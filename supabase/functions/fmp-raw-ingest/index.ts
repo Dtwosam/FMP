@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@5";
 import {
   assertTrustedGithubClaims,
+  manifestsEquivalent,
   validateObjectPath,
 } from "./validation.ts";
 
@@ -19,6 +20,18 @@ async function sha256Hex(bytes: Uint8Array): Promise<string> {
   ) as ArrayBuffer;
   const digest = await crypto.subtle.digest("SHA-256", digestInput);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function parseJsonObject(bytes: Uint8Array): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(new TextDecoder().decode(bytes));
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    // Fall through to null; malformed manifests are never treated as equivalent.
+  }
+  return null;
 }
 
 Deno.serve(async (req: Request) => {
@@ -78,11 +91,31 @@ Deno.serve(async (req: Request) => {
       if (downloadError || !existing) {
         throw error;
       }
-      const existingSha = await sha256Hex(new Uint8Array(await existing.arrayBuffer()));
-      if (existingSha !== expectedSha) {
-        return Response.json({ error: "immutable_object_conflict" }, { status: 409 });
+
+      const existingBytes = new Uint8Array(await existing.arrayBuffer());
+      const existingSha = await sha256Hex(existingBytes);
+      if (existingSha === expectedSha) {
+        return Response.json({ status: "already_verified", path: objectPath, sha256: actualSha });
       }
-      return Response.json({ status: "already_verified", path: objectPath, sha256: actualSha });
+
+      if (objectPath.endsWith(".json")) {
+        const firstManifest = parseJsonObject(existingBytes);
+        const retryManifest = parseJsonObject(body);
+        if (
+          firstManifest !== null &&
+          retryManifest !== null &&
+          manifestsEquivalent(firstManifest, retryManifest)
+        ) {
+          return Response.json({
+            status: "already_verified",
+            path: objectPath,
+            sha256: existingSha,
+            equivalence: "retrieved_at_utc_ignored",
+          });
+        }
+      }
+
+      return Response.json({ error: "immutable_object_conflict" }, { status: 409 });
     }
 
     return Response.json({ status: "stored", path: objectPath, sha256: actualSha }, { status: 201 });
