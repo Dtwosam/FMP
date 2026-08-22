@@ -12,31 +12,34 @@ env:
   PYTHONPATH: src
 
 jobs:
-  concurrent-source-probe:
+  serial-source-probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix:
-        shard:
-          - {pair: EURUSD, start: '2019-01-01', end: '2019-02-01'}
-          - {pair: GBPUSD, start: '2022-01-01', end: '2022-02-01'}
-          - {pair: USDJPY, start: '2024-01-01', end: '2024-02-01'}
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Probe Dukascopy with production retry settings
+      - name: Probe previously failing URLs serially
         shell: bash
         run: |
-          set -o pipefail
-          echo "probe pair=${{ matrix.shard.pair }} start=${{ matrix.shard.start }} end=${{ matrix.shard.end }}"
-          python -m fmp.data.cli fetch \
-            --pair "${{ matrix.shard.pair }}" \
-            --start "${{ matrix.shard.start }}" \
-            --end "${{ matrix.shard.end }}" \
-            --out ".phase1-source-diagnostic-${{ matrix.shard.pair }}" \
-            --attempts 6 \
-            --timeout 30
+          python - <<'PY'
+          import time
+          from datetime import date
+          from fmp.data.dukascopy import DukascopySource, UrllibTransport
+          from fmp.data.types import RawChunkKey
+
+          probes = [
+              RawChunkKey('USDJPY', 'ASK', date(2024, 1, 4)),
+              RawChunkKey('GBPUSD', 'ASK', date(2022, 1, 4)),
+              RawChunkKey('EURUSD', 'ASK', date(2019, 1, 4)),
+          ]
+          source = DukascopySource()
+          transport = UrllibTransport()
+          for idx, key in enumerate(probes):
+              url = source.url_for(key)
+              response = transport.get(url, 30.0)
+              print(f'{key.pair} {key.day} {key.side} status={response.status} bytes={len(response.body)} url={url}', flush=True)
+              if idx + 1 < len(probes):
+                  time.sleep(10)
+          PY
