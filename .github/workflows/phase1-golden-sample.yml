@@ -2,6 +2,7 @@ name: phase1-golden-sample
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'src/fmp/data/**'
       - 'tests/**'
@@ -15,6 +16,7 @@ permissions:
 
 jobs:
   all-v1-pairs-one-day:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
