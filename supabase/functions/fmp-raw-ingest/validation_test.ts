@@ -20,8 +20,23 @@ const trustedClaims = {
     "Dtwosam/FMP/.github/workflows/phase1-full-acquisition.yml@refs/heads/main",
 };
 
-Deno.test("accepts only the trusted FMP full-acquisition GitHub identity", () => {
+Deno.test("accepts trusted workflow-dispatch identity", () => {
   assertEquals(assertTrustedGithubClaims(trustedClaims), true);
+});
+
+Deno.test("accepts trusted main-branch push identity for cloud smoke", () => {
+  assertEquals(
+    assertTrustedGithubClaims({ ...trustedClaims, event_name: "push" }),
+    true,
+  );
+});
+
+Deno.test("rejects other event types", () => {
+  assertThrows(
+    () => assertTrustedGithubClaims({ ...trustedClaims, event_name: "schedule" }),
+    Error,
+    "event_name",
+  );
 });
 
 Deno.test("rejects a token from another repository", () => {
