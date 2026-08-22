@@ -10,10 +10,25 @@ on:
       - 'supabase/functions/fmp-raw-ingest/**'
       - 'docs/phase1-full-acquisition-trigger.md'
   workflow_dispatch:
+    inputs:
+      repair_year:
+        description: 'Optional repair year (2015-2026); leave blank with repair_month for full matrix'
+        required: false
+        default: ''
+        type: string
+      repair_month:
+        description: 'Optional repair month (1-12); leave blank with repair_year for full matrix'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
   id-token: write
+
+concurrency:
+  group: phase1-dukascopy-acquisition
+  cancel-in-progress: false
 
 env:
   PYTHONPATH: src
@@ -47,8 +62,35 @@ jobs:
             --end 2024-01-03 \
             --out .phase1-cloud-smoke
 
+  manual-input-validation:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate repair inputs
+        env:
+          REPAIR_YEAR: ${{ inputs.repair_year }}
+          REPAIR_MONTH: ${{ inputs.repair_month }}
+        run: |
+          python - <<'PY'
+          import os
+
+          year = os.environ['REPAIR_YEAR'].strip()
+          month = os.environ['REPAIR_MONTH'].strip()
+          if bool(year) != bool(month):
+              raise SystemExit('repair_year and repair_month must either both be set or both be blank')
+          if year:
+              y = int(year)
+              m = int(month)
+              if y < 2015 or y > 2026:
+                  raise SystemExit('repair_year must be between 2015 and 2026')
+              if m < 1 or m > 12:
+                  raise SystemExit('repair_month must be between 1 and 12')
+              if y == 2026 and m > 8:
+                  raise SystemExit('repair month is beyond the frozen Phase 1 cutoff')
+          PY
+
   full-acquisition:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[phase1-full]')
+    if: contains(github.event.head_commit.message, '[phase1-full]') || (github.event_name == 'workflow_dispatch' && inputs.repair_year == '' && inputs.repair_month == '')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -109,3 +151,53 @@ jobs:
             --start "${{ steps.range.outputs.start }}" \
             --end "${{ steps.range.outputs.end }}" \
             --out ".phase1-${{ matrix.year }}-${{ matrix.month }}"
+
+  targeted-repair:
+    if: github.event_name == 'workflow_dispatch' && inputs.repair_year != '' && inputs.repair_month != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Resolve targeted repair range
+        id: repair-range
+        env:
+          YEAR: ${{ inputs.repair_year }}
+          MONTH: ${{ inputs.repair_month }}
+        run: |
+          python - <<'PY'
+          import os
+          from datetime import date
+
+          year = int(os.environ['YEAR'])
+          month = int(os.environ['MONTH'])
+          if year < 2015 or year > 2026 or month < 1 or month > 12 or (year == 2026 and month > 8):
+              raise SystemExit('repair month is outside the frozen Phase 1 range')
+          start = date(year, month, 1)
+          end = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
+          if end > date(2026, 8, 21):
+              end = date(2026, 8, 21)
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f"start={start.isoformat()}\n")
+              handle.write(f"end={end.isoformat()}\n")
+          PY
+      - name: Acquire targeted repair month
+        run: |
+          python -m fmp.data.cli fetch \
+            --pair ALL \
+            --start "${{ steps.repair-range.outputs.start }}" \
+            --end "${{ steps.repair-range.outputs.end }}" \
+            --out ".phase1-repair-${{ inputs.repair_year }}-${{ inputs.repair_month }}" \
+            --attempts 8 \
+            --source-delay 5 \
+            --continue-on-error \
+            --mirror-url "$FMP_RAW_INGEST_URL"
+      - name: Verify targeted repair provenance
+        run: |
+          python -m fmp.data.cli verify \
+            --pair ALL \
+            --start "${{ steps.repair-range.outputs.start }}" \
+            --end "${{ steps.repair-range.outputs.end }}" \
+            --out ".phase1-repair-${{ inputs.repair_year }}-${{ inputs.repair_month }}"
