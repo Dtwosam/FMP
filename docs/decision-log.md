@@ -84,3 +84,26 @@ Rules:
 - acquisition remains sequential/resumable initially; no undocumented rate allowance is assumed.
 
 **Verification evidence:** GitHub Actions run `32541224812`, job `96951495249`, on a clean Ubuntu runner. EUR/USD 2024-01-02 returned HTTP 200 for both sides with 1,440 records each. BID SHA-256: `9b2d2b718f9ca123b58dce4b4512d4e1bd35c692e23e1beafebdd700072cf546`. ASK SHA-256: `a7dd327f5c59ad016c0e7e480d33fd7abd38da3e9c51dfe614f5e95f677386b3`. The workflow independently recomputed checksums and passed coverage assertions.
+
+## DEC-010 — Dedicated Supabase raw snapshot persistence
+
+**Date:** 2026-08-22  
+**Status:** APPROVED
+
+Use a dedicated Supabase project named `FMP` as the persistent cloud copy of Phase 1 immutable Dukascopy raw chunks and acquisition manifests only.
+
+- Supabase project ref: `htjqqzlezyguveuajuat`
+- region: `eu-central-1`
+- private Storage bucket: `fmp-raw`
+- creation cost verified by Supabase management API: `$0/month`
+- free-plan Storage is used for Phase 1 raw/manifests only; Phase 2+ normalized/feature datasets remain Parquet/DuckDB outside this bucket unless a later decision changes the architecture.
+- the unrelated `frnd-staging` project is not used by FMP.
+- the bucket is private and is not given public write policies.
+- GitHub never receives a Supabase service-role/secret key.
+- uploads go through the `fmp-raw-ingest` Edge Function, which validates GitHub Actions OIDC identity and pins repository, repository ID, owner ID, `main` ref, workflow identity and GitHub-hosted runner environment.
+- only `push` and `workflow_dispatch` events from the pinned workflow are accepted.
+- uploaded bytes must match a caller-supplied SHA-256 before storage.
+- object paths are restricted to canonical V1 raw/manifest paths.
+- cloud objects are immutable: an existing path is accepted only when its stored bytes match the requested SHA-256; conflicts fail closed.
+
+This storage layer solves persistence for ephemeral GitHub acquisition runners without changing Dukascopy source semantics or making Supabase part of downstream trading intelligence.
