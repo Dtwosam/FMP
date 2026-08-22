@@ -7,3 +7,5 @@ This file exists only as a controlled GitHub Actions trigger surface for Phase 1
 - Do not use the full trigger until the main-branch cloud smoke and private-bucket observation gates pass.
 
 **Full-history trigger issued:** 2026-08-22 after the main-branch OIDC cloud smoke PASS and independent private-bucket observation.
+
+**Manifest-idempotency smoke re-run:** 2026-08-22 against Edge Function version 3.
