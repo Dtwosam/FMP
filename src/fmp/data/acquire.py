@@ -164,8 +164,8 @@ def acquire_chunk(
     source: DukascopySource | None = None,
     transport: HttpTransport | None = None,
     timeout_seconds: float = 30.0,
-    max_attempts: int = 3,
-    backoff_seconds: float = 0.5,
+    max_attempts: int = 6,
+    backoff_seconds: float = 1.0,
     recheck_not_found: bool = False,
 ) -> AcquisitionResult:
     source = source or DukascopySource()
