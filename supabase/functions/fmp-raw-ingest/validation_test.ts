@@ -4,6 +4,7 @@ import {
 } from "jsr:@std/assert@1";
 import {
   assertTrustedGithubClaims,
+  manifestsEquivalent,
   validateObjectPath,
 } from "./validation.ts";
 
@@ -25,53 +26,28 @@ Deno.test("accepts trusted workflow-dispatch identity", () => {
 });
 
 Deno.test("accepts trusted main-branch push identity for cloud smoke", () => {
-  assertEquals(
-    assertTrustedGithubClaims({ ...trustedClaims, event_name: "push" }),
-    true,
-  );
+  assertEquals(assertTrustedGithubClaims({ ...trustedClaims, event_name: "push" }), true);
 });
 
 Deno.test("rejects other event types", () => {
-  assertThrows(
-    () => assertTrustedGithubClaims({ ...trustedClaims, event_name: "schedule" }),
-    Error,
-    "event_name",
-  );
+  assertThrows(() => assertTrustedGithubClaims({ ...trustedClaims, event_name: "schedule" }), Error, "event_name");
 });
 
 Deno.test("rejects a token from another repository", () => {
-  assertThrows(
-    () => assertTrustedGithubClaims({ ...trustedClaims, repository: "attacker/FMP" }),
-    Error,
-    "repository",
-  );
+  assertThrows(() => assertTrustedGithubClaims({ ...trustedClaims, repository: "attacker/FMP" }), Error, "repository");
 });
 
 Deno.test("rejects a token from a different workflow", () => {
   assertThrows(
-    () =>
-      assertTrustedGithubClaims({
-        ...trustedClaims,
-        workflow_ref: "Dtwosam/FMP/.github/workflows/tests.yml@refs/heads/main",
-      }),
+    () => assertTrustedGithubClaims({ ...trustedClaims, workflow_ref: "Dtwosam/FMP/.github/workflows/tests.yml@refs/heads/main" }),
     Error,
     "workflow",
   );
 });
 
 Deno.test("accepts canonical raw and manifest object paths", () => {
-  assertEquals(
-    validateObjectPath(
-      "raw/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.bi5",
-    ),
-    true,
-  );
-  assertEquals(
-    validateObjectPath(
-      "manifests/dukascopy/v1/USDJPY/2024/00/02/ASK_candles_min_1.json",
-    ),
-    true,
-  );
+  assertEquals(validateObjectPath("raw/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.bi5"), true);
+  assertEquals(validateObjectPath("manifests/dukascopy/v1/USDJPY/2024/00/02/ASK_candles_min_1.json"), true);
 });
 
 Deno.test("rejects path traversal and non-V1 objects", () => {
@@ -83,4 +59,31 @@ Deno.test("rejects path traversal and non-V1 objects", () => {
   ]) {
     assertThrows(() => validateObjectPath(path), Error);
   }
+});
+
+Deno.test("manifest retries may differ only by retrieval timestamp", () => {
+  const first = {
+    pair: "EURUSD",
+    side: "BID",
+    status: "complete",
+    sha256: "abc",
+    records: 1440,
+    retrieved_at_utc: "2026-08-22T01:00:00Z",
+  };
+  const retry = { ...first, retrieved_at_utc: "2026-08-22T02:00:00Z" };
+  assertEquals(manifestsEquivalent(first, retry), true);
+});
+
+Deno.test("manifest retry rejects substantive differences", () => {
+  const first = {
+    pair: "EURUSD",
+    side: "BID",
+    status: "complete",
+    sha256: "abc",
+    records: 1440,
+    retrieved_at_utc: "2026-08-22T01:00:00Z",
+  };
+  assertEquals(manifestsEquivalent(first, { ...first, sha256: "changed" }), false);
+  assertEquals(manifestsEquivalent(first, { ...first, records: 1439 }), false);
+  assertEquals(manifestsEquivalent(first, { ...first, extra: "field" }), false);
 });
