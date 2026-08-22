@@ -92,13 +92,21 @@ def _atomic_write_bytes(path: Path, body: bytes) -> None:
         raise
 
 
-def _existing_verified_result(key: RawChunkKey, raw_path: Path, manifest_path: Path) -> AcquisitionResult | None:
+def _existing_verified_result(
+    key: RawChunkKey,
+    raw_path: Path,
+    manifest_path: Path,
+    *,
+    recheck_not_found: bool = False,
+) -> AcquisitionResult | None:
     if not raw_path.exists() and not manifest_path.exists():
         return None
     if manifest_path.exists():
         manifest = load_manifest(manifest_path)
         status = manifest.get("status")
         if status == AcquisitionStatus.NOT_FOUND.value and not raw_path.exists():
+            if recheck_not_found:
+                return None
             return AcquisitionResult(key, AcquisitionStatus.NOT_FOUND, None, None, None, 404)
         if status == AcquisitionStatus.COMPLETE.value and raw_path.exists():
             expected = manifest.get("sha256")
@@ -158,13 +166,16 @@ def acquire_chunk(
     timeout_seconds: float = 30.0,
     max_attempts: int = 3,
     backoff_seconds: float = 0.5,
+    recheck_not_found: bool = False,
 ) -> AcquisitionResult:
     source = source or DukascopySource()
     transport = transport or UrllibTransport()
     raw_path = root / "raw" / key.relative_raw_path
     manifest_path = root / "manifests" / key.relative_manifest_path
 
-    existing = _existing_verified_result(key, raw_path, manifest_path)
+    existing = _existing_verified_result(
+        key, raw_path, manifest_path, recheck_not_found=recheck_not_found
+    )
     if existing is not None:
         return existing
 
