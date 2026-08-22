@@ -99,6 +99,7 @@ jobs:
             --out ".phase1-${{ matrix.year }}-${{ matrix.month }}" \
             --attempts 8 \
             --source-delay 5 \
+            --continue-on-error \
             --mirror-url "$FMP_RAW_INGEST_URL"
       - name: Verify local monthly shard provenance
         if: steps.range.outputs.active == 'true'
