@@ -1,0 +1,67 @@
+name: phase1-golden-sample
+
+on:
+  pull_request:
+    paths:
+      - 'src/fmp/data/**'
+      - 'tests/**'
+      - '.github/workflows/phase1-golden-sample.yml'
+      - 'docs/decision-log.md'
+      - 'docs/phase1-acquisition-spike.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  all-v1-pairs-one-day:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire all V1 pairs for one complete weekday
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m fmp.data.cli fetch \
+            --pair ALL \
+            --start 2024-01-02 \
+            --end 2024-01-03 \
+            --out .phase1-golden \
+            --attempts 3 \
+            --timeout 30
+      - name: Verify six complete pair-side manifests and raw checksums
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from collections import defaultdict
+          from pathlib import Path
+
+          root = Path('.phase1-golden')
+          manifests = sorted((root / 'manifests').rglob('*.json'))
+          assert len(manifests) == 6, manifests
+          observed = defaultdict(set)
+          for manifest_path in manifests:
+              m = json.loads(manifest_path.read_text())
+              assert m['status'] == 'complete', m
+              assert m['date_utc'] == '2024-01-02'
+              assert m['granularity'] == '1m'
+              assert 0 < int(m['records']) <= 1440
+              observed[m['pair']].add(m['side'])
+              raw_rel = Path('dukascopy/v1') / m['pair'] / '2024' / '00' / '02' / f"{m['side']}_candles_min_1.bi5"
+              raw_path = root / 'raw' / raw_rel
+              assert raw_path.is_file(), raw_path
+              assert hashlib.sha256(raw_path.read_bytes()).hexdigest() == m['sha256']
+          assert dict(observed) == {
+              'EURUSD': {'BID', 'ASK'},
+              'GBPUSD': {'BID', 'ASK'},
+              'USDJPY': {'BID', 'ASK'},
+          }, dict(observed)
+          PY
+      - name: Show golden-sample coverage
+        env:
+          PYTHONPATH: src
+        run: python -m fmp.data.cli coverage --out .phase1-golden
