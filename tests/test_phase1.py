@@ -166,17 +166,42 @@ class Phase1Tests(unittest.TestCase):
             self.assertEqual(raw_path.read_bytes(), original)
             self.assertEqual(first.sha256, second.sha256)
 
+
+if __name__ == "__main__":
+    unittest.main()
+
+class PlanningAndCoverageTests(unittest.TestCase):
     def test_plan_all_pairs_and_sides_for_two_days(self) -> None:
         from fmp.data.cli import plan_keys
-
         keys = plan_keys(("EURUSD", "GBPUSD", "USDJPY"), date(2024, 1, 1), date(2024, 1, 3))
         self.assertEqual(len(keys), 12)
         self.assertEqual(keys[0], RawChunkKey("EURUSD", "BID", date(2024, 1, 1)))
         self.assertEqual(keys[-1], RawChunkKey("USDJPY", "ASK", date(2024, 1, 2)))
 
+    def test_snapshot_verifier_requires_every_manifest_and_verified_raw_checksum(self) -> None:
+        from fmp.data.coverage import verify_snapshot
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            day = date(2024, 1, 2)
+            bid = RawChunkKey("EURUSD", "BID", day)
+            ask = RawChunkKey("EURUSD", "ASK", day)
+            acquire_chunk(bid, root, transport=FakeTransport([HttpResponse(status=200, body=make_bi5(2))]))
+            acquire_chunk(ask, root, transport=FakeTransport([HttpResponse(status=404, body=b"")]))
+
+            report = verify_snapshot(root, ("EURUSD",), day, date(2024, 1, 3))
+            self.assertTrue(report["ready"] )
+            self.assertEqual(report["planned_chunks"], 2)
+            self.assertEqual(report["complete"], 1)
+            self.assertEqual(report["not_found"], 1)
+
+            (root / "manifests" / ask.relative_manifest_path).unlink()
+            report = verify_snapshot(root, ("EURUSD",), day, date(2024, 1, 3))
+            self.assertFalse(report["ready"] )
+            self.assertEqual(report["missing_manifest"], 1)
+
     def test_coverage_summary_counts_manifest_statuses(self) -> None:
         from fmp.data.coverage import build_coverage_report
-
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             keys = [
@@ -192,7 +217,3 @@ class Phase1Tests(unittest.TestCase):
             self.assertEqual(report["totals"]["not_found"], 1)
             self.assertEqual(report["totals"]["manifests"], 3)
             self.assertEqual(report["pairs"]["EURUSD"]["complete"], 2)
-
-
-if __name__ == "__main__":
-    unittest.main()
