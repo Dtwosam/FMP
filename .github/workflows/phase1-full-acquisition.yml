@@ -23,7 +23,7 @@ jobs:
   cloud-smoke:
     if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]')
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,6 +36,8 @@ jobs:
             --start 2024-01-02 \
             --end 2024-01-03 \
             --out .phase1-cloud-smoke \
+            --attempts 8 \
+            --source-delay 5 \
             --mirror-url "$FMP_RAW_INGEST_URL"
       - name: Verify local smoke snapshot
         run: |
@@ -51,39 +53,58 @@ jobs:
     timeout-minutes: 350
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 1
       matrix:
-        pair: [EURUSD, GBPUSD, USDJPY]
         year: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
+        month: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Resolve shard range
+      - name: Resolve monthly shard range
         id: range
-        shell: bash
+        env:
+          YEAR: ${{ matrix.year }}
+          MONTH: ${{ matrix.month }}
         run: |
-          YEAR="${{ matrix.year }}"
-          echo "start=${YEAR}-01-01" >> "$GITHUB_OUTPUT"
-          if [ "$YEAR" = "2026" ]; then
-            echo "end=2026-08-21" >> "$GITHUB_OUTPUT"
-          else
-            NEXT=$((YEAR + 1))
-            echo "end=${NEXT}-01-01" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Acquire and immediately mirror shard
+          python - <<'PY'
+          import os
+          from datetime import date
+
+          year = int(os.environ['YEAR'])
+          month = int(os.environ['MONTH'])
+          active = not (year == 2026 and month > 8)
+          output = os.environ['GITHUB_OUTPUT']
+          with open(output, 'a', encoding='utf-8') as handle:
+              handle.write(f"active={'true' if active else 'false'}\n")
+              if active:
+                  start = date(year, month, 1)
+                  if month == 12:
+                      end = date(year + 1, 1, 1)
+                  else:
+                      end = date(year, month + 1, 1)
+                  if end > date(2026, 8, 21):
+                      end = date(2026, 8, 21)
+                  handle.write(f"start={start.isoformat()}\n")
+                  handle.write(f"end={end.isoformat()}\n")
+          PY
+      - name: Acquire and immediately mirror monthly shard
+        if: steps.range.outputs.active == 'true'
         run: |
           python -m fmp.data.cli fetch \
-            --pair "${{ matrix.pair }}" \
+            --pair ALL \
             --start "${{ steps.range.outputs.start }}" \
             --end "${{ steps.range.outputs.end }}" \
-            --out ".phase1-${{ matrix.pair }}-${{ matrix.year }}" \
+            --out ".phase1-${{ matrix.year }}-${{ matrix.month }}" \
+            --attempts 8 \
+            --source-delay 5 \
             --mirror-url "$FMP_RAW_INGEST_URL"
-      - name: Verify local shard provenance
+      - name: Verify local monthly shard provenance
+        if: steps.range.outputs.active == 'true'
         run: |
           python -m fmp.data.cli verify \
-            --pair "${{ matrix.pair }}" \
+            --pair ALL \
             --start "${{ steps.range.outputs.start }}" \
             --end "${{ steps.range.outputs.end }}" \
-            --out ".phase1-${{ matrix.pair }}-${{ matrix.year }}"
+            --out ".phase1-${{ matrix.year }}-${{ matrix.month }}"
