@@ -24,6 +24,19 @@ export function assertTrustedGithubClaims(
   return true;
 }
 
+export function manifestsEquivalent(
+  first: Record<string, unknown>,
+  retry: Record<string, unknown>,
+): boolean {
+  const canonical = (manifest: Record<string, unknown>): string =>
+    JSON.stringify(
+      Object.entries(manifest)
+        .filter(([key]) => key !== "retrieved_at_utc")
+        .sort(([left], [right]) => left.localeCompare(right)),
+    );
+  return canonical(first) === canonical(retry);
+}
+
 const RAW_RE = /^raw\/dukascopy\/v1\/(EURUSD|GBPUSD|USDJPY)\/(\d{4})\/(0[0-9]|1[01])\/([0-2][0-9]|3[01])\/(BID|ASK)_candles_min_1\.bi5$/;
 const MANIFEST_RE = /^manifests\/dukascopy\/v1\/(EURUSD|GBPUSD|USDJPY)\/(\d{4})\/(0[0-9]|1[01])\/([0-2][0-9]|3[01])\/(BID|ASK)_candles_min_1\.json$/;
 
