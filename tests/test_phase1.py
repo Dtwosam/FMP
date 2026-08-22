@@ -118,6 +118,21 @@ class Phase1Tests(unittest.TestCase):
             self.assertEqual(manifest["status"], "not_found")
             self.assertEqual(manifest["http_status"], 404)
 
+    def test_default_retry_budget_survives_three_transient_503s(self) -> None:
+        body = make_bi5(2)
+        key = RawChunkKey("USDJPY", "BID", date(2024, 3, 6))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            transport = FakeTransport([
+                HttpResponse(status=503, body=b""),
+                HttpResponse(status=503, body=b""),
+                HttpResponse(status=503, body=b""),
+                HttpResponse(status=200, body=body),
+            ])
+            result = acquire_chunk(key, root, transport=transport, backoff_seconds=0)
+            self.assertEqual(result.status, AcquisitionStatus.COMPLETE)
+            self.assertEqual(len(transport.calls), 4)
+
     def test_not_found_can_be_explicitly_rechecked_and_completed(self) -> None:
         body = make_bi5(2)
         key = RawChunkKey("EURUSD", "ASK", date(2024, 3, 5))
