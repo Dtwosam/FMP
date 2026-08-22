@@ -1,0 +1,42 @@
+name: phase1-source-diagnostic
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/phase1-source-diagnostic.yml'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: src
+
+jobs:
+  concurrent-source-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        shard:
+          - {pair: EURUSD, start: '2019-01-01', end: '2019-02-01'}
+          - {pair: GBPUSD, start: '2022-01-01', end: '2022-02-01'}
+          - {pair: USDJPY, start: '2024-01-01', end: '2024-02-01'}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Probe Dukascopy with production retry settings
+        shell: bash
+        run: |
+          set -o pipefail
+          echo "probe pair=${{ matrix.shard.pair }} start=${{ matrix.shard.start }} end=${{ matrix.shard.end }}"
+          python -m fmp.data.cli fetch \
+            --pair "${{ matrix.shard.pair }}" \
+            --start "${{ matrix.shard.start }}" \
+            --end "${{ matrix.shard.end }}" \
+            --out ".phase1-source-diagnostic-${{ matrix.shard.pair }}" \
+            --attempts 6 \
+            --timeout 30
