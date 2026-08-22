@@ -1,0 +1,89 @@
+name: phase1-full-acquisition
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/phase1-full-acquisition.yml'
+      - 'src/fmp/data/cloud.py'
+      - 'src/fmp/data/cli.py'
+      - 'supabase/functions/fmp-raw-ingest/**'
+      - 'docs/phase1-full-acquisition-trigger.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PYTHONPATH: src
+  FMP_RAW_INGEST_URL: https://htjqqzlezyguveuajuat.supabase.co/functions/v1/fmp-raw-ingest
+
+jobs:
+  cloud-smoke:
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire and immediately mirror one EURUSD weekday
+        run: |
+          python -m fmp.data.cli fetch \
+            --pair EURUSD \
+            --start 2024-01-02 \
+            --end 2024-01-03 \
+            --out .phase1-cloud-smoke \
+            --mirror-url "$FMP_RAW_INGEST_URL"
+      - name: Verify local smoke snapshot
+        run: |
+          python -m fmp.data.cli verify \
+            --pair EURUSD \
+            --start 2024-01-02 \
+            --end 2024-01-03 \
+            --out .phase1-cloud-smoke
+
+  full-acquisition:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[phase1-full]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        pair: [EURUSD, GBPUSD, USDJPY]
+        year: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Resolve shard range
+        id: range
+        shell: bash
+        run: |
+          YEAR="${{ matrix.year }}"
+          echo "start=${YEAR}-01-01" >> "$GITHUB_OUTPUT"
+          if [ "$YEAR" = "2026" ]; then
+            echo "end=2026-08-21" >> "$GITHUB_OUTPUT"
+          else
+            NEXT=$((YEAR + 1))
+            echo "end=${NEXT}-01-01" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Acquire and immediately mirror shard
+        run: |
+          python -m fmp.data.cli fetch \
+            --pair "${{ matrix.pair }}" \
+            --start "${{ steps.range.outputs.start }}" \
+            --end "${{ steps.range.outputs.end }}" \
+            --out ".phase1-${{ matrix.pair }}-${{ matrix.year }}" \
+            --mirror-url "$FMP_RAW_INGEST_URL"
+      - name: Verify local shard provenance
+        run: |
+          python -m fmp.data.cli verify \
+            --pair "${{ matrix.pair }}" \
+            --start "${{ steps.range.outputs.start }}" \
+            --end "${{ steps.range.outputs.end }}" \
+            --out ".phase1-${{ matrix.pair }}-${{ matrix.year }}"
