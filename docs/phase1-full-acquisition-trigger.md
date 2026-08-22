@@ -9,3 +9,5 @@ This file exists only as a controlled GitHub Actions trigger surface for Phase 1
 **Full-history trigger issued:** 2026-08-22 after the main-branch OIDC cloud smoke PASS and independent private-bucket observation.
 
 **Manifest-idempotency smoke re-run:** 2026-08-22 against Edge Function version 3.
+
+**Post-throttling hardening smoke trigger:** 2026-08-22 after PR #7 merge; smoke-only commit intentionally omits the full-acquisition marker.
