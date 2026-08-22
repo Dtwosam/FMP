@@ -1,0 +1,20 @@
+name: phase1-full-acquisition
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Placeholder until Supabase upload client is wired
+        run: echo "Supabase raw-storage workflow identity established"
