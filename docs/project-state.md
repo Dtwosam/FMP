@@ -4,7 +4,7 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 1 — Historical Data Acquisition  
-**Phase status:** CLOUD_PERSISTENCE_READY_FOR_MAIN_SMOKE  
+**Phase status:** READY_FOR_FULL_HISTORY_CLOUD_ACQUISITION  
 **Next phase:** Phase 2 — Validation, Normalization & Derived Bars (LOCKED until Phase 1 PASS)
 
 ## Current baseline
@@ -73,8 +73,8 @@
 - [x] Python GitHub-OIDC raw mirror client implemented and tested
 - [x] Acquisition CLI mirrors each result immediately when `--mirror-url` is supplied
 - [x] Sharded GitHub full-acquisition workflow defined
-- [ ] Main-branch end-to-end OIDC cloud smoke PASS
-- [ ] Supabase cloud smoke objects independently observed in private bucket
+- [x] Main-branch end-to-end OIDC cloud smoke PASS
+- [x] Supabase cloud smoke objects independently observed in private bucket
 - [ ] `[phase1-full]` full-history run triggered
 - [ ] All pair/year shards PASS
 - [ ] Full target history accounted for in private bucket
@@ -84,21 +84,36 @@
 
 ## Current verification evidence
 
+### Existing source-acquisition evidence
+
 - Existing acquisition semantics: 13-test Python suite + live source smoke/golden sample previously PASS.
 - Cloud mirror contract adds tests for GitHub OIDC audience/auth request, object SHA-256 headers, idempotent `already_verified`, manifest-only mirroring for source 404, and immediate mirror-before-advance semantics.
 - Edge validation tests cover pinned repository/workflow identity, allowed event types, and canonical storage paths.
 - Edge Function entrypoint is type-checked with Deno in CI.
 - Supabase Edge Function `fmp-raw-ingest` version 2 is ACTIVE.
 
+### Main-branch cloud smoke — PASS
+
+Triggered from `main` by commit `e3f0d3e5977be4b1066764dfb0d9eafd43e190ad` on 2026-08-22.
+
+Supabase Edge Function logs recorded four HTTP 201 `PUT` responses through deployment version 2. Independent SQL inspection of private bucket `fmp-raw` confirmed exactly the expected EUR/USD 2024-01-02 objects:
+
+- `raw/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.bi5` — 11,714 bytes
+- `raw/dukascopy/v1/EURUSD/2024/00/02/ASK_candles_min_1.bi5` — 12,015 bytes
+- `manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json` — 655 bytes
+- `manifests/dukascopy/v1/EURUSD/2024/00/02/ASK_candles_min_1.json` — 655 bytes
+
+The raw byte sizes match the earlier independently verified Dukascopy golden sample. The ingestion function computed and required SHA-256 equality before accepting each object.
+
 Detailed cloud architecture: `docs/supabase-storage.md`.
 
 ## Immediate next action
 
-1. Merge PR #3 after all current branch checks are green.
-2. Let the merge-triggered `phase1-full-acquisition` cloud-smoke job acquire EUR/USD 2024-01-02 BID+ASK and mirror both raw files and manifests to Supabase using GitHub OIDC.
-3. Independently query the private Supabase bucket to confirm the four expected cloud objects.
-4. Only after that proof, create a `main` commit containing `[phase1-full]` to trigger the 36-shard 2015→2026 acquisition.
-5. Keep Phase 2 locked until the full cloud snapshot is accounted for.
+1. Issue a controlled `main` commit containing `[phase1-full]` and touching `docs/phase1-full-acquisition-trigger.md`.
+2. This starts the 36-shard matrix: three pairs × years 2015–2026, max three concurrent jobs.
+3. Each shard must acquire BID/ASK source chunks, immediately mirror every result to private Supabase Storage, and pass its local provenance verifier.
+4. After the run, independently account for the full private-bucket snapshot and record coverage evidence.
+5. Keep Phase 2 locked until the full cloud snapshot is accounted for and Phase 1 is formally frozen.
 
 ## Known open decisions
 
@@ -110,7 +125,7 @@ Detailed cloud architecture: `docs/supabase-storage.md`.
 ## Blockers
 
 - No architecture blocker remains for persistent Phase 1 acquisition.
-- The only remaining gates are evidence gates: main-branch cloud smoke, full-history acquisition, cloud-accounting verification, and Phase 1 freeze.
+- Remaining gates are evidence gates only: full-history acquisition, full cloud accounting, Phase 1 PASS record, and checkpoint.
 - These gates do not justify starting Phase 2 early.
 
 ## Backlog — do not pull forward without need
