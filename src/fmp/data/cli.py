@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Callable, Iterable, Protocol
@@ -49,9 +50,16 @@ def process_fetch_plan(
     root: Path,
     acquire_fn: Callable[[RawChunkKey, Path], AcquisitionResult],
     mirror: ObjectMirror | None = None,
+    *,
+    source_delay_seconds: float = 0.0,
+    sleep_fn: Callable[[float], None] = time.sleep,
 ) -> list[AcquisitionResult]:
     results: list[AcquisitionResult] = []
+    first = True
     for key in keys:
+        if not first and source_delay_seconds > 0:
+            sleep_fn(source_delay_seconds)
+        first = False
         result = acquire_fn(key, root)
         if mirror is not None:
             mirror_acquisition_result(root, result, mirror)  # type: ignore[arg-type]
@@ -96,6 +104,7 @@ def run_fetch(args: argparse.Namespace) -> int:
         root,
         configured_acquire,
         mirror,
+        source_delay_seconds=args.source_delay,
     )
     results: list[dict[str, object]] = []
     for result in acquired:
@@ -133,6 +142,12 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--out", default="data")
     fetch.add_argument("--timeout", type=float, default=30.0)
     fetch.add_argument("--attempts", type=int, default=6)
+    fetch.add_argument(
+        "--source-delay",
+        type=float,
+        default=0.0,
+        help="seconds to pause between consecutive Dukascopy source chunks",
+    )
     fetch.add_argument(
         "--mirror-url",
         help="HTTPS FMP raw-ingest endpoint; requires GitHub Actions OIDC environment",

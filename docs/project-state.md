@@ -4,7 +4,7 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 1 — Historical Data Acquisition  
-**Phase status:** FULL_HISTORY_CLOUD_ACQUISITION_IN_PROGRESS  
+**Phase status:** RECOVERING_INCOMPLETE_FULL_HISTORY_ACQUISITION  
 **Next phase:** Phase 2 — Validation, Normalization & Derived Bars (LOCKED until Phase 1 PASS)
 
 ## Current baseline
@@ -13,6 +13,7 @@
 - Canonical history: 1-minute bid/ask
 - Derived bars: 5m, 15m, 1h
 - Frozen first snapshot target: 2015-01-01 through 2026-08-20 inclusive
+- Planned pair/side/date manifests: **25,500**
 - Development budget: $0
 - Historical source: Dukascopy daily M1 BID/ASK `.bi5`, frozen by DEC-009
 - Phase 1 persistent cloud copy: dedicated Supabase `FMP` project, private `fmp-raw` bucket, frozen by DEC-010
@@ -33,17 +34,17 @@ All Phase 0 source-of-truth, architecture, data, research, risk, build-order, ex
 
 ### Source/acquisition
 - [x] deterministic Dukascopy daily M1 BID/ASK source adapter
-- [x] resumable acquisition
+- [x] resumable local acquisition semantics
 - [x] atomic raw/manifest writes
 - [x] SHA-256 provenance
 - [x] fail-closed tamper handling
 - [x] structural LZMA/record validation
 - [x] explicit 404 `not_found` provenance
 - [x] delayed-404 recheck path
-- [x] hardened transient 5xx retry policy
+- [x] transient 5xx retry handling
 - [x] acquisition coverage report
 - [x] snapshot provenance verifier
-- [x] bounded live-network smoke PASS
+- [x] bounded live-network smoke previously PASS
 - [x] all-pair golden sample PASS
 - [x] retrieval method frozen as DEC-009
 
@@ -56,75 +57,110 @@ All Phase 0 source-of-truth, architecture, data, research, risk, build-order, ex
 - [x] SHA-256 required before storage
 - [x] Python GitHub-OIDC mirror client
 - [x] immediate per-result cloud mirroring
-- [x] 36-shard pair/year GitHub acquisition workflow
 - [x] main-branch end-to-end cloud smoke PASS
-- [x] four expected smoke objects independently observed
-- [x] `[phase1-full]` full-history trigger issued
-- [x] full acquisition observed writing objects to the private bucket
-- [x] retry-manifest idempotency defect discovered, regression-tested, fixed and live-verified
+- [x] retry-manifest idempotency defect regression-tested, fixed, deployed as Edge Function v3 and merged via PR #5
 
-## Full-history acquisition — ACTIVE
+## First full-history run — INCOMPLETE
 
-Trigger commit:
+Original trigger:
 
 - `496ef145daf694902d09d17e5f969cc62a93fefd` — `chore: start Phase 1 full acquisition [phase1-full]`
 
-Workflow shape:
+Original workflow shape:
 
-- 3 pairs × 12 year shards = 36 jobs
-- years 2015–2025 use full calendar years
-- 2026 shard ends at exclusive `2026-08-21`
-- maximum 3 concurrent jobs
-- every acquisition result is mirrored immediately to Supabase
-- each shard runs local provenance verification
-- market data is not stored as a GitHub artifact
+- 36 pair/year jobs
+- maximum 3 concurrent source runners
+- whole-year failure blast radius
+- 6-attempt source retry budget
+- no explicit inter-chunk source pacing
 
-Latest independently observed Supabase progress during this update:
+Independent Supabase audit after writes stopped:
 
-- total objects: **94**
-- raw objects: **47**
-- manifest objects: **47**
-- persisted bytes: **389,188**
-- latest observed object timestamp: `2026-08-22 01:44:33.57992+00`
+- expected manifests: **25,500**
+- present manifests: **1,055**
+- missing manifests: **24,445**
+- raw objects: **1,055**
+- manifest objects: **1,055**
+- total objects: **2,110**
+- latest object observed from the stopped run: `2026-08-22 03:59:46.247262+00`
 
-These numbers prove active persistence only. They are **not** Phase 1 completion evidence.
+The partial cloud snapshot is valid persisted progress but is **not** Phase 1 completion evidence.
+
+## Root cause — DUKASCOPY THROTTLING / SOURCE INSTABILITY
+
+A diagnostic-only PR reproduced the stopped-run behavior without writing to Supabase.
+
+### Concurrent reproduction
+
+GitHub Actions run `32561119936` used three simultaneous one-month source probes with the same six-attempt production retry budget.
+
+- USDJPY job `97002685840` exhausted all six retries on HTTP **503** for `USDJPY/2024/00/04/ASK_candles_min_1.bi5`.
+- GBPUSD job `97002685900` exhausted all six retries on HTTP **503** for `GBPUSD/2022/00/04/ASK_candles_min_1.bi5`.
+
+### Serial hypothesis test
+
+GitHub Actions run `32561495430` requested the exact previously failing URLs serially with a 10-second gap:
+
+- USDJPY 2024-01-04 ASK → HTTP **200**, 12,699 bytes.
+- GBPUSD 2022-01-04 ASK → HTTP **200**, 11,426 bytes.
+- a later EURUSD request received `Connection reset by peer`.
+
+Conclusion: Dukascopy is load-sensitive under our earlier concurrency and remains intermittently unstable even with serial access. Supabase was not the primary cause of the stopped historical run.
+
+## Recovery implementation — PR #7
+
+PR #7: `Phase 1: harden Dukascopy throttling recovery`
+
+### TDD evidence
+
+Red commit `b26306ceebcad10641ae4658a6d9179f21057aa1` added tests requiring:
+
+- configurable delay between consecutive source chunks;
+- CLI `--source-delay` support.
+
+CI run `32561686275` failed exactly on those two missing behaviors while existing tests remained green.
+
+Green implementation commit `619e8e5cb9dfec83e3e4d5b8d604799493be3072` added the minimal pacing support. Subsequent Python CI passed all **20 tests**.
+
+### Recovery workflow shape
+
+The proposed full-history workflow now:
+
+- runs at **max-parallel: 1**;
+- uses calendar-month shards instead of pair/year shards;
+- processes all three V1 pairs sequentially inside each active month;
+- uses immediate Supabase mirroring for every result;
+- uses `--attempts 8`;
+- uses `--source-delay 5` seconds;
+- verifies each month locally after acquisition;
+- caps the first snapshot at exclusive `2026-08-21`;
+- keeps failed months isolated and retryable.
+
+The proposed live regression smoke now covers EUR/USD 2024-01-02 through 2024-01-07 inclusive (both sides), with the same 8-attempt / 5-second pacing policy. Python tests and the all-pair golden sample are green. The strengthened multi-day source smoke is the remaining pre-merge gate.
+
+DEC-011 records the throttling recovery decision.
 
 ## Manifest retry incident — FIXED
 
-A duplicate main-branch smoke discovered that raw `.bi5` retry semantics were correct but manifests were not byte-idempotent because `retrieved_at_utc` changes on every fresh acquisition attempt.
+A prior duplicate cloud smoke found regenerated manifests differ by `retrieved_at_utc` even when raw market data is identical.
 
-Observed v2 behavior:
-
-- duplicate raw object: HTTP 200 `already_verified`
-- semantically identical regenerated manifest: HTTP 409 conflict
-
-Root cause: acquisition manifests intentionally record attempt-specific `retrieved_at_utc`, so identical source/provenance can produce different manifest bytes.
-
-Approved fix:
+Current v3 rule:
 
 - raw `.bi5` objects remain strictly byte-for-byte immutable;
 - duplicate manifest bytes are accepted directly when SHA-256 matches;
 - when manifest bytes differ, semantic comparison ignores **only** top-level `retrieved_at_utc`;
-- every other field must match, including source URL, pair, side, date, status, raw SHA-256, record count, source format and any additional field;
-- the first cloud manifest remains stored; retry attempts never overwrite it;
-- substantive differences still return HTTP 409.
+- every other manifest field must match;
+- first cloud manifest remains stored; retry attempts do not overwrite it;
+- substantive conflicts still return HTTP 409.
 
-TDD evidence:
-
-- regression tests were first observed red because `manifestsEquivalent` did not exist;
-- Python tests remained green;
-- implementation then made Edge tests + type-check green;
-- fix was deployed as `fmp-raw-ingest` **version 3**;
-- live duplicate requests on v3 returned multiple HTTP 200 idempotent responses with no new v3 409 observed;
-- current-main replay CI passed Python + Edge suites;
-- merged via PR #5 at commit `a2906a37f380dc6c4d27e90d46f15c2c2731d417`.
-
-PR #4 was closed unmerged because `main` advanced during the live run; PR #5 replayed the identical tested fix onto current `main`.
+Merged via PR #5 at commit `a2906a37f380dc6c4d27e90d46f15c2c2731d417`.
 
 ## Remaining Phase 1 gates
 
-- [ ] all pair/year acquisition shards accounted for
-- [ ] full target cloud snapshot independently audited
+- [ ] hardened multi-day source smoke PASS
+- [ ] PR #7 merged and main-branch cloud smoke PASS
+- [ ] serialized monthly full-history recovery triggered
+- [ ] every planned pair/side/date manifest accounted for
 - [ ] expected source-404/market-closure manifests accounted for
 - [ ] no unexplained missing planned chunks
 - [ ] final cloud provenance/coverage evidence recorded
@@ -133,7 +169,12 @@ PR #4 was closed unmerged because `main` advanced during the live run; PR #5 rep
 
 ## Immediate next action
 
-Continue evidence collection on the already-triggered full acquisition. Do **not** begin Phase 2 merely because objects are arriving. After acquisition stops changing, independently audit the private bucket against the full planned 2015-01-01 → 2026-08-21-exclusive pair/side/date plan. If any shard or date is missing, rerun safely using the v3 idempotent cloud layer. Only a complete accounted-for snapshot may unlock Phase 2.
+1. Wait for the hardened multi-day source smoke on PR #7 to pass or produce a concrete failure.
+2. Do not merge on a pending/failed network gate.
+3. If green, merge PR #7 and verify the merge-triggered main-branch cloud smoke against Supabase.
+4. Only after that, issue a fresh `[phase1-full]` recovery trigger using the serialized monthly workflow.
+5. Independently audit the private bucket against all 25,500 planned manifests before Phase 1 can PASS.
+6. Keep Phase 2 locked throughout recovery.
 
 ## Known open decisions
 

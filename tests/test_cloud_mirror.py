@@ -8,7 +8,7 @@ from datetime import date
 from pathlib import Path
 
 from fmp.data.acquire import AcquisitionResult, AcquisitionStatus
-from fmp.data.cli import process_fetch_plan
+from fmp.data.cli import build_parser, process_fetch_plan
 from fmp.data.cloud import (
     CloudHttpResponse,
     GithubOidcTokenProvider,
@@ -145,6 +145,44 @@ class CloudMirrorTests(unittest.TestCase):
                     "manifests/" + key.relative_manifest_path.as_posix(),
                 ],
             )
+
+    def test_fetch_plan_applies_delay_between_source_chunks(self) -> None:
+        keys = [
+            RawChunkKey("EURUSD", "BID", date(2024, 1, 2)),
+            RawChunkKey("EURUSD", "ASK", date(2024, 1, 2)),
+        ]
+        sleeps: list[float] = []
+
+        def fake_acquire(key: RawChunkKey, root: Path) -> AcquisitionResult:
+            return AcquisitionResult(key, AcquisitionStatus.COMPLETE, "x", 1, 1, 200)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            results = process_fetch_plan(
+                keys,
+                Path(tmp),
+                fake_acquire,
+                source_delay_seconds=2.5,
+                sleep_fn=sleeps.append,
+            )
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(sleeps, [2.5])
+
+    def test_fetch_parser_accepts_source_delay(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "fetch",
+                "--pair",
+                "EURUSD",
+                "--start",
+                "2024-01-01",
+                "--end",
+                "2024-01-02",
+                "--source-delay",
+                "2.5",
+            ]
+        )
+        self.assertEqual(args.source_delay, 2.5)
 
 
 if __name__ == "__main__":
