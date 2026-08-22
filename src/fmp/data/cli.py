@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Iterable
 
 from .acquire import AcquisitionResult, acquire_chunk
-from .coverage import build_coverage_report
+from .coverage import build_coverage_report, verify_snapshot
 from .types import RawChunkKey
 
 V1_PAIRS = ("EURUSD", "GBPUSD", "USDJPY")
@@ -81,6 +81,13 @@ def run_coverage(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_verify(args: argparse.Namespace) -> int:
+    pairs = V1_PAIRS if args.pair == "ALL" else (args.pair,)
+    report = verify_snapshot(Path(args.out), pairs, args.start, args.end)
+    print(json.dumps(report, sort_keys=True, indent=2))
+    return 0 if report["ready"] else 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="FMP Phase 1 Dukascopy raw-data acquisition")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -100,6 +107,12 @@ def build_parser() -> argparse.ArgumentParser:
     coverage = sub.add_parser("coverage", help="summarize acquisition manifests")
     coverage.add_argument("--out", default="data")
     coverage.set_defaults(func=run_coverage)
+    verify = sub.add_parser("verify", help="verify every planned chunk has consistent acquisition provenance")
+    verify.add_argument("--pair", choices=(*V1_PAIRS, "ALL"), required=True)
+    verify.add_argument("--start", type=_parse_date, required=True)
+    verify.add_argument("--end", type=_parse_date, required=True, help="exclusive end date")
+    verify.add_argument("--out", default="data")
+    verify.set_defaults(func=run_verify)
     return parser
 
 
