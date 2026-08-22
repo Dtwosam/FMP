@@ -1,0 +1,63 @@
+name: phase1-network-smoke
+
+on:
+  pull_request:
+    paths:
+      - 'src/fmp/data/**'
+      - 'tests/**'
+      - '.github/workflows/phase1-network-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bounded-dukascopy-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire one bounded EURUSD weekday sample
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m fmp.data.cli fetch \
+            --pair EURUSD \
+            --start 2024-01-02 \
+            --end 2024-01-03 \
+            --out .phase1-smoke \
+            --attempts 6 \
+            --timeout 30
+      - name: Verify both sides and checksums
+        env:
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          root = Path('.phase1-smoke')
+          manifests = sorted((root / 'manifests').rglob('*.json'))
+          assert len(manifests) == 2, manifests
+          sides = set()
+          for manifest_path in manifests:
+              m = json.loads(manifest_path.read_text())
+              assert m['status'] == 'complete', m
+              assert m['pair'] == 'EURUSD'
+              assert m['granularity'] == '1m'
+              sides.add(m['side'])
+              raw_rel = Path('dukascopy/v1/EURUSD/2024/00/02') / f"{m['side']}_candles_min_1.bi5"
+              raw_path = root / 'raw' / raw_rel
+              assert raw_path.is_file(), raw_path
+              digest = hashlib.sha256(raw_path.read_bytes()).hexdigest()
+              assert digest == m['sha256']
+              assert m['records'] and 0 < m['records'] <= 1440
+          assert sides == {'BID', 'ASK'}, sides
+          PY
+      - name: Show acquisition coverage
+        env:
+          PYTHONPATH: src
+        run: python -m fmp.data.cli coverage --out .phase1-smoke

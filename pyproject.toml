@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fmp"
+version = "0.1.0"
+description = "Forex Market Project systematic research engine"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+fmp-data = "fmp.data.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

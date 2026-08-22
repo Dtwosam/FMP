@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Market data is intentionally local and never committed.
+data/raw/
+data/manifests/
+data/processed/
+data/features/
+data/reports/
+
+# Local secrets/config
+.env
+*.secret
