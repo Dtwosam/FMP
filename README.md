@@ -42,6 +42,36 @@ The goal is not to build an impressive AI bot. The goal is to build a reproducib
 
 ## Current status
 
-Phase 0 source-of-truth baseline is frozen. The next implementation phase is **Phase 1 — Historical Data Acquisition**.
+Phase 0 is frozen. **Phase 1 — Historical Data Acquisition** is active.
+
+### Phase 1 developer quick start
+
+FMP Phase 1 has no runtime Python dependencies beyond the standard library.
+
+Run unit tests:
+
+```bash
+PYTHONPATH=src python -m unittest discover -s tests -v
+```
+
+Acquire one pair for an explicit UTC date range (`--end` is exclusive):
+
+```bash
+PYTHONPATH=src python -m fmp.data.cli fetch --pair EURUSD --start 2024-01-02 --end 2024-01-03 --out data
+```
+
+Acquire all V1 pairs:
+
+```bash
+PYTHONPATH=src python -m fmp.data.cli fetch --pair ALL --start 2015-01-01 --end 2026-08-21 --out data
+```
+
+Summarize acquisition manifests:
+
+```bash
+PYTHONPATH=src python -m fmp.data.cli coverage --out data
+```
+
+Raw files and manifests are intentionally ignored by Git. Phase 1 reports acquisition coverage only; Phase 2 decides whether the acquired history is clean enough for research.
 
 Canonical repo: https://github.com/Dtwosam/FMP
