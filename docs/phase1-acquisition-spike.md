@@ -2,13 +2,28 @@
 
 **Date:** 2026-08-22  
 **Phase:** 1 — Historical Data Acquisition  
-**Status:** CODE_READY_FOR_BOUNDED_NETWORK_SMOKE
+**Status:** PASS — RETRIEVAL METHOD FROZEN
 
 ## Question
 
 Can FMP acquire source-faithful, free, daily 1-minute BID and ASK forex history for EUR/USD, GBP/USD, and USD/JPY without an API key or paid service, while preserving immutable raw files and reproducible provenance?
 
-## Evidence
+## Result
+
+Yes for the bounded verification case. The direct daily M1 file path was exercised on a clean GitHub-hosted Ubuntu runner and returned valid BID and ASK resources for EUR/USD on 2024-01-02. Both payloads passed FMP's structural checks, were written atomically, received manifests, and had their SHA-256 values independently recomputed by the workflow.
+
+Evidence:
+
+- GitHub Actions run: `32541224812`
+- job: `96951495249`
+- result: `success`
+- Python: 3.12.14
+- sample: EUR/USD 2024-01-02 UTC
+- BID: HTTP 200, 1,440 records, 11,714 compressed bytes, SHA-256 `9b2d2b718f9ca123b58dce4b4512d4e1bd35c692e23e1beafebdd700072cf546`
+- ASK: HTTP 200, 1,440 records, 12,015 compressed bytes, SHA-256 `a7dd327f5c59ad016c0e7e480d33fd7abd38da3e9c51dfe614f5e95f677386b3`
+- coverage result: 2 complete manifests, 0 `not_found`, 0 other
+
+## Evidence foundation
 
 Dukascopy's official Historical Data Export states that historical data is available and includes bid prices, ask prices, and trading volumes:
 
@@ -28,7 +43,7 @@ Current open-source clients independently use the active host `https://datafeed.
 - https://github.com/knusul/dukascopy-tools
 - https://github.com/Nosvemos/dukascopy-go
 
-## Retrieval method under test
+## Frozen retrieval method
 
 For each UTC calendar date and each side independently:
 
@@ -43,7 +58,9 @@ Where:
 - month is zero-based in the source path (`00` = January)
 - each successful body is kept byte-for-byte as immutable source data
 
-## Structural assumptions checked by FMP
+This decision is recorded as `DEC-009` in `docs/decision-log.md`.
+
+## Structural checks in Phase 1
 
 FMP does not normalize prices in Phase 1. It only performs enough structural inspection to reject an obviously partial/corrupt source response:
 
@@ -81,8 +98,8 @@ Existing successful chunks are never overwritten. Resume first verifies the reco
 
 FMP does not assume an undocumented request-rate entitlement. The Phase 1 CLI is intentionally sequential in its first implementation, uses bounded retries, and is resumable. This favors provider friendliness and correctness over download speed.
 
-Historical market data is not committed to Git. The repository contains acquisition code and manifests/schema rules only.
+Historical market data is not committed to Git. The repository contains acquisition code and provenance rules only.
 
-## Freeze condition
+## Next gate
 
-The method becomes the Phase 1 frozen source adapter only after a real bounded network smoke test downloads BID and ASK daily M1 chunks and verifies the generated manifests/checksums in a clean environment.
+Acquire and verify a golden sample covering all three V1 pairs and both sides before attempting the full target-history run.
