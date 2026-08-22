@@ -14,7 +14,7 @@ permissions:
 jobs:
   bounded-dukascopy-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,7 +29,7 @@ jobs:
             --start 2024-01-02 \
             --end 2024-01-03 \
             --out .phase1-smoke \
-            --attempts 3 \
+            --attempts 6 \
             --timeout 30
       - name: Verify both sides and checksums
         env:
