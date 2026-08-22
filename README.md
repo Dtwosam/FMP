@@ -42,7 +42,7 @@ The goal is not to build an impressive AI bot. The goal is to build a reproducib
 
 ## Current status
 
-Phase 0 is frozen. **Phase 1 — Historical Data Acquisition** is active.
+Phase 0 is frozen. **Phase 1 — Historical Data Acquisition** is active and its code/golden-sample gates are passing. Phase 2 remains locked until the full historical snapshot is acquired and provenance-verified.
 
 ### Phase 1 developer quick start
 
@@ -60,10 +60,25 @@ Acquire one pair for an explicit UTC date range (`--end` is exclusive):
 PYTHONPATH=src python -m fmp.data.cli fetch --pair EURUSD --start 2024-01-02 --end 2024-01-03 --out data
 ```
 
-Acquire all V1 pairs:
+Acquire all V1 pairs for the frozen snapshot range:
 
 ```bash
-PYTHONPATH=src python -m fmp.data.cli fetch --pair ALL --start 2015-01-01 --end 2026-08-21 --out data
+PYTHONPATH=src python -m fmp.data.cli fetch \
+  --pair ALL \
+  --start 2015-01-01 \
+  --end <EXCLUSIVE_LATEST_COMPLETE_DATE> \
+  --out data
+```
+
+If a previously recorded 404 should be checked again because source history may have appeared later:
+
+```bash
+PYTHONPATH=src python -m fmp.data.cli fetch \
+  --pair ALL \
+  --start 2015-01-01 \
+  --end <EXCLUSIVE_LATEST_COMPLETE_DATE> \
+  --out data \
+  --recheck-not-found
 ```
 
 Summarize acquisition manifests:
@@ -72,6 +87,18 @@ Summarize acquisition manifests:
 PYTHONPATH=src python -m fmp.data.cli coverage --out data
 ```
 
-Raw files and manifests are intentionally ignored by Git. Phase 1 reports acquisition coverage only; Phase 2 decides whether the acquired history is clean enough for research.
+Prove every planned chunk has consistent acquisition provenance and every completed raw file still matches its SHA-256 manifest:
+
+```bash
+PYTHONPATH=src python -m fmp.data.cli verify \
+  --pair ALL \
+  --start 2015-01-01 \
+  --end <EXCLUSIVE_LATEST_COMPLETE_DATE> \
+  --out data
+```
+
+`verify` returning `ready: true` means the Phase 1 snapshot is acquisition-complete and provenance-consistent. It does **not** mean the market data is clean; Phase 2 owns gap classification, quote sanity, bid/ask alignment, normalization, and derived-bar validation.
+
+Raw files and manifests are intentionally ignored by Git.
 
 Canonical repo: https://github.com/Dtwosam/FMP
