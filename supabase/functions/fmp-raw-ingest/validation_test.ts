@@ -4,6 +4,7 @@ import {
 } from "jsr:@std/assert@1";
 import {
   assertTrustedGithubClaims,
+  manifestsEquivalent,
   validateObjectPath,
 } from "./validation.ts";
 
@@ -83,4 +84,34 @@ Deno.test("rejects path traversal and non-V1 objects", () => {
   ]) {
     assertThrows(() => validateObjectPath(path), Error);
   }
+});
+
+Deno.test("manifest retries may differ only by retrieval timestamp", () => {
+  const first = {
+    pair: "EURUSD",
+    side: "BID",
+    status: "complete",
+    sha256: "abc",
+    records: 1440,
+    retrieved_at_utc: "2026-08-22T01:00:00Z",
+  };
+  const retry = {
+    ...first,
+    retrieved_at_utc: "2026-08-22T02:00:00Z",
+  };
+  assertEquals(manifestsEquivalent(first, retry), true);
+});
+
+Deno.test("manifest retry rejects substantive differences", () => {
+  const first = {
+    pair: "EURUSD",
+    side: "BID",
+    status: "complete",
+    sha256: "abc",
+    records: 1440,
+    retrieved_at_utc: "2026-08-22T01:00:00Z",
+  };
+  assertEquals(manifestsEquivalent(first, { ...first, sha256: "changed" }), false);
+  assertEquals(manifestsEquivalent(first, { ...first, records: 1439 }), false);
+  assertEquals(manifestsEquivalent(first, { ...first, extra: "field" }), false);
 });
