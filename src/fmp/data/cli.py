@@ -62,6 +62,7 @@ def run_fetch(args: argparse.Namespace) -> int:
             root,
             timeout_seconds=args.timeout,
             max_attempts=args.attempts,
+            recheck_not_found=args.recheck_not_found,
         )
         result_payload = _result_json(result)
         results.append(result_payload)
@@ -90,6 +91,11 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--out", default="data")
     fetch.add_argument("--timeout", type=float, default=30.0)
     fetch.add_argument("--attempts", type=int, default=3)
+    fetch.add_argument(
+        "--recheck-not-found",
+        action="store_true",
+        help="retry chunks previously recorded as HTTP 404; useful for recently published source history",
+    )
     fetch.set_defaults(func=run_fetch)
     coverage = sub.add_parser("coverage", help="summarize acquisition manifests")
     coverage.add_argument("--out", default="data")
