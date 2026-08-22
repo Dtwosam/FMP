@@ -81,9 +81,9 @@ Rules:
 - every successful chunk gets a SHA-256 manifest and deterministic provenance path.
 - existing verified chunks are never silently overwritten.
 - HTTP 404 is recorded as `not_found`; delayed files can be explicitly retried with `--recheck-not-found`.
-- acquisition remains sequential/resumable initially; no undocumented rate allowance is assumed.
+- no undocumented rate allowance is assumed.
 
-**Verification evidence:** GitHub Actions run `32541224812`, job `96951495249`, on a clean Ubuntu runner. EUR/USD 2024-01-02 returned HTTP 200 for both sides with 1,440 records each. BID SHA-256: `9b2d2b718f9ca123b58dce4b4512d4e1bd35c692e23e1beafebdd700072cf546`. ASK SHA-256: `a7dd327f5c59ad016c0e7e480d33fd7abd38da3e9c51dfe614f5e95f677386b3`. The workflow independently recomputed checksums and passed coverage assertions.
+**Verification evidence:** GitHub Actions run `32541224812`, job `96951495249`, on a clean Ubuntu runner. EUR/USD 2024-01-02 returned HTTP 200 for both sides with 1,440 records each. BID SHA-256: `9b2d2b718f9ca123b58dce4b4512d4e1bd35c692e23e1beafebdd700072cf546`. ASK SHA-256: `a7dd327f5c59ad016c0e7e480d33fd7abd38da3e9c51dfe614f5e95f677386b3`.
 
 ## DEC-010 — Dedicated Supabase raw snapshot persistence
 
@@ -100,10 +100,35 @@ Use a dedicated Supabase project named `FMP` as the persistent cloud copy of Pha
 - the unrelated `frnd-staging` project is not used by FMP.
 - the bucket is private and is not given public write policies.
 - GitHub never receives a Supabase service-role/secret key.
-- uploads go through the `fmp-raw-ingest` Edge Function, which validates GitHub Actions OIDC identity and pins repository, repository ID, owner ID, `main` ref, workflow identity and GitHub-hosted runner environment.
-- only `push` and `workflow_dispatch` events from the pinned workflow are accepted.
+- uploads go through the `fmp-raw-ingest` Edge Function, which validates GitHub Actions OIDC identity and canonical repository/workflow claims.
 - uploaded bytes must match a caller-supplied SHA-256 before storage.
 - object paths are restricted to canonical V1 raw/manifest paths.
-- cloud objects are immutable: an existing path is accepted only when its stored bytes match the requested SHA-256; conflicts fail closed.
+- cloud raw objects are immutable; semantically identical retry manifests may differ only in `retrieved_at_utc` and never overwrite the first stored manifest.
 
 This storage layer solves persistence for ephemeral GitHub acquisition runners without changing Dukascopy source semantics or making Supabase part of downstream trading intelligence.
+
+## DEC-011 — Serialize and monthly-isolate Dukascopy acquisition
+
+**Date:** 2026-08-22  
+**Status:** APPROVED, pending final hardened network-smoke gate before merge
+
+The first full-history run used 36 pair/year jobs with up to three concurrent source runners. It stopped with only 1,055 of 25,500 planned manifests persisted.
+
+Root-cause diagnostics reproduced Dukascopy source instability directly:
+
+- diagnostic run `32561119936`, USDJPY job `97002685840`, exhausted all six retries on HTTP 503 for `USDJPY/2024/00/04/ASK_candles_min_1.bi5`;
+- the same run, GBPUSD job `97002685900`, exhausted all six retries on HTTP 503 for `GBPUSD/2022/00/04/ASK_candles_min_1.bi5`;
+- diagnostic run `32561495430` then requested those exact URLs serially with a 10-second gap and both returned HTTP 200;
+- the same serial diagnostic later received `Connection reset by peer` on a EURUSD request, proving intermittent instability remains even without concurrency.
+
+Therefore Phase 1 acquisition is changed as follows:
+
+- at most **one GitHub source runner** may access Dukascopy at a time;
+- full-history work is isolated by **calendar month** rather than pair/year, reducing failure blast radius;
+- each monthly runner processes all three V1 pairs sequentially;
+- production source requests use a configured delay between consecutive chunks;
+- the hardened recovery workflow currently uses a **5-second inter-chunk delay** and **8-attempt** retry budget, subject to the final live regression smoke before merge;
+- successful objects already in Supabase remain reusable through immutable/idempotent cloud semantics;
+- a failed month is a recoverable Phase 1 acquisition failure and does not unlock Phase 2.
+
+This decision supersedes the concurrency and year-shard operational assumptions of the initial full-history workflow. It does **not** change DEC-009 source format, canonical data, or Phase 1 acceptance criteria.
