@@ -8,6 +8,7 @@ from datetime import date
 from pathlib import Path
 
 from fmp.data.acquire import AcquisitionResult, AcquisitionStatus
+from fmp.data.cli import process_fetch_plan
 from fmp.data.cloud import (
     CloudHttpResponse,
     GithubOidcTokenProvider,
@@ -49,6 +50,15 @@ class FakePutTransport:
 class StaticTokenProvider:
     def get_token(self) -> str:
         return "oidc-token"
+
+
+class FakeObjectMirror:
+    def __init__(self) -> None:
+        self.paths: list[str] = []
+
+    def put_object(self, object_path: str, body: bytes) -> str:
+        self.paths.append(object_path)
+        return "stored"
 
 
 class CloudMirrorTests(unittest.TestCase):
@@ -109,6 +119,32 @@ class CloudMirrorTests(unittest.TestCase):
             mirrored = mirror_acquisition_result(root, result, mirror)
             self.assertEqual(mirrored, ["manifests/" + key.relative_manifest_path.as_posix()])
             self.assertEqual(len(transport.calls), 1)
+
+    def test_fetch_plan_mirrors_result_before_advancing(self) -> None:
+        key = RawChunkKey("EURUSD", "BID", date(2024, 1, 2))
+        mirror = FakeObjectMirror()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+
+            def fake_acquire(planned_key: RawChunkKey, planned_root: Path) -> AcquisitionResult:
+                self.assertEqual(planned_key, key)
+                raw = planned_root / "raw" / key.relative_raw_path
+                manifest = planned_root / "manifests" / key.relative_manifest_path
+                raw.parent.mkdir(parents=True)
+                manifest.parent.mkdir(parents=True)
+                raw.write_bytes(b"raw")
+                manifest.write_bytes(b"manifest")
+                return AcquisitionResult(key, AcquisitionStatus.COMPLETE, "x", 1, 3, 200)
+
+            results = process_fetch_plan([key], root, fake_acquire, mirror)
+            self.assertEqual(len(results), 1)
+            self.assertEqual(
+                mirror.paths,
+                [
+                    "raw/" + key.relative_raw_path.as_posix(),
+                    "manifests/" + key.relative_manifest_path.as_posix(),
+                ],
+            )
 
 
 if __name__ == "__main__":
