@@ -3,11 +3,12 @@ const EXPECTED = {
   repository_id: "1342321016",
   repository_owner_id: "42391449",
   ref: "refs/heads/main",
-  event_name: "workflow_dispatch",
   runner_environment: "github-hosted",
   workflow_ref:
     "Dtwosam/FMP/.github/workflows/phase1-full-acquisition.yml@refs/heads/main",
 } as const;
+
+const ALLOWED_EVENTS = new Set(["push", "workflow_dispatch"]);
 
 export function assertTrustedGithubClaims(
   claims: Record<string, unknown>,
@@ -16,6 +17,9 @@ export function assertTrustedGithubClaims(
     if (claims[key] !== expected) {
       throw new Error(`untrusted GitHub ${key}`);
     }
+  }
+  if (!ALLOWED_EVENTS.has(String(claims.event_name ?? ""))) {
+    throw new Error("untrusted GitHub event_name");
   }
   return true;
 }
