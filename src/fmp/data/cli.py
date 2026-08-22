@@ -90,7 +90,7 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--end", type=_parse_date, required=True, help="exclusive end date")
     fetch.add_argument("--out", default="data")
     fetch.add_argument("--timeout", type=float, default=30.0)
-    fetch.add_argument("--attempts", type=int, default=3)
+    fetch.add_argument("--attempts", type=int, default=6)
     fetch.add_argument(
         "--recheck-not-found",
         action="store_true",
