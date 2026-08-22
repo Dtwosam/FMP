@@ -142,16 +142,44 @@ Independent Supabase observation proves the recovery is filling previously missi
 - the stressed ASK request eventually recovered and stored its raw object at `08:38:52.364578+00` and manifest at `08:38:53.083381+00`;
 - the worker then advanced to EUR/USD 2015-01-02 BID, storing raw at `08:39:09.440082+00` and manifest at `08:39:10.394765+00`.
 
-This is direct live evidence that the hardened retry/pacing policy can survive a multi-minute source stall and continue to the next chunk.
+This is direct live evidence that the hardened retry/pacing policy can survive multi-minute source stalls and continue to later chunks.
 
-Latest exhaustive manifest-accounting sample during this state update:
+### January 2015 first-pair completion / pair handoff evidence
 
-- expected manifests: **25,500**
-- present manifests: **1,058**
-- missing manifests: **24,442**
-- completion: **4.1490%**
+A later direct Supabase audit established the first complete pair/month under the hardened recovery:
+
+- EUR/USD January 2015 reached **62/62** planned BID/ASK manifests;
+- raw/manifest object parity remained exact;
+- the same monthly worker then advanced into GBP/USD January 2015 without restarting or changing policy;
+- at the latest state sample used for this ledger update, GBP/USD January had reached **8/62** manifests;
+- USD/JPY January already contained **34/62** persisted manifests from the earlier partial run; those objects remain immutable/idempotent cloud progress, although a fresh runner still re-requests Dukascopy before the cloud mirror can return `already_verified`;
+- global snapshot at that sample: **1,125 manifests / 1,125 raw objects**, zero raw/manifest delta;
+- latest object timestamp in that sample: `2026-08-22 09:24:02.968782+00`.
+
+This proves the monthly worker executes the intended serial pair loop (`EURUSD` → `GBPUSD` → `USDJPY`) and that the first pair completed without unexplained missing chunks.
 
 These values are progress evidence only. Phase 1 remains open until the count reaches 25,500/25,500 and all remaining acceptance checks pass.
+
+## Prepared source-failure isolation safeguard — DRAFT / NOT MERGED
+
+Draft PR #10: `Phase 1: isolate terminal source failures to one chunk`
+
+Purpose:
+
+- reduce a future terminal Dukascopy failure from “rest of month skipped” to “one unresolved chunk remains absent”;
+- continue attempting later source chunks only after `AcquisitionError`;
+- preserve the existing monthly `verify` step as the fail-closed gate;
+- keep cloud/OIDC/Supabase mirror failures fail-fast and never swallow them.
+
+TDD evidence:
+
+- RED commit `c1810972f0aea4045a2c327b67352328f7b2ecba`: existing tests passed; new tests failed exactly because `--continue-on-error` and chunk-level continuation were missing;
+- GREEN implementation begins at `6235de930c4b15932f3af2a6a8c9e41fd9043205`;
+- guard test at `1f702f2fe27d2a633bd433e3a0a83fa74042a4e0` proves continue mode does not swallow cloud mirror failures;
+- latest unit-test workflow PASS and package compilation PASS;
+- draft-PR network/golden workflows are configured to skip while PR #10 remains draft, avoiding unnecessary Dukascopy source contention.
+
+Operational rule: **do not merge PR #10 while the active serialized recovery remains healthy merely because the fallback is green.** It is a prepared recovery safeguard if a monthly shard actually terminates after exhausted source retries.
 
 ## Manifest retry incident — FIXED
 
@@ -179,11 +207,13 @@ Merged via PR #5 at commit `a2906a37f380dc6c4d27e90d46f15c2c2731d417`.
 ## Immediate next action
 
 1. Allow the already-triggered serialized monthly recovery to continue using the proven 8-attempt / 5-second pacing policy.
-2. Do not change acquisition policy merely because a chunk is quiet during retries; the 2015-01-01 ASK live recovery proved multi-minute stalls can recover successfully.
-3. Re-audit the bucket against the exact 25,500-manifest plan after the matrix stops changing.
-4. Retry only missing/failed monthly shards as needed; immutable/idempotent storage makes reruns safe.
-5. Record final coverage/provenance evidence and Phase 1 PASS only after every planned chunk is accounted for.
-6. Keep Phase 2 locked throughout recovery.
+2. Monitor GBP/USD January 2015 through completion and confirm handoff into USD/JPY within the same monthly job.
+3. Do not change acquisition policy merely because a chunk is quiet during retries; repeated live stalls have recovered successfully.
+4. Keep PR #10 draft/unmerged unless a monthly shard actually terminates and the prepared source-failure isolation safeguard is needed.
+5. Re-audit the bucket against the exact 25,500-manifest plan after the matrix stops changing.
+6. Retry only missing/failed monthly shards as needed; immutable/idempotent storage makes reruns safe.
+7. Record final coverage/provenance evidence and Phase 1 PASS only after every planned chunk is accounted for.
+8. Keep Phase 2 locked throughout recovery.
 
 ## Known open decisions
 
