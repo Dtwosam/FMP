@@ -118,6 +118,26 @@ class Phase1Tests(unittest.TestCase):
             self.assertEqual(manifest["status"], "not_found")
             self.assertEqual(manifest["http_status"], 404)
 
+    def test_not_found_can_be_explicitly_rechecked_and_completed(self) -> None:
+        body = make_bi5(2)
+        key = RawChunkKey("EURUSD", "ASK", date(2024, 3, 5))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            first = acquire_chunk(
+                key, root, transport=FakeTransport([HttpResponse(status=404, body=b"")])
+            )
+            self.assertEqual(first.status, AcquisitionStatus.NOT_FOUND)
+            second = acquire_chunk(
+                key,
+                root,
+                transport=FakeTransport([HttpResponse(status=200, body=body)]),
+                recheck_not_found=True,
+            )
+            self.assertEqual(second.status, AcquisitionStatus.COMPLETE)
+            self.assertTrue((root / "raw" / key.relative_raw_path).is_file())
+            manifest = load_manifest(root / "manifests" / key.relative_manifest_path)
+            self.assertEqual(manifest["status"], "complete")
+
     def test_duplicate_retry_does_not_replace_good_file(self) -> None:
         body = make_bi5(2)
         key = RawChunkKey("USDJPY", "ASK", date(2024, 3, 4))
