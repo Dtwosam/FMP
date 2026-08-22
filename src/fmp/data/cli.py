@@ -7,7 +7,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Callable, Iterable, Protocol
 
-from .acquire import AcquisitionResult, acquire_chunk
+from .acquire import AcquisitionError, AcquisitionResult, acquire_chunk
 from .cloud import GithubOidcTokenProvider, SupabaseRawMirror, mirror_acquisition_result
 from .coverage import build_coverage_report, verify_snapshot
 from .types import RawChunkKey
@@ -53,6 +53,8 @@ def process_fetch_plan(
     *,
     source_delay_seconds: float = 0.0,
     sleep_fn: Callable[[float], None] = time.sleep,
+    continue_on_acquisition_error: bool = False,
+    on_acquisition_error: Callable[[RawChunkKey, AcquisitionError], None] | None = None,
 ) -> list[AcquisitionResult]:
     results: list[AcquisitionResult] = []
     first = True
@@ -60,7 +62,14 @@ def process_fetch_plan(
         if not first and source_delay_seconds > 0:
             sleep_fn(source_delay_seconds)
         first = False
-        result = acquire_fn(key, root)
+        try:
+            result = acquire_fn(key, root)
+        except AcquisitionError as exc:
+            if not continue_on_acquisition_error:
+                raise
+            if on_acquisition_error is not None:
+                on_acquisition_error(key, exc)
+            continue
         if mirror is not None:
             mirror_acquisition_result(root, result, mirror)  # type: ignore[arg-type]
         results.append(result)
@@ -99,12 +108,27 @@ def run_fetch(args: argparse.Namespace) -> int:
             recheck_not_found=args.recheck_not_found,
         )
 
+    failures: list[dict[str, object]] = []
+
+    def record_acquisition_error(key: RawChunkKey, exc: AcquisitionError) -> None:
+        payload: dict[str, object] = {
+            "pair": key.pair,
+            "side": key.side,
+            "date": key.day.isoformat(),
+            "status": "acquisition_error",
+            "error": str(exc),
+        }
+        failures.append(payload)
+        print(json.dumps(payload, sort_keys=True), flush=True)
+
     acquired = process_fetch_plan(
         plan_keys(pairs, args.start, args.end),
         root,
         configured_acquire,
         mirror,
         source_delay_seconds=args.source_delay,
+        continue_on_acquisition_error=args.continue_on_error,
+        on_acquisition_error=record_acquisition_error if args.continue_on_error else None,
     )
     results: list[dict[str, object]] = []
     for result in acquired:
@@ -115,7 +139,17 @@ def run_fetch(args: argparse.Namespace) -> int:
     for item in results:
         status = str(item["status"])
         summary[status] = summary.get(status, 0) + 1
-    print(json.dumps({"summary": summary, "chunks": len(results)}, sort_keys=True), flush=True)
+    if failures:
+        summary["acquisition_error"] = len(failures)
+    print(
+        json.dumps(
+            {"summary": summary, "chunks": len(results), "failed_chunks": len(failures)},
+            sort_keys=True,
+        ),
+        flush=True,
+    )
+    # In continue mode, unresolved source chunks are intentionally left without
+    # canonical manifests. The following `verify` step is the fail-closed gate.
     return 0
 
 
@@ -147,6 +181,14 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.0,
         help="seconds to pause between consecutive Dukascopy source chunks",
+    )
+    fetch.add_argument(
+        "--continue-on-error",
+        action="store_true",
+        help=(
+            "continue attempting later source chunks after AcquisitionError; "
+            "failed chunks remain absent so verify still fails closed"
+        ),
     )
     fetch.add_argument(
         "--mirror-url",
