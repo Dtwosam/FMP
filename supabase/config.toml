@@ -1,0 +1,2 @@
+[functions.fmp-raw-ingest]
+verify_jwt = false
