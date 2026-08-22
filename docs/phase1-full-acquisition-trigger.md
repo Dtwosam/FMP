@@ -6,8 +6,10 @@ This file exists only as a controlled GitHub Actions trigger surface for Phase 1
 - A commit whose message contains `[phase1-full]` starts the sharded full-history acquisition.
 - Do not use the full trigger until the main-branch cloud smoke and private-bucket observation gates pass.
 
-**Full-history trigger issued:** 2026-08-22 after the main-branch OIDC cloud smoke PASS and independent private-bucket observation.
+**Initial full-history trigger issued:** 2026-08-22 after the first main-branch OIDC cloud smoke PASS and independent private-bucket observation.
 
 **Manifest-idempotency smoke re-run:** 2026-08-22 against Edge Function version 3.
 
-**Post-throttling hardening smoke trigger:** 2026-08-22 after PR #7 merge; smoke-only commit intentionally omits the full-acquisition marker.
+**Post-throttling hardening smoke:** PASS on 2026-08-22 after PR #7 merge. Four fresh Edge Function v3 PUT requests returned HTTP 200 for the existing EUR/USD smoke raw+manifest objects.
+
+**Serialized monthly recovery trigger issued:** 2026-08-22 after the hardened six-day source smoke, all-pair golden sample, Python tests, and post-hardening main-branch cloud smoke all passed.
