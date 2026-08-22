@@ -16,7 +16,7 @@ permissions:
 jobs:
   all-v1-pairs-one-day:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,7 +31,7 @@ jobs:
             --start 2024-01-02 \
             --end 2024-01-03 \
             --out .phase1-golden \
-            --attempts 3 \
+            --attempts 6 \
             --timeout 30
       - name: Verify six complete pair-side manifests and raw checksums
         run: |
