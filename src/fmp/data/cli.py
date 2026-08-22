@@ -4,14 +4,19 @@ import argparse
 import json
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable, Protocol
 
 from .acquire import AcquisitionResult, acquire_chunk
+from .cloud import GithubOidcTokenProvider, SupabaseRawMirror, mirror_acquisition_result
 from .coverage import build_coverage_report, verify_snapshot
 from .types import RawChunkKey
 
 V1_PAIRS = ("EURUSD", "GBPUSD", "USDJPY")
 SIDES = ("BID", "ASK")
+
+
+class ObjectMirror(Protocol):
+    def put_object(self, object_path: str, body: bytes) -> str: ...
 
 
 def _parse_date(value: str) -> date:
@@ -39,6 +44,21 @@ def plan_keys(pairs: Iterable[str], start: date, end_exclusive: date) -> list[Ra
     ]
 
 
+def process_fetch_plan(
+    keys: Iterable[RawChunkKey],
+    root: Path,
+    acquire_fn: Callable[[RawChunkKey, Path], AcquisitionResult],
+    mirror: ObjectMirror | None = None,
+) -> list[AcquisitionResult]:
+    results: list[AcquisitionResult] = []
+    for key in keys:
+        result = acquire_fn(key, root)
+        if mirror is not None:
+            mirror_acquisition_result(root, result, mirror)  # type: ignore[arg-type]
+        results.append(result)
+    return results
+
+
 def _result_json(result: AcquisitionResult) -> dict[str, object]:
     return {
         "pair": result.key.pair,
@@ -55,15 +75,30 @@ def _result_json(result: AcquisitionResult) -> dict[str, object]:
 def run_fetch(args: argparse.Namespace) -> int:
     root = Path(args.out)
     pairs = V1_PAIRS if args.pair == "ALL" else (args.pair,)
-    results: list[dict[str, object]] = []
-    for key in plan_keys(pairs, args.start, args.end):
-        result = acquire_chunk(
+    mirror = None
+    if args.mirror_url:
+        mirror = SupabaseRawMirror(
+            endpoint=args.mirror_url,
+            token_provider=GithubOidcTokenProvider.from_environment(),
+        )
+
+    def configured_acquire(key: RawChunkKey, configured_root: Path) -> AcquisitionResult:
+        return acquire_chunk(
             key,
-            root,
+            configured_root,
             timeout_seconds=args.timeout,
             max_attempts=args.attempts,
             recheck_not_found=args.recheck_not_found,
         )
+
+    acquired = process_fetch_plan(
+        plan_keys(pairs, args.start, args.end),
+        root,
+        configured_acquire,
+        mirror,
+    )
+    results: list[dict[str, object]] = []
+    for result in acquired:
         result_payload = _result_json(result)
         results.append(result_payload)
         print(json.dumps(result_payload, sort_keys=True), flush=True)
@@ -98,6 +133,10 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--out", default="data")
     fetch.add_argument("--timeout", type=float, default=30.0)
     fetch.add_argument("--attempts", type=int, default=6)
+    fetch.add_argument(
+        "--mirror-url",
+        help="HTTPS FMP raw-ingest endpoint; requires GitHub Actions OIDC environment",
+    )
     fetch.add_argument(
         "--recheck-not-found",
         action="store_true",
