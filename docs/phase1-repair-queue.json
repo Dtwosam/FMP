@@ -1,5 +1,7 @@
 {
   "generated_at_utc": "2026-08-28T12:13:45Z",
+  "triggered_at_utc": "2026-08-28T12:32:00Z",
+  "trigger_revision": 1,
   "frozen_target_manifests": 25500,
   "present_manifests_at_audit": 11667,
   "missing_manifests_at_audit": 13833,
