@@ -16,3 +16,5 @@ This file exists only as a controlled GitHub Actions trigger surface for Phase 1
 **Serialized monthly recovery trigger issued:** 2026-08-22 after the hardened six-day source smoke, all-pair golden sample, Python tests, and post-hardening main-branch cloud smoke all passed.
 
 **Exact repair-batch trigger issued:** 2026-08-28 after PR #10 merged at `db0dfc592da9dd7da1fe398bc1701c5036bb1281`, with unit tests, all-pair golden sample, and bounded network smoke all passing on the exact PR head. Immediately before trigger, the frozen Phase 1 audit remained 11,667 / 25,500 manifests present, 13,833 missing, across 121 incomplete calendar months. The batch queue repairs only those 121 months with one Dukascopy runner at a time.
+
+**Repair-batch trigger reissued:** 2026-08-28 after the first trigger run was cancelled before job creation while the PR-merge cloud-smoke still occupied the shared Phase 1 concurrency group. That cloud-smoke completed successfully at 12:32:57 UTC; the exact 121-month queue and 13,833-missing audit were unchanged before this reissue.
