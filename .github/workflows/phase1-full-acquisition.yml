@@ -9,6 +9,7 @@ on:
       - 'src/fmp/data/cli.py'
       - 'supabase/functions/fmp-raw-ingest/**'
       - 'docs/phase1-full-acquisition-trigger.md'
+      - 'docs/phase1-repair-queue.json'
   workflow_dispatch:
     inputs:
       repair_year:
@@ -36,7 +37,7 @@ env:
 
 jobs:
   cloud-smoke:
-    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]')
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -201,3 +202,93 @@ jobs:
             --start "${{ steps.repair-range.outputs.start }}" \
             --end "${{ steps.repair-range.outputs.end }}" \
             --out ".phase1-repair-${{ inputs.repair_year }}-${{ inputs.repair_month }}"
+
+  repair-batch-plan:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]')
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.queue.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate repair queue and build matrix
+        id: queue
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          payload = json.loads(Path('docs/phase1-repair-queue.json').read_text(encoding='utf-8'))
+          months = payload.get('months')
+          if not isinstance(months, list) or not months:
+              raise SystemExit('repair queue must contain a non-empty months list')
+          if len(months) != len(set(months)):
+              raise SystemExit('repair queue contains duplicate months')
+
+          include = []
+          for value in months:
+              if not isinstance(value, str) or re.fullmatch(r'\d{4}-\d{2}', value) is None:
+                  raise SystemExit(f'invalid repair month: {value!r}')
+              year, month = map(int, value.split('-'))
+              if year < 2015 or year > 2026 or month < 1 or month > 12 or (year == 2026 and month > 8):
+                  raise SystemExit(f'repair month outside frozen Phase 1 range: {value}')
+              include.append({'year': year, 'month': month})
+
+          matrix = json.dumps({'include': include}, separators=(',', ':'))
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f'matrix={matrix}\n')
+          PY
+
+  repair-batch:
+    needs: repair-batch-plan
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.repair-batch-plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Resolve repair batch month range
+        id: repair-range
+        env:
+          YEAR: ${{ matrix.year }}
+          MONTH: ${{ matrix.month }}
+        run: |
+          python - <<'PY'
+          import os
+          from datetime import date
+
+          year = int(os.environ['YEAR'])
+          month = int(os.environ['MONTH'])
+          start = date(year, month, 1)
+          end = date(year + 1, 1, 1) if month == 12 else date(year, month + 1, 1)
+          if end > date(2026, 8, 21):
+              end = date(2026, 8, 21)
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f"start={start.isoformat()}\n")
+              handle.write(f"end={end.isoformat()}\n")
+          PY
+      - name: Acquire repair batch month
+        run: |
+          python -m fmp.data.cli fetch \
+            --pair ALL \
+            --start "${{ steps.repair-range.outputs.start }}" \
+            --end "${{ steps.repair-range.outputs.end }}" \
+            --out ".phase1-repair-${{ matrix.year }}-${{ matrix.month }}" \
+            --attempts 8 \
+            --source-delay 5 \
+            --continue-on-error \
+            --mirror-url "$FMP_RAW_INGEST_URL"
+      - name: Verify repair batch month provenance
+        run: |
+          python -m fmp.data.cli verify \
+            --pair ALL \
+            --start "${{ steps.repair-range.outputs.start }}" \
+            --end "${{ steps.repair-range.outputs.end }}" \
+            --out ".phase1-repair-${{ matrix.year }}-${{ matrix.month }}"
