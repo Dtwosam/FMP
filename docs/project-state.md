@@ -1,10 +1,10 @@
 # FMP Project State
 
-**Updated:** 2026-08-22  
+**Updated:** 2026-09-07  
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 1 — Historical Data Acquisition  
-**Phase status:** SERIALIZED_MONTHLY_RECOVERY_ACTIVE  
+**Phase status:** REPAIR_SWEEP_2_ACTIVE  
 **Next phase:** Phase 2 — Validation, Normalization & Derived Bars (LOCKED until Phase 1 PASS)
 
 ## Current baseline
@@ -160,26 +160,51 @@ This proves the monthly worker executes the intended serial pair loop (`EURUSD` 
 
 These values are progress evidence only. Phase 1 remains open until the count reaches 25,500/25,500 and all remaining acceptance checks pass.
 
-## Prepared source-failure isolation safeguard — DRAFT / NOT MERGED
+## Chunk-level source-failure isolation + serial repair batch — MERGED / ACTIVE
 
-Draft PR #10: `Phase 1: isolate terminal source failures to one chunk`
+PR #10 was completed and merged after the first serialized full-history pass stopped.
 
-Purpose:
+Merged behavior:
 
-- reduce a future terminal Dukascopy failure from “rest of month skipped” to “one unresolved chunk remains absent”;
-- continue attempting later source chunks only after `AcquisitionError`;
-- preserve the existing monthly `verify` step as the fail-closed gate;
-- keep cloud/OIDC/Supabase mirror failures fail-fast and never swallow them.
+- terminal Dukascopy `AcquisitionError` can be isolated to one chunk with `--continue-on-error`;
+- later source chunks continue after a terminal source acquisition failure;
+- cloud/OIDC/Supabase mirror failures remain fail-fast;
+- monthly provenance verification remains fail-closed;
+- targeted month repair and a queue-driven serial repair batch are available;
+- repair batches use the same one-source-runner, 8-attempt, 5-second pacing policy.
 
-TDD evidence:
+Repair sweep 1 trigger:
 
-- RED commit `c1810972f0aea4045a2c327b67352328f7b2ecba`: existing tests passed; new tests failed exactly because `--continue-on-error` and chunk-level continuation were missing;
-- GREEN implementation begins at `6235de930c4b15932f3af2a6a8c9e41fd9043205`;
-- guard test at `1f702f2fe27d2a633bd433e3a0a83fa74042a4e0` proves continue mode does not swallow cloud mirror failures;
-- latest unit-test workflow PASS and package compilation PASS;
-- draft-PR network/golden workflows are configured to skip while PR #10 remains draft, avoiding unnecessary Dukascopy source contention.
+- `a8d9467f6ae4a46d2e71c0646b63ed2485e76f7e`
 
-Operational rule: **do not merge PR #10 while the active serialized recovery remains healthy merely because the fallback is green.** It is a prepared recovery safeguard if a monthly shard actually terminates after exhausted source retries.
+Repair sweep 1 result after the full 121-month queue completed:
+
+- expected manifests: **25,500**
+- present manifests: **24,080**
+- missing manifests: **1,420**
+- coverage: **94.4314%**
+- raw objects: **24,085**
+- raw-only objects: **5**
+- complete calendar months: **66 / 140**
+- months with one or more remaining gaps: **74**
+- no repair jobs remained active or queued after the sweep completed.
+
+The five raw-only objects at the sweep-1 audit were preserved and will be reconciled by later repair/audit passes; they are not deleted or overwritten.
+
+Repair sweep 2 was generated directly from the exhaustive post-sweep gap audit:
+
+- queue revision: **2**
+- queue size: **74 months**
+- missing manifests at trigger: **1,420**
+- trigger commit: `3bbca039ea5a9ce6c5a27f8e50b9abaa5b09d2b2`
+- trigger message: `chore: start Phase 1 repair sweep 2 [phase1-repair-batch]`
+- queue validation: PASS
+- unit tests on trigger commit: PASS
+- cloud smoke/full acquisition/targeted repair jobs: correctly skipped for the batch trigger
+- first active repair month: **2015-02**
+- remaining 73 repair months queued behind it under `max-parallel: 1`.
+
+Phase 1 remains open until exhaustive coverage reaches 25,500/25,500 and final integrity/provenance gates pass.
 
 ## Manifest retry incident — FIXED
 
@@ -206,14 +231,15 @@ Merged via PR #5 at commit `a2906a37f380dc6c4d27e90d46f15c2c2731d417`.
 
 ## Immediate next action
 
-1. Allow the already-triggered serialized monthly recovery to continue using the proven 8-attempt / 5-second pacing policy.
-2. Monitor GBP/USD January 2015 through completion and confirm handoff into USD/JPY within the same monthly job.
-3. Do not change acquisition policy merely because a chunk is quiet during retries; repeated live stalls have recovered successfully.
-4. Keep PR #10 draft/unmerged unless a monthly shard actually terminates and the prepared source-failure isolation safeguard is needed.
-5. Re-audit the bucket against the exact 25,500-manifest plan after the matrix stops changing.
-6. Retry only missing/failed monthly shards as needed; immutable/idempotent storage makes reruns safe.
-7. Record final coverage/provenance evidence and Phase 1 PASS only after every planned chunk is accounted for.
-8. Keep Phase 2 locked throughout recovery.
+1. Allow repair sweep 2 to run serially across the exact 74-month gap queue.
+2. Do not add parallel Dukascopy traffic while the sweep is active.
+3. After sweep 2 stops, re-audit Supabase against the exact 25,500-manifest frozen plan.
+4. Generate the next repair queue only from still-missing pair/date/side chunks grouped by month.
+5. Reconcile any remaining raw-only objects without deleting immutable cloud data.
+6. Repeat bounded serial repair/audit cycles until missing manifests reach zero.
+7. Run the final Phase 1 coverage, integrity, provenance, and recovery-accounting acceptance gates.
+8. Record Phase 1 PASS/checkpoint only after **25,500 / 25,500** is proven.
+9. Keep Phase 2 locked until that PASS is recorded.
 
 ## Known open decisions
 
