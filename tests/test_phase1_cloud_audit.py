@@ -378,6 +378,31 @@ class AcquisitionBaselineSelectionTests(unittest.TestCase):
             "2026-09-09T12:30:00Z",
         )
 
+    def test_unknown_status_on_older_source_run_fails_closed(self) -> None:
+        selector = __import__(
+            "fmp.data.acquisition_runs",
+            fromlist=["select_acquisition_baseline"],
+        ).select_acquisition_baseline
+        runs = [
+            {
+                "id": 100,
+                "event": "push",
+                "status": "mystery",
+                "updated_at": "2026-09-09T10:00:00Z",
+                "head_commit": {"message": "[phase1-repair-batch] old repair"},
+            },
+            {
+                "id": 101,
+                "event": "push",
+                "status": "completed",
+                "updated_at": "2026-09-09T11:42:29Z",
+                "head_commit": {"message": "[phase1-repair-batch] later repair"},
+            },
+        ]
+
+        with self.assertRaisesRegex(ValueError, "invalid status"):
+            selector(runs)
+
     def test_manual_dispatch_is_source_capable_even_on_no_source_head(self) -> None:
         selector = __import__(
             "fmp.data.acquisition_runs",
