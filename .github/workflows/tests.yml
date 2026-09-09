@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Validate workflow YAML syntax
+        run: ruby scripts/validate_workflow_yaml.rb .github/workflows
       - name: Run unit tests
         env:
           PYTHONPATH: src
