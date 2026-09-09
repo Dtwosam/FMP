@@ -308,9 +308,15 @@ jobs:
         run: |
           python - <<'PY'
           import hashlib
+          import os
           from pathlib import Path
 
           from fmp.data.repair_plan import load_exact_gap_plan
+
+          if os.environ.get('GITHUB_RUN_ATTEMPT') != '1':
+              raise SystemExit(
+                  'exact-gap repair reruns are disabled; regenerate a fresh exact-gap plan'
+              )
 
           path = Path('docs/phase1-exact-gap-queue.json')
           keys = load_exact_gap_plan(path)
