@@ -282,6 +282,47 @@ class Phase1AcceptanceTests(unittest.TestCase):
             report["checks"]["provenance_acquisition_baseline_completed_at_utc"]
         )
 
+    def test_rejects_non_utc_structural_audit_timestamp(self) -> None:
+        structural = structural_report()
+        structural["audited_at_utc"] = "2026-09-09T13:05:00+01:00"
+
+        report = evaluate_phase1_acceptance(
+            structural,
+            accounting_report(),
+            provenance_report(),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["structural_audited_at_utc_valid"])
+
+    def test_rejects_non_utc_accounting_audit_timestamp(self) -> None:
+        accounting = accounting_report()
+        accounting["audited_at_utc"] = "2026-09-09T13:05:00+01:00"
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting,
+            provenance_report(),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["accounting_audited_at_utc_valid"])
+
+    def test_rejects_non_utc_acquisition_baseline_completion_time(self) -> None:
+        provenance = provenance_report()
+        provenance["acquisition_baseline_completed_at_utc"] = "2026-09-09T12:42:29+01:00"
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(
+            report["checks"]["provenance_acquisition_baseline_completed_at_utc"]
+        )
+
     def test_rejects_wrong_provenance_snapshot_identity(self) -> None:
         provenance = provenance_report()
         provenance["plan_sha256"] = "0" * 64
