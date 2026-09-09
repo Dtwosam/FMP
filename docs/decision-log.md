@@ -168,6 +168,7 @@ Rules:
 - final provenance baseline identity is the most recently updated source-capable acquisition run, not merely the newest workflow-run ID; the same run ID and activity/completion timestamp must be selected before and after provenance verification;
 - the final provenance JSON must bind `acquisition_history_guard_version = 1` and the guard's UTC start timestamp; the final acceptance combiner rejects provenance produced before this history-guard evidence existed;
 - final Phase 1 evidence ordering is baseline completion ≤ structural/accounting audit timestamps ≤ provenance history-guard start; reports outside that ordering fail acceptance;
+- `accept-phase1` requires a fresh paginated `phase1-full-acquisition` history snapshot; final PASS fails if any source-capable run was updated at or after the provenance history-guard boundary or if the current source-capable baseline ID/completion timestamp differs from provenance;
 - the final cloud-audit client must reject response protocol drift fail-closed: top-level response keys, typed integer `count`, per-kind object fields, path/order, kind, SHA-256, size, and manifest parse/body consistency are exact;
 - Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
 

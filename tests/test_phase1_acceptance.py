@@ -481,18 +481,63 @@ class Phase1AcceptanceTests(unittest.TestCase):
         self.assertFalse(report["ready"])
         self.assertFalse(report["checks"]["provenance_frozen_plan_sha256"])
 
+    def test_acceptance_cli_requires_fresh_acquisition_history(self) -> None:
+        parser = build_parser()
+        with self.assertRaises(SystemExit):
+            parser.parse_args(
+                [
+                    "accept-phase1",
+                    "--structural-json",
+                    "structural.json",
+                    "--accounting-json",
+                    "accounting.json",
+                    "--provenance-json",
+                    "provenance.json",
+                ]
+            )
+
     def test_acceptance_cli_consumes_evidence_files_and_returns_zero(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             structural_path = root / "structural.json"
             accounting_path = root / "accounting.json"
             provenance_path = root / "provenance.json"
+            workflow_runs_path = root / "workflow-runs.json"
             structural_path.write_text(json.dumps(structural_report()), encoding="utf-8")
             accounting_path.write_text(
                 json.dumps({"phase1_recovery_accounting": accounting_report()}),
                 encoding="utf-8",
             )
             provenance_path.write_text(json.dumps(provenance_report()), encoding="utf-8")
+            workflow_runs_path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "workflow_runs": [
+                                {
+                                    "id": 34113319817,
+                                    "event": "push",
+                                    "status": "completed",
+                                    "updated_at": "2026-09-09T11:42:29Z",
+                                    "head_commit": {
+                                        "message": "[phase1-repair-batch] repair"
+                                    },
+                                },
+                                {
+                                    "id": 34113319999,
+                                    "event": "push",
+                                    "status": "completed",
+                                    "updated_at": "2026-09-09T12:20:00Z",
+                                    "head_commit": {
+                                        "message": "[phase1-no-source] docs"
+                                    },
+                                },
+                            ]
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
 
             args = build_parser().parse_args(
                 [
@@ -503,6 +548,8 @@ class Phase1AcceptanceTests(unittest.TestCase):
                     str(accounting_path),
                     "--provenance-json",
                     str(provenance_path),
+                    "--workflow-runs-json",
+                    str(workflow_runs_path),
                 ]
             )
             output = StringIO()
@@ -511,6 +558,71 @@ class Phase1AcceptanceTests(unittest.TestCase):
 
             self.assertEqual(code, 0)
             self.assertTrue(json.loads(output.getvalue())["ready"])
+
+    def test_acceptance_cli_rejects_source_activity_after_provenance_guard(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            structural_path = root / "structural.json"
+            accounting_path = root / "accounting.json"
+            provenance_path = root / "provenance.json"
+            workflow_runs_path = root / "workflow-runs.json"
+            structural_path.write_text(json.dumps(structural_report()), encoding="utf-8")
+            accounting_path.write_text(
+                json.dumps({"phase1_recovery_accounting": accounting_report()}),
+                encoding="utf-8",
+            )
+            provenance_path.write_text(json.dumps(provenance_report()), encoding="utf-8")
+            workflow_runs_path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "workflow_runs": [
+                                {
+                                    "id": 34113319817,
+                                    "event": "push",
+                                    "status": "completed",
+                                    "updated_at": "2026-09-09T11:42:29Z",
+                                    "head_commit": {
+                                        "message": "[phase1-repair-batch] repair"
+                                    },
+                                },
+                                {
+                                    "id": 34113320000,
+                                    "event": "push",
+                                    "status": "completed",
+                                    "updated_at": "2026-09-09T12:20:00Z",
+                                    "head_commit": {
+                                        "message": "[phase1-repair-batch] later repair"
+                                    },
+                                },
+                            ]
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            args = build_parser().parse_args(
+                [
+                    "accept-phase1",
+                    "--structural-json",
+                    str(structural_path),
+                    "--accounting-json",
+                    str(accounting_path),
+                    "--provenance-json",
+                    str(provenance_path),
+                    "--workflow-runs-json",
+                    str(workflow_runs_path),
+                ]
+            )
+            output = StringIO()
+            with redirect_stdout(output):
+                code = args.func(args)
+
+            report = json.loads(output.getvalue())
+            self.assertEqual(code, 2)
+            self.assertFalse(report["ready"])
+            self.assertFalse(report["checks"]["pass_guard_no_source_activity_since_provenance"])
 
 
 if __name__ == "__main__":

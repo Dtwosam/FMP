@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Callable, Iterable, Protocol
 
@@ -15,8 +15,12 @@ from .cloud_audit import (
     verify_cloud_keys,
 )
 from .coverage import build_coverage_report, verify_exact_keys, verify_snapshot
+from .acquisition_runs import select_acquisition_baseline
 from .phase1_acceptance import evaluate_phase1_acceptance
-from .repair_plan import load_exact_gap_plan
+from .repair_plan import (
+    ensure_no_source_capable_acquisition_updates_since,
+    load_exact_gap_plan,
+)
 from .types import RawChunkKey
 
 V1_PAIRS = ("EURUSD", "GBPUSD", "USDJPY")
@@ -224,6 +228,44 @@ def _load_json_object(path: str) -> dict[str, object]:
     return payload
 
 
+def _load_workflow_runs(path: str) -> list[dict[str, object]]:
+    try:
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"invalid GitHub workflow-runs JSON file: {path}") from exc
+    if not isinstance(payload, list):
+        raise ValueError("GitHub workflow-runs snapshot must be a list of pages")
+
+    runs: list[dict[str, object]] = []
+    for index, page in enumerate(payload):
+        if not isinstance(page, dict):
+            raise ValueError(f"GitHub workflow-runs page {index} must be an object")
+        page_runs = page.get("workflow_runs")
+        if not isinstance(page_runs, list):
+            raise ValueError(
+                f"GitHub workflow-runs page {index} is missing workflow_runs"
+            )
+        for run_index, run in enumerate(page_runs):
+            if not isinstance(run, dict):
+                raise ValueError(
+                    f"GitHub workflow-runs page {index} run {run_index} must be an object"
+                )
+            runs.append(run)
+    return runs
+
+
+def _utc_datetime(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+        return None
+    return parsed
+
+
 def run_accept_phase1(args: argparse.Namespace) -> int:
     structural = _load_json_object(args.structural_json)
     accounting = _load_json_object(args.accounting_json)
@@ -233,7 +275,68 @@ def run_accept_phase1(args: argparse.Namespace) -> int:
     ):
         accounting = accounting["phase1_recovery_accounting"]
     provenance = _load_json_object(args.provenance_json)
+    workflow_runs = _load_workflow_runs(args.workflow_runs_json)
     report = evaluate_phase1_acceptance(structural, accounting, provenance)
+
+    guard_started = _utc_datetime(
+        provenance.get("acquisition_history_guard_started_at_utc")
+    )
+    history_summary: dict[str, object] | None = None
+    history_error: str | None = None
+    no_source_activity = False
+    if guard_started is not None:
+        try:
+            history_summary = ensure_no_source_capable_acquisition_updates_since(
+                workflow_runs,
+                guard_started_at_utc=guard_started,
+            )
+            no_source_activity = True
+        except ValueError as exc:
+            history_error = str(exc)
+
+    current_baseline: dict[str, object] | None = None
+    baseline_error: str | None = None
+    try:
+        current_baseline = select_acquisition_baseline(workflow_runs)
+    except ValueError as exc:
+        baseline_error = str(exc)
+
+    provenance_baseline_id = provenance.get("acquisition_baseline_run_id")
+    provenance_baseline_completed_at = provenance.get(
+        "acquisition_baseline_completed_at_utc"
+    )
+    baseline_id_matches = (
+        current_baseline is not None
+        and isinstance(provenance_baseline_id, int)
+        and not isinstance(provenance_baseline_id, bool)
+        and current_baseline.get("latest_run_id") == provenance_baseline_id
+    )
+    baseline_completed_at_matches = (
+        current_baseline is not None
+        and isinstance(provenance_baseline_completed_at, str)
+        and current_baseline.get("baseline_completed_at_utc")
+        == provenance_baseline_completed_at
+    )
+
+    checks = dict(report["checks"])
+    checks["pass_guard_no_source_activity_since_provenance"] = no_source_activity
+    checks["pass_guard_baseline_run_id_matches"] = baseline_id_matches
+    checks["pass_guard_baseline_completed_at_matches"] = baseline_completed_at_matches
+    failed = sorted(name for name, passed in checks.items() if not passed)
+
+    report["checks"] = checks
+    report["checks_total"] = len(checks)
+    report["checks_failed"] = len(failed)
+    report["failed_checks"] = failed
+    report["pass_guard"] = {
+        "workflow_runs_checked": len(workflow_runs),
+        "history_summary": history_summary,
+        "history_error": history_error,
+        "current_baseline": current_baseline,
+        "baseline_error": baseline_error,
+    }
+    report["ready"] = not failed
+
     print(json.dumps(report, sort_keys=True, indent=2))
     return 0 if report["ready"] else 2
 
@@ -328,6 +431,11 @@ def build_parser() -> argparse.ArgumentParser:
     accept_phase1.add_argument("--structural-json", required=True)
     accept_phase1.add_argument("--accounting-json", required=True)
     accept_phase1.add_argument("--provenance-json", required=True)
+    accept_phase1.add_argument(
+        "--workflow-runs-json",
+        required=True,
+        help="fresh gh api --paginate --slurp snapshot of phase1-full-acquisition runs",
+    )
     accept_phase1.set_defaults(func=run_accept_phase1)
     return parser
 
