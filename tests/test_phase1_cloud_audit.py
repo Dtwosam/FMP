@@ -266,6 +266,12 @@ class FinalCloudAuditWorkflowTests(unittest.TestCase):
         self.assertIn("steps.acquisition-baseline.outputs.latest_run_id", workflow)
         self.assertIn("Refuse audit if acquisition changed during verification", workflow)
         self.assertIn('report["acquisition_baseline_run_id"] = int(baseline)', workflow)
+        self.assertIn("baseline_completed_at_utc=", workflow)
+        self.assertIn("steps.acquisition-baseline.outputs.baseline_completed_at_utc", workflow)
+        self.assertIn(
+            'report["acquisition_baseline_completed_at_utc"] = baseline_completed_at',
+            workflow,
+        )
         self.assertIn(
             'report["acquisition_unchanged_during_verification"] = True',
             workflow,

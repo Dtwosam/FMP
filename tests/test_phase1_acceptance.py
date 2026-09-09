@@ -77,6 +77,7 @@ def provenance_report() -> dict[str, object]:
         "issues": 0,
         "issue_samples": [],
         "acquisition_baseline_run_id": 34113319817,
+        "acquisition_baseline_completed_at_utc": "2026-09-09T11:42:29Z",
         "acquisition_unchanged_during_verification": True,
         "ready": True,
     }
@@ -239,6 +240,47 @@ class Phase1AcceptanceTests(unittest.TestCase):
 
         self.assertFalse(report["ready"])
         self.assertFalse(report["checks"]["provenance_acquisition_baseline_run_id"])
+
+    def test_rejects_structural_evidence_older_than_acquisition_baseline(self) -> None:
+        structural = structural_report()
+        structural["audited_at_utc"] = "2026-09-09T11:00:00Z"
+
+        report = evaluate_phase1_acceptance(
+            structural,
+            accounting_report(),
+            provenance_report(),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["structural_after_acquisition_baseline"])
+
+    def test_rejects_accounting_evidence_older_than_acquisition_baseline(self) -> None:
+        accounting = accounting_report()
+        accounting["audited_at_utc"] = "2026-09-09T11:00:00Z"
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting,
+            provenance_report(),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["accounting_after_acquisition_baseline"])
+
+    def test_rejects_malformed_acquisition_baseline_completion_time(self) -> None:
+        provenance = provenance_report()
+        provenance["acquisition_baseline_completed_at_utc"] = "not-a-timestamp"
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(
+            report["checks"]["provenance_acquisition_baseline_completed_at_utc"]
+        )
 
     def test_rejects_wrong_provenance_snapshot_identity(self) -> None:
         provenance = provenance_report()

@@ -22,13 +22,14 @@ bar correctness; those remain Phase 2.
 
 1. No `phase1-full-acquisition` workflow run may be queued, waiting, pending,
    or in progress.
-2. Exact-gap repair must have reduced the frozen plan to:
+2. Evidence A and B must be generated after the latest completed `phase1-full-acquisition` workflow run that will be used as the final provenance baseline.
+3. Exact-gap repair must have reduced the frozen plan to:
    - 25,500 present manifests;
    - zero missing manifests;
    - zero raw-without-manifest objects;
    - zero unexpected raw or manifest paths.
-3. Do not delete immutable cloud objects to satisfy accounting.
-4. The read-only `fmp-raw-audit` Edge Function must not be deployed until
+4. Do not delete immutable cloud objects to satisfy accounting.
+5. The read-only `fmp-raw-audit` Edge Function must not be deployed until
    acquisition is idle and the structural snapshot is complete.
 
 ## Evidence A — Structural cloud ledger
@@ -90,7 +91,7 @@ Only after Evidence A and B pass and acquisition is idle:
    - `.github/workflows/phase1-final-cloud-audit.yml`
 4. The workflow itself refuses to run while Phase 1 acquisition is active.
 5. It snapshots the latest `phase1-full-acquisition` run ID before provenance verification and fails if that run ID changes before verification completes, so an acquisition that starts and finishes during the audit still invalidates the evidence.
-6. Only after that stability check passes does the workflow stamp the provenance JSON with the acquisition baseline ID and `acquisition_unchanged_during_verification = true`.
+6. Only after that stability check passes does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
 7. Download the `phase1-cloud-provenance-<run_id>` artifact and retain
    `phase1-cloud-provenance.json`.
 
@@ -106,6 +107,8 @@ Required result:
 - `complete + not_found = 25500`
 - `issues = 0`
 - `acquisition_baseline_run_id` is a non-negative integer
+- `acquisition_baseline_completed_at_utc` is a timezone-aware timestamp
+- both Evidence A and Evidence B `audited_at_utc` timestamps are at or after that acquisition baseline completion time
 - `acquisition_unchanged_during_verification = true`
 - `ready = true`
 
@@ -129,7 +132,8 @@ Important cross-checks include:
 - structural and accounting frozen snapshot identities match this runbook;
 - accounting contains one complete, unique, totals-reconciled row for every frozen pair/side;
 - provenance plan SHA-256 matches the frozen plan fingerprint above;
-- provenance carries a valid acquisition baseline run ID and confirms acquisition remained unchanged during verification;
+- provenance carries a valid acquisition baseline run ID/completion time and confirms acquisition remained unchanged during verification;
+- structural and accounting evidence timestamps are timezone-aware and are not older than the acquisition baseline completion time;
 - structural present = accounting present = provenance planned = 25,500;
 - structural raw objects = accounting raw-backed = provenance complete;
 - accounting inferred not_found = provenance not_found.
