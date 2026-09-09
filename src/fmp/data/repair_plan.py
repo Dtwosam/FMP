@@ -9,6 +9,7 @@ from .types import RawChunkKey
 _PLAN_VERSION = 1
 _FROZEN_START_DATE = date(2015, 1, 1)
 _FROZEN_END_DATE_EXCLUSIVE = date(2026, 8, 21)
+_REQUIRED_ROOT_FIELDS = {"plan_version", "frozen_start_date", "frozen_end_date_exclusive", "chunks"}
 _REQUIRED_CHUNK_FIELDS = {"pair", "side", "date_utc"}
 
 
@@ -26,6 +27,10 @@ def load_exact_gap_plan(path: Path) -> list[RawChunkKey]:
 
     if not isinstance(payload, dict):
         raise ValueError("exact-gap plan root must be a JSON object")
+    if set(payload) != _REQUIRED_ROOT_FIELDS:
+        raise ValueError(
+            f"exact-gap plan root must contain exactly {sorted(_REQUIRED_ROOT_FIELDS)}"
+        )
     if payload.get("plan_version") != _PLAN_VERSION:
         raise ValueError(f"exact-gap plan_version must be {_PLAN_VERSION}")
     if payload.get("frozen_start_date") != _FROZEN_START_DATE.isoformat():
@@ -72,5 +77,9 @@ def load_exact_gap_plan(path: Path) -> list[RawChunkKey]:
             )
         seen.add(key)
         keys.append(key)
+
+    canonical = sorted(keys, key=lambda item: (item.day, item.pair, item.side))
+    if keys != canonical:
+        raise ValueError("exact-gap chunks must be in canonical date/pair/side order")
 
     return keys
