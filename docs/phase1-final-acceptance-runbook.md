@@ -41,6 +41,10 @@ Save the single result object as `phase1-structural.json`.
 
 Required result:
 
+- `report_version = 1`
+- `scope = phase1_structural_acceptance`
+- `frozen_start_date = 2015-01-01`
+- `frozen_end_date_exclusive = 2026-08-21`
 - `expected_manifests = 25500`
 - `present_manifests = 25500`
 - `missing_manifests = 0`
@@ -115,6 +119,7 @@ agree with one another.
 
 Important cross-checks include:
 
+- structural and accounting frozen snapshot identities match this runbook;
 - provenance plan SHA-256 matches the frozen plan fingerprint above;
 - structural present = accounting present = provenance planned = 25,500;
 - structural raw objects = accounting raw-backed = provenance complete;

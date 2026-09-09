@@ -83,6 +83,10 @@ raw_without_manifest as (
     and m.name is null
 )
 select
+  1 as report_version,
+  'phase1_structural_acceptance' as scope,
+  b.start_day as frozen_start_date,
+  b.end_exclusive as frozen_end_date_exclusive,
   mc.expected_manifests,
   mc.present_manifests,
   mc.expected_manifests - mc.present_manifests as missing_manifests,
@@ -102,6 +106,7 @@ select
     and ur.unexpected_raw_paths = 0
   ) as structural_gate_pass
 from manifest_coverage mc
+cross join bounds b
 cross join unexpected_manifests um
 cross join raw_without_manifest rwm
 cross join unexpected_raws ur;
