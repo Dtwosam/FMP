@@ -356,7 +356,7 @@ Verification evidence for the fingerprint hardening:
 - no-source golden/network jobs were skipped as intended;
 - the existing repair sweep 2 source job remained active and was not cancelled by the merge.
 
-Final acceptance remains locked until acquisition is idle and the structural/accounting ledger is complete. Only then may the read-only audit Edge be deployed and the manual full cloud-provenance workflow run according to `docs/phase1-final-acceptance-runbook.md`.
+Final acceptance remains locked until acquisition is idle and the structural/accounting ledger is complete. Only then may the read-only audit Edge be deployed. The deployed endpoint must preserve `verify_jwt = false` and pass the authenticated repository handshake `{"status":"ready","protocol":"fmp-raw-audit-v1"}`; `verify-cloud` now enforces that preflight before any provenance object reads. The manual full cloud-provenance workflow then runs according to `docs/phase1-final-acceptance-runbook.md`.
 
 ## Final cloud-audit active-run guard — FIXED
 
