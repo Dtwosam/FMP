@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
-from datetime import datetime, timezone
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -332,7 +331,6 @@ class Phase1AcceptanceTests(unittest.TestCase):
             structural,
             accounting_report(),
             provenance_report(),
-            now_utc=datetime(2026, 9, 9, 18, 0, tzinfo=timezone.utc),
         )
 
         self.assertFalse(report["ready"])
@@ -346,7 +344,6 @@ class Phase1AcceptanceTests(unittest.TestCase):
             structural_report(),
             accounting,
             provenance_report(),
-            now_utc=datetime(2026, 9, 9, 18, 0, tzinfo=timezone.utc),
         )
 
         self.assertFalse(report["ready"])
@@ -364,7 +361,6 @@ class Phase1AcceptanceTests(unittest.TestCase):
             structural,
             accounting,
             provenance,
-            now_utc=datetime(2026, 9, 9, 18, 0, tzinfo=timezone.utc),
         )
 
         self.assertFalse(report["ready"])
