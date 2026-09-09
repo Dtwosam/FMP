@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import unittest
 from datetime import date
@@ -7,6 +8,7 @@ from unittest.mock import patch
 
 from fmp.data.cloud_audit import (
     CloudAuditError,
+    GithubAuditOidcTokenProvider,
     SupabaseRawAuditClient,
     verify_cloud_keys,
 )
@@ -93,6 +95,49 @@ def audit_raw(path: str, *, sha256: str = "a" * 64, size: int = 123) -> dict[str
         "sha256": sha256,
         "size_bytes": size,
     }
+
+
+class FakeGetTransport:
+    def __init__(self, tokens: list[str]) -> None:
+        self.tokens = list(tokens)
+        self.calls: list[tuple[str, dict[str, str], float]] = []
+
+    def get(self, url: str, headers: dict[str, str], timeout_seconds: float):
+        from fmp.data.cloud import CloudHttpResponse
+
+        self.calls.append((url, headers, timeout_seconds))
+        token = self.tokens.pop(0)
+        return CloudHttpResponse(200, json.dumps({"value": token}).encode())
+
+
+def fake_jwt(exp: int) -> str:
+    payload = base64.urlsafe_b64encode(
+        json.dumps({"exp": exp}).encode()
+    ).decode().rstrip("=")
+    return f"header.{payload}.signature"
+
+
+class AuditOidcTests(unittest.TestCase):
+    def test_requests_audit_specific_audience_and_caches_until_near_expiry(self) -> None:
+        now = [100.0]
+        transport = FakeGetTransport([fake_jwt(1000), fake_jwt(2000)])
+        provider = GithubAuditOidcTokenProvider(
+            "https://actions.example/oidc?base=1",
+            "request-token",
+            transport=transport,
+            clock=lambda: now[0],
+        )
+
+        first = provider.get_token()
+        second = provider.get_token()
+        self.assertEqual(first, second)
+        self.assertEqual(len(transport.calls), 1)
+        self.assertIn("audience=fmp-supabase-raw-audit", transport.calls[0][0])
+
+        now[0] = 950.0
+        refreshed = provider.get_token()
+        self.assertNotEqual(refreshed, first)
+        self.assertEqual(len(transport.calls), 2)
 
 
 class CloudAuditClientTests(unittest.TestCase):
