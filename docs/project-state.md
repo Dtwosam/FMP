@@ -954,6 +954,10 @@ No intervention is authorized while the serialized sweep is active: do not add p
 - [ ] Phase 1 acceptance gate recorded PASS
 - [ ] Phase 1 checkpoint recorded
 
+## Repair sweep reliability note — GitHub OIDC transient retry
+
+Live sweep evidence on 2026-09-09 showed a repair-month job failing after hours of acquisition because the GitHub Actions OIDC token endpoint returned HTTP 503 during cloud mirroring. Current-main mirror token retrieval now retries only HTTP 429 and 5xx responses, up to 3 total attempts with a 1-second delay. Authentication/protocol failures remain immediate and retry exhaustion still fails closed. This hardening does not alter Dukascopy concurrency or source pacing.
+
 ## Immediate next action
 
 1. Allow repair sweep 2 to continue under the existing single-source-runner lock; do not add parallel Dukascopy traffic.
