@@ -9,6 +9,11 @@ from typing import Callable, Iterable, Protocol
 
 from .acquire import AcquisitionError, AcquisitionResult, acquire_chunk
 from .cloud import GithubOidcTokenProvider, SupabaseRawMirror, mirror_acquisition_result
+from .cloud_audit import (
+    GithubAuditOidcTokenProvider,
+    SupabaseRawAuditClient,
+    verify_cloud_keys,
+)
 from .coverage import build_coverage_report, verify_exact_keys, verify_snapshot
 from .repair_plan import load_exact_gap_plan
 from .types import RawChunkKey
@@ -184,6 +189,22 @@ def run_verify_plan(args: argparse.Namespace) -> int:
     return 0 if report["ready"] else 2
 
 
+def run_verify_cloud(args: argparse.Namespace) -> int:
+    pairs = V1_PAIRS if args.pair == "ALL" else (args.pair,)
+    client = SupabaseRawAuditClient(
+        endpoint=args.endpoint,
+        token_provider=GithubAuditOidcTokenProvider.from_environment(),
+        timeout_seconds=args.timeout,
+    )
+    report = verify_cloud_keys(
+        plan_keys(pairs, args.start, args.end),
+        client,
+        batch_size=args.batch_size,
+    )
+    print(json.dumps(report, sort_keys=True, indent=2))
+    return 0 if report["ready"] else 2
+
+
 def _add_fetch_runtime_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--out", default="data")
     parser.add_argument("--timeout", type=float, default=30.0)
@@ -250,6 +271,18 @@ def build_parser() -> argparse.ArgumentParser:
     verify_plan.add_argument("--plan", required=True)
     verify_plan.add_argument("--out", default="data")
     verify_plan.set_defaults(func=run_verify_plan)
+
+    verify_cloud = sub.add_parser(
+        "verify-cloud",
+        help="verify the cloud snapshot manifest provenance and raw SHA-256/size",
+    )
+    verify_cloud.add_argument("--endpoint", required=True)
+    verify_cloud.add_argument("--pair", choices=(*V1_PAIRS, "ALL"), required=True)
+    verify_cloud.add_argument("--start", type=_parse_date, required=True)
+    verify_cloud.add_argument("--end", type=_parse_date, required=True, help="exclusive end date")
+    verify_cloud.add_argument("--batch-size", type=int, default=100)
+    verify_cloud.add_argument("--timeout", type=float, default=60.0)
+    verify_cloud.set_defaults(func=run_verify_cloud)
     return parser
 
 
