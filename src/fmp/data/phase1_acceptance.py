@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Mapping
 
 FROZEN_MANIFEST_TARGET = 25_500
@@ -30,6 +31,18 @@ def _int_value(mapping: Mapping[str, object], key: str) -> int | None:
 
 def _mapping(value: object) -> Mapping[str, object]:
     return value if isinstance(value, Mapping) else {}
+
+
+def _aware_datetime(value: object) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        return None
+    return parsed
 
 
 def _valid_accounting_pair_side_breakdown(
@@ -118,6 +131,11 @@ def evaluate_phase1_acceptance(
     provenance_planned = _int_value(provenance, "planned_chunks")
     provenance_complete = _int_value(provenance, "complete")
     provenance_not_found = _int_value(provenance, "not_found")
+    structural_audited_at = _aware_datetime(structural.get("audited_at_utc"))
+    accounting_audited_at = _aware_datetime(accounting.get("audited_at_utc"))
+    acquisition_baseline_completed_at = _aware_datetime(
+        provenance.get("acquisition_baseline_completed_at_utc")
+    )
 
     checks: dict[str, bool] = {
         "structural_report_version": _is_exact_int(structural.get("report_version"), 1),
@@ -143,6 +161,12 @@ def evaluate_phase1_acceptance(
         ),
         "structural_unexpected_raw_paths_zero": _is_exact_int(
             structural.get("unexpected_raw_paths"), 0
+        ),
+        "structural_audited_at_utc_valid": structural_audited_at is not None,
+        "structural_after_acquisition_baseline": (
+            structural_audited_at is not None
+            and acquisition_baseline_completed_at is not None
+            and structural_audited_at >= acquisition_baseline_completed_at
         ),
         "structural_gate_pass": structural.get("structural_gate_pass") is True,
         "accounting_report_version": _is_exact_int(accounting.get("report_version"), 1),
@@ -181,6 +205,12 @@ def evaluate_phase1_acceptance(
                 total_not_found=accounting_not_found,
             )
         ),
+        "accounting_audited_at_utc_valid": accounting_audited_at is not None,
+        "accounting_after_acquisition_baseline": (
+            accounting_audited_at is not None
+            and acquisition_baseline_completed_at is not None
+            and accounting_audited_at >= acquisition_baseline_completed_at
+        ),
         "accounting_gate_pass": accounting.get("accounting_gate_pass") is True,
         "provenance_report_version": _is_exact_int(provenance.get("report_version"), 1),
         "provenance_source": provenance.get("source") == "dukascopy",
@@ -213,6 +243,9 @@ def evaluate_phase1_acceptance(
             isinstance(provenance.get("acquisition_baseline_run_id"), int)
             and not isinstance(provenance.get("acquisition_baseline_run_id"), bool)
             and int(provenance["acquisition_baseline_run_id"]) >= 0
+        ),
+        "provenance_acquisition_baseline_completed_at_utc": (
+            acquisition_baseline_completed_at is not None
         ),
         "provenance_acquisition_unchanged_during_verification": (
             provenance.get("acquisition_unchanged_during_verification") is True
