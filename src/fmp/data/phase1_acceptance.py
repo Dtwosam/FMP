@@ -252,6 +252,7 @@ def evaluate_phase1_acceptance(
             provenance.get("invalid_raw_audit"), 0
         ),
         "provenance_issues_zero": _is_exact_int(provenance.get("issues"), 0),
+        "provenance_issue_samples_empty": provenance.get("issue_samples") == [],
         "provenance_partition_complete": (
             provenance_complete is not None
             and provenance_not_found is not None

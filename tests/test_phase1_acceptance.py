@@ -150,6 +150,27 @@ class Phase1AcceptanceTests(unittest.TestCase):
         self.assertFalse(report["checks"]["raw_backed_equals_provenance_complete"])
         self.assertFalse(report["checks"]["inferred_not_found_equals_provenance_not_found"])
 
+    def test_rejects_issue_samples_when_provenance_reports_zero_issues(self) -> None:
+        provenance = provenance_report()
+        provenance["issue_samples"] = [
+            {
+                "kind": "invalid_manifest",
+                "pair": "EURUSD",
+                "side": "BID",
+                "date_utc": "2024-01-02",
+                "detail": "contradictory sample",
+            }
+        ]
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["provenance_issue_samples_empty"])
+
     def test_rejects_inconsistent_provenance_issue_subcount(self) -> None:
         provenance = provenance_report()
         provenance["raw_checksum_mismatch"] = 1
