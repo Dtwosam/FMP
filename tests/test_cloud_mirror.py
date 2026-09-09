@@ -106,6 +106,69 @@ class CloudMirrorTests(unittest.TestCase):
         self.assertEqual(headers["Authorization"], "Bearer request-token")
         self.assertGreater(timeout, 0)
 
+    def test_oidc_provider_retries_transient_http_failures(self) -> None:
+        class SequenceGetTransport:
+            def __init__(self) -> None:
+                self.statuses = [503, 503, 200]
+                self.calls = 0
+
+            def get(
+                self,
+                url: str,
+                headers: dict[str, str],
+                timeout_seconds: float,
+            ) -> CloudHttpResponse:
+                self.calls += 1
+                status = self.statuses.pop(0)
+                payload = {"value": "oidc-token"} if status == 200 else {"error": "transient"}
+                return CloudHttpResponse(status, json.dumps(payload).encode())
+
+        transport = SequenceGetTransport()
+        sleeps: list[float] = []
+        provider = GithubOidcTokenProvider(
+            request_url="https://actions.example/oidc",
+            request_token="request-token",
+            transport=transport,
+            max_attempts=4,
+            backoff_seconds=1.0,
+            sleep_fn=sleeps.append,
+        )
+
+        self.assertEqual(provider.get_token(), "oidc-token")
+        self.assertEqual(transport.calls, 3)
+        self.assertEqual(sleeps, [1.0, 2.0])
+
+    def test_oidc_provider_does_not_retry_permanent_http_failure(self) -> None:
+        class UnauthorizedTransport:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def get(
+                self,
+                url: str,
+                headers: dict[str, str],
+                timeout_seconds: float,
+            ) -> CloudHttpResponse:
+                self.calls += 1
+                return CloudHttpResponse(401, b'{"error":"unauthorized"}')
+
+        transport = UnauthorizedTransport()
+        sleeps: list[float] = []
+        provider = GithubOidcTokenProvider(
+            request_url="https://actions.example/oidc",
+            request_token="request-token",
+            transport=transport,
+            max_attempts=4,
+            backoff_seconds=1.0,
+            sleep_fn=sleeps.append,
+        )
+
+        with self.assertRaisesRegex(CloudMirrorError, "HTTP 401"):
+            provider.get_token()
+
+        self.assertEqual(transport.calls, 1)
+        self.assertEqual(sleeps, [])
+
     def test_ingest_preflight_accepts_expected_protocol(self) -> None:
         transport = FakeMirrorTransport()
         mirror = SupabaseRawMirror(
