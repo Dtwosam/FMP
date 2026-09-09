@@ -1,3 +1,5 @@
+export const INGEST_PROTOCOL = "fmp-raw-ingest-v2";
+
 const EXPECTED = {
   repository: "Dtwosam/FMP",
   repository_id: "1342321016",
