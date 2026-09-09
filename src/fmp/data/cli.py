@@ -9,7 +9,8 @@ from typing import Callable, Iterable, Protocol
 
 from .acquire import AcquisitionError, AcquisitionResult, acquire_chunk
 from .cloud import GithubOidcTokenProvider, SupabaseRawMirror, mirror_acquisition_result
-from .coverage import build_coverage_report, verify_snapshot
+from .coverage import build_coverage_report, verify_exact_keys, verify_snapshot
+from .repair_plan import load_exact_gap_plan
 from .types import RawChunkKey
 
 V1_PAIRS = ("EURUSD", "GBPUSD", "USDJPY")
@@ -89,9 +90,8 @@ def _result_json(result: AcquisitionResult) -> dict[str, object]:
     }
 
 
-def run_fetch(args: argparse.Namespace) -> int:
+def _run_fetch_keys(args: argparse.Namespace, keys: Iterable[RawChunkKey]) -> int:
     root = Path(args.out)
-    pairs = V1_PAIRS if args.pair == "ALL" else (args.pair,)
     mirror = None
     if args.mirror_url:
         mirror = SupabaseRawMirror(
@@ -122,7 +122,7 @@ def run_fetch(args: argparse.Namespace) -> int:
         print(json.dumps(payload, sort_keys=True), flush=True)
 
     acquired = process_fetch_plan(
-        plan_keys(pairs, args.start, args.end),
+        keys,
         root,
         configured_acquire,
         mirror,
@@ -149,8 +149,19 @@ def run_fetch(args: argparse.Namespace) -> int:
         flush=True,
     )
     # In continue mode, unresolved source chunks are intentionally left without
-    # canonical manifests. The following `verify` step is the fail-closed gate.
+    # canonical manifests. The following verify/verify-plan step is the
+    # fail-closed gate.
     return 0
+
+
+def run_fetch(args: argparse.Namespace) -> int:
+    pairs = V1_PAIRS if args.pair == "ALL" else (args.pair,)
+    return _run_fetch_keys(args, plan_keys(pairs, args.start, args.end))
+
+
+def run_fetch_plan(args: argparse.Namespace) -> int:
+    keys = load_exact_gap_plan(Path(args.plan))
+    return _run_fetch_keys(args, keys)
 
 
 def run_coverage(args: argparse.Namespace) -> int:
@@ -166,49 +177,79 @@ def run_verify(args: argparse.Namespace) -> int:
     return 0 if report["ready"] else 2
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="FMP Phase 1 Dukascopy raw-data acquisition")
-    sub = parser.add_subparsers(dest="command", required=True)
-    fetch = sub.add_parser("fetch", help="acquire a UTC date range; end is exclusive")
-    fetch.add_argument("--pair", choices=(*V1_PAIRS, "ALL"), required=True)
-    fetch.add_argument("--start", type=_parse_date, required=True)
-    fetch.add_argument("--end", type=_parse_date, required=True, help="exclusive end date")
-    fetch.add_argument("--out", default="data")
-    fetch.add_argument("--timeout", type=float, default=30.0)
-    fetch.add_argument("--attempts", type=int, default=6)
-    fetch.add_argument(
+def run_verify_plan(args: argparse.Namespace) -> int:
+    keys = load_exact_gap_plan(Path(args.plan))
+    report = verify_exact_keys(Path(args.out), keys)
+    print(json.dumps(report, sort_keys=True, indent=2))
+    return 0 if report["ready"] else 2
+
+
+def _add_fetch_runtime_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--out", default="data")
+    parser.add_argument("--timeout", type=float, default=30.0)
+    parser.add_argument("--attempts", type=int, default=6)
+    parser.add_argument(
         "--source-delay",
         type=float,
         default=0.0,
         help="seconds to pause between consecutive Dukascopy source chunks",
     )
-    fetch.add_argument(
+    parser.add_argument(
         "--continue-on-error",
         action="store_true",
         help=(
             "continue attempting later source chunks after AcquisitionError; "
-            "failed chunks remain absent so verify still fails closed"
+            "failed chunks remain absent so provenance verification still fails closed"
         ),
     )
-    fetch.add_argument(
+    parser.add_argument(
         "--mirror-url",
         help="HTTPS FMP raw-ingest endpoint; requires GitHub Actions OIDC environment",
     )
-    fetch.add_argument(
+    parser.add_argument(
         "--recheck-not-found",
         action="store_true",
         help="retry chunks previously recorded as HTTP 404; useful for recently published source history",
     )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="FMP Phase 1 Dukascopy raw-data acquisition")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    fetch = sub.add_parser("fetch", help="acquire a UTC date range; end is exclusive")
+    fetch.add_argument("--pair", choices=(*V1_PAIRS, "ALL"), required=True)
+    fetch.add_argument("--start", type=_parse_date, required=True)
+    fetch.add_argument("--end", type=_parse_date, required=True, help="exclusive end date")
+    _add_fetch_runtime_arguments(fetch)
     fetch.set_defaults(func=run_fetch)
+
+    fetch_plan = sub.add_parser(
+        "fetch-plan",
+        help="acquire only the explicit pair/date/side chunks in an exact-gap JSON plan",
+    )
+    fetch_plan.add_argument("--plan", required=True)
+    _add_fetch_runtime_arguments(fetch_plan)
+    fetch_plan.set_defaults(func=run_fetch_plan)
+
     coverage = sub.add_parser("coverage", help="summarize acquisition manifests")
     coverage.add_argument("--out", default="data")
     coverage.set_defaults(func=run_coverage)
+
     verify = sub.add_parser("verify", help="verify every planned chunk has consistent acquisition provenance")
     verify.add_argument("--pair", choices=(*V1_PAIRS, "ALL"), required=True)
     verify.add_argument("--start", type=_parse_date, required=True)
     verify.add_argument("--end", type=_parse_date, required=True, help="exclusive end date")
     verify.add_argument("--out", default="data")
     verify.set_defaults(func=run_verify)
+
+    verify_plan = sub.add_parser(
+        "verify-plan",
+        help="verify acquisition provenance for only the chunks in an exact-gap JSON plan",
+    )
+    verify_plan.add_argument("--plan", required=True)
+    verify_plan.add_argument("--out", default="data")
+    verify_plan.set_defaults(func=run_verify_plan)
     return parser
 
 
