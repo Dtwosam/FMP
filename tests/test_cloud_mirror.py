@@ -11,6 +11,7 @@ from fmp.data.acquire import AcquisitionResult, AcquisitionStatus
 from fmp.data.cli import build_parser, process_fetch_plan
 from fmp.data.cloud import (
     CloudHttpResponse,
+    CloudMirrorError,
     GithubOidcTokenProvider,
     SupabaseRawMirror,
     mirror_acquisition_result,
@@ -119,6 +120,46 @@ class CloudMirrorTests(unittest.TestCase):
             mirrored = mirror_acquisition_result(root, result, mirror)
             self.assertEqual(mirrored, ["manifests/" + key.relative_manifest_path.as_posix()])
             self.assertEqual(len(transport.calls), 1)
+
+    def test_raw_conflict_aborts_before_manifest_upload(self) -> None:
+        key = RawChunkKey("USDJPY", "BID", date(2022, 12, 17))
+        raw_object = "raw/" + key.relative_raw_path.as_posix()
+        manifest_object = "manifests/" + key.relative_manifest_path.as_posix()
+
+        class RawConflictMirror:
+            def __init__(self) -> None:
+                self.paths: list[str] = []
+
+            def put_object(self, object_path: str, body: bytes) -> str:
+                self.paths.append(object_path)
+                if object_path == raw_object:
+                    raise CloudMirrorError("immutable raw conflict")
+                if object_path == manifest_object:
+                    raise AssertionError("manifest must not be uploaded after raw conflict")
+                raise AssertionError(f"unexpected object path: {object_path}")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw_path = root / "raw" / key.relative_raw_path
+            manifest_path = root / "manifests" / key.relative_manifest_path
+            raw_path.parent.mkdir(parents=True)
+            manifest_path.parent.mkdir(parents=True)
+            raw_path.write_bytes(b"refetched raw")
+            manifest_path.write_bytes(b'{"status":"complete"}\n')
+            result = AcquisitionResult(
+                key,
+                AcquisitionStatus.COMPLETE,
+                "x",
+                1,
+                len(b"refetched raw"),
+                200,
+            )
+            mirror = RawConflictMirror()
+
+            with self.assertRaisesRegex(CloudMirrorError, "immutable raw conflict"):
+                mirror_acquisition_result(root, result, mirror)
+
+            self.assertEqual(mirror.paths, [raw_object])
 
     def test_fetch_plan_mirrors_result_before_advancing(self) -> None:
         key = RawChunkKey("EURUSD", "BID", date(2024, 1, 2))
