@@ -35,41 +35,54 @@ jobs:
           started = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
           print(f"audit_guard_started_at_utc={started}")
           PY
-          active=0
-          for status in requested queued waiting pending in_progress; do
-            count="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?status=${status}&per_page=1" --jq '.total_count')"
-            active=$((active + count))
-          done
-          if [ "$active" != "0" ]; then
-            echo "Phase 1 acquisition is still active; final cloud audit requires a stable cloud snapshot."
-            exit 2
-          fi
-          baseline_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=1")"
-          BASELINE_JSON="$baseline_json" python - <<'PY' >> "$GITHUB_OUTPUT"
+          gh api --paginate --slurp \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=100" \
+            > .phase1-final-acquisition-workflow-pages.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
           import json
-          import os
+          from pathlib import Path
 
-          payload = json.loads(os.environ["BASELINE_JSON"])
-          runs = payload.get("workflow_runs")
-          if not isinstance(runs, list) or not runs:
-              raise SystemExit("Phase 1 final audit requires a completed acquisition baseline run.")
+          from fmp.data.acquisition_runs import select_acquisition_baseline
 
-          latest = runs[0]
-          latest_run_id = latest.get("id")
-          baseline_status = latest.get("status")
-          baseline_completed_at_utc = latest.get("updated_at")
-          if (
-              not isinstance(latest_run_id, int)
-              or latest_run_id <= 0
-              or baseline_status != "completed"
-              or not isinstance(baseline_completed_at_utc, str)
-              or not baseline_completed_at_utc
-          ):
-              raise SystemExit("Phase 1 final audit requires a completed acquisition baseline run.")
+          pages = json.loads(
+              Path(".phase1-final-acquisition-workflow-pages.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          if not isinstance(pages, list):
+              raise SystemExit(
+                  "GitHub acquisition workflow pagination response must be a list"
+              )
 
-          print(f"latest_run_id={latest_run_id}")
-          print(f"baseline_completed_at_utc={baseline_completed_at_utc}")
+          runs = []
+          for index, page in enumerate(pages):
+              if not isinstance(page, dict):
+                  raise SystemExit(
+                      f"GitHub acquisition workflow page {index} must be an object"
+                  )
+              page_runs = page.get("workflow_runs")
+              if not isinstance(page_runs, list):
+                  raise SystemExit(
+                      f"GitHub acquisition workflow page {index} is missing workflow_runs"
+                  )
+              runs.extend(page_runs)
+
+          try:
+              baseline = select_acquisition_baseline(runs)
+          except ValueError as exc:
+              raise SystemExit(str(exc)) from exc
+
+          print(f"latest_run_id={baseline['latest_run_id']}")
+          print(
+              "baseline_completed_at_utc="
+              f"{baseline['baseline_completed_at_utc']}"
+          )
+          print(
+              "no_source_runs_ignored="
+              f"{baseline['no_source_runs_ignored']}"
+          )
           PY
+          rm -f .phase1-final-acquisition-workflow-pages.json
       - name: Verify full frozen cloud provenance
         run: |
           set -o pipefail
@@ -97,15 +110,17 @@ jobs:
           from datetime import datetime
           from pathlib import Path
 
-          from fmp.data.repair_plan import ensure_no_source_capable_acquisition_updates_since
-
-          pages = json.loads(
-              Path(".phase1-final-acquisition-workflow-pages.json").read_text(
-                  encoding="utf-8"
-              )
+          from fmp.data.acquisition_runs import select_acquisition_baseline
+          from fmp.data.repair_plan import (
+              ensure_no_source_capable_acquisition_updates_since,
           )
+
+          pages_path = Path(".phase1-final-acquisition-workflow-pages.json")
+          pages = json.loads(pages_path.read_text(encoding="utf-8"))
           if not isinstance(pages, list):
-              raise SystemExit("GitHub acquisition workflow pagination response must be a list")
+              raise SystemExit(
+                  "GitHub acquisition workflow pagination response must be a list"
+              )
 
           runs = []
           for index, page in enumerate(pages):
@@ -126,38 +141,41 @@ jobs:
                   raw_started.replace("Z", "+00:00")
               )
           except ValueError as exc:
-              raise SystemExit("invalid final cloud audit guard start timestamp") from exc
+              raise SystemExit(
+                  "invalid final cloud audit guard start timestamp"
+              ) from exc
 
-          summary = ensure_no_source_capable_acquisition_updates_since(
-              runs,
-              guard_started_at_utc=guard_started,
-          )
+          try:
+              summary = ensure_no_source_capable_acquisition_updates_since(
+                  runs,
+                  guard_started_at_utc=guard_started,
+              )
+              current = select_acquisition_baseline(runs)
+          except ValueError as exc:
+              raise SystemExit(str(exc)) from exc
+
           Path(".phase1-final-acquisition-run-guard.json").write_text(
               json.dumps(summary, sort_keys=True, indent=2) + "\n",
               encoding="utf-8",
           )
-          print(json.dumps(summary, sort_keys=True))
-          PY
-          rm -f .phase1-final-acquisition-workflow-pages.json
 
-          latest_run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=1" --jq '.workflow_runs[0].id // 0')"
-          if [ "$latest_run_id" != "$BASELINE_RUN_ID" ]; then
-            echo "Phase 1 acquisition changed during final cloud verification; discard this mixed-snapshot audit."
-            exit 3
-          fi
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          path = Path("phase1-cloud-provenance.json")
-          report = json.loads(path.read_text(encoding="utf-8"))
           baseline = os.environ["BASELINE_RUN_ID"]
           baseline_completed_at = os.environ["BASELINE_COMPLETED_AT_UTC"]
           if not baseline.isdigit():
               raise SystemExit("invalid acquisition baseline run id")
-          if not baseline_completed_at:
-              raise SystemExit("missing acquisition baseline completion time")
+          if current["latest_run_id"] != int(baseline):
+              raise SystemExit(
+                  "Phase 1 source-capable acquisition changed during final cloud "
+                  "verification; discard this mixed-snapshot audit."
+              )
+          if current["baseline_completed_at_utc"] != baseline_completed_at:
+              raise SystemExit(
+                  "Phase 1 acquisition baseline activity changed during final "
+                  "cloud verification."
+              )
+
+          path = Path("phase1-cloud-provenance.json")
+          report = json.loads(path.read_text(encoding="utf-8"))
           report["acquisition_baseline_run_id"] = int(baseline)
           report["acquisition_baseline_completed_at_utc"] = baseline_completed_at
           report["acquisition_unchanged_during_verification"] = True
@@ -165,7 +183,9 @@ jobs:
               json.dumps(report, sort_keys=True, indent=2) + "\n",
               encoding="utf-8",
           )
+          print(json.dumps(summary, sort_keys=True))
           PY
+          rm -f .phase1-final-acquisition-workflow-pages.json
       - name: Persist final cloud provenance report
         if: always()
         uses: actions/upload-artifact@v4
