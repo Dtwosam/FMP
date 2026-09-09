@@ -79,7 +79,7 @@ def provenance_report() -> dict[str, object]:
         "acquisition_baseline_run_id": 34113319817,
         "acquisition_baseline_completed_at_utc": "2026-09-09T11:42:29Z",
         "acquisition_history_guard_version": 1,
-        "acquisition_history_guard_started_at_utc": "2026-09-09T11:50:00Z",
+        "acquisition_history_guard_started_at_utc": "2026-09-09T12:10:00Z",
         "acquisition_unchanged_during_verification": True,
         "ready": True,
     }
@@ -415,6 +415,36 @@ class Phase1AcceptanceTests(unittest.TestCase):
         self.assertFalse(report["ready"])
         self.assertFalse(
             report["checks"]["provenance_acquisition_baseline_not_future"]
+        )
+
+    def test_rejects_structural_evidence_after_history_guard_start(self) -> None:
+        structural = structural_report()
+        structural["audited_at_utc"] = "2026-09-09T12:11:00Z"
+
+        report = evaluate_phase1_acceptance(
+            structural,
+            accounting_report(),
+            provenance_report(),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(
+            report["checks"]["structural_not_after_provenance_history_guard"]
+        )
+
+    def test_rejects_accounting_evidence_after_history_guard_start(self) -> None:
+        accounting = accounting_report()
+        accounting["audited_at_utc"] = "2026-09-09T12:11:00Z"
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting,
+            provenance_report(),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(
+            report["checks"]["accounting_not_after_provenance_history_guard"]
         )
 
     def test_rejects_wrong_provenance_snapshot_identity(self) -> None:
