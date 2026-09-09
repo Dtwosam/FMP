@@ -891,7 +891,7 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Edge Function was deployed while repair sweep 2 is active.
 
-Operational requirement after sweep 2 stops: deploy the repository `fmp-raw-ingest` source containing PR #31 through PR #34 with `verify_jwt = false`, read back metadata/source to confirm deployment, then proceed to exhaustive audit/exact-gap work. Later, deploy `fmp-raw-audit` with `verify_jwt = false` only after structural/accounting completion.
+Operational requirement after sweep 2 stops: deploy the exact tested `fmp-raw-ingest` source/config from current `main`, read back metadata/source to confirm the deployment, require `verify_jwt = false`, and require the authenticated `fmp-raw-ingest-v2` readiness response before exhaustive audit/exact-gap work. Later, deploy `fmp-raw-audit` with `verify_jwt = false` only after structural/accounting completion.
 
 ## Edge runtime dependency pins — MERGED / VERIFIED / UNDEPLOYED
 
@@ -958,7 +958,7 @@ No intervention is authorized while the serialized sweep is active: do not add p
 
 1. Allow repair sweep 2 to continue under the existing single-source-runner lock; do not add parallel Dukascopy traffic.
 2. When sweep 2 stops, confirm no source-capable `phase1-full-acquisition` run is requested/queued/waiting/pending/in-progress.
-3. Deploy the tested repository version of `fmp-raw-ingest` containing PR #31 through PR #34; verify the deployed source/version matches `main`. Do not trigger a source smoke merely to deploy it.
+3. Deploy the exact tested `fmp-raw-ingest` source/config from current `main` (including the hardened cross-object/schema/date guards, authenticated `fmp-raw-ingest-v2` preflight, `verify_jwt = false`, and pinned Edge dependencies). Read back deployed metadata and source, then require authenticated GET to return exactly `{"status":"ready","protocol":"fmp-raw-ingest-v2"}`. Do not trigger a source smoke merely to deploy it.
 4. Run the committed exhaustive cloud audit against the exact **25,500-manifest** frozen plan.
 5. If missing manifests remain, materialize a **fresh** `docs/phase1-exact-gap-queue.json` directly from `docs/phase1-exact-gap-audit.sql`.
 6. Trigger one `[phase1-exact-gap-batch]` sparse pass. Do **not** rerun the same workflow attempt after partial success/failure.
