@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from pathlib import Path
 
+from fmp.data.cli import build_parser
 from fmp.data.phase1_acceptance import evaluate_phase1_acceptance
 
 
@@ -128,6 +134,37 @@ class Phase1AcceptanceTests(unittest.TestCase):
 
         self.assertFalse(report["ready"])
         self.assertFalse(report["checks"]["accounting_frozen_snapshot"])
+
+    def test_acceptance_cli_consumes_evidence_files_and_returns_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            structural_path = root / "structural.json"
+            accounting_path = root / "accounting.json"
+            provenance_path = root / "provenance.json"
+            structural_path.write_text(json.dumps(structural_report()), encoding="utf-8")
+            accounting_path.write_text(
+                json.dumps({"phase1_recovery_accounting": accounting_report()}),
+                encoding="utf-8",
+            )
+            provenance_path.write_text(json.dumps(provenance_report()), encoding="utf-8")
+
+            args = build_parser().parse_args(
+                [
+                    "accept-phase1",
+                    "--structural-json",
+                    str(structural_path),
+                    "--accounting-json",
+                    str(accounting_path),
+                    "--provenance-json",
+                    str(provenance_path),
+                ]
+            )
+            output = StringIO()
+            with redirect_stdout(output):
+                code = args.func(args)
+
+            self.assertEqual(code, 0)
+            self.assertTrue(json.loads(output.getvalue())["ready"])
 
 
 if __name__ == "__main__":
