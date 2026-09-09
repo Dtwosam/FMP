@@ -567,6 +567,33 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Dukascopy acquisition or Supabase deployment was introduced by this change.
 
+## Exact-gap intervening-acquisition guard — MERGED / VERIFIED
+
+PR #28 `[phase1-no-source] Phase 1: reject stale exact-gap plans after intervening acquisition` merged to `main` at:
+
+- `d632046dfcbc245aaba62404d373819551e19da6`
+
+Exact-gap plans already had strict frozen-snapshot validation and a two-hour freshness window, but age alone did not prove that the cloud ledger was unchanged after the plan audit. A different source-capable `phase1-full-acquisition` run could complete or partially write after the audit and before sparse execution, leaving a young but logically stale plan.
+
+Before `fetch-plan` can access Dukascopy, the exact-gap workflow now:
+
+- pages the full `phase1-full-acquisition` workflow history with GitHub Actions read permission;
+- excludes the current exact-gap workflow run;
+- excludes runs explicitly tagged `[phase1-no-source]`, because those jobs cannot access the source;
+- treats all other runs conservatively as source-capable;
+- rejects the plan if any such run has `updated_at` later than the plan's `audited_at_utc`, including failed/cancelled runs that may have partially mirrored data;
+- persists `.phase1-exact-gap-run-guard.json` alongside the exact-gap plan and verification evidence.
+
+DEC-012 and the Phase 1 acquisition trigger runbook now record that freshness-by-age is necessary but not sufficient: no intervening source-capable acquisition may exist after the audit.
+
+Verification evidence:
+
+- RED run `34363736380` failed on the absent helper and absent pre-source workflow guard;
+- GREEN implementation run `34363945420` passed workflow YAML validation, unit tests, and compile;
+- docs-head GREEN run `34364056475` passed;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Dukascopy acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
