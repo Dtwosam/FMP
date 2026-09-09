@@ -672,6 +672,36 @@ Verification evidence:
 
 Operational requirement after sweep 2 stops: deploy the tested repository version of `fmp-raw-ingest` before any fresh exact-gap pass that may include the known raw-only keys. This is separate from `fmp-raw-audit`, which remains undeployed until the final structural/provenance stage.
 
+## Complete-manifest cloud-raw invariant — MERGED / VERIFIED / UNDEPLOYED
+
+PR #32 `[phase1-no-source] Phase 1: require complete manifests to match cloud raw` merged to `main` at:
+
+- `40795bff53058f8314ef374b0f97b0cb3a9d30fb`
+
+The repository ingest source now enforces both sides of the manifest/raw cross-object invariant before immutable manifest storage:
+
+- malformed manifest JSON is rejected with HTTP 400;
+- unknown manifest statuses are rejected with HTTP 400;
+- a `not_found` manifest is accepted only when the matching raw object is verified absent;
+- a `complete` manifest is accepted only when the matching raw object already exists;
+- the server downloads that raw object with `cache: no-store` and requires exact SHA-256 and byte-size agreement with the manifest;
+- a missing raw counterpart or raw/manifest mismatch returns HTTP 409;
+- Storage lookup failures other than a verified missing-key result fail closed.
+
+This turns the client-side raw-before-manifest ordering into a server-enforced invariant and prevents a malformed or inconsistent manifest from becoming an immutable cloud object.
+
+Verification evidence:
+
+- RED Edge run `34370385038` failed exactly because `manifestStorageInvariant` did not yet exist;
+- GREEN implementation Python run `34370544210` passed;
+- GREEN implementation Edge run `34370544201` passed Deno tests and entrypoint type-check;
+- final PR-head Python run `34370646499` passed;
+- final PR-head Edge run `34370646479` passed;
+- golden/source jobs skipped under `[phase1-no-source]`;
+- **the Edge Function was not deployed while repair sweep 2 is active**.
+
+Operational requirement after sweep 2 stops: deploy the tested repository `fmp-raw-ingest` version containing PR #31 and PR #32 before any fresh exact-gap pass. The separate read-only `fmp-raw-audit` remains undeployed until the later final provenance stage.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
