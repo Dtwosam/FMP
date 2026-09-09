@@ -310,9 +310,10 @@ jobs:
           import hashlib
           import json
           import os
+          from datetime import timedelta
           from pathlib import Path
 
-          from fmp.data.repair_plan import load_exact_gap_plan
+          from fmp.data.repair_plan import ensure_exact_gap_plan_fresh
 
           if os.environ.get('GITHUB_RUN_ATTEMPT') != '1':
               raise SystemExit(
@@ -320,7 +321,7 @@ jobs:
               )
 
           path = Path('docs/phase1-exact-gap-queue.json')
-          keys = load_exact_gap_plan(path)
+          keys = ensure_exact_gap_plan_fresh(path, max_age=timedelta(hours=2))
           digest = hashlib.sha256(path.read_bytes()).hexdigest()
           plan = json.loads(path.read_text(encoding='utf-8'))
           evidence = {
