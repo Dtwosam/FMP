@@ -48,17 +48,67 @@ export function validateObjectPath(path: string): true {
 }
 
 
+export type ManifestStorageInvariant =
+  | {
+    status: "complete";
+    rawPath: string;
+    sha256: string;
+    sizeBytes: number;
+  }
+  | {
+    status: "not_found";
+    rawPath: string;
+  };
+
+function rawPathForManifest(manifestPath: string): string {
+  const match = MANIFEST_RE.exec(manifestPath);
+  if (!match) {
+    throw new Error("manifest path is not canonical");
+  }
+  const [, pair, year, month, day, side] = match;
+  return `raw/dukascopy/v1/${pair}/${year}/${month}/${day}/${side}_candles_min_1.bi5`;
+}
+
+export function manifestStorageInvariant(
+  manifestPath: string,
+  manifest: Record<string, unknown>,
+): ManifestStorageInvariant {
+  const status = manifest.status;
+  const rawPath = rawPathForManifest(manifestPath);
+
+  if (status === "not_found") {
+    return { status: "not_found", rawPath };
+  }
+
+  if (status === "complete") {
+    const sha256 = manifest.sha256;
+    const sizeBytes = manifest.compressed_size_bytes;
+    if (
+      typeof sha256 !== "string" ||
+      !/^[0-9a-f]{64}$/.test(sha256) ||
+      typeof sizeBytes !== "number" ||
+      !Number.isInteger(sizeBytes) ||
+      sizeBytes <= 0
+    ) {
+      throw new Error("complete manifest raw metadata is invalid");
+    }
+    return {
+      status: "complete",
+      rawPath,
+      sha256,
+      sizeBytes,
+    };
+  }
+
+  throw new Error("manifest status is invalid");
+}
+
 export function rawPathForNotFoundManifest(
   manifestPath: string,
   manifest: Record<string, unknown>,
 ): string | null {
   if (manifest.status !== "not_found") return null;
-  const match = MANIFEST_RE.exec(manifestPath);
-  if (!match) {
-    throw new Error("not_found manifest path is not canonical");
-  }
-  const [, pair, year, month, day, side] = match;
-  return `raw/dukascopy/v1/${pair}/${year}/${month}/${day}/${side}_candles_min_1.bi5`;
+  return manifestStorageInvariant(manifestPath, manifest).rawPath;
 }
 
 export function isStorageObjectNotFound(error: unknown): boolean {

@@ -43,9 +43,11 @@ The supported recovery path is the fresh exact-gap repair cycle:
 3. Cloud mirroring writes/verifies the raw object **before** attempting the manifest object.
 4. If the refetched raw bytes match the immutable cloud raw, the ingest layer returns success/already-verified and the canonical manifest can then be mirrored.
 5. If the refetched raw bytes differ, the immutable raw PUT fails and manifest upload is never attempted. Stop and investigate; never create a manifest that blesses different bytes and never delete the original raw to force accounting to pass.
-6. If the source now returns HTTP 404 for a key whose immutable raw already exists, the repository ingest source rejects the `not_found` manifest with HTTP 409. Any Storage lookup failure other than a verified missing-key result also fails closed.
+6. If the source now returns HTTP 404 for a key whose immutable raw already exists, the repository ingest source rejects the `not_found` manifest with HTTP 409.
+7. For every `complete` manifest, the repository ingest source requires the matching raw object to already exist and verifies its server-side SHA-256 and byte size against the manifest before storing the manifest.
+8. Malformed JSON, unknown manifest statuses, raw/manifest metadata mismatches, and Storage lookup failures other than a verified missing-key result all fail closed.
 
-Before executing a fresh exact-gap pass that may include raw-only keys, deploy the tested repository version of `fmp-raw-ingest` containing this cross-object guard. Do not deploy it while a Phase 1 acquisition run is active.
+Before executing a fresh exact-gap pass that may include raw-only keys, deploy the tested repository version of `fmp-raw-ingest` containing these cross-object guards. Do not deploy it while a Phase 1 acquisition run is active.
 
 This ordering is a Phase 1 safety property. Final Evidence A/B must still show `raw_without_manifest = 0` before provenance verification begins.
 

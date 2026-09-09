@@ -8,3 +8,6 @@ Security is based on GitHub Actions OIDC, not a long-lived GitHub secret. The fu
 ## Raw-only safety
 
 For canonical manifest uploads with `status = "not_found"`, the function checks the matching raw object path first. If immutable raw already exists, the manifest is rejected with HTTP 409. A Storage error is treated as absence only when it is a verified missing-key/not-found response; all other lookup failures fail closed.
+
+
+For canonical `complete` manifests, the function downloads the matching immutable raw object with `cache: no-store` and requires exact SHA-256 and byte-size agreement with the manifest before the manifest can be stored. Malformed JSON and unknown manifest statuses are rejected before immutable storage.

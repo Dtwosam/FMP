@@ -154,7 +154,10 @@ Rules:
 - before sparse source access, the runner must reject a plan if any other source-capable `phase1-full-acquisition` run was updated after the plan's `audited_at_utc`; the current exact-gap run and push-triggered `[phase1-no-source]` runs are excluded from that check; manual `workflow_dispatch` runs remain source-capable regardless of the underlying head-commit message;
 - cloud/OIDC/Supabase failures remain fail-fast and local exact-plan provenance verification remains fail-closed;
 - raw cloud objects remain immutable and are never deleted merely to repair accounting;
-- the ingest endpoint must reject a `not_found` manifest if the matching immutable raw object already exists; Storage lookup errors other than a verified missing-key result fail closed;
+- the ingest endpoint must reject malformed or unknown-status manifest JSON before immutable storage;
+- a `not_found` manifest is accepted only when the matching immutable raw object is verified absent;
+- a `complete` manifest is accepted only when the matching immutable raw object already exists and its server-side SHA-256 and byte size match the manifest;
+- Storage lookup errors other than a verified missing-key result fail closed;
 - `[phase1-no-source]` is the code/docs-only operational tag: it suppresses push-triggered Phase 1 acquisition and PR Dukascopy golden/network jobs;
 - Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
 
