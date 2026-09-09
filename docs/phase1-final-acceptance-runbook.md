@@ -115,11 +115,12 @@ Only after Evidence A and B pass and acquisition is idle:
 4. Manually dispatch:
    - `.github/workflows/phase1-final-cloud-audit.yml`
 5. The workflow itself refuses to run while Phase 1 acquisition is active.
-6. It pages the full `phase1-full-acquisition` run history and captures the latest **source-capable** run as the baseline snapshot. Push-triggered `[phase1-no-source]` runs are ignored because their acquisition jobs are suppressed; manual `workflow_dispatch` runs remain source-capable regardless of the underlying head-commit message. The selected baseline itself must have `status = completed`.
-7. It repeats the same source-capable full-history selection after provenance verification and fails if the baseline run ID or completion metadata changed, so an acquisition that starts and finishes during the audit still invalidates the evidence while unrelated no-source pushes do not.
-8. Only after that stability check passes does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
-9. Download the `phase1-cloud-provenance-<run_id>` artifact and retain
-   `phase1-cloud-provenance.json`.
+6. It pages the full `phase1-full-acquisition` history and selects the most recently **updated source-capable** run as the baseline. Push-triggered `[phase1-no-source]` runs are ignored because their acquisition jobs are suppressed; manual `workflow_dispatch` runs remain source-capable regardless of head-commit text. The selected baseline must have `status = completed`.
+7. It records an audit-guard UTC timestamp before that initial source-capable idle/baseline check, then re-scans the complete acquisition workflow history after provenance verification. Any source-capable run updated at or after that observable UTC second invalidates the evidence, including reruns that reuse older workflow run IDs.
+8. It repeats the source-capable baseline selection after provenance and requires the same baseline run ID **and** completion/activity timestamp. This catches pre-audit reruns through baseline selection and in-audit reruns through the guard, while unrelated no-source pushes do not invalidate evidence.
+9. Only after both stability checks pass does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
+10. Download the `phase1-cloud-provenance-<run_id>` artifact and retain both
+    `phase1-cloud-provenance.json` and `.phase1-final-acquisition-run-guard.json`.
 
 The verifier checks all 25,500 manifest bodies for exact Phase 1
 schema/identity/source semantics and, for every `complete` manifest, checks
@@ -132,7 +133,7 @@ Required result:
 - `planned_chunks = 25500`
 - `complete + not_found = 25500`
 - `issues = 0`
-- `acquisition_baseline_run_id` is a non-negative integer
+- `acquisition_baseline_run_id` is a positive integer
 - `acquisition_baseline_completed_at_utc` is a UTC-zero timestamp
 - both Evidence A and Evidence B `audited_at_utc` timestamps are at or after that acquisition baseline completion time
 - `acquisition_unchanged_during_verification = true`
