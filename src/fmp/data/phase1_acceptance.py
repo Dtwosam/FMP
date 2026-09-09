@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Mapping
 
 FROZEN_MANIFEST_TARGET = 25_500
@@ -40,7 +40,7 @@ def _aware_datetime(value: object) -> datetime | None:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return None
-    if parsed.tzinfo is None or parsed.utcoffset() is None:
+    if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
         return None
     return parsed
 
