@@ -639,6 +639,7 @@ class Phase1AcceptanceTests(unittest.TestCase):
                 json.dumps(
                     [
                         {
+                            "total_count": 2,
                             "workflow_runs": [
                                 {
                                     "id": 34113319817,
