@@ -261,6 +261,14 @@ class FinalCloudAuditWorkflowTests(unittest.TestCase):
         self.assertIn('for status in queued waiting pending in_progress; do', workflow)
         self.assertIn('runs?status=${status}&per_page=1', workflow)
         self.assertIn("active=$((active + count))", workflow)
+        self.assertIn("id: acquisition-baseline", workflow)
+        self.assertIn("latest_run_id=", workflow)
+        self.assertIn("steps.acquisition-baseline.outputs.latest_run_id", workflow)
+        self.assertIn("Refuse audit if acquisition changed during verification", workflow)
+        self.assertGreaterEqual(
+            workflow.count("actions/workflows/phase1-full-acquisition.yml/runs?per_page=1"),
+            2,
+        )
 
 
 if __name__ == "__main__":
