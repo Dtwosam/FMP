@@ -15,7 +15,10 @@ from .cloud_audit import (
     verify_cloud_keys,
 )
 from .coverage import build_coverage_report, verify_exact_keys, verify_snapshot
-from .acquisition_runs import select_acquisition_baseline
+from .acquisition_runs import (
+    flatten_complete_workflow_run_pages,
+    select_acquisition_baseline,
+)
 from .phase1_acceptance import evaluate_phase1_acceptance
 from .repair_plan import (
     ensure_no_source_capable_acquisition_updates_since,
@@ -234,59 +237,7 @@ def _load_workflow_runs(path: str) -> list[dict[str, object]]:
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"invalid GitHub workflow-runs JSON file: {path}") from exc
-    if not isinstance(payload, list) or not payload:
-        raise ValueError("GitHub workflow-runs snapshot must be a non-empty list of pages")
-
-    runs: list[dict[str, object]] = []
-    expected_total: int | None = None
-    seen_run_ids: set[int] = set()
-    for index, page in enumerate(payload):
-        if not isinstance(page, dict):
-            raise ValueError(f"GitHub workflow-runs page {index} must be an object")
-
-        total_count = page.get("total_count")
-        if (
-            not isinstance(total_count, int)
-            or isinstance(total_count, bool)
-            or total_count < 0
-        ):
-            raise ValueError(
-                f"GitHub workflow-runs page {index} has invalid total_count"
-            )
-        if expected_total is None:
-            expected_total = total_count
-        elif total_count != expected_total:
-            raise ValueError("GitHub workflow-runs pages have inconsistent total_count")
-
-        page_runs = page.get("workflow_runs")
-        if not isinstance(page_runs, list):
-            raise ValueError(
-                f"GitHub workflow-runs page {index} is missing workflow_runs"
-            )
-        for run_index, run in enumerate(page_runs):
-            if not isinstance(run, dict):
-                raise ValueError(
-                    f"GitHub workflow-runs page {index} run {run_index} must be an object"
-                )
-            run_id = run.get("id")
-            if (
-                not isinstance(run_id, int)
-                or isinstance(run_id, bool)
-                or run_id <= 0
-            ):
-                raise ValueError(
-                    f"GitHub workflow-runs page {index} run {run_index} has invalid id"
-                )
-            if run_id in seen_run_ids:
-                raise ValueError(f"GitHub workflow-runs snapshot has duplicate run id {run_id}")
-            seen_run_ids.add(run_id)
-            runs.append(run)
-
-    if expected_total is None or len(runs) != expected_total:
-        raise ValueError(
-            "GitHub workflow-runs snapshot total_count does not match flattened runs"
-        )
-    return runs
+    return flatten_complete_workflow_run_pages(payload)
 
 
 def _utc_datetime(value: object) -> datetime | None:
