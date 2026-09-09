@@ -468,6 +468,27 @@ class Phase1AcceptanceTests(unittest.TestCase):
             report["checks"]["accounting_not_after_provenance_history_guard"]
         )
 
+    def test_rejects_issue_samples_when_provenance_claims_zero_issues(self) -> None:
+        provenance = provenance_report()
+        provenance["issue_samples"] = [
+            {
+                "kind": "raw_checksum_mismatch",
+                "pair": "EURUSD",
+                "side": "BID",
+                "date_utc": "2024-01-02",
+                "detail": "unexpected diagnostic evidence",
+            }
+        ]
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["provenance_issue_samples_empty"])
+
     def test_rejects_wrong_provenance_snapshot_identity(self) -> None:
         provenance = provenance_report()
         provenance["plan_sha256"] = "0" * 64
