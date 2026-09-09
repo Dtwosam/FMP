@@ -862,6 +862,37 @@ Verification evidence:
 
 Operational consequence: after sweep 2 stops, deploy the tested repository `fmp-raw-ingest` first. The next current-`main` cloud-mirrored acquisition cannot proceed until that deployment advertises the exact hardened protocol.
 
+## Audit Edge JWT configuration — MERGED / VERIFIED / UNDEPLOYED
+
+PR #36 `[phase1-no-source] Phase 1: pin audit Edge JWT configuration` merged to `main` at:
+
+- `397f34a87e14fe495175e8032cf4cccc9fc4f882`
+
+Both Supabase Edge Functions use GitHub Actions OIDC tokens and perform their own issuer/audience/repository/workflow verification inside function code. Supabase's platform JWT gateway therefore must not pre-validate those requests as Supabase JWTs.
+
+Repository config now pins:
+
+- `[functions.fmp-raw-ingest] verify_jwt = false`;
+- `[functions.fmp-raw-audit] verify_jwt = false`.
+
+A regression test requires both settings. The final provenance runbook also requires reading back deployed `fmp-raw-audit` metadata and confirming `verify_jwt = false` before provenance execution.
+
+Live deployment observed before this change:
+
+- `fmp-raw-ingest` ACTIVE version 3;
+- `verify_jwt = false`;
+- live source is the older pre-PR31 implementation;
+- `fmp-raw-audit` remains undeployed.
+
+Verification evidence:
+
+- RED run `34376649181` failed exactly because `fmp-raw-audit` was absent from `supabase/config.toml`;
+- GREEN run `34376746736` passed after adding the audit function config and runbook verification;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Edge Function was deployed while repair sweep 2 is active.
+
+Operational requirement after sweep 2 stops: deploy the repository `fmp-raw-ingest` source containing PR #31 through PR #34 with `verify_jwt = false`, read back metadata/source to confirm deployment, then proceed to exhaustive audit/exact-gap work. Later, deploy `fmp-raw-audit` with `verify_jwt = false` only after structural/accounting completion.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
