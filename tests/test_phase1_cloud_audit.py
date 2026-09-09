@@ -343,17 +343,14 @@ class FinalCloudAuditWorkflowTests(unittest.TestCase):
         self.assertIn("phase1-cloud-provenance.json", workflow)
         self.assertGreaterEqual(workflow.count("gh api --paginate --slurp"), 2)
         self.assertIn("select_acquisition_baseline", workflow)
-        self.assertIn('for status in requested queued waiting pending in_progress; do', workflow)
-        self.assertIn('runs?status=${status}&per_page=1', workflow)
-        self.assertIn("active=$((active + count))", workflow)
+        self.assertNotIn('runs?status=${status}&per_page=1', workflow)
+        self.assertIn("no_source_runs_ignored=", workflow)
         self.assertIn("id: acquisition-baseline", workflow)
         self.assertIn("latest_run_id=", workflow)
         self.assertIn("steps.acquisition-baseline.outputs.latest_run_id", workflow)
         self.assertIn("Refuse audit if acquisition changed during verification", workflow)
         self.assertIn('report["acquisition_baseline_run_id"] = int(baseline)', workflow)
         self.assertIn("baseline_completed_at_utc=", workflow)
-        self.assertIn('baseline_status = latest.get("status")', workflow)
-        self.assertIn('baseline_status != "completed"', workflow)
         self.assertIn("steps.acquisition-baseline.outputs.baseline_completed_at_utc", workflow)
         self.assertIn(
             'report["acquisition_baseline_completed_at_utc"] = baseline_completed_at',
@@ -364,7 +361,7 @@ class FinalCloudAuditWorkflowTests(unittest.TestCase):
             workflow,
         )
         self.assertGreaterEqual(
-            workflow.count("actions/workflows/phase1-full-acquisition.yml/runs?per_page=1"),
+            workflow.count("actions/workflows/phase1-full-acquisition.yml/runs?per_page=100"),
             2,
         )
 
