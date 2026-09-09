@@ -63,6 +63,27 @@ class FakePutTransport:
         )
 
 
+class SequencedPutTransport:
+    def __init__(self, outcomes: list[CloudHttpResponse | BaseException]) -> None:
+        self.outcomes = list(outcomes)
+        self.calls: list[tuple[str, bytes, dict[str, str], float]] = []
+
+    def put(
+        self,
+        url: str,
+        body: bytes,
+        headers: dict[str, str],
+        timeout_seconds: float,
+    ) -> CloudHttpResponse:
+        self.calls.append((url, body, headers, timeout_seconds))
+        if not self.outcomes:
+            raise AssertionError("unexpected extra mirror PUT")
+        outcome = self.outcomes.pop(0)
+        if isinstance(outcome, BaseException):
+            raise outcome
+        return outcome
+
+
 class FakeMirrorTransport(FakePutTransport):
     def __init__(
         self,
@@ -265,6 +286,120 @@ class CloudMirrorTests(unittest.TestCase):
         self.assertEqual(sent_body, body)
         self.assertEqual(headers["Authorization"], "Bearer oidc-token")
         self.assertEqual(headers["x-fmp-sha256"], hashlib.sha256(body).hexdigest())
+
+    def test_put_object_retries_timeout_then_accepts_already_verified(self) -> None:
+        transport = SequencedPutTransport(
+            [
+                TimeoutError("read timed out"),
+                CloudHttpResponse(
+                    200,
+                    json.dumps(
+                        {
+                            "status": "already_verified",
+                            "path": "raw/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.bi5",
+                        }
+                    ).encode(),
+                ),
+            ]
+        )
+        sleeps: list[float] = []
+        mirror = SupabaseRawMirror(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-ingest",
+            token_provider=StaticTokenProvider(),
+            transport=transport,
+            max_attempts=3,
+            retry_delay_seconds=0.25,
+            sleep_fn=sleeps.append,
+        )
+        path = "raw/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.bi5"
+        body = b"immutable bytes"
+
+        self.assertEqual(mirror.put_object(path, body), "already_verified")
+        self.assertEqual(len(transport.calls), 2)
+        self.assertEqual(sleeps, [0.25])
+        self.assertEqual(transport.calls[0][1], transport.calls[1][1])
+        self.assertEqual(
+            transport.calls[0][2]["x-fmp-sha256"],
+            transport.calls[1][2]["x-fmp-sha256"],
+        )
+
+    def test_put_object_retries_transient_503_then_succeeds(self) -> None:
+        path = "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json"
+        transport = SequencedPutTransport(
+            [
+                CloudHttpResponse(503, b'{"error":"temporary"}'),
+                CloudHttpResponse(
+                    201,
+                    json.dumps({"status": "stored", "path": path}).encode(),
+                ),
+            ]
+        )
+        sleeps: list[float] = []
+        mirror = SupabaseRawMirror(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-ingest",
+            token_provider=StaticTokenProvider(),
+            transport=transport,
+            max_attempts=3,
+            retry_delay_seconds=0.25,
+            sleep_fn=sleeps.append,
+        )
+
+        self.assertEqual(mirror.put_object(path, b"{}"), "stored")
+        self.assertEqual(len(transport.calls), 2)
+        self.assertEqual(sleeps, [0.25])
+
+    def test_put_object_does_not_retry_immutable_conflict(self) -> None:
+        transport = SequencedPutTransport(
+            [
+                CloudHttpResponse(409, b'{"error":"immutable_conflict"}'),
+                CloudHttpResponse(201, b'{"status":"stored"}'),
+            ]
+        )
+        sleeps: list[float] = []
+        mirror = SupabaseRawMirror(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-ingest",
+            token_provider=StaticTokenProvider(),
+            transport=transport,
+            max_attempts=3,
+            retry_delay_seconds=0.25,
+            sleep_fn=sleeps.append,
+        )
+
+        with self.assertRaisesRegex(CloudMirrorError, "HTTP 409"):
+            mirror.put_object(
+                "raw/dukascopy/v1/USDJPY/2022/11/17/BID_candles_min_1.bi5",
+                b"different bytes",
+            )
+
+        self.assertEqual(len(transport.calls), 1)
+        self.assertEqual(sleeps, [])
+
+    def test_put_object_fails_after_bounded_timeouts(self) -> None:
+        transport = SequencedPutTransport(
+            [
+                TimeoutError("one"),
+                TimeoutError("two"),
+                TimeoutError("three"),
+            ]
+        )
+        sleeps: list[float] = []
+        mirror = SupabaseRawMirror(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-ingest",
+            token_provider=StaticTokenProvider(),
+            transport=transport,
+            max_attempts=3,
+            retry_delay_seconds=0.25,
+            sleep_fn=sleeps.append,
+        )
+
+        with self.assertRaisesRegex(CloudMirrorError, "after 3 attempts"):
+            mirror.put_object(
+                "manifests/dukascopy/v1/GBPUSD/2015/08/03/ASK_candles_min_1.json",
+                b"{}",
+            )
+
+        self.assertEqual(len(transport.calls), 3)
+        self.assertEqual(sleeps, [0.25, 0.25])
 
     def test_already_verified_is_success(self) -> None:
         mirror = SupabaseRawMirror(
