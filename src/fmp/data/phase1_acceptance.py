@@ -138,6 +138,9 @@ def evaluate_phase1_acceptance(
     acquisition_baseline_completed_at = _aware_datetime(
         provenance.get("acquisition_baseline_completed_at_utc")
     )
+    acquisition_history_guard_started_at = _aware_datetime(
+        provenance.get("acquisition_history_guard_started_at_utc")
+    )
     acceptance_time = now_utc or datetime.now(timezone.utc)
     if (
         acceptance_time.tzinfo is None
@@ -266,6 +269,21 @@ def evaluate_phase1_acceptance(
         "provenance_acquisition_baseline_not_future": (
             acquisition_baseline_completed_at is not None
             and acquisition_baseline_completed_at <= acceptance_time
+        ),
+        "provenance_acquisition_history_guard_version": _is_exact_int(
+            provenance.get("acquisition_history_guard_version"), 1
+        ),
+        "provenance_acquisition_history_guard_started_at_utc": (
+            acquisition_history_guard_started_at is not None
+        ),
+        "provenance_acquisition_history_guard_not_future": (
+            acquisition_history_guard_started_at is not None
+            and acquisition_history_guard_started_at <= acceptance_time
+        ),
+        "provenance_acquisition_history_guard_after_baseline": (
+            acquisition_history_guard_started_at is not None
+            and acquisition_baseline_completed_at is not None
+            and acquisition_history_guard_started_at >= acquisition_baseline_completed_at
         ),
         "provenance_acquisition_unchanged_during_verification": (
             provenance.get("acquisition_unchanged_during_verification") is True

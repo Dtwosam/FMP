@@ -388,6 +388,8 @@ class FinalCloudAuditWorkflowTests(unittest.TestCase):
             'report["acquisition_baseline_completed_at_utc"] = baseline_completed_at',
             workflow,
         )
+        self.assertIn('report["acquisition_history_guard_version"]', workflow)
+        self.assertIn('report["acquisition_history_guard_started_at_utc"]', workflow)
         self.assertIn(
             'report["acquisition_unchanged_during_verification"] = True',
             workflow,
