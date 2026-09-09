@@ -67,6 +67,12 @@ class Phase1RepairWorkflowTests(unittest.TestCase):
         self.assertIn("exact_gap_plan_sha256=", workflow)
         self.assertIn("exact_gap_chunks=", workflow)
 
+    def test_exact_gap_batch_rejects_github_reruns(self) -> None:
+        workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
+
+        self.assertIn("GITHUB_RUN_ATTEMPT", workflow)
+        self.assertIn("regenerate a fresh exact-gap plan", workflow)
+
     def test_acquisition_trigger_tags_are_mutually_exclusive(self) -> None:
         workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
 
