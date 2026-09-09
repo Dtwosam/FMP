@@ -546,6 +546,27 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Dukascopy source acquisition or Supabase deployment was introduced by this change.
 
+## Workflow YAML syntax validation — MERGED / VERIFIED
+
+PR #27 `[phase1-no-source] Phase 1: validate GitHub workflow YAML in CI` merged to `main` at:
+
+- `64fb767328296a03d31ab5a2277e50e806a6c385`
+
+The normal unit-test gate previously exercised workflow semantics with text assertions but did not syntax-parse every GitHub Actions YAML file. During PR #26 this allowed an intermediate malformed workflow commit to pass Python tests while GitHub separately rejected the workflow definition.
+
+CI now includes a dependency-free Ruby/Psych validator:
+
+- `scripts/validate_workflow_yaml.rb` syntax-parses every `.github/workflows/*.yml` / `.yaml` file;
+- `tests/test_workflow_yaml_validation.py` proves all repository workflows parse and proves malformed YAML is rejected;
+- `.github/workflows/tests.yml` runs workflow YAML validation before unit tests.
+
+Verification evidence:
+
+- RED run `34357268414` failed because the validator script did not yet exist;
+- GREEN run `34357358399` passed the new `Validate workflow YAML syntax` step, unit tests, and compile step;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Dukascopy acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
