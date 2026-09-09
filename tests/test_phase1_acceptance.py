@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from fmp.data.cli import build_parser
+from fmp.data.cli import _load_workflow_runs, build_parser
 from fmp.data.phase1_acceptance import evaluate_phase1_acceptance
 
 
@@ -496,6 +496,68 @@ class Phase1AcceptanceTests(unittest.TestCase):
                 ]
             )
 
+    def test_workflow_history_loader_rejects_truncated_pagination(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "workflow-runs.json"
+            path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "total_count": 2,
+                            "workflow_runs": [
+                                {
+                                    "id": 34113319817,
+                                    "event": "push",
+                                    "status": "completed",
+                                    "updated_at": "2026-09-09T11:42:29Z",
+                                    "head_commit": {
+                                        "message": "[phase1-repair-batch] repair"
+                                    },
+                                }
+                            ],
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "total_count"):
+                _load_workflow_runs(str(path))
+
+    def test_workflow_history_loader_rejects_inconsistent_page_totals(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "workflow-runs.json"
+            path.write_text(
+                json.dumps(
+                    [
+                        {"total_count": 2, "workflow_runs": [{"id": 1}]},
+                        {"total_count": 3, "workflow_runs": [{"id": 2}]},
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "total_count"):
+                _load_workflow_runs(str(path))
+
+    def test_workflow_history_loader_rejects_duplicate_run_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "workflow-runs.json"
+            path.write_text(
+                json.dumps(
+                    [
+                        {
+                            "total_count": 2,
+                            "workflow_runs": [{"id": 7}, {"id": 7}],
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "duplicate"):
+                _load_workflow_runs(str(path))
+
     def test_acceptance_cli_consumes_evidence_files_and_returns_zero(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -513,6 +575,7 @@ class Phase1AcceptanceTests(unittest.TestCase):
                 json.dumps(
                     [
                         {
+                            "total_count": 2,
                             "workflow_runs": [
                                 {
                                     "id": 34113319817,
