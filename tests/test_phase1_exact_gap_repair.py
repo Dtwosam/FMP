@@ -521,6 +521,19 @@ class ExactGapPlanTests(unittest.TestCase):
                 ),
             )
 
+    def test_load_exact_gap_plan_rejects_boolean_plan_version(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_plan(
+                Path(tmp),
+                [{"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}],
+            )
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["plan_version"] = True
+            path.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "plan_version"):
+                load_exact_gap_plan(path)
+
     def test_load_exact_gap_plan_rejects_unknown_chunk_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
