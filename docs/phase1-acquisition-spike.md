@@ -76,7 +76,7 @@ Full price-field decoding and quote sanity are Phase 2 responsibilities.
 
 HTTP 404 is recorded as a `not_found` acquisition manifest, not silently discarded and not automatically classified as a market-data defect. Phase 2 will distinguish expected market closures from suspicious gaps.
 
-A prior `not_found` manifest is resumable by default without another network request, but the operator can explicitly re-check it with `--recheck-not-found`. This matters for recently published history because a missing file can be temporary.
+A prior `not_found` manifest is resumable by default without another network request, but the operator can explicitly re-check it locally with `--recheck-not-found`. This matters for recently published history because a missing file can be temporary. Under DEC-013 this flag cannot be combined with cloud mirroring: V1 canonical cloud manifests are first-write stable and are not promoted in place from `not_found` to `complete`.
 
 ## Reproducibility
 
