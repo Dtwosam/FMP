@@ -755,6 +755,32 @@ Verification evidence:
 
 Operational requirement after sweep 2 stops: deploy the tested repository `fmp-raw-ingest` version containing PR #31 through PR #34 before any fresh exact-gap source pass.
 
+## Cloud `not_found` promotion policy — MERGED / VERIFIED
+
+PR #35 `[phase1-no-source] Phase 1: block cloud promotion of not_found manifests` merged to `main` at:
+
+- `8a682d204b04dfa22b9f9a9b5c8fb11690e46e92`
+
+DEC-013 now resolves the tension between explicit source rechecks and first-write cloud-manifest immutability.
+
+V1 policy:
+
+- `--recheck-not-found` remains available for local acquisition/revalidation;
+- combining `--recheck-not-found` with `--mirror-url` fails before GitHub OIDC setup and before any source request;
+- a canonical cloud `not_found` manifest is not promoted in place to `complete`;
+- this prevents the unsafe sequence where a later HTTP 200 stores raw first, then the immutable earlier `not_found` manifest rejects the substantive replacement and leaves raw + stale provenance;
+- any future cloud 404→200 transition requires an explicitly approved versioned-provenance design rather than mutation/deletion of canonical objects.
+
+No production acquisition workflow currently uses `--recheck-not-found`, so this guard does not alter repair sweep 2.
+
+Verification evidence:
+
+- RED run `34372389889` showed the incompatible flag combination proceeded into mirroring instead of failing before source/OIDC;
+- GREEN implementation run `34372492046` passed;
+- final PR-head run `34372638407` passed;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no source acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
@@ -781,15 +807,18 @@ Merged via PR #5 at commit `a2906a37f380dc6c4d27e90d46f15c2c2731d417`.
 ## Immediate next action
 
 1. Allow repair sweep 2 to continue under the existing single-source-runner lock; do not add parallel Dukascopy traffic.
-2. When sweep 2 stops, run the committed exhaustive cloud audit against the exact **25,500-manifest** frozen plan.
-3. If missing manifests remain, materialize `docs/phase1-exact-gap-queue.json` directly from `docs/phase1-exact-gap-audit.sql`.
-4. Trigger one `[phase1-exact-gap-batch]` sparse pass. Do **not** rerun the same workflow attempt after partial success/failure.
-5. After every sparse pass, generate a fresh cloud audit and fresh exact-gap plan from only still-missing chunks.
-6. Continue bounded exact-gap audit/repair cycles until missing manifests reach zero.
-7. Reconcile any remaining raw-only objects through immutable/idempotent repair semantics; never delete cloud raw data to make counts match.
-8. Run `docs/phase1-final-acceptance-audit.sql` plus the required provenance/recovery-accounting checks.
-9. Record Phase 1 PASS/checkpoint only after **25,500 / 25,500** and all integrity gates are proven.
-10. Keep Phase 2 locked until that PASS is recorded.
+2. When sweep 2 stops, confirm no source-capable `phase1-full-acquisition` run is requested/queued/waiting/pending/in-progress.
+3. Deploy the tested repository version of `fmp-raw-ingest` containing PR #31 through PR #34; verify the deployed source/version matches `main`. Do not trigger a source smoke merely to deploy it.
+4. Run the committed exhaustive cloud audit against the exact **25,500-manifest** frozen plan.
+5. If missing manifests remain, materialize a **fresh** `docs/phase1-exact-gap-queue.json` directly from `docs/phase1-exact-gap-audit.sql`.
+6. Trigger one `[phase1-exact-gap-batch]` sparse pass. Do **not** rerun the same workflow attempt after partial success/failure.
+7. After every sparse pass, generate a fresh cloud audit and fresh exact-gap plan from only still-missing chunks.
+8. Continue bounded exact-gap audit/repair cycles until missing manifests reach zero.
+9. Reconcile any remaining raw-only objects through immutable/idempotent repair semantics; never delete cloud raw data to make counts match.
+10. Run `docs/phase1-final-acceptance-audit.sql` plus the required provenance/recovery-accounting checks.
+11. Only after acquisition is idle **and** structural/accounting evidence is complete, deploy the separate read-only `fmp-raw-audit` and run the final cloud provenance workflow.
+12. Record Phase 1 PASS/checkpoint only after **25,500 / 25,500** and all integrity gates are proven.
+13. Keep Phase 2 locked until that PASS is recorded.
 
 ## Known open decisions
 
