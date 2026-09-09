@@ -473,6 +473,30 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Dukascopy source acquisition or Supabase deployment was introduced by this change.
 
+## Final evidence freshness vs acquisition baseline — MERGED / VERIFIED
+
+PR #24 `[phase1-no-source] Phase 1: bind final evidence to acquisition baseline time` merged to `main` at:
+
+- `99fb8bcd6686e70d745288c2ecb3ed58754e247f`
+
+The final acceptance combiner previously validated structural/accounting identities and provenance stability, but did not prove that the structural/accounting ledger reports were generated after the latest acquisition workflow used as the provenance baseline. A stale clean ledger report could therefore be paired with newer provenance evidence.
+
+The final cloud-provenance workflow now records the latest completed `phase1-full-acquisition` workflow `updated_at` timestamp as `acquisition_baseline_completed_at_utc` alongside the baseline run ID. The final acceptance combiner requires:
+
+- a valid timezone-aware acquisition baseline completion timestamp;
+- a valid timezone-aware structural `audited_at_utc`;
+- a valid timezone-aware accounting `audited_at_utc`;
+- both ledger audit timestamps to be at or after the acquisition baseline completion timestamp;
+- the existing acquisition-unchanged-during-verification stamp to remain true.
+
+Verification evidence:
+
+- RED run `34355560210` failed on stale structural evidence, stale accounting evidence, malformed baseline completion time, and missing workflow stamping;
+- GREEN implementation run `34355687877` passed;
+- docs-head GREEN run `34355823707` passed;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Dukascopy acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
