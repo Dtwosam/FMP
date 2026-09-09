@@ -200,6 +200,14 @@ class CloudSnapshotVerifierTests(unittest.TestCase):
         self.assertEqual(report["complete"], 1)
         self.assertEqual(report["not_found"], 1)
         self.assertEqual(report["issues"], 0)
+        self.assertEqual(
+            report["plan_sha256"],
+            "1fef91c801d1d09c286cb3bf27cc5e75a8d261fa505dac3029224107cc27afa8",
+        )
+        reversed_report = verify_cloud_keys(
+            [not_found, complete], FakeAuditClient(client.objects), batch_size=100
+        )
+        self.assertEqual(reversed_report["plan_sha256"], report["plan_sha256"])
         self.assertEqual(client.calls[0], [complete_manifest_path, not_found_manifest_path])
         self.assertEqual(client.calls[1], [raw_path])
 
