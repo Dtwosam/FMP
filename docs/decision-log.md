@@ -171,6 +171,7 @@ Rules:
 - final Phase 1 evidence ordering is baseline completion ≤ structural/accounting audit timestamps ≤ provenance history-guard start; reports outside that ordering fail acceptance;
 - `accept-phase1` requires a fresh paginated `phase1-full-acquisition` history snapshot; final PASS fails if any source-capable run was updated at or after the provenance history-guard boundary or if the current source-capable baseline ID/completion timestamp differs from provenance;
 - the final cloud-audit client must reject response protocol drift fail-closed: top-level response keys, typed integer `count`, per-kind object fields, path/order, kind, SHA-256, size, and manifest parse/body consistency are exact;
+- the live `accept-phase1` workflow-history snapshot must prove pagination completeness: every page must report the same non-negative integer `total_count`, flattened run count must equal that total, and workflow run IDs must be unique positive integers;
 - Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
 
 Implementation evidence: PR #12, merge commit `a6bf7e2ecf215cf65e99cc9653267abe9ddb4eb1`.
