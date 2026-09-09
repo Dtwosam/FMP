@@ -10,6 +10,7 @@ on:
       - 'supabase/functions/fmp-raw-ingest/**'
       - 'docs/phase1-full-acquisition-trigger.md'
       - 'docs/phase1-repair-queue.json'
+      - 'docs/phase1-exact-gap-queue.json'
   workflow_dispatch:
     inputs:
       repair_year:
@@ -37,7 +38,7 @@ env:
 
 jobs:
   cloud-smoke:
-    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]')
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -292,3 +293,28 @@ jobs:
             --start "${{ steps.repair-range.outputs.start }}" \
             --end "${{ steps.repair-range.outputs.end }}" \
             --out ".phase1-repair-${{ matrix.year }}-${{ matrix.month }}"
+
+
+  exact-gap-repair:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-exact-gap-batch]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire exact missing chunks only
+        run: |
+          python -m fmp.data.cli fetch-plan \
+            --plan docs/phase1-exact-gap-queue.json \
+            --out .phase1-exact-gap-repair \
+            --attempts 8 \
+            --source-delay 5 \
+            --continue-on-error \
+            --mirror-url "$FMP_RAW_INGEST_URL"
+      - name: Verify exact-gap repair provenance
+        run: |
+          python -m fmp.data.cli verify-plan \
+            --plan docs/phase1-exact-gap-queue.json \
+            --out .phase1-exact-gap-repair
