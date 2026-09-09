@@ -308,6 +308,7 @@ jobs:
         run: |
           python - <<'PY'
           import hashlib
+          import json
           import os
           from pathlib import Path
 
@@ -321,6 +322,23 @@ jobs:
           path = Path('docs/phase1-exact-gap-queue.json')
           keys = load_exact_gap_plan(path)
           digest = hashlib.sha256(path.read_bytes()).hexdigest()
+          plan = json.loads(path.read_text(encoding='utf-8'))
+          evidence = {
+              'evidence_version': 1,
+              'plan_path': path.as_posix(),
+              'exact_gap_plan_sha256': digest,
+              'exact_gap_chunks': len(keys),
+              'audited_at_utc': plan['audited_at_utc'],
+              'present_manifests_at_audit': plan['present_manifests_at_audit'],
+              'missing_manifests_at_audit': plan['missing_manifests_at_audit'],
+              'github_sha': os.environ.get('GITHUB_SHA'),
+              'github_run_id': os.environ.get('GITHUB_RUN_ID'),
+              'github_run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+          }
+          Path('.phase1-exact-gap-plan-evidence.json').write_text(
+              json.dumps(evidence, sort_keys=True, indent=2) + '\n',
+              encoding='utf-8',
+          )
           print(f'exact_gap_plan_sha256={digest}')
           print(f'exact_gap_chunks={len(keys)}')
           PY
@@ -337,4 +355,15 @@ jobs:
         run: |
           python -m fmp.data.cli verify-plan \
             --plan docs/phase1-exact-gap-queue.json \
-            --out .phase1-exact-gap-repair
+            --out .phase1-exact-gap-repair \
+            | tee .phase1-exact-gap-verification.json
+      - name: Persist exact-gap evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-gap-evidence-${{ github.run_id }}
+          path: |
+            .phase1-exact-gap-plan-evidence.json
+            .phase1-exact-gap-verification.json
+          if-no-files-found: warn
+          retention-days: 90
