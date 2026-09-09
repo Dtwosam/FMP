@@ -66,24 +66,12 @@ def _iter_days(start: date, end_exclusive: date) -> Iterable[date]:
         current += timedelta(days=1)
 
 
-def verify_snapshot(
+def _verify_keys(
     root: Path,
-    pairs: Iterable[str],
-    start: date,
-    end_exclusive: date,
+    keys: Iterable[RawChunkKey],
     *,
-    issue_sample_limit: int = 20,
-) -> dict[str, Any]:
-    """Verify acquisition completeness/provenance, not market-data quality.
-
-    Every planned pair/date/side must have a manifest. A complete manifest must
-    have a raw file whose SHA-256 matches. A not_found manifest must have no raw
-    file. Phase 2 remains responsible for deciding whether any source gap is
-    expected or suspicious.
-    """
-    if end_exclusive <= start:
-        raise ValueError("end must be after start")
-
+    issue_sample_limit: int,
+) -> tuple[dict[str, int], list[dict[str, str]], int]:
     counts = {
         "planned_chunks": 0,
         "complete": 0,
@@ -109,51 +97,48 @@ def verify_snapshot(
                 }
             )
 
-    for pair in pairs:
-        for day in _iter_days(start, end_exclusive):
-            for side in ("BID", "ASK"):
-                key = RawChunkKey(pair, side, day)  # type: ignore[arg-type]
-                counts["planned_chunks"] += 1
-                raw_path = root / "raw" / key.relative_raw_path
-                manifest_path = root / "manifests" / key.relative_manifest_path
-                if not manifest_path.is_file():
-                    add_issue("missing_manifest", key, str(manifest_path))
-                    continue
-                try:
-                    manifest = load_manifest(manifest_path)
-                except (OSError, ValueError) as exc:
-                    add_issue("invalid_manifest", key, str(exc))
-                    continue
+    for key in keys:
+        counts["planned_chunks"] += 1
+        raw_path = root / "raw" / key.relative_raw_path
+        manifest_path = root / "manifests" / key.relative_manifest_path
+        if not manifest_path.is_file():
+            add_issue("missing_manifest", key, str(manifest_path))
+            continue
+        try:
+            manifest = load_manifest(manifest_path)
+        except (OSError, ValueError) as exc:
+            add_issue("invalid_manifest", key, str(exc))
+            continue
 
-                expected_identity = (
-                    manifest.get("pair") == key.pair
-                    and manifest.get("side") == key.side
-                    and manifest.get("date_utc") == key.day.isoformat()
-                    and manifest.get("granularity") == "1m"
-                    and manifest.get("source") == "dukascopy"
-                )
-                if not expected_identity:
-                    add_issue("invalid_manifest", key, "manifest identity/provenance mismatch")
-                    continue
+        expected_identity = (
+            manifest.get("pair") == key.pair
+            and manifest.get("side") == key.side
+            and manifest.get("date_utc") == key.day.isoformat()
+            and manifest.get("granularity") == "1m"
+            and manifest.get("source") == "dukascopy"
+        )
+        if not expected_identity:
+            add_issue("invalid_manifest", key, "manifest identity/provenance mismatch")
+            continue
 
-                status = manifest.get("status")
-                if status == "complete":
-                    if not raw_path.is_file():
-                        add_issue("missing_raw", key, str(raw_path))
-                        continue
-                    expected_digest = manifest.get("sha256")
-                    actual_digest = _sha256_file(raw_path)
-                    if not expected_digest or actual_digest != expected_digest:
-                        add_issue("checksum_mismatch", key, str(raw_path))
-                        continue
-                    counts["complete"] += 1
-                elif status == "not_found":
-                    if raw_path.exists():
-                        add_issue("unexpected_raw", key, str(raw_path))
-                        continue
-                    counts["not_found"] += 1
-                else:
-                    add_issue("invalid_manifest", key, f"unsupported status: {status!r}")
+        status = manifest.get("status")
+        if status == "complete":
+            if not raw_path.is_file():
+                add_issue("missing_raw", key, str(raw_path))
+                continue
+            expected_digest = manifest.get("sha256")
+            actual_digest = _sha256_file(raw_path)
+            if not expected_digest or actual_digest != expected_digest:
+                add_issue("checksum_mismatch", key, str(raw_path))
+                continue
+            counts["complete"] += 1
+        elif status == "not_found":
+            if raw_path.exists():
+                add_issue("unexpected_raw", key, str(raw_path))
+                continue
+            counts["not_found"] += 1
+        else:
+            add_issue("invalid_manifest", key, f"unsupported status: {status!r}")
 
     issue_total = sum(
         counts[name]
@@ -164,6 +149,70 @@ def verify_snapshot(
             "unexpected_raw",
             "invalid_manifest",
         )
+    )
+    return counts, issue_samples, issue_total
+
+
+def verify_exact_keys(
+    root: Path,
+    keys: Iterable[RawChunkKey],
+    *,
+    issue_sample_limit: int = 20,
+) -> dict[str, Any]:
+    """Verify provenance for an explicit sparse repair plan only."""
+    planned = list(keys)
+    if not planned:
+        raise ValueError("exact verification requires at least one planned chunk")
+    if len(set(planned)) != len(planned):
+        raise ValueError("exact verification plan contains duplicate chunks")
+
+    counts, issue_samples, issue_total = _verify_keys(
+        root,
+        planned,
+        issue_sample_limit=issue_sample_limit,
+    )
+    return {
+        "report_version": 1,
+        "source": "dukascopy",
+        "granularity": "1m",
+        "scope": "exact_keys",
+        **counts,
+        "issues": issue_total,
+        "issue_samples": issue_samples,
+        "ready": issue_total == 0
+        and counts["complete"] + counts["not_found"] == counts["planned_chunks"],
+        "note": "ready means acquisition/provenance complete only; Phase 2 still determines data cleanliness.",
+    }
+
+
+def verify_snapshot(
+    root: Path,
+    pairs: Iterable[str],
+    start: date,
+    end_exclusive: date,
+    *,
+    issue_sample_limit: int = 20,
+) -> dict[str, Any]:
+    """Verify acquisition completeness/provenance, not market-data quality.
+
+    Every planned pair/date/side must have a manifest. A complete manifest must
+    have a raw file whose SHA-256 matches. A not_found manifest must have no raw
+    file. Phase 2 remains responsible for deciding whether any source gap is
+    expected or suspicious.
+    """
+    if end_exclusive <= start:
+        raise ValueError("end must be after start")
+
+    keys = [
+        RawChunkKey(pair, side, day)  # type: ignore[arg-type]
+        for pair in pairs
+        for day in _iter_days(start, end_exclusive)
+        for side in ("BID", "ASK")
+    ]
+    counts, issue_samples, issue_total = _verify_keys(
+        root,
+        keys,
+        issue_sample_limit=issue_sample_limit,
     )
     return {
         "report_version": 1,
