@@ -4,6 +4,7 @@ import {
 } from "jsr:@std/assert@1";
 import {
   assertTrustedGithubAuditClaims,
+  AUDIT_PROTOCOL,
   validateAuditPaths,
 } from "./validation.ts";
 
@@ -19,6 +20,10 @@ const trustedClaims = {
   workflow_ref:
     "Dtwosam/FMP/.github/workflows/phase1-final-cloud-audit.yml@refs/heads/main",
 };
+
+Deno.test("audit protocol is pinned for client preflight", () => {
+  assertEquals(AUDIT_PROTOCOL, "fmp-raw-audit-v1");
+});
 
 Deno.test("accepts trusted manual final-audit workflow identity", () => {
   assertEquals(assertTrustedGithubAuditClaims(trustedClaims), true);
