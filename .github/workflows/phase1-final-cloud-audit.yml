@@ -24,7 +24,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          active="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?status=in_progress&per_page=1" --jq '.total_count')"
+          active=0
+          for status in queued waiting pending in_progress; do
+            count="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?status=${status}&per_page=1" --jq '.total_count')"
+            active=$((active + count))
+          done
           if [ "$active" != "0" ]; then
             echo "Phase 1 acquisition is still active; final cloud audit requires a stable cloud snapshot."
             exit 2
