@@ -58,6 +58,15 @@ class Phase1RepairWorkflowTests(unittest.TestCase):
             workflow,
         )
 
+    def test_exact_gap_plan_is_validated_before_source_access(self) -> None:
+        workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
+
+        validate_index = workflow.index("Validate exact-gap plan before source access")
+        acquire_index = workflow.index("Acquire exact missing chunks only")
+        self.assertLess(validate_index, acquire_index)
+        self.assertIn("exact_gap_plan_sha256=", workflow)
+        self.assertIn("exact_gap_chunks=", workflow)
+
     def test_acquisition_trigger_tags_are_mutually_exclusive(self) -> None:
         workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
 
