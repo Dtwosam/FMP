@@ -5,6 +5,7 @@ import {
 import {
   assertTrustedGithubClaims,
   isStorageObjectNotFound,
+  manifestStorageInvariant,
   manifestsEquivalent,
   rawPathForNotFoundManifest,
   validateObjectPath,
@@ -133,5 +134,52 @@ Deno.test("storage missing-key errors are distinguished from other 404s", () => 
   assertEquals(
     isStorageObjectNotFound({ statusCode: "500", error: "InternalError" }),
     false,
+  );
+});
+
+
+Deno.test("complete manifest requires canonical raw expectation", () => {
+  const invariant = manifestStorageInvariant(
+    "manifests/dukascopy/v1/GBPUSD/2020/05/01/BID_candles_min_1.json",
+    {
+      status: "complete",
+      sha256: "a".repeat(64),
+      compressed_size_bytes: 321,
+    },
+  );
+  assertEquals(invariant, {
+    status: "complete",
+    rawPath: "raw/dukascopy/v1/GBPUSD/2020/05/01/BID_candles_min_1.bi5",
+    sha256: "a".repeat(64),
+    sizeBytes: 321,
+  });
+});
+
+Deno.test("complete manifest rejects missing or invalid raw metadata", () => {
+  const path =
+    "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json";
+  for (const manifest of [
+    { status: "complete", compressed_size_bytes: 123 },
+    { status: "complete", sha256: "not-a-sha", compressed_size_bytes: 123 },
+    { status: "complete", sha256: "a".repeat(64), compressed_size_bytes: 0 },
+    { status: "complete", sha256: "a".repeat(64), compressed_size_bytes: 12.5 },
+  ]) {
+    assertThrows(
+      () => manifestStorageInvariant(path, manifest),
+      Error,
+      "complete manifest",
+    );
+  }
+});
+
+Deno.test("manifest storage invariant rejects unknown status", () => {
+  assertThrows(
+    () =>
+      manifestStorageInvariant(
+        "manifests/dukascopy/v1/USDJPY/2024/00/02/ASK_candles_min_1.json",
+        { status: "mystery" },
+      ),
+    Error,
+    "status",
   );
 });
