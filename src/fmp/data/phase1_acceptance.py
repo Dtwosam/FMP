@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping
 
 FROZEN_MANIFEST_TARGET = 25_500
@@ -109,6 +109,8 @@ def evaluate_phase1_acceptance(
     structural: Mapping[str, object],
     accounting: Mapping[str, object],
     provenance: Mapping[str, object],
+    *,
+    now_utc: datetime | None = None,
 ) -> dict[str, Any]:
     """Combine independent Phase 1 evidence into one fail-closed decision.
 
@@ -136,6 +138,12 @@ def evaluate_phase1_acceptance(
     acquisition_baseline_completed_at = _aware_datetime(
         provenance.get("acquisition_baseline_completed_at_utc")
     )
+    acceptance_time = now_utc or datetime.now(timezone.utc)
+    if (
+        acceptance_time.tzinfo is None
+        or acceptance_time.utcoffset() != timedelta(0)
+    ):
+        raise ValueError("Phase 1 acceptance clock must use UTC")
 
     checks: dict[str, bool] = {
         "structural_report_version": _is_exact_int(structural.get("report_version"), 1),
@@ -163,6 +171,10 @@ def evaluate_phase1_acceptance(
             structural.get("unexpected_raw_paths"), 0
         ),
         "structural_audited_at_utc_valid": structural_audited_at is not None,
+        "structural_audited_at_not_future": (
+            structural_audited_at is not None
+            and structural_audited_at <= acceptance_time
+        ),
         "structural_after_acquisition_baseline": (
             structural_audited_at is not None
             and acquisition_baseline_completed_at is not None
@@ -206,6 +218,10 @@ def evaluate_phase1_acceptance(
             )
         ),
         "accounting_audited_at_utc_valid": accounting_audited_at is not None,
+        "accounting_audited_at_not_future": (
+            accounting_audited_at is not None
+            and accounting_audited_at <= acceptance_time
+        ),
         "accounting_after_acquisition_baseline": (
             accounting_audited_at is not None
             and acquisition_baseline_completed_at is not None
@@ -246,6 +262,10 @@ def evaluate_phase1_acceptance(
         ),
         "provenance_acquisition_baseline_completed_at_utc": (
             acquisition_baseline_completed_at is not None
+        ),
+        "provenance_acquisition_baseline_not_future": (
+            acquisition_baseline_completed_at is not None
+            and acquisition_baseline_completed_at <= acceptance_time
         ),
         "provenance_acquisition_unchanged_during_verification": (
             provenance.get("acquisition_unchanged_during_verification") is True
