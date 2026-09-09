@@ -421,6 +421,34 @@ Verification:
 - GREEN run `34350032666` passed after explicit subcounter checks were added;
 - network/golden source checks skipped under `[phase1-no-source]`.
 
+## Final cloud-provenance snapshot stability — MERGED / VERIFIED
+
+PR #22 `[phase1-no-source] Phase 1: fail final audit on concurrent acquisition` merged to `main` at:
+
+- `cbf9dc376cae4ebda1150d7eba2d1785ffef4d24`
+
+The final 25,500-key cloud provenance workflow previously verified that Phase 1 acquisition was idle only before the audit began. Because `phase1-final-cloud-audit` and `phase1-full-acquisition` use separate concurrency groups, a full/repair/exact-gap acquisition run could otherwise begin while provenance verification was already scanning the cloud snapshot.
+
+The workflow now:
+
+- rejects any queued/waiting/pending/in-progress `phase1-full-acquisition` run before verification;
+- records the latest acquisition workflow run ID as the audit baseline;
+- re-reads that latest run ID after the full provenance scan and fails if it changed, catching even an acquisition that starts and finishes during verification;
+- stamps `phase1-cloud-provenance.json` with `acquisition_baseline_run_id` and `acquisition_unchanged_during_verification = true` only after the post-verification stability check passes;
+- keeps artifact upload fail-safe, but the final acceptance combiner now rejects provenance evidence unless the stability stamp and a valid baseline run ID are present.
+
+This deliberately does not share the acquisition concurrency group: GitHub concurrency permits only one pending run per group and a newer pending run can replace an older one, so using a shared group for the audit could disturb legitimate recovery scheduling.
+
+Verification evidence:
+
+- RED run `34350773788` failed because the workflow lacked the run-ID stability guard;
+- workflow guard GREEN run `34350844521` passed;
+- RED run `34350929083` proved the final combiner still accepted provenance whose acquisition-stability stamp was false;
+- final GREEN run `34351058998` passed after binding the stamp into the acceptance gate;
+- docs-head GREEN run `34351121434` passed;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Supabase function was deployed and no Dukascopy source acquisition was started by this work.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
