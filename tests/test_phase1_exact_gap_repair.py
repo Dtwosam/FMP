@@ -81,6 +81,42 @@ class ExactGapPlanTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "frozen"):
                 load_exact_gap_plan(path)
 
+    def test_load_exact_gap_plan_rejects_unknown_root_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "exact-gaps.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "plan_version": 1,
+                        "frozen_start_date": "2015-01-01",
+                        "frozen_end_date_exclusive": "2026-08-21",
+                        "chunks": [
+                            {"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}
+                        ],
+                        "months": ["2024-01"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "root"):
+                load_exact_gap_plan(path)
+
+    def test_load_exact_gap_plan_rejects_noncanonical_chunk_order(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = self._write_plan(
+                root,
+                [
+                    {"pair": "EURUSD", "side": "BID", "date_utc": "2024-06-11"},
+                    {"pair": "GBPUSD", "side": "ASK", "date_utc": "2019-05-03"},
+                ],
+            )
+
+            with self.assertRaisesRegex(ValueError, "canonical"):
+                load_exact_gap_plan(path)
+
     def test_load_exact_gap_plan_rejects_unknown_chunk_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
