@@ -594,6 +594,30 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Dukascopy acquisition or Supabase deployment was introduced by this change.
 
+## Exact-gap manual-dispatch classification — MERGED / VERIFIED
+
+PR #29 `[phase1-no-source] Phase 1: treat manual exact-gap predecessors as source-capable` merged to `main` at:
+
+- `6dceb5191957e46f506827c58473378c4b9f7a16`
+
+The intervening-acquisition guard added by PR #28 initially ignored any workflow run whose head commit message contained `[phase1-no-source]`. That classification is correct for push-triggered runs because all push acquisition jobs explicitly suppress source access under that tag, but it is not correct for manual `workflow_dispatch`: manual full/targeted acquisition can still run from a commit whose message happens to contain the tag.
+
+The guard now:
+
+- ignores `[phase1-no-source]` only when the workflow run event is `push`;
+- continues to exclude the current exact-gap run;
+- treats manual `workflow_dispatch` runs as source-capable regardless of the underlying head-commit message;
+- therefore rejects a sparse plan if such a manual run was updated after the plan audit.
+
+DEC-012 and the acquisition trigger runbook now state this push-only exemption explicitly.
+
+Verification evidence:
+
+- RED run `34364290527` failed exactly because a manual dispatch with a no-source head message was incorrectly ignored;
+- GREEN run `34364388003` passed workflow YAML validation, unit tests, and compile;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Dukascopy acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
