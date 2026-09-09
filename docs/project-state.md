@@ -521,6 +521,31 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Dukascopy acquisition or Supabase deployment was introduced by this change.
 
+## Final cloud-audit baseline race guard — MERGED / VERIFIED
+
+PR #26 `[phase1-no-source] Phase 1: require completed final-audit baseline` merged to `main` at:
+
+- `9669152ef6ad40c3e3fb96f1589b12f848c873fc`
+
+The final audit already rejected known active acquisition statuses before capturing its acquisition baseline, but there was still a race: a new acquisition run could be created after the status scan and before baseline capture. The latest run ID could then be captured from a non-completed run.
+
+The baseline capture now reads one GitHub API response and validates the captured latest `phase1-full-acquisition` run atomically:
+
+- a positive integer run ID is required;
+- the captured run must itself have `status = completed`;
+- the captured run must have a non-empty completion/update timestamp;
+- only then are the baseline run ID and completion timestamp exported for provenance verification.
+
+Verification evidence:
+
+- RED run `34356363553` failed because the workflow did not validate the captured baseline status;
+- first implementation commit `32453933ede64bf8a3db9a84c9fd40216081434c` exposed an invalid-workflow regression before merge; GitHub rejected `.github/workflows/phase1-final-cloud-audit.yml` in run `34356447055`;
+- the workflow was restored from `main` and the atomic baseline capture was reimplemented safely at `8a760f92a7657e95a34be73f46a939361fab88a7`;
+- final GREEN unit run `34356594966` passed;
+- docs-head GREEN run `34356647166` passed;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Dukascopy source acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
