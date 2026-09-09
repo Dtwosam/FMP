@@ -341,6 +341,52 @@ class ExactGapPlanTests(unittest.TestCase):
                 current_run_id=999,
             )
 
+    def test_exact_gap_guard_rejects_non_utc_workflow_updated_at(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_plan(
+                Path(tmp),
+                [{"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}],
+            )
+            runs = [
+                {
+                    "id": 206,
+                    "event": "push",
+                    "updated_at": "2026-09-09T10:30:00+01:00",
+                    "head_commit": {"message": "[phase1-repair-batch] repair"},
+                }
+            ]
+
+            with self.assertRaisesRegex(ValueError, "must use UTC"):
+                __import__(
+                    "fmp.data.repair_plan",
+                    fromlist=["x"],
+                ).ensure_no_intervening_acquisition_runs(
+                    path,
+                    runs,
+                    current_run_id=999,
+                )
+
+    def test_final_history_guard_rejects_non_utc_workflow_updated_at(self) -> None:
+        runs = [
+            {
+                "id": 207,
+                "event": "push",
+                "updated_at": "2026-09-09T10:30:00+01:00",
+                "head_commit": {"message": "[phase1-repair-batch] repair"},
+            }
+        ]
+
+        with self.assertRaisesRegex(ValueError, "must use UTC"):
+            __import__(
+                "fmp.data.repair_plan",
+                fromlist=["x"],
+            ).ensure_no_source_capable_acquisition_updates_since(
+                runs,
+                guard_started_at_utc=datetime(
+                    2026, 9, 9, 10, 0, 0, tzinfo=timezone.utc
+                ),
+            )
+
     def test_no_source_run_after_audit_does_not_invalidate_exact_gap_plan(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = self._write_plan(
