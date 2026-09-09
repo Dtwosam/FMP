@@ -198,12 +198,16 @@ class SupabaseRawAuditClient:
             raise CloudAuditError(
                 f"Supabase raw audit failed with HTTP {response.status}: {payload}"
             )
-        if not isinstance(payload, dict) or payload.get("status") != "audited":
+        if not isinstance(payload, dict) or set(payload) != {"status", "count", "objects"}:
+            raise CloudAuditError("Supabase raw audit response schema was invalid")
+        if payload.get("status") != "audited":
             raise CloudAuditError("Supabase raw audit response status was invalid")
         objects = payload.get("objects")
         count = payload.get("count")
         if (
-            not isinstance(objects, list)
+            not isinstance(count, int)
+            or isinstance(count, bool)
+            or not isinstance(objects, list)
             or count != len(paths)
             or len(objects) != len(paths)
         ):
@@ -213,9 +217,14 @@ class SupabaseRawAuditClient:
         for expected_path, item in zip(paths, objects, strict=True):
             if not isinstance(item, dict):
                 raise CloudAuditError("Supabase raw audit object was not a JSON object")
+            expected_kind = "manifest" if expected_path.endswith(".json") else "raw"
+            expected_fields = {"path", "kind", "sha256", "size_bytes"}
+            if expected_kind == "manifest":
+                expected_fields |= {"manifest_json", "manifest_parse_error"}
+            if set(item) != expected_fields:
+                raise CloudAuditError("Supabase raw audit object schema was invalid")
             if item.get("path") != expected_path:
                 raise CloudAuditError("Supabase raw audit response path/order mismatch")
-            expected_kind = "manifest" if expected_path.endswith(".json") else "raw"
             if item.get("kind") != expected_kind:
                 raise CloudAuditError("Supabase raw audit response kind mismatch")
             digest = item.get("sha256")
@@ -224,6 +233,22 @@ class SupabaseRawAuditClient:
                 raise CloudAuditError("Supabase raw audit response had invalid SHA-256")
             if not isinstance(size, int) or isinstance(size, bool) or size < 0:
                 raise CloudAuditError("Supabase raw audit response had invalid size")
+            if expected_kind == "manifest":
+                parse_error = item.get("manifest_parse_error")
+                manifest_json = item.get("manifest_json")
+                if not isinstance(parse_error, bool):
+                    raise CloudAuditError(
+                        "Supabase raw audit manifest parse flag was invalid"
+                    )
+                if parse_error:
+                    if manifest_json is not None:
+                        raise CloudAuditError(
+                            "Supabase raw audit malformed manifest response was inconsistent"
+                        )
+                elif not isinstance(manifest_json, dict):
+                    raise CloudAuditError(
+                        "Supabase raw audit parsed manifest response was invalid"
+                    )
             validated.append(item)
         return validated
 
