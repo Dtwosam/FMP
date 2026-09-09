@@ -134,6 +134,21 @@ class Phase1AcceptanceTests(unittest.TestCase):
         self.assertFalse(report["checks"]["raw_backed_equals_provenance_complete"])
         self.assertFalse(report["checks"]["inferred_not_found_equals_provenance_not_found"])
 
+    def test_rejects_inconsistent_provenance_issue_subcount(self) -> None:
+        provenance = provenance_report()
+        provenance["raw_checksum_mismatch"] = 1
+        provenance["issues"] = 0
+        provenance["ready"] = True
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["provenance_raw_checksum_mismatch_zero"])
+
     def test_rejects_cloud_provenance_that_does_not_cover_full_frozen_plan(self) -> None:
         provenance = provenance_report()
         provenance["planned_chunks"] = 25499
