@@ -32,6 +32,20 @@ bar correctness; those remain Phase 2.
 5. The read-only `fmp-raw-audit` Edge Function must not be deployed until
    acquisition is idle and the structural snapshot is complete.
 
+## Raw-only reconciliation before final evidence
+
+If the structural audit shows planned raw objects without matching manifests, do not delete or overwrite those raw objects.
+
+The supported recovery path is the fresh exact-gap repair cycle:
+
+1. The missing manifest causes that exact pair/date/side key to appear in the fresh exact-gap plan.
+2. The runner reacquires the source chunk and validates it locally.
+3. Cloud mirroring writes/verifies the raw object **before** attempting the manifest object.
+4. If the refetched raw bytes match the immutable cloud raw, the ingest layer returns success/already-verified and the canonical manifest can then be mirrored.
+5. If the refetched raw bytes differ, the immutable raw PUT fails and manifest upload is never attempted. Stop and investigate; never create a manifest that blesses different bytes and never delete the original raw to force accounting to pass.
+
+This ordering is a Phase 1 safety property. Final Evidence A/B must still show `raw_without_manifest = 0` before provenance verification begins.
+
 ## Evidence A — Structural cloud ledger
 
 Run:
