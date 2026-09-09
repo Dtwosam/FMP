@@ -162,6 +162,56 @@ class CloudAuditClientTests(unittest.TestCase):
         self.assertEqual(json.loads(body), {"paths": [path]})
         self.assertEqual(headers["Authorization"], "Bearer oidc-token")
 
+    def test_client_rejects_boolean_count(self) -> None:
+        path = "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json"
+        client = SupabaseRawAuditClient(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-audit",
+            token_provider=StaticTokenProvider(),
+            transport=FakePostTransport(
+                {
+                    "status": "audited",
+                    "count": True,
+                    "objects": [audit_manifest(path, {})],
+                }
+            ),
+        )
+
+        with self.assertRaisesRegex(CloudAuditError, "count"):
+            client.audit_paths([path])
+
+    def test_client_rejects_extra_top_level_response_field(self) -> None:
+        path = "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json"
+        client = SupabaseRawAuditClient(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-audit",
+            token_provider=StaticTokenProvider(),
+            transport=FakePostTransport(
+                {
+                    "status": "audited",
+                    "count": 1,
+                    "objects": [audit_manifest(path, {})],
+                    "protocol": "unexpected",
+                }
+            ),
+        )
+
+        with self.assertRaisesRegex(CloudAuditError, "schema"):
+            client.audit_paths([path])
+
+    def test_client_rejects_extra_manifest_audit_field(self) -> None:
+        path = "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json"
+        item = audit_manifest(path, {})
+        item["unexpected"] = True
+        client = SupabaseRawAuditClient(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-audit",
+            token_provider=StaticTokenProvider(),
+            transport=FakePostTransport(
+                {"status": "audited", "count": 1, "objects": [item]}
+            ),
+        )
+
+        with self.assertRaisesRegex(CloudAuditError, "schema"):
+            client.audit_paths([path])
+
     def test_client_rejects_malformed_response(self) -> None:
         client = SupabaseRawAuditClient(
             endpoint="https://example.supabase.co/functions/v1/fmp-raw-audit",
