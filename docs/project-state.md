@@ -642,6 +642,36 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Dukascopy acquisition or Supabase deployment was introduced by this change.
 
+## Raw-only 404 cross-object ingest guard — MERGED / VERIFIED / UNDEPLOYED
+
+PR #31 `[phase1-no-source] Phase 1: reject not_found manifests beside existing raw` merged to `main` at:
+
+- `e15de09f70939453db0c59a01bd4c94a7b684d28`
+
+A raw-only exact-gap key can be dangerous if a later source retry returns HTTP 404: without a cross-object guard, a new `not_found` manifest could be stored beside an already-existing immutable raw object. Final acceptance would detect the inconsistency later, but the immutable manifest would make recovery materially harder.
+
+The repository `fmp-raw-ingest` source now protects this state before upload:
+
+- canonical `not_found` manifests map to their exact raw counterpart path;
+- the ingest function checks that raw path with a private Storage download using `cache: no-store`;
+- if raw exists, the manifest is rejected with HTTP 409 `raw_present_for_not_found_manifest`;
+- only verified missing-key/not-found Storage errors are treated as absence;
+- any other Storage lookup error fails closed;
+- complete manifests and normal raw uploads retain the existing immutable/idempotent behavior.
+
+DEC-012, the final acceptance runbook, and the ingest README now record this rule.
+
+Verification evidence:
+
+- RED Edge run `34368654147` failed exactly because the new helper exports were absent;
+- GREEN implementation Edge run `34368795330` passed Deno tests and entrypoint type-check;
+- GREEN final Edge run `34368975336` passed;
+- Python/test workflow `34368975076` passed;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- **the Edge Function was not deployed while repair sweep 2 is active**.
+
+Operational requirement after sweep 2 stops: deploy the tested repository version of `fmp-raw-ingest` before any fresh exact-gap pass that may include the known raw-only keys. This is separate from `fmp-raw-audit`, which remains undeployed until the final structural/provenance stage.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
