@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -321,6 +322,54 @@ class Phase1AcceptanceTests(unittest.TestCase):
         self.assertFalse(report["ready"])
         self.assertFalse(
             report["checks"]["provenance_acquisition_baseline_completed_at_utc"]
+        )
+
+    def test_rejects_future_structural_audit_timestamp(self) -> None:
+        structural = structural_report()
+        structural["audited_at_utc"] = "2099-01-01T00:00:00Z"
+
+        report = evaluate_phase1_acceptance(
+            structural,
+            accounting_report(),
+            provenance_report(),
+            now_utc=datetime(2026, 9, 9, 18, 0, tzinfo=timezone.utc),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["structural_audited_at_not_future"])
+
+    def test_rejects_future_accounting_audit_timestamp(self) -> None:
+        accounting = accounting_report()
+        accounting["audited_at_utc"] = "2099-01-01T00:00:00Z"
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting,
+            provenance_report(),
+            now_utc=datetime(2026, 9, 9, 18, 0, tzinfo=timezone.utc),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["accounting_audited_at_not_future"])
+
+    def test_rejects_future_acquisition_baseline_completion_time(self) -> None:
+        structural = structural_report()
+        accounting = accounting_report()
+        provenance = provenance_report()
+        provenance["acquisition_baseline_completed_at_utc"] = "2099-01-01T00:00:00Z"
+        structural["audited_at_utc"] = "2099-01-01T00:01:00Z"
+        accounting["audited_at_utc"] = "2099-01-01T00:01:00Z"
+
+        report = evaluate_phase1_acceptance(
+            structural,
+            accounting,
+            provenance,
+            now_utc=datetime(2026, 9, 9, 18, 0, tzinfo=timezone.utc),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(
+            report["checks"]["provenance_acquisition_baseline_not_future"]
         )
 
     def test_rejects_wrong_provenance_snapshot_identity(self) -> None:
