@@ -363,6 +363,21 @@ class CloudSnapshotVerifierTests(unittest.TestCase):
         self.assertFalse(report["ready"])
         self.assertEqual(report["raw_checksum_mismatch"], 1)
 
+    def test_manifest_version_must_be_exact_integer(self) -> None:
+        key = RawChunkKey("EURUSD", "BID", date(2024, 1, 2))
+        manifest_path = "manifests/" + key.relative_manifest_path.as_posix()
+        bad = manifest_payload(key)
+        bad["manifest_version"] = True
+        client = FakeAuditClient(
+            {manifest_path: audit_manifest(manifest_path, bad)}
+        )
+
+        report = verify_cloud_keys([key], client)
+
+        self.assertFalse(report["ready"])
+        self.assertEqual(report["invalid_manifest"], 1)
+        self.assertEqual(len(client.calls), 1)
+
     def test_manifest_retrieval_timestamp_must_use_utc(self) -> None:
         key = RawChunkKey("EURUSD", "BID", date(2024, 1, 2))
         manifest_path = "manifests/" + key.relative_manifest_path.as_posix()
