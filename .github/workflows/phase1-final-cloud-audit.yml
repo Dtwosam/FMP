@@ -152,6 +152,11 @@ jobs:
 
           path = Path("phase1-cloud-provenance.json")
           report = json.loads(path.read_text(encoding="utf-8"))
+          guard = json.loads(
+              Path(".phase1-final-acquisition-run-guard.json").read_text(
+                  encoding="utf-8"
+              )
+          )
           baseline = os.environ["BASELINE_RUN_ID"]
           baseline_completed_at = os.environ["BASELINE_COMPLETED_AT_UTC"]
           if not baseline.isdigit():
@@ -160,6 +165,10 @@ jobs:
               raise SystemExit("missing acquisition baseline completion time")
           report["acquisition_baseline_run_id"] = int(baseline)
           report["acquisition_baseline_completed_at_utc"] = baseline_completed_at
+          report["acquisition_history_guard_version"] = guard["guard_version"]
+          report["acquisition_history_guard_started_at_utc"] = guard[
+              "guard_started_at_utc"
+          ]
           report["acquisition_unchanged_during_verification"] = True
           path.write_text(
               json.dumps(report, sort_keys=True, indent=2) + "\n",
