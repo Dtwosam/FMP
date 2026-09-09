@@ -15,6 +15,7 @@ from .cloud_audit import (
     verify_cloud_keys,
 )
 from .coverage import build_coverage_report, verify_exact_keys, verify_snapshot
+from .phase1_acceptance import evaluate_phase1_acceptance
 from .repair_plan import load_exact_gap_plan
 from .types import RawChunkKey
 
@@ -205,6 +206,30 @@ def run_verify_cloud(args: argparse.Namespace) -> int:
     return 0 if report["ready"] else 2
 
 
+def _load_json_object(path: str) -> dict[str, object]:
+    try:
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"invalid JSON evidence file: {path}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"JSON evidence file must contain an object: {path}")
+    return payload
+
+
+def run_accept_phase1(args: argparse.Namespace) -> int:
+    structural = _load_json_object(args.structural_json)
+    accounting = _load_json_object(args.accounting_json)
+    if (
+        set(accounting) == {"phase1_recovery_accounting"}
+        and isinstance(accounting["phase1_recovery_accounting"], dict)
+    ):
+        accounting = accounting["phase1_recovery_accounting"]
+    provenance = _load_json_object(args.provenance_json)
+    report = evaluate_phase1_acceptance(structural, accounting, provenance)
+    print(json.dumps(report, sort_keys=True, indent=2))
+    return 0 if report["ready"] else 2
+
+
 def _add_fetch_runtime_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--out", default="data")
     parser.add_argument("--timeout", type=float, default=30.0)
@@ -283,6 +308,15 @@ def build_parser() -> argparse.ArgumentParser:
     verify_cloud.add_argument("--batch-size", type=int, default=100)
     verify_cloud.add_argument("--timeout", type=float, default=60.0)
     verify_cloud.set_defaults(func=run_verify_cloud)
+
+    accept_phase1 = sub.add_parser(
+        "accept-phase1",
+        help="combine structural, recovery-accounting, and cloud-provenance evidence",
+    )
+    accept_phase1.add_argument("--structural-json", required=True)
+    accept_phase1.add_argument("--accounting-json", required=True)
+    accept_phase1.add_argument("--provenance-json", required=True)
+    accept_phase1.set_defaults(func=run_accept_phase1)
     return parser
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -227,6 +228,14 @@ class SupabaseRawAuditClient:
         return validated
 
 
+def _plan_sha256(keys: Iterable[RawChunkKey]) -> str:
+    canonical = "\n".join(
+        f"{key.day.isoformat()}|{key.pair}|{key.side}"
+        for key in sorted(keys, key=lambda key: (key.day, key.pair, key.side))
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def _iter_batches(items: list[str], batch_size: int) -> Iterable[list[str]]:
     for offset in range(0, len(items), batch_size):
         yield items[offset : offset + batch_size]
@@ -395,6 +404,7 @@ def verify_cloud_keys(
         "source": "dukascopy",
         "granularity": "1m",
         "scope": "cloud_snapshot_provenance",
+        "plan_sha256": _plan_sha256(planned),
         **counts,
         "issues": issue_total,
         "issue_samples": issue_samples,
