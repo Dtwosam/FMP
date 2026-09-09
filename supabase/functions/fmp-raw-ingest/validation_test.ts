@@ -4,6 +4,7 @@ import {
 } from "jsr:@std/assert@1";
 import {
   assertTrustedGithubClaims,
+  INGEST_PROTOCOL,
   isStorageObjectNotFound,
   manifestStorageInvariant,
   manifestsEquivalent,
@@ -50,6 +51,10 @@ const trustedClaims = {
   workflow_ref:
     "Dtwosam/FMP/.github/workflows/phase1-full-acquisition.yml@refs/heads/main",
 };
+
+Deno.test("ingest protocol is pinned for client preflight", () => {
+  assertEquals(INGEST_PROTOCOL, "fmp-raw-ingest-v2");
+});
 
 Deno.test("accepts trusted workflow-dispatch identity", () => {
   assertEquals(assertTrustedGithubClaims(trustedClaims), true);

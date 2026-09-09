@@ -111,6 +111,7 @@ def _run_fetch_keys(args: argparse.Namespace, keys: Iterable[RawChunkKey]) -> in
             endpoint=args.mirror_url,
             token_provider=GithubOidcTokenProvider.from_environment(),
         )
+        mirror.preflight()
 
     def configured_acquire(key: RawChunkKey, configured_root: Path) -> AcquisitionResult:
         return acquire_chunk(

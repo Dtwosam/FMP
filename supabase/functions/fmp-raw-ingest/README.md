@@ -21,3 +21,14 @@ Before immutable manifest storage, the ingest function requires the exact frozen
 ## Frozen object namespace
 
 Canonical raw and manifest paths are accepted only when their zero-based year/month/day components resolve to a real Gregorian date in the frozen Phase 1 interval, 2015-01-01 through 2026-08-20 inclusive. Regex-shaped impossible dates and paths outside that interval are rejected before Storage access.
+
+
+## Protocol preflight
+
+Authenticated GitHub Actions callers may send `GET` to the function endpoint. A deployment that matches the hardened Phase 1 ingest contract returns exactly:
+
+```json
+{"status":"ready","protocol":"fmp-raw-ingest-v2"}
+```
+
+The Python mirror client requires this response before any cloud-mirrored source acquisition. This makes a stale or incorrectly deployed ingest endpoint fail before Dukascopy access rather than during object persistence.

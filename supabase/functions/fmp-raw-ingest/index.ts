@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@5";
 import {
   assertTrustedGithubClaims,
+  INGEST_PROTOCOL,
   isStorageObjectNotFound,
   manifestStorageInvariant,
   manifestsEquivalent,
@@ -39,7 +40,7 @@ function parseJsonObject(bytes: Uint8Array): Record<string, unknown> | null {
 
 Deno.serve(async (req: Request) => {
   try {
-    if (req.method !== "PUT") {
+    if (req.method !== "GET" && req.method !== "PUT") {
       return Response.json({ error: "method_not_allowed" }, { status: 405 });
     }
 
@@ -54,6 +55,13 @@ Deno.serve(async (req: Request) => {
       audience: AUDIENCE,
     });
     assertTrustedGithubClaims(payload as Record<string, unknown>);
+
+    if (req.method === "GET") {
+      return Response.json({
+        status: "ready",
+        protocol: INGEST_PROTOCOL,
+      });
+    }
 
     const objectPath = req.headers.get("x-fmp-object-path") ?? "";
     validateObjectPath(objectPath);
