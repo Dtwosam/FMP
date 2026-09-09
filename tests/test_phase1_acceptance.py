@@ -192,6 +192,19 @@ class Phase1AcceptanceTests(unittest.TestCase):
             report["checks"]["provenance_acquisition_unchanged_during_verification"]
         )
 
+    def test_rejects_provenance_without_acquisition_baseline_run_id(self) -> None:
+        provenance = provenance_report()
+        provenance["acquisition_baseline_run_id"] = None
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["provenance_acquisition_baseline_run_id"])
+
     def test_rejects_wrong_provenance_snapshot_identity(self) -> None:
         provenance = provenance_report()
         provenance["plan_sha256"] = "0" * 64
