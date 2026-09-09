@@ -262,6 +262,68 @@ class CloudSnapshotVerifierTests(unittest.TestCase):
         self.assertEqual(len(client.calls), 1)
 
 
+class AcquisitionBaselineSelectionTests(unittest.TestCase):
+    def test_latest_no_source_push_is_not_used_as_acquisition_baseline(self) -> None:
+        selector = __import__(
+            "fmp.data.acquisition_runs",
+            fromlist=["select_acquisition_baseline"],
+        ).select_acquisition_baseline
+        runs = [
+            {
+                "id": 102,
+                "event": "push",
+                "status": "completed",
+                "created_at": "2026-09-09T12:00:00Z",
+                "updated_at": "2026-09-09T12:00:10Z",
+                "head_commit": {"message": "[phase1-no-source] docs"},
+            },
+            {
+                "id": 101,
+                "event": "push",
+                "status": "completed",
+                "created_at": "2026-09-09T11:00:00Z",
+                "updated_at": "2026-09-09T11:42:29Z",
+                "head_commit": {"message": "[phase1-repair-batch] repair"},
+            },
+        ]
+
+        baseline = selector(runs)
+
+        self.assertEqual(baseline["latest_run_id"], 101)
+        self.assertEqual(
+            baseline["baseline_completed_at_utc"],
+            "2026-09-09T11:42:29Z",
+        )
+        self.assertEqual(baseline["no_source_runs_ignored"], 1)
+
+    def test_manual_dispatch_is_source_capable_even_on_no_source_head(self) -> None:
+        selector = __import__(
+            "fmp.data.acquisition_runs",
+            fromlist=["select_acquisition_baseline"],
+        ).select_acquisition_baseline
+        runs = [
+            {
+                "id": 103,
+                "event": "workflow_dispatch",
+                "status": "in_progress",
+                "created_at": "2026-09-09T12:00:00Z",
+                "updated_at": "2026-09-09T12:01:00Z",
+                "head_commit": {"message": "[phase1-no-source] docs"},
+            },
+            {
+                "id": 101,
+                "event": "push",
+                "status": "completed",
+                "created_at": "2026-09-09T11:00:00Z",
+                "updated_at": "2026-09-09T11:42:29Z",
+                "head_commit": {"message": "[phase1-repair-batch] repair"},
+            },
+        ]
+
+        with self.assertRaisesRegex(ValueError, "active"):
+            selector(runs)
+
+
 class FinalCloudAuditWorkflowTests(unittest.TestCase):
     def test_manual_workflow_is_source_free_and_persists_report(self) -> None:
         from pathlib import Path
@@ -279,6 +341,8 @@ class FinalCloudAuditWorkflowTests(unittest.TestCase):
         self.assertIn("2026-08-21", workflow)
         self.assertIn("actions/upload-artifact@v4", workflow)
         self.assertIn("phase1-cloud-provenance.json", workflow)
+        self.assertGreaterEqual(workflow.count("gh api --paginate --slurp"), 2)
+        self.assertIn("select_acquisition_baseline", workflow)
         self.assertIn('for status in requested queued waiting pending in_progress; do', workflow)
         self.assertIn('runs?status=${status}&per_page=1', workflow)
         self.assertIn("active=$((active + count))", workflow)
