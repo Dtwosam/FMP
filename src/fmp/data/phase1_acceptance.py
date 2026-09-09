@@ -51,6 +51,12 @@ def evaluate_phase1_acceptance(
     provenance_not_found = _int_value(provenance, "not_found")
 
     checks: dict[str, bool] = {
+        "structural_report_version": _is_exact_int(structural.get("report_version"), 1),
+        "structural_scope": structural.get("scope") == "phase1_structural_acceptance",
+        "structural_frozen_snapshot": (
+            structural.get("frozen_start_date") == FROZEN_START_DATE
+            and structural.get("frozen_end_date_exclusive") == FROZEN_END_DATE_EXCLUSIVE
+        ),
         "structural_expected_25500": _is_exact_int(
             structural.get("expected_manifests"), FROZEN_MANIFEST_TARGET
         ),
