@@ -164,6 +164,7 @@ Rules:
 - canonical ingest object paths must resolve to a real Gregorian date inside the frozen Phase 1 interval 2015-01-01 through 2026-08-20 inclusive; regex-shaped but impossible/out-of-range paths are rejected before storage;
 - final Phase 1 structural/accounting audit clocks and the provenance acquisition-baseline completion clock must use UTC-zero offsets and must not be future-dated at acceptance time;
 - `[phase1-no-source]` is the code/docs-only operational tag: it suppresses push-triggered Phase 1 acquisition and PR Dukascopy golden/network jobs;
+- final cloud provenance must record its guard start before checking acquisition idleness and, after provenance reads finish, scan the complete acquisition workflow history; any source-capable run updated at or after that observable UTC-second boundary invalidates the audit, including GitHub reruns that reuse an old workflow run ID; only push-triggered `[phase1-no-source]` runs are exempt;
 - Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
 
 Implementation evidence: PR #12, merge commit `a6bf7e2ecf215cf65e99cc9653267abe9ddb4eb1`.

@@ -211,6 +211,98 @@ def ensure_no_intervening_acquisition_runs(
     }
 
 
+def ensure_no_source_capable_acquisition_updates_since(
+    workflow_runs: object,
+    *,
+    guard_started_at_utc: datetime,
+) -> dict[str, object]:
+    """Reject final audit evidence if source-capable acquisition changed after guard start."""
+
+    if not isinstance(workflow_runs, list):
+        raise ValueError("GitHub acquisition workflow runs must be a list")
+    if (
+        guard_started_at_utc.tzinfo is None
+        or guard_started_at_utc.utcoffset() is None
+        or guard_started_at_utc.utcoffset() != timedelta(0)
+    ):
+        raise ValueError("final cloud audit guard start must use UTC")
+
+    github_precision_boundary = guard_started_at_utc.astimezone(timezone.utc).replace(
+        microsecond=0
+    )
+    checked = 0
+    ignored_no_source = 0
+    latest_checked_run_id: int | None = None
+    latest_checked_updated_at: datetime | None = None
+
+    for index, run in enumerate(workflow_runs):
+        if not isinstance(run, dict):
+            raise ValueError(f"GitHub acquisition workflow run {index} must be an object")
+
+        run_id = run.get("id")
+        if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+            raise ValueError(f"GitHub acquisition workflow run {index} has invalid id")
+
+        head_commit = run.get("head_commit")
+        message = head_commit.get("message") if isinstance(head_commit, dict) else None
+        if (
+            run.get("event") == "push"
+            and isinstance(message, str)
+            and "[phase1-no-source]" in message
+        ):
+            ignored_no_source += 1
+            continue
+
+        updated_at_raw = run.get("updated_at")
+        if not isinstance(updated_at_raw, str):
+            raise ValueError(
+                f"GitHub acquisition workflow run {run_id} has invalid updated_at"
+            )
+        try:
+            updated_at = datetime.fromisoformat(
+                updated_at_raw.replace("Z", "+00:00")
+            )
+        except ValueError as exc:
+            raise ValueError(
+                f"GitHub acquisition workflow run {run_id} has invalid updated_at"
+            ) from exc
+        if updated_at.tzinfo is None or updated_at.utcoffset() is None:
+            raise ValueError(
+                f"GitHub acquisition workflow run {run_id} updated_at must be timezone-aware"
+            )
+        updated_at = updated_at.astimezone(timezone.utc)
+
+        checked += 1
+        if latest_checked_updated_at is None or updated_at > latest_checked_updated_at:
+            latest_checked_run_id = run_id
+            latest_checked_updated_at = updated_at
+
+        if updated_at >= github_precision_boundary:
+            raise ValueError(
+                "Phase 1 acquisition changed during final cloud audit: "
+                f"source-capable workflow run {run_id} was updated at "
+                f"{updated_at.isoformat()}, at or after the audit guard's observable "
+                f"UTC-second boundary {github_precision_boundary.isoformat()}"
+            )
+
+    return {
+        "guard_version": 1,
+        "guard_started_at_utc": guard_started_at_utc.isoformat().replace("+00:00", "Z"),
+        "github_precision_boundary_utc": github_precision_boundary.isoformat().replace(
+            "+00:00", "Z"
+        ),
+        "source_capable_runs_checked": checked,
+        "no_source_runs_ignored": ignored_no_source,
+        "latest_checked_source_run_id": latest_checked_run_id,
+        "latest_checked_source_run_updated_at_utc": (
+            latest_checked_updated_at.isoformat().replace("+00:00", "Z")
+            if latest_checked_updated_at is not None
+            else None
+        ),
+        "ready": True,
+    }
+
+
 def load_exact_gap_plan(path: Path) -> list[RawChunkKey]:
     """Load and strictly validate an exact Phase 1 repair plan.
 

@@ -116,10 +116,11 @@ Only after Evidence A and B pass and acquisition is idle:
    - `.github/workflows/phase1-final-cloud-audit.yml`
 5. The workflow itself refuses to run while Phase 1 acquisition is active.
 6. It captures the latest `phase1-full-acquisition` run as one baseline snapshot and refuses to proceed unless that captured run itself has `status = completed`.
-7. It snapshots that baseline run ID before provenance verification and fails if the latest run ID changes before verification completes, so an acquisition that starts and finishes during the audit still invalidates the evidence.
-8. Only after that stability check passes does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
-9. Download the `phase1-cloud-provenance-<run_id>` artifact and retain
-   `phase1-cloud-provenance.json`.
+7. It records an audit-guard UTC timestamp before the initial idle check, then re-scans the complete `phase1-full-acquisition` workflow history after provenance verification. Any source-capable run updated at or after that observable UTC second invalidates the evidence, including reruns of older workflow run IDs. Push-triggered `[phase1-no-source]` runs are ignored; manual dispatches remain source-capable regardless of head-commit text.
+8. It also requires the latest workflow run ID to remain the captured baseline ID, so newly created workflow runs fail closed even if they cannot be cleanly classified.
+9. Only after both stability checks pass does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
+10. Download the `phase1-cloud-provenance-<run_id>` artifact and retain both
+    `phase1-cloud-provenance.json` and `.phase1-final-acquisition-run-guard.json`.
 
 The verifier checks all 25,500 manifest bodies for exact Phase 1
 schema/identity/source semantics and, for every `complete` manifest, checks

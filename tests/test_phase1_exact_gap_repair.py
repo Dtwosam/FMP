@@ -404,6 +404,77 @@ class ExactGapPlanTests(unittest.TestCase):
                 current_run_id=202,
             )
 
+    def test_final_audit_guard_rejects_older_source_run_rerun_after_guard_start(self) -> None:
+        runs = [
+            {
+                "id": 100,
+                "event": "push",
+                "updated_at": "2026-09-09T10:00:01Z",
+                "head_commit": {"message": "[phase1-repair-batch] old repair rerun"},
+            },
+            {
+                "id": 200,
+                "event": "push",
+                "updated_at": "2026-09-09T09:59:00Z",
+                "head_commit": {"message": "[phase1-no-source] later code-only push"},
+            },
+        ]
+
+        with self.assertRaisesRegex(ValueError, "changed during final cloud audit"):
+            __import__(
+                "fmp.data.repair_plan",
+                fromlist=["x"],
+            ).ensure_no_source_capable_acquisition_updates_since(
+                runs,
+                guard_started_at_utc=datetime(
+                    2026, 9, 9, 10, 0, 0, 500000, tzinfo=timezone.utc
+                ),
+            )
+
+    def test_final_audit_guard_ignores_no_source_push_after_guard_start(self) -> None:
+        runs = [
+            {
+                "id": 201,
+                "event": "push",
+                "updated_at": "2026-09-09T10:00:01Z",
+                "head_commit": {"message": "[phase1-no-source] docs"},
+            }
+        ]
+
+        summary = __import__(
+            "fmp.data.repair_plan",
+            fromlist=["x"],
+        ).ensure_no_source_capable_acquisition_updates_since(
+            runs,
+            guard_started_at_utc=datetime(
+                2026, 9, 9, 10, 0, 0, 500000, tzinfo=timezone.utc
+            ),
+        )
+
+        self.assertTrue(summary["ready"])
+        self.assertEqual(summary["no_source_runs_ignored"], 1)
+
+    def test_final_audit_guard_treats_manual_no_source_head_as_source_capable(self) -> None:
+        runs = [
+            {
+                "id": 202,
+                "event": "workflow_dispatch",
+                "updated_at": "2026-09-09T10:00:01Z",
+                "head_commit": {"message": "[phase1-no-source] docs"},
+            }
+        ]
+
+        with self.assertRaisesRegex(ValueError, "changed during final cloud audit"):
+            __import__(
+                "fmp.data.repair_plan",
+                fromlist=["x"],
+            ).ensure_no_source_capable_acquisition_updates_since(
+                runs,
+                guard_started_at_utc=datetime(
+                    2026, 9, 9, 10, 0, 0, 500000, tzinfo=timezone.utc
+                ),
+            )
+
     def test_load_exact_gap_plan_rejects_unknown_chunk_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
