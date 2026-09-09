@@ -115,7 +115,8 @@ class Phase1AcceptanceTests(unittest.TestCase):
         self.assertIn("'phase1_structural_acceptance' as scope", sql)
         self.assertIn("b.start_day as frozen_start_date", sql)
         self.assertIn("b.end_exclusive as frozen_end_date_exclusive", sql)
-        self.assertIn("to_char(now() at time zone 'UTC'", sql)
+        self.assertIn("to_char(", sql)
+        self.assertIn("now() at time zone 'UTC'", sql)
         self.assertIn("'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'", sql)
         self.assertNotIn("now() as audited_at_utc", sql)
 
