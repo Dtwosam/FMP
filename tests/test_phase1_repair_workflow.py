@@ -100,6 +100,14 @@ class Phase1RepairWorkflowTests(unittest.TestCase):
             workflow,
         )
 
+    def test_no_source_push_bypasses_source_concurrency_lock(self) -> None:
+        workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
+
+        self.assertIn("github.event_name == 'push'", workflow)
+        self.assertIn("[phase1-no-source]", workflow)
+        self.assertIn("format('phase1-no-source-{0}', github.run_id)", workflow)
+        self.assertIn("'phase1-dukascopy-acquisition'", workflow)
+
     def test_exact_gap_run_persists_plan_and_verification_evidence(self) -> None:
         workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
 
