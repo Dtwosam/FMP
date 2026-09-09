@@ -115,8 +115,8 @@ Only after Evidence A and B pass and acquisition is idle:
 4. Manually dispatch:
    - `.github/workflows/phase1-final-cloud-audit.yml`
 5. The workflow itself refuses to run while Phase 1 acquisition is active.
-6. It captures the latest `phase1-full-acquisition` run as one baseline snapshot and refuses to proceed unless that captured run itself has `status = completed`.
-7. It snapshots that baseline run ID before provenance verification and fails if the latest run ID changes before verification completes, so an acquisition that starts and finishes during the audit still invalidates the evidence.
+6. It pages the full `phase1-full-acquisition` run history and captures the latest **source-capable** run as the baseline snapshot. Push-triggered `[phase1-no-source]` runs are ignored because their acquisition jobs are suppressed; manual `workflow_dispatch` runs remain source-capable regardless of the underlying head-commit message. The selected baseline itself must have `status = completed`.
+7. It repeats the same source-capable full-history selection after provenance verification and fails if the baseline run ID or completion metadata changed, so an acquisition that starts and finishes during the audit still invalidates the evidence while unrelated no-source pushes do not.
 8. Only after that stability check passes does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
 9. Download the `phase1-cloud-provenance-<run_id>` artifact and retain
    `phase1-cloud-provenance.json`.
