@@ -29,9 +29,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          from datetime import datetime, timezone
+
+          started = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+          print(f"audit_guard_started_at_utc={started}")
+          PY
           gh api --paginate --slurp \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=100" \
-            > .phase1-final-acquisition-pages.json
+            > .phase1-final-acquisition-workflow-pages.json
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json
           from pathlib import Path
@@ -39,10 +45,14 @@ jobs:
           from fmp.data.acquisition_runs import select_acquisition_baseline
 
           pages = json.loads(
-              Path(".phase1-final-acquisition-pages.json").read_text(encoding="utf-8")
+              Path(".phase1-final-acquisition-workflow-pages.json").read_text(
+                  encoding="utf-8"
+              )
           )
           if not isinstance(pages, list):
-              raise SystemExit("GitHub acquisition workflow pagination response must be a list")
+              raise SystemExit(
+                  "GitHub acquisition workflow pagination response must be a list"
+              )
 
           runs = []
           for index, page in enumerate(pages):
@@ -72,7 +82,7 @@ jobs:
               f"{baseline['no_source_runs_ignored']}"
           )
           PY
-          rm -f .phase1-final-acquisition-pages.json
+          rm -f .phase1-final-acquisition-workflow-pages.json
       - name: Verify full frozen cloud provenance
         run: |
           set -o pipefail
@@ -89,21 +99,28 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BASELINE_RUN_ID: ${{ steps.acquisition-baseline.outputs.latest_run_id }}
           BASELINE_COMPLETED_AT_UTC: ${{ steps.acquisition-baseline.outputs.baseline_completed_at_utc }}
+          AUDIT_GUARD_STARTED_AT_UTC: ${{ steps.acquisition-baseline.outputs.audit_guard_started_at_utc }}
         run: |
           gh api --paginate --slurp \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=100" \
-            > .phase1-final-acquisition-pages.json
+            > .phase1-final-acquisition-workflow-pages.json
           python - <<'PY'
           import json
           import os
+          from datetime import datetime
           from pathlib import Path
 
           from fmp.data.acquisition_runs import select_acquisition_baseline
+          from fmp.data.repair_plan import (
+              ensure_no_source_capable_acquisition_updates_since,
+          )
 
-          pages_path = Path(".phase1-final-acquisition-pages.json")
+          pages_path = Path(".phase1-final-acquisition-workflow-pages.json")
           pages = json.loads(pages_path.read_text(encoding="utf-8"))
           if not isinstance(pages, list):
-              raise SystemExit("GitHub acquisition workflow pagination response must be a list")
+              raise SystemExit(
+                  "GitHub acquisition workflow pagination response must be a list"
+              )
 
           runs = []
           for index, page in enumerate(pages):
@@ -118,10 +135,29 @@ jobs:
                   )
               runs.extend(page_runs)
 
+          raw_started = os.environ["AUDIT_GUARD_STARTED_AT_UTC"]
           try:
+              guard_started = datetime.fromisoformat(
+                  raw_started.replace("Z", "+00:00")
+              )
+          except ValueError as exc:
+              raise SystemExit(
+                  "invalid final cloud audit guard start timestamp"
+              ) from exc
+
+          try:
+              summary = ensure_no_source_capable_acquisition_updates_since(
+                  runs,
+                  guard_started_at_utc=guard_started,
+              )
               current = select_acquisition_baseline(runs)
           except ValueError as exc:
               raise SystemExit(str(exc)) from exc
+
+          Path(".phase1-final-acquisition-run-guard.json").write_text(
+              json.dumps(summary, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
 
           baseline = os.environ["BASELINE_RUN_ID"]
           baseline_completed_at = os.environ["BASELINE_COMPLETED_AT_UTC"]
@@ -134,7 +170,7 @@ jobs:
               )
           if current["baseline_completed_at_utc"] != baseline_completed_at:
               raise SystemExit(
-                  "Phase 1 acquisition baseline metadata changed during final "
+                  "Phase 1 acquisition baseline activity changed during final "
                   "cloud verification."
               )
 
@@ -147,13 +183,16 @@ jobs:
               json.dumps(report, sort_keys=True, indent=2) + "\n",
               encoding="utf-8",
           )
+          print(json.dumps(summary, sort_keys=True))
           PY
-          rm -f .phase1-final-acquisition-pages.json
+          rm -f .phase1-final-acquisition-workflow-pages.json
       - name: Persist final cloud provenance report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: phase1-cloud-provenance-${{ github.run_id }}
-          path: phase1-cloud-provenance.json
+          path: |
+            phase1-cloud-provenance.json
+            .phase1-final-acquisition-run-guard.json
           if-no-files-found: warn
           retention-days: 90
