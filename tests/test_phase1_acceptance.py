@@ -13,6 +13,10 @@ from fmp.data.phase1_acceptance import evaluate_phase1_acceptance
 
 def structural_report() -> dict[str, object]:
     return {
+        "report_version": 1,
+        "scope": "phase1_structural_acceptance",
+        "frozen_start_date": "2015-01-01",
+        "frozen_end_date_exclusive": "2026-08-21",
         "expected_manifests": 25500,
         "present_manifests": 25500,
         "missing_manifests": 0,
@@ -81,6 +85,26 @@ class Phase1AcceptanceTests(unittest.TestCase):
         self.assertEqual(report["frozen_manifest_target"], 25500)
         self.assertEqual(report["checks_failed"], 0)
         self.assertTrue(all(report["checks"].values()))
+
+    def test_rejects_wrong_structural_snapshot_identity(self) -> None:
+        structural = structural_report()
+        structural["frozen_end_date_exclusive"] = "2026-08-20"
+
+        report = evaluate_phase1_acceptance(
+            structural,
+            accounting_report(),
+            provenance_report(),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["structural_frozen_snapshot"])
+
+    def test_structural_audit_sql_emits_snapshot_identity(self) -> None:
+        sql = Path("docs/phase1-final-acceptance-audit.sql").read_text(encoding="utf-8")
+        self.assertIn("1 as report_version", sql)
+        self.assertIn("'phase1_structural_acceptance' as scope", sql)
+        self.assertIn("b.start_day as frozen_start_date", sql)
+        self.assertIn("b.end_exclusive as frozen_end_date_exclusive", sql)
 
     def test_rejects_structural_failure_even_when_other_reports_pass(self) -> None:
         structural = structural_report()
