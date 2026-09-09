@@ -12,6 +12,7 @@ Frozen Phase 1 snapshot:
 - start: 2015-01-01
 - end exclusive: 2026-08-21
 - planned manifests: 25,500
+- canonical plan SHA-256: `2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6`
 
 A Phase 1 PASS proves acquisition completeness and cloud provenance. It does
 not prove quote cleanliness, gap acceptability, session correctness, or derived
@@ -91,6 +92,7 @@ the matching cloud raw object's server-side SHA-256 and compressed size.
 
 Required result:
 
+- `plan_sha256 = 2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6`
 - `planned_chunks = 25500`
 - `complete + not_found = 25500`
 - `issues = 0`
@@ -113,6 +115,7 @@ agree with one another.
 
 Important cross-checks include:
 
+- provenance plan SHA-256 matches the frozen plan fingerprint above;
 - structural present = accounting present = provenance planned = 25,500;
 - structural raw objects = accounting raw-backed = provenance complete;
 - accounting inferred not_found = provenance not_found.
