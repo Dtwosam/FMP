@@ -893,6 +893,31 @@ Verification evidence:
 
 Operational requirement after sweep 2 stops: deploy the repository `fmp-raw-ingest` source containing PR #31 through PR #34 with `verify_jwt = false`, read back metadata/source to confirm deployment, then proceed to exhaustive audit/exact-gap work. Later, deploy `fmp-raw-audit` with `verify_jwt = false` only after structural/accounting completion.
 
+## Edge runtime dependency pins — MERGED / VERIFIED / UNDEPLOYED
+
+PR #39 `[phase1-no-source] Phase 1: pin Edge runtime dependencies` merged to `main` at:
+
+- `071533af6a16dbbbf76c11cad3b0f2a2fb819abf`
+
+Both Phase 1 Supabase Edge Functions previously used floating major-version npm imports without a Deno lockfile:
+
+- `npm:@supabase/supabase-js@2`;
+- `npm:jose@5`.
+
+Recent GREEN Edge CI had resolved those ranges to `@supabase/supabase-js 2.116.0` and `jose 5.10.0`. The repository now pins those exact versions in both `fmp-raw-ingest` and `fmp-raw-audit`, and a regression test forbids reverting to floating major ranges.
+
+This keeps the later post-sweep Edge deployments reproducible against dependency versions already exercised by Deno tests/type-check.
+
+Verification evidence:
+
+- RED run `34381891939` failed on both floating Edge entrypoints;
+- final GREEN Python run `34381993488` passed;
+- final GREEN Edge run `34381993220` passed Deno tests and type-check;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Edge Function was deployed and no Dukascopy source traffic was introduced by this change.
+
+Operational requirement after sweep 2 stops remains unchanged: deploy/read-back-verify the repository `fmp-raw-ingest` target before exact-gap source access, and deploy `fmp-raw-audit` only at the later final provenance stage.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
