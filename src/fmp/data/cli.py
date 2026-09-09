@@ -97,6 +97,13 @@ def _result_json(result: AcquisitionResult) -> dict[str, object]:
 
 
 def _run_fetch_keys(args: argparse.Namespace, keys: Iterable[RawChunkKey]) -> int:
+    if args.recheck_not_found and args.mirror_url:
+        raise ValueError(
+            "cloud-mirrored --recheck-not-found is unsupported: canonical cloud "
+            "manifests are first-write immutable, so a not_found manifest cannot "
+            "be promoted in place"
+        )
+
     root = Path(args.out)
     mirror = None
     if args.mirror_url:
@@ -255,7 +262,11 @@ def _add_fetch_runtime_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--recheck-not-found",
         action="store_true",
-        help="retry chunks previously recorded as HTTP 404; useful for recently published source history",
+        help=(
+            "retry chunks previously recorded as HTTP 404 locally; cannot be "
+            "combined with --mirror-url because canonical cloud manifests are "
+            "first-write immutable"
+        ),
     )
 
 
