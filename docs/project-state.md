@@ -830,6 +830,38 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Dukascopy acquisition or Supabase deployment was introduced by this change.
 
+## Hardened ingest protocol preflight — MERGED / VERIFIED / UNDEPLOYED
+
+PR #38 `[phase1-no-source] Phase 1: require ingest protocol preflight before source` merged to `main` at:
+
+- `65a4bfa26ced78a2b19ac8576f2572f2641d1662`
+
+The post-sweep ingest deployment prerequisite is now machine-enforced rather than relying only on operator discipline.
+
+The hardened repository contract is:
+
+- `fmp-raw-ingest` exports protocol `fmp-raw-ingest-v2`;
+- an authenticated GitHub Actions `GET` to the ingest endpoint returns exactly `{"status":"ready","protocol":"fmp-raw-ingest-v2"}`;
+- the Python `SupabaseRawMirror` client performs this preflight before any cloud-mirrored source acquisition;
+- a malformed response, non-2xx response, unexpected fields, or wrong protocol raises `CloudMirrorError`;
+- the CLI invokes preflight immediately after mirror construction and before the first `acquire_chunk` call;
+- therefore the currently deployed pre-hardening v3 endpoint (which returns HTTP 405 for GET) causes future current-`main` source runs to fail before Dukascopy access until the tested ingest is deployed.
+
+This does not affect repair sweep 2 because that long-running workflow is pinned to its historical trigger commit and does not execute current-`main` client code.
+
+Verification evidence:
+
+- RED Python run `34377511304` failed only because `SupabaseRawMirror.preflight` did not exist;
+- RED Edge run `34377511305` failed only because `INGEST_PROTOCOL` did not exist;
+- GREEN implementation Python run `34377686725` passed;
+- GREEN implementation Edge run `34377686712` passed Deno tests and entrypoint type-check;
+- final PR-head Python run `34377893039` passed;
+- final PR-head Edge run `34377892951` passed;
+- golden/network source jobs skipped;
+- no Supabase deployment or Dukascopy acquisition was introduced by this change.
+
+Operational consequence: after sweep 2 stops, deploy the tested repository `fmp-raw-ingest` first. The next current-`main` cloud-mirrored acquisition cannot proceed until that deployment advertises the exact hardened protocol.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
