@@ -289,6 +289,49 @@ The returned list is canonical by date / pair / side and the declared counts rec
 
 The false structural result is expected and proves the gate does not incorrectly declare Phase 1 complete while manifests are missing or raw-only objects remain.
 
+## Recovery accounting audit — MERGED / LIVE-VALIDATED
+
+PR #15 added `docs/phase1-recovery-accounting-audit.sql` and merged to `main` at:
+
+- `83e7cce46833b4f8ab6224e9bec4f8ae8d1ba547`
+
+The audit relies only on enforced acquisition/mirror invariants:
+
+- a complete result mirrors **raw first, then manifest**;
+- a `not_found` result mirrors **manifest only**;
+- cloud objects are immutable and are not deleted to make accounting pass.
+
+Therefore, once raw-only objects and unexpected paths are zero, planned manifest-only objects are the accounting class `manifest_only_inferred_not_found`. This is acquisition accounting only; Python provenance verification remains a separate required gate.
+
+Live validation at `2026-09-09T11:26:49.677Z`:
+
+- expected manifests: **25,500**
+- present manifests: **24,520**
+- missing manifests: **980**
+- raw-backed manifests: **24,520**
+- manifest-only inferred `not_found`: **0**
+- raw without manifest: **3**
+- unexpected manifest paths: **0**
+- unexpected raw paths: **0**
+- accounting gate: **FAIL**, correctly, because coverage/integrity are incomplete
+
+Pair/side missing counts in that audit:
+
+- EURUSD ASK: **32**
+- EURUSD BID: **29**
+- GBPUSD ASK: **153**
+- GBPUSD BID: **154**
+- USDJPY ASK: **309**
+- USDJPY BID: **303**
+
+The three raw-only objects were identified exactly:
+
+- `raw/dukascopy/v1/GBPUSD/2020/05/01/BID_candles_min_1.bi5`
+- `raw/dukascopy/v1/USDJPY/2015/08/03/ASK_candles_min_1.bi5`
+- `raw/dukascopy/v1/USDJPY/2022/11/17/BID_candles_min_1.bi5`
+
+Each maps to a planned manifest that is currently absent. Normal month/exact-gap repair will safely re-fetch the source chunk, receive `already_verified` for the immutable raw object if bytes match, then store the missing manifest. No raw deletion or overwrite exception is required.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
