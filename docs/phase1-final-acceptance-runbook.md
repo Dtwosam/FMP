@@ -133,7 +133,7 @@ Required result:
 - `planned_chunks = 25500`
 - `complete + not_found = 25500`
 - `issues = 0`
-- `acquisition_baseline_run_id` is a non-negative integer
+- `acquisition_baseline_run_id` is a positive integer
 - `acquisition_baseline_completed_at_utc` is a UTC-zero timestamp
 - both Evidence A and Evidence B `audited_at_utc` timestamps are at or after that acquisition baseline completion time
 - `acquisition_unchanged_during_verification = true`
