@@ -28,6 +28,9 @@ class ExactGapPlanTests(unittest.TestCase):
                     "plan_version": 1,
                     "frozen_start_date": "2015-01-01",
                     "frozen_end_date_exclusive": "2026-08-21",
+                    "audited_at_utc": "2026-09-09T10:00:00Z",
+                    "present_manifests_at_audit": 25500 - len(chunks),
+                    "missing_manifests_at_audit": len(chunks),
                     "chunks": chunks,
                 }
             ),
@@ -91,6 +94,9 @@ class ExactGapPlanTests(unittest.TestCase):
                         "plan_version": 1,
                         "frozen_start_date": "2015-01-01",
                         "frozen_end_date_exclusive": "2026-08-21",
+                        "audited_at_utc": "2026-09-09T10:00:00Z",
+                        "present_manifests_at_audit": 25499,
+                        "missing_manifests_at_audit": 1,
                         "chunks": [
                             {"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}
                         ],
@@ -101,6 +107,79 @@ class ExactGapPlanTests(unittest.TestCase):
             )
 
             with self.assertRaisesRegex(ValueError, "root"):
+                load_exact_gap_plan(path)
+
+    def test_load_exact_gap_plan_rejects_inconsistent_audit_counts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "exact-gaps.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "plan_version": 1,
+                        "frozen_start_date": "2015-01-01",
+                        "frozen_end_date_exclusive": "2026-08-21",
+                        "audited_at_utc": "2026-09-09T10:00:00Z",
+                        "present_manifests_at_audit": 25498,
+                        "missing_manifests_at_audit": 1,
+                        "chunks": [
+                            {"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "25,500"):
+                load_exact_gap_plan(path)
+
+    def test_load_exact_gap_plan_rejects_missing_count_that_differs_from_chunks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "exact-gaps.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "plan_version": 1,
+                        "frozen_start_date": "2015-01-01",
+                        "frozen_end_date_exclusive": "2026-08-21",
+                        "audited_at_utc": "2026-09-09T10:00:00Z",
+                        "present_manifests_at_audit": 25499,
+                        "missing_manifests_at_audit": 1,
+                        "chunks": [
+                            {"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"},
+                            {"pair": "GBPUSD", "side": "ASK", "date_utc": "2024-01-03"},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "chunk count"):
+                load_exact_gap_plan(path)
+
+    def test_load_exact_gap_plan_requires_timezone_aware_audit_timestamp(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "exact-gaps.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "plan_version": 1,
+                        "frozen_start_date": "2015-01-01",
+                        "frozen_end_date_exclusive": "2026-08-21",
+                        "audited_at_utc": "2026-09-09T10:00:00",
+                        "present_manifests_at_audit": 25499,
+                        "missing_manifests_at_audit": 1,
+                        "chunks": [
+                            {"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "timezone"):
                 load_exact_gap_plan(path)
 
     def test_load_exact_gap_plan_rejects_noncanonical_chunk_order(self) -> None:
