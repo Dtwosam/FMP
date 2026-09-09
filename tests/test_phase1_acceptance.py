@@ -48,7 +48,14 @@ def accounting_report() -> dict[str, object]:
             "unexpected_manifest_paths": 0,
             "unexpected_raw_paths": 0,
         },
-        "pair_side_breakdown": [],
+        "pair_side_breakdown": [
+            {"pair": "EURUSD", "side": "ASK", "expected_manifests": 4250, "present_manifests": 4250, "missing_manifests": 0, "raw_backed_manifests": 4230, "manifest_only_inferred_not_found": 20, "raw_without_manifest": 0},
+            {"pair": "EURUSD", "side": "BID", "expected_manifests": 4250, "present_manifests": 4250, "missing_manifests": 0, "raw_backed_manifests": 4230, "manifest_only_inferred_not_found": 20, "raw_without_manifest": 0},
+            {"pair": "GBPUSD", "side": "ASK", "expected_manifests": 4250, "present_manifests": 4250, "missing_manifests": 0, "raw_backed_manifests": 4230, "manifest_only_inferred_not_found": 20, "raw_without_manifest": 0},
+            {"pair": "GBPUSD", "side": "BID", "expected_manifests": 4250, "present_manifests": 4250, "missing_manifests": 0, "raw_backed_manifests": 4230, "manifest_only_inferred_not_found": 20, "raw_without_manifest": 0},
+            {"pair": "USDJPY", "side": "ASK", "expected_manifests": 4250, "present_manifests": 4250, "missing_manifests": 0, "raw_backed_manifests": 4240, "manifest_only_inferred_not_found": 10, "raw_without_manifest": 0},
+            {"pair": "USDJPY", "side": "BID", "expected_manifests": 4250, "present_manifests": 4250, "missing_manifests": 0, "raw_backed_manifests": 4240, "manifest_only_inferred_not_found": 10, "raw_without_manifest": 0},
+        ],
         "accounting_gate_pass": True,
     }
 
@@ -163,6 +170,34 @@ class Phase1AcceptanceTests(unittest.TestCase):
 
         self.assertFalse(report["ready"])
         self.assertFalse(report["checks"]["provenance_planned_chunks_25500"])
+
+    def test_rejects_missing_accounting_pair_side_breakdown(self) -> None:
+        accounting = accounting_report()
+        accounting["pair_side_breakdown"] = []
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting,
+            provenance_report(),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["accounting_pair_side_breakdown_complete"])
+
+    def test_rejects_duplicate_accounting_pair_side_row(self) -> None:
+        accounting = accounting_report()
+        breakdown = list(accounting["pair_side_breakdown"])
+        breakdown[-1] = dict(breakdown[0])
+        accounting["pair_side_breakdown"] = breakdown
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting,
+            provenance_report(),
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["accounting_pair_side_breakdown_complete"])
 
     def test_rejects_wrong_accounting_snapshot_identity(self) -> None:
         accounting = accounting_report()

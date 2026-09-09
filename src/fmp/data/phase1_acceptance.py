@@ -6,6 +6,15 @@ FROZEN_MANIFEST_TARGET = 25_500
 FROZEN_START_DATE = "2015-01-01"
 FROZEN_END_DATE_EXCLUSIVE = "2026-08-21"
 FROZEN_PLAN_SHA256 = "2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6"
+FROZEN_PAIR_SIDE_MANIFEST_TARGET = 4_250
+FROZEN_PAIR_SIDES = {
+    ("EURUSD", "ASK"),
+    ("EURUSD", "BID"),
+    ("GBPUSD", "ASK"),
+    ("GBPUSD", "BID"),
+    ("USDJPY", "ASK"),
+    ("USDJPY", "BID"),
+}
 
 
 def _is_exact_int(value: object, expected: int) -> bool:
@@ -21,6 +30,66 @@ def _int_value(mapping: Mapping[str, object], key: str) -> int | None:
 
 def _mapping(value: object) -> Mapping[str, object]:
     return value if isinstance(value, Mapping) else {}
+
+
+def _valid_accounting_pair_side_breakdown(
+    value: object,
+    *,
+    total_raw_backed: int | None,
+    total_not_found: int | None,
+) -> bool:
+    if not isinstance(value, list) or len(value) != len(FROZEN_PAIR_SIDES):
+        return False
+
+    seen: set[tuple[object, object]] = set()
+    raw_backed_sum = 0
+    not_found_sum = 0
+
+    for item in value:
+        if not isinstance(item, Mapping):
+            return False
+        key = (item.get("pair"), item.get("side"))
+        if key not in FROZEN_PAIR_SIDES or key in seen:
+            return False
+        seen.add(key)
+
+        if not _is_exact_int(
+            item.get("expected_manifests"), FROZEN_PAIR_SIDE_MANIFEST_TARGET
+        ):
+            return False
+        if not _is_exact_int(
+            item.get("present_manifests"), FROZEN_PAIR_SIDE_MANIFEST_TARGET
+        ):
+            return False
+        if not _is_exact_int(item.get("missing_manifests"), 0):
+            return False
+        if not _is_exact_int(item.get("raw_without_manifest"), 0):
+            return False
+
+        raw_backed = _int_value(item, "raw_backed_manifests")
+        inferred_not_found = _int_value(
+            item, "manifest_only_inferred_not_found"
+        )
+        if (
+            raw_backed is None
+            or inferred_not_found is None
+            or raw_backed < 0
+            or inferred_not_found < 0
+            or raw_backed + inferred_not_found
+            != FROZEN_PAIR_SIDE_MANIFEST_TARGET
+        ):
+            return False
+
+        raw_backed_sum += raw_backed
+        not_found_sum += inferred_not_found
+
+    return (
+        seen == FROZEN_PAIR_SIDES
+        and total_raw_backed is not None
+        and total_not_found is not None
+        and raw_backed_sum == total_raw_backed
+        and not_found_sum == total_not_found
+    )
 
 
 def evaluate_phase1_acceptance(
@@ -104,6 +173,13 @@ def evaluate_phase1_acceptance(
             and accounting_not_found is not None
             and accounting_present is not None
             and accounting_raw_backed + accounting_not_found == accounting_present
+        ),
+        "accounting_pair_side_breakdown_complete": (
+            _valid_accounting_pair_side_breakdown(
+                accounting.get("pair_side_breakdown"),
+                total_raw_backed=accounting_raw_backed,
+                total_not_found=accounting_not_found,
+            )
         ),
         "accounting_gate_pass": accounting.get("accounting_gate_pass") is True,
         "provenance_report_version": _is_exact_int(provenance.get("report_version"), 1),

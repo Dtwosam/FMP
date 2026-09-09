@@ -71,6 +71,9 @@ Required result:
 - missing manifests are zero;
 - raw-without-manifest and unexpected path counts are zero;
 - raw-backed + manifest-only inferred not_found = 25,500;
+- `pair_side_breakdown` contains exactly six unique rows: EURUSD/GBPUSD/USDJPY × BID/ASK;
+- each pair/side row has `expected_manifests = present_manifests = 4250`, zero missing/raw-without-manifest, and raw-backed + inferred not_found = 4,250;
+- the six row-level raw-backed/not_found counts reconcile exactly to the accounting totals;
 - `accounting_gate_pass = true`.
 
 This is accounting evidence only. It does not replace manifest-body/raw
@@ -124,6 +127,7 @@ agree with one another.
 Important cross-checks include:
 
 - structural and accounting frozen snapshot identities match this runbook;
+- accounting contains one complete, unique, totals-reconciled row for every frozen pair/side;
 - provenance plan SHA-256 matches the frozen plan fingerprint above;
 - provenance carries a valid acquisition baseline run ID and confirms acquisition remained unchanged during verification;
 - structural present = accounting present = provenance planned = 25,500;
