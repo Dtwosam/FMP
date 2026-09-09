@@ -3,10 +3,13 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from unittest.mock import patch
 from datetime import date
 from pathlib import Path
 
-from fmp.data.acquire import acquire_chunk
+from fmp.data.acquire import AcquisitionResult, AcquisitionStatus, acquire_chunk
 from fmp.data.cli import build_parser
 from fmp.data.coverage import verify_exact_keys
 from fmp.data.dukascopy import HttpResponse
@@ -130,6 +133,102 @@ class ExactGapCliTests(unittest.TestCase):
         )
         self.assertEqual(verify_args.command, "verify-plan")
         self.assertEqual(verify_args.plan, "docs/phase1-exact-gap-queue.json")
+
+
+class ExactGapExecutionSafetyTests(unittest.TestCase):
+    def _write_plan(self, root: Path, chunks: list[dict[str, str]]) -> Path:
+        path = root / "exact-gaps.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "plan_version": 1,
+                    "frozen_start_date": "2015-01-01",
+                    "frozen_end_date_exclusive": "2026-08-21",
+                    "chunks": chunks,
+                }
+            ),
+            encoding="utf-8",
+        )
+        return path
+
+    def test_fetch_plan_attempts_only_explicit_keys_in_plan_order(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plan = self._write_plan(
+                root,
+                [
+                    {"pair": "GBPUSD", "side": "ASK", "date_utc": "2019-05-03"},
+                    {"pair": "EURUSD", "side": "BID", "date_utc": "2024-06-11"},
+                ],
+            )
+            expected = [
+                RawChunkKey("GBPUSD", "ASK", date(2019, 5, 3)),
+                RawChunkKey("EURUSD", "BID", date(2024, 6, 11)),
+            ]
+            observed: list[RawChunkKey] = []
+
+            def fake_acquire(key: RawChunkKey, _root: Path, **_kwargs: object) -> AcquisitionResult:
+                observed.append(key)
+                return AcquisitionResult(
+                    key=key,
+                    status=AcquisitionStatus.NOT_FOUND,
+                    sha256=None,
+                    records=None,
+                    compressed_size=None,
+                    http_status=404,
+                )
+
+            args = build_parser().parse_args(
+                [
+                    "fetch-plan",
+                    "--plan",
+                    str(plan),
+                    "--out",
+                    str(root / "out"),
+                ]
+            )
+            with patch("fmp.data.cli.acquire_chunk", side_effect=fake_acquire):
+                with redirect_stdout(StringIO()):
+                    code = args.func(args)
+
+            self.assertEqual(code, 0)
+            self.assertEqual(observed, expected)
+
+    def test_invalid_plan_fails_before_any_acquisition_attempt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            plan = root / "invalid.json"
+            plan.write_text(
+                json.dumps(
+                    {
+                        "plan_version": 1,
+                        "frozen_start_date": "2015-01-01",
+                        "frozen_end_date_exclusive": "2026-08-21",
+                        "chunks": [
+                            {
+                                "pair": "EURUSD",
+                                "side": "BID",
+                                "date_utc": "2026-08-21",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            args = build_parser().parse_args(
+                [
+                    "fetch-plan",
+                    "--plan",
+                    str(plan),
+                    "--out",
+                    str(root / "out"),
+                ]
+            )
+            with patch("fmp.data.cli.acquire_chunk") as acquire:
+                with self.assertRaises(ValueError):
+                    args.func(args)
+
+            acquire.assert_not_called()
 
 
 class ExactGapVerificationTests(unittest.TestCase):
