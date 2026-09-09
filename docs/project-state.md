@@ -254,6 +254,41 @@ Latest cloud sample recorded during this documentation update:
 
 This sample is progress evidence only. The exact-gap workflow has **not** been triggered yet.
 
+## Live validation of committed Phase 1 audit tooling — PASS
+
+The committed audit queries were executed directly against the live dedicated FMP Supabase project after merge of the exact-gap tooling.
+
+### Exact-gap audit integration
+
+`docs/phase1-exact-gap-audit.sql` executed successfully and emitted the strict schema consumed by `load_exact_gap_plan`:
+
+- plan version: **1**
+- frozen start: **2015-01-01**
+- frozen exclusive end: **2026-08-21**
+- audit timestamp: **2026-09-09T11:11:59.752Z**
+- present manifests at audit: **24,520**
+- missing manifests at audit: **980**
+- exact missing chunk list: **980 pair/date/side keys**
+
+The returned list is canonical by date / pair / side and the declared counts reconcile to the frozen **25,500** target. This is integration evidence only; the output was not materialized as the active exact-gap queue because repair sweep 2 is still running and the plan would become stale.
+
+### Final structural acceptance audit integration
+
+`docs/phase1-final-acceptance-audit.sql` also executed successfully against the live ledger:
+
+- expected manifests: **25,500**
+- present manifests: **24,520**
+- missing manifests: **980**
+- completion: **96.1569%**
+- raw objects: **24,523**
+- unexpected manifest paths: **0**
+- raw without matching manifest: **3**
+- unexpected raw paths: **0**
+- latest manifest write: `2026-09-09 09:18:39.532127+00`
+- structural gate: **FAIL**, as required while coverage/integrity are incomplete
+
+The false structural result is expected and proves the gate does not incorrectly declare Phase 1 complete while manifests are missing or raw-only objects remain.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
