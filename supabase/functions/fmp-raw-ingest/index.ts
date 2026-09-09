@@ -3,8 +3,8 @@ import { createRemoteJWKSet, jwtVerify } from "npm:jose@5";
 import {
   assertTrustedGithubClaims,
   isStorageObjectNotFound,
+  manifestStorageInvariant,
   manifestsEquivalent,
-  rawPathForNotFoundManifest,
   validateObjectPath,
 } from "./validation.ts";
 
@@ -79,31 +79,70 @@ Deno.serve(async (req: Request) => {
 
     if (objectPath.endsWith(".json")) {
       const incomingManifest = parseJsonObject(body);
-      if (incomingManifest) {
-        const rawCounterpart = rawPathForNotFoundManifest(
-          objectPath,
-          incomingManifest,
-        );
-        if (rawCounterpart) {
-          const { data: rawData, error: rawError } = await supabase.storage
-            .from(BUCKET)
-            .download(rawCounterpart, {}, { cache: "no-store" });
+      if (!incomingManifest) {
+        return Response.json({ error: "invalid_manifest_json" }, { status: 400 });
+      }
 
-          if (!rawError && rawData) {
+      let invariant;
+      try {
+        invariant = manifestStorageInvariant(objectPath, incomingManifest);
+      } catch (error) {
+        console.error(error);
+        return Response.json({ error: "invalid_manifest" }, { status: 400 });
+      }
+
+      const { data: rawData, error: rawError } = await supabase.storage
+        .from(BUCKET)
+        .download(invariant.rawPath, {}, { cache: "no-store" });
+
+      if (invariant.status === "not_found") {
+        if (!rawError && rawData) {
+          return Response.json(
+            {
+              error: "raw_present_for_not_found_manifest",
+              path: objectPath,
+              raw_path: invariant.rawPath,
+            },
+            { status: 409 },
+          );
+        }
+        if (!rawError || !isStorageObjectNotFound(rawError)) {
+          throw rawError ?? new Error(
+            "raw counterpart lookup returned neither object nor not-found error",
+          );
+        }
+      } else {
+        if (rawError) {
+          if (isStorageObjectNotFound(rawError)) {
             return Response.json(
               {
-                error: "raw_present_for_not_found_manifest",
+                error: "raw_missing_for_complete_manifest",
                 path: objectPath,
-                raw_path: rawCounterpart,
+                raw_path: invariant.rawPath,
               },
               { status: 409 },
             );
           }
-          if (!rawError || !isStorageObjectNotFound(rawError)) {
-            throw rawError ?? new Error(
-              "raw counterpart lookup returned neither object nor not-found error",
-            );
-          }
+          throw rawError;
+        }
+        if (!rawData) {
+          throw new Error("raw counterpart lookup returned no object");
+        }
+
+        const rawBytes = new Uint8Array(await rawData.arrayBuffer());
+        const rawSha = await sha256Hex(rawBytes);
+        if (
+          rawSha !== invariant.sha256 ||
+          rawBytes.length !== invariant.sizeBytes
+        ) {
+          return Response.json(
+            {
+              error: "raw_manifest_mismatch",
+              path: objectPath,
+              raw_path: invariant.rawPath,
+            },
+            { status: 409 },
+          );
         }
       }
     }
