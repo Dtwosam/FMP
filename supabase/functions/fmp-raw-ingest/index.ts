@@ -2,7 +2,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@5";
 import {
   assertTrustedGithubClaims,
+  isStorageObjectNotFound,
   manifestsEquivalent,
+  rawPathForNotFoundManifest,
   validateObjectPath,
 } from "./validation.ts";
 
@@ -74,6 +76,37 @@ Deno.serve(async (req: Request) => {
     const secretKey = secretKeys.default;
     if (!secretKey) throw new Error("missing Supabase secret key");
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, secretKey);
+
+    if (objectPath.endsWith(".json")) {
+      const incomingManifest = parseJsonObject(body);
+      if (incomingManifest) {
+        const rawCounterpart = rawPathForNotFoundManifest(
+          objectPath,
+          incomingManifest,
+        );
+        if (rawCounterpart) {
+          const { data: rawData, error: rawError } = await supabase.storage
+            .from(BUCKET)
+            .download(rawCounterpart, {}, { cache: "no-store" });
+
+          if (!rawError && rawData) {
+            return Response.json(
+              {
+                error: "raw_present_for_not_found_manifest",
+                path: objectPath,
+                raw_path: rawCounterpart,
+              },
+              { status: 409 },
+            );
+          }
+          if (!rawError || !isStorageObjectNotFound(rawError)) {
+            throw rawError ?? new Error(
+              "raw counterpart lookup returned neither object nor not-found error",
+            );
+          }
+        }
+      }
+    }
 
     const contentType = objectPath.endsWith(".json")
       ? "application/json"

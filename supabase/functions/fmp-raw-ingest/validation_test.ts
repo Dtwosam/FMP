@@ -4,7 +4,9 @@ import {
 } from "jsr:@std/assert@1";
 import {
   assertTrustedGithubClaims,
+  isStorageObjectNotFound,
   manifestsEquivalent,
+  rawPathForNotFoundManifest,
   validateObjectPath,
 } from "./validation.ts";
 
@@ -86,4 +88,50 @@ Deno.test("manifest retry rejects substantive differences", () => {
   assertEquals(manifestsEquivalent(first, { ...first, sha256: "changed" }), false);
   assertEquals(manifestsEquivalent(first, { ...first, records: 1439 }), false);
   assertEquals(manifestsEquivalent(first, { ...first, extra: "field" }), false);
+});
+
+
+Deno.test("not_found manifest maps to canonical raw counterpart", () => {
+  const manifestPath =
+    "manifests/dukascopy/v1/USDJPY/2022/11/17/BID_candles_min_1.json";
+  const rawPath = rawPathForNotFoundManifest(manifestPath, {
+    status: "not_found",
+  });
+  assertEquals(
+    rawPath,
+    "raw/dukascopy/v1/USDJPY/2022/11/17/BID_candles_min_1.bi5",
+  );
+});
+
+Deno.test("complete manifest does not request raw counterpart absence check", () => {
+  assertEquals(
+    rawPathForNotFoundManifest(
+      "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json",
+      { status: "complete" },
+    ),
+    null,
+  );
+});
+
+Deno.test("storage missing-key errors are distinguished from other 404s", () => {
+  assertEquals(
+    isStorageObjectNotFound({ statusCode: "404", error: "NoSuchKey" }),
+    true,
+  );
+  assertEquals(
+    isStorageObjectNotFound({ status: 404, error: "NotFound" }),
+    true,
+  );
+  assertEquals(
+    isStorageObjectNotFound({ statusCode: "404", code: "not_found" }),
+    true,
+  );
+  assertEquals(
+    isStorageObjectNotFound({ statusCode: "404", error: "NoSuchBucket" }),
+    false,
+  );
+  assertEquals(
+    isStorageObjectNotFound({ statusCode: "500", error: "InternalError" }),
+    false,
+  );
 });
