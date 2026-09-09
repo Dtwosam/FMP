@@ -5,6 +5,7 @@ from typing import Any, Mapping
 FROZEN_MANIFEST_TARGET = 25_500
 FROZEN_START_DATE = "2015-01-01"
 FROZEN_END_DATE_EXCLUSIVE = "2026-08-21"
+FROZEN_PLAN_SHA256 = "2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6"
 
 
 def _is_exact_int(value: object, expected: int) -> bool:
@@ -103,6 +104,7 @@ def evaluate_phase1_acceptance(
         "provenance_source": provenance.get("source") == "dukascopy",
         "provenance_granularity": provenance.get("granularity") == "1m",
         "provenance_scope": provenance.get("scope") == "cloud_snapshot_provenance",
+        "provenance_frozen_plan_sha256": provenance.get("plan_sha256") == FROZEN_PLAN_SHA256,
         "provenance_planned_chunks_25500": _is_exact_int(
             provenance.get("planned_chunks"), FROZEN_MANIFEST_TARGET
         ),
@@ -140,6 +142,7 @@ def evaluate_phase1_acceptance(
         "frozen_manifest_target": FROZEN_MANIFEST_TARGET,
         "frozen_start_date": FROZEN_START_DATE,
         "frozen_end_date_exclusive": FROZEN_END_DATE_EXCLUSIVE,
+        "frozen_plan_sha256": FROZEN_PLAN_SHA256,
         "checks": checks,
         "checks_total": len(checks),
         "checks_failed": len(failed),
