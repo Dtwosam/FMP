@@ -702,6 +702,34 @@ Verification evidence:
 
 Operational requirement after sweep 2 stops: deploy the tested repository `fmp-raw-ingest` version containing PR #31 and PR #32 before any fresh exact-gap pass. The separate read-only `fmp-raw-audit` remains undeployed until the later final provenance stage.
 
+## Canonical manifest ingest schema — MERGED / VERIFIED / UNDEPLOYED
+
+PR #33 `[phase1-no-source] Phase 1: validate canonical manifest schema at ingest` merged to `main` at:
+
+- `1864e52768a7d0d35fee523fb7b46649de46e2fe`
+
+Before immutable manifest storage, the repository `fmp-raw-ingest` source now requires the exact frozen Phase 1 manifest schema and path/body identity:
+
+- the field set must be exact; extra or missing fields are rejected;
+- path-derived pair, side, UTC date, source URL, retrieval method, 1m granularity, BI5 source format, 24-byte record size, and zero-based source-month semantics must match the manifest body;
+- `retrieved_at_utc` must be timezone-aware;
+- `complete` manifests require HTTP 2xx, lowercase SHA-256, positive compressed size, and 1..1440 records;
+- `not_found` manifests require HTTP 404 with null SHA/size/records;
+- malformed JSON, invalid identity, invalid timestamps, unknown statuses, and inconsistent status metadata fail before immutable storage;
+- PR #31/#32 cross-object raw absence/presence/hash/size checks then run only on a canonical manifest body.
+
+Verification evidence:
+
+- RED Edge run `34370969633` failed because `validateManifestForStorage` did not yet exist;
+- the first implementation's Deno tests all passed, but Edge run `34371146760` correctly failed entrypoint type-check because the new validator import was missing;
+- the import was fixed at `d6b5ae56743212cde86d7565b097dfee54022217`;
+- GREEN implementation Edge run `34371245289` and Python run `34371245177` passed;
+- final PR-head Edge run `34371361406` and Python run `34371361403` passed;
+- golden/source jobs skipped under `[phase1-no-source]`;
+- **the Edge Function was not deployed while repair sweep 2 is active**.
+
+Operational requirement after sweep 2 stops: deploy the tested repository `fmp-raw-ingest` version containing PR #31, PR #32, and PR #33 before any fresh exact-gap source pass. The separate read-only `fmp-raw-audit` remains undeployed until the later final provenance stage.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
