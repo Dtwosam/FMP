@@ -114,6 +114,18 @@ def evaluate_phase1_acceptance(
         "provenance_planned_chunks_25500": _is_exact_int(
             provenance.get("planned_chunks"), FROZEN_MANIFEST_TARGET
         ),
+        "provenance_invalid_manifest_zero": _is_exact_int(
+            provenance.get("invalid_manifest"), 0
+        ),
+        "provenance_raw_checksum_mismatch_zero": _is_exact_int(
+            provenance.get("raw_checksum_mismatch"), 0
+        ),
+        "provenance_raw_size_mismatch_zero": _is_exact_int(
+            provenance.get("raw_size_mismatch"), 0
+        ),
+        "provenance_invalid_raw_audit_zero": _is_exact_int(
+            provenance.get("invalid_raw_audit"), 0
+        ),
         "provenance_issues_zero": _is_exact_int(provenance.get("issues"), 0),
         "provenance_partition_complete": (
             provenance_complete is not None
