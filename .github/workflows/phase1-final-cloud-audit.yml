@@ -34,9 +34,62 @@ jobs:
             echo "Phase 1 acquisition is still active; final cloud audit requires a stable cloud snapshot."
             exit 2
           fi
+          baseline="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=1" --jq '.workflow_runs[0] | "\(.id // 0)\t\(.status // "")\t\(.updated_at // "")"')"
+          IFS=          echo "latest_run_id=$latest_run_id" >> "$GITHUB_OUTPUT"
+          echo "baseline_completed_at_utc=$baseline_completed_at_utc" >> "$GITHUB_OUTPUT"
+      - name: Verify full frozen cloud provenance
+        run: |
+          set -o pipefail
+          python -m fmp.data.cli verify-cloud \
+            --endpoint https://htjqqzlezyguveuajuat.supabase.co/functions/v1/fmp-raw-audit \
+            --pair ALL \
+            --start 2015-01-01 \
+            --end 2026-08-21 \
+            --batch-size 100 \
+            --timeout 60 \
+            | tee phase1-cloud-provenance.json
+      - name: Refuse audit if acquisition changed during verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASELINE_RUN_ID: ${{ steps.acquisition-baseline.outputs.latest_run_id }}
+          BASELINE_COMPLETED_AT_UTC: ${{ steps.acquisition-baseline.outputs.baseline_completed_at_utc }}
+        run: |
           latest_run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=1" --jq '.workflow_runs[0].id // 0')"
-          baseline_completed_at_utc="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=1" --jq '.workflow_runs[0].updated_at // empty')"
-          if [ "$latest_run_id" = "0" ] || [ -z "$baseline_completed_at_utc" ]; then
+          if [ "$latest_run_id" != "$BASELINE_RUN_ID" ]; then
+            echo "Phase 1 acquisition changed during final cloud verification; discard this mixed-snapshot audit."
+            exit 3
+          fi
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path("phase1-cloud-provenance.json")
+          report = json.loads(path.read_text(encoding="utf-8"))
+          baseline = os.environ["BASELINE_RUN_ID"]
+          baseline_completed_at = os.environ["BASELINE_COMPLETED_AT_UTC"]
+          if not baseline.isdigit():
+              raise SystemExit("invalid acquisition baseline run id")
+          if not baseline_completed_at:
+              raise SystemExit("missing acquisition baseline completion time")
+          report["acquisition_baseline_run_id"] = int(baseline)
+          report["acquisition_baseline_completed_at_utc"] = baseline_completed_at
+          report["acquisition_unchanged_during_verification"] = True
+          path.write_text(
+              json.dumps(report, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+      - name: Persist final cloud provenance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase1-cloud-provenance-${{ github.run_id }}
+          path: phase1-cloud-provenance.json
+          if-no-files-found: warn
+          retention-days: 90
+\t' read -r latest_run_id baseline_status baseline_completed_at_utc <<< "$baseline"
+          if [ "$latest_run_id" = "0" ] || [ "$baseline_status" != "completed" ] || [ -z "$baseline_completed_at_utc" ]; then
             echo "Phase 1 final audit requires a completed acquisition baseline run."
             exit 2
           fi
