@@ -618,6 +618,30 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Dukascopy acquisition or Supabase deployment was introduced by this change.
 
+## Raw-only reconciliation fail-closed proof — MERGED / VERIFIED
+
+PR #30 `[phase1-no-source] Phase 1: prove raw-only reconciliation fails closed` merged to `main` at:
+
+- `fe361a3dad01a154f016b569e2832632e56f1d10`
+
+The three known planned raw-without-manifest objects remain:
+
+- `raw/dukascopy/v1/GBPUSD/2020/05/01/BID_candles_min_1.bi5`;
+- `raw/dukascopy/v1/USDJPY/2015/08/03/ASK_candles_min_1.bi5`;
+- `raw/dukascopy/v1/USDJPY/2022/11/17/BID_candles_min_1.bi5`.
+
+The supported recovery path is the fresh exact-gap cycle. A missing manifest puts the exact key into the sparse plan. Reacquisition validates source bytes locally, then cloud mirroring verifies/writes the raw object before attempting the manifest object.
+
+This ordering is now covered by an explicit regression test: if the immutable cloud raw rejects the refetched bytes, `CloudMirrorError` propagates immediately and the manifest PUT is never attempted. Therefore recovery cannot create a manifest that blesses bytes different from the already-stored immutable raw, and raw deletion/overwrite is never used to force accounting to pass.
+
+The final acceptance runbook now documents this fail-closed raw-only reconciliation contract.
+
+Verification evidence:
+
+- PR-head test run `34368149054` passed workflow YAML validation, unit tests, and compile;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Dukascopy acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
