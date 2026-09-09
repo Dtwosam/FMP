@@ -154,6 +154,7 @@ Rules:
 - before sparse source access, the runner must reject a plan if any other source-capable `phase1-full-acquisition` run was updated after the plan's `audited_at_utc`; because GitHub workflow timestamps are only second-granularity, any source-capable run reported in the same UTC second as the audit is also treated as intervening/fail-closed; the current exact-gap run and push-triggered `[phase1-no-source]` runs are excluded from that check; manual `workflow_dispatch` runs remain source-capable regardless of the underlying head-commit message;
 - cloud/OIDC/Supabase failures remain fail-fast and local exact-plan provenance verification remains fail-closed;
 - raw cloud objects remain immutable and are never deleted merely to repair accounting;
+- every cloud-mirrored Phase 1 acquisition run from current `main` must complete an authenticated ingest protocol preflight before any source request and require exactly `fmp-raw-ingest-v2`; an older/misdeployed endpoint fails before Dukascopy access;
 - the ingest endpoint must reject malformed, extra-field, missing-field, path/body-identity-mismatched, or unknown-status manifest JSON before immutable storage;
 - manifest identity fields must match the canonical object path, source URL, pair, side, UTC date, retrieval method, 1m granularity, BI5 format, 24-byte record size, and zero-based source-month semantics;
 - `retrieved_at_utc` must be timezone-aware and status-specific metadata must satisfy the frozen `complete` / `not_found` schema;
