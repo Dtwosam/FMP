@@ -1,5 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
-import { createRemoteJWKSet, jwtVerify } from "npm:jose@5";
+import { createClient } from "npm:@supabase/supabase-js@2.116.0";
+import { createRemoteJWKSet, jwtVerify } from "npm:jose@5.10.0";
 import {
   assertTrustedGithubClaims,
   INGEST_PROTOCOL,
