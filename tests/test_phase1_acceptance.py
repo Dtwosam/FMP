@@ -78,6 +78,8 @@ def provenance_report() -> dict[str, object]:
         "issue_samples": [],
         "acquisition_baseline_run_id": 34113319817,
         "acquisition_baseline_completed_at_utc": "2026-09-09T11:42:29Z",
+        "acquisition_history_guard_version": 1,
+        "acquisition_history_guard_started_at_utc": "2026-09-09T11:50:00Z",
         "acquisition_unchanged_during_verification": True,
         "ready": True,
     }
@@ -216,6 +218,36 @@ class Phase1AcceptanceTests(unittest.TestCase):
 
         self.assertFalse(report["ready"])
         self.assertFalse(report["checks"]["accounting_frozen_snapshot"])
+
+    def test_rejects_provenance_without_history_guard_version(self) -> None:
+        provenance = provenance_report()
+        provenance.pop("acquisition_history_guard_version")
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(
+            report["checks"]["provenance_acquisition_history_guard_version"]
+        )
+
+    def test_rejects_provenance_without_history_guard_timestamp(self) -> None:
+        provenance = provenance_report()
+        provenance.pop("acquisition_history_guard_started_at_utc")
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(
+            report["checks"]["provenance_acquisition_history_guard_started_at_utc"]
+        )
 
     def test_rejects_provenance_without_stable_acquisition_stamp(self) -> None:
         provenance = provenance_report()
