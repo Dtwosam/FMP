@@ -497,6 +497,30 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Dukascopy acquisition or Supabase deployment was introduced by this change.
 
+## Final cloud-audit requested-state guard — MERGED / VERIFIED
+
+PR #25 `[phase1-no-source] Phase 1: block requested acquisition runs in final audit` merged to `main` at:
+
+- `256639d0d50996ac584de84b956fb1fe38e1de78`
+
+GitHub Actions exposes `requested` as a non-completed workflow-run status in addition to `queued`, `waiting`, `pending`, and `in_progress`. The final cloud-audit precheck previously omitted `requested`.
+
+The guard now rejects all five non-completed acquisition states before treating the cloud snapshot as stable:
+
+- `requested`;
+- `queued`;
+- `waiting`;
+- `pending`;
+- `in_progress`.
+
+Verification evidence:
+
+- RED run `34356031188` failed exactly because the workflow omitted `requested`;
+- GREEN implementation run `34356086024` passed;
+- docs-head GREEN run `34356136210` passed;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Dukascopy acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
