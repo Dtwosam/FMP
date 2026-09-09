@@ -43,7 +43,7 @@ def select_acquisition_baseline(workflow_runs: object) -> dict[str, Any]:
     if not isinstance(workflow_runs, list):
         raise ValueError("GitHub acquisition workflow runs must be a list")
 
-    candidates: list[tuple[datetime, int, str, datetime]] = []
+    candidates: list[tuple[datetime, int, str]] = []
     ignored_no_source = 0
 
     for index, run in enumerate(workflow_runs):
@@ -63,13 +63,14 @@ def select_acquisition_baseline(workflow_runs: object) -> dict[str, Any]:
             raise ValueError(
                 f"GitHub acquisition workflow run {run_id} has invalid status"
             )
-        created_at = _utc_timestamp(run.get("created_at"), field="created_at", run_id=run_id)
-        updated_at = _utc_timestamp(run.get("updated_at"), field="updated_at", run_id=run_id)
-        candidates.append((created_at, run_id, status, updated_at))
+        updated_at = _utc_timestamp(
+            run.get("updated_at"), field="updated_at", run_id=run_id
+        )
+        candidates.append((updated_at, run_id, status))
 
     active_run_ids = sorted(
         run_id
-        for _, run_id, status, _ in candidates
+        for _, run_id, status in candidates
         if status in _ACTIVE_STATUSES
     )
     if active_run_ids:
@@ -83,7 +84,7 @@ def select_acquisition_baseline(workflow_runs: object) -> dict[str, Any]:
             "Phase 1 final audit requires a completed source-capable acquisition baseline run"
         )
 
-    _, latest_run_id, latest_status, latest_updated_at = max(
+    latest_updated_at, latest_run_id, latest_status = max(
         candidates, key=lambda item: (item[0], item[1])
     )
     if latest_status != "completed":
