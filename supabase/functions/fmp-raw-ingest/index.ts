@@ -5,6 +5,7 @@ import {
   isStorageObjectNotFound,
   manifestStorageInvariant,
   manifestsEquivalent,
+  validateManifestForStorage,
   validateObjectPath,
 } from "./validation.ts";
 
@@ -85,6 +86,7 @@ Deno.serve(async (req: Request) => {
 
       let invariant;
       try {
+        validateManifestForStorage(objectPath, incomingManifest);
         invariant = manifestStorageInvariant(objectPath, incomingManifest);
       } catch (error) {
         console.error(error);

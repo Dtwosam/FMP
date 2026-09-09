@@ -8,8 +8,35 @@ import {
   manifestStorageInvariant,
   manifestsEquivalent,
   rawPathForNotFoundManifest,
+  validateManifestForStorage,
   validateObjectPath,
 } from "./validation.ts";
+
+function canonicalManifest(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    manifest_version: 1,
+    retrieval_method: "dukascopy-public-daily-m1-bi5-v1",
+    source: "dukascopy",
+    source_url:
+      "https://datafeed.dukascopy.com/datafeed/EURUSD/2024/00/02/BID_candles_min_1.bi5",
+    pair: "EURUSD",
+    side: "BID",
+    date_utc: "2024-01-02",
+    granularity: "1m",
+    source_format: "bi5-lzma-daily-candles",
+    record_size_bytes: 24,
+    month_indexing: "zero_based_in_source_url",
+    status: "complete",
+    http_status: 200,
+    sha256: "a".repeat(64),
+    compressed_size_bytes: 321,
+    records: 1440,
+    retrieved_at_utc: "2026-09-09T15:00:00+00:00",
+    ...overrides,
+  };
+}
 
 const trustedClaims = {
   iss: "https://token.actions.githubusercontent.com",
@@ -181,5 +208,118 @@ Deno.test("manifest storage invariant rejects unknown status", () => {
       ),
     Error,
     "status",
+  );
+});
+
+
+Deno.test("canonical complete manifest schema is accepted for its path", () => {
+  assertEquals(
+    validateManifestForStorage(
+      "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json",
+      canonicalManifest(),
+    ),
+    true,
+  );
+});
+
+Deno.test("canonical not_found manifest schema is accepted", () => {
+  assertEquals(
+    validateManifestForStorage(
+      "manifests/dukascopy/v1/EURUSD/2024/00/06/ASK_candles_min_1.json",
+      canonicalManifest({
+        source_url:
+          "https://datafeed.dukascopy.com/datafeed/EURUSD/2024/00/06/ASK_candles_min_1.bi5",
+        side: "ASK",
+        date_utc: "2024-01-06",
+        status: "not_found",
+        http_status: 404,
+        sha256: null,
+        compressed_size_bytes: null,
+        records: null,
+      }),
+    ),
+    true,
+  );
+});
+
+Deno.test("manifest schema rejects path/body identity mismatches", () => {
+  const path =
+    "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json";
+  for (const manifest of [
+    canonicalManifest({ pair: "GBPUSD" }),
+    canonicalManifest({ side: "ASK" }),
+    canonicalManifest({ date_utc: "2024-01-03" }),
+    canonicalManifest({
+      source_url:
+        "https://datafeed.dukascopy.com/datafeed/EURUSD/2024/00/03/BID_candles_min_1.bi5",
+    }),
+  ]) {
+    assertThrows(
+      () => validateManifestForStorage(path, manifest),
+      Error,
+      "identity",
+    );
+  }
+});
+
+Deno.test("manifest schema rejects missing and extra fields", () => {
+  const path =
+    "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json";
+  const missing = canonicalManifest();
+  delete missing.records;
+  assertThrows(
+    () => validateManifestForStorage(path, missing),
+    Error,
+    "fields",
+  );
+  assertThrows(
+    () =>
+      validateManifestForStorage(path, {
+        ...canonicalManifest(),
+        extra: "not-canonical",
+      }),
+    Error,
+    "fields",
+  );
+});
+
+Deno.test("manifest schema rejects invalid retrieval timestamp", () => {
+  assertThrows(
+    () =>
+      validateManifestForStorage(
+        "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json",
+        canonicalManifest({ retrieved_at_utc: "2026-09-09T15:00:00" }),
+      ),
+    Error,
+    "retrieved_at_utc",
+  );
+});
+
+Deno.test("manifest schema rejects inconsistent status metadata", () => {
+  const path =
+    "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json";
+  assertThrows(
+    () =>
+      validateManifestForStorage(
+        path,
+        canonicalManifest({
+          status: "not_found",
+          http_status: 404,
+          sha256: "a".repeat(64),
+          compressed_size_bytes: null,
+          records: null,
+        }),
+      ),
+    Error,
+    "not_found",
+  );
+  assertThrows(
+    () =>
+      validateManifestForStorage(
+        path,
+        canonicalManifest({ http_status: 404 }),
+      ),
+    Error,
+    "complete",
   );
 });
