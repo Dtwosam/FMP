@@ -80,7 +80,7 @@ Rules:
 - Phase 1 performs only structural validation sufficient to reject empty/corrupt/obviously partial payloads; full price decoding and quote-quality validation remain Phase 2.
 - every successful chunk gets a SHA-256 manifest and deterministic provenance path.
 - existing verified chunks are never silently overwritten.
-- HTTP 404 is recorded as `not_found`; delayed files can be explicitly retried with `--recheck-not-found`.
+- HTTP 404 is recorded as `not_found`; delayed files can be explicitly retried locally with `--recheck-not-found`, subject to DEC-013's prohibition on cloud-mirrored in-place promotion.
 - no undocumented rate allowance is assumed.
 
 **Verification evidence:** GitHub Actions run `32541224812`, job `96951495249`, on a clean Ubuntu runner. EUR/USD 2024-01-02 returned HTTP 200 for both sides with 1,440 records each. BID SHA-256: `9b2d2b718f9ca123b58dce4b4512d4e1bd35c692e23e1beafebdd700072cf546`. ASK SHA-256: `a7dd327f5c59ad016c0e7e480d33fd7abd38da3e9c51dfe614f5e95f677386b3`.
@@ -165,3 +165,22 @@ Rules:
 - Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
 
 Implementation evidence: PR #12, merge commit `a6bf7e2ecf215cf65e99cc9653267abe9ddb4eb1`.
+
+
+## DEC-013 — No in-place cloud promotion of canonical `not_found` manifests
+
+**Date:** 2026-09-09  
+**Status:** APPROVED
+
+The canonical Phase 1 cloud manifest path is first-write stable. A cloud manifest whose first accepted status is `not_found` is not mutated or replaced later with a `complete` manifest in V1.
+
+Rules:
+
+- `--recheck-not-found` remains supported for local acquisition/revalidation when `--mirror-url` is not configured;
+- combining `--recheck-not-found` with cloud mirroring is rejected before GitHub OIDC setup and before any source request;
+- this avoids the unsafe sequence where a later HTTP 200 uploads a new raw object first, then the immutable earlier `not_found` manifest rejects the substantive `complete` replacement and leaves raw + stale `not_found` provenance;
+- existing canonical manifests and raw objects are not deleted or overwritten to implement a status transition;
+- any future cloud 404→200 promotion requires a separately approved versioned-provenance design rather than in-place mutation;
+- legitimate `not_found` manifests remain valid Phase 1 accounting/provenance evidence and Phase 2 still determines whether observed gaps are expected market closures or data-quality concerns.
+
+This decision reconciles DEC-009's explicit source recheck capability with DEC-010's first-cloud-manifest immutability.

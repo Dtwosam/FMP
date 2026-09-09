@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
+from unittest.mock import patch
 
 from fmp.data.acquire import AcquisitionResult, AcquisitionStatus
 from fmp.data.cli import build_parser, process_fetch_plan
@@ -208,6 +209,34 @@ class CloudMirrorTests(unittest.TestCase):
 
         self.assertEqual(len(results), 2)
         self.assertEqual(sleeps, [2.5])
+
+    def test_cloud_mirrored_recheck_not_found_fails_before_oidc_or_source(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "fetch",
+                "--pair",
+                "EURUSD",
+                "--start",
+                "2024-01-01",
+                "--end",
+                "2024-01-02",
+                "--out",
+                ".phase1-recheck",
+                "--mirror-url",
+                "https://example.supabase.co/functions/v1/fmp-raw-ingest",
+                "--recheck-not-found",
+            ]
+        )
+
+        with (
+            patch("fmp.data.cli.GithubOidcTokenProvider.from_environment") as oidc,
+            patch("fmp.data.cli.acquire_chunk") as acquire,
+        ):
+            with self.assertRaisesRegex(ValueError, "cloud-mirrored"):
+                args.func(args)
+
+        oidc.assert_not_called()
+        acquire.assert_not_called()
 
     def test_fetch_parser_accepts_source_delay(self) -> None:
         args = build_parser().parse_args(
