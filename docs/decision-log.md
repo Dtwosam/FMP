@@ -157,7 +157,7 @@ Rules:
 - every cloud-mirrored Phase 1 acquisition run from current `main` must complete an authenticated ingest protocol preflight before any source request and require exactly `fmp-raw-ingest-v2`; an older/misdeployed endpoint fails before Dukascopy access;
 - the ingest endpoint must reject malformed, extra-field, missing-field, path/body-identity-mismatched, or unknown-status manifest JSON before immutable storage;
 - manifest identity fields must match the canonical object path, source URL, pair, side, UTC date, retrieval method, 1m granularity, BI5 format, 24-byte record size, and zero-based source-month semantics;
-- `retrieved_at_utc` must be timezone-aware and status-specific metadata must satisfy the frozen `complete` / `not_found` schema;
+- `retrieved_at_utc` must use UTC (zero offset) and status-specific metadata must satisfy the frozen `complete` / `not_found` schema;
 - a `not_found` manifest is accepted only when the matching immutable raw object is verified absent;
 - a `complete` manifest is accepted only when the matching immutable raw object already exists and its server-side SHA-256 and byte size match the manifest;
 - Storage lookup errors other than a verified missing-key result fail closed;
