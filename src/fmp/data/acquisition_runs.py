@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 _ACTIVE_STATUSES = {"requested", "queued", "waiting", "pending", "in_progress"}
+_KNOWN_STATUSES = _ACTIVE_STATUSES | {"completed"}
 
 
 def _utc_timestamp(value: object, *, field: str, run_id: int) -> datetime:
@@ -59,7 +60,7 @@ def select_acquisition_baseline(workflow_runs: object) -> dict[str, Any]:
             continue
 
         status = run.get("status")
-        if not isinstance(status, str):
+        if not isinstance(status, str) or status not in _KNOWN_STATUSES:
             raise ValueError(
                 f"GitHub acquisition workflow run {run_id} has invalid status"
             )
