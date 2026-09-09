@@ -69,6 +69,8 @@ def provenance_report() -> dict[str, object]:
         "invalid_raw_audit": 0,
         "issues": 0,
         "issue_samples": [],
+        "acquisition_baseline_run_id": 34113319817,
+        "acquisition_unchanged_during_verification": True,
         "ready": True,
     }
 
@@ -174,6 +176,34 @@ class Phase1AcceptanceTests(unittest.TestCase):
 
         self.assertFalse(report["ready"])
         self.assertFalse(report["checks"]["accounting_frozen_snapshot"])
+
+    def test_rejects_provenance_without_stable_acquisition_stamp(self) -> None:
+        provenance = provenance_report()
+        provenance["acquisition_unchanged_during_verification"] = False
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(
+            report["checks"]["provenance_acquisition_unchanged_during_verification"]
+        )
+
+    def test_rejects_provenance_without_acquisition_baseline_run_id(self) -> None:
+        provenance = provenance_report()
+        provenance["acquisition_baseline_run_id"] = None
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["provenance_acquisition_baseline_run_id"])
 
     def test_rejects_wrong_provenance_snapshot_identity(self) -> None:
         provenance = provenance_report()
