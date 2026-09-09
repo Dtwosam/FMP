@@ -335,6 +335,18 @@ Deno.test("manifest schema rejects invalid retrieval timestamp", () => {
   );
 });
 
+Deno.test("manifest schema rejects non-UTC retrieval timestamp", () => {
+  assertThrows(
+    () =>
+      validateManifestForStorage(
+        "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json",
+        canonicalManifest({ retrieved_at_utc: "2026-09-09T16:00:00+01:00" }),
+      ),
+    Error,
+    "retrieved_at_utc",
+  );
+});
+
 Deno.test("manifest schema rejects inconsistent status metadata", () => {
   const path =
     "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json";

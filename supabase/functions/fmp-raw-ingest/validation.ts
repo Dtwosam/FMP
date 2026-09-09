@@ -118,10 +118,10 @@ export function validateManifestForStorage(
   const retrievedAt = manifest.retrieved_at_utc;
   if (
     typeof retrievedAt !== "string" ||
-    !/(?:Z|[+-]\d{2}:\d{2})$/.test(retrievedAt) ||
+    !/(?:Z|\+00:00)$/.test(retrievedAt) ||
     !Number.isFinite(Date.parse(retrievedAt))
   ) {
-    throw new Error("manifest retrieved_at_utc must be timezone-aware");
+    throw new Error("manifest retrieved_at_utc must use UTC");
   }
 
   if (manifest.status === "complete") {

@@ -9,7 +9,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Iterable, Protocol
 
 from .cloud import CloudGetTransport, CloudHttpResponse, UrllibCloudTransport
@@ -248,7 +248,7 @@ def _valid_timestamp(value: object) -> bool:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError:
         return False
-    return parsed.tzinfo is not None and parsed.utcoffset() is not None
+    return parsed.tzinfo is not None and parsed.utcoffset() == timedelta(0)
 
 
 def _validate_manifest(
