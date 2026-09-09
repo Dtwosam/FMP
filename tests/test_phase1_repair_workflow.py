@@ -58,6 +58,28 @@ class Phase1RepairWorkflowTests(unittest.TestCase):
             workflow,
         )
 
+    def test_acquisition_trigger_tags_are_mutually_exclusive(self) -> None:
+        workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
+
+        self.assertIn(
+            "contains(github.event.head_commit.message, '[phase1-full]') && "
+            "!contains(github.event.head_commit.message, '[phase1-repair-batch]') && "
+            "!contains(github.event.head_commit.message, '[phase1-exact-gap-batch]')",
+            workflow,
+        )
+        self.assertIn(
+            "contains(github.event.head_commit.message, '[phase1-repair-batch]') && "
+            "!contains(github.event.head_commit.message, '[phase1-full]') && "
+            "!contains(github.event.head_commit.message, '[phase1-exact-gap-batch]')",
+            workflow,
+        )
+        self.assertIn(
+            "contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && "
+            "!contains(github.event.head_commit.message, '[phase1-full]') && "
+            "!contains(github.event.head_commit.message, '[phase1-repair-batch]')",
+            workflow,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
