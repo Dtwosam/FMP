@@ -3,12 +3,13 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import Callable, Protocol
 
 from .acquire import AcquisitionResult, AcquisitionStatus
 
@@ -87,13 +88,27 @@ class GithubOidcTokenProvider:
         *,
         transport: CloudGetTransport | None = None,
         timeout_seconds: float = 15.0,
+        max_attempts: int = 3,
+        retry_delay_seconds: float = 1.0,
+        sleep_fn: Callable[[float], None] = time.sleep,
     ) -> None:
         if not request_url or not request_token:
             raise CloudMirrorError("GitHub OIDC request URL/token are required")
+        if (
+            not isinstance(max_attempts, int)
+            or isinstance(max_attempts, bool)
+            or max_attempts <= 0
+        ):
+            raise CloudMirrorError("GitHub OIDC max attempts must be a positive integer")
+        if retry_delay_seconds < 0:
+            raise CloudMirrorError("GitHub OIDC retry delay must be non-negative")
         self.request_url = request_url
         self.request_token = request_token
         self.transport = transport or UrllibCloudTransport()
         self.timeout_seconds = timeout_seconds
+        self.max_attempts = max_attempts
+        self.retry_delay_seconds = retry_delay_seconds
+        self.sleep_fn = sleep_fn
 
     @classmethod
     def from_environment(cls) -> "GithubOidcTokenProvider":
@@ -104,21 +119,47 @@ class GithubOidcTokenProvider:
 
     def get_token(self) -> str:
         separator = "&" if "?" in self.request_url else "?"
-        url = self.request_url + separator + urllib.parse.urlencode({"audience": OIDC_AUDIENCE})
-        response = self.transport.get(
-            url,
-            {"Authorization": f"Bearer {self.request_token}", "Accept": "application/json"},
-            self.timeout_seconds,
+        url = self.request_url + separator + urllib.parse.urlencode(
+            {"audience": OIDC_AUDIENCE}
         )
-        if not 200 <= response.status < 300:
-            raise CloudMirrorError(f"GitHub OIDC token request failed with HTTP {response.status}")
-        try:
-            value = json.loads(response.body.decode("utf-8"))["value"]
-        except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
-            raise CloudMirrorError("GitHub OIDC token response was malformed") from exc
-        if not isinstance(value, str) or not value:
-            raise CloudMirrorError("GitHub OIDC token response did not contain a token")
-        return value
+        headers = {
+            "Authorization": f"Bearer {self.request_token}",
+            "Accept": "application/json",
+        }
+
+        for attempt in range(1, self.max_attempts + 1):
+            response = self.transport.get(url, headers, self.timeout_seconds)
+            if 200 <= response.status < 300:
+                try:
+                    value = json.loads(response.body.decode("utf-8"))["value"]
+                except (
+                    UnicodeDecodeError,
+                    json.JSONDecodeError,
+                    KeyError,
+                    TypeError,
+                ) as exc:
+                    raise CloudMirrorError(
+                        "GitHub OIDC token response was malformed"
+                    ) from exc
+                if not isinstance(value, str) or not value:
+                    raise CloudMirrorError(
+                        "GitHub OIDC token response did not contain a token"
+                    )
+                return value
+
+            transient = response.status == 429 or 500 <= response.status < 600
+            if not transient:
+                raise CloudMirrorError(
+                    f"GitHub OIDC token request failed with HTTP {response.status}"
+                )
+            if attempt == self.max_attempts:
+                raise CloudMirrorError(
+                    "GitHub OIDC token request failed with "
+                    f"HTTP {response.status} after {self.max_attempts} attempts"
+                )
+            self.sleep_fn(self.retry_delay_seconds)
+
+        raise AssertionError("unreachable GitHub OIDC retry state")
 
 
 class SupabaseRawMirror:

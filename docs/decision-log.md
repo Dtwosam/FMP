@@ -152,7 +152,8 @@ Rules:
 - the dedicated trigger is `[phase1-exact-gap-batch]`;
 - the same exact-gap workflow run must not be rerun after partial success/failure; a fresh Supabase audit and smaller fresh plan are required;
 - before sparse source access, the runner must reject a plan if any other source-capable `phase1-full-acquisition` run was updated after the plan's `audited_at_utc`; because GitHub workflow timestamps are only second-granularity, any source-capable run reported in the same UTC second as the audit is also treated as intervening/fail-closed; the current exact-gap run and push-triggered `[phase1-no-source]` runs are excluded from that check; manual `workflow_dispatch` runs remain source-capable regardless of the underlying head-commit message;
-- cloud/OIDC/Supabase failures remain fail-fast and local exact-plan provenance verification remains fail-closed;
+- GitHub OIDC token retrieval uses a bounded reliability exception: HTTP 429 and 5xx responses are retried up to 3 total attempts with a 1-second delay; non-transient HTTP failures, malformed responses, and exhaustion still fail closed;
+- other cloud/Supabase failures remain fail-fast and local exact-plan provenance verification remains fail-closed;
 - raw cloud objects remain immutable and are never deleted merely to repair accounting;
 - every cloud-mirrored Phase 1 acquisition run from current `main` must complete an authenticated ingest protocol preflight before any source request and require exactly `fmp-raw-ingest-v2`; an older/misdeployed endpoint fails before Dukascopy access;
 - the ingest endpoint must reject malformed, extra-field, missing-field, path/body-identity-mismatched, or unknown-status manifest JSON before immutable storage;

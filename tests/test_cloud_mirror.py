@@ -29,6 +29,20 @@ class FakeGetTransport:
         return CloudHttpResponse(200, json.dumps({"value": "oidc-token"}).encode())
 
 
+class SequencedGetTransport:
+    def __init__(self, responses: list[CloudHttpResponse]) -> None:
+        self.responses = list(responses)
+        self.calls: list[tuple[str, dict[str, str], float]] = []
+
+    def get(
+        self, url: str, headers: dict[str, str], timeout_seconds: float
+    ) -> CloudHttpResponse:
+        self.calls.append((url, headers, timeout_seconds))
+        if not self.responses:
+            raise AssertionError("unexpected extra OIDC request")
+        return self.responses.pop(0)
+
+
 class FakePutTransport:
     def __init__(self, status: int = 201, response_status: str = "stored") -> None:
         self.status = status
@@ -105,6 +119,75 @@ class CloudMirrorTests(unittest.TestCase):
         self.assertIn("audience=fmp-supabase-raw-ingest", url)
         self.assertEqual(headers["Authorization"], "Bearer request-token")
         self.assertGreater(timeout, 0)
+
+    def test_oidc_provider_retries_transient_503_then_succeeds(self) -> None:
+        transport = SequencedGetTransport(
+            [
+                CloudHttpResponse(503, b'{"error":"temporary"}'),
+                CloudHttpResponse(503, b'{"error":"temporary"}'),
+                CloudHttpResponse(200, b'{"value":"oidc-token"}'),
+            ]
+        )
+        sleeps: list[float] = []
+        provider = GithubOidcTokenProvider(
+            request_url="https://actions.example/oidc",
+            request_token="request-token",
+            transport=transport,
+            max_attempts=3,
+            retry_delay_seconds=0.25,
+            sleep_fn=sleeps.append,
+        )
+
+        self.assertEqual(provider.get_token(), "oidc-token")
+        self.assertEqual(len(transport.calls), 3)
+        self.assertEqual(sleeps, [0.25, 0.25])
+
+    def test_oidc_provider_does_not_retry_auth_failure(self) -> None:
+        transport = SequencedGetTransport(
+            [
+                CloudHttpResponse(401, b'{"error":"unauthorized"}'),
+                CloudHttpResponse(200, b'{"value":"must-not-be-used"}'),
+            ]
+        )
+        sleeps: list[float] = []
+        provider = GithubOidcTokenProvider(
+            request_url="https://actions.example/oidc",
+            request_token="request-token",
+            transport=transport,
+            max_attempts=3,
+            retry_delay_seconds=0.25,
+            sleep_fn=sleeps.append,
+        )
+
+        with self.assertRaisesRegex(CloudMirrorError, "HTTP 401"):
+            provider.get_token()
+
+        self.assertEqual(len(transport.calls), 1)
+        self.assertEqual(sleeps, [])
+
+    def test_oidc_provider_fails_after_bounded_transient_retries(self) -> None:
+        transport = SequencedGetTransport(
+            [
+                CloudHttpResponse(503, b'{}'),
+                CloudHttpResponse(503, b'{}'),
+                CloudHttpResponse(503, b'{}'),
+            ]
+        )
+        sleeps: list[float] = []
+        provider = GithubOidcTokenProvider(
+            request_url="https://actions.example/oidc",
+            request_token="request-token",
+            transport=transport,
+            max_attempts=3,
+            retry_delay_seconds=0.25,
+            sleep_fn=sleeps.append,
+        )
+
+        with self.assertRaisesRegex(CloudMirrorError, "after 3 attempts"):
+            provider.get_token()
+
+        self.assertEqual(len(transport.calls), 3)
+        self.assertEqual(sleeps, [0.25, 0.25])
 
     def test_ingest_preflight_accepts_expected_protocol(self) -> None:
         transport = FakeMirrorTransport()
