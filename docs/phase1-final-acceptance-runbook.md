@@ -133,7 +133,7 @@ Required result:
 - `complete + not_found = 25500`
 - `issues = 0`
 - `acquisition_baseline_run_id` is a non-negative integer
-- `acquisition_baseline_completed_at_utc` is a timezone-aware timestamp
+- `acquisition_baseline_completed_at_utc` is a UTC-zero timestamp
 - both Evidence A and Evidence B `audited_at_utc` timestamps are at or after that acquisition baseline completion time
 - `acquisition_unchanged_during_verification = true`
 - `ready = true`
@@ -159,7 +159,7 @@ Important cross-checks include:
 - accounting contains one complete, unique, totals-reconciled row for every frozen pair/side;
 - provenance plan SHA-256 matches the frozen plan fingerprint above;
 - provenance carries a valid acquisition baseline run ID/completion time and confirms acquisition remained unchanged during verification;
-- structural and accounting evidence timestamps are timezone-aware and are not older than the acquisition baseline completion time;
+- structural and accounting `audited_at_utc` timestamps use UTC-zero offsets and are not older than the acquisition baseline completion time;
 - structural present = accounting present = provenance planned = 25,500;
 - structural raw objects = accounting raw-backed = provenance complete;
 - accounting inferred not_found = provenance not_found.
