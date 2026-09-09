@@ -875,6 +875,19 @@ Current Edge Function v3 rule:
 
 Merged via PR #5 at commit `a2906a37f380dc6c4d27e90d46f15c2c2731d417`.
 
+## Active-sweep raw-only watchpoint — LIVE / NO INTERVENTION
+
+Repair sweep 2 is still running from the historical trigger commit and therefore still uses deployed `fmp-raw-ingest` v3 rather than the hardened repository protocol.
+
+Two queued repair months contain known raw-only keys:
+
+- `repair-batch (2020, 6)` contains `raw/dukascopy/v1/GBPUSD/2020/05/01/BID_candles_min_1.bi5`;
+- `repair-batch (2022, 12)` contains `raw/dukascopy/v1/USDJPY/2022/11/17/BID_candles_min_1.bi5`.
+
+The earlier `USDJPY/2015/08/03/ASK` raw-only key is in calendar month 2015-09 and is no longer in the queued tail.
+
+No intervention is authorized while the serialized sweep is active: do not add parallel source traffic and do not redeploy the ingest endpoint mid-run under the current recovery contract. Preserve this watchpoint for the exhaustive post-sweep structural/accounting audit. If either raw-only key gains a manifest during sweep 2, the final recovery evidence must reconcile that state explicitly rather than assuming raw-only count movement is automatically correct.
+
 ## Remaining Phase 1 gates
 
 - [ ] serialized monthly recovery completes / all failed months retried
