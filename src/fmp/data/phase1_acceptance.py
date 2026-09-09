@@ -183,6 +183,11 @@ def evaluate_phase1_acceptance(
             and acquisition_baseline_completed_at is not None
             and structural_audited_at >= acquisition_baseline_completed_at
         ),
+        "structural_not_after_provenance_history_guard": (
+            structural_audited_at is not None
+            and acquisition_history_guard_started_at is not None
+            and structural_audited_at <= acquisition_history_guard_started_at
+        ),
         "structural_gate_pass": structural.get("structural_gate_pass") is True,
         "accounting_report_version": _is_exact_int(accounting.get("report_version"), 1),
         "accounting_scope": accounting.get("scope") == "phase1_recovery_accounting",
@@ -229,6 +234,11 @@ def evaluate_phase1_acceptance(
             accounting_audited_at is not None
             and acquisition_baseline_completed_at is not None
             and accounting_audited_at >= acquisition_baseline_completed_at
+        ),
+        "accounting_not_after_provenance_history_guard": (
+            accounting_audited_at is not None
+            and acquisition_history_guard_started_at is not None
+            and accounting_audited_at <= acquisition_history_guard_started_at
         ),
         "accounting_gate_pass": accounting.get("accounting_gate_pass") is True,
         "provenance_report_version": _is_exact_int(provenance.get("report_version"), 1),
