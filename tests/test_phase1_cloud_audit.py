@@ -273,6 +273,7 @@ class FinalCloudAuditWorkflowTests(unittest.TestCase):
         self.assertNotIn("schedule:", workflow)
         self.assertIn("id-token: write", workflow)
         self.assertIn("actions: read", workflow)
+        self.assertIn("PYTHONPATH: src", workflow)
         self.assertIn("verify-cloud", workflow)
         self.assertIn("2015-01-01", workflow)
         self.assertIn("2026-08-21", workflow)
