@@ -13,6 +13,7 @@ from typing import Protocol
 from .acquire import AcquisitionResult, AcquisitionStatus
 
 OIDC_AUDIENCE = "fmp-supabase-raw-ingest"
+INGEST_PROTOCOL = "fmp-raw-ingest-v2"
 
 
 class CloudMirrorError(RuntimeError):
@@ -28,6 +29,16 @@ class CloudHttpResponse:
 class CloudGetTransport(Protocol):
     def get(
         self, url: str, headers: dict[str, str], timeout_seconds: float
+    ) -> CloudHttpResponse: ...
+
+
+class CloudMirrorTransport(CloudGetTransport, Protocol):
+    def put(
+        self,
+        url: str,
+        body: bytes,
+        headers: dict[str, str],
+        timeout_seconds: float,
     ) -> CloudHttpResponse: ...
 
 
@@ -116,7 +127,7 @@ class SupabaseRawMirror:
         endpoint: str,
         token_provider: GithubOidcTokenProvider | Protocol,
         *,
-        transport: CloudPutTransport | None = None,
+        transport: CloudMirrorTransport | None = None,
         timeout_seconds: float = 30.0,
     ) -> None:
         if not endpoint.startswith("https://"):
@@ -125,6 +136,33 @@ class SupabaseRawMirror:
         self.token_provider = token_provider
         self.transport = transport or UrllibCloudTransport()
         self.timeout_seconds = timeout_seconds
+
+    def preflight(self) -> None:
+        token = self.token_provider.get_token()  # type: ignore[attr-defined]
+        response = self.transport.get(
+            self.endpoint,
+            {
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+            self.timeout_seconds,
+        )
+        try:
+            payload = json.loads(response.body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise CloudMirrorError(
+                f"Supabase raw mirror preflight returned malformed HTTP {response.status} response"
+            ) from exc
+        if (
+            not 200 <= response.status < 300
+            or not isinstance(payload, dict)
+            or set(payload) != {"status", "protocol"}
+            or payload.get("status") != "ready"
+            or payload.get("protocol") != INGEST_PROTOCOL
+        ):
+            raise CloudMirrorError(
+                f"Supabase raw mirror preflight failed with HTTP {response.status}: {payload}"
+            )
 
     def put_object(self, object_path: str, body: bytes) -> str:
         digest = hashlib.sha256(body).hexdigest()
