@@ -299,6 +299,9 @@ class FinalCloudAuditWorkflowTests(unittest.TestCase):
             'report["acquisition_unchanged_during_verification"] = True',
             workflow,
         )
+        self.assertIn("audit_guard_started_at_utc", workflow)
+        self.assertIn("gh api --paginate --slurp", workflow)
+        self.assertIn("ensure_no_source_capable_acquisition_updates_since", workflow)
         self.assertGreaterEqual(
             workflow.count("actions/workflows/phase1-full-acquisition.yml/runs?per_page=1"),
             2,
