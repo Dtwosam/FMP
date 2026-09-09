@@ -267,6 +267,7 @@ class ExactGapPlanTests(unittest.TestCase):
             runs = [
                 {
                     "id": 201,
+                    "event": "push",
                     "updated_at": "2026-09-09T10:30:00Z",
                     "head_commit": {"message": "[phase1-no-source] docs"},
                 }
@@ -277,6 +278,28 @@ class ExactGapPlanTests(unittest.TestCase):
                 runs,
                 current_run_id=999,
             )
+
+    def test_manual_dispatch_is_not_ignored_by_no_source_commit_message(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_plan(
+                Path(tmp),
+                [{"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}],
+            )
+            runs = [
+                {
+                    "id": 203,
+                    "event": "workflow_dispatch",
+                    "updated_at": "2026-09-09T10:30:00Z",
+                    "head_commit": {"message": "[phase1-no-source] docs"},
+                }
+            ]
+
+            with self.assertRaisesRegex(ValueError, "intervening"):
+                __import__("fmp.data.repair_plan", fromlist=["x"]).ensure_no_intervening_acquisition_runs(
+                    path,
+                    runs,
+                    current_run_id=999,
+                )
 
     def test_current_exact_gap_run_is_excluded_from_intervening_check(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

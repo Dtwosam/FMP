@@ -153,7 +153,11 @@ def ensure_no_intervening_acquisition_runs(
 
         head_commit = run.get("head_commit")
         message = head_commit.get("message") if isinstance(head_commit, dict) else None
-        if isinstance(message, str) and "[phase1-no-source]" in message:
+        if (
+            run.get("event") == "push"
+            and isinstance(message, str)
+            and "[phase1-no-source]" in message
+        ):
             ignored_no_source += 1
             continue
 
