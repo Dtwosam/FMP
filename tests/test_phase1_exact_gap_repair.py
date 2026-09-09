@@ -258,6 +258,89 @@ class ExactGapPlanTests(unittest.TestCase):
                     current_run_id=999,
                 )
 
+    def test_same_second_source_run_invalidates_millisecond_audit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "exact-gaps.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "plan_version": 1,
+                        "frozen_start_date": "2015-01-01",
+                        "frozen_end_date_exclusive": "2026-08-21",
+                        "audited_at_utc": "2026-09-09T10:00:00.500Z",
+                        "present_manifests_at_audit": 25499,
+                        "missing_manifests_at_audit": 1,
+                        "chunks": [
+                            {
+                                "pair": "EURUSD",
+                                "side": "BID",
+                                "date_utc": "2024-01-02",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            runs = [
+                {
+                    "id": 204,
+                    "event": "workflow_dispatch",
+                    "updated_at": "2026-09-09T10:00:00Z",
+                    "head_commit": {"message": "manual repair"},
+                }
+            ]
+
+            with self.assertRaisesRegex(ValueError, "intervening"):
+                __import__(
+                    "fmp.data.repair_plan",
+                    fromlist=["x"],
+                ).ensure_no_intervening_acquisition_runs(
+                    path,
+                    runs,
+                    current_run_id=999,
+                )
+
+    def test_source_run_in_prior_second_does_not_invalidate_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "exact-gaps.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "plan_version": 1,
+                        "frozen_start_date": "2015-01-01",
+                        "frozen_end_date_exclusive": "2026-08-21",
+                        "audited_at_utc": "2026-09-09T10:00:00.500Z",
+                        "present_manifests_at_audit": 25499,
+                        "missing_manifests_at_audit": 1,
+                        "chunks": [
+                            {
+                                "pair": "EURUSD",
+                                "side": "BID",
+                                "date_utc": "2024-01-02",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            runs = [
+                {
+                    "id": 205,
+                    "event": "workflow_dispatch",
+                    "updated_at": "2026-09-09T09:59:59Z",
+                    "head_commit": {"message": "manual repair"},
+                }
+            ]
+
+            __import__(
+                "fmp.data.repair_plan",
+                fromlist=["x"],
+            ).ensure_no_intervening_acquisition_runs(
+                path,
+                runs,
+                current_run_id=999,
+            )
+
     def test_no_source_run_after_audit_does_not_invalidate_exact_gap_plan(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = self._write_plan(
