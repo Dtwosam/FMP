@@ -30,7 +30,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: phase1-dukascopy-acquisition
+  group: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-no-source]') && format('phase1-no-source-{0}', github.run_id) || 'phase1-dukascopy-acquisition' }}
   cancel-in-progress: false
 
 env:
