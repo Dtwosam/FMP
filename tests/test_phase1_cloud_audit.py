@@ -258,7 +258,7 @@ class FinalCloudAuditWorkflowTests(unittest.TestCase):
         self.assertIn("2026-08-21", workflow)
         self.assertIn("actions/upload-artifact@v4", workflow)
         self.assertIn("phase1-cloud-provenance.json", workflow)
-        self.assertIn('for status in queued waiting pending in_progress; do', workflow)
+        self.assertIn('for status in requested queued waiting pending in_progress; do', workflow)
         self.assertIn('runs?status=${status}&per_page=1', workflow)
         self.assertIn("active=$((active + count))", workflow)
         self.assertIn("id: acquisition-baseline", workflow)
