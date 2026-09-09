@@ -106,15 +106,19 @@ provenance verification.
 Only after Evidence A and B pass and acquisition is idle:
 
 1. Deploy the repository version of the separate read-only Supabase Edge
-   Function `fmp-raw-audit`.
-2. Do not modify or redeploy `fmp-raw-ingest` as part of this step.
-3. Manually dispatch:
+   Function `fmp-raw-audit` with its committed `verify_jwt = false` setting.
+   This function validates GitHub OIDC inside its own code; Supabase's platform
+   JWT gate must therefore remain disabled for this endpoint.
+2. Read back the deployed function metadata and require `verify_jwt = false`
+   before running provenance. If the deployed setting differs, stop.
+3. Do not modify or redeploy `fmp-raw-ingest` as part of this step.
+4. Manually dispatch:
    - `.github/workflows/phase1-final-cloud-audit.yml`
-4. The workflow itself refuses to run while Phase 1 acquisition is active.
-5. It captures the latest `phase1-full-acquisition` run as one baseline snapshot and refuses to proceed unless that captured run itself has `status = completed`.
-6. It snapshots that baseline run ID before provenance verification and fails if the latest run ID changes before verification completes, so an acquisition that starts and finishes during the audit still invalidates the evidence.
-7. Only after that stability check passes does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
-8. Download the `phase1-cloud-provenance-<run_id>` artifact and retain
+5. The workflow itself refuses to run while Phase 1 acquisition is active.
+6. It captures the latest `phase1-full-acquisition` run as one baseline snapshot and refuses to proceed unless that captured run itself has `status = completed`.
+7. It snapshots that baseline run ID before provenance verification and fails if the latest run ID changes before verification completes, so an acquisition that starts and finishes during the audit still invalidates the evidence.
+8. Only after that stability check passes does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
+9. Download the `phase1-cloud-provenance-<run_id>` artifact and retain
    `phase1-cloud-provenance.json`.
 
 The verifier checks all 25,500 manifest bodies for exact Phase 1
