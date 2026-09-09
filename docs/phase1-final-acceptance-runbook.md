@@ -129,7 +129,7 @@ Only after Evidence A and B pass and acquisition is idle:
 The client also treats the read-only Edge Function response as a frozen protocol: exact top-level/object fields, integer `count` (booleans are rejected), path order, object kind, SHA-256, size, and manifest parse/body consistency must all validate before provenance processing.
 
 The verifier checks all 25,500 manifest bodies for exact Phase 1
-schema/identity/source semantics and, for every `complete` manifest, checks
+schema/identity/source semantics, including integer `manifest_version = 1` (JSON booleans are rejected) and, for every `complete` manifest, checks
 the matching cloud raw object's server-side SHA-256 and compressed size.
 `not_found` manifests must carry HTTP 404 and null raw metadata.
 
