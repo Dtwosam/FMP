@@ -241,6 +241,19 @@ class Phase1AcceptanceTests(unittest.TestCase):
         self.assertFalse(report["ready"])
         self.assertFalse(report["checks"]["provenance_acquisition_baseline_run_id"])
 
+    def test_rejects_zero_acquisition_baseline_run_id(self) -> None:
+        provenance = provenance_report()
+        provenance["acquisition_baseline_run_id"] = 0
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["provenance_acquisition_baseline_run_id"])
+
     def test_rejects_structural_evidence_older_than_acquisition_baseline(self) -> None:
         structural = structural_report()
         structural["audited_at_utc"] = "2026-09-09T11:00:00Z"

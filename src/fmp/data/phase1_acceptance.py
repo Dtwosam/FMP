@@ -258,7 +258,7 @@ def evaluate_phase1_acceptance(
         "provenance_acquisition_baseline_run_id": (
             isinstance(provenance.get("acquisition_baseline_run_id"), int)
             and not isinstance(provenance.get("acquisition_baseline_run_id"), bool)
-            and int(provenance["acquisition_baseline_run_id"]) >= 0
+            and int(provenance["acquisition_baseline_run_id"]) > 0
         ),
         "provenance_acquisition_baseline_completed_at_utc": (
             acquisition_baseline_completed_at is not None
