@@ -151,6 +151,7 @@ Rules:
 - sparse acquisition uses the existing DEC-011 one-runner, 8-attempt, 5-second pacing policy;
 - the dedicated trigger is `[phase1-exact-gap-batch]`;
 - the same exact-gap workflow run must not be rerun after partial success/failure; a fresh Supabase audit and smaller fresh plan are required;
+- before sparse source access, the runner must reject a plan if any other source-capable `phase1-full-acquisition` run was updated after the plan's `audited_at_utc`; the current exact-gap run and `[phase1-no-source]` runs are excluded from that check;
 - cloud/OIDC/Supabase failures remain fail-fast and local exact-plan provenance verification remains fail-closed;
 - raw cloud objects remain immutable and are never deleted merely to repair accounting;
 - `[phase1-no-source]` is the code/docs-only operational tag: it suppresses push-triggered Phase 1 acquisition and PR Dukascopy golden/network jobs;
