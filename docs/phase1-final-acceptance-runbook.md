@@ -158,8 +158,8 @@ Important cross-checks include:
 - structural and accounting frozen snapshot identities match this runbook;
 - accounting contains one complete, unique, totals-reconciled row for every frozen pair/side;
 - provenance plan SHA-256 matches the frozen plan fingerprint above;
-- provenance carries a valid acquisition baseline run ID/completion time and confirms acquisition remained unchanged during verification;
-- structural and accounting `audited_at_utc` timestamps use UTC-zero offsets and are not older than the acquisition baseline completion time;
+- provenance carries a valid acquisition baseline run ID/completion time, that completion time is not future-dated relative to acceptance execution, and acquisition remained unchanged during verification;
+- structural and accounting `audited_at_utc` timestamps use UTC-zero offsets, are not older than the acquisition baseline completion time, and are not future-dated relative to acceptance execution;
 - structural present = accounting present = provenance planned = 25,500;
 - structural raw objects = accounting raw-backed = provenance complete;
 - accounting inferred not_found = provenance not_found.
