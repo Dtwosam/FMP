@@ -162,10 +162,13 @@ python -m fmp.data.cli accept-phase1 \
 ```
 
 The command exits zero only when every independent gate passes, the reports
-agree with one another, the fresh GitHub history shows no source-capable
-acquisition activity at or after the provenance history-guard boundary, and the
-current source-capable acquisition baseline ID/completion timestamp still match
-the values bound into provenance.
+agree with one another, and the fresh GitHub history is itself complete and
+stable: every paginated page must report the same non-negative integer
+`total_count`, the flattened run count must equal that total, and workflow run
+IDs must be unique positive integers. The validated history must then show no
+source-capable acquisition activity at or after the provenance history-guard
+boundary, while the current source-capable acquisition baseline ID/completion
+timestamp must still match the values bound into provenance.
 
 Important cross-checks include:
 
