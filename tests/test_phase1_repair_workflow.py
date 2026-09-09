@@ -82,6 +82,18 @@ class Phase1RepairWorkflowTests(unittest.TestCase):
             workflow,
         )
 
+    def test_exact_gap_run_persists_plan_and_verification_evidence(self) -> None:
+        workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
+
+        self.assertIn("exact-gap-evidence", workflow)
+        self.assertIn("actions/upload-artifact@v4", workflow)
+        self.assertIn("if: always()", workflow)
+        self.assertIn(".phase1-exact-gap-plan-evidence.json", workflow)
+        self.assertIn(".phase1-exact-gap-verification.json", workflow)
+        self.assertIn("tee .phase1-exact-gap-verification.json", workflow)
+        self.assertIn("exact_gap_plan_sha256", workflow)
+        self.assertIn("exact_gap_chunks", workflow)
+
     def test_acquisition_trigger_tags_are_mutually_exclusive(self) -> None:
         workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
 
