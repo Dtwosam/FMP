@@ -20,8 +20,8 @@ bar correctness; those remain Phase 2.
 
 ## Preconditions
 
-1. No `phase1-full-acquisition` workflow run may be queued, waiting, pending,
-   or in progress.
+1. No `phase1-full-acquisition` workflow run may be requested, queued, waiting,
+   pending, or in progress.
 2. Evidence A and B must be generated after the latest completed `phase1-full-acquisition` workflow run that will be used as the final provenance baseline.
 3. Exact-gap repair must have reduced the frozen plan to:
    - 25,500 present manifests;
