@@ -162,6 +162,7 @@ Rules:
 - a `complete` manifest is accepted only when the matching immutable raw object already exists and its server-side SHA-256 and byte size match the manifest;
 - Storage lookup errors other than a verified missing-key result fail closed;
 - canonical ingest object paths must resolve to a real Gregorian date inside the frozen Phase 1 interval 2015-01-01 through 2026-08-20 inclusive; regex-shaped but impossible/out-of-range paths are rejected before storage;
+- final Phase 1 structural/accounting audit clocks and the provenance acquisition-baseline completion clock must use UTC-zero offsets and must not be future-dated at acceptance time;
 - `[phase1-no-source]` is the code/docs-only operational tag: it suppresses push-triggered Phase 1 acquisition and PR Dukascopy golden/network jobs;
 - Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
 
