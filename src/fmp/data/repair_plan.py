@@ -136,6 +136,7 @@ def ensure_no_intervening_acquisition_runs(
         raise ValueError("GitHub acquisition workflow runs must be a list")
 
     _, audited_at = _load_validated_exact_gap_plan(path)
+    github_precision_boundary = audited_at.replace(microsecond=0)
     checked = 0
     ignored_no_source = 0
     latest_prior_run_id: int | None = None
@@ -185,11 +186,13 @@ def ensure_no_intervening_acquisition_runs(
             latest_prior_run_id = run_id
             latest_prior_updated_at = updated_at
 
-        if updated_at > audited_at:
+        if updated_at >= github_precision_boundary:
             raise ValueError(
                 "exact-gap plan invalidated by intervening acquisition workflow run "
-                f"{run_id}: run updated at {updated_at.isoformat()} after audit "
-                f"{audited_at.isoformat()}"
+                f"{run_id}: GitHub reports run updated at {updated_at.isoformat()}, "
+                "which is at or after the audit's observable UTC-second boundary "
+                f"{github_precision_boundary.isoformat()} "
+                f"(audit {audited_at.isoformat()})"
             )
 
     return {
