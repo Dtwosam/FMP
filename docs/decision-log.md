@@ -167,6 +167,7 @@ Rules:
 - final cloud provenance must record its guard start before checking acquisition idleness and, after provenance reads finish, scan the complete acquisition workflow history; any source-capable run updated at or after that observable UTC-second boundary invalidates the audit, including GitHub reruns that reuse an old workflow run ID; only push-triggered `[phase1-no-source]` runs are exempt;
 - final provenance baseline identity is the most recently updated source-capable acquisition run, not merely the newest workflow-run ID; the same run ID and activity/completion timestamp must be selected before and after provenance verification;
 - the final provenance JSON must bind `acquisition_history_guard_version = 1` and the guard's UTC start timestamp; the final acceptance combiner rejects provenance produced before this history-guard evidence existed;
+- final Phase 1 evidence ordering is baseline completion ≤ structural/accounting audit timestamps ≤ provenance history-guard start; reports outside that ordering fail acceptance;
 - the final cloud-audit client must reject response protocol drift fail-closed: top-level response keys, typed integer `count`, per-kind object fields, path/order, kind, SHA-256, size, and manifest parse/body consistency are exact;
 - Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
 
