@@ -224,6 +224,7 @@ Merged behavior:
   - exact chunk list;
 - audit counts must reconcile to exactly **25,500** and declared missing count must equal the chunk list length;
 - duplicate, unsupported, out-of-range, unknown-field, and non-canonical plans fail closed;
+- before exact-gap source access, paginated acquisition history must reconcile GitHub `total_count` exactly with unique positive run IDs; the same shared validator is used by final cloud-audit history guards and final PASS history input;
 - chunk order is canonical by date / pair / side;
 - `fetch-plan` requests only explicit chunks from the validated plan;
 - `verify-plan` verifies provenance only for the explicit sparse plan;
