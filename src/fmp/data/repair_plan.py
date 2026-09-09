@@ -118,6 +118,92 @@ def _load_validated_exact_gap_plan(path: Path) -> tuple[list[RawChunkKey], datet
     return keys, audited_at
 
 
+def ensure_no_intervening_acquisition_runs(
+    path: Path,
+    workflow_runs: object,
+    *,
+    current_run_id: int,
+) -> dict[str, object]:
+    """Reject an exact-gap plan if another source-capable acquisition changed after its audit."""
+
+    if (
+        not isinstance(current_run_id, int)
+        or isinstance(current_run_id, bool)
+        or current_run_id <= 0
+    ):
+        raise ValueError("current GitHub workflow run id must be a positive integer")
+    if not isinstance(workflow_runs, list):
+        raise ValueError("GitHub acquisition workflow runs must be a list")
+
+    _, audited_at = _load_validated_exact_gap_plan(path)
+    checked = 0
+    ignored_no_source = 0
+    latest_prior_run_id: int | None = None
+    latest_prior_updated_at: datetime | None = None
+
+    for index, run in enumerate(workflow_runs):
+        if not isinstance(run, dict):
+            raise ValueError(f"GitHub acquisition workflow run {index} must be an object")
+
+        run_id = run.get("id")
+        if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+            raise ValueError(f"GitHub acquisition workflow run {index} has invalid id")
+        if run_id == current_run_id:
+            continue
+
+        head_commit = run.get("head_commit")
+        message = head_commit.get("message") if isinstance(head_commit, dict) else None
+        if isinstance(message, str) and "[phase1-no-source]" in message:
+            ignored_no_source += 1
+            continue
+
+        updated_at_raw = run.get("updated_at")
+        if not isinstance(updated_at_raw, str):
+            raise ValueError(
+                f"GitHub acquisition workflow run {run_id} has invalid updated_at"
+            )
+        try:
+            updated_at = datetime.fromisoformat(
+                updated_at_raw.replace("Z", "+00:00")
+            )
+        except ValueError as exc:
+            raise ValueError(
+                f"GitHub acquisition workflow run {run_id} has invalid updated_at"
+            ) from exc
+        if updated_at.tzinfo is None or updated_at.utcoffset() is None:
+            raise ValueError(
+                f"GitHub acquisition workflow run {run_id} updated_at must be timezone-aware"
+            )
+        updated_at = updated_at.astimezone(timezone.utc)
+
+        checked += 1
+        if latest_prior_updated_at is None or updated_at > latest_prior_updated_at:
+            latest_prior_run_id = run_id
+            latest_prior_updated_at = updated_at
+
+        if updated_at > audited_at:
+            raise ValueError(
+                "exact-gap plan invalidated by intervening acquisition workflow run "
+                f"{run_id}: run updated at {updated_at.isoformat()} after audit "
+                f"{audited_at.isoformat()}"
+            )
+
+    return {
+        "guard_version": 1,
+        "current_run_id": current_run_id,
+        "plan_audited_at_utc": audited_at.isoformat().replace("+00:00", "Z"),
+        "source_capable_runs_checked": checked,
+        "no_source_runs_ignored": ignored_no_source,
+        "latest_prior_source_run_id": latest_prior_run_id,
+        "latest_prior_source_run_updated_at_utc": (
+            latest_prior_updated_at.isoformat().replace("+00:00", "Z")
+            if latest_prior_updated_at is not None
+            else None
+        ),
+        "ready": True,
+    }
+
+
 def load_exact_gap_plan(path: Path) -> list[RawChunkKey]:
     """Load and strictly validate an exact Phase 1 repair plan.
 
