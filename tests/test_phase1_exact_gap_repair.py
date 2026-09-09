@@ -6,14 +6,14 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from unittest.mock import patch
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from fmp.data.acquire import AcquisitionResult, AcquisitionStatus, acquire_chunk
 from fmp.data.cli import build_parser
 from fmp.data.coverage import verify_exact_keys
 from fmp.data.dukascopy import HttpResponse
-from fmp.data.repair_plan import load_exact_gap_plan
+from fmp.data.repair_plan import ensure_exact_gap_plan_fresh, load_exact_gap_plan
 from fmp.data.types import RawChunkKey
 
 from test_phase1 import FakeTransport, make_bi5
@@ -195,6 +195,47 @@ class ExactGapPlanTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "canonical"):
                 load_exact_gap_plan(path)
+
+    def test_exact_gap_plan_freshness_accepts_recent_utc_audit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_plan(
+                Path(tmp),
+                [{"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}],
+            )
+
+            ensure_exact_gap_plan_fresh(
+                path,
+                now_utc=datetime(2026, 9, 9, 11, 59, tzinfo=timezone.utc),
+                max_age=timedelta(hours=2),
+            )
+
+    def test_exact_gap_plan_freshness_rejects_stale_audit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_plan(
+                Path(tmp),
+                [{"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}],
+            )
+
+            with self.assertRaisesRegex(ValueError, "stale"):
+                ensure_exact_gap_plan_fresh(
+                    path,
+                    now_utc=datetime(2026, 9, 9, 12, 0, 1, tzinfo=timezone.utc),
+                    max_age=timedelta(hours=2),
+                )
+
+    def test_exact_gap_plan_freshness_rejects_future_audit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_plan(
+                Path(tmp),
+                [{"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}],
+            )
+
+            with self.assertRaisesRegex(ValueError, "future"):
+                ensure_exact_gap_plan_fresh(
+                    path,
+                    now_utc=datetime(2026, 9, 9, 9, 59, tzinfo=timezone.utc),
+                    max_age=timedelta(hours=2),
+                )
 
     def test_load_exact_gap_plan_rejects_unknown_chunk_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
