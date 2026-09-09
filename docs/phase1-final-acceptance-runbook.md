@@ -122,6 +122,8 @@ Only after Evidence A and B pass and acquisition is idle:
 10. Download the `phase1-cloud-provenance-<run_id>` artifact and retain both
     `phase1-cloud-provenance.json` and `.phase1-final-acquisition-run-guard.json`.
 
+The client also treats the read-only Edge Function response as a frozen protocol: exact top-level/object fields, integer `count` (booleans are rejected), path order, object kind, SHA-256, size, and manifest parse/body consistency must all validate before provenance processing.
+
 The verifier checks all 25,500 manifest bodies for exact Phase 1
 schema/identity/source semantics and, for every `complete` manifest, checks
 the matching cloud raw object's server-side SHA-256 and compressed size.
