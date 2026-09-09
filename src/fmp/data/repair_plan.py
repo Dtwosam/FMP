@@ -35,8 +35,13 @@ def _load_validated_exact_gap_plan(path: Path) -> tuple[list[RawChunkKey], datet
         raise ValueError(
             f"exact-gap plan root must contain exactly {sorted(_REQUIRED_ROOT_FIELDS)}"
         )
-    if payload.get("plan_version") != _PLAN_VERSION:
-        raise ValueError(f"exact-gap plan_version must be {_PLAN_VERSION}")
+    plan_version = payload.get("plan_version")
+    if (
+        not isinstance(plan_version, int)
+        or isinstance(plan_version, bool)
+        or plan_version != _PLAN_VERSION
+    ):
+        raise ValueError(f"exact-gap plan_version must be integer {_PLAN_VERSION}")
     if payload.get("frozen_start_date") != _FROZEN_START_DATE.isoformat():
         raise ValueError("exact-gap plan frozen_start_date does not match Phase 1 snapshot")
     if payload.get("frozen_end_date_exclusive") != _FROZEN_END_DATE_EXCLUSIVE.isoformat():
