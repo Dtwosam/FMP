@@ -805,6 +805,31 @@ Verification evidence:
 
 Live Supabase deployment remains `fmp-raw-ingest` **version 3**, `verify_jwt = false`, with deployment fingerprint `6650ad4c469231ef2f0de990fead495cd4a8662ce50f1f9135829b7cff61b6fa`. Its retrieved source is still the older pre-PR31 implementation, so the tested repository ingest source must still be deployed after repair sweep 2 becomes idle and before exact-gap source repair begins.
 
+## Exact-gap GitHub timestamp precision guard — MERGED / VERIFIED
+
+PR #37 `[phase1-no-source] Phase 1: close exact-gap timestamp precision race` merged to `main` at:
+
+- `f5bb0db03585577972be740d4f7f899622a27626`
+
+The exact-gap audit timestamp is millisecond-resolution, while GitHub Actions workflow-run `updated_at` timestamps are observable only at whole-second precision. The prior intervening-run guard compared those timestamps directly, so a source-capable run that changed later in the same UTC second as the audit could be reported as the start of that second and appear older than the audit.
+
+The guard now fails closed at GitHub's observable precision boundary:
+
+- the audit timestamp is floored to its UTC second for workflow-history comparison;
+- any source-capable acquisition run reported at or after that second invalidates the sparse plan;
+- a run from the prior second remains valid;
+- same-second ambiguity is resolved by generating a fresh audit rather than guessing event order.
+
+DEC-012 and the Phase 1 acquisition trigger runbook now record this rule.
+
+Verification evidence:
+
+- RED run `34377000840` failed only because a same-second source run was not rejected; the prior-second control passed;
+- GREEN implementation run `34377083894` passed;
+- final PR-head run `34377171889` passed;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Dukascopy acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
