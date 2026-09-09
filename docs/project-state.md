@@ -781,6 +781,30 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no source acquisition or Supabase deployment was introduced by this change.
 
+## Audit Edge platform-JWT configuration — MERGED / VERIFIED / UNDEPLOYED
+
+PR #36 `[phase1-no-source] Phase 1: pin audit Edge JWT configuration` merged to `main` at:
+
+- `397f34a87e14fe495175e8032cf4cccc9fc4f882`
+
+Both Phase 1 Supabase Edge Functions authenticate GitHub Actions with function-level OIDC verification rather than Supabase Auth user JWTs. Supabase's platform `verify_jwt` check runs before function code and defaults to enabled, so the read-only final-provenance function would have rejected GitHub OIDC at the gateway if deployed without an explicit override.
+
+`supabase/config.toml` now pins:
+
+- `functions.fmp-raw-ingest.verify_jwt = false`;
+- `functions.fmp-raw-audit.verify_jwt = false`.
+
+A Python regression test requires both settings. The final acceptance runbook now also requires reading back deployed `fmp-raw-audit` metadata and confirming `verify_jwt = false` before dispatching final provenance.
+
+Verification evidence:
+
+- RED run `34376649181` failed exactly because `fmp-raw-audit` was absent from `supabase/config.toml`;
+- GREEN run `34376746736` passed after the audit config was pinned;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Edge Function was deployed and no Dukascopy acquisition was introduced by this change.
+
+Live Supabase deployment remains `fmp-raw-ingest` **version 3**, `verify_jwt = false`, with deployment fingerprint `6650ad4c469231ef2f0de990fead495cd4a8662ce50f1f9135829b7cff61b6fa`. Its retrieved source is still the older pre-PR31 implementation, so the tested repository ingest source must still be deployed after repair sweep 2 becomes idle and before exact-gap source repair begins.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
