@@ -332,6 +332,32 @@ The three raw-only objects were identified exactly:
 
 Each maps to a planned manifest that is currently absent. Normal month/exact-gap repair will safely re-fetch the source chunk, receive `already_verified` for the immutable raw object if bytes match, then store the missing manifest. No raw deletion or overwrite exception is required.
 
+## Final Phase 1 cloud-provenance + acceptance tooling — MERGED / READY
+
+The final read-only provenance and cross-report acceptance path is now implemented without changing Dukascopy acquisition semantics.
+
+Merged components:
+
+- PR #16, merge `56fb8bc9639c081b62866d5417149a31d09b695b`: separate read-only `fmp-raw-audit` Supabase Edge Function source added; it remains **undeployed** while acquisition is active/incomplete.
+- PR #17, merge `f16ab31e193ac93747e522507cb9c3c3acede595`: full cloud manifest/raw provenance verifier plus manual final cloud-audit workflow.
+- PR #18, merge `d92e10537cab8dcb862558c5ff2a6415b524970b`: deterministic final Phase 1 acceptance combiner and runbook.
+
+The provenance report now includes a canonical SHA-256 fingerprint of the exact planned pair/date/side key set. The frozen Phase 1 plan fingerprint is:
+
+- `2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6`
+
+This closes a fail-closed identity gap: a provenance report with merely 25,500 chunks is insufficient; its exact planned-key fingerprint must match the frozen V1 snapshot before final acceptance can pass.
+
+Verification evidence for the fingerprint hardening:
+
+- RED Actions run `34348884782` failed exactly because the provenance report lacked `plan_sha256` and the combiner accepted an intentionally wrong fingerprint;
+- GREEN Actions run `34348988473` passed after the minimal implementation;
+- merge-push unit-test run `34349117225` passed;
+- no-source golden/network jobs were skipped as intended;
+- the existing repair sweep 2 source job remained active and was not cancelled by the merge.
+
+Final acceptance remains locked until acquisition is idle and the structural/accounting ledger is complete. Only then may the read-only audit Edge be deployed and the manual full cloud-provenance workflow run according to `docs/phase1-final-acceptance-runbook.md`.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
