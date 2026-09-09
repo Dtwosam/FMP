@@ -7,6 +7,7 @@ from datetime import date
 from pathlib import Path
 
 from fmp.data.acquire import acquire_chunk
+from fmp.data.cli import build_parser
 from fmp.data.coverage import verify_exact_keys
 from fmp.data.dukascopy import HttpResponse
 from fmp.data.repair_plan import load_exact_gap_plan
@@ -76,6 +77,59 @@ class ExactGapPlanTests(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "frozen"):
                 load_exact_gap_plan(path)
+
+    def test_load_exact_gap_plan_rejects_unknown_chunk_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = self._write_plan(
+                root,
+                [
+                    {
+                        "pair": "EURUSD",
+                        "side": "ASK",
+                        "date_utc": "2024-01-02",
+                        "month": "2024-01",
+                    }
+                ],
+            )
+
+            with self.assertRaisesRegex(ValueError, "exactly"):
+                load_exact_gap_plan(path)
+
+
+class ExactGapCliTests(unittest.TestCase):
+    def test_cli_exposes_fetch_plan_and_verify_plan_commands(self) -> None:
+        parser = build_parser()
+
+        fetch_args = parser.parse_args(
+            [
+                "fetch-plan",
+                "--plan",
+                "docs/phase1-exact-gap-queue.json",
+                "--out",
+                ".exact-gap",
+                "--attempts",
+                "8",
+                "--source-delay",
+                "5",
+                "--continue-on-error",
+            ]
+        )
+        self.assertEqual(fetch_args.command, "fetch-plan")
+        self.assertEqual(fetch_args.plan, "docs/phase1-exact-gap-queue.json")
+        self.assertTrue(fetch_args.continue_on_error)
+
+        verify_args = parser.parse_args(
+            [
+                "verify-plan",
+                "--plan",
+                "docs/phase1-exact-gap-queue.json",
+                "--out",
+                ".exact-gap",
+            ]
+        )
+        self.assertEqual(verify_args.command, "verify-plan")
+        self.assertEqual(verify_args.plan, "docs/phase1-exact-gap-queue.json")
 
 
 class ExactGapVerificationTests(unittest.TestCase):
