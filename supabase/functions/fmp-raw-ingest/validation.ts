@@ -46,3 +46,28 @@ export function validateObjectPath(path: string): true {
   }
   return true;
 }
+
+
+export function rawPathForNotFoundManifest(
+  manifestPath: string,
+  manifest: Record<string, unknown>,
+): string | null {
+  if (manifest.status !== "not_found") return null;
+  const match = MANIFEST_RE.exec(manifestPath);
+  if (!match) {
+    throw new Error("not_found manifest path is not canonical");
+  }
+  const [, pair, year, month, day, side] = match;
+  return `raw/dukascopy/v1/${pair}/${year}/${month}/${day}/${side}_candles_min_1.bi5`;
+}
+
+export function isStorageObjectNotFound(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const item = error as Record<string, unknown>;
+  const status = String(
+    item.status ?? item.statusCode ?? item.httpStatusCode ?? "",
+  );
+  const code = String(item.error ?? item.code ?? "");
+  return status === "404" &&
+    new Set(["NoSuchKey", "NotFound", "not_found"]).has(code);
+}
