@@ -39,6 +39,25 @@ class Phase1RepairWorkflowTests(unittest.TestCase):
             workflow,
         )
 
+    def test_workflow_supports_exact_gap_batch_without_month_matrix(self) -> None:
+        workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
+
+        self.assertIn("docs/phase1-exact-gap-queue.json", workflow)
+        self.assertIn("[phase1-exact-gap-batch]", workflow)
+        self.assertIn("exact-gap-repair:", workflow)
+        self.assertIn("fetch-plan", workflow)
+        self.assertIn("verify-plan", workflow)
+        self.assertIn("Acquire exact missing chunks only", workflow)
+        self.assertIn("Verify exact-gap repair provenance", workflow)
+
+    def test_exact_gap_batch_push_does_not_run_cloud_smoke(self) -> None:
+        workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
+
+        self.assertIn(
+            "!contains(github.event.head_commit.message, '[phase1-exact-gap-batch]')",
+            workflow,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
