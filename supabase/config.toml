@@ -1,2 +1,5 @@
 [functions.fmp-raw-ingest]
 verify_jwt = false
+
+[functions.fmp-raw-audit]
+verify_jwt = false
