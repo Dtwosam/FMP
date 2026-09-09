@@ -296,6 +296,38 @@ class AcquisitionBaselineSelectionTests(unittest.TestCase):
         )
         self.assertEqual(baseline["no_source_runs_ignored"], 1)
 
+    def test_rerun_activity_can_make_older_run_the_latest_baseline(self) -> None:
+        selector = __import__(
+            "fmp.data.acquisition_runs",
+            fromlist=["select_acquisition_baseline"],
+        ).select_acquisition_baseline
+        runs = [
+            {
+                "id": 100,
+                "event": "push",
+                "status": "completed",
+                "created_at": "2026-09-08T09:00:00Z",
+                "updated_at": "2026-09-09T12:30:00Z",
+                "head_commit": {"message": "[phase1-repair-batch] rerun"},
+            },
+            {
+                "id": 101,
+                "event": "push",
+                "status": "completed",
+                "created_at": "2026-09-09T11:00:00Z",
+                "updated_at": "2026-09-09T11:42:29Z",
+                "head_commit": {"message": "[phase1-repair-batch] repair"},
+            },
+        ]
+
+        baseline = selector(runs)
+
+        self.assertEqual(baseline["latest_run_id"], 100)
+        self.assertEqual(
+            baseline["baseline_completed_at_utc"],
+            "2026-09-09T12:30:00Z",
+        )
+
     def test_manual_dispatch_is_source_capable_even_on_no_source_head(self) -> None:
         selector = __import__(
             "fmp.data.acquisition_runs",
