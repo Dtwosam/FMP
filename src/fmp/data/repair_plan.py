@@ -175,9 +175,9 @@ def ensure_no_intervening_acquisition_runs(
             raise ValueError(
                 f"GitHub acquisition workflow run {run_id} has invalid updated_at"
             ) from exc
-        if updated_at.tzinfo is None or updated_at.utcoffset() is None:
+        if updated_at.tzinfo is None or updated_at.utcoffset() != timedelta(0):
             raise ValueError(
-                f"GitHub acquisition workflow run {run_id} updated_at must be timezone-aware"
+                f"GitHub acquisition workflow run {run_id} updated_at must use UTC"
             )
         updated_at = updated_at.astimezone(timezone.utc)
 
@@ -266,9 +266,9 @@ def ensure_no_source_capable_acquisition_updates_since(
             raise ValueError(
                 f"GitHub acquisition workflow run {run_id} has invalid updated_at"
             ) from exc
-        if updated_at.tzinfo is None or updated_at.utcoffset() is None:
+        if updated_at.tzinfo is None or updated_at.utcoffset() != timedelta(0):
             raise ValueError(
-                f"GitHub acquisition workflow run {run_id} updated_at must be timezone-aware"
+                f"GitHub acquisition workflow run {run_id} updated_at must use UTC"
             )
         updated_at = updated_at.astimezone(timezone.utc)
 
