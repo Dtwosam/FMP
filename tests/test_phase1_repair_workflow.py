@@ -73,6 +73,15 @@ class Phase1RepairWorkflowTests(unittest.TestCase):
         self.assertIn("GITHUB_RUN_ATTEMPT", workflow)
         self.assertIn("regenerate a fresh exact-gap plan", workflow)
 
+    def test_no_source_tag_suppresses_all_push_acquisition_jobs(self) -> None:
+        workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
+
+        self.assertIn("[phase1-no-source]", workflow)
+        self.assertIn(
+            "!contains(github.event.head_commit.message, '[phase1-no-source]')",
+            workflow,
+        )
+
     def test_acquisition_trigger_tags_are_mutually_exclusive(self) -> None:
         workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
 
