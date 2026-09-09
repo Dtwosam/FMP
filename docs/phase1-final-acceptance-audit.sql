@@ -96,7 +96,10 @@ select
   rwm.raw_without_manifest,
   ur.unexpected_raw_paths,
   (select max(created_at) from manifests) as latest_manifest_write,
-  now() as audited_at_utc,
+  to_char(
+    now() at time zone 'UTC',
+    'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+  ) as audited_at_utc,
   (
     mc.expected_manifests = 25500
     and mc.present_manifests = 25500
