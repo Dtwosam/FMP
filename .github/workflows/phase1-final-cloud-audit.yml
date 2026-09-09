@@ -12,6 +12,9 @@ concurrency:
   group: phase1-final-cloud-audit
   cancel-in-progress: false
 
+env:
+  PYTHONPATH: src
+
 jobs:
   verify-cloud:
     runs-on: ubuntu-latest
