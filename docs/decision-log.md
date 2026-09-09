@@ -163,6 +163,7 @@ Rules:
 - Storage lookup errors other than a verified missing-key result fail closed;
 - canonical ingest object paths must resolve to a real Gregorian date inside the frozen Phase 1 interval 2015-01-01 through 2026-08-20 inclusive; regex-shaped but impossible/out-of-range paths are rejected before storage;
 - final Phase 1 structural/accounting audit clocks and the provenance acquisition-baseline completion clock must use UTC-zero offsets and must not be future-dated at acceptance time;
+- final cloud provenance baseline selection pages the full acquisition workflow history, ignores only push-triggered `[phase1-no-source]` runs, treats manual dispatches as source-capable, and must select the same completed source-capable run before and after verification;
 - `[phase1-no-source]` is the code/docs-only operational tag: it suppresses push-triggered Phase 1 acquisition and PR Dukascopy golden/network jobs;
 - Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
 
