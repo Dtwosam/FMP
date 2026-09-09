@@ -494,6 +494,49 @@ class ExactGapPlanTests(unittest.TestCase):
                 load_exact_gap_plan(path)
 
 
+class WorkflowHistoryPaginationTests(unittest.TestCase):
+    def test_shared_history_validator_rejects_truncated_pages(self) -> None:
+        validator = __import__(
+            "fmp.data.acquisition_runs",
+            fromlist=["flatten_complete_workflow_run_pages"],
+        ).flatten_complete_workflow_run_pages
+
+        with self.assertRaisesRegex(ValueError, "total_count"):
+            validator(
+                [
+                    {
+                        "total_count": 2,
+                        "workflow_runs": [{"id": 101}],
+                    }
+                ]
+            )
+
+    def test_shared_history_validator_rejects_duplicate_run_ids(self) -> None:
+        validator = __import__(
+            "fmp.data.acquisition_runs",
+            fromlist=["flatten_complete_workflow_run_pages"],
+        ).flatten_complete_workflow_run_pages
+
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            validator(
+                [
+                    {
+                        "total_count": 2,
+                        "workflow_runs": [{"id": 101}, {"id": 101}],
+                    }
+                ]
+            )
+
+    def test_source_sensitive_workflows_use_complete_history_validator(self) -> None:
+        for workflow_path in (
+            Path(".github/workflows/phase1-full-acquisition.yml"),
+            Path(".github/workflows/phase1-final-cloud-audit.yml"),
+        ):
+            with self.subTest(workflow=workflow_path.as_posix()):
+                workflow = workflow_path.read_text(encoding="utf-8")
+                self.assertIn("flatten_complete_workflow_run_pages", workflow)
+
+
 class ExactGapCliTests(unittest.TestCase):
     def test_cli_exposes_fetch_plan_and_verify_plan_commands(self) -> None:
         parser = build_parser()
