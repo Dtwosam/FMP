@@ -52,6 +52,16 @@ Deno.test("accepts canonical manifest and raw audit paths", () => {
   assertEquals(validateAuditPaths(paths), paths);
 });
 
+Deno.test("rejects impossible and out-of-snapshot canonical-looking paths", () => {
+  for (const path of [
+    "raw/dukascopy/v1/EURUSD/2024/01/31/BID_candles_min_1.bi5",
+    "manifests/dukascopy/v1/EURUSD/2014/11/31/BID_candles_min_1.json",
+    "raw/dukascopy/v1/USDJPY/2026/07/21/ASK_candles_min_1.bi5",
+  ]) {
+    assertThrows(() => validateAuditPaths([path]), Error, "snapshot");
+  }
+});
+
 Deno.test("rejects duplicate, invalid, empty, and overlarge audit path batches", () => {
   assertThrows(() => validateAuditPaths([]), Error, "1..100");
   assertThrows(
