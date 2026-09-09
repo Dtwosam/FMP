@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import date
 from unittest.mock import patch
 
+from fmp.data.cli import build_parser
 from fmp.data.cloud_audit import (
     CloudAuditError,
     GithubAuditOidcTokenProvider,
@@ -193,6 +194,38 @@ class CloudAuditClientTests(unittest.TestCase):
         self.assertIn('req.method !== "GET" && req.method !== "POST"', source)
         self.assertIn('if (req.method === "GET")', source)
         self.assertIn("AUDIT_PROTOCOL", source)
+
+    def test_verify_cloud_cli_preflights_before_scan(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "verify-cloud",
+                "--endpoint",
+                "https://example.supabase.co/functions/v1/fmp-raw-audit",
+                "--pair",
+                "EURUSD",
+                "--start",
+                "2024-01-01",
+                "--end",
+                "2024-01-02",
+            ]
+        )
+
+        with (
+            patch(
+                "fmp.data.cli.GithubAuditOidcTokenProvider.from_environment",
+                return_value=StaticTokenProvider(),
+            ),
+            patch(
+                "fmp.data.cli.SupabaseRawAuditClient.preflight",
+                side_effect=CloudAuditError("audit preflight failed"),
+            ) as preflight,
+            patch("fmp.data.cli.verify_cloud_keys") as verify,
+        ):
+            with self.assertRaisesRegex(CloudAuditError, "preflight"):
+                args.func(args)
+
+        preflight.assert_called_once_with()
+        verify.assert_not_called()
 
     def test_client_posts_canonical_batch_with_oidc(self) -> None:
         path = "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json"
