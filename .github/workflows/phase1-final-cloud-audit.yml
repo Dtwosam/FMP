@@ -34,14 +34,32 @@ jobs:
             echo "Phase 1 acquisition is still active; final cloud audit requires a stable cloud snapshot."
             exit 2
           fi
-          latest_run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=1" --jq '.workflow_runs[0].id // 0')"
-          baseline_completed_at_utc="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=1" --jq '.workflow_runs[0].updated_at // empty')"
-          if [ "$latest_run_id" = "0" ] || [ -z "$baseline_completed_at_utc" ]; then
-            echo "Phase 1 final audit requires a completed acquisition baseline run."
-            exit 2
-          fi
-          echo "latest_run_id=$latest_run_id" >> "$GITHUB_OUTPUT"
-          echo "baseline_completed_at_utc=$baseline_completed_at_utc" >> "$GITHUB_OUTPUT"
+          baseline_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/phase1-full-acquisition.yml/runs?per_page=1")"
+          BASELINE_JSON="$baseline_json" python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+
+          payload = json.loads(os.environ["BASELINE_JSON"])
+          runs = payload.get("workflow_runs")
+          if not isinstance(runs, list) or not runs:
+              raise SystemExit("Phase 1 final audit requires a completed acquisition baseline run.")
+
+          latest = runs[0]
+          latest_run_id = latest.get("id")
+          baseline_status = latest.get("status")
+          baseline_completed_at_utc = latest.get("updated_at")
+          if (
+              not isinstance(latest_run_id, int)
+              or latest_run_id <= 0
+              or baseline_status != "completed"
+              or not isinstance(baseline_completed_at_utc, str)
+              or not baseline_completed_at_utc
+          ):
+              raise SystemExit("Phase 1 final audit requires a completed acquisition baseline run.")
+
+          print(f"latest_run_id={latest_run_id}")
+          print(f"baseline_completed_at_utc={baseline_completed_at_utc}")
+          PY
       - name: Verify full frozen cloud provenance
         run: |
           set -o pipefail
