@@ -135,6 +135,8 @@ Required result:
 - `issues = 0`
 - `acquisition_baseline_run_id` is a positive integer
 - `acquisition_baseline_completed_at_utc` is a UTC-zero timestamp
+- `acquisition_history_guard_version = 1`
+- `acquisition_history_guard_started_at_utc` is a UTC-zero timestamp at or after the acquisition baseline completion time
 - both Evidence A and Evidence B `audited_at_utc` timestamps are at or after that acquisition baseline completion time
 - `acquisition_unchanged_during_verification = true`
 - `ready = true`
@@ -159,7 +161,7 @@ Important cross-checks include:
 - structural and accounting frozen snapshot identities match this runbook;
 - accounting contains one complete, unique, totals-reconciled row for every frozen pair/side;
 - provenance plan SHA-256 matches the frozen plan fingerprint above;
-- provenance carries a valid acquisition baseline run ID/completion time, that completion time is not future-dated relative to acceptance execution, and acquisition remained unchanged during verification;
+- provenance carries a valid source-capable acquisition baseline run ID/completion time, binds final acquisition-history guard version 1 and its UTC start timestamp into the same JSON, keeps those times non-future, and confirms acquisition remained unchanged during verification;
 - structural and accounting `audited_at_utc` timestamps use UTC-zero offsets, are not older than the acquisition baseline completion time, and are not future-dated relative to acceptance execution;
 - structural present = accounting present = provenance planned = 25,500;
 - structural raw objects = accounting raw-backed = provenance complete;
