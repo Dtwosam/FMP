@@ -259,6 +259,9 @@ class ExactGapExecutionSafetyTests(unittest.TestCase):
                     "plan_version": 1,
                     "frozen_start_date": "2015-01-01",
                     "frozen_end_date_exclusive": "2026-08-21",
+                    "audited_at_utc": "2026-09-09T10:00:00Z",
+                    "present_manifests_at_audit": 25500 - len(chunks),
+                    "missing_manifests_at_audit": len(chunks),
                     "chunks": chunks,
                 }
             ),
@@ -319,6 +322,9 @@ class ExactGapExecutionSafetyTests(unittest.TestCase):
                         "plan_version": 1,
                         "frozen_start_date": "2015-01-01",
                         "frozen_end_date_exclusive": "2026-08-21",
+                        "audited_at_utc": "2026-09-09T10:00:00Z",
+                        "present_manifests_at_audit": 25499,
+                        "missing_manifests_at_audit": 1,
                         "chunks": [
                             {
                                 "pair": "EURUSD",
