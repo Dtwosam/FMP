@@ -1,3 +1,5 @@
+export const AUDIT_PROTOCOL = "fmp-raw-audit-v1";
+
 const EXPECTED = {
   repository: "Dtwosam/FMP",
   repository_id: "1342321016",

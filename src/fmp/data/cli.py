@@ -209,6 +209,7 @@ def run_verify_cloud(args: argparse.Namespace) -> int:
         token_provider=GithubAuditOidcTokenProvider.from_environment(),
         timeout_seconds=args.timeout,
     )
+    client.preflight()
     report = verify_cloud_keys(
         plan_keys(pairs, args.start, args.end),
         client,

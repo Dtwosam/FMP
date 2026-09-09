@@ -3,9 +3,11 @@ from __future__ import annotations
 import base64
 import json
 import unittest
+from pathlib import Path
 from datetime import date
 from unittest.mock import patch
 
+from fmp.data.cli import build_parser
 from fmp.data.cloud_audit import (
     CloudAuditError,
     GithubAuditOidcTokenProvider,
@@ -140,7 +142,91 @@ class AuditOidcTests(unittest.TestCase):
         self.assertEqual(len(transport.calls), 2)
 
 
+class FakeAuditGetTransport:
+    def __init__(self, payload: dict[str, object], status: int = 200) -> None:
+        self.payload = payload
+        self.status = status
+        self.calls: list[tuple[str, dict[str, str], float]] = []
+
+    def get(self, url: str, headers: dict[str, str], timeout_seconds: float):
+        from fmp.data.cloud import CloudHttpResponse
+
+        self.calls.append((url, headers, timeout_seconds))
+        return CloudHttpResponse(self.status, json.dumps(self.payload).encode())
+
+
 class CloudAuditClientTests(unittest.TestCase):
+    def test_client_preflight_requires_exact_audit_protocol(self) -> None:
+        get_transport = FakeAuditGetTransport(
+            {"status": "ready", "protocol": "fmp-raw-audit-v1"}
+        )
+        client = SupabaseRawAuditClient(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-audit",
+            token_provider=StaticTokenProvider(),
+            transport=FakePostTransport({"status": "audited", "count": 0, "objects": []}),
+            get_transport=get_transport,
+        )
+
+        client.preflight()
+
+        self.assertEqual(len(get_transport.calls), 1)
+        _, headers, _ = get_transport.calls[0]
+        self.assertEqual(headers["Authorization"], "Bearer oidc-token")
+
+    def test_client_preflight_rejects_wrong_audit_protocol(self) -> None:
+        client = SupabaseRawAuditClient(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-audit",
+            token_provider=StaticTokenProvider(),
+            transport=FakePostTransport({"status": "audited", "count": 0, "objects": []}),
+            get_transport=FakeAuditGetTransport(
+                {"status": "ready", "protocol": "stale-audit"}
+            ),
+        )
+
+        with self.assertRaisesRegex(CloudAuditError, "preflight"):
+            client.preflight()
+
+    def test_audit_edge_source_exposes_authenticated_get_preflight(self) -> None:
+        source = Path("supabase/functions/fmp-raw-audit/index.ts").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn('req.method !== "GET" && req.method !== "POST"', source)
+        self.assertIn('if (req.method === "GET")', source)
+        self.assertIn("AUDIT_PROTOCOL", source)
+
+    def test_verify_cloud_cli_preflights_before_scan(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "verify-cloud",
+                "--endpoint",
+                "https://example.supabase.co/functions/v1/fmp-raw-audit",
+                "--pair",
+                "EURUSD",
+                "--start",
+                "2024-01-01",
+                "--end",
+                "2024-01-02",
+            ]
+        )
+
+        with (
+            patch(
+                "fmp.data.cli.GithubAuditOidcTokenProvider.from_environment",
+                return_value=StaticTokenProvider(),
+            ),
+            patch(
+                "fmp.data.cli.SupabaseRawAuditClient.preflight",
+                side_effect=CloudAuditError("audit preflight failed"),
+            ) as preflight,
+            patch("fmp.data.cli.verify_cloud_keys") as verify,
+        ):
+            with self.assertRaisesRegex(CloudAuditError, "preflight"):
+                args.func(args)
+
+        preflight.assert_called_once_with()
+        verify.assert_not_called()
+
     def test_client_posts_canonical_batch_with_oidc(self) -> None:
         path = "manifests/dukascopy/v1/EURUSD/2024/00/02/BID_candles_min_1.json"
         payload = {

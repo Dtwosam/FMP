@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 import { createRemoteJWKSet, jwtVerify } from "npm:jose@5.10.0";
 import {
   assertTrustedGithubAuditClaims,
+  AUDIT_PROTOCOL,
   validateAuditRequest,
 } from "./validation.ts";
 
@@ -60,7 +61,7 @@ async function authenticate(req: Request): Promise<void> {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method !== "POST") {
+  if (req.method !== "GET" && req.method !== "POST") {
     return Response.json({ error: "method_not_allowed" }, { status: 405 });
   }
 
@@ -69,6 +70,13 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     console.error(error);
     return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  if (req.method === "GET") {
+    return Response.json({
+      status: "ready",
+      protocol: AUDIT_PROTOCOL,
+    });
   }
 
   let paths: string[];

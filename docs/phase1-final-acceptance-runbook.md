@@ -111,15 +111,19 @@ Only after Evidence A and B pass and acquisition is idle:
    JWT gate must therefore remain disabled for this endpoint.
 2. Read back the deployed function metadata and require `verify_jwt = false`
    before running provenance. If the deployed setting differs, stop.
-3. Do not modify or redeploy `fmp-raw-ingest` as part of this step.
-4. Manually dispatch:
+3. Require an authenticated GET to the deployed audit endpoint to return exactly
+   `{"status":"ready","protocol":"fmp-raw-audit-v1"}`. The repository
+   `verify-cloud` client performs this preflight automatically before any
+   provenance object reads; a stale or wrong deployment fails closed.
+4. Do not modify or redeploy `fmp-raw-ingest` as part of this step.
+5. Manually dispatch:
    - `.github/workflows/phase1-final-cloud-audit.yml`
-5. The workflow itself refuses to run while Phase 1 acquisition is active.
-6. It pages the full `phase1-full-acquisition` history and selects the most recently **updated source-capable** run as the baseline. Push-triggered `[phase1-no-source]` runs are ignored because their acquisition jobs are suppressed; manual `workflow_dispatch` runs remain source-capable regardless of head-commit text. The selected baseline must have `status = completed`.
-7. It records an audit-guard UTC timestamp before that initial source-capable idle/baseline check, then re-scans the complete acquisition workflow history after provenance verification. Any source-capable run updated at or after that observable UTC second invalidates the evidence, including reruns that reuse older workflow run IDs.
-8. It repeats the source-capable baseline selection after provenance and requires the same baseline run ID **and** completion/activity timestamp. This catches pre-audit reruns through baseline selection and in-audit reruns through the guard, while unrelated no-source pushes do not invalidate evidence.
-9. Only after both stability checks pass does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
-10. Download the `phase1-cloud-provenance-<run_id>` artifact and retain both
+6. The workflow itself refuses to run while Phase 1 acquisition is active.
+7. It pages the full `phase1-full-acquisition` history and selects the most recently **updated source-capable** run as the baseline. Push-triggered `[phase1-no-source]` runs are ignored because their acquisition jobs are suppressed; manual `workflow_dispatch` runs remain source-capable regardless of head-commit text. The selected baseline must have `status = completed`.
+8. It records an audit-guard UTC timestamp before that initial source-capable idle/baseline check, then re-scans the complete acquisition workflow history after provenance verification. Any source-capable run updated at or after that observable UTC second invalidates the evidence, including reruns that reuse older workflow run IDs.
+9. It repeats the source-capable baseline selection after provenance and requires the same baseline run ID **and** completion/activity timestamp. This catches pre-audit reruns through baseline selection and in-audit reruns through the guard, while unrelated no-source pushes do not invalidate evidence.
+10. Only after both stability checks pass does the workflow stamp the provenance JSON with the acquisition baseline ID, the baseline completion timestamp, and `acquisition_unchanged_during_verification = true`.
+11. Download the `phase1-cloud-provenance-<run_id>` artifact and retain both
     `phase1-cloud-provenance.json` and `.phase1-final-acquisition-run-guard.json`.
 
 The client also treats the read-only Edge Function response as a frozen protocol: exact top-level/object fields, integer `count` (booleans are rejected), path order, object kind, SHA-256, size, and manifest parse/body consistency must all validate before provenance processing.
