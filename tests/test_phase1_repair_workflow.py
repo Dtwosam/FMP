@@ -75,6 +75,16 @@ class Phase1RepairWorkflowTests(unittest.TestCase):
         self.assertLess(freshness_index, acquire_index)
         self.assertIn("timedelta(hours=2)", workflow)
 
+    def test_exact_gap_workflow_rejects_intervening_acquisition_before_source(self) -> None:
+        workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
+
+        guard_index = workflow.index("Reject exact-gap plan after intervening acquisition")
+        acquire_index = workflow.index("Acquire exact missing chunks only")
+        self.assertLess(guard_index, acquire_index)
+        self.assertIn("actions: read", workflow)
+        self.assertIn("gh api --paginate --slurp", workflow)
+        self.assertIn("ensure_no_intervening_acquisition_runs", workflow)
+
     def test_exact_gap_batch_rejects_github_reruns(self) -> None:
         workflow = Path(".github/workflows/phase1-full-acquisition.yml").read_text(encoding="utf-8")
 

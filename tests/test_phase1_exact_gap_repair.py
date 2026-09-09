@@ -237,6 +237,67 @@ class ExactGapPlanTests(unittest.TestCase):
                     max_age=timedelta(hours=2),
                 )
 
+    def test_intervening_source_run_invalidates_exact_gap_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_plan(
+                Path(tmp),
+                [{"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}],
+            )
+            runs = [
+                {
+                    "id": 200,
+                    "updated_at": "2026-09-09T10:30:00Z",
+                    "head_commit": {"message": "[phase1-repair-batch] repair"},
+                }
+            ]
+
+            with self.assertRaisesRegex(ValueError, "intervening"):
+                __import__("fmp.data.repair_plan", fromlist=["x"]).ensure_no_intervening_acquisition_runs(
+                    path,
+                    runs,
+                    current_run_id=999,
+                )
+
+    def test_no_source_run_after_audit_does_not_invalidate_exact_gap_plan(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_plan(
+                Path(tmp),
+                [{"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}],
+            )
+            runs = [
+                {
+                    "id": 201,
+                    "updated_at": "2026-09-09T10:30:00Z",
+                    "head_commit": {"message": "[phase1-no-source] docs"},
+                }
+            ]
+
+            __import__("fmp.data.repair_plan", fromlist=["x"]).ensure_no_intervening_acquisition_runs(
+                path,
+                runs,
+                current_run_id=999,
+            )
+
+    def test_current_exact_gap_run_is_excluded_from_intervening_check(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = self._write_plan(
+                Path(tmp),
+                [{"pair": "EURUSD", "side": "BID", "date_utc": "2024-01-02"}],
+            )
+            runs = [
+                {
+                    "id": 202,
+                    "updated_at": "2026-09-09T10:30:00Z",
+                    "head_commit": {"message": "[phase1-exact-gap-batch] execute"},
+                }
+            ]
+
+            __import__("fmp.data.repair_plan", fromlist=["x"]).ensure_no_intervening_acquisition_runs(
+                path,
+                runs,
+                current_run_id=202,
+            )
+
     def test_load_exact_gap_plan_rejects_unknown_chunk_fields(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
