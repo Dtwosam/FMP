@@ -49,6 +49,34 @@ class FakePutTransport:
         )
 
 
+class FakeMirrorTransport(FakePutTransport):
+    def __init__(
+        self,
+        *,
+        get_status: int = 200,
+        get_payload: dict[str, object] | None = None,
+    ) -> None:
+        super().__init__()
+        self.get_status = get_status
+        self.get_payload = get_payload or {
+            "status": "ready",
+            "protocol": "fmp-raw-ingest-v2",
+        }
+        self.get_calls: list[tuple[str, dict[str, str], float]] = []
+
+    def get(
+        self,
+        url: str,
+        headers: dict[str, str],
+        timeout_seconds: float,
+    ) -> CloudHttpResponse:
+        self.get_calls.append((url, headers, timeout_seconds))
+        return CloudHttpResponse(
+            self.get_status,
+            json.dumps(self.get_payload).encode(),
+        )
+
+
 class StaticTokenProvider:
     def get_token(self) -> str:
         return "oidc-token"
@@ -77,6 +105,68 @@ class CloudMirrorTests(unittest.TestCase):
         self.assertIn("audience=fmp-supabase-raw-ingest", url)
         self.assertEqual(headers["Authorization"], "Bearer request-token")
         self.assertGreater(timeout, 0)
+
+    def test_ingest_preflight_accepts_expected_protocol(self) -> None:
+        transport = FakeMirrorTransport()
+        mirror = SupabaseRawMirror(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-ingest",
+            token_provider=StaticTokenProvider(),
+            transport=transport,
+        )
+
+        mirror.preflight()
+
+        self.assertEqual(len(transport.get_calls), 1)
+        _, headers, _ = transport.get_calls[0]
+        self.assertEqual(headers["Authorization"], "Bearer oidc-token")
+
+    def test_ingest_preflight_rejects_old_endpoint_before_source(self) -> None:
+        transport = FakeMirrorTransport(
+            get_status=405,
+            get_payload={"error": "method_not_allowed"},
+        )
+        mirror = SupabaseRawMirror(
+            endpoint="https://example.supabase.co/functions/v1/fmp-raw-ingest",
+            token_provider=StaticTokenProvider(),
+            transport=transport,
+        )
+
+        with self.assertRaisesRegex(CloudMirrorError, "preflight"):
+            mirror.preflight()
+
+    def test_cli_runs_ingest_preflight_before_source(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "fetch",
+                "--pair",
+                "EURUSD",
+                "--start",
+                "2024-01-01",
+                "--end",
+                "2024-01-02",
+                "--out",
+                ".phase1-preflight",
+                "--mirror-url",
+                "https://example.supabase.co/functions/v1/fmp-raw-ingest",
+            ]
+        )
+
+        with (
+            patch(
+                "fmp.data.cli.GithubOidcTokenProvider.from_environment",
+                return_value=StaticTokenProvider(),
+            ),
+            patch(
+                "fmp.data.cli.SupabaseRawMirror.preflight",
+                side_effect=CloudMirrorError("ingest preflight failed"),
+            ) as preflight,
+            patch("fmp.data.cli.acquire_chunk") as acquire,
+        ):
+            with self.assertRaisesRegex(CloudMirrorError, "preflight"):
+                args.func(args)
+
+        preflight.assert_called_once_with()
+        acquire.assert_not_called()
 
     def test_put_object_sends_path_checksum_and_oidc_token(self) -> None:
         transport = FakePutTransport()
