@@ -175,6 +175,7 @@ Rules:
 - the live `accept-phase1` workflow-history snapshot must prove pagination completeness: every page must report the same non-negative integer `total_count`, flattened run count must equal that total, and workflow run IDs must be unique positive integers;
 - every source-sensitive paginated acquisition-history consumer (exact-gap pre-source guard, final cloud-audit pre/post guard, and live `accept-phase1`) uses the same completeness validator before trusting history evidence;
 - every GitHub acquisition-history `updated_at` used by Phase 1 safety guards must itself use a UTC-zero offset; non-UTC timestamps are rejected rather than normalized;
+- frozen JSON version fields are exact integers, not Python-equality lookalikes: boolean `true` is rejected for exact-gap `plan_version` and manifest `manifest_version`;
 - Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
 
 Implementation evidence: PR #12, merge commit `a6bf7e2ecf215cf65e99cc9653267abe9ddb4eb1`.

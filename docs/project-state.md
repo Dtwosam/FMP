@@ -217,7 +217,7 @@ Purpose: eliminate the large replay overhead of month-level repair once remainin
 Merged behavior:
 
 - `docs/phase1-exact-gap-audit.sql` deterministically emits the exact missing pair/date/side plan from the frozen 25,500-manifest target;
-- exact-gap plan root schema is strict and includes:
+- exact-gap plan root schema is strict, requires integer `plan_version = 1` (not a boolean), and includes:
   - frozen start/end boundaries,
   - UTC audit timestamp,
   - present/missing manifest counts,

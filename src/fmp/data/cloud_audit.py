@@ -313,9 +313,16 @@ def _validate_manifest(
     if not isinstance(manifest, dict) or set(manifest) != _REQUIRED_MANIFEST_FIELDS:
         return None
 
+    manifest_version = manifest.get("manifest_version")
+    if (
+        not isinstance(manifest_version, int)
+        or isinstance(manifest_version, bool)
+        or manifest_version != 1
+    ):
+        return None
+
     source = DukascopySource()
     fixed = {
-        "manifest_version": 1,
         "retrieval_method": "dukascopy-public-daily-m1-bi5-v1",
         "source": "dukascopy",
         "source_url": source.url_for(key),
