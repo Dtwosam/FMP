@@ -110,7 +110,7 @@ This storage layer solves persistence for ephemeral GitHub acquisition runners w
 ## DEC-011 — Serialize and monthly-isolate Dukascopy acquisition
 
 **Date:** 2026-08-22  
-**Status:** APPROVED, pending final hardened network-smoke gate before merge
+**Status:** APPROVED
 
 The first full-history run used 36 pair/year jobs with up to three concurrent source runners. It stopped with only 1,055 of 25,500 planned manifests persisted.
 
@@ -132,3 +132,28 @@ Therefore Phase 1 acquisition is changed as follows:
 - a failed month is a recoverable Phase 1 acquisition failure and does not unlock Phase 2.
 
 This decision supersedes the concurrency and year-shard operational assumptions of the initial full-history workflow. It does **not** change DEC-009 source format, canonical data, or Phase 1 acceptance criteria.
+
+
+## DEC-012 — Sparse exact-gap Phase 1 cleanup
+
+**Date:** 2026-09-09  
+**Status:** APPROVED
+
+Once Phase 1 recovery gaps are sparse, repair will move from month-level replay to exact missing pair/date/side chunks.
+
+Rules:
+
+- the frozen target remains exactly **25,500** Dukascopy V1 manifests;
+- exact-gap plans are generated from the live Supabase cloud ledger after the preceding repair sweep stops;
+- each plan carries its UTC audit timestamp, present/missing counts, and explicit chunk list;
+- present + missing must equal 25,500 and missing must equal the exact chunk count;
+- plans reject duplicate, unknown, unsupported, out-of-range, or non-canonical chunks;
+- sparse acquisition uses the existing DEC-011 one-runner, 8-attempt, 5-second pacing policy;
+- the dedicated trigger is `[phase1-exact-gap-batch]`;
+- the same exact-gap workflow run must not be rerun after partial success/failure; a fresh Supabase audit and smaller fresh plan are required;
+- cloud/OIDC/Supabase failures remain fail-fast and local exact-plan provenance verification remains fail-closed;
+- raw cloud objects remain immutable and are never deleted merely to repair accounting;
+- `[phase1-no-source]` is the code/docs-only operational tag: it suppresses push-triggered Phase 1 acquisition and PR Dukascopy golden/network jobs;
+- Phase 2 remains locked until the final 25,500/25,500 coverage and integrity gates pass.
+
+Implementation evidence: PR #12, merge commit `a6bf7e2ecf215cf65e99cc9653267abe9ddb4eb1`.
