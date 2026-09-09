@@ -449,6 +449,30 @@ Verification evidence:
 - golden/network source jobs skipped under `[phase1-no-source]`;
 - no Supabase function was deployed and no Dukascopy source acquisition was started by this work.
 
+## Pair/side accounting acceptance — MERGED / VERIFIED
+
+PR #23 `[phase1-no-source] Phase 1: validate accounting pair-side evidence` merged to `main` at:
+
+- `4e9e71ac1d875a8150f6dc5a12787a0c2fae157e`
+
+The recovery/accounting SQL has always emitted a six-row `pair_side_breakdown`, but the final acceptance combiner previously trusted only aggregate totals. A malformed artifact could therefore omit or duplicate pair/side rows while retaining passing grand totals.
+
+The final combiner now requires exactly one row for every frozen pair/side:
+
+- EURUSD ASK/BID;
+- GBPUSD ASK/BID;
+- USDJPY ASK/BID.
+
+Each row must contain exactly 4,250 expected and present manifests, zero missing manifests, zero raw-without-manifest objects, and a raw-backed + inferred-not-found partition of exactly 4,250. The six row-level raw-backed/not-found counts must also reconcile exactly to the accounting totals.
+
+Verification evidence:
+
+- RED run `34351355133` failed on both missing-breakdown and duplicate-row cases;
+- GREEN run `34351433652` passed after the strict validator was added;
+- docs-head GREEN run `34351492926` passed;
+- golden/network source jobs skipped under `[phase1-no-source]`;
+- no Dukascopy source acquisition or Supabase deployment was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
