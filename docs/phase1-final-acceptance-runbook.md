@@ -49,7 +49,7 @@ The supported recovery path is the fresh exact-gap repair cycle:
 9. Raw/manifest metadata mismatches and Storage lookup failures other than a verified missing-key result also fail closed.
 10. Both raw and manifest object paths must resolve to a real calendar date inside the frozen 2015-01-01 through 2026-08-20 interval; impossible or out-of-snapshot paths are rejected before immutable storage.
 
-Before executing a fresh exact-gap pass that may include raw-only keys, deploy the tested repository version of `fmp-raw-ingest` containing these cross-object guards. Do not deploy it while a Phase 1 acquisition run is active.
+Before executing a fresh exact-gap pass that may include raw-only keys, deploy the tested repository version of `fmp-raw-ingest` containing these cross-object guards. Do not deploy it while a Phase 1 acquisition run is active. Read back the deployed metadata and source, require `verify_jwt = false`, and confirm that authenticated GET returns exactly `{"status":"ready","protocol":"fmp-raw-ingest-v2"}`. The current main-branch mirror client also enforces this preflight before its first source request.
 
 This ordering is a Phase 1 safety property. Final Evidence A/B must still show `raw_without_manifest = 0` before provenance verification begins.
 
