@@ -10,6 +10,7 @@ on:
       - 'supabase/functions/fmp-raw-ingest/**'
       - 'docs/phase1-full-acquisition-trigger.md'
       - 'docs/phase1-repair-queue.json'
+      - 'docs/phase1-exact-gap-queue.json'
   workflow_dispatch:
     inputs:
       repair_year:
@@ -37,7 +38,7 @@ env:
 
 jobs:
   cloud-smoke:
-    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]')
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -91,7 +92,7 @@ jobs:
           PY
 
   full-acquisition:
-    if: contains(github.event.head_commit.message, '[phase1-full]') || (github.event_name == 'workflow_dispatch' && inputs.repair_year == '' && inputs.repair_month == '')
+    if: (contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')) || (github.event_name == 'workflow_dispatch' && inputs.repair_year == '' && inputs.repair_month == '')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -204,7 +205,7 @@ jobs:
             --out ".phase1-repair-${{ inputs.repair_year }}-${{ inputs.repair_month }}"
 
   repair-batch-plan:
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]')
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.queue.outputs.matrix }}
@@ -242,7 +243,7 @@ jobs:
 
   repair-batch:
     needs: repair-batch-plan
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]')
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -292,3 +293,48 @@ jobs:
             --start "${{ steps.repair-range.outputs.start }}" \
             --end "${{ steps.repair-range.outputs.end }}" \
             --out ".phase1-repair-${{ matrix.year }}-${{ matrix.month }}"
+
+
+  exact-gap-repair:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate exact-gap plan before source access
+        run: |
+          python - <<'PY'
+          import hashlib
+          import os
+          from pathlib import Path
+
+          from fmp.data.repair_plan import load_exact_gap_plan
+
+          if os.environ.get('GITHUB_RUN_ATTEMPT') != '1':
+              raise SystemExit(
+                  'exact-gap repair reruns are disabled; regenerate a fresh exact-gap plan'
+              )
+
+          path = Path('docs/phase1-exact-gap-queue.json')
+          keys = load_exact_gap_plan(path)
+          digest = hashlib.sha256(path.read_bytes()).hexdigest()
+          print(f'exact_gap_plan_sha256={digest}')
+          print(f'exact_gap_chunks={len(keys)}')
+          PY
+      - name: Acquire exact missing chunks only
+        run: |
+          python -m fmp.data.cli fetch-plan \
+            --plan docs/phase1-exact-gap-queue.json \
+            --out .phase1-exact-gap-repair \
+            --attempts 8 \
+            --source-delay 5 \
+            --continue-on-error \
+            --mirror-url "$FMP_RAW_INGEST_URL"
+      - name: Verify exact-gap repair provenance
+        run: |
+          python -m fmp.data.cli verify-plan \
+            --plan docs/phase1-exact-gap-queue.json \
+            --out .phase1-exact-gap-repair
