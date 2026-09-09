@@ -730,6 +730,31 @@ Verification evidence:
 
 Operational requirement after sweep 2 stops: deploy the tested repository `fmp-raw-ingest` version containing PR #31, PR #32, and PR #33 before any fresh exact-gap source pass. The separate read-only `fmp-raw-audit` remains undeployed until the later final provenance stage.
 
+## Frozen ingest object-date namespace — MERGED / VERIFIED / UNDEPLOYED
+
+PR #34 `[phase1-no-source] Phase 1: restrict ingest paths to frozen valid dates` merged to `main` at:
+
+- `08b53ba7b05c18c80b569c5033ac84f83a4b9dfa`
+
+The repository `fmp-raw-ingest` path gate previously enforced only canonical-looking regex structure. A trusted-workflow bug could therefore submit an impossible calendar date or a date outside the frozen Phase 1 snapshot and create an unexpected immutable raw/manifest object.
+
+The ingest source now requires every canonical raw/manifest path to resolve to:
+
+- a real Gregorian date;
+- on or after `2015-01-01`;
+- before `2026-08-21` (therefore through `2026-08-20` inclusive);
+- while retaining the existing V1 pair, BID/ASK, zero-based source-month, and canonical filename restrictions.
+
+Verification evidence:
+
+- RED Edge run `34371729935` failed exactly because regex-only validation accepted out-of-range and impossible dates;
+- GREEN implementation Edge run `34371837136` and Python run `34371837190` passed;
+- final PR-head Edge run `34371960570` and Python run `34371960666` passed;
+- golden/source jobs skipped under `[phase1-no-source]`;
+- **the Edge Function was not deployed while repair sweep 2 is active**.
+
+Operational requirement after sweep 2 stops: deploy the tested repository `fmp-raw-ingest` version containing PR #31 through PR #34 before any fresh exact-gap source pass.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
