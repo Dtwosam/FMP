@@ -375,6 +375,52 @@ Verification evidence:
 - golden/network source jobs were skipped under `[phase1-no-source]`;
 - no Supabase function was deployed and no new Dukascopy source traffic was introduced by this change.
 
+## Final acceptance evidence identity/counter hardening — MERGED / VERIFIED
+
+Two additional source-free fail-closed acceptance defects were closed while repair sweep 2 remained the only Dukascopy source workload.
+
+### Structural evidence snapshot identity
+
+PR #20 `[phase1-no-source] Phase 1: bind structural evidence to frozen snapshot` merged at:
+
+- `aa9e6dfb9ab4e29d6f760042f4869bd20ec4854e`
+
+Changes:
+
+- `docs/phase1-final-acceptance-audit.sql` now emits:
+  - `report_version = 1`;
+  - `scope = phase1_structural_acceptance`;
+  - `frozen_start_date = 2015-01-01`;
+  - `frozen_end_date_exclusive = 2026-08-21`.
+- the final acceptance combiner requires those identity fields to match the frozen snapshot.
+
+Verification:
+
+- RED run `34349685588` failed because structural identity was absent and a wrong frozen end date was accepted;
+- GREEN run `34349752285` passed after the minimal implementation;
+- the modified structural SQL was executed read-only against live Supabase at `2026-09-09 12:13:29.64728+00` and returned the expected identity fields while correctly keeping `structural_gate_pass = false` at 24,521 / 25,500 manifests.
+
+### Provenance issue subcounter consistency
+
+PR #21 `[phase1-no-source] Phase 1: validate provenance issue counters` merged at:
+
+- `4b6ca4503dec7e705de9f31f7d51140c870ce41f`
+
+The final acceptance combiner now independently requires zero for each provenance issue class:
+
+- `invalid_manifest`;
+- `raw_checksum_mismatch`;
+- `raw_size_mismatch`;
+- `invalid_raw_audit`.
+
+This prevents a malformed or manually edited provenance report from passing merely because aggregate `issues = 0` and `ready = true` claim cleanliness.
+
+Verification:
+
+- RED run `34349955332` proved a nonzero `raw_checksum_mismatch` could previously be hidden by inconsistent aggregate fields;
+- GREEN run `34350032666` passed after explicit subcounter checks were added;
+- network/golden source checks skipped under `[phase1-no-source]`.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
