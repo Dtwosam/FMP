@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 from .types import RawChunkKey
@@ -20,15 +20,10 @@ _REQUIRED_ROOT_FIELDS = {
 }
 _FROZEN_MANIFEST_TARGET = 25_500
 _REQUIRED_CHUNK_FIELDS = {"pair", "side", "date_utc"}
+_DEFAULT_MAX_PLAN_AGE = timedelta(hours=2)
 
 
-def load_exact_gap_plan(path: Path) -> list[RawChunkKey]:
-    """Load and strictly validate an exact Phase 1 repair plan.
-
-    The plan is intentionally explicit: every entry identifies exactly one
-    pair/date/side chunk. This prevents sparse cleanup from silently expanding
-    back into month- or range-level acquisition.
-    """
+def _load_validated_exact_gap_plan(path: Path) -> tuple[list[RawChunkKey], datetime]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -58,6 +53,7 @@ def load_exact_gap_plan(path: Path) -> list[RawChunkKey]:
         raise ValueError("exact-gap plan audited_at_utc must be timezone-aware")
     if audited_at.utcoffset() != timedelta(0):
         raise ValueError("exact-gap plan audited_at_utc must use UTC")
+    audited_at = audited_at.astimezone(timezone.utc)
 
     present = payload.get("present_manifests_at_audit")
     missing = payload.get("missing_manifests_at_audit")
@@ -119,4 +115,46 @@ def load_exact_gap_plan(path: Path) -> list[RawChunkKey]:
     if keys != canonical:
         raise ValueError("exact-gap chunks must be in canonical date/pair/side order")
 
+    return keys, audited_at
+
+
+def load_exact_gap_plan(path: Path) -> list[RawChunkKey]:
+    """Load and strictly validate an exact Phase 1 repair plan.
+
+    This validates structural identity and the frozen-snapshot accounting
+    contract. Operational freshness is a separate pre-source gate.
+    """
+    keys, _ = _load_validated_exact_gap_plan(path)
+    return keys
+
+
+def ensure_exact_gap_plan_fresh(
+    path: Path,
+    *,
+    now_utc: datetime | None = None,
+    max_age: timedelta = _DEFAULT_MAX_PLAN_AGE,
+) -> list[RawChunkKey]:
+    """Validate an exact-gap plan and reject stale/future cloud audits.
+
+    Returns the validated explicit keys so callers can use the same parsed plan
+    after the freshness gate. The default two-hour limit allows normal GitHub
+    queue latency while preventing old sparse snapshots from driving new source
+    requests.
+    """
+    if max_age <= timedelta(0):
+        raise ValueError("exact-gap max plan age must be positive")
+
+    now = now_utc or datetime.now(timezone.utc)
+    if now.tzinfo is None or now.utcoffset() is None:
+        raise ValueError("exact-gap freshness clock must be timezone-aware")
+    now = now.astimezone(timezone.utc)
+
+    keys, audited_at = _load_validated_exact_gap_plan(path)
+    age = now - audited_at
+    if age < timedelta(0):
+        raise ValueError("exact-gap plan audit timestamp is in the future")
+    if age > max_age:
+        raise ValueError(
+            f"exact-gap plan is stale: age {age} exceeds maximum {max_age}"
+        )
     return keys
