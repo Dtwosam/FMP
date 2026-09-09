@@ -133,6 +133,14 @@ def evaluate_phase1_acceptance(
             and provenance_planned is not None
             and provenance_complete + provenance_not_found == provenance_planned
         ),
+        "provenance_acquisition_baseline_run_id": (
+            isinstance(provenance.get("acquisition_baseline_run_id"), int)
+            and not isinstance(provenance.get("acquisition_baseline_run_id"), bool)
+            and int(provenance["acquisition_baseline_run_id"]) >= 0
+        ),
+        "provenance_acquisition_unchanged_during_verification": (
+            provenance.get("acquisition_unchanged_during_verification") is True
+        ),
         "provenance_ready": provenance.get("ready") is True,
         "present_counts_agree": (
             structural_present is not None
