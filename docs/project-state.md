@@ -358,6 +358,23 @@ Verification evidence for the fingerprint hardening:
 
 Final acceptance remains locked until acquisition is idle and the structural/accounting ledger is complete. Only then may the read-only audit Edge be deployed and the manual full cloud-provenance workflow run according to `docs/phase1-final-acceptance-runbook.md`.
 
+## Final cloud-audit active-run guard — FIXED
+
+PR #19 `[phase1-no-source] Phase 1: block all active acquisition states in final audit` merged to `main` at:
+
+- `69d5075a0b42a0ebb7fba630b1ff2a0b719dd4c5`
+
+The manual final cloud-provenance workflow previously queried only Phase 1 acquisition runs with `status=in_progress`. That was weaker than the final acceptance runbook, which requires no acquisition workflow to be queued, waiting, pending, or in progress before the cloud snapshot is treated as stable.
+
+The guard now queries GitHub server-side for each active state — `queued`, `waiting`, `pending`, and `in_progress` — and refuses the audit when any such acquisition run exists. Server-side status queries are used rather than scanning only a bounded page of recent runs, so an older queued sweep cannot be missed after later CI activity.
+
+Verification evidence:
+
+- RED run `34349392546` failed exactly because the workflow still used the old single-status guard;
+- GREEN run `34349499066` passed after the minimal workflow change;
+- golden/network source jobs were skipped under `[phase1-no-source]`;
+- no Supabase function was deployed and no new Dukascopy source traffic was introduced by this change.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
