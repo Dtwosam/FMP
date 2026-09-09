@@ -178,6 +178,10 @@ jobs:
           report = json.loads(path.read_text(encoding="utf-8"))
           report["acquisition_baseline_run_id"] = int(baseline)
           report["acquisition_baseline_completed_at_utc"] = baseline_completed_at
+          report["acquisition_history_guard_version"] = summary["guard_version"]
+          report["acquisition_history_guard_started_at_utc"] = summary[
+              "guard_started_at_utc"
+          ]
           report["acquisition_unchanged_during_verification"] = True
           path.write_text(
               json.dumps(report, sort_keys=True, indent=2) + "\n",
