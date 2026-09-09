@@ -55,6 +55,7 @@ def provenance_report() -> dict[str, object]:
         "source": "dukascopy",
         "granularity": "1m",
         "scope": "cloud_snapshot_provenance",
+        "plan_sha256": "2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6",
         "planned_chunks": 25500,
         "complete": 25400,
         "not_found": 100,
@@ -134,6 +135,19 @@ class Phase1AcceptanceTests(unittest.TestCase):
 
         self.assertFalse(report["ready"])
         self.assertFalse(report["checks"]["accounting_frozen_snapshot"])
+
+    def test_rejects_wrong_provenance_snapshot_identity(self) -> None:
+        provenance = provenance_report()
+        provenance["plan_sha256"] = "0" * 64
+
+        report = evaluate_phase1_acceptance(
+            structural_report(),
+            accounting_report(),
+            provenance,
+        )
+
+        self.assertFalse(report["ready"])
+        self.assertFalse(report["checks"]["provenance_frozen_plan_sha256"])
 
     def test_acceptance_cli_consumes_evidence_files_and_returns_zero(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
