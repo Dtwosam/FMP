@@ -81,6 +81,8 @@ PYTHONPATH=src python -m fmp.data.cli fetch \
   --recheck-not-found
 ```
 
+`--recheck-not-found` is local-only in V1. Do not combine it with `--mirror-url`: canonical cloud manifests are first-write stable, so a previously persisted `not_found` manifest is not promoted in place to `complete` (DEC-013).
+
 Summarize acquisition manifests:
 
 ```bash
