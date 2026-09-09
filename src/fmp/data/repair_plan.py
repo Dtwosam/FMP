@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from .types import RawChunkKey
@@ -9,7 +9,16 @@ from .types import RawChunkKey
 _PLAN_VERSION = 1
 _FROZEN_START_DATE = date(2015, 1, 1)
 _FROZEN_END_DATE_EXCLUSIVE = date(2026, 8, 21)
-_REQUIRED_ROOT_FIELDS = {"plan_version", "frozen_start_date", "frozen_end_date_exclusive", "chunks"}
+_REQUIRED_ROOT_FIELDS = {
+    "plan_version",
+    "frozen_start_date",
+    "frozen_end_date_exclusive",
+    "audited_at_utc",
+    "present_manifests_at_audit",
+    "missing_manifests_at_audit",
+    "chunks",
+}
+_FROZEN_MANIFEST_TARGET = 25_500
 _REQUIRED_CHUNK_FIELDS = {"pair", "side", "date_utc"}
 
 
@@ -38,9 +47,37 @@ def load_exact_gap_plan(path: Path) -> list[RawChunkKey]:
     if payload.get("frozen_end_date_exclusive") != _FROZEN_END_DATE_EXCLUSIVE.isoformat():
         raise ValueError("exact-gap plan frozen_end_date_exclusive does not match Phase 1 snapshot")
 
+    audited_at_utc = payload.get("audited_at_utc")
+    if not isinstance(audited_at_utc, str):
+        raise ValueError("exact-gap plan audited_at_utc must be a string")
+    try:
+        audited_at = datetime.fromisoformat(audited_at_utc.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("exact-gap plan audited_at_utc must be ISO-8601") from exc
+    if audited_at.tzinfo is None or audited_at.utcoffset() is None:
+        raise ValueError("exact-gap plan audited_at_utc must be timezone-aware")
+    if audited_at.utcoffset() != timedelta(0):
+        raise ValueError("exact-gap plan audited_at_utc must use UTC")
+
+    present = payload.get("present_manifests_at_audit")
+    missing = payload.get("missing_manifests_at_audit")
+    if (
+        not isinstance(present, int)
+        or isinstance(present, bool)
+        or not isinstance(missing, int)
+        or isinstance(missing, bool)
+        or present < 0
+        or missing < 0
+    ):
+        raise ValueError("exact-gap audit manifest counts must be non-negative integers")
+    if present + missing != _FROZEN_MANIFEST_TARGET:
+        raise ValueError("exact-gap audit manifest counts must reconcile to frozen 25,500 target")
+
     chunks = payload.get("chunks")
     if not isinstance(chunks, list) or not chunks:
         raise ValueError("exact-gap plan must contain a non-empty chunks list")
+    if missing != len(chunks):
+        raise ValueError("exact-gap missing manifest count must equal chunk count")
 
     keys: list[RawChunkKey] = []
     seen: set[RawChunkKey] = set()
