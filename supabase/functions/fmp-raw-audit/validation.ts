@@ -37,6 +37,7 @@ export function validateAuditPaths(paths: unknown): string[] {
     if (!RAW_RE.test(value) && !MANIFEST_RE.test(value)) {
       throw new Error(`invalid FMP audit object path: ${value}`);
     }
+    validateSnapshotDate(value);
     if (seen.has(value)) {
       throw new Error(`duplicate FMP audit object path: ${value}`);
     }
