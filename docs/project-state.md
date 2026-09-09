@@ -1,6 +1,6 @@
 # FMP Project State
 
-**Updated:** 2026-09-07  
+**Updated:** 2026-09-09  
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 1 — Historical Data Acquisition  
@@ -206,6 +206,54 @@ Repair sweep 2 was generated directly from the exhaustive post-sweep gap audit:
 
 Phase 1 remains open until exhaustive coverage reaches 25,500/25,500 and final integrity/provenance gates pass.
 
+## Exact-gap sparse cleanup tooling — MERGED / READY
+
+PR #12 `[phase1-no-source] Phase 1: add exact-gap repair path` was merged to `main` at:
+
+- `a6bf7e2ecf215cf65e99cc9653267abe9ddb4eb1`
+
+Purpose: eliminate the large replay overhead of month-level repair once remaining gaps become sparse.
+
+Merged behavior:
+
+- `docs/phase1-exact-gap-audit.sql` deterministically emits the exact missing pair/date/side plan from the frozen 25,500-manifest target;
+- exact-gap plan root schema is strict and includes:
+  - frozen start/end boundaries,
+  - UTC audit timestamp,
+  - present/missing manifest counts,
+  - exact chunk list;
+- audit counts must reconcile to exactly **25,500** and declared missing count must equal the chunk list length;
+- duplicate, unsupported, out-of-range, unknown-field, and non-canonical plans fail closed;
+- chunk order is canonical by date / pair / side;
+- `fetch-plan` requests only explicit chunks from the validated plan;
+- `verify-plan` verifies provenance only for the explicit sparse plan;
+- exact-gap execution preserves the existing one-runner / 8-attempt / 5-second Dukascopy policy;
+- acquisition errors may continue to later exact chunks, while cloud/OIDC/Supabase failures remain fail-fast;
+- `[phase1-exact-gap-batch]` is the dedicated sparse-repair trigger;
+- exact-gap GitHub reruns are rejected: after any partial/failed sparse pass, a **fresh Supabase audit and fresh exact-gap plan are required**;
+- `[phase1-no-source]` suppresses all push-triggered Phase 1 acquisition jobs and also suppresses PR golden/network source tests for code-only changes;
+- `docs/phase1-final-acceptance-audit.sql` codifies the final structural cloud acceptance query.
+
+Verification evidence:
+
+- exact-gap implementation followed RED -> GREEN tests;
+- unit-test suite + package compilation PASS on the final PR head;
+- tests prove invalid plans fail before any acquisition attempt;
+- tests prove valid sparse execution attempts only the explicit keys in plan order;
+- ready-for-review golden/network Dukascopy jobs were both **skipped** under `[phase1-no-source]`;
+- merge push used `[phase1-no-source]`;
+- the existing repair sweep 2 remained the only active Dukascopy acquisition run after the merge.
+
+Latest cloud sample recorded during this documentation update:
+
+- manifests: **24,520 / 25,500**
+- coverage: **96.1569%**
+- remaining manifests: **980**
+- raw objects: **24,523**
+- latest manifest write in that sample: `2026-09-09 09:18:39.532127+00`
+
+This sample is progress evidence only. The exact-gap workflow has **not** been triggered yet.
+
 ## Manifest retry incident — FIXED
 
 Current Edge Function v3 rule:
@@ -231,15 +279,16 @@ Merged via PR #5 at commit `a2906a37f380dc6c4d27e90d46f15c2c2731d417`.
 
 ## Immediate next action
 
-1. Allow repair sweep 2 to run serially across the exact 74-month gap queue.
-2. Do not add parallel Dukascopy traffic while the sweep is active.
-3. After sweep 2 stops, re-audit Supabase against the exact 25,500-manifest frozen plan.
-4. Generate the next repair queue only from still-missing pair/date/side chunks grouped by month.
-5. Reconcile any remaining raw-only objects without deleting immutable cloud data.
-6. Repeat bounded serial repair/audit cycles until missing manifests reach zero.
-7. Run the final Phase 1 coverage, integrity, provenance, and recovery-accounting acceptance gates.
-8. Record Phase 1 PASS/checkpoint only after **25,500 / 25,500** is proven.
-9. Keep Phase 2 locked until that PASS is recorded.
+1. Allow repair sweep 2 to continue under the existing single-source-runner lock; do not add parallel Dukascopy traffic.
+2. When sweep 2 stops, run the committed exhaustive cloud audit against the exact **25,500-manifest** frozen plan.
+3. If missing manifests remain, materialize `docs/phase1-exact-gap-queue.json` directly from `docs/phase1-exact-gap-audit.sql`.
+4. Trigger one `[phase1-exact-gap-batch]` sparse pass. Do **not** rerun the same workflow attempt after partial success/failure.
+5. After every sparse pass, generate a fresh cloud audit and fresh exact-gap plan from only still-missing chunks.
+6. Continue bounded exact-gap audit/repair cycles until missing manifests reach zero.
+7. Reconcile any remaining raw-only objects through immutable/idempotent repair semantics; never delete cloud raw data to make counts match.
+8. Run `docs/phase1-final-acceptance-audit.sql` plus the required provenance/recovery-accounting checks.
+9. Record Phase 1 PASS/checkpoint only after **25,500 / 25,500** and all integrity gates are proven.
+10. Keep Phase 2 locked until that PASS is recorded.
 
 ## Known open decisions
 
