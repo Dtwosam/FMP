@@ -5,6 +5,7 @@ import {
   isStorageObjectNotFound,
   manifestStorageInvariant,
   manifestsEquivalent,
+  validateManifestForStorage,
   validateObjectPath,
 } from "./validation.ts";
 
