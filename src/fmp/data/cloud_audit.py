@@ -17,6 +17,7 @@ from .dukascopy import DukascopySource
 from .types import RawChunkKey
 
 AUDIT_OIDC_AUDIENCE = "fmp-supabase-raw-audit"
+AUDIT_PROTOCOL = "fmp-raw-audit-v1"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _REQUIRED_MANIFEST_FIELDS = {
     "manifest_version",
@@ -160,6 +161,7 @@ class SupabaseRawAuditClient:
         token_provider: Protocol,
         *,
         transport: CloudAuditPostTransport | None = None,
+        get_transport: CloudGetTransport | None = None,
         timeout_seconds: float = 60.0,
     ) -> None:
         if not endpoint.startswith("https://"):
@@ -167,7 +169,35 @@ class SupabaseRawAuditClient:
         self.endpoint = endpoint
         self.token_provider = token_provider
         self.transport = transport or UrllibCloudAuditTransport()
+        self.get_transport = get_transport or UrllibCloudTransport()
         self.timeout_seconds = timeout_seconds
+
+    def preflight(self) -> None:
+        token = self.token_provider.get_token()  # type: ignore[attr-defined]
+        response = self.get_transport.get(
+            self.endpoint,
+            {
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json",
+            },
+            self.timeout_seconds,
+        )
+        try:
+            payload = json.loads(response.body.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise CloudAuditError(
+                f"Supabase raw audit preflight returned malformed HTTP {response.status} response"
+            ) from exc
+        if (
+            not 200 <= response.status < 300
+            or not isinstance(payload, dict)
+            or set(payload) != {"status", "protocol"}
+            or payload.get("status") != "ready"
+            or payload.get("protocol") != AUDIT_PROTOCOL
+        ):
+            raise CloudAuditError(
+                f"Supabase raw audit preflight failed with HTTP {response.status}: {payload}"
+            )
 
     def audit_paths(self, paths: list[str]) -> list[dict[str, object]]:
         if not 1 <= len(paths) <= 100:
