@@ -39,16 +39,28 @@ present as (
   where bucket_id = 'fmp-raw'
     and name like 'manifests/dukascopy/v1/%'
 ),
+coverage as (
+  select count(*)::int as present_manifests_at_audit
+  from expected e
+  join present p on p.name = e.object_name
+),
 missing as (
   select e.pair, e.side, e.day
   from expected e
   left join present p on p.name = e.object_name
   where p.name is null
+),
+missing_count as (
+  select count(*)::int as missing_manifests_at_audit
+  from missing
 )
 select jsonb_build_object(
   'plan_version', 1,
   'frozen_start_date', '2015-01-01',
   'frozen_end_date_exclusive', '2026-08-21',
+  'audited_at_utc', to_char(now() at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),
+  'present_manifests_at_audit', coverage.present_manifests_at_audit,
+  'missing_manifests_at_audit', missing_count.missing_manifests_at_audit,
   'chunks', coalesce(
     jsonb_agg(
       jsonb_build_object(
@@ -61,4 +73,7 @@ select jsonb_build_object(
     '[]'::jsonb
   )
 ) as exact_gap_plan
-from missing;
+from missing
+cross join coverage
+cross join missing_count
+group by coverage.present_manifests_at_audit, missing_count.missing_manifests_at_audit;
