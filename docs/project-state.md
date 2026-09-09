@@ -967,8 +967,9 @@ No intervention is authorized while the serialized sweep is active: do not add p
 9. Reconcile any remaining raw-only objects through immutable/idempotent repair semantics; never delete cloud raw data to make counts match.
 10. Run `docs/phase1-final-acceptance-audit.sql` plus the required provenance/recovery-accounting checks.
 11. Only after acquisition is idle **and** structural/accounting evidence is complete, deploy the separate read-only `fmp-raw-audit` and run the final cloud provenance workflow.
-12. Record Phase 1 PASS/checkpoint only after **25,500 / 25,500** and all integrity gates are proven.
-13. Keep Phase 2 locked until that PASS is recorded.
+12. Immediately before final acceptance, capture a fresh paginated `phase1-full-acquisition` history JSON and run `accept-phase1` with `--workflow-runs-json`; any source-capable activity since the provenance guard or baseline drift keeps Phase 1 open.
+13. Record Phase 1 PASS/checkpoint only after **25,500 / 25,500** and all integrity gates plus the live history guard are proven.
+14. Keep Phase 2 locked until that PASS is recorded.
 
 ## Known open decisions
 
