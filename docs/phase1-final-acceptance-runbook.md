@@ -145,18 +145,27 @@ Required result:
 
 ## Evidence D — Cross-report acceptance
 
-Run:
+Immediately before final acceptance, fetch a **fresh** complete acquisition-workflow
+history snapshot. Do not reuse the history JSON captured by an earlier attempt:
 
 ```bash
+gh api --paginate --slurp \
+  "repos/Dtwosam/FMP/actions/workflows/phase1-full-acquisition.yml/runs?per_page=100" \
+  > phase1-final-acquisition-runs.json
+
 python -m fmp.data.cli accept-phase1 \
   --structural-json phase1-structural.json \
   --accounting-json phase1-accounting.json \
   --provenance-json phase1-cloud-provenance.json \
+  --workflow-runs-json phase1-final-acquisition-runs.json \
   > phase1-final-acceptance.json
 ```
 
-The command exits zero only when every independent gate passes and the reports
-agree with one another.
+The command exits zero only when every independent gate passes, the reports
+agree with one another, the fresh GitHub history shows no source-capable
+acquisition activity at or after the provenance history-guard boundary, and the
+current source-capable acquisition baseline ID/completion timestamp still match
+the values bound into provenance.
 
 Important cross-checks include:
 
