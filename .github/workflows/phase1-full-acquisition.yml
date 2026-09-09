@@ -38,7 +38,7 @@ env:
 
 jobs:
   cloud-smoke:
-    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-no-source]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
+    if: github.event_name == 'push' && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -92,7 +92,7 @@ jobs:
           PY
 
   full-acquisition:
-    if: (contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')) || (github.event_name == 'workflow_dispatch' && inputs.repair_year == '' && inputs.repair_month == '')
+    if: (contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')) || (github.event_name == 'workflow_dispatch' && inputs.repair_year == '' && inputs.repair_month == '')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -205,7 +205,7 @@ jobs:
             --out ".phase1-repair-${{ inputs.repair_year }}-${{ inputs.repair_month }}"
 
   repair-batch-plan:
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-no-source]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.queue.outputs.matrix }}
@@ -243,7 +243,7 @@ jobs:
 
   repair-batch:
     needs: repair-batch-plan
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]')
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -296,7 +296,7 @@ jobs:
 
 
   exact-gap-repair:
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-no-source]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[phase1-exact-gap-batch]') && !contains(github.event.head_commit.message, '[phase1-full]') && !contains(github.event.head_commit.message, '[phase1-repair-batch]') && !contains(github.event.head_commit.message, '[phase1-no-source]')
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
