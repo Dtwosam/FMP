@@ -158,10 +158,38 @@ export function validateManifestForStorage(
   throw new Error("manifest status is invalid");
 }
 
+const FROZEN_START_MS = Date.UTC(2015, 0, 1);
+const FROZEN_END_EXCLUSIVE_MS = Date.UTC(2026, 7, 21);
+
+function validateFrozenPathDate(match: RegExpExecArray): void {
+  const year = Number(match[2]);
+  const sourceMonth = Number(match[3]);
+  const day = Number(match[4]);
+  const value = new Date(Date.UTC(year, sourceMonth, day));
+
+  if (
+    value.getUTCFullYear() !== year ||
+    value.getUTCMonth() !== sourceMonth ||
+    value.getUTCDate() !== day
+  ) {
+    throw new Error("FMP storage object path has invalid calendar date");
+  }
+
+  const timestamp = value.getTime();
+  if (
+    timestamp < FROZEN_START_MS ||
+    timestamp >= FROZEN_END_EXCLUSIVE_MS
+  ) {
+    throw new Error("FMP storage object path is outside frozen Phase 1 snapshot");
+  }
+}
+
 export function validateObjectPath(path: string): true {
-  if (!RAW_RE.test(path) && !MANIFEST_RE.test(path)) {
+  const match = RAW_RE.exec(path) ?? MANIFEST_RE.exec(path);
+  if (!match) {
     throw new Error("invalid FMP storage object path");
   }
+  validateFrozenPathDate(match);
   return true;
 }
 

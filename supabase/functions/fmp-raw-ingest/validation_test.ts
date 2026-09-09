@@ -80,6 +80,41 @@ Deno.test("accepts canonical raw and manifest object paths", () => {
   assertEquals(validateObjectPath("manifests/dukascopy/v1/USDJPY/2024/00/02/ASK_candles_min_1.json"), true);
 });
 
+Deno.test("accepts frozen snapshot boundary object paths", () => {
+  for (const path of [
+    "raw/dukascopy/v1/EURUSD/2015/00/01/BID_candles_min_1.bi5",
+    "manifests/dukascopy/v1/USDJPY/2026/07/20/ASK_candles_min_1.json",
+  ]) {
+    assertEquals(validateObjectPath(path), true);
+  }
+});
+
+Deno.test("rejects object paths outside frozen snapshot", () => {
+  for (const path of [
+    "raw/dukascopy/v1/EURUSD/2014/11/31/BID_candles_min_1.bi5",
+    "manifests/dukascopy/v1/USDJPY/2026/07/21/ASK_candles_min_1.json",
+    "raw/dukascopy/v1/GBPUSD/2026/08/01/BID_candles_min_1.bi5",
+  ]) {
+    assertThrows(() => validateObjectPath(path), Error, "frozen");
+  }
+});
+
+Deno.test("rejects impossible calendar dates in object paths", () => {
+  for (const path of [
+    "raw/dukascopy/v1/EURUSD/2024/01/31/BID_candles_min_1.bi5",
+    "manifests/dukascopy/v1/USDJPY/2023/01/29/ASK_candles_min_1.json",
+    "raw/dukascopy/v1/GBPUSD/2024/03/31/BID_candles_min_1.bi5",
+  ]) {
+    assertThrows(() => validateObjectPath(path), Error, "calendar");
+  }
+  assertEquals(
+    validateObjectPath(
+      "raw/dukascopy/v1/USDJPY/2024/01/29/ASK_candles_min_1.bi5",
+    ),
+    true,
+  );
+});
+
 Deno.test("rejects path traversal and non-V1 objects", () => {
   for (const path of [
     "../secret",

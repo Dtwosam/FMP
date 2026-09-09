@@ -16,3 +16,8 @@ For canonical `complete` manifests, the function downloads the matching immutabl
 ## Canonical manifest validation
 
 Before immutable manifest storage, the ingest function requires the exact frozen Phase 1 manifest field set and validates path-derived pair/side/date/source identity, retrieval method, granularity/format constants, timezone-aware retrieval timestamp, and status-specific `complete` / `not_found` metadata. Extra fields, missing fields, identity mismatches, malformed JSON, and unknown statuses are rejected.
+
+
+## Frozen object namespace
+
+Canonical raw and manifest paths are accepted only when their zero-based year/month/day components resolve to a real Gregorian date in the frozen Phase 1 interval, 2015-01-01 through 2026-08-20 inclusive. Regex-shaped impossible dates and paths outside that interval are rejected before Storage access.

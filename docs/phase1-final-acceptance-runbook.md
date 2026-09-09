@@ -47,6 +47,7 @@ The supported recovery path is the fresh exact-gap repair cycle:
 7. For every `complete` manifest, the repository ingest source requires the matching raw object to already exist and verifies its server-side SHA-256 and byte size against the manifest before storing the manifest.
 8. Before cross-object checks, every manifest body must exactly match the frozen Phase 1 schema and its path-derived pair/side/date/source identity; extra or missing fields, malformed JSON, invalid timestamps, unknown statuses, or inconsistent status metadata fail closed.
 9. Raw/manifest metadata mismatches and Storage lookup failures other than a verified missing-key result also fail closed.
+10. Both raw and manifest object paths must resolve to a real calendar date inside the frozen 2015-01-01 through 2026-08-20 interval; impossible or out-of-snapshot paths are rejected before immutable storage.
 
 Before executing a fresh exact-gap pass that may include raw-only keys, deploy the tested repository version of `fmp-raw-ingest` containing these cross-object guards. Do not deploy it while a Phase 1 acquisition run is active.
 
