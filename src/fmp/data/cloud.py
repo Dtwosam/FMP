@@ -128,7 +128,16 @@ class GithubOidcTokenProvider:
         }
 
         for attempt in range(1, self.max_attempts + 1):
-            response = self.transport.get(url, headers, self.timeout_seconds)
+            try:
+                response = self.transport.get(url, headers, self.timeout_seconds)
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                if attempt == self.max_attempts:
+                    raise CloudMirrorError(
+                        f"GitHub OIDC token request failed after {self.max_attempts} attempts"
+                    ) from exc
+                self.sleep_fn(self.retry_delay_seconds)
+                continue
+
             if 200 <= response.status < 300:
                 try:
                     value = json.loads(response.body.decode("utf-8"))["value"]
