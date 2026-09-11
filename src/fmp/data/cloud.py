@@ -170,13 +170,27 @@ class SupabaseRawMirror:
         *,
         transport: CloudMirrorTransport | None = None,
         timeout_seconds: float = 30.0,
+        max_attempts: int = 3,
+        retry_delay_seconds: float = 1.0,
+        sleep_fn: Callable[[float], None] = time.sleep,
     ) -> None:
         if not endpoint.startswith("https://"):
             raise CloudMirrorError("Supabase ingest endpoint must use HTTPS")
+        if (
+            not isinstance(max_attempts, int)
+            or isinstance(max_attempts, bool)
+            or max_attempts <= 0
+        ):
+            raise CloudMirrorError("Supabase raw mirror max attempts must be a positive integer")
+        if retry_delay_seconds < 0:
+            raise CloudMirrorError("Supabase raw mirror retry delay must be non-negative")
         self.endpoint = endpoint
         self.token_provider = token_provider
         self.transport = transport or UrllibCloudTransport()
         self.timeout_seconds = timeout_seconds
+        self.max_attempts = max_attempts
+        self.retry_delay_seconds = retry_delay_seconds
+        self.sleep_fn = sleep_fn
 
     def preflight(self) -> None:
         token = self.token_provider.get_token()  # type: ignore[attr-defined]
@@ -208,29 +222,61 @@ class SupabaseRawMirror:
     def put_object(self, object_path: str, body: bytes) -> str:
         digest = hashlib.sha256(body).hexdigest()
         token = self.token_provider.get_token()  # type: ignore[attr-defined]
-        response = self.transport.put(
-            self.endpoint,
-            body,
-            {
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/octet-stream",
-                "x-fmp-object-path": object_path,
-                "x-fmp-sha256": digest,
-            },
-            self.timeout_seconds,
-        )
-        try:
-            payload = json.loads(response.body.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise CloudMirrorError(
-                f"Supabase raw mirror returned malformed HTTP {response.status} response"
-            ) from exc
-        status = payload.get("status") if isinstance(payload, dict) else None
-        if 200 <= response.status < 300 and status in {"stored", "already_verified"}:
-            return str(status)
-        raise CloudMirrorError(
-            f"Supabase raw mirror failed with HTTP {response.status}: {payload}"
-        )
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/octet-stream",
+            "x-fmp-object-path": object_path,
+            "x-fmp-sha256": digest,
+        }
+
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                response = self.transport.put(
+                    self.endpoint,
+                    body,
+                    headers,
+                    self.timeout_seconds,
+                )
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                if attempt == self.max_attempts:
+                    raise CloudMirrorError(
+                        f"Supabase raw mirror failed after {self.max_attempts} attempts"
+                    ) from exc
+                self.sleep_fn(self.retry_delay_seconds)
+                continue
+
+            transient = response.status == 429 or 500 <= response.status < 600
+            try:
+                payload = json.loads(response.body.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                if transient and attempt < self.max_attempts:
+                    self.sleep_fn(self.retry_delay_seconds)
+                    continue
+                if transient:
+                    raise CloudMirrorError(
+                        "Supabase raw mirror failed with "
+                        f"HTTP {response.status} after {self.max_attempts} attempts"
+                    ) from exc
+                raise CloudMirrorError(
+                    f"Supabase raw mirror returned malformed HTTP {response.status} response"
+                ) from exc
+
+            status = payload.get("status") if isinstance(payload, dict) else None
+            if 200 <= response.status < 300 and status in {"stored", "already_verified"}:
+                return str(status)
+
+            if not transient:
+                raise CloudMirrorError(
+                    f"Supabase raw mirror failed with HTTP {response.status}: {payload}"
+                )
+            if attempt == self.max_attempts:
+                raise CloudMirrorError(
+                    "Supabase raw mirror failed with "
+                    f"HTTP {response.status} after {self.max_attempts} attempts: {payload}"
+                )
+            self.sleep_fn(self.retry_delay_seconds)
+
+        raise AssertionError("unreachable Supabase raw mirror retry state")
 
 
 def mirror_acquisition_result(
