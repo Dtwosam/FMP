@@ -12,7 +12,7 @@ from enum import StrEnum
 from pathlib import Path
 
 from .dukascopy import DukascopySource, HttpResponse, HttpTransport, UrllibTransport
-from .manifest import atomic_write_json, load_manifest
+from .manifest import atomic_write_json, load_manifest, validate_manifest_for_key
 from .types import RawChunkKey
 
 _RECORD_SIZE = 24
@@ -103,22 +103,23 @@ def _existing_verified_result(
         return None
     if manifest_path.exists():
         manifest = load_manifest(manifest_path)
-        status = manifest.get("status")
-        if status == AcquisitionStatus.NOT_FOUND.value and not raw_path.exists():
+        validated = validate_manifest_for_key(key, manifest)
+        if validated is None:
+            raise AcquisitionError(f"existing manifest failed validation: {manifest_path}")
+        if validated.status == AcquisitionStatus.NOT_FOUND.value and not raw_path.exists():
             if recheck_not_found:
                 return None
             return AcquisitionResult(key, AcquisitionStatus.NOT_FOUND, None, None, None, 404)
-        if status == AcquisitionStatus.COMPLETE.value and raw_path.exists():
-            expected = manifest.get("sha256")
+        if validated.status == AcquisitionStatus.COMPLETE.value and raw_path.exists():
             actual = _sha256_file(raw_path)
-            if expected == actual:
+            if validated.sha256 == actual:
                 return AcquisitionResult(
                     key=key,
                     status=AcquisitionStatus.ALREADY_VERIFIED,
                     sha256=actual,
-                    records=int(manifest["records"]),
+                    records=validated.records,
                     compressed_size=raw_path.stat().st_size,
-                    http_status=int(manifest.get("http_status", 200)),
+                    http_status=validated.http_status,
                 )
             raise AcquisitionError(f"existing raw chunk checksum mismatch: {raw_path}")
     raise AcquisitionError(

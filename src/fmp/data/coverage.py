@@ -6,7 +6,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Iterable
 
-from .manifest import load_manifest
+from .manifest import load_manifest, validate_manifest_for_key
 from .types import RawChunkKey
 
 
@@ -110,35 +110,27 @@ def _verify_keys(
             add_issue("invalid_manifest", key, str(exc))
             continue
 
-        expected_identity = (
-            manifest.get("pair") == key.pair
-            and manifest.get("side") == key.side
-            and manifest.get("date_utc") == key.day.isoformat()
-            and manifest.get("granularity") == "1m"
-            and manifest.get("source") == "dukascopy"
-        )
-        if not expected_identity:
-            add_issue("invalid_manifest", key, "manifest identity/provenance mismatch")
+        validated = validate_manifest_for_key(key, manifest)
+        if validated is None:
+            add_issue("invalid_manifest", key, "manifest contract/provenance mismatch")
             continue
 
-        status = manifest.get("status")
-        if status == "complete":
+        if validated.status == "complete":
             if not raw_path.is_file():
                 add_issue("missing_raw", key, str(raw_path))
                 continue
-            expected_digest = manifest.get("sha256")
             actual_digest = _sha256_file(raw_path)
-            if not expected_digest or actual_digest != expected_digest:
+            if actual_digest != validated.sha256:
                 add_issue("checksum_mismatch", key, str(raw_path))
                 continue
             counts["complete"] += 1
-        elif status == "not_found":
+        elif validated.status == "not_found":
             if raw_path.exists():
                 add_issue("unexpected_raw", key, str(raw_path))
                 continue
             counts["not_found"] += 1
         else:
-            add_issue("invalid_manifest", key, f"unsupported status: {status!r}")
+            add_issue("invalid_manifest", key, f"unsupported status: {validated.status!r}")
 
     issue_total = sum(
         counts[name]

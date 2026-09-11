@@ -153,6 +153,51 @@ class Phase1Tests(unittest.TestCase):
             manifest = load_manifest(root / "manifests" / key.relative_manifest_path)
             self.assertEqual(manifest["status"], "complete")
 
+    def test_resume_rejects_manifest_schema_drift_before_already_verified(self) -> None:
+        body = make_bi5(2)
+        key = RawChunkKey("USDJPY", "ASK", date(2024, 3, 4))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            acquire_chunk(
+                key,
+                root,
+                transport=FakeTransport([HttpResponse(status=200, body=body)]),
+            )
+            manifest_path = root / "manifests" / key.relative_manifest_path
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["retrieval_method"] = "tampered"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            with self.assertRaisesRegex(AcquisitionError, "manifest"):
+                acquire_chunk(key, root, transport=FakeTransport([]))
+
+    def test_snapshot_verifier_rejects_manifest_schema_drift(self) -> None:
+        from fmp.data.coverage import verify_snapshot
+
+        body = make_bi5(2)
+        key = RawChunkKey("EURUSD", "BID", date(2024, 1, 2))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            acquire_chunk(
+                key,
+                root,
+                transport=FakeTransport([HttpResponse(status=200, body=body)]),
+            )
+            manifest_path = root / "manifests" / key.relative_manifest_path
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["retrieval_method"] = "tampered"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+            report = verify_snapshot(
+                root,
+                ("EURUSD",),
+                date(2024, 1, 2),
+                date(2024, 1, 3),
+            )
+
+            self.assertFalse(report["ready"])
+            self.assertEqual(report["invalid_manifest"], 1)
+
     def test_duplicate_retry_does_not_replace_good_file(self) -> None:
         body = make_bi5(2)
         key = RawChunkKey("USDJPY", "ASK", date(2024, 3, 4))
