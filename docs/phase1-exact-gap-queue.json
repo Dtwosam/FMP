@@ -1,0 +1,3840 @@
+{
+  "plan_version": 1,
+  "frozen_start_date": "2015-01-01",
+  "frozen_end_date_exclusive": "2026-08-21",
+  "audited_at_utc": "2026-09-11T13:01:05.281Z",
+  "present_manifests_at_audit": 24734,
+  "missing_manifests_at_audit": 766,
+  "chunks": [
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2015-05-05"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2015-05-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-27"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2015-09-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2015-09-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2015-09-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2016-01-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2017-09-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2017-10-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-04-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-07"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-08"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-08"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-09"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-09"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-10"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-10"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-11"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-11"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-12"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-12"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-13"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-13"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-14"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-14"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-15"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-15"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-16"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-16"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-17"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-17"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-18"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-18"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-19"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-19"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-20"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-20"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-21"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-21"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-22"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-22"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-23"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-23"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-24"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-24"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-25"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-25"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-26"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-26"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-27"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-27"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-29"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-29"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2019-05-31"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2019-05-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-05-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2019-05-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2019-06-18"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2020-04-20"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2020-04-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-06-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-11"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-07-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-17"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2020-07-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-29"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-07-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-07-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-07-31"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-07-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-07-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-07-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-15"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-16"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-16"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-17"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-17"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-18"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-18"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-19"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-19"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-20"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-20"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-21"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-21"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-22"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-22"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-23"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-23"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-24"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-24"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-25"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-25"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-26"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-26"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-27"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-27"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-29"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-29"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2020-09-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2020-09-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2020-09-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2020-09-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2022-03-02"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2022-07-12"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2022-08-12"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2022-08-13"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2022-08-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2022-12-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2022-12-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-02-10"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-03-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-03-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-03-31"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-01"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-01"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-02"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-02"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-03"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-03"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-04"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-04"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-05"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-05"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-06"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-06"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-07"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-07"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-08"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-08"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-09"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-09"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-10"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-10"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-11"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-11"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-12"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-12"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-13"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-13"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-14"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-14"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-15"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-15"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-16"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-16"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-17"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-17"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-18"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-18"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-19"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-19"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-20"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-20"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-21"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-21"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-22"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-22"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-23"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-23"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-24"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-24"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-25"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-25"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-26"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-26"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-27"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-27"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-27"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-28"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "BID",
+      "date_utc": "2023-11-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-28"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-29"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "BID",
+      "date_utc": "2023-11-29"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-29"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-29"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-30"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "BID",
+      "date_utc": "2023-11-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2023-11-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2023-11-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2023-11-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-11-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2023-12-17"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-04-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-05-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-05-31"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-01"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-01"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-01"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-02"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-02"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-03"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-03"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-04"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-04"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-04"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-05"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-05"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-06"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-06"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-06"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-07"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-07"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-07"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-08"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-08"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-08"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-09"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-09"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-09"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-10"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-10"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-10"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-11"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-11"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-12"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-12"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-12"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-13"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-13"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-13"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-14"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-14"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-14"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-15"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-15"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-15"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-16"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-16"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-16"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-17"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-17"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-18"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-18"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-19"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-19"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-20"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-20"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-21"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-21"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-22"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-22"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-23"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-23"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-24"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-24"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-25"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-25"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-26"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-26"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-27"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-27"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-29"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-29"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2024-06-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-06-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-06-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-06-30"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-07-19"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-07-26"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-08-05"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2024-08-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2024-10-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2024-12-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2025-03-03"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2025-04-02"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2025-04-07"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2025-04-08"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2025-05-19"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "BID",
+      "date_utc": "2025-05-20"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2025-05-22"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "ASK",
+      "date_utc": "2025-05-25"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "BID",
+      "date_utc": "2025-06-05"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2025-06-10"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2025-06-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2025-06-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2025-07-01"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2025-07-03"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "BID",
+      "date_utc": "2025-07-11"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2025-07-16"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "ASK",
+      "date_utc": "2025-07-18"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2025-07-25"
+    },
+    {
+      "pair": "EURUSD",
+      "side": "BID",
+      "date_utc": "2025-07-28"
+    },
+    {
+      "pair": "GBPUSD",
+      "side": "BID",
+      "date_utc": "2026-03-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-04-17"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-04-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-05-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-05-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-05-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-05-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-05-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-05-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-05-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-05-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-05-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-05-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-06-05"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-20"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-21"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-22"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-23"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-24"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-25"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-26"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-27"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-28"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-29"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-30"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "ASK",
+      "date_utc": "2026-07-31"
+    },
+    {
+      "pair": "USDJPY",
+      "side": "BID",
+      "date_utc": "2026-07-31"
+    }
+  ]
+}
