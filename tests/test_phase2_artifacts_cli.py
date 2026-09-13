@@ -117,6 +117,24 @@ class Phase2ArtifactTests(unittest.TestCase):
             self.assertEqual(PARQUET_WRITER_CONFIG["compression_level"], 3)
             self.assertTrue(PARQUET_WRITER_CONFIG["statistics"])
 
+    def test_parquet_write_is_idempotent_but_rejects_conflicting_existing_partition(self) -> None:
+        frame = canonical_frame()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "partition.parquet"
+            first = write_parquet_partition(frame, path)
+            repeated = write_parquet_partition(frame, path)
+            self.assertEqual(repeated.sha256, first.sha256)
+
+            conflicting = frame.with_columns(
+                pl.when(pl.col("timestamp_utc") == frame["timestamp_utc"][0])
+                .then(pl.lit(9.9))
+                .otherwise(pl.col("bid_close"))
+                .alias("bid_close")
+            )
+            with self.assertRaisesRegex(ValueError, "conflicting existing Parquet partition"):
+                write_parquet_partition(conflicting, path)
+            self.assertEqual(sha256_file(path), first.sha256)
+
     def test_processed_manifest_records_source_identity_artifacts_and_writer(self) -> None:
         generated_at = datetime(2026, 9, 13, 19, 0, tzinfo=timezone.utc)
         artifacts = {
