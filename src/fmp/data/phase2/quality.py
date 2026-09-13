@@ -9,7 +9,7 @@ from typing import Any
 import polars as pl
 
 from .market_hours import is_market_open_minute
-from .schema import CANONICAL_SCHEMA_VERSION, INGESTION_VERSION
+from .schema import CANONICAL_SCHEMA_VERSION, INGESTION_VERSION, validate_canonical_frame
 
 _PIP_SCALES = {"EURUSD": 10_000.0, "GBPUSD": 10_000.0, "USDJPY": 100.0}
 _PRICE_FIELDS = tuple(
@@ -288,6 +288,7 @@ def _midpoint_return_analysis(frame: pl.DataFrame, duplicate_keys: set[tuple[str
 
 
 def analyze_quality(frame: pl.DataFrame) -> dict[str, object]:
+    validate_canonical_frame(frame)
     findings: list[QualityFinding] = []
     compare_fields = ("open", "high", "low", "close")
     duplicate_findings, duplicate_count, duplicate_keys = _duplicate_findings(frame)
@@ -348,6 +349,25 @@ def analyze_quality(frame: pl.DataFrame) -> dict[str, object]:
                     "non_positive_price",
                     "error",
                     {"fields": non_positive_price_fields},
+                )
+            )
+
+        negative_volume_fields = [
+            field
+            for field in _VOLUME_FIELDS
+            if row[field] is not None
+            and math.isfinite(float(row[field]))
+            and float(row[field]) < 0.0
+        ]
+        if negative_volume_fields:
+            findings.append(
+                QualityFinding(
+                    symbol,
+                    timestamp,
+                    None,
+                    "negative_volume",
+                    "error",
+                    {"fields": negative_volume_fields},
                 )
             )
 
