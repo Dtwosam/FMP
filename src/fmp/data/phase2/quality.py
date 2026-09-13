@@ -76,6 +76,24 @@ def _duplicate_findings(frame: pl.DataFrame) -> tuple[list[QualityFinding], int,
     return findings, duplicate_count, duplicate_keys
 
 
+def _market_segments(missing: list[datetime]) -> list[tuple[bool, list[datetime]]]:
+    if not missing:
+        return []
+    segments: list[tuple[bool, list[datetime]]] = []
+    current_open = is_market_open_minute(missing[0])
+    current = [missing[0]]
+    for timestamp in missing[1:]:
+        market_open = is_market_open_minute(timestamp)
+        if market_open == current_open:
+            current.append(timestamp)
+            continue
+        segments.append((current_open, current))
+        current_open = market_open
+        current = [timestamp]
+    segments.append((current_open, current))
+    return segments
+
+
 def _gap_findings(frame: pl.DataFrame) -> list[QualityFinding]:
     result: list[QualityFinding] = []
     by_symbol: dict[str, list[datetime]] = {}
@@ -91,41 +109,66 @@ def _gap_findings(frame: pl.DataFrame) -> list[QualityFinding]:
             if minutes <= 0:
                 continue
             missing = [left + timedelta(minutes=i) for i in range(1, minutes + 1)]
-            open_minutes = [item for item in missing if is_market_open_minute(item)]
-            if open_minutes:
-                result.append(
-                    QualityFinding(
-                        symbol,
-                        open_minutes[0],
-                        open_minutes[-1],
-                        "missing_open_market_minute",
-                        "error",
-                        {"missing_minutes": len(open_minutes)},
-                    )
-                )
-                if len(open_minutes) >= 30:
+            for market_open, segment in _market_segments(missing):
+                segment_minutes = len(segment)
+                if market_open:
                     result.append(
                         QualityFinding(
                             symbol,
-                            open_minutes[0],
-                            open_minutes[-1],
-                            "long_weekday_gap",
+                            segment[0],
+                            segment[-1],
+                            "missing_open_market_minute",
                             "error",
-                            {"missing_minutes": len(open_minutes), "threshold_minutes": 30},
+                            {"missing_minutes": segment_minutes},
                         )
                     )
-            else:
-                result.append(
-                    QualityFinding(
-                        symbol,
-                        missing[0],
-                        missing[-1],
-                        "weekend_closure_gap",
-                        "info",
-                        {"missing_minutes": len(missing)},
+                    if segment_minutes >= 30:
+                        result.append(
+                            QualityFinding(
+                                symbol,
+                                segment[0],
+                                segment[-1],
+                                "long_weekday_gap",
+                                "error",
+                                {"missing_minutes": segment_minutes, "threshold_minutes": 30},
+                            )
+                        )
+                else:
+                    result.append(
+                        QualityFinding(
+                            symbol,
+                            segment[0],
+                            segment[-1],
+                            "weekend_closure_gap",
+                            "info",
+                            {"missing_minutes": segment_minutes},
+                        )
                     )
-                )
     return result
+
+
+def _gap_summary(findings: list[QualityFinding]) -> dict[str, object]:
+    suspicious = [finding for finding in findings if finding.code == "missing_open_market_minute"]
+    weekend = [finding for finding in findings if finding.code == "weekend_closure_gap"]
+    suspicious_spans = [
+        {
+            "symbol": finding.symbol,
+            "timestamp_start_utc": finding.timestamp_start_utc,
+            "timestamp_end_utc": finding.timestamp_end_utc,
+            "missing_minutes": int(finding.details["missing_minutes"]),
+        }
+        for finding in suspicious
+    ]
+    suspicious_minutes = [int(finding.details["missing_minutes"]) for finding in suspicious]
+    return {
+        "missing_open_market_minutes": sum(suspicious_minutes),
+        "suspicious_gap_spans": suspicious_spans,
+        "max_suspicious_gap_minutes": max(suspicious_minutes, default=0),
+        "weekend_closure_gap_count": len(weekend),
+        "weekend_closure_minutes": sum(
+            int(finding.details["missing_minutes"]) for finding in weekend
+        ),
+    }
 
 
 def _iqr_summary(samples: list[tuple[datetime, float]]) -> tuple[dict[str, object], list[tuple[datetime, float]], float | None]:
@@ -321,7 +364,9 @@ def analyze_quality(frame: pl.DataFrame) -> dict[str, object]:
             if breached:
                 findings.append(QualityFinding(symbol, timestamp, None, "ask_below_bid", "error", {"fields": breached}))
 
-    findings.extend(_gap_findings(frame))
+    gap_findings = _gap_findings(frame)
+    gap_summary = _gap_summary(gap_findings)
+    findings.extend(gap_findings)
     spread_summary, spread_findings = _spread_analysis(frame, duplicate_keys)
     midpoint_return_summary, jump_findings = _midpoint_return_analysis(frame, duplicate_keys)
     findings.extend(spread_findings)
@@ -340,6 +385,7 @@ def analyze_quality(frame: pl.DataFrame) -> dict[str, object]:
         "missing_ask_rows": missing_ask_rows,
         "required_null_count": required_null_count,
         "duplicate_count": duplicate_count,
+        **gap_summary,
         "finding_counts": dict(sorted(finding_counts.items())),
         "spread_summary": spread_summary,
         "midpoint_return_summary": midpoint_return_summary,
