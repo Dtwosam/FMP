@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+from datetime import date
+
 import polars as pl
 
+from fmp.data.types import Pair, RawChunkKey
+
+from .bi5 import decode_bi5_day
+from .raw_reader import RawChunkReader
 from .schema import (
     CANONICAL_COLUMNS,
     CANONICAL_SCHEMA_VERSION,
@@ -10,6 +16,28 @@ from .schema import (
 )
 
 _SIDE_VALUE_COLUMNS = ("open", "high", "low", "close", "volume")
+
+
+def _empty_canonical_frame() -> pl.DataFrame:
+    return pl.DataFrame(
+        schema={
+            "timestamp_utc": pl.Datetime(time_unit="us", time_zone="UTC"),
+            "symbol": pl.String,
+            "bid_open": pl.Float64,
+            "bid_high": pl.Float64,
+            "bid_low": pl.Float64,
+            "bid_close": pl.Float64,
+            "ask_open": pl.Float64,
+            "ask_high": pl.Float64,
+            "ask_low": pl.Float64,
+            "ask_close": pl.Float64,
+            "bid_volume": pl.Float64,
+            "ask_volume": pl.Float64,
+            "source": pl.String,
+            "ingestion_version": pl.String,
+            "schema_version": pl.String,
+        }
+    ).select(list(CANONICAL_COLUMNS))
 
 
 def _prepare_side(frame: pl.DataFrame | None, side: str) -> pl.DataFrame | None:
@@ -64,3 +92,17 @@ def normalize_decoded_sides(
         pl.lit(CANONICAL_SCHEMA_VERSION).alias("schema_version"),
     )
     return joined.select(list(CANONICAL_COLUMNS)).sort(["symbol", "timestamp_utc"])
+
+
+def normalize_day(reader: RawChunkReader, pair: Pair, day: date) -> pl.DataFrame:
+    bid_key = RawChunkKey(pair, "BID", day)
+    ask_key = RawChunkKey(pair, "ASK", day)
+    bid_body = reader.read(bid_key)
+    ask_body = reader.read(ask_key)
+
+    if bid_body is None and ask_body is None:
+        return _empty_canonical_frame()
+
+    bid = None if bid_body is None else decode_bi5_day(bid_key, bid_body)
+    ask = None if ask_body is None else decode_bi5_day(ask_key, ask_body)
+    return normalize_decoded_sides(bid, ask)
