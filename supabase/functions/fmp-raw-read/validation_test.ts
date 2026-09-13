@@ -31,6 +31,29 @@ Deno.test("read protocol and trusted GitHub claims are pinned", () => {
   }
 });
 
+Deno.test("full-history workflow identity is trusted", () => {
+  assertEquals(
+    assertTrustedGithubReadClaims({
+      ...trustedClaims,
+      workflow_ref:
+        "Dtwosam/FMP/.github/workflows/phase2-full-history.yml@refs/heads/main",
+    }),
+    true,
+  );
+});
+
+Deno.test("unlisted raw-read workflow identity is rejected", () => {
+  for (const workflow_ref of [
+    "Dtwosam/FMP/.github/workflows/other.yml@refs/heads/main",
+    "Dtwosam/FMP/.github/workflows/phase2-full-history.yml@refs/heads/feature",
+    "Dtwosam/FMP/.github/workflows/phase2-full-history.yml@refs/pull/1/merge",
+  ]) {
+    assertThrows(() =>
+      assertTrustedGithubReadClaims({ ...trustedClaims, workflow_ref })
+    );
+  }
+});
+
 Deno.test("request accepts exactly pair side date_utc", () => {
   assertEquals(
     validateReadRequest({ pair: "EURUSD", side: "BID", date_utc: "2015-01-01" }),
