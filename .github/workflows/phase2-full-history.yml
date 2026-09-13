@@ -26,7 +26,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          python -m fmp.data.phase2.full_history_cli \
+          python -m fmp.data.phase2.full_history \
             --endpoint https://htjqqzlezyguveuajuat.supabase.co/functions/v1/fmp-raw-read \
             --pair "${{ matrix.pair }}" \
             --out ".phase2-full-history/${{ matrix.pair }}" \
