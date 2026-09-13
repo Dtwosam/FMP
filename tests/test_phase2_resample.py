@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 import polars as pl
 
-from fmp.data.phase2.resample import resample_bars
+from fmp.data.phase2.resample import resample_canonical
 from fmp.data.phase2.schema import CANONICAL_SCHEMA_VERSION, DERIVED_SCHEMA_VERSION, INGESTION_VERSION
 
 
@@ -37,7 +37,7 @@ def canonical_minutes(count: int) -> pl.DataFrame:
 class Phase2ResampleTests(unittest.TestCase):
     def test_five_minute_buckets_are_closed_left_and_mark_incomplete_tail(self) -> None:
         frame = canonical_minutes(6)
-        out = resample_bars(frame, "5m")
+        out = resample_canonical(frame, "5m")
         self.assertEqual(out.height, 2)
 
         first = out.row(0, named=True)
@@ -51,6 +51,7 @@ class Phase2ResampleTests(unittest.TestCase):
         self.assertEqual(first["bid_volume"], 5.0)
         self.assertEqual(first["ask_volume"], 10.0)
         self.assertEqual(first["source_minutes"], 5)
+        self.assertEqual(first["expected_open_minutes"], 5)
         self.assertTrue(first["is_complete"])
         self.assertEqual(first["timeframe"], "5m")
         self.assertEqual(first["schema_version"], DERIVED_SCHEMA_VERSION)
@@ -58,6 +59,7 @@ class Phase2ResampleTests(unittest.TestCase):
         second = out.row(1, named=True)
         self.assertEqual(second["timestamp_utc"], datetime(2026, 9, 14, 0, 5, tzinfo=timezone.utc))
         self.assertEqual(second["source_minutes"], 1)
+        self.assertEqual(second["expected_open_minutes"], 5)
         self.assertFalse(second["is_complete"])
 
 
