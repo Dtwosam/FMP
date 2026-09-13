@@ -1,0 +1,57 @@
+name: phase2-cloud-golden
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  bounded-cloud-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Run bounded Phase 2 cloud golden proof
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m fmp.data.phase2.cloud_golden \
+            --endpoint https://htjqqzlezyguveuajuat.supabase.co/functions/v1/fmp-raw-read \
+            --out .phase2-cloud-golden \
+            --code-commit "${{ github.sha }}"
+      - name: Verify bounded evidence shape
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('.phase2-cloud-golden')
+          summary = json.loads((root / 'summary.json').read_text(encoding='utf-8'))
+          assert summary['pairs'] == ['EURUSD', 'USDJPY'], summary
+          assert summary['date_utc'] == '2024-01-02', summary
+          assert len(summary['raw_chunks']) == 4, summary['raw_chunks']
+          assert {(x['pair'], x['side']) for x in summary['raw_chunks']} == {
+              ('EURUSD', 'BID'), ('EURUSD', 'ASK'),
+              ('USDJPY', 'BID'), ('USDJPY', 'ASK'),
+          }
+          for pair in ('EURUSD', 'USDJPY'):
+              assert set(summary['evidence'][pair]) == {'1m', 'quality', '5m', '15m', '1h'}
+              for item in summary['evidence'][pair].values():
+                  path = root / item['path']
+                  assert path.is_file(), path
+                  assert item['size_bytes'] > 0, item
+                  assert len(item['sha256']) == 64, item
+          PY
+      - name: Upload bounded Phase 2 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase2-cloud-golden-evidence
+          path: .phase2-cloud-golden
+          if-no-files-found: error
