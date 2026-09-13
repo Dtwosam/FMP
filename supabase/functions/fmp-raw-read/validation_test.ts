@@ -102,6 +102,15 @@ Deno.test("manifest validator accepts exact complete and not_found contracts", (
     records: 1440,
   });
   assertEquals(
+    validateManifestForRead(request, manifest({ retrieved_at_utc: "2026-08-20T12:00:00+00:00" })),
+    {
+      status: "complete",
+      sha256: "a".repeat(64),
+      compressedSizeBytes: 123,
+      records: 1440,
+    },
+  );
+  assertEquals(
     validateManifestForRead(
       request,
       manifest({
