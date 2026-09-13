@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 2 — Validation, Normalization & Derived Bars  
-**Phase status:** CANONICAL_FOUNDATION_ACTIVE  
-**Next milestone:** authenticated cloud raw reader, accepted golden-chunk validation, and bounded cloud materialization
+**Phase status:** FULL_HISTORY_MATERIALIZATION_ACTIVE  
+**Next milestone:** exhaustive source-free full-history materialization and Phase 2 acceptance evidence review
 
 ## Current baseline
 
@@ -100,29 +100,72 @@ Evidence ordering satisfied:
 
 Phase 1 is closed. No further acquisition or repair workflow is required for the frozen V1 snapshot unless later evidence demonstrates an integrity defect.
 
-Phase 2 — Validation, Normalization & Derived Bars — is now active. This Phase 1 PASS does not authorize any real-money trading or change DEC-008.
+Phase 2 — Validation, Normalization & Derived Bars — is active. This Phase 1 PASS does not authorize any real-money trading or change DEC-008.
 
 Historical Phase 1 recovery chronology remains preserved in Git history through pre-PASS main commit `0ff45220cd930839059afcfba631e1e120cb38aa`.
 
-## Phase 2 — CANONICAL_FOUNDATION_ACTIVE
+## Phase 2 — FULL_HISTORY_MATERIALIZATION_ACTIVE
 
-The `phase2-canonical-data-foundation` branch implements only the local, bounded canonical-data foundation defined by the approved Phase 2 design and implementation plan. It does **not** mark Phase 2 PASS.
+Phase 2 has a proven local canonical-data foundation and a proven authenticated bounded cloud-read path. Phase 2 is **not PASS** until exhaustive processing of the frozen three-pair snapshot is complete and the resulting quality/manifests are reviewed against the Phase 2 exit gate.
 
-Implemented foundation scope:
+### Canonical foundation implemented
 
 - typed Dukascopy BI5 decoding with frozen V1 price scaling and fail-closed structural validation;
-- `RawChunkReader` protocol plus manifest/SHA/size-verifying `LocalRawChunkReader`;
+- `RawChunkReader` protocol plus manifest/SHA/size-verifying local and cloud readers;
 - canonical BID/ASK normalization with one-sided-row preservation and duplicate-side rejection;
 - deterministic quote-quality, spread/jump outlier, market-week, gap, and DST analysis;
 - deterministic 5m/15m/1h resampling with explicit completeness;
 - deterministic Zstd Parquet artifacts, quality JSON, processed manifests, and artifact digests;
-- bounded local CLI commands: `decode-day`, `normalize`, `quality`, `resample`, and `process-phase2`.
+- bounded local CLI commands for decode, normalize, quality, resample, and processing.
 
-Still outside this local foundation and required before Phase 2 can close:
+### Authenticated bounded cloud proof — PROVEN
 
-- authenticated `CloudRawChunkReader` / read-only `fmp-raw-read` path;
-- accepted real Phase 1 golden-chunk decoder validation;
-- bounded cloud materialization, then exhaustive full-history processing;
-- quantified quality evidence for all three V1 pairs;
-- reproducible full-history 1m/5m/15m/1h artifacts and processed manifests;
-- Phase 2 checkpoint `fmp-v1-phase2-normalized-data`.
+The read-only `fmp-raw-read` Edge Function and `CloudRawChunkReader` were exercised against the real frozen Phase 1 cloud snapshot through GitHub OIDC.
+
+- workflow: `phase2-cloud-golden`
+- run: **#2**
+- run ID: `34780748485`
+- head SHA: `c2aa08e36157544d891375ea5aba44915d702d76`
+- result: **SUCCESS**
+- artifact: `phase2-cloud-golden-evidence`
+- artifact ID: `10325445851`
+- artifact ZIP SHA-256: `458f827676be8985cd684549aa68574cbcb772531401dca4e9c7404c9a53d1cc`
+- artifact files: **11**
+
+Verified raw chunks for `2024-01-02`:
+
+- EURUSD BID: 11,714 bytes, SHA-256 `9b2d2b718f9ca123b58dce4b4512d4e1bd35c692e23e1beafebdd700072cf546`
+- EURUSD ASK: 12,015 bytes, SHA-256 `a7dd327f5c59ad016c0e7e480d33fd7abd38da3e9c51dfe614f5e95f677386b3`
+- USDJPY BID: 12,522 bytes, SHA-256 `c090db5407da5b5733b2bba5fbd52b39d8ea5afdd43dd2f4741f8acbbca86915`
+- USDJPY ASK: 12,514 bytes, SHA-256 `f08b20f1fe78ae48bdb99f2080d93432f6ee5ab8b3b3063c3f8f62dfdc504242`
+
+For both pairs the proof produced and verified:
+
+- 1m rows: **1,440**
+- 5m rows: **288**
+- 15m rows: **96**
+- 1h rows: **24**
+- pair quality JSON with zero missing BID/ASK rows, zero required nulls, zero duplicate rows, zero missing open-market minutes, and zero suspicious gaps for the bounded day.
+
+Spread-outlier warnings (EURUSD 44, USDJPY 50) were retained as quality telemetry and did not mutate source or canonical observations.
+
+### Active milestone
+
+The active Phase 2 slice is exhaustive source-free materialization of the complete frozen snapshot:
+
+- EURUSD, GBPUSD, USDJPY;
+- 2015-01-01 through 2026-08-20 inclusive;
+- **4,250** days and **8,500** verified BID/ASK reads per pair;
+- monthly deterministic 1m/5m/15m/1h Parquet partitions;
+- full-pair quality reports;
+- exact raw-read ledgers;
+- versioned processed manifests and reproducibility digests.
+
+Still required before Phase 2 can close:
+
+- successful exhaustive materialization for all three pairs through the authenticated cloud-read path;
+- inspection of all three raw ledgers, quality reports, row counts, partition digests, and processed manifests;
+- explicit Phase 2 acceptance review against `docs/data-spec.md` and `docs/build-order.md`;
+- only after that review, checkpoint `fmp-v1-phase2-normalized-data` and a Phase 2 PASS decision.
+
+Phase 3 has not started.

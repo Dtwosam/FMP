@@ -7,9 +7,12 @@ const EXPECTED = {
   ref: "refs/heads/main",
   event_name: "workflow_dispatch",
   runner_environment: "github-hosted",
-  workflow_ref:
-    "Dtwosam/FMP/.github/workflows/phase2-cloud-golden.yml@refs/heads/main",
 } as const;
+
+const TRUSTED_WORKFLOW_REFS = new Set([
+  "Dtwosam/FMP/.github/workflows/phase2-cloud-golden.yml@refs/heads/main",
+  "Dtwosam/FMP/.github/workflows/phase2-full-history.yml@refs/heads/main",
+]);
 
 const PAIRS = new Set(["EURUSD", "GBPUSD", "USDJPY"]);
 const SIDES = new Set(["BID", "ASK"]);
@@ -36,6 +39,12 @@ export type ValidatedManifest =
 export function assertTrustedGithubReadClaims(claims: Record<string, unknown>): true {
   for (const [key, expected] of Object.entries(EXPECTED)) {
     if (claims[key] !== expected) throw new Error(`untrusted GitHub ${key}`);
+  }
+  if (
+    typeof claims.workflow_ref !== "string" ||
+    !TRUSTED_WORKFLOW_REFS.has(claims.workflow_ref)
+  ) {
+    throw new Error("untrusted GitHub workflow_ref");
   }
   return true;
 }
