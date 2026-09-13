@@ -123,6 +123,35 @@ class Phase2ResampleTests(unittest.TestCase):
         self.assertEqual(resample_canonical(winter_open, "5m")["expected_open_minutes"][0], 5)
         self.assertEqual(resample_canonical(summer_open, "5m")["expected_open_minutes"][0], 5)
 
+    def test_friday_close_and_sunday_open_boundaries_drive_completeness(self) -> None:
+        friday_open = resample_canonical(
+            canonical_minutes(5, datetime(2026, 9, 18, 20, 55, tzinfo=timezone.utc)),
+            "5m",
+        ).row(0, named=True)
+        self.assertEqual(friday_open["expected_open_minutes"], 5)
+        self.assertTrue(friday_open["is_complete"])
+
+        friday_closed = resample_canonical(
+            canonical_minutes(1, datetime(2026, 9, 18, 21, 0, tzinfo=timezone.utc)),
+            "5m",
+        ).row(0, named=True)
+        self.assertEqual(friday_closed["expected_open_minutes"], 0)
+        self.assertFalse(friday_closed["is_complete"])
+
+        sunday_closed = resample_canonical(
+            canonical_minutes(1, datetime(2026, 9, 20, 20, 55, tzinfo=timezone.utc)),
+            "5m",
+        ).row(0, named=True)
+        self.assertEqual(sunday_closed["expected_open_minutes"], 0)
+        self.assertFalse(sunday_closed["is_complete"])
+
+        sunday_open = resample_canonical(
+            canonical_minutes(5, datetime(2026, 9, 20, 21, 0, tzinfo=timezone.utc)),
+            "5m",
+        ).row(0, named=True)
+        self.assertEqual(sunday_open["expected_open_minutes"], 5)
+        self.assertTrue(sunday_open["is_complete"])
+
 
 if __name__ == "__main__":
     unittest.main()
