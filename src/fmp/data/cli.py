@@ -20,6 +20,13 @@ from .acquisition_runs import (
     select_acquisition_baseline,
 )
 from .phase1_acceptance import evaluate_phase1_acceptance
+from .phase2.phase2_cli import (
+    run_decode_day,
+    run_normalize,
+    run_process_phase2,
+    run_quality,
+    run_resample,
+)
 from .repair_plan import (
     ensure_no_source_capable_acquisition_updates_since,
     load_exact_gap_plan,
@@ -423,6 +430,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="fresh gh api --paginate --slurp snapshot of phase1-full-acquisition runs",
     )
     accept_phase1.set_defaults(func=run_accept_phase1)
+
+    decode_day = sub.add_parser("decode-day", help="decode one manifest-verified local Phase 1 BI5 chunk")
+    decode_day.add_argument("--root", default="data")
+    decode_day.add_argument("--pair", choices=V1_PAIRS, required=True)
+    decode_day.add_argument("--side", choices=SIDES, required=True)
+    decode_day.add_argument("--date", type=_parse_date, required=True)
+    decode_day.add_argument("--out", required=True)
+    decode_day.set_defaults(func=run_decode_day)
+
+    normalize = sub.add_parser("normalize", help="normalize a bounded local Phase 1 date range to canonical 1m")
+    normalize.add_argument("--root", default="data")
+    normalize.add_argument("--pair", choices=V1_PAIRS, required=True)
+    normalize.add_argument("--start", type=_parse_date, required=True)
+    normalize.add_argument("--end", type=_parse_date, required=True, help="exclusive end date")
+    normalize.add_argument("--out", required=True)
+    normalize.set_defaults(func=run_normalize)
+
+    quality = sub.add_parser("quality", help="write a deterministic Phase 2 quality report from canonical Parquet")
+    quality.add_argument("--input", required=True)
+    quality.add_argument("--out", required=True)
+    quality.set_defaults(func=run_quality)
+
+    resample = sub.add_parser("resample", help="resample canonical 1m Parquet to a deterministic derived timeframe")
+    resample.add_argument("--input", required=True)
+    resample.add_argument("--timeframe", choices=("5m", "15m", "1h"), required=True)
+    resample.add_argument("--out", required=True)
+    resample.set_defaults(func=run_resample)
+
+    process_phase2 = sub.add_parser("process-phase2", help="run bounded local normalize, quality, resample, and manifest generation")
+    process_phase2.add_argument("--root", default="data")
+    process_phase2.add_argument("--pair", choices=V1_PAIRS, required=True)
+    process_phase2.add_argument("--start", type=_parse_date, required=True)
+    process_phase2.add_argument("--end", type=_parse_date, required=True, help="exclusive end date")
+    process_phase2.add_argument("--code-commit")
+    process_phase2.set_defaults(func=run_process_phase2)
     return parser
 
 
