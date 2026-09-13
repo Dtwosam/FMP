@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import math
 import os
 import re
 import time
@@ -10,7 +11,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
-from typing import Any, Iterable, Protocol
+from typing import Any, Callable, Iterable, Protocol
 
 from .cloud import CloudGetTransport, CloudHttpResponse, UrllibCloudTransport
 from .dukascopy import DukascopySource
@@ -42,6 +43,22 @@ _REQUIRED_MANIFEST_FIELDS = {
 
 class CloudAuditError(RuntimeError):
     pass
+
+
+def _validate_retry_settings(
+    max_attempts: int,
+    retry_delay_seconds: float,
+    context: str,
+) -> None:
+    if not isinstance(max_attempts, int) or isinstance(max_attempts, bool) or max_attempts <= 0:
+        raise CloudAuditError(f"{context} max attempts must be a positive integer")
+    if (
+        not isinstance(retry_delay_seconds, (int, float))
+        or isinstance(retry_delay_seconds, bool)
+        or not math.isfinite(retry_delay_seconds)
+        or retry_delay_seconds < 0
+    ):
+        raise CloudAuditError(f"{context} retry delay must be a finite non-negative number")
 
 
 class CloudAuditPostTransport(Protocol):
@@ -83,14 +100,21 @@ class GithubAuditOidcTokenProvider:
         *,
         transport: CloudGetTransport | None = None,
         timeout_seconds: float = 15.0,
+        max_attempts: int = 3,
+        retry_delay_seconds: float = 1.0,
+        sleep_fn: Callable[[float], None] = time.sleep,
         clock: callable = time.time,
     ) -> None:
         if not request_url or not request_token:
             raise CloudAuditError("GitHub OIDC request URL/token are required")
+        _validate_retry_settings(max_attempts, retry_delay_seconds, "GitHub OIDC audit")
         self.request_url = request_url
         self.request_token = request_token
         self.transport = transport or UrllibCloudTransport()
         self.timeout_seconds = timeout_seconds
+        self.max_attempts = max_attempts
+        self.retry_delay_seconds = retry_delay_seconds
+        self.sleep_fn = sleep_fn
         self.clock = clock
         self._cached_token: str | None = None
         self._cached_expiry: float | None = None
@@ -130,18 +154,35 @@ class GithubAuditOidcTokenProvider:
         url = self.request_url + separator + urllib.parse.urlencode(
             {"audience": AUDIT_OIDC_AUDIENCE}
         )
-        response = self.transport.get(
-            url,
-            {
-                "Authorization": f"Bearer {self.request_token}",
-                "Accept": "application/json",
-            },
-            self.timeout_seconds,
-        )
-        if not 200 <= response.status < 300:
-            raise CloudAuditError(
-                f"GitHub OIDC audit token request failed with HTTP {response.status}"
-            )
+        headers = {
+            "Authorization": f"Bearer {self.request_token}",
+            "Accept": "application/json",
+        }
+        response: CloudHttpResponse | None = None
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                response = self.transport.get(url, headers, self.timeout_seconds)
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                if attempt == self.max_attempts:
+                    raise CloudAuditError(
+                        f"GitHub OIDC audit token request failed after {self.max_attempts} attempts"
+                    ) from exc
+                self.sleep_fn(self.retry_delay_seconds)
+                continue
+            if 200 <= response.status < 300:
+                break
+            transient = response.status == 429 or 500 <= response.status < 600
+            if not transient:
+                raise CloudAuditError(
+                    f"GitHub OIDC audit token request failed with HTTP {response.status}"
+                )
+            if attempt == self.max_attempts:
+                raise CloudAuditError(
+                    "GitHub OIDC audit token request failed with "
+                    f"HTTP {response.status} after {self.max_attempts} attempts"
+                )
+            self.sleep_fn(self.retry_delay_seconds)
+        assert response is not None
         try:
             value = json.loads(response.body.decode("utf-8"))["value"]
         except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError) as exc:
@@ -163,25 +204,47 @@ class SupabaseRawAuditClient:
         transport: CloudAuditPostTransport | None = None,
         get_transport: CloudGetTransport | None = None,
         timeout_seconds: float = 60.0,
+        max_attempts: int = 3,
+        retry_delay_seconds: float = 1.0,
+        sleep_fn: Callable[[float], None] = time.sleep,
     ) -> None:
         if not endpoint.startswith("https://"):
             raise CloudAuditError("Supabase audit endpoint must use HTTPS")
+        _validate_retry_settings(max_attempts, retry_delay_seconds, "Supabase raw audit")
         self.endpoint = endpoint
         self.token_provider = token_provider
         self.transport = transport or UrllibCloudAuditTransport()
         self.get_transport = get_transport or UrllibCloudTransport()
         self.timeout_seconds = timeout_seconds
+        self.max_attempts = max_attempts
+        self.retry_delay_seconds = retry_delay_seconds
+        self.sleep_fn = sleep_fn
 
     def preflight(self) -> None:
         token = self.token_provider.get_token()  # type: ignore[attr-defined]
-        response = self.get_transport.get(
-            self.endpoint,
-            {
-                "Authorization": f"Bearer {token}",
-                "Accept": "application/json",
-            },
-            self.timeout_seconds,
-        )
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+        }
+        response: CloudHttpResponse | None = None
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                response = self.get_transport.get(
+                    self.endpoint, headers, self.timeout_seconds
+                )
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                if attempt == self.max_attempts:
+                    raise CloudAuditError(
+                        f"Supabase raw audit preflight failed after {self.max_attempts} attempts"
+                    ) from exc
+                self.sleep_fn(self.retry_delay_seconds)
+                continue
+            transient = response.status == 429 or 500 <= response.status < 600
+            if transient and attempt < self.max_attempts:
+                self.sleep_fn(self.retry_delay_seconds)
+                continue
+            break
+        assert response is not None
         try:
             payload = json.loads(response.body.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -207,16 +270,33 @@ class SupabaseRawAuditClient:
 
         token = self.token_provider.get_token()  # type: ignore[attr-defined]
         body = json.dumps({"paths": paths}, separators=(",", ":")).encode("utf-8")
-        response = self.transport.post(
-            self.endpoint,
-            body,
-            {
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            self.timeout_seconds,
-        )
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        response: CloudHttpResponse | None = None
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                response = self.transport.post(
+                    self.endpoint,
+                    body,
+                    headers,
+                    self.timeout_seconds,
+                )
+            except (ConnectionError, TimeoutError, OSError) as exc:
+                if attempt == self.max_attempts:
+                    raise CloudAuditError(
+                        f"Supabase raw audit failed after {self.max_attempts} attempts"
+                    ) from exc
+                self.sleep_fn(self.retry_delay_seconds)
+                continue
+            transient = response.status == 429 or 500 <= response.status < 600
+            if transient and attempt < self.max_attempts:
+                self.sleep_fn(self.retry_delay_seconds)
+                continue
+            break
+        assert response is not None
         try:
             payload = json.loads(response.body.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
