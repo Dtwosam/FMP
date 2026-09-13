@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import polars as pl
 
@@ -25,17 +25,17 @@ class Phase2MarketHoursTests(unittest.TestCase):
 
 class Phase2QualityTests(unittest.TestCase):
     def test_reports_quote_anomalies_without_mutating_frame(self) -> None:
-        timestamp = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
+        start = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
         frame = pl.DataFrame(
             {
-                "timestamp_utc": [timestamp],
-                "symbol": ["EURUSD"],
-                "bid_open": [1.10], "bid_high": [1.09], "bid_low": [1.08], "bid_close": [1.10],
-                "ask_open": [1.09], "ask_high": [1.11], "ask_low": [1.08], "ask_close": [1.09],
-                "bid_volume": [1.0], "ask_volume": [None],
-                "source": ["dukascopy"],
-                "ingestion_version": [INGESTION_VERSION],
-                "schema_version": [CANONICAL_SCHEMA_VERSION],
+                "timestamp_utc": [start, start + timedelta(minutes=1)],
+                "symbol": ["EURUSD", "EURUSD"],
+                "bid_open": [1.10, 1.10], "bid_high": [1.09, 1.11], "bid_low": [1.08, 1.09], "bid_close": [1.10, 1.10],
+                "ask_open": [1.09, None], "ask_high": [1.11, None], "ask_low": [1.08, None], "ask_close": [1.09, None],
+                "bid_volume": [1.0, 1.0], "ask_volume": [None, None],
+                "source": ["dukascopy", "dukascopy"],
+                "ingestion_version": [INGESTION_VERSION, INGESTION_VERSION],
+                "schema_version": [CANONICAL_SCHEMA_VERSION, CANONICAL_SCHEMA_VERSION],
             }
         ).with_columns(pl.col("timestamp_utc").dt.replace_time_zone("UTC"))
         before = frame.clone()
