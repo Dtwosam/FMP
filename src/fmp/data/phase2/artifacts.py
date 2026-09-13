@@ -69,15 +69,35 @@ def write_parquet_partition(frame: pl.DataFrame, path: Path) -> ArtifactDigest:
             compression_level=int(PARQUET_WRITER_CONFIG["compression_level"]),
             statistics=bool(PARQUET_WRITER_CONFIG["statistics"]),
         )
+        candidate_sha256 = sha256_file(tmp_path)
+        candidate_size = tmp_path.stat().st_size
+
+        if destination.exists():
+            existing_size = destination.stat().st_size
+            existing_sha256 = sha256_file(destination)
+            if existing_size != candidate_size or existing_sha256 != candidate_sha256:
+                raise ValueError(f"conflicting existing Parquet partition: {destination}")
+            tmp_path.unlink()
+            return ArtifactDigest(
+                path=destination.as_posix(),
+                sha256=existing_sha256,
+                size_bytes=existing_size,
+                row_count=stable.height,
+            )
+
         os.replace(tmp_path, destination)
+        written_size = destination.stat().st_size
+        written_sha256 = sha256_file(destination)
+        if written_size != candidate_size or written_sha256 != candidate_sha256:
+            raise ValueError(f"Parquet output checksum verification failed: {destination}")
     except Exception:
         tmp_path.unlink(missing_ok=True)
         raise
 
     return ArtifactDigest(
         path=destination.as_posix(),
-        sha256=sha256_file(destination),
-        size_bytes=destination.stat().st_size,
+        sha256=written_sha256,
+        size_bytes=written_size,
         row_count=stable.height,
     )
 
