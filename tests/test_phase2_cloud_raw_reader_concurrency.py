@@ -8,6 +8,7 @@ import unittest
 from concurrent.futures import ThreadPoolExecutor
 
 from fmp.data.cloud import CloudHttpResponse
+from fmp.data.phase2.full_history_cli import SynchronizedTokenProvider
 from fmp.data.phase2.raw_reader import GithubRawReadOidcTokenProvider
 
 
@@ -30,16 +31,17 @@ class SlowTransport:
 
 
 class OidcConcurrencyTests(unittest.TestCase):
-    def test_concurrent_callers_share_one_cached_refresh(self) -> None:
+    def test_concurrent_full_history_callers_share_one_cached_refresh(self) -> None:
         token = _jwt()
         transport = SlowTransport(token)
-        provider = GithubRawReadOidcTokenProvider(
+        inner = GithubRawReadOidcTokenProvider(
             "https://token.actions.example/id",
             "request-token",
             transport=transport,
             sleep_fn=lambda _: None,
             clock=lambda: 1_700_000_000,
         )
+        provider = SynchronizedTokenProvider(inner)
         with ThreadPoolExecutor(max_workers=4) as executor:
             values = list(executor.map(lambda _: provider.get_token(), range(4)))
         self.assertEqual(values, [token] * 4)
