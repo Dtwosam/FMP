@@ -127,20 +127,36 @@ class Phase2QualityTests(unittest.TestCase):
         self.assertIn("duplicate_timestamp", codes)
         self.assertEqual(report["duplicate_count"], 1)
 
-    def test_open_market_gap_of_30_missing_minutes_is_long(self) -> None:
+    def test_open_market_gap_of_30_missing_minutes_is_long_and_summarized(self) -> None:
         start = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
         report = analyze_quality(canonical_frame([start, start + timedelta(minutes=31)]))
         codes = [item["code"] for item in report["findings"]]
         self.assertIn("missing_open_market_minute", codes)
         self.assertIn("long_weekday_gap", codes)
+        self.assertEqual(report["missing_open_market_minutes"], 30)
+        self.assertEqual(report["max_suspicious_gap_minutes"], 30)
+        self.assertEqual(len(report["suspicious_gap_spans"]), 1)
+        self.assertEqual(report["suspicious_gap_spans"][0]["missing_minutes"], 30)
 
-    def test_weekend_closure_gap_is_not_suspicious_open_market_loss(self) -> None:
+    def test_open_market_gap_of_29_missing_minutes_is_not_long(self) -> None:
+        start = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
+        report = analyze_quality(canonical_frame([start, start + timedelta(minutes=30)]))
+        codes = [item["code"] for item in report["findings"]]
+        self.assertIn("missing_open_market_minute", codes)
+        self.assertNotIn("long_weekday_gap", codes)
+        self.assertEqual(report["missing_open_market_minutes"], 29)
+        self.assertEqual(report["max_suspicious_gap_minutes"], 29)
+
+    def test_weekend_closure_gap_is_summarized_not_suspicious(self) -> None:
         friday = datetime(2026, 9, 18, 20, 59, tzinfo=timezone.utc)
         sunday = datetime(2026, 9, 20, 21, 0, tzinfo=timezone.utc)
         report = analyze_quality(canonical_frame([friday, sunday]))
         codes = [item["code"] for item in report["findings"]]
         self.assertIn("weekend_closure_gap", codes)
         self.assertNotIn("missing_open_market_minute", codes)
+        self.assertEqual(report["weekend_closure_gap_count"], 1)
+        self.assertEqual(report["weekend_closure_minutes"], 2880)
+        self.assertEqual(report["missing_open_market_minutes"], 0)
 
     def test_spread_outlier_uses_frozen_iqr_rule(self) -> None:
         start = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
