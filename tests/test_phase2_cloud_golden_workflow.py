@@ -19,7 +19,10 @@ class Phase2CloudGoldenWorkflowTests(unittest.TestCase):
             text,
         )
         self.assertIn("python -m fmp.data.phase2.cloud_golden", text)
-        self.assertIn("actions/upload-artifact@v4", text)
+        self.assertIn("actions/checkout@v6", text)
+        self.assertIn("actions/setup-python@v6", text)
+        self.assertIn("actions/upload-artifact@v6", text)
+        self.assertIn("include-hidden-files: true", text)
         lowered = text.lower()
         for forbidden in (
             "fmp.data.cli fetch",
