@@ -54,5 +54,6 @@ jobs:
         with:
           name: phase2-cloud-golden-evidence
           path: .phase2-cloud-golden
+          # The bounded evidence root is intentionally dot-prefixed.
           include-hidden-files: true
           if-no-files-found: error
