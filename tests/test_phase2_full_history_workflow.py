@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 
@@ -25,9 +26,11 @@ class FullHistoryWorkflowTests(unittest.TestCase):
         lowered = text.lower()
         for forbidden in (
             "datafeed.dukascopy.com", "fmp.data.cli fetch", "fetch-plan",
-            "acquire_chunk", "repair", "phase1-full-acquisition", "--start", "--end",
+            "acquire_chunk", "repair", "phase1-full-acquisition",
         ):
             self.assertNotIn(forbidden, lowered)
+        self.assertIsNone(re.search(r"(^|\s)--start(?:\s|=)", lowered))
+        self.assertIsNone(re.search(r"(^|\s)--end(?:\s|=)", lowered))
 
 
 if __name__ == "__main__":
