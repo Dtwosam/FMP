@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import lzma
+import struct
 import tempfile
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import polars as pl
 
+from fmp.data.cli import main
+from fmp.data.dukascopy import DukascopySource
 from fmp.data.phase2.artifacts import (
     PARQUET_WRITER_CONFIG,
     PHASE1_FROZEN_PLAN_SHA256,
@@ -18,6 +23,7 @@ from fmp.data.phase2.artifacts import (
     write_processed_manifest,
 )
 from fmp.data.phase2.schema import CANONICAL_COLUMNS, CANONICAL_SCHEMA_VERSION, INGESTION_VERSION
+from fmp.data.types import RawChunkKey
 
 
 def canonical_frame() -> pl.DataFrame:
@@ -44,6 +50,51 @@ def canonical_frame() -> pl.DataFrame:
     return frame.select(list(CANONICAL_COLUMNS))
 
 
+def _bi5(rows: list[tuple[int, int, int, int, int, float]]) -> bytes:
+    return lzma.compress(b"".join(struct.pack(">IIIIIf", *row) for row in rows))
+
+
+def _complete_manifest(key: RawChunkKey, body: bytes, records: int) -> dict[str, object]:
+    return {
+        "manifest_version": 1,
+        "retrieval_method": "dukascopy-public-daily-m1-bi5-v1",
+        "source": "dukascopy",
+        "source_url": DukascopySource().url_for(key),
+        "pair": key.pair,
+        "side": key.side,
+        "date_utc": key.day.isoformat(),
+        "granularity": "1m",
+        "source_format": "bi5-lzma-daily-candles",
+        "record_size_bytes": 24,
+        "month_indexing": "zero_based_in_source_url",
+        "status": "complete",
+        "http_status": 200,
+        "sha256": hashlib.sha256(body).hexdigest(),
+        "compressed_size_bytes": len(body),
+        "records": records,
+        "retrieved_at_utc": "2026-09-13T12:00:00+00:00",
+    }
+
+
+def _write_phase1_day(root: Path, pair: str, day: date) -> dict[str, str]:
+    rows_by_side = {
+        "BID": [(0, 110000, 110010, 109990, 110020, 1.0), (60, 110010, 110020, 110000, 110030, 2.0)],
+        "ASK": [(0, 110020, 110030, 110010, 110040, 3.0), (60, 110030, 110040, 110020, 110050, 4.0)],
+    }
+    checksums: dict[str, str] = {}
+    for side, rows in rows_by_side.items():
+        key = RawChunkKey(pair, side, day)  # type: ignore[arg-type]
+        body = _bi5(rows)
+        raw_path = root / "raw" / key.relative_raw_path
+        manifest_path = root / "manifests" / key.relative_manifest_path
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        raw_path.write_bytes(body)
+        manifest_path.write_text(json.dumps(_complete_manifest(key, body, len(rows))), encoding="utf-8")
+        checksums[side] = hashlib.sha256(body).hexdigest()
+    return checksums
+
+
 class Phase2ArtifactTests(unittest.TestCase):
     def test_parquet_write_is_deterministic_and_round_trips_canonical_schema(self) -> None:
         frame = canonical_frame()
@@ -61,10 +112,7 @@ class Phase2ArtifactTests(unittest.TestCase):
 
             round_trip = pl.read_parquet(first)
             self.assertEqual(round_trip.columns, list(CANONICAL_COLUMNS))
-            self.assertEqual(
-                round_trip["timestamp_utc"].to_list(),
-                sorted(frame["timestamp_utc"].to_list()),
-            )
+            self.assertEqual(round_trip["timestamp_utc"].to_list(), sorted(frame["timestamp_utc"].to_list()))
             self.assertEqual(PARQUET_WRITER_CONFIG["compression"], "zstd")
             self.assertEqual(PARQUET_WRITER_CONFIG["compression_level"], 3)
             self.assertTrue(PARQUET_WRITER_CONFIG["statistics"])
@@ -105,6 +153,50 @@ class Phase2ArtifactTests(unittest.TestCase):
             loaded = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(loaded, manifest)
             self.assertTrue(path.read_text(encoding="utf-8").endswith("\n"))
+
+    def test_bounded_cli_commands_and_process_phase2_leave_raw_bytes_unchanged(self) -> None:
+        day = date(2024, 1, 2)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "data"
+            raw_hashes = _write_phase1_day(root, "EURUSD", day)
+
+            decoded = Path(tmp) / "decoded.parquet"
+            self.assertEqual(main(["decode-day", "--root", str(root), "--pair", "EURUSD", "--side", "BID", "--date", day.isoformat(), "--out", str(decoded)]), 0)
+            self.assertEqual(pl.read_parquet(decoded).height, 2)
+
+            canonical = Path(tmp) / "canonical.parquet"
+            self.assertEqual(main(["normalize", "--root", str(root), "--pair", "EURUSD", "--start", day.isoformat(), "--end", "2024-01-03", "--out", str(canonical)]), 0)
+            self.assertEqual(pl.read_parquet(canonical).height, 2)
+
+            quality = Path(tmp) / "quality.json"
+            self.assertEqual(main(["quality", "--input", str(canonical), "--out", str(quality)]), 0)
+            quality_payload = json.loads(quality.read_text(encoding="utf-8"))
+            self.assertEqual(quality_payload["row_count"], 2)
+
+            five = Path(tmp) / "five.parquet"
+            self.assertEqual(main(["resample", "--input", str(canonical), "--timeframe", "5m", "--out", str(five)]), 0)
+            self.assertEqual(pl.read_parquet(five).height, 1)
+
+            self.assertEqual(main(["process-phase2", "--root", str(root), "--pair", "EURUSD", "--start", day.isoformat(), "--end", "2024-01-03", "--code-commit", "testcommit"]), 0)
+            expected = [
+                root / "processed" / CANONICAL_SCHEMA_VERSION / "1m" / "EURUSD" / "2024" / "01.parquet",
+                root / "processed" / CANONICAL_SCHEMA_VERSION / "5m" / "EURUSD" / "2024" / "01.parquet",
+                root / "processed" / CANONICAL_SCHEMA_VERSION / "15m" / "EURUSD" / "2024" / "01.parquet",
+                root / "processed" / CANONICAL_SCHEMA_VERSION / "1h" / "EURUSD" / "2024" / "01.parquet",
+                root / "processed" / CANONICAL_SCHEMA_VERSION / "quality" / "EURUSD.json",
+                root / "manifests" / "processed" / CANONICAL_SCHEMA_VERSION / "EURUSD.json",
+            ]
+            for path in expected:
+                self.assertTrue(path.exists(), path)
+
+            manifest = json.loads(expected[-1].read_text(encoding="utf-8"))
+            self.assertEqual(manifest["code_commit"], "testcommit")
+            self.assertEqual(manifest["row_counts"]["1m"], 2)
+
+            for side in ("BID", "ASK"):
+                key = RawChunkKey("EURUSD", side, day)  # type: ignore[arg-type]
+                raw_path = root / "raw" / key.relative_raw_path
+                self.assertEqual(hashlib.sha256(raw_path.read_bytes()).hexdigest(), raw_hashes[side])
 
 
 if __name__ == "__main__":
