@@ -5,7 +5,7 @@ import struct
 import unittest
 from datetime import date, datetime, timezone
 
-from fmp.data.phase2.bi5 import decode_bi5_day
+from fmp.data.phase2.bi5 import Phase2DecodeError, decode_bi5_day
 from fmp.data.types import RawChunkKey
 
 
@@ -29,6 +29,17 @@ class Phase2Bi5Tests(unittest.TestCase):
             frame["timestamp_utc"].to_list(),
             [datetime(2024, 1, 2, tzinfo=timezone.utc)],
         )
+
+    def test_rejects_more_than_1440_records(self) -> None:
+        rows = [
+            (idx, 110000, 110010, 109990, 110020, 1.0)
+            for idx in range(1441)
+        ]
+        with self.assertRaisesRegex(Phase2DecodeError, "record count"):
+            decode_bi5_day(
+                RawChunkKey("EURUSD", "BID", date(2024, 1, 2)),
+                make_bi5(rows),
+            )
 
 
 if __name__ == "__main__":
