@@ -23,6 +23,24 @@ class EdgeFunctionConfigTests(unittest.TestCase):
                     f"{name} must set verify_jwt=false because it validates GitHub OIDC in function code",
                 )
 
+    def test_raw_read_edge_function_has_no_storage_mutation_or_proxy_surface(self) -> None:
+        source = Path("supabase/functions/fmp-raw-read/index.ts").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(".download(", source)
+        for forbidden in (
+            ".upload(",
+            ".update(",
+            ".remove(",
+            ".list(",
+            ".createSignedUrl(",
+            ".createSignedUrls(",
+            ".move(",
+            ".copy(",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, source)
+
 
 if __name__ == "__main__":
     unittest.main()
