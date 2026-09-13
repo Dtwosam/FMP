@@ -30,12 +30,12 @@ Phase 2 does not add trading logic, features, strategy research, ML, backtesting
 
 - Python >= 3.11.
 - Standard library for BI5/LZMA decoding and hashing.
-- Polars 1.x for typed tabular transforms, Parquet output, joins, and resampling.
+- `polars==1.44.2` for typed tabular transforms, Parquet output, joins, and resampling.
 - `zoneinfo` for DST-aware market-week utilities.
 - Parquet for processed datasets.
 - JSON for quality summaries and processed manifests.
 
-Polars is the first runtime data-processing dependency added by Phase 2. The implementation must pin a compatible 1.x range and must not adopt the Polars 2.0 release candidate while Phase 2 is being frozen.
+Polars is the first runtime data-processing dependency added by Phase 2. Phase 2 pins stable Polars 1.44.2 and does not adopt the Polars 2.0 release candidate while the data contract is being frozen.
 
 ## Raw input boundary
 
@@ -50,7 +50,7 @@ Two implementations are required:
 
 The cloud reader must verify returned object path, SHA-256, and byte size against the Phase 1 manifest before decoding. A mismatch is fatal. The existing `fmp-raw-audit` protocol stays read-only metadata/provenance verification and is not overloaded with bulk-byte export semantics.
 
-A separate `fmp-raw-read` Edge Function is therefore preferred for full-history materialization. It accepts only canonical frozen V1 raw paths, authenticates GitHub OIDC using the same repository/workflow trust boundary, and returns one immutable raw object with explicit SHA-256 and size headers. It cannot write Storage.
+A separate `fmp-raw-read` Edge Function is preferred for full-history materialization. It accepts only canonical frozen V1 raw paths, authenticates GitHub OIDC using the same repository/workflow trust boundary, and returns one immutable raw object with explicit SHA-256 and size headers. It cannot write Storage.
 
 ## Dukascopy BI5 decoder contract
 
@@ -79,7 +79,7 @@ Price divisors are frozen for V1:
 
 A decoded timestamp is `date_utc 00:00:00+00:00 + seconds`, and labels the start of the one-minute interval.
 
-The decoder must fail closed on invalid LZMA, non-24-byte alignment, duplicate/non-increasing offsets, out-of-day offsets, non-finite volume, non-positive prices, or unsupported symbols.
+The decoder fails closed on invalid LZMA, non-24-byte alignment, duplicate/non-increasing offsets, out-of-day offsets, or unsupported symbols. Quote-value anomalies such as zero/non-finite prices or volume are preserved in decoded rows so the quality layer can report them rather than hiding source evidence.
 
 Before this field-order/divisor contract is used on full history, a bounded golden fixture from the accepted Phase 1 snapshot must be decoded and independently checked for plausible OHLC ordering and price scale. If that fixture contradicts the contract, implementation stops and this design is amended rather than compensating silently.
 
@@ -153,7 +153,13 @@ For each populated side:
 
 When both sides exist, ask must not be below bid for the corresponding open, high, low, or close comparison. Such cases are findings, not auto-corrections.
 
-Outlier detectors are descriptive. Thresholds must be deterministic, documented, and reported with counts; outlier status alone does not delete a row.
+Spread outliers are computed from valid both-sided close spreads in pips for each symbol. Let `Q1` and `Q3` be the 25th and 75th percentiles and `IQR = Q3 - Q1`; a valid close spread is a `spread_outlier` when it is greater than `Q3 + 10 * IQR`. The report records the calculated threshold.
+
+Price-jump outliers use absolute one-minute midpoint close returns only where consecutive canonical timestamps differ by exactly 60 seconds and both sides are populated. Using the same `Q1/Q3/IQR` rule, a return is a `price_jump_outlier` when it is greater than `Q3 + 10 * IQR`. This deliberately avoids treating weekend reopening jumps as one-minute returns. The report records the calculated threshold.
+
+If `IQR == 0`, the threshold is `Q3`; only values strictly greater than that threshold are flagged.
+
+Outlier status is descriptive and never deletes or alters a row.
 
 ## Time continuity and market-week rules
 
@@ -166,7 +172,7 @@ The baseline forex market-week model is:
 
 Missing minutes wholly outside that interval are classified as `weekend_closure_gap`.
 
-Missing minutes inside that interval are suspicious and reported as `missing_open_market_minute`; contiguous suspicious spans above the deterministic long-gap threshold are also summarized as `long_weekday_gap`.
+Missing minutes inside that interval are suspicious and reported as `missing_open_market_minute`. A contiguous suspicious open-market gap of **30 minutes or more** is additionally summarized as `long_weekday_gap`.
 
 Phase 2 does not fabricate a comprehensive holiday calendar. Likely holiday closures remain visible in the suspicious-gap report unless later source-backed rules are added through change control.
 
@@ -185,8 +191,8 @@ A deterministic per-symbol quality report must include at least:
 - missing open-market minute count;
 - weekend-closure gap count/duration;
 - suspicious gap spans and maximum duration;
-- spread distribution summary and outlier count;
-- one-bar return/jump summary and outlier count;
+- spread distribution summary, calculated threshold, and outlier count;
+- one-minute midpoint-return distribution summary, calculated threshold, and outlier count;
 - schema version and ingestion version.
 
 The report is evidence for Phase 2 acceptance, not a data-cleaning instruction.
@@ -233,6 +239,8 @@ data/manifests/processed/fmp-canonical-1m-v1/{SYMBOL}.json
 
 Monthly partitioning keeps regeneration bounded while preserving deterministic ordering.
 
+Parquet writes use the pinned Polars version, Zstandard compression at level 3, statistics enabled, and stable column order. The processed manifest records the Polars version and Parquet write configuration so byte checksums are tied to the generating environment.
+
 ## Processed manifests
 
 Each symbol manifest records:
@@ -247,6 +255,7 @@ Each symbol manifest records:
 - row counts by timeframe;
 - SHA-256 and byte size for every Parquet/quality artifact;
 - quality summary counts;
+- `polars_version` and Parquet write configuration;
 - generation timestamp UTC;
 - generating code commit when available.
 
@@ -281,6 +290,7 @@ Fail immediately on:
 Report but preserve on:
 
 - one-sided quotes;
+- non-positive/non-finite quote values;
 - ask-below-bid observations;
 - suspicious gaps;
 - extreme spread/jump observations;
@@ -290,13 +300,13 @@ Report but preserve on:
 
 TDD is mandatory. Required test layers:
 
-1. BI5 decoder fixtures for EURUSD and USDJPY scaling, field order, timestamp offsets, invalid compression, invalid length, invalid offsets, and non-finite volume;
+1. BI5 decoder fixtures for EURUSD and USDJPY scaling, field order, timestamp offsets, invalid compression, invalid length, invalid offsets, and preservation of anomalous numeric values;
 2. golden accepted Phase 1 raw-chunk decoder integration before full-history processing;
 3. normalization tests for BID/ASK joins, one-sided rows, stable ordering, and duplicate rejection;
-4. quality tests for OHLC sanity, ask-below-bid, non-positive values, weekend gaps, weekday gaps, spread outliers, and price-jump outliers;
+4. quality tests for OHLC sanity, ask-below-bid, non-positive/non-finite values, weekend gaps, weekday gaps, 30-minute long-gap classification, spread outliers, and price-jump outliers;
 5. timezone/DST tests around New York spring/fall transitions;
 6. exact resampling examples for 5m/15m/1h boundaries and incomplete windows;
-7. Parquet round-trip/schema tests;
+7. Parquet round-trip/schema tests with the pinned writer configuration;
 8. processed-manifest checksum/determinism tests;
 9. CLI integration tests over a bounded local fixture;
 10. full Python suite and workflow-YAML validation before merge.
