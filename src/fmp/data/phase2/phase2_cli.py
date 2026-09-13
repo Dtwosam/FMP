@@ -19,7 +19,7 @@ from .artifacts import (
     write_processed_manifest,
 )
 from .bi5 import decode_bi5_day
-from .normalize import normalize_decoded_sides
+from .normalize import normalize_day
 from .quality import analyze_quality
 from .raw_reader import LocalRawChunkReader
 from .resample import resample_canonical
@@ -35,24 +35,13 @@ def _iter_days(start: date, end_exclusive: date) -> Iterable[date]:
         current += timedelta(days=1)
 
 
-def _normalize_day(reader: LocalRawChunkReader, pair: str, day: date) -> pl.DataFrame | None:
-    decoded: dict[str, pl.DataFrame | None] = {}
-    for side in ("BID", "ASK"):
-        key = RawChunkKey(pair, side, day)  # type: ignore[arg-type]
-        body = reader.read(key)
-        decoded[side] = None if body is None else decode_bi5_day(key, body)
-    if decoded["BID"] is None and decoded["ASK"] is None:
-        return None
-    return normalize_decoded_sides(decoded["BID"], decoded["ASK"])
-
-
 def _normalize_range(root: Path, pair: str, start: date, end_exclusive: date) -> pl.DataFrame:
     reader = LocalRawChunkReader(root)
-    frames = [
-        frame
-        for day in _iter_days(start, end_exclusive)
-        if (frame := _normalize_day(reader, pair, day)) is not None
-    ]
+    frames: list[pl.DataFrame] = []
+    for day in _iter_days(start, end_exclusive):
+        frame = normalize_day(reader, pair, day)  # type: ignore[arg-type]
+        if not frame.is_empty():
+            frames.append(frame)
     if not frames:
         raise ValueError("selected Phase 2 range contains no canonical rows")
     return pl.concat(frames, how="vertical").sort(["symbol", "timestamp_utc"])
