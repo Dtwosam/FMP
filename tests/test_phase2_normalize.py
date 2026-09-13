@@ -12,7 +12,7 @@ import polars as pl
 from fmp.data.dukascopy import DukascopySource
 from fmp.data.phase2.normalize import normalize_decoded_sides
 from fmp.data.phase2.raw_reader import LocalRawChunkReader, RawReadError
-from fmp.data.phase2.schema import CANONICAL_SCHEMA_VERSION
+from fmp.data.phase2.schema import CANONICAL_COLUMNS, CANONICAL_SCHEMA_VERSION
 from fmp.data.types import RawChunkKey
 
 
@@ -82,11 +82,16 @@ class Phase2NormalizeTests(unittest.TestCase):
     def test_outer_join_preserves_one_sided_minute(self) -> None:
         out = normalize_decoded_sides(decoded_side("BID", [0, 1]), decoded_side("ASK", [0]))
         self.assertEqual(out.height, 2)
+        self.assertEqual(out.columns, list(CANONICAL_COLUMNS))
         second = out.filter(pl.col("timestamp_utc") == datetime(2024, 1, 2, 0, 1, tzinfo=timezone.utc))
         self.assertEqual(second.height, 1)
         self.assertIsNone(second["ask_open"][0])
         self.assertEqual(second["bid_open"][0], 1.1001)
         self.assertEqual(out["schema_version"].unique().to_list(), [CANONICAL_SCHEMA_VERSION])
+
+    def test_rejects_duplicate_timestamp_within_side(self) -> None:
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            normalize_decoded_sides(decoded_side("BID", [0, 0]), decoded_side("ASK", [0]))
 
     def test_local_raw_reader_returns_only_manifest_verified_bytes(self) -> None:
         key = RawChunkKey("EURUSD", "BID", date(2024, 1, 2))
