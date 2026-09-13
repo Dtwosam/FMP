@@ -13,6 +13,7 @@ class EdgeDependencyPinTests(unittest.TestCase):
         for path in (
             Path("supabase/functions/fmp-raw-ingest/index.ts"),
             Path("supabase/functions/fmp-raw-audit/index.ts"),
+            Path("supabase/functions/fmp-raw-read/index.ts"),
         ):
             with self.subTest(path=path.as_posix()):
                 source = path.read_text(encoding="utf-8")
