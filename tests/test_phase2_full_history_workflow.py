@@ -16,7 +16,7 @@ class FullHistoryWorkflowTests(unittest.TestCase):
         self.assertIn("id-token: write", text)
         for pair in ("EURUSD", "GBPUSD", "USDJPY"):
             self.assertIn(pair, text)
-        self.assertIn("python -m fmp.data.phase2.full_history_cli", text)
+        self.assertIn("python -m fmp.data.phase2.full_history", text)
         self.assertIn("--workers 4", text)
         self.assertIn("https://htjqqzlezyguveuajuat.supabase.co/functions/v1/fmp-raw-read", text)
         for action in ("actions/checkout@v6", "actions/setup-python@v6", "actions/upload-artifact@v6"):
