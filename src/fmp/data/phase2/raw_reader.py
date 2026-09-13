@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+from typing import Protocol
 
 from fmp.data.manifest import load_manifest, validate_manifest_for_key
 from fmp.data.types import RawChunkKey
+
+
+class RawChunkReader(Protocol):
+    def read(self, key: RawChunkKey) -> bytes | None: ...
 
 
 class RawReadError(RuntimeError):
