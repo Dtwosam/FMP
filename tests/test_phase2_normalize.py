@@ -32,7 +32,7 @@ def decoded_side(side: str, minutes: list[int]) -> pl.DataFrame:
     ).with_columns(pl.col("timestamp_utc").dt.replace_time_zone("UTC"))
 
 
-def complete_manifest(key: RawChunkKey, body: bytes) -> dict[str, object]:
+def manifest_base(key: RawChunkKey) -> dict[str, object]:
     return {
         "manifest_version": 1,
         "retrieval_method": "dukascopy-public-daily-m1-bi5-v1",
@@ -45,12 +45,27 @@ def complete_manifest(key: RawChunkKey, body: bytes) -> dict[str, object]:
         "source_format": "bi5-lzma-daily-candles",
         "record_size_bytes": 24,
         "month_indexing": "zero_based_in_source_url",
+        "retrieved_at_utc": "2026-09-13T12:00:00+00:00",
+    }
+
+
+def complete_manifest(key: RawChunkKey, body: bytes) -> dict[str, object]:
+    return manifest_base(key) | {
         "status": "complete",
         "http_status": 200,
         "sha256": hashlib.sha256(body).hexdigest(),
         "compressed_size_bytes": len(body),
         "records": 1,
-        "retrieved_at_utc": "2026-09-13T12:00:00+00:00",
+    }
+
+
+def not_found_manifest(key: RawChunkKey) -> dict[str, object]:
+    return manifest_base(key) | {
+        "status": "not_found",
+        "http_status": 404,
+        "sha256": None,
+        "compressed_size_bytes": None,
+        "records": None,
     }
 
 
@@ -76,6 +91,15 @@ class Phase2NormalizeTests(unittest.TestCase):
             raw_path.write_bytes(body)
             manifest_path.write_text(json.dumps(complete_manifest(key, body)), encoding="utf-8")
             self.assertEqual(LocalRawChunkReader(root).read(key), body)
+
+    def test_local_raw_reader_returns_none_for_verified_not_found(self) -> None:
+        key = RawChunkKey("EURUSD", "ASK", date(2024, 1, 2))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest_path = root / "manifests" / key.relative_manifest_path
+            manifest_path.parent.mkdir(parents=True, exist_ok=True)
+            manifest_path.write_text(json.dumps(not_found_manifest(key)), encoding="utf-8")
+            self.assertIsNone(LocalRawChunkReader(root).read(key))
 
 
 if __name__ == "__main__":
