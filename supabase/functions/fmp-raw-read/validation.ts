@@ -82,9 +82,11 @@ export function deriveReadPaths(request: ReadRequest): { manifestPath: string; r
 }
 
 function validUtcTimestamp(value: unknown): boolean {
-  if (typeof value !== "string" || !value.endsWith("Z")) return false;
-  const time = Date.parse(value);
-  return Number.isFinite(time);
+  if (typeof value !== "string") return false;
+  const match = /(Z|[+-]\d{2}:\d{2})$/.exec(value);
+  if (!match) return false;
+  if (match[1] !== "Z" && match[1] !== "+00:00" && match[1] !== "-00:00") return false;
+  return Number.isFinite(Date.parse(value));
 }
 
 function exactFieldSet(record: Record<string, unknown>): boolean {
