@@ -13,7 +13,7 @@ class EdgeFunctionConfigTests(unittest.TestCase):
         functions = config.get("functions")
         self.assertIsInstance(functions, dict)
 
-        for name in ("fmp-raw-ingest", "fmp-raw-audit"):
+        for name in ("fmp-raw-ingest", "fmp-raw-audit", "fmp-raw-read"):
             with self.subTest(function=name):
                 function = functions.get(name)
                 self.assertIsInstance(function, dict)
