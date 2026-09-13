@@ -3,9 +3,9 @@
 **Updated:** 2026-09-13  
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
-**Current phase:** Phase 1 — Historical Data Acquisition  
-**Phase status:** PASS  
-**Next phase:** Phase 2 — Validation, Normalization & Derived Bars (UNLOCKED / READY)
+**Current phase:** Phase 2 — Validation, Normalization & Derived Bars  
+**Phase status:** CANONICAL_FOUNDATION_ACTIVE  
+**Next milestone:** authenticated cloud raw reader, accepted golden-chunk validation, and bounded cloud materialization
 
 ## Current baseline
 
@@ -100,6 +100,29 @@ Evidence ordering satisfied:
 
 Phase 1 is closed. No further acquisition or repair workflow is required for the frozen V1 snapshot unless later evidence demonstrates an integrity defect.
 
-Phase 2 — Validation, Normalization & Derived Bars — is now **UNLOCKED / READY**. Phase 2 may validate quote quality, classify market/data gaps, normalize the canonical data, and generate 5m/15m/1h bars. This Phase 1 PASS does not authorize any real-money trading or change DEC-008.
+Phase 2 — Validation, Normalization & Derived Bars — is now active. This Phase 1 PASS does not authorize any real-money trading or change DEC-008.
 
 Historical Phase 1 recovery chronology remains preserved in Git history through pre-PASS main commit `0ff45220cd930839059afcfba631e1e120cb38aa`.
+
+## Phase 2 — CANONICAL_FOUNDATION_ACTIVE
+
+The `phase2-canonical-data-foundation` branch implements only the local, bounded canonical-data foundation defined by the approved Phase 2 design and implementation plan. It does **not** mark Phase 2 PASS.
+
+Implemented foundation scope:
+
+- typed Dukascopy BI5 decoding with frozen V1 price scaling and fail-closed structural validation;
+- `RawChunkReader` protocol plus manifest/SHA/size-verifying `LocalRawChunkReader`;
+- canonical BID/ASK normalization with one-sided-row preservation and duplicate-side rejection;
+- deterministic quote-quality, spread/jump outlier, market-week, gap, and DST analysis;
+- deterministic 5m/15m/1h resampling with explicit completeness;
+- deterministic Zstd Parquet artifacts, quality JSON, processed manifests, and artifact digests;
+- bounded local CLI commands: `decode-day`, `normalize`, `quality`, `resample`, and `process-phase2`.
+
+Still outside this local foundation and required before Phase 2 can close:
+
+- authenticated `CloudRawChunkReader` / read-only `fmp-raw-read` path;
+- accepted real Phase 1 golden-chunk decoder validation;
+- bounded cloud materialization, then exhaustive full-history processing;
+- quantified quality evidence for all three V1 pairs;
+- reproducible full-history 1m/5m/15m/1h artifacts and processed manifests;
+- Phase 2 checkpoint `fmp-v1-phase2-normalized-data`.
