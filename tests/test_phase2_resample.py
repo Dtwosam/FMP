@@ -9,8 +9,8 @@ from fmp.data.phase2.resample import resample_canonical
 from fmp.data.phase2.schema import CANONICAL_SCHEMA_VERSION, DERIVED_SCHEMA_VERSION, INGESTION_VERSION
 
 
-def canonical_minutes(count: int) -> pl.DataFrame:
-    start = datetime(2026, 9, 14, 0, 0, tzinfo=timezone.utc)
+def canonical_minutes(count: int, start: datetime | None = None) -> pl.DataFrame:
+    start = start or datetime(2026, 9, 14, 0, 0, tzinfo=timezone.utc)
     timestamps = [start + timedelta(minutes=i) for i in range(count)]
     bid_open = [1.1000 + i * 0.0001 for i in range(count)]
     return pl.DataFrame(
@@ -61,6 +61,67 @@ class Phase2ResampleTests(unittest.TestCase):
         self.assertEqual(second["source_minutes"], 1)
         self.assertEqual(second["expected_open_minutes"], 5)
         self.assertFalse(second["is_complete"])
+
+    def test_one_sided_minute_keeps_bar_but_marks_it_incomplete(self) -> None:
+        start = datetime(2026, 9, 14, 0, 0, tzinfo=timezone.utc)
+        frame = canonical_minutes(5, start).with_columns(
+            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=2))
+            .then(pl.lit(None, dtype=pl.Float64))
+            .otherwise(pl.col("ask_open"))
+            .alias("ask_open"),
+            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=2))
+            .then(pl.lit(None, dtype=pl.Float64))
+            .otherwise(pl.col("ask_high"))
+            .alias("ask_high"),
+            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=2))
+            .then(pl.lit(None, dtype=pl.Float64))
+            .otherwise(pl.col("ask_low"))
+            .alias("ask_low"),
+            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=2))
+            .then(pl.lit(None, dtype=pl.Float64))
+            .otherwise(pl.col("ask_close"))
+            .alias("ask_close"),
+        )
+        row = resample_canonical(frame, "5m").row(0, named=True)
+        self.assertEqual(row["source_minutes"], 5)
+        self.assertEqual(row["expected_open_minutes"], 5)
+        self.assertFalse(row["is_complete"])
+        self.assertEqual(row["ask_open"], frame["ask_open"][0])
+        self.assertEqual(row["ask_close"], frame["ask_close"][4])
+
+    def test_all_null_volume_stays_null(self) -> None:
+        frame = canonical_minutes(5).with_columns(pl.lit(None, dtype=pl.Float64).alias("bid_volume"))
+        row = resample_canonical(frame, "5m").row(0, named=True)
+        self.assertIsNone(row["bid_volume"])
+        self.assertEqual(row["ask_volume"], 10.0)
+
+    def test_fifteen_minute_and_hour_labels_are_utc_aligned(self) -> None:
+        frame = canonical_minutes(61)
+        fifteen = resample_canonical(frame, "15m")
+        self.assertEqual(
+            fifteen["timestamp_utc"].to_list(),
+            [
+                datetime(2026, 9, 14, 0, 0, tzinfo=timezone.utc),
+                datetime(2026, 9, 14, 0, 15, tzinfo=timezone.utc),
+                datetime(2026, 9, 14, 0, 30, tzinfo=timezone.utc),
+                datetime(2026, 9, 14, 0, 45, tzinfo=timezone.utc),
+                datetime(2026, 9, 14, 1, 0, tzinfo=timezone.utc),
+            ],
+        )
+        hourly = resample_canonical(frame, "1h")
+        self.assertEqual(
+            hourly["timestamp_utc"].to_list(),
+            [
+                datetime(2026, 9, 14, 0, 0, tzinfo=timezone.utc),
+                datetime(2026, 9, 14, 1, 0, tzinfo=timezone.utc),
+            ],
+        )
+
+    def test_expected_open_minutes_follow_new_york_dst(self) -> None:
+        winter_open = canonical_minutes(1, datetime(2026, 1, 4, 22, 0, tzinfo=timezone.utc))
+        summer_open = canonical_minutes(1, datetime(2026, 7, 5, 21, 0, tzinfo=timezone.utc))
+        self.assertEqual(resample_canonical(winter_open, "5m")["expected_open_minutes"][0], 5)
+        self.assertEqual(resample_canonical(summer_open, "5m")["expected_open_minutes"][0], 5)
 
 
 if __name__ == "__main__":
