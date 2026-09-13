@@ -6,7 +6,7 @@ from typing import Literal
 import polars as pl
 
 from .market_hours import is_market_open_minute
-from .schema import DERIVED_SCHEMA_VERSION
+from .schema import DERIVED_SCHEMA_VERSION, validate_canonical_frame
 
 Timeframe = Literal["5m", "15m", "1h"]
 
@@ -55,6 +55,7 @@ def _volume_sum(column: str) -> pl.Expr:
 
 
 def resample_canonical(frame: pl.DataFrame, timeframe: Timeframe) -> pl.DataFrame:
+    validate_canonical_frame(frame)
     width_minutes = _TIMEFRAME_MINUTES.get(timeframe)
     if width_minutes is None:
         raise ValueError(f"unsupported Phase 2 timeframe: {timeframe}")
