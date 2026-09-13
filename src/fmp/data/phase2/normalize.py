@@ -23,6 +23,11 @@ def _prepare_side(frame: pl.DataFrame | None, side: str) -> pl.DataFrame | None:
     sides = frame["side"].unique().to_list()
     if sides != [expected_side]:
         raise ValueError(f"decoded frame must contain only {expected_side} rows")
+    identity = frame.select(["symbol", "timestamp_utc"])
+    if identity.unique().height != identity.height:
+        raise ValueError(
+            f"decoded {expected_side} frame contains duplicate symbol/timestamp rows"
+        )
     rename = {name: f"{side.lower()}_{name}" for name in _SIDE_VALUE_COLUMNS}
     return frame.drop("side").rename(rename)
 
