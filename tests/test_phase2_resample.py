@@ -152,6 +152,13 @@ class Phase2ResampleTests(unittest.TestCase):
         self.assertEqual(sunday_open["expected_open_minutes"], 5)
         self.assertTrue(sunday_open["is_complete"])
 
+    def test_rejects_wrong_canonical_ingestion_identity(self) -> None:
+        frame = canonical_minutes(5).with_columns(
+            pl.lit("wrong-ingestion").alias("ingestion_version")
+        )
+        with self.assertRaisesRegex(ValueError, "ingestion_version"):
+            resample_canonical(frame, "5m")
+
 
 if __name__ == "__main__":
     unittest.main()
