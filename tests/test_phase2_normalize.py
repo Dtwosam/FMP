@@ -11,7 +11,7 @@ import polars as pl
 
 from fmp.data.dukascopy import DukascopySource
 from fmp.data.phase2.normalize import normalize_decoded_sides
-from fmp.data.phase2.raw_reader import LocalRawChunkReader
+from fmp.data.phase2.raw_reader import LocalRawChunkReader, RawReadError
 from fmp.data.phase2.schema import CANONICAL_SCHEMA_VERSION
 from fmp.data.types import RawChunkKey
 
@@ -69,6 +69,15 @@ def not_found_manifest(key: RawChunkKey) -> dict[str, object]:
     }
 
 
+def paths(root: Path, key: RawChunkKey) -> tuple[Path, Path]:
+    return root / "raw" / key.relative_raw_path, root / "manifests" / key.relative_manifest_path
+
+
+def write_manifest(path: Path, payload: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+
 class Phase2NormalizeTests(unittest.TestCase):
     def test_outer_join_preserves_one_sided_minute(self) -> None:
         out = normalize_decoded_sides(decoded_side("BID", [0, 1]), decoded_side("ASK", [0]))
@@ -84,22 +93,62 @@ class Phase2NormalizeTests(unittest.TestCase):
         body = b"verified-raw-bytes"
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            raw_path = root / "raw" / key.relative_raw_path
-            manifest_path = root / "manifests" / key.relative_manifest_path
+            raw_path, manifest_path = paths(root, key)
             raw_path.parent.mkdir(parents=True, exist_ok=True)
-            manifest_path.parent.mkdir(parents=True, exist_ok=True)
             raw_path.write_bytes(body)
-            manifest_path.write_text(json.dumps(complete_manifest(key, body)), encoding="utf-8")
+            write_manifest(manifest_path, complete_manifest(key, body))
             self.assertEqual(LocalRawChunkReader(root).read(key), body)
 
     def test_local_raw_reader_returns_none_for_verified_not_found(self) -> None:
         key = RawChunkKey("EURUSD", "ASK", date(2024, 1, 2))
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            manifest_path = root / "manifests" / key.relative_manifest_path
-            manifest_path.parent.mkdir(parents=True, exist_ok=True)
-            manifest_path.write_text(json.dumps(not_found_manifest(key)), encoding="utf-8")
+            _, manifest_path = paths(root, key)
+            write_manifest(manifest_path, not_found_manifest(key))
             self.assertIsNone(LocalRawChunkReader(root).read(key))
+
+    def test_local_raw_reader_rejects_checksum_mismatch(self) -> None:
+        key = RawChunkKey("EURUSD", "BID", date(2024, 1, 2))
+        body = b"verified-raw-bytes"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw_path, manifest_path = paths(root, key)
+            raw_path.parent.mkdir(parents=True, exist_ok=True)
+            raw_path.write_bytes(b"tampered-raw-bytes")
+            manifest = complete_manifest(key, body)
+            manifest["compressed_size_bytes"] = len(b"tampered-raw-bytes")
+            write_manifest(manifest_path, manifest)
+            with self.assertRaisesRegex(RawReadError, "checksum mismatch"):
+                LocalRawChunkReader(root).read(key)
+
+    def test_local_raw_reader_rejects_size_mismatch(self) -> None:
+        key = RawChunkKey("EURUSD", "BID", date(2024, 1, 2))
+        body = b"verified-raw-bytes"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw_path, manifest_path = paths(root, key)
+            raw_path.parent.mkdir(parents=True, exist_ok=True)
+            raw_path.write_bytes(body + b"x")
+            write_manifest(manifest_path, complete_manifest(key, body))
+            with self.assertRaisesRegex(RawReadError, "size mismatch"):
+                LocalRawChunkReader(root).read(key)
+
+    def test_local_raw_reader_rejects_missing_manifest(self) -> None:
+        key = RawChunkKey("EURUSD", "BID", date(2024, 1, 2))
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(RawReadError, "missing Phase 1 manifest"):
+                LocalRawChunkReader(Path(tmp)).read(key)
+
+    def test_local_raw_reader_rejects_raw_beside_not_found(self) -> None:
+        key = RawChunkKey("EURUSD", "ASK", date(2024, 1, 2))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            raw_path, manifest_path = paths(root, key)
+            raw_path.parent.mkdir(parents=True, exist_ok=True)
+            raw_path.write_bytes(b"illegal")
+            write_manifest(manifest_path, not_found_manifest(key))
+            with self.assertRaisesRegex(RawReadError, "raw object present beside not_found"):
+                LocalRawChunkReader(root).read(key)
 
 
 if __name__ == "__main__":
