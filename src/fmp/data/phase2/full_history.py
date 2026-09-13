@@ -139,3 +139,26 @@ def validate_full_history_ledger(
     expected = _expected_identities(pair, start, end_exclusive)
     if observed != expected or len(records) != len(expected):
         raise ValueError("full-history raw ledger does not match frozen pair/date/side plan")
+
+
+def materialize_pair(
+    reader: ReaderLike,
+    output_root: Path,
+    pair: str,
+    *,
+    start: date,
+    end_exclusive: date,
+    code_commit: str | None,
+    workers: int,
+) -> dict[str, object]:
+    from .full_history_materialize import materialize_pair as _materialize_pair
+
+    return _materialize_pair(
+        reader,
+        output_root,
+        pair,
+        start=start,
+        end_exclusive=end_exclusive,
+        code_commit=code_commit,
+        workers=workers,
+    )
