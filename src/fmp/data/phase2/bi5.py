@@ -11,6 +11,7 @@ from fmp.data.types import RawChunkKey
 from .schema import DECODED_SIDE_COLUMNS, PRICE_DIVISORS
 
 _RECORD = struct.Struct(">IIIIIf")
+_MAX_DAILY_M1_RECORDS = 1440
 
 
 class Phase2DecodeError(ValueError):
@@ -25,6 +26,10 @@ def decode_bi5_day(key: RawChunkKey, body: bytes) -> pl.DataFrame:
 
     if not payload or len(payload) % _RECORD.size != 0:
         raise Phase2DecodeError("BI5 payload is not a non-zero multiple of 24 bytes")
+
+    record_count = len(payload) // _RECORD.size
+    if record_count > _MAX_DAILY_M1_RECORDS:
+        raise Phase2DecodeError(f"daily M1 record count exceeds {_MAX_DAILY_M1_RECORDS}: {record_count}")
 
     divisor = PRICE_DIVISORS[key.pair]
     day_start = datetime.combine(key.day, time.min, tzinfo=timezone.utc)
