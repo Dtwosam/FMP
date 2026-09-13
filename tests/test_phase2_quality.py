@@ -16,9 +16,16 @@ def canonical_frame(timestamps: list[datetime]) -> pl.DataFrame:
         {
             "timestamp_utc": timestamps,
             "symbol": ["EURUSD"] * count,
-            "bid_open": [1.10] * count, "bid_high": [1.11] * count, "bid_low": [1.09] * count, "bid_close": [1.10] * count,
-            "ask_open": [1.1002] * count, "ask_high": [1.1102] * count, "ask_low": [1.0902] * count, "ask_close": [1.1002] * count,
-            "bid_volume": [1.0] * count, "ask_volume": [1.0] * count,
+            "bid_open": [1.10] * count,
+            "bid_high": [1.11] * count,
+            "bid_low": [1.09] * count,
+            "bid_close": [1.10] * count,
+            "ask_open": [1.1002] * count,
+            "ask_high": [1.1102] * count,
+            "ask_low": [1.0902] * count,
+            "ask_close": [1.1002] * count,
+            "bid_volume": [1.0] * count,
+            "ask_volume": [1.0] * count,
             "source": ["dukascopy"] * count,
             "ingestion_version": [INGESTION_VERSION] * count,
             "schema_version": [CANONICAL_SCHEMA_VERSION] * count,
@@ -43,13 +50,36 @@ class Phase2QualityTests(unittest.TestCase):
     def test_reports_quote_anomalies_without_mutating_frame(self) -> None:
         start = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
         frame = canonical_frame([start, start + timedelta(minutes=1)]).with_columns(
-            pl.when(pl.col("timestamp_utc") == start).then(pl.lit(1.09)).otherwise(pl.col("bid_high")).alias("bid_high"),
-            pl.when(pl.col("timestamp_utc") == start).then(pl.lit(1.09)).otherwise(pl.col("ask_open")).alias("ask_open"),
-            pl.when(pl.col("timestamp_utc") == start).then(pl.lit(1.09)).otherwise(pl.col("ask_close")).alias("ask_close"),
-            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=1)).then(pl.lit(None, dtype=pl.Float64)).otherwise(pl.col("ask_open")).alias("ask_open"),
-            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=1)).then(pl.lit(None, dtype=pl.Float64)).otherwise(pl.col("ask_high")).alias("ask_high"),
-            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=1)).then(pl.lit(None, dtype=pl.Float64)).otherwise(pl.col("ask_low")).alias("ask_low"),
-            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=1)).then(pl.lit(None, dtype=pl.Float64)).otherwise(pl.col("ask_close")).alias("ask_close"),
+            pl.when(pl.col("timestamp_utc") == start)
+            .then(pl.lit(1.09))
+            .otherwise(pl.col("bid_high"))
+            .alias("bid_high"),
+            pl.when(pl.col("timestamp_utc") == start)
+            .then(pl.lit(1.09))
+            .otherwise(pl.col("ask_open"))
+            .alias("ask_open"),
+            pl.when(pl.col("timestamp_utc") == start)
+            .then(pl.lit(1.09))
+            .otherwise(pl.col("ask_close"))
+            .alias("ask_close"),
+        )
+        frame = frame.with_columns(
+            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=1))
+            .then(pl.lit(None, dtype=pl.Float64))
+            .otherwise(pl.col("ask_open"))
+            .alias("ask_open"),
+            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=1))
+            .then(pl.lit(None, dtype=pl.Float64))
+            .otherwise(pl.col("ask_high"))
+            .alias("ask_high"),
+            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=1))
+            .then(pl.lit(None, dtype=pl.Float64))
+            .otherwise(pl.col("ask_low"))
+            .alias("ask_low"),
+            pl.when(pl.col("timestamp_utc") == start + timedelta(minutes=1))
+            .then(pl.lit(None, dtype=pl.Float64))
+            .otherwise(pl.col("ask_close"))
+            .alias("ask_close"),
         )
         before = frame.clone()
         report = analyze_quality(frame)
