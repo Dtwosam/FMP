@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import date, datetime, time, timedelta, timezone
 import math
 from typing import Sequence
+from zoneinfo import ZoneInfo
 
-from fmp.contracts import QuoteBar
+from fmp.contracts import Direction, QuoteBar
+from fmp.strategies.contracts import SignalCandidate
 
 
+LONDON = ZoneInfo("Europe/London")
 _TIMEFRAME_MINUTES = {"5m": 5, "15m": 15, "1h": 60}
 _ALLOWED_LOOKBACK_HOURS = frozenset({4, 8, 16})
 _ALLOWED_THRESHOLDS = frozenset({1.5, 2.0})
@@ -89,3 +92,224 @@ def z_score_against_reference(value: float, mean: float, std: float) -> float:
     if not all(math.isfinite(item) for item in (value, mean, std)) or std <= 0.0:
         raise ValueError("value and mean must be finite and std must be positive and finite")
     return (value - mean) / std
+
+
+def _local_label(session_date: date, hour: int) -> datetime:
+    return datetime.combine(session_date, time(hour, 0), tzinfo=LONDON).astimezone(timezone.utc)
+
+
+def _eligible_labels(session_date: date, *, width_minutes: int) -> tuple[datetime, ...]:
+    start = datetime.combine(session_date, time(8, 0), tzinfo=LONDON)
+    end = datetime.combine(session_date, time(14, 0), tzinfo=LONDON)
+    labels: list[datetime] = []
+    current = start
+    while current <= end:
+        labels.append(current.astimezone(timezone.utc))
+        current += timedelta(minutes=width_minutes)
+    return tuple(labels)
+
+
+def _session_dates(bars: Sequence[QuoteBar]) -> tuple[date, ...]:
+    dates: set[date] = set()
+    for bar in bars:
+        local = bar.timestamp_utc.astimezone(LONDON)
+        local_time = local.timetz().replace(tzinfo=None)
+        if time(8, 0) <= local_time <= time(16, 0):
+            dates.add(local.date())
+    return tuple(sorted(dates))
+
+
+def _candidate_id(
+    *,
+    symbol: str,
+    session_date: date,
+    config: MeanReversionConfig,
+    suffix: str,
+) -> str:
+    threshold = str(config.threshold_sigma).replace(".", "p")
+    return (
+        f"MR-{symbol}-{session_date:%Y%m%d}-{config.timeframe}-"
+        f"L{config.lookback_hours}-Z{threshold}-{suffix}"
+    )
+
+
+def _no_trade(
+    *,
+    symbol: str,
+    session_date: date,
+    config: MeanReversionConfig,
+    observation_timestamp: datetime,
+    reason_code: str,
+    metadata: dict[str, object],
+) -> SignalCandidate:
+    width = timedelta(minutes=_TIMEFRAME_MINUTES[config.timeframe])
+    return SignalCandidate(
+        candidate_id=_candidate_id(
+            symbol=symbol,
+            session_date=session_date,
+            config=config,
+            suffix=reason_code,
+        ),
+        symbol=symbol,
+        observation_bar_timestamp_utc=observation_timestamp,
+        signal_known_timestamp_utc=observation_timestamp + width,
+        direction=Direction.NO_TRADE,
+        stop_price=None,
+        target_price=None,
+        latest_exit_timestamp_utc=None,
+        reason_code=reason_code,
+        metadata=metadata,
+    )
+
+
+def generate_mean_reversion_candidates(
+    bars: Sequence[QuoteBar],
+    *,
+    config: MeanReversionConfig,
+) -> tuple[SignalCandidate, ...]:
+    if not bars:
+        return ()
+
+    ordered = tuple(sorted(bars, key=lambda item: (item.timestamp_utc, item.symbol)))
+    symbols = {bar.symbol for bar in ordered}
+    if len(symbols) != 1:
+        raise ValueError("mean reversion requires bars for exactly one symbol")
+    symbol = next(iter(symbols))
+    identities = [(bar.timestamp_utc, bar.symbol) for bar in ordered]
+    if len(set(identities)) != len(identities):
+        raise ValueError("duplicate quote-bar identity in mean-reversion input")
+
+    width_minutes = _TIMEFRAME_MINUTES[config.timeframe]
+    width = timedelta(minutes=width_minutes)
+    lookback_count = duration_to_bars(config.timeframe, config.lookback_hours)
+    by_timestamp = {bar.timestamp_utc: bar for bar in ordered}
+    index_by_timestamp = {bar.timestamp_utc: index for index, bar in enumerate(ordered)}
+    out: list[SignalCandidate] = []
+
+    for session_date in _session_dates(ordered):
+        exit_timestamp = _local_label(session_date, 16)
+        labels = _eligible_labels(session_date, width_minutes=width_minutes)
+        base_metadata: dict[str, object] = {
+            "session_date": session_date.isoformat(),
+            "timezone": "Europe/London",
+            "timeframe": config.timeframe,
+            "lookback_hours": config.lookback_hours,
+            "threshold_sigma": config.threshold_sigma,
+        }
+
+        if exit_timestamp not in by_timestamp:
+            out.append(
+                _no_trade(
+                    symbol=symbol,
+                    session_date=session_date,
+                    config=config,
+                    observation_timestamp=labels[-1],
+                    reason_code="INCOMPLETE_SESSION",
+                    metadata={**base_metadata, "missing_timestamp_utc": exit_timestamp},
+                )
+            )
+            continue
+
+        emitted = False
+        for label in labels:
+            index = index_by_timestamp.get(label)
+            if index is None or index <= 0:
+                continue
+
+            current_reference = rolling_reference(
+                ordered,
+                observation_index=index,
+                lookback_count=lookback_count,
+                width=width,
+            )
+            previous_reference = rolling_reference(
+                ordered,
+                observation_index=index - 1,
+                lookback_count=lookback_count,
+                width=width,
+            )
+            if current_reference is None or previous_reference is None:
+                continue
+
+            current_mean, current_std = current_reference
+            previous_mean, previous_std = previous_reference
+            current_close = _midpoint_close(ordered[index])
+            previous_close = _midpoint_close(ordered[index - 1])
+            current_z = z_score_against_reference(current_close, current_mean, current_std)
+            previous_z = z_score_against_reference(previous_close, previous_mean, previous_std)
+            threshold = config.threshold_sigma
+
+            long_signal = previous_z > -threshold and current_z <= -threshold
+            short_signal = previous_z < threshold and current_z >= threshold
+            if not long_signal and not short_signal:
+                continue
+
+            direction = Direction.LONG if long_signal else Direction.SHORT
+            stop = (
+                current_close - current_std
+                if direction is Direction.LONG
+                else current_close + current_std
+            )
+            target = current_mean
+            valid_geometry = (
+                stop < current_close < target
+                if direction is Direction.LONG
+                else target < current_close < stop
+            )
+            metadata = {
+                **base_metadata,
+                "previous_z": previous_z,
+                "current_z": current_z,
+                "reference_mean": current_mean,
+                "reference_std": current_std,
+                "signal_mid_close": current_close,
+            }
+            if not valid_geometry:
+                out.append(
+                    _no_trade(
+                        symbol=symbol,
+                        session_date=session_date,
+                        config=config,
+                        observation_timestamp=label,
+                        reason_code="INVALID_GEOMETRY",
+                        metadata=metadata,
+                    )
+                )
+                emitted = True
+                break
+
+            out.append(
+                SignalCandidate(
+                    candidate_id=_candidate_id(
+                        symbol=symbol,
+                        session_date=session_date,
+                        config=config,
+                        suffix=direction.value,
+                    ),
+                    symbol=symbol,
+                    observation_bar_timestamp_utc=label,
+                    signal_known_timestamp_utc=label + width,
+                    direction=direction,
+                    stop_price=stop,
+                    target_price=target,
+                    latest_exit_timestamp_utc=exit_timestamp,
+                    reason_code=f"REVERSION_{direction.value}",
+                    metadata=metadata,
+                )
+            )
+            emitted = True
+            break
+
+        if not emitted:
+            out.append(
+                _no_trade(
+                    symbol=symbol,
+                    session_date=session_date,
+                    config=config,
+                    observation_timestamp=labels[-1],
+                    reason_code="NO_EXCURSION",
+                    metadata=base_metadata,
+                )
+            )
+
+    return tuple(out)
