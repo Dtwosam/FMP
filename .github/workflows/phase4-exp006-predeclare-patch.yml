@@ -31,7 +31,7 @@ jobs:
           old_decision = '**Decision:** `DEC-026` (to be formalized only after written-spec approval)'
           assert old_status in text
           assert old_decision in text
-          text = text.replace(old_status, '**Status:** APPROVED — PREDECLARED  ', 1)
+          text = text.replace(old_status, '**Status:** APPROVED — PREDECLARED', 1)
           text = text.replace(old_decision, '**Decision:** `DEC-026` — APPROVED', 1)
           spec.write_text(text, encoding='utf-8')
 
