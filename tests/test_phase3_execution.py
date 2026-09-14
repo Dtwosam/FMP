@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from fmp.backtest.costs import FixedCommissionPerMillion, ZeroCommission, ZeroFinancing
 from fmp.backtest.execution import (
     close_end_of_data,
+    close_time_exit,
     entry_reference_price,
     evaluate_exit,
     fill_entry,
@@ -350,6 +351,60 @@ class Phase3ExecutionTests(unittest.TestCase):
         )
         self.assertEqual(exit_fill.reference_price, 1.1007)
         self.assertAlmostEqual(exit_fill.execution_price, 1.1008)
+
+    def test_time_exit_long_uses_bid_open_with_adverse_slippage_and_commission(self) -> None:
+        position = fill_entry(intent(), bar(), slippage_pips=0.0, commission_model=ZeroCommission())
+        exit_bar = bar(
+            timestamp=BASE_TS + timedelta(minutes=5),
+            bid_open=1.1005,
+            bid_high=1.1010,
+            bid_low=1.1000,
+            bid_close=1.1006,
+            ask_open=1.1007,
+            ask_high=1.1012,
+            ask_low=1.1002,
+            ask_close=1.1008,
+        )
+        exit_fill = close_time_exit(
+            position,
+            exit_bar,
+            slippage_pips=1.0,
+            commission_model=FixedCommissionPerMillion(30.0),
+            financing_model=ZeroFinancing(),
+        )
+        self.assertEqual(exit_fill.reason, ExitReason.TIME_EXIT)
+        self.assertEqual(exit_fill.reference_price, 1.1005)
+        self.assertAlmostEqual(exit_fill.execution_price, 1.1004)
+        self.assertAlmostEqual(exit_fill.exit_commission_usd, 3.0)
+
+    def test_time_exit_short_uses_ask_open_with_adverse_slippage(self) -> None:
+        position = fill_entry(
+            intent(direction=Direction.SHORT, stop_price=1.1020, target_price=1.0980),
+            bar(),
+            slippage_pips=0.0,
+            commission_model=ZeroCommission(),
+        )
+        exit_bar = bar(
+            timestamp=BASE_TS + timedelta(minutes=5),
+            bid_open=1.0995,
+            bid_high=1.1000,
+            bid_low=1.0990,
+            bid_close=1.0994,
+            ask_open=1.0997,
+            ask_high=1.1002,
+            ask_low=1.0992,
+            ask_close=1.0996,
+        )
+        exit_fill = close_time_exit(
+            position,
+            exit_bar,
+            slippage_pips=1.0,
+            commission_model=ZeroCommission(),
+            financing_model=ZeroFinancing(),
+        )
+        self.assertEqual(exit_fill.reason, ExitReason.TIME_EXIT)
+        self.assertEqual(exit_fill.reference_price, 1.0997)
+        self.assertAlmostEqual(exit_fill.execution_price, 1.0998)
 
 
 if __name__ == "__main__":
