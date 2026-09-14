@@ -1,10 +1,10 @@
 # EXP-20260914-003 — Mean Reversion Baseline
 
-**Status:** PLANNED  
+**Status:** FAIL  
 **Decision:** DEC-020  
 **Design:** `docs/superpowers/specs/2026-09-14-phase4-mean-reversion-design.md`
 
-The experiment is frozen before result-producing implementation.
+The experiment protocol below was frozen before result-producing implementation. Result fields were appended only after the complete merged-main benchmark matrix finished and was independently verified.
 
 - Pairs: EURUSD, GBPUSD, USDJPY.
 - Timeframes: 5m, 15m, 1h.
@@ -20,7 +20,11 @@ The experiment is frozen before result-producing implementation.
 - Planned matrix: 18 pair/timeframe/split cells and 324 configuration rows.
 - Candidate generation is reused unchanged across cost scenarios.
 - No post-result parameter expansion is authorized under this experiment ID.
-- Result-producing benchmark: NOT RUN.
-- Conclusion: not assigned.
+- Result-producing benchmark: run `34875463677` — SUCCESS on code commit `87003a3982ca61eb6fd030c5291616d98dbb0c1a`.
+- Completed matrix: 18/18 cells successful; 324/324 rows independently verified with zero integrity/identity errors.
+- Baseline promotion result: zero of 54 pair/timeframe/lookback/threshold points passes the 0.2-pip development-and-validation gate; every 0.2-pip row has negative net return, negative expectancy, and profit factor below one on both splits.
+- Conclusion: REJECT.
 
-The final-test period remains locked. Phase 4 remains ACTIVE. Phase 5 and live execution permissions remain unchanged.
+Detailed evidence: `docs/phase4-mean-reversion-evidence.md`.
+
+The final-test period remains locked. The frozen USDJPY 15m session-breakout serious candidate remains unchanged. Phase 4 remains ACTIVE; the next approved baseline family is previous-day high/low rejection. Phase 5 and live execution permissions remain unchanged.
