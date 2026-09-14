@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 4 — Baseline Strategy Research  
 **Phase status:** ACTIVE  
-**Next milestone:** Predeclare the distinct session high/low sweep/rejection family before any result-producing implementation or benchmark; final-test data remains locked
+**Next milestone:** Predeclare the volatility-breakout family before any result-producing implementation or benchmark; session high/low sweep/rejection remains the later sixth baseline family and final-test data remains locked
 
 ## Current baseline
 
@@ -179,7 +179,7 @@ The session-breakout candidate remains frozen unchanged while subsequent baselin
 - robustness failure: validation turns negative at 0.5-pip slippage (-0.2343%, -$8.3685 expectancy/trade, PF 0.9547); both neighboring buffers are negative on both splits; validation is negative in 2021 and 2022 and positive only in 2023; top three winners contribute about 85.38% of validation positive R
 - no previous-day rejection candidate is promoted and no post-result parameter expansion is authorized under EXP-20260914-004
 
-Phase 4 remains ACTIVE. The frozen USDJPY 15m session-breakout candidate remains unchanged. EXP-20260914-004 is formally closed as FAIL / REJECT. The next family is the distinct session high/low sweep/rejection family, which must be separately predeclared before any result-producing implementation or benchmark. Candidate selection across the admitted baseline program is not materially complete, so the final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created.
+Phase 4 remains ACTIVE. The frozen USDJPY 15m session-breakout candidate remains unchanged. EXP-20260914-004 is formally closed as FAIL / REJECT. The next family in the original approved baseline-first sequence is **volatility breakout**; session high/low sweep/rejection remains the later sixth family. The volatility-breakout protocol must be separately predeclared before any result-producing implementation or benchmark. Candidate selection across the admitted baseline program is not materially complete, so the final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created.
 
 ## Phase 5 — UNSTARTED
 
