@@ -33,6 +33,8 @@ Finding telemetry is preserved without mutation: EURUSD has 6,621 price-jump and
 
 The exhaustive evidence satisfies the Phase 2 exit gates in `docs/build-order.md` and `docs/data-spec.md`: canonical normalized histories exist for all three pairs, quality anomalies/gaps are quantified rather than hidden, deterministic 5m/15m/1h bars and versioned processed manifests exist, and the required canonical/resampling/weekend/DST test suite passed on the merged implementation.
 
-**Acceptance review: PASS.**
+Checkpoint `fmp-v1-phase2-normalized-data` was created at verified acceptance commit `80e763c46fc365d48922fb37de1a70dfe188de70`.
 
-Checkpoint `fmp-v1-phase2-normalized-data` remains the administrative closure action if project checkpoints are represented by Git tags/refs. Phase 3 has not started.
+**Phase 2: PASS.**
+
+Phase 3 has not started.
