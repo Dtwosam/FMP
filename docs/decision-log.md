@@ -70,7 +70,7 @@ Phase 3 uses a deterministic, broker-independent backtesting engine over the acc
 - USDJPY stop sizing converts quote-currency loss at the stop price, while realized USDJPY PnL converts at the executable exit price.
 - Backtest artifacts are deterministic and contain no runtime clock, hostname, UUID, or process metadata.
 
-These semantics grant no real-money permission and do not alter DEC-008. Phase 3 remains ACTIVE until merged-main golden acceptance artifacts are independently inspected and checkpoint `fmp-v1-phase3-backtester` is created. Phase 4 remains unstarted.
+These semantics grant no real-money permission and do not alter DEC-008. Phase 4 remains unstarted.
 
 ## DEC-017 — Phase 3 deterministic acceptance review
 
@@ -87,4 +87,6 @@ Independent inspection verified all five scripted scenarios, all primary/repeat 
 
 The evidence merge SHA triggered exactly `tests` and `phase3-acceptance`; no Phase 1 acquisition-capable workflow triggered for that SHA. No source acquisition, raw mutation, Supabase write, broker/live path, Phase 4 strategy code, or real-money permission was introduced.
 
-Consequences: the Phase 3 acceptance gate is PASS. Formal Phase 3 closure remains checkpoint-pending until branch `fmp-v1-phase3-backtester` is created at the verified acceptance-closure commit. Phase 4 remains unstarted and DEC-008 remains unchanged. Detailed evidence is in `docs/phase3-acceptance-evidence.md`.
+Checkpoint branch `fmp-v1-phase3-backtester` was created after the acceptance-closure merge and independently verified to resolve exactly to commit `7685ba73f18457d5d3945f2fea21ceba3de81cf1`, which contains `docs/phase3-acceptance-evidence.md` and this acceptance decision.
+
+Consequences: Phase 3 is formally PASS and closed at `fmp-v1-phase3-backtester`. Phase 4 remains unstarted and DEC-008 remains unchanged. Detailed evidence is in `docs/phase3-acceptance-evidence.md`.
