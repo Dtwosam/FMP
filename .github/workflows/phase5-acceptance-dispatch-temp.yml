@@ -1,0 +1,19 @@
+name: phase5-acceptance-dispatch-temp
+
+on:
+  push:
+    branches:
+      - phase5-acceptance-dispatch
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch official merged Phase 5 workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run phase5-features.yml --ref main --repo "${GITHUB_REPOSITORY}"
