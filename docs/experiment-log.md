@@ -79,3 +79,33 @@ Copy this section for each serious experiment:
 - Conclusion: PROMOTE
 - Reason: promote the frozen USDJPY 15m, 5-pip buffer, 1.5x target configuration as a serious Phase 4 candidate because development and validation agree, neighboring parameter points show support, moderate 0.5-pip cost stress survives, and the same parameter point has cross-timeframe support. Promotion is limited by 1.0-pip cost failure and material 2022 validation concentration.
 - Follow-up: retain this candidate unchanged, proceed to the next predeclared Phase 4 family, trend continuation, and keep the 2024-01-01 through 2026-08-20 final-test period untouched until candidate selection across the admitted baseline program is materially complete. This conclusion does not make Phase 4 PASS, start Phase 5, authorize broker/live integration, or unlock real-money trading. Detailed evidence is in `docs/phase4-session-breakout-evidence.md`.
+
+### EXP-20260914-002 — Trend continuation baseline
+
+- Date: 2026-09-14
+- Status: PLANNED
+- Hypothesis: During the London trading day, a pullback that temporarily crosses a short trend average and then resumes in the direction of an established multi-hour trend may have enough continuation to overcome historical BID/ASK spread and adverse slippage under fixed-risk execution. No profitability is assumed.
+- Code commit: to be bound to the exact merged-main implementation commit before result-producing benchmark execution.
+- Data manifest/version: accepted Phase 2 processed manifests, schema `fmp-canonical-1m-v1`; exact processed-manifest hashes are bound by the benchmark artifacts.
+- Pair(s): EURUSD, GBPUSD, USDJPY
+- Timeframe(s): 5m, 15m, 1h
+- Data range: accepted Phase 2 coverage 2015-01-01 through 2026-08-20 inclusive; normal tooling may load development and validation only.
+- Train period: 2015-01-01 through 2020-12-31 inclusive
+- Validation period: 2021-01-01 through 2023-12-31 inclusive
+- Final-test touched?: NO
+- Strategy/model: deterministic London-session trend-continuation baseline; signals observed on fully closed bars from 08:00 through 14:00 `Europe/London`, first qualifying signal only, exact mandatory flat timestamp 16:00 local.
+- Features: midpoint OHLC only for SMA context, pullback/resumption detection, three-bar structural stop, and frozen R-target geometry; Phase 3 historical BID/ASK execution remains the sole fill/PnL source of truth.
+- Parameters/search space: trend windows `2h/8h`, `4h/16h`, `8h/32h` × target `{1.0R, 1.5R}`; exactly 6 strategy configurations per pair/timeframe and no post-result parameter expansion under this experiment ID.
+- Random seed (if relevant): not applicable; deterministic strategy and backtester.
+- Spread/cost model: historical BID/ASK spread; zero commission; zero financing.
+- Slippage model: 0.2, 0.5, 1.0 pips per fill, adverse on every execution side.
+- Risk assumptions: 0.25% requested; 0.50% hard per-trade max; 1.00% simultaneous max; 1.50% UTC day-start realized-loss halt; accepted Phase 3 sizing/execution rules unchanged.
+- Trade count: pending merged-main benchmark evidence.
+- Net return after costs: pending merged-main benchmark evidence.
+- Expectancy/trade: pending merged-main benchmark evidence.
+- Profit factor: pending merged-main benchmark evidence.
+- Max drawdown: pending merged-main benchmark evidence.
+- Key subperiod results: pending merged-main benchmark evidence.
+- Robustness/cost sensitivity: frozen pre-result protocol will assess development-to-validation agreement, 0.5-pip stress survival, neighboring trend-window/target stability, drawdown, yearly/subperiod behavior, trade count, and top-winner dependence; 1.0-pip stress is diagnostic.
+- Reason: predeclared before any result-producing merged-main benchmark run so strategy, cost, risk, chronology, and promotion criteria cannot be changed in response to outcomes.
+- Follow-up: merge only after fresh CI and source-guard review, then run the fixed 18-cell development/validation matrix from accepted Phase 2 artifacts. The final-test period remains structurally locked.
