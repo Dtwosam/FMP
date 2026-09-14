@@ -16,7 +16,7 @@ class PreviousDayRejectionStateTests(unittest.TestCase):
         self.assertIn("# EXP-20260914-004 — Previous-Day High/Low Rejection Baseline", record)
         self.assertIn("**Status:** PREDECLARED", record)
         self.assertIn("Final-test touched?: NO", record)
-        self.assertIn("17:00 `America/New_York`", record)
+        self.assertIn("[17:00 America/New_York, 17:00 America/New_York)", record)
         self.assertIn("exactly 0, 2, and 5 pips", record)
         self.assertIn("exactly 0.2, 0.5, and 1.0 pips", record)
         self.assertIn("162 benchmark rows", record)
