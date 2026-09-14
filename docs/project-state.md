@@ -3,9 +3,9 @@
 **Updated:** 2026-09-14  
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
-**Current phase:** Phase 3 — Backtesting Engine  
-**Phase status:** PASS  
-**Next milestone:** Phase 4 remains unstarted; no Phase 4 work begins until separately authorized
+**Current phase:** Phase 4 — Baseline Strategy Research  
+**Phase status:** ACTIVE  
+**Next milestone:** Run and independently inspect the predeclared source-free session-breakout development/validation benchmark; final-test data remains locked
 
 ## Current baseline
 
@@ -130,4 +130,30 @@ The deterministic broker-independent backtesting engine is formally accepted and
 
 Phase 3 is formally closed as PASS at `fmp-v1-phase3-backtester`.
 
-Phase 4 has not started. Real-money trading remains locked under DEC-008.
+## Phase 4 — ACTIVE
+
+Phase 4 has started with the first sequential baseline family, session breakout. DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact parameter/cost grid, and unchanged Phase 3 risk settings before benchmark results are inspected.
+
+- first serious experiment: `EXP-20260914-001 — Session breakout baseline`
+- experiment status: PLANNED
+- development: 2015-01-01 through 2020-12-31 inclusive
+- validation: 2021-01-01 through 2023-12-31 inclusive
+- final untouched test: 2024-01-01 through 2026-08-20 inclusive
+- Final-test touched: NO
+- eligible pairs: EURUSD, GBPUSD, USDJPY
+- eligible signal timeframes: 5m, 15m, 1h
+- parameter grid: 3 breakout buffers × 3 target multiples = 9 configurations per pair/timeframe
+- adverse slippage scenarios: 0.2, 0.5, 1.0 pips per fill
+- commission/financing: zero / zero for this mandatory-intraday-flat baseline
+- risk: accepted Phase 3 policy unchanged
+- benchmark evidence: not yet run on merged main; no experiment conclusion has been recorded
+
+The implementation remains source-free and reads only accepted Phase 2 processed artifacts. It does not acquire source data, mutate the immutable raw snapshot, change Supabase, integrate a broker/live path, or grant real-money permission.
+
+Phase 4 remains ACTIVE after this first family. The Phase 4 checkpoint is not created from the session-breakout slice alone.
+
+## Phase 5 — UNSTARTED
+
+Phase 5 has not started. No ML/feature-engine promotion is authorized by Phase 4 implementation work or by any session-breakout result.
+
+Real-money trading remains locked; DEC-008 remains unchanged.
