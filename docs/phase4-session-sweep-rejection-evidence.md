@@ -3,7 +3,7 @@
 **Experiment result:** FAIL  
 **Conclusion:** REJECT  
 **Protocol decision:** DEC-026 — APPROVED  
-**Outcome decision:** DEC-027 — pending evidence-closure merge  
+**Outcome decision:** DEC-027 — APPROVED
 **Final-test touched?: NO**
 
 ## Authoritative execution
