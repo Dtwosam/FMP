@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import date, datetime, time, timezone
 from zoneinfo import ZoneInfo
 
 from fmp.contracts import Direction, QuoteBar
@@ -23,11 +23,18 @@ def quote(
     *,
     symbol: str = "EURUSD",
     mid_open: float = 1.1000,
-    mid_high: float = 1.1005,
-    mid_low: float = 1.0995,
-    mid_close: float = 1.1000,
+    mid_high: float | None = None,
+    mid_low: float | None = None,
+    mid_close: float | None = None,
 ) -> QuoteBar:
     spread_half = 0.0001 if symbol != "USDJPY" else 0.01
+    default_range_half = 0.0005 if symbol != "USDJPY" else 0.05
+    if mid_high is None:
+        mid_high = mid_open + default_range_half
+    if mid_low is None:
+        mid_low = mid_open - default_range_half
+    if mid_close is None:
+        mid_close = mid_open
     return QuoteBar(
         timestamp_utc=timestamp_utc,
         symbol=symbol,
@@ -139,13 +146,21 @@ class Phase4SessionBreakoutTests(unittest.TestCase):
     def test_first_breakout_only_even_when_later_bar_crosses_other_direction(self) -> None:
         session_date = date(2020, 1, 2)
         bars = one_hour_session(session_date, breakout_hour=8, breakout_close=1.1013)
+        reversal_timestamp = local_label(session_date, 9)
+        reversal_close = 1.0985
         bars = [
             quote(
                 bar.timestamp_utc,
                 mid_open=(bar.bid_open + bar.ask_open) / 2,
-                mid_high=(bar.bid_high + bar.ask_high) / 2,
-                mid_low=(bar.bid_low + bar.ask_low) / 2,
-                mid_close=1.0985 if bar.timestamp_utc == local_label(session_date, 9) else (bar.bid_close + bar.ask_close) / 2,
+                mid_high=max(
+                    (bar.bid_high + bar.ask_high) / 2,
+                    reversal_close if bar.timestamp_utc == reversal_timestamp else (bar.bid_close + bar.ask_close) / 2,
+                ),
+                mid_low=min(
+                    (bar.bid_low + bar.ask_low) / 2,
+                    reversal_close if bar.timestamp_utc == reversal_timestamp else (bar.bid_close + bar.ask_close) / 2,
+                ),
+                mid_close=reversal_close if bar.timestamp_utc == reversal_timestamp else (bar.bid_close + bar.ask_close) / 2,
             )
             for bar in bars
         ]
