@@ -3,7 +3,7 @@
 **Experiment result:** PASS  
 **Conclusion:** PROMOTE one serious Phase 4 research candidate  
 **Protocol decision:** DEC-024 — APPROVED  
-**Outcome decision:** DEC-025 — pending evidence-closure merge  
+**Outcome decision:** DEC-025 — APPROVED
 **Final-test touched?: NO**
 
 ## Authoritative execution
