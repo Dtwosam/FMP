@@ -1,5 +1,6 @@
 name: zz-phase4-acceptance-runner
 
+# Retrigger after whitespace-guard normalization.
 on:
   push:
     branches:
