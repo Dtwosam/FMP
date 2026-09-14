@@ -171,6 +171,7 @@ def write_backtest_artifacts(run: BacktestRun, out_dir: Path) -> dict[str, objec
         "trade_count": len(run.trades),
         "rejection_count": len(run.rejections),
         "equity_checkpoint_count": len(run.equity_checkpoints),
+        "equity_checkpoints": run.equity_checkpoints,
     }
     trades = sorted(run.trades, key=lambda item: (item.exit_timestamp_utc, item.trade_id))
     rejections = sorted(
