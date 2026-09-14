@@ -3,9 +3,9 @@
 **Updated:** 2026-09-14  
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
-**Current phase:** Phase 4 — Baseline Strategy Research  
-**Phase status:** PASS
-**Next milestone:** Begin a separate Phase 5 leakage-safe feature-engine design from the frozen Phase 4 checkpoint; final-test data remains locked
+**Current phase:** Phase 5 — Leakage-Safe Feature Engineering
+**Phase status:** ACTIVE
+**Next milestone:** Implement and verify `fmp-feature-v1` under DEC-029; final-test data remains locked and 2024+ processed partitions are not readable by normal Phase 5 tooling
 
 ## Current baseline
 
@@ -234,8 +234,10 @@ The session-breakout candidate remains frozen unchanged while subsequent baselin
 
 Phase 4 is formally PASS under DEC-028. All six planned baseline families have complete benchmark evidence and experiment-log entries. Two serious research candidates remain frozen unchanged: the EXP-001 USDJPY 15m / 5-pip / 1.5x session-breakout point and the EXP-005 USDJPY 1h / 2.0x / fixed-1.0R volatility-breakout point. EXP-002, EXP-003, EXP-004, and EXP-006 remain FAIL / REJECT. Detailed acceptance evidence is `docs/phase4-acceptance-evidence.md`. The final-test period remains locked. Phase 4 checkpoint: `fmp-v1-phase4-baselines` at `115bb8080e951db16ca1a1174227ffa181a03d1b`; post-merge tests `34903338560` SUCCESS and Phase 3 acceptance `34903338538` SUCCESS.
 
-## Phase 5 — UNSTARTED
+## Phase 5 — ACTIVE
 
-Phase 5 is the next project phase but has not started. It may begin only as separate leakage-safe feature-engine work under the approved project source. Phase 4 PASS does not authorize final-test inspection, broker/live integration, or real-money trading.
+DEC-029 freezes the leakage-safe `fmp-feature-v1` protocol in `docs/superpowers/specs/2026-09-14-phase5-leakage-safe-feature-engine-design.md`. Phase 5 may implement and validate only that predeclared feature layer across EURUSD/GBPUSD/USDJPY at 5m/15m/1h, using processed source coverage no later than 2023-12-31. Normal Phase 5 tooling must fail before opening any processed partition reaching 2024-01-01 or later.
 
-Real-money trading remains locked; DEC-008 remains unchanged.
+The eight approved families are returns, volatility/range, trend/structure, momentum, candle structure, session/time, market location, and spread/quote quality. Relative source activity, 1m feature matrices, cross-pair or multi-timeframe joins, labels, models, target-driven feature selection, and strategy retuning remain out of scope.
+
+Phase 4 remains frozen PASS at checkpoint `fmp-v1-phase4-baselines`; both serious candidates remain unchanged. Phase 6 model fitting, broker/live/demo integration, final-test inspection, and real-money trading remain locked; DEC-008 remains unchanged.

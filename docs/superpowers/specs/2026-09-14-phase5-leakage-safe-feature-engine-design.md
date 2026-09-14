@@ -1,6 +1,6 @@
 # Phase 5 Leakage-Safe Feature Engine Design
 
-**Status:** PROPOSED — written-spec approval required before DEC-029, implementation, or feature generation  
+**Status:** APPROVED — frozen by DEC-029 before implementation or feature generation
 **Date:** 2026-09-14  
 **Phase 4 checkpoint:** `fmp-v1-phase4-baselines` → `115bb8080e951db16ca1a1174227ffa181a03d1b`  
 **Final-test touched?: NO**
