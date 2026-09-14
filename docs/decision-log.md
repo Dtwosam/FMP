@@ -26,6 +26,7 @@ Active decision index:
 - DEC-018 — Phase 4 baseline research protocol — APPROVED
 - DEC-019 — Phase 4 trend-continuation baseline protocol — APPROVED
 - DEC-020 — Phase 4 mean-reversion baseline protocol — APPROVED
+- DEC-021 — Phase 4 mean-reversion experiment outcome — APPROVED
 
 ## DEC-014 — Phase 1 frozen snapshot accepted
 
@@ -164,3 +165,14 @@ The third sequential Phase 4 family is the deterministic intraday mean-reversion
 - Normal mean-reversion tooling cannot access the final 2024-01-01 through 2026-08-20 test split.
 
 Consequences: `EXP-20260914-003` may run only after this protocol and its implementation are merged to `main`. The frozen USDJPY 15m session-breakout candidate remains unchanged; rejected trend-continuation parameters stay rejected; Phase 4 remains ACTIVE; Phase 5 remains unstarted; final-test access and broker/live/real-money permissions remain locked; DEC-008 remains unchanged.
+
+## DEC-021 — Phase 4 mean-reversion experiment outcome
+
+**Date:** 2026-09-14  
+**Status:** APPROVED
+
+Merged-main mean-reversion benchmark run `34875463677` on exact code commit `87003a3982ca61eb6fd030c5291616d98dbb0c1a` completed successfully. All 18 pair/timeframe/split cells succeeded and all 324 frozen configuration rows were independently verified with zero ZIP, manifest, code/data identity, split, grid, candidate-reuse, or cost/risk identity errors. The final-test split was not used.
+
+At the predeclared 0.2-pip baseline gate, zero of 54 pair/timeframe/lookback/threshold points survived. More strongly, on both development and validation, zero of 54 baseline rows had positive net return, zero had positive expectancy/trade, and zero had profit factor above one. Because the first frozen promotion gate failed universally, no downstream cost result may be used to rescue or retune this experiment after observation.
+
+Consequences: `EXP-20260914-003` is FAIL / REJECT; no mean-reversion candidate is promoted and no post-result parameter expansion is authorized under this experiment ID. The frozen USDJPY 15m session-breakout candidate remains unchanged. Phase 4 remains ACTIVE and the next approved baseline family is previous-day high/low rejection. The final-test period, Phase 5, broker/live integration, and real-money trading remain locked; DEC-008 remains unchanged. Detailed evidence is in `docs/phase4-mean-reversion-evidence.md`.
