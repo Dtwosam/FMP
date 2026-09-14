@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 4 — Baseline Strategy Research  
 **Phase status:** ACTIVE  
-**Next milestone:** Merge the predeclared trend-continuation baseline and run its fixed source-free development/validation benchmark while retaining the frozen session-breakout candidate; final-test data remains locked
+**Next milestone:** Predeclare and implement the mean-reversion baseline while retaining the frozen session-breakout candidate; final-test data remains locked
 
 ## Current baseline
 
@@ -78,7 +78,7 @@ Phase 3 is formally closed as PASS.
 
 ## Phase 4 — ACTIVE
 
-DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact session-breakout grid/cost assumptions, and unchanged Phase 3 risk settings. DEC-019 freezes the trend-continuation family-specific protocol while DEC-018 remains authoritative for shared research rules.
+DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact shared grid/cost assumptions, and unchanged Phase 3 risk settings. DEC-019 freezes the completed trend-continuation family-specific protocol while DEC-018 remains authoritative for shared research rules.
 
 ### EXP-20260914-001 — Session breakout baseline
 
@@ -111,23 +111,30 @@ At 0.5-pip adverse slippage it remains positive on both splits (+3.4625% develop
 
 Yearly results show material regime sensitivity, especially strong 2022 validation performance, so this is a serious research candidate rather than proof of deployment readiness. EURUSD supplies no baseline configuration positive on both development and validation; GBPUSD has two baseline-positive 5m target-1.5 configurations but both fail 0.5-pip stress.
 
-The session-breakout candidate remains frozen unchanged while the second baseline family is evaluated.
+The session-breakout candidate remains frozen unchanged while subsequent baseline families are evaluated.
 
 ### EXP-20260914-002 — Trend continuation baseline
 
-- experiment status: PLANNED
-- protocol: DEC-019; trend windows 2h/8h, 4h/16h, 8h/32h × 1.0R/1.5R targets; three-bar structural stop; fully closed London-session bars only
-- pair/timeframe scope: EURUSD, GBPUSD, USDJPY × 5m, 15m, 1h
+- experiment status: FAIL
+- conclusion: REJECT; detailed evidence is `docs/phase4-trend-continuation-evidence.md`
+- implementation / benchmark commit: `d1c821cb8b4bfaaddbc334fee0f2f3b1dfe054a2`
+- merged-main tests: run `34863705694` — SUCCESS, 378 tests PASS, workflow YAML PASS, compile PASS
+- unchanged Phase 3 acceptance: run `34863705935` — SUCCESS
+- Phase 4 benchmark: run `34863705913` — SUCCESS
+- matrix: 3 pairs × 3 signal timeframes × development/validation = 18/18 cells successful
+- independently inspected benchmark rows: 324/324 with zero ZIP, manifest, code/data identity, split, grid, candidate-reuse, or accounting discrepancies
 - development: 2015-01-01 through 2020-12-31 inclusive
 - validation: 2021-01-01 through 2023-12-31 inclusive
 - final untouched test: 2024-01-01 through 2026-08-20 inclusive
 - Final-test touched: NO
-- cost stress: 0.2/0.5/1.0 adverse slippage pips per fill; historical BID/ASK spread; zero commission; zero financing
+- frozen grid: trend windows 2h/8h, 4h/16h, 8h/32h × targets 1.0R/1.5R × adverse slippage 0.2/0.5/1.0 pips per fill
+- commission/financing: zero / zero for the mandatory-intraday-flat family
 - risk: accepted Phase 3 policy unchanged
-- benchmark size when merged: 18 workflow cells / 324 configuration rows
-- current state: implementation and source-free workflow are under guarded review; no result-producing merged-main benchmark has run under EXP-20260914-002
+- promotion screen: zero configurations have positive net return, positive expectancy, and profit factor above one on both development and validation at 0.2-pip baseline; zero also survive at 0.5 or 1.0 pip
+- failure character: isolated split-only winners reverse across chronology. GBPUSD 1h `8h/32h / 1.5R` is +14.8309% development but -2.7022% validation; USDJPY 15m has zero development qualifiers but two validation qualifiers
+- no trend-continuation candidate is promoted and no post-result parameter expansion is authorized under EXP-20260914-002
 
-Phase 4 remains ACTIVE. Candidate selection across the admitted baseline program is not materially complete, so the final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created.
+Phase 4 remains ACTIVE. The next predeclared family is mean reversion. Candidate selection across the admitted baseline program is not materially complete, so the final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created.
 
 ## Phase 5 — UNSTARTED
 

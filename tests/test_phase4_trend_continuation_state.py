@@ -43,12 +43,12 @@ class Phase4TrendContinuationStateTests(unittest.TestCase):
         self.assertIn("DEC-018 remains authoritative", section)
         self.assertIn("DEC-008 remains unchanged", section)
 
-    def test_exp002_is_predeclared_without_results(self) -> None:
+    def test_exp002_preserves_predeclared_protocol_after_rejection(self) -> None:
         text = read("docs/experiment-log.md")
         marker = "### EXP-20260914-002 — Trend continuation baseline"
         self.assertIn(marker, text)
         section = text.split(marker, 1)[1]
-        self.assertIn("- Status: PLANNED", section)
+        self.assertIn("- Status: FAIL", section)
         self.assertIn("pullback", section.lower())
         self.assertIn("- Pair(s): EURUSD, GBPUSD, USDJPY", section)
         self.assertIn("- Timeframe(s): 5m, 15m, 1h", section)
@@ -66,8 +66,9 @@ class Phase4TrendContinuationStateTests(unittest.TestCase):
         self.assertIn("0.50% hard per-trade max", section)
         self.assertIn("1.00% simultaneous max", section)
         self.assertIn("1.50% UTC day-start realized-loss halt", section)
-        self.assertNotIn("- Result summary:", section)
-        self.assertNotIn("- Conclusion:", section)
+        self.assertIn("- Result summary:", section)
+        self.assertIn("- Conclusion: REJECT", section)
+        self.assertIn("no post-result parameter expansion", section.lower())
 
     def test_project_state_keeps_phase4_active_and_session_candidate_frozen(self) -> None:
         text = read("docs/project-state.md")
@@ -76,8 +77,9 @@ class Phase4TrendContinuationStateTests(unittest.TestCase):
         self.assertIn("EXP-20260914-001 — Session breakout baseline", text)
         self.assertIn("USDJPY 15m, 5-pip breakout buffer, 1.5x target-range multiple", text)
         self.assertIn("EXP-20260914-002 — Trend continuation baseline", text)
-        self.assertIn("experiment status: PLANNED", text)
-        self.assertIn("trend continuation", text.lower())
+        self.assertIn("experiment status: FAIL", text)
+        self.assertIn("conclusion: REJECT", text)
+        self.assertIn("mean reversion", text.lower())
         self.assertIn("Final-test touched: NO", text)
         self.assertIn("## Phase 5 — UNSTARTED", text)
         self.assertIn("Real-money trading remains locked", text)
