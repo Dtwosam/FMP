@@ -40,7 +40,7 @@ decision_path.write_text(decision, encoding="utf-8")
 # Project state: advance only Phase 5 to PASS, keep every later gate locked.
 state_path = Path("docs/project-state.md")
 state = state_path.read_text(encoding="utf-8")
-state = replace_once(state, "**Updated:** 2026-09-14", "**Updated:** 2026-09-15", "state date")
+state = replace_once(state, "**Updated:** 2026-09-14  ", "**Updated:** 2026-09-15", "state date")
 state = replace_once(state, "**Phase status:** ACTIVE", "**Phase status:** PASS", "phase status")
 state = replace_once(
     state,
