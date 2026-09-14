@@ -1,12 +1,12 @@
 # Phase 4 Session High/Low Sweep-Rejection Baseline Design
 
 **Date:** 2026-09-14  
-**Status:** APPROVED IN CHAT — written-spec review pending  
+**Status:** APPROVED — PREDECLARED
 **Repository:** `Dtwosam/FMP`  
 **Base commit:** `91ff33830032c3de74af5d2759fa4cdff3b6ec2b`  
 **Phase:** Phase 4 — Baseline Strategy Research  
 **Experiment:** `EXP-20260914-006`  
-**Decision:** `DEC-026` (to be formalized only after written-spec approval)
+**Decision:** `DEC-026` — APPROVED
 
 ## 1. Objective
 
