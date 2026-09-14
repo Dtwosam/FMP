@@ -23,6 +23,7 @@ Active decision index:
 - DEC-015 — Phase 2 exhaustive acceptance review — APPROVED
 - DEC-016 — Phase 3 backtester semantics — APPROVED
 - DEC-017 — Phase 3 deterministic acceptance review — APPROVED
+- DEC-018 — Phase 4 baseline research protocol — APPROVED
 
 ## DEC-014 — Phase 1 frozen snapshot accepted
 
@@ -90,3 +91,22 @@ The evidence merge SHA triggered exactly `tests` and `phase3-acceptance`; no Pha
 Checkpoint branch `fmp-v1-phase3-backtester` was created after the acceptance-closure merge and independently verified to resolve exactly to commit `7685ba73f18457d5d3945f2fea21ceba3de81cf1`, which contains `docs/phase3-acceptance-evidence.md` and this acceptance decision.
 
 Consequences: Phase 3 is formally PASS and closed at `fmp-v1-phase3-backtester`. Phase 4 remains unstarted and DEC-008 remains unchanged. Detailed evidence is in `docs/phase3-acceptance-evidence.md`.
+
+## DEC-018 — Phase 4 baseline research protocol
+
+**Date:** 2026-09-14  
+**Status:** APPROVED
+
+Phase 4 begins with the session-breakout family under a frozen chronological, anti-leakage, source-free research protocol. No profitability is assumed; failed and empty configurations remain evidence.
+
+- Development: 2015-01-01 through 2020-12-31 inclusive.
+- Validation: 2021-01-01 through 2023-12-31 inclusive.
+- Final untouched test: 2024-01-01 through 2026-08-20 inclusive.
+- The final-test data is unavailable from the normal development/validation runner. Final access requires a separate explicit promotion step after candidate selection is materially complete.
+- Phase 2 derived bars are left-labelled. For a timeframe of width `W`, the observation label `T` identifies the start of the closed bar; true signal-known time is `T + W`. The Phase 3 decision timestamp remains `T`, while the earliest executable timestamp is `T + W`, preserving the accepted next-bar execution contract without implying same-bar knowledge.
+- The session-breakout grid is exactly `(0, 0.5), (0, 1.0), (0, 1.5), (2, 0.5), (2, 1.0), (2, 1.5), (5, 0.5), (5, 1.0), (5, 1.5)`, representing buffer pips and target range multiples.
+- Predeclared adverse slippage is 0.2, 0.5, and 1.0 pips per fill.
+- The initial mandatory-intraday-flat family uses zero commission and zero financing; historical BID/ASK spread remains in execution prices.
+- Phase 3 risk settings are unchanged: requested risk/trade: 0.25%; hard max risk/trade: 0.50%; maximum simultaneous open risk: 1.00%; daily realized-loss halt: 1.50% of UTC day-start realized risk equity.
+
+Consequences: Phase 4 is ACTIVE for sequential baseline research. Development and validation may run only under the predeclared protocol; the final test remains untouched. Phase 5 remains unstarted, real-money trading remains locked, and DEC-008 remains unchanged.
