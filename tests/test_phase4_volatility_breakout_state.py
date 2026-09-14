@@ -34,15 +34,15 @@ class VolatilityBreakoutStateTests(unittest.TestCase):
         self.assertIn("+6.5350%", evidence)
         self.assertIn("+3.2953%", evidence)
 
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("experiment status: PASS", state)
         self.assertIn("DEC-025 APPROVED", state)
         self.assertIn("USDJPY 15m", state)
         self.assertIn("USDJPY 1h / 2.0x", state)
         self.assertIn("session high/low sweep-rejection", state.lower())
         self.assertIn("final-test", state.lower())
-        self.assertIn("## Phase 5 — UNSTARTED", state)
-        self.assertIn("Real-money trading remains locked", state)
+        self.assertIn("## Phase 5 — ACTIVE", state)
+        self.assertIn("Real-money trading: locked", state)
 
 
 if __name__ == "__main__":

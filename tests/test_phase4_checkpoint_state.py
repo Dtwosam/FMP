@@ -16,10 +16,10 @@ class Phase4CheckpointStateTests(unittest.TestCase):
         self.assertIn("tests run `34903338560`", evidence)
         self.assertIn("Phase 3 acceptance run `34903338538`", evidence)
         self.assertIn("## Phase 4 — PASS", state)
-        self.assertIn("## Phase 5 — UNSTARTED", state)
+        self.assertIn("## Phase 5 — ACTIVE", state)
         self.assertIn("final-test data remains locked", state.lower())
-        self.assertIn("Real-money trading remains locked", state)
-        self.assertNotIn("## Phase 5 — ACTIVE", state)
+        self.assertIn("Real-money trading: locked", state)
+        self.assertIn("## Phase 5 — ACTIVE", state)
 
 
 if __name__ == "__main__":

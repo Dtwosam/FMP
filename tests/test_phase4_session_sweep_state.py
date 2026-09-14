@@ -30,15 +30,15 @@ class SessionSweepStateTests(unittest.TestCase):
         self.assertIn("-15.4056%", evidence)
         self.assertIn("Final-test touched?: NO", evidence)
 
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("experiment status: FAIL", state)
         self.assertIn("DEC-027 APPROVED", state)
         self.assertIn("All six planned baseline families have complete benchmark evidence and experiment-log entries", state)
         self.assertIn("USDJPY 15m", state)
         self.assertIn("USDJPY 1h / 2.0x", state)
         self.assertIn("final-test", state.lower())
-        self.assertIn("## Phase 5 — UNSTARTED", state)
-        self.assertIn("Real-money trading remains locked", state)
+        self.assertIn("## Phase 5 — ACTIVE", state)
+        self.assertIn("Real-money trading: locked", state)
 
 
 if __name__ == "__main__":

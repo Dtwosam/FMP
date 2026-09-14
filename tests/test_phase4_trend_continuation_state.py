@@ -72,8 +72,8 @@ class Phase4TrendContinuationStateTests(unittest.TestCase):
 
     def test_project_state_keeps_phase4_active_and_session_candidate_frozen(self) -> None:
         text = read("docs/project-state.md")
-        self.assertIn("**Current phase:** Phase 4 — Baseline Strategy Research", text)
-        self.assertIn("**Phase status:** PASS", text)
+        self.assertIn("**Current phase:** Phase 5 — Leakage-Safe Feature Engineering", text)
+        self.assertIn("**Phase status:** ACTIVE", text)
         self.assertIn("EXP-20260914-001 — Session breakout baseline", text)
         self.assertIn("USDJPY 15m, 5-pip breakout buffer, 1.5x target-range multiple", text)
         self.assertIn("EXP-20260914-002 — Trend continuation baseline", text)
@@ -81,8 +81,8 @@ class Phase4TrendContinuationStateTests(unittest.TestCase):
         self.assertIn("conclusion: REJECT", text)
         self.assertIn("mean reversion", text.lower())
         self.assertIn("Final-test touched: NO", text)
-        self.assertIn("## Phase 5 — UNSTARTED", text)
-        self.assertIn("Real-money trading remains locked", text)
+        self.assertIn("## Phase 5 — ACTIVE", text)
+        self.assertIn("Real-money trading: locked", text)
         self.assertIn("DEC-008 remains unchanged", text)
 
 
