@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 2 — Validation, Normalization & Derived Bars  
-**Phase status:** ACCEPTANCE_REVIEW_PASS_CHECKPOINT_PENDING  
-**Next milestone:** create checkpoint `fmp-v1-phase2-normalized-data`, record formal Phase 2 PASS, and keep Phase 3 unstarted until the next approved implementation slice
+**Phase status:** PASS  
+**Next milestone:** Phase 3 — Backtesting Engine remains unstarted until the next approved implementation slice
 
 ## Current baseline
 
@@ -39,7 +39,7 @@ Phase 1 is closed for the frozen three-pair snapshot. Final acceptance establish
 
 Phase 1 acceptance proves acquisition completeness and immutable provenance only. No further acquisition is required unless later evidence demonstrates an integrity defect.
 
-## Phase 2 — ACCEPTANCE REVIEW PASS
+## Phase 2 — PASS
 
 The canonical-data foundation and exhaustive authenticated cloud-read materialization are complete. The detailed acceptance record is `docs/phase2-acceptance-evidence.md`.
 
@@ -90,8 +90,12 @@ Outlier findings remain recorded as telemetry and were not silently removed or r
 
 The Phase 2 acceptance review against `docs/data-spec.md` and `docs/build-order.md` is PASS. Canonical/schema, quote-sanity, duplicate/missing-timestamp, deterministic resampling boundary, weekend-gap, DST-sensitive utility, ledger, workflow-guard, and real Parquet materialization tests were green on the merged implementation and post-merge main CI.
 
-## Remaining Phase 2 closure action
+### Checkpoint
 
-Create checkpoint `fmp-v1-phase2-normalized-data` if checkpoints are represented by Git tags/refs. After that administrative checkpoint exists, record formal Phase 2 status as PASS.
+- checkpoint: `fmp-v1-phase2-normalized-data`
+- checkpoint commit: `80e763c46fc365d48922fb37de1a70dfe188de70`
+- checkpoint contains the exhaustive acceptance evidence and DEC-015 acceptance review
+
+Phase 2 is formally closed as PASS.
 
 Phase 3 — Backtesting Engine — has **not started**.
