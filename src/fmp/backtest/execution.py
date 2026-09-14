@@ -208,6 +208,31 @@ def evaluate_exit(
     return None
 
 
+def close_time_exit(
+    position: Position,
+    bar: QuoteBar,
+    *,
+    slippage_pips: float,
+    commission_model: CommissionModel,
+    financing_model: FinancingModel,
+) -> ExitFill:
+    if position.symbol != bar.symbol:
+        raise ValueError("position symbol does not match quote bar")
+    if bar.timestamp_utc < position.entry_timestamp_utc:
+        raise ValueError("time-exit bar cannot precede position entry")
+    reference = bar.bid_open if position.direction is Direction.LONG else bar.ask_open
+    return _make_exit_fill(
+        position,
+        bar,
+        reference_price=reference,
+        reason=ExitReason.TIME_EXIT,
+        intrabar_ambiguous=False,
+        slippage_pips=slippage_pips,
+        commission_model=commission_model,
+        financing_model=financing_model,
+    )
+
+
 def close_end_of_data(
     position: Position,
     bar: QuoteBar,
