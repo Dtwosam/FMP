@@ -32,7 +32,7 @@ state = state_path.read_text(encoding="utf-8")
 replacements = [
     (
         "**Current phase:** Phase 4 — Baseline Strategy Research  \n**Phase status:** ACTIVE  \n**Next milestone:** Complete the Phase 4 acceptance/checkpoint review now that all six planned baseline families are benchmarked; both serious candidates remain frozen unchanged and final-test data remains locked",
-        "**Current phase:** Phase 4 — Baseline Strategy Research  \n**Phase status:** PASS  \n**Next milestone:** Create checkpoint `fmp-v1-phase4-baselines` at the verified acceptance-closure commit, then begin a separate Phase 5 leakage-safe feature-engine design; final-test data remains locked",
+        "**Current phase:** Phase 4 — Baseline Strategy Research  \n**Phase status:** PASS\n**Next milestone:** Create checkpoint `fmp-v1-phase4-baselines` at the verified acceptance-closure commit, then begin a separate Phase 5 leakage-safe feature-engine design; final-test data remains locked",
     ),
     (
         "## Phase 4 — ACTIVE",
