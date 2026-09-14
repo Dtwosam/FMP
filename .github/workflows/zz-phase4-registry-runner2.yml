@@ -1,0 +1,38 @@
+name: zz-phase4-registry-runner2
+
+on:
+  push:
+    branches:
+      - phase4-registry-completion
+    paths:
+      - .github/workflows/zz-phase4-registry-runner2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: phase4-registry-completion
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Apply registry completion
+        run: python scripts/_phase4_registry_completion_once.py
+      - name: Verify registry completion
+        run: |
+          git diff --check
+          python -m unittest discover -s tests -p 'test_phase4_experiment_registry_state.py' -v
+          grep -q 'EXP-20260914-006' docs/experiment-log.md
+          grep -q 'DEC-025 — APPROVED' docs/phase4-volatility-breakout-evidence.md
+          grep -q 'DEC-027 — APPROVED' docs/phase4-session-sweep-rejection-evidence.md
+      - name: Commit docs and tests only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/experiment-log.md docs/phase4-volatility-breakout-evidence.md docs/phase4-session-sweep-rejection-evidence.md tests/test_phase4_experiment_registry_state.py
+          git commit -m '[phase1-no-source] Complete Phase 4 experiment registry'
+          git push origin HEAD:phase4-registry-completion
