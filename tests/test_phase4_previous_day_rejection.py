@@ -50,18 +50,20 @@ def _reference_bars(
     *,
     timeframe_minutes: int = 60,
     symbol: str = "EURUSD",
-    high: float = 1.1100,
-    low: float = 1.0900,
+    high: float | None = None,
+    low: float | None = None,
 ) -> list[QuoteBar]:
+    center = 150.0000 if symbol == "USDJPY" else 1.1000
+    high = center + (0.10 if symbol == "USDJPY" else 0.0100) if high is None else high
+    low = center - (0.10 if symbol == "USDJPY" else 0.0100) if low is None else low
     start, end = previous_completed_ny_session_bounds(london_day)
     bars: list[QuoteBar] = []
     current = start
     index = 0
     while current < end:
-        close = 1.1000
-        bar_high = high if index == 3 else close
-        bar_low = low if index == 7 else close
-        bars.append(_bar(current, close=close, high=bar_high, low=bar_low, symbol=symbol))
+        bar_high = high if index == 3 else center
+        bar_low = low if index == 7 else center
+        bars.append(_bar(current, close=center, high=bar_high, low=bar_low, symbol=symbol))
         current += timedelta(minutes=timeframe_minutes)
         index += 1
     return bars
@@ -74,19 +76,23 @@ def _signal_session_bars(
     buffer_pips: int = 0,
     symbol: str = "EURUSD",
 ) -> list[QuoteBar]:
-    pip = 0.0001 if symbol != "USDJPY" else 0.01
+    pip = 0.01 if symbol == "USDJPY" else 0.0001
+    center = 150.0000 if symbol == "USDJPY" else 1.1000
+    previous_high = center + (0.10 if symbol == "USDJPY" else 0.0100)
+    previous_low = center - (0.10 if symbol == "USDJPY" else 0.0100)
+    inside = 0.01 if symbol == "USDJPY" else 0.0010
     bars: list[QuoteBar] = []
     previous_label = _local_utc(london_day, 7, zone=LONDON)
-    bars.append(_bar(previous_label, close=1.1000, symbol=symbol))
+    bars.append(_bar(previous_label, close=center, symbol=symbol))
     for hour in range(8, 17):
         ts = _local_utc(london_day, hour, zone=LONDON)
         if hour == 8 and signal_direction is Direction.SHORT:
             bars.append(
                 _bar(
                     ts,
-                    close=1.1090,
-                    high=1.1100 + buffer_pips * pip,
-                    low=1.1080,
+                    close=previous_high - inside,
+                    high=previous_high + buffer_pips * pip,
+                    low=previous_high - 2 * inside,
                     symbol=symbol,
                 )
             )
@@ -94,14 +100,14 @@ def _signal_session_bars(
             bars.append(
                 _bar(
                     ts,
-                    close=1.0910,
-                    high=1.0920,
-                    low=1.0900 - buffer_pips * pip,
+                    close=previous_low + inside,
+                    high=previous_low + 2 * inside,
+                    low=previous_low - buffer_pips * pip,
                     symbol=symbol,
                 )
             )
         else:
-            bars.append(_bar(ts, close=1.1000, symbol=symbol))
+            bars.append(_bar(ts, close=center, symbol=symbol))
     return bars
 
 
@@ -134,6 +140,14 @@ class PreviousDayRejectionTests(unittest.TestCase):
         self.assertEqual(end.astimezone(NEW_YORK).hour, 17)
         self.assertEqual(start.astimezone(NEW_YORK).date(), date(2021, 3, 11))
         self.assertEqual(start.astimezone(NEW_YORK).hour, 17)
+
+    def test_new_york_dst_keeps_reference_boundary_at_local_1700(self) -> None:
+        london_day = date(2021, 3, 16)
+        start, end = previous_completed_ny_session_bounds(london_day)
+        self.assertEqual(start, datetime(2021, 3, 14, 21, 0, tzinfo=timezone.utc))
+        self.assertEqual(end, datetime(2021, 3, 15, 21, 0, tzinfo=timezone.utc))
+        self.assertEqual(start.astimezone(NEW_YORK).hour, 17)
+        self.assertEqual(end.astimezone(NEW_YORK).hour, 17)
 
     def test_short_rejection_uses_previous_day_high_signal_wick_and_close_back_inside(self) -> None:
         day = date(2021, 3, 16)
@@ -168,6 +182,23 @@ class PreviousDayRejectionTests(unittest.TestCase):
         self.assertAlmostEqual(candidate.stop_price, 1.0895)
         self.assertAlmostEqual(candidate.target_price, 1.1000)
 
+    def test_usdjpy_uses_jpy_pip_size_for_penetration_buffer(self) -> None:
+        day = date(2021, 3, 17)
+        config = PreviousDayRejectionConfig(buffer_pips=2, timeframe="1h")
+        bars = _reference_bars(day, symbol="USDJPY") + _signal_session_bars(
+            day,
+            signal_direction=Direction.SHORT,
+            buffer_pips=2,
+            symbol="USDJPY",
+        )
+        candidate = _candidate_for_day(
+            generate_previous_day_rejection_candidates(bars, config=config), day
+        )
+        self.assertIs(candidate.direction, Direction.SHORT)
+        self.assertAlmostEqual(candidate.metadata["previous_day_high"], 150.10)
+        self.assertAlmostEqual(candidate.stop_price, 150.12)
+        self.assertAlmostEqual(candidate.target_price, 150.00)
+
     def test_missing_reference_bar_fails_closed_with_reasoned_no_trade(self) -> None:
         day = date(2021, 3, 18)
         config = PreviousDayRejectionConfig(buffer_pips=0, timeframe="1h")
@@ -179,6 +210,23 @@ class PreviousDayRejectionTests(unittest.TestCase):
         candidate = _candidate_for_day(candidates, day)
         self.assertIs(candidate.direction, Direction.NO_TRADE)
         self.assertEqual(candidate.reason_code, "INCOMPLETE_REFERENCE_SESSION")
+        self.assertEqual(candidate.metadata["missing_timestamp_utc"], missing)
+
+    def test_missing_signal_session_bar_fails_closed_with_reasoned_no_trade(self) -> None:
+        day = date(2021, 3, 18)
+        config = PreviousDayRejectionConfig(buffer_pips=0, timeframe="1h")
+        signal = _signal_session_bars(day, signal_direction=None)
+        missing = _local_utc(day, 12, zone=LONDON)
+        signal = [bar for bar in signal if bar.timestamp_utc != missing]
+        candidate = _candidate_for_day(
+            generate_previous_day_rejection_candidates(
+                _reference_bars(day) + signal,
+                config=config,
+            ),
+            day,
+        )
+        self.assertIs(candidate.direction, Direction.NO_TRADE)
+        self.assertEqual(candidate.reason_code, "INCOMPLETE_SIGNAL_SESSION")
         self.assertEqual(candidate.metadata["missing_timestamp_utc"], missing)
 
     def test_complete_session_without_rejection_emits_no_rejection(self) -> None:
