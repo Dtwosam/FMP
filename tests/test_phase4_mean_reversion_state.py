@@ -23,11 +23,11 @@ class MeanReversionStateTests(unittest.TestCase):
         self.assertIn("87003a3982ca61eb6fd030c5291616d98dbb0c1a", record)
         self.assertIn("34875463677", record)
         self.assertIn("Conclusion: REJECT", record)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("previous-day high/low rejection", state.lower())
         self.assertIn("final-test", state.lower())
-        self.assertIn("## Phase 5 — UNSTARTED", state)
-        self.assertIn("Real-money trading remains locked", state)
+        self.assertIn("## Phase 5 — ACTIVE", state)
+        self.assertIn("Real-money trading: locked", state)
 
 
 if __name__ == "__main__":

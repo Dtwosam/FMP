@@ -23,13 +23,13 @@ class PreviousDayRejectionStateTests(unittest.TestCase):
         self.assertIn("AMBIGUOUS_DUAL_REJECTION", record)
         self.assertIn("No post-result parameter expansion", record)
 
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("EXP-20260914-004", state)
         self.assertIn("previous-day high/low rejection", state.lower())
         self.assertIn("USDJPY 15m", state)
         self.assertIn("final-test", state.lower())
-        self.assertIn("## Phase 5 — UNSTARTED", state)
-        self.assertIn("Real-money trading remains locked", state)
+        self.assertIn("## Phase 5 — ACTIVE", state)
+        self.assertIn("Real-money trading: locked", state)
 
 
 if __name__ == "__main__":
