@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 4 — Baseline Strategy Research  
 **Phase status:** PASS
-**Next milestone:** Create checkpoint `fmp-v1-phase4-baselines` at the verified acceptance-closure commit, then begin a separate Phase 5 leakage-safe feature-engine design; final-test data remains locked
+**Next milestone:** Begin a separate Phase 5 leakage-safe feature-engine design from the frozen Phase 4 checkpoint; final-test data remains locked
 
 ## Current baseline
 
@@ -232,7 +232,7 @@ The session-breakout candidate remains frozen unchanged while subsequent baselin
 - no session sweep-rejection candidate is promoted and no post-result parameter expansion or rescue rule is authorized
 
 
-Phase 4 is formally PASS under DEC-028. All six planned baseline families have complete benchmark evidence and experiment-log entries. Two serious research candidates remain frozen unchanged: the EXP-001 USDJPY 15m / 5-pip / 1.5x session-breakout point and the EXP-005 USDJPY 1h / 2.0x / fixed-1.0R volatility-breakout point. EXP-002, EXP-003, EXP-004, and EXP-006 remain FAIL / REJECT. Detailed acceptance evidence is `docs/phase4-acceptance-evidence.md`. The final-test period remains locked. Checkpoint `fmp-v1-phase4-baselines` is created only after the merged acceptance closure passes post-merge verification.
+Phase 4 is formally PASS under DEC-028. All six planned baseline families have complete benchmark evidence and experiment-log entries. Two serious research candidates remain frozen unchanged: the EXP-001 USDJPY 15m / 5-pip / 1.5x session-breakout point and the EXP-005 USDJPY 1h / 2.0x / fixed-1.0R volatility-breakout point. EXP-002, EXP-003, EXP-004, and EXP-006 remain FAIL / REJECT. Detailed acceptance evidence is `docs/phase4-acceptance-evidence.md`. The final-test period remains locked. Phase 4 checkpoint: `fmp-v1-phase4-baselines` at `115bb8080e951db16ca1a1174227ffa181a03d1b`; post-merge tests `34903338560` SUCCESS and Phase 3 acceptance `34903338538` SUCCESS.
 
 ## Phase 5 — UNSTARTED
 
