@@ -28,6 +28,7 @@ Active decision index:
 - DEC-020 — Phase 4 mean-reversion baseline protocol — APPROVED
 - DEC-021 — Phase 4 mean-reversion experiment outcome — APPROVED
 - DEC-022 — Phase 4 previous-day high/low rejection baseline protocol — APPROVED
+- DEC-023 — Phase 4 previous-day high/low rejection experiment outcome — APPROVED
 
 ## DEC-014 — Phase 1 frozen snapshot accepted
 
@@ -205,3 +206,16 @@ The fourth sequential Phase 4 family is the deterministic New-York-close previou
 - Normal tooling for this experiment cannot access the final 2024-01-01 through 2026-08-20 test split.
 
 Consequences: `EXP-20260914-004` may run only after this protocol and implementation are merged to `main`. The frozen USDJPY 15m session-breakout candidate remains unchanged. Phase 4 remains ACTIVE; Phase 5, final-test access, broker/live integration, and real-money trading remain locked; DEC-008 remains unchanged.
+
+## DEC-023 — Phase 4 previous-day high/low rejection experiment outcome
+
+**Date:** 2026-09-14  
+**Status:** APPROVED
+
+Merged-main previous-day rejection benchmark run `34883815436` on exact implementation commit `7db3a747236942fa393521e5866e3245d1a22a99` completed successfully. All 18 pair/timeframe/split cells succeeded and all 162 frozen configuration rows were independently verified with zero ZIP, manifest, code/data identity, split, grid, candidate-reuse, accounting, or cost/risk identity errors. The final-test split was not used.
+
+At the frozen 0.2-pip baseline gate, exactly one of 27 pair/timeframe/buffer points survived: USDJPY 5m / 5-pip penetration buffer. Development was +4.0039% net return, +$138.0644 expectancy/trade, PF 1.9002 on 29 trades. Validation was only +0.0657%, +$2.3461 expectancy/trade, PF 1.0133 on 28 trades.
+
+The survivor fails the predeclared robustness review. At 0.5-pip adverse slippage validation turns negative (-0.2343%, -$8.3685 expectancy/trade, PF 0.9547); both neighboring 0- and 2-pip buffers are negative on both development and validation; validation is negative in 2021 and 2022 and positive only in 2023; and the top three winners contribute about 85.38% of validation positive R. No post-result widening, alternate buffer search, or rescue rule is authorized.
+
+Consequences: `EXP-20260914-004` is FAIL / REJECT; no previous-day high/low rejection candidate is promoted. The frozen USDJPY 15m session-breakout candidate remains unchanged. Phase 4 remains ACTIVE and the next baseline family is the distinct session high/low sweep/rejection family, whose protocol must be separately predeclared before any result-producing implementation or benchmark. The final-test period, Phase 5, broker/live integration, and real-money trading remain locked; DEC-008 remains unchanged. Detailed evidence is in `docs/phase4-previous-day-rejection-evidence.md`.
