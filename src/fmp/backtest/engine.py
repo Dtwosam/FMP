@@ -11,6 +11,7 @@ from fmp.backtest.costs import CommissionModel, FinancingModel
 from fmp.backtest.execution import (
     ExitFill,
     close_end_of_data,
+    close_time_exit,
     entry_reference_price,
     evaluate_exit,
     fill_entry,
@@ -25,6 +26,7 @@ from fmp.contracts import (
     QuoteBar,
     RejectionCode,
     RejectionRecord,
+    ScheduledExit,
     TradeRecord,
     validate_decisions,
     validate_quote_bars,
@@ -98,8 +100,11 @@ def _rejection(
     )
 
 
-def _run_identity(config: BacktestConfig) -> dict[str, object]:
-    return {
+def _run_identity(
+    config: BacktestConfig,
+    scheduled_exits: Sequence[ScheduledExit],
+) -> dict[str, object]:
+    identity: dict[str, object] = {
         "backtest_engine_version": BACKTEST_ENGINE_VERSION,
         "code_commit": config.code_commit,
         "processed_data_manifest_id": config.processed_data_manifest_id,
@@ -114,6 +119,45 @@ def _run_identity(config: BacktestConfig) -> dict[str, object]:
         "financing_model": dict(config.financing_model.to_config()),
         "decision_config": dict(config.decision_config),
     }
+    if scheduled_exits:
+        identity["scheduled_exits"] = [
+            {
+                "decision_id": item.decision_id,
+                "symbol": item.symbol,
+                "timestamp_utc": item.timestamp_utc,
+            }
+            for item in sorted(
+                scheduled_exits,
+                key=lambda value: (value.timestamp_utc, value.symbol, value.decision_id),
+            )
+        ]
+    return identity
+
+
+def _scheduled_exit_map(
+    decisions: Sequence[Decision],
+    scheduled_exits: Sequence[ScheduledExit],
+) -> dict[str, ScheduledExit]:
+    decisions_by_id = {decision.decision_id: decision for decision in decisions}
+    mapped: dict[str, ScheduledExit] = {}
+    for scheduled_exit in scheduled_exits:
+        if scheduled_exit.decision_id in mapped:
+            raise ValueError(f"duplicate scheduled exit for decision {scheduled_exit.decision_id!r}")
+        decision = decisions_by_id.get(scheduled_exit.decision_id)
+        if decision is None:
+            raise ValueError(
+                f"scheduled exit references unknown decision {scheduled_exit.decision_id!r}"
+            )
+        if decision.direction is Direction.NO_TRADE:
+            raise ValueError("scheduled exit requires a directional decision")
+        if scheduled_exit.symbol != decision.symbol:
+            raise ValueError("scheduled exit symbol does not match decision symbol")
+        earliest = decision.earliest_executable_timestamp_utc
+        assert earliest is not None
+        if scheduled_exit.timestamp_utc <= earliest:
+            raise ValueError("scheduled exit must be after the earliest executable timestamp")
+        mapped[scheduled_exit.decision_id] = scheduled_exit
+    return mapped
 
 
 def run_backtest(
@@ -121,9 +165,11 @@ def run_backtest(
     bars: Sequence[QuoteBar],
     decisions: Sequence[Decision],
     config: BacktestConfig,
+    scheduled_exits: Sequence[ScheduledExit] = (),
 ) -> BacktestRun:
     validate_quote_bars(bars)
     validate_decisions(decisions)
+    scheduled_exit_by_decision = _scheduled_exit_map(decisions, scheduled_exits)
     if not bars:
         raise ValueError("backtest requires at least one quote bar")
 
@@ -264,12 +310,27 @@ def run_backtest(
         timestamp_bars = bars_by_timestamp[timestamp]
 
         # Existing positions exit before any new entries at the same timestamp.
+        # A declared time exit executes at the bar open before intrabar stop/target
+        # reachability is considered for that same bar.
         for position_id in sorted(tuple(open_positions)):
             position = open_positions.get(position_id)
             if position is None:
                 continue
             bar = timestamp_bars.get(position.symbol)
             if bar is None:
+                continue
+            scheduled_exit = scheduled_exit_by_decision.get(position.decision_id)
+            if scheduled_exit is not None and scheduled_exit.timestamp_utc == timestamp:
+                finalize_position(
+                    position,
+                    close_time_exit(
+                        position,
+                        bar,
+                        slippage_pips=config.slippage_pips,
+                        commission_model=config.commission_model,
+                        financing_model=config.financing_model,
+                    ),
+                )
                 continue
             exit_fill = evaluate_exit(
                 position,
@@ -385,7 +446,7 @@ def run_backtest(
         equity_checkpoints=equity_checkpoints,
     )
     return BacktestRun(
-        run_identity=_run_identity(config),
+        run_identity=_run_identity(config, scheduled_exits),
         trades=tuple(trades),
         rejections=tuple(rejections),
         equity_checkpoints=tuple(equity_checkpoints),
