@@ -34,7 +34,7 @@ class Phase4MeanReversionEvidenceStateTests(unittest.TestCase):
     def test_project_state_keeps_phase4_active_and_session_candidate_frozen(self):
         state = (ROOT / "docs" / "project-state.md").read_text(encoding="utf-8")
         self.assertIn("**Current phase:** Phase 4 — Baseline Strategy Research", state)
-        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("EXP-20260914-003", state)
         self.assertIn("experiment status: FAIL", state)
         self.assertIn("conclusion: REJECT", state)

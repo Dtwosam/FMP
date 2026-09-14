@@ -23,7 +23,7 @@ class PreviousDayRejectionStateTests(unittest.TestCase):
         self.assertIn("AMBIGUOUS_DUAL_REJECTION", record)
         self.assertIn("No post-result parameter expansion", record)
 
-        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("EXP-20260914-004", state)
         self.assertIn("previous-day high/low rejection", state.lower())
         self.assertIn("USDJPY 15m", state)

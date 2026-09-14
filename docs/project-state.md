@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 4 — Baseline Strategy Research  
-**Phase status:** ACTIVE  
-**Next milestone:** Complete the Phase 4 acceptance/checkpoint review now that all six planned baseline families are benchmarked; both serious candidates remain frozen unchanged and final-test data remains locked
+**Phase status:** PASS
+**Next milestone:** Create checkpoint `fmp-v1-phase4-baselines` at the verified acceptance-closure commit, then begin a separate Phase 5 leakage-safe feature-engine design; final-test data remains locked
 
 ## Current baseline
 
@@ -76,9 +76,9 @@ Detailed acceptance evidence is `docs/phase3-acceptance-evidence.md`; DEC-016 fr
 
 Phase 3 is formally closed as PASS.
 
-## Phase 4 — ACTIVE
+## Phase 4 — PASS
 
-DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact shared cost assumptions, and unchanged Phase 3 risk settings. DEC-019 freezes the completed trend-continuation family-specific protocol, DEC-020 freezes the completed mean-reversion family-specific protocol, DEC-021 records the mean-reversion rejection, DEC-022 freezes the previous-day high/low rejection protocol, DEC-023 records the EXP-004 FAIL / REJECT outcome, DEC-024 freezes the EXP-005 rolling volatility-breakout protocol, DEC-025 records the EXP-005 PASS / PROMOTE outcome, and DEC-026 freezes the EXP-006 session high/low sweep-rejection protocol and DEC-027 records the EXP-006 FAIL / REJECT outcome; DEC-018 remains authoritative for shared research rules.
+DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact shared cost assumptions, and unchanged Phase 3 risk settings. DEC-019 freezes the completed trend-continuation family-specific protocol, DEC-020 freezes the completed mean-reversion family-specific protocol, DEC-021 records the mean-reversion rejection, DEC-022 freezes the previous-day high/low rejection protocol, DEC-023 records the EXP-004 FAIL / REJECT outcome, DEC-024 freezes the EXP-005 rolling volatility-breakout protocol, DEC-025 records the EXP-005 PASS / PROMOTE outcome, DEC-026 freezes the EXP-006 session high/low sweep-rejection protocol, DEC-027 records the EXP-006 FAIL / REJECT outcome, and DEC-028 records the Phase 4 PASS acceptance review; DEC-018 remains authoritative for shared research rules.
 
 ### EXP-20260914-001 — Session breakout baseline
 
@@ -232,10 +232,10 @@ The session-breakout candidate remains frozen unchanged while subsequent baselin
 - no session sweep-rejection candidate is promoted and no post-result parameter expansion or rescue rule is authorized
 
 
-Phase 4 remains ACTIVE pending its explicit acceptance/checkpoint review. All six planned baseline families are now complete. Two serious research candidates remain frozen unchanged: the EXP-001 USDJPY 15m / 5-pip / 1.5x session-breakout point and the EXP-005 USDJPY 1h / 2.0x / fixed-1.0R volatility-breakout point. EXP-004 and EXP-006 remain FAIL / REJECT. The Phase 4 baseline acceptance gate can now be reviewed against the approved project source; this status does not authorize final-test access. The final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created until the acceptance closure is merged.
+Phase 4 is formally PASS under DEC-028. All six planned baseline families have complete benchmark evidence and experiment-log entries. Two serious research candidates remain frozen unchanged: the EXP-001 USDJPY 15m / 5-pip / 1.5x session-breakout point and the EXP-005 USDJPY 1h / 2.0x / fixed-1.0R volatility-breakout point. EXP-002, EXP-003, EXP-004, and EXP-006 remain FAIL / REJECT. Detailed acceptance evidence is `docs/phase4-acceptance-evidence.md`. The final-test period remains locked. Checkpoint `fmp-v1-phase4-baselines` is created only after the merged acceptance closure passes post-merge verification.
 
 ## Phase 5 — UNSTARTED
 
-Phase 5 has not started. No ML/feature-engine promotion is authorized by the Phase 4 baseline work completed so far.
+Phase 5 is the next project phase but has not started. It may begin only as separate leakage-safe feature-engine work under the approved project source. Phase 4 PASS does not authorize final-test inspection, broker/live integration, or real-money trading.
 
 Real-money trading remains locked; DEC-008 remains unchanged.
