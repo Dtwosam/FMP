@@ -1,9 +1,7 @@
 name: phase5-closure-patch-temp
 
 on:
-  push:
-    branches:
-      - phase5-feature-acceptance
+  pull_request:
     paths:
       - scripts/_phase5_closure_patch.py
       - .github/workflows/phase5-closure-patch-temp.yml
@@ -13,6 +11,7 @@ permissions:
 
 jobs:
   patch:
+    if: github.event.pull_request.number == 103
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
