@@ -69,4 +69,6 @@ def run_feature_generation(
         processed_manifest_sha256=loaded.processed_manifest_sha256,
         code_commit=code_commit,
         opened_months=loaded.opened_months,
+        requested_start=start,
+        requested_end_exclusive=end_exclusive,
     )
