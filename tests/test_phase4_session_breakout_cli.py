@@ -54,7 +54,7 @@ class Phase4SessionBreakoutCliTests(unittest.TestCase):
         self.assertNotEqual(completed.returncode, 0)
         self.assertIn("invalid choice", completed.stderr)
         self.assertIn("final", completed.stderr)
-        self.assertNotIn("manifest", completed.stderr.lower())
+        self.assertNotIn("No such file or directory", completed.stderr)
 
     def test_script_delegates_to_frozen_runner_and_writer_and_is_source_free(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
