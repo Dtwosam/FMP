@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -10,7 +10,13 @@ import polars as pl
 
 from fmp.data.phase2.artifacts import sha256_file, write_parquet_partition
 
-from .contracts import FEATURE_SET_VERSION, FINAL_SOURCE_END_EXCLUSIVE, validate_symbol, validate_timeframe
+from .contracts import (
+    FEATURE_SET_VERSION,
+    FINAL_SOURCE_END_EXCLUSIVE,
+    validate_source_range,
+    validate_symbol,
+    validate_timeframe,
+)
 from .schema import FEATURE_COLUMNS, FEATURE_VALUE_COLUMNS
 
 
@@ -49,15 +55,22 @@ def write_feature_artifacts(
     processed_manifest_sha256: str,
     code_commit: str,
     opened_months: Iterable[str],
+    requested_start: date,
+    requested_end_exclusive: date,
 ) -> dict[str, object]:
     validate_symbol(symbol)
     validate_timeframe(timeframe)
+    validate_source_range(requested_start, requested_end_exclusive)
     if features.is_empty():
         raise ValueError("cannot write empty Phase 5 feature dataset")
     if tuple(features.columns) != FEATURE_COLUMNS:
         raise ValueError("Phase 5 feature frame does not match frozen schema")
     if set(features["symbol"].to_list()) != {symbol} or set(features["timeframe"].to_list()) != {timeframe}:
         raise ValueError("Phase 5 feature artifact identity mismatch")
+    if set(features["feature_set_version"].to_list()) != {FEATURE_SET_VERSION}:
+        raise ValueError("Phase 5 feature-set identity mismatch")
+    if set(features["processed_manifest_sha256"].to_list()) != {processed_manifest_sha256}:
+        raise ValueError("Phase 5 processed manifest identity mismatch")
     boundary = _locked_boundary_utc()
     if features.filter(pl.col("available_at_utc") >= boundary).height:
         raise ValueError("Phase 5 final-test lock: refusing feature output reaching 2024-01-01")
@@ -108,6 +121,10 @@ def write_feature_artifacts(
         "processed_manifest_sha256": processed_manifest_sha256,
         "symbol": symbol,
         "timeframe": timeframe,
+        "generation_parameters": {
+            "requested_start": requested_start.isoformat(),
+            "requested_end_exclusive": requested_end_exclusive.isoformat(),
+        },
         "opened_source_months": list(months),
         "output_start_utc": _iso(first_start),
         "output_end_utc": _iso(last_end),
