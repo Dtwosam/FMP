@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 3 — Backtesting Engine  
-**Phase status:** ACCEPTANCE PASS — CHECKPOINT PENDING  
-**Next milestone:** create checkpoint `fmp-v1-phase3-backtester` at the verified acceptance-closure commit, then mark Phase 3 formally PASS
+**Phase status:** PASS  
+**Next milestone:** Phase 4 remains unstarted; no Phase 4 work begins until separately authorized
 
 ## Current baseline
 
@@ -98,9 +98,9 @@ The Phase 2 acceptance review against `docs/data-spec.md` and `docs/build-order.
 
 Phase 2 is formally closed as PASS.
 
-## Phase 3 — ACCEPTANCE PASS / CHECKPOINT PENDING
+## Phase 3 — PASS
 
-The deterministic broker-independent backtesting engine implementation and merged-main acceptance runner are complete.
+The deterministic broker-independent backtesting engine is formally accepted and closed. Detailed acceptance evidence is `docs/phase3-acceptance-evidence.md`; frozen semantics are DEC-016 and the final acceptance review is DEC-017.
 
 ### Implementation and merged-main regression
 
@@ -121,8 +121,13 @@ The deterministic broker-independent backtesting engine implementation and merge
 - independent per-file manifest SHA/size verification: PASS
 - independent PnL, equity-checkpoint, rejection-code, and metrics recomputation: PASS with zero validation errors
 
-Detailed evidence is `docs/phase3-acceptance-evidence.md`. Frozen semantics remain in DEC-016 and the acceptance review is DEC-017.
+### Checkpoint
 
-The acceptance gate is PASS. Formal Phase 3 closure is intentionally not declared until checkpoint branch `fmp-v1-phase3-backtester` is created at the verified acceptance-closure commit.
+- checkpoint: `fmp-v1-phase3-backtester`
+- checkpoint commit: `7685ba73f18457d5d3945f2fea21ceba3de81cf1`
+- checkpoint contains `docs/phase3-acceptance-evidence.md` and DEC-017
+- checkpoint branch was independently read back and verified to resolve to the exact closure commit
+
+Phase 3 is formally closed as PASS at `fmp-v1-phase3-backtester`.
 
 Phase 4 has not started. Real-money trading remains locked under DEC-008.
