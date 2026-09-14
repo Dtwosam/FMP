@@ -27,6 +27,7 @@ jobs:
         run: |
           set -euo pipefail
           git diff --check
+          git add -N tests/test_phase5_feature_protocol_state.py
           git diff --name-only | sort > /tmp/changed.txt
           cat > /tmp/expected.txt <<'EOF'
           docs/decision-log.md
