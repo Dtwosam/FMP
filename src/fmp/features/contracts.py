@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 FEATURE_SET_VERSION = "fmp-feature-v1"
 PROCESSED_SCHEMA_VERSION = "fmp-canonical-1m-v1"
+SOURCE_START_INCLUSIVE = date(2015, 1, 1)
 FINAL_SOURCE_END_EXCLUSIVE = date(2024, 1, 1)
 SUPPORTED_SYMBOLS = ("EURUSD", "GBPUSD", "USDJPY")
 SUPPORTED_TIMEFRAMES = ("5m", "15m", "1h")
@@ -40,6 +41,8 @@ def pip_size(symbol: str) -> float:
 def validate_source_range(start: date, end_exclusive: date) -> None:
     if start >= end_exclusive:
         raise ValueError("Phase 5 source range must be non-empty")
+    if start < SOURCE_START_INCLUSIVE:
+        raise ValueError("Phase 5 source coverage may not start before 2015-01-01")
     if end_exclusive > FINAL_SOURCE_END_EXCLUSIVE:
         raise ValueError(
             "Phase 5 final-test lock: source coverage may not reach 2024-01-01 or later"
