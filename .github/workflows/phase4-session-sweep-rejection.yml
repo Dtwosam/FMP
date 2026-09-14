@@ -1,0 +1,152 @@
+name: phase4-session-sweep-rejection
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/fmp/research/session_sweep_rejection.py'
+      - 'src/fmp/strategies/session_sweep_rejection.py'
+      - 'scripts/phase4_session_sweep_rejection.py'
+      - '.github/workflows/phase4-session-sweep-rejection.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        dataset:
+          - symbol: EURUSD
+            artifact_id: '10325737935'
+            zip_sha256: db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3
+          - symbol: GBPUSD
+            artifact_id: '10326096831'
+            zip_sha256: fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2
+          - symbol: USDJPY
+            artifact_id: '10327600628'
+            zip_sha256: 6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72
+        timeframe: [5m, 15m, 1h]
+        split: [development, validation]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Download and verify accepted Phase 2 processed artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ matrix.dataset.artifact_id }}
+          EXPECTED_ZIP_SHA256: ${{ matrix.dataset.zip_sha256 }}
+          SYMBOL: ${{ matrix.dataset.symbol }}
+        run: |
+          set -euo pipefail
+          root=".phase2-accepted/${SYMBOL}"
+          zip_path=".phase2-accepted/${SYMBOL}.zip"
+          mkdir -p "${root}"
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
+            > "${zip_path}"
+          actual_sha256="$(sha256sum "${zip_path}" | awk '{print $1}')"
+          if [ "${actual_sha256}" != "${EXPECTED_ZIP_SHA256}" ]; then
+            echo "accepted Phase 2 artifact digest mismatch" >&2
+            exit 1
+          fi
+          unzip -q "${zip_path}" -d "${root}"
+
+      - name: Verify accepted processed manifest exists
+        env:
+          SYMBOL: ${{ matrix.dataset.symbol }}
+        run: |
+          set -euo pipefail
+          manifest=".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json"
+          test -f "${manifest}"
+
+      - name: Run frozen Phase 4 session sweep-rejection benchmark
+        env:
+          SYMBOL: ${{ matrix.dataset.symbol }}
+          TIMEFRAME: ${{ matrix.timeframe }}
+          SPLIT: ${{ matrix.split }}
+        run: |
+          set -euo pipefail
+          out=".phase4-session-sweep-rejection/${SYMBOL}-${TIMEFRAME}-${SPLIT}"
+          python scripts/phase4_session_sweep_rejection.py \
+            --dataset-root ".phase2-accepted/${SYMBOL}" \
+            --manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json" \
+            --symbol "${SYMBOL}" \
+            --timeframe "${TIMEFRAME}" \
+            --split "${SPLIT}" \
+            --out "${out}" \
+            --code-commit "${GITHUB_SHA}"
+
+      - name: Verify benchmark evidence identity
+        env:
+          SYMBOL: ${{ matrix.dataset.symbol }}
+          TIMEFRAME: ${{ matrix.timeframe }}
+          SPLIT: ${{ matrix.split }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          symbol = os.environ['SYMBOL']
+          timeframe = os.environ['TIMEFRAME']
+          split = os.environ['SPLIT']
+          root = Path('.phase4-session-sweep-rejection') / f'{symbol}-{timeframe}-{split}'
+          benchmark = json.loads((root / 'benchmark.json').read_text(encoding='utf-8'))
+          artifact_manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+          assert benchmark['protocol'] == 'fmp-phase4-session-sweep-rejection-grid-v1', benchmark
+          assert benchmark['family_id'] == 'session_sweep_rejection', benchmark
+          assert benchmark['symbol'] == symbol, benchmark
+          assert benchmark['timeframe'] == timeframe, benchmark
+          assert benchmark['split_name'] == split, benchmark
+          assert benchmark['code_commit'] == os.environ['GITHUB_SHA'], benchmark
+          assert len(benchmark['configuration_rows']) == 9, len(benchmark['configuration_rows'])
+          artifact_rows = benchmark['configuration_rows']
+          for buffer_pips in (0, 2, 5):
+              digests = {
+                  row['candidate_sha256']
+                  for row in artifact_rows
+                  if row['buffer_pips'] == buffer_pips
+              }
+              counts = {
+                  row['candidate_count']
+                  for row in artifact_rows
+                  if row['buffer_pips'] == buffer_pips
+              }
+              reasons = {
+                  json.dumps(row['candidate_reason_counts'], sort_keys=True, separators=(',', ':'))
+                  for row in artifact_rows
+                  if row['buffer_pips'] == buffer_pips
+              }
+              assert len(digests) == 1, (buffer_pips, digests)
+              assert len(counts) == 1, (buffer_pips, counts)
+              assert len(reasons) == 1, (buffer_pips, reasons)
+          assert artifact_manifest['protocol'] == 'fmp-phase4-benchmark-artifacts-v1', artifact_manifest
+          assert len(artifact_manifest['artifacts']) == 1, artifact_manifest
+          assert artifact_manifest['artifacts'][0]['path'] == 'benchmark.json', artifact_manifest
+          PY
+
+      - name: Upload Phase 4 session sweep-rejection evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase4-session-sweep-rejection-${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}-${{ matrix.split }}-${{ github.sha }}
+          path: .phase4-session-sweep-rejection/${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}-${{ matrix.split }}
+          include-hidden-files: true
+          if-no-files-found: error
