@@ -3,9 +3,9 @@
 **Updated:** 2026-09-14  
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
-**Current phase:** Phase 2 — Validation, Normalization & Derived Bars  
-**Phase status:** PASS  
-**Next milestone:** Phase 3 — Backtesting Engine remains unstarted until the next approved implementation slice
+**Current phase:** Phase 3 — Backtesting Engine  
+**Phase status:** ACTIVE  
+**Next milestone:** verify deterministic Phase 3 golden acceptance suite and inspect acceptance artifacts
 
 ## Current baseline
 
@@ -98,4 +98,12 @@ The Phase 2 acceptance review against `docs/data-spec.md` and `docs/build-order.
 
 Phase 2 is formally closed as PASS.
 
-Phase 3 — Backtesting Engine — has **not started**.
+## Phase 3 — ACTIVE
+
+The deterministic broker-independent backtesting engine is under implementation and acceptance review on PR #78. The current implementation includes frozen decision/quote contracts, stop-based sizing and portfolio risk controls, executable-side bid/ask fills, adverse slippage and explicit cost models, conservative intrabar/gap handling, chronological exit-before-entry processing, deterministic reporting, and golden hand-calculated acceptance scenarios.
+
+Frozen Phase 3 semantics are recorded in DEC-016. The latest pre-documentation implementation head passed the full repository test suite and both Phase 1 source-capable PR checks were skipped under `[phase1-no-source]`.
+
+Phase 3 is **not PASS** until the implementation is merged, deterministic acceptance artifacts from merged `main` are independently inspected, and checkpoint `fmp-v1-phase3-backtester` is created.
+
+Phase 4 has not started. Real-money trading remains locked.

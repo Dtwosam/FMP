@@ -21,6 +21,7 @@ Active decision index:
 - DEC-013 — No in-place cloud promotion of canonical `not_found` manifests — APPROVED
 - DEC-014 — Phase 1 frozen snapshot accepted — APPROVED
 - DEC-015 — Phase 2 exhaustive acceptance review — APPROVED
+- DEC-016 — Phase 3 backtester semantics — APPROVED
 
 ## DEC-014 — Phase 1 frozen snapshot accepted
 
@@ -47,3 +48,25 @@ USDJPY attempt 1 received one HTTP 401 from the read-only raw Edge Function; an 
 Checkpoint `fmp-v1-phase2-normalized-data` was created at verified acceptance commit `80e763c46fc365d48922fb37de1a70dfe188de70`.
 
 Consequences: Phase 2 is formally PASS and closed at `fmp-v1-phase2-normalized-data`; Phase 3 remains unstarted; DEC-008 remains unchanged. Detailed evidence is in `docs/phase2-acceptance-evidence.md`.
+
+## DEC-016 — Phase 3 backtester semantics
+
+**Date:** 2026-09-14  
+**Status:** APPROVED
+
+Phase 3 uses a deterministic, broker-independent backtesting engine over the accepted canonical bid/ask data. Its risk and execution semantics are frozen as follows:
+
+- Daily loss control uses UTC day-start **realized risk equity** as its basis.
+- Realized daily PnL at or below `-1.50%` of that basis blocks new entries for the remainder of the UTC date.
+- Existing positions are not force-closed solely because the daily-loss halt becomes active.
+- Existing-position exits are processed before new entries at the same timestamp, so released risk is immediately available to later same-timestamp decisions.
+- Simultaneous eligible decisions are ordered deterministically by `decision_id`.
+- LONG entries execute from ASK and LONG exits from BID; SHORT entries execute from BID and SHORT exits from ASK.
+- If both stop and target are reachable within a bar and the path is unresolved, STOP wins and the trade is marked intrabar-ambiguous.
+- An adverse stop gap uses the worse executable-side open; a favorable target gap receives no price improvement beyond the declared target.
+- End-of-data closure uses the final executable close side: BID close for LONG and ASK close for SHORT.
+- Slippage is adverse and accounted exactly once; commission and financing are explicit cost components.
+- USDJPY stop sizing converts quote-currency loss at the stop price, while realized USDJPY PnL converts at the executable exit price.
+- Backtest artifacts are deterministic and contain no runtime clock, hostname, UUID, or process metadata.
+
+These semantics grant no real-money permission and do not alter DEC-008. Phase 3 remains ACTIVE until merged-main golden acceptance artifacts are independently inspected and checkpoint `fmp-v1-phase3-backtester` is created. Phase 4 remains unstarted.
