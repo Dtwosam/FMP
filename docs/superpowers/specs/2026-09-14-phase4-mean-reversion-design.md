@@ -176,6 +176,8 @@ Absolute z-score thresholds are exactly:
 
 Combined with the three lookbacks, this produces exactly six strategy configurations per pair/timeframe.
 
+Only the **current** observation bar must have a London-local label inside the eligible 08:00–14:00 window. The previous z-score is always taken from the immediately preceding supplied bar at exact timeframe cadence; that previous bar may lie before 08:00 (for example 07:55 before an 08:00 5m signal). It must still be fully closed and have a valid reference window. This permits a fresh excursion that occurs exactly at the session boundary without treating a pre-session bar as an independently eligible signal bar.
+
 ### 8.2 LONG
 
 For threshold `k`, LONG requires a fresh lower-band excursion:
@@ -453,6 +455,8 @@ Implementation must proceed test-first and cover at minimum:
 
 - LONG requires previous z strictly above `-k` and current z at/below `-k`;
 - SHORT requires previous z strictly below `+k` and current z at/above `+k`;
+- an 08:00 current observation may use the immediately preceding pre-session bar for previous-z crossing state;
+- the pre-session previous bar is not itself eligible to emit a directional candidate;
 - intrabar high/low threshold touches do not matter because signal statistic uses closed midpoint close;
 - remaining outside the band does not retrigger;
 - returning inside and crossing again later is still ignored after the first qualifying signal that London date;
