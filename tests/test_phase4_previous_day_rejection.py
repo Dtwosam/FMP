@@ -105,6 +105,17 @@ def _signal_session_bars(
     return bars
 
 
+def _candidate_for_day(candidates, london_day: date):
+    matched = [
+        candidate
+        for candidate in candidates
+        if candidate.metadata.get("session_date") == london_day.isoformat()
+    ]
+    if len(matched) != 1:
+        raise AssertionError(f"expected exactly one candidate for {london_day}, got {len(matched)}")
+    return matched[0]
+
+
 class PreviousDayRejectionTests(unittest.TestCase):
     def test_config_accepts_only_frozen_buffers_and_timeframes(self) -> None:
         for buffer_pips in (0, 2, 5):
@@ -130,7 +141,9 @@ class PreviousDayRejectionTests(unittest.TestCase):
         bars = _reference_bars(day) + _signal_session_bars(
             day, signal_direction=Direction.SHORT, buffer_pips=2
         )
-        candidate = generate_previous_day_rejection_candidates(bars, config=config)[0]
+        candidate = _candidate_for_day(
+            generate_previous_day_rejection_candidates(bars, config=config), day
+        )
         self.assertIs(candidate.direction, Direction.SHORT)
         self.assertEqual(candidate.reason_code, "PREVIOUS_DAY_REJECTION_SHORT")
         self.assertEqual(candidate.observation_bar_timestamp_utc, _local_utc(day, 8, zone=LONDON))
@@ -148,7 +161,9 @@ class PreviousDayRejectionTests(unittest.TestCase):
         bars = _reference_bars(day) + _signal_session_bars(
             day, signal_direction=Direction.LONG, buffer_pips=5
         )
-        candidate = generate_previous_day_rejection_candidates(bars, config=config)[0]
+        candidate = _candidate_for_day(
+            generate_previous_day_rejection_candidates(bars, config=config), day
+        )
         self.assertIs(candidate.direction, Direction.LONG)
         self.assertAlmostEqual(candidate.stop_price, 1.0895)
         self.assertAlmostEqual(candidate.target_price, 1.1000)
@@ -158,9 +173,10 @@ class PreviousDayRejectionTests(unittest.TestCase):
         config = PreviousDayRejectionConfig(buffer_pips=0, timeframe="1h")
         reference = _reference_bars(day)
         missing = reference.pop(4).timestamp_utc
-        candidate = generate_previous_day_rejection_candidates(
+        candidates = generate_previous_day_rejection_candidates(
             reference + _signal_session_bars(day, signal_direction=None), config=config
-        )[0]
+        )
+        candidate = _candidate_for_day(candidates, day)
         self.assertIs(candidate.direction, Direction.NO_TRADE)
         self.assertEqual(candidate.reason_code, "INCOMPLETE_REFERENCE_SESSION")
         self.assertEqual(candidate.metadata["missing_timestamp_utc"], missing)
@@ -168,9 +184,13 @@ class PreviousDayRejectionTests(unittest.TestCase):
     def test_complete_session_without_rejection_emits_no_rejection(self) -> None:
         day = date(2021, 3, 19)
         config = PreviousDayRejectionConfig(buffer_pips=0, timeframe="1h")
-        candidate = generate_previous_day_rejection_candidates(
-            _reference_bars(day) + _signal_session_bars(day, signal_direction=None), config=config
-        )[0]
+        candidate = _candidate_for_day(
+            generate_previous_day_rejection_candidates(
+                _reference_bars(day) + _signal_session_bars(day, signal_direction=None),
+                config=config,
+            ),
+            day,
+        )
         self.assertIs(candidate.direction, Direction.NO_TRADE)
         self.assertEqual(candidate.reason_code, "NO_REJECTION")
 
@@ -184,9 +204,12 @@ class PreviousDayRejectionTests(unittest.TestCase):
             high=1.1110,
             low=1.0890,
         )
-        candidate = generate_previous_day_rejection_candidates(
-            _reference_bars(day) + signal, config=config
-        )[0]
+        candidate = _candidate_for_day(
+            generate_previous_day_rejection_candidates(
+                _reference_bars(day) + signal, config=config
+            ),
+            day,
+        )
         self.assertIs(candidate.direction, Direction.NO_TRADE)
         self.assertEqual(candidate.reason_code, "AMBIGUOUS_DUAL_REJECTION")
 
@@ -203,8 +226,8 @@ class PreviousDayRejectionTests(unittest.TestCase):
         bars = tuple(_reference_bars(day) + signal)
         first = generate_previous_day_rejection_candidates(bars, config=config)
         second = generate_previous_day_rejection_candidates(tuple(reversed(bars)), config=config)
-        self.assertEqual(len(first), 1)
-        self.assertIs(first[0].direction, Direction.SHORT)
+        target = _candidate_for_day(first, day)
+        self.assertIs(target.direction, Direction.SHORT)
         self.assertEqual(
             tuple(item.stable_json_bytes() for item in first),
             tuple(item.stable_json_bytes() for item in second),
