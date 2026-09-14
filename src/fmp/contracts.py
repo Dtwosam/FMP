@@ -23,6 +23,7 @@ class OrderSide(str, Enum):
 class ExitReason(str, Enum):
     STOP = "STOP"
     TARGET = "TARGET"
+    TIME_EXIT = "TIME_EXIT"
     END_OF_DATA = "END_OF_DATA"
 
 
@@ -133,6 +134,19 @@ class Decision:
         _validate_price(self.stop_price, field="stop_price")
         if self.target_price is not None:
             _validate_price(self.target_price, field="target_price")
+
+
+@dataclass(frozen=True, slots=True)
+class ScheduledExit:
+    decision_id: str
+    symbol: str
+    timestamp_utc: datetime
+
+    def __post_init__(self) -> None:
+        if not self.decision_id.strip():
+            raise ValueError("scheduled-exit decision_id must be non-empty")
+        _validate_symbol(self.symbol)
+        _validate_utc(self.timestamp_utc, field="scheduled-exit timestamp_utc")
 
 
 @dataclass(frozen=True, slots=True)

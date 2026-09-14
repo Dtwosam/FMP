@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 from fmp.backtest.costs import ZeroCommission, ZeroFinancing
 from fmp.backtest.engine import BacktestConfig, run_backtest
-from fmp.contracts import Decision, Direction, ExitReason, QuoteBar, RejectionCode
+from fmp.contracts import Decision, Direction, ExitReason, QuoteBar, RejectionCode, ScheduledExit
 from fmp.risk import RiskConfig
 
 
@@ -358,6 +358,114 @@ class Phase3EngineTests(unittest.TestCase):
         )
         self.assertEqual(run.trades, ())
         self.assertEqual(run.rejections[0].code, RejectionCode.INVALID_STOP_TARGET)
+
+    def test_scheduled_exit_precedes_same_bar_stop_target_evaluation(self) -> None:
+        bars = [
+            eurusd_bar(0),
+            eurusd_bar(1, bid_low=1.0995, bid_high=1.1008),
+            eurusd_bar(
+                2,
+                bid_open=1.1004,
+                bid_high=1.1030,
+                bid_low=1.0980,
+                ask_open=1.1006,
+                ask_high=1.1032,
+                ask_low=1.0982,
+            ),
+        ]
+        decision = long_decision(
+            "TIME-FIRST",
+            decision_minute=0,
+            executable_minute=1,
+            stop_price=1.0990,
+            target_price=1.1020,
+        )
+        run = run_backtest(
+            bars=bars,
+            decisions=[decision],
+            scheduled_exits=[ScheduledExit("TIME-FIRST", "EURUSD", DAY + timedelta(minutes=2))],
+            config=config(),
+        )
+        self.assertEqual(len(run.trades), 1)
+        self.assertEqual(run.trades[0].exit_reason, ExitReason.TIME_EXIT)
+        self.assertEqual(run.trades[0].exit_reference_price, 1.1004)
+        self.assertFalse(run.trades[0].intrabar_ambiguous)
+
+    def test_scheduled_exit_releases_risk_before_same_timestamp_entry(self) -> None:
+        bars = [
+            eurusd_bar(0),
+            eurusd_bar(1),
+            gbpusd_bar(1),
+            usdjpy_bar(1),
+            # Make the timed EURUSD exit PnL-neutral at reference prices so this
+            # fixture isolates reservation-release ordering rather than changing
+            # the simultaneous-risk denominator via realized PnL.
+            eurusd_bar(2, bid_open=1.1002, ask_open=1.1004),
+            gbpusd_bar(2),
+            usdjpy_bar(2),
+        ]
+        scheduled = long_decision(
+            "EUR-TIME",
+            decision_minute=0,
+            executable_minute=1,
+            requested_risk_fraction=0.005,
+            stop_price=1.0900,
+            target_price=1.1100,
+        )
+        persistent = long_decision(
+            "GBP-HOLD",
+            symbol="GBPUSD",
+            decision_minute=0,
+            executable_minute=1,
+            requested_risk_fraction=0.005,
+            stop_price=1.2900,
+            target_price=1.3200,
+        )
+        replacement = long_decision(
+            "JPY-NEW-TIME",
+            symbol="USDJPY",
+            decision_minute=1,
+            executable_minute=2,
+            requested_risk_fraction=0.005,
+            stop_price=149.90,
+            target_price=151.0,
+        )
+        run = run_backtest(
+            bars=bars,
+            decisions=[scheduled, persistent, replacement],
+            scheduled_exits=[ScheduledExit("EUR-TIME", "EURUSD", DAY + timedelta(minutes=2))],
+            config=config(),
+        )
+        rejected = {item.decision_id: item.code for item in run.rejections}
+        self.assertNotIn("JPY-NEW-TIME", rejected)
+        self.assertTrue(any(trade.decision_id == "JPY-NEW-TIME" for trade in run.trades))
+        timed = next(trade for trade in run.trades if trade.decision_id == "EUR-TIME")
+        self.assertEqual(timed.exit_reason, ExitReason.TIME_EXIT)
+        self.assertAlmostEqual(timed.net_pnl_usd, 0.0)
+
+    def test_scheduled_exit_is_noop_after_prior_target(self) -> None:
+        bars = [
+            eurusd_bar(0),
+            eurusd_bar(1),
+            eurusd_bar(2, bid_high=1.1030, ask_high=1.1032),
+            eurusd_bar(3),
+        ]
+        decision = long_decision(
+            "TARGET-FIRST",
+            decision_minute=0,
+            executable_minute=1,
+            stop_price=1.0900,
+            target_price=1.1020,
+        )
+        run = run_backtest(
+            bars=bars,
+            decisions=[decision],
+            scheduled_exits=[ScheduledExit("TARGET-FIRST", "EURUSD", DAY + timedelta(minutes=3))],
+            config=config(),
+        )
+        self.assertEqual(len(run.trades), 1)
+        self.assertEqual(run.trades[0].exit_reason, ExitReason.TARGET)
+        self.assertEqual(run.trades[0].exit_timestamp_utc, DAY + timedelta(minutes=2))
 
 
 if __name__ == "__main__":
