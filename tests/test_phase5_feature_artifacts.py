@@ -6,6 +6,8 @@ import unittest
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+import polars as pl
+
 from tests.phase5_helpers import make_bars, sha256, write_dataset
 
 
@@ -19,19 +21,29 @@ class Phase5FeatureArtifactTests(unittest.TestCase):
             symbol="EURUSD", timeframe="1h", processed_manifest_sha256="a" * 64,
         )
         with tempfile.TemporaryDirectory() as tmp1, tempfile.TemporaryDirectory() as tmp2:
-            m1 = write_feature_artifacts(
-                features=features, output_root=Path(tmp1), symbol="EURUSD", timeframe="1h",
-                processed_manifest_sha256="a" * 64, code_commit="deadbeef", opened_months=("2023-01",),
-            )
-            m2 = write_feature_artifacts(
-                features=features, output_root=Path(tmp2), symbol="EURUSD", timeframe="1h",
-                processed_manifest_sha256="a" * 64, code_commit="deadbeef", opened_months=("2023-01",),
-            )
+            kwargs = {
+                "symbol": "EURUSD",
+                "timeframe": "1h",
+                "processed_manifest_sha256": "a" * 64,
+                "code_commit": "deadbeef",
+                "opened_months": ("2023-01",),
+                "requested_start": date(2023, 1, 1),
+                "requested_end_exclusive": date(2023, 2, 1),
+            }
+            m1 = write_feature_artifacts(features=features, output_root=Path(tmp1), **kwargs)
+            m2 = write_feature_artifacts(features=features, output_root=Path(tmp2), **kwargs)
             self.assertEqual(m1, m2)
             self.assertEqual(m1["feature_set_version"], "fmp-feature-v1")
             self.assertEqual(m1["code_commit"], "deadbeef")
             self.assertEqual(m1["processed_manifest_sha256"], "a" * 64)
             self.assertEqual(m1["opened_source_months"], ["2023-01"])
+            self.assertEqual(
+                m1["generation_parameters"],
+                {
+                    "requested_start": "2023-01-01",
+                    "requested_end_exclusive": "2023-02-01",
+                },
+            )
             self.assertEqual(m1["row_count"], features.height)
             self.assertEqual(m1["unique_key_count"], features.height)
             self.assertEqual(len(m1["schema_sha256"]), 64)
@@ -56,6 +68,23 @@ class Phase5FeatureArtifactTests(unittest.TestCase):
                 write_feature_artifacts(
                     features=features, output_root=Path(tmp), symbol="EURUSD", timeframe="1h",
                     processed_manifest_sha256="a" * 64, code_commit="deadbeef", opened_months=("2024-01",),
+                    requested_start=date(2023, 12, 1), requested_end_exclusive=date(2024, 1, 1),
+                )
+
+    def test_writer_rejects_processed_manifest_identity_mismatch(self) -> None:
+        from fmp.features.artifacts import write_feature_artifacts
+        from fmp.features.engine import build_feature_frame
+
+        features = build_feature_frame(
+            make_bars(timeframe="1h", start=datetime(2023, 1, 1, tzinfo=timezone.utc), count=2),
+            symbol="EURUSD", timeframe="1h", processed_manifest_sha256="a" * 64,
+        ).with_columns(pl.lit("b" * 64).alias("processed_manifest_sha256"))
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, "processed.*manifest.*identity|identity.*mismatch"):
+                write_feature_artifacts(
+                    features=features, output_root=Path(tmp), symbol="EURUSD", timeframe="1h",
+                    processed_manifest_sha256="a" * 64, code_commit="deadbeef", opened_months=("2023-01",),
+                    requested_start=date(2023, 1, 1), requested_end_exclusive=date(2023, 2, 1),
                 )
 
     def test_generation_cli_integration_stays_pre2024_and_records_source_identity(self) -> None:
@@ -77,6 +106,13 @@ class Phase5FeatureArtifactTests(unittest.TestCase):
             self.assertEqual(result["timeframe"], "1h")
             self.assertEqual(result["code_commit"], "abc123")
             self.assertEqual(result["opened_source_months"], ["2023-01"])
+            self.assertEqual(
+                result["generation_parameters"],
+                {
+                    "requested_start": "2023-01-01",
+                    "requested_end_exclusive": "2023-02-01",
+                },
+            )
             self.assertTrue((out / "manifest.json").is_file())
             loaded = json.loads((out / "manifest.json").read_text())
             self.assertEqual(loaded, result)
