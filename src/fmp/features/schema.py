@@ -1,0 +1,67 @@
+from __future__ import annotations
+
+IDENTITY_COLUMNS = (
+    "symbol",
+    "timeframe",
+    "bar_start_utc",
+    "bar_end_utc",
+    "available_at_utc",
+    "feature_set_version",
+    "processed_manifest_sha256",
+)
+
+FEATURE_VALUE_COLUMNS = (
+    "return_1bar",
+    "return_1h",
+    "return_24h",
+    "log_return_1bar",
+    "range_pips",
+    "true_range_pips",
+    "realized_vol_1h",
+    "realized_vol_8h",
+    "realized_vol_24h",
+    "range_vs_prior_median_8h",
+    "sma_distance_2h_pips",
+    "sma_distance_8h_pips",
+    "sma_slope_2h_pips",
+    "sma_slope_8h_pips",
+    "breakout_above_prior_8h",
+    "breakout_below_prior_8h",
+    "roc_4h",
+    "roc_8h",
+    "momentum_accel_4h",
+    "body_pips",
+    "upper_wick_pips",
+    "lower_wick_pips",
+    "body_to_range",
+    "close_location",
+    "candle_direction",
+    "directional_streak",
+    "hour_utc",
+    "minute_utc",
+    "day_of_week_utc",
+    "is_asia_session",
+    "is_london_session",
+    "is_new_york_session",
+    "is_london_new_york_overlap",
+    "minutes_since_asia_open",
+    "minutes_since_london_open",
+    "minutes_since_new_york_open",
+    "prev_fx_day_high_dist_pips",
+    "prev_fx_day_low_dist_pips",
+    "prev_fx_day_close_dist_pips",
+    "prev_asia_high_dist_pips",
+    "prev_asia_low_dist_pips",
+    "prev_london_high_dist_pips",
+    "prev_london_low_dist_pips",
+    "spread_close_pips",
+    "spread_mean_1h_pips",
+    "spread_median_prior_8h_pips",
+    "spread_vs_prior_median_8h",
+    "spread_percentile_prior_24h",
+)
+
+FEATURE_COLUMNS = IDENTITY_COLUMNS + FEATURE_VALUE_COLUMNS
+
+assert len(FEATURE_VALUE_COLUMNS) == 48
+assert len(FEATURE_COLUMNS) == 55
