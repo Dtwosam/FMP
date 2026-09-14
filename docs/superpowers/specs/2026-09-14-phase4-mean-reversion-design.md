@@ -96,7 +96,7 @@ Named timezone: `Europe/London`.
 For each London-local trading date:
 
 - eligible observation labels are 08:00 through 14:00 inclusive;
-- only fully closed bars may contribute to rolling statistics or signals;
+- only fully closed bars may contribute to reference statistics or signals;
 - exact mandatory flat timestamp is 16:00 London local time.
 
 UTC conversion must use timezone-aware/DST-aware logic. Hard-coded seasonal UTC offsets are forbidden.
@@ -125,15 +125,21 @@ Examples:
 
 No shortened history or partial lookback is allowed.
 
-### 7.2 Mean and standard deviation
+### 7.2 Reference mean and standard deviation
 
-At eligible observation bar index `i`, for lookback size `N`, use the `N` fully closed midpoint closes ending at `i`:
+The observation bar is **not** included in its own reference distribution. This avoids self-dilution of the excursion and ensures every declared threshold remains reachable even for the four-bar 1h/4h configuration.
 
-`mean_i = sum(x_j) / N`
+At eligible observation bar index `i`, for lookback size `N`, use the `N` fully closed midpoint closes immediately preceding `i`:
+
+`R_i = {x_(i-N), ..., x_(i-1)}`
+
+Reference mean:
+
+`mean_i = sum(R_i) / N`
 
 Population variance:
 
-`variance_i = sum((x_j - mean_i)^2) / N`
+`variance_i = sum((x_j - mean_i)^2 for x_j in R_i) / N`
 
 Population standard deviation:
 
@@ -143,7 +149,7 @@ Current z-score:
 
 `z_i = (x_i - mean_i) / std_i`
 
-The previous z-score `z_(i-1)` is computed independently from the immediately preceding closed bar using that bar's own complete `N`-bar rolling window.
+The previous z-score `z_(i-1)` is computed independently against its own preceding `N`-bar reference window `R_(i-1) = {x_(i-N-1), ..., x_(i-2)}`. Therefore neither the current nor previous observation is included in the distribution against which that observation is standardized.
 
 ### 7.3 Eligibility requirements
 
@@ -151,10 +157,10 @@ A signal observation is ineligible unless both the current and previous z-scores
 
 That requires:
 
-- complete `N`-bar current rolling window;
-- complete `N`-bar previous rolling window;
-- exact expected timestamp cadence throughout every required bar from the start of the previous rolling window through the current observation bar;
-- positive finite population standard deviation in both windows;
+- complete `N`-bar reference window before the current observation;
+- complete `N`-bar reference window before the previous observation;
+- exact expected timestamp cadence throughout every required bar from the first bar of the previous reference window through the current observation bar;
+- positive finite population standard deviation in both reference windows;
 - finite midpoint closes, means, and z-scores.
 
 A missing cadence, zero variance, non-finite statistic, or insufficient history makes the observation ineligible. History is never shortened to recover a signal.
@@ -203,13 +209,13 @@ If no qualifying fresh excursion occurs during the eligible window, the session 
 
 ## 9. Frozen stop and target geometry
 
-Signal-time geometry is derived only from the current closed rolling distribution and then frozen.
+Signal-time geometry is derived only from the current observation close and its immediately preceding closed reference distribution, then frozen.
 
 Let:
 
 - `x = current signal midpoint close`;
-- `m = current rolling midpoint mean`;
-- `s = current rolling population standard deviation`.
+- `m = current reference mean from R_i`;
+- `s = current reference population standard deviation from R_i`.
 
 ### 9.1 LONG geometry
 
@@ -233,7 +239,7 @@ Any signal-time violation is emitted as explicit non-tradable evidence rather th
 
 The actual next-bar BID/ASK executable entry may make the frozen stop/target invalid under Phase 3 rules. If so, the order is rejected with the accepted `INVALID_STOP_TARGET` semantics. Strategy/research code must not move the stop, move the target, chase the entry, widen risk, or retry later.
 
-The target remains the signal-time rolling mean even if the rolling mean changes after the signal.
+The target remains the signal-time reference mean even though later reference means will change as new bars close.
 
 ## 10. Mandatory intraday exit
 
@@ -395,7 +401,7 @@ Owns only deterministic setup logic:
 
 - config validation;
 - duration-to-bar conversion;
-- midpoint-close rolling mean/population standard deviation/z-score;
+- midpoint-close reference mean/population standard deviation/z-score;
 - fresh-excursion detection;
 - first-signal-per-date behavior;
 - frozen stop/target geometry;
@@ -435,8 +441,10 @@ Implementation must proceed test-first and cover at minimum:
 
 - config accepts only 4h/8h/16h and 1.5σ/2.0σ;
 - duration-to-bar counts are exact for 5m/15m/1h;
-- hand-calculated midpoint rolling mean is exact within the project's numeric convention;
+- hand-calculated midpoint reference mean is correct;
 - hand-calculated population standard deviation and z-score are correct;
+- the observation close is excluded from its own reference distribution;
+- the 1h/4h/2.0σ configuration can produce a qualifying synthetic signal;
 - zero standard deviation is ineligible;
 - insufficient history is ineligible;
 - missing cadence anywhere in the previous/current required context is ineligible.
@@ -454,7 +462,7 @@ Implementation must proceed test-first and cover at minimum:
 
 ### Geometry and timing
 
-- LONG target equals signal-time rolling mean and stop equals signal close minus one current standard deviation;
+- LONG target equals the signal-time preceding-window reference mean and stop equals signal close minus one reference standard deviation;
 - SHORT geometry is symmetric;
 - target/stop remain frozen after the signal;
 - observation label, true-known time, and next-bar execution follow DEC-018 exactly;
