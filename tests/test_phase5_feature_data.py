@@ -79,6 +79,19 @@ class Phase5FeatureDataTests(unittest.TestCase):
                 )
             self.assertEqual(opened, [])
 
+    def test_reader_rejects_pre2015_request_before_manifest_access(self) -> None:
+        from fmp.features.data import load_feature_source
+
+        with self.assertRaisesRegex(ValueError, "2015"):
+            load_feature_source(
+                dataset_root=Path("."),
+                manifest_path=Path("does-not-exist.json"),
+                symbol="EURUSD",
+                timeframe="1h",
+                start=date(2014, 12, 1),
+                end_exclusive=date(2015, 2, 1),
+            )
+
     def test_reader_rejects_manifest_identity_and_path_escape(self) -> None:
         from fmp.features.data import load_feature_source
 
