@@ -1,8 +1,10 @@
 # EXP-20260914-005 — Rolling Volatility-Breakout Baseline
 
-**Status:** PREDECLARED  
+**Status:** CLOSED  
 **Decision:** DEC-024 — APPROVED  
-**Result:** pending implementation and development/validation benchmark  
+**Outcome decision:** DEC-025 — PASS / PROMOTE  
+**Result:** PASS — promote USDJPY 1h / 2.0x as a serious Phase 4 research candidate  
+**Evidence:** `docs/phase4-volatility-breakout-evidence.md`  
 **Final-test touched?: NO**
 
 DEC-018 remains authoritative for the chronological split, final-test isolation, left-labelled timing bridge, source-free research boundary, historical BID/ASK execution, shared cost model, and unchanged Phase 3 risk controls.
@@ -75,3 +77,11 @@ No post-result parameter expansion, alternate lookback, extra multiplier, target
 ## Locked boundaries
 
 Implementation and development/validation benchmarking are authorized only under this exact protocol after the predeclaration is present on the result-producing implementation head. The frozen USDJPY 15m session-breakout / 5-pip / 1.5x candidate remains unchanged. EXP-004 remains FAIL / REJECT. Session high/low sweep/rejection remains the later sixth baseline family. Phase 4 remains ACTIVE; the final test, Phase 5, broker/live integration, and real-money trading remain locked.
+
+## Closed outcome
+
+Authoritative merged-main benchmark run `34888225242` on exact implementation commit `3bf36186900f5065e9e3ddced0305865433b9d69` completed all 18/18 matrix cells successfully. Independent inspection verified all 162/162 benchmark rows with zero ZIP, inner-manifest, code/data identity, split, grid, candidate-reuse, accounting, cost, or risk-identity errors.
+
+Exactly one of 27 pair/timeframe/multiplier points passed the frozen 0.2-pip development-and-validation gate: **USDJPY 1h / 2.0x**. It returned +11.4235% development and +5.5971% validation at baseline, with PF 1.2321 / 1.1931 and 596 / 364 trades. It remains positive on both splits at 0.5-pip stress (+6.5350% / +3.2953%), while the 1.0-pip diagnostic is negative on both splits. Neighboring multiplier and adjacent-timeframe support is weak, but the large sample, low drawdown, broad development-year distribution, two-of-three positive validation years, and very low top-winner dependence support retaining the exact point as a serious Phase 4 research candidate.
+
+No parameters were widened or retuned after results. The existing USDJPY 15m session-breakout candidate remains frozen unchanged; EXP-005 adds a second serious candidate. Phase 4 remains ACTIVE and proceeds to the sixth planned session high/low sweep/rejection family. Final-test access, Phase 5, broker/live integration, and real-money trading remain locked.
