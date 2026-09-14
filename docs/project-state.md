@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 4 — Baseline Strategy Research  
 **Phase status:** ACTIVE  
-**Next milestone:** Implement and benchmark the predeclared EXP-20260914-005 volatility-breakout family under DEC-024; session high/low sweep/rejection remains the later sixth baseline family and final-test data remains locked
+**Next milestone:** Design and predeclare the sixth Phase 4 baseline family, session high/low sweep/rejection; both serious candidates remain frozen unchanged and final-test data remains locked
 
 ## Current baseline
 
@@ -78,7 +78,7 @@ Phase 3 is formally closed as PASS.
 
 ## Phase 4 — ACTIVE
 
-DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact shared cost assumptions, and unchanged Phase 3 risk settings. DEC-019 freezes the completed trend-continuation family-specific protocol, DEC-020 freezes the completed mean-reversion family-specific protocol, DEC-021 records the mean-reversion rejection, DEC-022 freezes the previous-day high/low rejection protocol, DEC-023 records the EXP-004 FAIL / REJECT outcome, and DEC-024 freezes the EXP-005 rolling volatility-breakout protocol while DEC-018 remains authoritative for shared research rules.
+DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact shared cost assumptions, and unchanged Phase 3 risk settings. DEC-019 freezes the completed trend-continuation family-specific protocol, DEC-020 freezes the completed mean-reversion family-specific protocol, DEC-021 records the mean-reversion rejection, DEC-022 freezes the previous-day high/low rejection protocol, DEC-023 records the EXP-004 FAIL / REJECT outcome, DEC-024 freezes the EXP-005 rolling volatility-breakout protocol, and DEC-025 records the EXP-005 PASS / PROMOTE outcome while DEC-018 remains authoritative for shared research rules.
 
 ### EXP-20260914-001 — Session breakout baseline
 
@@ -181,22 +181,33 @@ The session-breakout candidate remains frozen unchanged while subsequent baselin
 
 ### EXP-20260914-005 — Rolling volatility-breakout baseline
 
-- experiment status: PREDECLARED
-- protocol decision: DEC-024 APPROVED
-- predeclaration: `docs/phase4-volatility-breakout-predeclaration.md`
-- pairs/timeframes: EURUSD, GBPUSD, USDJPY × 5m/15m/1h
-- rolling reference: exact preceding 8h `[T - 8h, T)`, excluding the current signal bar
-- frozen grid: range-expansion multipliers exactly 1.0x/1.5x/2.0x; fixed target exactly 1.0R
-- signal: close outside the rolling midpoint high/low plus current midpoint range at least multiplier × reference median midpoint range
-- eligible signal labels: 08:00 through 14:00 Europe/London; exact mandatory flat 16:00
-- cost scenarios: 0.2/0.5/1.0 pips adverse slippage per fill; zero commission/financing; historical BID/ASK spread authoritative
-- planned matrix: 18 pair/timeframe/split cells × 3 configurations × 3 costs = 162 benchmark rows
-- promotion gate: same multiplier must have positive net return, positive expectancy, and PF > 1 on both development and validation at 0.2-pip baseline before downstream robustness review
+- experiment status: PASS
+- conclusion: PROMOTE one serious research candidate; detailed evidence is `docs/phase4-volatility-breakout-evidence.md`
+- protocol decision: DEC-024 APPROVED; outcome decision: DEC-025 APPROVED
+- implementation / benchmark commit: `3bf36186900f5065e9e3ddced0305865433b9d69`
+- merged-main tests: run `34888225240` — SUCCESS, workflow YAML PASS, unit tests PASS, compile PASS
+- unchanged Phase 3 acceptance: run `34888225252` — SUCCESS
+- Phase 4 benchmark: run `34888225242` — SUCCESS
+- matrix: 3 pairs × 3 signal timeframes × development/validation = 18/18 cells successful
+- independently inspected benchmark rows: 162/162 with zero ZIP, inner-manifest, code/data identity, split, grid, candidate-reuse, accounting, cost, or risk-identity errors
+- development: 2015-01-01 through 2020-12-31 inclusive
+- validation: 2021-01-01 through 2023-12-31 inclusive
 - final untouched test: 2024-01-01 through 2026-08-20 inclusive
 - Final-test touched: NO
+- frozen grid: rolling 8h reference × range-expansion multipliers 1.0x/1.5x/2.0x × fixed 1.0R target × adverse slippage 0.2/0.5/1.0 pips per fill
+- commission/financing: zero / zero; historical BID/ASK remains authoritative for Phase 3 execution
+- risk: accepted Phase 3 policy unchanged
+- initial 0.2-pip screen: exactly one of 27 pair/timeframe/multiplier points survives — USDJPY 1h / 2.0x
+- survivor development: +11.4235%, +$19.1670 expectancy/trade, PF 1.2321, 596 trades, max drawdown 2.5228%
+- survivor validation: +5.5971%, +$15.3766 expectancy/trade, PF 1.1931, 364 trades, max drawdown 1.9853%
+- 0.5-pip robustness: +6.5350% development / +3.2953% validation; PF 1.1297 / 1.1111
+- 1.0-pip diagnostic: negative on both splits (-1.1416% / -0.4304%)
+- robustness strengths: all six development calendar years positive, 2022 and 2023 validation positive, large sample, low drawdown, top-three winner dependence about 1.30% development / 2.22% validation positive R
+- robustness weaknesses: 2021 validation negative; neighboring multipliers and adjacent timeframes do not confirm the development edge; 1.0-pip stress fails
+- promoted serious candidate: retain USDJPY 1h / 2.0x / fixed 1.0R unchanged for later cross-family selection
 - no post-result parameter expansion, alternate lookback, extra multiplier, target retuning, or rescue rule is authorized
 
-Phase 4 remains ACTIVE. The frozen USDJPY 15m session-breakout candidate remains unchanged. EXP-20260914-004 is formally closed as FAIL / REJECT. EXP-20260914-005 is PREDECLARED and authorized for implementation plus development/validation benchmarking only under DEC-024. Session high/low sweep/rejection remains the later sixth family. Candidate selection across the admitted baseline program is not materially complete, so the final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created.
+Phase 4 remains ACTIVE. Two serious research candidates are retained unchanged: the EXP-001 USDJPY 15m / 5-pip / 1.5x session-breakout point and the EXP-005 USDJPY 1h / 2.0x / fixed-1.0R volatility-breakout point. EXP-20260914-004 remains FAIL / REJECT. The next baseline family is the sixth planned session high/low sweep/rejection family. Candidate selection across the admitted baseline program is not materially complete, so the final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created.
 
 ## Phase 5 — UNSTARTED
 
