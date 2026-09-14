@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 4 — Baseline Strategy Research  
 **Phase status:** ACTIVE  
-**Next milestone:** Design and predeclare the trend-continuation baseline while retaining the frozen session-breakout candidate; final-test data remains locked
+**Next milestone:** Merge the predeclared trend-continuation baseline and run its fixed source-free development/validation benchmark while retaining the frozen session-breakout candidate; final-test data remains locked
 
 ## Current baseline
 
@@ -78,7 +78,7 @@ Phase 3 is formally closed as PASS.
 
 ## Phase 4 — ACTIVE
 
-DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact session-breakout grid/cost assumptions, and unchanged Phase 3 risk settings.
+DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact session-breakout grid/cost assumptions, and unchanged Phase 3 risk settings. DEC-019 freezes the trend-continuation family-specific protocol while DEC-018 remains authoritative for shared research rules.
 
 ### EXP-20260914-001 — Session breakout baseline
 
@@ -111,12 +111,26 @@ At 0.5-pip adverse slippage it remains positive on both splits (+3.4625% develop
 
 Yearly results show material regime sensitivity, especially strong 2022 validation performance, so this is a serious research candidate rather than proof of deployment readiness. EURUSD supplies no baseline configuration positive on both development and validation; GBPUSD has two baseline-positive 5m target-1.5 configurations but both fail 0.5-pip stress.
 
-The session-breakout candidate is frozen while Phase 4 proceeds sequentially to **trend continuation**. Candidate selection across the admitted baseline program is not materially complete, therefore the final-test period remains locked.
+The session-breakout candidate remains frozen unchanged while the second baseline family is evaluated.
 
-Phase 4 remains ACTIVE. The checkpoint `fmp-v1-phase4-baselines` is not created from this first-family result alone.
+### EXP-20260914-002 — Trend continuation baseline
+
+- experiment status: PLANNED
+- protocol: DEC-019; trend windows 2h/8h, 4h/16h, 8h/32h × 1.0R/1.5R targets; three-bar structural stop; fully closed London-session bars only
+- pair/timeframe scope: EURUSD, GBPUSD, USDJPY × 5m, 15m, 1h
+- development: 2015-01-01 through 2020-12-31 inclusive
+- validation: 2021-01-01 through 2023-12-31 inclusive
+- final untouched test: 2024-01-01 through 2026-08-20 inclusive
+- Final-test touched: NO
+- cost stress: 0.2/0.5/1.0 adverse slippage pips per fill; historical BID/ASK spread; zero commission; zero financing
+- risk: accepted Phase 3 policy unchanged
+- benchmark size when merged: 18 workflow cells / 324 configuration rows
+- current state: implementation and source-free workflow are under guarded review; no result-producing merged-main benchmark has run under EXP-20260914-002
+
+Phase 4 remains ACTIVE. Candidate selection across the admitted baseline program is not materially complete, so the final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created.
 
 ## Phase 5 — UNSTARTED
 
-Phase 5 has not started. No ML/feature-engine promotion is authorized by the session-breakout result.
+Phase 5 has not started. No ML/feature-engine promotion is authorized by the Phase 4 baseline work completed so far.
 
 Real-money trading remains locked; DEC-008 remains unchanged.
