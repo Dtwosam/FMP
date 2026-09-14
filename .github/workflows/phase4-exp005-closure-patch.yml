@@ -1,0 +1,68 @@
+name: phase4-exp005-closure-patch
+
+on:
+  push:
+    branches:
+      - phase4-volatility-breakout-evidence
+    paths:
+      - .github/workflows/phase4-exp005-closure-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase4-volatility-breakout-evidence
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Patch closure state
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          decision = Path('docs/decision-log.md')
+          text = decision.read_text(encoding='utf-8')
+          index_old = '- DEC-024 — Phase 4 volatility-breakout baseline protocol — APPROVED\n'
+          index_new = index_old + '- DEC-025 — Phase 4 volatility-breakout experiment outcome — APPROVED\n'
+          assert index_old in text
+          assert '## DEC-025 — Phase 4 volatility-breakout experiment outcome' not in text
+          text = text.replace(index_old, index_new, 1)
+          text += '''\n\n## DEC-025 — Phase 4 volatility-breakout experiment outcome\n\n**Date:** 2026-09-14  \n**Status:** APPROVED\n\nMerged-main volatility-breakout benchmark run `34888225242` on exact implementation commit `3bf36186900f5065e9e3ddced0305865433b9d69` completed successfully. Merged-main tests run `34888225240` and unchanged Phase 3 acceptance run `34888225252` also completed successfully. All 18 pair/timeframe/split cells succeeded and all 162 frozen benchmark rows were independently verified with zero ZIP, inner-manifest, code/data identity, split, grid, candidate-reuse, accounting, cost, or risk-identity errors. The final-test split was not used.\n\nAt the frozen 0.2-pip baseline gate, exactly one of 27 pair/timeframe/multiplier points survived: **USDJPY 1h / 2.0x range-expansion multiplier**. Development returned +11.4235% with +$19.1670 expectancy/trade, PF 1.2321, 596 trades, and 2.5228% max drawdown. Validation returned +5.5971% with +$15.3766 expectancy/trade, PF 1.1931, 364 trades, and 1.9853% max drawdown.\n\nThe survivor passes the predeclared 0.5-pip robustness review, remaining positive on both splits (+6.5350% development, PF 1.1297; +3.2953% validation, PF 1.1111). The 1.0-pip diagnostic is negative on both splits and remains a material cost-sensitivity limitation. Neighboring multipliers and adjacent timeframes do not confirm the development edge. Against those weaknesses, the exact point has a substantial sample, low drawdown, positive net PnL in all six development calendar years, positive validation in 2022 and 2023 despite a negative 2021, and very low top-winner dependence (top three positive-R trades about 1.30% of development positive R and 2.22% of validation positive R). No post-result widening, alternate lookback, extra multiplier, target retuning, or rescue rule is authorized.\n\nConsequences: `EXP-20260914-005` is PASS / PROMOTE. Retain **USDJPY 1h / 2.0x / fixed 1.0R** unchanged as a serious Phase 4 research candidate. This adds a second serious candidate and does not supersede the frozen USDJPY 15m / 5-pip / 1.5x session-breakout candidate from EXP-001. Phase 4 remains ACTIVE and the next baseline family is the sixth planned **session high/low sweep/rejection** family. The final-test period, Phase 5, broker/live integration, and real-money trading remain locked; DEC-008 remains unchanged. Detailed evidence is in `docs/phase4-volatility-breakout-evidence.md`.\n'''
+          decision.write_text(text, encoding='utf-8')
+
+          state = Path('docs/project-state.md')
+          text = state.read_text(encoding='utf-8')
+          old_next = '**Next milestone:** Implement and benchmark the predeclared EXP-20260914-005 volatility-breakout family under DEC-024; session high/low sweep/rejection remains the later sixth baseline family and final-test data remains locked'
+          new_next = '**Next milestone:** Design and predeclare the sixth Phase 4 baseline family, session high/low sweep/rejection; both serious candidates remain frozen unchanged and final-test data remains locked'
+          assert old_next in text
+          text = text.replace(old_next, new_next, 1)
+          old_decisions = 'DEC-023 records the EXP-004 FAIL / REJECT outcome, and DEC-024 freezes the EXP-005 rolling volatility-breakout protocol while DEC-018 remains authoritative for shared research rules.'
+          new_decisions = 'DEC-023 records the EXP-004 FAIL / REJECT outcome, DEC-024 freezes the EXP-005 rolling volatility-breakout protocol, and DEC-025 records the EXP-005 PASS / PROMOTE outcome while DEC-018 remains authoritative for shared research rules.'
+          assert old_decisions in text
+          text = text.replace(old_decisions, new_decisions, 1)
+          start = text.index('### EXP-20260914-005 — Rolling volatility-breakout baseline')
+          end = text.index('\nPhase 4 remains ACTIVE.', start)
+          new_block = '''### EXP-20260914-005 — Rolling volatility-breakout baseline\n\n- experiment status: PASS\n- conclusion: PROMOTE one serious research candidate; detailed evidence is `docs/phase4-volatility-breakout-evidence.md`\n- protocol decision: DEC-024 APPROVED; outcome decision: DEC-025 APPROVED\n- implementation / benchmark commit: `3bf36186900f5065e9e3ddced0305865433b9d69`\n- merged-main tests: run `34888225240` — SUCCESS, workflow YAML PASS, unit tests PASS, compile PASS\n- unchanged Phase 3 acceptance: run `34888225252` — SUCCESS\n- Phase 4 benchmark: run `34888225242` — SUCCESS\n- matrix: 3 pairs × 3 signal timeframes × development/validation = 18/18 cells successful\n- independently inspected benchmark rows: 162/162 with zero ZIP, inner-manifest, code/data identity, split, grid, candidate-reuse, accounting, cost, or risk-identity errors\n- development: 2015-01-01 through 2020-12-31 inclusive\n- validation: 2021-01-01 through 2023-12-31 inclusive\n- final untouched test: 2024-01-01 through 2026-08-20 inclusive\n- Final-test touched: NO\n- frozen grid: rolling 8h reference × range-expansion multipliers 1.0x/1.5x/2.0x × fixed 1.0R target × adverse slippage 0.2/0.5/1.0 pips per fill\n- commission/financing: zero / zero; historical BID/ASK remains authoritative for Phase 3 execution\n- risk: accepted Phase 3 policy unchanged\n- initial 0.2-pip screen: exactly one of 27 pair/timeframe/multiplier points survives — USDJPY 1h / 2.0x\n- survivor development: +11.4235%, +$19.1670 expectancy/trade, PF 1.2321, 596 trades, max drawdown 2.5228%\n- survivor validation: +5.5971%, +$15.3766 expectancy/trade, PF 1.1931, 364 trades, max drawdown 1.9853%\n- 0.5-pip robustness: +6.5350% development / +3.2953% validation; PF 1.1297 / 1.1111\n- 1.0-pip diagnostic: negative on both splits (-1.1416% / -0.4304%)\n- robustness strengths: all six development calendar years positive, 2022 and 2023 validation positive, large sample, low drawdown, top-three winner dependence about 1.30% development / 2.22% validation positive R\n- robustness weaknesses: 2021 validation negative; neighboring multipliers and adjacent timeframes do not confirm the development edge; 1.0-pip stress fails\n- promoted serious candidate: retain USDJPY 1h / 2.0x / fixed 1.0R unchanged for later cross-family selection\n- no post-result parameter expansion, alternate lookback, extra multiplier, target retuning, or rescue rule is authorized\n'''
+          text = text[:start] + new_block + text[end:]
+          old_tail = 'Phase 4 remains ACTIVE. The frozen USDJPY 15m session-breakout candidate remains unchanged. EXP-20260914-004 is formally closed as FAIL / REJECT. EXP-20260914-005 is PREDECLARED and authorized for implementation plus development/validation benchmarking only under DEC-024. Session high/low sweep/rejection remains the later sixth family. Candidate selection across the admitted baseline program is not materially complete, so the final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created.'
+          new_tail = 'Phase 4 remains ACTIVE. Two serious research candidates are retained unchanged: the EXP-001 USDJPY 15m / 5-pip / 1.5x session-breakout point and the EXP-005 USDJPY 1h / 2.0x / fixed-1.0R volatility-breakout point. EXP-20260914-004 remains FAIL / REJECT. The next baseline family is the sixth planned session high/low sweep/rejection family. Candidate selection across the admitted baseline program is not materially complete, so the final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created.'
+          assert old_tail in text
+          text = text.replace(old_tail, new_tail, 1)
+          state.write_text(text, encoding='utf-8')
+
+          test = Path('tests/test_phase4_volatility_breakout_state.py')
+          test.write_text('''from pathlib import Path\nimport unittest\n\n\nROOT = Path(__file__).resolve().parents[1]\n\n\nclass VolatilityBreakoutStateTests(unittest.TestCase):\n    def test_exp005_is_closed_promoted_and_guardrails_remain_locked(self) -> None:\n        decisions = (ROOT / "docs/decision-log.md").read_text(encoding="utf-8")\n        record = (ROOT / "docs/phase4-volatility-breakout-predeclaration.md").read_text(encoding="utf-8")\n        evidence = (ROOT / "docs/phase4-volatility-breakout-evidence.md").read_text(encoding="utf-8")\n        state = (ROOT / "docs/project-state.md").read_text(encoding="utf-8")\n\n        self.assertIn("DEC-024 — Phase 4 volatility-breakout baseline protocol", decisions)\n        self.assertIn("DEC-025 — Phase 4 volatility-breakout experiment outcome", decisions)\n        self.assertIn("# EXP-20260914-005 — Rolling Volatility-Breakout Baseline", record)\n        self.assertIn("**Status:** CLOSED", record)\n        self.assertIn("**Outcome decision:** DEC-025 — PASS / PROMOTE", record)\n        self.assertIn("Final-test touched?: NO", record)\n        self.assertIn("[T - 8h, T)", record)\n        self.assertIn("1.0x, 1.5x, and 2.0x", record)\n        self.assertIn("exactly **1.0R**", record)\n        self.assertIn("0.2, 0.5, and 1.0 pips", record)\n        self.assertIn("No post-result parameter expansion", record)\n\n        self.assertIn("**Experiment result:** PASS", evidence)\n        self.assertIn("**Conclusion:** PROMOTE", evidence)\n        self.assertIn("18/18 cells successful", evidence)\n        self.assertIn("162/162", evidence)\n        self.assertIn("USDJPY 1h / 2.0x", evidence)\n        self.assertIn("+11.4235%", evidence)\n        self.assertIn("+5.5971%", evidence)\n        self.assertIn("+6.5350%", evidence)\n        self.assertIn("+3.2953%", evidence)\n\n        self.assertIn("**Phase status:** ACTIVE", state)\n        self.assertIn("experiment status: PASS", state)\n        self.assertIn("DEC-025 APPROVED", state)\n        self.assertIn("USDJPY 15m", state)\n        self.assertIn("USDJPY 1h / 2.0x", state)\n        self.assertIn("session high/low sweep/rejection", state.lower())\n        self.assertIn("final-test", state.lower())\n        self.assertIn("## Phase 5 — UNSTARTED", state)\n        self.assertIn("Real-money trading remains locked", state)\n\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8')
+          PY
+      - name: Commit closure patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/decision-log.md docs/project-state.md tests/test_phase4_volatility_breakout_state.py
+          git diff --cached --check
+          git commit -m "[phase1-no-source] Close EXP-005 outcome"
+          git push origin HEAD:phase4-volatility-breakout-evidence
