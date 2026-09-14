@@ -2,8 +2,8 @@
 
 **Review date:** 2026-09-14
 **Result:** PASS
-**Decision:** DEC-028 — pending acceptance-closure merge
-**Checkpoint:** `fmp-v1-phase4-baselines` — pending acceptance-closure merge and post-merge verification
+**Decision:** DEC-028 — APPROVED
+**Checkpoint:** `fmp-v1-phase4-baselines` — CREATED at `115bb8080e951db16ca1a1174227ffa181a03d1b`
 **Final-test touched?: NO**
 
 ## Acceptance gate
@@ -76,4 +76,4 @@ No post-result rescue search is authorized by this acceptance review.
 
 Phase 4 satisfies its approved acceptance gate and is ready to close as **PASS**. The two serious candidates remain frozen for later cross-family/model comparison. Phase 5 may become the next project phase for leakage-safe feature-engine work, but this Phase 4 closure does **not** authorize final-test inspection, broker/live integration, or real-money trading.
 
-After the acceptance closure is merged and its source-free regression checks pass on `main`, create checkpoint `fmp-v1-phase4-baselines` at the verified closure commit.
+The acceptance closure merged at `115bb8080e951db16ca1a1174227ffa181a03d1b`. Post-merge tests run `34903338560` and Phase 3 acceptance run `34903338538` both completed SUCCESS, and no Phase 1 acquisition or Phase 4 benchmark reran. Checkpoint `fmp-v1-phase4-baselines` was then created at that verified closure commit.
