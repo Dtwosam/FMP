@@ -22,6 +22,7 @@ Active decision index:
 - DEC-014 — Phase 1 frozen snapshot accepted — APPROVED
 - DEC-015 — Phase 2 exhaustive acceptance review — APPROVED
 - DEC-016 — Phase 3 backtester semantics — APPROVED
+- DEC-017 — Phase 3 deterministic acceptance review — APPROVED
 
 ## DEC-014 — Phase 1 frozen snapshot accepted
 
@@ -70,3 +71,20 @@ Phase 3 uses a deterministic, broker-independent backtesting engine over the acc
 - Backtest artifacts are deterministic and contain no runtime clock, hostname, UUID, or process metadata.
 
 These semantics grant no real-money permission and do not alter DEC-008. Phase 3 remains ACTIVE until merged-main golden acceptance artifacts are independently inspected and checkpoint `fmp-v1-phase3-backtester` is created. Phase 4 remains unstarted.
+
+## DEC-017 — Phase 3 deterministic acceptance review
+
+**Date:** 2026-09-14  
+**Status:** APPROVED
+
+Phase 3's acceptance gate is approved from merged-main evidence.
+
+Implementation PR #78 merged as `96ca80b3baae4de511b5b14eb6c2f9d4d723645b`. The source-free acceptance-runner PR #79 merged as `f7d98676d40f9af67f2d6f6cde36b3a465f68741`. Exact merged-main test run `34838682046` completed successfully with 300 tests, workflow YAML validation, and package compile all passing.
+
+Formal acceptance workflow run `34838682032` on exact main SHA `f7d98676d40f9af67f2d6f6cde36b3a465f68741` completed successfully and produced artifact `10344943075`, whose GitHub SHA-256 and independently recomputed ZIP SHA-256 both equal `357152cef5118163f06f9d6166e7e02cdd7ed556a3de1c5723a6a6079bd6c4f0`.
+
+Independent inspection verified all five scripted scenarios, all primary/repeat artifact bytes, every manifest-listed SHA/size, run identities, realized-equity checkpoints, hand-calculated PnL/costs, rejection codes, and independently recomputed metrics with zero validation errors. The reviewed scenarios prove LONG/SHORT executable-side pricing, nonzero slippage/commission accounting, conservative same-bar ambiguity, simultaneous-risk rejection, daily realized-loss halt, and next-UTC-day reset. The merged-main suite additionally proves USDJPY sizing/PnL conversion, timing/no-lookahead, gap handling, exact risk boundaries, exit-before-entry risk release, stable decision ordering, EOD side selection, and deterministic serialization.
+
+The evidence merge SHA triggered exactly `tests` and `phase3-acceptance`; no Phase 1 acquisition-capable workflow triggered for that SHA. No source acquisition, raw mutation, Supabase write, broker/live path, Phase 4 strategy code, or real-money permission was introduced.
+
+Consequences: the Phase 3 acceptance gate is PASS. Formal Phase 3 closure remains checkpoint-pending until branch `fmp-v1-phase3-backtester` is created at the verified acceptance-closure commit. Phase 4 remains unstarted and DEC-008 remains unchanged. Detailed evidence is in `docs/phase3-acceptance-evidence.md`.
