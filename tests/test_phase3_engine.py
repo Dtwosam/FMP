@@ -397,7 +397,10 @@ class Phase3EngineTests(unittest.TestCase):
             eurusd_bar(1),
             gbpusd_bar(1),
             usdjpy_bar(1),
-            eurusd_bar(2),
+            # Make the timed EURUSD exit PnL-neutral at reference prices so this
+            # fixture isolates reservation-release ordering rather than changing
+            # the simultaneous-risk denominator via realized PnL.
+            eurusd_bar(2, bid_open=1.1002, ask_open=1.1004),
             gbpusd_bar(2),
             usdjpy_bar(2),
         ]
@@ -438,6 +441,7 @@ class Phase3EngineTests(unittest.TestCase):
         self.assertTrue(any(trade.decision_id == "JPY-NEW-TIME" for trade in run.trades))
         timed = next(trade for trade in run.trades if trade.decision_id == "EUR-TIME")
         self.assertEqual(timed.exit_reason, ExitReason.TIME_EXIT)
+        self.assertAlmostEqual(timed.net_pnl_usd, 0.0)
 
     def test_scheduled_exit_is_noop_after_prior_target(self) -> None:
         bars = [
