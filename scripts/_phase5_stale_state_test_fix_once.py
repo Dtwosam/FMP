@@ -21,6 +21,7 @@ REPLACEMENTS = (
     ),
     ('"**Phase status:** PASS"', '"**Phase status:** ACTIVE"'),
     ('"## Phase 5 — UNSTARTED"', '"## Phase 5 — ACTIVE"'),
+    ('"Real-money trading remains locked"', '"Real-money trading: locked"'),
 )
 
 for filename in FILES:
