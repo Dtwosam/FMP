@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 3 — Backtesting Engine  
-**Phase status:** ACTIVE  
-**Next milestone:** verify deterministic Phase 3 golden acceptance suite and inspect acceptance artifacts
+**Phase status:** ACCEPTANCE PASS — CHECKPOINT PENDING  
+**Next milestone:** create checkpoint `fmp-v1-phase3-backtester` at the verified acceptance-closure commit, then mark Phase 3 formally PASS
 
 ## Current baseline
 
@@ -98,12 +98,31 @@ The Phase 2 acceptance review against `docs/data-spec.md` and `docs/build-order.
 
 Phase 2 is formally closed as PASS.
 
-## Phase 3 — ACTIVE
+## Phase 3 — ACCEPTANCE PASS / CHECKPOINT PENDING
 
-The deterministic broker-independent backtesting engine is under implementation and acceptance review on PR #78. The current implementation includes frozen decision/quote contracts, stop-based sizing and portfolio risk controls, executable-side bid/ask fills, adverse slippage and explicit cost models, conservative intrabar/gap handling, chronological exit-before-entry processing, deterministic reporting, and golden hand-calculated acceptance scenarios.
+The deterministic broker-independent backtesting engine implementation and merged-main acceptance runner are complete.
 
-Frozen Phase 3 semantics are recorded in DEC-016. The latest pre-documentation implementation head passed the full repository test suite and both Phase 1 source-capable PR checks were skipped under `[phase1-no-source]`.
+### Implementation and merged-main regression
 
-Phase 3 is **not PASS** until the implementation is merged, deterministic acceptance artifacts from merged `main` are independently inspected, and checkpoint `fmp-v1-phase3-backtester` is created.
+- implementation merge: `96ca80b3baae4de511b5b14eb6c2f9d4d723645b`
+- acceptance-runner merge / evidence code: `f7d98676d40f9af67f2d6f6cde36b3a465f68741`
+- merged-main tests run: `34838682046`
+- test result: 300 tests PASS; workflow YAML validation PASS; compile PASS
 
-Phase 4 has not started. Real-money trading remains locked.
+### Formal deterministic acceptance evidence
+
+- workflow: `phase3-acceptance`
+- merged-main run: `34838682032`
+- result: SUCCESS
+- artifact ID: `10344943075`
+- artifact SHA-256: `357152cef5118163f06f9d6166e7e02cdd7ed556a3de1c5723a6a6079bd6c4f0`
+- independently inspected scenarios: LONG cost accounting, SHORT target, conservative ambiguity, simultaneous-risk rejection, daily halt and next-UTC-day reset
+- primary/repeat deterministic artifact equality: PASS for all five scenarios
+- independent per-file manifest SHA/size verification: PASS
+- independent PnL, equity-checkpoint, rejection-code, and metrics recomputation: PASS with zero validation errors
+
+Detailed evidence is `docs/phase3-acceptance-evidence.md`. Frozen semantics remain in DEC-016 and the acceptance review is DEC-017.
+
+The acceptance gate is PASS. Formal Phase 3 closure is intentionally not declared until checkpoint branch `fmp-v1-phase3-backtester` is created at the verified acceptance-closure commit.
+
+Phase 4 has not started. Real-money trading remains locked under DEC-008.
