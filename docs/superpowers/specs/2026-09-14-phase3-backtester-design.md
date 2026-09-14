@@ -39,6 +39,7 @@ Exact Python names may be adjusted for clarity during implementation, but the se
 
 Represents an already-known directional or no-trade decision. It contains at minimum:
 
+- stable `decision_id`;
 - symbol;
 - decision timestamp;
 - direction: `LONG`, `SHORT`, or `NO_TRADE`;
@@ -56,7 +57,7 @@ Contains approval/rejection, approved monetary risk, approved units if applicabl
 
 ### `OrderIntent`
 
-Created only after a directional decision passes risk. It is broker-independent and includes symbol, side, units, stop, target, decision timestamp, and earliest executable timestamp.
+Created only after a directional decision passes risk. It is broker-independent and includes decision identity, symbol, side, units, stop, target, decision timestamp, and earliest executable timestamp.
 
 ### `TradeRecord`
 
@@ -64,7 +65,7 @@ Contains deterministic entry/exit timestamps and prices, side, units, stop/targe
 
 ### `BacktestRun`
 
-Identifies the code/data/config inputs and summarizes deterministic outputs including trades, rejections, account/equity series or checkpoints, metrics, and artifact hashes.
+Identifies the code/data/config inputs and summarizes deterministic outputs including trades, rejections, account/equity checkpoints, metrics, and artifact hashes.
 
 ## 5. Signal timing and anti-look-ahead contract
 
@@ -96,10 +97,12 @@ Spread therefore enters naturally through separate bid/ask observations and must
 
 ## 7. Slippage, commission, and financing
 
-Slippage is explicit and adverse:
+Slippage is explicit and adverse for every simulated fill, including entry, stop, target, and end-of-data exits:
 
-- buy fills move upward by configured slippage;
-- sell fills move downward by configured slippage.
+- any BUY fill moves upward by configured slippage;
+- any SELL fill moves downward by configured slippage.
+
+For a stop or target reached intrabar, first choose the policy-defined reference price (stop or target), then apply adverse slippage according to whether the resulting fill is a BUY or SELL. For an adverse stop gap, the executable bar open is the reference price before slippage.
 
 Slippage configuration is expressed in pips and converted by symbol pip convention. Golden tests cover both JPY and non-JPY pairs.
 
@@ -111,13 +114,15 @@ Financing/rollover is represented by a cost-model interface. A zero-financing im
 
 Stop and target become active immediately after entry unless a future strategy contract explicitly declares a later activation rule; Phase 3 fixtures use immediate activation.
 
+A position entered at a bar open may therefore exit later within that same bar if its executable-side high/low reaches the stop or target. The entry occurs first at the bar open; the subsequent intrabar ordering remains unknown and uses the conservative rules below.
+
 ### Stop fill
 
-If the executable side opens beyond the stop in an adverse direction, fill at the worse executable bar-open price plus adverse slippage. Otherwise, if the stop is touched intrabar, fill at the stop price plus adverse slippage.
+For a position already open before a bar begins, if the executable side opens beyond the stop in an adverse direction, fill at that worse executable bar-open reference price plus adverse slippage. Otherwise, if the stop is touched intrabar, use the declared stop as reference price plus adverse slippage.
 
 ### Target fill
 
-If the executable side reaches the target, fill at the declared target price minus adverse slippage as applicable. Favorable gap-through-target price improvement is not granted; the simulator does not create optimistic execution from OHLC uncertainty.
+If the executable side reaches the target, use the declared target as reference price and then apply adverse slippage according to fill side. Favorable gap-through-target price improvement is not granted; the simulator does not create optimistic execution from OHLC uncertainty.
 
 ### Both stop and target reachable in one bar
 
@@ -129,37 +134,43 @@ The engine records that the exit was intrabar-ambiguous and resolved conservativ
 
 ### End of data
 
-Any open position at the end of the supplied backtest data closes deterministically on the final executable side and records exit reason `END_OF_DATA`.
+Any open position at the end of the supplied backtest data closes deterministically on the final executable side, applies the configured adverse exit slippage/cost model, and records exit reason `END_OF_DATA`.
 
-## 9. Account state
+## 9. Account state and equity basis
 
-The initial implementation models one USD-denominated research account with deterministic realized cash/equity accounting.
+The initial implementation models one USD-denominated research account with deterministic realized accounting.
+
+Define **risk equity** as:
+
+`starting_equity + cumulative_realized_net_pnl`
+
+Risk equity excludes unrealized PnL. It is the equity basis used for new position sizing, per-trade percentage limits, simultaneous-risk percentage limits, and each UTC day's start-of-day risk snapshot. This avoids introducing an unstated mark-to-market convention into Phase 3 risk decisions.
 
 The engine records at minimum:
 
 - starting equity;
-- realized PnL;
-- current equity used for new-risk calculations;
+- cumulative realized gross and net PnL;
+- current risk equity;
 - reserved open risk;
 - start-of-day risk basis;
-- day realized PnL;
+- day realized net PnL;
 - open positions;
 - daily halt state.
 
-Unrealized mark-to-market may be tracked for reporting/drawdown where needed, but position sizing and daily realized-loss halt use the explicitly defined bases below rather than an implicit mark convention.
+The Phase 3 core maximum-drawdown metric is computed from the realized risk-equity curve after each closed-trade/account event. Unrealized mark-to-market drawdown may be added later as explicit telemetry, but it must use a separately frozen mark convention and does not replace the Phase 3 realized-equity acceptance metric.
 
 ## 10. Risk policy
 
 Existing approved limits are unchanged:
 
-- default risk per trade: 0.25% of current equity;
-- hard maximum requested risk per trade: 0.50% of current equity;
-- maximum simultaneous open risk: 1.00% of current equity;
+- default risk per trade: 0.25% of current risk equity;
+- hard maximum requested risk per trade: 0.50% of current risk equity;
+- maximum simultaneous open risk: 1.00% of current risk equity;
 - maximum daily realized loss before halt: 1.50%.
 
 A request above the hard per-trade maximum is rejected. It is not silently clamped.
 
-Open positions reserve their approved monetary risk until close. A new entry is rejected if existing reserved risk plus proposed approved risk would exceed the simultaneous-risk limit.
+Open positions reserve their approved monetary risk until close. A new entry is rejected if existing reserved risk plus proposed approved risk would exceed the simultaneous-risk limit evaluated against current risk equity.
 
 Every rejection receives a stable machine-readable reason code plus human-readable explanation.
 
@@ -167,14 +178,16 @@ Every rejection receives a stable machine-readable reason code plus human-readab
 
 Phase 3 freezes the previously unresolved daily-loss interpretation:
 
-**Daily-loss basis is the account equity snapshot at the start of each UTC calendar day, before that day's realized PnL.**
+**Daily-loss basis is the risk-equity snapshot at the start of each UTC calendar day, before that day's realized PnL.**
 
-When cumulative realized PnL for that UTC day is less than or equal to negative 1.50% of that day-start equity basis:
+When cumulative realized **net** PnL for that UTC day is less than or equal to negative 1.50% of that day-start risk-equity basis:
 
 - new entries are blocked for the remainder of that UTC day;
 - existing positions are not automatically closed solely because of the halt;
 - the halt reason/time is recorded;
-- the halt resets deterministically on the next UTC date, whose new day-start equity snapshot becomes the next basis.
+- the halt resets deterministically on the next UTC date, whose new day-start risk-equity snapshot becomes the next basis.
+
+A fill occurring at `00:00:00Z` belongs to the new UTC day. The new day's basis is captured immediately before processing any fills/events at the first timestamp of that UTC date.
 
 ## 12. Position sizing
 
@@ -194,21 +207,31 @@ For USD base / JPY quote:
 
 `loss_jpy_per_unit = abs(entry_price - stop_price)`
 
-Convert the stop loss to USD using the adverse stop/fill conversion basis defined by the execution fixture. For the Phase 3 deterministic sizing contract, the stop price is used as the USDJPY conversion denominator:
+For the Phase 3 deterministic sizing contract, convert the stop loss to USD using the declared stop price as the conversion denominator:
 
 `loss_usd_per_unit = abs(entry_price - stop_price) / stop_price`
 
 `units = floor(allowed_risk_usd / loss_usd_per_unit)`
 
-Sizing rejects invalid/non-positive stop distance, non-positive equity/risk allowance, unsupported symbols, or zero/invalid conversion values.
+Sizing rejects invalid/non-positive stop distance, non-positive risk equity/risk allowance, unsupported symbols, or zero/invalid conversion values.
 
-## 13. Position concurrency
+The sizing formula determines nominal stop risk before realized execution slippage/commission. Cost sensitivity is reported separately; risk reservations use approved nominal monetary stop risk so the rule is deterministic and independent of a chosen cost scenario.
+
+## 13. Position concurrency and event ordering
 
 The engine supports multiple simultaneously open positions because the approved risk policy has a simultaneous-risk cap.
 
 Phase 3 enforces aggregate reserved monetary risk only. Cross-pair USD exposure/correlation logic is explicitly deferred until the policy requires it before multi-position demo/live operation. No rolling-correlation model is invented in Phase 3.
 
-The deterministic event order for simultaneous timestamps must be frozen in tests. The implementation must process exits before evaluating new entries at the same timestamp so legitimately released risk is available for that timestamp's new decisions; within each category, ordering must be stable and documented.
+For each chronological bar timestamp, event ordering is frozen:
+
+1. If the UTC date changed, capture the new day-start risk-equity basis before processing fills at that timestamp.
+2. Evaluate exits for positions that were open before the bar began, sorted by `(symbol, position_id)`; apply realized net PnL and release reserved risk immediately.
+3. Evaluate decisions eligible at that timestamp, sorted by `(symbol, decision_id)`.
+4. For each eligible directional decision in that order, run risk assessment against the state left by prior events at the same timestamp and, if approved, enter at the executable bar open.
+5. After each new entry, evaluate that newly opened position against the remainder of the same bar using the stop/target/ambiguity rules; any same-bar exit is realized before the next decision in the stable decision order.
+
+This ordering makes released risk available deterministically while ensuring same-timestamp competing decisions cannot depend on container/hash iteration order.
 
 ## 14. Rejections and `NO_TRADE`
 
@@ -266,7 +289,7 @@ The Phase 3 reporting layer computes deterministic whole-run metrics sufficient 
 - average win;
 - average loss;
 - trade count;
-- maximum drawdown;
+- maximum realized-equity drawdown;
 - recovery factor where denominator is meaningful;
 - longest winning streak;
 - longest losing streak;
@@ -284,7 +307,8 @@ The engine fails closed on malformed or unsupported inputs rather than guessing:
 - non-finite/non-positive executable prices;
 - invalid stop direction;
 - invalid units/risk values;
-- duplicate executable identities that make event ordering ambiguous.
+- duplicate executable identities that make event ordering ambiguous;
+- duplicate `decision_id` values within a run.
 
 No input defect is silently repaired by the backtester.
 
@@ -302,19 +326,21 @@ The Phase 3 acceptance suite must include hand-calculable cases for:
 8. Gap through stop -> worse executable bar-open fill.
 9. Target gap does not receive favorable price improvement.
 10. Signal on bar `T` cannot execute on bar `T`; earliest fill is the next bar.
-11. EURUSD/GBPUSD USD-risk sizing.
-12. USDJPY sizing and pip/slippage convention.
-13. Adverse slippage direction for buys/sells.
-14. Commission application.
-15. Per-trade hard-risk rejection.
-16. Simultaneous open-risk rejection.
-17. Exit-before-entry event ordering releases risk deterministically.
-18. Daily realized-loss halt.
-19. Deterministic UTC next-day halt reset.
-20. `NO_TRADE` and rejected decisions are recorded.
-21. End-of-data forced close semantics.
-22. Repeated identical runs produce identical trade/metric/artifact digests.
-23. Hand-calculated account/equity/PnL scenario agrees exactly with engine output.
+11. Same-bar post-entry stop/target activation is deterministic.
+12. EURUSD/GBPUSD USD-risk sizing.
+13. USDJPY sizing and pip/slippage convention.
+14. Adverse slippage direction for every BUY/SELL fill type.
+15. Commission application.
+16. Per-trade hard-risk rejection.
+17. Simultaneous open-risk rejection.
+18. Exit-before-entry event ordering releases risk deterministically.
+19. Stable same-timestamp decision ordering produces deterministic cap allocation.
+20. Daily realized-loss halt.
+21. Deterministic UTC next-day halt reset, including a `00:00:00Z` fill.
+22. `NO_TRADE` and rejected decisions are recorded.
+23. End-of-data forced close semantics.
+24. Repeated identical runs produce identical trade/metric/artifact digests.
+25. Hand-calculated account/risk-equity/PnL scenario agrees exactly with engine output.
 
 The full repository regression suite must also remain green.
 
