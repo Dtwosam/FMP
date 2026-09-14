@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
-import math
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal, ROUND_FLOOR
 from pathlib import Path
 
 from fmp.backtest.costs import FixedCommissionPerMillion, ZeroCommission, ZeroFinancing
@@ -127,7 +127,7 @@ class Phase3GoldenAcceptanceTests(unittest.TestCase):
     def test_short_bid_entry_ask_target_exit_matches_hand_calculation(self) -> None:
         bars = [
             quote(0),
-            quote(1),
+            quote(1, bid_high=1.1006, ask_high=1.1008),
             quote(
                 2,
                 bid_open=1.0994,
@@ -280,8 +280,19 @@ class Phase3GoldenAcceptanceTests(unittest.TestCase):
             config=config(),
         )
         trade = run.trades[0]
-        expected_units = math.floor(25.0 / (abs(150.02 - 149.92) / 149.92))
-        expected_pnl = (150.12 - 150.02) * expected_units / 150.12
+        entry = Decimal("150.02")
+        stop = Decimal("149.92")
+        allowed_risk = Decimal("25")
+        expected_units = int(
+            (allowed_risk / ((entry - stop) / stop)).to_integral_value(
+                rounding=ROUND_FLOOR
+            )
+        )
+        expected_pnl = float(
+            (Decimal("150.12") - entry)
+            * Decimal(expected_units)
+            / Decimal("150.12")
+        )
         self.assertEqual(trade.units, expected_units)
         self.assertEqual(trade.exit_reason, ExitReason.END_OF_DATA)
         self.assertAlmostEqual(trade.gross_pnl_usd, expected_pnl)
