@@ -34,15 +34,15 @@ class Phase4ResearchStateTests(unittest.TestCase):
         self.assertIn("daily realized-loss halt: 1.50%", text)
         self.assertIn("DEC-008 remains unchanged", text)
 
-    def test_first_serious_experiment_is_predeclared_without_results(self) -> None:
+    def test_first_serious_experiment_preserves_predeclared_protocol_after_result(self) -> None:
         text = read("docs/experiment-log.md")
         marker = "### EXP-20260914-001 — Session breakout baseline"
         self.assertIn(marker, text)
         section = text.split(marker, 1)[1]
-        self.assertIn("- Status: PLANNED", section)
+        self.assertIn("- Status: PASS", section)
         self.assertIn("After a completed pre-London range", section)
         self.assertIn(
-            "- Code commit: merged-main workflow head SHA recorded by the experiment artifact; copied into the result record after execution.",
+            "- Code commit: `cc01929b80cbd1d5619de8476caa8f3d3410262e`",
             section,
         )
         self.assertIn("- Pair(s): EURUSD, GBPUSD, USDJPY", section)
@@ -59,8 +59,9 @@ class Phase4ResearchStateTests(unittest.TestCase):
         self.assertIn("0.50% hard per-trade max", section)
         self.assertIn("1.00% simultaneous max", section)
         self.assertIn("1.50% UTC day-start realized-loss halt", section)
-        self.assertNotIn("- Conclusion:", section)
-        self.assertNotIn("- Result summary:", section)
+        self.assertIn("- Conclusion: PROMOTE", section)
+        self.assertIn("USDJPY 15m", section)
+        self.assertIn("trend continuation", section.lower())
 
     def test_project_state_marks_phase4_active_and_locks_later_phases(self) -> None:
         text = read("docs/project-state.md")

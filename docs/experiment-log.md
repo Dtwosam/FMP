@@ -51,21 +51,31 @@ Copy this section for each serious experiment:
 ### EXP-20260914-001 — Session breakout baseline
 
 - Date: 2026-09-14
-- Status: PLANNED
-- Hypothesis: After a completed pre-London range, a confirmed break during the early London session may exhibit enough short-horizon continuation on some V1 pair/timeframe combinations to overcome historical spread and adverse slippage under fixed-risk execution. No profitability is assumed.
-- Code commit: merged-main workflow head SHA recorded by the experiment artifact; copied into the result record after execution.
-- Data manifest/version: accepted Phase 2 processed manifests, schema `fmp-canonical-1m-v1`, from the immutable accepted EURUSD/GBPUSD/USDJPY full-history artifacts recorded in `docs/project-state.md`.
+- Status: PASS
+- Hypothesis: After a completed pre-London range, a confirmed break during the early London session may exhibit enough short-horizon continuation on some V1 pair/timeframe combinations to overcome historical spread and adverse slippage under fixed-risk execution. No profitability was assumed.
+- Code commit: `cc01929b80cbd1d5619de8476caa8f3d3410262e`
+- Data manifest/version: accepted Phase 2 processed manifests, schema `fmp-canonical-1m-v1`; EURUSD `fd7676282e6e667c39754b09b43a43288a0a877fec588cd2601a601e2b0edf6a`, GBPUSD `a6ee73e94781f48a43f2792328528d242455d4f7f4f2e0a5760446df21ba4d94`, USDJPY `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`.
 - Pair(s): EURUSD, GBPUSD, USDJPY
 - Timeframe(s): 5m, 15m, 1h
-- Data range: accepted Phase 2 coverage 2015-01-01 through 2026-08-20 inclusive; this experiment runner is limited to development and validation.
+- Data range: accepted Phase 2 coverage 2015-01-01 through 2026-08-20 inclusive; this experiment loaded development and validation only.
 - Train period: 2015-01-01 through 2020-12-31 inclusive
 - Validation period: 2021-01-01 through 2023-12-31 inclusive
 - Final-test touched?: NO
 - Strategy/model: deterministic `session_breakout` baseline, `Europe/London`; range 00:00–08:00, breakout observation 08:00–12:00, exact mandatory flat timestamp 16:00 local; first qualifying breakout only.
-- Features: midpoint OHLC only for range/signal analysis; Phase 3 historical BID/ASK execution remains the sole fill/PnL source of truth.
+- Features: midpoint OHLC only for range/signal analysis; Phase 3 historical BID/ASK execution remained the sole fill/PnL source of truth.
 - Parameters/search space: `buffer_pips = {0, 2, 5}` × `target_range_multiple = {0.5, 1.0, 1.5}`; exactly 9 predeclared configurations per pair/timeframe and no post-result expansion under this experiment ID.
 - Random seed (if relevant): not applicable; deterministic strategy and backtester.
 - Spread/cost model: historical BID/ASK spread; zero commission; zero financing.
 - Slippage model: 0.2, 0.5, 1.0 pips per fill, adverse on every execution side.
 - Risk assumptions: 0.25% requested; 0.50% hard per-trade max; 1.00% simultaneous max; 1.50% UTC day-start realized-loss halt; accepted Phase 3 sizing/execution rules unchanged.
-- Follow-up: Run the merged-main source-free development/validation matrix, preserve all configurations including losing and empty rows, independently inspect deterministic artifacts, then record the evidence-supported experiment outcome. The final test remains untouched.
+- Trade count: frozen serious candidate USDJPY 15m, 5-pip buffer, 1.5x target: 620 development trades and 362 validation trades.
+- Net return after costs: at 0.2-pip slippage, +5.8023% development and +3.7076% validation for the frozen serious candidate.
+- Expectancy/trade: at 0.2-pip slippage, +$9.3585 development and +$10.2421 validation.
+- Profit factor: at 0.2-pip slippage, 1.1477 development and 1.1449 validation.
+- Max drawdown: at 0.2-pip slippage, 2.9370% development and 2.9860% validation.
+- Key subperiod results: selected-candidate yearly net PnL at 0.2-pip slippage was 2015 -$1,025.12, 2016 +$2,794.76, 2017 -$870.72, 2018 +$975.35, 2019 +$7.88, 2020 +$3,920.14; validation was 2021 -$1,308.81, 2022 +$4,595.37, 2023 +$421.08. About 91.6% of validation gross positive PnL occurred in 2022, a material concentration weakness.
+- Robustness/cost sensitivity: all three USDJPY 15m target-1.5 buffer neighbors remain positive on both splits at 0.5-pip slippage; the same 5-pip / 1.5x point also remains positive on both splits at 5m and 1h under 0.5-pip slippage. The selected USDJPY 15m point is +3.4625% development / +2.5224% validation at 0.5 pips. At 1.0 pip it is -0.3228% development / +0.5769% validation, and no configuration in the full experiment remains positive on both splits at 1.0-pip stress.
+- Result summary: merged-main run `34848137086` completed SUCCESS. All 18/18 matrix artifacts and 486/486 configuration rows were independently inspected with zero ZIP, manifest, code/data identity, grid, candidate-reuse, or accounting discrepancies. At 0.5-pip stress exactly nine configurations remain positive on both development and validation, all USDJPY. GBPUSD has two baseline 5m target-1.5 points positive on both splits but neither survives 0.5-pip stress; EURUSD has no baseline configuration positive on both splits.
+- Conclusion: PROMOTE
+- Reason: promote the frozen USDJPY 15m, 5-pip buffer, 1.5x target configuration as a serious Phase 4 candidate because development and validation agree, neighboring parameter points show support, moderate 0.5-pip cost stress survives, and the same parameter point has cross-timeframe support. Promotion is limited by 1.0-pip cost failure and material 2022 validation concentration.
+- Follow-up: retain this candidate unchanged, proceed to the next predeclared Phase 4 family, trend continuation, and keep the 2024-01-01 through 2026-08-20 final-test period untouched until candidate selection across the admitted baseline program is materially complete. This conclusion does not make Phase 4 PASS, start Phase 5, authorize broker/live integration, or unlock real-money trading. Detailed evidence is in `docs/phase4-session-breakout-evidence.md`.

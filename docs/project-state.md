@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 4 — Baseline Strategy Research  
 **Phase status:** ACTIVE  
-**Next milestone:** Run and independently inspect the predeclared source-free session-breakout development/validation benchmark; final-test data remains locked
+**Next milestone:** Design and predeclare the trend-continuation baseline while retaining the frozen session-breakout candidate; final-test data remains locked
 
 ## Current baseline
 
@@ -16,17 +16,19 @@
 - Frozen raw identities: 25,500
 - Historical source: Dukascopy daily M1 BID/ASK `.bi5`
 - Persistent immutable raw snapshot: Supabase private bucket `fmp-raw`
-- Frozen plan SHA-256: `2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6`
+- Frozen Phase 1 plan SHA-256: `2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6`
 - Real-money trading: locked
 
 ## Phase 0 — PASS
 
-- Merge commit: `31cd8decca5dcb90f9d123ff33f71ac20413e269`
-- Checkpoint: `fmp-v1-phase0-source-of-truth`
+- merge commit: `31cd8decca5dcb90f9d123ff33f71ac20413e269`
+- checkpoint: `fmp-v1-phase0-source-of-truth`
+
+Phase 0 source-of-truth rules remain authoritative except where later decision-log entries explicitly supersede them.
 
 ## Phase 1 — PASS
 
-Phase 1 is closed for the frozen three-pair snapshot. Final acceptance established 25,500 expected and present raw-backed manifests, zero missing identities, zero inferred `not_found`, zero unexpected raw/manifest paths, and zero checksum/size mismatches.
+Phase 1 is closed for the frozen EURUSD/GBPUSD/USDJPY BID/ASK snapshot covering 2015-01-01 through 2026-08-20 inclusive.
 
 - final provenance workflow: `phase1-final-cloud-audit`
 - run ID: `34758527971`
@@ -34,126 +36,87 @@ Phase 1 is closed for the frozen three-pair snapshot. Final acceptance establish
 - result: SUCCESS
 - artifact ID: `10318323714`
 - artifact SHA-256: `53dbc184677393642e07c78fb6f2229a2c9bf5d8a38c2169935c23297003244b`
-- cross-report acceptance: 55 checks passed, 0 failed
-- checkpoint/source identity: `fmp-v1-phase1-source-of-truth`
+- acceptance: 25,500 expected/present raw-backed manifests, zero missing identities, zero unexpected identities, zero inferred `not_found`, zero checksum/size mismatches
+- checkpoint: `fmp-v1-phase1-source-of-truth`
 
-Phase 1 acceptance proves acquisition completeness and immutable provenance only. No further acquisition is required unless later evidence demonstrates an integrity defect.
+No further Phase 1 acquisition is required unless later integrity evidence demonstrates a defect.
 
 ## Phase 2 — PASS
 
-The canonical-data foundation and exhaustive authenticated cloud-read materialization are complete. The detailed acceptance record is `docs/phase2-acceptance-evidence.md`.
+Detailed acceptance evidence is `docs/phase2-acceptance-evidence.md`; DEC-015 records the acceptance review.
 
-### Exhaustive workflow
-
-- workflow: `phase2-full-history`
-- run number: #1
-- run ID: `34782357048`
-- final attempt: 2
-- head SHA: `158c1c121655867b7fb2886fe755585dfcd682ec`
-- final conclusion: SUCCESS
-- completion: `2026-09-13T23:10:00Z`
-
-Attempt 1 completed EURUSD and GBPUSD but USDJPY received one HTTP 401 from the read-only raw Edge Function. The isolated USDJPY rerun succeeded without code, data, source, or configuration changes; the 401 did not reproduce.
-
-### Frozen scope proved
-
-For each of EURUSD, GBPUSD, and USDJPY:
-
-- 4,250 days and exactly 8,500 verified raw reads (4,250 BID + 4,250 ASK)
-- 140 calendar months
-- 140 monthly partitions for each of 1m, 5m, 15m, and 1h
-- row counts: 1m 6,120,000; 5m 1,224,000; 15m 408,000; 1h 102,000
-- 561 processed-manifest artifacts
-- exact raw ledger with zero missing or duplicate frozen identities
-
-### Artifact digests
-
+- exhaustive workflow: `phase2-full-history`
+- run ID: `34782357048`, final attempt 2
+- implementation head: `158c1c121655867b7fb2886fe755585dfcd682ec`
+- result: SUCCESS
+- per pair: 4,250 days; 8,500 verified raw reads; 140 months; 140 partitions for each 1m/5m/15m/1h; 561 processed-manifest artifacts
+- row counts per pair: 1m 6,120,000; 5m 1,224,000; 15m 408,000; 1h 102,000
 - EURUSD artifact `10325737935`: `db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3`
 - GBPUSD artifact `10326096831`: `fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2`
 - USDJPY artifact `10327600628`: `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`
-
-Independent inspection verified every ZIP digest, every manifest-listed file size/SHA, every ledger identity, and every monthly partition set with zero validation errors.
-
-### Quality acceptance
-
-For all three pair histories:
-
-- actual range: `2015-01-01T00:00:00Z` through `2026-08-20T23:59:00Z`
-- duplicate rows: 0
-- missing BID rows: 0
-- missing ASK rows: 0
-- required null count: 0
-- missing open-market minutes: 0
-- maximum suspicious gap minutes: 0
-
-Outlier findings remain recorded as telemetry and were not silently removed or rewritten.
-
-The Phase 2 acceptance review against `docs/data-spec.md` and `docs/build-order.md` is PASS. Canonical/schema, quote-sanity, duplicate/missing-timestamp, deterministic resampling boundary, weekend-gap, DST-sensitive utility, ledger, workflow-guard, and real Parquet materialization tests were green on the merged implementation and post-merge main CI.
-
-### Checkpoint
-
+- structural quality: zero duplicates, missing BID/ASK rows, required nulls, missing open-market minutes, or suspicious gaps across all three histories
 - checkpoint: `fmp-v1-phase2-normalized-data`
 - checkpoint commit: `80e763c46fc365d48922fb37de1a70dfe188de70`
-- checkpoint contains the exhaustive acceptance evidence and DEC-015 acceptance review
 
 Phase 2 is formally closed as PASS.
 
 ## Phase 3 — PASS
 
-The deterministic broker-independent backtesting engine is formally accepted and closed. Detailed acceptance evidence is `docs/phase3-acceptance-evidence.md`; frozen semantics are DEC-016 and the final acceptance review is DEC-017.
-
-### Implementation and merged-main regression
+Detailed acceptance evidence is `docs/phase3-acceptance-evidence.md`; DEC-016 freezes simulator semantics and DEC-017 records the acceptance review.
 
 - implementation merge: `96ca80b3baae4de511b5b14eb6c2f9d4d723645b`
 - acceptance-runner merge / evidence code: `f7d98676d40f9af67f2d6f6cde36b3a465f68741`
-- merged-main tests run: `34838682046`
-- test result: 300 tests PASS; workflow YAML validation PASS; compile PASS
-
-### Formal deterministic acceptance evidence
-
-- workflow: `phase3-acceptance`
-- merged-main run: `34838682032`
-- result: SUCCESS
+- merged-main tests run: `34838682046` — 300 tests PASS; workflow YAML PASS; compile PASS
+- formal acceptance run: `34838682032` — SUCCESS
 - artifact ID: `10344943075`
 - artifact SHA-256: `357152cef5118163f06f9d6166e7e02cdd7ed556a3de1c5723a6a6079bd6c4f0`
-- independently inspected scenarios: LONG cost accounting, SHORT target, conservative ambiguity, simultaneous-risk rejection, daily halt and next-UTC-day reset
-- primary/repeat deterministic artifact equality: PASS for all five scenarios
-- independent per-file manifest SHA/size verification: PASS
-- independent PnL, equity-checkpoint, rejection-code, and metrics recomputation: PASS with zero validation errors
-
-### Checkpoint
-
+- independent deterministic/PnL/risk/manifest verification: PASS with zero validation errors
 - checkpoint: `fmp-v1-phase3-backtester`
 - checkpoint commit: `7685ba73f18457d5d3945f2fea21ceba3de81cf1`
-- checkpoint contains `docs/phase3-acceptance-evidence.md` and DEC-017
-- checkpoint branch was independently read back and verified to resolve to the exact closure commit
 
-Phase 3 is formally closed as PASS at `fmp-v1-phase3-backtester`.
+Phase 3 is formally closed as PASS.
 
 ## Phase 4 — ACTIVE
 
-Phase 4 has started with the first sequential baseline family, session breakout. DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact parameter/cost grid, and unchanged Phase 3 risk settings before benchmark results are inspected.
+DEC-018 freezes the chronological split, final-test lock, left-labelled timing bridge, exact session-breakout grid/cost assumptions, and unchanged Phase 3 risk settings.
 
-- first serious experiment: `EXP-20260914-001 — Session breakout baseline`
-- experiment status: PLANNED
+### EXP-20260914-001 — Session breakout baseline
+
+- experiment status: PASS
+- conclusion: PROMOTE one serious research candidate; detailed evidence is `docs/phase4-session-breakout-evidence.md`
+- implementation / benchmark commit: `cc01929b80cbd1d5619de8476caa8f3d3410262e`
+- merged-main tests: run `34848136901` — SUCCESS, 348 tests PASS, workflow YAML PASS, compile PASS
+- unchanged Phase 3 acceptance: run `34848137105` — SUCCESS
+- Phase 4 benchmark: run `34848137086` — SUCCESS
+- matrix: 3 pairs × 3 signal timeframes × development/validation = 18/18 cells successful
+- independently inspected benchmark rows: 486/486 with zero ZIP, manifest, identity, grid, candidate-reuse, or accounting discrepancies
 - development: 2015-01-01 through 2020-12-31 inclusive
 - validation: 2021-01-01 through 2023-12-31 inclusive
 - final untouched test: 2024-01-01 through 2026-08-20 inclusive
 - Final-test touched: NO
-- eligible pairs: EURUSD, GBPUSD, USDJPY
-- eligible signal timeframes: 5m, 15m, 1h
-- parameter grid: 3 breakout buffers × 3 target multiples = 9 configurations per pair/timeframe
-- adverse slippage scenarios: 0.2, 0.5, 1.0 pips per fill
-- commission/financing: zero / zero for this mandatory-intraday-flat baseline
+- predeclared grid: buffers 0/2/5 pips × targets 0.5/1.0/1.5 × adverse slippage 0.2/0.5/1.0 pips per fill
+- commission/financing: zero / zero for the mandatory-intraday-flat family
 - risk: accepted Phase 3 policy unchanged
-- benchmark evidence: not yet run on merged main; no experiment conclusion has been recorded
 
-The implementation remains source-free and reads only accepted Phase 2 processed artifacts. It does not acquire source data, mutate the immutable raw snapshot, change Supabase, integrate a broker/live path, or grant real-money permission.
+### Frozen serious candidate
 
-Phase 4 remains ACTIVE after this first family. The Phase 4 checkpoint is not created from the session-breakout slice alone.
+Retain **USDJPY 15m, 5-pip breakout buffer, 1.5x target-range multiple** unchanged for later promotion testing.
+
+At 0.2-pip adverse slippage:
+
+- development: 620 trades, +5.8023% net return, +$9.3585 expectancy/trade, profit factor 1.1477, max drawdown 2.9370%
+- validation: 362 trades, +3.7076% net return, +$10.2421 expectancy/trade, profit factor 1.1449, max drawdown 2.9860%
+
+At 0.5-pip adverse slippage it remains positive on both splits (+3.4625% development / +2.5224% validation). All three USDJPY 15m target-1.5 buffer neighbors remain positive on both splits at 0.5-pip stress. At 1.0 pip no configuration in the full experiment remains positive on both development and validation; the selected point is -0.3228% development / +0.5769% validation.
+
+Yearly results show material regime sensitivity, especially strong 2022 validation performance, so this is a serious research candidate rather than proof of deployment readiness. EURUSD supplies no baseline configuration positive on both development and validation; GBPUSD has two baseline-positive 5m target-1.5 configurations but both fail 0.5-pip stress.
+
+The session-breakout candidate is frozen while Phase 4 proceeds sequentially to **trend continuation**. Candidate selection across the admitted baseline program is not materially complete, therefore the final-test period remains locked.
+
+Phase 4 remains ACTIVE. The checkpoint `fmp-v1-phase4-baselines` is not created from this first-family result alone.
 
 ## Phase 5 — UNSTARTED
 
-Phase 5 has not started. No ML/feature-engine promotion is authorized by Phase 4 implementation work or by any session-breakout result.
+Phase 5 has not started. No ML/feature-engine promotion is authorized by the session-breakout result.
 
 Real-money trading remains locked; DEC-008 remains unchanged.
