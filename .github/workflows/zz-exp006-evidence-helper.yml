@@ -1,0 +1,87 @@
+name: zz-exp006-evidence-helper
+
+on:
+  push:
+    branches:
+      - phase4-exp006-evidence
+    paths:
+      - .github/workflows/zz-exp006-evidence-helper.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: phase4-exp006-evidence
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Apply bounded source-of-truth closure
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          decision_path = Path('docs/decision-log.md')
+          decision = decision_path.read_text(encoding='utf-8')
+          index_anchor = '- DEC-026 — Phase 4 session high/low sweep-rejection baseline protocol — APPROVED\n'
+          if 'DEC-027 — Phase 4 session high/low sweep-rejection experiment outcome — APPROVED' not in decision:
+              if decision.count(index_anchor) != 1:
+                  raise SystemExit('DEC-026 index anchor mismatch')
+              decision = decision.replace(
+                  index_anchor,
+                  index_anchor + '- DEC-027 — Phase 4 session high/low sweep-rejection experiment outcome — APPROVED\n',
+                  1,
+              )
+              decision += '''\n\n## DEC-027 — Phase 4 session high/low sweep-rejection experiment outcome\n\n**Date:** 2026-09-14  \n**Status:** APPROVED\n\nMerged-main session sweep-rejection benchmark run `34895426037` on exact implementation commit `120348d4a5df806f674551590610b216a9bc33ac` completed successfully. Merged-main tests run `34895426082` and unchanged Phase 3 acceptance run `34895426066` also completed successfully. All 18 pair/timeframe/split cells succeeded and all 162 frozen benchmark rows were independently verified with zero ZIP, inner-manifest, code/data identity, split, grid, candidate-reuse, accounting, cost, or risk-identity errors. The final-test split was not used.\n\nAt the frozen 0.2-pip baseline gate, zero of 27 pair/timeframe/buffer points survive on both development and validation. The only development-only qualifier, USDJPY 5m / 2-pip buffer, reverses from +1.9167% development return, +$5.6874 expectancy/trade, and PF 1.0282 to -15.4056% validation return, -$64.1899 expectancy/trade, and PF 0.6706. Two USDJPY 1h validation-only qualifiers also fail development: the 2-pip point is -4.0619% development versus +0.5797% validation, and the 5-pip point is -0.3861% development versus +0.2743% validation. No downstream cost result may rescue a point that fails the predeclared two-split baseline gate.\n\nConsequences: `EXP-20260914-006` is FAIL / REJECT; no session high/low sweep-rejection candidate is promoted and no post-result parameter expansion, alternate reference session, extra buffer, target/stop retuning, or rescue rule is authorized. The two serious candidates from EXP-001 and EXP-005 remain frozen unchanged. This completes development/validation benchmarking of all six planned Phase 4 baseline families. Phase 4 remains ACTIVE only until its separate acceptance/checkpoint review is formally recorded; the final-test period remains locked and is not authorized by this decision. Phase 5, broker/live integration, and real-money trading remain locked; DEC-008 remains unchanged. Detailed evidence is in `docs/phase4-session-sweep-rejection-evidence.md`.\n'''
+          decision_path.write_text(decision, encoding='utf-8')
+
+          state_path = Path('docs/project-state.md')
+          state = state_path.read_text(encoding='utf-8')
+          old_next = '**Next milestone:** Implement and benchmark the predeclared EXP-20260914-006 session high/low sweep-rejection family under DEC-026; both serious candidates remain frozen unchanged and final-test data remains locked'
+          new_next = '**Next milestone:** Complete the Phase 4 acceptance/checkpoint review now that all six planned baseline families are benchmarked; both serious candidates remain frozen unchanged and final-test data remains locked'
+          if old_next not in state:
+              raise SystemExit('next-milestone anchor missing')
+          state = state.replace(old_next, new_next, 1)
+          old_intro = 'DEC-026 freezes the EXP-006 session high/low sweep-rejection protocol while DEC-018 remains authoritative for shared research rules.'
+          new_intro = 'DEC-026 freezes the EXP-006 session high/low sweep-rejection protocol and DEC-027 records the EXP-006 FAIL / REJECT outcome; DEC-018 remains authoritative for shared research rules.'
+          if old_intro not in state:
+              raise SystemExit('Phase 4 intro anchor missing')
+          state = state.replace(old_intro, new_intro, 1)
+
+          start_marker = '### EXP-20260914-006 — Session high/low sweep-rejection baseline\n'
+          start = state.index(start_marker)
+          end = state.index('\n\nPhase 4 remains ACTIVE.', start)
+          exp006 = '''### EXP-20260914-006 — Session high/low sweep-rejection baseline\n\n- experiment status: FAIL\n- conclusion: REJECT; detailed evidence is `docs/phase4-session-sweep-rejection-evidence.md`\n- protocol decision: DEC-026 APPROVED; outcome decision: DEC-027 APPROVED\n- implementation / benchmark commit: `120348d4a5df806f674551590610b216a9bc33ac`\n- merged-main tests: run `34895426082` — SUCCESS; unit tests, workflow YAML validation, and compile PASS\n- unchanged Phase 3 acceptance: run `34895426066` — SUCCESS\n- Phase 4 benchmark: run `34895426037` — SUCCESS\n- matrix: 3 pairs × 3 signal timeframes × development/validation = 18/18 cells successful\n- independently inspected benchmark rows: 162/162 with zero ZIP, inner-manifest, code/data identity, split, grid, candidate-reuse, accounting, cost, or risk-identity errors\n- development: 2015-01-01 through 2020-12-31 inclusive\n- validation: 2021-01-01 through 2023-12-31 inclusive\n- final untouched test: 2024-01-01 through 2026-08-20 inclusive\n- Final-test touched: NO\n- frozen grid: 00:00–08:00 `Europe/London` session reference × penetration buffers 0/2/5 pips × adverse slippage 0.2/0.5/1.0 pips per fill\n- commission/financing: zero / zero; historical BID/ASK remains authoritative for Phase 3 execution\n- risk: accepted Phase 3 policy unchanged\n- promotion screen: zero of 27 pair/timeframe/buffer points survive the 0.2-pip development-and-validation gate\n- clearest chronology failure: USDJPY 5m / 2-pip buffer is +1.9167% development with +$5.6874 expectancy/trade and PF 1.0282, then -15.4056% validation with -$64.1899 expectancy/trade and PF 0.6706\n- two USDJPY 1h validation-only qualifiers fail development; no 0.5/1.0-pip result may rescue a failed baseline point\n- no session sweep-rejection candidate is promoted and no post-result parameter expansion or rescue rule is authorized\n'''
+          state = state[:start] + exp006 + state[end:]
+
+          phase5_marker = '\n\n## Phase 5 — UNSTARTED'
+          phase4_tail_start = state.index('\n\nPhase 4 remains ACTIVE.', state.index(start_marker))
+          phase4_tail_end = state.index(phase5_marker, phase4_tail_start)
+          new_tail = '''\n\nPhase 4 remains ACTIVE pending its explicit acceptance/checkpoint review. All six planned baseline families are now complete. Two serious research candidates remain frozen unchanged: the EXP-001 USDJPY 15m / 5-pip / 1.5x session-breakout point and the EXP-005 USDJPY 1h / 2.0x / fixed-1.0R volatility-breakout point. EXP-004 and EXP-006 remain FAIL / REJECT. The Phase 4 baseline acceptance gate can now be reviewed against the approved project source; this status does not authorize final-test access. The final-test period remains locked and checkpoint `fmp-v1-phase4-baselines` is not created until the acceptance closure is merged.'''
+          state = state[:phase4_tail_start] + new_tail + state[phase4_tail_end:]
+          state_path.write_text(state, encoding='utf-8')
+
+          test_path = Path('tests/test_phase4_session_sweep_state.py')
+          test_path.write_text('''from pathlib import Path\nimport unittest\n\n\nROOT = Path(__file__).resolve().parents[1]\n\n\nclass SessionSweepStateTests(unittest.TestCase):\n    def test_exp006_is_closed_rejected_and_guardrails_remain_locked(self) -> None:\n        decisions = (ROOT / "docs/decision-log.md").read_text(encoding="utf-8")\n        spec = (ROOT / "docs/superpowers/specs/2026-09-14-phase4-session-sweep-rejection-design.md").read_text(encoding="utf-8")\n        evidence = (ROOT / "docs/phase4-session-sweep-rejection-evidence.md").read_text(encoding="utf-8")\n        state = (ROOT / "docs/project-state.md").read_text(encoding="utf-8")\n\n        self.assertIn("DEC-026 — Phase 4 session high/low sweep-rejection baseline protocol", decisions)\n        self.assertIn("DEC-027 — Phase 4 session high/low sweep-rejection experiment outcome", decisions)\n        self.assertIn("**Status:** APPROVED — PREDECLARED", spec)\n        self.assertIn("**Decision:** `DEC-026` — APPROVED", spec)\n        self.assertIn("[00:00, 08:00) Europe/London", spec)\n        self.assertIn("18 × 3 × 3 = 162", spec)\n        self.assertIn("Normal EXP-006 tooling must reject any final-split request before loading market data", spec)\n\n        self.assertIn("**Experiment result:** FAIL", evidence)\n        self.assertIn("**Conclusion:** REJECT", evidence)\n        self.assertIn("18/18 cells successful", evidence)\n        self.assertIn("162/162", evidence)\n        self.assertIn("zero of 27", evidence.lower())\n        self.assertIn("USDJPY 5m / 2-pip buffer", evidence)\n        self.assertIn("+1.9167%", evidence)\n        self.assertIn("-15.4056%", evidence)\n        self.assertIn("Final-test touched?: NO", evidence)\n\n        self.assertIn("**Phase status:** ACTIVE", state)\n        self.assertIn("experiment status: FAIL", state)\n        self.assertIn("DEC-027 APPROVED", state)\n        self.assertIn("All six planned baseline families are now complete", state)\n        self.assertIn("USDJPY 15m", state)\n        self.assertIn("USDJPY 1h / 2.0x", state)\n        self.assertIn("final-test", state.lower())\n        self.assertIn("## Phase 5 — UNSTARTED", state)\n        self.assertIn("Real-money trading remains locked", state)\n\n\nif __name__ == "__main__":\n    unittest.main()\n''', encoding='utf-8')
+
+          Path('.github/workflows/zz-exp006-evidence-helper.yml').unlink()
+          PY
+      - name: Verify bounded closure
+        run: |
+          git diff --check
+          python -m unittest discover -s tests -p 'test_phase4_session_sweep_state.py' -v
+          grep -q 'DEC-027 — Phase 4 session high/low sweep-rejection experiment outcome — APPROVED' docs/decision-log.md
+          grep -q 'experiment status: FAIL' docs/project-state.md
+          grep -q '162/162' docs/phase4-session-sweep-rejection-evidence.md
+          test ! -e .github/workflows/zz-exp006-evidence-helper.yml
+      - name: Commit closure
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/decision-log.md docs/project-state.md tests/test_phase4_session_sweep_state.py .github/workflows/zz-exp006-evidence-helper.yml
+          git commit -m '[phase1-no-source] Close EXP-006 evidence state'
+          git push origin HEAD:phase4-exp006-evidence
