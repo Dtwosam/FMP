@@ -31,12 +31,12 @@ class Phase5AcceptanceStateTests(unittest.TestCase):
             "`fmp-v1-phase5-features` — CREATED at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`",
             evidence,
         )
-        self.assertIn("## Phase 6 —", state)
+        self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("DEC-031", state)
-        self.assertIn("## Phase 7 — ACTIVE", state)
-        self.assertIn("final-test", state.lower())
-        self.assertIn("locked", state.lower())
+        self.assertIn("## Phase 7 — PASS", state)
+        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("Real-money trading: locked", state)
+        self.assertNotIn("## Phase 8 — ACTIVE", state)
 
 
 if __name__ == "__main__":
