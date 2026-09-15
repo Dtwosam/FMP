@@ -25,24 +25,13 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             "${api}/ref/tags/${TAG_NAME}")"
           if [ "${status}" = "200" ]; then
-            existing="$(python - <<'PY'
-import json
-with open('/tmp/tag.json', encoding='utf-8') as f:
-    print(json.load(f)['object']['sha'])
-PY
-)"
+            existing="$(python -c 'import json; print(json.load(open("/tmp/tag.json", encoding="utf-8"))["object"]["sha"])')"
             test "${existing}" = "${TARGET_SHA}"
             echo "Checkpoint tag already exists at exact target."
             exit 0
           fi
           test "${status}" = "404"
-          python - <<'PY' >/tmp/create.json
-import json, os
-print(json.dumps({
-    "ref": "refs/tags/" + os.environ["TAG_NAME"],
-    "sha": os.environ["TARGET_SHA"],
-}))
-PY
+          python -c 'import json, os; print(json.dumps({"ref": "refs/tags/" + os.environ["TAG_NAME"], "sha": os.environ["TARGET_SHA"]}))' >/tmp/create.json
           curl --fail-with-body -sS -X POST \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
