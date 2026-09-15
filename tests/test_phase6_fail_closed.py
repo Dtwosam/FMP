@@ -20,7 +20,7 @@ from tests.test_phase6_pipeline import _candidates, _financial, _labels, _model_
 class Phase6FailClosedEvidenceTests(unittest.TestCase):
     def test_all_null_fit_input_is_durable_model_failure_not_process_failure(self) -> None:
         import fmp.models.evaluation as evaluation
-        from fmp.models.artifacts import write_phase6_artifacts
+        import fmp.models.fail_closed as fail_closed
 
         candidates_by_split = {
             name: _candidates(name) for name in ("fit", "selection", "validation")
@@ -63,33 +63,62 @@ class Phase6FailClosedEvidenceTests(unittest.TestCase):
             split_name = str(candidates[0].metadata["split"])
             frame = _model_frame(tuple(candidates), offset=0.0 if split_name == "fit" else 10.0)
             if split_name == "fit":
-                frame = frame.with_columns(pl.lit(None).cast(pl.Float64).alias("minutes_since_new_york_open"))
+                frame = frame.with_columns(
+                    pl.lit(None)
+                    .cast(pl.Float64)
+                    .alias("minutes_since_new_york_open")
+                )
             return frame
 
         def label_batch(candidates, _bars):
             return _labels(tuple(candidates))
 
         def backtest(**kwargs):
-            return _financial(tuple(kwargs["candidates"]), float(kwargs["slippage_pips"]))
+            return _financial(
+                tuple(kwargs["candidates"]), float(kwargs["slippage_pips"])
+            )
 
         with tempfile.TemporaryDirectory() as tmp:
             out_dir = Path(tmp) / "out"
             with (
-                patch.object(evaluation, "load_processed_bars_for_split", side_effect=bars_loader),
-                patch.object(evaluation, "load_phase6_feature_frame", side_effect=feature_loader),
-                patch.object(evaluation, "generate_frozen_candidates", side_effect=generate),
-                patch.object(evaluation, "join_directional_candidates_to_features", side_effect=join),
+                patch.object(
+                    evaluation,
+                    "load_processed_bars_for_split",
+                    side_effect=bars_loader,
+                ),
+                patch.object(
+                    evaluation,
+                    "load_phase6_feature_frame",
+                    side_effect=feature_loader,
+                ),
+                patch.object(
+                    evaluation,
+                    "generate_frozen_candidates",
+                    side_effect=generate,
+                ),
+                patch.object(
+                    evaluation,
+                    "join_directional_candidates_to_features",
+                    side_effect=join,
+                ),
                 patch.object(evaluation, "label_candidates", side_effect=label_batch),
-                patch.object(evaluation, "run_candidate_backtest", side_effect=backtest),
+                patch.object(
+                    evaluation, "run_candidate_backtest", side_effect=backtest
+                ),
+                patch.object(
+                    fail_closed, "run_candidate_backtest", side_effect=backtest
+                ),
                 patch.object(
                     evaluation,
                     "selection_gate",
                     return_value=GateResult(passed=True, criteria={"synthetic": True}),
                 ),
             ):
-                result = evaluation.run_phase6_strategy_cell(
+                result = fail_closed.run_phase6_strategy_cell_or_failure(
                     dataset_root=Path("/synthetic/processed"),
-                    processed_manifest_path=Path("/synthetic/processed-manifest.json"),
+                    processed_manifest_path=Path(
+                        "/synthetic/processed-manifest.json"
+                    ),
                     feature_root=Path("/synthetic/features"),
                     feature_manifest_path=Path("/synthetic/feature-manifest.json"),
                     strategy_id="session_breakout",
@@ -97,17 +126,31 @@ class Phase6FailClosedEvidenceTests(unittest.TestCase):
                     code_commit="abc123",
                 )
 
-            self.assertEqual(result["selection"]["selected_variant"], "NO_ML_CHALLENGER")
-            self.assertEqual(result["validation"], {"status": "NO_ML_CHALLENGER", "validation_loaded": False})
+            self.assertEqual(
+                result["execution_status"], "FAIL_CLOSED_MODEL_FAILURE"
+            )
+            self.assertEqual(
+                result["selection"]["selected_variant"], "NO_ML_CHALLENGER"
+            )
+            self.assertEqual(result["validation"]["status"], "NO_ML_CHALLENGER")
+            self.assertFalse(result["validation"]["validation_loaded"])
             self.assertEqual(len(result["selection"]["variants"]), 6)
             for family in ModelFamily:
                 model = result["selection"]["models"][family.value]
-                self.assertEqual(model["fit_status"]["status"], "PREPROCESSING_FAILED")
-                self.assertEqual(model["fit_status"]["reason_code"], "ALL_NULL_FIT_COLUMN")
-                self.assertEqual(model["fit_status"]["column"], "minutes_since_new_york_open")
+                self.assertEqual(
+                    model["fit_status"]["status"], "PREPROCESSING_FAILED"
+                )
+                self.assertEqual(
+                    model["fit_status"]["reason_code"], "ALL_NULL_FIT_COLUMN"
+                )
+                self.assertEqual(
+                    model["fit_status"]["column"],
+                    "minutes_since_new_york_open",
+                )
                 self.assertEqual(model["fit_status"]["fit_count"], 0)
                 family_rows = [
-                    row for row in result["selection"]["variants"]
+                    row
+                    for row in result["selection"]["variants"]
                     if row["model_family"] == family.value
                 ]
                 self.assertEqual(len(family_rows), 3)
@@ -116,7 +159,9 @@ class Phase6FailClosedEvidenceTests(unittest.TestCase):
                     {"NOT_EVALUATED_MODEL_FIT_FAILED"},
                 )
 
-            write_phase6_artifacts(result, Path(tmp) / "artifact")
+            fail_closed.write_phase6_fail_closed_artifacts(
+                result, Path(tmp) / "artifact"
+            )
 
 
 if __name__ == "__main__":
