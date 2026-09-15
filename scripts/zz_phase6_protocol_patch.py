@@ -59,7 +59,7 @@ Consequences: Phase 6 is ACTIVE only for test-first implementation and execution
 """
 if "## DEC-031 — Phase 6 statistical / ML filter protocol" in decision:
     raise SystemExit("DEC-031 section already present")
-decision_path.write_text(decision.rstrip() + section + "\n", encoding="utf-8")
+decision_path.write_text(decision.rstrip() + section.rstrip() + "\n", encoding="utf-8")
 
 state_path = Path("docs/project-state.md")
 state = state_path.read_text(encoding="utf-8")
