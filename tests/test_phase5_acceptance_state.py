@@ -2,6 +2,8 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+PHASE7_TAG = "fmp-v1-phase7-walk-forward"
+PHASE7_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
 
 
 class Phase5AcceptanceStateTests(unittest.TestCase):
@@ -34,9 +36,13 @@ class Phase5AcceptanceStateTests(unittest.TestCase):
         self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("DEC-031", state)
         self.assertIn("## Phase 7 — PASS", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn(PHASE7_TAG, state)
+        self.assertIn(PHASE7_SHA, state)
+        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("Phase 9/demo order placement: LOCKED", state)
         self.assertIn("Real-money trading: locked", state)
-        self.assertNotIn("## Phase 8 — ACTIVE", state)
 
 
 if __name__ == "__main__":
