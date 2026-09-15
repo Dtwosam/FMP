@@ -1,7 +1,7 @@
 # Phase 6 Statistical / ML Filter Design
 
 **Date:** 2026-09-15
-**Status:** APPROVED IN CHAT — PENDING WRITTEN-SPEC REVIEW
+**Status:** APPROVED
 **Planned experiment:** `EXP-20260915-007`
 **Final-test touched?: NO**
 
