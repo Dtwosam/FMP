@@ -32,13 +32,14 @@ class Phase6ProtocolStateTests(unittest.TestCase):
 
         self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", state)
         self.assertIn("## Phase 5 — PASS", state)
-        self.assertIn("## Phase 6 —", state)
+        self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("EXP-20260915-007", state)
         self.assertIn("fmp-v1-phase5-features", state)
         self.assertIn("2024-01-01", state)
         self.assertIn("locked", state.lower())
         self.assertIn("real-money trading", state.lower())
-        self.assertIn("## Phase 7 — ACTIVE", state)
+        self.assertIn("## Phase 7 — PASS", state)
+        self.assertNotIn("## Phase 8 — ACTIVE", state)
 
 
 if __name__ == "__main__":
