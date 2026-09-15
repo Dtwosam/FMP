@@ -13,6 +13,7 @@ from typing import Any
 
 from .oanda import OandaPracticePricingStream
 from .qualification import QualificationOutcome, qualify_stream
+from .replay import replay_segment
 from .runner import run_live_shadow_capture
 
 
@@ -33,6 +34,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="run one explicitly requested Phase 8 shadow capture segment",
     )
     run.add_argument("--campaign-dir", required=True, type=Path)
+    replay = subparsers.add_parser(
+        "replay",
+        help="replay one captured Phase 8 segment without network access",
+    )
+    replay.add_argument("--segment-dir", required=True, type=Path)
     return parser
 
 
@@ -72,12 +78,17 @@ def main(
     utc_now: Callable[[], datetime] | None = None,
     monotonic_ns: Callable[[], int] | None = None,
     run_command: Callable[..., int] = run_live_shadow_capture,
+    replay_command: Callable[[Path], Mapping[str, object]] = replay_segment,
     code_commit_resolver: Callable[[], str] = _current_code_commit,
 ) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    env = os.environ if environ is None else environ
 
+    if args.command == "replay":
+        result = replay_command(Path(args.segment_dir))
+        return 0 if result.get("match") is True else 5
+
+    env = os.environ if environ is None else environ
     account_id = env.get(_ACCOUNT_ENV)
     token = env.get(_TOKEN_ENV)
     if not isinstance(account_id, str) or not account_id.strip():
