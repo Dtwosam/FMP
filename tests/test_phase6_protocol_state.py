@@ -30,7 +30,7 @@ class Phase6ProtocolStateTests(unittest.TestCase):
         self.assertIn("0.25", decision)
         self.assertIn("no refit", decision.lower())
 
-        self.assertIn("**Current phase:** Phase 6", state)
+        self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", state)
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("## Phase 6 —", state)
         self.assertIn("EXP-20260915-007", state)
@@ -38,7 +38,7 @@ class Phase6ProtocolStateTests(unittest.TestCase):
         self.assertIn("2024-01-01", state)
         self.assertIn("locked", state.lower())
         self.assertIn("real-money trading", state.lower())
-        self.assertNotIn("## Phase 7 — ACTIVE", state)
+        self.assertIn("## Phase 7 — ACTIVE", state)
 
 
 if __name__ == "__main__":

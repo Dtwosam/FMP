@@ -13,8 +13,8 @@ class Phase6AcceptanceStateTests(unittest.TestCase):
 
         self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("DEC-032", state)
-        self.assertIn("Phase 7 remains UNSTARTED", state)
-        self.assertNotIn("## Phase 7 — ACTIVE", state)
+        self.assertIn("## Phase 7 — ACTIVE", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("Final-test touched: NO", state)
         self.assertIn("fmp-v1-phase6-models", state)
         self.assertIn("5d387b7ca93d04c498eb04c376e0dd92f1fe1953", state)

@@ -33,7 +33,7 @@ class Phase5AcceptanceStateTests(unittest.TestCase):
         )
         self.assertIn("## Phase 6 —", state)
         self.assertIn("DEC-031", state)
-        self.assertIn("Phase 7 remains UNSTARTED", state)
+        self.assertIn("## Phase 7 — ACTIVE", state)
         self.assertIn("final-test", state.lower())
         self.assertIn("locked", state.lower())
         self.assertIn("Real-money trading: locked", state)

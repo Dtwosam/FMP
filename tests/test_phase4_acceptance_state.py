@@ -5,12 +5,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Phase4AcceptanceStateTests(unittest.TestCase):
-    def test_phase4_is_pass_after_phase6_activation(self) -> None:
+    def test_phase4_is_pass_after_phase7_activation(self) -> None:
         state = (ROOT / "docs/project-state.md").read_text(encoding="utf-8")
         decision = (ROOT / "docs/decision-log.md").read_text(encoding="utf-8")
         evidence = (ROOT / "docs/phase4-acceptance-evidence.md").read_text(encoding="utf-8")
 
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("## Phase 6 — PASS", state)
