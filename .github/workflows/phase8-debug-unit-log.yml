@@ -1,0 +1,31 @@
+name: phase8-debug-unit-log
+
+on:
+  push:
+    branches:
+      - phase8-debug-helper
+    paths:
+      - .github/workflows/phase8-debug-unit-log.yml
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Capture unit suite
+        run: python -m unittest discover -s tests -v > phase8-unit.txt 2>&1 || true
+      - name: Commit diagnostic output
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add phase8-unit.txt
+          git commit -m "[phase1-no-source] Capture Phase 8 unit diagnostic"
+          git push origin HEAD:phase8-debug-helper
