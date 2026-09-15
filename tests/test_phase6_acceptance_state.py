@@ -3,7 +3,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-
+# Source-free closure guard for the audited Phase 6 outcome and still-locked later gates.
 class Phase6AcceptanceStateTests(unittest.TestCase):
     def test_phase6_is_pass_with_rejected_ml_challengers_and_checkpoint_pending(self) -> None:
         state = (ROOT / "docs/project-state.md").read_text(encoding="utf-8")
