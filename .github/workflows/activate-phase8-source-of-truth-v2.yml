@@ -39,6 +39,9 @@ jobs:
               if collecting and line == "          PY":
                   break
               if collecting:
+                  if line == '':
+                      out.append('')
+                      continue
                   if not line.startswith('          '):
                       raise SystemExit(f'unexpected activation indentation: {line!r}')
                   out.append(line[10:])
