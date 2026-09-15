@@ -10,9 +10,9 @@ class Phase4AcceptanceStateTests(unittest.TestCase):
         decision = (ROOT / "docs/decision-log.md").read_text(encoding="utf-8")
         evidence = (ROOT / "docs/phase4-acceptance-evidence.md").read_text(encoding="utf-8")
 
-        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("## Phase 4 — PASS", state)
-        self.assertIn("## Phase 5 — ACTIVE", state)
+        self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("DEC-028", state)
         self.assertEqual(decision.count("## DEC-028 — Phase 4 baseline strategy research acceptance review"), 1)
         self.assertIn("- DEC-028 — Phase 4 baseline strategy research acceptance review — APPROVED", decision)
@@ -20,7 +20,7 @@ class Phase4AcceptanceStateTests(unittest.TestCase):
         self.assertIn("Final-test touched?: NO", evidence)
         self.assertIn("final-test period remains locked", state.lower())
         self.assertIn("Real-money trading: locked", state)
-        self.assertIn("## Phase 5 — ACTIVE", state)
+        self.assertIn("## Phase 5 — PASS", state)
 
 
 if __name__ == "__main__":
