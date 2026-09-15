@@ -1,0 +1,121 @@
+name: activate-phase8-source-of-truth
+
+on:
+  push:
+    branches:
+      - phase8-activation-helper
+
+permissions:
+  contents: write
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase8-shadow-implementation
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact Phase 7 checkpoint
+        run: |
+          git fetch --tags origin
+          actual="$(git rev-list -n 1 fmp-v1-phase7-walk-forward)"
+          test "${actual}" = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
+      - name: Apply Phase 8 source-of-truth activation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          TAG = "fmp-v1-phase7-walk-forward"
+          SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              p = Path(path)
+              text = p.read_text(encoding="utf-8")
+              if old not in text:
+                  raise SystemExit(f"missing expected activation anchor in {path}: {old[:80]!r}")
+              if text.count(old) != 1:
+                  raise SystemExit(f"activation anchor is not unique in {path}: {old[:80]!r}")
+              p.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          spec = "docs/superpowers/specs/2026-09-15-phase8-shadow-design.md"
+          replace_once(
+              spec,
+              "**Status:** APPROVED DESIGN — pending written-spec review, Phase 7 checkpoint creation, source-of-truth activation, and implementation plan  ",
+              "**Status:** APPROVED / ACTIVATED — DEC-036; Phase 8 ACTIVE under the frozen design  ",
+          )
+          replace_once(
+              spec,
+              "## 23. Source-of-truth activation before runtime code\n\nAfter written-spec approval and after the Phase 7 checkpoint prerequisite is satisfied, activation must:",
+              "## 23. Source-of-truth activation before runtime code\n\n**Activation state:** COMPLETED under `DEC-036` after exact checkpoint verification. The activation requirements remain frozen below as the audit trail.\n\nAfter written-spec approval and after the Phase 7 checkpoint prerequisite is satisfied, activation must:",
+          )
+
+          decision_path = Path("docs/decision-log.md")
+          decision = decision_path.read_text(encoding="utf-8")
+          index_anchor = "- DEC-035 — Phase 7 walk-forward outcome and acceptance review — APPROVED\n"
+          if "- DEC-036 — Phase 8 live shadow protocol — APPROVED\n" not in decision:
+              if decision.count(index_anchor) != 1:
+                  raise SystemExit("DEC-035 index anchor missing or duplicated")
+              decision = decision.replace(
+                  index_anchor,
+                  index_anchor + "- DEC-036 — Phase 8 live shadow protocol — APPROVED\n",
+                  1,
+              )
+          if "## DEC-036 — Phase 8 live shadow protocol" not in decision:
+              decision += f'''\n\n## DEC-036 — Phase 8 live shadow protocol\n\n**Date:** 2026-09-15\n**Status:** APPROVED\n\nThe approved `docs/superpowers/specs/2026-09-15-phase8-shadow-design.md` protocol is activated after checkpoint `{TAG}` was verified to resolve exactly to Phase 7 acceptance-closure commit `{SHA}`. The implementation plan `docs/superpowers/plans/2026-09-15-phase8-live-shadow.md` is also approved as the execution sequence.\n\nPhase 8 admits only the unchanged USDJPY 15m `session_breakout` survivor with 5-pip buffer, 1.5x target-range multiple, existing London-session/DST semantics, exact 16:00 `Europe/London` flat rule, no ML overlay, and unchanged Phase 3 risk semantics. No parameter search, alternate pair/timeframe, or rescue candidate is authorized.\n\nThe selected initial live quote role is the OANDA v20 fxTrade Practice pricing stream only: fixed `GET` to `https://stream-fxpractice.oanda.com/v3/accounts/{{account_id}}/pricing/stream` for provider instrument `USD_JPY`, with `snapshot=true` and `includeHomeConversions=false`. Runtime architecture must make order/trade/position mutation structurally unavailable; production hosts, generic broker request surfaces, REST candle backfill, MT5 execution integration, demo orders, live orders, and real-money trading remain outside Phase 8. Credentials may exist only in memory/local secret input and durable evidence may contain only a one-way account fingerprint, never a token or plain account ID.\n\n`EXP-20260915-009` is the frozen Phase 8 live-shadow experiment. Cost scenarios remain exactly 0.2/0.5/1.0 pips adverse per fill, with 0.2 and 0.5 gating and 1.0 diagnostic; each virtual scenario starts at $100,000 and carries independently through the registered campaign. Stale timeout is 15 seconds and entry/scheduled-exit quote deadlines are 5 seconds. Acceptance requires the exact operational, timing, spread-parity, financial, sample-size, coverage, evidence-integrity, and deterministic-replay gates frozen in the design; implementation completion alone is not Phase 8 PASS.\n\nConsequences: Phase 8 becomes ACTIVE for shadow-only implementation, connector qualification, and later explicitly operator-started live evidence collection. Phase 9 remains locked. No practice/demo order placement, production/live order placement, broker mutation, or real-money path is authorized. `DEC-008` remains unchanged.\n'''
+          decision_path.write_text(decision, encoding="utf-8")
+
+          experiment_path = Path("docs/experiment-log.md")
+          experiment = experiment_path.read_text(encoding="utf-8")
+          if "### EXP-20260915-009 — Phase 8 live shadow evaluation" not in experiment:
+              experiment += f'''\n\n### EXP-20260915-009 — Phase 8 live shadow evaluation\n\n- Date: 2026-09-15\n- Status: RUNNING\n- Hypothesis: The sole Phase 7 survivor may preserve materially comparable timing, spread conditions, operational integrity, and positive hypothetical after-cost behavior when driven by real-time OANDA Practice USD_JPY quotes without any broker order-submission capability. No live viability is assumed.\n- Code commit: source-of-truth activation commit first; shadow runtime implementation commits and accepted campaign code identity will be recorded as they are verified.\n- Data manifest/version: upstream Phase 7 checkpoint `{TAG}` / `{SHA}`; accepted Phase 2 USDJPY artifact `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`; processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`; live evidence uses the Phase 8 append-only evidence protocol and manifest defined by DEC-036.\n- Pair(s): USDJPY only; provider instrument `USD_JPY`.\n- Timeframe(s): frozen 15m session breakout; 1m shadow-live bars are an operational construction input only.\n- Data range: future explicitly registered live-shadow campaign only; no hidden historical backfill is permitted after campaign gaps.\n- Train period: not applicable; fixed rule, no fitting or optimization.\n- Validation period: live campaign after frozen connector qualification/implementation verification; acceptance review requires the predeclared minimum sample/time/coverage gates.\n- Final-test touched?: YES upstream in Phase 7; Phase 8 itself opens no additional historical final-test search and performs no retuning.\n- Strategy/model: unchanged USDJPY 15m `session_breakout`, 5-pip buffer, 1.5x target range, exact London timing, no ML overlay.\n- Features: strategy-native midpoint/session structure only; no Phase 5 model features or new predictive features.\n- Parameters/search space: none. Provider/environment, method/host/path/instrument, stale threshold, quote deadlines, bar completeness, cost scenarios, risk settings, historical spread-reference method, sample minimums, and acceptance thresholds are frozen by DEC-036.\n- Random seed (if relevant): not applicable; deterministic fixed-rule shadow/replay pipeline.\n- Spread/cost model: observed live bid/ask spread plus zero commission and zero financing for the mandatory intraday-flat strategy.\n- Slippage model: exactly 0.2, 0.5, and 1.0 pips adverse per fill; 0.2 and 0.5 are gating, 1.0 is diagnostic only.\n- Risk assumptions: unchanged Phase 3 policy — 0.25% default requested risk, 0.50% hard per-trade maximum, 1.00% simultaneous open-risk maximum, 1.50% UTC day-start realized-loss halt; independent $100,000 virtual account per cost scenario.\n- Trade count: pending live campaign; at least 40 completed financially scorable 0.2-pip trades are required before acceptance review.\n- Net return after costs: pending.\n- Expectancy/trade: pending.\n- Profit factor: pending.\n- Max drawdown: pending.\n- Key subperiod results: pending; acceptance also requires at least 8 elapsed calendar weeks, at least 30 fully observed London dates, and at least 90% valid denominator-date coverage.\n- Robustness/cost sensitivity: pending; mandatory gates apply at 0.2 and 0.5 pips while 1.0 pip remains diagnostic.\n- Result summary: RUNNING. Source-of-truth activation authorizes shadow-only implementation and evidence collection after qualification; it does not constitute Phase 8 PASS.\n- Conclusion: NEED_MORE_DATA\n- Reason: no Phase 8 live campaign evidence has yet met the frozen minimum evidence gate.\n- Follow-up: implement the structurally GET-only Practice quote boundary, deterministic normalization/bar/simulation/evidence/replay pipeline, historical spread reference, connector qualification, and campaign registration exactly as DEC-036; keep Phase 9/demo/live-order/real-money paths locked.\n'''
+          experiment_path.write_text(experiment, encoding="utf-8")
+
+          state_path = Path("docs/project-state.md")
+          state = state_path.read_text(encoding="utf-8")
+          old_header = "**Current phase:** Phase 7 — Walk-forward Evaluation\n**Phase status:** PASS\n**Next milestone:** preserve the verified Phase 7 closure and create checkpoint `fmp-v1-phase7-walk-forward`; Phase 8 shadow design remains UNSTARTED pending its own explicit design/implementation work"
+          new_header = "**Current phase:** Phase 8 — Live shadow mode\n**Phase status:** ACTIVE\n**Next milestone:** implement the activated DEC-036 shadow-only runtime, qualify the fixed OANDA Practice pricing stream, and register/collect `EXP-20260915-009`; Phase 9 remains locked"
+          if old_header not in state:
+              raise SystemExit("project-state phase header anchor missing")
+          state = state.replace(old_header, new_header, 1)
+          baseline_anchor = "- Frozen Phase 1 plan SHA-256: `2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6`\n- Real-money trading: locked"
+          baseline_new = f"- Frozen Phase 1 plan SHA-256: `2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6`\n- Phase 7 checkpoint: `{TAG}` at `{SHA}`\n- Demo trading: locked\n- Live order placement / broker mutation: locked\n- Real-money trading: locked"
+          if baseline_anchor not in state:
+              raise SystemExit("project-state baseline anchor missing")
+          state = state.replace(baseline_anchor, baseline_new, 1)
+          phase7_tail = "Phase 7 is formally PASS. The surviving `session_breakout` rule is eligible for Phase 8 shadow design only. Phase 8 remains UNSTARTED and no shadow implementation is authorized by this closure. Broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged."
+          phase7_new = f"Phase 7 is formally PASS and checkpoint `{TAG}` is frozen at `{SHA}`. DEC-036 separately activates Phase 8 shadow-only implementation for the unchanged surviving `session_breakout` rule. Broker mutation, demo order placement, production/live order placement, and real-money trading remain locked; DEC-008 remains unchanged."
+          if phase7_tail not in state:
+              raise SystemExit("project-state Phase 7 tail anchor missing")
+          state = state.replace(phase7_tail, phase7_new, 1)
+          if "## Phase 8 — ACTIVE" not in state:
+              state += f'''\n\n## Phase 8 — ACTIVE\n\nDEC-036 freezes and activates the approved Phase 8 live-shadow protocol; `EXP-20260915-009` is RUNNING.\n\n- prerequisite checkpoint: `{TAG}` at `{SHA}` — VERIFIED\n- approved design: `docs/superpowers/specs/2026-09-15-phase8-shadow-design.md`\n- implementation plan: `docs/superpowers/plans/2026-09-15-phase8-live-shadow.md`\n- sole strategy: USDJPY 15m `session_breakout`, 5-pip buffer, 1.5x target range, exact existing London-session/DST semantics, exact 16:00 `Europe/London` flat rule\n- ML overlay: none\n- selected live quote role: OANDA v20 fxTrade Practice pricing stream, fixed GET-only `stream-fxpractice.oanda.com` / `USD_JPY` boundary\n- slippage scenarios: 0.2 and 0.5 pips gating; 1.0 pip diagnostic only\n- Phase 3 risk policy: unchanged; independent $100,000 virtual account per cost scenario\n- stale timeout: 15 seconds; entry and scheduled-exit quote deadlines: 5 seconds\n- runtime implementation: authorized under DEC-036 but not yet accepted\n- live campaign: not yet accepted; must be explicitly operator-started and satisfy all frozen minimum evidence and acceptance gates\n- Phase 9/demo order placement: LOCKED\n- production/live order placement and broker mutation: LOCKED\n- real-money trading: LOCKED\n\nPhase 8 is not PASS because the design is activated or because code exists. PASS requires connector qualification, verified structural no-order implementation, deterministic replay, and a completed live-shadow campaign satisfying every frozen DEC-036 acceptance gate. `PHASE8_NEED_MORE_DATA` remains non-terminal.\n'''
+          state_path.write_text(state, encoding="utf-8")
+
+          source_path = Path("docs/source-register.md")
+          sources = source_path.read_text(encoding="utf-8")
+          sources = sources.replace("**Last verified:** 2026-08-22", "**Last verified:** 2026-09-15", 1)
+          start = sources.index("## SRC-003 — OANDA v20 Development Guide")
+          end = sources.index("## Source policy")
+          replacement = '''## SRC-003 — OANDA v20 Development Guide and Pricing Stream\n\nOfficial pages:\n- https://developer.oanda.com/rest-live-v20/development-guide/\n- https://developer.oanda.com/rest-live-v20/pricing-ep/\n\nVerified foundation on 2026-09-15:\n- separate `fxTrade Practice` REST and streaming environments remain documented;\n- Practice streaming base URL is `https://stream-fxpractice.oanda.com`;\n- production streaming uses a different host and is outside the Phase 8 boundary;\n- account pricing stream is `GET /v3/accounts/{accountID}/pricing/stream`;\n- the pricing-stream response is line-delimited JSON carrying price and pricing-heartbeat objects;\n- the pricing endpoint supports instrument selection, and the frozen Phase 8 provider instrument is `USD_JPY`.\n\nSelected Phase 8 use:\n- OANDA fxTrade Practice pricing stream is the sole initial live quote source for `EXP-20260915-009`;\n- FMP hard-codes a GET-only Practice pricing boundary at `stream-fxpractice.oanda.com`;\n- Phase 8 does not use OANDA order, trade, or position mutation endpoints and does not use the production host.\n\nDoes **not** guarantee:\n- account eligibility in every jurisdiction;\n- perpetual free access;\n- that OANDA will be the final Phase 9 demo broker.\n\nReverify again before any later demo/execution adapter is designed.\n\n## SRC-004 — MetaTrader 5 Python Integration\n\nOfficial pages:\n- https://www.mql5.com/en/docs/python_metatrader5\n- https://www.mql5.com/en/docs/python_metatrader5/mt5symbolinfotick_py\n- https://www.mql5.com/en/docs/python_metatrader5/mt5ordersend_py\n\nVerified foundation on 2026-09-15:\n- official Python integration remains documented;\n- quote access includes `symbol_info_tick`;\n- the integration also exposes trading operations including `order_send`, so importing it into the initial Phase 8 shadow runtime would weaken the structural no-order boundary.\n\nAllowed use in FMP:\n- deferred candidate for a separately designed later demo/execution phase only;\n- explicitly not selected for the initial Phase 8 implementation.\n\nImportant architectural consequence:\n- FMP core remains broker-independent; MT5 is not the research brain and is not a Phase 8 execution dependency.\n\n'''
+          sources = sources[:start] + replacement + sources[end:]
+          source_path.write_text(sources, encoding="utf-8")
+          PY
+      - name: Verify focused activation state
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_phase8_protocol_state.py' -v
+          python -m unittest discover -s tests -p 'test_phase7_acceptance_state.py' -v
+          python -m unittest discover -s tests -p 'test_phase7_protocol_state.py' -v
+      - name: Commit activation before runtime work
+        run: |
+          git config user.name "Dtwosam"
+          git config user.email "42391449+Dtwosam@users.noreply.github.com"
+          git add docs/superpowers/specs/2026-09-15-phase8-shadow-design.md docs/decision-log.md docs/experiment-log.md docs/project-state.md docs/source-register.md
+          git diff --cached --check
+          git commit -m "[phase1-no-source] Activate Phase 8 shadow protocol"
+          git push origin HEAD:phase8-shadow-implementation
