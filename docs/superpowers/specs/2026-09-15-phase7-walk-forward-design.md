@@ -50,7 +50,7 @@ Only the two frozen rule-based candidates retained at the end of Phase 6 are eli
 
 No other pair, timeframe, strategy family, parameter point, feature subset, model, or threshold may enter `EXP-20260915-008`.
 
-## 3. Frozen behavior carried forward
+## 3. Frozen behavior and immutable inputs carried forward
 
 Phase 7 reuses the accepted Phase 3 simulator and the frozen Phase 4 strategy semantics. It does not create a second execution model.
 
@@ -65,10 +65,20 @@ The following remain unchanged:
 - maximum simultaneous open risk: `1.00%` equity;
 - maximum daily realized loss before halt: `1.50%` of UTC day-start realized risk equity;
 - deterministic decision ordering and Phase 3 lifecycle semantics;
-- Phase 2 accepted processed-data identity;
 - frozen candidate parameters above.
 
 Phase 6 concluded that no ML challenger was promoted. Phase 7 therefore evaluates the frozen rule baselines only. There is no model fitting, probability filtering, score cutoff, feature selection, or ML refit in this phase.
+
+The immutable upstream identities for `EXP-20260915-008` are:
+
+- Phase 6 checkpoint: `fmp-v1-phase6-models`;
+- Phase 6 checkpoint commit: `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`;
+- accepted Phase 2 USDJPY artifact ID: `10327600628`;
+- accepted Phase 2 USDJPY artifact ZIP SHA-256: `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`;
+- accepted Phase 2 USDJPY processed-manifest SHA-256: `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`;
+- accepted canonical schema identity: the existing Phase 2 canonical schema version referenced by that processed manifest.
+
+A mismatch in any immutable upstream identity fails closed.
 
 ## 4. Data partition architecture
 
@@ -110,7 +120,7 @@ A bounded pre-window warm-up is allowed only to reconstruct strategy state neede
 - no PnL from warm-up may enter starting equity or Phase 7 metrics;
 - the Stage 1 account starts at exactly `$100,000` at `2024-01-01T00:00:00Z`.
 
-The implementation must prove by test that changing warm-up-only candidate opportunities cannot change the scored trade ledger except through legitimate state required at or after the Stage 1 boundary.
+The implementation must prove by test that warm-up context cannot itself create a scored pre-boundary trade and that the first scored decision uses only state legitimately knowable at or before its decision time.
 
 ### 5.3 Cost scenarios
 
@@ -129,10 +139,9 @@ A candidate advances to Stage 2 only if **all** of the following are true at bot
 - net return is strictly positive;
 - expectancy per completed trade is strictly positive;
 - profit factor is strictly greater than `1.0`;
-- completed trade count is at least `40` in the `0.2`-pip baseline scenario;
 - maximum drawdown fraction is less than or equal to `0.05`.
 
-The trade-count condition is evaluated once at `0.2` pips because candidate generation is cost-invariant and the accepted simulator should not change eligibility solely because the configured slippage value changes.
+In addition, the `0.2`-pip baseline scenario must contain at least `40` completed trades. The trade-count requirement is deliberately baseline-only and is not redefined after results are observed.
 
 There is no cross-candidate ranking. Each candidate passes or fails independently against the frozen gate.
 
@@ -174,14 +183,16 @@ The promoted candidates are fixed rule systems, not fitted statistical models. T
 
 No parameter, feature, threshold, or strategy state is optimized from previous forward-window outcomes.
 
-### 6.3 Window state and account semantics
+### 6.3 Window state, warm-up, and account semantics
 
 Each forward window is an independent evaluation unit with:
 
 - starting equity exactly `$100,000`;
 - unchanged Phase 3 risk settings;
 - only that window's scored decisions and trades contributing to window metrics;
-- up to seven calendar days of pre-window warm-up context under the same exclusion rules as Stage 1.
+- up to seven calendar days of context immediately preceding the window start.
+
+For Stage 2, a warm-up interval may overlap the preceding forward window because it is historical context for the new window. Rows in that overlap may have been scored in the earlier window, but they are context-only for the new window and cannot be scored a second time in the new window. No warm-up PnL carries into the new window's starting equity.
 
 Independent window equity prevents the outcome of an earlier forward window from mechanically changing dollar position size in a later window. Aggregate Phase 7 metrics are computed from normalized per-window returns/trade records rather than by chaining capital across windows.
 
@@ -257,7 +268,7 @@ It owns only Phase 7 promotion evaluation and evidence assembly.
 
 Expected responsibilities:
 
-- `contracts.py` — frozen Stage 1/Stage 2 date contracts, candidate identities, cost scenarios, and gate constants;
+- `contracts.py` — frozen Stage 1/Stage 2 date contracts, candidate identities, cost scenarios, upstream identities, and gate constants;
 - `data.py` — promotion-only processed-data loader with pre-I/O range guards and exact partition accounting;
 - `evaluation.py` — single-candidate/single-window execution over existing strategy generators and Phase 3 backtester;
 - `gates.py` — pure Stage 1 and Stage 2 gate functions;
@@ -292,11 +303,12 @@ Responsibilities:
 
 1. checkout exact implementation commit;
 2. install the package;
-3. download and checksum-verify the accepted Phase 2 USDJPY artifact;
-4. execute each frozen candidate twice for Stage 1;
-5. require byte-identical deterministic evidence across repeats;
-6. verify the evidence contains only approved Stage 1 scored coverage plus bounded pre-2024 warm-up;
-7. upload one evidence artifact per candidate.
+3. download and checksum-verify accepted Phase 2 USDJPY artifact `10327600628`;
+4. verify the artifact ZIP SHA-256 and processed-manifest SHA-256 against the immutable values in Section 3;
+5. execute each frozen candidate twice for Stage 1;
+6. require byte-identical deterministic evidence across repeats;
+7. verify the evidence contains only approved Stage 1 scored coverage plus bounded pre-2024 warm-up;
+8. upload one evidence artifact per candidate.
 
 The workflow must not download Phase 5 feature artifacts because Phase 7 uses no ML overlay.
 
@@ -331,8 +343,8 @@ Evidence records must identify:
 
 - `experiment_id = EXP-20260915-008`;
 - exact code commit;
-- exact Phase 6 checkpoint SHA;
-- accepted Phase 2 processed-manifest SHA-256;
+- Phase 6 checkpoint tag and exact checkpoint SHA from Section 3;
+- accepted Phase 2 artifact ID, ZIP SHA-256, and processed-manifest SHA-256 from Section 3;
 - canonical schema version;
 - candidate strategy ID/version;
 - symbol and timeframe;
@@ -363,7 +375,8 @@ Phase 7 must fail before data I/O when any of the following occurs:
 - a Stage 1 run attempts to reach `2025-01-01` or later;
 - a Stage 2 run lacks an approved Stage 1 PASS identity for that candidate;
 - a candidate identity or parameters differ from the frozen contract;
-- the processed manifest identity differs from the accepted Phase 2 identity;
+- the Phase 6 checkpoint identity differs from Section 3;
+- the Phase 2 artifact or processed-manifest identity differs from Section 3;
 - required data is missing or duplicate;
 - a required opened partition lies outside the exact approved scored/warm-up ranges;
 - deterministic repeat evidence differs.
@@ -380,6 +393,7 @@ Implementation must be test-first and include at minimum:
 - accepted end-exclusive `2026-08-21`;
 - invalid arbitrary date range rejected;
 - frozen candidate identities/parameters cannot be mutated;
+- exact upstream checkpoint/data identities;
 - exact cost scenarios and gate constants.
 
 ### 14.2 Data-isolation tests
@@ -387,8 +401,9 @@ Implementation must be test-first and include at minimum:
 - Stage 1 rejects any required `2025-*` or `2026-*` partition before file read;
 - Stage 2 rejects access without Stage 1 PASS proof before file read;
 - normal Phase 4/6 loaders still reject 2024+ after Phase 7 is added;
-- warm-up is at most seven calendar days;
-- warm-up rows never become scored trades or metrics;
+- warm-up is at most seven calendar days and immediately precedes its scored window;
+- warm-up rows never become scored trades or metrics for the current window;
+- a Stage 2 warm-up overlap with the prior window is not double-scored in the new window;
 - monthly partition accounting is exact and deterministic;
 - path traversal or missing artifact paths fail closed.
 
@@ -402,7 +417,7 @@ Cover exact boundary behavior for:
 
 - zero versus positive return/expectancy;
 - profit factor exactly `1.0` versus greater than `1.0`;
-- `39` versus `40` Stage 1 trades;
+- `39` versus `40` Stage 1 baseline trades;
 - drawdown exactly `5%` versus above `5%`;
 - `99` versus `100` aggregate Stage 2 trades;
 - three versus four positive windows;
@@ -437,29 +452,30 @@ The same change must update `docs/project-state.md` so that:
 - Phase 8 remains UNSTARTED;
 - broker/live/demo integration and real-money trading remain locked.
 
-## 16. Acceptance and outcomes
+## 16. Acceptance and terminal outcomes
 
 Phase 7 has two legitimate terminal outcomes.
 
-### 16.1 PASS / promote to Phase 8 design
+### 16.1 PASS / eligible for Phase 8 shadow design
 
 At least one candidate:
 
 1. passes the Stage 1 2024 untouched OOS gate; and
-2. passes every Stage 2 aggregate/stability condition.
+2. completes all seven Stage 2 forward windows; and
+3. passes every Stage 2 aggregate/stability condition.
 
-The candidate is then eligible only for Phase 8 shadow-mode design. No broker/demo/live permission follows automatically.
+That candidate is then eligible only for Phase 8 shadow-mode design. No broker/demo/live permission follows automatically.
 
-### 16.2 PASS / credible rejection
+### 16.2 COMPLETE / REJECT
 
-Phase 7 may still be considered an honestly completed research phase when:
+Phase 7 completes with a rejection outcome, not a promotion PASS, when:
 
 - neither candidate passes Stage 1; or
 - Stage 1 survivor(s) complete all seven forward windows and none passes the Stage 2 promotion gate.
 
-All negative evidence must be retained. In this case Phase 8 remains locked unless the source-of-truth is explicitly amended with a new research direction.
+All negative evidence must be retained. Phase 8 remains locked unless the source-of-truth is explicitly amended with a justified next research direction.
 
-The phase checkpoint `fmp-v1-phase7-walk-forward` is created only after the experiment outcome is recorded, fresh merged-main verification passes, and Phase 7 acceptance evidence is complete.
+The phase checkpoint `fmp-v1-phase7-walk-forward` is created only after the experiment outcome is recorded, fresh merged-main verification passes, and Phase 7 acceptance evidence is complete. The checkpoint records the frozen outcome whether that outcome is promotion PASS or completed rejection.
 
 ## 17. Explicit non-goals
 
@@ -499,11 +515,12 @@ Before this design is translated into an implementation plan, review must confir
 
 - no placeholder or unresolved parameter remains;
 - all Phase 7 data ranges are exact;
+- immutable Phase 6/Phase 2 identities are exact;
 - existing Phase 4/6 final-test locks remain unchanged;
 - Stage 2 cannot access 2025+ without Stage 1 PASS proof;
 - both candidates remain frozen exactly as accepted;
 - no ML or broker path is introduced;
 - all gating thresholds are predeclared;
 - deterministic evidence requirements are explicit;
-- PASS and rejection outcomes are both valid research conclusions;
+- promotion PASS and completed rejection are distinct outcomes;
 - Phase 8 and real-money paths remain locked.
