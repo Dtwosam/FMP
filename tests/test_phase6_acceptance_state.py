@@ -16,7 +16,7 @@ class Phase6AcceptanceStateTests(unittest.TestCase):
         self.assertIn("Phase 7 remains UNSTARTED", state)
         self.assertNotIn("## Phase 7 — ACTIVE", state)
         self.assertIn("Final-test touched: NO", state)
-        self.assertIn("checkpoint: PENDING", state.lower())
+        self.assertIn("checkpoint: pending", state.lower())
         self.assertIn("Real-money trading: locked", state)
 
         self.assertEqual(
