@@ -262,7 +262,7 @@ DEC-031 remains the frozen statistical / ML filter protocol for `EXP-20260915-00
 
 - Candidate A: USDJPY 15m session breakout, 5-pip buffer, 1.5x target range — rule baseline retained unchanged.
 - Candidate B: USDJPY 1h volatility breakout, 2.0x range expansion, fixed 1.0R target — rule baseline retained unchanged.
-- feature checkpoint: `fmp-v1-phase5-features` at `e0b2fc7bf12b0c9d76668564df6b7714b1fe0`
+- feature checkpoint: `fmp-v1-phase5-features` at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`
 - feature schema: `fmp-feature-v1`, exact 48 feature values plus signal direction for modeling
 - accepted USDJPY processed-manifest SHA-256: `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`
 - experiment: `EXP-20260915-007` — PASS / ML overlay REJECT
