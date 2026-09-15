@@ -10,6 +10,8 @@ PRACTICE_STREAM_HOST = "stream-fxpractice.oanda.com"
 
 
 class Phase8ProtocolStateTests(unittest.TestCase):
+    """Guard the activated Phase 8 state while all execution gates remain locked."""
+
     def test_phase8_source_of_truth_is_active_and_execution_remains_locked(self) -> None:
         decision_log = Path("docs/decision-log.md").read_text(encoding="utf-8")
         experiment_log = Path("docs/experiment-log.md").read_text(encoding="utf-8")
