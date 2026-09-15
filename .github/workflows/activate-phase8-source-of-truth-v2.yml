@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch --tags origin
-          git fetch origin phase8-activation-helper
+          git fetch origin phase8-activation-helper:refs/remotes/origin/phase8-activation-helper
           actual="$(git rev-list -n 1 fmp-v1-phase7-walk-forward)"
           test "${actual}" = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
           git show origin/phase8-activation-helper:.github/workflows/activate-phase8-source-of-truth.yml >/tmp/helper.yml
