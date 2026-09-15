@@ -1,6 +1,6 @@
 # Phase 7 Walk-Forward Evaluation Design
 
-**Status:** APPROVED DESIGN — pending source-of-truth decision record and implementation plan  
+**Status:** APPROVED — implementation governed by `docs/superpowers/plans/2026-09-15-phase7-walk-forward.md`; source-of-truth activation remains Task 1 so RED state tests precede DEC-033/project-state edits  
 **Date:** 2026-09-15  
 **Repository:** `Dtwosam/FMP`  
 **Phase:** 7 — Walk-forward evaluation  
@@ -50,7 +50,7 @@ Only the two frozen rule-based candidates retained at the end of Phase 6 are eli
 
 No other pair, timeframe, strategy family, parameter point, feature subset, model, or threshold may enter `EXP-20260915-008`.
 
-## 3. Frozen behavior and immutable inputs carried forward
+## 3. Frozen behavior carried forward
 
 Phase 7 reuses the accepted Phase 3 simulator and the frozen Phase 4 strategy semantics. It does not create a second execution model.
 
@@ -65,20 +65,10 @@ The following remain unchanged:
 - maximum simultaneous open risk: `1.00%` equity;
 - maximum daily realized loss before halt: `1.50%` of UTC day-start realized risk equity;
 - deterministic decision ordering and Phase 3 lifecycle semantics;
+- Phase 2 accepted processed-data identity;
 - frozen candidate parameters above.
 
 Phase 6 concluded that no ML challenger was promoted. Phase 7 therefore evaluates the frozen rule baselines only. There is no model fitting, probability filtering, score cutoff, feature selection, or ML refit in this phase.
-
-The immutable upstream identities for `EXP-20260915-008` are:
-
-- Phase 6 checkpoint: `fmp-v1-phase6-models`;
-- Phase 6 checkpoint commit: `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`;
-- accepted Phase 2 USDJPY artifact ID: `10327600628`;
-- accepted Phase 2 USDJPY artifact ZIP SHA-256: `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`;
-- accepted Phase 2 USDJPY processed-manifest SHA-256: `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`;
-- accepted canonical schema identity: the existing Phase 2 canonical schema version referenced by that processed manifest.
-
-A mismatch in any immutable upstream identity fails closed.
 
 ## 4. Data partition architecture
 
@@ -120,7 +110,7 @@ A bounded pre-window warm-up is allowed only to reconstruct strategy state neede
 - no PnL from warm-up may enter starting equity or Phase 7 metrics;
 - the Stage 1 account starts at exactly `$100,000` at `2024-01-01T00:00:00Z`.
 
-The implementation must prove by test that warm-up context cannot itself create a scored pre-boundary trade and that the first scored decision uses only state legitimately knowable at or before its decision time.
+The implementation must prove by test that changing warm-up-only candidate opportunities cannot change the scored trade ledger except through legitimate state required at or after the Stage 1 boundary.
 
 ### 5.3 Cost scenarios
 
@@ -139,9 +129,10 @@ A candidate advances to Stage 2 only if **all** of the following are true at bot
 - net return is strictly positive;
 - expectancy per completed trade is strictly positive;
 - profit factor is strictly greater than `1.0`;
+- completed trade count is at least `40` in the `0.2`-pip baseline scenario;
 - maximum drawdown fraction is less than or equal to `0.05`.
 
-In addition, the `0.2`-pip baseline scenario must contain at least `40` completed trades. The trade-count requirement is deliberately baseline-only and is not redefined after results are observed.
+The trade-count condition is evaluated once at `0.2` pips because candidate generation is cost-invariant and the accepted simulator should not change eligibility solely because the configured slippage value changes.
 
 There is no cross-candidate ranking. Each candidate passes or fails independently against the frozen gate.
 
@@ -183,16 +174,16 @@ The promoted candidates are fixed rule systems, not fitted statistical models. T
 
 No parameter, feature, threshold, or strategy state is optimized from previous forward-window outcomes.
 
-### 6.3 Window state, warm-up, and account semantics
+### 6.3 Window state and account semantics
 
 Each forward window is an independent evaluation unit with:
 
 - starting equity exactly `$100,000`;
 - unchanged Phase 3 risk settings;
 - only that window's scored decisions and trades contributing to window metrics;
-- up to seven calendar days of context immediately preceding the window start.
+- up to seven calendar days of pre-window warm-up context under the same exclusion rules as Stage 1.
 
-For Stage 2, a warm-up interval may overlap the preceding forward window because it is historical context for the new window. Rows in that overlap may have been scored in the earlier window, but they are context-only for the new window and cannot be scored a second time in the new window. No warm-up PnL carries into the new window's starting equity.
+When a Stage 2 warm-up interval overlaps the immediately preceding scored window, the same historical source bars may be reopened solely as state context for the later window. They remain unscored in the later window and may not duplicate any candidate, decision, trade, PnL, or metric observation.
 
 Independent window equity prevents the outcome of an earlier forward window from mechanically changing dollar position size in a later window. Aggregate Phase 7 metrics are computed from normalized per-window returns/trade records rather than by chaining capital across windows.
 
@@ -268,7 +259,7 @@ It owns only Phase 7 promotion evaluation and evidence assembly.
 
 Expected responsibilities:
 
-- `contracts.py` — frozen Stage 1/Stage 2 date contracts, candidate identities, cost scenarios, upstream identities, and gate constants;
+- `contracts.py` — frozen Stage 1/Stage 2 date contracts, candidate identities, cost scenarios, and gate constants;
 - `data.py` — promotion-only processed-data loader with pre-I/O range guards and exact partition accounting;
 - `evaluation.py` — single-candidate/single-window execution over existing strategy generators and Phase 3 backtester;
 - `gates.py` — pure Stage 1 and Stage 2 gate functions;
@@ -303,12 +294,11 @@ Responsibilities:
 
 1. checkout exact implementation commit;
 2. install the package;
-3. download and checksum-verify accepted Phase 2 USDJPY artifact `10327600628`;
-4. verify the artifact ZIP SHA-256 and processed-manifest SHA-256 against the immutable values in Section 3;
-5. execute each frozen candidate twice for Stage 1;
-6. require byte-identical deterministic evidence across repeats;
-7. verify the evidence contains only approved Stage 1 scored coverage plus bounded pre-2024 warm-up;
-8. upload one evidence artifact per candidate.
+3. download and checksum-verify the accepted Phase 2 USDJPY artifact;
+4. execute each frozen candidate twice for Stage 1;
+5. require byte-identical deterministic evidence across repeats;
+6. verify the evidence contains only approved Stage 1 scored coverage plus bounded pre-2024 warm-up;
+7. upload one evidence artifact per candidate.
 
 The workflow must not download Phase 5 feature artifacts because Phase 7 uses no ML overlay.
 
@@ -343,8 +333,9 @@ Evidence records must identify:
 
 - `experiment_id = EXP-20260915-008`;
 - exact code commit;
-- Phase 6 checkpoint tag and exact checkpoint SHA from Section 3;
-- accepted Phase 2 artifact ID, ZIP SHA-256, and processed-manifest SHA-256 from Section 3;
+- exact Phase 6 checkpoint SHA `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`;
+- accepted Phase 2 USDJPY artifact ID `10327600628` and ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`;
+- accepted Phase 2 processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`;
 - canonical schema version;
 - candidate strategy ID/version;
 - symbol and timeframe;
@@ -372,155 +363,59 @@ Phase 7 must fail before data I/O when any of the following occurs:
 - a requested scored range differs from an approved Stage 1/Stage 2 range;
 - a warm-up range exceeds seven calendar days;
 - a warm-up range extends beyond the immediately preceding interval;
-- a Stage 1 run attempts to reach `2025-01-01` or later;
-- a Stage 2 run lacks an approved Stage 1 PASS identity for that candidate;
-- a candidate identity or parameters differ from the frozen contract;
-- the Phase 6 checkpoint identity differs from Section 3;
-- the Phase 2 artifact or processed-manifest identity differs from Section 3;
-- required data is missing or duplicate;
-- a required opened partition lies outside the exact approved scored/warm-up ranges;
-- deterministic repeat evidence differs.
+- the accepted-data endpoint would be exceeded;
+- a candidate, symbol, timeframe, or parameter mapping differs from the frozen contract;
+- the processed manifest identity differs from the accepted USDJPY Phase 2 manifest;
+- the Phase 6 checkpoint identity differs from `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`;
+- Stage 2 lacks a valid Stage 1 PASS authorization identity;
+- a workflow attempts to make dates or strategy parameters caller-configurable.
 
-Failures remain evidence. A failed orchestration run does not silently become a successful research result after partial outputs are inspected.
+After I/O begins, malformed schema, duplicate identities, wrong source symbol/timeframe, missing source partitions, incomplete required cadence, or nondeterministic evidence also fail closed. None of these conditions may trigger parameter repair or alternate candidate selection.
 
 ## 14. Testing requirements
 
-Implementation must be test-first and include at minimum:
+The implementation must be test-first and cover at minimum:
 
-### 14.1 Contract tests
+- exact immutable contract values;
+- rejection of arbitrary Phase 7 date ranges;
+- fail-before-I/O behavior for invalid ranges/identities;
+- unchanged normal Phase 4/6 final-test locks;
+- exact Stage 1 and seven Stage 2 windows;
+- bounded warm-up inclusion and scored-trade exclusion;
+- overlapping previous-window warm-up bars never being rescored;
+- exact frozen strategy configuration reuse;
+- exact Phase 3 risk/cost/execution reuse;
+- independent `$100,000` starting equity per forward window;
+- `NOT_APPLICABLE_FIXED_RULE` refit status;
+- every Stage 1 and Stage 2 gate boundary;
+- aggregate financial arithmetic and concentration logic;
+- deterministic evidence generation;
+- Stage 2 authorization before source I/O;
+- workflow exact artifact identities and double-run byte comparisons;
+- no generic final-test escape hatch;
+- Phase 8, broker, demo, live, and real-money locks.
 
-- exact Stage 1 and seven Stage 2 boundaries;
-- accepted end-exclusive `2026-08-21`;
-- invalid arbitrary date range rejected;
-- frozen candidate identities/parameters cannot be mutated;
-- exact upstream checkpoint/data identities;
-- exact cost scenarios and gate constants.
+## 15. Source-of-truth and experiment state
 
-### 14.2 Data-isolation tests
+The approved design is now the authoritative Phase 7 design basis. `DEC-033`, project-state activation, and `EXP-20260915-008` registry activation are intentionally applied as implementation-plan Task 1 so the required failing protocol-state test exists before those source-of-truth edits.
 
-- Stage 1 rejects any required `2025-*` or `2026-*` partition before file read;
-- Stage 2 rejects access without Stage 1 PASS proof before file read;
-- normal Phase 4/6 loaders still reject 2024+ after Phase 7 is added;
-- warm-up is at most seven calendar days and immediately precedes its scored window;
-- warm-up rows never become scored trades or metrics for the current window;
-- a Stage 2 warm-up overlap with the prior window is not double-scored in the new window;
-- monthly partition accounting is exact and deterministic;
-- path traversal or missing artifact paths fail closed.
+Until Task 1 executes and later guarded implementation is merged:
 
-### 14.3 Strategy/execution parity tests
+- Phase 6 remains the last closed phase on `main`;
+- `Final-test touched: NO` remains true;
+- existing tooling remains unable to open 2024+;
+- no Phase 7 workflow may be dispatched.
 
-For synthetic bars that fit inside pre-2024 dates, the Phase 7 wrapper must reproduce the same candidate/decision/trade outcomes as the existing frozen Phase 4 strategy plus Phase 3 simulator for equivalent configuration.
+After DEC-033 is recorded, Phase 7 becomes ACTIVE for test-first implementation, but DEC-033 alone still does not authorize existing tooling or partially implemented code to open 2024+ data. The first authorized 2024 data access occurs only through the verified merged Stage 1 workflow described in the implementation plan.
 
-### 14.4 Gate tests
+## 16. Phase completion semantics
 
-Cover exact boundary behavior for:
+A valid negative result is not an implementation failure.
 
-- zero versus positive return/expectancy;
-- profit factor exactly `1.0` versus greater than `1.0`;
-- `39` versus `40` Stage 1 baseline trades;
-- drawdown exactly `5%` versus above `5%`;
-- `99` versus `100` aggregate Stage 2 trades;
-- three versus four positive windows;
-- positive-window concentration exactly `50%` versus greater than `50%`.
+- If neither candidate passes Stage 1, Phase 7 is complete with a rejection outcome and Stage 2 remains forbidden.
+- If Stage 1 produces survivor(s), each survivor must complete all seven Stage 2 windows.
+- A candidate is eligible for Phase 8 shadow design only when every Stage 2 aggregate/stability gate passes.
+- Phase 8 does not start automatically after Phase 7; it requires its own design/activation work.
+- Broker/live/demo/real-money authorization is unchanged.
 
-### 14.5 Determinism tests
-
-- stable JSON key/order serialization;
-- stable candidate/window ordering;
-- identical repeated artifact bytes;
-- evidence manifest digests match recomputation.
-
-### 14.6 Regression tests
-
-Before Phase 7 acceptance:
-
-- full repository tests pass;
-- workflow YAML validation passes;
-- package compile passes;
-- Phase 3 acceptance remains green;
-- source-capable Phase 1 workflows remain skipped for source-free Phase 7 documentation/code merges unless deliberately dispatched under their own rules.
-
-## 15. Source-of-truth updates before implementation
-
-Before Phase 7 implementation begins, the approved written spec must be accompanied by a source-of-truth decision entry `DEC-033` that freezes this protocol and explicitly records the one-time partition of the previously untouched period.
-
-The same change must update `docs/project-state.md` so that:
-
-- Phase 6 remains closed PASS at `fmp-v1-phase6-models`;
-- Phase 7 becomes ACTIVE for test-first implementation of `EXP-20260915-008`;
-- 2024+ data remains unopened until the Stage 1 workflow is deliberately dispatched after implementation verification;
-- Phase 8 remains UNSTARTED;
-- broker/live/demo integration and real-money trading remain locked.
-
-## 16. Acceptance and terminal outcomes
-
-Phase 7 has two legitimate terminal outcomes.
-
-### 16.1 PASS / eligible for Phase 8 shadow design
-
-At least one candidate:
-
-1. passes the Stage 1 2024 untouched OOS gate; and
-2. completes all seven Stage 2 forward windows; and
-3. passes every Stage 2 aggregate/stability condition.
-
-That candidate is then eligible only for Phase 8 shadow-mode design. No broker/demo/live permission follows automatically.
-
-### 16.2 COMPLETE / REJECT
-
-Phase 7 completes with a rejection outcome, not a promotion PASS, when:
-
-- neither candidate passes Stage 1; or
-- Stage 1 survivor(s) complete all seven forward windows and none passes the Stage 2 promotion gate.
-
-All negative evidence must be retained. Phase 8 remains locked unless the source-of-truth is explicitly amended with a justified next research direction.
-
-The phase checkpoint `fmp-v1-phase7-walk-forward` is created only after the experiment outcome is recorded, fresh merged-main verification passes, and Phase 7 acceptance evidence is complete. The checkpoint records the frozen outcome whether that outcome is promotion PASS or completed rejection.
-
-## 17. Explicit non-goals
-
-`EXP-20260915-008` does not authorize:
-
-- parameter retuning;
-- neighboring-parameter rescue experiments;
-- a new strategy family;
-- pair/timeframe expansion;
-- ML reintroduction;
-- feature engineering or feature selection;
-- probability-based sizing;
-- portfolio optimization;
-- correlated multi-position changes;
-- new risk limits;
-- tick-data research;
-- live quote ingestion;
-- broker adapters;
-- shadow execution implementation;
-- demo trading;
-- real-money execution.
-
-Any such work requires a later phase or a separately approved source-of-truth amendment.
-
-## 18. Rationale for quarterly windows
-
-Quarterly windows are chosen before result access because they balance two competing requirements:
-
-- monthly windows would create many low-sample observations for these relatively low-frequency candidates;
-- semiannual windows would yield too few repeated forward observations across the remaining history.
-
-Seven non-overlapping quarterly/partial-quarter windows provide repeated chronology while keeping each interval large enough to produce interpretable strategy evidence. The final partial quarter is unavoidable because the frozen accepted dataset ends on 2026-08-20 and must not be padded with unaccepted future history.
-
-## 19. Review checklist
-
-Before this design is translated into an implementation plan, review must confirm:
-
-- no placeholder or unresolved parameter remains;
-- all Phase 7 data ranges are exact;
-- immutable Phase 6/Phase 2 identities are exact;
-- existing Phase 4/6 final-test locks remain unchanged;
-- Stage 2 cannot access 2025+ without Stage 1 PASS proof;
-- both candidates remain frozen exactly as accepted;
-- no ML or broker path is introduced;
-- all gating thresholds are predeclared;
-- deterministic evidence requirements are explicit;
-- promotion PASS and completed rejection are distinct outcomes;
-- Phase 8 and real-money paths remain locked.
+The target immutable Phase 7 checkpoint remains `fmp-v1-phase7-walk-forward`, created only after final evidence/state closure and fresh merged-main verification.
