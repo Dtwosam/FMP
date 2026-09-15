@@ -240,7 +240,6 @@ Copy this section for each serious experiment:
 - Reason: no exact predeclared buffer achieved positive net return, positive expectancy, and PF > 1 on both development and validation at 0.2-pip baseline.
 - Follow-up: promote nothing; retain EXP-001 and EXP-005 candidates frozen unchanged. This completes all six planned Phase 4 baseline families. Detailed evidence: `docs/phase4-session-sweep-rejection-evidence.md`.
 
-
 ### EXP-20260915-007 — Phase 6 statistical / ML candidate filters
 
 - Date: 2026-09-15
@@ -276,16 +275,16 @@ Copy this section for each serious experiment:
 ### EXP-20260915-008 — Phase 7 walk-forward evaluation
 
 - Date: 2026-09-15
-- Status: PLANNED
+- Status: RUNNING
 - Hypothesis: Either frozen Phase 4 serious rule candidate may retain positive, cost-robust expectancy through a one-shot untouched 2024 out-of-sample gate and repeated 2025-2026 forward windows without parameter retuning or ML filtering. No viability is assumed.
-- Code commit: pending guarded Phase 7 implementation; no result-producing code has been accepted yet.
+- Code commit: `e33270de1f89757d1bf2a0d12ef40b2dc36bc110`
 - Data manifest/version: Phase 6 checkpoint `fmp-v1-phase6-models` / `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`; accepted Phase 2 USDJPY artifact `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`; accepted USDJPY processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`.
 - Pair(s): USDJPY
 - Timeframe(s): 15m session breakout and 1h volatility breakout
-- Data range: accepted history through 2026-08-20 inclusive; Phase 7 has not opened any required 2024+ partition at protocol activation.
+- Data range: Stage 1 opened only bounded 2023-12 warm-up context and the scored 2024-01-01 through 2024-12-31 period. Required 2025-01-01 through 2026-08-20 Stage 2 partitions remain unopened pending exact Stage 1 PASS authorization verification.
 - Train period: not applicable; both strategies are fixed rules and no Phase 7 refit or optimization is authorized.
-- Validation period: Stage 1 one-shot OOS gate 2024-01-01 through 2024-12-31; Stage 2, only for Stage 1 survivors, uses seven frozen forward windows from 2025-01-01 through 2026-08-20 inclusive.
-- Final-test touched?: NO
+- Validation period: Stage 1 one-shot OOS gate 2024-01-01 through 2024-12-31; Stage 2, only for the audited Stage 1 survivor, uses seven frozen forward windows from 2025-01-01 through 2026-08-20 inclusive.
+- Final-test touched?: YES — Stage 1 2024 only
 - Strategy/model: unchanged USDJPY 15m session breakout, 5-pip buffer, 1.5x target range; unchanged USDJPY 1h volatility breakout, 2.0x range expansion, fixed 1.0R target; no ML overlay.
 - Features: existing strategy-native midpoint OHLC/reference logic only; historical BID/ASK remains the execution source of truth; Phase 5 model features are not used.
 - Parameters/search space: no search space. Candidate identities and parameters are frozen exactly; no neighboring-parameter substitution, rescue search, or candidate replacement.
@@ -293,14 +292,14 @@ Copy this section for each serious experiment:
 - Spread/cost model: historical BID/ASK spread; zero commission; zero financing.
 - Slippage model: exactly 0.2, 0.5, and 1.0 pips adverse per fill; 0.2 and 0.5 are gating, 1.0 is diagnostic.
 - Risk assumptions: unchanged Phase 3 contract: 0.25% requested risk, 0.50% hard per-trade max, 1.00% simultaneous max, 1.50% UTC day-start realized-loss halt; each Phase 7 evaluation window starts at $100,000.
-- Trade count: pending execution.
-- Net return after costs: pending execution.
-- Expectancy/trade: pending execution.
-- Profit factor: pending execution.
-- Max drawdown: pending execution.
-- Key subperiod results: pending execution; the seven Stage 2 windows are frozen before access.
-- Robustness/cost sensitivity: Stage 1 requires the frozen financial gate at both 0.2 and 0.5 pips plus at least 40 baseline trades; Stage 2 requires the frozen aggregate/stability gates, with 1.0-pip results diagnostic only.
-- Result summary: protocol approved; implementation has not yet opened final-test data.
+- Trade count: Stage 1 `session_breakout` 122 trades at each cost; `volatility_breakout` 103 trades at each cost.
+- Net return after costs: `session_breakout` +1.383287% / +1.102509% / +0.636234% at 0.2 / 0.5 / 1.0 pips; `volatility_breakout` -2.603768% / -3.051558% / -3.793353%.
+- Expectancy/trade: `session_breakout` +$11.3384 / +$9.0370 / +$5.2150; `volatility_breakout` -$25.2793 / -$29.6268 / -$36.8287 at 0.2 / 0.5 / 1.0 pips.
+- Profit factor: `session_breakout` 1.166401 / 1.130773 / 1.073756; `volatility_breakout` 0.720003 / 0.680125 / 0.618485 at 0.2 / 0.5 / 1.0 pips.
+- Max drawdown: `session_breakout` 1.181400% / 1.305490% / 1.527260%; `volatility_breakout` 3.102796% / 3.484070% / 4.126035% at 0.2 / 0.5 / 1.0 pips.
+- Key subperiod results: Stage 1 is the authoritative 2024 one-shot OOS result. The seven Stage 2 windows remain frozen and unopened until the exact survivor authorization is verified.
+- Robustness/cost sensitivity: `session_breakout` passes every mandatory 0.2- and 0.5-pip Stage 1 criterion with 122 baseline trades and also remains positive in the diagnostic 1.0-pip scenario. `volatility_breakout` stays within the drawdown cap and has 103 baseline trades but fails net-return, expectancy, and profit-factor gates at both mandatory costs.
+- Result summary: authoritative manual `phase7-final-gate` run `35013047267` on exact verified merged-main SHA `e33270de1f89757d1bf2a0d12ef40b2dc36bc110` completed SUCCESS with double execution and byte-identical evidence for both candidates. Independently audited Stage 1 evidence is `session_breakout` artifact `10414407590`, ZIP SHA-256 `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb`, `STAGE1_PASS`; and `volatility_breakout` artifact `10414905151`, ZIP SHA-256 `5ee8b6b96382741f454d2b72a6ae6de04e85c9eca04c17ac846c0d594fd27d24`, `STAGE1_REJECT`. Detailed audit: `docs/phase7-stage1-evidence.md`.
 - Conclusion: NEED_MORE_DATA
-- Reason: `EXP-20260915-008` is predeclared and awaiting guarded implementation and deliberate Stage 1 execution; no Phase 7 result exists yet.
-- Follow-up: implement and verify the guarded Phase 7 evaluator under DEC-033, preserve all existing Phase 4/5/6 2024+ locks, and do not open 2024+ data until the verified Stage 1 workflow is deliberately dispatched.
+- Reason: one frozen candidate, `session_breakout`, survived the predeclared Stage 1 gate and therefore requires the frozen Stage 2 evaluation before Phase 7 can close; `volatility_breakout` is rejected and cannot be rescued or retuned under this experiment.
+- Follow-up: after the audited Stage 1 evidence/state change is merged, execute Stage 2 exactly once for `session_breakout` using only artifact `10414407590` / ZIP `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb` as authorization. Keep `volatility_breakout` out of Stage 2, preserve all failed evidence, and keep Phase 8/broker/demo/live/real-money locked.
