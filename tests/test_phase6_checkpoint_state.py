@@ -9,6 +9,7 @@ TESTS_RUN = "34972534430"
 PHASE3_RUN = "34972534435"
 
 
+# Durable guard for the immutable checkpoint and the still-locked later gates.
 class Phase6CheckpointStateTests(unittest.TestCase):
     def test_phase6_checkpoint_is_created_at_verified_closure_commit(self) -> None:
         evidence = (ROOT / "docs/phase6-ml-filter-evidence.md").read_text(encoding="utf-8")
