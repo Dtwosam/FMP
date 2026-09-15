@@ -1,0 +1,54 @@
+name: phase6-bookkeeping-editor
+
+on:
+  push:
+    branches:
+      - phase6-checkpoint-bookkeeping
+    paths:
+      - .github/workflows/phase6-bookkeeping-editor.yml
+
+permissions:
+  contents: write
+
+jobs:
+  edit-bookkeeping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase6-checkpoint-bookkeeping
+          fetch-depth: 0
+
+      - name: Verify checkpoint and exact main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: 5d387b7ca93d04c498eb04c376e0dd92f1fe1953
+          TAG_NAME: fmp-v1-phase6-models
+        run: |
+          set -euo pipefail
+          main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/main" --jq '.object.sha')"
+          tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG_NAME}" --jq '.object.sha')"
+          tag_type="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG_NAME}" --jq '.object.type')"
+          test "${main_sha}" = "${EXPECTED_SHA}"
+          test "${tag_sha}" = "${EXPECTED_SHA}"
+          test "${tag_type}" = "commit"
+
+      - name: Apply checkpoint bookkeeping
+        run: python scripts/phase6_checkpoint_bookkeeping.py
+
+      - name: Verify targeted checkpoint tests and diff
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_phase6_checkpoint_state tests.test_phase6_acceptance_state -v
+          git diff --check
+
+      - name: Remove helper and commit bookkeeping
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/phase6-bookkeeping-editor.yml scripts/phase6_checkpoint_bookkeeping.py
+          git add docs/phase6-ml-filter-evidence.md docs/project-state.md
+          git diff --cached --check
+          git commit -m "[phase1-no-source] Record verified Phase 6 checkpoint"
+          git push origin HEAD:phase6-checkpoint-bookkeeping
