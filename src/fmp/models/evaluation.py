@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 from statistics import median
 from typing import Mapping, Sequence
 
 import numpy as np
+import polars as pl
 from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
 
 from fmp.backtest.costs import ZeroCommission, ZeroFinancing
@@ -14,6 +18,8 @@ from fmp.backtest.engine import BacktestConfig, run_backtest
 from fmp.contracts import Direction, QuoteBar
 from fmp.data.phase2.schema import CANONICAL_SCHEMA_VERSION
 from fmp.research.adapter import candidate_to_decision
+from fmp.research.contracts import ResearchSplit
+from fmp.research.data import load_processed_bars_for_split
 from fmp.research.reporting import compute_research_metrics
 from fmp.risk import RiskConfig
 from fmp.strategies.contracts import SignalCandidate
@@ -21,11 +27,26 @@ from fmp.strategies.contracts import SignalCandidate
 from .contracts import (
     EXPERIMENT_ID,
     FINAL_START,
+    FIT_SPLIT,
     FROZEN_STRATEGIES,
+    PHASE5_CHECKPOINT_SHA,
+    SELECTION_SPLIT,
+    VALIDATION_SPLIT,
     ModelFamily,
     Phase6Split,
     USDJPY_PROCESSED_MANIFEST_SHA256,
 )
+from .data import (
+    MODEL_INPUT_COLUMNS,
+    generate_frozen_candidates,
+    join_directional_candidates_to_features,
+    load_phase6_feature_frame,
+)
+from .estimators import FittedEstimator, fit_estimator, score_digest, score_estimator
+from .filtering import filter_candidates
+from .labels import LabelResult, label_candidates
+from .preprocessing import PreprocessorState, fit_preprocessor, transform_features
+from .thresholds import ScoreCutoff, derive_fit_cutoffs
 
 
 STARTING_EQUITY_USD = 100_000.0
@@ -416,3 +437,556 @@ def select_one_variant(rows: Sequence[Mapping[str, object]]) -> SelectedVariant 
         retained_fraction=float(selected_row["retained_fraction"]),
         selection_row=dict(selected_row),
     )
+
+
+def _research_split(split: Phase6Split) -> ResearchSplit:
+    return ResearchSplit(split.name, split.start, split.end_exclusive)
+
+
+def _jsonable(value: object) -> object:
+    if isinstance(value, Mapping):
+        return {str(key): _jsonable(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            raise ValueError("Phase 6 evidence timestamp must be timezone-aware")
+        utc = value.astimezone(timezone.utc)
+        return utc.isoformat().replace("+00:00", "Z")
+    if isinstance(value, Path):
+        return value.as_posix()
+    if isinstance(value, (np.integer, np.floating, np.bool_)):
+        return _jsonable(value.item())
+    if value is None or isinstance(value, (str, bool, int)):
+        return value
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError("Phase 6 evidence cannot contain non-finite floats")
+        return value
+    raise TypeError(f"unsupported Phase 6 evidence value: {type(value).__name__}")
+
+
+def _canonical_json_bytes(value: object) -> bytes:
+    return (
+        json.dumps(
+            _jsonable(value),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
+
+
+def _atomic_write_json(path: Path, value: object) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_name(path.name + ".tmp")
+    temp.write_bytes(
+        json.dumps(
+            _jsonable(value),
+            sort_keys=True,
+            indent=2,
+            ensure_ascii=False,
+            allow_nan=False,
+        ).encode("utf-8")
+        + b"\n"
+    )
+    temp.replace(path)
+
+
+def _serialize_preprocessor(state: PreprocessorState) -> dict[str, object]:
+    return {
+        "input_columns": list(state.input_columns),
+        "medians": list(state.medians),
+        "null_counts": list(state.null_counts),
+        "standardize": state.standardize,
+        "scaler_mean": None if state.scaler_mean is None else list(state.scaler_mean),
+        "scaler_scale": None if state.scaler_scale is None else list(state.scaler_scale),
+    }
+
+
+def _serialize_cutoff(cutoff: ScoreCutoff) -> dict[str, object]:
+    return {
+        "retained_fraction": cutoff.retained_fraction,
+        "fit_index": cutoff.fit_index,
+        "score": cutoff.score,
+        "fit_row_count": cutoff.fit_row_count,
+        "fit_retained_count": cutoff.fit_retained_count,
+        "fit_retained_rate": cutoff.fit_retained_rate,
+    }
+
+
+def _serialize_financial(result: FinancialResult) -> dict[str, object]:
+    return {
+        "slippage_pips": result.slippage_pips,
+        "candidate_count": result.candidate_count,
+        "directional_candidate_count": result.directional_candidate_count,
+        "metrics": _jsonable(result.metrics),
+        "run_identity": _jsonable(result.run_identity),
+    }
+
+
+def _serialize_gate(gate: GateResult) -> dict[str, object]:
+    return {"passed": gate.passed, "criteria": dict(gate.criteria)}
+
+
+def _model_config(fitted: FittedEstimator) -> dict[str, object]:
+    params = fitted.estimator.get_params(deep=False)
+    if fitted.family is ModelFamily.LOGISTIC_REGRESSION:
+        keys = (
+            "penalty",
+            "C",
+            "solver",
+            "tol",
+            "fit_intercept",
+            "class_weight",
+            "max_iter",
+            "warm_start",
+        )
+    else:
+        keys = (
+            "loss",
+            "learning_rate",
+            "max_iter",
+            "max_leaf_nodes",
+            "max_depth",
+            "min_samples_leaf",
+            "l2_regularization",
+            "max_features",
+            "max_bins",
+            "early_stopping",
+            "warm_start",
+            "class_weight",
+            "random_state",
+        )
+    return {key: _jsonable(params[key]) for key in keys}
+
+
+def _dataset_digest(
+    frame: pl.DataFrame,
+    labels_by_id: Mapping[str, LabelResult],
+) -> str:
+    rows: list[dict[str, object]] = []
+    for row in frame.to_dicts():
+        candidate_id = str(row["candidate_id"])
+        label = labels_by_id[candidate_id]
+        if label.label is None:
+            continue
+        rows.append(
+            {
+                "candidate_id": candidate_id,
+                "inputs": {name: row[name] for name in MODEL_INPUT_COLUMNS},
+                "label": label.label,
+                "label_reason": label.reason_code,
+                "resolved_timestamp_utc": label.resolved_timestamp_utc,
+            }
+        )
+    return hashlib.sha256(_canonical_json_bytes(rows)).hexdigest()
+
+
+def _load_split_dataset(
+    *,
+    dataset_root: Path,
+    processed_manifest_path: Path,
+    feature_root: Path,
+    feature_manifest_path: Path,
+    strategy_id: str,
+    split: Phase6Split,
+) -> dict[str, object]:
+    strategy = FROZEN_STRATEGIES[strategy_id]
+    research_split = _research_split(split)
+    loaded_bars = load_processed_bars_for_split(
+        dataset_root=Path(dataset_root),
+        manifest_path=Path(processed_manifest_path),
+        symbol=strategy.symbol,
+        timeframe=strategy.timeframe,
+        split=research_split,
+    )
+    loaded_features = load_phase6_feature_frame(
+        feature_root=Path(feature_root),
+        feature_manifest_path=Path(feature_manifest_path),
+        strategy=strategy,
+        split=research_split,
+    )
+    candidates = generate_frozen_candidates(strategy_id, loaded_bars.bars)
+    labels = label_candidates(candidates, loaded_bars.bars)
+    label_by_id = {item.candidate_id: item for item in labels}
+    if len(label_by_id) != len(labels):
+        raise ValueError("duplicate Phase 6 label candidate identity")
+    if set(label_by_id) != {candidate.candidate_id for candidate in candidates}:
+        raise ValueError("Phase 6 labels do not cover the exact candidate set")
+    model_frame = join_directional_candidates_to_features(candidates, loaded_features)
+    if model_frame.is_empty():
+        raise ValueError(f"Phase 6 split {split.name!r} has no directional model rows")
+    model_ids = tuple(str(value) for value in model_frame["candidate_id"].to_list())
+    directional_ids = tuple(
+        candidate.candidate_id
+        for candidate in candidates
+        if candidate.direction in {Direction.LONG, Direction.SHORT}
+    )
+    if set(model_ids) != set(directional_ids):
+        raise ValueError("Phase 6 model rows do not match directional candidates exactly")
+    return {
+        "split": split,
+        "bars": tuple(loaded_bars.bars),
+        "candidates": tuple(candidates),
+        "labels": tuple(labels),
+        "label_by_id": label_by_id,
+        "model_frame": model_frame,
+        "feature_manifest_sha256": loaded_features.feature_manifest_sha256,
+        "processed_manifest_sha256": loaded_features.processed_manifest_sha256,
+        "phase5_checkpoint_sha": loaded_features.phase5_checkpoint_sha,
+        "phase5_code_commit": loaded_features.phase5_code_commit,
+        "opened_artifacts": tuple(loaded_features.opened_artifacts),
+    }
+
+
+def _labeled_model_rows(dataset: Mapping[str, object]) -> tuple[pl.DataFrame, tuple[str, ...], np.ndarray]:
+    frame = dataset["model_frame"]
+    label_by_id = dataset["label_by_id"]
+    if not isinstance(frame, pl.DataFrame) or not isinstance(label_by_id, Mapping):
+        raise TypeError("invalid Phase 6 split dataset")
+    ids = tuple(
+        str(value)
+        for value in frame["candidate_id"].to_list()
+        if isinstance(label_by_id[str(value)], LabelResult)
+        and label_by_id[str(value)].label is not None
+    )
+    if not ids:
+        raise ValueError("Phase 6 fit/evaluation rows contain no label-eligible candidates")
+    id_set = set(ids)
+    selected = frame.filter(pl.col("candidate_id").is_in(id_set))
+    selected_ids = tuple(str(value) for value in selected["candidate_id"].to_list())
+    labels = np.asarray(
+        [int(label_by_id[candidate_id].label) for candidate_id in selected_ids],
+        dtype=np.int64,
+    )
+    return selected.select(list(MODEL_INPUT_COLUMNS)), selected_ids, labels
+
+
+def _all_model_rows(dataset: Mapping[str, object]) -> tuple[pl.DataFrame, tuple[str, ...]]:
+    frame = dataset["model_frame"]
+    if not isinstance(frame, pl.DataFrame):
+        raise TypeError("invalid Phase 6 model frame")
+    ids = tuple(str(value) for value in frame["candidate_id"].to_list())
+    return frame.select(list(MODEL_INPUT_COLUMNS)), ids
+
+
+def _diagnostics_for_labeled(
+    *,
+    dataset: Mapping[str, object],
+    all_ids: tuple[str, ...],
+    all_scores: Sequence[float],
+) -> dict[str, object]:
+    label_by_id = dataset["label_by_id"]
+    if not isinstance(label_by_id, Mapping):
+        raise TypeError("invalid Phase 6 label mapping")
+    score_by_id = {
+        candidate_id: float(score)
+        for candidate_id, score in zip(all_ids, all_scores, strict=True)
+    }
+    labeled_ids = tuple(
+        candidate_id
+        for candidate_id in all_ids
+        if isinstance(label_by_id[candidate_id], LabelResult)
+        and label_by_id[candidate_id].label is not None
+    )
+    labels = tuple(int(label_by_id[candidate_id].label) for candidate_id in labeled_ids)
+    scores = tuple(score_by_id[candidate_id] for candidate_id in labeled_ids)
+    return classification_diagnostics(labels, scores, labeled_ids)
+
+
+def _find_cutoff(
+    cutoffs: Sequence[ScoreCutoff], retained_fraction: float
+) -> ScoreCutoff:
+    for cutoff in cutoffs:
+        if cutoff.retained_fraction == retained_fraction:
+            return cutoff
+    raise ValueError("selected Phase 6 retained fraction has no frozen fit cutoff")
+
+
+def run_phase6_strategy_cell(
+    *,
+    dataset_root: Path,
+    processed_manifest_path: Path,
+    feature_root: Path,
+    feature_manifest_path: Path,
+    strategy_id: str,
+    out_dir: Path,
+    code_commit: str,
+) -> dict[str, object]:
+    if strategy_id not in FROZEN_STRATEGIES:
+        raise ValueError(f"unsupported frozen Phase 6 strategy: {strategy_id!r}")
+    if not code_commit.strip():
+        raise ValueError("code_commit must be non-empty")
+    output = Path(out_dir)
+    output.mkdir(parents=True, exist_ok=True)
+
+    fit = _load_split_dataset(
+        dataset_root=Path(dataset_root),
+        processed_manifest_path=Path(processed_manifest_path),
+        feature_root=Path(feature_root),
+        feature_manifest_path=Path(feature_manifest_path),
+        strategy_id=strategy_id,
+        split=FIT_SPLIT,
+    )
+    selection = _load_split_dataset(
+        dataset_root=Path(dataset_root),
+        processed_manifest_path=Path(processed_manifest_path),
+        feature_root=Path(feature_root),
+        feature_manifest_path=Path(feature_manifest_path),
+        strategy_id=strategy_id,
+        split=SELECTION_SPLIT,
+    )
+
+    fit_features, fit_ids, fit_labels = _labeled_model_rows(fit)
+    selection_features, selection_ids = _all_model_rows(selection)
+    fit_label_by_id = fit["label_by_id"]
+    if not isinstance(fit_label_by_id, Mapping):
+        raise TypeError("invalid Phase 6 fit label mapping")
+
+    preprocessors: dict[ModelFamily, PreprocessorState] = {}
+    fitted_estimators: dict[ModelFamily, FittedEstimator] = {}
+    cutoffs_by_family: dict[ModelFamily, tuple[ScoreCutoff, ScoreCutoff, ScoreCutoff]] = {}
+    selection_scores_by_family: dict[ModelFamily, dict[str, float]] = {}
+    model_evidence: dict[str, object] = {}
+
+    for family in ModelFamily:
+        state = fit_preprocessor(
+            fit_features,
+            standardize=family is ModelFamily.LOGISTIC_REGRESSION,
+        )
+        X_fit = transform_features(fit_features, state)
+        fitted = fit_estimator(family, X_fit, fit_labels)
+        fit_scores = score_estimator(fitted, X_fit)
+        cutoffs = derive_fit_cutoffs(fit_scores)
+
+        X_selection = transform_features(selection_features, state)
+        selection_scores = score_estimator(fitted, X_selection)
+        selection_score_map = {
+            candidate_id: float(score)
+            for candidate_id, score in zip(selection_ids, selection_scores, strict=True)
+        }
+
+        preprocessors[family] = state
+        fitted_estimators[family] = fitted
+        cutoffs_by_family[family] = cutoffs
+        selection_scores_by_family[family] = selection_score_map
+        model_evidence[family.value] = {
+            "preprocessing": _serialize_preprocessor(state),
+            "model_config": _model_config(fitted),
+            "fit_score_digest": score_digest(fit_ids, fit_scores),
+            "selection_score_digest": score_digest(selection_ids, selection_scores),
+            "cutoffs": [_serialize_cutoff(cutoff) for cutoff in cutoffs],
+            "fit_diagnostics": classification_diagnostics(
+                tuple(int(value) for value in fit_labels.tolist()),
+                tuple(float(value) for value in fit_scores.tolist()),
+                fit_ids,
+            ),
+            "selection_diagnostics": _diagnostics_for_labeled(
+                dataset=selection,
+                all_ids=selection_ids,
+                all_scores=selection_scores,
+            ),
+        }
+
+    selection_candidates = selection["candidates"]
+    selection_bars = selection["bars"]
+    if not isinstance(selection_candidates, tuple) or not isinstance(selection_bars, tuple):
+        raise TypeError("invalid Phase 6 selection dataset")
+    selection_baseline = run_candidate_backtest(
+        bars=selection_bars,
+        candidates=selection_candidates,
+        strategy_id=strategy_id,
+        split=SELECTION_SPLIT,
+        code_commit=code_commit,
+        slippage_pips=0.2,
+    )
+
+    internal_rows: list[dict[str, object]] = []
+    evidence_rows: list[dict[str, object]] = []
+    for family in ModelFamily:
+        for cutoff in cutoffs_by_family[family]:
+            filtered_candidates = filter_candidates(
+                selection_candidates,
+                selection_scores_by_family[family],
+                cutoff,
+                family.value,
+            )
+            filtered = run_candidate_backtest(
+                bars=selection_bars,
+                candidates=filtered_candidates,
+                strategy_id=strategy_id,
+                split=SELECTION_SPLIT,
+                code_commit=code_commit,
+                slippage_pips=0.2,
+            )
+            gate = selection_gate(filtered, selection_baseline)
+            internal = {
+                "model_family": family.value,
+                "retained_fraction": cutoff.retained_fraction,
+                "cutoff": cutoff,
+                "filtered": filtered,
+                "baseline": selection_baseline,
+                "gate": gate,
+            }
+            internal_rows.append(internal)
+            evidence_rows.append(
+                {
+                    "model_family": family.value,
+                    "retained_fraction": cutoff.retained_fraction,
+                    "cutoff": _serialize_cutoff(cutoff),
+                    "filtered": _serialize_financial(filtered),
+                    "baseline": _serialize_financial(selection_baseline),
+                    "gate": _serialize_gate(gate),
+                }
+            )
+
+    selected = select_one_variant(internal_rows)
+    selected_payload: object = "NO_ML_CHALLENGER"
+    if selected is not None:
+        family = ModelFamily(selected.model_family)
+        cutoff = _find_cutoff(cutoffs_by_family[family], selected.retained_fraction)
+        selected_payload = {
+            "model_family": family.value,
+            "retained_fraction": cutoff.retained_fraction,
+            "cutoff": _serialize_cutoff(cutoff),
+        }
+
+    selection_artifact: dict[str, object] = {
+        "experiment_id": EXPERIMENT_ID,
+        "strategy_id": strategy_id,
+        "code_commit": code_commit,
+        "phase5_checkpoint_sha": PHASE5_CHECKPOINT_SHA,
+        "processed_manifest_sha256": USDJPY_PROCESSED_MANIFEST_SHA256,
+        "fit_split": {
+            "start": FIT_SPLIT.start.isoformat(),
+            "end_exclusive": FIT_SPLIT.end_exclusive.isoformat(),
+        },
+        "selection_split": {
+            "start": SELECTION_SPLIT.start.isoformat(),
+            "end_exclusive": SELECTION_SPLIT.end_exclusive.isoformat(),
+        },
+        "fit_dataset_digest": _dataset_digest(fit["model_frame"], fit_label_by_id),
+        "fit_feature_manifest_sha256": fit["feature_manifest_sha256"],
+        "selection_feature_manifest_sha256": selection["feature_manifest_sha256"],
+        "models": model_evidence,
+        "baseline_02": _serialize_financial(selection_baseline),
+        "variants": evidence_rows,
+        "tie_break_order": [
+            "net_return_improvement",
+            "expectancy_improvement",
+            "profit_factor_improvement",
+            "lower_max_drawdown",
+            "higher_trade_count",
+            "logistic_before_histogram",
+            "retained_0.75_before_0.50_before_0.25",
+        ],
+        "selected_variant": selected_payload,
+    }
+    _atomic_write_json(output / "selection.json", selection_artifact)
+
+    if selected is None:
+        validation_artifact: dict[str, object] = {
+            "status": "NO_ML_CHALLENGER",
+            "validation_loaded": False,
+        }
+        return {
+            "experiment_id": EXPERIMENT_ID,
+            "strategy_id": strategy_id,
+            "code_commit": code_commit,
+            "selection": selection_artifact,
+            "validation": validation_artifact,
+        }
+
+    selected_family = ModelFamily(selected.model_family)
+    selected_cutoff = _find_cutoff(
+        cutoffs_by_family[selected_family], selected.retained_fraction
+    )
+    validation = _load_split_dataset(
+        dataset_root=Path(dataset_root),
+        processed_manifest_path=Path(processed_manifest_path),
+        feature_root=Path(feature_root),
+        feature_manifest_path=Path(feature_manifest_path),
+        strategy_id=strategy_id,
+        split=VALIDATION_SPLIT,
+    )
+    validation_features, validation_ids = _all_model_rows(validation)
+    X_validation = transform_features(
+        validation_features, preprocessors[selected_family]
+    )
+    validation_scores = score_estimator(
+        fitted_estimators[selected_family], X_validation
+    )
+    validation_score_map = {
+        candidate_id: float(score)
+        for candidate_id, score in zip(validation_ids, validation_scores, strict=True)
+    }
+    validation_candidates = validation["candidates"]
+    validation_bars = validation["bars"]
+    if not isinstance(validation_candidates, tuple) or not isinstance(validation_bars, tuple):
+        raise TypeError("invalid Phase 6 validation dataset")
+    filtered_validation = filter_candidates(
+        validation_candidates,
+        validation_score_map,
+        selected_cutoff,
+        selected_family.value,
+    )
+
+    baselines: dict[str, FinancialResult] = {}
+    filtered_results: dict[str, FinancialResult] = {}
+    for slippage in (0.2, 0.5, 1.0):
+        key = f"{slippage:.1f}"
+        baselines[key] = run_candidate_backtest(
+            bars=validation_bars,
+            candidates=validation_candidates,
+            strategy_id=strategy_id,
+            split=VALIDATION_SPLIT,
+            code_commit=code_commit,
+            slippage_pips=slippage,
+        )
+        filtered_results[key] = run_candidate_backtest(
+            bars=validation_bars,
+            candidates=filtered_validation,
+            strategy_id=strategy_id,
+            split=VALIDATION_SPLIT,
+            code_commit=code_commit,
+            slippage_pips=slippage,
+        )
+
+    gate = validation_gate(
+        filtered_results["0.2"],
+        baselines["0.2"],
+        filtered_results["0.5"],
+        baselines["0.5"],
+    )
+    validation_artifact = {
+        "status": "PROMOTE_ML_FILTER" if gate.passed else "REJECT_ML_FILTER",
+        "validation_loaded": True,
+        "model_family": selected_family.value,
+        "retained_fraction": selected_cutoff.retained_fraction,
+        "cutoff": _serialize_cutoff(selected_cutoff),
+        "score_digest": score_digest(validation_ids, validation_scores),
+        "diagnostics": _diagnostics_for_labeled(
+            dataset=validation,
+            all_ids=validation_ids,
+            all_scores=validation_scores,
+        ),
+        "feature_manifest_sha256": validation["feature_manifest_sha256"],
+        "baseline_results": {
+            key: _serialize_financial(value) for key, value in baselines.items()
+        },
+        "filtered_results": {
+            key: _serialize_financial(value) for key, value in filtered_results.items()
+        },
+        "gate": _serialize_gate(gate),
+        "refit_count_after_selection": 0,
+    }
+    return {
+        "experiment_id": EXPERIMENT_ID,
+        "strategy_id": strategy_id,
+        "code_commit": code_commit,
+        "selection": selection_artifact,
+        "validation": validation_artifact,
+    }
