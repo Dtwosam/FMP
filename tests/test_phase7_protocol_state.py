@@ -15,7 +15,12 @@ class Phase7ProtocolStateTests(unittest.TestCase):
             / "docs/superpowers/specs/2026-09-15-phase7-walk-forward-design.md"
         ).read_text(encoding="utf-8")
 
-        self.assertIn("DEC-033 — Phase 7 walk-forward evaluation protocol — APPROVED", decision)
+        self.assertIn(
+            "## DEC-033 — Phase 7 walk-forward evaluation protocol\n\n"
+            "**Date:** 2026-09-15\n"
+            "**Status:** APPROVED",
+            decision,
+        )
         self.assertIn("Phase 7 is ACTIVE only for test-first implementation", decision)
         self.assertIn("PLANNED with `Final-test touched: NO`", decision)
         self.assertIn("**Status:** APPROVED", spec)
