@@ -9,7 +9,12 @@ from unittest.mock import patch
 
 import polars as pl
 
-from fmp.models.contracts import FEATURE_SET_VERSION, ModelFamily
+from fmp.models.contracts import (
+    FEATURE_SET_VERSION,
+    PHASE5_CHECKPOINT_SHA,
+    USDJPY_PROCESSED_MANIFEST_SHA256,
+    ModelFamily,
+)
 from fmp.models.data import MODEL_INPUT_COLUMNS
 from fmp.models.evaluation import GateResult
 from fmp.models.estimators import EXPERIMENT_SEED
@@ -69,8 +74,8 @@ class Phase6EvidenceContractTests(unittest.TestCase):
             return SimpleNamespace(
                 frame=_feature_frame(candidates_by_split[split.name]),
                 feature_manifest_sha256=f"feature-{split.name}",
-                processed_manifest_sha256="processed",
-                phase5_checkpoint_sha="checkpoint",
+                processed_manifest_sha256=USDJPY_PROCESSED_MANIFEST_SHA256,
+                phase5_checkpoint_sha=PHASE5_CHECKPOINT_SHA,
                 phase5_code_commit="phase5",
                 opened_artifacts=(
                     f"data/features/fmp-feature-v1/USDJPY/15m/{year}/01.parquet",
