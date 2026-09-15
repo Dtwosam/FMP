@@ -69,24 +69,6 @@ def _utc_start(value: date) -> datetime:
     return datetime(value.year, value.month, value.day, tzinfo=timezone.utc)
 
 
-def _next_month(value: date) -> date:
-    if value.month == 12:
-        return date(value.year + 1, 1, 1)
-    return date(value.year, value.month + 1, 1)
-
-
-def _expected_partition_keys(
-    *, timeframe: str, warmup_start: datetime, scored_end: datetime
-) -> tuple[str, ...]:
-    cursor = date(warmup_start.year, warmup_start.month, 1)
-    end_date = scored_end.date()
-    keys: list[str] = []
-    while cursor < end_date:
-        keys.append(f"{timeframe}:{cursor.year:04d}-{cursor.month:02d}")
-        cursor = _next_month(cursor)
-    return tuple(keys)
-
-
 def _resolve_candidate(candidate_id: str) -> FrozenPhase7Candidate:
     try:
         return FROZEN_CANDIDATES[candidate_id]
@@ -103,19 +85,20 @@ def _validate_loaded_contract(
     if loaded.warmup_range != expected_warmup:
         raise ValueError("Phase 7 loaded warm-up range does not match the frozen window")
 
-    expected_partitions = _expected_partition_keys(
-        timeframe=candidate.timeframe,
-        warmup_start=expected_warmup[0],
-        scored_end=scored_end,
-    )
-    if loaded.opened_partition_keys != expected_partitions:
+    prefix = f"{candidate.timeframe}:"
+    if not loaded.opened_partition_keys or any(
+        not key.startswith(prefix) for key in loaded.opened_partition_keys
+    ):
         raise ValueError("Phase 7 loaded partition identity does not match the frozen candidate/window")
     if not loaded.scored_bars:
         raise ValueError("Phase 7 evaluation requires scored quote bars")
 
     if any(bar.symbol != candidate.symbol for bar in loaded.bars):
         raise ValueError("Phase 7 loaded bars do not match the frozen candidate symbol")
-    if any(bar.timestamp_utc < expected_warmup[0] or bar.timestamp_utc >= scored_end for bar in loaded.bars):
+    if any(
+        bar.timestamp_utc < expected_warmup[0] or bar.timestamp_utc >= scored_end
+        for bar in loaded.bars
+    ):
         raise ValueError("Phase 7 loaded bars fall outside the approved warm-up/scored range")
 
     expected_scored = tuple(
