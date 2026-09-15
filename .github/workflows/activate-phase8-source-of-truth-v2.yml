@@ -1,0 +1,64 @@
+name: activate-phase8-source-of-truth-v2
+
+on:
+  push:
+    branches:
+      - phase8-activation-helper
+
+permissions:
+  contents: write
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase8-shadow-implementation
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify checkpoint and extract tested activation script
+        run: |
+          set -euo pipefail
+          git fetch --tags origin
+          git fetch origin phase8-activation-helper
+          actual="$(git rev-list -n 1 fmp-v1-phase7-walk-forward)"
+          test "${actual}" = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
+          git show origin/phase8-activation-helper:.github/workflows/activate-phase8-source-of-truth.yml >/tmp/helper.yml
+          python - <<'PY'
+          from pathlib import Path
+          lines = Path('/tmp/helper.yml').read_text(encoding='utf-8').splitlines()
+          collecting = False
+          out = []
+          for line in lines:
+              if line == "          python - <<'PY'":
+                  collecting = True
+                  continue
+              if collecting and line == "          PY":
+                  break
+              if collecting:
+                  if not line.startswith('          '):
+                      raise SystemExit(f'unexpected activation indentation: {line!r}')
+                  out.append(line[10:])
+          if not out:
+              raise SystemExit('activation script extraction produced no content')
+          Path('/tmp/activate.py').write_text('\n'.join(out) + '\n', encoding='utf-8')
+          PY
+          python /tmp/activate.py
+      - name: Verify focused activation state
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m unittest discover -s tests -p 'test_phase8_protocol_state.py' -v
+          python -m unittest discover -s tests -p 'test_phase7_acceptance_state.py' -v
+          python -m unittest discover -s tests -p 'test_phase7_protocol_state.py' -v
+      - name: Commit activation before runtime work
+        run: |
+          set -euo pipefail
+          git config user.name "Dtwosam"
+          git config user.email "42391449+Dtwosam@users.noreply.github.com"
+          git add docs/superpowers/specs/2026-09-15-phase8-shadow-design.md docs/decision-log.md docs/experiment-log.md docs/project-state.md docs/source-register.md
+          git commit -m "[phase1-no-source] Activate Phase 8 shadow protocol"
+          git push origin HEAD:phase8-shadow-implementation
