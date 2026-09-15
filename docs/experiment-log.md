@@ -303,3 +303,36 @@ Copy this section for each serious experiment:
 - Conclusion: PROMOTE
 - Reason: `session_breakout` is the sole frozen candidate to pass the one-shot Stage 1 gate and then every mandatory Stage 2 aggregate/stability criterion without retuning, refitting, rescue search, or protocol changes. `volatility_breakout` remains rejected from Stage 1. The successful mandatory costs are accompanied by a negative 1.0-pip diagnostic, which remains a deployment-cost limitation rather than a failed predeclared gate.
 - Follow-up: close Phase 7 as PASS after the acceptance evidence/state change is merged and freshly verified on `main`; create checkpoint `fmp-v1-phase7-walk-forward` at that verified closure commit. The surviving `session_breakout` is eligible for Phase 8 shadow design only. Phase 8 remains UNSTARTED, and broker/demo/live/real-money trading remain locked.
+
+
+### EXP-20260915-009 — Phase 8 live shadow evaluation
+
+- Date: 2026-09-15
+- Status: RUNNING
+- Hypothesis: The sole Phase 7 survivor may preserve materially comparable timing, spread conditions, operational integrity, and positive hypothetical after-cost behavior when driven by real-time OANDA Practice USD_JPY quotes without any broker order-submission capability. No live viability is assumed.
+- Code commit: source-of-truth activation commit first; shadow runtime implementation commits and accepted campaign code identity will be recorded as they are verified.
+- Data manifest/version: upstream Phase 7 checkpoint `fmp-v1-phase7-walk-forward` / `b6fb0176555b071fef6d1070edf3407b03cd60c9`; accepted Phase 2 USDJPY artifact `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`; processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`; live evidence uses the Phase 8 append-only evidence protocol and manifest defined by DEC-036.
+- Pair(s): USDJPY only; provider instrument `USD_JPY`.
+- Timeframe(s): frozen 15m session breakout; 1m shadow-live bars are an operational construction input only.
+- Data range: future explicitly registered live-shadow campaign only; no hidden historical backfill is permitted after campaign gaps.
+- Train period: not applicable; fixed rule, no fitting or optimization.
+- Validation period: live campaign after frozen connector qualification/implementation verification; acceptance review requires the predeclared minimum sample/time/coverage gates.
+- Final-test touched?: YES upstream in Phase 7; Phase 8 itself opens no additional historical final-test search and performs no retuning.
+- Strategy/model: unchanged USDJPY 15m `session_breakout`, 5-pip buffer, 1.5x target range, exact London timing, no ML overlay.
+- Features: strategy-native midpoint/session structure only; no Phase 5 model features or new predictive features.
+- Parameters/search space: none. Provider/environment, method/host/path/instrument, stale threshold, quote deadlines, bar completeness, cost scenarios, risk settings, historical spread-reference method, sample minimums, and acceptance thresholds are frozen by DEC-036.
+- Random seed (if relevant): not applicable; deterministic fixed-rule shadow/replay pipeline.
+- Spread/cost model: observed live bid/ask spread plus zero commission and zero financing for the mandatory intraday-flat strategy.
+- Slippage model: exactly 0.2, 0.5, and 1.0 pips adverse per fill; 0.2 and 0.5 are gating, 1.0 is diagnostic only.
+- Risk assumptions: unchanged Phase 3 policy — 0.25% default requested risk, 0.50% hard per-trade maximum, 1.00% simultaneous open-risk maximum, 1.50% UTC day-start realized-loss halt; independent $100,000 virtual account per cost scenario.
+- Trade count: pending live campaign; at least 40 completed financially scorable 0.2-pip trades are required before acceptance review.
+- Net return after costs: pending.
+- Expectancy/trade: pending.
+- Profit factor: pending.
+- Max drawdown: pending.
+- Key subperiod results: pending; acceptance also requires at least 8 elapsed calendar weeks, at least 30 fully observed London dates, and at least 90% valid denominator-date coverage.
+- Robustness/cost sensitivity: pending; mandatory gates apply at 0.2 and 0.5 pips while 1.0 pip remains diagnostic.
+- Result summary: RUNNING. Source-of-truth activation authorizes shadow-only implementation and evidence collection after qualification; it does not constitute Phase 8 PASS.
+- Conclusion: NEED_MORE_DATA
+- Reason: no Phase 8 live campaign evidence has yet met the frozen minimum evidence gate.
+- Follow-up: implement the structurally GET-only Practice quote boundary, deterministic normalization/bar/simulation/evidence/replay pipeline, historical spread reference, connector qualification, and campaign registration exactly as DEC-036; keep Phase 9/demo/live-order/real-money paths locked.
