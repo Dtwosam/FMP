@@ -38,6 +38,7 @@ Active decision index:
 - DEC-030 — Phase 5 leakage-safe feature-engine acceptance review — APPROVED
 - DEC-031 — Phase 6 statistical / ML filter protocol — APPROVED
 - DEC-032 — Phase 6 statistical / ML filter experiment outcome and acceptance review — APPROVED
+- DEC-033 — Phase 7 walk-forward evaluation protocol — APPROVED
 
 ## DEC-014 — Phase 1 frozen snapshot accepted
 
@@ -397,3 +398,31 @@ For USDJPY 1h `volatility_breakout`, both frozen models fit exactly once on 374 
 No strategy parameter, feature definition, model family, hyperparameter, retained fraction, cutoff rule, selection gate, validation gate, risk rule, or execution semantic was changed in response to the results. The failed first orchestration run is debugging history only and its successful volatility output was not used for selection decisions. Both authoritative outcomes preserve negative evidence and reject the optional ML overlay while retaining the two frozen Phase 4 rule baselines unchanged.
 
 Consequences: `EXP-20260915-007` is complete with experiment status PASS and ML conclusion REJECT. Phase 6 is formally PASS. Checkpoint `fmp-v1-phase6-models` is to be created only at the verified acceptance-closure merge commit after fresh source-free merged-main tests and Phase 3 acceptance succeed. Phase 7 remains UNSTARTED. The untouched 2024-01-01 through 2026-08-20 final-test period remains locked; broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged. Detailed evidence is in `docs/phase6-ml-filter-evidence.md`.
+
+## DEC-033 — Phase 7 walk-forward evaluation protocol
+
+**Date:** 2026-09-15
+**Status:** APPROVED
+
+Phase 7 begins under the user-approved design in `docs/superpowers/specs/2026-09-15-phase7-walk-forward-design.md`. That design is authoritative for `EXP-20260915-008` unless a later explicitly approved decision supersedes a named rule.
+
+Frozen protocol:
+
+- The only candidates are the unchanged Phase 4 rule baselines retained by Phase 6: USDJPY 15m session breakout with 5-pip buffer and 1.5x target range, and USDJPY 1h volatility breakout with 2.0x range expansion and fixed 1.0R target.
+- No ML overlay, feature selection, estimator, threshold, strategy retuning, neighboring-parameter rescue, candidate replacement, pair expansion, or timeframe expansion is authorized.
+- Immutable upstream identities are Phase 6 checkpoint `fmp-v1-phase6-models` at `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`; Phase 2 USDJPY artifact `10327600628` with ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`; and USDJPY processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`.
+- Stage 1 scores exactly `2024-01-01 <= T < 2025-01-01`. At most seven immediately preceding calendar days may be opened as context, no earlier than `2023-12-25T00:00:00Z`; warm-up context can never become a scored decision, trade, PnL, or metric observation. Stage 1 starts at exactly $100,000.
+- Slippage scenarios are exactly 0.2, 0.5, and 1.0 pips adverse per fill. The 0.2- and 0.5-pip scenarios are gating; 1.0 pip is diagnostic only. Historical BID/ASK spread remains authoritative and commission/financing remain zero.
+- A candidate passes Stage 1 only if, at both 0.2 and 0.5 pips, net return and expectancy are strictly positive, profit factor is greater than 1.0, and maximum drawdown is at most 5%. The 0.2-pip baseline must additionally contain at least 40 completed trades.
+- Stage 2 is authorized only for Stage 1 survivors and uses exactly seven non-overlapping forward windows: 2025-Q1, 2025-Q2, 2025-Q3, 2025-Q4, 2026-Q1, 2026-Q2, and the partial 2026-Q3 ending exclusively at `2026-08-21`.
+- Every Stage 2 window starts independently at exactly $100,000 and records `refit_status = NOT_APPLICABLE_FIXED_RULE`. Up to seven immediately preceding calendar days may be used as context only; no context row is rescored in the new window.
+- Stage 2 aggregate at 0.2 pips requires positive net return, positive expectancy, profit factor greater than 1.0, at least 100 completed trades, and maximum independent-window drawdown at most 5%. Aggregate 0.5-pip results require positive net return, positive expectancy, profit factor greater than 1.0, and maximum independent-window drawdown at most 5%.
+- Stage 2 stability at 0.2 pips requires at least four of seven windows to have positive net PnL, and no single positive window may contribute more than 50% of total positive-window PnL.
+- Aggregate maximum drawdown is the maximum of the seven independent window drawdowns; Phase 7 must not fabricate a chained-equity drawdown across independently reset windows.
+- Existing Phase 4, Phase 5, and Phase 6 APIs retain their hard 2024+ fail-before-I/O guards. Phase 7 must use a dedicated promotion-only path with exact enumerated ranges and no generic `allow_final`, arbitrary dates, arbitrary strategy, or arbitrary parameter surface.
+- Stage 2 must fail before required 2025/2026 source I/O unless the exact candidate/data/experiment identity has a verified Stage 1 PASS artifact.
+- Evidence must be deterministic and bind code, upstream data/checkpoint identities, candidate parameters, scored/warm-up ranges, opened partitions, cost/risk identity, per-window metrics, aggregate metrics, gates, and final decision. Runtime clocks, hostnames, UUIDs, temporary paths, and nondeterministic ordering are forbidden from evidence bytes.
+
+This protocol decision does not itself inspect final-test data. The first required 2024 partition may be opened only after the guarded Phase 7 implementation is merged and verified and the dedicated Stage 1 workflow is deliberately dispatched. Required 2025/2026 partitions remain locked behind Stage 1 PASS authorization.
+
+Consequences: Phase 6 remains frozen PASS at `fmp-v1-phase6-models`; Phase 7 is ACTIVE only for test-first implementation of `EXP-20260915-008`, which is PLANNED with `Final-test touched: NO`. Phase 8 remains UNSTARTED. Broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged.
