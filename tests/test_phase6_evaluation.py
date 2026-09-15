@@ -177,6 +177,31 @@ class Phase6EvaluationTests(unittest.TestCase):
         self.assertFalse(failed.passed)
         self.assertFalse(failed.criteria["yearly_net_pnl_improves_at_least_two_of_three"])
 
+    def test_half_pip_robustness_has_no_trade_count_gate(self) -> None:
+        from fmp.models.evaluation import validation_gate
+
+        baseline02 = financial_result(
+            trades=100, net_return=0.02, expectancy=20.0, profit_factor=1.2, drawdown=0.10,
+            yearly=(100.0, 100.0, 100.0),
+        )
+        filtered02 = financial_result(
+            trades=50, net_return=0.04, expectancy=30.0, profit_factor=1.4, drawdown=0.08,
+            yearly=(110.0, 120.0, 90.0),
+        )
+        baseline05 = financial_result(
+            trades=100, net_return=0.01, expectancy=10.0, profit_factor=1.1, drawdown=0.12,
+            yearly=(0.0, 0.0, 0.0), slippage_pips=0.5,
+        )
+        filtered05 = financial_result(
+            trades=1, net_return=0.02, expectancy=15.0, profit_factor=1.2, drawdown=0.10,
+            yearly=(0.0, 0.0, 0.0), slippage_pips=0.5,
+        )
+
+        gate = validation_gate(filtered02, baseline02, filtered05, baseline05)
+        self.assertTrue(gate.passed)
+        self.assertTrue(gate.criteria["robust_05_all"])
+        self.assertNotIn("robust_05_trade_count_at_least_40pct_baseline", gate.criteria)
+
     def test_variant_selection_uses_frozen_tie_break_order(self) -> None:
         from fmp.models.evaluation import GateResult, select_one_variant
 
