@@ -2,10 +2,12 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+PHASE7_TAG = "fmp-v1-phase7-walk-forward"
+PHASE7_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
 
 
 class Phase4CheckpointStateTests(unittest.TestCase):
-    def test_phase4_checkpoint_remains_recorded_after_phase7_closure(self) -> None:
+    def test_phase4_checkpoint_remains_recorded_after_phase8_activation(self) -> None:
         state = (ROOT / "docs/project-state.md").read_text(encoding="utf-8")
         evidence = (ROOT / "docs/phase4-acceptance-evidence.md").read_text(encoding="utf-8")
 
@@ -19,8 +21,13 @@ class Phase4CheckpointStateTests(unittest.TestCase):
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("## Phase 7 — PASS", state)
+        self.assertIn(PHASE7_TAG, state)
+        self.assertIn(PHASE7_SHA, state)
+        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("Phase 9/demo order placement: LOCKED", state)
         self.assertIn("Real-money trading: locked", state)
-        self.assertNotIn("## Phase 8 — ACTIVE", state)
 
 
 if __name__ == "__main__":
