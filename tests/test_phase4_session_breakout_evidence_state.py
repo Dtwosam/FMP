@@ -35,10 +35,10 @@ class Phase4SessionBreakoutEvidenceStateTests(unittest.TestCase):
     def test_project_state_preserves_phase4_candidate_and_later_gates(self):
         state = (ROOT / "docs" / "project-state.md").read_text(encoding="utf-8")
         self.assertIn("**Current phase:** Phase 6 — Statistical / ML Filters", state)
-        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("## Phase 5 — PASS", state)
-        self.assertIn("## Phase 6 — ACTIVE", state)
+        self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("EXP-20260914-001", state)
         self.assertIn("USDJPY 15m", state)
         self.assertIn("Final-test touched: NO", state)
