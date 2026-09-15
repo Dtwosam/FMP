@@ -101,7 +101,14 @@ class Phase6LeakageTests(unittest.TestCase):
         def feature_loader(**kwargs):
             split = kwargs["split"]
             return SimpleNamespace(
-                frame=pl.DataFrame(),
+                frame=pl.DataFrame(
+                    {
+                        "available_at_utc": [
+                            candidate.signal_known_timestamp_utc
+                            for candidate in candidates_by_split[split.name]
+                        ]
+                    }
+                ),
                 feature_manifest_sha256=f"feature-{split.name}",
                 processed_manifest_sha256="processed",
                 phase5_checkpoint_sha="checkpoint",
