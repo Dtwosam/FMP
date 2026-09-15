@@ -122,12 +122,9 @@ jobs:
           diff \
             <(find "${a}" -type f -printf '%P\n' | sort) \
             <(find "${b}" -type f -printf '%P\n' | sort)
-          if grep -R -E '2024-[0-9]{2}-[0-9]{2}|[/\\]2024[/\\]' "${a}"; then
-            echo 'locked 2024+ evidence detected' >&2
-            exit 1
-          fi
           python - "${a}" "${GITHUB_SHA}" "${STRATEGY}" <<'PY'
           import json
+          import re
           import sys
           from pathlib import Path
 
@@ -137,6 +134,37 @@ jobs:
           manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
           result = json.loads((root / 'result.json').read_text(encoding='utf-8'))
           selection = json.loads((root / 'selection.json').read_text(encoding='utf-8'))
+
+          date_2024_plus = re.compile(r'(?<!\d)(20(?:2[4-9]|[3-9]\d))-\d{2}-\d{2}(?!\d)')
+          path_2024_plus = re.compile(r'(?:^|[/\\])(20(?:2[4-9]|[3-9]\d))(?:[/\\]|$)')
+
+          def assert_pre2024(value, path='root'):
+              if isinstance(value, dict):
+                  for key, item in value.items():
+                      if key == 'end_exclusive' and item == '2024-01-01':
+                          continue
+                      if isinstance(key, str) and key.isdigit() and len(key) == 4 and int(key) >= 2024:
+                          raise AssertionError(f'locked 2024+ evidence key: {path}.{key}')
+                      assert_pre2024(item, f'{path}.{key}')
+                  return
+              if isinstance(value, list):
+                  for index, item in enumerate(value):
+                      assert_pre2024(item, f'{path}[{index}]')
+                  return
+              if isinstance(value, str):
+                  lowered = value.strip().lower()
+                  if lowered in {'final', 'final-test', 'final_test', 'final test'}:
+                      raise AssertionError(f'locked final evidence marker: {path}')
+                  if date_2024_plus.search(value) or path_2024_plus.search(value):
+                      raise AssertionError(f'locked 2024+ evidence: {path}={value!r}')
+
+          for name, payload in (
+              ('manifest', manifest),
+              ('result', result),
+              ('selection', selection),
+          ):
+              assert_pre2024(payload, name)
+
           assert manifest['experiment_id'] == 'EXP-20260915-007'
           assert result['experiment_id'] == 'EXP-20260915-007'
           assert selection['experiment_id'] == 'EXP-20260915-007'
@@ -150,6 +178,7 @@ jobs:
           assert manifest['phase5_checkpoint_sha'] == 'e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0'
           assert manifest['processed_manifest_sha256'] == 'e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d'
           assert selection['feature_set_version'] == 'fmp-feature-v1'
+          assert selection['evidence_contract_version'] == 1
           assert set(selection['models']) == {'logistic_regression', 'hist_gradient_boosting'}
           assert result['validation']['status'] in {
               'NO_ML_CHALLENGER', 'PROMOTE_ML_FILTER', 'REJECT_ML_FILTER'
