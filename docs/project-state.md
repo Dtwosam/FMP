@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 6 — Statistical / ML Filters
-**Phase status:** ACTIVE
-**Next milestone:** Implement and execute frozen `EXP-20260915-007`; final-test data remains locked
+**Phase status:** PASS
+**Next milestone:** Create immutable Phase 6 checkpoint; Phase 7 remains UNSTARTED and final-test data remains locked
 
 ## Current baseline
 
@@ -256,24 +256,24 @@ DEC-029 freezes the leakage-safe `fmp-feature-v1` protocol; DEC-030 records the 
 
 Phase 5 is formally PASS under DEC-030. Checkpoint `fmp-v1-phase5-features` is frozen at the verified acceptance-closure commit `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`; post-merge tests `34912677109` and Phase 3 acceptance `34912677100` completed SUCCESS. Normal Phase 5 tooling still rejects any processed source request reaching 2024-01-01 or later before that partition is opened. The final-test period remains locked.
 
-## Phase 6 — ACTIVE
+## Phase 6 — PASS
 
-DEC-031 freezes the statistical / ML filter protocol for `EXP-20260915-007`. Phase 6 evaluates optional candidate-level filters only; it does not create a new strategy or retune the two frozen Phase 4 candidates.
+DEC-031 remains the frozen statistical / ML filter protocol for `EXP-20260915-007`. DEC-032 records the completed experiment outcome and Phase 6 acceptance without changing the protocol, strategy parameters, features, models, thresholds, gates, or Phase 3 execution/risk semantics.
 
-- Candidate A: USDJPY 15m session breakout, 5-pip buffer, 1.5x target range.
-- Candidate B: USDJPY 1h volatility breakout, 2.0x range expansion, fixed 1.0R target.
+- Candidate A: USDJPY 15m session breakout, 5-pip buffer, 1.5x target range — rule baseline retained unchanged.
+- Candidate B: USDJPY 1h volatility breakout, 2.0x range expansion, fixed 1.0R target — rule baseline retained unchanged.
 - feature checkpoint: `fmp-v1-phase5-features` at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`
 - feature schema: `fmp-feature-v1`, exact 48 feature values plus signal direction for modeling
 - accepted USDJPY processed-manifest SHA-256: `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`
-- experiment: `EXP-20260915-007`
+- experiment: `EXP-20260915-007` — PASS / ML overlay REJECT
+- authoritative run: `34966406652` on `2dccb0f00d2a443bc41646ac1b3b494d81e1f13c` — SUCCESS
+- session-breakout evidence: artifact `10395810196`, ZIP SHA-256 `36cb9f80ca043da23250669dd974036eb9fb985c3f7f9ffd7844b9d99c96073d`; `ALL_NULL_FIT_COLUMN` on `minutes_since_new_york_open`; both models fail closed; all six variants not evaluated; `NO_ML_CHALLENGER`; validation unopened
+- volatility-breakout evidence: artifact `10395670751`, ZIP SHA-256 `0cf71a4d725fb1e609a512bb95aa13e4ad8771ae2b5864dd09e2833fe160a8d2`; both models fit exactly once; all six variants fail the selection gate; `NO_ML_CHALLENGER`; validation unopened
 - fit: 2015-01-01 through 2018-12-31 inclusive
 - selection: 2019-01-01 through 2020-12-31 inclusive
-- external validation: 2021-01-01 through 2023-12-31 inclusive
-- models: exact L2 logistic regression and shallow histogram gradient boosting under `scikit-learn==1.9.1`
-- fit-derived retained fractions: 0.75, 0.50, 0.25
-- no refit after selection before external validation
-- primary label: `target_before_stop` under unchanged Phase 3 BID/ASK stop/target/time-exit semantics
-- Phase 3 risk and execution semantics: unchanged
+- external validation: 2021-01-01 through 2023-12-31 inclusive; not opened because neither strategy produced a qualifying selection-period challenger
+- no refit after selection; no post-result threshold widening or model/strategy retuning
 - Final-test touched: NO
+- checkpoint: PENDING (`fmp-v1-phase6-models`)
 
-Normal Phase 6 tooling cannot open any required source or feature partition reaching 2024-01-01 or later. Phase 7 remains UNSTARTED. Broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged.
+Phase 6 is formally PASS under DEC-032 because both frozen strategies completed the predeclared deterministic leakage-safe experiment and all negative evidence was preserved. No ML filter is promoted. Normal Phase 6 tooling still cannot open any required source or feature partition reaching 2024-01-01 or later. Phase 7 remains UNSTARTED. The final-test period, broker/live/demo integration, and real-money trading remain locked; DEC-008 remains unchanged.

@@ -239,3 +239,36 @@ Copy this section for each serious experiment:
 - Conclusion: REJECT
 - Reason: no exact predeclared buffer achieved positive net return, positive expectancy, and PF > 1 on both development and validation at 0.2-pip baseline.
 - Follow-up: promote nothing; retain EXP-001 and EXP-005 candidates frozen unchanged. This completes all six planned Phase 4 baseline families. Detailed evidence: `docs/phase4-session-sweep-rejection-evidence.md`.
+
+
+### EXP-20260915-007 — Phase 6 statistical / ML candidate filters
+
+- Date: 2026-09-15
+- Status: PASS
+- Hypothesis: A predeclared supervised outcome model may filter lower-quality entries from either frozen Phase 4 serious rule candidate and improve financial quality without changing the strategy, execution, or fixed-risk contract. No model improvement was assumed.
+- Code commit: `2dccb0f00d2a443bc41646ac1b3b494d81e1f13c`
+- Data manifest/version: Phase 5 `fmp-feature-v1` checkpoint `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`; accepted USDJPY processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`; authoritative Phase 5 USDJPY 15m artifact `10374600839` ZIP `2e9b19935fc2699c94e5c3b91675c332892da9448e994438e479cf501e3c6215`; USDJPY 1h artifact `10374645600` ZIP `3db4d9d4fd4613c9e91f4c3fc1d815750038e33ea993608513066cec53aa617f`.
+- Pair(s): USDJPY
+- Timeframe(s): 15m session breakout and 1h volatility breakout
+- Data range: accepted pre-2024 data only; fit 2015-2018 and selection 2019-2020 were opened. The predeclared 2021-2023 validation split remained unopened because neither strategy produced a qualifying selection-period challenger.
+- Train period: fit 2015-01-01 through 2018-12-31 inclusive; selection 2019-01-01 through 2020-12-31 inclusive
+- Validation period: 2021-01-01 through 2023-12-31 inclusive, gated and not opened
+- Final-test touched?: NO
+- Strategy/model: unchanged USDJPY 15m session-breakout 5-pip/1.5x rule and USDJPY 1h volatility-breakout 2.0x/1.0R rule; exact L2 logistic regression and shallow histogram gradient boosting challengers.
+- Features: exactly 48 frozen `fmp-feature-v1` values plus signal direction; exact observation/availability join; no outcome/PnL/future feature input.
+- Parameters/search space: exactly two model families × retained fractions 0.75, 0.50, and 0.25 per strategy; cutoffs derived from fit scores only; no post-result widening, extra model, or rescue search.
+- Random seed (if relevant): `20260915`
+- Spread/cost model: historical BID/ASK spread; zero commission; zero financing.
+- Slippage model: 0.2 pips per fill for selection; 0.5-pip validation robustness only for a selected challenger; 1.0 pip diagnostic only. Validation was not opened because no challenger survived selection.
+- Risk assumptions: unchanged Phase 3 contract: 0.25% requested risk, 0.50% hard per-trade max, 1.00% simultaneous max, 1.50% UTC day-start realized-loss halt.
+- Trade count: selection rule baselines were 192 session-breakout trades and 222 volatility-breakout trades; no filtered candidate was promoted.
+- Net return after costs: selection rule baselines were +3.8558% session breakout and +3.8457% volatility breakout at 0.2-pip adverse slippage. No session ML variant was fit; all six volatility filtered variants were below the volatility baseline net return.
+- Expectancy/trade: selection rule baselines +$20.0822 session breakout and +$17.3228 volatility breakout. Best volatility filtered expectancy was +$21.0354 for logistic 0.50, but that variant still failed the all-conditions gate because its +2.7136% net return was below baseline.
+- Profit factor: selection rule baselines 1.3010 session breakout and 1.2014 volatility breakout. No session model fit; volatility filtered PF ranged 0.9703 to 1.2101 and did not produce a qualifying all-conditions variant.
+- Max drawdown: selection rule baselines 1.4390% session breakout and 1.4105% volatility breakout; drawdown improvement alone could not rescue a variant that failed another frozen selection condition.
+- Key subperiod results: no validation subperiod result exists because DEC-031 forbids validation from rescuing a strategy without a qualifying selection-period challenger.
+- Robustness/cost sensitivity: validation and the 0.5-pip robustness gate remained unopened for both strategies; no 1.0-pip diagnostic result was used.
+- Result summary: authoritative run `34966406652` completed SUCCESS with double execution, byte-identical evidence, and locked pre-2024 coverage. Session breakout failed closed for both models on `ALL_NULL_FIT_COLUMN` / `minutes_since_new_york_open`, leaving all six variants not evaluated. Volatility breakout fit both models once, but all six variants failed selection and every variant had `net_return_beats_baseline = false`. Audited artifacts are session `10395810196` / ZIP `36cb9f80ca043da23250669dd974036eb9fb985c3f7f9ffd7844b9d99c96073d` and volatility `10395670751` / ZIP `0cf71a4d725fb1e609a512bb95aa13e4ad8771ae2b5864dd09e2833fe160a8d2`.
+- Conclusion: REJECT
+- Reason: neither frozen strategy produced a valid ML challenger under the predeclared selection protocol; `NO_ML_CHALLENGER` is the authoritative outcome for both.
+- Follow-up: retain both frozen Phase 4 rule candidates unchanged, close Phase 6 as PASS because the deterministic leakage-safe experiment completed correctly with negative evidence preserved, create `fmp-v1-phase6-models` only after verified acceptance-closure merge, keep Phase 7 UNSTARTED, and keep the final-test period locked. Detailed evidence: `docs/phase6-ml-filter-evidence.md`.

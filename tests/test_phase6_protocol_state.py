@@ -31,9 +31,8 @@ class Phase6ProtocolStateTests(unittest.TestCase):
         self.assertIn("no refit", decision.lower())
 
         self.assertIn("**Current phase:** Phase 6", state)
-        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("## Phase 5 — PASS", state)
-        self.assertIn("## Phase 6 — ACTIVE", state)
+        self.assertIn("## Phase 6 —", state)
         self.assertIn("EXP-20260915-007", state)
         self.assertIn("fmp-v1-phase5-features", state)
         self.assertIn("2024-01-01", state)

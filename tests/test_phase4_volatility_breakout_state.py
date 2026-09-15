@@ -36,8 +36,8 @@ class VolatilityBreakoutStateTests(unittest.TestCase):
 
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("## Phase 5 — PASS", state)
-        self.assertIn("## Phase 6 — ACTIVE", state)
-        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("## Phase 6 — PASS", state)
+        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("experiment status: PASS", state)
         self.assertIn("DEC-025 APPROVED", state)
         self.assertIn("USDJPY 15m", state)
