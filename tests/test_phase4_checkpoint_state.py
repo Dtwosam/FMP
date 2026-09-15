@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Phase4CheckpointStateTests(unittest.TestCase):
-    def test_phase4_checkpoint_is_recorded_without_starting_phase5(self) -> None:
+    def test_phase4_checkpoint_remains_recorded_after_phase7_activation(self) -> None:
         state = (ROOT / "docs/project-state.md").read_text(encoding="utf-8")
         evidence = (ROOT / "docs/phase4-acceptance-evidence.md").read_text(encoding="utf-8")
 
@@ -17,9 +17,9 @@ class Phase4CheckpointStateTests(unittest.TestCase):
         self.assertIn("Phase 3 acceptance run `34903338538`", evidence)
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("## Phase 5 — PASS", state)
-        self.assertIn("final-test data remains locked", state.lower())
+        self.assertIn("final-test period remains locked", state.lower())
         self.assertIn("Real-money trading: locked", state)
-        self.assertIn("## Phase 5 — PASS", state)
+        self.assertIn("## Phase 7 — ACTIVE", state)
 
 
 if __name__ == "__main__":

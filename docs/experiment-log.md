@@ -272,3 +272,35 @@ Copy this section for each serious experiment:
 - Conclusion: REJECT
 - Reason: neither frozen strategy produced a valid ML challenger under the predeclared selection protocol; `NO_ML_CHALLENGER` is the authoritative outcome for both.
 - Follow-up: retain both frozen Phase 4 rule candidates unchanged, close Phase 6 as PASS because the deterministic leakage-safe experiment completed correctly with negative evidence preserved, create `fmp-v1-phase6-models` only after verified acceptance-closure merge, keep Phase 7 UNSTARTED, and keep the final-test period locked. Detailed evidence: `docs/phase6-ml-filter-evidence.md`.
+
+### EXP-20260915-008 — Phase 7 walk-forward evaluation
+
+- Date: 2026-09-15
+- Status: PLANNED
+- Hypothesis: Either frozen Phase 4 serious rule candidate may retain positive, cost-robust expectancy through a one-shot untouched 2024 out-of-sample gate and repeated 2025-2026 forward windows without parameter retuning or ML filtering. No viability is assumed.
+- Code commit: pending guarded Phase 7 implementation; no result-producing code has been accepted yet.
+- Data manifest/version: Phase 6 checkpoint `fmp-v1-phase6-models` / `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`; accepted Phase 2 USDJPY artifact `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`; accepted USDJPY processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`.
+- Pair(s): USDJPY
+- Timeframe(s): 15m session breakout and 1h volatility breakout
+- Data range: accepted history through 2026-08-20 inclusive; Phase 7 has not opened any required 2024+ partition at protocol activation.
+- Train period: not applicable; both strategies are fixed rules and no Phase 7 refit or optimization is authorized.
+- Validation period: Stage 1 one-shot OOS gate 2024-01-01 through 2024-12-31; Stage 2, only for Stage 1 survivors, uses seven frozen forward windows from 2025-01-01 through 2026-08-20 inclusive.
+- Final-test touched?: NO
+- Strategy/model: unchanged USDJPY 15m session breakout, 5-pip buffer, 1.5x target range; unchanged USDJPY 1h volatility breakout, 2.0x range expansion, fixed 1.0R target; no ML overlay.
+- Features: existing strategy-native midpoint OHLC/reference logic only; historical BID/ASK remains the execution source of truth; Phase 5 model features are not used.
+- Parameters/search space: no search space. Candidate identities and parameters are frozen exactly; no neighboring-parameter substitution, rescue search, or candidate replacement.
+- Random seed (if relevant): not applicable; deterministic fixed-rule evaluation.
+- Spread/cost model: historical BID/ASK spread; zero commission; zero financing.
+- Slippage model: exactly 0.2, 0.5, and 1.0 pips adverse per fill; 0.2 and 0.5 are gating, 1.0 is diagnostic.
+- Risk assumptions: unchanged Phase 3 contract: 0.25% requested risk, 0.50% hard per-trade max, 1.00% simultaneous max, 1.50% UTC day-start realized-loss halt; each Phase 7 evaluation window starts at $100,000.
+- Trade count: pending execution.
+- Net return after costs: pending execution.
+- Expectancy/trade: pending execution.
+- Profit factor: pending execution.
+- Max drawdown: pending execution.
+- Key subperiod results: pending execution; the seven Stage 2 windows are frozen before access.
+- Robustness/cost sensitivity: Stage 1 requires the frozen financial gate at both 0.2 and 0.5 pips plus at least 40 baseline trades; Stage 2 requires the frozen aggregate/stability gates, with 1.0-pip results diagnostic only.
+- Result summary: protocol approved; implementation has not yet opened final-test data.
+- Conclusion: NEED_MORE_DATA
+- Reason: `EXP-20260915-008` is predeclared and awaiting guarded implementation and deliberate Stage 1 execution; no Phase 7 result exists yet.
+- Follow-up: implement and verify the guarded Phase 7 evaluator under DEC-033, preserve all existing Phase 4/5/6 2024+ locks, and do not open 2024+ data until the verified Stage 1 workflow is deliberately dispatched.

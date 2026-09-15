@@ -30,8 +30,8 @@ class Phase4TrendContinuationEvidenceStateTests(unittest.TestCase):
 
     def test_project_state_preserves_phase4_rejection_and_frozen_candidate(self):
         state = (ROOT / "docs" / "project-state.md").read_text(encoding="utf-8")
-        self.assertIn("**Current phase:** Phase 6 — Statistical / ML Filters", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("## Phase 6 — PASS", state)

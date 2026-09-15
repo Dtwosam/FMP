@@ -26,7 +26,7 @@ class MeanReversionStateTests(unittest.TestCase):
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("## Phase 6 — PASS", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("previous-day high/low rejection", state.lower())
         self.assertIn("final-test", state.lower())
         self.assertIn("Real-money trading: locked", state)
