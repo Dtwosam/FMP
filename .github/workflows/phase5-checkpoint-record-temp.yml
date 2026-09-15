@@ -1,0 +1,86 @@
+name: phase5-checkpoint-record-temp
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase5-checkpoint-record-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout checkpoint branch
+        uses: actions/checkout@v6
+        with:
+          ref: phase5-checkpoint-record
+          fetch-depth: 0
+      - name: Apply bounded checkpoint record
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one match, found {count}")
+              return text.replace(old, new, 1)
+
+          evidence_path = Path("docs/phase5-acceptance-evidence.md")
+          evidence = evidence_path.read_text(encoding="utf-8")
+          evidence = replace_once(
+              evidence,
+              "**Checkpoint:** `fmp-v1-phase5-features` — PENDING post-merge verification",
+              "**Checkpoint:** `fmp-v1-phase5-features` — CREATED at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`",
+              "evidence checkpoint",
+          )
+          evidence = replace_once(
+              evidence,
+              "Checkpoint `fmp-v1-phase5-features` remains **PENDING** until this acceptance closure is merged, the exact merged closure commit passes post-merge source-free repository tests and unchanged Phase 3 acceptance, and that verified closure commit is then used as the checkpoint target.",
+              "The acceptance closure merged at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`. Post-merge tests run `34912677109` and Phase 3 acceptance run `34912677100` both completed SUCCESS, and no Phase 1 acquisition ran. Checkpoint `fmp-v1-phase5-features` was then created at that exact verified closure commit.",
+              "evidence conclusion",
+          )
+          evidence_path.write_text(evidence, encoding="utf-8")
+
+          state_path = Path("docs/project-state.md")
+          state = state_path.read_text(encoding="utf-8")
+          state = replace_once(
+              state,
+              "**Next milestone:** Record the verified Phase 5 checkpoint; Phase 6 remains UNSTARTED and final-test data remains locked",
+              "**Next milestone:** Phase 6 design remains a separate approval gate; final-test data remains locked",
+              "state next milestone",
+          )
+          state = replace_once(
+              state,
+              "- checkpoint: `fmp-v1-phase5-features` — PENDING post-merge verification",
+              "- Phase 5 closure merge: `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`\n- post-merge tests: run `34912677109` — SUCCESS, 510 tests PASS, workflow YAML PASS, compile PASS\n- post-merge Phase 3 acceptance: run `34912677100` — SUCCESS\n- checkpoint: `fmp-v1-phase5-features` at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`",
+              "state checkpoint",
+          )
+          state = replace_once(
+              state,
+              "Phase 5 is formally PASS under DEC-030. Normal Phase 5 tooling still rejects any processed source request reaching 2024-01-01 or later before that partition is opened. The final-test period remains locked.",
+              "Phase 5 is formally PASS under DEC-030. Checkpoint `fmp-v1-phase5-features` is frozen at the verified acceptance-closure commit `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`; post-merge tests `34912677109` and Phase 3 acceptance `34912677100` completed SUCCESS. Normal Phase 5 tooling still rejects any processed source request reaching 2024-01-01 or later before that partition is opened. The final-test period remains locked.",
+              "state phase5 conclusion",
+          )
+          state_path.write_text(state, encoding="utf-8")
+          PY
+      - name: Verify bounded diff and checkpoint state
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' docs/phase5-acceptance-evidence.md docs/project-state.md | sort)"
+          test "${changed}" = "${expected}"
+          PYTHONPATH=src python -m unittest tests.test_phase5_checkpoint_state -v
+      - name: Commit durable checkpoint record
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/phase5-acceptance-evidence.md docs/project-state.md
+          git commit -m '[phase1-no-source] Record Phase 5 checkpoint state'
+          git push origin HEAD:phase5-checkpoint-record
