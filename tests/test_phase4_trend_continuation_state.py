@@ -73,19 +73,21 @@ class Phase4TrendContinuationStateTests(unittest.TestCase):
     def test_project_state_preserves_phase4_pass_and_frozen_candidate(self) -> None:
         text = read("docs/project-state.md")
         self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", text)
-        self.assertIn("**Phase status:** ACTIVE", text)
+        self.assertIn("**Phase status:** PASS", text)
         self.assertIn("## Phase 4 — PASS", text)
         self.assertIn("## Phase 5 — PASS", text)
         self.assertIn("## Phase 6 — PASS", text)
+        self.assertIn("## Phase 7 — PASS", text)
         self.assertIn("EXP-20260914-001 — Session breakout baseline", text)
         self.assertIn("USDJPY 15m, 5-pip breakout buffer, 1.5x target-range multiple", text)
         self.assertIn("EXP-20260914-002 — Trend continuation baseline", text)
         self.assertIn("experiment status: FAIL", text)
         self.assertIn("conclusion: REJECT", text)
         self.assertIn("mean reversion", text.lower())
-        self.assertIn("Final-test touched: NO", text)
+        self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", text)
         self.assertIn("Real-money trading: locked", text)
         self.assertIn("DEC-008 remains unchanged", text)
+        self.assertNotIn("## Phase 8 — ACTIVE", text)
 
 
 if __name__ == "__main__":

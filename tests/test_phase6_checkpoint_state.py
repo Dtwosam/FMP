@@ -26,13 +26,12 @@ class Phase6CheckpointStateTests(unittest.TestCase):
         self.assertIn(f"Phase 3 acceptance run `{PHASE3_RUN}`", evidence)
 
         self.assertIn("## Phase 6 — PASS", state)
-        self.assertIn("**Phase status:** ACTIVE", state)
-        self.assertIn("## Phase 7 — ACTIVE", state)
-        self.assertIn("Final-test touched: NO", state)
-        self.assertIn("final-test", state.lower())
-        self.assertIn("locked", state.lower())
+        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("## Phase 7 — PASS", state)
+        self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", state)
         self.assertIn("broker/live/demo", state.lower())
         self.assertIn("real-money trading", state.lower())
+        self.assertNotIn("## Phase 8 — ACTIVE", state)
 
 
 if __name__ == "__main__":

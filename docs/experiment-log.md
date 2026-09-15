@@ -275,31 +275,31 @@ Copy this section for each serious experiment:
 ### EXP-20260915-008 — Phase 7 walk-forward evaluation
 
 - Date: 2026-09-15
-- Status: RUNNING
-- Hypothesis: Either frozen Phase 4 serious rule candidate may retain positive, cost-robust expectancy through a one-shot untouched 2024 out-of-sample gate and repeated 2025-2026 forward windows without parameter retuning or ML filtering. No viability is assumed.
-- Code commit: `e33270de1f89757d1bf2a0d12ef40b2dc36bc110`
+- Status: PASS
+- Hypothesis: Either frozen Phase 4 serious rule candidate may retain positive, cost-robust expectancy through a one-shot untouched 2024 out-of-sample gate and repeated 2025-2026 forward windows without parameter retuning or ML filtering. No viability was assumed.
+- Code commit: Stage 1 `e33270de1f89757d1bf2a0d12ef40b2dc36bc110`; Stage 2 `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d`.
 - Data manifest/version: Phase 6 checkpoint `fmp-v1-phase6-models` / `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`; accepted Phase 2 USDJPY artifact `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`; accepted USDJPY processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`.
 - Pair(s): USDJPY
 - Timeframe(s): 15m session breakout and 1h volatility breakout
-- Data range: Stage 1 opened only bounded 2023-12 warm-up context and the scored 2024-01-01 through 2024-12-31 period. Required 2025-01-01 through 2026-08-20 Stage 2 partitions remain unopened pending exact Stage 1 PASS authorization verification.
+- Data range: Stage 1 opened bounded 2023-12 warm-up context plus scored 2024; Stage 2 for the sole survivor opened only the exact seven frozen forward windows plus each immediate seven-day warm-up, covering scored 2025-01-01 through 2026-08-20 inclusive.
 - Train period: not applicable; both strategies are fixed rules and no Phase 7 refit or optimization is authorized.
-- Validation period: Stage 1 one-shot OOS gate 2024-01-01 through 2024-12-31; Stage 2, only for the audited Stage 1 survivor, uses seven frozen forward windows from 2025-01-01 through 2026-08-20 inclusive.
-- Final-test touched?: YES — Stage 1 2024 only
+- Validation period: Stage 1 one-shot OOS gate 2024-01-01 through 2024-12-31; Stage 2 seven frozen independent forward windows 2025-Q1 through 2026-partial-Q3 for the sole Stage 1 survivor.
+- Final-test touched?: YES — Stage 1 2024 and Stage 2 2025-2026
 - Strategy/model: unchanged USDJPY 15m session breakout, 5-pip buffer, 1.5x target range; unchanged USDJPY 1h volatility breakout, 2.0x range expansion, fixed 1.0R target; no ML overlay.
 - Features: existing strategy-native midpoint OHLC/reference logic only; historical BID/ASK remains the execution source of truth; Phase 5 model features are not used.
-- Parameters/search space: no search space. Candidate identities and parameters are frozen exactly; no neighboring-parameter substitution, rescue search, or candidate replacement.
+- Parameters/search space: no search space. Candidate identities and parameters remained frozen exactly; no neighboring-parameter substitution, rescue search, candidate replacement, or post-result threshold change.
 - Random seed (if relevant): not applicable; deterministic fixed-rule evaluation.
 - Spread/cost model: historical BID/ASK spread; zero commission; zero financing.
-- Slippage model: exactly 0.2, 0.5, and 1.0 pips adverse per fill; 0.2 and 0.5 are gating, 1.0 is diagnostic.
-- Risk assumptions: unchanged Phase 3 contract: 0.25% requested risk, 0.50% hard per-trade max, 1.00% simultaneous max, 1.50% UTC day-start realized-loss halt; each Phase 7 evaluation window starts at $100,000.
-- Trade count: Stage 1 `session_breakout` 122 trades at each cost; `volatility_breakout` 103 trades at each cost.
-- Net return after costs: `session_breakout` +1.383287% / +1.102509% / +0.636234% at 0.2 / 0.5 / 1.0 pips; `volatility_breakout` -2.603768% / -3.051558% / -3.793353%.
-- Expectancy/trade: `session_breakout` +$11.3384 / +$9.0370 / +$5.2150; `volatility_breakout` -$25.2793 / -$29.6268 / -$36.8287 at 0.2 / 0.5 / 1.0 pips.
-- Profit factor: `session_breakout` 1.166401 / 1.130773 / 1.073756; `volatility_breakout` 0.720003 / 0.680125 / 0.618485 at 0.2 / 0.5 / 1.0 pips.
-- Max drawdown: `session_breakout` 1.181400% / 1.305490% / 1.527260%; `volatility_breakout` 3.102796% / 3.484070% / 4.126035% at 0.2 / 0.5 / 1.0 pips.
-- Key subperiod results: Stage 1 is the authoritative 2024 one-shot OOS result. The seven Stage 2 windows remain frozen and unopened until the exact survivor authorization is verified.
-- Robustness/cost sensitivity: `session_breakout` passes every mandatory 0.2- and 0.5-pip Stage 1 criterion with 122 baseline trades and also remains positive in the diagnostic 1.0-pip scenario. `volatility_breakout` stays within the drawdown cap and has 103 baseline trades but fails net-return, expectancy, and profit-factor gates at both mandatory costs.
-- Result summary: authoritative manual `phase7-final-gate` run `35013047267` on exact verified merged-main SHA `e33270de1f89757d1bf2a0d12ef40b2dc36bc110` completed SUCCESS with double execution and byte-identical evidence for both candidates. Independently audited Stage 1 evidence is `session_breakout` artifact `10414407590`, ZIP SHA-256 `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb`, `STAGE1_PASS`; and `volatility_breakout` artifact `10414905151`, ZIP SHA-256 `5ee8b6b96382741f454d2b72a6ae6de04e85c9eca04c17ac846c0d594fd27d24`, `STAGE1_REJECT`. Detailed audit: `docs/phase7-stage1-evidence.md`.
-- Conclusion: NEED_MORE_DATA
-- Reason: one frozen candidate, `session_breakout`, survived the predeclared Stage 1 gate and therefore requires the frozen Stage 2 evaluation before Phase 7 can close; `volatility_breakout` is rejected and cannot be rescued or retuned under this experiment.
-- Follow-up: after the audited Stage 1 evidence/state change is merged, execute Stage 2 exactly once for `session_breakout` using only artifact `10414407590` / ZIP `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb` as authorization. Keep `volatility_breakout` out of Stage 2, preserve all failed evidence, and keep Phase 8/broker/demo/live/real-money locked.
+- Slippage model: exactly 0.2, 0.5, and 1.0 pips adverse per fill; 0.2 and 0.5 are gating, 1.0 is diagnostic only.
+- Risk assumptions: unchanged Phase 3 contract: 0.25% requested risk, 0.50% hard per-trade max, 1.00% simultaneous max, 1.50% UTC day-start realized-loss halt; every Stage 1/Stage 2 evaluation window starts independently at $100,000 as specified.
+- Trade count: Stage 1 `session_breakout` 122 trades at each cost and `volatility_breakout` 103 trades at each cost. Stage 2 `session_breakout` completed 199 trades across the seven independent windows at each cost.
+- Net return after costs: Stage 1 `session_breakout` +1.383287% / +1.102509% / +0.636234% at 0.2 / 0.5 / 1.0 pips; Stage 1 `volatility_breakout` -2.603768% / -3.051558% / -3.793353%. Stage 2 `session_breakout` aggregate +0.757266% at 0.2 pips and +0.262176% at 0.5 pips; the 1.0-pip diagnostic is -0.562118%.
+- Expectancy/trade: Stage 2 `session_breakout` +$3.8054 at 0.2 pips and +$1.3175 at 0.5 pips; 1.0-pip diagnostic -$2.8247.
+- Profit factor: Stage 2 `session_breakout` 1.062731 at 0.2 pips and 1.021310 at 0.5 pips; 1.0-pip diagnostic 0.955760.
+- Max drawdown: Stage 2 maximum independent-window drawdown 1.140640% at 0.2 pips, 1.170046% at 0.5 pips, and 1.219045% in the 1.0-pip diagnostic.
+- Key subperiod results: at 0.2 pips, five of seven Stage 2 windows have positive net PnL. The two negative windows are 2025-Q1 (-0.520185%) and 2026-partial-Q3 (-0.645978%). The maximum positive-window contribution is 35.061843%, below the frozen 50% concentration ceiling.
+- Robustness/cost sensitivity: Stage 2 remains positive with PF > 1, positive expectancy, and sub-5% drawdown at both mandatory 0.2- and 0.5-pip costs. The negative 1.0-pip diagnostic is retained as material cost-sensitivity evidence and does not change the frozen outcome because DEC-033 explicitly defines it as non-gating.
+- Result summary: Stage 1 run `35013047267` produced `session_breakout` `STAGE1_PASS` artifact `10414407590` / ZIP `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb` and `volatility_breakout` `STAGE1_REJECT` artifact `10414905151` / ZIP `5ee8b6b96382741f454d2b72a6ae6de04e85c9eca04c17ac846c0d594fd27d24`. Authoritative Stage 2 run `35015277625` on exact merged-main SHA `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d` completed SUCCESS after verifying the exact Stage 1 PASS package before source I/O, re-verifying accepted Phase 2 identity, executing twice with byte-identical complete evidence, independently validating all 21 window rows, and recomputing the gate. Stage 2 artifact `10414817824` has ZIP SHA-256 `2522bbfd22979fd753fb1f51d2bb0d1ada957090102712fffbfdf59fe345bad4`; final status `PHASE7_PROMOTE_TO_SHADOW_DESIGN`. Detailed evidence: `docs/phase7-stage1-evidence.md` and `docs/phase7-walk-forward-evidence.md`.
+- Conclusion: PROMOTE
+- Reason: `session_breakout` is the sole frozen candidate to pass the one-shot Stage 1 gate and then every mandatory Stage 2 aggregate/stability criterion without retuning, refitting, rescue search, or protocol changes. `volatility_breakout` remains rejected from Stage 1. The successful mandatory costs are accompanied by a negative 1.0-pip diagnostic, which remains a deployment-cost limitation rather than a failed predeclared gate.
+- Follow-up: close Phase 7 as PASS after the acceptance evidence/state change is merged and freshly verified on `main`; create checkpoint `fmp-v1-phase7-walk-forward` at that verified closure commit. The surviving `session_breakout` is eligible for Phase 8 shadow design only. Phase 8 remains UNSTARTED, and broker/demo/live/real-money trading remain locked.

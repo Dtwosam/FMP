@@ -17,19 +17,20 @@ class Phase5FeatureProtocolStateTests(unittest.TestCase):
         self.assertIn("2024-01-01 or later", spec)
         self.assertIn("before that partition is opened", spec)
 
-    def test_project_state_preserves_phase5_checkpoint_under_phase7(self) -> None:
+    def test_project_state_preserves_phase5_checkpoint_under_phase7_closure(self) -> None:
         state = read("docs/project-state.md")
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("fmp-v1-phase4-baselines", state)
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("fmp-v1-phase5-features", state)
         self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", state)
-        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("2024-01-01 or later", state)
-        self.assertIn("## Phase 7 — ACTIVE", state)
-        self.assertIn("real-money trading remain locked", state.lower())
+        self.assertIn("## Phase 7 — PASS", state)
+        self.assertIn("real-money trading", state.lower())
         self.assertIn("DEC-008 remains unchanged", state)
+        self.assertNotIn("## Phase 8 — ACTIVE", state)
 
 
 if __name__ == "__main__":
