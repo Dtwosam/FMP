@@ -32,15 +32,17 @@ class Phase4SessionBreakoutEvidenceStateTests(unittest.TestCase):
         self.assertIn("1.5", log)
         self.assertIn("trend continuation", log.lower())
 
-    def test_project_state_keeps_phase4_active_and_later_gates_locked(self):
+    def test_project_state_preserves_phase4_candidate_and_later_gates(self):
         state = (ROOT / "docs" / "project-state.md").read_text(encoding="utf-8")
-        self.assertIn("**Current phase:** Phase 5 — Leakage-Safe Feature Engineering", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Current phase:** Phase 6 — Statistical / ML Filters", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("## Phase 4 — PASS", state)
+        self.assertIn("## Phase 5 — PASS", state)
+        self.assertIn("## Phase 6 — ACTIVE", state)
         self.assertIn("EXP-20260914-001", state)
         self.assertIn("USDJPY 15m", state)
         self.assertIn("Final-test touched: NO", state)
         self.assertIn("trend continuation", state.lower())
-        self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("Real-money trading: locked", state)
 
 

@@ -17,15 +17,17 @@ class Phase5FeatureProtocolStateTests(unittest.TestCase):
         self.assertIn("2024-01-01 or later", spec)
         self.assertIn("before that partition is opened", spec)
 
-    def test_project_state_advances_only_to_locked_phase5_feature_work(self) -> None:
+    def test_project_state_preserves_phase5_checkpoint_under_phase6(self) -> None:
         state = read("docs/project-state.md")
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("fmp-v1-phase4-baselines", state)
-        self.assertIn("**Current phase:** Phase 5 — Leakage-Safe Feature Engineering", state)
-        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("## Phase 5 — PASS", state)
+        self.assertIn("fmp-v1-phase5-features", state)
+        self.assertIn("**Current phase:** Phase 6 — Statistical / ML Filters", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("## Phase 6 — ACTIVE", state)
         self.assertIn("2024-01-01 or later", state)
-        self.assertIn("Phase 6 model fitting", state)
+        self.assertIn("Phase 7 remains UNSTARTED", state)
         self.assertIn("real-money trading remain locked", state.lower())
         self.assertIn("DEC-008 remains unchanged", state)
 

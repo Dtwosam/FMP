@@ -63,14 +63,15 @@ class Phase4ResearchStateTests(unittest.TestCase):
         self.assertIn("USDJPY 15m", section)
         self.assertIn("trend continuation", section.lower())
 
-    def test_project_state_marks_phase4_active_and_locks_later_phases(self) -> None:
+    def test_project_state_preserves_phase4_pass_and_locks_later_phases(self) -> None:
         text = read("docs/project-state.md")
-        self.assertIn("**Current phase:** Phase 5 — Leakage-Safe Feature Engineering", text)
-        self.assertIn("**Phase status:** PASS", text)
+        self.assertIn("**Current phase:** Phase 6 — Statistical / ML Filters", text)
+        self.assertIn("**Phase status:** ACTIVE", text)
         self.assertIn("## Phase 3 — PASS", text)
         self.assertIn("## Phase 4 — PASS", text)
-        self.assertIn("Final-test touched: NO", text)
         self.assertIn("## Phase 5 — PASS", text)
+        self.assertIn("## Phase 6 — ACTIVE", text)
+        self.assertIn("Final-test touched: NO", text)
         self.assertIn("Real-money trading: locked", text)
         self.assertIn("DEC-008 remains unchanged", text)
 

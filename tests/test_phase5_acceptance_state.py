@@ -11,7 +11,7 @@ class Phase5AcceptanceStateTests(unittest.TestCase):
         evidence = (ROOT / "docs/phase5-acceptance-evidence.md").read_text(encoding="utf-8")
 
         self.assertIn("## Phase 5 — PASS", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("DEC-030", state)
         self.assertEqual(
             decision.count("## DEC-030 — Phase 5 leakage-safe feature-engine acceptance review"),
@@ -32,8 +32,9 @@ class Phase5AcceptanceStateTests(unittest.TestCase):
             "`fmp-v1-phase5-features` — CREATED at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`",
             evidence,
         )
-        self.assertIn("Phase 6", state)
-        self.assertIn("UNSTARTED", state)
+        self.assertIn("## Phase 6 — ACTIVE", state)
+        self.assertIn("DEC-031", state)
+        self.assertIn("Phase 7 remains UNSTARTED", state)
         self.assertIn("final-test", state.lower())
         self.assertIn("locked", state.lower())
         self.assertIn("Real-money trading: locked", state)
