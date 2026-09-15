@@ -26,6 +26,7 @@ from fmp.strategies.contracts import SignalCandidate
 
 from .contracts import (
     EXPERIMENT_ID,
+    FEATURE_SET_VERSION,
     FINAL_START,
     FIT_SPLIT,
     FROZEN_STRATEGIES,
@@ -42,7 +43,13 @@ from .data import (
     join_directional_candidates_to_features,
     load_phase6_feature_frame,
 )
-from .estimators import FittedEstimator, fit_estimator, score_digest, score_estimator
+from .estimators import (
+    EXPERIMENT_SEED,
+    FittedEstimator,
+    fit_estimator,
+    score_digest,
+    score_estimator,
+)
 from .filtering import filter_candidates
 from .labels import LabelResult, label_candidates
 from .preprocessing import PreprocessorState, fit_preprocessor, transform_features
@@ -51,6 +58,7 @@ from .thresholds import ScoreCutoff, derive_fit_cutoffs
 
 STARTING_EQUITY_USD = 100_000.0
 REQUESTED_RISK_FRACTION = 0.0025
+EVIDENCE_CONTRACT_VERSION = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -585,6 +593,173 @@ def _dataset_digest(
     return hashlib.sha256(_canonical_json_bytes(rows)).hexdigest()
 
 
+def _sha256_evidence(value: object) -> str:
+    return hashlib.sha256(_canonical_json_bytes(value)).hexdigest()
+
+
+def _candidate_records(candidates: Sequence[SignalCandidate]) -> list[dict[str, object]]:
+    return [
+        {
+            "candidate_id": candidate.candidate_id,
+            "symbol": candidate.symbol,
+            "observation_bar_timestamp_utc": candidate.observation_bar_timestamp_utc,
+            "signal_known_timestamp_utc": candidate.signal_known_timestamp_utc,
+            "direction": candidate.direction.value,
+            "stop_price": candidate.stop_price,
+            "target_price": candidate.target_price,
+            "latest_exit_timestamp_utc": candidate.latest_exit_timestamp_utc,
+            "reason_code": candidate.reason_code,
+            "metadata": dict(candidate.metadata),
+        }
+        for candidate in sorted(candidates, key=lambda item: item.candidate_id)
+    ]
+
+
+def _label_records(labels: Sequence[LabelResult]) -> list[dict[str, object]]:
+    return [
+        {
+            "candidate_id": label.candidate_id,
+            "label": label.label,
+            "reason_code": label.reason_code,
+            "resolved_timestamp_utc": label.resolved_timestamp_utc,
+        }
+        for label in sorted(labels, key=lambda item: item.candidate_id)
+    ]
+
+
+def _timestamp_range(values: Sequence[datetime]) -> dict[str, object] | None:
+    ordered = tuple(sorted(values))
+    if not ordered:
+        return None
+    return {"min": ordered[0], "max": ordered[-1]}
+
+
+def _input_null_counts(frame: pl.DataFrame) -> list[int]:
+    counts: list[int] = []
+    for name in MODEL_INPUT_COLUMNS:
+        count = 0
+        for value in frame[name].to_list():
+            if value is None:
+                count += 1
+            elif isinstance(value, (float, np.floating)) and not math.isfinite(float(value)):
+                count += 1
+        counts.append(count)
+    return counts
+
+
+def _transform_evidence(frame: pl.DataFrame, matrix: np.ndarray) -> dict[str, object]:
+    values = np.asarray(matrix, dtype=np.float64)
+    if values.ndim != 2 or values.shape != (frame.height, len(MODEL_INPUT_COLUMNS)):
+        raise ValueError("Phase 6 transformed matrix evidence shape mismatch")
+    after = np.sum(~np.isfinite(values), axis=0).astype(np.int64).tolist()
+    if any(after):
+        raise ValueError("Phase 6 transformed matrix evidence contains non-finite values")
+    return {
+        "row_count": int(values.shape[0]),
+        "column_count": int(values.shape[1]),
+        "input_columns": list(MODEL_INPUT_COLUMNS),
+        "null_counts_before": _input_null_counts(frame),
+        "null_counts_after": [int(value) for value in after],
+        "matrix_digest": _sha256_evidence(
+            {"shape": list(values.shape), "values": values.tolist()}
+        ),
+    }
+
+
+def _split_evidence(dataset: Mapping[str, object]) -> dict[str, object]:
+    split = dataset.get("split")
+    candidates = dataset.get("candidates")
+    labels = dataset.get("labels")
+    model_frame = dataset.get("model_frame")
+    feature_frame = dataset.get("feature_frame")
+    opened_artifacts = dataset.get("opened_artifacts")
+    if not isinstance(split, Phase6Split):
+        raise TypeError("invalid Phase 6 evidence split")
+    if not isinstance(candidates, tuple) or not isinstance(labels, tuple):
+        raise TypeError("invalid Phase 6 evidence candidate/label rows")
+    if not isinstance(model_frame, pl.DataFrame) or not isinstance(feature_frame, pl.DataFrame):
+        raise TypeError("invalid Phase 6 evidence feature/join frame")
+    if not isinstance(opened_artifacts, tuple):
+        raise TypeError("invalid Phase 6 opened feature artifacts")
+
+    typed_candidates = tuple(
+        item for item in candidates if isinstance(item, SignalCandidate)
+    )
+    typed_labels = tuple(item for item in labels if isinstance(item, LabelResult))
+    if len(typed_candidates) != len(candidates) or len(typed_labels) != len(labels):
+        raise TypeError("invalid Phase 6 evidence candidate/label type")
+    labeled = tuple(item for item in typed_labels if item.label is not None)
+    unlabeled_counts: dict[str, int] = {}
+    for item in typed_labels:
+        if item.label is None:
+            unlabeled_counts[item.reason_code] = unlabeled_counts.get(item.reason_code, 0) + 1
+    resolved = tuple(
+        item.resolved_timestamp_utc
+        for item in labeled
+        if item.resolved_timestamp_utc is not None
+    )
+    availability = tuple(
+        value
+        for value in feature_frame["available_at_utc"].to_list()
+        if isinstance(value, datetime)
+    )
+    positive_count = sum(int(item.label) for item in labeled)
+    label_prevalence = float(positive_count / len(labeled)) if labeled else None
+    boundary = _utc_start(FINAL_START)
+    opened_pre_2024 = all("/2024/" not in str(path).replace("\\", "/") for path in opened_artifacts)
+    timestamps_pre_2024 = all(value < boundary for value in (*availability, *resolved))
+
+    return {
+        "split": {
+            "name": split.name,
+            "start": split.start.isoformat(),
+            "end_exclusive": split.end_exclusive.isoformat(),
+        },
+        "candidate_row_count": len(typed_candidates),
+        "candidate_digest": _sha256_evidence(_candidate_records(typed_candidates)),
+        "labeled_row_count": len(labeled),
+        "labeled_digest": _sha256_evidence(_label_records(labeled)),
+        "unlabelable_counts_by_reason": dict(sorted(unlabeled_counts.items())),
+        "feature_row_count": feature_frame.height,
+        "joined_row_count": model_frame.height,
+        "joined_digest": _sha256_evidence(model_frame.to_dicts()),
+        "input_columns": list(MODEL_INPUT_COLUMNS),
+        "label_prevalence": label_prevalence,
+        "feature_availability_range": _timestamp_range(availability),
+        "label_resolution_range": _timestamp_range(resolved),
+        "feature_manifest_sha256": dataset["feature_manifest_sha256"],
+        "processed_manifest_sha256": dataset["processed_manifest_sha256"],
+        "phase5_checkpoint_sha": dataset["phase5_checkpoint_sha"],
+        "phase5_code_commit": dataset["phase5_code_commit"],
+        "opened_feature_artifacts": list(opened_artifacts),
+        "opened_coverage_pre_2024": bool(opened_pre_2024 and timestamps_pre_2024),
+    }
+
+
+def _strategy_evidence(strategy_id: str) -> dict[str, object]:
+    strategy = FROZEN_STRATEGIES[strategy_id]
+    return {
+        "family": strategy.family,
+        "symbol": strategy.symbol,
+        "timeframe": strategy.timeframe,
+        "parameters": dict(strategy.parameters),
+    }
+
+
+def _retention_evidence(
+    *,
+    candidate_count: int,
+    retained_count: int,
+) -> dict[str, object]:
+    if candidate_count <= 0 or retained_count < 0 or retained_count > candidate_count:
+        raise ValueError("Phase 6 retention evidence counts are invalid")
+    return {
+        "candidate_count": candidate_count,
+        "retained_count": retained_count,
+        "retained_rate": float(retained_count / candidate_count),
+    }
+
+
 def _load_split_dataset(
     *,
     dataset_root: Path,
@@ -633,6 +808,7 @@ def _load_split_dataset(
         "candidates": tuple(candidates),
         "labels": tuple(labels),
         "label_by_id": label_by_id,
+        "feature_frame": loaded_features.frame,
         "model_frame": model_frame,
         "feature_manifest_sha256": loaded_features.feature_manifest_sha256,
         "processed_manifest_sha256": loaded_features.processed_manifest_sha256,
@@ -776,6 +952,18 @@ def run_phase6_strategy_cell(
         model_evidence[family.value] = {
             "preprocessing": _serialize_preprocessor(state),
             "model_config": _model_config(fitted),
+            "random_seed": EXPERIMENT_SEED,
+            "fit_row_count": len(fit_ids),
+            "fit_status": {
+                "status": "FIT_OK",
+                "fit_count": 1,
+                "fit_split": FIT_SPLIT.name,
+                "refit_after_selection": False,
+            },
+            "transforms": {
+                "fit": _transform_evidence(fit_features, X_fit),
+                "selection": _transform_evidence(selection_features, X_selection),
+            },
             "fit_score_digest": score_digest(fit_ids, fit_scores),
             "selection_score_digest": score_digest(selection_ids, selection_scores),
             "cutoffs": [_serialize_cutoff(cutoff) for cutoff in cutoffs],
@@ -823,6 +1011,10 @@ def run_phase6_strategy_cell(
                 slippage_pips=0.2,
             )
             gate = selection_gate(filtered, selection_baseline)
+            retained_count = sum(
+                candidate.direction in {Direction.LONG, Direction.SHORT}
+                for candidate in filtered_candidates
+            )
             internal = {
                 "model_family": family.value,
                 "retained_fraction": cutoff.retained_fraction,
@@ -837,6 +1029,10 @@ def run_phase6_strategy_cell(
                     "model_family": family.value,
                     "retained_fraction": cutoff.retained_fraction,
                     "cutoff": _serialize_cutoff(cutoff),
+                    "retention": _retention_evidence(
+                        candidate_count=len(selection_ids),
+                        retained_count=retained_count,
+                    ),
                     "filtered": _serialize_financial(filtered),
                     "baseline": _serialize_financial(selection_baseline),
                     "gate": _serialize_gate(gate),
@@ -856,8 +1052,11 @@ def run_phase6_strategy_cell(
 
     selection_artifact: dict[str, object] = {
         "experiment_id": EXPERIMENT_ID,
+        "evidence_contract_version": EVIDENCE_CONTRACT_VERSION,
         "strategy_id": strategy_id,
+        "strategy": _strategy_evidence(strategy_id),
         "code_commit": code_commit,
+        "feature_set_version": FEATURE_SET_VERSION,
         "phase5_checkpoint_sha": PHASE5_CHECKPOINT_SHA,
         "processed_manifest_sha256": USDJPY_PROCESSED_MANIFEST_SHA256,
         "fit_split": {
@@ -867,6 +1066,10 @@ def run_phase6_strategy_cell(
         "selection_split": {
             "start": SELECTION_SPLIT.start.isoformat(),
             "end_exclusive": SELECTION_SPLIT.end_exclusive.isoformat(),
+        },
+        "datasets": {
+            "fit": _split_evidence(fit),
+            "selection": _split_evidence(selection),
         },
         "fit_dataset_digest": _dataset_digest(fit["model_frame"], fit_label_by_id),
         "fit_feature_manifest_sha256": fit["feature_manifest_sha256"],
@@ -933,6 +1136,10 @@ def run_phase6_strategy_cell(
         selected_cutoff,
         selected_family.value,
     )
+    validation_retained_count = sum(
+        candidate.direction in {Direction.LONG, Direction.SHORT}
+        for candidate in filtered_validation
+    )
 
     baselines: dict[str, FinancialResult] = {}
     filtered_results: dict[str, FinancialResult] = {}
@@ -964,9 +1171,15 @@ def run_phase6_strategy_cell(
     validation_artifact = {
         "status": "PROMOTE_ML_FILTER" if gate.passed else "REJECT_ML_FILTER",
         "validation_loaded": True,
+        "dataset": _split_evidence(validation),
         "model_family": selected_family.value,
         "retained_fraction": selected_cutoff.retained_fraction,
         "cutoff": _serialize_cutoff(selected_cutoff),
+        "transformation": _transform_evidence(validation_features, X_validation),
+        "retention": _retention_evidence(
+            candidate_count=len(validation_ids),
+            retained_count=validation_retained_count,
+        ),
         "score_digest": score_digest(validation_ids, validation_scores),
         "diagnostics": _diagnostics_for_labeled(
             dataset=validation,
