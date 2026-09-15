@@ -90,6 +90,7 @@ class LiveBarBuilder:
     __slots__ = (
         "_current_minute",
         "_minute_bars",
+        "_completed_minutes",
         "_stale_intervals",
         "_last_time",
         "_closed_fifteen",
@@ -98,6 +99,7 @@ class LiveBarBuilder:
     def __init__(self) -> None:
         self._current_minute: _MinuteAccumulator | None = None
         self._minute_bars: dict[datetime, QuoteBar] = {}
+        self._completed_minutes: list[QuoteBar] = []
         self._stale_intervals: list[tuple[datetime, datetime]] = []
         self._last_time: datetime | None = None
         self._closed_fifteen: set[datetime] = set()
@@ -122,6 +124,11 @@ class LiveBarBuilder:
     def on_time_advance(self, timestamp_utc: datetime) -> tuple[QuoteBar, ...]:
         return self._advance(timestamp_utc)
 
+    def drain_completed_minute_bars(self) -> tuple[QuoteBar, ...]:
+        completed = tuple(self._completed_minutes)
+        self._completed_minutes.clear()
+        return completed
+
     def mark_stale_interval(self, start_utc: datetime, end_utc: datetime) -> None:
         _require_utc(start_utc, field="start_utc")
         _require_utc(end_utc, field="end_utc")
@@ -145,6 +152,11 @@ class LiveBarBuilder:
         ]
         for label in stale_minutes:
             del self._minute_bars[label]
+        self._completed_minutes = [
+            item
+            for item in self._completed_minutes
+            if not self._minute_is_stale(item.timestamp_utc)
+        ]
 
     def _advance(self, timestamp_utc: datetime) -> tuple[QuoteBar, ...]:
         _require_utc(timestamp_utc, field="timestamp_utc")
@@ -164,7 +176,9 @@ class LiveBarBuilder:
             return
         label = current.timestamp_utc
         if not self._minute_is_stale(label):
-            self._minute_bars[label] = current.to_bar()
+            completed = current.to_bar()
+            self._minute_bars[label] = completed
+            self._completed_minutes.append(completed)
         self._current_minute = None
 
     def _minute_is_stale(self, label: datetime) -> bool:
