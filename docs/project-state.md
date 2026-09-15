@@ -3,9 +3,9 @@
 **Updated:** 2026-09-15
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
-**Current phase:** Phase 7 — Walk-forward Evaluation
-**Phase status:** PASS
-**Next milestone:** preserve the verified Phase 7 closure and create checkpoint `fmp-v1-phase7-walk-forward`; Phase 8 shadow design remains UNSTARTED pending its own explicit design/implementation work
+**Current phase:** Phase 8 — Live shadow mode
+**Phase status:** ACTIVE
+**Next milestone:** implement the activated DEC-036 shadow-only runtime, qualify the fixed OANDA Practice pricing stream, and register/collect `EXP-20260915-009`; Phase 9 remains locked
 
 ## Current baseline
 
@@ -17,6 +17,9 @@
 - Historical source: Dukascopy daily M1 BID/ASK `.bi5`
 - Persistent immutable raw snapshot: Supabase private bucket `fmp-raw`
 - Frozen Phase 1 plan SHA-256: `2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6`
+- Phase 7 checkpoint: `fmp-v1-phase7-walk-forward` at `b6fb0176555b071fef6d1070edf3407b03cd60c9`
+- Demo trading: locked
+- Live order placement / broker mutation: locked
 - Real-money trading: locked
 
 ## Phase 0 — PASS
@@ -313,4 +316,26 @@ DEC-033 freezes the approved Phase 7 protocol for `EXP-20260915-008`; DEC-034 re
 
 The independently audited Stage 1 evidence is recorded in `docs/phase7-stage1-evidence.md`; complete Stage 2 acceptance evidence is recorded in `docs/phase7-walk-forward-evidence.md`. `session_breakout` passed every frozen Stage 1 and Stage 2 mandatory gate. The negative 1.0-pip diagnostic remains evidence and does not alter the predeclared decision because DEC-033 defines it as diagnostic only. `volatility_breakout` remains rejected at Stage 1. No retuning, rescue search, alternate candidate, new pair/timeframe, ML overlay, or post-result threshold change is authorized.
 
-Phase 7 is formally PASS. The surviving `session_breakout` rule is eligible for Phase 8 shadow design only. Phase 8 remains UNSTARTED and no shadow implementation is authorized by this closure. Broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged.
+Phase 7 is formally PASS and checkpoint `fmp-v1-phase7-walk-forward` is frozen at `b6fb0176555b071fef6d1070edf3407b03cd60c9`. DEC-036 separately activates Phase 8 shadow-only implementation for the unchanged surviving `session_breakout` rule. Broker mutation, demo order placement, production/live order placement, and real-money trading remain locked; DEC-008 remains unchanged.
+
+
+## Phase 8 — ACTIVE
+
+DEC-036 freezes and activates the approved Phase 8 live-shadow protocol; `EXP-20260915-009` is RUNNING.
+
+- prerequisite checkpoint: `fmp-v1-phase7-walk-forward` at `b6fb0176555b071fef6d1070edf3407b03cd60c9` — VERIFIED
+- approved design: `docs/superpowers/specs/2026-09-15-phase8-shadow-design.md`
+- implementation plan: `docs/superpowers/plans/2026-09-15-phase8-live-shadow.md`
+- sole strategy: USDJPY 15m `session_breakout`, 5-pip buffer, 1.5x target range, exact existing London-session/DST semantics, exact 16:00 `Europe/London` flat rule
+- ML overlay: none
+- selected live quote role: OANDA v20 fxTrade Practice pricing stream, fixed GET-only `stream-fxpractice.oanda.com` / `USD_JPY` boundary
+- slippage scenarios: 0.2 and 0.5 pips gating; 1.0 pip diagnostic only
+- Phase 3 risk policy: unchanged; independent $100,000 virtual account per cost scenario
+- stale timeout: 15 seconds; entry and scheduled-exit quote deadlines: 5 seconds
+- runtime implementation: authorized under DEC-036 but not yet accepted
+- live campaign: not yet accepted; must be explicitly operator-started and satisfy all frozen minimum evidence and acceptance gates
+- Phase 9/demo order placement: LOCKED
+- production/live order placement and broker mutation: LOCKED
+- real-money trading: LOCKED
+
+Phase 8 is not PASS because the design is activated or because code exists. PASS requires connector qualification, verified structural no-order implementation, deterministic replay, and a completed live-shadow campaign satisfying every frozen DEC-036 acceptance gate. `PHASE8_NEED_MORE_DATA` remains non-terminal.

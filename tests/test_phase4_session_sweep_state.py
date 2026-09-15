@@ -34,7 +34,7 @@ class SessionSweepStateTests(unittest.TestCase):
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("## Phase 7 — PASS", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("experiment status: FAIL", state)
         self.assertIn("DEC-027 APPROVED", state)
         self.assertIn("All six planned baseline families have complete benchmark evidence and experiment-log entries", state)
@@ -42,7 +42,7 @@ class SessionSweepStateTests(unittest.TestCase):
         self.assertIn("USDJPY 1h / 2.0x", state)
         self.assertIn("final-test", state.lower())
         self.assertIn("Real-money trading: locked", state)
-        self.assertNotIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE", state)
 
 
 if __name__ == "__main__":

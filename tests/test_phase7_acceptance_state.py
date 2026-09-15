@@ -3,10 +3,12 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PHASE7_TAG = "fmp-v1-phase7-walk-forward"
+PHASE7_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
 
 
 class Phase7AcceptanceStateTests(unittest.TestCase):
-    def test_phase7_pass_and_shadow_design_eligibility_are_recorded_exactly(self) -> None:
+    def test_phase7_pass_remains_recorded_after_phase8_activation(self) -> None:
         evidence = (ROOT / "docs/phase7-walk-forward-evidence.md").read_text(encoding="utf-8")
         decision = (ROOT / "docs/decision-log.md").read_text(encoding="utf-8")
         experiments = (ROOT / "docs/experiment-log.md").read_text(encoding="utf-8")
@@ -35,12 +37,16 @@ class Phase7AcceptanceStateTests(unittest.TestCase):
         self.assertIn("- Conclusion: PROMOTE", experiments)
         self.assertIn("35015277625", experiments)
 
-        self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("## Phase 7 — PASS", state)
         self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", state)
         self.assertIn("Stage 2 outcome: `PHASE7_PROMOTE_TO_SHADOW_DESIGN`", state)
-        self.assertIn("Phase 8 remains UNSTARTED", state)
-        self.assertNotIn("## Phase 8 — ACTIVE", state)
+        self.assertIn(PHASE7_TAG, state)
+        self.assertIn(PHASE7_SHA, state)
+        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("Phase 9/demo order placement: LOCKED", state)
+        self.assertIn("real-money trading: LOCKED", state)
 
 
 if __name__ == "__main__":

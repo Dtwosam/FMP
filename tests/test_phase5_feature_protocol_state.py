@@ -2,6 +2,10 @@ import unittest
 from pathlib import Path
 
 
+PHASE7_TAG = "fmp-v1-phase7-walk-forward"
+PHASE7_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
+
+
 def read(path: str) -> str:
     return Path(path).read_text(encoding="utf-8")
 
@@ -17,20 +21,23 @@ class Phase5FeatureProtocolStateTests(unittest.TestCase):
         self.assertIn("2024-01-01 or later", spec)
         self.assertIn("before that partition is opened", spec)
 
-    def test_project_state_preserves_phase5_checkpoint_under_phase7_closure(self) -> None:
+    def test_project_state_preserves_phase5_checkpoint_under_phase8_activation(self) -> None:
         state = read("docs/project-state.md")
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("fmp-v1-phase4-baselines", state)
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("fmp-v1-phase5-features", state)
-        self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", state)
-        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("2024-01-01 or later", state)
         self.assertIn("## Phase 7 — PASS", state)
+        self.assertIn(PHASE7_TAG, state)
+        self.assertIn(PHASE7_SHA, state)
+        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE", state)
         self.assertIn("real-money trading", state.lower())
         self.assertIn("DEC-008 remains unchanged", state)
-        self.assertNotIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("Phase 9/demo order placement: LOCKED", state)
 
 
 if __name__ == "__main__":
