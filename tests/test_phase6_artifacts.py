@@ -9,31 +9,119 @@ from pathlib import Path
 from fmp.models.contracts import (
     EXPERIMENT_ID,
     FEATURE_SET_VERSION,
+    FROZEN_STRATEGIES,
     PHASE5_CHECKPOINT_SHA,
     USDJPY_PROCESSED_MANIFEST_SHA256,
 )
+from fmp.models.data import MODEL_INPUT_COLUMNS
+from fmp.models.estimators import EXPERIMENT_SEED
+
+
+def _dataset_fixture(name: str, start: str, end_exclusive: str, digest: str) -> dict[str, object]:
+    return {
+        "split": {"name": name, "start": start, "end_exclusive": end_exclusive},
+        "candidate_row_count": 40,
+        "candidate_digest": digest * 64,
+        "labeled_row_count": 40,
+        "labeled_digest": digest * 64,
+        "unlabelable_counts_by_reason": {},
+        "feature_row_count": 40,
+        "joined_row_count": 40,
+        "joined_digest": digest * 64,
+        "input_columns": list(MODEL_INPUT_COLUMNS),
+        "label_prevalence": 0.5,
+        "feature_availability_range": None,
+        "label_resolution_range": None,
+        "feature_manifest_sha256": f"feature-{name}",
+        "processed_manifest_sha256": USDJPY_PROCESSED_MANIFEST_SHA256,
+        "phase5_checkpoint_sha": PHASE5_CHECKPOINT_SHA,
+        "phase5_code_commit": "phase5",
+        "opened_feature_artifacts": [],
+        "opened_coverage_pre_2024": True,
+    }
+
+
+def _transform_fixture(digest: str) -> dict[str, object]:
+    return {
+        "row_count": 40,
+        "column_count": len(MODEL_INPUT_COLUMNS),
+        "input_columns": list(MODEL_INPUT_COLUMNS),
+        "null_counts_before": [0] * len(MODEL_INPUT_COLUMNS),
+        "null_counts_after": [0] * len(MODEL_INPUT_COLUMNS),
+        "matrix_digest": digest * 64,
+    }
+
+
+def _model_fixture(digest: str) -> dict[str, object]:
+    return {
+        "preprocessing": {"input_columns": list(MODEL_INPUT_COLUMNS)},
+        "model_config": {},
+        "random_seed": EXPERIMENT_SEED,
+        "fit_row_count": 40,
+        "fit_status": {
+            "status": "FIT_OK",
+            "fit_count": 1,
+            "fit_split": "fit",
+            "refit_after_selection": False,
+        },
+        "transforms": {
+            "fit": _transform_fixture(digest),
+            "selection": _transform_fixture(digest),
+        },
+        "fit_score_digest": digest * 64,
+        "selection_score_digest": digest * 64,
+        "cutoffs": [],
+        "fit_diagnostics": {},
+        "selection_diagnostics": {},
+    }
 
 
 def result_fixture() -> dict[str, object]:
+    strategy = FROZEN_STRATEGIES["session_breakout"]
+    retention = {
+        "candidate_count": 40,
+        "retained_count": 30,
+        "retained_rate": 0.75,
+    }
+    variants = [
+        {
+            "model_family": family,
+            "retained_fraction": fraction,
+            "retention": dict(retention),
+        }
+        for family in ("logistic_regression", "hist_gradient_boosting")
+        for fraction in (0.75, 0.50, 0.25)
+    ]
     return {
         "experiment_id": EXPERIMENT_ID,
         "strategy_id": "session_breakout",
         "code_commit": "abc123",
         "selection": {
             "experiment_id": EXPERIMENT_ID,
+            "evidence_contract_version": 1,
             "strategy_id": "session_breakout",
+            "strategy": {
+                "family": strategy.family,
+                "symbol": strategy.symbol,
+                "timeframe": strategy.timeframe,
+                "parameters": dict(strategy.parameters),
+            },
             "code_commit": "abc123",
             "feature_set_version": FEATURE_SET_VERSION,
             "phase5_checkpoint_sha": PHASE5_CHECKPOINT_SHA,
             "processed_manifest_sha256": USDJPY_PROCESSED_MANIFEST_SHA256,
             "fit_split": {"start": "2015-01-01", "end_exclusive": "2019-01-01"},
             "selection_split": {"start": "2019-01-01", "end_exclusive": "2021-01-01"},
+            "datasets": {
+                "fit": _dataset_fixture("fit", "2015-01-01", "2019-01-01", "a"),
+                "selection": _dataset_fixture("selection", "2019-01-01", "2021-01-01", "b"),
+            },
             "fit_dataset_digest": "a" * 64,
             "models": {
-                "logistic_regression": {"fit_score_digest": "b" * 64},
-                "hist_gradient_boosting": {"fit_score_digest": "c" * 64},
+                "logistic_regression": _model_fixture("c"),
+                "hist_gradient_boosting": _model_fixture("d"),
             },
-            "variants": [],
+            "variants": variants,
             "selected_variant": "NO_ML_CHALLENGER",
         },
         "validation": {
