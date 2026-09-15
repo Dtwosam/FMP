@@ -25,15 +25,16 @@ class Phase8ProtocolStateTests(unittest.TestCase):
         self.assertIn("- Status: RUNNING", experiment_log)
         self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
         self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn(EXPECTED_EXPERIMENT, state)
         self.assertIn(EXPECTED_PHASE7_TAG, state)
         self.assertIn(EXPECTED_PHASE7_SHA, state)
         self.assertIn(PRACTICE_STREAM_HOST, sources)
         self.assertIn("2026-09-15", sources)
         self.assertIn("**Status:** APPROVED / ACTIVATED", design)
         self.assertIn("DEC-008", decision_log)
+        self.assertIn("Phase 9/demo order placement: LOCKED", state)
+        self.assertIn("production/live order placement and broker mutation: LOCKED", state)
         self.assertIn("Real-money trading: locked", state)
-        self.assertIn("demo", state.lower())
-        self.assertIn("locked", state.lower())
 
 
 if __name__ == "__main__":
