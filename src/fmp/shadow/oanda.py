@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import http.client
+import json
 import re
 from collections.abc import Iterator
 
@@ -19,6 +20,18 @@ _STREAM_QUERY = (
 
 class OandaPracticeStreamError(RuntimeError):
     """Fail-closed public error for the fixed Practice pricing stream."""
+
+
+def parse_provider_line(line: bytes) -> dict[str, object]:
+    try:
+        value = json.loads(line)
+    except (UnicodeDecodeError, json.JSONDecodeError, TypeError):
+        raise OandaPracticeStreamError(
+            "OANDA Practice stream message is invalid"
+        ) from None
+    if not isinstance(value, dict):
+        raise OandaPracticeStreamError("OANDA Practice stream message is invalid")
+    return value
 
 
 class OandaPracticePricingStream:
@@ -84,4 +97,8 @@ class OandaPracticePricingStream:
                     pass
 
 
-__all__ = ["OandaPracticePricingStream", "OandaPracticeStreamError"]
+__all__ = [
+    "OandaPracticePricingStream",
+    "OandaPracticeStreamError",
+    "parse_provider_line",
+]
