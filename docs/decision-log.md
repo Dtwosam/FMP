@@ -40,6 +40,7 @@ Active decision index:
 - DEC-032 — Phase 6 statistical / ML filter experiment outcome and acceptance review — APPROVED
 - DEC-033 — Phase 7 walk-forward evaluation protocol — APPROVED
 - DEC-034 — Phase 7 Stage 1 final-gate outcome — APPROVED
+- DEC-035 — Phase 7 walk-forward outcome and acceptance review — APPROVED
 
 ## DEC-014 — Phase 1 frozen snapshot accepted
 
@@ -439,3 +440,20 @@ For USDJPY 1h `volatility_breakout`, the authoritative artifact is `10414905151`
 Stage 2 is authorized only for `session_breakout`. Authorization is bound to candidate `session_breakout`, Stage 1 artifact `10414407590`, ZIP SHA-256 `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb`, code SHA `e33270de1f89757d1bf2a0d12ef40b2dc36bc110`, and the exact upstream identities above. The manual Stage 2 workflow must verify this package before opening any required 2025/2026 source partition. `volatility_breakout` is rejected for Stage 2 under `EXP-20260915-008`; no retuning, parameter substitution, rescue search, alternative candidate, or post-result threshold change is authorized.
 
 Consequences: `EXP-20260915-008` remains RUNNING and Phase 7 remains ACTIVE for the frozen seven-window Stage 2 evaluation of the sole survivor. Phase 8 remains UNSTARTED. Broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged. Detailed audited evidence is in `docs/phase7-stage1-evidence.md`.
+
+## DEC-035 — Phase 7 walk-forward outcome and acceptance review
+
+**Date:** 2026-09-15
+**Status:** APPROVED
+
+Authoritative manual `phase7-walk-forward` run `35015277625` executed on exact merged-main SHA `a1f8a0466463c79fdbceb9d6ebad9e3ea809474d` for the sole Stage 1 survivor, USDJPY 15m `session_breakout` with the unchanged 5-pip buffer and 1.5x target-range multiple. Before any required 2025/2026 source I/O, the workflow downloaded and verified Stage 1 PASS artifact `10414407590`, ZIP SHA-256 `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb`, then re-verified the accepted Phase 2 USDJPY artifact `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`, processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`, and Phase 6 checkpoint `fmp-v1-phase6-models` at `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`.
+
+The Stage 2 workflow executed the complete seven-window evaluation twice, compared the complete file sets and every evidence byte, independently reconstructed all seven frozen scored/warm-up ranges and exact partition keys, and recomputed the aggregate gate from all 21 window rows before upload. The authoritative artifact is `10414817824`, ZIP SHA-256 `2522bbfd22979fd753fb1f51d2bb0d1ada957090102712fffbfdf59fe345bad4`; constituent `result.json` SHA-256 is `ce7ef3f732bf2da7cd9c0df5e5d695dcdadd63e309c9428a6f572801fcb197b7` and `windows.json` SHA-256 is `66a1d35b12b68a0762dd98cd6838a2befcaf57ef9ae43bce181241fe4d23a4f0`.
+
+At the mandatory 0.2-pip cost, the seven independent windows aggregate to +0.757266% net return, +$3.8054 expectancy/trade, PF 1.062731, 199 completed trades, and 1.140640% maximum independent-window drawdown. Five of seven windows have positive net PnL and the largest positive window contributes 35.061843% of total positive-window PnL, satisfying both stability gates. At the mandatory 0.5-pip cost, aggregate net return is +0.262176%, expectancy is +$1.3175/trade, PF is 1.021310, and maximum independent-window drawdown is 1.170046%. Every frozen mandatory Stage 2 criterion is true.
+
+The 1.0-pip diagnostic is negative: -0.562118% aggregate net return, -$2.8247 expectancy/trade, PF 0.955760, and 1.219045% maximum independent-window drawdown. This cost-sensitivity result is preserved as evidence and cannot be ignored, but DEC-033 explicitly defines the 1.0-pip scenario as diagnostic rather than gating. It therefore does not reverse a pass at both mandatory costs and was not used to retune the rule or alter any threshold after observation.
+
+No strategy parameter, pair, timeframe, model, feature, risk setting, cost rule, forward boundary, warm-up rule, gate, or execution semantic changed after either Stage 1 or Stage 2 observation. `volatility_breakout` remains rejected from Stage 1 and was not opened in Stage 2. The audited final result is `PHASE7_PROMOTE_TO_SHADOW_DESIGN`.
+
+Consequences: `EXP-20260915-008` is PASS / PROMOTE and Phase 7 is formally PASS. The unchanged USDJPY 15m `session_breakout` rule is eligible for Phase 8 shadow design only. Phase 8 remains UNSTARTED; no shadow implementation, broker integration, demo trading, live trading, order placement, or real-money trading is authorized by this decision. Checkpoint `fmp-v1-phase7-walk-forward` is to be created only at the verified merged acceptance-closure commit after fresh source-free merged-main tests and unchanged Phase 3 acceptance succeed. DEC-008 remains unchanged. Detailed evidence is in `docs/phase7-walk-forward-evidence.md`.
