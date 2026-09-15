@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 5 — Leakage-Safe Feature Engineering
 **Phase status:** PASS
-**Next milestone:** Record the verified Phase 5 checkpoint; Phase 6 remains UNSTARTED and final-test data remains locked
+**Next milestone:** Phase 6 design remains a separate approval gate; final-test data remains locked
 
 ## Current baseline
 
@@ -249,9 +249,12 @@ DEC-029 freezes the leakage-safe `fmp-feature-v1` protocol; DEC-030 records the 
 - source coverage: 2015-01-01 through 2023-12-31 only
 - feature schema: `fmp-feature-v1`, 55 columns = 7 identity + 48 feature values
 - Final-test touched: NO
-- checkpoint: `fmp-v1-phase5-features` — PENDING post-merge verification
+- Phase 5 closure merge: `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`
+- post-merge tests: run `34912677109` — SUCCESS, 510 tests PASS, workflow YAML PASS, compile PASS
+- post-merge Phase 3 acceptance: run `34912677100` — SUCCESS
+- checkpoint: `fmp-v1-phase5-features` at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`
 
-Phase 5 is formally PASS under DEC-030. Normal Phase 5 tooling still rejects any processed source request reaching 2024-01-01 or later before that partition is opened. The final-test period remains locked.
+Phase 5 is formally PASS under DEC-030. Checkpoint `fmp-v1-phase5-features` is frozen at the verified acceptance-closure commit `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`; post-merge tests `34912677109` and Phase 3 acceptance `34912677100` completed SUCCESS. Normal Phase 5 tooling still rejects any processed source request reaching 2024-01-01 or later before that partition is opened. The final-test period remains locked.
 
 ## Phase 6 — UNSTARTED
 

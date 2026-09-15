@@ -3,7 +3,7 @@
 **Review date:** 2026-09-15
 **Result:** PASS
 **Decision:** DEC-030 — APPROVED
-**Checkpoint:** `fmp-v1-phase5-features` — PENDING post-merge verification
+**Checkpoint:** `fmp-v1-phase5-features` — CREATED at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`
 **Final-test touched?: NO**
 
 ## Acceptance gate
@@ -130,6 +130,6 @@ The two frozen Phase 4 serious research candidates remain unchanged.
 
 Phase 5 satisfies DEC-029 and the approved build-order acceptance gate and is ready to close as **PASS**.
 
-Checkpoint `fmp-v1-phase5-features` remains **PENDING** until this acceptance closure is merged, the exact merged closure commit passes post-merge source-free repository tests and unchanged Phase 3 acceptance, and that verified closure commit is then used as the checkpoint target.
+The acceptance closure merged at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`. Post-merge tests run `34912677109` and Phase 3 acceptance run `34912677100` both completed SUCCESS, and no Phase 1 acquisition ran. Checkpoint `fmp-v1-phase5-features` was then created at that exact verified closure commit.
 
 This acceptance does **not** authorize Phase 6 implementation, final-test inspection, broker/live/demo integration, or real-money trading. Those remain separate later gates.
