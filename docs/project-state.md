@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 6 — Statistical / ML Filters
 **Phase status:** PASS
-**Next milestone:** Create immutable Phase 6 checkpoint; Phase 7 remains UNSTARTED and final-test data remains locked
+**Next milestone:** Phase 6 is closed at its immutable checkpoint; Phase 7 remains UNSTARTED and final-test data remains locked
 
 ## Current baseline
 
@@ -274,6 +274,9 @@ DEC-031 remains the frozen statistical / ML filter protocol for `EXP-20260915-00
 - external validation: 2021-01-01 through 2023-12-31 inclusive; not opened because neither strategy produced a qualifying selection-period challenger
 - no refit after selection; no post-result threshold widening or model/strategy retuning
 - Final-test touched: NO
-- checkpoint: PENDING (`fmp-v1-phase6-models`)
+- checkpoint: `fmp-v1-phase6-models` — CREATED at `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`
+- closure merge: `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`
+- post-merge tests run: `34972534430` — SUCCESS, 573/573 tests PASS, workflow YAML PASS, compile PASS
+- post-merge Phase 3 acceptance run: `34972534435` — SUCCESS
 
 Phase 6 is formally PASS under DEC-032 because both frozen strategies completed the predeclared deterministic leakage-safe experiment and all negative evidence was preserved. No ML filter is promoted. Normal Phase 6 tooling still cannot open any required source or feature partition reaching 2024-01-01 or later. Phase 7 remains UNSTARTED. The final-test period, broker/live/demo integration, and real-money trading remain locked; DEC-008 remains unchanged.

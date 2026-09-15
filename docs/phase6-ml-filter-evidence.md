@@ -4,7 +4,7 @@
 **Result:** PASS
 **Decision:** DEC-032 — APPROVED
 **Experiment:** `EXP-20260915-007`
-**Checkpoint:** `fmp-v1-phase6-models` — PENDING
+**Checkpoint:** `fmp-v1-phase6-models` — CREATED at `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`
 **Final-test touched?: NO**
 
 ## Acceptance gate
@@ -67,8 +67,18 @@ The accepted evidence binds the complete approved evidence contract: exact strat
 
 The workflow and independent audit found no 2024-or-later opened feature artifact, source partition, label-resolution timestamp, or financial evidence. The normal Phase 6 data surfaces still reject any required 2024+ access before opening the partition. **Final-test touched?: NO.**
 
+## Closure checkpoint
+
+The source-free Phase 6 acceptance closure merged to `main` at `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`. Fresh verification on that exact merge commit completed successfully before checkpoint creation:
+
+- tests run `34972534430` — SUCCESS, 573/573 tests PASS, workflow YAML PASS, compile PASS.
+- Phase 3 acceptance run `34972534435` — SUCCESS.
+- Phase 1 source-capable workflows remained suppressed by the `[phase1-no-source]` closure path.
+
+The immutable lightweight checkpoint `fmp-v1-phase6-models` was then created and independently verified to resolve directly to commit `5d387b7ca93d04c498eb04c376e0dd92f1fe1953` (`type = commit`). No Phase 7 work, final-test access, broker/live/demo integration, or real-money trading was opened by checkpoint creation.
+
 ## Acceptance conclusion
 
 `EXP-20260915-007` completed under the frozen DEC-031 protocol and rejects the ML overlay for both serious Phase 4 candidates. The negative result is accepted evidence, not a protocol failure. The USDJPY 15m session-breakout and USDJPY 1h volatility-breakout rule baselines remain frozen unchanged; no model is promoted.
 
-Phase 6 is therefore formally **PASS**. Checkpoint `fmp-v1-phase6-models` remains **PENDING** until this source-free acceptance closure is merged and fresh merged-main tests plus Phase 3 acceptance succeed. Phase 7 remains UNSTARTED. The final-test period remains locked, and no broker/live/demo integration or real-money trading is authorized.
+Phase 6 is therefore formally **PASS**. Checkpoint `fmp-v1-phase6-models` is **CREATED** at the verified closure merge `5d387b7ca93d04c498eb04c376e0dd92f1fe1953` after tests run `34972534430` and Phase 3 acceptance run `34972534435` both succeeded. Phase 7 remains UNSTARTED. The final-test period remains locked, and no broker/live/demo integration or real-money trading is authorized.
