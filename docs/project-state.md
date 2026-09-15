@@ -3,9 +3,9 @@
 **Updated:** 2026-09-15
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
-**Current phase:** Phase 6 — Statistical / ML Filters
-**Phase status:** PASS
-**Next milestone:** Phase 6 is closed at its immutable checkpoint; Phase 7 remains UNSTARTED and final-test data remains locked
+**Current phase:** Phase 7 — Walk-forward Evaluation
+**Phase status:** ACTIVE
+**Next milestone:** implement and verify the guarded Phase 7 Stage 1 evaluator; final-test data remains untouched until the verified implementation is deliberately dispatched
 
 ## Current baseline
 
@@ -279,4 +279,24 @@ DEC-031 remains the frozen statistical / ML filter protocol for `EXP-20260915-00
 - post-merge tests run: `34972534430` — SUCCESS, 573/573 tests PASS, workflow YAML PASS, compile PASS
 - post-merge Phase 3 acceptance run: `34972534435` — SUCCESS
 
-Phase 6 is formally PASS under DEC-032 because both frozen strategies completed the predeclared deterministic leakage-safe experiment and all negative evidence was preserved. No ML filter is promoted. Normal Phase 6 tooling still cannot open any required source or feature partition reaching 2024-01-01 or later. Phase 7 remains UNSTARTED. The final-test period, broker/live/demo integration, and real-money trading remain locked; DEC-008 remains unchanged.
+Phase 6 is formally PASS under DEC-032 because both frozen strategies completed the predeclared deterministic leakage-safe experiment and all negative evidence was preserved. No ML filter is promoted. Normal Phase 6 tooling still cannot open any required source or feature partition reaching 2024-01-01 or later. The final-test period remains locked; DEC-008 remains unchanged.
+
+## Phase 7 — ACTIVE
+
+DEC-033 freezes the approved Phase 7 protocol for `EXP-20260915-008`. Phase 7 is active only for test-first implementation of a dedicated guarded promotion evaluator.
+
+- frozen candidates: USDJPY 15m session breakout, 5-pip buffer, 1.5x target range; USDJPY 1h volatility breakout, 2.0x range expansion, fixed 1.0R target
+- ML overlay: none; Phase 6 rejected all ML challengers
+- Stage 1 scored range: 2024-01-01 through 2024-12-31 inclusive
+- Stage 1 warm-up: at most the seven immediately preceding calendar days; context only and never scored
+- Stage 2 forward horizon: 2025-01-01 through 2026-08-20 inclusive, partitioned into the seven frozen quarterly/partial-quarter windows in the approved design
+- Stage 2 authorization: locked until the exact candidate has a verified Stage 1 PASS identity
+- accepted Phase 2 USDJPY artifact: `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`
+- accepted USDJPY processed-manifest SHA-256: `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`
+- Phase 6 checkpoint: `fmp-v1-phase6-models` at `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`
+- experiment: `EXP-20260915-008` — PLANNED
+- Final-test touched: NO
+
+The protocol decision does not itself open any 2024+ data. Existing Phase 4, Phase 5, and Phase 6 guards remain unchanged and must continue failing before 2024+ source or feature I/O. The first 2024 partition may be opened only by the dedicated guarded Phase 7 Stage 1 workflow after implementation is merged and verified, and only by deliberate dispatch. Required 2025/2026 partitions remain unavailable until Stage 1 PASS authorization is verified for the exact frozen candidate and data identity.
+
+Phase 8 remains UNSTARTED. Broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged.
