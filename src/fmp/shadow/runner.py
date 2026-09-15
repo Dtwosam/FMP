@@ -8,10 +8,16 @@ from pathlib import Path
 from typing import Protocol
 from zoneinfo import ZoneInfo
 
-from fmp.contracts import Direction, QuoteBar
+from fmp.contracts import Direction, EquityCheckpoint, QuoteBar
+from fmp.reporting.backtest import compute_backtest_metrics
 
 from .bars import LiveBarBuilder
-from .contracts import HeartbeatEvent, LIVENESS_TIMEOUT_SECONDS, NormalizedQuote
+from .contracts import (
+    HeartbeatEvent,
+    LIVENESS_TIMEOUT_SECONDS,
+    NormalizedQuote,
+    STARTING_EQUITY_USD,
+)
 from .evidence import EvidenceWriter
 from .normalization import ProviderMessageError, StreamSegmentNormalizer
 from .oanda import OandaPracticePricingStream, OandaPracticeStreamError, parse_provider_line
@@ -90,6 +96,7 @@ class ShadowRunner:
         self._seen_rejections: dict[float, set[str]] = {
             scenario: set() for scenario in self.simulator.states
         }
+        self._metrics_recorded = False
 
     def start(self, *, now_utc: datetime, restarted: bool) -> None:
         _require_utc(now_utc, field_name="now_utc")
@@ -125,6 +132,7 @@ class ShadowRunner:
         self._mark_date_ineligible(_london_date(now_utc), reason="disconnect")
         self.simulator.mark_stale_gap(now_utc, now_utc)
         self._record_scenario_changes()
+        self._record_financial_metrics()
 
     def process_line(
         self,
@@ -411,6 +419,37 @@ class ShadowRunner:
                         "rejection": state.rejections[decision_id],
                     }
                 )
+
+    def _record_financial_metrics(self) -> None:
+        if self._metrics_recorded:
+            return
+        self._metrics_recorded = True
+        for scenario, state in self.simulator.states.items():
+            trades = tuple(
+                sorted(
+                    state.completed_trades,
+                    key=lambda item: (item.exit_timestamp_utc, item.trade_id),
+                )
+            )
+            checkpoints = tuple(
+                EquityCheckpoint(
+                    timestamp_utc=trade.exit_timestamp_utc,
+                    realized_risk_equity_usd=trade.risk_equity_after_usd,
+                )
+                for trade in trades
+            )
+            metrics = compute_backtest_metrics(
+                starting_equity_usd=STARTING_EQUITY_USD,
+                trades=trades,
+                equity_checkpoints=checkpoints,
+            )
+            self.evidence.append_scenario(
+                {
+                    "event": "financial_metrics",
+                    "slippage_pips": scenario,
+                    "metrics": metrics,
+                }
+            )
 
 
 def run_live_shadow_capture(
