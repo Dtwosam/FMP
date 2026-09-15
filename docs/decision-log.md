@@ -39,6 +39,7 @@ Active decision index:
 - DEC-031 — Phase 6 statistical / ML filter protocol — APPROVED
 - DEC-032 — Phase 6 statistical / ML filter experiment outcome and acceptance review — APPROVED
 - DEC-033 — Phase 7 walk-forward evaluation protocol — APPROVED
+- DEC-034 — Phase 7 Stage 1 final-gate outcome — APPROVED
 
 ## DEC-014 — Phase 1 frozen snapshot accepted
 
@@ -271,7 +272,6 @@ The survivor passes the predeclared 0.5-pip robustness review, remaining positiv
 
 Consequences: `EXP-20260914-005` is PASS / PROMOTE. Retain **USDJPY 1h / 2.0x / fixed 1.0R** unchanged as a serious Phase 4 research candidate. This adds a second serious candidate and does not supersede the frozen USDJPY 15m / 5-pip / 1.5x session-breakout candidate from EXP-001. Phase 4 remains ACTIVE and the next baseline family is the sixth planned **session high/low sweep/rejection** family. The final-test period, Phase 5, broker/live integration, and real-money trading remain locked; DEC-008 remains unchanged. Detailed evidence is in `docs/phase4-volatility-breakout-evidence.md`.
 
-
 ## DEC-026 — Phase 4 session high/low sweep-rejection baseline protocol
 
 **Date:** 2026-09-14
@@ -297,7 +297,6 @@ The sixth sequential Phase 4 family is the deterministic Asian-session high/low 
 
 Consequences: EXP-006 implementation and development/validation benchmarking are authorized only after this protocol is present on the result-producing implementation head. The two serious candidates from EXP-001 and EXP-005 remain frozen unchanged. Phase 4 remains ACTIVE; final-test access, Phase 5, broker/live integration, and real-money trading remain locked; DEC-008 remains unchanged.
 
-
 ## DEC-027 — Phase 4 session high/low sweep-rejection experiment outcome
 
 **Date:** 2026-09-14
@@ -308,7 +307,6 @@ Merged-main session sweep-rejection benchmark run `34895426037` on exact impleme
 At the frozen 0.2-pip baseline gate, zero of 27 pair/timeframe/buffer points survive on both development and validation. The only development-only qualifier, USDJPY 5m / 2-pip buffer, reverses from +1.9167% development return, +$5.6874 expectancy/trade, and PF 1.0282 to -15.4056% validation return, -$64.1899 expectancy/trade, and PF 0.6706. Two USDJPY 1h validation-only qualifiers also fail development: the 2-pip point is -4.0619% development versus +0.5797% validation, and the 5-pip point is -0.3861% development versus +0.2743% validation. No downstream cost result may rescue a point that fails the predeclared two-split baseline gate.
 
 Consequences: `EXP-20260914-006` is FAIL / REJECT; no session high/low sweep-rejection candidate is promoted and no post-result parameter expansion, alternate reference session, extra buffer, target/stop retuning, or rescue rule is authorized. The two serious candidates from EXP-001 and EXP-005 remain frozen unchanged. This completes development/validation benchmarking of all six planned Phase 4 baseline families. Phase 4 remains ACTIVE only until its separate acceptance/checkpoint review is formally recorded; the final-test period remains locked and is not authorized by this decision. Phase 5, broker/live integration, and real-money trading remain locked; DEC-008 remains unchanged. Detailed evidence is in `docs/phase4-session-sweep-rejection-evidence.md`.
-
 
 ## DEC-028 — Phase 4 baseline strategy research acceptance review
 
@@ -342,7 +340,6 @@ Frozen V1 scope and leakage controls:
 - Phase 5 acceptance is exactly 3 pairs × 3 timeframes = 9 source-free generation cells over 2015-01-01 through 2023-12-31, with reproducible manifests/digests and unchanged repository-wide regression surfaces.
 
 Consequences: Phase 5 is ACTIVE for test-first implementation of the approved leakage-safe feature engine. Phase 4 remains frozen PASS at checkpoint `fmp-v1-phase4-baselines`. The 2024-01-01 through 2026-08-20 final-test period remains locked; Phase 6 model fitting, broker/live/demo integration, and real-money trading remain unauthorized. DEC-008 remains unchanged.
-
 
 ## DEC-030 — Phase 5 leakage-safe feature-engine acceptance review
 
@@ -382,7 +379,6 @@ Frozen experiment scope:
 - No strategy-parameter retuning, new feature family, target-aware feature selection, pooled/cross-pair/cross-timeframe model, probability-based sizing, AutoML, neural network, post-result threshold widening, broker/live/demo path, or real-money trading is authorized under this experiment.
 
 Consequences: Phase 6 is ACTIVE only for test-first implementation and execution of `EXP-20260915-007`. Phase 5 remains frozen PASS at `fmp-v1-phase5-features`; Phase 7 remains unstarted; the 2024-01-01 through 2026-08-20 final-test period remains locked; broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged.
-
 
 ## DEC-032 — Phase 6 statistical / ML filter experiment outcome and acceptance review
 
@@ -426,3 +422,20 @@ Frozen protocol:
 This protocol decision does not itself inspect final-test data. The first required 2024 partition may be opened only after the guarded Phase 7 implementation is merged and verified and the dedicated Stage 1 workflow is deliberately dispatched. Required 2025/2026 partitions remain locked behind Stage 1 PASS authorization.
 
 Consequences: Phase 6 remains frozen PASS at `fmp-v1-phase6-models`; Phase 7 is ACTIVE only for test-first implementation of `EXP-20260915-008`, which is PLANNED with `Final-test touched: NO`. Phase 8 remains UNSTARTED. Broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged.
+
+## DEC-034 — Phase 7 Stage 1 final-gate outcome
+
+**Date:** 2026-09-15
+**Status:** APPROVED
+
+Authoritative manual `phase7-final-gate` run `35013047267` executed on the exact verified merged-main Phase 7 implementation SHA `e33270de1f89757d1bf2a0d12ef40b2dc36bc110` and completed `SUCCESS` for both frozen candidate cells. Before dispatch, tests run `35010868101` completed successfully with 620/620 tests, workflow YAML validation, and compile passing, and unchanged Phase 3 acceptance run `35010868091` completed successfully. Each Stage 1 cell executed twice and passed a complete byte-for-byte evidence comparison before upload.
+
+The Stage 1 run used only the accepted Phase 2 USDJPY artifact `10327600628` / ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`, processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`, canonical schema `fmp-canonical-1m-v1`, and Phase 6 checkpoint `fmp-v1-phase6-models` at `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`. Scoring was exactly `[2024-01-01, 2025-01-01)` with only the immediately preceding seven calendar days available as non-scored warm-up context. Final-test touched: YES — Stage 1 2024 only. No required 2025/2026 Stage 2 partition was opened.
+
+For USDJPY 15m `session_breakout`, the authoritative artifact is `10414407590`, ZIP SHA-256 `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb`, with inner `manifest.json` SHA-256 `a8ca80186708aedbfd52fd688c843c4dc06e2ce8a81f543bd7224abc0a955faa`. At 0.2-pip slippage it completed 122 trades, returned +1.383287%, produced +$11.3384 expectancy/trade and PF 1.166401, with 1.181400% max drawdown. At 0.5 pips it returned +1.102509%, produced +$9.0370 expectancy/trade and PF 1.130773, with 1.305490% max drawdown. Every mandatory Stage 1 gate is true; the 1.0-pip diagnostic also remains positive. The audited outcome is `STAGE1_PASS`.
+
+For USDJPY 1h `volatility_breakout`, the authoritative artifact is `10414905151`, ZIP SHA-256 `5ee8b6b96382741f454d2b72a6ae6de04e85c9eca04c17ac846c0d594fd27d24`, with inner `manifest.json` SHA-256 `a2526d90312e85a2ab2d57ab86d5502e8644a16735aa0a677cda5626976dda35`. At 0.2 pips it completed 103 trades but returned -2.603768%, produced -$25.2793 expectancy/trade and PF 0.720003, with 3.102796% max drawdown. At 0.5 pips it returned -3.051558%, produced -$29.6268 expectancy/trade and PF 0.680125, with 3.484070% max drawdown. It therefore fails the mandatory profitability, expectancy, and profit-factor gates while passing the sample-size and drawdown bounds. The audited outcome is `STAGE1_REJECT`.
+
+Stage 2 is authorized only for `session_breakout`. Authorization is bound to candidate `session_breakout`, Stage 1 artifact `10414407590`, ZIP SHA-256 `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb`, code SHA `e33270de1f89757d1bf2a0d12ef40b2dc36bc110`, and the exact upstream identities above. The manual Stage 2 workflow must verify this package before opening any required 2025/2026 source partition. `volatility_breakout` is rejected for Stage 2 under `EXP-20260915-008`; no retuning, parameter substitution, rescue search, alternative candidate, or post-result threshold change is authorized.
+
+Consequences: `EXP-20260915-008` remains RUNNING and Phase 7 remains ACTIVE for the frozen seven-window Stage 2 evaluation of the sole survivor. Phase 8 remains UNSTARTED. Broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged. Detailed audited evidence is in `docs/phase7-stage1-evidence.md`.
