@@ -5,11 +5,24 @@ import json
 from pathlib import Path
 from typing import Sequence
 
-from .artifacts import write_phase6_artifacts
-from .evaluation import run_phase6_strategy_cell
+from .artifacts import write_phase6_artifacts as _write_phase6_artifacts
+from .fail_closed import (
+    FAIL_CLOSED_EXECUTION_STATUS,
+    run_phase6_strategy_cell_or_failure,
+    write_phase6_fail_closed_artifacts,
+)
 
 
 STRATEGIES = ("session_breakout", "volatility_breakout")
+
+# Keep these names stable for the CLI contract and existing test patch points.
+run_phase6_strategy_cell = run_phase6_strategy_cell_or_failure
+
+
+def write_phase6_artifacts(result, out_dir):
+    if result.get("execution_status") == FAIL_CLOSED_EXECUTION_STATUS:
+        return write_phase6_fail_closed_artifacts(result, out_dir)
+    return _write_phase6_artifacts(result, out_dir)
 
 
 def build_parser() -> argparse.ArgumentParser:

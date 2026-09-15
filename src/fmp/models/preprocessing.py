@@ -9,6 +9,13 @@ import polars as pl
 from sklearn.preprocessing import StandardScaler
 
 
+class PreprocessingFitFailure(ValueError):
+    def __init__(self, *, reason_code: str, column: str, message: str) -> None:
+        super().__init__(message)
+        self.reason_code = reason_code
+        self.column = column
+
+
 @dataclass(frozen=True, slots=True)
 class PreprocessorState:
     input_columns: tuple[str, ...]
@@ -74,7 +81,11 @@ def fit_preprocessor(
         null_counts.append(int((~finite).sum()))
         values = column[finite]
         if values.size == 0:
-            raise ValueError(f"Phase 6 fit column {name!r} is entirely null/all-null")
+            raise PreprocessingFitFailure(
+                reason_code="ALL_NULL_FIT_COLUMN",
+                column=name,
+                message=f"Phase 6 fit column {name!r} is entirely null/all-null",
+            )
         median = float(np.median(values))
         if not math.isfinite(median):
             raise ValueError(f"Phase 6 fit median for {name!r} is non-finite")
