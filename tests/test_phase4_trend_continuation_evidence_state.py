@@ -30,8 +30,8 @@ class Phase4TrendContinuationEvidenceStateTests(unittest.TestCase):
 
     def test_project_state_preserves_phase4_rejection_and_frozen_candidate(self):
         state = (ROOT / "docs" / "project-state.md").read_text(encoding="utf-8")
-        self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("## Phase 6 — PASS", state)
@@ -43,7 +43,7 @@ class Phase4TrendContinuationEvidenceStateTests(unittest.TestCase):
         self.assertIn("mean reversion", state.lower())
         self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", state)
         self.assertIn("Real-money trading: locked", state)
-        self.assertNotIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE", state)
 
 
 if __name__ == "__main__":

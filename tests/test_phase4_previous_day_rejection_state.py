@@ -27,13 +27,13 @@ class PreviousDayRejectionStateTests(unittest.TestCase):
         self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("## Phase 7 — PASS", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("EXP-20260914-004", state)
         self.assertIn("previous-day high/low rejection", state.lower())
         self.assertIn("USDJPY 15m", state)
         self.assertIn("final-test", state.lower())
         self.assertIn("Real-money trading: locked", state)
-        self.assertNotIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE", state)
 
 
 if __name__ == "__main__":
