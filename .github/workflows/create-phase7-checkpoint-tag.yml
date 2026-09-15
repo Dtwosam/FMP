@@ -1,0 +1,51 @@
+name: create-phase7-checkpoint-tag
+
+on:
+  push:
+    branches:
+      - phase7-checkpoint-tag
+
+permissions:
+  contents: write
+
+jobs:
+  create-checkpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create exact Phase 7 checkpoint tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: fmp-v1-phase7-walk-forward
+          TARGET_SHA: b6fb0176555b071fef6d1070edf3407b03cd60c9
+        run: |
+          set -euo pipefail
+          api="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/git"
+          status="$(curl -sS -o /tmp/tag.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "${api}/ref/tags/${TAG_NAME}")"
+          if [ "${status}" = "200" ]; then
+            existing="$(python - <<'PY'
+import json
+with open('/tmp/tag.json', encoding='utf-8') as f:
+    print(json.load(f)['object']['sha'])
+PY
+)"
+            test "${existing}" = "${TARGET_SHA}"
+            echo "Checkpoint tag already exists at exact target."
+            exit 0
+          fi
+          test "${status}" = "404"
+          python - <<'PY' >/tmp/create.json
+import json, os
+print(json.dumps({
+    "ref": "refs/tags/" + os.environ["TAG_NAME"],
+    "sha": os.environ["TARGET_SHA"],
+}))
+PY
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            "${api}/refs" \
+            --data-binary @/tmp/create.json
