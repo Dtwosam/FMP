@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 7 — Walk-forward Evaluation
 **Phase status:** ACTIVE
-**Next milestone:** implement and verify the guarded Phase 7 Stage 1 evaluator; final-test data remains untouched until the verified implementation is deliberately dispatched
+**Next milestone:** execute the frozen seven-window Stage 2 evaluation only for the audited `session_breakout` Stage 1 survivor; required 2025/2026 data remains locked until the exact Stage 1 PASS package is verified before source I/O
 
 ## Current baseline
 
@@ -262,7 +262,7 @@ DEC-031 remains the frozen statistical / ML filter protocol for `EXP-20260915-00
 
 - Candidate A: USDJPY 15m session breakout, 5-pip buffer, 1.5x target range — rule baseline retained unchanged.
 - Candidate B: USDJPY 1h volatility breakout, 2.0x range expansion, fixed 1.0R target — rule baseline retained unchanged.
-- feature checkpoint: `fmp-v1-phase5-features` at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`
+- feature checkpoint: `fmp-v1-phase5-features` at `e0b2fc7bf12b0c9d76668564df6b7714b1fe0`
 - feature schema: `fmp-feature-v1`, exact 48 feature values plus signal direction for modeling
 - accepted USDJPY processed-manifest SHA-256: `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`
 - experiment: `EXP-20260915-007` — PASS / ML overlay REJECT
@@ -283,20 +283,30 @@ Phase 6 is formally PASS under DEC-032 because both frozen strategies completed 
 
 ## Phase 7 — ACTIVE
 
-DEC-033 freezes the approved Phase 7 protocol for `EXP-20260915-008`. Phase 7 is active only for test-first implementation of a dedicated guarded promotion evaluator.
+DEC-033 freezes the approved Phase 7 protocol for `EXP-20260915-008`; DEC-034 records the audited Stage 1 final-gate outcome without changing any frozen protocol rule.
 
 - frozen candidates: USDJPY 15m session breakout, 5-pip buffer, 1.5x target range; USDJPY 1h volatility breakout, 2.0x range expansion, fixed 1.0R target
 - ML overlay: none; Phase 6 rejected all ML challengers
+- implementation / Stage 1 code SHA: `e33270de1f89757d1bf2a0d12ef40b2dc36bc110`
+- pre-dispatch merged-main tests: run `35010868101` — SUCCESS, 620/620 tests PASS, workflow YAML PASS, compile PASS
+- pre-dispatch unchanged Phase 3 acceptance: run `35010868091` — SUCCESS
+- authoritative Stage 1 workflow: `phase7-final-gate`, run `35013047267` — SUCCESS
 - Stage 1 scored range: 2024-01-01 through 2024-12-31 inclusive
-- Stage 1 warm-up: at most the seven immediately preceding calendar days; context only and never scored
-- Stage 2 forward horizon: 2025-01-01 through 2026-08-20 inclusive, partitioned into the seven frozen quarterly/partial-quarter windows in the approved design
-- Stage 2 authorization: locked until the exact candidate has a verified Stage 1 PASS identity
+- Stage 1 warm-up: 2023-12-25 through 2023-12-31 context only and never scored
+- Final-test touched: YES — Stage 1 2024 only
+- Stage 2 forward horizon: 2025-01-01 through 2026-08-20 inclusive, partitioned into the seven frozen quarterly/partial-quarter windows; required 2025/2026 partitions have not yet been opened
+- Stage 2 survivor: `session_breakout`
+- Stage 2 rejected candidate: `volatility_breakout`
+- `session_breakout` Stage 1 evidence: artifact `10414407590`, ZIP SHA-256 `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb`, inner `manifest.json` SHA-256 `a8ca80186708aedbfd52fd688c843c4dc06e2ce8a81f543bd7224abc0a955faa`, outcome `STAGE1_PASS`
+- `volatility_breakout` Stage 1 evidence: artifact `10414905151`, ZIP SHA-256 `5ee8b6b96382741f454d2b72a6ae6de04e85c9eca04c17ac846c0d594fd27d24`, inner `manifest.json` SHA-256 `a2526d90312e85a2ab2d57ab86d5502e8644a16735aa0a677cda5626976dda35`, outcome `STAGE1_REJECT`
+- Stage 2 authorization: only the exact `session_breakout` package from artifact `10414407590` / ZIP `d9950ceb37188761a3460df7b4ab75463cdf1c19ce42634d910d33bae3f8c8bb` may authorize Stage 2, and the Stage 2 workflow must verify it before any required 2025/2026 source I/O
 - accepted Phase 2 USDJPY artifact: `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`
 - accepted USDJPY processed-manifest SHA-256: `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`
 - Phase 6 checkpoint: `fmp-v1-phase6-models` at `5d387b7ca93d04c498eb04c376e0dd92f1fe1953`
-- experiment: `EXP-20260915-008` — PLANNED
-- Final-test touched: NO
+- experiment: `EXP-20260915-008` — RUNNING
 
-The protocol decision does not itself open any 2024+ data. Existing Phase 4, Phase 5, and Phase 6 guards remain unchanged and must continue failing before 2024+ source or feature I/O. The first 2024 partition may be opened only by the dedicated guarded Phase 7 Stage 1 workflow after implementation is merged and verified, and only by deliberate dispatch. Required 2025/2026 partitions remain unavailable until Stage 1 PASS authorization is verified for the exact frozen candidate and data identity.
+The independently audited Stage 1 metrics and constituent digests are recorded in `docs/phase7-stage1-evidence.md`. `session_breakout` passed every frozen 0.2/0.5-pip Stage 1 gate and has 122 baseline trades; `volatility_breakout` failed mandatory profitability/expectancy/profit-factor gates and is not eligible for Stage 2. No retuning, rescue search, or candidate replacement is authorized.
+
+Existing Phase 4, Phase 5, and Phase 6 guards remain unchanged and continue failing before 2024+ source or feature I/O. Phase 7 may now open only the frozen Stage 2 windows for the exact authorized `session_breakout` identity after verifying the Stage 1 evidence package. No 2025/2026 Stage 2 partition has been opened at this state checkpoint.
 
 Phase 8 remains UNSTARTED. Broker/live/demo integration and real-money trading remain locked; DEC-008 remains unchanged.
