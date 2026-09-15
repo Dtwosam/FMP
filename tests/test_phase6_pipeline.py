@@ -117,7 +117,14 @@ class Phase6PipelineTests(unittest.TestCase):
                 if split.name == "validation":
                     self.assertTrue((out_dir / "selection.json").is_file())
                 return SimpleNamespace(
-                    frame=pl.DataFrame(),
+                    frame=pl.DataFrame(
+                        {
+                            "available_at_utc": [
+                                candidate.signal_known_timestamp_utc
+                                for candidate in candidates_by_split[split.name]
+                            ]
+                        }
+                    ),
                     feature_manifest_sha256=f"feature-{split.name}",
                     processed_manifest_sha256="processed",
                     phase5_checkpoint_sha="checkpoint",
