@@ -50,6 +50,16 @@ def _require_utc(value: datetime, *, field_name: str) -> None:
         raise ValueError(f"{field_name} must use UTC")
 
 
+def _validate_code_commit(value: str) -> None:
+    if not isinstance(value, str) or _HEX40.fullmatch(value) is None:
+        raise ValueError("code_commit must be a lowercase 40-character commit SHA")
+
+
+def _validate_sha256(value: str, *, field_name: str) -> None:
+    if not isinstance(value, str) or _HEX64.fullmatch(value) is None:
+        raise ValueError(f"{field_name} must be a lowercase SHA-256")
+
+
 def _redact_string(value: str) -> str:
     redacted = _BEARER.sub("[REDACTED]", value)
     return _ACCOUNT.sub("[REDACTED_ACCOUNT]", redacted)
@@ -118,6 +128,89 @@ def _file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _build_manifest(
+    root: Path,
+    *,
+    code_commit: str,
+    account_fingerprint_sha256: str,
+    run_start_utc: datetime,
+    run_end_utc: datetime,
+    replay_result_digest: str,
+) -> dict[str, object]:
+    _validate_code_commit(code_commit)
+    _validate_sha256(account_fingerprint_sha256, field_name="account_fingerprint_sha256")
+    _validate_sha256(replay_result_digest, field_name="replay_result_digest")
+    _require_utc(run_start_utc, field_name="run_start_utc")
+    _require_utc(run_end_utc, field_name="run_end_utc")
+    if run_end_utc < run_start_utc:
+        raise ValueError("run_end_utc cannot precede run_start_utc")
+    missing = [name for name in _STREAM_FILES if not (root / name).is_file()]
+    if missing:
+        raise FileNotFoundError(f"Phase 8 evidence stream missing: {missing[0]}")
+
+    return {
+        "protocol": EVIDENCE_PROTOCOL,
+        "code_commit": code_commit,
+        "phase7_checkpoint_tag": PHASE7_CHECKPOINT_TAG,
+        "phase7_checkpoint_sha": PHASE7_CHECKPOINT_SHA,
+        "phase7_experiment": PHASE7_EXPERIMENT,
+        "phase7_outcome": PHASE7_OUTCOME,
+        "strategy": {
+            "id": "session_breakout",
+            "symbol": "USDJPY",
+            "timeframe": "15m",
+            "buffer_pips": 5,
+            "target_range_multiple": 1.5,
+        },
+        "connector_protocol": CONNECTOR_PROTOCOL,
+        "connector_boundary": {
+            "method": "GET",
+            "host": PRACTICE_STREAM_HOST,
+            "path_template": PRACTICE_STREAM_PATH_TEMPLATE,
+            "instrument": PROVIDER_INSTRUMENT,
+            "snapshot": True,
+            "include_home_conversions": False,
+        },
+        "practice_host": PRACTICE_STREAM_HOST,
+        "provider_instrument": PROVIDER_INSTRUMENT,
+        "account_fingerprint_sha256": account_fingerprint_sha256,
+        "slippage_scenarios": list(SLIPPAGE_SCENARIOS),
+        "risk_policy": RiskConfig().to_config(),
+        "run_start_utc": run_start_utc,
+        "run_end_utc": run_end_utc,
+        "file_sha256": {name: _file_sha256(root / name) for name in _STREAM_FILES},
+        "replay_result_digest": replay_result_digest,
+    }
+
+
+def finalize_existing_segment(
+    root: Path,
+    *,
+    code_commit: str,
+    account_fingerprint_sha256: str,
+    run_start_utc: datetime,
+    run_end_utc: datetime,
+    replay_result_digest: str,
+) -> dict[str, object]:
+    root = Path(root)
+    manifest = _build_manifest(
+        root,
+        code_commit=code_commit,
+        account_fingerprint_sha256=account_fingerprint_sha256,
+        run_start_utc=run_start_utc,
+        run_end_utc=run_end_utc,
+        replay_result_digest=replay_result_digest,
+    )
+    manifest_path = root / "manifest.json"
+    expected_bytes = _stable_json_bytes(manifest)
+    if manifest_path.exists():
+        if manifest_path.read_bytes() != expected_bytes:
+            raise ValueError("existing Phase 8 manifest conflicts with replay-verified segment")
+    else:
+        _atomic_write(manifest_path, expected_bytes)
+    return _jsonable(manifest)  # type: ignore[return-value]
+
+
 class EvidenceWriter:
     def __init__(
         self,
@@ -127,13 +220,8 @@ class EvidenceWriter:
         account_fingerprint_sha256: str,
         run_start_utc: datetime,
     ) -> None:
-        if not isinstance(code_commit, str) or _HEX40.fullmatch(code_commit) is None:
-            raise ValueError("code_commit must be a lowercase 40-character commit SHA")
-        if (
-            not isinstance(account_fingerprint_sha256, str)
-            or _HEX64.fullmatch(account_fingerprint_sha256) is None
-        ):
-            raise ValueError("account_fingerprint_sha256 must be a lowercase SHA-256")
+        _validate_code_commit(code_commit)
+        _validate_sha256(account_fingerprint_sha256, field_name="account_fingerprint_sha256")
         _require_utc(run_start_utc, field_name="run_start_utc")
 
         self.root = Path(root)
@@ -208,49 +296,14 @@ class EvidenceWriter:
     ) -> dict[str, object]:
         if self._sealed:
             raise RuntimeError("Phase 8 evidence writer is finalized")
-        _require_utc(run_end_utc, field_name="run_end_utc")
-        if run_end_utc < self.run_start_utc:
-            raise ValueError("run_end_utc cannot precede run_start_utc")
-        if not isinstance(replay_result_digest, str) or _HEX64.fullmatch(replay_result_digest) is None:
-            raise ValueError("replay_result_digest must be a lowercase SHA-256")
-
-        file_sha256 = {
-            name: _file_sha256(self.root / name)
-            for name in _STREAM_FILES
-        }
-        manifest: dict[str, object] = {
-            "protocol": EVIDENCE_PROTOCOL,
-            "code_commit": self.code_commit,
-            "phase7_checkpoint_tag": PHASE7_CHECKPOINT_TAG,
-            "phase7_checkpoint_sha": PHASE7_CHECKPOINT_SHA,
-            "phase7_experiment": PHASE7_EXPERIMENT,
-            "phase7_outcome": PHASE7_OUTCOME,
-            "strategy": {
-                "id": "session_breakout",
-                "symbol": "USDJPY",
-                "timeframe": "15m",
-                "buffer_pips": 5,
-                "target_range_multiple": 1.5,
-            },
-            "connector_protocol": CONNECTOR_PROTOCOL,
-            "connector_boundary": {
-                "method": "GET",
-                "host": PRACTICE_STREAM_HOST,
-                "path_template": PRACTICE_STREAM_PATH_TEMPLATE,
-                "instrument": PROVIDER_INSTRUMENT,
-                "snapshot": True,
-                "include_home_conversions": False,
-            },
-            "practice_host": PRACTICE_STREAM_HOST,
-            "provider_instrument": PROVIDER_INSTRUMENT,
-            "account_fingerprint_sha256": self.account_fingerprint_sha256,
-            "slippage_scenarios": list(SLIPPAGE_SCENARIOS),
-            "risk_policy": RiskConfig().to_config(),
-            "run_start_utc": self.run_start_utc,
-            "run_end_utc": run_end_utc,
-            "file_sha256": file_sha256,
-            "replay_result_digest": replay_result_digest,
-        }
+        manifest = _build_manifest(
+            self.root,
+            code_commit=self.code_commit,
+            account_fingerprint_sha256=self.account_fingerprint_sha256,
+            run_start_utc=self.run_start_utc,
+            run_end_utc=run_end_utc,
+            replay_result_digest=replay_result_digest,
+        )
         _atomic_write(self.root / "manifest.json", _stable_json_bytes(manifest))
         self._sealed = True
         return _jsonable(manifest)  # type: ignore[return-value]
@@ -264,4 +317,5 @@ __all__ = [
     "PHASE7_CHECKPOINT_TAG",
     "PHASE7_EXPERIMENT",
     "PHASE7_OUTCOME",
+    "finalize_existing_segment",
 ]
