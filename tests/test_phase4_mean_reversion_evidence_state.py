@@ -31,17 +31,19 @@ class Phase4MeanReversionEvidenceStateTests(unittest.TestCase):
         self.assertIn("Final-test touched?: NO", record)
         self.assertIn("Conclusion: REJECT", record)
 
-    def test_project_state_keeps_phase4_active_and_session_candidate_frozen(self):
+    def test_project_state_preserves_phase4_rejection_and_frozen_candidate(self):
         state = (ROOT / "docs" / "project-state.md").read_text(encoding="utf-8")
-        self.assertIn("**Current phase:** Phase 5 — Leakage-Safe Feature Engineering", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("**Current phase:** Phase 6 — Statistical / ML Filters", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("## Phase 4 — PASS", state)
+        self.assertIn("## Phase 5 — PASS", state)
+        self.assertIn("## Phase 6 — ACTIVE", state)
         self.assertIn("EXP-20260914-003", state)
         self.assertIn("experiment status: FAIL", state)
         self.assertIn("conclusion: REJECT", state)
         self.assertIn("USDJPY 15m", state)
         self.assertIn("previous-day high/low rejection", state.lower())
         self.assertIn("Final-test touched: NO", state)
-        self.assertIn("## Phase 5 — PASS", state)
         self.assertIn("Real-money trading: locked", state)
 
 
