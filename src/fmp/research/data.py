@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Mapping
+from typing import Callable, Mapping
 
 import polars as pl
 
@@ -14,6 +14,8 @@ from fmp.research.contracts import ResearchSplit, allowed_split
 
 
 ELIGIBLE_TIMEFRAMES = frozenset({"5m", "15m", "1h"})
+_PHASE6_SOURCE_START = date(2015, 1, 1)
+_FINAL_TEST_START = date(2024, 1, 1)
 _REQUIRED_QUOTE_COLUMNS = (
     "timestamp_utc",
     "symbol",
@@ -121,19 +123,30 @@ def _to_quote_bar(row: Mapping[str, object]) -> QuoteBar:
     )
 
 
-def load_processed_bars(
+def load_processed_bars_for_split(
     *,
     dataset_root: Path,
     manifest_path: Path,
     symbol: str,
     timeframe: str,
-    split_name: str,
+    split: ResearchSplit,
+    parquet_reader: Callable[[Path], pl.DataFrame] = pl.read_parquet,
 ) -> LoadedResearchBars:
+    """Load processed bars for an exact pre-2024 split.
+
+    The date guard intentionally runs before manifest or Parquet I/O so Phase 6
+    cannot use this adapter to reach the untouched final-test period.
+    """
     if timeframe not in ELIGIBLE_TIMEFRAMES:
         raise ValueError(f"unsupported Phase 4 signal timeframe: {timeframe!r}")
-    split = allowed_split(split_name)
-    manifest = _load_manifest(Path(manifest_path))
+    if split.start < _PHASE6_SOURCE_START:
+        raise ValueError("processed research source may not start before 2015-01-01")
+    if split.end_exclusive > _FINAL_TEST_START:
+        raise ValueError(
+            "final-test lock: processed research source may not reach 2024-01-01 or later"
+        )
 
+    manifest = _load_manifest(Path(manifest_path))
     if manifest.get("schema_version") != CANONICAL_SCHEMA_VERSION:
         raise ValueError("processed manifest schema identity does not match Phase 2")
     if manifest.get("symbol") != symbol:
@@ -148,7 +161,7 @@ def load_processed_bars(
         timeframe=timeframe,
         split=split,
     )
-    frames = [pl.read_parquet(path) for path in paths]
+    frames = [parquet_reader(path) for path in paths]
     frame = pl.concat(frames, how="vertical") if len(frames) > 1 else frames[0]
     missing = [column for column in _REQUIRED_QUOTE_COLUMNS if column not in frame.columns]
     if missing:
@@ -184,4 +197,24 @@ def load_processed_bars(
         bars=bars,
         excluded_incomplete_count=incomplete_count,
         eligible_utc_dates=eligible_dates,
+    )
+
+
+def load_processed_bars(
+    *,
+    dataset_root: Path,
+    manifest_path: Path,
+    symbol: str,
+    timeframe: str,
+    split_name: str,
+) -> LoadedResearchBars:
+    if timeframe not in ELIGIBLE_TIMEFRAMES:
+        raise ValueError(f"unsupported Phase 4 signal timeframe: {timeframe!r}")
+    split = allowed_split(split_name)
+    return load_processed_bars_for_split(
+        dataset_root=Path(dataset_root),
+        manifest_path=Path(manifest_path),
+        symbol=symbol,
+        timeframe=timeframe,
+        split=split,
     )
