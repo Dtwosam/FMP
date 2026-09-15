@@ -1,0 +1,201 @@
+name: phase7-final-gate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - candidate: session_breakout
+          - candidate: volatility_breakout
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Download and verify accepted Phase 2 USDJPY artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: '10327600628'
+          EXPECTED_ZIP_SHA256: 6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72
+          EXPECTED_MANIFEST_SHA256: e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d
+        run: |
+          set -euo pipefail
+          root=".phase2-accepted"
+          zip_path=".phase2-accepted.zip"
+          manifest_path="${root}/manifests/processed/fmp-canonical-1m-v1/USDJPY.json"
+          mkdir -p "${root}"
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
+            > "${zip_path}"
+          actual_zip_sha256="$(sha256sum "${zip_path}" | awk '{print $1}')"
+          test "${actual_zip_sha256}" = "${EXPECTED_ZIP_SHA256}"
+          unzip -q "${zip_path}" -d "${root}"
+          test -f "${manifest_path}"
+          actual_manifest_sha256="$(sha256sum "${manifest_path}" | awk '{print $1}')"
+          test "${actual_manifest_sha256}" = "${EXPECTED_MANIFEST_SHA256}"
+
+      - name: Execute first frozen Phase 7 final-gate cell
+        env:
+          CANDIDATE: ${{ matrix.candidate }}
+        run: |
+          set -euo pipefail
+          python scripts/phase7_final_gate.py \
+            --dataset-root ".phase2-accepted" \
+            --processed-manifest ".phase2-accepted/manifests/processed/fmp-canonical-1m-v1/USDJPY.json" \
+            --candidate "${CANDIDATE}" \
+            --out ".phase7-stage1-a/${CANDIDATE}" \
+            --code-commit "${GITHUB_SHA}"
+
+      - name: Execute second frozen Phase 7 final-gate cell
+        env:
+          CANDIDATE: ${{ matrix.candidate }}
+        run: |
+          set -euo pipefail
+          python scripts/phase7_final_gate.py \
+            --dataset-root ".phase2-accepted" \
+            --processed-manifest ".phase2-accepted/manifests/processed/fmp-canonical-1m-v1/USDJPY.json" \
+            --candidate "${CANDIDATE}" \
+            --out ".phase7-stage1-b/${CANDIDATE}" \
+            --code-commit "${GITHUB_SHA}"
+
+      - name: Verify deterministic Stage 1 evidence and exact 2024 coverage
+        env:
+          CANDIDATE: ${{ matrix.candidate }}
+        run: |
+          set -euo pipefail
+          a=".phase7-stage1-a/${CANDIDATE}"
+          b=".phase7-stage1-b/${CANDIDATE}"
+          diff \
+            <(find "${a}" -type f -printf '%P\n' | sort) \
+            <(find "${b}" -type f -printf '%P\n' | sort)
+          while IFS= read -r name; do
+            cmp "${a}/${name}" "${b}/${name}"
+          done < <(find "${a}" -type f -printf '%P\n' | sort)
+
+          python - "${a}" "${GITHUB_SHA}" "${CANDIDATE}" <<'PY'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+
+          root = Path(sys.argv[1])
+          expected_commit = sys.argv[2]
+          expected_candidate = sys.argv[3]
+
+          manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+          result = json.loads((root / 'result.json').read_text(encoding='utf-8'))
+          stage1 = json.loads((root / 'stage1.json').read_text(encoding='utf-8'))
+
+          exact_range = {
+              'start_utc': '2024-01-01T00:00:00Z',
+              'end_exclusive_utc': '2025-01-01T00:00:00Z',
+          }
+          warmup_floor = '2023-12-25T00:00:00Z'
+          expected_statuses = {'STAGE1_PASS', 'STAGE1_REJECT'}
+          expected_slippage = {'0.2', '0.5', '1.0'}
+
+          def assert_common(payload, label):
+              assert payload['protocol'] == 'fmp-phase7-walk-forward-artifacts-v1', label
+              assert payload['experiment_id'] == 'EXP-20260915-008', label
+              assert payload['code_commit'] == expected_commit, label
+              assert payload['phase6_checkpoint_tag'] == 'fmp-v1-phase6-models', label
+              assert payload['phase6_checkpoint_sha'] == '5d387b7ca93d04c498eb04c376e0dd92f1fe1953', label
+              assert payload['phase2_artifact_id'] == 10327600628, label
+              assert payload['phase2_zip_sha256'] == '6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72', label
+              assert payload['processed_manifest_sha256'] == 'e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d', label
+              assert payload['canonical_schema_version'] == 'fmp-canonical-1m-v1', label
+              candidate = payload['candidate']
+              assert candidate['candidate_id'] == expected_candidate, label
+              assert candidate['strategy_version'] == 1, label
+              assert candidate['symbol'] == 'USDJPY', label
+              if expected_candidate == 'session_breakout':
+                  assert candidate['timeframe'] == '15m', label
+                  assert candidate['parameters'] == {
+                      'buffer_pips': 5,
+                      'target_range_multiple': 1.5,
+                  }, label
+              elif expected_candidate == 'volatility_breakout':
+                  assert candidate['timeframe'] == '1h', label
+                  assert candidate['parameters'] == {
+                      'range_multiplier': 2.0,
+                      'target_r': 1.0,
+                  }, label
+              else:
+                  raise AssertionError('unexpected frozen candidate')
+              assert payload['starting_equity_usd'] == 100000.0, label
+              assert payload['requested_risk_fraction'] == 0.0025, label
+              assert payload['slippage_scenarios'] == [0.2, 0.5, 1.0], label
+              assert payload['commission_model'] == {'model': 'zero_commission'}, label
+              assert payload['financing_model'] == {'model': 'zero_financing'}, label
+
+          for label, payload in (
+              ('manifest', manifest),
+              ('result', result),
+              ('stage1', stage1),
+          ):
+              assert_common(payload, label)
+              assert payload['stage'] == 'stage1', label
+              assert payload['status'] in expected_statuses, label
+
+          assert manifest['status'] == result['status'] == stage1['status']
+          assert stage1['scored_range'] == exact_range
+          assert set(stage1['results_by_slippage']) == expected_slippage
+          assert stage1['gate']['passed'] == (stage1['status'] == 'STAGE1_PASS')
+          assert result['gate'] == stage1['gate']
+          assert result['stage2_authorized'] == (result['status'] == 'STAGE1_PASS')
+          assert result['candidate_statuses'] == {
+              expected_candidate: 'PASS' if result['status'] == 'STAGE1_PASS' else 'REJECT'
+          }
+
+          for cost, row in stage1['results_by_slippage'].items():
+              assert cost in expected_slippage
+              assert row['candidate_id'] == expected_candidate
+              assert row['window_name'] == 'stage1-2024'
+              assert row['refit_status'] == 'NOT_APPLICABLE_FIXED_RULE'
+              assert row['scored_range'] == exact_range
+              warmup_range = row['warmup_range']
+              assert warmup_range['end_exclusive_utc'] == '2024-01-01T00:00:00Z'
+              assert warmup_range['start_utc'] >= warmup_floor
+              opened = row['opened_partition_keys']
+              assert isinstance(opened, list) and opened
+              for key in opened:
+                  month = key.split(':', 1)[1]
+                  if month >= '2025-01':
+                      raise AssertionError(f'Stage 1 opened forbidden 2025+ partition: {key}')
+
+          artifacts = manifest['artifacts']
+          assert isinstance(artifacts, list) and len(artifacts) == 2
+          by_name = {item['path']: item for item in artifacts}
+          assert set(by_name) == {'result.json', 'stage1.json'}
+          for name, record in by_name.items():
+              data = (root / name).read_bytes()
+              assert record['size_bytes'] == len(data)
+              assert record['sha256'] == hashlib.sha256(data).hexdigest()
+          PY
+
+      - name: Upload Phase 7 Stage 1 evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase7-stage1-${{ matrix.candidate }}-${{ github.sha }}
+          path: .phase7-stage1-a/${{ matrix.candidate }}
+          include-hidden-files: true
+          if-no-files-found: error
