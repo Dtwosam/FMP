@@ -20,7 +20,7 @@ class Phase5CheckpointStateTests(unittest.TestCase):
         self.assertIn("tests run `34912677109`", evidence)
         self.assertIn("Phase 3 acceptance run `34912677100`", evidence)
         self.assertIn("## Phase 5 — PASS", state)
-        self.assertIn("## Phase 6 — ACTIVE", state)
+        self.assertIn("## Phase 6 — PASS", state)
         self.assertNotIn("## Phase 6 — UNSTARTED", state)
         self.assertIn("Phase 7 remains UNSTARTED", state)
         self.assertIn("final-test data remains locked", state.lower())
