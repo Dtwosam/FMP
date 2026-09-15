@@ -13,12 +13,13 @@ class Phase6AcceptanceStateTests(unittest.TestCase):
 
         self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("DEC-032", state)
-        self.assertIn("## Phase 7 — ACTIVE", state)
-        self.assertIn("**Phase status:** ACTIVE", state)
-        self.assertIn("Final-test touched: NO", state)
+        self.assertIn("## Phase 7 — PASS", state)
+        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", state)
         self.assertIn("fmp-v1-phase6-models", state)
         self.assertIn("5d387b7ca93d04c498eb04c376e0dd92f1fe1953", state)
         self.assertIn("Real-money trading: locked", state)
+        self.assertNotIn("## Phase 8 — ACTIVE", state)
 
         self.assertEqual(
             decision.count("## DEC-032 — Phase 6 statistical / ML filter experiment outcome and acceptance review"),
