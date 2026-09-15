@@ -1,0 +1,330 @@
+name: phase7-walk-forward
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate:
+        description: Frozen Stage 1 survivor to evaluate
+        required: true
+        type: choice
+        options:
+          - session_breakout
+          - volatility_breakout
+      stage1_artifact_id:
+        description: Authoritative Stage 1 PASS GitHub artifact ID
+        required: true
+        type: string
+      stage1_zip_sha256:
+        description: Exact SHA-256 of the authoritative Stage 1 artifact ZIP
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Verify Stage 1 PASS authorization
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_CANDIDATE: ${{ inputs.candidate }}
+          STAGE1_ARTIFACT_ID: ${{ inputs.stage1_artifact_id }}
+          EXPECTED_STAGE1_ZIP_SHA256: ${{ inputs.stage1_zip_sha256 }}
+        run: |
+          set -euo pipefail
+          evidence=".phase7-stage1-authorized"
+          zip_path=".phase7-stage1-authorized.zip"
+          identity_path=".phase7-stage1-identity.json"
+
+          [[ "${STAGE1_ARTIFACT_ID}" =~ ^[1-9][0-9]*$ ]]
+          [[ "${EXPECTED_STAGE1_ZIP_SHA256}" =~ ^[0-9a-f]{64}$ ]]
+          mkdir -p "${evidence}"
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/${GITHUB_REPOSITORY}/actions/artifacts/${STAGE1_ARTIFACT_ID}/zip" \
+            > "${zip_path}"
+          actual_stage1_zip_sha256="$(sha256sum "${zip_path}" | awk '{print $1}')"
+          test "${actual_stage1_zip_sha256}" = "${EXPECTED_STAGE1_ZIP_SHA256}"
+          unzip -q "${zip_path}" -d "${evidence}"
+
+          python - "${evidence}" "${EXPECTED_CANDIDATE}" "${identity_path}" <<'PY'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+
+          from fmp.walkforward.cli import verify_stage1_evidence
+
+          evidence = Path(sys.argv[1])
+          expected_candidate = sys.argv[2]
+          identity_path = Path(sys.argv[3])
+          stage1_identity = verify_stage1_evidence(
+              evidence,
+              candidate_id=expected_candidate,
+          )
+          assert stage1_identity['experiment_id'] == 'EXP-20260915-008'
+          assert stage1_identity['candidate_id'] == expected_candidate
+          assert stage1_identity['status'] == 'STAGE1_PASS'
+          assert stage1_identity['phase6_checkpoint_sha'] == '5d387b7ca93d04c498eb04c376e0dd92f1fe1953'
+          assert stage1_identity['processed_manifest_sha256'] == 'e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d'
+          stage1_manifest_sha256 = hashlib.sha256(
+              (evidence / 'manifest.json').read_bytes()
+          ).hexdigest()
+          assert stage1_identity['manifest_sha256'] == stage1_manifest_sha256
+          identity_path.write_text(
+              json.dumps(stage1_identity, sort_keys=True, separators=(',', ':')) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Download and verify accepted Phase 2 USDJPY artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: '10327600628'
+          EXPECTED_ZIP_SHA256: 6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72
+          EXPECTED_MANIFEST_SHA256: e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d
+        run: |
+          set -euo pipefail
+          root=".phase2-accepted"
+          zip_path=".phase2-accepted.zip"
+          manifest_path="${root}/manifests/processed/fmp-canonical-1m-v1/USDJPY.json"
+          mkdir -p "${root}"
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
+            > "${zip_path}"
+          actual_zip_sha256="$(sha256sum "${zip_path}" | awk '{print $1}')"
+          test "${actual_zip_sha256}" = "${EXPECTED_ZIP_SHA256}"
+          unzip -q "${zip_path}" -d "${root}"
+          test -f "${manifest_path}"
+          actual_manifest_sha256="$(sha256sum "${manifest_path}" | awk '{print $1}')"
+          test "${actual_manifest_sha256}" = "${EXPECTED_MANIFEST_SHA256}"
+
+      - name: Execute first frozen Phase 7 walk-forward cell
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+        run: |
+          set -euo pipefail
+          python scripts/phase7_walk_forward.py \
+            --dataset-root ".phase2-accepted" \
+            --processed-manifest ".phase2-accepted/manifests/processed/fmp-canonical-1m-v1/USDJPY.json" \
+            --candidate "${CANDIDATE}" \
+            --stage1-evidence ".phase7-stage1-authorized" \
+            --out ".phase7-stage2-a/${CANDIDATE}" \
+            --code-commit "${GITHUB_SHA}"
+
+      - name: Execute second frozen Phase 7 walk-forward cell
+        env:
+          CANDIDATE: ${{ inputs.candidate }}
+        run: |
+          set -euo pipefail
+          python scripts/phase7_walk_forward.py \
+            --dataset-root ".phase2-accepted" \
+            --processed-manifest ".phase2-accepted/manifests/processed/fmp-canonical-1m-v1/USDJPY.json" \
+            --candidate "${CANDIDATE}" \
+            --stage1-evidence ".phase7-stage1-authorized" \
+            --out ".phase7-stage2-b/${CANDIDATE}" \
+            --code-commit "${GITHUB_SHA}"
+
+      - name: Verify deterministic Stage 2 evidence and exact walk-forward coverage
+        env:
+          EXPECTED_CANDIDATE: ${{ inputs.candidate }}
+        run: |
+          set -euo pipefail
+          a=".phase7-stage2-a/${EXPECTED_CANDIDATE}"
+          b=".phase7-stage2-b/${EXPECTED_CANDIDATE}"
+          diff \
+            <(find "${a}" -type f -printf '%P\n' | sort) \
+            <(find "${b}" -type f -printf '%P\n' | sort)
+          while IFS= read -r name; do
+            cmp "${a}/${name}" "${b}/${name}"
+          done < <(find "${a}" -type f -printf '%P\n' | sort)
+
+          python - "${a}" ".phase7-stage1-identity.json" "${GITHUB_SHA}" "${EXPECTED_CANDIDATE}" <<'PY'
+          import hashlib
+          import json
+          import sys
+          from dataclasses import asdict
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+          from types import SimpleNamespace
+
+          from fmp.walkforward.gates import aggregate_windows, stage2_gate
+
+          root = Path(sys.argv[1])
+          authorized_identity = json.loads(Path(sys.argv[2]).read_text(encoding='utf-8'))
+          expected_commit = sys.argv[3]
+          expected_candidate = sys.argv[4]
+
+          windows = json.loads((root / 'windows.json').read_text(encoding='utf-8'))
+          result = json.loads((root / 'result.json').read_text(encoding='utf-8'))
+          manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+
+          expected_costs = {'0.2', '0.5', '1.0'}
+          expected_windows = [
+              ('2025-Q1', '2025-01-01T00:00:00Z', '2025-04-01T00:00:00Z'),
+              ('2025-Q2', '2025-04-01T00:00:00Z', '2025-07-01T00:00:00Z'),
+              ('2025-Q3', '2025-07-01T00:00:00Z', '2025-10-01T00:00:00Z'),
+              ('2025-Q4', '2025-10-01T00:00:00Z', '2026-01-01T00:00:00Z'),
+              ('2026-Q1', '2026-01-01T00:00:00Z', '2026-04-01T00:00:00Z'),
+              ('2026-Q2', '2026-04-01T00:00:00Z', '2026-07-01T00:00:00Z'),
+              ('2026-partial-Q3', '2026-07-01T00:00:00Z', '2026-08-21T00:00:00Z'),
+          ]
+          allowed_statuses = {
+              'PHASE7_PROMOTE_TO_SHADOW_DESIGN',
+              'PHASE7_COMPLETE_REJECT',
+          }
+
+          def parse_utc(value):
+              parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
+              assert parsed.tzinfo is not None and parsed.utcoffset() == timedelta(0)
+              return parsed.astimezone(timezone.utc)
+
+          def expected_partition_keys(timeframe, warmup_start, scored_end):
+              cursor = datetime(warmup_start.year, warmup_start.month, 1, tzinfo=timezone.utc)
+              end_month = datetime(scored_end.year, scored_end.month, 1, tzinfo=timezone.utc)
+              if scored_end.day != 1 or scored_end.hour or scored_end.minute or scored_end.second:
+                  if end_month.month == 12:
+                      end_month = datetime(end_month.year + 1, 1, 1, tzinfo=timezone.utc)
+                  else:
+                      end_month = datetime(end_month.year, end_month.month + 1, 1, tzinfo=timezone.utc)
+              keys = []
+              while cursor < end_month:
+                  keys.append(f'{timeframe}:{cursor.year:04d}-{cursor.month:02d}')
+                  if cursor.month == 12:
+                      cursor = datetime(cursor.year + 1, 1, 1, tzinfo=timezone.utc)
+                  else:
+                      cursor = datetime(cursor.year, cursor.month + 1, 1, tzinfo=timezone.utc)
+              return keys
+
+          def assert_common(payload, label):
+              assert payload['protocol'] == 'fmp-phase7-walk-forward-artifacts-v1', label
+              assert payload['experiment_id'] == 'EXP-20260915-008', label
+              assert payload['code_commit'] == expected_commit, label
+              assert payload['phase6_checkpoint_tag'] == 'fmp-v1-phase6-models', label
+              assert payload['phase6_checkpoint_sha'] == '5d387b7ca93d04c498eb04c376e0dd92f1fe1953', label
+              assert payload['phase2_artifact_id'] == 10327600628, label
+              assert payload['phase2_zip_sha256'] == '6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72', label
+              assert payload['processed_manifest_sha256'] == 'e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d', label
+              assert payload['canonical_schema_version'] == 'fmp-canonical-1m-v1', label
+              candidate = payload['candidate']
+              assert candidate['candidate_id'] == expected_candidate, label
+              assert candidate['strategy_version'] == 1, label
+              assert candidate['symbol'] == 'USDJPY', label
+              assert payload['starting_equity_usd'] == 100000.0, label
+              assert payload['requested_risk_fraction'] == 0.0025, label
+              assert payload['slippage_scenarios'] == [0.2, 0.5, 1.0], label
+              assert payload['commission_model'] == {'model': 'zero_commission'}, label
+              assert payload['financing_model'] == {'model': 'zero_financing'}, label
+              stage1_identity = payload['stage1_identity']
+              assert stage1_identity == authorized_identity, label
+              assert stage1_identity['candidate_id'] == expected_candidate, label
+              assert stage1_identity['status'] == 'STAGE1_PASS', label
+              stage1_manifest_sha256 = authorized_identity['manifest_sha256']
+              assert stage1_identity['manifest_sha256'] == stage1_manifest_sha256, label
+
+          for label, payload in (
+              ('windows', windows),
+              ('result', result),
+              ('manifest', manifest),
+          ):
+              assert_common(payload, label)
+              assert payload['stage'] == 'stage2', label
+              assert payload['status'] in allowed_statuses, label
+
+          assert windows['status'] == result['status'] == manifest['status']
+          assert set(windows['windows_by_slippage']) == expected_costs
+          assert set(windows['aggregate_by_slippage']) == expected_costs
+
+          candidate_timeframe = windows['candidate']['timeframe']
+          rows_for_gate = {}
+          for cost in sorted(expected_costs):
+              rows = windows['windows_by_slippage'][cost]
+              if len(rows) != 7:
+                  raise AssertionError(f'{cost} must contain exactly seven windows')
+              actual_windows = [
+                  (
+                      row['window_name'],
+                      row['scored_range']['start_utc'],
+                      row['scored_range']['end_exclusive_utc'],
+                  )
+                  for row in rows
+              ]
+              if actual_windows != expected_windows:
+                  raise AssertionError(f'{cost} window order/bounds mismatch')
+
+              namespaces = []
+              for row in rows:
+                  assert row['candidate_id'] == expected_candidate
+                  assert row['slippage_pips'] == float(cost)
+                  assert row['refit_status'] == 'NOT_APPLICABLE_FIXED_RULE'
+                  scored_start = parse_utc(row['scored_range']['start_utc'])
+                  scored_end = parse_utc(row['scored_range']['end_exclusive_utc'])
+                  warmup_start = parse_utc(row['warmup_range']['start_utc'])
+                  warmup_end = parse_utc(row['warmup_range']['end_exclusive_utc'])
+                  assert warmup_end == scored_start
+                  assert warmup_start == scored_start - timedelta(days=7)
+                  assert scored_end <= parse_utc('2026-08-21T00:00:00Z')
+                  assert row['opened_partition_keys'] == expected_partition_keys(
+                      candidate_timeframe,
+                      warmup_start,
+                      scored_end,
+                  )
+                  namespaces.append(SimpleNamespace(**row))
+              rows_for_gate[float(cost)] = tuple(namespaces)
+
+          recomputed_gate = stage2_gate(rows_for_gate)
+          recorded_gate = windows['gate']
+          assert recorded_gate == {
+              'passed': recomputed_gate.passed,
+              'criteria': dict(recomputed_gate.criteria),
+          }
+          assert result['gate'] == recorded_gate
+          expected_status = (
+              'PHASE7_PROMOTE_TO_SHADOW_DESIGN'
+              if recomputed_gate.passed
+              else 'PHASE7_COMPLETE_REJECT'
+          )
+          assert windows['status'] == expected_status
+          assert result['candidate_statuses'] == {
+              expected_candidate: 'PASS' if recomputed_gate.passed else 'REJECT'
+          }
+
+          for cost, rows in rows_for_gate.items():
+              expected_aggregate = asdict(aggregate_windows(rows))
+              recorded_aggregate = windows['aggregate_by_slippage'][f'{cost:.1f}']
+              assert recorded_aggregate == expected_aggregate
+
+          artifacts = manifest['artifacts']
+          assert isinstance(artifacts, list) and len(artifacts) == 2
+          by_name = {item['path']: item for item in artifacts}
+          assert set(by_name) == {'result.json', 'windows.json'}
+          for name, record in by_name.items():
+              data = (root / name).read_bytes()
+              assert record['size_bytes'] == len(data)
+              assert record['sha256'] == hashlib.sha256(data).hexdigest()
+          PY
+
+      - name: Upload Phase 7 Stage 2 evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase7-stage2-${{ inputs.candidate }}-${{ github.sha }}
+          path: .phase7-stage2-a/${{ inputs.candidate }}
+          include-hidden-files: true
+          if-no-files-found: error
