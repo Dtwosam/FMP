@@ -1,9 +1,9 @@
 # Phase 6 Statistical / ML Filter Design
 
 **Date:** 2026-09-15
-**Status:** APPROVED IN CHAT — written-spec review required before DEC-031 and implementation
+**Status:** APPROVED IN CHAT — PENDING WRITTEN-SPEC REVIEW
 **Planned experiment:** `EXP-20260915-007`
-**Final-test touched?: NO
+**Final-test touched?: NO**
 
 ## 1. Purpose
 
@@ -31,7 +31,11 @@ The following existing rules remain authoritative and are not changed by Phase 6
 - Final untouched test remains 2024-01-01 through 2026-08-20 and is unavailable to normal Phase 6 tooling.
 - Phase 7 walk-forward, broker/live/demo integration, and real-money trading remain separate later gates.
 
-Phase 5 checkpoint `fmp-v1-phase5-features` remains the authoritative feature-engine freeze. Phase 6 may use only `fmp-feature-v1` semantics and accepted Phase 5 feature identities.
+Phase 5 checkpoint `fmp-v1-phase5-features` at `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0` remains the authoritative feature-engine freeze. Phase 6 may use only `fmp-feature-v1` semantics and accepted Phase 5 feature identities.
+
+The accepted USDJPY Phase 2 processed-manifest SHA-256 remains:
+
+`e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`
 
 ## 3. Frozen rule baselines
 
@@ -113,7 +117,17 @@ One row represents one directional strategy setup emitted by the exact frozen Ph
 
 `NO_TRADE` strategy outputs are retained in rule-baseline accounting but are not model-training examples. Directional setups that fail structural executability checks are recorded as rejected / unlabelable evidence and are not silently repaired.
 
-## 7. Feature join and decision-time safety
+## 7. Feature provenance, materialization, and decision-time safety
+
+Phase 6 does not require GitHub's Phase 5 acceptance ZIPs to remain permanent storage. It may deterministically regenerate only the required USDJPY 15m and 1h `fmp-feature-v1` tables from the accepted Phase 2 processed artifact, using feature-engine code whose behavior remains byte-equivalent to the Phase 5 checkpoint. Phase 6 must not modify Phase 5 feature semantics.
+
+Every regenerated feature manifest must bind:
+
+- `feature_set_version == "fmp-feature-v1"`;
+- Phase 5 checkpoint `e0b2fc7bf12b0c9cd9d76668564df6b7714b1fe0`;
+- USDJPY processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`;
+- exact 2015-01-01 through 2023-12-31 maximum allowed feature coverage;
+- deterministic file / schema digests.
 
 For a strategy signal based on the left-labelled observation bar beginning at `T` with width `D`:
 
@@ -122,7 +136,7 @@ For a strategy signal based on the left-labelled observation bar beginning at `T
 - the joined Phase 5 feature row must have `bar_start_utc == T`;
 - the same row must have `available_at_utc == T + D`;
 - feature set version must equal `fmp-feature-v1`;
-- feature processed-manifest identity must match the accepted Phase 2 / Phase 5 identity for USDJPY.
+- feature processed-manifest identity must match the accepted USDJPY identity.
 
 The model input is therefore frozen at the same true-known time as the strategy signal and cannot see the next execution bar.
 
@@ -141,7 +155,7 @@ For each structurally executable directional setup:
 - label `1` if the frozen strategy target is reached before the frozen stop and before the mandatory strategy time exit;
 - label `0` if the frozen stop is reached first, the mandatory time exit occurs before target, or unresolved same-bar target/stop reachability is conservatively resolved to stop under accepted Phase 3 semantics.
 
-The label is generated from future historical BID/ASK bars only after the feature row is frozen. It is never exposed as a feature.
+The label is generated from future historical BID/ASK bars only after the feature row is frozen. It is never exposed as a feature. Label resolution is itself restricted to pre-2024 source coverage.
 
 ### 8.1 Structural executability
 
@@ -242,11 +256,13 @@ The score is used only for ranking / filtering. Phase 6 does not assume it is a 
 Required diagnostics per strategy/model/split:
 
 - ROC-AUC;
-- average precision / PR-AUC proxy;
+- `average_precision_score`;
 - Brier score;
 - positive-class prevalence;
 - score min / max / mean / median;
 - deterministic 10-bin equal-frequency reliability summary where sample size permits.
+
+Reliability bins are formed after sorting by `(model_score, candidate_id)` and splitting the sorted rows into at most ten contiguous chunks whose sizes differ by at most one. Each bin records row count, mean model score, and observed positive rate. The reliability summary is diagnostic only and never participates in promotion.
 
 Because promotion uses score ranks rather than claimed probability levels, no extra probability calibrator is fitted in this experiment. If a later system needs numerically calibrated probabilities, that requires a separate predeclared experiment rather than post-result calibration here.
 
@@ -320,6 +336,8 @@ Selection outcomes are frozen before opening the 2021-2023 validation partition.
 ## 15. External validation gate
 
 The one frozen selection, if any, is evaluated exactly once on 2021-2023.
+
+The model, preprocessing parameters, and cutoff remain exactly those fitted / derived from 2015-2018. There is no refit on 2019-2020 before validation. The 2019-2020 period selects among already-fitted variants only.
 
 ### 15.1 Baseline 0.2-pip gate
 
@@ -441,13 +459,15 @@ Required permanent tests include:
 9. Fit-only imputer/scaler parameters are unchanged when selection/validation values are perturbed.
 10. Thresholds depend only on fit scores.
 11. Validation cannot be opened until the selection artifact is frozen.
-12. Two identical fits yield identical prediction-score digests.
-13. Filter rejection never mutates accepted candidate stop/target/timestamps.
-14. Financial evaluation uses unchanged Phase 3 risk/cost semantics.
-15. Rule-only baseline reproduction matches the frozen candidate protocol.
-16. Experiment artifacts are byte-deterministic after canonical serialization.
-17. No model code imports broker/live/demo/execution adapters.
-18. No final-test path can appear in Phase 6 evidence.
+12. No refit occurs after model/cutoff selection and before external validation.
+13. Two identical fits yield identical prediction-score digests.
+14. Filter rejection never mutates accepted candidate stop/target/timestamps.
+15. Financial evaluation uses unchanged Phase 3 risk/cost semantics.
+16. Rule-only baseline reproduction matches the frozen candidate protocol.
+17. Experiment artifacts are byte-deterministic after canonical serialization.
+18. No model code imports broker/live/demo/execution adapters.
+19. No final-test path can appear in Phase 6 evidence.
+20. Required USDJPY feature manifests bind the Phase 5 checkpoint and accepted processed-manifest identity.
 
 ## 19. Implementation architecture
 
@@ -477,13 +497,13 @@ The authoritative experiment runs exactly two strategy cells:
 
 Each cell must:
 
-1. obtain accepted processed data / feature inputs without source acquisition;
-2. verify Phase 2 processed-manifest and Phase 5 feature identities;
+1. obtain accepted processed data and deterministically materialize / verify the required Phase 5 feature inputs without source acquisition;
+2. verify the accepted USDJPY processed-manifest and Phase 5 checkpoint identities;
 3. build deterministic candidate-feature-label rows for fit/selection only;
 4. fit both models twice and verify identical score digests;
 5. evaluate all six selection variants;
 6. freeze zero or one challenger before opening validation;
-7. if a challenger exists, open validation once and evaluate exact 0.2/0.5/1.0 scenarios;
+7. if a challenger exists, open validation once and evaluate the same frozen fit/preprocessor/cutoff under exact 0.2/0.5/1.0 scenarios;
 8. upload deterministic evidence.
 
 The workflow must have no Dukascopy acquisition path, no Supabase write path, no broker/live/demo path, and no final-test path.
@@ -522,4 +542,4 @@ Broker/live/demo integration and real-money trading remain locked.
 
 After written-spec approval, record DEC-031 as the Phase 6 statistical / ML filter protocol and mark Phase 6 ACTIVE. DEC-031 must reference this design, the exact chronology, both frozen candidate configurations, two frozen model configurations, selection / validation gates, final-test hard block, and `EXP-20260915-007`.
 
-No result-driven widening is permitted under `EXP-20260915-007`. Any new model family, hyperparameter search, different label, different retention threshold, different split, probability calibration layer, new feature, pooled strategy model, or altered promotion gate requires a new experiment ID and explicit design/change-control decision before execution.
+No result-driven widening is permitted under `EXP-20260915-007`. Any new model family, hyperparameter search, different label, different retention threshold, different split, probability calibration layer, new feature, pooled strategy model, altered refit rule, or altered promotion gate requires a new experiment ID and explicit design/change-control decision before execution.
