@@ -18,6 +18,7 @@ from .contracts import (
     PHASE7_CHECKPOINT_TAG,
     PHASE8_EXPERIMENT_ID,
     PRACTICE_STREAM_HOST,
+    PRACTICE_STREAM_PATH_TEMPLATE,
     PROVIDER_INSTRUMENT,
     QUOTE_DEADLINE_SECONDS,
     SLIPPAGE_SCENARIOS,
@@ -243,7 +244,7 @@ def register_campaign(
         },
         "provider": "OANDA_PRACTICE_PRICING_STREAM",
         "host": PRACTICE_STREAM_HOST,
-        "path_template": "/v3/accounts/{account_id}/pricing/stream",
+        "path_template": PRACTICE_STREAM_PATH_TEMPLATE,
         "instrument": PROVIDER_INSTRUMENT,
         "strategy": {
             "id": STRATEGY_FAMILY,
@@ -266,6 +267,103 @@ def register_campaign(
             handle.flush()
     except FileExistsError:
         raise FileExistsError("Phase 8 campaign registration already exists") from None
+    return record
+
+
+def load_campaign_registration(
+    campaign_dir: Path,
+    *,
+    code_commit: str,
+) -> dict[str, object]:
+    _require_commit(code_commit)
+    registration_path = Path(campaign_dir) / "registration.json"
+    try:
+        payload = registration_path.read_bytes()
+    except OSError as exc:
+        raise ValueError("Phase 8 campaign registration is missing") from exc
+    try:
+        value = json.loads(payload)
+    except json.JSONDecodeError as exc:
+        raise ValueError("Phase 8 campaign registration is not valid JSON") from exc
+    if not isinstance(value, dict):
+        raise ValueError("Phase 8 campaign registration root must be an object")
+    record: dict[str, object] = dict(value)
+    if payload != _canonical_bytes(record):
+        raise ValueError("Phase 8 campaign registration must use canonical bytes")
+
+    expected_keys = {
+        "registration_version",
+        "phase8_experiment",
+        "campaign_start_utc",
+        "first_london_date",
+        "code_commit",
+        "reference_sha256",
+        "reference_identity",
+        "provider",
+        "host",
+        "path_template",
+        "instrument",
+        "strategy",
+        "risk_policy",
+        "slippage_scenarios",
+        "gating_slippage_scenarios",
+        "starting_equity_usd",
+        "acceptance_thresholds",
+    }
+    if set(record) != expected_keys:
+        raise ValueError("Phase 8 campaign registration fields mismatch")
+
+    exact = {
+        "registration_version": 1,
+        "phase8_experiment": PHASE8_EXPERIMENT_ID,
+        "code_commit": code_commit,
+        "provider": "OANDA_PRACTICE_PRICING_STREAM",
+        "host": PRACTICE_STREAM_HOST,
+        "path_template": PRACTICE_STREAM_PATH_TEMPLATE,
+        "instrument": PROVIDER_INSTRUMENT,
+        "strategy": {
+            "id": STRATEGY_FAMILY,
+            "symbol": FMP_SYMBOL,
+            "timeframe": TIMEFRAME,
+            "buffer_pips": BREAKOUT_BUFFER_PIPS,
+            "target_range_multiple": TARGET_RANGE_MULTIPLE,
+        },
+        "risk_policy": RiskConfig().to_config(),
+        "slippage_scenarios": list(SLIPPAGE_SCENARIOS),
+        "gating_slippage_scenarios": list(GATING_SLIPPAGE_SCENARIOS),
+        "starting_equity_usd": STARTING_EQUITY_USD,
+        "acceptance_thresholds": acceptance_thresholds(),
+    }
+    for key, expected in exact.items():
+        if record.get(key) != expected:
+            raise ValueError(f"Phase 8 campaign registration mismatch: {key}")
+
+    reference_digest = record.get("reference_sha256")
+    _require_sha256(reference_digest, field="reference_sha256")  # type: ignore[arg-type]
+    expected_reference_identity = {
+        "method_version": _REFERENCE_METHOD_VERSION,
+        "phase7_checkpoint_tag": PHASE7_CHECKPOINT_TAG,
+        "phase7_checkpoint_sha": PHASE7_CHECKPOINT_SHA,
+        "phase7_stage2_run_id": _PHASE7_STAGE2_RUN_ID,
+        "phase2_artifact_id": _PHASE2_ARTIFACT_ID,
+        "processed_manifest_sha256": _PROCESSED_MANIFEST_SHA256,
+    }
+    if record.get("reference_identity") != expected_reference_identity:
+        raise ValueError("Phase 8 campaign registration mismatch: reference_identity")
+
+    start_text = record.get("campaign_start_utc")
+    if not isinstance(start_text, str) or not start_text.endswith("Z"):
+        raise ValueError("Phase 8 campaign registration campaign_start_utc is invalid")
+    try:
+        start = datetime.fromisoformat(start_text[:-1] + "+00:00")
+    except ValueError as exc:
+        raise ValueError("Phase 8 campaign registration campaign_start_utc is invalid") from exc
+    _require_utc(start, field="campaign_start_utc")
+    if _iso_utc(start) != start_text:
+        raise ValueError("Phase 8 campaign registration campaign_start_utc must be canonical")
+    expected_first_date = start.astimezone(LONDON).date().isoformat()
+    if record.get("first_london_date") != expected_first_date:
+        raise ValueError("Phase 8 campaign registration mismatch: first_london_date")
     return record
 
 
@@ -327,6 +425,7 @@ __all__ = [
     "ProviderClosure",
     "acceptance_thresholds",
     "denominator_london_dates",
+    "load_campaign_registration",
     "minimum_review_evidence_met",
     "register_campaign",
 ]

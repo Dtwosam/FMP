@@ -12,6 +12,7 @@ from fmp.contracts import Direction, EquityCheckpoint, QuoteBar
 from fmp.reporting.backtest import compute_backtest_metrics
 
 from .bars import LiveBarBuilder
+from .campaign import load_campaign_registration
 from .contracts import (
     HeartbeatEvent,
     LIVENESS_TIMEOUT_SECONDS,
@@ -463,9 +464,7 @@ def run_live_shadow_capture(
     stream_factory: Callable[..., OandaPracticePricingStream] = OandaPracticePricingStream,
 ) -> int:
     campaign_dir = Path(campaign_dir)
-    registration = campaign_dir / "registration.json"
-    if not registration.is_file():
-        raise RuntimeError("Phase 8 campaign registration is required before live capture")
+    load_campaign_registration(campaign_dir, code_commit=code_commit)
 
     start = utc_now()
     _require_utc(start, field_name="run_start_utc")
