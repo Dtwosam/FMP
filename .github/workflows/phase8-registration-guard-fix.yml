@@ -1,0 +1,78 @@
+name: phase8-registration-guard-fix
+
+on:
+  push:
+    branches:
+      - phase8-activation-helper
+    paths:
+      - .github/workflows/phase8-registration-guard-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase8-shadow-implementation
+          fetch-depth: 0
+
+      - name: Add immutable registration validation before live capture
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          campaign = Path('src/fmp/shadow/campaign.py')
+          text = campaign.read_text(encoding='utf-8')
+
+          old_import = '''    PHASE8_EXPERIMENT_ID,\n    PRACTICE_STREAM_HOST,\n    PROVIDER_INSTRUMENT,'''
+          new_import = '''    PHASE8_EXPERIMENT_ID,\n    PRACTICE_STREAM_HOST,\n    PRACTICE_STREAM_PATH_TEMPLATE,\n    PROVIDER_INSTRUMENT,'''
+          if text.count(old_import) != 1:
+              raise SystemExit('campaign contracts import anchor mismatch')
+          text = text.replace(old_import, new_import, 1)
+
+          old_path = '        "path_template": "/v3/accounts/{account_id}/pricing/stream",\n'
+          new_path = '        "path_template": PRACTICE_STREAM_PATH_TEMPLATE,\n'
+          if text.count(old_path) != 1:
+              raise SystemExit('registration path-template anchor mismatch')
+          text = text.replace(old_path, new_path, 1)
+
+          anchor = '''    return record\n\n\ndef denominator_london_dates(\n'''
+          if text.count(anchor) != 1:
+              raise SystemExit('campaign loader insertion anchor mismatch')
+          loader = '''    return record\n\n\ndef load_campaign_registration(\n    campaign_dir: Path,\n    *,\n    code_commit: str,\n) -> dict[str, object]:\n    _require_commit(code_commit)\n    registration_path = Path(campaign_dir) / "registration.json"\n    try:\n        payload = registration_path.read_bytes()\n    except OSError as exc:\n        raise ValueError("Phase 8 campaign registration is missing") from exc\n    try:\n        value = json.loads(payload)\n    except json.JSONDecodeError as exc:\n        raise ValueError("Phase 8 campaign registration is not valid JSON") from exc\n    if not isinstance(value, dict):\n        raise ValueError("Phase 8 campaign registration root must be an object")\n    record: dict[str, object] = dict(value)\n    if payload != _canonical_bytes(record):\n        raise ValueError("Phase 8 campaign registration must use canonical bytes")\n\n    expected_keys = {\n        "registration_version",\n        "phase8_experiment",\n        "campaign_start_utc",\n        "first_london_date",\n        "code_commit",\n        "reference_sha256",\n        "reference_identity",\n        "provider",\n        "host",\n        "path_template",\n        "instrument",\n        "strategy",\n        "risk_policy",\n        "slippage_scenarios",\n        "gating_slippage_scenarios",\n        "starting_equity_usd",\n        "acceptance_thresholds",\n    }\n    if set(record) != expected_keys:\n        raise ValueError("Phase 8 campaign registration fields mismatch")\n\n    exact = {\n        "registration_version": 1,\n        "phase8_experiment": PHASE8_EXPERIMENT_ID,\n        "code_commit": code_commit,\n        "provider": "OANDA_PRACTICE_PRICING_STREAM",\n        "host": PRACTICE_STREAM_HOST,\n        "path_template": PRACTICE_STREAM_PATH_TEMPLATE,\n        "instrument": PROVIDER_INSTRUMENT,\n        "strategy": {\n            "id": STRATEGY_FAMILY,\n            "symbol": FMP_SYMBOL,\n            "timeframe": TIMEFRAME,\n            "buffer_pips": BREAKOUT_BUFFER_PIPS,\n            "target_range_multiple": TARGET_RANGE_MULTIPLE,\n        },\n        "risk_policy": RiskConfig().to_config(),\n        "slippage_scenarios": list(SLIPPAGE_SCENARIOS),\n        "gating_slippage_scenarios": list(GATING_SLIPPAGE_SCENARIOS),\n        "starting_equity_usd": STARTING_EQUITY_USD,\n        "acceptance_thresholds": acceptance_thresholds(),\n    }\n    for key, expected in exact.items():\n        if record.get(key) != expected:\n            raise ValueError(f"Phase 8 campaign registration mismatch: {key}")\n\n    reference_digest = record.get("reference_sha256")\n    _require_sha256(reference_digest, field="reference_sha256")  # type: ignore[arg-type]\n    expected_reference_identity = {\n        "method_version": _REFERENCE_METHOD_VERSION,\n        "phase7_checkpoint_tag": PHASE7_CHECKPOINT_TAG,\n        "phase7_checkpoint_sha": PHASE7_CHECKPOINT_SHA,\n        "phase7_stage2_run_id": _PHASE7_STAGE2_RUN_ID,\n        "phase2_artifact_id": _PHASE2_ARTIFACT_ID,\n        "processed_manifest_sha256": _PROCESSED_MANIFEST_SHA256,\n    }\n    if record.get("reference_identity") != expected_reference_identity:\n        raise ValueError("Phase 8 campaign registration mismatch: reference_identity")\n\n    start_text = record.get("campaign_start_utc")\n    if not isinstance(start_text, str) or not start_text.endswith("Z"):\n        raise ValueError("Phase 8 campaign registration campaign_start_utc is invalid")\n    try:\n        start = datetime.fromisoformat(start_text[:-1] + "+00:00")\n    except ValueError as exc:\n        raise ValueError("Phase 8 campaign registration campaign_start_utc is invalid") from exc\n    _require_utc(start, field="campaign_start_utc")\n    if _iso_utc(start) != start_text:\n        raise ValueError("Phase 8 campaign registration campaign_start_utc must be canonical")\n    expected_first_date = start.astimezone(LONDON).date().isoformat()\n    if record.get("first_london_date") != expected_first_date:\n        raise ValueError("Phase 8 campaign registration mismatch: first_london_date")\n    return record\n\n\ndef denominator_london_dates(\n'''
+          text = text.replace(anchor, loader, 1)
+
+          old_all = '    "minimum_review_evidence_met",\n    "register_campaign",\n]'
+          new_all = '    "load_campaign_registration",\n    "minimum_review_evidence_met",\n    "register_campaign",\n]'
+          if text.count(old_all) != 1:
+              raise SystemExit('campaign __all__ anchor mismatch')
+          text = text.replace(old_all, new_all, 1)
+          campaign.write_text(text, encoding='utf-8')
+
+          runner = Path('src/fmp/shadow/runner.py')
+          text = runner.read_text(encoding='utf-8')
+          import_anchor = 'from .bars import LiveBarBuilder\n'
+          if text.count(import_anchor) != 1:
+              raise SystemExit('runner import anchor mismatch')
+          text = text.replace(import_anchor, import_anchor + 'from .campaign import load_campaign_registration\n', 1)
+          old_guard = '''    campaign_dir = Path(campaign_dir)\n    registration = campaign_dir / "registration.json"\n    if not registration.is_file():\n        raise RuntimeError("Phase 8 campaign registration is required before live capture")\n\n    start = utc_now()\n'''
+          new_guard = '''    campaign_dir = Path(campaign_dir)\n    load_campaign_registration(campaign_dir, code_commit=code_commit)\n\n    start = utc_now()\n'''
+          if text.count(old_guard) != 1:
+              raise SystemExit('runner registration guard anchor mismatch')
+          text = text.replace(old_guard, new_guard, 1)
+          runner.write_text(text, encoding='utf-8')
+          PY
+
+          git diff --check
+          git diff -- src/fmp/shadow/campaign.py src/fmp/shadow/runner.py
+
+      - name: Commit and push target branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/fmp/shadow/campaign.py src/fmp/shadow/runner.py
+          git commit -m "[phase1-no-source] Validate Phase 8 registration before capture"
+          git push origin HEAD:phase8-shadow-implementation
