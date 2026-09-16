@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Mapping, Sequence
 from zoneinfo import ZoneInfo
 
+from fmp.risk import RiskConfig
+
 from .contracts import (
     BREAKOUT_BUFFER_PIPS,
     FMP_SYMBOL,
@@ -250,6 +252,7 @@ def register_campaign(
             "buffer_pips": BREAKOUT_BUFFER_PIPS,
             "target_range_multiple": TARGET_RANGE_MULTIPLE,
         },
+        "risk_policy": RiskConfig().to_config(),
         "slippage_scenarios": list(SLIPPAGE_SCENARIOS),
         "gating_slippage_scenarios": list(GATING_SLIPPAGE_SCENARIOS),
         "starting_equity_usd": STARTING_EQUITY_USD,
