@@ -1,0 +1,51 @@
+name: phase8-latency-evidence-fix
+on:
+  push:
+    branches: [phase8-activation-helper]
+    paths:
+      - .github/workflows/phase8-latency-evidence-fix.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase8-shadow-implementation
+          fetch-depth: 0
+      - name: Record durable normalized append latency
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("src/fmp/shadow/runner.py")
+          text = path.read_text(encoding="utf-8")
+
+          old = '''        strategy_adapter: Callable[\n            [tuple[QuoteBar, ...]], tuple[ShadowStrategyDecision, ...]\n        ] = generate_shadow_strategy_decisions,\n    ) -> None:\n        self.evidence = evidence\n        self.bar_builder = bar_builder or LiveBarBuilder()\n        self.simulator = simulator or ShadowSimulator()\n        self.strategy_adapter = strategy_adapter\n'''
+          new = '''        strategy_adapter: Callable[\n            [tuple[QuoteBar, ...]], tuple[ShadowStrategyDecision, ...]\n        ] = generate_shadow_strategy_decisions,\n        processing_monotonic_ns: Callable[[], int] | None = None,\n    ) -> None:\n        self.evidence = evidence\n        self.bar_builder = bar_builder or LiveBarBuilder()\n        self.simulator = simulator or ShadowSimulator()\n        self.strategy_adapter = strategy_adapter\n        self._processing_monotonic_ns = processing_monotonic_ns\n'''
+          if text.count(old) != 1:
+              raise SystemExit("constructor patch anchor mismatch")
+          text = text.replace(old, new)
+
+          old = '''        self.evidence.append_normalized(event)\n\n        if self.stale:\n'''
+          new = '''        self.evidence.append_normalized(event)\n        if self._processing_monotonic_ns is not None:\n            append_completed_monotonic_ns = self._processing_monotonic_ns()\n            if (\n                isinstance(append_completed_monotonic_ns, bool)\n                or not isinstance(append_completed_monotonic_ns, int)\n                or append_completed_monotonic_ns < receive_monotonic_ns\n            ):\n                raise ValueError("normalized append completion monotonic time is invalid")\n            self.evidence.append_operational(\n                {\n                    "event": "normalized_append_latency",\n                    "timestamp_utc": received_at_utc,\n                    "source_time_utc": event.source_time_utc,\n                    "receive_monotonic_ns": receive_monotonic_ns,\n                    "append_completed_monotonic_ns": append_completed_monotonic_ns,\n                    "processing_latency_ms": (\n                        append_completed_monotonic_ns - receive_monotonic_ns\n                    )\n                    / 1_000_000,\n                }\n            )\n\n        if self.stale:\n'''
+          if text.count(old) != 1:
+              raise SystemExit("append patch anchor mismatch")
+          text = text.replace(old, new)
+
+          old = '''    runner = ShadowRunner(evidence=evidence)\n'''
+          new = '''    runner = ShadowRunner(\n        evidence=evidence,\n        processing_monotonic_ns=monotonic_ns,\n    )\n'''
+          if text.count(old) != 1:
+              raise SystemExit("live runner patch anchor mismatch")
+          text = text.replace(old, new)
+
+          path.write_text(text, encoding="utf-8")
+      - name: Commit and push target branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/fmp/shadow/runner.py
+          git diff --cached --check
+          git commit -m "[phase1-no-source] Record Phase 8 durable append latency"
+          git push origin HEAD:phase8-shadow-implementation
