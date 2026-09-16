@@ -1,0 +1,314 @@
+name: phase8-restart-state-fix
+on:
+  push:
+    branches: [phase8-activation-helper]
+    paths:
+      - .github/workflows/phase8-restart-state-fix.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase8-shadow-implementation
+          fetch-depth: 0
+      - name: Restore virtual campaign state from append-only evidence
+        shell: bash
+        run: |
+          cat > src/fmp/shadow/state.py <<'PY'
+          from __future__ import annotations
+
+          import json
+          import math
+          from datetime import datetime, timedelta
+          from pathlib import Path
+          from typing import Mapping
+
+          from fmp.contracts import Direction, Position, ScheduledExit
+          from fmp.risk import record_realized_pnl, release_risk, reserve_risk
+
+          from .contracts import FMP_SYMBOL, SLIPPAGE_SCENARIOS, ShadowOutcome
+          from .simulation import ShadowPosition, ShadowSimulator
+
+
+          _SCENARIOS = frozenset(SLIPPAGE_SCENARIOS)
+
+
+          def _parse_utc(value: object, *, field: str) -> datetime:
+              if not isinstance(value, str) or not value.endswith("Z"):
+                  raise ValueError(f"{field} must be a UTC timestamp")
+              try:
+                  parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+              except ValueError as exc:
+                  raise ValueError(f"{field} must be a valid UTC timestamp") from exc
+              if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+                  raise ValueError(f"{field} must use UTC")
+              return parsed
+
+
+          def _finite_number(value: object, *, field: str, positive: bool = False) -> float:
+              if isinstance(value, bool) or not isinstance(value, (int, float)):
+                  raise ValueError(f"{field} must be numeric")
+              numeric = float(value)
+              if not math.isfinite(numeric) or (positive and numeric <= 0):
+                  raise ValueError(f"{field} is invalid")
+              return numeric
+
+
+          def _positive_int(value: object, *, field: str) -> int:
+              if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+                  raise ValueError(f"{field} must be a positive integer")
+              return value
+
+
+          def _mapping(value: object, *, field: str) -> Mapping[str, object]:
+              if not isinstance(value, Mapping):
+                  raise ValueError(f"{field} must be an object")
+              return value
+
+
+          def _parse_shadow_position(value: object, *, scenario: float) -> ShadowPosition:
+              record = _mapping(value, field="position")
+              nested = _mapping(record.get("position"), field="position.position")
+              scheduled = _mapping(record.get("scheduled_exit"), field="position.scheduled_exit")
+              nested_slippage = _finite_number(
+                  record.get("slippage_pips"), field="position.slippage_pips"
+              )
+              if nested_slippage != scenario:
+                  raise ValueError("restored position slippage does not match scenario")
+
+              direction_raw = nested.get("direction")
+              try:
+                  direction = Direction(direction_raw)
+              except (TypeError, ValueError) as exc:
+                  raise ValueError("restored position direction is invalid") from exc
+              if direction not in {Direction.LONG, Direction.SHORT}:
+                  raise ValueError("restored position must be directional")
+              symbol = nested.get("symbol")
+              if symbol != FMP_SYMBOL:
+                  raise ValueError("restored position symbol mismatch")
+              position_id = nested.get("position_id")
+              decision_id = nested.get("decision_id")
+              if not isinstance(position_id, str) or not position_id:
+                  raise ValueError("restored position_id is invalid")
+              if not isinstance(decision_id, str) or not decision_id:
+                  raise ValueError("restored decision_id is invalid")
+              units = _positive_int(nested.get("units"), field="position.units")
+              target_raw = nested.get("target_price")
+              target = (
+                  None
+                  if target_raw is None
+                  else _finite_number(target_raw, field="position.target_price", positive=True)
+              )
+              position = Position(
+                  position_id=position_id,
+                  decision_id=decision_id,
+                  symbol=FMP_SYMBOL,
+                  direction=direction,
+                  units=units,
+                  entry_timestamp_utc=_parse_utc(
+                      nested.get("entry_timestamp_utc"), field="position.entry_timestamp_utc"
+                  ),
+                  entry_reference_price=_finite_number(
+                      nested.get("entry_reference_price"),
+                      field="position.entry_reference_price",
+                      positive=True,
+                  ),
+                  entry_price=_finite_number(
+                      nested.get("entry_price"), field="position.entry_price", positive=True
+                  ),
+                  entry_commission_usd=_finite_number(
+                      nested.get("entry_commission_usd"), field="position.entry_commission_usd"
+                  ),
+                  stop_price=_finite_number(
+                      nested.get("stop_price"), field="position.stop_price", positive=True
+                  ),
+                  target_price=target,
+                  reserved_risk_usd=_finite_number(
+                      nested.get("reserved_risk_usd"),
+                      field="position.reserved_risk_usd",
+                      positive=True,
+                  ),
+              )
+              scheduled_id = scheduled.get("decision_id")
+              scheduled_symbol = scheduled.get("symbol")
+              if scheduled_id != decision_id or scheduled_symbol != FMP_SYMBOL:
+                  raise ValueError("restored scheduled exit identity mismatch")
+              scheduled_exit = ScheduledExit(
+                  decision_id=decision_id,
+                  symbol=FMP_SYMBOL,
+                  timestamp_utc=_parse_utc(
+                      scheduled.get("timestamp_utc"), field="position.scheduled_exit.timestamp_utc"
+                  ),
+              )
+              if scheduled_exit.timestamp_utc <= position.entry_timestamp_utc:
+                  raise ValueError("restored scheduled exit must follow entry")
+              return ShadowPosition(
+                  position=position,
+                  scheduled_exit=scheduled_exit,
+                  slippage_pips=scenario,
+              )
+
+
+          def _scenario_records(campaign_dir: Path):  # type: ignore[no-untyped-def]
+              for segment in sorted(Path(campaign_dir).glob("segment-*")):
+                  if not segment.is_dir():
+                      continue
+                  path = segment / "scenarios.jsonl"
+                  if not path.exists():
+                      continue
+                  for line_number, line in enumerate(
+                      path.read_text(encoding="utf-8").splitlines(), start=1
+                  ):
+                      if not line:
+                          continue
+                      try:
+                          record = json.loads(line)
+                      except json.JSONDecodeError as exc:
+                          raise ValueError(
+                              f"Phase 8 scenario evidence is invalid at {segment.name}:{line_number}"
+                          ) from exc
+                      if not isinstance(record, dict):
+                          raise ValueError("Phase 8 scenario evidence record must be an object")
+                      yield record
+
+
+          def restore_shadow_simulator(campaign_dir: Path) -> ShadowSimulator:
+              simulator = ShadowSimulator()
+              terminal: dict[float, set[str]] = {scenario: set() for scenario in _SCENARIOS}
+
+              for record in _scenario_records(Path(campaign_dir)):
+                  scenario_raw = record.get("slippage_pips")
+                  scenario = _finite_number(scenario_raw, field="slippage_pips")
+                  if scenario not in _SCENARIOS:
+                      raise ValueError("Phase 8 scenario evidence has unsupported slippage")
+                  state = simulator.states[scenario]
+                  event = record.get("event")
+                  decision_id = record.get("decision_id")
+                  if not isinstance(decision_id, str) or not decision_id:
+                      if event == "financial_metrics":
+                          continue
+                      raise ValueError("Phase 8 scenario evidence decision_id is invalid")
+
+                  if event == "position_opened":
+                      if decision_id in terminal[scenario] or decision_id in state.open_positions:
+                          raise ValueError("Phase 8 scenario evidence reopens a completed decision")
+                      shadow_position = _parse_shadow_position(
+                          record.get("position"), scenario=scenario
+                      )
+                      if shadow_position.position.decision_id != decision_id:
+                          raise ValueError("Phase 8 position evidence decision_id mismatch")
+                      state.open_positions[decision_id] = shadow_position
+                      reserve_risk(
+                          state.risk_state,
+                          position_id=shadow_position.position.position_id,
+                          amount_usd=shadow_position.position.reserved_risk_usd,
+                      )
+                      continue
+
+                  if event == "trade_completed":
+                      trade = _mapping(record.get("trade"), field="trade")
+                      if trade.get("decision_id") != decision_id:
+                          raise ValueError("Phase 8 trade evidence decision_id mismatch")
+                      before = _finite_number(
+                          trade.get("risk_equity_before_usd"), field="risk_equity_before_usd"
+                      )
+                      after = _finite_number(
+                          trade.get("risk_equity_after_usd"), field="risk_equity_after_usd"
+                      )
+                      pnl = _finite_number(trade.get("net_pnl_usd"), field="net_pnl_usd")
+                      if not math.isclose(
+                          state.risk_state.risk_equity_usd,
+                          before,
+                          rel_tol=0.0,
+                          abs_tol=1e-9,
+                      ):
+                          raise ValueError("Phase 8 trade evidence risk equity chain mismatch")
+                      existing = state.open_positions.pop(decision_id, None)
+                      if existing is not None:
+                          release_risk(
+                              state.risk_state,
+                              position_id=existing.position.position_id,
+                          )
+                      record_realized_pnl(
+                          state.risk_state,
+                          timestamp_utc=_parse_utc(
+                              trade.get("exit_timestamp_utc"), field="trade.exit_timestamp_utc"
+                          ),
+                          pnl_usd=pnl,
+                          config=state.risk_config,
+                      )
+                      if not math.isclose(
+                          state.risk_state.risk_equity_usd,
+                          after,
+                          rel_tol=0.0,
+                          abs_tol=1e-9,
+                      ):
+                          raise ValueError("Phase 8 trade evidence risk equity result mismatch")
+                      terminal[scenario].add(decision_id)
+                      continue
+
+                  if event == "outcome":
+                      outcome_raw = record.get("outcome")
+                      try:
+                          outcome = ShadowOutcome(outcome_raw)
+                      except (TypeError, ValueError) as exc:
+                          raise ValueError("Phase 8 scenario outcome is invalid") from exc
+                      existing = state.open_positions.pop(decision_id, None)
+                      if existing is not None:
+                          release_risk(
+                              state.risk_state,
+                              position_id=existing.position.position_id,
+                          )
+                      if outcome is not ShadowOutcome.COMPLETED:
+                          terminal[scenario].add(decision_id)
+                      continue
+
+                  if event == "risk_rejection":
+                      terminal[scenario].add(decision_id)
+                      continue
+
+                  if event == "financial_metrics":
+                      continue
+                  raise ValueError("Phase 8 scenario evidence event is unsupported")
+
+              return simulator
+
+
+          __all__ = ["restore_shadow_simulator"]
+          PY
+
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/fmp/shadow/runner.py")
+          text = path.read_text(encoding="utf-8")
+          old = "from .simulation import ShadowSimulator\n"
+          new = "from .simulation import ShadowSimulator\nfrom .state import restore_shadow_simulator\n"
+          if text.count(old) != 1:
+              raise SystemExit("state import anchor mismatch")
+          text = text.replace(old, new)
+
+          old = '''    runner = ShadowRunner(\n        evidence=evidence,\n        processing_monotonic_ns=monotonic_ns,\n    )\n'''
+          new = '''    simulator = restore_shadow_simulator(campaign_dir) if restarted else ShadowSimulator()\n    runner = ShadowRunner(\n        evidence=evidence,\n        simulator=simulator,\n        processing_monotonic_ns=monotonic_ns,\n    )\n'''
+          if text.count(old) != 1:
+              raise SystemExit("live runner anchor mismatch")
+          text = text.replace(old, new)
+
+          old = '__all__ = ["EvidenceSink", "ShadowRunner", "run_live_shadow_capture"]\n'
+          new = '__all__ = ["EvidenceSink", "ShadowRunner", "restore_shadow_simulator", "run_live_shadow_capture"]\n'
+          if text.count(old) != 1:
+              raise SystemExit("runner export anchor mismatch")
+          text = text.replace(old, new)
+          path.write_text(text, encoding="utf-8")
+          PY
+      - name: Commit and push target branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/fmp/shadow/state.py src/fmp/shadow/runner.py
+          git diff --cached --check
+          git commit -m "[phase1-no-source] Restore Phase 8 campaign state on restart"
+          git push origin HEAD:phase8-shadow-implementation
