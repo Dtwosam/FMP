@@ -1,6 +1,6 @@
 # Phase 8 Live Shadow Mode Design
 
-**Status:** APPROVED DESIGN — pending written-spec review, Phase 7 checkpoint creation, source-of-truth activation, and implementation plan  
+**Status:** APPROVED / ACTIVATED — DEC-036; Phase 8 ACTIVE under the frozen design  
 **Date:** 2026-09-15  
 **Repository:** `Dtwosam/FMP`  
 **Phase:** 8 — Live shadow mode  
@@ -526,6 +526,8 @@ GitHub Actions may run source-free unit/replay tests, but the long-running live 
 The software may be restartable; evidence exists only while the operator actually runs it. No assistant/background-service assumption is part of the protocol.
 
 ## 23. Source-of-truth activation before runtime code
+
+**Activation state:** COMPLETED under `DEC-036` after exact checkpoint verification. The activation requirements remain frozen below as the audit trail.
 
 After written-spec approval and after the Phase 7 checkpoint prerequisite is satisfied, activation must:
 

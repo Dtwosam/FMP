@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class Phase7Stage1EvidenceStateTests(unittest.TestCase):
-    def test_stage1_outcome_remains_recorded_after_stage2_closure(self) -> None:
+    def test_stage1_outcome_remains_recorded_after_phase8_activation(self) -> None:
         evidence = (ROOT / "docs/phase7-stage1-evidence.md").read_text(encoding="utf-8")
         decision = (ROOT / "docs/decision-log.md").read_text(encoding="utf-8")
         experiments = (ROOT / "docs/experiment-log.md").read_text(encoding="utf-8")
@@ -23,18 +23,20 @@ class Phase7Stage1EvidenceStateTests(unittest.TestCase):
         self.assertIn("DEC-034 — Phase 7 Stage 1 final-gate outcome", decision)
         self.assertIn("Stage 2 is authorized only for `session_breakout`", decision)
 
-        # The experiment/current-state view legitimately advances after Stage 2.
+        # Phase 7 remains closed while the current project state advances to Phase 8.
         self.assertIn("### EXP-20260915-008 — Phase 7 walk-forward evaluation", experiments)
         self.assertIn("- Status: PASS", experiments)
 
-        self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", state)
-        self.assertIn("**Phase status:** PASS", state)
+        self.assertIn("## Phase 7 — PASS", state)
+        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", state)
         self.assertIn("Stage 2 survivor: `session_breakout`", state)
         self.assertIn("Stage 2 rejected candidate: `volatility_breakout`", state)
         self.assertIn("10414407590", state)
         self.assertIn("PHASE7_PROMOTE_TO_SHADOW_DESIGN", state)
-        self.assertNotIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("Real-money trading: locked", state)
 
 
 if __name__ == "__main__":

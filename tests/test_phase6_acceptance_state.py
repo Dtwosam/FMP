@@ -2,6 +2,8 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+PHASE7_TAG = "fmp-v1-phase7-walk-forward"
+PHASE7_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
 
 # Source-free closure guard for the audited Phase 6 outcome and still-locked later gates.
 class Phase6AcceptanceStateTests(unittest.TestCase):
@@ -14,12 +16,16 @@ class Phase6AcceptanceStateTests(unittest.TestCase):
         self.assertIn("## Phase 6 — PASS", state)
         self.assertIn("DEC-032", state)
         self.assertIn("## Phase 7 — PASS", state)
-        self.assertIn("**Phase status:** PASS", state)
         self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", state)
         self.assertIn("fmp-v1-phase6-models", state)
         self.assertIn("5d387b7ca93d04c498eb04c376e0dd92f1fe1953", state)
+        self.assertIn(PHASE7_TAG, state)
+        self.assertIn(PHASE7_SHA, state)
+        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Phase status:** ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("Phase 9/demo order placement: LOCKED", state)
         self.assertIn("Real-money trading: locked", state)
-        self.assertNotIn("## Phase 8 — ACTIVE", state)
 
         self.assertEqual(
             decision.count("## DEC-032 — Phase 6 statistical / ML filter experiment outcome and acceptance review"),

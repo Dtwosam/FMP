@@ -5,6 +5,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PHASE7_TAG = "fmp-v1-phase7-walk-forward"
+PHASE7_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
 
 
 def read(path: str) -> str:
@@ -65,17 +67,20 @@ class Phase4ResearchStateTests(unittest.TestCase):
 
     def test_project_state_preserves_phase4_pass_and_later_closure(self) -> None:
         text = read("docs/project-state.md")
-        self.assertIn("**Current phase:** Phase 7 — Walk-forward Evaluation", text)
-        self.assertIn("**Phase status:** PASS", text)
         self.assertIn("## Phase 3 — PASS", text)
         self.assertIn("## Phase 4 — PASS", text)
         self.assertIn("## Phase 5 — PASS", text)
         self.assertIn("## Phase 6 — PASS", text)
         self.assertIn("## Phase 7 — PASS", text)
+        self.assertIn(PHASE7_TAG, text)
+        self.assertIn(PHASE7_SHA, text)
         self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", text)
+        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", text)
+        self.assertIn("**Phase status:** ACTIVE", text)
+        self.assertIn("## Phase 8 — ACTIVE", text)
+        self.assertIn("Phase 9/demo order placement: LOCKED", text)
         self.assertIn("Real-money trading: locked", text)
         self.assertIn("DEC-008 remains unchanged", text)
-        self.assertNotIn("## Phase 8 — ACTIVE", text)
 
 
 if __name__ == "__main__":

@@ -131,7 +131,10 @@ def generate_session_breakout_candidates(
     bars: Sequence[QuoteBar],
     *,
     config: SessionBreakoutConfig,
+    require_scheduled_exit_bar: bool = True,
 ) -> tuple[SignalCandidate, ...]:
+    if type(require_scheduled_exit_bar) is not bool:
+        raise TypeError("require_scheduled_exit_bar must be bool")
     if not bars:
         return ()
 
@@ -186,7 +189,7 @@ def generate_session_breakout_candidates(
             )
             continue
 
-        if exit_timestamp not in by_timestamp:
+        if require_scheduled_exit_bar and exit_timestamp not in by_timestamp:
             out.append(
                 _no_trade(
                     symbol=symbol,

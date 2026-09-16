@@ -1011,11 +1011,13 @@ A provider/protocol change requires a design amendment and source-of-truth updat
 Use the exact accepted Phase 2/7 identities and frozen Phase 7 survivor.
 
 ```bash
-python scripts/phase8_shadow.py reference \
+python scripts/phase8_shadow.py build-reference \
+  --dataset-root <accepted-phase2-dataset-root> \
+  --processed-manifest <accepted-usdjpy-processed-manifest> \
   --out evidence/phase8/reference
 ```
 
-The command may use the existing authenticated/canonical historical-data path required to reconstruct the accepted reference, but must not call OANDA candle history.
+Use the accepted/local materialization of the exact Phase 2 USDJPY dataset and processed manifest bound by Task 12. If those artifacts must first be retrieved through the existing authenticated canonical-data path, do that separately; do not call the Phase 1 source or any OANDA candle-history endpoint.
 
 **Step 2: Verify and freeze the reference digest**
 
@@ -1052,10 +1054,10 @@ Never reconstruct unseen path. Invalidate current-day context and any open outco
 **Step 3: Replay every accepted segment offline**
 
 ```bash
-python scripts/phase8_shadow.py replay --campaign-dir evidence/phase8/campaign
+python scripts/phase8_shadow.py replay --segment-dir evidence/phase8/campaign/<segment>
 ```
 
-Any mismatch blocks acceptance and requires defect correction plus fresh valid evidence; retain failed evidence.
+Repeat replay for every finalized accepted segment. Any mismatch blocks acceptance and requires defect correction plus fresh valid evidence; retain failed evidence.
 
 **Step 4: Do not request acceptance review until the minimum sample is real**
 
