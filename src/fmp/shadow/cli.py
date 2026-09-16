@@ -13,6 +13,7 @@ from typing import Any
 
 from .oanda import OandaPracticePricingStream
 from .qualification import QualificationOutcome, qualify_stream
+from .reference import build_and_write_spread_reference
 from .replay import replay_segment
 from .runner import run_live_shadow_capture
 
@@ -39,6 +40,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="replay one captured Phase 8 segment without network access",
     )
     replay.add_argument("--segment-dir", required=True, type=Path)
+    reference = subparsers.add_parser(
+        "build-reference",
+        help="build the frozen Phase 8 historical spread reference offline",
+    )
+    reference.add_argument("--dataset-root", required=True, type=Path)
+    reference.add_argument("--processed-manifest", required=True, type=Path)
+    reference.add_argument("--out", required=True, type=Path)
     return parser
 
 
@@ -79,6 +87,7 @@ def main(
     monotonic_ns: Callable[[], int] | None = None,
     run_command: Callable[..., int] = run_live_shadow_capture,
     replay_command: Callable[[Path], Mapping[str, object]] = replay_segment,
+    reference_command: Callable[..., str] = build_and_write_spread_reference,
     code_commit_resolver: Callable[[], str] = _current_code_commit,
 ) -> int:
     parser = build_parser()
@@ -87,6 +96,15 @@ def main(
     if args.command == "replay":
         result = replay_command(Path(args.segment_dir))
         return 0 if result.get("match") is True else 5
+
+    if args.command == "build-reference":
+        reference_command(
+            dataset_root=Path(args.dataset_root),
+            manifest_path=Path(args.processed_manifest),
+            out_dir=Path(args.out),
+            code_commit=code_commit_resolver(),
+        )
+        return 0
 
     env = os.environ if environ is None else environ
     account_id = env.get(_ACCOUNT_ENV)
