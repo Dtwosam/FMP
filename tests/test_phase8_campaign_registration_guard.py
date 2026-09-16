@@ -46,21 +46,36 @@ class Phase8CampaignRegistrationGuardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "code_commit"):
                 campaign.load_campaign_registration(root, code_commit="e" * 40)
 
-    def test_loader_rejects_tampered_risk_threshold_and_noncanonical_bytes(self) -> None:
+    def test_loader_rejects_tampered_risk_boundary_and_noncanonical_bytes(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._register(root)
             path = root / "registration.json"
             original = json.loads(path.read_text(encoding="utf-8"))
 
-            tampered = dict(original)
-            tampered["risk_policy"] = dict(original["risk_policy"])
-            tampered["risk_policy"]["default_risk_fraction"] = 0.005
-            path.write_text(json.dumps(tampered, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+            tampered_risk = dict(original)
+            tampered_risk["risk_policy"] = dict(original["risk_policy"])
+            tampered_risk["risk_policy"]["default_risk_fraction"] = 0.005
+            path.write_text(
+                json.dumps(tampered_risk, sort_keys=True, separators=(",", ":")) + "\n",
+                encoding="utf-8",
+            )
             with self.assertRaisesRegex(ValueError, "risk_policy"):
                 campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
 
-            path.write_text(json.dumps(original, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            tampered_path = dict(original)
+            tampered_path["path_template"] = "/v3/accounts/{account_id}/orders"
+            path.write_text(
+                json.dumps(tampered_path, sort_keys=True, separators=(",", ":")) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "path_template"):
+                campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
+
+            path.write_text(
+                json.dumps(original, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
             with self.assertRaisesRegex(ValueError, "canonical"):
                 campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
 
