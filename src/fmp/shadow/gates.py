@@ -308,7 +308,11 @@ def load_review_evidence(path: Path) -> Phase8ReviewEvidence:
 
 
 def review_campaign(campaign_dir: Path) -> Phase8ReviewOutcome:
-    evidence = load_review_evidence(Path(campaign_dir) / "review-evidence.json")
+    from .review_compiler import compile_review_evidence
+
+    campaign_dir = Path(campaign_dir)
+    compile_review_evidence(campaign_dir)
+    evidence = load_review_evidence(campaign_dir / "review-evidence.json")
     return evaluate_phase8_review(evidence)
 
 
