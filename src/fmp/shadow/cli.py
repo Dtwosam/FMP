@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from .campaign import register_campaign
+from .gates import Phase8ReviewOutcome, review_campaign
 from .oanda import OandaPracticePricingStream
 from .qualification import QualificationOutcome, qualify_stream
 from .reference import build_and_write_spread_reference
@@ -25,7 +26,7 @@ _TOKEN_ENV = "OANDA_PRACTICE_TOKEN"
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="FMP Phase 8 live-shadow tooling")
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers = parser.add_subpar(dest="command", required=True)
     qualify = subparsers.add_parser(
         "qualify",
         help="run the bounded OANDA Practice quote-source qualification",
@@ -54,6 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     register.add_argument("--reference", required=True, type=Path)
     register.add_argument("--campaign-dir", required=True, type=Path)
+    review = subparsers.add_parser(
+        "review",
+        help="review frozen Phase 8 campaign evidence without network access",
+    )
+    review.add_argument("--campaign-dir", required=True, type=Path)
     return parser
 
 
@@ -96,6 +102,7 @@ def main(
     replay_command: Callable[[Path], Mapping[str, object]] = replay_segment,
     reference_command: Callable[..., str] = build_and_write_spread_reference,
     register_command: Callable[..., Mapping[str, object]] = register_campaign,
+    review_command: Callable[[Path], Phase8ReviewOutcome] = review_campaign,
     code_commit_resolver: Callable[[], str] = _current_code_commit,
 ) -> int:
     parser = build_parser()
@@ -123,6 +130,17 @@ def main(
             campaign_start_utc=now(),
         )
         return 0
+
+    if args.command == "review":
+        outcome = review_command(Path(args.campaign_dir))
+        return {
+            Phase8ReviewOutcome.PASS: 0,
+            Phase8ReviewOutcome.NEED_MORE_DATA: 2,
+            Phase8ReviewOutcome.REJECT_OPERATIONAL: 3,
+            Phase8ReviewOutcome.REJECT_MARKET: 4,
+            Phase8ReviewOutcome.REJECT_FINANCIAL: 5,
+            Phase8ReviewOutcome.REJECT_SAFETY: 6,
+        }[outcome]
 
     env = os.environ if environ is None else environ
     account_id = env.get(_ACCOUNT_ENV)
