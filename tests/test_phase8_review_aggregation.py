@@ -114,9 +114,9 @@ def _trade(*, scenario: float, entry: datetime, exit_: datetime) -> dict[str, ob
         "entry_timestamp_utc": _timestamp(entry),
         "exit_timestamp_utc": _timestamp(exit_),
         "entry_reference_price": 140.003,
-        "exit_reference_price": 140.104,
+        "exit_reference_price": 140.100,
         "entry_price": 140.003 + scenario * 0.01,
-        "exit_price": 140.104 - scenario * 0.01,
+        "exit_price": 140.100 - scenario * 0.01,
         "stop_price": 139.5,
         "target_price": 140.5,
         "exit_reason": "TIME_EXIT",
@@ -347,7 +347,7 @@ class Phase8ReviewAggregationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "digest|hash|manifest"):
                 review_campaign(campaign)
 
-    def test_replay_mismatch_fails_closed_before_scoring(self) -> None:
+    def test_replay_mismatch_records_frozen_safety_rejection(self) -> None:
         with TemporaryDirectory() as tmp:
             _, campaign = _setup_phase8(Path(tmp))
             segment = _verified_segment(campaign)
@@ -355,8 +355,9 @@ class Phase8ReviewAggregationTests(unittest.TestCase):
             replay["match"] = False
             replay["mismatched_files"] = ["scenarios.jsonl"]
             _write_json(segment / "replay.json", replay)
-            with self.assertRaisesRegex(ValueError, "replay"):
-                review_campaign(campaign)
+            self.assertEqual(review_campaign(campaign), Phase8ReviewOutcome.REJECT_SAFETY)
+            evidence = json.loads((campaign / "review-evidence.json").read_text(encoding="utf-8"))
+            self.assertFalse(evidence["replay_identical"])
 
 
 if __name__ == "__main__":
