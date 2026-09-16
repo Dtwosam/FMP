@@ -1,0 +1,40 @@
+name: phase8-review-spread-rounding-fix
+
+on:
+  push:
+    branches:
+      - phase8-activation-helper
+    paths:
+      - .github/workflows/phase8-review-spread-rounding-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase8-shadow-implementation
+          fetch-depth: 0
+      - name: Normalize live spread review precision
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/fmp/shadow/review_compiler.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    return {\n        "median_pips": round(float(median(ordered)), 12),\n        "p95_pips": round(float(ordered[rank - 1]), 12),\n    }\n'''
+          new = '''    return {\n        "median_pips": round(float(median(ordered)), 9),\n        "p95_pips": round(float(ordered[rank - 1]), 9),\n    }\n'''
+          if old not in text:
+              raise SystemExit('expected spread distribution block not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Commit and push target branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/fmp/shadow/review_compiler.py
+          git commit -m "[phase1-no-source] Normalize Phase 8 live spread summaries"
+          git push origin HEAD:phase8-shadow-implementation
