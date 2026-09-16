@@ -498,7 +498,6 @@ def _compile_segments(
             segment,
             code_commit=code_commit,
             qualification_fingerprint=qualification_fingerprint,
-            provider_closures=provider_closures,
         )
         for segment in segment_dirs
     ]
@@ -812,6 +811,7 @@ def compile_review_evidence(campaign_dir: Path) -> dict[str, object]:
             registration=registration,
             code_commit=code_commit,
             qualification_fingerprint=qualification_fingerprint,
+            provider_closures=provider_closures,
         )
     else:
         aggregate = {
