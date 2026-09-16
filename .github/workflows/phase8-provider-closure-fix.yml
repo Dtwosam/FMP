@@ -1,0 +1,274 @@
+name: phase8-provider-closure-fix
+
+on:
+  push:
+    branches:
+      - phase8-activation-helper
+    paths:
+      - .github/workflows/phase8-provider-closure-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase8-shadow-implementation
+          fetch-depth: 0
+      - name: Add durable provider closure ledger and review wiring
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          campaign = Path('src/fmp/shadow/campaign.py')
+          text = campaign.read_text(encoding='utf-8')
+          text = text.replace('import json\n', 'import json\nimport os\n', 1)
+          text = text.replace(
+              'FULL_MARKET_CLOSURE_REASON = "PROVIDER_DOCUMENTED_FULL_MARKET_CLOSURE"\n',
+              'FULL_MARKET_CLOSURE_REASON = "PROVIDER_DOCUMENTED_FULL_MARKET_CLOSURE"\n'
+              'PROVIDER_CLOSURE_PROTOCOL = "fmp-phase8-provider-closure-v1"\n'
+              'PROVIDER_CLOSURE_FILENAME = "provider-closures.jsonl"\n',
+              1,
+          )
+          marker = '\n\ndef denominator_london_dates(\n'
+          if marker not in text:
+              raise SystemExit('campaign denominator marker not found')
+          block = r'''
+
+def _provider_closure_record(closure: ProviderClosure, *, code_commit: str) -> dict[str, object]:
+    return {
+        "protocol": PROVIDER_CLOSURE_PROTOCOL,
+        "code_commit": code_commit,
+        "london_date": closure.london_date.isoformat(),
+        "reason": closure.reason,
+        "documentation": closure.documentation,
+        "recorded_at_utc": _iso_utc(closure.recorded_at_utc),
+    }
+
+
+def load_provider_closures(
+    campaign_dir: Path,
+    *,
+    code_commit: str,
+) -> tuple[ProviderClosure, ...]:
+    registration = load_campaign_registration(Path(campaign_dir), code_commit=code_commit)
+    first_date_raw = registration.get("first_london_date")
+    if not isinstance(first_date_raw, str):
+        raise ValueError("Phase 8 campaign registration first_london_date is invalid")
+    first_date = date.fromisoformat(first_date_raw)
+    path = Path(campaign_dir) / PROVIDER_CLOSURE_FILENAME
+    if not path.exists():
+        return ()
+    try:
+        payload = path.read_bytes()
+    except OSError as exc:
+        raise ValueError("Phase 8 provider closure evidence is unreadable") from exc
+
+    closures: list[ProviderClosure] = []
+    seen_dates: set[date] = set()
+    for line_number, raw in enumerate(payload.splitlines(keepends=True), start=1):
+        try:
+            value = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Phase 8 provider closure evidence is invalid at line {line_number}"
+            ) from exc
+        if not isinstance(value, dict):
+            raise ValueError("Phase 8 provider closure evidence record must be an object")
+        record: dict[str, object] = dict(value)
+        if raw != _canonical_bytes(record):
+            raise ValueError("Phase 8 provider closure evidence must use canonical bytes")
+        expected_keys = {
+            "protocol",
+            "code_commit",
+            "london_date",
+            "reason",
+            "documentation",
+            "recorded_at_utc",
+        }
+        if set(record) != expected_keys:
+            raise ValueError("Phase 8 provider closure evidence fields mismatch")
+        if record.get("protocol") != PROVIDER_CLOSURE_PROTOCOL:
+            raise ValueError("Phase 8 provider closure protocol mismatch")
+        if record.get("code_commit") != code_commit:
+            raise ValueError("Phase 8 provider closure code commit mismatch")
+        london_date_raw = record.get("london_date")
+        if not isinstance(london_date_raw, str):
+            raise ValueError("Phase 8 provider closure London date is invalid")
+        try:
+            london_date = date.fromisoformat(london_date_raw)
+        except ValueError as exc:
+            raise ValueError("Phase 8 provider closure London date is invalid") from exc
+        if london_date.isoformat() != london_date_raw:
+            raise ValueError("Phase 8 provider closure London date must be canonical")
+        if london_date.weekday() >= 5:
+            raise ValueError("provider full-market closure must be a London weekday")
+        if london_date < first_date:
+            raise ValueError("provider full-market closure cannot precede campaign start")
+        recorded_raw = record.get("recorded_at_utc")
+        if not isinstance(recorded_raw, str) or not recorded_raw.endswith("Z"):
+            raise ValueError("Phase 8 provider closure recorded_at_utc is invalid")
+        try:
+            recorded_at = datetime.fromisoformat(recorded_raw[:-1] + "+00:00")
+        except ValueError as exc:
+            raise ValueError("Phase 8 provider closure recorded_at_utc is invalid") from exc
+        _require_utc(recorded_at, field="recorded_at_utc")
+        if _iso_utc(recorded_at) != recorded_raw:
+            raise ValueError("Phase 8 provider closure recorded_at_utc must be canonical")
+        documentation = record.get("documentation")
+        if not isinstance(documentation, str):
+            raise ValueError("Phase 8 provider closure documentation is invalid")
+        closure = ProviderClosure(
+            london_date=london_date,
+            reason=str(record.get("reason")),
+            documentation=documentation,
+            recorded_at_utc=recorded_at,
+        )
+        london_midnight = datetime.combine(
+            closure.london_date, time.min, tzinfo=LONDON
+        ).astimezone(timezone.utc)
+        if closure.recorded_at_utc >= london_midnight:
+            raise ValueError(
+                "provider full-market closure must be recorded before the London date begins"
+            )
+        if closure.london_date in seen_dates:
+            raise ValueError("duplicate provider full-market closure date")
+        seen_dates.add(closure.london_date)
+        closures.append(closure)
+    return tuple(closures)
+
+
+def record_provider_closure(
+    *,
+    campaign_dir: Path,
+    code_commit: str,
+    london_date: date,
+    documentation: str,
+    recorded_at_utc: datetime,
+) -> ProviderClosure:
+    registration = load_campaign_registration(Path(campaign_dir), code_commit=code_commit)
+    if not isinstance(london_date, date) or isinstance(london_date, datetime):
+        raise TypeError("london_date must be a date")
+    if london_date.weekday() >= 5:
+        raise ValueError("provider full-market closure must be a London weekday")
+    first_date_raw = registration.get("first_london_date")
+    if not isinstance(first_date_raw, str):
+        raise ValueError("Phase 8 campaign registration first_london_date is invalid")
+    if london_date < date.fromisoformat(first_date_raw):
+        raise ValueError("provider full-market closure cannot precede campaign start")
+    closure = ProviderClosure(
+        london_date=london_date,
+        reason=FULL_MARKET_CLOSURE_REASON,
+        documentation=documentation,
+        recorded_at_utc=recorded_at_utc,
+    )
+    london_midnight = datetime.combine(
+        closure.london_date, time.min, tzinfo=LONDON
+    ).astimezone(timezone.utc)
+    if closure.recorded_at_utc >= london_midnight:
+        raise ValueError(
+            "provider full-market closure must be recorded before the London date begins"
+        )
+    existing = load_provider_closures(Path(campaign_dir), code_commit=code_commit)
+    if any(item.london_date == closure.london_date for item in existing):
+        raise ValueError("duplicate provider full-market closure date")
+
+    record = _provider_closure_record(closure, code_commit=code_commit)
+    path = Path(campaign_dir) / PROVIDER_CLOSURE_FILENAME
+    with path.open("ab") as handle:
+        handle.write(_canonical_bytes(record))
+        handle.flush()
+        os.fsync(handle.fileno())
+    return closure
+'''
+          text = text.replace(marker, block + marker, 1)
+          text = text.replace(
+              '    "ProviderClosure",\n',
+              '    "ProviderClosure",\n'
+              '    "PROVIDER_CLOSURE_FILENAME",\n'
+              '    "PROVIDER_CLOSURE_PROTOCOL",\n',
+              1,
+          )
+          text = text.replace(
+              '    "load_campaign_registration",\n',
+              '    "load_campaign_registration",\n'
+              '    "load_provider_closures",\n',
+              1,
+          )
+          text = text.replace(
+              '    "register_campaign",\n',
+              '    "record_provider_closure",\n'
+              '    "register_campaign",\n',
+              1,
+          )
+          campaign.write_text(text, encoding='utf-8')
+
+          cli = Path('src/fmp/shadow/cli.py')
+          text = cli.read_text(encoding='utf-8')
+          text = text.replace(
+              'from datetime import datetime, timezone\n',
+              'from datetime import date, datetime, timezone\n',
+              1,
+          )
+          text = text.replace(
+              'from .campaign import register_campaign\n',
+              'from .campaign import record_provider_closure, register_campaign\n',
+              1,
+          )
+          parser_marker = '''    register.add_argument("--reference", required=True, type=Path)\n    register.add_argument("--campaign-dir", required=True, type=Path)\n'''
+          parser_insert = parser_marker + '''    record_closure = subparsers.add_parser(\n        "record-closure",\n        help="record a provider-documented full-market closure before its London date",\n    )\n    record_closure.add_argument("--campaign-dir", required=True, type=Path)\n    record_closure.add_argument("--london-date", required=True, type=date.fromisoformat)\n    record_closure.add_argument("--documentation", required=True)\n'''
+          if parser_marker not in text:
+              raise SystemExit('CLI registration parser marker not found')
+          text = text.replace(parser_marker, parser_insert, 1)
+          text = text.replace(
+              '    register_command: Callable[..., Mapping[str, object]] = register_campaign,\n',
+              '    register_command: Callable[..., Mapping[str, object]] = register_campaign,\n'
+              '    record_closure_command: Callable[..., object] = record_provider_closure,\n',
+              1,
+          )
+          main_marker = '''    if args.command == "review":\n        outcome = review_command(Path(args.campaign_dir))\n'''
+          main_insert = '''    if args.command == "record-closure":\n        now = utc_now or (lambda: datetime.now(timezone.utc))\n        record_closure_command(\n            campaign_dir=Path(args.campaign_dir),\n            code_commit=code_commit_resolver(),\n            london_date=args.london_date,\n            documentation=args.documentation,\n            recorded_at_utc=now(),\n        )\n        return 0\n\n''' + main_marker
+          if main_marker not in text:
+              raise SystemExit('CLI review marker not found')
+          text = text.replace(main_marker, main_insert, 1)
+          cli.write_text(text, encoding='utf-8')
+
+          review = Path('src/fmp/shadow/review_compiler.py')
+          text = review.read_text(encoding='utf-8')
+          text = text.replace(
+              '    load_campaign_registration,\n',
+              '    load_campaign_registration,\n    load_provider_closures,\n',
+              1,
+          )
+          text = text.replace(
+              '    qualification_fingerprint: str | None,\n) -> dict[str, object]:\n',
+              '    qualification_fingerprint: str | None,\n    provider_closures: Sequence[object],\n) -> dict[str, object]:\n',
+              1,
+          )
+          text = text.replace(
+              '        review_cutoff_utc=review_cutoff,\n    )\n',
+              '        review_cutoff_utc=review_cutoff,\n        provider_closures=provider_closures,\n    )\n',
+              1,
+          )
+          caller_marker = '''    segment_dirs = tuple(\n        path for path in sorted(campaign_dir.glob("segment-*")) if path.is_dir()\n    )\n'''
+          caller_insert = '''    provider_closures = load_provider_closures(\n        campaign_dir,\n        code_commit=code_commit,\n    )\n''' + caller_marker
+          if caller_marker not in text:
+              raise SystemExit('review segment marker not found')
+          text = text.replace(caller_marker, caller_insert, 1)
+          text = text.replace(
+              '            qualification_fingerprint=qualification_fingerprint,\n        )\n',
+              '            qualification_fingerprint=qualification_fingerprint,\n            provider_closures=provider_closures,\n        )\n',
+              1,
+          )
+          review.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit and push target branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/fmp/shadow/campaign.py src/fmp/shadow/cli.py src/fmp/shadow/review_compiler.py
+          git commit -m "[phase1-no-source] Persist Phase 8 provider closures"
+          git push origin HEAD:phase8-shadow-implementation
