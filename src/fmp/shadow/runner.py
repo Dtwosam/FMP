@@ -23,6 +23,7 @@ from .evidence import EvidenceWriter
 from .normalization import ProviderMessageError, StreamSegmentNormalizer
 from .oanda import OandaPracticePricingStream, OandaPracticeStreamError, parse_provider_line
 from .simulation import ShadowSimulator
+from .state import restore_shadow_simulator
 from .strategy import ShadowStrategyDecision, generate_shadow_strategy_decisions
 
 
@@ -501,8 +502,10 @@ def run_live_shadow_capture(
         account_fingerprint_sha256=account_fingerprint,
         run_start_utc=start,
     )
+    simulator = restore_shadow_simulator(campaign_dir) if restarted else ShadowSimulator()
     runner = ShadowRunner(
         evidence=evidence,
+        simulator=simulator,
         processing_monotonic_ns=monotonic_ns,
     )
     runner.start(now_utc=start, restarted=restarted)
@@ -530,4 +533,4 @@ def run_live_shadow_capture(
     return 0
 
 
-__all__ = ["EvidenceSink", "ShadowRunner", "run_live_shadow_capture"]
+__all__ = ["EvidenceSink", "ShadowRunner", "restore_shadow_simulator", "run_live_shadow_capture"]
