@@ -20,6 +20,7 @@ from .campaign import (
     _load_reference,
     denominator_london_dates,
     load_campaign_registration,
+    load_provider_closures,
     minimum_review_evidence_met,
 )
 from .contracts import (
@@ -490,12 +491,14 @@ def _compile_segments(
     registration: Mapping[str, object],
     code_commit: str,
     qualification_fingerprint: str | None,
+    provider_closures: Sequence[object],
 ) -> dict[str, object]:
     validated = [
         _validate_segment(
             segment,
             code_commit=code_commit,
             qualification_fingerprint=qualification_fingerprint,
+            provider_closures=provider_closures,
         )
         for segment in segment_dirs
     ]
@@ -574,6 +577,7 @@ def _compile_segments(
     denominator = denominator_london_dates(
         first_london_date=first_date,
         review_cutoff_utc=review_cutoff,
+        provider_closures=provider_closures,
     )
 
     invalid_dates: set[date] = set()
@@ -788,6 +792,10 @@ def compile_review_evidence(campaign_dir: Path) -> dict[str, object]:
         raise ValueError("Phase 8 campaign registration reference digest mismatch")
     qualification_pass, qualification_fingerprint = _qualification(phase8_dir)
 
+    provider_closures = load_provider_closures(
+        campaign_dir,
+        code_commit=code_commit,
+    )
     segment_dirs = tuple(
         path for path in sorted(campaign_dir.glob("segment-*")) if path.is_dir()
     )

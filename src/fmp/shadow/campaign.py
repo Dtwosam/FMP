@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
@@ -31,6 +32,8 @@ from .contracts import (
 
 LONDON = ZoneInfo("Europe/London")
 FULL_MARKET_CLOSURE_REASON = "PROVIDER_DOCUMENTED_FULL_MARKET_CLOSURE"
+PROVIDER_CLOSURE_PROTOCOL = "fmp-phase8-provider-closure-v1"
+PROVIDER_CLOSURE_FILENAME = "provider-closures.jsonl"
 GATING_SLIPPAGE_SCENARIOS = (0.2, 0.5)
 
 MINIMUM_COMPLETED_SCORABLE_TRADES_0P2 = 40
@@ -367,6 +370,153 @@ def load_campaign_registration(
     return record
 
 
+def _provider_closure_record(closure: ProviderClosure, *, code_commit: str) -> dict[str, object]:
+    return {
+        "protocol": PROVIDER_CLOSURE_PROTOCOL,
+        "code_commit": code_commit,
+        "london_date": closure.london_date.isoformat(),
+        "reason": closure.reason,
+        "documentation": closure.documentation,
+        "recorded_at_utc": _iso_utc(closure.recorded_at_utc),
+    }
+
+
+def load_provider_closures(
+    campaign_dir: Path,
+    *,
+    code_commit: str,
+) -> tuple[ProviderClosure, ...]:
+    registration = load_campaign_registration(Path(campaign_dir), code_commit=code_commit)
+    first_date_raw = registration.get("first_london_date")
+    if not isinstance(first_date_raw, str):
+        raise ValueError("Phase 8 campaign registration first_london_date is invalid")
+    first_date = date.fromisoformat(first_date_raw)
+    path = Path(campaign_dir) / PROVIDER_CLOSURE_FILENAME
+    if not path.exists():
+        return ()
+    try:
+        payload = path.read_bytes()
+    except OSError as exc:
+        raise ValueError("Phase 8 provider closure evidence is unreadable") from exc
+
+    closures: list[ProviderClosure] = []
+    seen_dates: set[date] = set()
+    for line_number, raw in enumerate(payload.splitlines(keepends=True), start=1):
+        try:
+            value = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Phase 8 provider closure evidence is invalid at line {line_number}"
+            ) from exc
+        if not isinstance(value, dict):
+            raise ValueError("Phase 8 provider closure evidence record must be an object")
+        record: dict[str, object] = dict(value)
+        if raw != _canonical_bytes(record):
+            raise ValueError("Phase 8 provider closure evidence must use canonical bytes")
+        expected_keys = {
+            "protocol",
+            "code_commit",
+            "london_date",
+            "reason",
+            "documentation",
+            "recorded_at_utc",
+        }
+        if set(record) != expected_keys:
+            raise ValueError("Phase 8 provider closure evidence fields mismatch")
+        if record.get("protocol") != PROVIDER_CLOSURE_PROTOCOL:
+            raise ValueError("Phase 8 provider closure protocol mismatch")
+        if record.get("code_commit") != code_commit:
+            raise ValueError("Phase 8 provider closure code commit mismatch")
+        london_date_raw = record.get("london_date")
+        if not isinstance(london_date_raw, str):
+            raise ValueError("Phase 8 provider closure London date is invalid")
+        try:
+            london_date = date.fromisoformat(london_date_raw)
+        except ValueError as exc:
+            raise ValueError("Phase 8 provider closure London date is invalid") from exc
+        if london_date.isoformat() != london_date_raw:
+            raise ValueError("Phase 8 provider closure London date must be canonical")
+        if london_date.weekday() >= 5:
+            raise ValueError("provider full-market closure must be a London weekday")
+        if london_date < first_date:
+            raise ValueError("provider full-market closure cannot precede campaign start")
+        recorded_raw = record.get("recorded_at_utc")
+        if not isinstance(recorded_raw, str) or not recorded_raw.endswith("Z"):
+            raise ValueError("Phase 8 provider closure recorded_at_utc is invalid")
+        try:
+            recorded_at = datetime.fromisoformat(recorded_raw[:-1] + "+00:00")
+        except ValueError as exc:
+            raise ValueError("Phase 8 provider closure recorded_at_utc is invalid") from exc
+        _require_utc(recorded_at, field="recorded_at_utc")
+        if _iso_utc(recorded_at) != recorded_raw:
+            raise ValueError("Phase 8 provider closure recorded_at_utc must be canonical")
+        documentation = record.get("documentation")
+        if not isinstance(documentation, str):
+            raise ValueError("Phase 8 provider closure documentation is invalid")
+        closure = ProviderClosure(
+            london_date=london_date,
+            reason=str(record.get("reason")),
+            documentation=documentation,
+            recorded_at_utc=recorded_at,
+        )
+        london_midnight = datetime.combine(
+            closure.london_date, time.min, tzinfo=LONDON
+        ).astimezone(timezone.utc)
+        if closure.recorded_at_utc >= london_midnight:
+            raise ValueError(
+                "provider full-market closure must be recorded before the London date begins"
+            )
+        if closure.london_date in seen_dates:
+            raise ValueError("duplicate provider full-market closure date")
+        seen_dates.add(closure.london_date)
+        closures.append(closure)
+    return tuple(closures)
+
+
+def record_provider_closure(
+    *,
+    campaign_dir: Path,
+    code_commit: str,
+    london_date: date,
+    documentation: str,
+    recorded_at_utc: datetime,
+) -> ProviderClosure:
+    registration = load_campaign_registration(Path(campaign_dir), code_commit=code_commit)
+    if not isinstance(london_date, date) or isinstance(london_date, datetime):
+        raise TypeError("london_date must be a date")
+    if london_date.weekday() >= 5:
+        raise ValueError("provider full-market closure must be a London weekday")
+    first_date_raw = registration.get("first_london_date")
+    if not isinstance(first_date_raw, str):
+        raise ValueError("Phase 8 campaign registration first_london_date is invalid")
+    if london_date < date.fromisoformat(first_date_raw):
+        raise ValueError("provider full-market closure cannot precede campaign start")
+    closure = ProviderClosure(
+        london_date=london_date,
+        reason=FULL_MARKET_CLOSURE_REASON,
+        documentation=documentation,
+        recorded_at_utc=recorded_at_utc,
+    )
+    london_midnight = datetime.combine(
+        closure.london_date, time.min, tzinfo=LONDON
+    ).astimezone(timezone.utc)
+    if closure.recorded_at_utc >= london_midnight:
+        raise ValueError(
+            "provider full-market closure must be recorded before the London date begins"
+        )
+    existing = load_provider_closures(Path(campaign_dir), code_commit=code_commit)
+    if any(item.london_date == closure.london_date for item in existing):
+        raise ValueError("duplicate provider full-market closure date")
+
+    record = _provider_closure_record(closure, code_commit=code_commit)
+    path = Path(campaign_dir) / PROVIDER_CLOSURE_FILENAME
+    with path.open("ab") as handle:
+        handle.write(_canonical_bytes(record))
+        handle.flush()
+        os.fsync(handle.fileno())
+    return closure
+
+
 def denominator_london_dates(
     *,
     first_london_date: date,
@@ -423,9 +573,13 @@ __all__ = [
     "FULL_MARKET_CLOSURE_REASON",
     "GATING_SLIPPAGE_SCENARIOS",
     "ProviderClosure",
+    "PROVIDER_CLOSURE_FILENAME",
+    "PROVIDER_CLOSURE_PROTOCOL",
     "acceptance_thresholds",
     "denominator_london_dates",
     "load_campaign_registration",
+    "load_provider_closures",
     "minimum_review_evidence_met",
+    "record_provider_closure",
     "register_campaign",
 ]

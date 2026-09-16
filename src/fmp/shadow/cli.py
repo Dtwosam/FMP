@@ -7,11 +7,11 @@ import os
 import subprocess
 import time
 from collections.abc import Callable, Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .campaign import register_campaign
+from .campaign import record_provider_closure, register_campaign
 from .gates import Phase8ReviewOutcome, review_campaign
 from .oanda import OandaPracticePricingStream
 from .qualification import QualificationOutcome, qualify_stream
@@ -55,6 +55,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     register.add_argument("--reference", required=True, type=Path)
     register.add_argument("--campaign-dir", required=True, type=Path)
+    record_closure = subparsers.add_parser(
+        "record-closure",
+        help="record a provider-documented full-market closure before its London date",
+    )
+    record_closure.add_argument("--campaign-dir", required=True, type=Path)
+    record_closure.add_argument("--london-date", required=True, type=date.fromisoformat)
+    record_closure.add_argument("--documentation", required=True)
     review = subparsers.add_parser(
         "review",
         help="review frozen Phase 8 campaign evidence without network access",
@@ -102,6 +109,7 @@ def main(
     replay_command: Callable[[Path], Mapping[str, object]] = replay_segment,
     reference_command: Callable[..., str] = build_and_write_spread_reference,
     register_command: Callable[..., Mapping[str, object]] = register_campaign,
+    record_closure_command: Callable[..., object] = record_provider_closure,
     review_command: Callable[[Path], Phase8ReviewOutcome] = review_campaign,
     code_commit_resolver: Callable[[], str] = _current_code_commit,
 ) -> int:
@@ -128,6 +136,17 @@ def main(
             campaign_dir=Path(args.campaign_dir),
             code_commit=code_commit_resolver(),
             campaign_start_utc=now(),
+        )
+        return 0
+
+    if args.command == "record-closure":
+        now = utc_now or (lambda: datetime.now(timezone.utc))
+        record_closure_command(
+            campaign_dir=Path(args.campaign_dir),
+            code_commit=code_commit_resolver(),
+            london_date=args.london_date,
+            documentation=args.documentation,
+            recorded_at_utc=now(),
         )
         return 0
 
