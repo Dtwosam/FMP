@@ -4,7 +4,7 @@ import inspect
 from datetime import datetime, timezone
 import unittest
 
-from fmp.shadow.runner import ShadowRunner
+from fmp.shadow.runner import ShadowRunner, run_live_shadow_capture
 
 
 UTC = timezone.utc
@@ -75,6 +75,10 @@ class Phase8ProcessingLatencyEvidenceTests(unittest.TestCase):
         self.assertEqual(latency[0]["receive_monotonic_ns"], 1_000_000_000)
         self.assertEqual(latency[0]["append_completed_monotonic_ns"], 1_250_000_000)
         self.assertEqual(latency[0]["processing_latency_ms"], 250.0)
+
+    def test_live_capture_uses_same_segment_monotonic_clock_for_latency_completion(self) -> None:
+        source = inspect.getsource(run_live_shadow_capture)
+        self.assertIn("processing_monotonic_ns=monotonic_ns", source)
 
 
 if __name__ == "__main__":
