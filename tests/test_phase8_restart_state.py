@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -195,6 +196,11 @@ class Phase8RestartStateTests(unittest.TestCase):
                 self.assertEqual(set(state.outcomes.values()), {ShadowOutcome.OUTCOME_UNKNOWN_AFTER_GAP})
             outcomes = [item for item in evidence.scenarios if item.get("event") == "outcome"]
             self.assertEqual(len(outcomes), 3)
+
+    def test_live_capture_uses_restored_simulator_when_prior_segments_exist(self) -> None:
+        source = inspect.getsource(runner_module.run_live_shadow_capture)
+        self.assertIn("restore_shadow_simulator(campaign_dir) if restarted", source)
+        self.assertIn("simulator=simulator", source)
 
 
 if __name__ == "__main__":
