@@ -1054,7 +1054,7 @@ Never reconstruct unseen path. Invalidate current-day context and any open outco
 **Step 3: Replay every accepted segment offline**
 
 ```bash
-python scripts/phase8_shadow.py replay --campaign-dir evidence/phase8/campaign
+python scripts/phase8_shadow.py replay --segment-dir evidence/phase8/campaign/<segment>
 ```
 
 Repeat replay for every finalized accepted segment. Any mismatch blocks acceptance and requires defect correction plus fresh valid evidence; retain failed evidence.
