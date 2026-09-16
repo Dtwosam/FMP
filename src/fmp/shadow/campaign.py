@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
@@ -276,9 +275,12 @@ def denominator_london_dates(
     if not isinstance(first_london_date, date) or isinstance(first_london_date, datetime):
         raise TypeError("first_london_date must be a date")
     _require_utc(review_cutoff_utc, field="review_cutoff_utc")
-    cutoff_date = review_cutoff_utc.astimezone(LONDON).date()
+    local_cutoff = review_cutoff_utc.astimezone(LONDON)
+    cutoff_date = local_cutoff.date()
+    if local_cutoff.time() == time.min:
+        cutoff_date -= timedelta(days=1)
     if cutoff_date < first_london_date:
-        raise ValueError("review cutoff precedes registered campaign start")
+        return ()
 
     excluded: set[date] = set()
     for closure in provider_closures:
