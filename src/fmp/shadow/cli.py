@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .campaign import register_campaign
 from .oanda import OandaPracticePricingStream
 from .qualification import QualificationOutcome, qualify_stream
 from .reference import build_and_write_spread_reference
@@ -47,6 +48,12 @@ def build_parser() -> argparse.ArgumentParser:
     reference.add_argument("--dataset-root", required=True, type=Path)
     reference.add_argument("--processed-manifest", required=True, type=Path)
     reference.add_argument("--out", required=True, type=Path)
+    register = subparsers.add_parser(
+        "register",
+        help="register the immutable Phase 8 live-shadow campaign boundary",
+    )
+    register.add_argument("--reference", required=True, type=Path)
+    register.add_argument("--campaign-dir", required=True, type=Path)
     return parser
 
 
@@ -88,6 +95,7 @@ def main(
     run_command: Callable[..., int] = run_live_shadow_capture,
     replay_command: Callable[[Path], Mapping[str, object]] = replay_segment,
     reference_command: Callable[..., str] = build_and_write_spread_reference,
+    register_command: Callable[..., Mapping[str, object]] = register_campaign,
     code_commit_resolver: Callable[[], str] = _current_code_commit,
 ) -> int:
     parser = build_parser()
@@ -103,6 +111,16 @@ def main(
             manifest_path=Path(args.processed_manifest),
             out_dir=Path(args.out),
             code_commit=code_commit_resolver(),
+        )
+        return 0
+
+    if args.command == "register":
+        now = utc_now or (lambda: datetime.now(timezone.utc))
+        register_command(
+            reference_dir=Path(args.reference),
+            campaign_dir=Path(args.campaign_dir),
+            code_commit=code_commit_resolver(),
+            campaign_start_utc=now(),
         )
         return 0
 
