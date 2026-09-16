@@ -26,7 +26,7 @@ _TOKEN_ENV = "OANDA_PRACTICE_TOKEN"
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="FMP Phase 8 live-shadow tooling")
-    subparsers = parser.add_subpar(dest="command", required=True)
+    subparsers = parser.add_subparsers(dest="command", required=True)
     qualify = subparsers.add_parser(
         "qualify",
         help="run the bounded OANDA Practice quote-source qualification",
