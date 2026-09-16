@@ -19,49 +19,24 @@ jobs:
           ref: phase8-shadow-implementation
           fetch-depth: 0
 
-      - name: Patch operator handoff commands exactly
+      - name: Patch replay handoff command exactly
         run: |
           python - <<'PY'
           from pathlib import Path
 
           path = Path('docs/superpowers/plans/2026-09-15-phase8-live-shadow.md')
           text = path.read_text(encoding='utf-8')
-
-          old_reference = '''```bash
-          python scripts/phase8_shadow.py reference \\
-            --out evidence/phase8/reference
-          ```'''.replace('          ', '')
-          new_reference = '''```bash
-          python scripts/phase8_shadow.py build-reference \\
-            --dataset-root <accepted-phase2-dataset-root> \\
-            --processed-manifest <accepted-usdjpy-processed-manifest> \\
-            --out evidence/phase8/reference
-          ```'''.replace('          ', '')
-
-          old_replay = '''```bash
-          python scripts/phase8_shadow.py replay --campaign-dir evidence/phase8/campaign
-          ```'''.replace('          ', '')
-          new_replay = '''```bash
-          python scripts/phase8_shadow.py replay --segment-dir evidence/phase8/campaign/<segment>
-          ```'''.replace('          ', '')
-
-          if text.count(old_reference) != 1:
-              raise SystemExit('expected exactly one stale Task 18 reference command')
-          if text.count(old_replay) != 1:
-              raise SystemExit('expected exactly one stale Task 19 replay command')
-
-          text = text.replace(old_reference, new_reference)
-          text = text.replace(
-              'The command may use the existing authenticated/canonical historical-data path required to reconstruct the accepted reference, but must not call OANDA candle history.',
-              'Use the accepted/local materialization of the exact Phase 2 USDJPY dataset and processed manifest bound by Task 12. If those artifacts must first be retrieved through the existing authenticated canonical-data path, do that separately; do not call the Phase 1 source or any OANDA candle-history endpoint.'
-          )
-          text = text.replace(
-              'Any mismatch blocks acceptance and requires defect correction plus fresh valid evidence; retain failed evidence.',
-              'Repeat replay for every finalized accepted segment. Any mismatch blocks acceptance and requires defect correction plus fresh valid evidence; retain failed evidence.'
-          )
+          old = 'python scripts/phase8_shadow.py replay --campaign-dir evidence/phase8/campaign'
+          new = 'python scripts/phase8_shadow.py replay --segment-dir evidence/phase8/campaign/<segment>'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one stale replay command, found {text.count(old)}')
+          if new in text:
+              raise SystemExit('segment replay command already present before patch')
+          text = text.replace(old, new)
+          if old in text or text.count(new) != 1:
+              raise SystemExit('replay command replacement did not converge exactly')
           path.write_text(text, encoding='utf-8')
           PY
-
           git diff --check
           git diff -- docs/superpowers/plans/2026-09-15-phase8-live-shadow.md
 
@@ -70,5 +45,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/superpowers/plans/2026-09-15-phase8-live-shadow.md
-          git commit -m "[phase1-no-source] Align Phase 8 operator handoff commands"
+          git commit -m "[phase1-no-source] Fix Phase 8 segment replay handoff"
           git push origin HEAD:phase8-shadow-implementation
