@@ -244,8 +244,8 @@ def _distribution(values: Sequence[float]) -> dict[str, float]:
     ordered = sorted(float(value) for value in values)
     rank = max(1, math.ceil(0.95 * len(ordered)))
     return {
-        "median_pips": round(float(median(ordered)), 12),
-        "p95_pips": round(float(ordered[rank - 1]), 12),
+        "median_pips": round(float(median(ordered)), 9),
+        "p95_pips": round(float(ordered[rank - 1]), 9),
     }
 
 
