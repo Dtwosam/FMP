@@ -70,11 +70,13 @@ class ShadowRunner:
         strategy_adapter: Callable[
             [tuple[QuoteBar, ...]], tuple[ShadowStrategyDecision, ...]
         ] = generate_shadow_strategy_decisions,
+        processing_monotonic_ns: Callable[[], int] | None = None,
     ) -> None:
         self.evidence = evidence
         self.bar_builder = bar_builder or LiveBarBuilder()
         self.simulator = simulator or ShadowSimulator()
         self.strategy_adapter = strategy_adapter
+        self._processing_monotonic_ns = processing_monotonic_ns
         self.normalizer = StreamSegmentNormalizer()
         self.ineligible_london_dates: set[date] = set()
         self.stale = False
@@ -218,6 +220,27 @@ class ShadowRunner:
             receive_monotonic_ns=receive_monotonic_ns,
         )
         self.evidence.append_normalized(event)
+        if self._processing_monotonic_ns is not None:
+            append_completed_monotonic_ns = self._processing_monotonic_ns()
+            if (
+                isinstance(append_completed_monotonic_ns, bool)
+                or not isinstance(append_completed_monotonic_ns, int)
+                or append_completed_monotonic_ns < receive_monotonic_ns
+            ):
+                raise ValueError("normalized append completion monotonic time is invalid")
+            self.evidence.append_operational(
+                {
+                    "event": "normalized_append_latency",
+                    "timestamp_utc": received_at_utc,
+                    "source_time_utc": event.source_time_utc,
+                    "receive_monotonic_ns": receive_monotonic_ns,
+                    "append_completed_monotonic_ns": append_completed_monotonic_ns,
+                    "processing_latency_ms": (
+                        append_completed_monotonic_ns - receive_monotonic_ns
+                    )
+                    / 1_000_000,
+                }
+            )
 
         if self.stale:
             self.stale = False
@@ -478,7 +501,10 @@ def run_live_shadow_capture(
         account_fingerprint_sha256=account_fingerprint,
         run_start_utc=start,
     )
-    runner = ShadowRunner(evidence=evidence)
+    runner = ShadowRunner(
+        evidence=evidence,
+        processing_monotonic_ns=monotonic_ns,
+    )
     runner.start(now_utc=start, restarted=restarted)
     stream = stream_factory(account_id=account_id, token=token)
 
