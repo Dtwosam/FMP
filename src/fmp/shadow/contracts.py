@@ -8,10 +8,20 @@ from enum import Enum
 from fmp.contracts import Decision, Direction, ScheduledExit
 
 
-PHASE8_EXPERIMENT_ID = "EXP-20260915-009"
+PHASE8_EXPERIMENT_ID = "EXP-20260917-010"
 PHASE7_CHECKPOINT_TAG = "fmp-v1-phase7-walk-forward"
 PHASE7_CHECKPOINT_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
 
+MT5_BRIDGE_PROTOCOL = "fmp-mt5-demo-file-bridge-v1"
+MT5_PROVIDER = "FP_MARKETS_MT5_DEMO"
+MT5_TRANSPORT = "MT5_FILE_COMMON_JSONL"
+MT5_BRIDGE_FILE = "FMP/phase8-usdjpy-feed.jsonl"
+MT5_ALLOWED_SERVERS = ("FPMarketsSC-Demo", "FPMarketsSC-Demo2")
+
+# Retained temporarily for the legacy OANDA implementation while the amended
+# MT5 bridge is introduced task-by-task. Active OANDA runtime surfaces are
+# retired later in the implementation plan rather than during this identity-only
+# contract change.
 PRACTICE_STREAM_HOST = "stream-fxpractice.oanda.com"
 PRACTICE_STREAM_PATH_TEMPLATE = "/v3/accounts/{account_id}/pricing/stream"
 PROVIDER_INSTRUMENT = "USD_JPY"
@@ -130,6 +140,11 @@ __all__ = [
     "FMP_SYMBOL",
     "HeartbeatEvent",
     "LIVENESS_TIMEOUT_SECONDS",
+    "MT5_ALLOWED_SERVERS",
+    "MT5_BRIDGE_FILE",
+    "MT5_BRIDGE_PROTOCOL",
+    "MT5_PROVIDER",
+    "MT5_TRANSPORT",
     "NormalizedQuote",
     "PHASE7_CHECKPOINT_SHA",
     "PHASE7_CHECKPOINT_TAG",
