@@ -1,0 +1,129 @@
+name: phase8-task9-capture-patch
+
+on:
+  push:
+    branches: [phase8-mt5-bridge-amendment]
+    paths:
+      - '.github/workflows/phase8-task9-capture-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-capture:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase8-mt5-bridge-amendment
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Patch MT5 live capture
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/fmp/shadow/runner.py')
+          source = path.read_text(encoding='utf-8')
+          source = source.replace(
+              '    BridgeHeartbeatRecord,\n    BridgeProtocolError,',
+              '    BridgeFileTail,\n    BridgeHeartbeatRecord,\n    BridgeProtocolError,',
+          )
+          start = source.index('def run_live_shadow_capture(\n')
+          end = source.index('\n\n__all__ =', start)
+          replacement = '''def run_live_shadow_capture(
+              *,
+              bridge_tail: BridgeFileTail,
+              campaign_dir: Path,
+              code_commit: str,
+              utc_now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
+              monotonic_ns: Callable[[], int] = time.monotonic_ns,
+              sleep: Callable[[float], None] = time.sleep,
+          ) -> int:
+              campaign_dir = Path(campaign_dir)
+              load_campaign_registration(campaign_dir, code_commit=code_commit)
+
+              start = utc_now()
+              _require_utc(start, field_name="run_start_utc")
+              restarted = any(path.is_dir() for path in campaign_dir.glob("segment-*"))
+              segment_name = start.strftime("segment-%Y%m%dT%H%M%S.%fZ")
+              segment_dir = campaign_dir / segment_name
+              bridge_start = bridge_tail.start_record
+              evidence = EvidenceWriter(
+                  segment_dir,
+                  code_commit=code_commit,
+                  bridge_source_commit=code_commit,
+                  bridge_session_id=bridge_start.bridge_session_id,
+                  server=bridge_start.server,
+                  account_fingerprint_sha256=bridge_start.account_fingerprint,
+                  run_start_utc=start,
+              )
+              simulator = restore_shadow_simulator(campaign_dir) if restarted else ShadowSimulator()
+              runner = ShadowRunner(
+                  evidence=evidence,
+                  simulator=simulator,
+                  processing_monotonic_ns=monotonic_ns,
+              )
+              runner.start(now_utc=start, restarted=restarted)
+              runner.process_bridge_record(
+                  bridge_start,
+                  received_at_utc=start,
+                  receive_monotonic_ns=monotonic_ns(),
+              )
+
+              try:
+                  while True:
+                      records = bridge_tail.read_available()
+                      if not records:
+                          now = utc_now()
+                          runner.check_liveness(
+                              now_utc=now,
+                              now_monotonic_ns=monotonic_ns(),
+                          )
+                          sleep(0.05)
+                          continue
+                      for record in records:
+                          received_at = utc_now()
+                          runner.process_bridge_record(
+                              record,
+                              received_at_utc=received_at,
+                              receive_monotonic_ns=monotonic_ns(),
+                          )
+              except KeyboardInterrupt:
+                  runner.disconnect(now_utc=utc_now(), reason="operator_stop")
+                  return 0
+              except BridgeProtocolError:
+                  now = utc_now()
+                  runner.disconnect(now_utc=now, reason="bridge_failed")
+                  return 4
+              except (OSError, ValueError, TypeError):
+                  now = utc_now()
+                  runner.evidence.append_operational(
+                      {
+                          "event": "rejection",
+                          "timestamp_utc": now,
+                          "reason": "bridge_capture_failed",
+                      }
+                  )
+                  runner.disconnect(now_utc=now, reason="bridge_failed")
+                  return 4
+          '''
+          source = source[:start] + replacement + source[end:]
+          path.write_text(source, encoding='utf-8')
+          PY
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Run focused capture tests
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -p 'test_phase8_mt5_capture.py' -v
+      - name: Commit implementation and remove one-shot workflow
+        run: |
+          rm .github/workflows/phase8-task9-capture-patch.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/fmp/shadow/runner.py .github/workflows/phase8-task9-capture-patch.yml
+          git commit -m '[phase1-no-source] Capture Phase 8 from MT5 bridge tail'
+          git push origin HEAD:phase8-mt5-bridge-amendment
