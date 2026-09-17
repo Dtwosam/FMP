@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import time
+from dataclasses import asdict
 from collections.abc import Callable, Mapping
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -20,6 +21,14 @@ from .contracts import (
     STARTING_EQUITY_USD,
 )
 from .evidence import EvidenceWriter
+from .mt5_bridge import (
+    BridgeHeartbeatRecord,
+    BridgeProtocolError,
+    BridgeRecord,
+    BridgeSessionValidator,
+    BridgeStartRecord,
+    BridgeTickRecord,
+)
 from .normalization import ProviderMessageError, StreamSegmentNormalizer
 from .oanda import OandaPracticePricingStream, OandaPracticeStreamError, parse_provider_line
 from .simulation import ShadowSimulator
@@ -79,6 +88,11 @@ class ShadowRunner:
         self.strategy_adapter = strategy_adapter
         self._processing_monotonic_ns = processing_monotonic_ns
         self.normalizer = StreamSegmentNormalizer()
+        self.bridge_validator = BridgeSessionValidator()
+        self._bridge_last_monotonic_ns: int | None = None
+        self._market_last_monotonic_ns: int | None = None
+        self._bridge_start_received_at_utc: datetime | None = None
+        self._last_market_source_time: datetime | None = None
         self.ineligible_london_dates: set[date] = set()
         self.stale = False
         self._started = False
@@ -220,6 +234,21 @@ class ShadowRunner:
             received_at_utc=received_at_utc,
             receive_monotonic_ns=receive_monotonic_ns,
         )
+        self._process_normalized_event(
+            event,
+            received_at_utc=received_at_utc,
+            receive_monotonic_ns=receive_monotonic_ns,
+            update_legacy_liveness=True,
+        )
+
+    def _process_normalized_event(
+        self,
+        event: NormalizedQuote | HeartbeatEvent,
+        *,
+        received_at_utc: datetime,
+        receive_monotonic_ns: int,
+        update_legacy_liveness: bool,
+    ) -> None:
         self.evidence.append_normalized(event)
         if self._processing_monotonic_ns is not None:
             append_completed_monotonic_ns = self._processing_monotonic_ns()
@@ -249,9 +278,10 @@ class ShadowRunner:
                 {"event": "recovered", "timestamp_utc": received_at_utc}
             )
 
-        self._last_valid_source_time = event.source_time_utc
-        self._last_valid_received_at = received_at_utc
-        self._last_valid_monotonic_ns = receive_monotonic_ns
+        if update_legacy_liveness:
+            self._last_valid_source_time = event.source_time_utc
+            self._last_valid_received_at = received_at_utc
+            self._last_valid_monotonic_ns = receive_monotonic_ns
 
         if isinstance(event, NormalizedQuote):
             completed = self.bar_builder.on_quote(event)
@@ -268,6 +298,104 @@ class ShadowRunner:
             self.simulator.on_time_advance(event.source_time_utc)
         self._record_scenario_changes()
 
+    def process_bridge_record(
+        self,
+        record: BridgeRecord,
+        *,
+        received_at_utc: datetime,
+        receive_monotonic_ns: int,
+    ) -> None:
+        if not self._started:
+            raise RuntimeError("Phase 8 shadow runner is not started")
+        _require_utc(received_at_utc, field_name="received_at_utc")
+        if (
+            isinstance(receive_monotonic_ns, bool)
+            or not isinstance(receive_monotonic_ns, int)
+            or receive_monotonic_ns < 0
+        ):
+            raise ValueError("receive_monotonic_ns must be a non-negative integer")
+
+        raw = asdict(record)
+        try:
+            event = self.bridge_validator.accept(
+                record,
+                received_at_utc=received_at_utc,
+                receive_monotonic_ns=receive_monotonic_ns,
+            )
+        except (BridgeProtocolError, TypeError):
+            self.evidence.append_operational(
+                {
+                    "event": "rejection",
+                    "timestamp_utc": received_at_utc,
+                    "reason": "bridge_record_rejected",
+                }
+            )
+            raise
+
+        self.evidence.append_raw(
+            raw,
+            received_at_utc=received_at_utc,
+            receive_monotonic_ns=receive_monotonic_ns,
+        )
+
+        if isinstance(record, BridgeStartRecord):
+            self._bridge_last_monotonic_ns = receive_monotonic_ns
+            self._market_last_monotonic_ns = receive_monotonic_ns
+            self._bridge_start_received_at_utc = received_at_utc
+            self._last_market_source_time = None
+            return
+
+        if self._bridge_last_monotonic_ns is None or self._market_last_monotonic_ns is None:
+            raise BridgeProtocolError("bridge record received before BRIDGE_START binding")
+
+        bridge_gap_ns = receive_monotonic_ns - self._bridge_last_monotonic_ns
+        market_gap_ns = receive_monotonic_ns - self._market_last_monotonic_ns
+        if bridge_gap_ns < 0 or market_gap_ns < 0:
+            raise ValueError("receive monotonic time regressed")
+
+        gap_start = (
+            self._last_market_source_time
+            or self._bridge_start_received_at_utc
+            or received_at_utc
+        )
+        if not self.stale and bridge_gap_ns >= _LIVENESS_TIMEOUT_NS:
+            self._mark_stale(
+                start_utc=gap_start,
+                end_utc=received_at_utc,
+                detected_at_utc=received_at_utc,
+                liveness_reason="bridge",
+            )
+        elif not self.stale and market_gap_ns >= _LIVENESS_TIMEOUT_NS:
+            self._mark_stale(
+                start_utc=gap_start,
+                end_utc=(
+                    event.source_time_utc
+                    if isinstance(event, NormalizedQuote)
+                    else received_at_utc
+                ),
+                detected_at_utc=received_at_utc,
+                liveness_reason="market",
+            )
+
+        self._bridge_last_monotonic_ns = receive_monotonic_ns
+        if isinstance(record, BridgeHeartbeatRecord):
+            return
+        if not isinstance(record, BridgeTickRecord):
+            raise TypeError("unsupported MT5 bridge record")
+        if event is None:
+            return
+        if not isinstance(event, NormalizedQuote):
+            raise TypeError("MT5 bridge tick did not normalize to a quote")
+
+        self._market_last_monotonic_ns = receive_monotonic_ns
+        self._last_market_source_time = event.source_time_utc
+        self._process_normalized_event(
+            event,
+            received_at_utc=received_at_utc,
+            receive_monotonic_ns=receive_monotonic_ns,
+            update_legacy_liveness=False,
+        )
+
     def check_liveness(
         self,
         *,
@@ -281,6 +409,36 @@ class ShadowRunner:
             or now_monotonic_ns < 0
         ):
             raise ValueError("now_monotonic_ns must be a non-negative integer")
+        if self._bridge_last_monotonic_ns is not None:
+            if self.stale:
+                return True
+            if self._market_last_monotonic_ns is None:
+                raise RuntimeError("MT5 bridge market liveness baseline is missing")
+            bridge_gap_ns = now_monotonic_ns - self._bridge_last_monotonic_ns
+            market_gap_ns = now_monotonic_ns - self._market_last_monotonic_ns
+            if bridge_gap_ns < 0 or market_gap_ns < 0:
+                raise ValueError("monotonic clock regressed")
+            gap_start = (
+                self._last_market_source_time
+                or self._bridge_start_received_at_utc
+                or now_utc
+            )
+            if bridge_gap_ns >= _LIVENESS_TIMEOUT_NS:
+                self._mark_stale(
+                    start_utc=gap_start,
+                    end_utc=now_utc,
+                    detected_at_utc=now_utc,
+                    liveness_reason="bridge",
+                )
+            elif market_gap_ns >= _LIVENESS_TIMEOUT_NS:
+                self._mark_stale(
+                    start_utc=gap_start,
+                    end_utc=now_utc,
+                    detected_at_utc=now_utc,
+                    liveness_reason="market",
+                )
+            return self.stale
+
         if self._last_valid_monotonic_ns is None or self.stale:
             return self.stale
         gap_ns = now_monotonic_ns - self._last_valid_monotonic_ns
@@ -301,6 +459,7 @@ class ShadowRunner:
         start_utc: datetime,
         end_utc: datetime,
         detected_at_utc: datetime,
+        liveness_reason: str | None = None,
     ) -> None:
         if end_utc <= start_utc:
             end_utc = start_utc + timedelta(microseconds=1)
@@ -308,14 +467,15 @@ class ShadowRunner:
         self._mark_date_ineligible(_london_date(detected_at_utc), reason="stale")
         self.bar_builder.mark_stale_interval(start_utc, end_utc)
         self.simulator.mark_stale_gap(start_utc, end_utc)
-        self.evidence.append_operational(
-            {
-                "event": "stale",
-                "timestamp_utc": detected_at_utc,
-                "gap_start_utc": start_utc,
-                "gap_end_utc": end_utc,
-            }
-        )
+        stale_record: dict[str, object] = {
+            "event": "stale",
+            "timestamp_utc": detected_at_utc,
+            "gap_start_utc": start_utc,
+            "gap_end_utc": end_utc,
+        }
+        if liveness_reason is not None:
+            stale_record["liveness_reason"] = liveness_reason
+        self.evidence.append_operational(stale_record)
         self._record_scenario_changes()
 
     def _mark_date_ineligible(self, session_date: date, *, reason: str) -> None:
