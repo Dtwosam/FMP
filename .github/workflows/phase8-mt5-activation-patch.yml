@@ -1,0 +1,101 @@
+name: phase8-mt5-activation-patch
+
+on:
+  push:
+    branches:
+      - phase8-mt5-bridge-amendment
+
+permissions:
+  contents: write
+
+jobs:
+  patch-source-of-truth:
+    if: github.event.head_commit.message == '[phase1-no-source] Add one-shot Phase 8 activation patch'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: phase8-mt5-bridge-amendment
+          fetch-depth: 0
+      - name: Apply approved DEC-037 source-of-truth transition
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          decision = Path('docs/decision-log.md')
+          text = decision.read_text(encoding='utf-8')
+          index_line = '- DEC-037 — Phase 8 MT5 demo quote bridge amendment — APPROVED\n'
+          if index_line not in text:
+              anchor = '- DEC-036 — Phase 8 live shadow protocol — APPROVED\n'
+              if anchor not in text:
+                  raise SystemExit('DEC-036 index anchor missing')
+              text = text.replace(anchor, anchor + index_line, 1)
+          if '## DEC-037 — Phase 8 MT5 demo quote bridge amendment' not in text:
+              text = text.rstrip() + '''\n\n## DEC-037 — Phase 8 MT5 demo quote bridge amendment\n\n**Date:** 2026-09-17\n**Status:** APPROVED\n\nThe approved `docs/superpowers/specs/2026-09-17-phase8-mt5-bridge-amendment.md` supersedes DEC-036 only for the Phase 8 live quote-source connector. OANDA Practice qualification did not occur because the required account is unavailable to the operator's jurisdiction. The unchanged USDJPY 15m `session_breakout` strategy, 5-pip buffer, 1.5x target-range multiple, London-session/DST semantics, exact 16:00 `Europe/London` flat rule, three virtual slippage scenarios, campaign minima, acceptance thresholds, deterministic replay requirements, and exact review outcomes remain frozen.\n\nThe selected connector is `FP_MARKETS_MT5_DEMO` through the read-only `FMPPhase8QuoteBridge` MQL5 Expert Advisor attached only to `USDJPY`. The bridge may run only on demo account mode and only on `FPMarketsSC-Demo` or `FPMarketsSC-Demo2`, writes the fixed `FILE_COMMON` transport `FMP/phase8-usdjpy-feed.jsonl`, and exposes no order/trade/position mutation surface. Direct Python `MetaTrader5` integration, MT5 live servers, generic broker fallback, demo order placement, production/live order placement, broker mutation, and real-money trading remain forbidden.\n\n`EXP-20260915-009` is stopped before qualification and produced no scored campaign evidence. `EXP-20260917-010` is the active Phase 8 MT5 demo live-shadow experiment. Successful connector qualification authorizes only historical-reference generation and campaign registration; it is not Phase 8 PASS. Phase 9 remains locked. `DEC-008` remains unchanged.\n'''
+          decision.write_text(text, encoding='utf-8')
+
+          experiments = Path('docs/experiment-log.md')
+          text = experiments.read_text(encoding='utf-8')
+          old_start = text.find('### EXP-20260915-009')
+          if old_start < 0:
+              raise SystemExit('EXP-20260915-009 section missing')
+          next_start = text.find('\n### ', old_start + 1)
+          old_end = len(text) if next_start < 0 else next_start
+          old = text[old_start:old_end]
+          old = re.sub(r'^- Status: RUNNING$', '- Status: INCONCLUSIVE', old, count=1, flags=re.MULTILINE)
+          transition = '- Connector transition: STOPPED BEFORE QUALIFICATION — OANDA Practice account unavailable to the operator jurisdiction; no qualification or scored live-shadow campaign occurred.\n'
+          if transition not in old:
+              marker = '- Status: INCONCLUSIVE\n'
+              if marker not in old:
+                  raise SystemExit('EXP-009 status marker missing')
+              old = old.replace(marker, marker + transition, 1)
+          text = text[:old_start] + old + text[old_end:]
+          if '### EXP-20260917-010 — Phase 8 MT5 demo live-shadow evaluation' not in text:
+              text = text.rstrip() + '''\n\n### EXP-20260917-010 — Phase 8 MT5 demo live-shadow evaluation\n\n- Date: 2026-09-17\n- Status: RUNNING\n- Hypothesis: The unchanged Phase 7-promoted USDJPY 15m session-breakout rule can be evaluated prospectively using a read-only FP Markets MT5 demo quote bridge without changing strategy, execution-simulation, risk, or acceptance semantics.\n- Code commit: pending implementation merge; evidence must bind the exact merged implementation commit before qualification/campaign registration.\n- Data manifest/version: historical reference remains bound to accepted Phase 2 USDJPY identity and Phase 7 checkpoint; live evidence protocol `fmp-phase8-shadow-evidence-v2`.\n- Pair(s): USDJPY only\n- Timeframe(s): 15m strategy bars built from complete live 1m bid/ask bars\n- Data range: prospective live-shadow observations only after successful connector qualification; no backfill.\n- Train period: not applicable; fixed rule, no refit.\n- Validation period: prospective Phase 8 registered campaign.\n- Final-test touched?: YES — Phase 7 already completed its approved final/walk-forward gate; Phase 8 is prospective live shadow, not historical retuning.\n- Strategy/model: unchanged `session_breakout`, 5-pip buffer, 1.5x target-range multiple, London-session/DST semantics, exact 16:00 `Europe/London` flat, no ML overlay.\n- Features: live bid/ask quote stream only; no new feature/model fitting.\n- Parameters/search space: none.\n- Random seed (if relevant): not applicable.\n- Spread/cost model: observed live demo bid/ask spread; zero commission and zero financing in the frozen Phase 8 simulator.\n- Slippage model: 0.2, 0.5, and 1.0 adverse pips per fill; 0.2/0.5 gating, 1.0 diagnostic.\n- Risk assumptions: existing Phase 3 risk policy unchanged; three independent $100,000 virtual scenarios.\n- Trade count: pending prospective campaign.\n- Net return after costs: pending.\n- Expectancy/trade: pending.\n- Profit factor: pending.\n- Max drawdown: pending.\n- Key subperiod results: pending.\n- Robustness/cost sensitivity: pending.\n- Result summary: implementation and source-free verification pending; live qualification must be explicitly operator-started after merge.\n- Conclusion: NEED_MORE_DATA\n- Reason: the amended provider path has not yet completed source-free implementation verification, connector qualification, or the frozen multi-week campaign.\n- Follow-up: implement DEC-037 test-first; after verified merge, compile/attach the read-only EA locally with AutoTrading OFF, run bounded qualification, then build/freeze the historical spread reference and register the campaign only after qualification PASS.\n'''
+          experiments.write_text(text, encoding='utf-8')
+
+          state = Path('docs/project-state.md')
+          text = state.read_text(encoding='utf-8')
+          text = text.replace('**Updated:** 2026-09-15', '**Updated:** 2026-09-17', 1)
+          text = re.sub(
+              r'^\*\*Next milestone:\*\*.*$',
+              '**Next milestone:** Implement and source-free verify DEC-037, then explicitly qualify the fixed read-only FP Markets MT5 demo bridge for `EXP-20260917-010`; only a qualification PASS permits historical-reference generation and new campaign registration.',
+              text,
+              count=1,
+              flags=re.MULTILINE,
+          )
+          if 'EXP-20260917-010' not in text:
+              marker = '**Phase status:** ACTIVE\n'
+              if marker not in text:
+                  raise SystemExit('project-state Phase status anchor missing')
+              text = text.replace(marker, marker + '**Active Phase 8 experiment:** `EXP-20260917-010` under DEC-037 (`FP_MARKETS_MT5_DEMO` read-only bridge).\n', 1)
+          state.write_text(text, encoding='utf-8')
+
+          sources = Path('docs/source-register.md')
+          text = sources.read_text(encoding='utf-8')
+          if '## SRC-005 — MQL5 read-only MT5 file bridge' not in text:
+              text = text.rstrip() + '''\n\n## SRC-005 — MQL5 read-only MT5 file bridge\n\n- Status: SELECTED for amended Phase 8 quote-source role under DEC-037\n- Reviewed: 2026-09-17\n- Provider identity: `FP_MARKETS_MT5_DEMO`\n- Allowed demo servers: `FPMarketsSC-Demo`, `FPMarketsSC-Demo2`\n- Fixed transport: `MT5_FILE_COMMON_JSONL` at logical `FMP/phase8-usdjpy-feed.jsonl`\n- Official references: MQL5 `OnTick`, `MqlTick`, `FileOpen`, `FileFlush`, and `CryptEncode` documentation.\n- Outcome: use a purpose-built MQL5 EA only to validate demo/server/symbol identity, read USDJPY Bid/Ask ticks, emit local bridge liveness, compute an account SHA-256 fingerprint, and write the fixed `FILE_COMMON` transport. The EA and FMP Python runtime contain no order/trade/position mutation path. Direct Python `MetaTrader5` integration remains rejected for Phase 8 because its API exposes execution functions.\n- Safety: AutoTrading remains OFF; live server names, generic provider fallback, demo/live orders, broker mutation, and real-money trading remain locked.\n'''
+          sources.write_text(text, encoding='utf-8')
+
+          spec = Path('docs/superpowers/specs/2026-09-17-phase8-mt5-bridge-amendment.md')
+          text = spec.read_text(encoding='utf-8')
+          old = '**Status:** DRAFT FOR WRITTEN REVIEW'
+          if old not in text and '**Status:** APPROVED / ACTIVATED' not in text:
+              raise SystemExit('amendment status marker missing')
+          text = text.replace(old, '**Status:** APPROVED / ACTIVATED', 1)
+          spec.write_text(text, encoding='utf-8')
+
+          workflow = Path('.github/workflows/phase8-mt5-activation-patch.yml')
+          workflow.unlink()
+          PY
+      - name: Commit approved activation
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m '[phase1-no-source] Activate Phase 8 MT5 bridge amendment'
+          git push origin HEAD:phase8-mt5-bridge-amendment
