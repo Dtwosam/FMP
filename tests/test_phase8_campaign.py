@@ -90,7 +90,7 @@ class Phase8CampaignTests(unittest.TestCase):
             self.assertEqual(record["first_london_date"], "2026-09-16")
             self.assertEqual(record["code_commit"], CODE_COMMIT)
             self.assertEqual(record["reference_sha256"], digest)
-            self.assertEqual(record["phase8_experiment"], "EXP-20260915-009")
+            self.assertEqual(record["phase8_experiment"], "EXP-20260917-010")
             self.assertEqual(record["provider"], "OANDA_PRACTICE_PRICING_STREAM")
             self.assertEqual(record["host"], "stream-fxpractice.oanda.com")
             self.assertEqual(record["instrument"], "USD_JPY")
