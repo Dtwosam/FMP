@@ -12,9 +12,6 @@ from fmp.shadow import (
     PHASE7_CHECKPOINT_SHA,
     PHASE7_CHECKPOINT_TAG,
     PHASE8_EXPERIMENT_ID,
-    PRACTICE_STREAM_HOST,
-    PRACTICE_STREAM_PATH_TEMPLATE,
-    PROVIDER_INSTRUMENT,
     QUOTE_DEADLINE_SECONDS,
     SLIPPAGE_SCENARIOS,
     STARTING_EQUITY_USD,
@@ -25,19 +22,25 @@ from fmp.shadow import (
     ShadowIntent,
     ShadowOutcome,
 )
+from fmp.shadow.contracts import (
+    MT5_ALLOWED_SERVERS,
+    MT5_BRIDGE_FILE,
+    MT5_BRIDGE_PROTOCOL,
+    MT5_PROVIDER,
+    MT5_TRANSPORT,
+)
 
 
 class Phase8ContractTests(unittest.TestCase):
     def test_frozen_phase8_identity_and_threshold_constants_are_exact(self) -> None:
-        self.assertEqual(PHASE8_EXPERIMENT_ID, "EXP-20260915-009")
+        self.assertEqual(PHASE8_EXPERIMENT_ID, "EXP-20260917-010")
         self.assertEqual(PHASE7_CHECKPOINT_TAG, "fmp-v1-phase7-walk-forward")
         self.assertEqual(PHASE7_CHECKPOINT_SHA, "b6fb0176555b071fef6d1070edf3407b03cd60c9")
-        self.assertEqual(PRACTICE_STREAM_HOST, "stream-fxpractice.oanda.com")
-        self.assertEqual(
-            PRACTICE_STREAM_PATH_TEMPLATE,
-            "/v3/accounts/{account_id}/pricing/stream",
-        )
-        self.assertEqual(PROVIDER_INSTRUMENT, "USD_JPY")
+        self.assertEqual(MT5_BRIDGE_PROTOCOL, "fmp-mt5-demo-file-bridge-v1")
+        self.assertEqual(MT5_PROVIDER, "FP_MARKETS_MT5_DEMO")
+        self.assertEqual(MT5_TRANSPORT, "MT5_FILE_COMMON_JSONL")
+        self.assertEqual(MT5_BRIDGE_FILE, "FMP/phase8-usdjpy-feed.jsonl")
+        self.assertEqual(MT5_ALLOWED_SERVERS, ("FPMarketsSC-Demo", "FPMarketsSC-Demo2"))
         self.assertEqual(FMP_SYMBOL, "USDJPY")
         self.assertEqual(STRATEGY_FAMILY, "session_breakout")
         self.assertEqual(TIMEFRAME, "15m")
