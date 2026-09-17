@@ -86,14 +86,21 @@ class Phase8CampaignTests(unittest.TestCase):
                 campaign_start_utc=started,
             )
 
+            self.assertEqual(record["registration_version"], 2)
             self.assertEqual(record["campaign_start_utc"], "2026-09-16T10:30:00Z")
             self.assertEqual(record["first_london_date"], "2026-09-16")
             self.assertEqual(record["code_commit"], CODE_COMMIT)
             self.assertEqual(record["reference_sha256"], digest)
             self.assertEqual(record["phase8_experiment"], "EXP-20260917-010")
-            self.assertEqual(record["provider"], "OANDA_PRACTICE_PRICING_STREAM")
-            self.assertEqual(record["host"], "stream-fxpractice.oanda.com")
-            self.assertEqual(record["instrument"], "USD_JPY")
+            self.assertEqual(record["provider"], "FP_MARKETS_MT5_DEMO")
+            self.assertEqual(record["connector_protocol"], "fmp-mt5-demo-file-bridge-v1")
+            self.assertEqual(record["transport"], "MT5_FILE_COMMON_JSONL")
+            self.assertEqual(record["bridge_file"], "FMP/phase8-usdjpy-feed.jsonl")
+            self.assertEqual(record["allowed_servers"], ["FPMarketsSC-Demo", "FPMarketsSC-Demo2"])
+            self.assertEqual(record["provider_instrument"], "USDJPY")
+            self.assertNotIn("host", record)
+            self.assertNotIn("path_template", record)
+            self.assertNotIn("instrument", record)
             self.assertEqual(record["strategy"]["id"], "session_breakout")
             self.assertEqual(record["slippage_scenarios"], [0.2, 0.5, 1.0])
             self.assertEqual(record["gating_slippage_scenarios"], [0.2, 0.5])
@@ -142,8 +149,8 @@ class Phase8CampaignTests(unittest.TestCase):
                 )
 
     def test_weekday_denominator_allows_only_predeclared_documented_full_market_closures(self) -> None:
-        start = date(2026, 9, 14)  # Monday
-        cutoff = datetime(2026, 9, 21, 23, 0, tzinfo=UTC)  # following Monday
+        start = date(2026, 9, 14)
+        cutoff = datetime(2026, 9, 21, 23, 0, tzinfo=UTC)
         closure = ProviderClosure(
             london_date=date(2026, 9, 17),
             reason=FULL_MARKET_CLOSURE_REASON,
