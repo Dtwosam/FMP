@@ -25,7 +25,7 @@ FINGERPRINT = "b" * 64
 SERVER = "FPMarketsSC-Demo2"
 COMMON = {
     "protocol": "fmp-mt5-demo-file-bridge-v1",
-    "session_id": SESSION,
+    "bridge_session_id": SESSION,
     "symbol": "USDJPY",
     "server": SERVER,
     "account_fingerprint": FINGERPRINT,
@@ -38,7 +38,9 @@ def _line(record_type: str, **fields: object) -> bytes:
 
 
 def _start_line(**fields: object) -> bytes:
-    return _line("BRIDGE_START", **fields)
+    payload = {"account_mode": "DEMO", "bridge_start_time_msc": 1_789_667_199_000}
+    payload.update(fields)
+    return _line("BRIDGE_START", **payload)
 
 
 def _tick_line(**fields: object) -> bytes:
@@ -48,7 +50,10 @@ def _tick_line(**fields: object) -> bytes:
 
 
 def _heartbeat_line(**fields: object) -> bytes:
-    payload = {"last_tick_time_msc": 1_789_667_200_123}
+    payload = {
+        "bridge_emitted_time_msc": 1_789_667_205_000,
+        "last_tick_time_msc": 1_789_667_200_123,
+    }
     payload.update(fields)
     return _line("BRIDGE_HEARTBEAT", **payload)
 
@@ -58,14 +63,19 @@ class Phase8Mt5BridgeParserTests(unittest.TestCase):
         start = parse_bridge_line(_start_line())
         tick = parse_bridge_line(_tick_line())
         heartbeat = parse_bridge_line(_heartbeat_line())
+        heartbeat_before_tick = parse_bridge_line(_heartbeat_line(last_tick_time_msc=None))
 
         self.assertIsInstance(start, BridgeStartRecord)
-        self.assertEqual(start.session_id, SESSION)
+        self.assertEqual(start.bridge_session_id, SESSION)
+        self.assertEqual(start.account_mode, "DEMO")
+        self.assertEqual(start.bridge_start_time_msc, 1_789_667_199_000)
         self.assertIsInstance(tick, BridgeTickRecord)
         self.assertEqual(tick.source_time_msc, 1_789_667_200_123)
         self.assertEqual(tick.bid, 147.123)
         self.assertIsInstance(heartbeat, BridgeHeartbeatRecord)
+        self.assertEqual(heartbeat.bridge_emitted_time_msc, 1_789_667_205_000)
         self.assertEqual(heartbeat.last_tick_time_msc, 1_789_667_200_123)
+        self.assertIsNone(heartbeat_before_tick.last_tick_time_msc)
 
         for bad in (
             b"not-json\n",
@@ -84,13 +94,17 @@ class Phase8Mt5BridgeParserTests(unittest.TestCase):
             _start_line(protocol="wrong"),
             _start_line(symbol="EURUSD"),
             _start_line(server="FPMarketsSC-Live"),
-            _start_line(session_id="A" * 64),
+            _start_line(bridge_session_id="A" * 64),
             _start_line(account_fingerprint="not-hex"),
+            _start_line(account_mode="REAL"),
+            _start_line(bridge_start_time_msc=0),
             _tick_line(source_time_msc=0),
             _tick_line(bid=0.0),
             _tick_line(ask=float("inf")),
             _tick_line(bid=147.126, ask=147.125),
             _tick_line(flags=-1),
+            _heartbeat_line(bridge_emitted_time_msc=0),
+            _heartbeat_line(last_tick_time_msc=0),
             _heartbeat_line(last_tick_time_msc=-1),
         )
         for payload in cases:
@@ -111,7 +125,7 @@ class Phase8Mt5BridgeSessionTests(unittest.TestCase):
                 receive_monotonic_ns=10,
             )
         )
-        self.assertEqual(validator.session_id, SESSION)
+        self.assertEqual(validator.bridge_session_id, SESSION)
         self.assertEqual(validator.server, SERVER)
         self.assertEqual(validator.account_fingerprint, FINGERPRINT)
         self.assertEqual(validator.last_bridge_received_at_utc, received)
@@ -173,7 +187,7 @@ class Phase8Mt5BridgeSessionTests(unittest.TestCase):
         validator = BridgeSessionValidator()
         validator.accept(parse_bridge_line(_start_line()), received_at_utc=now, receive_monotonic_ns=1)
         for bad in (
-            _tick_line(session_id="c" * 64),
+            _tick_line(bridge_session_id="c" * 64),
             _heartbeat_line(account_fingerprint="d" * 64),
             _start_line(),
         ):
@@ -190,7 +204,7 @@ class Phase8Mt5BridgeTailTests(unittest.TestCase):
             path = Path(tmp) / "feed.jsonl"
             path.write_bytes(_start_line() + _tick_line(bid=147.111, ask=147.113))
             tail = BridgeFileTail(path)
-            self.assertEqual(tail.start_record.session_id, SESSION)
+            self.assertEqual(tail.start_record.bridge_session_id, SESSION)
             self.assertEqual(tail.read_available(), ())
 
             appended = _tick_line(bid=147.120, ask=147.122)
@@ -228,7 +242,7 @@ class Phase8Mt5BridgeTailTests(unittest.TestCase):
 
             tail = BridgeFileTail(path)
             with path.open("ab") as handle:
-                handle.write(_start_line(session_id="c" * 64))
+                handle.write(_start_line(bridge_session_id="c" * 64))
             with self.assertRaisesRegex(BridgeProtocolError, "session"):
                 tail.read_available()
 
