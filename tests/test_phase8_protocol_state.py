@@ -43,7 +43,7 @@ class Phase8ProtocolStateTests(unittest.TestCase):
         self.assertIn("Phase 9/demo order placement: LOCKED", state)
         self.assertIn("production/live order placement and broker mutation: LOCKED", state)
         self.assertIn("Real-money trading: locked", state)
-        self.assertIn("no demo order placement", amendment.lower())
+        self.assertIn("no practice/demo order placement", amendment.lower())
 
 
 if __name__ == "__main__":
