@@ -300,28 +300,41 @@ class Phase8RunnerTests(unittest.TestCase):
         )
         self.assertEqual([timeframe for timeframe, _ in evidence.bars], ["1m", "15m"])
 
-    def test_run_cli_is_explicit_env_credentialed_and_has_no_transport_override(self) -> None:
+    def test_run_cli_uses_bound_mt5_tail_and_has_no_transport_override(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["run", "--campaign-dir", "evidence/phase8/campaign"])
         self.assertEqual(args.command, "run")
         self.assertEqual(args.campaign_dir, Path("evidence/phase8/campaign"))
-        for forbidden in ("account_id", "token", "host", "instrument", "method", "base_url"):
+        for forbidden in (
+            "account_id",
+            "token",
+            "host",
+            "instrument",
+            "method",
+            "base_url",
+            "server",
+            "path",
+            "filename",
+        ):
             self.assertFalse(hasattr(args, forbidden))
 
+        tail = object()
         called: list[dict[str, object]] = []
         rc = main(
             ["run", "--campaign-dir", "campaign"],
-            environ={
-                "OANDA_PRACTICE_ACCOUNT_ID": "101-001-12345678-001",
-                "OANDA_PRACTICE_TOKEN": "secret-token",
-            },
+            environ={"OANDA_PRACTICE_TOKEN": "ignored"},
+            bridge_discoverer=lambda: Path("/fixed/common/FMP/phase8-usdjpy-feed.jsonl"),
+            tail_factory=lambda _: tail,  # type: ignore[arg-type]
             run_command=lambda **kwargs: called.append(kwargs) or 0,
             code_commit_resolver=lambda: "c" * 40,
         )
         self.assertEqual(rc, 0)
         self.assertEqual(len(called), 1)
+        self.assertIs(called[0]["bridge_tail"], tail)
         self.assertEqual(called[0]["campaign_dir"], Path("campaign"))
         self.assertEqual(called[0]["code_commit"], "c" * 40)
+        for forbidden in ("account_id", "token", "stream_factory", "server", "path"):
+            self.assertNotIn(forbidden, called[0])
 
     def test_runner_and_cli_have_no_reconciliation_daemon_or_order_submission_surface(self) -> None:
         source = "\n".join(
