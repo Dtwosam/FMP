@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 from typing import Mapping
 
 from .evidence import EvidenceWriter, finalize_existing_segment
+from .mt5_bridge import BridgeStartRecord, parse_bridge_line
 from .runner import ShadowRunner
 
 
@@ -89,6 +90,44 @@ def _segment_identity(
     )
 
 
+def _parse_stored_bridge_record(provider_object: Mapping[str, object], *, index: int):  # type: ignore[no-untyped-def]
+    try:
+        payload = (
+            json.dumps(
+                dict(provider_object),
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+                allow_nan=False,
+            )
+            + "\n"
+        ).encode("utf-8")
+    except (TypeError, ValueError):
+        raise ValueError(f"raw.jsonl record {index} provider_object is not canonical JSON") from None
+    try:
+        return parse_bridge_line(payload)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"raw.jsonl record {index} is not valid MT5 bridge evidence") from exc
+
+
+def _bridge_identity(
+    raw_records: list[dict[str, object]],
+    *,
+    operational_account_fingerprint: str,
+) -> tuple[str, str, str]:
+    if not raw_records:
+        raise ValueError("Phase 8 replay requires MT5 bridge raw evidence")
+    provider_object = raw_records[0].get("provider_object")
+    if not isinstance(provider_object, Mapping):
+        raise ValueError("raw.jsonl record 0 provider_object must be an object")
+    first = _parse_stored_bridge_record(provider_object, index=0)
+    if not isinstance(first, BridgeStartRecord):
+        raise ValueError("Phase 8 replay raw evidence must begin with BRIDGE_START")
+    if first.account_fingerprint != operational_account_fingerprint:
+        raise ValueError("Phase 8 replay account fingerprint identity mismatch")
+    return first.bridge_session_id, first.server, first.account_fingerprint
+
+
 def _feed_raw_records(
     runner: ShadowRunner,
     raw_records: list[dict[str, object]],
@@ -105,8 +144,9 @@ def _feed_raw_records(
         if previous_monotonic is not None and monotonic < previous_monotonic:
             raise ValueError("raw.jsonl receive monotonic time regressed")
         previous_monotonic = monotonic
-        runner.process_provider_message(
-            provider_object,
+        bridge_record = _parse_stored_bridge_record(provider_object, index=index)
+        runner.process_bridge_record(
+            bridge_record,
             received_at_utc=_parse_utc(received, field_name="raw received_at_utc"),
             receive_monotonic_ns=monotonic,
         )
@@ -155,10 +195,14 @@ def replay_segment(
         run_start,
         run_end,
         code_commit,
-        account_fingerprint,
+        operational_account_fingerprint,
         restarted,
         disconnect_reason,
     ) = _segment_identity(operational_records)
+    bridge_session_id, server, account_fingerprint = _bridge_identity(
+        raw_records,
+        operational_account_fingerprint=operational_account_fingerprint,
+    )
 
     compare_files = _SEMANTIC_FILES if allow_normalized_metadata_difference else _DERIVED_FILES
     for name in _DERIVED_FILES:
@@ -170,6 +214,9 @@ def replay_segment(
         evidence = EvidenceWriter(
             replay_root,
             code_commit=code_commit,
+            bridge_source_commit=code_commit,
+            bridge_session_id=bridge_session_id,
+            server=server,
             account_fingerprint_sha256=account_fingerprint,
             run_start_utc=run_start,
         )
@@ -206,6 +253,9 @@ def replay_segment(
     finalize_existing_segment(
         segment_dir,
         code_commit=code_commit,
+        bridge_source_commit=code_commit,
+        bridge_session_id=bridge_session_id,
+        server=server,
         account_fingerprint_sha256=account_fingerprint,
         run_start_utc=run_start,
         run_end_utc=run_end,
