@@ -24,9 +24,27 @@ from .contracts import (
     ShadowIntent,
     ShadowOutcome,
 )
+from .mt5_bridge import (
+    BridgeFileTail,
+    BridgeHeartbeatRecord,
+    BridgeProtocolError,
+    BridgeRecord,
+    BridgeSessionValidator,
+    BridgeStartRecord,
+    BridgeTickRecord,
+    discover_bridge_file,
+    parse_bridge_line,
+)
 
 __all__ = [
     "BREAKOUT_BUFFER_PIPS",
+    "BridgeFileTail",
+    "BridgeHeartbeatRecord",
+    "BridgeProtocolError",
+    "BridgeRecord",
+    "BridgeSessionValidator",
+    "BridgeStartRecord",
+    "BridgeTickRecord",
     "FMP_SYMBOL",
     "HeartbeatEvent",
     "LIVENESS_TIMEOUT_SECONDS",
@@ -50,4 +68,6 @@ __all__ = [
     "ShadowOutcome",
     "TARGET_RANGE_MULTIPLE",
     "TIMEFRAME",
+    "discover_bridge_file",
+    "parse_bridge_line",
 ]
