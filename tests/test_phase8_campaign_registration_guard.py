@@ -23,6 +23,15 @@ REFERENCE = {
 }
 
 
+class _ForbiddenTail:
+    @property
+    def start_record(self):  # type: ignore[no-untyped-def]
+        raise AssertionError("bridge tail must not be touched for invalid registration")
+
+    def read_available(self):  # type: ignore[no-untyped-def]
+        raise AssertionError("bridge tail must not be read for invalid registration")
+
+
 class Phase8CampaignRegistrationGuardTests(unittest.TestCase):
     def _register(self, root: Path) -> dict[str, object]:
         with patch(
@@ -79,28 +88,20 @@ class Phase8CampaignRegistrationGuardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "canonical"):
                 campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
 
-    def test_live_capture_validates_registration_before_transport_construction(self) -> None:
+    def test_live_capture_validates_registration_before_bridge_tail_access(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "registration.json").write_text("{}\n", encoding="utf-8")
-            transport_constructed = False
-
-            def forbidden_stream_factory(**_: object) -> object:
-                nonlocal transport_constructed
-                transport_constructed = True
-                raise AssertionError("transport must not be constructed for invalid registration")
 
             with self.assertRaisesRegex(ValueError, "registration"):
                 run_live_shadow_capture(
-                    account_id="101-001-1234567-001",
-                    token="test-token",
+                    bridge_tail=_ForbiddenTail(),  # type: ignore[arg-type]
                     campaign_dir=root,
                     code_commit=CODE_COMMIT,
                     utc_now=lambda: datetime(2026, 9, 16, 10, 31, tzinfo=timezone.utc),
                     monotonic_ns=lambda: 1,
-                    stream_factory=forbidden_stream_factory,
+                    sleep=lambda _: None,
                 )
-            self.assertFalse(transport_constructed)
             self.assertEqual(tuple(root.glob("segment-*")), ())
 
 
