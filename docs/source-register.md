@@ -85,3 +85,14 @@ Important architectural consequence:
 - Record verification date when a source affects implementation.
 - If a service/API changes, do not silently patch around it; record the decision and update this register.
 - No external source can override FMP risk/promotion rules.
+
+## SRC-005 — MQL5 read-only MT5 file bridge
+
+- Status: SELECTED for amended Phase 8 quote-source role under DEC-037
+- Reviewed: 2026-09-17
+- Provider identity: `FP_MARKETS_MT5_DEMO`
+- Allowed demo servers: `FPMarketsSC-Demo`, `FPMarketsSC-Demo2`
+- Fixed transport: `MT5_FILE_COMMON_JSONL` at logical `FMP/phase8-usdjpy-feed.jsonl`
+- Official references: MQL5 `OnTick`, `MqlTick`, `FileOpen`, `FileFlush`, and `CryptEncode` documentation.
+- Outcome: use a purpose-built MQL5 EA only to validate demo/server/symbol identity, read USDJPY Bid/Ask ticks, emit local bridge liveness, compute an account SHA-256 fingerprint, and write the fixed `FILE_COMMON` transport. The EA and FMP Python runtime contain no order/trade/position mutation path. Direct Python `MetaTrader5` integration remains rejected for Phase 8 because its API exposes execution functions.
+- Safety: AutoTrading remains OFF; live server names, generic provider fallback, demo/live orders, broker mutation, and real-money trading remain locked.

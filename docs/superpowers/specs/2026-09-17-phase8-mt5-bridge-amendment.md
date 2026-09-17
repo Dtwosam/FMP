@@ -1,6 +1,6 @@
 # Phase 8 MT5 Demo Quote Bridge Amendment
 
-**Status:** DRAFT FOR WRITTEN REVIEW  
+**Status:** APPROVED / ACTIVATED  
 **Date:** 2026-09-17  
 **Repository:** `Dtwosam/FMP`  
 **Phase:** 8 — Live shadow mode  
