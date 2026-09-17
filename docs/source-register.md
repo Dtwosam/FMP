@@ -1,6 +1,6 @@
 # FMP External Source Register
 
-**Last verified:** 2026-09-15
+**Last verified:** 2026-09-17
 
 This register records external foundations we are allowed to rely on. External documentation can change, so implementation phases should reverify details that affect code before freezing an adapter.
 
@@ -46,12 +46,14 @@ Verified foundation on 2026-09-15:
 - production streaming uses a different host and is outside the Phase 8 boundary;
 - account pricing stream is `GET /v3/accounts/{accountID}/pricing/stream`;
 - the pricing-stream response is line-delimited JSON carrying price and pricing-heartbeat objects;
-- the pricing endpoint supports instrument selection, and the frozen Phase 8 provider instrument is `USD_JPY`.
+- the pricing endpoint supports instrument selection, and the frozen Phase 8 provider instrument was `USD_JPY` under DEC-036.
 
-Selected Phase 8 use:
-- OANDA fxTrade Practice pricing stream is the sole initial live quote source for `EXP-20260915-009`;
-- FMP hard-codes a GET-only Practice pricing boundary at `stream-fxpractice.oanda.com`;
-- Phase 8 does not use OANDA order, trade, or position mutation endpoints and does not use the production host.
+Historical Phase 8 use under DEC-036 / `EXP-20260915-009`:
+- OANDA fxTrade Practice pricing stream was the selected initial quote source;
+- FMP hard-coded a GET-only Practice pricing boundary at `stream-fxpractice.oanda.com`;
+- the experiment stopped before qualification because the required account was unavailable to the operator jurisdiction;
+- no OANDA qualification or scored live-shadow campaign evidence was produced;
+- DEC-037 / `EXP-20260917-010` supersedes this source role with SRC-005.
 
 Does **not** guarantee:
 - account eligibility in every jurisdiction;
@@ -70,14 +72,14 @@ Official pages:
 Verified foundation on 2026-09-15:
 - official Python integration remains documented;
 - quote access includes `symbol_info_tick`;
-- the integration also exposes trading operations including `order_send`, so importing it into the initial Phase 8 shadow runtime would weaken the structural no-order boundary.
+- the integration also exposes trading operations including `order_send`, so importing it into the Phase 8 shadow runtime would weaken the structural no-order boundary.
 
 Allowed use in FMP:
 - deferred candidate for a separately designed later demo/execution phase only;
-- explicitly not selected for the initial Phase 8 implementation.
+- direct Python `MetaTrader5` integration remains explicitly rejected for Phase 8 under DEC-037.
 
 Important architectural consequence:
-- FMP core remains broker-independent; MT5 is not the research brain and is not a Phase 8 execution dependency.
+- FMP core remains broker-independent; the MT5 terminal is only a local quote-source edge in Phase 8 and is not the research brain.
 
 ## Source policy
 
