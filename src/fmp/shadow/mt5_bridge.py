@@ -22,15 +22,17 @@ _COMMON_FIELDS = frozenset(
     {
         "record_type",
         "protocol",
-        "session_id",
+        "bridge_session_id",
         "symbol",
         "server",
         "account_fingerprint",
     }
 )
-_START_FIELDS = _COMMON_FIELDS
+_START_FIELDS = _COMMON_FIELDS | frozenset({"account_mode", "bridge_start_time_msc"})
 _TICK_FIELDS = _COMMON_FIELDS | frozenset({"source_time_msc", "bid", "ask", "flags"})
-_HEARTBEAT_FIELDS = _COMMON_FIELDS | frozenset({"last_tick_time_msc"})
+_HEARTBEAT_FIELDS = _COMMON_FIELDS | frozenset(
+    {"bridge_emitted_time_msc", "last_tick_time_msc"}
+)
 _HEX = frozenset("0123456789abcdef")
 
 
@@ -41,17 +43,19 @@ class BridgeProtocolError(ValueError):
 @dataclass(frozen=True, slots=True)
 class BridgeStartRecord:
     protocol: str
-    session_id: str
+    bridge_session_id: str
     symbol: str
     server: str
     account_fingerprint: str
+    account_mode: str
+    bridge_start_time_msc: int
     record_type: str = "BRIDGE_START"
 
 
 @dataclass(frozen=True, slots=True)
 class BridgeTickRecord:
     protocol: str
-    session_id: str
+    bridge_session_id: str
     symbol: str
     server: str
     account_fingerprint: str
@@ -65,11 +69,12 @@ class BridgeTickRecord:
 @dataclass(frozen=True, slots=True)
 class BridgeHeartbeatRecord:
     protocol: str
-    session_id: str
+    bridge_session_id: str
     symbol: str
     server: str
     account_fingerprint: str
-    last_tick_time_msc: int
+    bridge_emitted_time_msc: int
+    last_tick_time_msc: int | None
     record_type: str = "BRIDGE_HEARTBEAT"
 
 
@@ -86,6 +91,12 @@ def _require_int(value: object, *, field: str, minimum: int) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
         raise BridgeProtocolError(f"bridge {field} is invalid")
     return value
+
+
+def _require_optional_positive_int(value: object, *, field: str) -> int | None:
+    if value is None:
+        return None
+    return _require_int(value, field=field, minimum=1)
 
 
 def _require_price(value: object, *, field: str) -> float:
@@ -107,11 +118,13 @@ def _validate_common(raw: dict[str, object]) -> tuple[str, str, str, str, str]:
     server = raw.get("server")
     if not isinstance(server, str) or server not in MT5_ALLOWED_SERVERS:
         raise BridgeProtocolError("bridge server is invalid")
-    session_id = _require_lower_hex(raw.get("session_id"), field="session_id")
+    bridge_session_id = _require_lower_hex(
+        raw.get("bridge_session_id"), field="bridge_session_id"
+    )
     account_fingerprint = _require_lower_hex(
         raw.get("account_fingerprint"), field="account_fingerprint"
     )
-    return protocol, session_id, symbol, server, account_fingerprint
+    return protocol, bridge_session_id, symbol, server, account_fingerprint
 
 
 def parse_bridge_line(line: bytes) -> BridgeRecord:
@@ -139,18 +152,27 @@ def parse_bridge_line(line: bytes) -> BridgeRecord:
     if frozenset(raw) != expected:
         raise BridgeProtocolError("bridge record fields are invalid")
 
-    protocol, session_id, symbol, server, account_fingerprint = _validate_common(raw)
+    protocol, bridge_session_id, symbol, server, account_fingerprint = _validate_common(raw)
     if record_type == "BRIDGE_START":
+        if raw.get("account_mode") != "DEMO":
+            raise BridgeProtocolError("bridge account mode is invalid")
+        bridge_start_time_msc = _require_int(
+            raw.get("bridge_start_time_msc"), field="bridge_start_time_msc", minimum=1
+        )
         return BridgeStartRecord(
             protocol=protocol,
-            session_id=session_id,
+            bridge_session_id=bridge_session_id,
             symbol=symbol,
             server=server,
             account_fingerprint=account_fingerprint,
+            account_mode="DEMO",
+            bridge_start_time_msc=bridge_start_time_msc,
         )
 
     if record_type == "TICK":
-        source_time_msc = _require_int(raw.get("source_time_msc"), field="source_time_msc", minimum=1)
+        source_time_msc = _require_int(
+            raw.get("source_time_msc"), field="source_time_msc", minimum=1
+        )
         bid = _require_price(raw.get("bid"), field="bid")
         ask = _require_price(raw.get("ask"), field="ask")
         if bid > ask:
@@ -158,7 +180,7 @@ def parse_bridge_line(line: bytes) -> BridgeRecord:
         flags = _require_int(raw.get("flags"), field="flags", minimum=0)
         return BridgeTickRecord(
             protocol=protocol,
-            session_id=session_id,
+            bridge_session_id=bridge_session_id,
             symbol=symbol,
             server=server,
             account_fingerprint=account_fingerprint,
@@ -168,15 +190,19 @@ def parse_bridge_line(line: bytes) -> BridgeRecord:
             flags=flags,
         )
 
-    last_tick_time_msc = _require_int(
-        raw.get("last_tick_time_msc"), field="last_tick_time_msc", minimum=0
+    bridge_emitted_time_msc = _require_int(
+        raw.get("bridge_emitted_time_msc"), field="bridge_emitted_time_msc", minimum=1
+    )
+    last_tick_time_msc = _require_optional_positive_int(
+        raw.get("last_tick_time_msc"), field="last_tick_time_msc"
     )
     return BridgeHeartbeatRecord(
         protocol=protocol,
-        session_id=session_id,
+        bridge_session_id=bridge_session_id,
         symbol=symbol,
         server=server,
         account_fingerprint=account_fingerprint,
+        bridge_emitted_time_msc=bridge_emitted_time_msc,
         last_tick_time_msc=last_tick_time_msc,
     )
 
@@ -204,7 +230,7 @@ def _utc_from_milliseconds(value: int) -> datetime:
 
 class BridgeSessionValidator:
     __slots__ = (
-        "_session_id",
+        "_bridge_session_id",
         "_server",
         "_account_fingerprint",
         "_last_source_time_msc",
@@ -214,7 +240,7 @@ class BridgeSessionValidator:
     )
 
     def __init__(self) -> None:
-        self._session_id: str | None = None
+        self._bridge_session_id: str | None = None
         self._server: str | None = None
         self._account_fingerprint: str | None = None
         self._last_source_time_msc: int | None = None
@@ -223,8 +249,8 @@ class BridgeSessionValidator:
         self._last_market_received_at_utc: datetime | None = None
 
     @property
-    def session_id(self) -> str | None:
-        return self._session_id
+    def bridge_session_id(self) -> str | None:
+        return self._bridge_session_id
 
     @property
     def server(self) -> str | None:
@@ -243,17 +269,17 @@ class BridgeSessionValidator:
         return self._last_market_received_at_utc
 
     def _bind_or_validate_identity(self, record: BridgeRecord) -> None:
-        if self._session_id is None:
+        if self._bridge_session_id is None:
             if not isinstance(record, BridgeStartRecord):
                 raise BridgeProtocolError("first bridge record must be BRIDGE_START")
-            self._session_id = record.session_id
+            self._bridge_session_id = record.bridge_session_id
             self._server = record.server
             self._account_fingerprint = record.account_fingerprint
             return
 
         if isinstance(record, BridgeStartRecord):
             raise BridgeProtocolError("bridge session changed after BRIDGE_START")
-        if record.session_id != self._session_id:
+        if record.bridge_session_id != self._bridge_session_id:
             raise BridgeProtocolError("bridge session identity changed")
         if record.server != self._server:
             raise BridgeProtocolError("bridge server identity changed")
