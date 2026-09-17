@@ -22,6 +22,7 @@ from .contracts import (
 )
 from .evidence import EvidenceWriter
 from .mt5_bridge import (
+    BridgeFileTail,
     BridgeHeartbeatRecord,
     BridgeProtocolError,
     BridgeRecord,
@@ -639,13 +640,12 @@ class ShadowRunner:
 
 def run_live_shadow_capture(
     *,
-    account_id: str,
-    token: str,
+    bridge_tail: BridgeFileTail,
     campaign_dir: Path,
     code_commit: str,
     utc_now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
     monotonic_ns: Callable[[], int] = time.monotonic_ns,
-    stream_factory: Callable[..., OandaPracticePricingStream] = OandaPracticePricingStream,
+    sleep: Callable[[float], None] = time.sleep,
 ) -> int:
     campaign_dir = Path(campaign_dir)
     load_campaign_registration(campaign_dir, code_commit=code_commit)
@@ -655,11 +655,14 @@ def run_live_shadow_capture(
     restarted = any(path.is_dir() for path in campaign_dir.glob("segment-*"))
     segment_name = start.strftime("segment-%Y%m%dT%H%M%S.%fZ")
     segment_dir = campaign_dir / segment_name
-    account_fingerprint = hashlib.sha256(account_id.encode("utf-8")).hexdigest()
+    bridge_start = bridge_tail.start_record
     evidence = EvidenceWriter(
         segment_dir,
         code_commit=code_commit,
-        account_fingerprint_sha256=account_fingerprint,
+        bridge_source_commit=code_commit,
+        bridge_session_id=bridge_start.bridge_session_id,
+        server=bridge_start.server,
+        account_fingerprint_sha256=bridge_start.account_fingerprint,
         run_start_utc=start,
     )
     simulator = restore_shadow_simulator(campaign_dir) if restarted else ShadowSimulator()
@@ -669,28 +672,48 @@ def run_live_shadow_capture(
         processing_monotonic_ns=monotonic_ns,
     )
     runner.start(now_utc=start, restarted=restarted)
-    stream = stream_factory(account_id=account_id, token=token)
+    runner.process_bridge_record(
+        bridge_start,
+        received_at_utc=start,
+        receive_monotonic_ns=monotonic_ns(),
+    )
 
     try:
-        for line in stream.iter_lines():
-            received_at = utc_now()
-            mono = monotonic_ns()
-            runner.process_line(
-                line,
-                received_at_utc=received_at,
-                receive_monotonic_ns=mono,
-            )
-    except (OandaPracticeStreamError, ProviderMessageError):
+        while True:
+            records = bridge_tail.read_available()
+            if not records:
+                now = utc_now()
+                runner.check_liveness(
+                    now_utc=now,
+                    now_monotonic_ns=monotonic_ns(),
+                )
+                sleep(0.05)
+                continue
+            for record in records:
+                received_at = utc_now()
+                runner.process_bridge_record(
+                    record,
+                    received_at_utc=received_at,
+                    receive_monotonic_ns=monotonic_ns(),
+                )
+    except KeyboardInterrupt:
+        runner.disconnect(now_utc=utc_now(), reason="operator_stop")
+        return 0
+    except BridgeProtocolError:
         now = utc_now()
-        runner.check_liveness(now_utc=now, now_monotonic_ns=monotonic_ns())
-        runner.evidence.append_operational(
-            {"event": "rejection", "timestamp_utc": now, "reason": "stream_failed"}
-        )
-        runner.disconnect(now_utc=now, reason="stream_failed")
+        runner.disconnect(now_utc=now, reason="bridge_failed")
         return 4
-
-    runner.disconnect(now_utc=utc_now(), reason="stream_end")
-    return 0
+    except (OSError, ValueError, TypeError):
+        now = utc_now()
+        runner.evidence.append_operational(
+            {
+                "event": "rejection",
+                "timestamp_utc": now,
+                "reason": "bridge_capture_failed",
+            }
+        )
+        runner.disconnect(now_utc=now, reason="bridge_failed")
+        return 4
 
 
 __all__ = ["EvidenceSink", "ShadowRunner", "restore_shadow_simulator", "run_live_shadow_capture"]
