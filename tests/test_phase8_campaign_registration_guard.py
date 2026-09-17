@@ -63,13 +63,13 @@ class Phase8CampaignRegistrationGuardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "risk_policy"):
                 campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
 
-            tampered_path = dict(original)
-            tampered_path["path_template"] = "/v3/accounts/{account_id}/orders"
+            tampered_protocol = dict(original)
+            tampered_protocol["connector_protocol"] = "oanda-v20-fxtrade-practice-pricing-stream-v1"
             path.write_text(
-                json.dumps(tampered_path, sort_keys=True, separators=(",", ":")) + "\n",
+                json.dumps(tampered_protocol, sort_keys=True, separators=(",", ":")) + "\n",
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "path_template"):
+            with self.assertRaisesRegex(ValueError, "connector_protocol"):
                 campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
 
             path.write_text(
@@ -79,16 +79,16 @@ class Phase8CampaignRegistrationGuardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "canonical"):
                 campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
 
-    def test_live_capture_validates_registration_before_stream_construction(self) -> None:
+    def test_live_capture_validates_registration_before_transport_construction(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "registration.json").write_text("{}\n", encoding="utf-8")
-            stream_constructed = False
+            transport_constructed = False
 
             def forbidden_stream_factory(**_: object) -> object:
-                nonlocal stream_constructed
-                stream_constructed = True
-                raise AssertionError("stream must not be constructed for invalid registration")
+                nonlocal transport_constructed
+                transport_constructed = True
+                raise AssertionError("transport must not be constructed for invalid registration")
 
             with self.assertRaisesRegex(ValueError, "registration"):
                 run_live_shadow_capture(
@@ -100,7 +100,7 @@ class Phase8CampaignRegistrationGuardTests(unittest.TestCase):
                     monotonic_ns=lambda: 1,
                     stream_factory=forbidden_stream_factory,
                 )
-            self.assertFalse(stream_constructed)
+            self.assertFalse(transport_constructed)
             self.assertEqual(tuple(root.glob("segment-*")), ())
 
 
