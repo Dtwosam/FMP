@@ -10,7 +10,7 @@ const string SERVER_DEMO_2 = "FPMarketsSC-Demo2";
 const int HEARTBEAT_SECONDS = 5;
 
 int g_file = INVALID_HANDLE;
-string g_session_id = "";
+string g_bridge_session_id = "";
 string g_server = "";
 string g_account_fingerprint = "";
 long g_last_tick_time_msc = 0;
@@ -42,9 +42,20 @@ string Sha256Text(const string value)
    return BytesToHex(digest);
   }
 
-string MakeSessionId(const long login, const string server)
+long BridgeAuditTimeMsc()
   {
-   const string seed = StringFormat("%I64d|%s|%I64d|%I64u", login, server, (long)TimeLocal(), GetMicrosecondCount());
+   return ((long)TimeGMT()) * 1000;
+  }
+
+string MakeBridgeSessionId(const long login, const string server)
+  {
+   const string seed = StringFormat(
+      "%I64d|%s|%I64d|%I64u",
+      login,
+      server,
+      (long)TimeGMT(),
+      GetMicrosecondCount()
+   );
    return Sha256Text(seed);
   }
 
@@ -61,10 +72,10 @@ bool WriteRecord(const string line)
 string CommonFields(const string record_type)
   {
    return StringFormat(
-      "{\"record_type\":\"%s\",\"protocol\":\"%s\",\"session_id\":\"%s\",\"symbol\":\"%s\",\"server\":\"%s\",\"account_fingerprint\":\"%s\"",
+      "{\"record_type\":\"%s\",\"protocol\":\"%s\",\"bridge_session_id\":\"%s\",\"symbol\":\"%s\",\"server\":\"%s\",\"account_fingerprint\":\"%s\"",
       record_type,
       BRIDGE_PROTOCOL,
-      g_session_id,
+      g_bridge_session_id,
       BRIDGE_SYMBOL,
       g_server,
       g_account_fingerprint
@@ -73,7 +84,15 @@ string CommonFields(const string record_type)
 
 bool EmitBridgeStart()
   {
-   return WriteRecord(CommonFields("BRIDGE_START") + "}");
+   const long bridge_start_time_msc = BridgeAuditTimeMsc();
+   if(bridge_start_time_msc <= 0)
+      return false;
+   const string line = StringFormat(
+      "%s,\"account_mode\":\"DEMO\",\"bridge_start_time_msc\":%I64d}",
+      CommonFields("BRIDGE_START"),
+      bridge_start_time_msc
+   );
+   return WriteRecord(line);
   }
 
 bool EmitTick(const MqlTick &tick)
@@ -91,10 +110,16 @@ bool EmitTick(const MqlTick &tick)
 
 bool EmitHeartbeat()
   {
+   const long bridge_emitted_time_msc = BridgeAuditTimeMsc();
+   if(bridge_emitted_time_msc <= 0)
+      return false;
+   const string last_tick_json =
+      g_last_tick_time_msc > 0 ? StringFormat("%I64d", g_last_tick_time_msc) : "null";
    const string line = StringFormat(
-      "%s,\"last_tick_time_msc\":%I64d}",
+      "%s,\"bridge_emitted_time_msc\":%I64d,\"last_tick_time_msc\":%s}",
       CommonFields("BRIDGE_HEARTBEAT"),
-      g_last_tick_time_msc
+      bridge_emitted_time_msc,
+      last_tick_json
    );
    return WriteRecord(line);
   }
@@ -123,8 +148,8 @@ int OnInit()
 
    const long login = AccountInfoInteger(ACCOUNT_LOGIN);
    g_account_fingerprint = Sha256Text(StringFormat("%I64d", login));
-   g_session_id = MakeSessionId(login, g_server);
-   if(StringLen(g_account_fingerprint) != 64 || StringLen(g_session_id) != 64)
+   g_bridge_session_id = MakeBridgeSessionId(login, g_server);
+   if(StringLen(g_account_fingerprint) != 64 || StringLen(g_bridge_session_id) != 64)
      {
       Print("FMP Phase 8 bridge refused: identity hashing failed");
       return INIT_FAILED;
