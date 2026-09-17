@@ -161,12 +161,16 @@ class Phase8Mt5QualificationTests(unittest.TestCase):
             [
                 (0.1, (duplicate,)),
                 (0.1, (duplicate,)),
-                (599.8, ()),
+                (5.0, (heartbeat_record(1, last_tick_time_msc=BASE_MSC + 1),)),
+                (5.0, (heartbeat_record(2, last_tick_time_msc=BASE_MSC + 1),)),
+                (5.0, (heartbeat_record(3, last_tick_time_msc=BASE_MSC + 1),)),
+                (0.001, (heartbeat_record(4, last_tick_time_msc=BASE_MSC + 1),)),
             ],
         )
         result = qualify_bridge(tail, utc_now=clock.utc_now, monotonic_ns=clock.monotonic_ns)
         self.assertEqual(result.outcome, QualificationOutcome.INCONCLUSIVE)
         self.assertEqual(result.price_count, 1)
+        self.assertEqual(result.rejection_codes, ("MARKET_LIVENESS_GAP",))
 
     def test_no_post_start_bridge_activity_is_connector_unavailable(self) -> None:
         clock = FakeClock()
@@ -239,21 +243,17 @@ class Phase8Mt5QualificationTests(unittest.TestCase):
 
     def test_ten_minute_limit_is_inconclusive_without_late_processing(self) -> None:
         clock = FakeClock()
-        tail = ScriptedTail(
-            clock,
-            [
-                (1.0, (tick_record(1),)),
-                (1.0, (heartbeat_record(1, last_tick_time_msc=BASE_MSC + 1),)),
-                (598.0, ()),
-                (1.0, (tick_record(2),)),
-            ],
-        )
+        script: list[tuple[float, tuple[object, ...] | Exception]] = [
+            (12.0, (tick_record(index),)) for index in range(50)
+        ]
+        script.append((1.0, (tick_record(50),)))
+        tail = ScriptedTail(clock, script)
         result = qualify_bridge(tail, utc_now=clock.utc_now, monotonic_ns=clock.monotonic_ns)
         self.assertEqual(result.outcome, QualificationOutcome.INCONCLUSIVE)
-        self.assertEqual(result.price_count, 1)
-        self.assertEqual(result.heartbeat_count, 1)
+        self.assertEqual(result.price_count, 49)
+        self.assertEqual(result.heartbeat_count, 0)
         self.assertLessEqual(result.elapsed_seconds, 600.0)
-        self.assertEqual(tail.read_count, 3)
+        self.assertEqual(tail.read_count, 50)
 
     def test_qualification_module_has_no_strategy_bar_simulator_or_risk_imports(self) -> None:
         source = Path("src/fmp/shadow/qualification.py").read_text(encoding="utf-8")
