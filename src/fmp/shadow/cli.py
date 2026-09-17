@@ -1,45 +1,38 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
-import os
 import subprocess
 import time
 from collections.abc import Callable, Mapping, Sequence
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any
 
 from .campaign import record_provider_closure, register_campaign
 from .gates import Phase8ReviewOutcome, review_campaign
-from .oanda import OandaPracticePricingStream
-from .qualification import QualificationOutcome, qualify_stream
+from .mt5_bridge import BridgeFileTail, discover_bridge_file
+from .qualification import QualificationOutcome, qualify_bridge
 from .reference import build_and_write_spread_reference
 from .replay import replay_segment
 from .runner import run_live_shadow_capture
 
 
-_ACCOUNT_ENV = "OANDA_PRACTICE_ACCOUNT_ID"
-_TOKEN_ENV = "OANDA_PRACTICE_TOKEN"
-
-
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="FMP Phase 8 live-shadow tooling")
+    parser = argparse.ArgumentParser(description="FMP Phase 8 MT5 demo shadow tooling")
     subparsers = parser.add_subparsers(dest="command", required=True)
     qualify = subparsers.add_parser(
         "qualify",
-        help="run the bounded OANDA Practice quote-source qualification",
+        help="run bounded qualification of the fixed local MT5 demo bridge",
     )
     qualify.add_argument("--out", required=True, type=Path)
     run = subparsers.add_parser(
         "run",
-        help="run one explicitly requested Phase 8 shadow capture segment",
+        help="run one explicitly requested Phase 8 shadow capture segment from the local MT5 demo bridge",
     )
     run.add_argument("--campaign-dir", required=True, type=Path)
     replay = subparsers.add_parser(
         "replay",
-        help="replay one captured Phase 8 segment without network access",
+        help="replay one captured Phase 8 segment without broker or network access",
     )
     replay.add_argument("--segment-dir", required=True, type=Path)
     reference = subparsers.add_parser(
@@ -64,7 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     record_closure.add_argument("--documentation", required=True)
     review = subparsers.add_parser(
         "review",
-        help="review frozen Phase 8 campaign evidence without network access",
+        help="review frozen Phase 8 campaign evidence without broker or network access",
     )
     review.add_argument("--campaign-dir", required=True, type=Path)
     return parser
@@ -102,9 +95,11 @@ def main(
     argv: Sequence[str] | None = None,
     *,
     environ: Mapping[str, str] | None = None,
-    stream_factory: Callable[..., Any] = OandaPracticePricingStream,
     utc_now: Callable[[], datetime] | None = None,
     monotonic_ns: Callable[[], int] | None = None,
+    bridge_discoverer: Callable[[], Path] = discover_bridge_file,
+    tail_factory: Callable[[Path], BridgeFileTail] = BridgeFileTail,
+    qualify_command: Callable[..., object] = qualify_bridge,
     run_command: Callable[..., int] = run_live_shadow_capture,
     replay_command: Callable[[Path], Mapping[str, object]] = replay_segment,
     reference_command: Callable[..., str] = build_and_write_spread_reference,
@@ -113,6 +108,7 @@ def main(
     review_command: Callable[[Path], Phase8ReviewOutcome] = review_campaign,
     code_commit_resolver: Callable[[], str] = _current_code_commit,
 ) -> int:
+    del environ
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -161,43 +157,38 @@ def main(
             Phase8ReviewOutcome.REJECT_SAFETY: 6,
         }[outcome]
 
-    env = os.environ if environ is None else environ
-    account_id = env.get(_ACCOUNT_ENV)
-    token = env.get(_TOKEN_ENV)
-    if not isinstance(account_id, str) or not account_id.strip():
-        parser.error(f"{_ACCOUNT_ENV} is required")
-    if not isinstance(token, str) or not token.strip():
-        parser.error(f"{_TOKEN_ENV} is required")
-
     now = utc_now or (lambda: datetime.now(timezone.utc))
     mono = monotonic_ns or time.monotonic_ns
 
     if args.command == "qualify":
-        fingerprint = hashlib.sha256(account_id.encode("utf-8")).hexdigest()
-        stream = stream_factory(account_id=account_id, token=token)
-        result = qualify_stream(
-            stream,
+        bridge_path = bridge_discoverer()
+        tail = tail_factory(bridge_path)
+        result = qualify_command(
+            tail,
             utc_now=now,
             monotonic_ns=mono,
-            account_fingerprint=fingerprint,
         )
-        _write_json(Path(args.out) / "qualification.json", result.to_record())
+        to_record = getattr(result, "to_record", None)
+        if not callable(to_record):
+            raise TypeError("qualification result must expose to_record()")
+        _write_json(Path(args.out) / "qualification.json", to_record())
+        outcome = getattr(result, "outcome", None)
         return {
             QualificationOutcome.PASS: 0,
             QualificationOutcome.INCONCLUSIVE: 2,
             QualificationOutcome.CONNECTOR_UNAVAILABLE: 3,
             QualificationOutcome.CONNECTOR_REJECTED: 4,
-        }[result.outcome]
+        }[outcome]
 
     if args.command == "run":
+        bridge_path = bridge_discoverer()
+        tail = tail_factory(bridge_path)
         return run_command(
-            account_id=account_id,
-            token=token,
+            bridge_tail=tail,
             campaign_dir=Path(args.campaign_dir),
             code_commit=code_commit_resolver(),
             utc_now=now,
             monotonic_ns=mono,
-            stream_factory=stream_factory,
         )
 
     parser.error("unsupported Phase 8 command")
