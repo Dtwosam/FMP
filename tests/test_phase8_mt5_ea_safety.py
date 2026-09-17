@@ -12,7 +12,7 @@ class Phase8Mt5EaSafetyTests(unittest.TestCase):
 
         required = (
             "fmp-mt5-demo-file-bridge-v1",
-            "FMP\\phase8-usdjpy-feed.jsonl",
+            "FMP\\\\phase8-usdjpy-feed.jsonl",
             "FPMarketsSC-Demo",
             "FPMarketsSC-Demo2",
             "ACCOUNT_TRADE_MODE",
