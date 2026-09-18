@@ -15,6 +15,7 @@ from fmp.shadow.mt5_bridge import (
     BridgeStartRecord,
     BridgeTickRecord,
     _discover_bridge_file,
+    _standard_common_files_roots,
     parse_bridge_line,
 )
 
@@ -245,6 +246,25 @@ class Phase8Mt5BridgeTailTests(unittest.TestCase):
                 handle.write(_start_line(bridge_session_id="c" * 64))
             with self.assertRaisesRegex(BridgeProtocolError, "session"):
                 tail.read_available()
+
+    def test_standard_common_files_roots_include_metaquotes_wine_user_profile(self) -> None:
+        home = Path.home()
+        expected = (
+            home
+            / "Library"
+            / "Application Support"
+            / "net.metaquotes.wine.metatrader5"
+            / "drive_c"
+            / "users"
+            / "user"
+            / "AppData"
+            / "Roaming"
+            / "MetaQuotes"
+            / "Terminal"
+            / "Common"
+            / "Files"
+        )
+        self.assertIn(expected, _standard_common_files_roots())
 
     def test_fixed_file_discovery_is_bounded_and_rejects_zero_or_multiple_matches(self) -> None:
         with TemporaryDirectory() as first_tmp, TemporaryDirectory() as second_tmp:
