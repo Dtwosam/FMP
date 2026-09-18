@@ -16,9 +16,6 @@ from .contracts import (
     MT5_BRIDGE_PROTOCOL,
     MT5_PROVIDER,
     MT5_TRANSPORT,
-    PRACTICE_STREAM_HOST,
-    PRACTICE_STREAM_PATH_TEMPLATE,
-    PROVIDER_INSTRUMENT,
 )
 from .mt5_bridge import (
     BridgeHeartbeatRecord,
@@ -28,8 +25,6 @@ from .mt5_bridge import (
     BridgeStartRecord,
     BridgeTickRecord,
 )
-from .normalization import ProviderMessageError, StreamSegmentNormalizer
-from .oanda import OandaPracticeStreamError, parse_provider_line
 
 
 MAX_QUALIFICATION_SECONDS = 600.0
@@ -44,10 +39,6 @@ class QualificationOutcome(str, Enum):
     INCONCLUSIVE = "INCONCLUSIVE"
     CONNECTOR_UNAVAILABLE = "CONNECTOR_UNAVAILABLE"
     CONNECTOR_REJECTED = "CONNECTOR_REJECTED"
-
-
-class PricingLineStream(Protocol):
-    def iter_lines(self): ...  # type: ignore[no-untyped-def]
 
 
 class BridgeRecordTail(Protocol):
@@ -92,17 +83,6 @@ class QualificationResult:
             record["max_bridge_liveness_gap_seconds"] = self.max_bridge_liveness_gap_seconds
             record["max_market_liveness_gap_seconds"] = self.max_market_liveness_gap_seconds
         return record
-
-
-def practice_boundary_audit() -> dict[str, object]:
-    return {
-        "method": "GET",
-        "host": PRACTICE_STREAM_HOST,
-        "path_template": PRACTICE_STREAM_PATH_TEMPLATE,
-        "instrument": PROVIDER_INSTRUMENT,
-        "snapshot": True,
-        "include_home_conversions": False,
-    }
 
 
 def mt5_boundary_audit() -> dict[str, object]:
@@ -295,119 +275,6 @@ def qualify_bridge(
                 return finish(QualificationOutcome.PASS)
 
 
-def qualify_stream(
-    stream: PricingLineStream,
-    *,
-    utc_now: Callable[[], datetime],
-    monotonic_ns: Callable[[], int],
-    account_fingerprint: str,
-) -> QualificationResult:
-    if not isinstance(account_fingerprint, str) or not _SHA256.fullmatch(account_fingerprint):
-        raise ValueError("account_fingerprint must be a lowercase SHA-256 digest")
-
-    started_at_utc, started_ns = _validated_clock(
-        utc_now=utc_now,
-        monotonic_ns=monotonic_ns,
-    )
-    normalizer = StreamSegmentNormalizer()
-    price_count = 0
-    heartbeat_count = 0
-    max_gap = 0.0
-    last_valid_ns: int | None = None
-    audit = practice_boundary_audit()
-
-    def finish(
-        outcome: QualificationOutcome,
-        *,
-        codes: tuple[str, ...] = (),
-        elapsed_override: float | None = None,
-    ) -> QualificationResult:
-        ended_at_utc = utc_now()
-        ended_ns = monotonic_ns()
-        elapsed = max(0.0, (ended_ns - started_ns) / 1_000_000_000)
-        if elapsed_override is not None:
-            elapsed = elapsed_override
-        return QualificationResult(
-            outcome=outcome,
-            account_fingerprint=account_fingerprint,
-            started_at_utc=started_at_utc,
-            ended_at_utc=ended_at_utc,
-            elapsed_seconds=elapsed,
-            price_count=price_count,
-            heartbeat_count=heartbeat_count,
-            max_liveness_gap_seconds=max_gap,
-            boundary_audit=audit,
-            rejection_codes=codes,
-        )
-
-    try:
-        for line in stream.iter_lines():
-            received_ns = monotonic_ns()
-            elapsed = max(0.0, (received_ns - started_ns) / 1_000_000_000)
-            if elapsed > MAX_QUALIFICATION_SECONDS:
-                return finish(
-                    QualificationOutcome.INCONCLUSIVE,
-                    elapsed_override=MAX_QUALIFICATION_SECONDS,
-                )
-            received_at_utc = utc_now()
-
-            if last_valid_ns is not None:
-                gap = max(0.0, (received_ns - last_valid_ns) / 1_000_000_000)
-                max_gap = max(max_gap, gap)
-                if gap > LIVENESS_TIMEOUT_SECONDS:
-                    return finish(
-                        QualificationOutcome.CONNECTOR_REJECTED,
-                        codes=("LIVENESS_GAP",),
-                    )
-
-            try:
-                raw = parse_provider_line(line)
-            except OandaPracticeStreamError:
-                return finish(
-                    QualificationOutcome.CONNECTOR_REJECTED,
-                    codes=("MALFORMED_MESSAGE",),
-                )
-
-            try:
-                normalizer.accept(
-                    raw,
-                    received_at_utc=received_at_utc,
-                    receive_monotonic_ns=received_ns,
-                )
-            except ProviderMessageError:
-                return finish(
-                    QualificationOutcome.CONNECTOR_REJECTED,
-                    codes=("MESSAGE_INTEGRITY",),
-                )
-
-            message_type = raw.get("type")
-            if message_type == "PRICE":
-                price_count += 1
-            elif message_type == "HEARTBEAT":
-                heartbeat_count += 1
-            else:
-                return finish(
-                    QualificationOutcome.CONNECTOR_REJECTED,
-                    codes=("MESSAGE_TYPE",),
-                )
-            last_valid_ns = received_ns
-
-            if price_count >= MIN_PRICE_COUNT and heartbeat_count >= MIN_HEARTBEAT_COUNT:
-                return finish(QualificationOutcome.PASS)
-    except OandaPracticeStreamError:
-        return finish(
-            QualificationOutcome.CONNECTOR_UNAVAILABLE,
-            codes=("STREAM_UNAVAILABLE",),
-        )
-    except Exception:
-        return finish(
-            QualificationOutcome.CONNECTOR_UNAVAILABLE,
-            codes=("STREAM_UNAVAILABLE",),
-        )
-
-    return finish(QualificationOutcome.INCONCLUSIVE)
-
-
 __all__ = [
     "MAX_QUALIFICATION_SECONDS",
     "MIN_HEARTBEAT_COUNT",
@@ -415,7 +282,5 @@ __all__ = [
     "QualificationOutcome",
     "QualificationResult",
     "mt5_boundary_audit",
-    "practice_boundary_audit",
     "qualify_bridge",
-    "qualify_stream",
 ]

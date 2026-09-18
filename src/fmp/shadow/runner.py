@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import time
 from dataclasses import asdict
 from collections.abc import Callable, Mapping
@@ -15,7 +14,6 @@ from fmp.reporting.backtest import compute_backtest_metrics
 from .bars import LiveBarBuilder
 from .campaign import load_campaign_registration
 from .contracts import (
-    HeartbeatEvent,
     LIVENESS_TIMEOUT_SECONDS,
     NormalizedQuote,
     STARTING_EQUITY_USD,
@@ -30,8 +28,6 @@ from .mt5_bridge import (
     BridgeStartRecord,
     BridgeTickRecord,
 )
-from .normalization import ProviderMessageError, StreamSegmentNormalizer
-from .oanda import OandaPracticePricingStream, OandaPracticeStreamError, parse_provider_line
 from .simulation import ShadowSimulator
 from .state import restore_shadow_simulator
 from .strategy import ShadowStrategyDecision, generate_shadow_strategy_decisions
@@ -88,7 +84,6 @@ class ShadowRunner:
         self.simulator = simulator or ShadowSimulator()
         self.strategy_adapter = strategy_adapter
         self._processing_monotonic_ns = processing_monotonic_ns
-        self.normalizer = StreamSegmentNormalizer()
         self.bridge_validator = BridgeSessionValidator()
         self._bridge_last_monotonic_ns: int | None = None
         self._market_last_monotonic_ns: int | None = None
@@ -97,9 +92,6 @@ class ShadowRunner:
         self.ineligible_london_dates: set[date] = set()
         self.stale = False
         self._started = False
-        self._last_valid_source_time: datetime | None = None
-        self._last_valid_received_at: datetime | None = None
-        self._last_valid_monotonic_ns: int | None = None
         self._strategy_bars: dict[date, list[QuoteBar]] = {}
         self._seen_decisions: set[str] = set()
         self._date_ineligible_evidenced: set[date] = set()
@@ -141,7 +133,7 @@ class ShadowRunner:
             {"event": "connect", "timestamp_utc": now_utc}
         )
 
-    def disconnect(self, *, now_utc: datetime, reason: str = "stream_end") -> None:
+    def disconnect(self, *, now_utc: datetime, reason: str = "bridge_end") -> None:
         _require_utc(now_utc, field_name="now_utc")
         if not self._started:
             raise RuntimeError("Phase 8 shadow runner is not started")
@@ -153,102 +145,12 @@ class ShadowRunner:
         self._record_scenario_changes()
         self._record_financial_metrics()
 
-    def process_line(
-        self,
-        line: bytes,
-        *,
-        received_at_utc: datetime,
-        receive_monotonic_ns: int,
-    ) -> None:
-        try:
-            raw = parse_provider_line(line)
-        except OandaPracticeStreamError:
-            self.evidence.append_operational(
-                {
-                    "event": "rejection",
-                    "timestamp_utc": received_at_utc,
-                    "reason": "provider_line_invalid",
-                }
-            )
-            raise
-        self.process_provider_message(
-            raw,
-            received_at_utc=received_at_utc,
-            receive_monotonic_ns=receive_monotonic_ns,
-        )
-
-    def process_provider_message(
-        self,
-        raw: Mapping[str, object],
-        *,
-        received_at_utc: datetime,
-        receive_monotonic_ns: int,
-    ) -> None:
-        if not self._started:
-            raise RuntimeError("Phase 8 shadow runner is not started")
-        _require_utc(received_at_utc, field_name="received_at_utc")
-        if (
-            isinstance(receive_monotonic_ns, bool)
-            or not isinstance(receive_monotonic_ns, int)
-            or receive_monotonic_ns < 0
-        ):
-            raise ValueError("receive_monotonic_ns must be a non-negative integer")
-
-        try:
-            event = self.normalizer.accept(
-                raw,
-                received_at_utc=received_at_utc,
-                receive_monotonic_ns=receive_monotonic_ns,
-            )
-        except ProviderMessageError:
-            self.evidence.append_operational(
-                {
-                    "event": "rejection",
-                    "timestamp_utc": received_at_utc,
-                    "reason": "provider_message_rejected",
-                }
-            )
-            raise
-
-        if event is None:
-            self.evidence.append_raw(
-                raw,
-                received_at_utc=received_at_utc,
-                receive_monotonic_ns=receive_monotonic_ns,
-            )
-            return
-
-        if self._last_valid_monotonic_ns is not None:
-            gap_ns = receive_monotonic_ns - self._last_valid_monotonic_ns
-            if gap_ns < 0:
-                raise ValueError("receive monotonic time regressed")
-            if gap_ns >= _LIVENESS_TIMEOUT_NS and not self.stale:
-                assert self._last_valid_source_time is not None
-                self._mark_stale(
-                    start_utc=self._last_valid_source_time,
-                    end_utc=event.source_time_utc,
-                    detected_at_utc=received_at_utc,
-                )
-
-        self.evidence.append_raw(
-            raw,
-            received_at_utc=received_at_utc,
-            receive_monotonic_ns=receive_monotonic_ns,
-        )
-        self._process_normalized_event(
-            event,
-            received_at_utc=received_at_utc,
-            receive_monotonic_ns=receive_monotonic_ns,
-            update_legacy_liveness=True,
-        )
-
     def _process_normalized_event(
         self,
-        event: NormalizedQuote | HeartbeatEvent,
+        event: NormalizedQuote,
         *,
         received_at_utc: datetime,
         receive_monotonic_ns: int,
-        update_legacy_liveness: bool,
     ) -> None:
         self.evidence.append_normalized(event)
         if self._processing_monotonic_ns is not None:
@@ -279,24 +181,9 @@ class ShadowRunner:
                 {"event": "recovered", "timestamp_utc": received_at_utc}
             )
 
-        if update_legacy_liveness:
-            self._last_valid_source_time = event.source_time_utc
-            self._last_valid_received_at = received_at_utc
-            self._last_valid_monotonic_ns = receive_monotonic_ns
-
-        if isinstance(event, NormalizedQuote):
-            completed = self.bar_builder.on_quote(event)
-        elif isinstance(event, HeartbeatEvent):
-            completed = self.bar_builder.on_time_advance(event.source_time_utc)
-        else:
-            raise TypeError("unsupported normalized Phase 8 event")
-
+        completed = self.bar_builder.on_quote(event)
         self._record_completed_bars(completed)
-
-        if isinstance(event, NormalizedQuote):
-            self.simulator.on_quote(event)
-        else:
-            self.simulator.on_time_advance(event.source_time_utc)
+        self.simulator.on_quote(event)
         self._record_scenario_changes()
 
     def process_bridge_record(
@@ -394,7 +281,6 @@ class ShadowRunner:
             event,
             received_at_utc=received_at_utc,
             receive_monotonic_ns=receive_monotonic_ns,
-            update_legacy_liveness=False,
         )
 
     def check_liveness(
@@ -440,18 +326,6 @@ class ShadowRunner:
                 )
             return self.stale
 
-        if self._last_valid_monotonic_ns is None or self.stale:
-            return self.stale
-        gap_ns = now_monotonic_ns - self._last_valid_monotonic_ns
-        if gap_ns < 0:
-            raise ValueError("monotonic clock regressed")
-        if gap_ns >= _LIVENESS_TIMEOUT_NS:
-            assert self._last_valid_source_time is not None
-            self._mark_stale(
-                start_utc=self._last_valid_source_time,
-                end_utc=now_utc,
-                detected_at_utc=now_utc,
-            )
         return self.stale
 
     def _mark_stale(
