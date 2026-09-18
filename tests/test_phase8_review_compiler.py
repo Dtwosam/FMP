@@ -10,11 +10,13 @@ from unittest.mock import patch
 
 from fmp.shadow import campaign
 from fmp.shadow.gates import Phase8ReviewOutcome, review_campaign
-from fmp.shadow.qualification import practice_boundary_audit
+from fmp.shadow.qualification import mt5_boundary_audit
 
 
 CODE_COMMIT = "c" * 40
 FINGERPRINT = "f" * 64
+QUALIFICATION_SESSION = "a" * 64
+SERVER = "FPMarketsSC-Demo2"
 REFERENCE = {
     "method_version": "fmp-phase8-spread-reference-v1",
     "phase7_checkpoint_tag": "fmp-v1-phase7-walk-forward",
@@ -127,7 +129,11 @@ class Phase8ReviewCompilerTests(unittest.TestCase):
                     "price_count": 100,
                     "heartbeat_count": 6,
                     "max_liveness_gap_seconds": 10.0,
-                    "boundary_audit": practice_boundary_audit(),
+                    "max_bridge_liveness_gap_seconds": 10.0,
+                    "max_market_liveness_gap_seconds": 10.0,
+                    "bridge_session_id": QUALIFICATION_SESSION,
+                    "server": SERVER,
+                    "boundary_audit": mt5_boundary_audit(),
                     "rejection_codes": [],
                 },
             )
