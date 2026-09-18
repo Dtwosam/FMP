@@ -52,18 +52,18 @@ class Phase8OperatorHandoffTests(unittest.TestCase):
             "python scripts/phase8_shadow.py qualify --out evidence/phase8/qualification",
             text,
         )
-        self.assertIn("python scripts/phase8_shadow.py build-reference \", text)
-        self.assertIn("--dataset-root <accepted-phase2-dataset-root> \", text)
+        self.assertIn("python scripts/phase8_shadow.py build-reference", text)
+        self.assertIn("--dataset-root <accepted-phase2-dataset-root>", text)
         self.assertIn(
-            "--processed-manifest <accepted-usdjpy-processed-manifest> \",
+            "--processed-manifest <accepted-usdjpy-processed-manifest>",
             text,
         )
         self.assertIn("--out evidence/phase8/reference", text)
         self.assertIn(
-            "python scripts/phase8_shadow.py register \",
+            "python scripts/phase8_shadow.py register",
             text,
         )
-        self.assertIn("--reference evidence/phase8/reference \", text)
+        self.assertIn("--reference evidence/phase8/reference", text)
         self.assertIn("--campaign-dir evidence/phase8/campaign", text)
         self.assertIn(
             "python scripts/phase8_shadow.py run --campaign-dir evidence/phase8/campaign",
