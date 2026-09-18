@@ -15,7 +15,10 @@ from fmp.shadow.evidence import EvidenceWriter
 
 UTC = timezone.utc
 START = datetime(2026, 1, 15, 8, 0, tzinfo=UTC)
-ACCOUNT_FINGERPRINT = hashlib.sha256(b"practice-account").hexdigest()
+ACCOUNT_FINGERPRINT = hashlib.sha256(b"demo-account").hexdigest()
+BRIDGE_SOURCE_COMMIT = "d" * 40
+BRIDGE_SESSION_ID = "e" * 64
+SERVER = "FPMarketsSC-Demo2"
 
 
 def normalized_quote() -> NormalizedQuote:
@@ -45,21 +48,32 @@ def quote_bar() -> QuoteBar:
     )
 
 
-def write_fixture(root: Path) -> dict[str, object]:
-    writer = EvidenceWriter(
+def _writer(root: Path, *, code_commit: str = "a" * 40) -> EvidenceWriter:
+    return EvidenceWriter(
         root,
-        code_commit="a" * 40,
+        code_commit=code_commit,
+        bridge_source_commit=BRIDGE_SOURCE_COMMIT,
+        bridge_session_id=BRIDGE_SESSION_ID,
+        server=SERVER,
         account_fingerprint_sha256=ACCOUNT_FINGERPRINT,
         run_start_utc=START,
     )
+
+
+def write_fixture(root: Path) -> dict[str, object]:
+    writer = _writer(root)
     writer.append_raw(
         {
-            "type": "PRICE",
-            "time": "2026-01-15T08:00:00.000000000Z",
-            "instrument": "USD_JPY",
-            "tradeable": True,
-            "bids": [{"price": "139.990"}],
-            "asks": [{"price": "140.010"}],
+            "protocol": "fmp-mt5-demo-file-bridge-v1",
+            "record_type": "TICK",
+            "bridge_session_id": BRIDGE_SESSION_ID,
+            "symbol": "USDJPY",
+            "server": SERVER,
+            "account_fingerprint": ACCOUNT_FINGERPRINT,
+            "source_time_msc": 1_768_467_600_000,
+            "bid": 139.99,
+            "ask": 140.01,
+            "flags": 6,
         },
         received_at_utc=START + timedelta(milliseconds=10),
         receive_monotonic_ns=123,
@@ -99,6 +113,7 @@ class Phase8EvidenceTests(unittest.TestCase):
                     hashlib.sha256(data).hexdigest(),
                 )
 
+            self.assertEqual(manifest["protocol"], "fmp-phase8-shadow-evidence-v2")
             self.assertEqual(manifest["code_commit"], "a" * 40)
             self.assertEqual(manifest["phase7_checkpoint_tag"], "fmp-v1-phase7-walk-forward")
             self.assertEqual(manifest["phase7_checkpoint_sha"], "b6fb0176555b071fef6d1070edf3407b03cd60c9")
@@ -114,12 +129,21 @@ class Phase8EvidenceTests(unittest.TestCase):
                     "target_range_multiple": 1.5,
                 },
             )
-            self.assertEqual(manifest["practice_host"], "stream-fxpractice.oanda.com")
-            self.assertEqual(manifest["provider_instrument"], "USD_JPY")
+            self.assertEqual(manifest["connector_protocol"], "fmp-mt5-demo-file-bridge-v1")
+            self.assertEqual(manifest["provider"], "FP_MARKETS_MT5_DEMO")
+            self.assertEqual(manifest["provider_instrument"], "USDJPY")
+            self.assertEqual(manifest["transport"], "MT5_FILE_COMMON_JSONL")
+            self.assertEqual(manifest["bridge_file"], "FMP/phase8-usdjpy-feed.jsonl")
+            self.assertEqual(manifest["allowed_servers"], ["FPMarketsSC-Demo", "FPMarketsSC-Demo2"])
+            self.assertEqual(manifest["bridge_session_id"], BRIDGE_SESSION_ID)
+            self.assertEqual(manifest["server"], SERVER)
+            self.assertEqual(manifest["bridge_source_commit"], BRIDGE_SOURCE_COMMIT)
             self.assertEqual(manifest["account_fingerprint_sha256"], ACCOUNT_FINGERPRINT)
             self.assertEqual(manifest["slippage_scenarios"], [0.2, 0.5, 1.0])
             self.assertEqual(manifest["risk_policy"], RiskConfig().to_config())
             self.assertEqual(manifest["replay_result_digest"], "b" * 64)
+            self.assertNotIn("practice_host", manifest)
+            self.assertNotIn("connector_boundary", manifest)
 
     def test_identical_events_write_byte_identical_artifacts(self) -> None:
         with TemporaryDirectory() as left_tmp, TemporaryDirectory() as right_tmp:
@@ -135,12 +159,7 @@ class Phase8EvidenceTests(unittest.TestCase):
     def test_append_calls_preserve_existing_prefix_and_finalize_seals_writer(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            writer = EvidenceWriter(
-                root,
-                code_commit="c" * 40,
-                account_fingerprint_sha256=ACCOUNT_FINGERPRINT,
-                run_start_utc=START,
-            )
+            writer = _writer(root, code_commit="c" * 40)
             writer.append_operational({"event": "connect"})
             prefix = (root / "operational.jsonl").read_bytes()
             writer.append_operational({"event": "heartbeat"})
@@ -154,14 +173,18 @@ class Phase8EvidenceTests(unittest.TestCase):
     def test_raw_records_include_receive_metadata_and_normalized_records_are_canonical(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            writer = EvidenceWriter(
-                root,
-                code_commit="e" * 40,
-                account_fingerprint_sha256=ACCOUNT_FINGERPRINT,
-                run_start_utc=START,
-            )
+            writer = _writer(root, code_commit="e" * 40)
             writer.append_raw(
-                {"type": "HEARTBEAT", "time": "2026-01-15T08:00:00Z"},
+                {
+                    "protocol": "fmp-mt5-demo-file-bridge-v1",
+                    "record_type": "BRIDGE_HEARTBEAT",
+                    "bridge_session_id": BRIDGE_SESSION_ID,
+                    "symbol": "USDJPY",
+                    "server": SERVER,
+                    "account_fingerprint": ACCOUNT_FINGERPRINT,
+                    "bridge_emitted_time_msc": 1_768_467_600_012,
+                    "last_tick_time_msc": None,
+                },
                 received_at_utc=START + timedelta(milliseconds=12),
                 receive_monotonic_ns=555,
             )
@@ -170,7 +193,7 @@ class Phase8EvidenceTests(unittest.TestCase):
             normalized = json.loads((root / "normalized.jsonl").read_text(encoding="utf-8"))
             self.assertEqual(raw["receive_monotonic_ns"], 555)
             self.assertEqual(raw["received_at_utc"], "2026-01-15T08:00:00.012000Z")
-            self.assertEqual(raw["provider_object"]["type"], "HEARTBEAT")
+            self.assertEqual(raw["provider_object"]["record_type"], "BRIDGE_HEARTBEAT")
             self.assertEqual(normalized["symbol"], "USDJPY")
             self.assertEqual(normalized["source_time_utc"], "2026-01-15T08:00:00Z")
 
@@ -179,26 +202,27 @@ class Phase8EvidenceTests(unittest.TestCase):
         plain_account = "001-011-12345678-001"
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
-            writer = EvidenceWriter(
-                root,
-                code_commit="f" * 40,
-                account_fingerprint_sha256=ACCOUNT_FINGERPRINT,
-                run_start_utc=START,
-            )
+            writer = _writer(root, code_commit="f" * 40)
             writer.append_operational(
                 {
                     "event": "transport_error",
                     "Authorization": f"Bearer {secret_token}",
                     "token": secret_token,
+                    "password": secret_token,
                     "account_id": plain_account,
                     "message": f"Authorization: Bearer {secret_token}; account={plain_account}",
                 }
             )
             writer.append_raw(
                 {
-                    "type": "PRICE",
-                    "time": "2026-01-15T08:00:00Z",
-                    "instrument": "USD_JPY",
+                    "protocol": "fmp-mt5-demo-file-bridge-v1",
+                    "record_type": "BRIDGE_HEARTBEAT",
+                    "bridge_session_id": BRIDGE_SESSION_ID,
+                    "symbol": "USDJPY",
+                    "server": SERVER,
+                    "account_fingerprint": ACCOUNT_FINGERPRINT,
+                    "bridge_emitted_time_msc": 1_768_467_600_012,
+                    "last_tick_time_msc": None,
                     "token": secret_token,
                     "accountID": plain_account,
                 },
@@ -217,6 +241,9 @@ class Phase8EvidenceTests(unittest.TestCase):
                 EvidenceWriter(
                     Path(tmp),
                     code_commit="abc",
+                    bridge_source_commit=BRIDGE_SOURCE_COMMIT,
+                    bridge_session_id=BRIDGE_SESSION_ID,
+                    server=SERVER,
                     account_fingerprint_sha256="not-a-sha",
                     run_start_utc=START,
                 )

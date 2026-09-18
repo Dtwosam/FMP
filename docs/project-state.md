@@ -1,11 +1,11 @@
 # FMP Project State
 
-**Updated:** 2026-09-15
+**Updated:** 2026-09-17
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8 — Live shadow mode
 **Phase status:** ACTIVE
-**Next milestone:** implement the activated DEC-036 shadow-only runtime, qualify the fixed OANDA Practice pricing stream, and register/collect `EXP-20260915-009`; Phase 9 remains locked
+**Next milestone:** Implement and source-free verify DEC-037, then explicitly qualify the fixed read-only FP Markets MT5 demo bridge for `EXP-20260917-010`; only a qualification PASS permits historical-reference generation and new campaign registration.
 
 ## Current baseline
 

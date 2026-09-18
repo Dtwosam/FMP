@@ -1,48 +1,51 @@
 from __future__ import annotations
 
-import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 import tempfile
 import unittest
 
 from fmp.shadow.cli import build_parser, main
+from fmp.shadow.qualification import QualificationOutcome
 
 
-ACCOUNT_ID = "101-001-12345678-001"
-TOKEN = "secret-token"
+UTC = timezone.utc
+NOW = datetime(2026, 9, 17, 20, 0, tzinfo=UTC)
+CODE_COMMIT = "c" * 40
+SESSION = "a" * 64
+FINGERPRINT = "b" * 64
+SERVER = "FPMarketsSC-Demo2"
 
 
-def price_line(index: int) -> bytes:
-    minute, second = divmod(index, 60)
-    return (
-        '{"type":"PRICE","time":"2026-09-15T12:%02d:%02dZ",'
-        '"instrument":"USD_JPY","tradeable":true,'
-        '"bids":[{"price":"140.001"}],"asks":[{"price":"140.003"}]}'
-        % (minute, second)
-    ).encode("utf-8")
+class FakeQualification:
+    outcome = QualificationOutcome.PASS
 
-
-def heartbeat_line(second: int) -> bytes:
-    return (
-        '{"type":"HEARTBEAT","time":"2026-09-15T12:00:%02dZ"}' % second
-    ).encode("utf-8")
-
-
-class FakeStream:
-    def iter_lines(self):  # type: ignore[no-untyped-def]
-        heartbeats = {10, 20, 30, 40, 50, 59}
-        for index in range(100):
-            yield price_line(index)
-            if index in heartbeats:
-                yield heartbeat_line(index)
+    def to_record(self) -> dict[str, object]:
+        return {
+            "outcome": "PASS",
+            "account_fingerprint": FINGERPRINT,
+            "bridge_session_id": SESSION,
+            "server": SERVER,
+            "price_count": 100,
+            "heartbeat_count": 6,
+            "boundary_audit": {
+                "connector_protocol": "fmp-mt5-demo-file-bridge-v1",
+                "provider": "FP_MARKETS_MT5_DEMO",
+                "transport": "MT5_FILE_COMMON_JSONL",
+                "bridge_file": "FMP/phase8-usdjpy-feed.jsonl",
+                "instrument": "USDJPY",
+                "allowed_servers": ["FPMarketsSC-Demo", "FPMarketsSC-Demo2"],
+            },
+        }
 
 
 class Phase8CliTests(unittest.TestCase):
-    def test_parser_exposes_only_qualify_and_out_not_credentials_or_transport_overrides(self) -> None:
+    def test_parser_exposes_no_credentials_or_transport_overrides(self) -> None:
         parser = build_parser()
         help_text = parser.format_help()
         self.assertIn("qualify", help_text)
+        self.assertIn("run", help_text)
         for forbidden in (
             "--account-id",
             "--token",
@@ -50,69 +53,101 @@ class Phase8CliTests(unittest.TestCase):
             "--base-url",
             "--method",
             "--path",
+            "--filename",
+            "--server",
             "--instrument",
         ):
             self.assertNotIn(forbidden, help_text)
 
-        for forbidden in ("--account-id", "--token", "--host", "--instrument"):
+        for forbidden in (
+            "--account-id",
+            "--token",
+            "--host",
+            "--path",
+            "--filename",
+            "--server",
+            "--instrument",
+        ):
             with self.subTest(forbidden=forbidden), self.assertRaises(SystemExit):
                 parser.parse_args(["qualify", "--out", "out", forbidden, "x"])
 
-    def test_missing_env_credentials_fail_before_stream_construction(self) -> None:
-        called = False
-
-        def factory(*, account_id: str, token: str):  # type: ignore[no-untyped-def]
-            nonlocal called
-            called = True
-            raise AssertionError("must not construct stream")
-
-        with tempfile.TemporaryDirectory() as tmp, self.assertRaises(SystemExit) as caught:
-            main(
-                ["qualify", "--out", tmp],
-                environ={},
-                stream_factory=factory,
-            )
-        self.assertEqual(caught.exception.code, 2)
-        self.assertFalse(called)
-
-    def test_qualify_reads_credentials_only_from_env_and_persists_no_plain_secret(self) -> None:
-        captured: dict[str, str] = {}
-
-        def factory(*, account_id: str, token: str):  # type: ignore[no-untyped-def]
-            captured["account_id"] = account_id
-            captured["token"] = token
-            return FakeStream()
+    def test_qualify_auto_discovers_fixed_bridge_and_requires_no_credentials(self) -> None:
+        discovered: list[Path] = []
+        tail = object()
+        qualification_calls: list[object] = []
 
         with tempfile.TemporaryDirectory() as tmp:
             rc = main(
                 ["qualify", "--out", tmp],
                 environ={
-                    "OANDA_PRACTICE_ACCOUNT_ID": ACCOUNT_ID,
-                    "OANDA_PRACTICE_TOKEN": TOKEN,
+                    "OANDA_PRACTICE_ACCOUNT_ID": "must-be-ignored",
+                    "OANDA_PRACTICE_TOKEN": "must-be-ignored",
                 },
-                stream_factory=factory,
+                bridge_discoverer=lambda: Path("/fixed/common/FMP/phase8-usdjpy-feed.jsonl"),
+                tail_factory=lambda path: discovered.append(path) or tail,
+                qualify_command=lambda value, **_: qualification_calls.append(value) or FakeQualification(),
+                utc_now=lambda: NOW,
+                monotonic_ns=lambda: 1,
             )
             self.assertEqual(rc, 0)
-            self.assertEqual(captured, {"account_id": ACCOUNT_ID, "token": TOKEN})
+            self.assertEqual(
+                discovered,
+                [Path("/fixed/common/FMP/phase8-usdjpy-feed.jsonl")],
+            )
+            self.assertEqual(qualification_calls, [tail])
 
             path = Path(tmp) / "qualification.json"
-            self.assertTrue(path.is_file())
-            raw = path.read_text(encoding="utf-8")
-            self.assertNotIn(ACCOUNT_ID, raw)
-            self.assertNotIn(TOKEN, raw)
-            record = json.loads(raw)
+            record = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(record["outcome"], "PASS")
             self.assertEqual(record["price_count"], 100)
             self.assertEqual(record["heartbeat_count"], 6)
-            self.assertEqual(
-                record["account_fingerprint"],
-                hashlib.sha256(ACCOUNT_ID.encode("utf-8")).hexdigest(),
+            self.assertEqual(record["account_fingerprint"], FINGERPRINT)
+            self.assertEqual(record["bridge_session_id"], SESSION)
+            self.assertEqual(record["server"], SERVER)
+            self.assertEqual(record["boundary_audit"]["provider"], "FP_MARKETS_MT5_DEMO")
+            raw = path.read_text(encoding="utf-8")
+            self.assertNotIn("must-be-ignored", raw)
+
+    def test_run_auto_discovers_same_fixed_bridge_and_passes_no_secret_surface(self) -> None:
+        discovered: list[Path] = []
+        tail = object()
+        calls: list[dict[str, object]] = []
+        with tempfile.TemporaryDirectory() as tmp:
+            campaign = Path(tmp)
+            rc = main(
+                ["run", "--campaign-dir", str(campaign)],
+                environ={"OANDA_PRACTICE_TOKEN": "ignored"},
+                bridge_discoverer=lambda: Path("/fixed/common/FMP/phase8-usdjpy-feed.jsonl"),
+                tail_factory=lambda path: discovered.append(path) or tail,
+                run_command=lambda **kwargs: calls.append(kwargs) or 0,
+                code_commit_resolver=lambda: CODE_COMMIT,
+                utc_now=lambda: NOW,
+                monotonic_ns=lambda: 1,
             )
-            self.assertEqual(record["boundary_audit"]["method"], "GET")
+            self.assertEqual(rc, 0)
+            self.assertEqual(len(calls), 1)
+            self.assertIs(calls[0]["bridge_tail"], tail)
+            self.assertEqual(calls[0]["campaign_dir"], campaign)
+            self.assertEqual(calls[0]["code_commit"], CODE_COMMIT)
+            for forbidden in ("account_id", "token", "stream_factory", "server", "path"):
+                self.assertNotIn(forbidden, calls[0])
             self.assertEqual(
-                record["boundary_audit"]["host"],
-                "stream-fxpractice.oanda.com",
+                discovered,
+                [Path("/fixed/common/FMP/phase8-usdjpy-feed.jsonl")],
             )
+
+    def test_active_cli_source_has_no_oanda_secret_or_transport_surface(self) -> None:
+        source = Path("src/fmp/shadow/cli.py").read_text(encoding="utf-8")
+        for forbidden in (
+            "OANDA_PRACTICE_ACCOUNT_ID",
+            "OANDA_PRACTICE_TOKEN",
+            "OandaPracticePricingStream",
+            "qualify_stream",
+            "account_id=",
+            "token=",
+            "stream_factory=",
+        ):
+            self.assertNotIn(forbidden, source)
 
     def test_script_delegates_to_shadow_cli_and_contains_no_order_surface(self) -> None:
         source = Path("scripts/phase8_shadow.py").read_text(encoding="utf-8")

@@ -14,15 +14,18 @@ from typing import Mapping
 from fmp.risk import RiskConfig
 
 from .contracts import (
-    PRACTICE_STREAM_HOST,
-    PRACTICE_STREAM_PATH_TEMPLATE,
-    PROVIDER_INSTRUMENT,
+    FMP_SYMBOL,
+    MT5_ALLOWED_SERVERS,
+    MT5_BRIDGE_FILE,
+    MT5_BRIDGE_PROTOCOL,
+    MT5_PROVIDER,
+    MT5_TRANSPORT,
     SLIPPAGE_SCENARIOS,
 )
 
 
-EVIDENCE_PROTOCOL = "fmp-phase8-shadow-evidence-v1"
-CONNECTOR_PROTOCOL = "oanda-v20-fxtrade-practice-pricing-stream-v1"
+EVIDENCE_PROTOCOL = "fmp-phase8-shadow-evidence-v2"
+CONNECTOR_PROTOCOL = MT5_BRIDGE_PROTOCOL
 PHASE7_CHECKPOINT_TAG = "fmp-v1-phase7-walk-forward"
 PHASE7_CHECKPOINT_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
 PHASE7_EXPERIMENT = "EXP-20260915-008"
@@ -38,7 +41,7 @@ _STREAM_FILES = (
 _HEX40 = re.compile(r"^[0-9a-f]{40}$")
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 _SENSITIVE_KEY = re.compile(
-    r"(?:authorization|token|secret|cookie|account_?id|accountid|request_?headers?|headers?)",
+    r"(?:authorization|token|secret|password|cookie|account_?id|accountid|request_?headers?|headers?)",
     re.IGNORECASE,
 )
 _BEARER = re.compile(r"(?i)(?:authorization\s*:\s*)?bearer\s+[^\s;,]+")
@@ -50,14 +53,19 @@ def _require_utc(value: datetime, *, field_name: str) -> None:
         raise ValueError(f"{field_name} must use UTC")
 
 
-def _validate_code_commit(value: str) -> None:
+def _validate_code_commit(value: str, *, field_name: str = "code_commit") -> None:
     if not isinstance(value, str) or _HEX40.fullmatch(value) is None:
-        raise ValueError("code_commit must be a lowercase 40-character commit SHA")
+        raise ValueError(f"{field_name} must be a lowercase 40-character commit SHA")
 
 
 def _validate_sha256(value: str, *, field_name: str) -> None:
     if not isinstance(value, str) or _HEX64.fullmatch(value) is None:
         raise ValueError(f"{field_name} must be a lowercase SHA-256")
+
+
+def _validate_server(value: str) -> None:
+    if not isinstance(value, str) or value not in MT5_ALLOWED_SERVERS:
+        raise ValueError("server must be an approved FP Markets MT5 demo server")
 
 
 def _redact_string(value: str) -> str:
@@ -132,12 +140,18 @@ def _build_manifest(
     root: Path,
     *,
     code_commit: str,
+    bridge_source_commit: str,
+    bridge_session_id: str,
+    server: str,
     account_fingerprint_sha256: str,
     run_start_utc: datetime,
     run_end_utc: datetime,
     replay_result_digest: str,
 ) -> dict[str, object]:
     _validate_code_commit(code_commit)
+    _validate_code_commit(bridge_source_commit, field_name="bridge_source_commit")
+    _validate_sha256(bridge_session_id, field_name="bridge_session_id")
+    _validate_server(server)
     _validate_sha256(account_fingerprint_sha256, field_name="account_fingerprint_sha256")
     _validate_sha256(replay_result_digest, field_name="replay_result_digest")
     _require_utc(run_start_utc, field_name="run_start_utc")
@@ -163,17 +177,15 @@ def _build_manifest(
             "target_range_multiple": 1.5,
         },
         "connector_protocol": CONNECTOR_PROTOCOL,
-        "connector_boundary": {
-            "method": "GET",
-            "host": PRACTICE_STREAM_HOST,
-            "path_template": PRACTICE_STREAM_PATH_TEMPLATE,
-            "instrument": PROVIDER_INSTRUMENT,
-            "snapshot": True,
-            "include_home_conversions": False,
-        },
-        "practice_host": PRACTICE_STREAM_HOST,
-        "provider_instrument": PROVIDER_INSTRUMENT,
+        "provider": MT5_PROVIDER,
+        "provider_instrument": FMP_SYMBOL,
+        "transport": MT5_TRANSPORT,
+        "bridge_file": MT5_BRIDGE_FILE,
+        "allowed_servers": list(MT5_ALLOWED_SERVERS),
+        "bridge_session_id": bridge_session_id,
+        "server": server,
         "account_fingerprint_sha256": account_fingerprint_sha256,
+        "bridge_source_commit": bridge_source_commit,
         "slippage_scenarios": list(SLIPPAGE_SCENARIOS),
         "risk_policy": RiskConfig().to_config(),
         "run_start_utc": run_start_utc,
@@ -187,6 +199,9 @@ def finalize_existing_segment(
     root: Path,
     *,
     code_commit: str,
+    bridge_source_commit: str,
+    bridge_session_id: str,
+    server: str,
     account_fingerprint_sha256: str,
     run_start_utc: datetime,
     run_end_utc: datetime,
@@ -196,6 +211,9 @@ def finalize_existing_segment(
     manifest = _build_manifest(
         root,
         code_commit=code_commit,
+        bridge_source_commit=bridge_source_commit,
+        bridge_session_id=bridge_session_id,
+        server=server,
         account_fingerprint_sha256=account_fingerprint_sha256,
         run_start_utc=run_start_utc,
         run_end_utc=run_end_utc,
@@ -217,15 +235,24 @@ class EvidenceWriter:
         root: Path,
         *,
         code_commit: str,
+        bridge_source_commit: str,
+        bridge_session_id: str,
+        server: str,
         account_fingerprint_sha256: str,
         run_start_utc: datetime,
     ) -> None:
         _validate_code_commit(code_commit)
+        _validate_code_commit(bridge_source_commit, field_name="bridge_source_commit")
+        _validate_sha256(bridge_session_id, field_name="bridge_session_id")
+        _validate_server(server)
         _validate_sha256(account_fingerprint_sha256, field_name="account_fingerprint_sha256")
         _require_utc(run_start_utc, field_name="run_start_utc")
 
         self.root = Path(root)
         self.code_commit = code_commit
+        self.bridge_source_commit = bridge_source_commit
+        self.bridge_session_id = bridge_session_id
+        self.server = server
         self.account_fingerprint_sha256 = account_fingerprint_sha256
         self.run_start_utc = run_start_utc
         self._sealed = False
@@ -299,6 +326,9 @@ class EvidenceWriter:
         manifest = _build_manifest(
             self.root,
             code_commit=self.code_commit,
+            bridge_source_commit=self.bridge_source_commit,
+            bridge_session_id=self.bridge_session_id,
+            server=self.server,
             account_fingerprint_sha256=self.account_fingerprint_sha256,
             run_start_utc=self.run_start_utc,
             run_end_utc=run_end_utc,

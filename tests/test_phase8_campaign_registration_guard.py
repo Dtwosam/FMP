@@ -23,6 +23,15 @@ REFERENCE = {
 }
 
 
+class _ForbiddenTail:
+    @property
+    def start_record(self):  # type: ignore[no-untyped-def]
+        raise AssertionError("bridge tail must not be touched for invalid registration")
+
+    def read_available(self):  # type: ignore[no-untyped-def]
+        raise AssertionError("bridge tail must not be read for invalid registration")
+
+
 class Phase8CampaignRegistrationGuardTests(unittest.TestCase):
     def _register(self, root: Path) -> dict[str, object]:
         with patch(
@@ -63,13 +72,13 @@ class Phase8CampaignRegistrationGuardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "risk_policy"):
                 campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
 
-            tampered_path = dict(original)
-            tampered_path["path_template"] = "/v3/accounts/{account_id}/orders"
+            tampered_protocol = dict(original)
+            tampered_protocol["connector_protocol"] = "oanda-v20-fxtrade-practice-pricing-stream-v1"
             path.write_text(
-                json.dumps(tampered_path, sort_keys=True, separators=(",", ":")) + "\n",
+                json.dumps(tampered_protocol, sort_keys=True, separators=(",", ":")) + "\n",
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "path_template"):
+            with self.assertRaisesRegex(ValueError, "connector_protocol"):
                 campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
 
             path.write_text(
@@ -79,28 +88,20 @@ class Phase8CampaignRegistrationGuardTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "canonical"):
                 campaign.load_campaign_registration(root, code_commit=CODE_COMMIT)
 
-    def test_live_capture_validates_registration_before_stream_construction(self) -> None:
+    def test_live_capture_validates_registration_before_bridge_tail_access(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "registration.json").write_text("{}\n", encoding="utf-8")
-            stream_constructed = False
-
-            def forbidden_stream_factory(**_: object) -> object:
-                nonlocal stream_constructed
-                stream_constructed = True
-                raise AssertionError("stream must not be constructed for invalid registration")
 
             with self.assertRaisesRegex(ValueError, "registration"):
                 run_live_shadow_capture(
-                    account_id="101-001-1234567-001",
-                    token="test-token",
+                    bridge_tail=_ForbiddenTail(),  # type: ignore[arg-type]
                     campaign_dir=root,
                     code_commit=CODE_COMMIT,
                     utc_now=lambda: datetime(2026, 9, 16, 10, 31, tzinfo=timezone.utc),
                     monotonic_ns=lambda: 1,
-                    stream_factory=forbidden_stream_factory,
+                    sleep=lambda _: None,
                 )
-            self.assertFalse(stream_constructed)
             self.assertEqual(tuple(root.glob("segment-*")), ())
 
 

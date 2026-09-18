@@ -1,5 +1,7 @@
 # Phase 8 Live Shadow Implementation Plan
 
+> **SUPERSEDED FOR OPERATOR USE (2026-09-17):** The connector/operator steps in this historical plan are superseded by **DEC-037** for the active Phase 8 experiment. Use `docs/phase8-mt5-operator-handoff.md` for the current FP Markets MT5 demo workflow. This file is retained as historical design/implementation context and its old operator commands must not be used for `EXP-20260917-010`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task with review checkpoints.
 
 **Goal:** Implement the approved Phase 8 OANDA Practice live-shadow protocol for the sole USDJPY 15m `session_breakout` survivor while making broker order submission structurally impossible, preserving Phase 3/4/7 semantics, and producing deterministic replayable evidence for the frozen Phase 8 acceptance gate.

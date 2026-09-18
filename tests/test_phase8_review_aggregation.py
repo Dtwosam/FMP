@@ -11,13 +11,16 @@ from zoneinfo import ZoneInfo
 from fmp.shadow.campaign import register_campaign
 from fmp.shadow.evidence import finalize_existing_segment
 from fmp.shadow.gates import Phase8ReviewOutcome, review_campaign
-from fmp.shadow.qualification import practice_boundary_audit
+from fmp.shadow.qualification import mt5_boundary_audit
 
 
 UTC = timezone.utc
 LONDON = ZoneInfo("Europe/London")
 CODE_COMMIT = "c" * 40
 FINGERPRINT = "f" * 64
+QUALIFICATION_SESSION = "a" * 64
+SEGMENT_SESSION = "b" * 64
+SERVER = "FPMarketsSC-Demo2"
 DECISION_ID = "SB-USDJPY-20260916-15m-B5-R1p5-LONG"
 REFERENCE = {
     "method_version": "fmp-phase8-spread-reference-v1",
@@ -158,7 +161,11 @@ def _setup_phase8(root: Path) -> tuple[Path, Path]:
             "price_count": 100,
             "heartbeat_count": 6,
             "max_liveness_gap_seconds": 10.0,
-            "boundary_audit": practice_boundary_audit(),
+            "max_bridge_liveness_gap_seconds": 10.0,
+            "max_market_liveness_gap_seconds": 10.0,
+            "bridge_session_id": QUALIFICATION_SESSION,
+            "server": SERVER,
+            "boundary_audit": mt5_boundary_audit(),
             "rejection_codes": [],
         },
     )
@@ -178,7 +185,25 @@ def _verified_segment(campaign: Path) -> Path:
     segment = campaign / "segment-20260916T065000.000000Z"
     segment.mkdir(parents=True)
 
-    _write_jsonl(segment / "raw.jsonl", [])
+    _write_jsonl(
+        segment / "raw.jsonl",
+        [
+            {
+                "provider_object": {
+                    "protocol": "fmp-mt5-demo-file-bridge-v1",
+                    "record_type": "BRIDGE_START",
+                    "bridge_session_id": SEGMENT_SESSION,
+                    "symbol": "USDJPY",
+                    "server": SERVER,
+                    "account_fingerprint": FINGERPRINT,
+                    "account_mode": "DEMO",
+                    "bridge_start_time_msc": int(run_start.timestamp() * 1000),
+                },
+                "received_at_utc": _timestamp(run_start),
+                "receive_monotonic_ns": 0,
+            }
+        ],
+    )
     _write_jsonl(
         segment / "normalized.jsonl",
         [
@@ -286,13 +311,16 @@ def _verified_segment(campaign: Path) -> Path:
                 "append_completed_monotonic_ns": 2_040_000_000,
                 "processing_latency_ms": 40.0,
             },
-            {"event": "disconnect", "timestamp_utc": _timestamp(run_end), "reason": "stream_end"},
+            {"event": "disconnect", "timestamp_utc": _timestamp(run_end), "reason": "bridge_end"},
         ],
     )
     digest = "d" * 64
     manifest = finalize_existing_segment(
         segment,
         code_commit=CODE_COMMIT,
+        bridge_source_commit=CODE_COMMIT,
+        bridge_session_id=SEGMENT_SESSION,
+        server=SERVER,
         account_fingerprint_sha256=FINGERPRINT,
         run_start_utc=run_start,
         run_end_utc=run_end,
@@ -316,7 +344,7 @@ def _verified_segment(campaign: Path) -> Path:
 
 
 class Phase8ReviewAggregationTests(unittest.TestCase):
-    def test_verified_segment_derives_campaign_metrics_timing_spreads_and_date_coverage(self) -> None:
+    def test_verified_mt5_v2_segment_derives_campaign_metrics_timing_spreads_and_date_coverage(self) -> None:
         with TemporaryDirectory() as tmp:
             _, campaign = _setup_phase8(Path(tmp))
             _verified_segment(campaign)
@@ -337,6 +365,34 @@ class Phase8ReviewAggregationTests(unittest.TestCase):
             self.assertNotEqual(evidence["scenario_metrics"]["0.2"]["trade_count"], 999)
             self.assertFalse(evidence["campaign_minimums_met"])
             self.assertTrue(evidence["replay_identical"])
+            self.assertTrue(evidence["qualification_pass"])
+
+    def test_oanda_v1_manifest_cannot_be_mixed_into_mt5_v2_campaign(self) -> None:
+        with TemporaryDirectory() as tmp:
+            _, campaign = _setup_phase8(Path(tmp))
+            segment = _verified_segment(campaign)
+            manifest_path = segment / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["protocol"] = "fmp-phase8-shadow-evidence-v1"
+            manifest["connector_protocol"] = "oanda-v20-fxtrade-practice-pricing-stream-v1"
+            _write_json(manifest_path, manifest)
+            with self.assertRaisesRegex(ValueError, "protocol"):
+                review_campaign(campaign)
+
+    def test_manifest_session_and_server_must_match_captured_bridge_start(self) -> None:
+        for field, value in (
+            ("bridge_session_id", "e" * 64),
+            ("server", "FPMarketsSC-Demo"),
+        ):
+            with self.subTest(field=field), TemporaryDirectory() as tmp:
+                _, campaign = _setup_phase8(Path(tmp))
+                segment = _verified_segment(campaign)
+                manifest_path = segment / "manifest.json"
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest[field] = value
+                _write_json(manifest_path, manifest)
+                with self.assertRaisesRegex(ValueError, "session|server|identity"):
+                    review_campaign(campaign)
 
     def test_tampered_stream_after_manifest_fails_closed(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -358,6 +414,18 @@ class Phase8ReviewAggregationTests(unittest.TestCase):
             self.assertEqual(review_campaign(campaign), Phase8ReviewOutcome.REJECT_SAFETY)
             evidence = json.loads((campaign / "review-evidence.json").read_text(encoding="utf-8"))
             self.assertFalse(evidence["replay_identical"])
+
+    def test_review_compiler_has_no_oanda_boundary_dependency(self) -> None:
+        source = Path("src/fmp/shadow/review_compiler.py").read_text(encoding="utf-8")
+        self.assertIn("mt5_boundary_audit", source)
+        for forbidden in (
+            "practice_boundary_audit",
+            "PRACTICE_STREAM_HOST",
+            "PROVIDER_INSTRUMENT",
+            "connector_boundary",
+            "practice_host",
+        ):
+            self.assertNotIn(forbidden, source)
 
 
 if __name__ == "__main__":

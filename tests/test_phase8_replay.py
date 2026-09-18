@@ -8,6 +8,7 @@ import unittest
 
 from fmp.shadow.cli import build_parser, main
 from fmp.shadow.evidence import EvidenceWriter
+from fmp.shadow.mt5_bridge import BridgeStartRecord, BridgeTickRecord
 from fmp.shadow.replay import ReplayMismatchError, replay_segment
 from fmp.shadow.runner import ShadowRunner
 
@@ -16,28 +17,54 @@ UTC = timezone.utc
 START = datetime(2026, 1, 15, 0, 0, tzinfo=UTC)
 CODE_COMMIT = "a" * 40
 ACCOUNT_FINGERPRINT = "b" * 64
+BRIDGE_SESSION_ID = "c" * 64
+SERVER = "FPMarketsSC-Demo2"
+PROTOCOL = "fmp-mt5-demo-file-bridge-v1"
 
 
-def provider_price(when: datetime, *, bid: float, ask: float) -> dict[str, object]:
-    return {
-        "type": "PRICE",
-        "time": when.isoformat().replace("+00:00", "Z"),
-        "instrument": "USD_JPY",
-        "tradeable": True,
-        "bids": [{"price": f"{bid:.3f}"}],
-        "asks": [{"price": f"{ask:.3f}"}],
-    }
+def bridge_start() -> BridgeStartRecord:
+    return BridgeStartRecord(
+        protocol=PROTOCOL,
+        bridge_session_id=BRIDGE_SESSION_ID,
+        symbol="USDJPY",
+        server=SERVER,
+        account_fingerprint=ACCOUNT_FINGERPRINT,
+        account_mode="DEMO",
+        bridge_start_time_msc=int(START.timestamp() * 1000) - 1,
+    )
+
+
+def bridge_tick(when: datetime, *, bid: float, ask: float) -> BridgeTickRecord:
+    return BridgeTickRecord(
+        protocol=PROTOCOL,
+        bridge_session_id=BRIDGE_SESSION_ID,
+        symbol="USDJPY",
+        server=SERVER,
+        account_fingerprint=ACCOUNT_FINGERPRINT,
+        source_time_msc=int(when.timestamp() * 1000),
+        bid=bid,
+        ask=ask,
+        flags=6,
+    )
 
 
 def build_live_segment(root: Path) -> None:
     writer = EvidenceWriter(
         root,
         code_commit=CODE_COMMIT,
+        bridge_source_commit=CODE_COMMIT,
+        bridge_session_id=BRIDGE_SESSION_ID,
+        server=SERVER,
         account_fingerprint_sha256=ACCOUNT_FINGERPRINT,
         run_start_utc=START,
     )
     runner = ShadowRunner(evidence=writer)
     runner.start(now_utc=START, restarted=False)
+    runner.process_bridge_record(
+        bridge_start(),
+        received_at_utc=START,
+        receive_monotonic_ns=0,
+    )
 
     for minute in range(497):
         when = START + timedelta(minutes=minute)
@@ -49,13 +76,13 @@ def build_live_segment(root: Path) -> None:
             bid, ask = 140.40, 140.42
         else:
             bid, ask = 140.90, 140.92
-        runner.process_provider_message(
-            provider_price(when, bid=bid, ask=ask),
+        runner.process_bridge_record(
+            bridge_tick(when, bid=bid, ask=ask),
             received_at_utc=when,
-            receive_monotonic_ns=minute * 1_000_000_000,
+            receive_monotonic_ns=(minute + 1) * 1_000_000_000,
         )
 
-    runner.disconnect(now_utc=START + timedelta(minutes=497), reason="stream_end")
+    runner.disconnect(now_utc=START + timedelta(minutes=497), reason="bridge_end")
 
 
 def jsonl(path: Path) -> list[dict[str, object]]:
@@ -100,6 +127,9 @@ class Phase8ReplayTests(unittest.TestCase):
             self.assertTrue(all(record["metrics"]["trade_count"] == 1 for record in metrics))
 
             manifest = json.loads((segment / "manifest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["protocol"], "fmp-phase8-shadow-evidence-v2")
+            self.assertEqual(manifest["bridge_session_id"], BRIDGE_SESSION_ID)
+            self.assertEqual(manifest["server"], SERVER)
             self.assertEqual(manifest["replay_result_digest"], first["replay_result_digest"])
 
     def test_replay_refuses_acceptance_when_a_derived_artifact_was_tampered(self) -> None:
@@ -130,13 +160,11 @@ class Phase8ReplayTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            # Receive timestamps are operational metadata. Re-normalized bytes may differ,
-            # but strategy decisions, scenario ledger and financial metrics must not.
             result = replay_segment(segment, allow_normalized_metadata_difference=True)
             self.assertTrue(result["match"])
             self.assertEqual(result["semantic_files"], ["bars.jsonl", "decisions.jsonl", "scenarios.jsonl"])
 
-    def test_replay_cli_is_offline_and_requires_no_oanda_credentials(self) -> None:
+    def test_replay_cli_is_offline_and_requires_no_broker_credentials(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["replay", "--segment-dir", "segment"])
         self.assertEqual(args.command, "replay")
@@ -154,6 +182,7 @@ class Phase8ReplayTests(unittest.TestCase):
     def test_replay_module_reuses_live_pipeline_and_has_no_network_strategy_or_simulator_clone(self) -> None:
         source = Path("src/fmp/shadow/replay.py").read_text(encoding="utf-8")
         self.assertIn("ShadowRunner", source)
+        self.assertIn("parse_bridge_line", source)
         for forbidden in (
             "OandaPracticePricingStream",
             "HTTPSConnection",
@@ -161,6 +190,7 @@ class Phase8ReplayTests(unittest.TestCase):
             "candidate_to_decision",
             "class ReplaySimulator",
             "class ReplayStrategy",
+            "process_provider_message(",
         ):
             self.assertNotIn(forbidden, source)
 

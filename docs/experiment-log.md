@@ -308,7 +308,8 @@ Copy this section for each serious experiment:
 ### EXP-20260915-009 — Phase 8 live shadow evaluation
 
 - Date: 2026-09-15
-- Status: RUNNING
+- Status: INCONCLUSIVE
+- Connector transition: STOPPED BEFORE QUALIFICATION — OANDA Practice account unavailable to the operator jurisdiction; no qualification or scored live-shadow campaign occurred.
 - Hypothesis: The sole Phase 7 survivor may preserve materially comparable timing, spread conditions, operational integrity, and positive hypothetical after-cost behavior when driven by real-time OANDA Practice USD_JPY quotes without any broker order-submission capability. No live viability is assumed.
 - Code commit: source-of-truth activation commit first; shadow runtime implementation commits and accepted campaign code identity will be recorded as they are verified.
 - Data manifest/version: upstream Phase 7 checkpoint `fmp-v1-phase7-walk-forward` / `b6fb0176555b071fef6d1070edf3407b03cd60c9`; accepted Phase 2 USDJPY artifact `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`; processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`; live evidence uses the Phase 8 append-only evidence protocol and manifest defined by DEC-036.
@@ -336,3 +337,35 @@ Copy this section for each serious experiment:
 - Conclusion: NEED_MORE_DATA
 - Reason: no Phase 8 live campaign evidence has yet met the frozen minimum evidence gate.
 - Follow-up: implement the structurally GET-only Practice quote boundary, deterministic normalization/bar/simulation/evidence/replay pipeline, historical spread reference, connector qualification, and campaign registration exactly as DEC-036; keep Phase 9/demo/live-order/real-money paths locked.
+
+### EXP-20260917-010 — Phase 8 MT5 demo live-shadow evaluation
+
+- Date: 2026-09-17
+- Status: RUNNING
+- Hypothesis: The unchanged Phase 7-promoted USDJPY 15m session-breakout rule can be evaluated prospectively using a read-only FP Markets MT5 demo quote bridge without changing strategy, execution-simulation, risk, or acceptance semantics.
+- Code commit: pending implementation merge; evidence must bind the exact merged implementation commit before qualification/campaign registration.
+- Data manifest/version: historical reference remains bound to accepted Phase 2 USDJPY identity and Phase 7 checkpoint; live evidence protocol `fmp-phase8-shadow-evidence-v2`.
+- Pair(s): USDJPY only
+- Timeframe(s): 15m strategy bars built from complete live 1m bid/ask bars
+- Data range: prospective live-shadow observations only after successful connector qualification; no backfill.
+- Train period: not applicable; fixed rule, no refit.
+- Validation period: prospective Phase 8 registered campaign.
+- Final-test touched?: YES — Phase 7 already completed its approved final/walk-forward gate; Phase 8 is prospective live shadow, not historical retuning.
+- Strategy/model: unchanged `session_breakout`, 5-pip buffer, 1.5x target-range multiple, London-session/DST semantics, exact 16:00 `Europe/London` flat, no ML overlay.
+- Features: live bid/ask quote stream only; no new feature/model fitting.
+- Parameters/search space: none.
+- Random seed (if relevant): not applicable.
+- Spread/cost model: observed live demo bid/ask spread; zero commission and zero financing in the frozen Phase 8 simulator.
+- Slippage model: 0.2, 0.5, and 1.0 adverse pips per fill; 0.2/0.5 gating, 1.0 diagnostic.
+- Risk assumptions: existing Phase 3 risk policy unchanged; three independent $100,000 virtual scenarios.
+- Trade count: pending prospective campaign.
+- Net return after costs: pending.
+- Expectancy/trade: pending.
+- Profit factor: pending.
+- Max drawdown: pending.
+- Key subperiod results: pending.
+- Robustness/cost sensitivity: pending.
+- Result summary: implementation and source-free verification pending; live qualification must be explicitly operator-started after merge.
+- Conclusion: NEED_MORE_DATA
+- Reason: the amended provider path has not yet completed source-free implementation verification, connector qualification, or the frozen multi-week campaign.
+- Follow-up: implement DEC-037 test-first; after verified merge, compile/attach the read-only EA locally with AutoTrading OFF, run bounded qualification, then build/freeze the historical spread reference and register the campaign only after qualification PASS.

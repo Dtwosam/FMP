@@ -7,6 +7,12 @@ import unittest
 from fmp.contracts import Decision, Direction, QuoteBar, ScheduledExit
 from fmp.shadow.cli import build_parser, main
 from fmp.shadow.contracts import NormalizedQuote, ShadowOutcome
+from fmp.shadow.mt5_bridge import (
+    BridgeHeartbeatRecord,
+    BridgeProtocolError,
+    BridgeStartRecord,
+    BridgeTickRecord,
+)
 from fmp.shadow.runner import ShadowRunner
 from fmp.shadow.simulation import ShadowSimulator
 from fmp.shadow.strategy import ShadowStrategyDecision
@@ -15,25 +21,47 @@ from fmp.strategies.contracts import SignalCandidate
 
 UTC = timezone.utc
 BASE = datetime(2026, 9, 15, 8, 15, tzinfo=UTC)
+SESSION = "a" * 64
+FINGERPRINT = "b" * 64
+SERVER = "FPMarketsSC-Demo2"
 
 
-def provider_time(value: datetime) -> str:
-    return value.isoformat().replace("+00:00", "Z")
+def bridge_start() -> BridgeStartRecord:
+    return BridgeStartRecord(
+        protocol="fmp-mt5-demo-file-bridge-v1",
+        bridge_session_id=SESSION,
+        symbol="USDJPY",
+        server=SERVER,
+        account_fingerprint=FINGERPRINT,
+        account_mode="DEMO",
+        bridge_start_time_msc=int(BASE.timestamp() * 1000) - 1000,
+    )
 
 
-def heartbeat(value: datetime) -> dict[str, object]:
-    return {"type": "HEARTBEAT", "time": provider_time(value)}
+def bridge_tick(value: datetime, *, bid: float = 140.00, ask: float = 140.02) -> BridgeTickRecord:
+    return BridgeTickRecord(
+        protocol="fmp-mt5-demo-file-bridge-v1",
+        bridge_session_id=SESSION,
+        symbol="USDJPY",
+        server=SERVER,
+        account_fingerprint=FINGERPRINT,
+        source_time_msc=int(value.timestamp() * 1000),
+        bid=bid,
+        ask=ask,
+        flags=6,
+    )
 
 
-def price(value: datetime, *, bid: float = 140.00, ask: float = 140.02) -> dict[str, object]:
-    return {
-        "type": "PRICE",
-        "time": provider_time(value),
-        "instrument": "USD_JPY",
-        "tradeable": True,
-        "bids": [{"price": f"{bid:.3f}"}],
-        "asks": [{"price": f"{ask:.3f}"}],
-    }
+def bridge_heartbeat(value: datetime, *, session: str = SESSION) -> BridgeHeartbeatRecord:
+    return BridgeHeartbeatRecord(
+        protocol="fmp-mt5-demo-file-bridge-v1",
+        bridge_session_id=session,
+        symbol="USDJPY",
+        server=SERVER,
+        account_fingerprint=FINGERPRINT,
+        bridge_emitted_time_msc=int(value.timestamp() * 1000),
+        last_tick_time_msc=None,
+    )
 
 
 def bar(value: datetime = BASE) -> QuoteBar:
@@ -145,12 +173,12 @@ class _BarSpy:
 
 
 class Phase8RunnerTests(unittest.TestCase):
-    def test_fifteen_seconds_without_valid_price_or_heartbeat_marks_stale_once(self) -> None:
+    def test_fifteen_seconds_without_bridge_or_market_update_marks_stale_once(self) -> None:
         evidence = _EvidenceSpy()
         bars = _BarSpy()
         runner = ShadowRunner(evidence=evidence, bar_builder=bars)
         runner.start(now_utc=BASE, restarted=False)
-        runner.process_provider_message(heartbeat(BASE), received_at_utc=BASE, receive_monotonic_ns=0)
+        runner.process_bridge_record(bridge_start(), received_at_utc=BASE, receive_monotonic_ns=0)
 
         self.assertTrue(
             runner.check_liveness(
@@ -189,7 +217,7 @@ class Phase8RunnerTests(unittest.TestCase):
         evidence = _EvidenceSpy()
         runner = ShadowRunner(evidence=evidence, simulator=simulator, bar_builder=_BarSpy())
         runner.start(now_utc=BASE, restarted=False)
-        runner.process_provider_message(heartbeat(BASE), received_at_utc=BASE, receive_monotonic_ns=0)
+        runner.process_bridge_record(bridge_start(), received_at_utc=BASE, receive_monotonic_ns=0)
         runner.check_liveness(
             now_utc=BASE + timedelta(seconds=16),
             now_monotonic_ns=16_000_000_000,
@@ -201,8 +229,8 @@ class Phase8RunnerTests(unittest.TestCase):
             )
             self.assertFalse(state.open_positions)
 
-        runner.process_provider_message(
-            heartbeat(BASE + timedelta(seconds=17)),
+        runner.process_bridge_record(
+            bridge_tick(BASE + timedelta(seconds=17)),
             received_at_utc=BASE + timedelta(seconds=17),
             receive_monotonic_ns=17_000_000_000,
         )
@@ -227,12 +255,13 @@ class Phase8RunnerTests(unittest.TestCase):
             strategy_adapter=strategy,
         )
         runner.start(now_utc=BASE, restarted=True)
-        runner.process_provider_message(
-            price(BASE + timedelta(seconds=1)),
+        runner.process_bridge_record(bridge_start(), received_at_utc=BASE, receive_monotonic_ns=0)
+        runner.process_bridge_record(
+            bridge_tick(BASE + timedelta(seconds=1)),
             received_at_utc=BASE + timedelta(seconds=1),
             receive_monotonic_ns=1_000_000_000,
         )
-        self.assertEqual(len(evidence.raw), 1)
+        self.assertEqual(len(evidence.raw), 2)
         self.assertEqual(len(evidence.normalized), 1)
         self.assertEqual(strategy_calls, [])
         self.assertTrue(all(not state.open_positions for state in simulator.states.values()))
@@ -265,7 +294,7 @@ class Phase8RunnerTests(unittest.TestCase):
                 ShadowOutcome.OUTCOME_UNKNOWN_AFTER_GAP,
             )
 
-    def test_malformed_provider_message_is_durably_rejected_without_strategy_activity(self) -> None:
+    def test_bridge_identity_mismatch_is_durably_rejected_without_strategy_activity(self) -> None:
         evidence = _EvidenceSpy()
         strategy_calls: list[object] = []
         runner = ShadowRunner(
@@ -274,11 +303,12 @@ class Phase8RunnerTests(unittest.TestCase):
             strategy_adapter=lambda items: strategy_calls.append(items) or (),
         )
         runner.start(now_utc=BASE, restarted=False)
-        with self.assertRaises(ValueError):
-            runner.process_provider_message(
-                {"type": "PRICE", "time": provider_time(BASE), "instrument": "EUR_USD"},
-                received_at_utc=BASE,
-                receive_monotonic_ns=0,
+        runner.process_bridge_record(bridge_start(), received_at_utc=BASE, receive_monotonic_ns=0)
+        with self.assertRaises(BridgeProtocolError):
+            runner.process_bridge_record(
+                bridge_heartbeat(BASE + timedelta(seconds=1), session="c" * 64),
+                received_at_utc=BASE + timedelta(seconds=1),
+                receive_monotonic_ns=1_000_000_000,
             )
         self.assertEqual(strategy_calls, [])
         self.assertTrue(any(item.get("event") == "rejection" for item in evidence.operational))
@@ -293,35 +323,49 @@ class Phase8RunnerTests(unittest.TestCase):
             strategy_adapter=lambda items: (),
         )
         runner.start(now_utc=BASE, restarted=False)
-        runner.process_provider_message(
-            price(BASE),
+        runner.process_bridge_record(bridge_start(), received_at_utc=BASE, receive_monotonic_ns=0)
+        runner.process_bridge_record(
+            bridge_tick(BASE),
             received_at_utc=BASE,
-            receive_monotonic_ns=0,
+            receive_monotonic_ns=1,
         )
         self.assertEqual([timeframe for timeframe, _ in evidence.bars], ["1m", "15m"])
 
-    def test_run_cli_is_explicit_env_credentialed_and_has_no_transport_override(self) -> None:
+    def test_run_cli_uses_bound_mt5_tail_and_has_no_transport_override(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["run", "--campaign-dir", "evidence/phase8/campaign"])
         self.assertEqual(args.command, "run")
         self.assertEqual(args.campaign_dir, Path("evidence/phase8/campaign"))
-        for forbidden in ("account_id", "token", "host", "instrument", "method", "base_url"):
+        for forbidden in (
+            "account_id",
+            "token",
+            "host",
+            "instrument",
+            "method",
+            "base_url",
+            "server",
+            "path",
+            "filename",
+        ):
             self.assertFalse(hasattr(args, forbidden))
 
+        tail = object()
         called: list[dict[str, object]] = []
         rc = main(
             ["run", "--campaign-dir", "campaign"],
-            environ={
-                "OANDA_PRACTICE_ACCOUNT_ID": "101-001-12345678-001",
-                "OANDA_PRACTICE_TOKEN": "secret-token",
-            },
+            environ={"OANDA_PRACTICE_TOKEN": "ignored"},
+            bridge_discoverer=lambda: Path("/fixed/common/FMP/phase8-usdjpy-feed.jsonl"),
+            tail_factory=lambda _: tail,  # type: ignore[arg-type]
             run_command=lambda **kwargs: called.append(kwargs) or 0,
             code_commit_resolver=lambda: "c" * 40,
         )
         self.assertEqual(rc, 0)
         self.assertEqual(len(called), 1)
+        self.assertIs(called[0]["bridge_tail"], tail)
         self.assertEqual(called[0]["campaign_dir"], Path("campaign"))
         self.assertEqual(called[0]["code_commit"], "c" * 40)
+        for forbidden in ("account_id", "token", "stream_factory", "server", "path"):
+            self.assertNotIn(forbidden, called[0])
 
     def test_runner_and_cli_have_no_reconciliation_daemon_or_order_submission_surface(self) -> None:
         source = "\n".join(

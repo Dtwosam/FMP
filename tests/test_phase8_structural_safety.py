@@ -11,6 +11,16 @@ _PRODUCTION_HOSTS = (
     "stream-fxtrade.oanda.com",
     "api-fxtrade.oanda.com",
     "api-fxpractice.oanda.com",
+    "FPMarketsSC-Live",
+    "FPMarketsSC-Live2",
+)
+_ACTIVE_RUNTIME_FILES = (
+    "__init__.py",
+    "cli.py",
+    "qualification.py",
+    "runner.py",
+    "replay.py",
+    "review_compiler.py",
 )
 _MUTATION_ENDPOINT_FRAGMENTS = (
     "/orders",
@@ -88,44 +98,40 @@ class Phase8StructuralSafetyTests(unittest.TestCase):
                 self.assertNotIn("mt5", parts, msg=str(path))
                 self.assertNotIn("broker", parts, msg=str(path))
 
-    def test_pricing_transport_has_only_fixed_credentials_and_one_get_request(self) -> None:
-        path = RUNTIME_ROOT / "oanda.py"
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        transport = next(
-            node
-            for node in tree.body
-            if isinstance(node, ast.ClassDef) and node.name == "OandaPracticePricingStream"
+    def test_active_runtime_is_mt5_only_and_oanda_is_historical(self) -> None:
+        active_source = "\n".join(
+            (RUNTIME_ROOT / name).read_text(encoding="utf-8")
+            for name in _ACTIVE_RUNTIME_FILES
         )
-        init = next(
-            node
-            for node in transport.body
-            if isinstance(node, ast.FunctionDef) and node.name == "__init__"
-        )
-        self.assertEqual([arg.arg for arg in init.args.args], ["self"])
-        self.assertEqual([arg.arg for arg in init.args.kwonlyargs], ["account_id", "token"])
-        self.assertIsNone(init.args.vararg)
-        self.assertIsNone(init.args.kwarg)
-
-        all_parameters: set[str] = set()
-        for function in (
-            node for node in transport.body if isinstance(node, ast.FunctionDef)
+        for forbidden in (
+            "from .oanda",
+            "import .oanda",
+            "OandaPractice",
+            "practice_boundary_audit",
+            "qualify_stream",
+            "process_provider_message",
+            "process_line(",
+            "PRACTICE_STREAM_HOST",
+            "PRACTICE_STREAM_PATH_TEMPLATE",
+            "PROVIDER_INSTRUMENT",
+            "OANDA_PRACTICE_ACCOUNT_ID",
+            "OANDA_PRACTICE_TOKEN",
         ):
-            all_parameters.update(arg.arg for arg in function.args.args if arg.arg != "self")
-            all_parameters.update(arg.arg for arg in function.args.kwonlyargs)
-        self.assertTrue(all_parameters.isdisjoint(_GENERIC_TRANSPORT_PARAMETERS))
+            self.assertNotIn(forbidden, active_source)
 
-        requests = [
-            node
-            for node in ast.walk(transport)
-            if isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Attribute)
-            and node.func.attr == "request"
-        ]
-        self.assertEqual(len(requests), 1)
-        request = requests[0]
-        self.assertGreaterEqual(len(request.args), 2)
-        self.assertIsInstance(request.args[0], ast.Constant)
-        self.assertEqual(request.args[0].value, "GET")
+        self.assertIn("mt5_bridge", active_source)
+        self.assertIn("qualify_bridge", active_source)
+        self.assertIn("process_bridge_record", active_source)
+
+    def test_historical_oanda_module_is_not_reexported(self) -> None:
+        package_source = (RUNTIME_ROOT / "__init__.py").read_text(encoding="utf-8")
+        for forbidden in (
+            "PRACTICE_STREAM_HOST",
+            "PRACTICE_STREAM_PATH_TEMPLATE",
+            "PROVIDER_INSTRUMENT",
+            "OandaPracticePricingStream",
+        ):
+            self.assertNotIn(forbidden, package_source)
 
     def test_runtime_has_no_public_broker_mutation_method_names(self) -> None:
         for path, tree in _runtime_trees().items():

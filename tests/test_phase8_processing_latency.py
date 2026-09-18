@@ -4,17 +4,48 @@ import inspect
 from datetime import datetime, timezone
 import unittest
 
+from fmp.shadow.mt5_bridge import BridgeStartRecord, BridgeTickRecord
 from fmp.shadow.runner import ShadowRunner, run_live_shadow_capture
 
 
 UTC = timezone.utc
 BASE = datetime(2026, 9, 16, 11, 0, tzinfo=UTC)
+SESSION = "a" * 64
+FINGERPRINT = "b" * 64
+SERVER = "FPMarketsSC-Demo2"
+BASE_MSC = int(BASE.timestamp() * 1000)
+
+
+def bridge_start() -> BridgeStartRecord:
+    return BridgeStartRecord(
+        protocol="fmp-mt5-demo-file-bridge-v1",
+        bridge_session_id=SESSION,
+        symbol="USDJPY",
+        server=SERVER,
+        account_fingerprint=FINGERPRINT,
+        account_mode="DEMO",
+        bridge_start_time_msc=BASE_MSC - 1000,
+    )
+
+
+def tick() -> BridgeTickRecord:
+    return BridgeTickRecord(
+        protocol="fmp-mt5-demo-file-bridge-v1",
+        bridge_session_id=SESSION,
+        symbol="USDJPY",
+        server=SERVER,
+        account_fingerprint=FINGERPRINT,
+        source_time_msc=BASE_MSC,
+        bid=140.0,
+        ask=140.002,
+        flags=6,
+    )
 
 
 class _EvidenceSpy:
     def __init__(self) -> None:
         self.code_commit = "a" * 40
-        self.account_fingerprint_sha256 = "b" * 64
+        self.account_fingerprint_sha256 = FINGERPRINT
         self.normalized_appended = False
         self.operational: list[dict[str, object]] = []
 
@@ -38,7 +69,7 @@ class _EvidenceSpy:
 
 
 class Phase8ProcessingLatencyEvidenceTests(unittest.TestCase):
-    def test_runner_records_receipt_to_completed_normalized_append_latency(self) -> None:
+    def test_runner_records_tick_receipt_to_completed_normalized_append_latency(self) -> None:
         self.assertIn(
             "processing_monotonic_ns",
             inspect.signature(ShadowRunner).parameters,
@@ -58,8 +89,13 @@ class Phase8ProcessingLatencyEvidenceTests(unittest.TestCase):
             processing_monotonic_ns=completed_append_clock,
         )
         runner.start(now_utc=BASE, restarted=False)
-        runner.process_provider_message(
-            {"type": "HEARTBEAT", "time": "2026-09-16T11:00:00Z"},
+        runner.process_bridge_record(
+            bridge_start(),
+            received_at_utc=BASE,
+            receive_monotonic_ns=0,
+        )
+        runner.process_bridge_record(
+            tick(),
             received_at_utc=BASE,
             receive_monotonic_ns=1_000_000_000,
         )
