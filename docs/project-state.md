@@ -1,11 +1,11 @@
 # FMP Project State
 
-**Updated:** 2026-09-17
+**Updated:** 2026-09-18
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8 — Live shadow mode
 **Phase status:** ACTIVE
-**Next milestone:** Implement and source-free verify DEC-037, then explicitly qualify the fixed read-only FP Markets MT5 demo bridge for `EXP-20260917-010`; only a qualification PASS permits historical-reference generation and new campaign registration.
+**Next milestone:** Explicitly qualify the merged fixed read-only FP Markets MT5 demo bridge for `EXP-20260917-010`; only a qualification PASS permits historical-reference generation and new campaign registration.
 
 ## Current baseline
 
@@ -321,21 +321,26 @@ Phase 7 is formally PASS and checkpoint `fmp-v1-phase7-walk-forward` is frozen a
 
 ## Phase 8 — ACTIVE
 
-DEC-036 freezes and activates the approved Phase 8 live-shadow protocol; `EXP-20260915-009` is RUNNING.
+DEC-036 remains authoritative for the frozen Phase 8 live-shadow strategy, risk, cost, campaign, replay, and acceptance rules. DEC-037 supersedes DEC-036 only for the live quote-source connector. `EXP-20260915-009` is stopped before qualification; `EXP-20260917-010` is RUNNING.
 
 - prerequisite checkpoint: `fmp-v1-phase7-walk-forward` at `b6fb0176555b071fef6d1070edf3407b03cd60c9` — VERIFIED
-- approved design: `docs/superpowers/specs/2026-09-15-phase8-shadow-design.md`
-- implementation plan: `docs/superpowers/plans/2026-09-15-phase8-live-shadow.md`
+- approved base design: `docs/superpowers/specs/2026-09-15-phase8-shadow-design.md`
+- approved connector amendment: `docs/superpowers/specs/2026-09-17-phase8-mt5-bridge-amendment.md`
+- implementation plan: `docs/superpowers/plans/2026-09-17-phase8-mt5-demo-bridge.md`
 - sole strategy: USDJPY 15m `session_breakout`, 5-pip buffer, 1.5x target range, exact existing London-session/DST semantics, exact 16:00 `Europe/London` flat rule
 - ML overlay: none
-- selected live quote role: OANDA v20 fxTrade Practice pricing stream, fixed GET-only `stream-fxpractice.oanda.com` / `USD_JPY` boundary
+- selected live quote role: `FP_MARKETS_MT5_DEMO` via read-only `FMPPhase8QuoteBridge.mq5`, fixed `MT5_FILE_COMMON_JSONL` transport `FMP/phase8-usdjpy-feed.jsonl`
+- approved MT5 demo servers only: `FPMarketsSC-Demo`, `FPMarketsSC-Demo2`
+- implementation head: `04ee440e5add9bfeaf8b6c59083e77424c17197e`
+- merge: PR #115 -> `main` at `839514879927a8549572c2505a2d0e37da33669a`
+- source-free verification on the implementation head: 783 tests PASS; workflow YAML PASS; Python compile PASS; deterministic Phase 3 acceptance PASS; Phase 1 acquisition workflows SKIPPED; structural no-order safety checks PASS
+- connector qualification: PENDING explicit operator-controlled local MT5 action with demo login, approved server, USDJPY chart, and AutoTrading OFF
 - slippage scenarios: 0.2 and 0.5 pips gating; 1.0 pip diagnostic only
 - Phase 3 risk policy: unchanged; independent $100,000 virtual account per cost scenario
 - stale timeout: 15 seconds; entry and scheduled-exit quote deadlines: 5 seconds
-- runtime implementation: authorized under DEC-036 but not yet accepted
-- live campaign: not yet accepted; must be explicitly operator-started and satisfy all frozen minimum evidence and acceptance gates
+- live campaign: not yet registered; qualification PASS is required before historical-reference generation and campaign registration
 - Phase 9/demo order placement: LOCKED
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-Phase 8 is not PASS because the design is activated or because code exists. PASS requires connector qualification, verified structural no-order implementation, deterministic replay, and a completed live-shadow campaign satisfying every frozen DEC-036 acceptance gate. `PHASE8_NEED_MORE_DATA` remains non-terminal.
+Phase 8 is not PASS because the connector implementation merged. PASS still requires successful connector qualification, deterministic replay, and a completed live-shadow campaign satisfying every frozen DEC-036/DEC-037 acceptance gate. `PHASE8_NEED_MORE_DATA` remains non-terminal.
