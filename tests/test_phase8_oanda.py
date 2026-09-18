@@ -5,7 +5,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from fmp.shadow import PRACTICE_STREAM_HOST
+from fmp.shadow.contracts import PRACTICE_STREAM_HOST
 from fmp.shadow.oanda import OandaPracticePricingStream, OandaPracticeStreamError
 
 
