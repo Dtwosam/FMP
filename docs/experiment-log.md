@@ -333,17 +333,17 @@ Copy this section for each serious experiment:
 - Max drawdown: pending.
 - Key subperiod results: pending; acceptance also requires at least 8 elapsed calendar weeks, at least 30 fully observed London dates, and at least 90% valid denominator-date coverage.
 - Robustness/cost sensitivity: pending; mandatory gates apply at 0.2 and 0.5 pips while 1.0 pip remains diagnostic.
-- Result summary: RUNNING. Source-of-truth activation authorizes shadow-only implementation and evidence collection after qualification; it does not constitute Phase 8 PASS.
+- Result summary: STOPPED BEFORE QUALIFICATION. The required OANDA Practice account was unavailable to the operator jurisdiction, so no qualification or scored live-shadow campaign occurred. DEC-037 supersedes only the connector path and preserves this negative operational evidence.
 - Conclusion: NEED_MORE_DATA
-- Reason: no Phase 8 live campaign evidence has yet met the frozen minimum evidence gate.
-- Follow-up: implement the structurally GET-only Practice quote boundary, deterministic normalization/bar/simulation/evidence/replay pipeline, historical spread reference, connector qualification, and campaign registration exactly as DEC-036; keep Phase 9/demo/live-order/real-money paths locked.
+- Reason: the OANDA connector path could not be qualified and produced no scored campaign evidence.
+- Follow-up: preserve this record as stopped operational history; continue Phase 8 only under `EXP-20260917-010` and DEC-037. Keep Phase 9/demo/live-order/real-money paths locked.
 
 ### EXP-20260917-010 — Phase 8 MT5 demo live-shadow evaluation
 
 - Date: 2026-09-17
 - Status: RUNNING
 - Hypothesis: The unchanged Phase 7-promoted USDJPY 15m session-breakout rule can be evaluated prospectively using a read-only FP Markets MT5 demo quote bridge without changing strategy, execution-simulation, risk, or acceptance semantics.
-- Code commit: pending implementation merge; evidence must bind the exact merged implementation commit before qualification/campaign registration.
+- Code commit: implementation head `04ee440e5add9bfeaf8b6c59083e77424c17197e`; merged by PR #115 to `main` at `839514879927a8549572c2505a2d0e37da33669a`. Qualification/campaign evidence must bind the merged implementation identity.
 - Data manifest/version: historical reference remains bound to accepted Phase 2 USDJPY identity and Phase 7 checkpoint; live evidence protocol `fmp-phase8-shadow-evidence-v2`.
 - Pair(s): USDJPY only
 - Timeframe(s): 15m strategy bars built from complete live 1m bid/ask bars
@@ -365,7 +365,7 @@ Copy this section for each serious experiment:
 - Max drawdown: pending.
 - Key subperiod results: pending.
 - Robustness/cost sensitivity: pending.
-- Result summary: implementation and source-free verification pending; live qualification must be explicitly operator-started after merge.
+- Result summary: implementation and source-free verification are complete. PR #115 merged the read-only MT5 demo bridge to `main`; 783 tests passed, workflow YAML validation passed, Python compile passed, deterministic Phase 3 acceptance passed, Phase 1 acquisition workflows were skipped, and structural no-order safety checks passed. Live connector qualification remains pending and must be explicitly operator-started locally.
 - Conclusion: NEED_MORE_DATA
-- Reason: the amended provider path has not yet completed source-free implementation verification, connector qualification, or the frozen multi-week campaign.
-- Follow-up: implement DEC-037 test-first; after verified merge, compile/attach the read-only EA locally with AutoTrading OFF, run bounded qualification, then build/freeze the historical spread reference and register the campaign only after qualification PASS.
+- Reason: the amended provider path is merged and source-free verified, but it has not yet completed local MT5 connector qualification or the frozen multi-week campaign.
+- Follow-up: compile/attach `FMPPhase8QuoteBridge.mq5` locally on the approved FP Markets demo USDJPY chart with AutoTrading OFF, run bounded qualification, then build/freeze the historical spread reference and register the campaign only after qualification PASS.
