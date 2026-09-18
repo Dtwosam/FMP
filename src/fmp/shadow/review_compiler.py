@@ -26,13 +26,16 @@ from .campaign import (
 from .contracts import (
     FMP_SYMBOL,
     LIVENESS_TIMEOUT_SECONDS,
-    PRACTICE_STREAM_HOST,
-    PROVIDER_INSTRUMENT,
+    MT5_ALLOWED_SERVERS,
+    MT5_BRIDGE_FILE,
+    MT5_BRIDGE_PROTOCOL,
+    MT5_PROVIDER,
+    MT5_TRANSPORT,
     SLIPPAGE_SCENARIOS,
     STARTING_EQUITY_USD,
 )
 from .evidence import CONNECTOR_PROTOCOL, EVIDENCE_PROTOCOL
-from .qualification import MIN_HEARTBEAT_COUNT, MIN_PRICE_COUNT, practice_boundary_audit
+from .qualification import MIN_HEARTBEAT_COUNT, MIN_PRICE_COUNT, mt5_boundary_audit
 from .replay import REPLAY_PROTOCOL
 
 
@@ -195,26 +198,50 @@ def _qualification(phase8_dir: Path) -> tuple[bool, str | None]:
         and len(fingerprint) == 64
         and all(character in "0123456789abcdef" for character in fingerprint)
     )
-    max_gap = record.get("max_liveness_gap_seconds")
-    max_gap_ok = (
-        not isinstance(max_gap, bool)
-        and isinstance(max_gap, (int, float))
-        and math.isfinite(float(max_gap))
-        and 0.0 <= float(max_gap) <= LIVENESS_TIMEOUT_SECONDS
+    bridge_session_id = record.get("bridge_session_id")
+    bridge_session_ok = (
+        isinstance(bridge_session_id, str)
+        and len(bridge_session_id) == 64
+        and all(character in "0123456789abcdef" for character in bridge_session_id)
+    )
+    server = record.get("server")
+    server_ok = isinstance(server, str) and server in MT5_ALLOWED_SERVERS
+
+    def valid_gap(field: str) -> tuple[bool, float]:
+        value = record.get(field)
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(float(value))
+            or not 0.0 <= float(value) <= LIVENESS_TIMEOUT_SECONDS
+        ):
+            return False, 0.0
+        return True, float(value)
+
+    max_gap_ok, max_gap = valid_gap("max_liveness_gap_seconds")
+    bridge_gap_ok, bridge_gap = valid_gap("max_bridge_liveness_gap_seconds")
+    market_gap_ok, market_gap = valid_gap("max_market_liveness_gap_seconds")
+    liveness_consistent = (
+        max_gap_ok
+        and bridge_gap_ok
+        and market_gap_ok
+        and math.isclose(max_gap, max(bridge_gap, market_gap), rel_tol=0.0, abs_tol=1e-9)
     )
     price_count = record.get("price_count")
     heartbeat_count = record.get("heartbeat_count")
     passed = bool(
         record.get("outcome") == "PASS"
         and fingerprint_ok
+        and bridge_session_ok
+        and server_ok
         and isinstance(price_count, int)
         and not isinstance(price_count, bool)
         and price_count >= MIN_PRICE_COUNT
         and isinstance(heartbeat_count, int)
         and not isinstance(heartbeat_count, bool)
         and heartbeat_count >= MIN_HEARTBEAT_COUNT
-        and max_gap_ok
-        and record.get("boundary_audit") == practice_boundary_audit()
+        and liveness_consistent
+        and record.get("boundary_audit") == mt5_boundary_audit()
         and record.get("rejection_codes") == []
     )
     return passed, fingerprint if fingerprint_ok else None
@@ -290,17 +317,49 @@ def _validate_segment(
         raise ValueError("Phase 8 segment manifest protocol mismatch")
     if manifest.get("code_commit") != code_commit:
         raise ValueError("Phase 8 segment manifest code commit mismatch")
+    if manifest.get("bridge_source_commit") != code_commit:
+        raise ValueError("Phase 8 segment bridge source identity mismatch")
+
     fingerprint = manifest.get("account_fingerprint_sha256")
     if qualification_fingerprint is not None and fingerprint != qualification_fingerprint:
         raise ValueError("Phase 8 segment account fingerprint mismatch")
+
+    audit = mt5_boundary_audit()
+    connector_identity = {
+        "connector_protocol": audit["connector_protocol"],
+        "provider": audit["provider"],
+        "provider_instrument": audit["instrument"],
+        "transport": audit["transport"],
+        "bridge_file": audit["bridge_file"],
+        "allowed_servers": audit["allowed_servers"],
+    }
+    for field, expected in connector_identity.items():
+        if manifest.get(field) != expected:
+            raise ValueError(f"Phase 8 segment connector identity mismatch: {field}")
     if manifest.get("connector_protocol") != CONNECTOR_PROTOCOL:
         raise ValueError("Phase 8 segment connector protocol mismatch")
-    if manifest.get("connector_boundary") != practice_boundary_audit():
-        raise ValueError("Phase 8 segment connector boundary mismatch")
-    if manifest.get("practice_host") != PRACTICE_STREAM_HOST:
-        raise ValueError("Phase 8 segment Practice host mismatch")
-    if manifest.get("provider_instrument") != PROVIDER_INSTRUMENT:
-        raise ValueError("Phase 8 segment provider instrument mismatch")
+    if manifest.get("provider") != MT5_PROVIDER:
+        raise ValueError("Phase 8 segment provider identity mismatch")
+    if manifest.get("transport") != MT5_TRANSPORT:
+        raise ValueError("Phase 8 segment transport identity mismatch")
+    if manifest.get("bridge_file") != MT5_BRIDGE_FILE:
+        raise ValueError("Phase 8 segment bridge file identity mismatch")
+    if manifest.get("allowed_servers") != list(MT5_ALLOWED_SERVERS):
+        raise ValueError("Phase 8 segment allowed-server identity mismatch")
+    if manifest.get("provider_instrument") != FMP_SYMBOL:
+        raise ValueError("Phase 8 segment provider instrument identity mismatch")
+
+    bridge_session_id = manifest.get("bridge_session_id")
+    if (
+        not isinstance(bridge_session_id, str)
+        or len(bridge_session_id) != 64
+        or any(character not in "0123456789abcdef" for character in bridge_session_id)
+    ):
+        raise ValueError("Phase 8 segment bridge session identity is invalid")
+    server = manifest.get("server")
+    if not isinstance(server, str) or server not in MT5_ALLOWED_SERVERS:
+        raise ValueError("Phase 8 segment server identity is invalid")
+
     if manifest.get("slippage_scenarios") != list(SLIPPAGE_SCENARIOS):
         raise ValueError("Phase 8 segment slippage scenarios mismatch")
     if manifest.get("risk_policy") != RiskConfig().to_config():
@@ -339,6 +398,28 @@ def _validate_segment(
             raise ValueError(f"Phase 8 segment replay output hash mismatch: {filename}")
 
     streams = {filename: _load_jsonl(segment / filename) for filename in _STREAM_FILES}
+    raw_records = streams["raw.jsonl"]
+    bridge_starts: list[Mapping[str, object]] = []
+    for raw_record in raw_records:
+        provider_object = raw_record.get("provider_object")
+        if isinstance(provider_object, Mapping) and provider_object.get("record_type") == "BRIDGE_START":
+            bridge_starts.append(provider_object)
+    if len(bridge_starts) != 1:
+        raise ValueError("Phase 8 segment bridge start identity is missing or ambiguous")
+    bridge_start = bridge_starts[0]
+    if bridge_start.get("protocol") != MT5_BRIDGE_PROTOCOL:
+        raise ValueError("Phase 8 segment bridge protocol identity mismatch")
+    if bridge_start.get("symbol") != FMP_SYMBOL:
+        raise ValueError("Phase 8 segment bridge symbol identity mismatch")
+    if bridge_start.get("account_mode") != "DEMO":
+        raise ValueError("Phase 8 segment bridge account-mode identity mismatch")
+    if bridge_start.get("bridge_session_id") != bridge_session_id:
+        raise ValueError("Phase 8 segment bridge session identity mismatch")
+    if bridge_start.get("server") != server:
+        raise ValueError("Phase 8 segment bridge server identity mismatch")
+    if bridge_start.get("account_fingerprint") != fingerprint:
+        raise ValueError("Phase 8 segment bridge account fingerprint identity mismatch")
+
     secret_free = _secret_free(manifest) and _secret_free(replay) and all(
         _secret_free(records) for records in streams.values()
     )
