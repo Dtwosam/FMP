@@ -411,36 +411,27 @@ def _standard_common_files_roots() -> tuple[Path, ...]:
     if appdata:
         roots.append(Path(appdata) / "MetaQuotes" / "Terminal" / "Common" / "Files")
 
-    roots.extend(
-        (
-            home
-            / "Library"
-            / "Application Support"
-            / "net.metaquotes.wine.metatrader5"
-            / "drive_c"
-            / "users"
-            / home.name
-            / "AppData"
-            / "Roaming"
-            / "MetaQuotes"
-            / "Terminal"
-            / "Common"
-            / "Files",
-            home
-            / "Library"
-            / "Application Support"
-            / "MetaTrader 5"
-            / "drive_c"
-            / "users"
-            / home.name
-            / "AppData"
-            / "Roaming"
-            / "MetaQuotes"
-            / "Terminal"
-            / "Common"
-            / "Files",
-        )
-    )
+    wine_user_names = tuple(dict.fromkeys((home.name, "user")))
+    for application_support_name in (
+        "net.metaquotes.wine.metatrader5",
+        "MetaTrader 5",
+    ):
+        for wine_user_name in wine_user_names:
+            roots.append(
+                home
+                / "Library"
+                / "Application Support"
+                / application_support_name
+                / "drive_c"
+                / "users"
+                / wine_user_name
+                / "AppData"
+                / "Roaming"
+                / "MetaQuotes"
+                / "Terminal"
+                / "Common"
+                / "Files"
+            )
     return tuple(roots)
 
 
