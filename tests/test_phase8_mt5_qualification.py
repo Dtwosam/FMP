@@ -263,10 +263,22 @@ class Phase8Mt5QualificationTests(unittest.TestCase):
 
     def test_ten_minute_limit_is_inconclusive_without_late_processing(self) -> None:
         clock = FakeClock()
-        script: list[tuple[float, tuple[object, ...] | Exception]] = [
-            (12.0, (tick_record(index),)) for index in range(50)
-        ]
-        script.append((1.0, (tick_record(50),)))
+        script: list[tuple[float, tuple[object, ...] | Exception]] = []
+        for index in range(50):
+            record = tick_record(index)
+            object.__setattr__(
+                record,
+                "source_time_msc",
+                int((START + timedelta(seconds=12 * (index + 1))).timestamp() * 1000),
+            )
+            script.append((12.0, (record,)))
+        late = tick_record(50)
+        object.__setattr__(
+            late,
+            "source_time_msc",
+            int((START + timedelta(seconds=601)).timestamp() * 1000),
+        )
+        script.append((1.0, (late,)))
         tail = ScriptedTail(clock, script)
         result = qualify_bridge(tail, utc_now=clock.utc_now, monotonic_ns=clock.monotonic_ns)
         self.assertEqual(result.outcome, QualificationOutcome.INCONCLUSIVE)
