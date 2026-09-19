@@ -16,6 +16,7 @@ from .contracts import (
     MT5_BRIDGE_PROTOCOL,
     MT5_PROVIDER,
     MT5_TRANSPORT,
+    QUOTE_DEADLINE_SECONDS,
 )
 from .mt5_bridge import (
     BridgeHeartbeatRecord,
@@ -263,6 +264,14 @@ def qualify_bridge(
                 heartbeat_count += 1
             elif isinstance(record, BridgeTickRecord):
                 if quote is not None:
+                    source_skew_seconds = abs(
+                        (received_at_utc - quote.source_time_utc).total_seconds()
+                    )
+                    if source_skew_seconds > QUOTE_DEADLINE_SECONDS:
+                        return finish(
+                            QualificationOutcome.CONNECTOR_REJECTED,
+                            codes=("SOURCE_TIME_SKEW",),
+                        )
                     price_count += 1
                     last_market_ns = received_ns
             else:
