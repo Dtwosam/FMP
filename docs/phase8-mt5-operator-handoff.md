@@ -52,6 +52,8 @@ python scripts/phase8_shadow.py qualify --out evidence/phase8/qualification
 
 Qualification runs for at most ten minutes and uses only records appended after the reader starts. It does not run strategy logic.
 
+Qualification also verifies that MT5 tick source times are aligned to UTC within the frozen 5-second quote deadline. The EA converts the broker/server tick clock to UTC before writing `source_time_msc`; a multi-hour broker clock offset must therefore fail qualification rather than shift the London-session bars.
+
 Interpret the result exactly:
 
 - `PASS` — the connector qualification passed; continue to the historical reference step.
@@ -127,5 +129,7 @@ If FMP cannot discover the bridge file:
 - confirm the EA is using the fixed `FILE_COMMON` transport.
 
 If discovery finds more than one candidate file, stop and resolve the stale/duplicate MT5 terminal data roots. Do not add or use an arbitrary path override.
+
+If qualification reports `SOURCE_TIME_SKEW`, stop. Confirm that the installed EA is the current repository version, recompile it in MetaEditor, and requalify before starting a campaign. Do not reinterpret or backfill previously captured timestamps.
 
 If the EA restarts, it creates a new bridge session. Treat that as a restart boundary; do not claim continuity across it.
