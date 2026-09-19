@@ -21,7 +21,8 @@ START = datetime(2026, 9, 17, 20, 0, tzinfo=UTC)
 SESSION = "a" * 64
 FINGERPRINT = "b" * 64
 SERVER = "FPMarketsSC-Demo2"
-BASE_MSC = 1_789_667_200_000
+BASE_MSC = int(START.timestamp() * 1000)
+TICK_STEP_MSC = 50
 
 
 def start_record() -> BridgeStartRecord:
@@ -44,7 +45,7 @@ def tick_record(index: int, *, ask_delta: float = 0.002) -> BridgeTickRecord:
         symbol="USDJPY",
         server=SERVER,
         account_fingerprint=FINGERPRINT,
-        source_time_msc=BASE_MSC + index,
+        source_time_msc=BASE_MSC + index * TICK_STEP_MSC,
         bid=bid,
         ask=bid + ask_delta,
         flags=6,
@@ -127,7 +128,7 @@ class Phase8Mt5QualificationTests(unittest.TestCase):
                         (
                             heartbeat_record(
                                 index,
-                                last_tick_time_msc=BASE_MSC + index,
+                                last_tick_time_msc=BASE_MSC + index * TICK_STEP_MSC,
                             ),
                         ),
                     )
@@ -161,7 +162,7 @@ class Phase8Mt5QualificationTests(unittest.TestCase):
             [
                 (0.1, (duplicate,)),
                 (0.1, (duplicate,)),
-                (5.0, (heartbeat_record(1, last_tick_time_msc=BASE_MSC + 1),)),
+                (5.0, (heartbeat_record(1, last_tick_time_msc=BASE_MSC + TICK_STEP_MSC),)),
                 (5.0, (heartbeat_record(2, last_tick_time_msc=BASE_MSC + 1),)),
                 (5.0, (heartbeat_record(3, last_tick_time_msc=BASE_MSC + 1),)),
                 (0.001, (heartbeat_record(4, last_tick_time_msc=BASE_MSC + 1),)),
@@ -209,6 +210,25 @@ class Phase8Mt5QualificationTests(unittest.TestCase):
         self.assertGreater(result.max_market_liveness_gap_seconds, 15.0)
         self.assertLessEqual(result.max_bridge_liveness_gap_seconds, 15.0)
 
+    def test_three_hour_broker_clock_offset_is_rejected_as_source_time_skew(self) -> None:
+        clock = FakeClock()
+        skewed = tick_record(1)
+        object.__setattr__(
+            skewed,
+            "source_time_msc",
+            int((START + timedelta(hours=3)).timestamp() * 1000),
+        )
+        tail = ScriptedTail(clock, [(0.1, (skewed,))])
+
+        result = qualify_bridge(
+            tail,
+            utc_now=clock.utc_now,
+            monotonic_ns=clock.monotonic_ns,
+        )
+
+        self.assertEqual(result.outcome, QualificationOutcome.CONNECTOR_REJECTED)
+        self.assertEqual(result.rejection_codes, ("SOURCE_TIME_SKEW",))
+
     def test_identity_source_regression_and_conflicting_duplicate_are_rejected(self) -> None:
         cases: list[tuple[tuple[object, ...], str]] = []
         wrong_session = heartbeat_record(1)
@@ -243,10 +263,22 @@ class Phase8Mt5QualificationTests(unittest.TestCase):
 
     def test_ten_minute_limit_is_inconclusive_without_late_processing(self) -> None:
         clock = FakeClock()
-        script: list[tuple[float, tuple[object, ...] | Exception]] = [
-            (12.0, (tick_record(index),)) for index in range(50)
-        ]
-        script.append((1.0, (tick_record(50),)))
+        script: list[tuple[float, tuple[object, ...] | Exception]] = []
+        for index in range(50):
+            record = tick_record(index)
+            object.__setattr__(
+                record,
+                "source_time_msc",
+                int((START + timedelta(seconds=12 * (index + 1))).timestamp() * 1000),
+            )
+            script.append((12.0, (record,)))
+        late = tick_record(50)
+        object.__setattr__(
+            late,
+            "source_time_msc",
+            int((START + timedelta(seconds=601)).timestamp() * 1000),
+        )
+        script.append((1.0, (late,)))
         tail = ScriptedTail(clock, script)
         result = qualify_bridge(tail, utc_now=clock.utc_now, monotonic_ns=clock.monotonic_ns)
         self.assertEqual(result.outcome, QualificationOutcome.INCONCLUSIVE)

@@ -8,6 +8,7 @@ const string BRIDGE_SYMBOL = "USDJPY";
 const string SERVER_DEMO_1 = "FPMarketsSC-Demo";
 const string SERVER_DEMO_2 = "FPMarketsSC-Demo2";
 const int HEARTBEAT_SECONDS = 5;
+const int MAX_CLOCK_SKEW_SECONDS = 5;
 
 int g_file = INVALID_HANDLE;
 string g_bridge_session_id = "";
@@ -95,12 +96,27 @@ bool EmitBridgeStart()
    return WriteRecord(line);
   }
 
-bool EmitTick(const MqlTick &tick)
+bool TickUtcTimeMsc(const MqlTick &tick, long &utc_time_msc)
+  {
+   const long server_seconds = (long)TimeCurrent();
+   const long utc_seconds = (long)TimeGMT();
+   const long raw_offset_seconds = server_seconds - utc_seconds;
+   const long rounded_offset_seconds =
+      ((long)MathRound((double)raw_offset_seconds / 3600.0)) * 3600;
+
+   if(MathAbs((double)(raw_offset_seconds - rounded_offset_seconds)) > MAX_CLOCK_SKEW_SECONDS)
+      return false;
+
+   utc_time_msc = tick.time_msc - rounded_offset_seconds * 1000;
+   return utc_time_msc > 0;
+  }
+
+bool EmitTick(const MqlTick &tick, const long source_time_msc)
   {
    const string line = StringFormat(
       "%s,\"source_time_msc\":%I64d,\"bid\":%s,\"ask\":%s,\"flags\":%u}",
       CommonFields("TICK"),
-      tick.time_msc,
+      source_time_msc,
       DoubleToString(tick.bid, _Digits),
       DoubleToString(tick.ask, _Digits),
       (uint)tick.flags
@@ -202,8 +218,12 @@ void OnTick()
    if(tick.bid <= 0.0 || tick.ask <= 0.0 || tick.ask < tick.bid)
       return;
 
-   if(EmitTick(tick))
-      g_last_tick_time_msc = tick.time_msc;
+   long source_time_msc = 0;
+   if(!TickUtcTimeMsc(tick, source_time_msc))
+      return;
+
+   if(EmitTick(tick, source_time_msc))
+      g_last_tick_time_msc = source_time_msc;
   }
 
 void OnTimer()
