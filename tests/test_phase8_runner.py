@@ -238,6 +238,48 @@ class Phase8RunnerTests(unittest.TestCase):
         self.assertIn(BASE.date(), runner.ineligible_london_dates)
         self.assertIn("recovered", [item["event"] for item in evidence.operational])
 
+    def test_market_quiet_invalidates_open_trade_path_without_invalidating_date(self) -> None:
+        simulator = ShadowSimulator()
+        item = directional_strategy_decision()
+        assert item.scheduled_exit is not None
+        simulator.register_decision(item.decision, item.scheduled_exit)
+        simulator.on_quote(
+            NormalizedQuote(
+                source_time_utc=BASE,
+                received_at_utc=BASE,
+                receive_monotonic_ns=0,
+                symbol="USDJPY",
+                bid=140.00,
+                ask=140.02,
+                tradeable=True,
+            )
+        )
+        evidence = _EvidenceSpy()
+        runner = ShadowRunner(evidence=evidence, simulator=simulator, bar_builder=_BarSpy())
+        runner.start(now_utc=BASE, restarted=False)
+        runner.process_bridge_record(
+            bridge_start(), received_at_utc=BASE, receive_monotonic_ns=0
+        )
+
+        for seconds in (5, 10, 15):
+            runner.process_bridge_record(
+                bridge_heartbeat(BASE + timedelta(seconds=seconds)),
+                received_at_utc=BASE + timedelta(seconds=seconds),
+                receive_monotonic_ns=seconds * 1_000_000_000,
+            )
+
+        self.assertFalse(runner.stale)
+        self.assertFalse(runner.ineligible_london_dates)
+        self.assertTrue(
+            any(record.get("event") == "market_quiet" for record in evidence.operational)
+        )
+        for state in simulator.states.values():
+            self.assertEqual(
+                state.outcomes[item.decision.decision_id],
+                ShadowOutcome.OUTCOME_UNKNOWN_AFTER_GAP,
+            )
+            self.assertFalse(state.open_positions)
+
     def test_ineligible_london_date_blocks_strategy_entry_but_capture_continues(self) -> None:
         evidence = _EvidenceSpy()
         bars = _BarSpy(completed=(bar(),))
