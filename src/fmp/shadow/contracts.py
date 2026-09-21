@@ -34,6 +34,9 @@ TARGET_RANGE_MULTIPLE = 1.5
 
 SLIPPAGE_SCENARIOS = (0.2, 0.5, 1.0)
 STARTING_EQUITY_USD = 100_000.0
+# Bridge silence at this threshold is a continuity failure. During live shadow
+# capture, market no-tick gaps at the same threshold are diagnostic only unless
+# they compromise required bar context or an open simulated trade path.
 LIVENESS_TIMEOUT_SECONDS = 15.0
 QUOTE_DEADLINE_SECONDS = 5.0
 
