@@ -89,6 +89,8 @@ class ShadowRunner:
         self._market_last_monotonic_ns: int | None = None
         self._bridge_start_received_at_utc: datetime | None = None
         self._last_market_source_time: datetime | None = None
+        self._market_quiet = False
+        self._market_quiet_started_at_utc: datetime | None = None
         self.ineligible_london_dates: set[date] = set()
         self.stale = False
         self._started = False
@@ -180,6 +182,18 @@ class ShadowRunner:
             self.evidence.append_operational(
                 {"event": "recovered", "timestamp_utc": received_at_utc}
             )
+        if self._market_quiet:
+            self.evidence.append_operational(
+                {
+                    "event": "market_resumed",
+                    "timestamp_utc": received_at_utc,
+                    "gap_start_utc": self._market_quiet_started_at_utc
+                    or event.source_time_utc,
+                    "gap_end_utc": event.source_time_utc,
+                }
+            )
+            self._market_quiet = False
+            self._market_quiet_started_at_utc = None
 
         completed = self.bar_builder.on_quote(event)
         self._record_completed_bars(completed)
@@ -253,16 +267,15 @@ class ShadowRunner:
                 detected_at_utc=received_at_utc,
                 liveness_reason="bridge",
             )
-        elif not self.stale and market_gap_ns >= _LIVENESS_TIMEOUT_NS:
-            self._mark_stale(
+        elif (
+            not self.stale
+            and not self._market_quiet
+            and market_gap_ns >= _LIVENESS_TIMEOUT_NS
+        ):
+            self._mark_market_quiet(
                 start_utc=gap_start,
-                end_utc=(
-                    event.source_time_utc
-                    if isinstance(event, NormalizedQuote)
-                    else received_at_utc
-                ),
                 detected_at_utc=received_at_utc,
-                liveness_reason="market",
+                observed_gap_ns=market_gap_ns,
             )
 
         self._bridge_last_monotonic_ns = receive_monotonic_ns
@@ -317,16 +330,33 @@ class ShadowRunner:
                     detected_at_utc=now_utc,
                     liveness_reason="bridge",
                 )
-            elif market_gap_ns >= _LIVENESS_TIMEOUT_NS:
-                self._mark_stale(
+            elif not self._market_quiet and market_gap_ns >= _LIVENESS_TIMEOUT_NS:
+                self._mark_market_quiet(
                     start_utc=gap_start,
-                    end_utc=now_utc,
                     detected_at_utc=now_utc,
-                    liveness_reason="market",
+                    observed_gap_ns=market_gap_ns,
                 )
             return self.stale
 
         return self.stale
+
+    def _mark_market_quiet(
+        self,
+        *,
+        start_utc: datetime,
+        detected_at_utc: datetime,
+        observed_gap_ns: int,
+    ) -> None:
+        self._market_quiet = True
+        self._market_quiet_started_at_utc = start_utc
+        self.evidence.append_operational(
+            {
+                "event": "market_quiet",
+                "timestamp_utc": detected_at_utc,
+                "gap_start_utc": start_utc,
+                "observed_gap_seconds": observed_gap_ns / 1_000_000_000,
+            }
+        )
 
     def _mark_stale(
         self,
