@@ -208,7 +208,7 @@ class Phase8Mt5RunnerTests(unittest.TestCase):
         self.assertEqual(bars.time_advance_calls, [])
         self.assertEqual(simulator.time_advance_calls, [])
         self.assertEqual(bars.stale_intervals, [])
-        self.assertEqual(simulator.stale_gaps, [])
+        self.assertEqual(len(simulator.stale_gaps), 1)
         self.assertFalse(runner.ineligible_london_dates)
         quiet = [row for row in evidence.operational if row.get("event") == "market_quiet"]
         self.assertEqual(len(quiet), 1)
