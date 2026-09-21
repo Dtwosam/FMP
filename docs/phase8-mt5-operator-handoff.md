@@ -94,7 +94,14 @@ python scripts/phase8_shadow.py run --campaign-dir evidence/phase8/campaign
 
 This is an operator-started local capture, not a daemon. Stop the segment explicitly when intended.
 
-A restart, disconnect, stale interval, MT5 restart, or EA restart is a real continuity break. There is **no backfill** and no reconstruction of unseen price path. FMP must never use pre-reader transport content, MT5 candles, or another provider to fill a gap.
+A restart, disconnect, **bridge-liveness stale interval**, MT5 restart, or EA restart is a real continuity break. There is **no backfill** and no reconstruction of unseen price path. FMP must never use pre-reader transport content, MT5 candles, or another provider to fill a gap.
+
+A no-tick period while bridge heartbeats remain healthy is recorded as `market_quiet` and, by itself, does **not** invalidate the entire London date. The safety gates remain fail-closed:
+
+- if required 1m/15m market context is actually missing, the strategy date becomes incomplete/ineligible;
+- if a simulated position is open when a market-quiet gap crosses the 15-second threshold, that position outcome becomes unknown rather than being scored from an unseen price path;
+- entry and scheduled-exit quotes still must satisfy the frozen 5-second quote deadline;
+- no missing quote path is backfilled or reconstructed.
 
 ## 7. Replay every finalized segment offline
 
