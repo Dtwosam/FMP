@@ -357,6 +357,8 @@ class ShadowRunner:
                 "observed_gap_seconds": observed_gap_ns / 1_000_000_000,
             }
         )
+        self.simulator.mark_stale_gap(start_utc, detected_at_utc)
+        self._record_scenario_changes()
 
     def _mark_stale(
         self,
