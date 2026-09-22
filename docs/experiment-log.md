@@ -1011,3 +1011,18 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #160 merged DEC-068 to `main` at `88d23744b23faf5035b2c67075af73b0e1c25abc`. The exact final PR head `c54ca6ae1a0bce9d74465039e85008c643d5fa28` passed 1075 tests plus workflow-YAML validation and compile checks in run `35785056511`; unchanged Phase 3 acceptance run `35785056455` passed. Post-merge `main` runs `35785181147` and `35785181186` also passed.
 - Follow-up: challenge-bound approval and gate-activation schemas now exist, but no real approval record or activation has been created. A separately approved operator-action/runtime-wiring decision is required before the hard source gate can be enabled or the DEC-065 runner can consume a real activation contract.
+
+
+### EXP-20260922-040 — Phase 9 approval-gated one-shot runtime wiring
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO REAL APPROVAL / NO DEMO ORDER
+- Protocol decision: DEC-069 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: wire one exact DEC-068 activation contract to the existing DEC-065 one-shot runner while preserving the repository hard source lock.
+- Validator separation: immutable DEC-060/062/064/067/068 artifact validators are now independent of current source-gate state; their builders and create-only writers still require source-unarmed operation, and the artifacts themselves still bind all embedded non-authorization flags false.
+- Runtime checks: exact DEC-068 activation lineage, current UTC inside the immutable arm window and at/after activation, daily halt inactive, journal integrity, zero prior SEND_ATTEMPTED, practice-only identity, one-order cap, and exact account/request/client/permit identities.
+- Delegation: after the DEC-069 source-gate check, all send-attempt journaling, exact checked-request use, no-retry behavior, DEC-058 send-result normalization, ambiguity handling, and post-send reconciliation remain delegated to DEC-065.
+- Repository safety: `DEMO_EXECUTION_SOURCE_ARMED=false`; no setter/env/config/artifact hook or order-capable CLI added. Armed-path unit tests patch the wrapper in-process and do not access a broker.
+- Real evidence status: no real Phase 8B prospective campaign/acceptance/SHADOW_VALIDATED transition; no real Phase 9 artifact chain, approval, activation, demo order, or broker mutation.
+- Verification: exact source head `b52c026324b67216f2060d120b13c36d30a6677d` passed 1080 tests plus workflow-YAML validation and compile checks in run `35786753220`; unchanged Phase 3 acceptance run `35786753236` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. After DEC-069, source construction for the first practice-order path is complete, but real execution still requires the real Phase 8B/Phase 9 evidence chain plus explicit operator action in a separately approved armed runtime.
