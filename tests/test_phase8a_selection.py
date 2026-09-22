@@ -47,7 +47,7 @@ def _scenario(
     slippage: float,
     *,
     net_return: float = 0.20,
-    expectancy: float = 10.0,
+    expectancy: float | None = 10.0,
     pf: float = 1.5,
     dd: float = 0.04,
     trades: int = 300,
@@ -174,6 +174,22 @@ class Phase8ASelectionTests(unittest.TestCase):
         self.assertFalse(failed_result.passed)
         self.assertFalse(failed_result.gates["max_strategy_positive_pnl_share_02"])
         self.assertEqual(failed_result.outcome, NO_PORTFOLIO_SELECTED)
+
+    def test_null_expectancy_fails_gate_without_schema_error(self) -> None:
+        fps = tuple(
+            sorted((_version(1).fingerprint, _version(2, "GBPUSD").fingerprint))
+        )
+        record = PortfolioSelectionRecord(
+            strategy_fingerprints=fps,
+            scenarios=(
+                _scenario(0.2, expectancy=None),
+                _scenario(0.5),
+                _scenario(1.0),
+            ),
+        )
+        result = evaluate_selection_gates(record)
+        self.assertFalse(result.passed)
+        self.assertFalse(result.gates["expectancy_positive_02"])
 
     def test_one_strategy_control_can_never_be_selected_as_multistrategy_winner(self) -> None:
         record = PortfolioSelectionRecord(
