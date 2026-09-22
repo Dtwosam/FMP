@@ -372,13 +372,13 @@ Implementation progress:
 
 Current milestone:
 
-1. EXP-013 Stage A and Stage B code/workflows are merged and verified but remain deliberately undispatched because the connected Mac is offline and no direct workflow-dispatch connector is available in this session;
-2. continue source-free EXP-015 implementation from the frozen DEC-043 protocol without opening any historical stage;
-3. PR #134 merged the `refs/heads/main` dispatch guard at `bec47ec62c33ec3a574a721c002ee536dd5d8ca0` after 912 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS; the current source-free hardening additionally requires every downstream referenced workflow run to have originated from `main` and from the exact expected workflow file before any artifact/source is accepted;
-4. EXP-015 Stage A remains deliberately undispatched until an authorized workflow-dispatch path is available; Stage B/C and DEC-042 remain downstream-blocked by exact upstream evidence;
-5. when an authorized operator dispatch path is available, run EXP-013 Stage A first from verified `main`; only exact Stage A survivors may enter its Stage B;
-6. if EXP-013 or EXP-015 yields one or more HISTORICAL_QUALIFIED challengers, add only those exact immutable identities to the DEC-042 selection-eligible pool without changing any selection gate;
-7. retain all results as retrospective and preserve Phase 8B/demo/live locks.
+1. EXP-013 Stage A/B, EXP-015 Stage A/B/C/finalization, and DEC-042 selection code/workflows are merged and verified but remain deliberately undispatched because the connected Mac is offline and the available GitHub connector cannot start new workflow_dispatch runs;
+2. PR #134 merged the `refs/heads/main` dispatch guard at `bec47ec62c33ec3a574a721c002ee536dd5d8ca0`; PR #135 merged exact upstream-main/workflow-path provenance checks at `9e1732846f62d86fd7c9e8dc6294183d5c73bb14`, both with repository tests/compile and unchanged Phase 3 acceptance green;
+3. DEC-045 / EXP-20260922-016 is now the active source-free implementation milestone: build the deterministic Phase 8A acceptance review required by DEC-039 step 9, consuming only exact DEC-042 artifacts and opening no new market data;
+4. DEC-045 may freeze a `SHADOW_CANDIDATE` only if the exact DEC-042 selected portfolio replays as the top passing set and its 0.5-pip annualized compounded return is strictly greater than the Phase 7 baseline control over the same selection range; otherwise Phase 8A records a research rejection and Phase 8B remains locked;
+5. when an authorized workflow-dispatch path is available, historical execution remains ordered and evidence-gated: EXP-015 Stage A -> Stage B -> Stage C/finalize -> DEC-042 selection -> DEC-045 acceptance. EXP-013 remains available as a separately frozen challenger experiment but is not required to bypass this chain;
+6. only an accepted DEC-045 artifact may authorize Phase 8B read-only shadow design/capture for the exact frozen candidate set; demo/live/broker mutation/real-money/Phase 9 remain locked;
+7. retain all results as retrospective and preserve champion/challenger immutability.
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
 `EXP-20260922-011` is preserved but will not be launched.
