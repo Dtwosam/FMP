@@ -20,6 +20,12 @@ from .research_data import (
     RetrospectiveRange,
     load_phase8a_retrospective_bars,
 )
+from .research_runner import (
+    Phase8ARetrospectivePlan,
+    build_strategy_config,
+    run_phase8a_retrospective_strategy,
+    summarize_daily_returns,
+)
 from .router import route_shadow_candidates
 
 __all__ = [
@@ -34,13 +40,17 @@ __all__ = [
     "PortfolioCandidate",
     "PortfolioExposure",
     "PortfolioRouteResult",
+    "Phase8ARetrospectivePlan",
     "RetrospectiveRange",
     "StrategyLifecycle",
     "StrategyRecord",
     "StrategyVersion",
     "build_phase4_baseline_inventory",
+    "build_strategy_config",
     "freeze_shadow_champion_set",
     "load_phase8a_retrospective_bars",
     "route_shadow_candidates",
+    "run_phase8a_retrospective_strategy",
+    "summarize_daily_returns",
     "transition_strategy",
 ]
