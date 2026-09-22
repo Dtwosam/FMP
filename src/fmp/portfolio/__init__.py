@@ -12,21 +12,35 @@ from .contracts import (
 )
 from .historical_inventory import build_phase4_baseline_inventory
 from .registry import freeze_shadow_champion_set, transition_strategy
+from .research_data import (
+    PHASE8A_RETROSPECTIVE_END_EXCLUSIVE,
+    PHASE8A_RETROSPECTIVE_LABEL,
+    PHASE8A_RETROSPECTIVE_START,
+    LoadedRetrospectiveBars,
+    RetrospectiveRange,
+    load_phase8a_retrospective_bars,
+)
 from .router import route_shadow_candidates
 
 __all__ = [
     "PHASE8A_EXPERIMENT_ID",
+    "PHASE8A_RETROSPECTIVE_END_EXCLUSIVE",
+    "PHASE8A_RETROSPECTIVE_LABEL",
+    "PHASE8A_RETROSPECTIVE_START",
     "CandidateRejection",
     "CandidateRejectionCode",
     "ChampionSet",
+    "LoadedRetrospectiveBars",
     "PortfolioCandidate",
     "PortfolioExposure",
     "PortfolioRouteResult",
+    "RetrospectiveRange",
     "StrategyLifecycle",
     "StrategyRecord",
     "StrategyVersion",
     "build_phase4_baseline_inventory",
     "freeze_shadow_champion_set",
+    "load_phase8a_retrospective_bars",
     "route_shadow_candidates",
     "transition_strategy",
 ]
