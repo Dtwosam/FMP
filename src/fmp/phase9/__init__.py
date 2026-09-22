@@ -20,6 +20,17 @@ from .design import (
     validate_phase9_demo_design,
     write_phase9_demo_design,
 )
+from .launch_preflight import (
+    PHASE9_DEMO_LAUNCH_PREFLIGHT_ARTIFACT_PROTOCOL,
+    PHASE9_DEMO_LAUNCH_PREFLIGHT_DECISION,
+    PHASE9_DEMO_LAUNCH_PREFLIGHT_EXPERIMENT_ID,
+    PHASE9_DEMO_LAUNCH_PREFLIGHT_PROTOCOL,
+    PHASE9_DEMO_LAUNCH_PREFLIGHT_READY,
+    Phase9DemoLaunchPreflightBackend,
+    run_phase9_demo_launch_preflight,
+    validate_phase9_demo_launch_preflight,
+    write_phase9_demo_launch_preflight,
+)
 from .mt5_mutation import (
     DEMO_EXECUTION_SOURCE_ARMED,
     GatedMT5DemoMutationAdapter,
@@ -104,6 +115,12 @@ from .protocol import (
 )
 
 __all__ = [
+    "PHASE9_DEMO_LAUNCH_PREFLIGHT_ARTIFACT_PROTOCOL",
+    "PHASE9_DEMO_LAUNCH_PREFLIGHT_DECISION",
+    "PHASE9_DEMO_LAUNCH_PREFLIGHT_EXPERIMENT_ID",
+    "PHASE9_DEMO_LAUNCH_PREFLIGHT_PROTOCOL",
+    "PHASE9_DEMO_LAUNCH_PREFLIGHT_READY",
+    "Phase9DemoLaunchPreflightBackend",
     "PHASE9_DEMO_RUNTIME_AUTHORITY_ARTIFACT_PROTOCOL",
     "PHASE9_DEMO_RUNTIME_AUTHORITY_DECISION",
     "PHASE9_DEMO_RUNTIME_AUTHORITY_EXPERIMENT_ID",
@@ -175,8 +192,10 @@ __all__ = [
     "build_phase9_send_attempt_payload",
     "build_phase9_demo_design_from_campaign",
     "phase9_demo_session_attempt_count",
+    "run_phase9_demo_launch_preflight",
     "run_phase9_mt5_demo_preflight",
     "validate_phase9_demo_design",
+    "validate_phase9_demo_launch_preflight",
     "validate_phase9_demo_execution_arm",
     "validate_phase9_demo_runtime_authority",
     "validate_phase9_demo_session_arm",
@@ -190,6 +209,7 @@ __all__ = [
     "validate_phase9_demo_order_request",
     "validate_phase9_demo_reconciliation",
     "write_phase9_demo_design",
+    "write_phase9_demo_launch_preflight",
     "write_phase9_demo_runtime_authority",
     "write_phase9_demo_execution_arm",
     "write_phase9_mt5_demo_preflight",
