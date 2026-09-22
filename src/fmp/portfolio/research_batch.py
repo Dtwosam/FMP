@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, fields, is_dataclass
+from datetime import date, datetime, timedelta
+from enum import Enum
 from pathlib import Path
 from typing import Callable, Iterable, Mapping
 
@@ -180,10 +183,32 @@ def run_phase8a_retrospective_batch(
     }
 
 
+def _jsonable(value: object) -> object:
+    if is_dataclass(value) and not isinstance(value, type):
+        return {item.name: _jsonable(getattr(value, item.name)) for item in fields(value)}
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, datetime):
+        if value.tzinfo is None or value.utcoffset() != timedelta(0):
+            raise ValueError("serialized datetime must use UTC")
+        return value.isoformat().replace("+00:00", "Z")
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, Mapping):
+        return {str(key): _jsonable(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("cannot serialize non-finite float")
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    raise TypeError(f"unsupported deterministic serialization type: {type(value).__name__}")
+
+
 def _stable_json_bytes(value: Mapping[str, object]) -> bytes:
     return (
         json.dumps(
-            dict(value),
+            _jsonable(value),
             sort_keys=True,
             indent=2,
             ensure_ascii=False,
