@@ -708,3 +708,22 @@ Copy this section for each serious experiment:
 - Verification: exact source head `3244459b456f4c05e07cb4e52ae7c50aeef96061` passed 982 tests plus workflow-YAML validation and compile checks in run `35754791092`; unchanged Phase 3 acceptance run `35754790877` passed.
 - Merge status: PR #145 merged DEC-053 to `main` at `3b0d7be25a8d5f2ff6eff2fb495aaa6c2ca3c09f`. The exact final PR head `ddce81d0e3fc948eb0d251e7d2dc488eba5cefae` passed 982 tests plus workflow-YAML validation and compile checks in run `35754982384`; unchanged Phase 3 acceptance run `35754982244` passed.
 - Follow-up: no real DEC-052 capture or DEC-051 acceptance result has been produced. The next milestone is to freeze the explicit acceptance-review invocation/lifecycle transition boundary over immutable DEC-053 snapshots and pre-frozen spread-reference evidence.
+
+
+### EXP-20260922-025 — Phase 8B acceptance review and shadow-validation freeze
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO REAL ACCEPTANCE RESULT
+- Protocol decision: DEC-054 APPROVED BEFORE ANY PHASE 8B ACCEPTANCE RESULT
+- Purpose: freeze the final source-only Phase 8B review boundary over exact DEC-053 closures and one deterministic campaign-bound DEC-051 historical spread reference.
+- Pre-capture ordering: `authorize-start` now persists DEC-048 start authorization and DEC-049 capture preflight from the same fresh EOF readers, then stops without capturing a prospective record.
+- Historical spread reference: fixed accepted Phase 8A complete canonical 1m snapshot, 2015-01-01 through 2026-08-21, fixed manifest layout, entry spread from bar open, exit spread from bar close, exact sample counts, median, nearest-rank p95, and exact processed-manifest/month provenance.
+- Capture gate: `capture-segment` requires the exact campaign-bound spread reference and fails after any terminal campaign marker.
+- Review: `review-campaign --campaign-dir <path> --closure-id <sha256>` binds one exact closure, one exact campaign-bound spread reference, and the review code commit into a deterministic create-only review ID.
+- NEED_MORE_DATA: non-terminal; writes acceptance evidence only and permits later clean capture/closure/review snapshots.
+- PASS/rejection: terminal for Phase 8B capture/review; writes `fmp-phase8b-campaign-terminal-v1` with all order/broker/real-money/Phase-9 execution flags false.
+- PASS lifecycle evidence: only exact PASS may create `fmp-phase8b-shadow-validation-v1`, applying existing registry transition SHADOW_CANDIDATE -> SHADOW_VALIDATED while reproducing the exact champion-set fingerprint.
+- Demo/live orders, broker mutation, real-money trading, DEMO_ELIGIBLE transition, and Phase 9 execution authorized?: NO.
+- Live execution status: NOT RUN.
+- Verification: PR #146 implementation head `57b94fc0ec1f30fea0acb036364d1ca0667f8c8c` passed 988 tests plus workflow-YAML validation and compile checks in run `35758432987`; unchanged Phase 3 acceptance run `35758432967` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. No real prospective capture, spread-reference freeze, campaign closure review, lifecycle transition, or Phase 9 design has been executed.

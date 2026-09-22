@@ -372,11 +372,11 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-051 are merged and source-free verified;
-2. DEC-052 / `EXP-20260922-023` is merged at `8d28dc3dfdc1bb41112034f7b1a91fd54ad55e46`, adding explicit bounded quote-only prospective segment capture with fsynced raw/audit/event evidence and deterministic child compile/replay; no real prospective segment has been invoked;
-3. PR #145 merged DEC-053 / `EXP-20260922-024` to `main` at `3b0d7be25a8d5f2ff6eff2fb495aaa6c2ca3c09f`: ordered DEC-052 journal revalidation, segment-local monotonic restart support with cross-segment source-time continuity, one continuous shared-risk aggregate DEC-050 replay, restart-gap accounting, derived DEC-051 timing/coverage/spread/representation/financial fields, terminal zero-open/pending closure, and immutable campaign-evidence snapshots; the exact final PR head `ddce81d0e3fc948eb0d251e7d2dc488eba5cefae` passed 982 tests plus YAML/compile in run `35754982384` and unchanged Phase 3 acceptance run `35754982244` passed;
-4. each DEC-053 close is an immutable snapshot rather than a permanent capture shutdown, so `PHASE8B_NEED_MORE_DATA` can be followed by additional clean segments and a newer snapshot;
-5. DEC-053 does not run acceptance or change lifecycle state; demo/live orders, broker mutation, real-money trading, Phase 9 execution, champion-set mutation, acceptance, and promotion remain locked.
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-053 are merged and verified on `main`;
+2. no real DEC-052 prospective segment and no DEC-051 acceptance result has been produced;
+3. DEC-054 / `EXP-20260922-025` is implemented on PR #146 head `57b94fc0ec1f30fea0acb036364d1ca0667f8c8c`: pre-capture DEC-049 preflight during authorize-start, deterministic campaign-bound historical spread-reference freeze, reference-gated prospective capture, immutable DEC-053 closure review, non-terminal NEED_MORE_DATA, terminal PASS/rejection marker, and exact SHADOW_CANDIDATE -> SHADOW_VALIDATED PASS evidence; run `35758432987` passed 988 tests plus YAML/compile and unchanged Phase 3 acceptance run `35758432967` passed;
+4. only exact PASS may create immutable SHADOW_CANDIDATE -> SHADOW_VALIDATED evidence while preserving the champion-set fingerprint; PASS remains demo-design eligibility only;
+5. demo/live orders, broker mutation, real-money trading, Phase 9 execution, DEMO_ELIGIBLE transition, and champion identity mutation remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
