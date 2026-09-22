@@ -1,0 +1,234 @@
+name: phase8a-exp015-stage-c
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage_a_run_id:
+        description: Successful phase8a-exp015-stage-a workflow run ID
+        required: true
+        type: string
+      stage_b_run_id:
+        description: Successful phase8a-exp015-stage-b workflow run ID
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  robust-and-finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout exact Stage C runner commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Verify Stage A and Stage B workflow runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGE_A_RUN_ID: ${{ inputs.stage_a_run_id }}
+          STAGE_B_RUN_ID: ${{ inputs.stage_b_run_id }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${STAGE_A_RUN_ID}" > stage-a-run.json
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${STAGE_B_RUN_ID}" > stage-b-run.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          expected = (
+              ('stage-a-run.json', 'phase8a-exp015-stage-a', 'stage-a-head-sha.txt'),
+              ('stage-b-run.json', 'phase8a-exp015-stage-b', 'stage-b-head-sha.txt'),
+          )
+          for filename, name, out in expected:
+              run = json.loads(Path(filename).read_text(encoding='utf-8'))
+              assert run['name'] == name, run
+              assert run['event'] == 'workflow_dispatch', run
+              assert run['status'] == 'completed', run
+              assert run['conclusion'] == 'success', run
+              head_sha = run['head_sha']
+              assert isinstance(head_sha, str) and len(head_sha) == 40, run
+              Path(out).write_text(head_sha, encoding='utf-8')
+          PY
+
+      - name: Download exact Stage A authorization
+        uses: actions/download-artifact@v6
+        with:
+          run-id: ${{ inputs.stage_a_run_id }}
+          github-token: ${{ github.token }}
+          pattern: phase8a-exp015-stage-a-authorization-*
+          path: .exp015-stage-a-input
+          merge-multiple: false
+
+      - name: Download exact Stage B evidence
+        uses: actions/download-artifact@v6
+        with:
+          run-id: ${{ inputs.stage_b_run_id }}
+          github-token: ${{ github.token }}
+          pattern: phase8a-exp015-stage-b-*
+          path: .exp015-stage-b-input
+          merge-multiple: false
+
+      - name: Validate upstream evidence before Stage C source download
+        run: |
+          set -euo pipefail
+          mapfile -t authorization_files < <(find .exp015-stage-a-input -type f -name authorization.json | sort)
+          mapfile -t stage_b_files < <(find .exp015-stage-b-input -type f -name stage-b.json | sort)
+          if [ "${#authorization_files[@]}" -ne 1 ] || [ "${#stage_b_files[@]}" -ne 1 ]; then
+            echo 'expected exactly one Stage A authorization and one Stage B result' >&2
+            exit 1
+          fi
+          cp "${authorization_files[0]}" stage-a-authorization.json
+          cp "${stage_b_files[0]}" stage-b.json
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          from fmp.portfolio.challenger_discovery_stage_bc import validate_exp015_stage_b_evidence
+
+          authorization_path = Path('stage-a-authorization.json')
+          stage_b_path = Path('stage-b.json')
+          authorization = json.loads(authorization_path.read_text(encoding='utf-8'))
+          stage_b = json.loads(stage_b_path.read_text(encoding='utf-8'))
+          stage_a_head = Path('stage-a-head-sha.txt').read_text(encoding='utf-8').strip()
+          stage_b_head = Path('stage-b-head-sha.txt').read_text(encoding='utf-8').strip()
+          assert authorization['runner_code_commit'] == stage_a_head, authorization
+          assert stage_b['stage_a_runner_code_commit'] == stage_a_head, stage_b
+          assert stage_b['stage_b_runner_code_commit'] == stage_b_head, stage_b
+          records = validate_exp015_stage_b_evidence(
+              stage_a_authorization=authorization,
+              stage_a_authorization_sha256=hashlib.sha256(authorization_path.read_bytes()).hexdigest(),
+              stage_b_result=stage_b,
+          )
+          assert records, 'Stage B produced no passers; Stage C source-open is forbidden'
+          symbols = sorted({item.strategy.symbol for item in records})
+          Path('required-symbols.txt').write_text('\n'.join(symbols) + '\n', encoding='utf-8')
+          PY
+
+      - name: Download required accepted Phase 2 artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .phase2-accepted
+          while IFS= read -r symbol; do
+            case "${symbol}" in
+              EURUSD)
+                artifact_id='10325737935'
+                expected_sha='db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3'
+                ;;
+              GBPUSD)
+                artifact_id='10326096831'
+                expected_sha='fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2'
+                ;;
+              USDJPY)
+                artifact_id='10327600628'
+                expected_sha='6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72'
+                ;;
+              *)
+                echo "unsupported Stage B passer symbol: ${symbol}" >&2
+                exit 1
+                ;;
+            esac
+            root=".phase2-accepted/${symbol}"
+            zip_path=".phase2-accepted/${symbol}.zip"
+            mkdir -p "${root}"
+            gh api \
+              -H 'Accept: application/vnd.github+json' \
+              "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" \
+              > "${zip_path}"
+            actual_sha="$(sha256sum "${zip_path}" | awk '{print $1}')"
+            if [ "${actual_sha}" != "${expected_sha}" ]; then
+              echo "accepted Phase 2 artifact digest mismatch for ${symbol}" >&2
+              exit 1
+            fi
+            unzip -q "${zip_path}" -d "${root}"
+          done < required-symbols.txt
+
+      - name: Run frozen EXP-015 Stage C
+        run: |
+          set -euo pipefail
+          args=(
+            python scripts/phase8a_exp015.py stage-c-run
+            --authorization stage-a-authorization.json
+            --stage-b stage-b.json
+            --code-commit "${GITHUB_SHA}"
+            --out .exp015-stage-c
+          )
+          while IFS= read -r symbol; do
+            root=".phase2-accepted/${symbol}"
+            manifest="${root}/manifests/processed/fmp-canonical-1m-v1/${symbol}.json"
+            test -f "${manifest}"
+            args+=(--dataset-source "${symbol}=${root}::${manifest}")
+          done < required-symbols.txt
+          "${args[@]}"
+
+      - name: Finalize frozen EXP-015 shortlist
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_exp015.py finalize \
+            --authorization stage-a-authorization.json \
+            --stage-b stage-b.json \
+            --stage-c .exp015-stage-c/stage-c.json \
+            --out .exp015-final
+
+      - name: Verify Stage C and final lifecycle evidence
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          stage_c = json.loads(Path('.exp015-stage-c/stage-c.json').read_text(encoding='utf-8'))
+          final = json.loads(Path('.exp015-final/final-shortlist.json').read_text(encoding='utf-8'))
+
+          assert stage_c['protocol'] == 'fmp-phase8a-exp015-stage-c-v1', stage_c
+          assert stage_c['experiment_id'] == 'EXP-20260922-015', stage_c
+          assert stage_c['evidence_label'] == 'RETROSPECTIVE_ALREADY_SEEN', stage_c
+          assert stage_c['untouched_oos'] is False, stage_c
+          assert stage_c['promotion_authorized'] is False, stage_c
+          assert stage_c['historical_status_mutation_authorized'] is False, stage_c
+          assert stage_c['stage_c_runner_code_commit'] == os.environ['GITHUB_SHA'], stage_c
+          assert stage_c['range_start'] == '2023-01-01', stage_c
+          assert stage_c['range_end_exclusive'] == '2026-08-21', stage_c
+          assert stage_c['scenario_run_count'] == stage_c['strategy_identity_count'] * 3, stage_c
+          assert stage_c['stage_c_pass_count'] == len(stage_c['stage_c_pass_fingerprints']), stage_c
+
+          assert final['protocol'] == 'fmp-phase8a-exp015-final-shortlist-v1', final
+          assert final['tested_candidate_count'] == 567, final
+          assert final['historical_qualified_count'] == len(final['historical_qualified_fingerprints']), final
+          assert final['historical_qualified_count'] <= 11, final
+          assert len(final['lifecycle_dispositions']) == 567, final
+          assert all(value <= 4 for value in final['selected_pair_counts'].values()), final
+          assert all(value <= 3 for value in final['selected_family_counts'].values()), final
+          assert all(value <= 2 for value in final['selected_cell_counts'].values()), final
+          assert final['promotion_authorized'] is False, final
+          PY
+
+      - name: Upload EXP-015 Stage C evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase8a-exp015-stage-c-${{ github.sha }}
+          path: .exp015-stage-c
+          include-hidden-files: true
+          if-no-files-found: error
+
+      - name: Upload EXP-015 final shortlist
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase8a-exp015-final-${{ github.sha }}
+          path: .exp015-final
+          include-hidden-files: true
+          if-no-files-found: error
