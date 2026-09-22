@@ -251,6 +251,7 @@ class Exp015StageATests(unittest.TestCase):
                     item for item in catalog
                     if item.strategy.symbol == symbol and item.strategy.timeframe == timeframe
                 ]
+                families = sorted({item.strategy.family for item in records})
                 gates.append(
                     {
                         "protocol": EXP015_STAGE_A_GATE_PROTOCOL,
@@ -268,8 +269,23 @@ class Exp015StageATests(unittest.TestCase):
                             item.strategy.fingerprint for item in records
                         ),
                         "survivor_fingerprints": [],
-                        "family_rankings": {},
-                        "strategy_gates": {},
+                        "family_rankings": {
+                            family: {
+                                "passing_fingerprints": [],
+                                "selected_fingerprints": [],
+                            }
+                            for family in families
+                        },
+                        "strategy_gates": {
+                            item.strategy.fingerprint: {
+                                "family": item.strategy.family,
+                                "parameters_json": item.strategy.parameters_json,
+                                "mandatory_gate_pass": False,
+                                "annualized_return_02": None,
+                                "annualized_return_05": None,
+                            }
+                            for item in records
+                        },
                     }
                 )
         auth = aggregate_exp015_stage_a_gates(gates)
