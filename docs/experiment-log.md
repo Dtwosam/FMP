@@ -728,3 +728,21 @@ Copy this section for each serious experiment:
 - Verification: PR #146 implementation head `57b94fc0ec1f30fea0acb036364d1ca0667f8c8c` passed 988 tests plus workflow-YAML validation and compile checks in run `35758432987`; unchanged Phase 3 acceptance run `35758432967` passed.
 - Merge status: PR #146 merged DEC-054 to `main` at `7e3e1f03fcdf9f2314cd96864eb1825b1b3c2a18`. The exact final PR head `aaa5500776fa4a8d7a4e5ddcfb0b8ec4d24498c5` passed 988 tests plus workflow-YAML validation and compile checks in run `35758599011`; unchanged Phase 3 acceptance run `35758598901` passed.
 - Follow-up: no real prospective capture, spread-reference freeze, campaign closure review, lifecycle transition, or Phase 9 design has been executed. A later separately frozen Phase 9 demo-design protocol may consume only an exact DEC-054 PASS/shadow-validation artifact.
+
+
+### EXP-20260922-026 — Phase 9 demo design proposal
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE DESIGN VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-055 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: freeze a source-only Phase 9 demo architecture from one exact terminal DEC-054 PASS review while preserving accepted Phase 8B champion/account/server/symbol identity and unchanged Phase 3 risk policy.
+- Input boundary: exact DEC-049 preflight, exact terminal DEC-054 PASS review/acceptance/shadow-validation bytes, and exact campaign-terminal marker.
+- Integrity: Phase 9 loader verifies the DEC-054 review-manifest SHA-256 bindings for acceptance and shadow-validation before compiling the design.
+- Provider path: accepted FP Markets MT5 demo identity only; changing provider requires a new decision.
+- Future protocol: `fmp-mt5-demo-order-bridge-v1` requirements frozen for practice-account assertion, deterministic client order IDs, mandatory protective stops, requested-vs-fill logging, order journal, startup reconciliation, orphan fail-closed behavior, restart/recovery, daily halt, and secret handling.
+- Risk: exact unchanged Phase 3 `RiskConfig` is embedded; DEC-055 cannot widen per-trade, simultaneous-risk, or daily-loss limits.
+- CLI: separate Phase 9 source-only `design-demo --campaign-dir <path> --review-id <sha256>`; no `run-demo`, `order`, `trade`, broker, or live command.
+- Authorization: `demo_adapter_source_authorized=true` only. Demo execution/order, live order, broker mutation, real-money trading, and Phase 10 remain false.
+- Live/demo execution status: NOT RUN.
+- Verification: PR #147 exact implementation head `c796c4988ebafb6d357b5a49de2d6ced928bd2a5` passed 993 tests plus workflow-YAML validation and compile checks in run `35759609550`; unchanged Phase 3 acceptance run `35759609484` passed.
+- Follow-up: merge only after the exact bookkeeping head remains green. A later separately frozen decision is required before any demo order adapter can be implemented or enabled.

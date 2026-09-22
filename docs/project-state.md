@@ -372,11 +372,10 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-053 are merged and verified on `main`;
-2. no real DEC-052 prospective segment and no DEC-051 acceptance result has been produced;
-3. PR #146 merged DEC-054 / `EXP-20260922-025` to `main` at `7e3e1f03fcdf9f2314cd96864eb1825b1b3c2a18`: pre-capture DEC-049 preflight during authorize-start, deterministic campaign-bound historical spread-reference freeze, reference-gated prospective capture, immutable DEC-053 closure review, non-terminal NEED_MORE_DATA, terminal PASS/rejection marker, and exact SHADOW_CANDIDATE -> SHADOW_VALIDATED PASS evidence; the exact final PR head `aaa5500776fa4a8d7a4e5ddcfb0b8ec4d24498c5` passed 988 tests plus YAML/compile in run `35758599011` and unchanged Phase 3 acceptance run `35758598901` passed;
-4. only exact PASS may create immutable SHADOW_CANDIDATE -> SHADOW_VALIDATED evidence while preserving the champion-set fingerprint; PASS remains demo-design eligibility only;
-5. demo/live orders, broker mutation, real-money trading, Phase 9 execution, DEMO_ELIGIBLE transition, and champion identity mutation remain locked.
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-054 are merged and verified on `main`;
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, or demo trade has been executed;
+3. DEC-055 / `EXP-20260922-026` is implemented on PR #147 head `c796c4988ebafb6d357b5a49de2d6ced928bd2a5`: separate source-only Phase 9 `design-demo`, exact terminal DEC-054 PASS/review byte binding, accepted MT5 demo identity preservation, unchanged Phase 3 risk policy, and frozen future order-bridge/protective-stop/reconciliation/idempotency controls; run `35759609550` passed 993 tests plus YAML/compile and unchanged Phase 3 acceptance run `35759609484` passed;
+4. DEC-055 may authorize future demo-adapter source implementation only; demo execution/order submission, broker mutation, real-money trading, Phase 10, and live execution remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
