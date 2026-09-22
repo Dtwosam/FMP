@@ -372,11 +372,11 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-067 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet artifact, explicit execution approval, demo order, or broker mutation has been executed;
-3. DEC-068 / `EXP-20260922-039` is implemented on PR #160 head `df64999f99aa8d5114b0a462e5d23723cb868fe1`: exact challenge-bound approval records, approval-window enforcement, source-only gate-activation contracts, and create-only persistence; run `35784906657` passed 1075 tests plus YAML/compile and unchanged Phase 3 acceptance run `35784906607` passed;
-4. DEC-068 must preserve the hard source lock, add no runner wiring or execution CLI, and tests may use only fixture approval statements/identities;
-5. real first-demo approval/execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-068 are merged and verified on `main`;
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet artifact, explicit execution approval, gate activation, demo order, or broker mutation has been executed;
+3. PR #160 merged DEC-068 / `EXP-20260922-039` to `main` at `88d23744b23faf5035b2c67075af73b0e1c25abc`; the exact final PR head `c54ca6ae1a0bce9d74465039e85008c643d5fa28` passed 1075 tests plus YAML/compile in run `35785056511` and unchanged Phase 3 acceptance run `35785056455` passed; post-merge `main` runs `35785181147` and `35785181186` passed;
+4. DEC-068 provides source-only exact challenge-bound approval-record and gate-activation contracts, but no real approval artifact exists, `DEMO_EXECUTION_SOURCE_ARMED=false`, and the DEC-065 runner is not wired to activation artifacts;
+5. the next boundary is a separately approved operator-action/runtime-wiring decision. Real first-demo approval/execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
