@@ -70,7 +70,17 @@ class Phase8BCliBoundaryTests(unittest.TestCase):
             ).command,
             "capture-segment",
         )
-        for forbidden in ("run", "capture", "start", "review", "close-campaign"):
+        self.assertEqual(
+            parser.parse_args(
+                [
+                    "close-campaign",
+                    "--campaign-dir",
+                    "campaign",
+                ]
+            ).command,
+            "close-campaign",
+        )
+        for forbidden in ("run", "capture", "start", "review"):
             with self.subTest(command=forbidden):
                 with self.assertRaises(SystemExit):
                     parser.parse_args([forbidden])
@@ -113,7 +123,14 @@ class Phase8BCliBoundaryTests(unittest.TestCase):
                 "60",
             ]
         )
-        for args in (qualify, register, authorize, capture):
+        close = parser.parse_args(
+            [
+                "close-campaign",
+                "--campaign-dir",
+                "campaign",
+            ]
+        )
+        for args in (qualify, register, authorize, capture, close):
             for forbidden in (
                 "symbol",
                 "path",

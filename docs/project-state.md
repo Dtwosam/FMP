@@ -372,12 +372,11 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045, and DEC-046 Phase 8B immutable design is merged to `main` at `960a590377c9a6d00c9c4fe26007ec855068cc84` after 931 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS;
-2. no result-producing EXP-015 / DEC-042 / DEC-045 workflow has been dispatched and no Phase 8B prospective live-shadow segment has yet been captured;
-3. DEC-047 through DEC-051 are merged: immutable multi-symbol demo bridge registration, prospective start/preflight, deterministic multi-strategy runtime/replay, and the frozen acceptance compiler/evidence contract are all source-free verified on `main`;
-4. PR #144 merged DEC-052 / `EXP-20260922-023` to `main` at `8d28dc3dfdc1bb41112034f7b1a91fd54ad55e46`: explicit bounded quote-only `capture-segment`, create-only fsynced raw/audit/event journals, same-reader first-preflight transition, fail-closed bridge identity, clean DEC-050 compile/replay closure, and immutable `fmp-phase8b-prospective-segment-v1` evidence; the exact final PR head `0d61fcb6f678a8c76cef78b6ab93df5485abe791` passed 977 tests plus YAML/compile in run `35751972199` and unchanged Phase 3 acceptance run `35751972226` passed;
-5. no live DEC-052 segment has been invoked yet. The next milestone is a separately frozen campaign-close protocol that accounts for restart gaps, aggregates only clean replay-matching prospective segments, and creates the exact DEC-051 `fmp-phase8b-campaign-evidence-v1` artifact;
-6. demo/live orders, broker mutation, real-money trading, Phase 9 execution, champion-set mutation, acceptance, and promotion remain locked.
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-051 are merged and source-free verified;
+2. DEC-052 / `EXP-20260922-023` is merged at `8d28dc3dfdc1bb41112034f7b1a91fd54ad55e46`, adding explicit bounded quote-only prospective segment capture with fsynced raw/audit/event evidence and deterministic child compile/replay; no real prospective segment has been invoked;
+3. DEC-053 / `EXP-20260922-024` is implemented on PR #145 source head `3244459b456f4c05e07cb4e52ae7c50aeef96061`: ordered DEC-052 journal revalidation, segment-local monotonic restart support with cross-segment source-time continuity, one continuous shared-risk aggregate DEC-050 replay, restart-gap accounting, derived DEC-051 timing/coverage/spread/representation/financial fields, terminal zero-open/pending closure, and immutable campaign-evidence snapshots; run `35754791092` passed 982 tests plus YAML/compile and unchanged Phase 3 acceptance run `35754790877` passed;
+4. each DEC-053 close is an immutable snapshot rather than a permanent capture shutdown, so `PHASE8B_NEED_MORE_DATA` can be followed by additional clean segments and a newer snapshot;
+5. DEC-053 does not run acceptance or change lifecycle state; demo/live orders, broker mutation, real-money trading, Phase 9 execution, champion-set mutation, acceptance, and promotion remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 

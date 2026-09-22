@@ -685,3 +685,25 @@ Copy this section for each serious experiment:
 - Live execution status: NOT RUN.
 - Implementation status: PR #144 merged DEC-052 to `main` at `8d28dc3dfdc1bb41112034f7b1a91fd54ad55e46`. The exact final PR head `0d61fcb6f678a8c76cef78b6ab93df5485abe791` passed 977 tests plus workflow-YAML validation and compile checks in run `35751972199`; unchanged Phase 3 acceptance run `35751972226` passed.
 - Follow-up: separately freeze and implement the multi-segment campaign-close protocol before DEC-051 acceptance can consume real prospective evidence.
+
+
+### EXP-20260922-024 — Phase 8B prospective campaign evidence close
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO ACCEPTANCE RESULT
+- Protocol decision: DEC-053 APPROVED BEFORE ANY PHASE 8B ACCEPTANCE RESULT
+- Purpose: compile immutable DEC-051 campaign-evidence snapshots from exact ordered DEC-052 prospective segment journals without resetting the shared virtual account at process boundaries.
+- Segment eligibility: exact valid prospective-segment closure, raw/audit/operational digests, child DEC-050 segment identity, child replay match, exact DEC-049 preflight identity, no duplicate prospective/runtime/replay/capture fingerprints, and non-overlapping wall-clock intervals.
+- Restart semantics: receive monotonic values remain segment-local; cross-segment source-time progression is mandatory; restart gaps are explicit and never backfilled.
+- Aggregate runtime: all eligible raw records are replayed as one continuous DEC-050 aggregate with one shared $100,000 Phase 3 risk account per slippage scenario; child financial summaries are integrity-only and are never summed.
+- Terminal snapshot rule: every aggregate scenario must have zero open and zero pending hypothetical decisions before campaign evidence can be written.
+- Derived DEC-051 evidence: London weekday denominator/full-day coverage, nearest-rank p99 processing latency, entry/exit deadline violations, strategy-family/pair representation, exact live entry/exit spread samples and median/p95, scenario financial metrics, structural safety, and integrity evidence.
+- Snapshot semantics: each close is immutable and create-only, but not a permanent capture shutdown; later clean segments may produce a newer snapshot after NEED_MORE_DATA.
+- CLI scope: adds only `close-campaign --campaign-dir <path>`; it reads existing artifacts only and does not access MT5 or a broker.
+- Broker/demo/live/real-money/Phase 9 authorized?: NO.
+- Acceptance/lifecycle transition executed?: NO.
+- Initial CI: run `35754471148` found one test-ordering issue: a copied duplicate segment failed as temporal overlap before duplicate immutable identity. Phase 3 acceptance `35754471080` passed.
+- Fix: commit `8f1eb49fb8ea84093c86da52779e74b91650591d` authenticates duplicate segment/runtime/replay/capture identities before interval overlap evaluation.
+- Additional pre-result safety amendment: commits `7d845ce8d437c8ab0b515358d075dd5c912de000` and `3244459b456f4c05e07cb4e52ae7c50aeef96061` freeze and enforce zero open/pending aggregate decisions before closure.
+- Verification: exact source head `3244459b456f4c05e07cb4e52ae7c50aeef96061` passed 982 tests plus workflow-YAML validation and compile checks in run `35754791092`; unchanged Phase 3 acceptance run `35754790877` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. No real DEC-052 capture or DEC-051 acceptance result has been produced.

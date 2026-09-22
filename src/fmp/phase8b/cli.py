@@ -13,6 +13,7 @@ from .bridge import (
     Phase8BBridgeFileTail,
     discover_phase8b_bridge_files,
 )
+from .campaign_close import close_phase8b_campaign_directory
 from .campaign_start import (
     build_phase8b_campaign_start_authorization,
     write_phase8b_campaign_start_authorization,
@@ -124,6 +125,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--duration-seconds",
         required=True,
         type=int,
+    )
+
+    close_campaign = subparsers.add_parser(
+        "close-campaign",
+        help="compile one immutable Phase 8B campaign-evidence snapshot",
+    )
+    close_campaign.add_argument(
+        "--campaign-dir",
+        required=True,
+        type=Path,
     )
     return parser
 
@@ -411,6 +422,36 @@ def main(
                     "replay_match": result["replay_match"],
                     "prospective_segment_closed": True,
                     "acceptance_authorized": False,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    if args.command == "close-campaign":
+        result = close_phase8b_campaign_directory(
+            campaign_dir=args.campaign_dir,
+            code_commit=code_commit_resolver(),
+        )
+        closure_dir = (
+            args.campaign_dir / "closures" / str(result["closure_id"])
+        )
+        evidence = result["campaign_evidence"]
+        print(
+            json.dumps(
+                {
+                    "campaign_evidence": str(
+                        closure_dir / "campaign-evidence.json"
+                    ),
+                    "manifest": str(closure_dir / "manifest.json"),
+                    "closure_id": result["closure_id"],
+                    "campaign_evidence_fingerprint": evidence[
+                        "campaign_evidence_fingerprint"
+                    ],
+                    "acceptance_authorized": False,
+                    "promotion_authorized": False,
                 },
                 sort_keys=True,
                 separators=(",", ":"),

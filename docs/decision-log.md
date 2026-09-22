@@ -790,3 +790,21 @@ A clean bounded segment close runs the exact DEC-050 compiler and deterministic 
 DEC-052 performs no multi-segment campaign aggregation and no acceptance review. A later separately frozen campaign-close protocol must aggregate only clean replay-matching DEC-052 segments and create the exact DEC-051 campaign-evidence artifact.
 
 Demo/live orders, broker mutation, real-money trading, Phase 9 execution, champion mutation, acceptance, and promotion remain locked.
+
+
+## DEC-053 — Phase 8B prospective campaign evidence close
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B ACCEPTANCE RESULT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-campaign-close.md` opens `EXP-20260922-024` for deterministic multi-segment campaign evidence snapshots over exact DEC-052 journals.
+
+DEC-053 fixes the cross-segment state-continuity boundary before any live segment exists. Child DEC-052 runtime results remain integrity evidence only; they are never summed as campaign financial evidence because each bounded child compile starts from the $100,000 baseline. Campaign close instead revalidates every clean raw journal and recompiles all ordered records as one continuous DEC-050 virtual campaign, preserving shared risk/equity/open-position state across process boundaries.
+
+Monotonic receive timestamps remain segment-local. Cross-segment continuity is enforced by immutable prospective-segment identity, non-overlapping wall-clock intervals, per-symbol source-time progression, explicit restart-gap accounting, and no backfill. Aggregate replay must reproduce the campaign segment byte-for-byte.
+
+DEC-053 derives the DEC-051 evidence fields rather than accepting free-form summaries: London weekday denominator/complete dates, nearest-rank p99 processing latency, deadline violations, representation, per-symbol live spread median/p95, scenario metrics, and structural/integrity evidence.
+
+Each `close-campaign` invocation creates an immutable closure snapshot; it is not a permanent capture shutdown, so a later snapshot may include additional clean segments after DEC-051 `PHASE8B_NEED_MORE_DATA`.
+
+The command is source-only over existing artifacts and does not access MT5 or any broker surface. Demo/live orders, broker mutation, real-money trading, Phase 9 execution, champion mutation, acceptance, and promotion remain locked.
