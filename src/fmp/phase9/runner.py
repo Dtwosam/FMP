@@ -328,10 +328,35 @@ def validate_phase9_demo_one_shot_run(
         "one_shot_run_fingerprint",
     ):
         _sha256(value.get(field), field=f"Phase 9 one-shot run {field}")
-    for field in ("send_result_fingerprint", "reconciliation_fingerprint"):
-        raw = value.get(field)
+    send_fp = value.get("send_result_fingerprint")
+    reconciliation_fp = value.get("reconciliation_fingerprint")
+    for field, raw in (
+        ("send_result_fingerprint", send_fp),
+        ("reconciliation_fingerprint", reconciliation_fp),
+    ):
         if raw is not None:
             _sha256(raw, field=f"Phase 9 one-shot run {field}")
+    if value.get("outcome") in {
+        PHASE9_DEMO_ONE_SHOT_COMPLETED,
+        PHASE9_DEMO_ONE_SHOT_NOT_COMPLETED,
+    } and (send_fp is None or reconciliation_fp is None):
+        raise ValueError(
+            "Phase 9 non-ambiguous one-shot outcome requires send and reconciliation evidence"
+        )
+    raw_count = value.get("journal_event_count")
+    if (
+        isinstance(raw_count, bool)
+        or not isinstance(raw_count, int)
+        or raw_count < 3
+    ):
+        raise ValueError("Phase 9 one-shot journal event count is invalid")
+    _sha256(
+        value.get("journal_tip_fingerprint"),
+        field="Phase 9 one-shot journal tip fingerprint",
+    )
+    client_order_id = value.get("client_order_id")
+    if not isinstance(client_order_id, str) or not client_order_id.strip():
+        raise ValueError("Phase 9 one-shot client-order ID is invalid")
     if value.get("send_attempt_count") != 1:
         raise ValueError("Phase 9 one-shot run requires exactly one attempt")
     if value.get("arm_spent") is not True:
