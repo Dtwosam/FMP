@@ -374,7 +374,7 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-053 are merged and verified on `main`;
 2. no real DEC-052 prospective segment and no DEC-051 acceptance result has been produced;
-3. DEC-054 / `EXP-20260922-025` is the active milestone: freeze the exact historical spread reference from the accepted Phase 8A complete canonical 1m snapshot, require that reference before any real capture, bind one exact DEC-053 closure to one explicit acceptance review, and persist terminal PASS/rejection or non-terminal NEED_MORE_DATA evidence;
+3. DEC-054 / `EXP-20260922-025` is implemented on PR #146 head `57b94fc0ec1f30fea0acb036364d1ca0667f8c8c`: pre-capture DEC-049 preflight during authorize-start, deterministic campaign-bound historical spread-reference freeze, reference-gated prospective capture, immutable DEC-053 closure review, non-terminal NEED_MORE_DATA, terminal PASS/rejection marker, and exact SHADOW_CANDIDATE -> SHADOW_VALIDATED PASS evidence; run `35758432987` passed 988 tests plus YAML/compile and unchanged Phase 3 acceptance run `35758432967` passed;
 4. only exact PASS may create immutable SHADOW_CANDIDATE -> SHADOW_VALIDATED evidence while preserving the champion-set fingerprint; PASS remains demo-design eligibility only;
 5. demo/live orders, broker mutation, real-money trading, Phase 9 execution, DEMO_ELIGIBLE transition, and champion identity mutation remain locked.
 
