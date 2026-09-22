@@ -4,6 +4,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
+import hashlib
 import json
 import unittest
 
@@ -169,9 +170,128 @@ class Exp015CliTests(unittest.TestCase):
             self.assertEqual(captured["count"], 9)
             self.assertTrue((out_dir / "authorization.json").is_file())
 
-    def test_cli_exposes_no_stage_b_command(self) -> None:
-        with self.assertRaises(SystemExit):
-            main(["stage-b-run"])
+    def test_stage_b_stage_c_and_finalize_bind_upstream_file_hashes(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            authorization_path = root / "authorization.json"
+            stage_b_path = root / "stage-b.json"
+            stage_c_path = root / "stage-c.json"
+            authorization_payload = b'{"protocol":"authorization"}\n'
+            stage_b_payload = b'{"protocol":"stage-b"}\n'
+            stage_c_payload = b'{"protocol":"stage-c"}\n'
+            authorization_path.write_bytes(authorization_payload)
+            stage_b_path.write_bytes(stage_b_payload)
+            stage_c_path.write_bytes(stage_c_payload)
+
+            captured = {}
+
+            def fake_stage_b(**kwargs):
+                captured["stage_b"] = kwargs
+                return {
+                    "protocol": "fmp-phase8a-exp015-stage-b-v1",
+                    "promotion_authorized": False,
+                }
+
+            def fake_stage_c(**kwargs):
+                captured["stage_c"] = kwargs
+                return {
+                    "protocol": "fmp-phase8a-exp015-stage-c-v1",
+                    "promotion_authorized": False,
+                }
+
+            def fake_finalize(**kwargs):
+                captured["finalize"] = kwargs
+                return {
+                    "protocol": "fmp-phase8a-exp015-final-shortlist-v1",
+                    "promotion_authorized": False,
+                }
+
+            stage_b_out = root / "stage-b-out"
+            self.assertEqual(
+                main(
+                    [
+                        "stage-b-run",
+                        "--authorization",
+                        str(authorization_path),
+                        "--dataset-source",
+                        "EURUSD=/data::/manifest.json",
+                        "--code-commit",
+                        COMMIT,
+                        "--out",
+                        str(stage_b_out),
+                    ],
+                    stage_b_command=fake_stage_b,
+                ),
+                0,
+            )
+            self.assertEqual(
+                captured["stage_b"]["stage_a_authorization_sha256"],
+                hashlib.sha256(authorization_payload).hexdigest(),
+            )
+            self.assertEqual(
+                captured["stage_b"]["dataset_sources"]["EURUSD"],
+                (Path("/data"), Path("/manifest.json")),
+            )
+
+            stage_c_out = root / "stage-c-out"
+            self.assertEqual(
+                main(
+                    [
+                        "stage-c-run",
+                        "--authorization",
+                        str(authorization_path),
+                        "--stage-b",
+                        str(stage_b_path),
+                        "--dataset-source",
+                        "EURUSD=/data::/manifest.json",
+                        "--code-commit",
+                        COMMIT,
+                        "--out",
+                        str(stage_c_out),
+                    ],
+                    stage_c_command=fake_stage_c,
+                ),
+                0,
+            )
+            self.assertEqual(
+                captured["stage_c"]["stage_a_authorization_sha256"],
+                hashlib.sha256(authorization_payload).hexdigest(),
+            )
+            self.assertEqual(
+                captured["stage_c"]["stage_b_result_sha256"],
+                hashlib.sha256(stage_b_payload).hexdigest(),
+            )
+
+            final_out = root / "final-out"
+            self.assertEqual(
+                main(
+                    [
+                        "finalize",
+                        "--authorization",
+                        str(authorization_path),
+                        "--stage-b",
+                        str(stage_b_path),
+                        "--stage-c",
+                        str(stage_c_path),
+                        "--out",
+                        str(final_out),
+                    ],
+                    finalize_command=fake_finalize,
+                ),
+                0,
+            )
+            self.assertEqual(
+                captured["finalize"]["stage_a_authorization_sha256"],
+                hashlib.sha256(authorization_payload).hexdigest(),
+            )
+            self.assertEqual(
+                captured["finalize"]["stage_b_result_sha256"],
+                hashlib.sha256(stage_b_payload).hexdigest(),
+            )
+            self.assertEqual(
+                captured["finalize"]["stage_c_result_sha256"],
+                hashlib.sha256(stage_c_payload).hexdigest(),
+            )
 
 
 if __name__ == "__main__":
