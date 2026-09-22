@@ -12,8 +12,10 @@ from fmp.strategies.contracts import SignalCandidate
 
 LONDON = ZoneInfo("Europe/London")
 _TIMEFRAME_MINUTES = {"5m": 5, "15m": 15, "1h": 60}
-_ALLOWED_LOOKBACK_HOURS = frozenset({4, 8, 16})
-_ALLOWED_THRESHOLDS = frozenset({1.5, 2.0})
+_PHASE4_LOOKBACK_HOURS = frozenset({4, 8, 16})
+_PHASE4_THRESHOLDS = frozenset({1.5, 2.0})
+_EXP015_LOOKBACK_HOURS = frozenset({2, 6, 12, 24})
+_EXP015_THRESHOLDS = frozenset({1.25, 1.75, 2.25, 2.5})
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,23 +23,43 @@ class MeanReversionConfig:
     lookback_hours: int
     threshold_sigma: float
     timeframe: str
+    parameter_region: str = "phase4"
 
     def __post_init__(self) -> None:
-        if self.lookback_hours not in _ALLOWED_LOOKBACK_HOURS:
-            raise ValueError("lookback_hours must be one of 4, 8, or 16")
-        if self.threshold_sigma not in _ALLOWED_THRESHOLDS:
-            raise ValueError("threshold_sigma must be one of 1.5 or 2.0")
+        if self.parameter_region == "phase4":
+            lookbacks = _PHASE4_LOOKBACK_HOURS
+            thresholds = _PHASE4_THRESHOLDS
+        elif self.parameter_region == "exp015":
+            lookbacks = _EXP015_LOOKBACK_HOURS
+            thresholds = _EXP015_THRESHOLDS
+        else:
+            raise ValueError("unsupported mean-reversion parameter_region")
+        if self.lookback_hours not in lookbacks:
+            raise ValueError("lookback_hours is outside the selected parameter region")
+        if self.threshold_sigma not in thresholds:
+            raise ValueError("threshold_sigma is outside the selected parameter region")
         if self.timeframe not in _TIMEFRAME_MINUTES:
             raise ValueError("timeframe must be one of 5m, 15m, or 1h")
 
 
-def duration_to_bars(timeframe: str, hours: int) -> int:
+def duration_to_bars(
+    timeframe: str,
+    hours: int,
+    *,
+    parameter_region: str = "phase4",
+) -> int:
     try:
         width_minutes = _TIMEFRAME_MINUTES[timeframe]
     except KeyError as exc:
         raise ValueError("timeframe must be one of 5m, 15m, or 1h") from exc
-    if hours not in _ALLOWED_LOOKBACK_HOURS:
-        raise ValueError("hours must be one of 4, 8, or 16")
+    if parameter_region == "phase4":
+        allowed = _PHASE4_LOOKBACK_HOURS
+    elif parameter_region == "exp015":
+        allowed = _EXP015_LOOKBACK_HOURS
+    else:
+        raise ValueError("unsupported mean-reversion parameter_region")
+    if hours not in allowed:
+        raise ValueError("hours is outside the selected parameter region")
     duration_minutes = hours * 60
     if duration_minutes % width_minutes:
         raise ValueError("duration must be exactly divisible by timeframe width")
@@ -181,7 +203,11 @@ def generate_mean_reversion_candidates(
 
     width_minutes = _TIMEFRAME_MINUTES[config.timeframe]
     width = timedelta(minutes=width_minutes)
-    lookback_count = duration_to_bars(config.timeframe, config.lookback_hours)
+    lookback_count = duration_to_bars(
+        config.timeframe,
+        config.lookback_hours,
+        parameter_region=config.parameter_region,
+    )
     by_timestamp = {bar.timestamp_utc: bar for bar in ordered}
     index_by_timestamp = {bar.timestamp_utc: index for index, bar in enumerate(ordered)}
     out: list[SignalCandidate] = []
