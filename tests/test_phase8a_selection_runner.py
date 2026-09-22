@@ -181,6 +181,13 @@ def _joint_result(
     }
     digest_chars = {"EURUSD": "e", "GBPUSD": "b", "USDJPY": "d"}
     manifests = {symbol: (digest_chars[symbol] * 64) for symbol in symbols}
+    combined_manifest_sha = hashlib.sha256(
+        json.dumps(
+            dict(sorted(manifests.items())),
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
     return {
         "protocol": "fmp-phase8a-joint-portfolio-v1",
         "experiment_id": DEC042_EXPERIMENT_ID,
@@ -197,7 +204,7 @@ def _joint_result(
         "range_end_exclusive": "2026-08-21",
         "strategy_fingerprints": list(fingerprints),
         "processed_manifest_sha256_by_symbol": manifests,
-        "combined_processed_manifest_sha256": "9" * 64,
+        "combined_processed_manifest_sha256": combined_manifest_sha,
         "candidate_sha256": candidate_sha,
         "run_identity": {
             "code_commit": RUNNER_COMMIT,
