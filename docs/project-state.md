@@ -374,7 +374,7 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-066 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet artifact, demo order, or broker mutation has been executed;
-3. DEC-067 / `EXP-20260922-038` is the active milestone: implement an immutable human-review packet for the exact first future practice order and a deterministic approval-challenge fingerprint;
+3. DEC-067 / `EXP-20260922-038` is implemented on PR #159 head `289dff872f3819c18ea37a2e33e27a35e27e3853`: immutable exact-order human review, DEC-066 obligation context, deterministic approval challenge, independent checked-request revalidation, and create-only persistence; run `35783034440` passed 1066 tests plus YAML/compile and unchanged Phase 3 acceptance run `35783034271` passed;
 4. the packet binds the exact DEMO account, strategy/symbol, side, units/volume, risk, checked price, stop/target, client-order ID, arm window, permit identity, and frozen DEC-066 demo-campaign obligations, but records no approval;
 5. `DEMO_EXECUTION_SOURCE_ARMED=false`; first-demo execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
