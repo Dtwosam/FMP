@@ -10,7 +10,7 @@ from fmp.portfolio.registry import (
     freeze_shadow_champion_set,
     transition_strategy,
 )
-from fmp.portfolio.contracts import StrategyLifecycle
+from fmp.portfolio.contracts import StrategyLifecycle, StrategyRecord
 from fmp.phase8b.design import (
     BRIDGE_FILE_BY_SYMBOL,
     PHASE8B_DESIGN_FROZEN,
@@ -34,11 +34,16 @@ def _accepted_artifact() -> dict[str, object]:
         for item in build_phase4_baseline_inventory()
         if item.lifecycle is StrategyLifecycle.HISTORICAL_QUALIFIED
     )
-    challenger = next(
+    challenger_source = next(
         item
         for item in build_exp015_challengers(code_commit="c" * 40)
         if item.strategy.symbol != baseline.strategy.symbol
         and item.strategy.family != baseline.strategy.family
+    )
+    challenger = StrategyRecord(
+        strategy=challenger_source.strategy,
+        lifecycle=StrategyLifecycle.HISTORICAL_QUALIFIED,
+        evidence_id="EXP-20260922-015:FINAL_SHORTLIST",
     )
     before = (baseline, challenger)
     transitioned = tuple(
