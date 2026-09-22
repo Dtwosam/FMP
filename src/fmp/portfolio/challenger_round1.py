@@ -509,6 +509,7 @@ def write_exp013_stage_a_cell_artifacts(
             value.get("symbol"),
             value.get("timeframe"),
             value.get("runner_code_commit"),
+            value.get("strategy_source_sha256"),
         )
         for value in (development, validation, gate)
     }
@@ -542,7 +543,7 @@ def write_exp013_stage_a_cell_artifacts(
 
 def _validate_exp013_stage_a_gate(
     value: Mapping[str, object],
-) -> tuple[str, str, str, tuple[str, ...], tuple[str, ...]]:
+) -> tuple[str, str, str, str, tuple[str, ...], tuple[str, ...]]:
     if value.get("protocol") != EXP013_STAGE_A_GATE_PROTOCOL:
         raise ValueError("EXP-013 Stage A gate protocol mismatch")
     if value.get("experiment_id") != EXP013_ID:
@@ -559,12 +560,18 @@ def _validate_exp013_stage_a_gate(
     symbol = value.get("symbol")
     timeframe = value.get("timeframe")
     code_commit = value.get("runner_code_commit")
+    strategy_source_sha256 = value.get("strategy_source_sha256")
     if not isinstance(symbol, str) or symbol not in SUPPORTED_SYMBOLS:
         raise ValueError("invalid EXP-013 Stage A gate symbol")
     if not isinstance(timeframe, str) or timeframe not in ELIGIBLE_TIMEFRAMES:
         raise ValueError("invalid EXP-013 Stage A gate timeframe")
     if not isinstance(code_commit, str) or not _COMMIT_RE.fullmatch(code_commit):
         raise ValueError("invalid EXP-013 Stage A gate runner commit")
+    if (
+        not isinstance(strategy_source_sha256, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", strategy_source_sha256)
+    ):
+        raise ValueError("invalid EXP-013 Stage A gate strategy source digest")
 
     raw_config_gates = value.get("config_gates")
     if not isinstance(raw_config_gates, Mapping) or len(raw_config_gates) != 4:
@@ -591,7 +598,14 @@ def _validate_exp013_stage_a_gate(
         if gate.get("stage_a_survivor") is not expected:
             raise ValueError("EXP-013 Stage A survivor flag/list mismatch")
 
-    return symbol, timeframe, code_commit, fingerprints, survivors
+    return (
+        symbol,
+        timeframe,
+        code_commit,
+        strategy_source_sha256,
+        fingerprints,
+        survivors,
+    )
 
 
 def aggregate_exp013_stage_a_gates(
@@ -608,19 +622,26 @@ def aggregate_exp013_stage_a_gates(
     }
     seen_cells: set[tuple[str, str]] = set()
     commits: set[str] = set()
+    source_digests: set[str] = set()
     all_fingerprints: set[str] = set()
     survivors: set[str] = set()
     cells: list[dict[str, object]] = []
 
     for gate in materialized:
-        symbol, timeframe, code_commit, fingerprints, cell_survivors = (
-            _validate_exp013_stage_a_gate(gate)
-        )
+        (
+            symbol,
+            timeframe,
+            code_commit,
+            strategy_source_sha256,
+            fingerprints,
+            cell_survivors,
+        ) = _validate_exp013_stage_a_gate(gate)
         cell = (symbol, timeframe)
         if cell in seen_cells:
             raise ValueError("duplicate EXP-013 Stage A cell gate")
         seen_cells.add(cell)
         commits.add(code_commit)
+        source_digests.add(strategy_source_sha256)
         if all_fingerprints.intersection(fingerprints):
             raise ValueError("EXP-013 Stage A strategy identity appears in multiple cells")
         all_fingerprints.update(fingerprints)
@@ -638,6 +659,8 @@ def aggregate_exp013_stage_a_gates(
         raise ValueError("EXP-013 Stage A authorization cell coverage mismatch")
     if len(commits) != 1:
         raise ValueError("EXP-013 Stage A gate runner commits differ")
+    if len(source_digests) != 1:
+        raise ValueError("EXP-013 Stage A strategy source digests differ")
     if len(all_fingerprints) != 36:
         raise ValueError("EXP-013 Stage A authorization must bind exactly 36 strategies")
 
@@ -650,6 +673,7 @@ def aggregate_exp013_stage_a_gates(
         "promotion_authorized": False,
         "historical_status_mutation_authorized": False,
         "runner_code_commit": next(iter(commits)),
+        "strategy_source_sha256": next(iter(source_digests)),
         "cell_count": 9,
         "strategy_identity_count": 36,
         "survivor_count": len(ordered_survivors),
