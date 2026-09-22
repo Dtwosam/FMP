@@ -24,10 +24,10 @@
 - Kept Phase 9 demo, broker mutation, live orders, and real-money execution locked.
 
 
-## 2026-09-22 — DEC-041 frozen portfolio selection
+## 2026-09-22 — DEC-042 frozen portfolio selection
 
 - Added `docs/superpowers/specs/2026-09-22-phase8a-portfolio-selection.md`.
-- Opened `EXP-20260922-013` for implementation of the frozen selection machinery.
+- Opened `EXP-20260922-014` for implementation of the frozen selection machinery.
 - Limited the eligible strategy pool to already qualified immutable strategy versions and blocked `DISCOVERY`, `CHALLENGER`, and `RETIRED` records.
 - Frozen pool size: 2 to 12 strategies; portfolio-set size: 1 to 6, with single-strategy sets retained only as controls.
 - Frozen retrospective selection range: 2019-01-01 inclusive through 2026-08-21 exclusive.
@@ -35,3 +35,13 @@
 - Frozen deterministic lexicographic ranking order; no post-result weights or threshold changes are permitted.
 - Confirmed the current historical inventory has only one eligible strategy, so combination search remains blocked pending a separately predeclared challenger-discovery/qualification experiment.
 - Phase 8B, demo orders, broker mutation, live orders, and real-money trading remain locked.
+
+
+## 2026-09-22 — Phase 8A identity correction
+
+- The repository already assigned `DEC-041` / `EXP-20260922-013` to the predeclared `opening_range_momentum` Challenger Round 1 before the portfolio-selection work was merged.
+- A later portfolio-selection commit accidentally reused those identifiers. No portfolio combination search, ranking result, or benchmark was executed under the duplicate identity.
+- Portfolio selection is corrected to `DEC-042` / `EXP-20260922-014`.
+- The six-family rule-based challenger-discovery protocol is corrected to `DEC-043` / `EXP-20260922-015`.
+- No EXP-015 Stage A/B/C historical run occurred before this correction.
+- Original `DEC-041` / `EXP-20260922-013` opening-range-momentum evidence identity remains unchanged.
