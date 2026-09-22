@@ -262,6 +262,49 @@ class Phase8BQualificationTests(unittest.TestCase):
         )
         self.assertIn("BRIDGE_INACTIVE", result.rejection_codes)
 
+    def test_per_feed_continuing_heartbeats_without_ticks_is_inconclusive(self) -> None:
+        start = _start("EURUSD", session="1" * 64)
+        heartbeat = Phase8BBridgeHeartbeatRecord(
+            protocol=start.protocol,
+            bridge_session_id=start.bridge_session_id,
+            symbol=start.symbol,
+            server=start.server,
+            account_fingerprint=start.account_fingerprint,
+            bridge_emitted_time_msc=int(NOW.timestamp() * 1000),
+            last_tick_time_msc=None,
+        )
+        tail = _Tail(
+            start,
+            [
+                (heartbeat,),
+                (heartbeat,),
+                (heartbeat,),
+                (heartbeat,),
+            ],
+        )
+        clock = _Clock(
+            [
+                0,
+                5_000_000_000,
+                10_000_000_000,
+                15_000_000_000,
+                20_000_000_000,
+                21_000_000_000,
+            ]
+        )
+        result = qualify_phase8b_feed(
+            tail,
+            expected_symbol="EURUSD",
+            utc_now=clock.utc_now,
+            monotonic_ns=clock.monotonic_ns,
+            sleep=lambda _: None,
+        )
+        self.assertEqual(
+            result.outcome,
+            FeedQualificationOutcome.INCONCLUSIVE,
+        )
+        self.assertIn("MARKET_LIVENESS_GAP", result.rejection_codes)
+
     def test_summary_pass_requires_same_account_server_and_distinct_sessions(self) -> None:
         design = _design()
         symbols = design["required_symbols"]
