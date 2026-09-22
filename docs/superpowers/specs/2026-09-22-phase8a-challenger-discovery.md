@@ -209,7 +209,7 @@ Walk down this ranking and select at most **11** new challengers, subject to:
 
 The selected set receives lifecycle `HISTORICAL_QUALIFIED` under EXP-014.
 
-Any EXP-014 candidate not selected in the final shortlist is recorded as `RETIRED` with its exact rejection/non-selection reason. No unselected candidate remains silently available for DEC-042.
+Any EXP-015 candidate not selected in the final shortlist is recorded as `RETIRED` with its exact rejection/non-selection reason. No unselected candidate remains silently available for DEC-042.
 
 With the existing Phase 7 baseline added later, DEC-042 can therefore receive at most 12 eligible strategies without changing its frozen pool-size rule.
 
