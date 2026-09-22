@@ -42,9 +42,9 @@ class Phase7AcceptanceStateTests(unittest.TestCase):
         self.assertIn("Stage 2 outcome: `PHASE7_PROMOTE_TO_SHADOW_DESIGN`", state)
         self.assertIn(PHASE7_TAG, state)
         self.assertIn(PHASE7_SHA, state)
-        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research", state)
         self.assertIn("**Phase status:** ACTIVE", state)
-        self.assertIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE AS AMENDED PHASE 8A / 8B", state)
         self.assertIn("Phase 9/demo order placement: LOCKED", state)
         self.assertIn("real-money trading: LOCKED", state)
 

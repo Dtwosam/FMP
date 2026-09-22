@@ -503,3 +503,32 @@ Fail-closed market-path protections remain unchanged in substance. If a simulate
 `EXP-20260917-010` is stopped as INCONCLUSIVE / DIAGNOSTIC under the superseded live-runner semantics. Its local evidence must be preserved and must not count toward the amended campaign. `EXP-20260922-011` is the new Phase 8 experiment identity. It requires fresh merged-code verification, connector qualification, historical-reference generation, and campaign registration before scored observation. The evidence protocol remains `fmp-phase8-shadow-evidence-v2`; exact campaign and segment code-commit binding prevents old/new semantics from being mixed.
 
 Consequences: Phase 8 remains ACTIVE and all original strategy, risk, cost, campaign-minimum, financial, spread, timing, replay, and structural no-order gates remain frozen except for the liveness interpretation explicitly amended above. Phase 9 remains locked. Demo order placement, production/live order placement, broker mutation, and real-money trading remain forbidden. DEC-008 remains unchanged.
+
+
+## DEC-039 — Phase 8 portfolio-research pivot to multi-pair, multi-strategy architecture
+
+**Date:** 2026-09-22
+**Status:** APPROVED
+
+The operator has revised the economic objective after reviewing the Phase 7 promoted strategy's actual forward performance. The sole promoted USDJPY 15m session-breakout strategy remains a valid Phase 7 result, but its Stage 2 aggregate return (+0.757266% at 0.2-pip adverse slippage; +0.262176% at 0.5 pips) is not economically attractive enough to justify spending the next multi-week campaign evaluating that strategy alone.
+
+Phase 8 is therefore amended into two ordered subphases under the approved design `docs/superpowers/specs/2026-09-22-phase8a-portfolio-research-redesign.md`:
+
+- **Phase 8A — Multi-pair, multi-strategy portfolio research**
+- **Phase 8B — Multi-strategy live shadow**
+
+Frozen scope and consequences:
+
+- V1 remains exactly EURUSD, GBPUSD, and USDJPY.
+- All accepted Dukascopy Phase 1/2 histories remain canonical and must be reused for Phase 8A research.
+- The formerly untouched 2024-01-01 through 2026-08-20 period was opened in Phase 7. New post-Phase-7 strategy versions may use that history for retrospective research/robustness, but may not call it an untouched final test. New genuine forward evidence begins only after each challenger version/protocol is frozen.
+- FMP may maintain many versioned strategies across all three pairs. Strategy versions progress through explicit lifecycle states and cannot mutate in place.
+- Continuous learning is permitted only as a research/challenger process. An active champion set is immutable during a registered campaign. No learning process may hot-swap a strategy into shadow/demo/live execution or authorize broker orders.
+- Portfolio routing may evaluate multiple eligible strategy versions, but portfolio exposure/conflict checks and the independent risk engine remain authoritative. Correlated/overlapping USD exposure must be measured.
+- The operator's aspiration for very high returns, including possible +10% days, is recorded as a research objective to measure, not a guaranteed or mandatory daily pass criterion. Phase 8A must report daily-return distributions, monthly/annualized return, drawdown, tail concentration, cost sensitivity, and contribution by pair/strategy/regime at fixed explicit risk.
+- Return improvement must come from stronger/diversified validated edges and capital utilization, not martingale, loss chasing, or silent leverage multiplication.
+- Existing baseline strategy families and all prior PASS/FAIL evidence remain preserved. New parameter regions, strategy families, regime-conditioned variants, or portfolio combinations require new predeclared experiment records rather than retroactive edits to old experiments.
+
+`EXP-20260922-011` is stopped before campaign registration. Its fresh connector qualification PASS and historical reference build are preserved as non-scored operational evidence. The reference SHA-256 is `e920b3254235d2bb0766762551b5eb9d21439d429c59aebd14c3e4bb16e8cc64`, bound to code commit `5cb884dfb15d7798b023658e025221a38dfec9fc`. No EXP-011 live-shadow segment is authorized to start.
+
+Consequences: Phase 8A becomes ACTIVE under new experiment `EXP-20260922-012`. Phase 8B, Phase 9 demo trading, broker mutation, live-order placement, and real-money trading remain LOCKED. The first Phase 8A implementation task is the deterministic versioned strategy registry plus champion/challenger promotion lock. Existing Phase 8 shadow tooling is preserved but not launched as EXP-011.

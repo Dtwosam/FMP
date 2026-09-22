@@ -24,9 +24,9 @@ class Phase4AcceptanceStateTests(unittest.TestCase):
         self.assertIn("**Result:** PASS", evidence)
         self.assertIn("Final-test touched?: NO", evidence)
         self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", state)
-        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research", state)
         self.assertIn("**Phase status:** ACTIVE", state)
-        self.assertIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE AS AMENDED PHASE 8A / 8B", state)
         self.assertIn("Phase 9/demo order placement: LOCKED", state)
         self.assertIn("Real-money trading: locked", state)
 

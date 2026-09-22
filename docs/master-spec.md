@@ -61,7 +61,7 @@ The system is not required to trade every hour or every day.
 ### Evidence before deployment
 A strategy must progress through increasingly realistic evidence:
 
-`historical research -> realistic backtest -> untouched OOS -> walk-forward -> shadow -> demo -> deployment review`
+`historical research -> realistic backtest -> chronological OOS/walk-forward -> portfolio/challenger selection -> prospective shadow -> demo -> deployment review`
 
 ### Reproducibility
 Every serious result must identify:
@@ -151,6 +151,10 @@ Before ML, establish transparent baselines such as:
 
 A strategy may work for one pair/timeframe and fail elsewhere. Nothing is assumed universal.
 
+Under DEC-039, V1 may retain **multiple independently validated strategy versions at once** across EURUSD, GBPUSD, and USDJPY. Strategy versions are immutable research identities. A portfolio/router may select among eligible approved versions according to predeclared applicability/regime rules, while the independent risk engine remains authoritative for sizing and total exposure.
+
+Continuous learning is a separated research process: new observations may create challengers, but a registered shadow/demo/live champion set cannot mutate in place or be hot-swapped by the learner.
+
 ## 9. Backtesting requirements
 
 The backtester must model at minimum:
@@ -216,7 +220,7 @@ Risk is based on allowed loss and stop distance, never desired profit.
 
 Forbidden: martingale, doubling after losses, revenge logic, removing stops because a trade is losing, or increasing leverage to manufacture profitability.
 
-Multi-position demo/live operation must account for overlapping USD exposure across the three pairs.
+Multi-position research/shadow/demo/live operation must account for overlapping USD exposure across the three pairs. Portfolio routing may not bypass the independent risk engine or silently multiply leverage.
 
 Detailed policy: `docs/risk-execution-policy.md`.
 
@@ -247,8 +251,11 @@ Requires positive net expectancy after realistic costs, adequate sample size, no
 ### Candidate -> walk-forward
 Untouched out-of-sample evidence must remain viable without material collapse.
 
-### Walk-forward -> shadow
-Repeated forward windows must show acceptable aggregate expectancy/stability with reproducible procedures.
+### Walk-forward / research revision -> portfolio candidate
+Repeated forward or retrospective walk-forward evidence must show acceptable aggregate expectancy/stability with reproducible procedures. If a strategy is invented after a previously untouched period has already been inspected, that history may support retrospective robustness but must not be relabeled as untouched OOS.
+
+### Portfolio candidate -> shadow
+The exact champion strategy versions, routing rules, cost/risk assumptions, and portfolio exposure controls must be frozen before prospective observation begins.
 
 ### Shadow -> demo
 Live quote handling, spread, timing, and hypothetical outcomes must materially resemble tested assumptions; shadow structurally cannot submit orders.
@@ -286,15 +293,21 @@ Canonical 1m + Derived Timeframes
 Feature Engine
         |
         v
-Strategy Candidates
+Versioned Strategy Library
         |
-        +--> Optional Statistical/ML Filter
+        +--> Optional Statistical/ML / Regime Filter
+        |
+        v
+Champion/Challenger Registry
+        |
+        v
+Portfolio / Applicability Router
         |
         v
 Decision Engine
         |
         v
-Risk Engine
+Portfolio-Aware Risk Engine
         |
         v
 Backtest / Shadow / Demo / Live Adapter
@@ -343,7 +356,8 @@ Code/data directories are created only as their active phase needs them.
 5. Leakage-safe feature engine
 6. Statistical/ML experiments
 7. Walk-forward evaluation
-8. Live shadow mode
+8A. Multi-pair, multi-strategy portfolio research
+8B. Multi-strategy live shadow
 9. Demo trading
 10. Deployment review
 11. Live execution, only after separate approval
@@ -369,6 +383,8 @@ Registry format: `docs/experiment-log.md`.
 
 V1 can succeed honestly in either form:
 
+Under DEC-039, a deployable V1 edge may be a **portfolio of multiple approved strategy versions across the three V1 pairs**, not only one strategy.
+
 ### A. Deployable edge
 At least one system survives realistic costs, unseen data, walk-forward, shadow, and demo well enough to justify a separate real-money decision.
 
@@ -389,7 +405,7 @@ Not in initial V1:
 - LLM trade calls;
 - copy trading;
 - paid signals/data;
-- automated strategy generation;
+- uncontrolled self-modifying production strategy generation; controlled versioned challenger discovery under Phase 8A is permitted;
 - reinforcement-learning live trading;
 - high-frequency trading;
 - tick-level model training by default;
@@ -434,3 +450,12 @@ A lower-precedence file cannot silently override a higher-precedence file.
 Canonical repo: https://github.com/Dtwosam/FMP
 
 The repository is the live engineering record. A downloadable `FMP_PROJECT_SOURCE.md` is the portable ChatGPT Project baseline. Future sessions should read this baseline, then inspect the repository's current `project-state.md` and `decision-log.md` before continuing.
+
+
+## 29. DEC-039 portfolio-research amendment
+
+DEC-039 amends the Phase 8 path without expanding the V1 instrument universe. The accepted Dukascopy EURUSD/GBPUSD/USDJPY histories remain canonical. Phase 8A builds a versioned multi-strategy portfolio research layer and controlled champion/challenger lifecycle before a new Phase 8B prospective shadow campaign.
+
+The former 2024-01-01 through 2026-08-20 final-test range was opened in Phase 7. New post-Phase-7 strategies may reuse it for retrospective research and rolling robustness, but cannot call it untouched. New forward evidence begins only after a challenger identity/protocol is frozen.
+
+The operator's high-return objective is a research objective to measure, not a guaranteed daily return. The system must report the return/drawdown/tail trade-off at explicit fixed risk and must not manufacture profitability through martingale, loss chasing, or hidden leverage escalation.

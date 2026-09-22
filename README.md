@@ -42,7 +42,13 @@ The goal is not to build an impressive AI bot. The goal is to build a reproducib
 
 ## Current status
 
-Phase 0 is frozen. **Phase 1 — Historical Data Acquisition** is active and its code/golden-sample gates are passing. Phase 2 remains locked until the full historical snapshot is acquired and provenance-verified.
+Phases 0–7 are complete and preserved. **Phase 8A — Multi-pair, multi-strategy portfolio research** is active under DEC-039 / EXP-20260922-012.
+
+The project still uses exactly EUR/USD, GBP/USD, and USD/JPY with the accepted Dukascopy historical dataset. The current build is adding a versioned strategy library, champion/challenger controls, multi-pair portfolio routing, and portfolio-level research before any new live-shadow campaign.
+
+The previously prepared EXP-20260922-011 USDJPY-only shadow campaign was stopped before registration. Phase 8B live shadow, Phase 9 demo orders, and all real-money execution remain locked.
+
+See `docs/project-state.md` for the current implementation milestone and `docs/superpowers/specs/2026-09-22-phase8a-portfolio-research-redesign.md` for the approved redesign.
 
 ### Phase 1 developer quick start
 

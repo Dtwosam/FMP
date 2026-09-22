@@ -1,6 +1,9 @@
 # Phase 8 MT5 Operator Handoff (macOS)
 
-Status: operator handoff for **DEC-037 / EXP-20260917-010** after the MT5 bridge implementation has been source-free verified and merged.
+> **PAUSED BY DEC-039 — DO NOT REGISTER OR START EXP-20260922-011.**  
+> The connector qualification/reference artifacts remain valid non-scored evidence, but Phase 8A portfolio research is now active. This handoff is retained for historical/technical reference until Phase 8B defines the multi-pair shadow campaign.
+
+Status: historical/operator reference for the read-only USDJPY bridge. **Campaign launch is paused under DEC-039.**
 
 This workflow is **read-only**. It reads the FP Markets MT5 demo USDJPY quote feed through the local `FMPPhase8QuoteBridge.mq5` Expert Advisor. Keep **AutoTrading OFF** throughout. There are **no demo or live orders** in this workflow, and no step authorizes broker execution.
 

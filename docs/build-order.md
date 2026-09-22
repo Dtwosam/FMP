@@ -259,26 +259,71 @@ PASS for promotion only if aggregate walk-forward expectancy remains positive/ac
 
 ---
 
-## Phase 8 — Live shadow mode
+## Phase 8 — Portfolio research expansion and live shadow
 
-### Goal
-Run the engine on live quotes with **structurally impossible order submission**.
+Phase 8 is split into two ordered subphases by DEC-039. Phase 8A must complete before Phase 8B begins.
 
-### Implementation tasks
-- choose free live quote/practice integration after a small connector spike
+### Phase 8A — Multi-pair, multi-strategy portfolio research
+
+#### Goal
+Build and evaluate a versioned portfolio of strategies across EURUSD, GBPUSD, and USDJPY so FMP can use whichever independently validated edges are applicable to current market conditions instead of depending on one permanently selected strategy.
+
+#### Implementation tasks
+- versioned strategy registry with immutable identities
+- explicit lifecycle states and validated transitions
+- champion/challenger separation
+- deterministic multi-pair candidate aggregation
+- regime/applicability metadata and leakage-safe routing
+- correlated/overlapping USD exposure accounting
+- portfolio-level conflict handling before risk approval
+- historical research orchestration over accepted Dukascopy EURUSD/GBPUSD/USDJPY data
+- strategy/portfolio contribution and concentration reporting
+- daily return distribution and high-return-day frequency reporting
+- continuous-research path that can create challengers but cannot mutate an active champion set
+- predeclared experiment protocols for every new strategy family, material parameter-region expansion, or promotion search
+
+#### Historical-data rule
+The 2024-01-01 through 2026-08-20 period was opened during Phase 7. Post-Phase-7 strategies may use it for retrospective research and walk-forward robustness, but it is no longer an untouched final test for newly invented or materially changed strategies. Genuine new forward evidence starts only after a challenger is frozen.
+
+#### Acceptance gate
+PASS only when:
+- all three V1 pairs participate in the research universe;
+- registry/lifecycle/promotion controls are deterministic and auditable;
+- only eligible lifecycle states can enter a portfolio candidate set;
+- research/learning output cannot hot-swap an active champion set;
+- portfolio exposure and correlated USD risk are measured before risk approval;
+- historical runs bind exact code/data/config/cost/risk identities;
+- performance reporting includes return, expectancy, PF, drawdown, trade count, concentration, cost sensitivity, and daily return distribution;
+- repeated historical search is explicitly treated as overfitting/multiple-comparison risk;
+- at least one frozen portfolio/shadow candidate materially improves the economic case over the Phase 7 single-strategy baseline, or a credible rejection is recorded;
+- repository-wide regression tests and unchanged Phase 3 execution/risk acceptance remain green.
+
+#### Checkpoint
+`fmp-v1-phase8a-portfolio-research`
+
+### Phase 8B — Multi-strategy live shadow
+
+#### Goal
+Run the frozen Phase 8A champion portfolio on prospective live quotes with **structurally impossible order submission** while preventing the continuous-research path from changing the active campaign.
+
+#### Implementation tasks
+- expand the read-only quote bridge to all instruments required by the frozen champion set
 - live quote normalization
-- stale-data detection
+- bridge-vs-market liveness separation
+- stale/missing-context fail-closed behavior
 - scheduler/event loop
+- multi-strategy/regime routing
+- portfolio conflict/exposure accounting
 - strategy + decision + risk execution in shadow mode
 - prediction/outcome ledger
 - operational error logging
+- immutable registered champion-set identity
 
-### Acceptance gate
-PASS when live signals, observed spreads, timing, and hypothetical outcomes materially match research assumptions and the shadow adapter proves it cannot place orders.
+#### Acceptance gate
+PASS when live signals, routing, observed spreads, timing, portfolio exposure, and hypothetical outcomes materially match the frozen research assumptions; the shadow adapter proves it cannot place orders; and genuinely prospective evidence supports the frozen portfolio strongly enough for separate demo design.
 
-### Checkpoint
+#### Checkpoint
 `fmp-v1-phase8-shadow`
-
 ---
 
 ## Phase 9 — Demo trading
