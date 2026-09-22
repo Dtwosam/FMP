@@ -17,6 +17,7 @@ from fmp.portfolio.research_data import (
 
 
 COMMIT = "a" * 40
+SOURCE_SHA = "f" * 64
 
 
 def _bar() -> QuoteBar:
@@ -101,6 +102,7 @@ def _cell_rows(
         "timeframe": "15m",
         "split_name": split_name,
         "runner_code_commit": COMMIT,
+        "strategy_source_sha256": SOURCE_SHA,
         "strategy_identity_count": 4,
         "scenario_run_count": 12,
         "rows": rows,

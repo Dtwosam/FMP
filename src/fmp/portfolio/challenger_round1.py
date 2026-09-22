@@ -31,6 +31,21 @@ EXP013_STAGE_A_CELL_PROTOCOL = "fmp-phase8a-exp013-stage-a-cell-v1"
 EXP013_STAGE_A_GATE_PROTOCOL = "fmp-phase8a-exp013-stage-a-gate-v1"
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
+def opening_range_momentum_source_sha256() -> str:
+    source_path = (
+        Path(__file__).resolve().parents[1]
+        / "strategies"
+        / "opening_range_momentum.py"
+    )
+    try:
+        payload = source_path.read_bytes()
+    except OSError as exc:
+        raise ValueError(
+            "cannot read opening_range_momentum strategy source"
+        ) from exc
+    return hashlib.sha256(payload).hexdigest()
+
+
 _STAGE_A_RANGES = {
     "development": RetrospectiveRange(
         start=date(2015, 1, 1),
@@ -88,6 +103,8 @@ def run_exp013_stage_a_cell(
         raise ValueError(f"unsupported EXP-013 signal timeframe: {timeframe!r}")
     if not _COMMIT_RE.fullmatch(code_commit):
         raise ValueError("code_commit must be a 40-character lowercase hexadecimal SHA")
+
+    strategy_source_sha256 = opening_range_momentum_source_sha256()
 
     records = tuple(
         item
@@ -173,6 +190,7 @@ def run_exp013_stage_a_cell(
         "range_start": research_range.start.isoformat(),
         "range_end_exclusive": research_range.end_exclusive.isoformat(),
         "runner_code_commit": code_commit,
+        "strategy_source_sha256": strategy_source_sha256,
         "processed_manifest_sha256": loaded.processed_manifest_sha256,
         "opened_artifact_months": list(loaded.opened_artifact_months),
         "strategy_identity_count": len(records),
@@ -186,7 +204,7 @@ def _validate_stage_a_cell(
     value: Mapping[str, object],
     *,
     expected_split: str,
-) -> tuple[str, str, str, dict[str, dict[float, Mapping[str, object]]]]:
+) -> tuple[str, str, str, str, dict[str, dict[float, Mapping[str, object]]]]:
     if value.get("protocol") != EXP013_STAGE_A_CELL_PROTOCOL:
         raise ValueError("EXP-013 Stage A cell protocol mismatch")
     if value.get("experiment_id") != EXP013_ID:
@@ -203,12 +221,18 @@ def _validate_stage_a_cell(
     symbol = value.get("symbol")
     timeframe = value.get("timeframe")
     code_commit = value.get("runner_code_commit")
+    strategy_source_sha256 = value.get("strategy_source_sha256")
     if not isinstance(symbol, str) or symbol not in SUPPORTED_SYMBOLS:
         raise ValueError("invalid EXP-013 Stage A symbol")
     if not isinstance(timeframe, str) or timeframe not in ELIGIBLE_TIMEFRAMES:
         raise ValueError("invalid EXP-013 Stage A timeframe")
     if not isinstance(code_commit, str) or not _COMMIT_RE.fullmatch(code_commit):
         raise ValueError("invalid EXP-013 Stage A runner commit")
+    if (
+        not isinstance(strategy_source_sha256, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", strategy_source_sha256)
+    ):
+        raise ValueError("invalid EXP-013 Stage A strategy source digest")
 
     raw_rows = value.get("rows")
     if not isinstance(raw_rows, list):
@@ -243,7 +267,7 @@ def _validate_stage_a_cell(
         raise ValueError("EXP-013 Stage A cell must contain exactly four strategies")
     if any(set(rows) != set(SLIPPAGE_SCENARIOS) for rows in indexed.values()):
         raise ValueError("EXP-013 Stage A strategy is missing a slippage scenario")
-    return symbol, timeframe, code_commit, indexed
+    return symbol, timeframe, code_commit, strategy_source_sha256, indexed
 
 
 def _mandatory_metrics_pass(row: Mapping[str, object]) -> bool:
@@ -311,18 +335,19 @@ def evaluate_exp013_stage_a_cell_pair(
     development: Mapping[str, object],
     validation: Mapping[str, object],
 ) -> dict[str, object]:
-    dev_symbol, dev_timeframe, dev_commit, dev_rows = _validate_stage_a_cell(
+    dev_symbol, dev_timeframe, dev_commit, dev_source_sha, dev_rows = _validate_stage_a_cell(
         development,
         expected_split="development",
     )
-    val_symbol, val_timeframe, val_commit, val_rows = _validate_stage_a_cell(
+    val_symbol, val_timeframe, val_commit, val_source_sha, val_rows = _validate_stage_a_cell(
         validation,
         expected_split="validation",
     )
-    if (dev_symbol, dev_timeframe, dev_commit) != (
+    if (dev_symbol, dev_timeframe, dev_commit, dev_source_sha) != (
         val_symbol,
         val_timeframe,
         val_commit,
+        val_source_sha,
     ):
         raise ValueError("EXP-013 development/validation cell identity mismatch")
     if set(dev_rows) != set(val_rows):
@@ -388,6 +413,7 @@ def evaluate_exp013_stage_a_cell_pair(
         "symbol": dev_symbol,
         "timeframe": dev_timeframe,
         "runner_code_commit": dev_commit,
+        "strategy_source_sha256": dev_source_sha,
         "survivor_fingerprints": survivors,
         "config_gates": config_gates,
     }
@@ -483,6 +509,7 @@ def write_exp013_stage_a_cell_artifacts(
             value.get("symbol"),
             value.get("timeframe"),
             value.get("runner_code_commit"),
+            value.get("strategy_source_sha256"),
         )
         for value in (development, validation, gate)
     }
@@ -516,7 +543,7 @@ def write_exp013_stage_a_cell_artifacts(
 
 def _validate_exp013_stage_a_gate(
     value: Mapping[str, object],
-) -> tuple[str, str, str, tuple[str, ...], tuple[str, ...]]:
+) -> tuple[str, str, str, str, tuple[str, ...], tuple[str, ...]]:
     if value.get("protocol") != EXP013_STAGE_A_GATE_PROTOCOL:
         raise ValueError("EXP-013 Stage A gate protocol mismatch")
     if value.get("experiment_id") != EXP013_ID:
@@ -533,12 +560,18 @@ def _validate_exp013_stage_a_gate(
     symbol = value.get("symbol")
     timeframe = value.get("timeframe")
     code_commit = value.get("runner_code_commit")
+    strategy_source_sha256 = value.get("strategy_source_sha256")
     if not isinstance(symbol, str) or symbol not in SUPPORTED_SYMBOLS:
         raise ValueError("invalid EXP-013 Stage A gate symbol")
     if not isinstance(timeframe, str) or timeframe not in ELIGIBLE_TIMEFRAMES:
         raise ValueError("invalid EXP-013 Stage A gate timeframe")
     if not isinstance(code_commit, str) or not _COMMIT_RE.fullmatch(code_commit):
         raise ValueError("invalid EXP-013 Stage A gate runner commit")
+    if (
+        not isinstance(strategy_source_sha256, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", strategy_source_sha256)
+    ):
+        raise ValueError("invalid EXP-013 Stage A gate strategy source digest")
 
     raw_config_gates = value.get("config_gates")
     if not isinstance(raw_config_gates, Mapping) or len(raw_config_gates) != 4:
@@ -565,7 +598,14 @@ def _validate_exp013_stage_a_gate(
         if gate.get("stage_a_survivor") is not expected:
             raise ValueError("EXP-013 Stage A survivor flag/list mismatch")
 
-    return symbol, timeframe, code_commit, fingerprints, survivors
+    return (
+        symbol,
+        timeframe,
+        code_commit,
+        strategy_source_sha256,
+        fingerprints,
+        survivors,
+    )
 
 
 def aggregate_exp013_stage_a_gates(
@@ -582,19 +622,26 @@ def aggregate_exp013_stage_a_gates(
     }
     seen_cells: set[tuple[str, str]] = set()
     commits: set[str] = set()
+    source_digests: set[str] = set()
     all_fingerprints: set[str] = set()
     survivors: set[str] = set()
     cells: list[dict[str, object]] = []
 
     for gate in materialized:
-        symbol, timeframe, code_commit, fingerprints, cell_survivors = (
-            _validate_exp013_stage_a_gate(gate)
-        )
+        (
+            symbol,
+            timeframe,
+            code_commit,
+            strategy_source_sha256,
+            fingerprints,
+            cell_survivors,
+        ) = _validate_exp013_stage_a_gate(gate)
         cell = (symbol, timeframe)
         if cell in seen_cells:
             raise ValueError("duplicate EXP-013 Stage A cell gate")
         seen_cells.add(cell)
         commits.add(code_commit)
+        source_digests.add(strategy_source_sha256)
         if all_fingerprints.intersection(fingerprints):
             raise ValueError("EXP-013 Stage A strategy identity appears in multiple cells")
         all_fingerprints.update(fingerprints)
@@ -612,6 +659,8 @@ def aggregate_exp013_stage_a_gates(
         raise ValueError("EXP-013 Stage A authorization cell coverage mismatch")
     if len(commits) != 1:
         raise ValueError("EXP-013 Stage A gate runner commits differ")
+    if len(source_digests) != 1:
+        raise ValueError("EXP-013 Stage A strategy source digests differ")
     if len(all_fingerprints) != 36:
         raise ValueError("EXP-013 Stage A authorization must bind exactly 36 strategies")
 
@@ -624,6 +673,7 @@ def aggregate_exp013_stage_a_gates(
         "promotion_authorized": False,
         "historical_status_mutation_authorized": False,
         "runner_code_commit": next(iter(commits)),
+        "strategy_source_sha256": next(iter(source_digests)),
         "cell_count": 9,
         "strategy_identity_count": 36,
         "survivor_count": len(ordered_survivors),

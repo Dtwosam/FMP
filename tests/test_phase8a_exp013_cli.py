@@ -11,6 +11,7 @@ from fmp.portfolio.exp013_cli import main
 
 
 COMMIT = "a" * 40
+SOURCE_SHA = "f" * 64
 
 
 def _cell_payload(symbol: str, timeframe: str, split_name: str) -> dict[str, object]:
@@ -27,6 +28,7 @@ def _cell_payload(symbol: str, timeframe: str, split_name: str) -> dict[str, obj
         "range_start": "2015-01-01" if split_name == "development" else "2021-01-01",
         "range_end_exclusive": "2021-01-01" if split_name == "development" else "2024-01-01",
         "runner_code_commit": COMMIT,
+        "strategy_source_sha256": SOURCE_SHA,
         "processed_manifest_sha256": "e" * 64,
         "opened_artifact_months": [],
         "strategy_identity_count": 4,
@@ -52,6 +54,7 @@ def _gate(symbol: str, timeframe: str) -> dict[str, object]:
         "symbol": symbol,
         "timeframe": timeframe,
         "runner_code_commit": COMMIT,
+        "strategy_source_sha256": SOURCE_SHA,
         "survivor_fingerprints": [],
         "config_gates": {
             fingerprint: {
@@ -163,9 +166,80 @@ class Exp013CliTests(unittest.TestCase):
                 str(out_dir / "authorization.json"),
             )
 
-    def test_cli_exposes_no_stage_b_run_command(self) -> None:
-        with self.assertRaises(SystemExit):
-            main(["stage-b"])
+    def test_stage_b_run_wires_exact_authorization_and_dataset_sources(self) -> None:
+        captured = {}
+
+        def fake_stage_b(**kwargs):
+            captured.update(kwargs)
+            return {
+                "protocol": "fmp-phase8a-exp013-stage-b-v1",
+                "experiment_id": "EXP-20260922-013",
+                "evidence_label": "RETROSPECTIVE_ALREADY_SEEN",
+                "untouched_oos": False,
+                "promotion_authorized": False,
+                "historical_status_mutation_authorized": False,
+                "historical_qualification_review_authorized": False,
+                "historical_qualification_candidate_fingerprints": [],
+            }
+
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            authorization_path = root / "authorization.json"
+            authorization_path.write_text(
+                json.dumps({"protocol": "fixture"}),
+                encoding="utf-8",
+            )
+            out_dir = root / "stage-b"
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                code = main(
+                    [
+                        "stage-b-run",
+                        "--authorization",
+                        str(authorization_path),
+                        "--dataset-source",
+                        f"EURUSD={root / 'eur'}::{root / 'eur.json'}",
+                        "--code-commit",
+                        COMMIT,
+                        "--out",
+                        str(out_dir),
+                    ],
+                    stage_b_command=fake_stage_b,
+                )
+
+            self.assertEqual(code, 0)
+            self.assertEqual(captured["code_commit"], COMMIT)
+            self.assertEqual(
+                captured["dataset_sources"]["EURUSD"],
+                (root / "eur", root / "eur.json"),
+            )
+            self.assertEqual(
+                len(captured["stage_a_authorization_sha256"]),
+                64,
+            )
+            self.assertTrue((out_dir / "stage-b.json").is_file())
+            printed = json.loads(stdout.getvalue())
+            self.assertEqual(printed["result"], str(out_dir / "stage-b.json"))
+
+    def test_stage_b_run_rejects_malformed_dataset_source(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            authorization_path = root / "authorization.json"
+            authorization_path.write_text("{}", encoding="utf-8")
+            with self.assertRaises(ValueError):
+                main(
+                    [
+                        "stage-b-run",
+                        "--authorization",
+                        str(authorization_path),
+                        "--dataset-source",
+                        "bad",
+                        "--code-commit",
+                        COMMIT,
+                        "--out",
+                        str(root / "out"),
+                    ]
+                )
 
 
 if __name__ == "__main__":

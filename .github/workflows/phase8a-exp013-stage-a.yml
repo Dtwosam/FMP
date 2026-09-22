@@ -87,6 +87,7 @@ jobs:
           TIMEFRAME: ${{ matrix.timeframe }}
         run: |
           python - <<'PY'
+          import hashlib
           import json
           import os
           from pathlib import Path
@@ -96,6 +97,7 @@ jobs:
           validation = json.loads((root / "validation.json").read_text(encoding="utf-8"))
           gate = json.loads((root / "gate.json").read_text(encoding="utf-8"))
           manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+          source_sha = hashlib.sha256(Path("src/fmp/strategies/opening_range_momentum.py").read_bytes()).hexdigest()
 
           for payload in (development, validation, gate):
               assert payload["experiment_id"] == "EXP-20260922-013", payload
@@ -103,6 +105,7 @@ jobs:
               assert payload["untouched_oos"] is False, payload
               assert payload["promotion_authorized"] is False, payload
               assert payload["runner_code_commit"] == os.environ["GITHUB_SHA"], payload
+              assert payload["strategy_source_sha256"] == source_sha, payload
               assert payload["symbol"] == os.environ["SYMBOL"], payload
               assert payload["timeframe"] == os.environ["TIMEFRAME"], payload
 
@@ -176,6 +179,7 @@ jobs:
       - name: Verify authorization remains non-promotional
         run: |
           python - <<'PY'
+          import hashlib
           import json
           import os
           from pathlib import Path
@@ -183,6 +187,7 @@ jobs:
           root = Path(".exp013-stage-a-authorization")
           authorization = json.loads((root / "authorization.json").read_text(encoding="utf-8"))
           manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+          source_sha = hashlib.sha256(Path("src/fmp/strategies/opening_range_momentum.py").read_bytes()).hexdigest()
 
           assert authorization["protocol"] == "fmp-phase8a-exp013-stage-a-authorization-v1", authorization
           assert authorization["experiment_id"] == "EXP-20260922-013", authorization
@@ -191,6 +196,7 @@ jobs:
           assert authorization["promotion_authorized"] is False, authorization
           assert authorization["historical_status_mutation_authorized"] is False, authorization
           assert authorization["runner_code_commit"] == os.environ["GITHUB_SHA"], authorization
+          assert authorization["strategy_source_sha256"] == source_sha, authorization
           assert authorization["cell_count"] == 9, authorization
           assert authorization["strategy_identity_count"] == 36, authorization
           assert authorization["survivor_count"] == len(authorization["survivor_fingerprints"]), authorization
