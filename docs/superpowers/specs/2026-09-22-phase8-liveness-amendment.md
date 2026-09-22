@@ -16,6 +16,8 @@ The strategy, risk policy, slippage scenarios, quote deadlines, campaign minimum
 
 This amendment does not authorize demo orders, live orders, broker mutation, or real-money trading. Phase 9 remains locked.
 
+No practice/demo order placement, production/live order placement, broker mutation, or real-money path is authorized by this amendment.
+
 ## 2. Diagnostic evidence from EXP-20260917-010
 
 The UTC-correct MT5 campaign under `EXP-20260917-010` is retained as diagnostic evidence only and is not eligible to be reclassified under this amendment.
