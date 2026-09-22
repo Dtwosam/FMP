@@ -631,7 +631,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-021 — Phase 8B runtime and deterministic replay kernel
 
 - Date: 2026-09-22
-- Status: ACTIVE — SOURCE-FREE IMPLEMENTATION ONLY / NO LIVE-SHADOW SEGMENT
+- Status: ACTIVE — SOURCE-FREE IMPLEMENTATION MERGED / NO LIVE-SHADOW SEGMENT
 - Protocol decision: DEC-050 APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
 - Purpose: implement the deterministic finite-sequence market-processing, multi-strategy routing, shared-account shadow simulation, segment evidence, and offline replay kernel over exact DEC-049 capture records.
 - Input boundary: one exact valid `fmp-phase8b-capture-preflight-v1` artifact plus an ordered finite sequence of exact `fmp-phase8b-capture-record-v1` envelopes.
@@ -643,5 +643,5 @@ Copy this section for each serious experiment:
 - CLI scope: unchanged; no `capture`, `run`, `start`, or `review` command.
 - Broker/demo/live/real-money/Phase 9 authorized?: NO.
 - Live execution status: NOT RUN.
-- Implementation status: PR #141 head `744f4b91a68cb91fca820ca5b5cbd2e35ae966b4` adds the runtime/replay kernel, deterministic segment/replay artifact support, Phase 8B API exports, and five focused runtime/replay tests. PR CI run `35747895559` passed 966 tests plus workflow-YAML validation and compile checks. Unchanged Phase 3 acceptance run `35747895632` passed.
-- Follow-up: merge after the final exact branch head remains green, then separately freeze and implement the Phase 8B acceptance compiler before any prospective segment may begin.
+- Implementation status: PR #141 merged DEC-050 to `main` at `4a8431d17f3fd050839d7841fc27e5543b258dc4`, adding the runtime/replay kernel, deterministic segment/replay artifact support, Phase 8B API exports, and five focused runtime/replay tests. Exact final PR-head verification passed 966 tests plus workflow-YAML validation and compile checks; unchanged Phase 3 acceptance passed.
+- Follow-up: separately freeze and implement the Phase 8B acceptance compiler before any prospective Phase 8B segment may begin.
