@@ -125,32 +125,38 @@ class Phase8AExp015CatalogTests(unittest.TestCase):
         )
 
     def test_strategy_validators_accept_old_and_exp015_values_but_reject_unlisted_values(self) -> None:
-        SessionBreakoutConfig(1, 0.75, "15m")
+        SessionBreakoutConfig(1, 0.75, "15m", parameter_region="exp015")
         SessionBreakoutConfig(5, 1.5, "15m")
-        TrendContinuationConfig("A", 0.75, "15m")
+        TrendContinuationConfig("A", 0.75, "15m", parameter_region="exp015")
         TrendContinuationConfig("C", 1.5, "15m")
-        MeanReversionConfig(2, 1.25, "15m")
+        MeanReversionConfig(2, 1.25, "15m", parameter_region="exp015")
         MeanReversionConfig(16, 2.0, "15m")
-        PreviousDayRejectionConfig(8, "15m")
+        PreviousDayRejectionConfig(8, "15m", parameter_region="exp015")
         PreviousDayRejectionConfig(5, "15m")
-        VolatilityBreakoutConfig(2.25, "15m")
+        VolatilityBreakoutConfig(2.25, "15m", parameter_region="exp015")
         VolatilityBreakoutConfig(2.0, "15m")
-        SessionSweepRejectionConfig(6, "15m")
+        SessionSweepRejectionConfig(6, "15m", parameter_region="exp015")
         SessionSweepRejectionConfig(2, "15m")
-        self.assertEqual(duration_to_bars("15m", 24), 96)
+        self.assertEqual(duration_to_bars("15m", 24, parameter_region="exp015"), 96)
 
+
+        # New EXP-015 values remain invalid under the default Phase 4 region.
         with self.assertRaises(ValueError):
-            SessionBreakoutConfig(7, 0.75, "15m")
+            SessionBreakoutConfig(1, 0.75, "15m")
         with self.assertRaises(ValueError):
-            TrendContinuationConfig("A", 2.5, "15m")
+            MeanReversionConfig(24, 2.25, "15m")
         with self.assertRaises(ValueError):
-            MeanReversionConfig(10, 1.25, "15m")
+            SessionBreakoutConfig(7, 0.75, "15m", parameter_region="exp015")
         with self.assertRaises(ValueError):
-            PreviousDayRejectionConfig(7, "15m")
+            TrendContinuationConfig("A", 2.5, "15m", parameter_region="exp015")
         with self.assertRaises(ValueError):
-            VolatilityBreakoutConfig(3.0, "15m")
+            MeanReversionConfig(10, 1.25, "15m", parameter_region="exp015")
         with self.assertRaises(ValueError):
-            SessionSweepRejectionConfig(7, "15m")
+            PreviousDayRejectionConfig(7, "15m", parameter_region="exp015")
+        with self.assertRaises(ValueError):
+            VolatilityBreakoutConfig(3.0, "15m", parameter_region="exp015")
+        with self.assertRaises(ValueError):
+            SessionSweepRejectionConfig(7, "15m", parameter_region="exp015")
 
     def test_catalog_rejects_invalid_code_commit(self) -> None:
         with self.assertRaises(ValueError):
