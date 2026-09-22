@@ -8,7 +8,7 @@ from enum import Enum
 from fmp.contracts import Decision, Direction, ScheduledExit
 
 
-PHASE8_EXPERIMENT_ID = "EXP-20260917-010"
+PHASE8_EXPERIMENT_ID = "EXP-20260922-011"
 PHASE7_CHECKPOINT_TAG = "fmp-v1-phase7-walk-forward"
 PHASE7_CHECKPOINT_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
 
