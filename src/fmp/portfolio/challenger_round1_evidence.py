@@ -154,6 +154,19 @@ def _validate_cell_evidence(value: Mapping[str, object]) -> tuple[str, str, str,
     if value.get("promotion_authorized") is not False:
         raise ValueError("EXP-013 Stage A cell-evidence cannot authorize promotion")
 
+    development = value.get("development")
+    validation = value.get("validation")
+    gate = value.get("gate")
+    if not isinstance(development, Mapping) or not isinstance(validation, Mapping) or not isinstance(gate, Mapping):
+        raise ValueError("EXP-013 Stage A cell-evidence must embed both splits and gate")
+    recomputed = build_exp013_stage_a_cell_evidence(
+        development=development,
+        validation=validation,
+        gate=gate,
+    )
+    if dict(value) != recomputed:
+        raise ValueError("EXP-013 Stage A cell-evidence summary does not match embedded evidence")
+
     symbol = value.get("symbol")
     timeframe = value.get("timeframe")
     commit = value.get("runner_code_commit")
