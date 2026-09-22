@@ -126,6 +126,8 @@ def _run_identity(
         "financing_model": dict(config.financing_model.to_config()),
         "decision_config": dict(config.decision_config),
     }
+    if config.execution_timing_mode != NEXT_SUPPLIED_BAR:
+        identity["execution_timing_mode"] = config.execution_timing_mode
     if scheduled_exits:
         identity["scheduled_exits"] = [
             {
