@@ -435,3 +435,36 @@ Copy this section for each serious experiment:
 - Implementation progress: PR #121 merged the registry/lifecycle/router and explicit retrospective evaluator; PR #122 merged the deterministic retrospective batch/CLI/manual 3-pair × 3-timeframe workflow; PR #123 merged the DEC-040 shared-account simulator with 1m execution, time-local conflict routing, and a single Phase 3 risk state. PR #122 pre-merge verification completed with 819 tests PASS; PR #123 pre-merge verification completed with 828 tests PASS; unchanged Phase 3 acceptance passed for both.
 - Joint-simulation protocol: DEC-040 freezes canonical 1m BID/ASK as the execution path, strategy-native 5m/15m/1h bars as the signal path, one shared $100,000 account/risk state per slippage scenario, and time-local same-symbol conflict handling. These results remain `RETROSPECTIVE_ALREADY_SEEN` and cannot authorize promotion.
 - Follow-up: complete deterministic joint evidence packaging and explicit-fingerprint manual CLI. After that evidence layer is green, predeclare a separate portfolio-selection protocol before any historical combination search or winner selection is allowed. Phase 8B live shadow remains locked until Phase 8A acceptance.
+
+
+### EXP-20260922-013 — Phase 8A opening-range momentum challenger round 1
+
+- Date: 2026-09-22
+- Status: ACTIVE — IMPLEMENTATION / NO BENCHMARK RESULTS INSPECTED
+- Protocol decision: DEC-041 APPROVED / PREDECLARED
+- Hypothesis: a breakout of the 06:00–08:00 London opening range may carry more persistent intraday information when the breakout candle also shows directional body conviction, producing a more robust multi-pair edge than an unfiltered range break.
+- Family/version: `opening_range_momentum` / `fmp-opening-range-momentum-v1`
+- Pair(s): EURUSD, GBPUSD, USDJPY
+- Timeframe(s): 5m, 15m, 1h
+- Reference window: 06:00–08:00 `Europe/London`
+- Signal window: 08:00–12:00 `Europe/London`
+- Mandatory flat: exact 16:00 `Europe/London`
+- Fixed buffer: 2 pips
+- Fixed stop geometry: 0.25 reference-range depth inside the breached boundary
+- Parameters/search space: `body_fraction_threshold ∈ {0.50, 0.70}`; `target_r_multiple ∈ {1.0, 1.5}`; exactly 36 pair/timeframe/configuration identities
+- Stage A development: 2015-01-01 through 2020-12-31 inclusive
+- Stage A validation: 2021-01-01 through 2023-12-31 inclusive
+- Stage B retrospective confirmation: 2024-01-01 through 2026-08-20 inclusive, only for exact Stage A survivors
+- Final-test touched?: YES upstream; all EXP-013 evidence is retrospective and Stage B must not be labeled untouched OOS
+- Spread/cost model: historical BID/ASK plus 0.2/0.5/1.0-pip adverse-slippage scenarios; 0.2 and 0.5 mandatory, 1.0 diagnostic
+- Commission/financing: zero / zero under mandatory intraday flat
+- Risk assumptions: unchanged Phase 3 risk — $100,000 starting equity, 0.25% requested risk, 0.50% hard per-trade max, 1.00% simultaneous risk max, 1.50% UTC daily realized-loss halt
+- Stage A gate: positive net return/expectancy/PF>1.0 and DD<=5% at 0.2 and 0.5 on both development and validation; at least 100 development and 50 validation 0.2-pip trades; at least one same-pair/timeframe neighboring grid point must also pass mandatory profitability/drawdown gates
+- Stage B gate: positive net return/expectancy/PF>1.0 and DD<=5% at both 0.2 and 0.5; at least 75 completed 0.2-pip trades
+- Trade count: pending implementation and benchmark
+- Net return after costs: pending
+- Expectancy/trade: pending
+- Profit factor: pending
+- Max drawdown: pending
+- Conclusion: NEED_MORE_DATA
+- Follow-up: implement the frozen signal contract and deterministic retrospective grid runner; verify source-free tests and unchanged Phase 3 acceptance; only then dispatch Stage A. No Stage B source is opened by EXP-013 until an exact Stage A survivor authorization is derived.
