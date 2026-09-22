@@ -868,3 +868,19 @@ Copy this section for each serious experiment:
 - Verification: exact source head `25f7a315266605097d51b92c2faca9364a1651db` passed 1025 tests plus workflow-YAML validation and compile checks in run `35772227156`; unchanged Phase 3 acceptance run `35772227085` passed.
 - Merge status: PR #153 merged DEC-061 to `main` at `ad4dea51f537225f7bbb18335c68beebb9c58067`. The exact final PR head `b6584aff886dad7fac513cdeb57d3c86430b67c4` passed 1025 tests plus workflow-YAML validation and compile checks in run `35772414863`; unchanged Phase 3 acceptance run `35772414631` passed.
 - Follow-up: a later separately frozen decision is required before a materialized arm can become runtime authority or the execution source gate can change.
+
+
+### EXP-20260922-033 — Phase 9 demo runtime arm authority contract
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE CONTRACT VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-062 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: accept one exact DEC-060/061 materialized demo arm as source-only runtime authority evidence without changing the DEC-058 execution source lock.
+- Upstream chain: exact DEC-055 design, DEC-056 request/client ID, DEC-059 session arm/readiness, and DEC-060 execution-arm fingerprints are revalidated and bound.
+- Runtime checks: current UTC must remain inside the unchanged arm window and not precede session readiness; daily halt must be inactive; one-order budget remains exactly one.
+- Journal replay: exact DEC-059 journal identity is validated; event count and tip fingerprint are bound; any prior `SEND_ATTEMPTED` fails closed.
+- Source isolation: runtime-authority source imports no MetaTrader5 backend or mutation adapter, adds no broker-connected CLI, and performs no broker access.
+- Authorization: only `demo_runtime_arm_authority_ready=true`; `DEMO_EXECUTION_SOURCE_ARMED=false` and every demo/live order, broker-mutation, real-money, and Phase-10 flag remain false.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `f17f67c4407e6100abbb47c855fd564a88b46bc3` passed 1031 tests plus workflow-YAML validation and compile checks in run `35774162526`; unchanged Phase 3 acceptance run `35774162520` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before the source execution gate can become true or any broker-connected runner may consume runtime-authority evidence.
