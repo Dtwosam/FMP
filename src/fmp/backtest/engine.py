@@ -32,6 +32,10 @@ from fmp.contracts import (
     validate_quote_bars,
 )
 from fmp.reporting.backtest import compute_backtest_metrics
+
+NEXT_SUPPLIED_BAR = "NEXT_SUPPLIED_BAR"
+DECLARED_EARLIEST_BAR = "DECLARED_EARLIEST_BAR"
+_ALLOWED_EXECUTION_TIMING_MODES = frozenset({NEXT_SUPPLIED_BAR, DECLARED_EARLIEST_BAR})
 from fmp.risk import (
     RiskConfig,
     RiskState,
@@ -63,6 +67,7 @@ class BacktestConfig:
     requested_end_utc: datetime
     code_commit: str
     decision_config: Mapping[str, object]
+    execution_timing_mode: str = NEXT_SUPPLIED_BAR
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.starting_equity_usd) or self.starting_equity_usd <= 0:
@@ -73,6 +78,8 @@ class BacktestConfig:
         _require_utc(self.requested_end_utc, field="requested_end_utc")
         if self.requested_end_utc < self.requested_start_utc:
             raise ValueError("requested end must not precede requested start")
+        if self.execution_timing_mode not in _ALLOWED_EXECUTION_TIMING_MODES:
+            raise ValueError("unsupported execution_timing_mode")
         for field, value in (
             ("processed_data_manifest_id", self.processed_data_manifest_id),
             ("schema_version", self.schema_version),
