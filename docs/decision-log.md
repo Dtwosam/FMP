@@ -824,3 +824,17 @@ A real `capture-segment` operator invocation is not permitted until that exact s
 DEC-054 also freezes explicit `review-campaign` over one exact DEC-053 closure and the campaign-bound spread reference. NEED_MORE_DATA is non-terminal and permits later clean capture/closure snapshots. PASS or any rejection writes a terminal campaign marker that blocks further Phase 8B capture/review for that campaign.
 
 Only exact PASS may create immutable SHADOW_CANDIDATE -> SHADOW_VALIDATED evidence using the existing registry transition function. Champion identity remains unchanged. PASS authorizes Phase 9 demo-design eligibility only; demo/live orders, broker mutation, real-money trading, Phase 9 execution, and DEMO_ELIGIBLE transition remain locked.
+
+
+## DEC-055 — Phase 9 demo design proposal
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-demo-design.md` opens `EXP-20260922-026` for a source-only demo-design compiler after exact Phase 8B PASS.
+
+DEC-055 may consume only one exact DEC-054 terminal PASS review and its shadow-validation artifact, plus the exact DEC-049 preflight bound to the same champion. The accepted Phase 8B provider identity selects the MT5 demo continuity path; changing execution provider requires a new decision.
+
+The design freezes the future `fmp-mt5-demo-order-bridge-v1` requirements, exact accepted demo account/server/symbol identities, unchanged Phase 3 risk configuration, protective-stop/reconciliation/idempotency requirements, and secret-handling boundary.
+
+A valid design may authorize source implementation of a future demo adapter only. It cannot enable AutoTrading, submit demo/live orders, mutate broker state, risk real money, or authorize Phase 10.
