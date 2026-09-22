@@ -612,7 +612,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-020 — Phase 8B prospective capture foundation
 
 - Date: 2026-09-22
-- Status: ACTIVE — SOURCE-FREE IMPLEMENTATION ONLY / NO LIVE-SHADOW SEGMENT
+- Status: ACTIVE — SOURCE-FREE IMPLEMENTATION MERGED / NO LIVE-SHADOW SEGMENT
 - Protocol decision: DEC-049 APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
 - Purpose: freeze and implement the exact source-free boundary between DEC-048 campaign-start authorization and a later live capture/replay/acceptance runtime.
 - Required inputs: one exact valid DEC-047 `fmp-phase8b-campaign-registration-v1` artifact plus one exact valid DEC-048 `fmp-phase8b-campaign-start-v1` artifact.
@@ -624,5 +624,5 @@ Copy this section for each serious experiment:
 - CLI scope: unchanged; no `capture`, `run`, `start`, `replay`, or `review` command.
 - Broker/demo/live/real-money/Phase 9 authorized?: NO.
 - Live execution status: NOT RUN.
-- Implementation status: PR #140 head `3058d2ae7ec914799acbe032d31a200bd118e255` adds DEC-049 docs, capture preflight/record-envelope APIs, exactly-once preflight artifacts, exports, and six focused contract tests. PR CI run `35745159288` passed 961 tests plus workflow-YAML validation and compile checks. Unchanged Phase 3 acceptance run `35745159404` passed.
-- Follow-up: merge only after the final branch head remains green. A later separately frozen runtime/replay/acceptance protocol is still required before any prospective Phase 8B segment may begin.
+- Implementation status: PR #140 merged DEC-049 to `main` at `39066f10c60bd1bade4f6f6e78e05ab3b7621c8e`, adding capture preflight/record-envelope APIs, exactly-once preflight artifacts, exports, and six focused contract tests. The exact final PR head passed 961 tests plus workflow-YAML validation and compile checks in run `35745448870`; unchanged Phase 3 acceptance run `35745448859` passed.
+- Follow-up: separately freeze and implement the Phase 8B runtime/replay/acceptance protocol before any prospective Phase 8B segment may begin.
