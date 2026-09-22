@@ -555,12 +555,23 @@ def aggregate_exp015_stage_a_gates(
             raise ValueError("EXP-015 Stage A strategy appears in multiple cells")
         all_fingerprints.update(expected)
         survivors.update(cell_survivors)
+        raw_family_rankings = gate.get("family_rankings")
+        raw_strategy_gates = gate.get("strategy_gates")
+        if not isinstance(raw_family_rankings, Mapping):
+            raise ValueError("EXP-015 Stage A family rankings are malformed")
+        if not isinstance(raw_strategy_gates, Mapping):
+            raise ValueError("EXP-015 Stage A strategy gates are malformed")
+        if set(raw_strategy_gates) != set(expected):
+            raise ValueError("EXP-015 Stage A strategy-gate coverage mismatch")
+
         cells.append(
             {
                 "symbol": symbol,
                 "timeframe": timeframe,
                 "strategy_fingerprints": expected,
                 "survivor_fingerprints": list(cell_survivors),
+                "family_rankings": dict(raw_family_rankings),
+                "strategy_gates": dict(raw_strategy_gates),
             }
         )
 
