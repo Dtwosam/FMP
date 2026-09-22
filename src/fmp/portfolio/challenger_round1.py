@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import math
+import os
 import re
-from datetime import date
+from dataclasses import fields, is_dataclass
+from datetime import date, datetime, timedelta
+from enum import Enum
 from pathlib import Path
 from typing import Callable, Mapping
 
@@ -386,3 +391,267 @@ def evaluate_exp013_stage_a_cell_pair(
         "survivor_fingerprints": survivors,
         "config_gates": config_gates,
     }
+
+
+EXP013_STAGE_A_CELL_ARTIFACT_PROTOCOL = "fmp-phase8a-exp013-stage-a-cell-artifacts-v1"
+EXP013_STAGE_A_AUTHORIZATION_PROTOCOL = "fmp-phase8a-exp013-stage-a-authorization-v1"
+EXP013_STAGE_A_AUTHORIZATION_ARTIFACT_PROTOCOL = (
+    "fmp-phase8a-exp013-stage-a-authorization-artifacts-v1"
+)
+
+
+def _jsonable(value: object) -> object:
+    if is_dataclass(value) and not isinstance(value, type):
+        return {item.name: _jsonable(getattr(value, item.name)) for item in fields(value)}
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, datetime):
+        if value.tzinfo is None or value.utcoffset() != timedelta(0):
+            raise ValueError("serialized datetime must use UTC")
+        return value.isoformat().replace("+00:00", "Z")
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, Mapping):
+        return {str(key): _jsonable(item) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError("cannot serialize non-finite float")
+        return value
+    if value is None or isinstance(value, (str, int, bool)):
+        return value
+    raise TypeError(f"unsupported deterministic serialization type: {type(value).__name__}")
+
+
+def _stable_json_bytes(value: object) -> bytes:
+    return (
+        json.dumps(
+            _jsonable(value),
+            sort_keys=True,
+            indent=2,
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
+
+
+def _atomic_write(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_bytes(data)
+    os.replace(temporary, path)
+
+
+def _artifact_record(path: Path) -> dict[str, object]:
+    data = path.read_bytes()
+    return {
+        "path": path.name,
+        "size_bytes": len(data),
+        "sha256": hashlib.sha256(data).hexdigest(),
+    }
+
+
+def write_exp013_stage_a_cell_artifacts(
+    *,
+    development: Mapping[str, object],
+    validation: Mapping[str, object],
+    gate: Mapping[str, object],
+    out_dir: Path,
+) -> dict[str, object]:
+    if development.get("protocol") != EXP013_STAGE_A_CELL_PROTOCOL:
+        raise ValueError("EXP-013 development artifact protocol mismatch")
+    if validation.get("protocol") != EXP013_STAGE_A_CELL_PROTOCOL:
+        raise ValueError("EXP-013 validation artifact protocol mismatch")
+    if gate.get("protocol") != EXP013_STAGE_A_GATE_PROTOCOL:
+        raise ValueError("EXP-013 gate artifact protocol mismatch")
+    if development.get("split_name") != "development":
+        raise ValueError("EXP-013 development artifact has wrong split")
+    if validation.get("split_name") != "validation":
+        raise ValueError("EXP-013 validation artifact has wrong split")
+    if development.get("range_start") != "2015-01-01":
+        raise ValueError("EXP-013 development range start drift")
+    if development.get("range_end_exclusive") != "2021-01-01":
+        raise ValueError("EXP-013 development range end drift")
+    if validation.get("range_start") != "2021-01-01":
+        raise ValueError("EXP-013 validation range start drift")
+    if validation.get("range_end_exclusive") != "2024-01-01":
+        raise ValueError("EXP-013 validation range end drift")
+    identities = {
+        (
+            value.get("symbol"),
+            value.get("timeframe"),
+            value.get("runner_code_commit"),
+        )
+        for value in (development, validation, gate)
+    }
+    if len(identities) != 1:
+        raise ValueError("EXP-013 Stage A artifact identity mismatch")
+    if any(value.get("promotion_authorized") is not False for value in (development, validation, gate)):
+        raise ValueError("EXP-013 Stage A artifacts cannot authorize promotion")
+
+    root = Path(out_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    payloads = {
+        "development.json": _stable_json_bytes(dict(development)),
+        "validation.json": _stable_json_bytes(dict(validation)),
+        "gate.json": _stable_json_bytes(dict(gate)),
+    }
+    for name, payload in payloads.items():
+        _atomic_write(root / name, payload)
+
+    manifest = {
+        "protocol": EXP013_STAGE_A_CELL_ARTIFACT_PROTOCOL,
+        "experiment_id": EXP013_ID,
+        "promotion_authorized": False,
+        "artifacts": [
+            _artifact_record(root / name)
+            for name in sorted(payloads)
+        ],
+    }
+    _atomic_write(root / "manifest.json", _stable_json_bytes(manifest))
+    return manifest
+
+
+def _validate_exp013_stage_a_gate(
+    value: Mapping[str, object],
+) -> tuple[str, str, str, tuple[str, ...], tuple[str, ...]]:
+    if value.get("protocol") != EXP013_STAGE_A_GATE_PROTOCOL:
+        raise ValueError("EXP-013 Stage A gate protocol mismatch")
+    if value.get("experiment_id") != EXP013_ID:
+        raise ValueError("EXP-013 Stage A gate experiment mismatch")
+    if value.get("evidence_label") != PHASE8A_RETROSPECTIVE_LABEL:
+        raise ValueError("EXP-013 Stage A gate must be retrospective")
+    if value.get("untouched_oos") is not False:
+        raise ValueError("EXP-013 Stage A gate cannot be untouched OOS")
+    if value.get("promotion_authorized") is not False:
+        raise ValueError("EXP-013 Stage A gate cannot authorize promotion")
+    if value.get("historical_status_mutation_authorized") is not False:
+        raise ValueError("EXP-013 Stage A gate cannot mutate historical status")
+
+    symbol = value.get("symbol")
+    timeframe = value.get("timeframe")
+    code_commit = value.get("runner_code_commit")
+    if not isinstance(symbol, str) or symbol not in SUPPORTED_SYMBOLS:
+        raise ValueError("invalid EXP-013 Stage A gate symbol")
+    if not isinstance(timeframe, str) or timeframe not in ELIGIBLE_TIMEFRAMES:
+        raise ValueError("invalid EXP-013 Stage A gate timeframe")
+    if not isinstance(code_commit, str) or not _COMMIT_RE.fullmatch(code_commit):
+        raise ValueError("invalid EXP-013 Stage A gate runner commit")
+
+    raw_config_gates = value.get("config_gates")
+    if not isinstance(raw_config_gates, Mapping) or len(raw_config_gates) != 4:
+        raise ValueError("EXP-013 Stage A gate must contain exactly four configs")
+    fingerprints = tuple(sorted(str(item) for item in raw_config_gates))
+    if len(set(fingerprints)) != 4:
+        raise ValueError("EXP-013 Stage A gate has duplicate strategy identities")
+    if any(not re.fullmatch(r"[0-9a-f]{64}", item) for item in fingerprints):
+        raise ValueError("EXP-013 Stage A gate has invalid strategy fingerprint")
+
+    raw_survivors = value.get("survivor_fingerprints")
+    if not isinstance(raw_survivors, list):
+        raise ValueError("EXP-013 Stage A survivor_fingerprints must be a list")
+    survivors = tuple(sorted(str(item) for item in raw_survivors))
+    if len(set(survivors)) != len(survivors):
+        raise ValueError("EXP-013 Stage A survivor list contains duplicates")
+    if not set(survivors).issubset(set(fingerprints)):
+        raise ValueError("EXP-013 Stage A survivor is outside its frozen cell")
+    for fingerprint in fingerprints:
+        gate = raw_config_gates[fingerprint]
+        if not isinstance(gate, Mapping):
+            raise ValueError("EXP-013 Stage A config gate must be an object")
+        expected = fingerprint in survivors
+        if gate.get("stage_a_survivor") is not expected:
+            raise ValueError("EXP-013 Stage A survivor flag/list mismatch")
+
+    return symbol, timeframe, code_commit, fingerprints, survivors
+
+
+def aggregate_exp013_stage_a_gates(
+    gates: list[Mapping[str, object]] | tuple[Mapping[str, object], ...],
+) -> dict[str, object]:
+    materialized = tuple(gates)
+    if len(materialized) != 9:
+        raise ValueError("EXP-013 Stage A authorization requires exactly nine cell gates")
+
+    expected_cells = {
+        (symbol, timeframe)
+        for symbol in ("EURUSD", "GBPUSD", "USDJPY")
+        for timeframe in ("5m", "15m", "1h")
+    }
+    seen_cells: set[tuple[str, str]] = set()
+    commits: set[str] = set()
+    all_fingerprints: set[str] = set()
+    survivors: set[str] = set()
+    cells: list[dict[str, object]] = []
+
+    for gate in materialized:
+        symbol, timeframe, code_commit, fingerprints, cell_survivors = (
+            _validate_exp013_stage_a_gate(gate)
+        )
+        cell = (symbol, timeframe)
+        if cell in seen_cells:
+            raise ValueError("duplicate EXP-013 Stage A cell gate")
+        seen_cells.add(cell)
+        commits.add(code_commit)
+        if all_fingerprints.intersection(fingerprints):
+            raise ValueError("EXP-013 Stage A strategy identity appears in multiple cells")
+        all_fingerprints.update(fingerprints)
+        survivors.update(cell_survivors)
+        cells.append(
+            {
+                "symbol": symbol,
+                "timeframe": timeframe,
+                "strategy_fingerprints": list(fingerprints),
+                "survivor_fingerprints": list(cell_survivors),
+            }
+        )
+
+    if seen_cells != expected_cells:
+        raise ValueError("EXP-013 Stage A authorization cell coverage mismatch")
+    if len(commits) != 1:
+        raise ValueError("EXP-013 Stage A gate runner commits differ")
+    if len(all_fingerprints) != 36:
+        raise ValueError("EXP-013 Stage A authorization must bind exactly 36 strategies")
+
+    ordered_survivors = sorted(survivors)
+    return {
+        "protocol": EXP013_STAGE_A_AUTHORIZATION_PROTOCOL,
+        "experiment_id": EXP013_ID,
+        "evidence_label": PHASE8A_RETROSPECTIVE_LABEL,
+        "untouched_oos": False,
+        "promotion_authorized": False,
+        "historical_status_mutation_authorized": False,
+        "runner_code_commit": next(iter(commits)),
+        "cell_count": 9,
+        "strategy_identity_count": 36,
+        "survivor_count": len(ordered_survivors),
+        "survivor_fingerprints": ordered_survivors,
+        "stage_b_source_open_authorized": bool(ordered_survivors),
+        "cells": sorted(cells, key=lambda item: (str(item["symbol"]), str(item["timeframe"]))),
+    }
+
+
+def write_exp013_stage_a_authorization_artifacts(
+    authorization: Mapping[str, object],
+    out_dir: Path,
+) -> dict[str, object]:
+    if authorization.get("protocol") != EXP013_STAGE_A_AUTHORIZATION_PROTOCOL:
+        raise ValueError("EXP-013 Stage A authorization protocol mismatch")
+    if authorization.get("promotion_authorized") is not False:
+        raise ValueError("EXP-013 Stage A authorization cannot authorize promotion")
+
+    root = Path(out_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    result_path = root / "authorization.json"
+    payload = _stable_json_bytes(dict(authorization))
+    _atomic_write(result_path, payload)
+    manifest = {
+        "protocol": EXP013_STAGE_A_AUTHORIZATION_ARTIFACT_PROTOCOL,
+        "experiment_id": EXP013_ID,
+        "promotion_authorized": False,
+        "artifacts": [_artifact_record(result_path)],
+    }
+    _atomic_write(root / "manifest.json", _stable_json_bytes(manifest))
+    return manifest

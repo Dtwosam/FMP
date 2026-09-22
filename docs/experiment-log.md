@@ -467,7 +467,8 @@ Copy this section for each serious experiment:
 - Profit factor: pending
 - Max drawdown: pending
 - Conclusion: NEED_MORE_DATA
-- Follow-up: implement the frozen signal contract and deterministic retrospective grid runner; verify source-free tests and unchanged Phase 3 acceptance; only then dispatch Stage A. No Stage B source is opened by EXP-013 until an exact Stage A survivor authorization is derived.
+- Implementation status: signal contract, 36 challenger identities, Stage A cell runner, and frozen gate logic were merged in PR #125. The operator workflow was missing from that merge; the current Stage A workflow/evidence branch adds deterministic development/validation/gate artifacts, nine-cell aggregation, and exact survivor-bound Stage B source-open authorization. No historical Stage A run has been dispatched yet.
+- Follow-up: merge and verify the Stage A workflow/evidence layer; then deliberately dispatch Stage A on the verified merged-main commit. No Stage B source is opened until the resulting nine-cell authorization artifact explicitly lists one or more exact survivor fingerprints.
 
 
 ### EXP-20260922-014 — Phase 8A frozen portfolio selection
