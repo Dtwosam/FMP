@@ -323,6 +323,8 @@ Phase 7 is formally PASS and checkpoint `fmp-v1-phase7-walk-forward` is frozen a
 
 DEC-039 changes Phase 8 from a single-strategy live-shadow campaign into two ordered subphases because the sole Phase 7 survivor is robust enough to have passed its historical gates but is not economically attractive enough for the operator's revised objective.
 
+DEC-036, DEC-037, and DEC-038 remain preserved as the historical single-strategy shadow/connector/liveness contracts where they are not superseded by DEC-039. Their EXP-011 USDJPY-only campaign launch path is superseded; the read-only, no-broker-mutation and fail-closed safety lessons carry forward into Phase 8B.
+
 ### Phase 8A — Multi-pair, multi-strategy portfolio research — ACTIVE
 
 Approved design: `docs/superpowers/specs/2026-09-22-phase8a-portfolio-research-redesign.md`
