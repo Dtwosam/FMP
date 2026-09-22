@@ -61,6 +61,18 @@ class Phase8BCliBoundaryTests(unittest.TestCase):
         self.assertEqual(
             parser.parse_args(
                 [
+                    "freeze-spread-reference",
+                    "--campaign-dir",
+                    "campaign",
+                    "--dataset-root",
+                    "data",
+                ]
+            ).command,
+            "freeze-spread-reference",
+        )
+        self.assertEqual(
+            parser.parse_args(
+                [
                     "capture-segment",
                     "--campaign-dir",
                     "campaign",
@@ -80,7 +92,19 @@ class Phase8BCliBoundaryTests(unittest.TestCase):
             ).command,
             "close-campaign",
         )
-        for forbidden in ("run", "capture", "start", "review"):
+        self.assertEqual(
+            parser.parse_args(
+                [
+                    "review-campaign",
+                    "--campaign-dir",
+                    "campaign",
+                    "--closure-id",
+                    "9" * 64,
+                ]
+            ).command,
+            "review-campaign",
+        )
+        for forbidden in ("run", "capture", "start", "review", "broker"):
             with self.subTest(command=forbidden):
                 with self.assertRaises(SystemExit):
                     parser.parse_args([forbidden])
@@ -114,6 +138,15 @@ class Phase8BCliBoundaryTests(unittest.TestCase):
                 "campaign",
             ]
         )
+        freeze = parser.parse_args(
+            [
+                "freeze-spread-reference",
+                "--campaign-dir",
+                "campaign",
+                "--dataset-root",
+                "data",
+            ]
+        )
         capture = parser.parse_args(
             [
                 "capture-segment",
@@ -130,7 +163,24 @@ class Phase8BCliBoundaryTests(unittest.TestCase):
                 "campaign",
             ]
         )
-        for args in (qualify, register, authorize, capture, close):
+        review = parser.parse_args(
+            [
+                "review-campaign",
+                "--campaign-dir",
+                "campaign",
+                "--closure-id",
+                "9" * 64,
+            ]
+        )
+        for args in (
+            qualify,
+            register,
+            authorize,
+            freeze,
+            capture,
+            close,
+            review,
+        ):
             for forbidden in (
                 "symbol",
                 "path",
