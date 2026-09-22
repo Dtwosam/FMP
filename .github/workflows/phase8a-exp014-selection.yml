@@ -53,6 +53,8 @@ jobs:
           run = json.loads(Path('stage-c-run.json').read_text(encoding='utf-8'))
           assert run['name'] == 'phase8a-exp015-stage-c', run
           assert run['event'] == 'workflow_dispatch', run
+          assert run['head_branch'] == 'main', run
+          assert run['path'] == '.github/workflows/phase8a-exp015-stage-c.yml', run
           assert run['status'] == 'completed', run
           assert run['conclusion'] == 'success', run
           head_sha = run['head_sha']
