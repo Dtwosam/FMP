@@ -155,10 +155,16 @@ def _validate_stage_a_authorization(
 
         raw_fingerprints = raw_cell.get("strategy_fingerprints")
         raw_cell_survivors = raw_cell.get("survivor_fingerprints")
+        raw_family_rankings = raw_cell.get("family_rankings")
+        raw_strategy_gates = raw_cell.get("strategy_gates")
         if not isinstance(raw_fingerprints, list) or len(raw_fingerprints) != 63:
             raise ValueError("EXP-015 Stage A cell must bind 63 strategies")
         if not isinstance(raw_cell_survivors, list):
             raise ValueError("EXP-015 Stage A cell survivor list is malformed")
+        if not isinstance(raw_family_rankings, Mapping):
+            raise ValueError("EXP-015 Stage A family rankings are malformed")
+        if not isinstance(raw_strategy_gates, Mapping):
+            raise ValueError("EXP-015 Stage A strategy gates are malformed")
         fingerprints = tuple(sorted(str(item) for item in raw_fingerprints))
         survivors_for_cell = tuple(sorted(str(item) for item in raw_cell_survivors))
         if len(set(fingerprints)) != 63:
@@ -167,15 +173,59 @@ def _validate_stage_a_authorization(
             raise ValueError("EXP-015 Stage A pair/timeframe survivor cap exceeded")
         if not set(survivors_for_cell).issubset(fingerprints):
             raise ValueError("EXP-015 Stage A cell survivor is outside its cell")
+        if set(raw_strategy_gates) != set(fingerprints):
+            raise ValueError("EXP-015 Stage A strategy-gate coverage mismatch")
+        expected_families = {
+            catalog[fingerprint].strategy.family
+            for fingerprint in fingerprints
+        }
+        if set(raw_family_rankings) != expected_families:
+            raise ValueError("EXP-015 Stage A family-ranking coverage mismatch")
+
         family_counts: dict[str, int] = {}
-        for fingerprint in survivors_for_cell:
-            record = catalog.get(fingerprint)
-            if record is None:
-                raise ValueError("EXP-015 Stage A cell survivor is outside catalog")
-            family = record.strategy.family
-            family_counts[family] = family_counts.get(family, 0) + 1
+        selected_union: set[str] = set()
+        for family in sorted(expected_families):
+            raw_ranking = raw_family_rankings[family]
+            if not isinstance(raw_ranking, Mapping):
+                raise ValueError("EXP-015 Stage A family ranking must be an object")
+            raw_passing = raw_ranking.get("passing_fingerprints")
+            raw_selected = raw_ranking.get("selected_fingerprints")
+            if not isinstance(raw_passing, list) or not isinstance(raw_selected, list):
+                raise ValueError("EXP-015 Stage A family ranking lists are malformed")
+            passing = [str(item) for item in raw_passing]
+            selected = [str(item) for item in raw_selected]
+            if len(set(passing)) != len(passing) or len(set(selected)) != len(selected):
+                raise ValueError("EXP-015 Stage A family ranking contains duplicates")
+            family_fingerprints = {
+                fingerprint
+                for fingerprint in fingerprints
+                if catalog[fingerprint].strategy.family == family
+            }
+            if not set(passing).issubset(family_fingerprints):
+                raise ValueError("EXP-015 Stage A passing ranking leaks across family cell")
+            if selected != passing[:2]:
+                raise ValueError("EXP-015 Stage A selected ranking is not top-two")
+            mandatory_passers: set[str] = set()
+            for fingerprint in family_fingerprints:
+                gate = raw_strategy_gates[fingerprint]
+                if not isinstance(gate, Mapping):
+                    raise ValueError("EXP-015 Stage A strategy gate must be an object")
+                if gate.get("family") != family:
+                    raise ValueError("EXP-015 Stage A strategy-gate family mismatch")
+                mandatory = gate.get("mandatory_gate_pass")
+                if type(mandatory) is not bool:
+                    raise ValueError("EXP-015 Stage A mandatory gate flag must be bool")
+                if mandatory:
+                    mandatory_passers.add(fingerprint)
+            if set(passing) != mandatory_passers:
+                raise ValueError("EXP-015 Stage A passing ranking/gate mismatch")
+            family_counts[family] = len(selected)
+            selected_union.update(selected)
+
         if any(value > 2 for value in family_counts.values()):
             raise ValueError("EXP-015 Stage A family-cell survivor cap exceeded")
+        if selected_union != set(survivors_for_cell):
+            raise ValueError("EXP-015 Stage A selected ranking/survivor mismatch")
         if all_fingerprints.intersection(fingerprints):
             raise ValueError("EXP-015 Stage A strategy appears in multiple cells")
         all_fingerprints.update(fingerprints)
@@ -190,6 +240,31 @@ def _validate_stage_a_authorization(
 
     records = tuple(catalog[item] for item in survivors)
     return stage_a_commit, catalog_sha, source_sha, survivors, records
+
+
+def _stage_a_reason_map(
+    authorization: Mapping[str, object],
+) -> dict[str, str]:
+    reasons: dict[str, str] = {}
+    raw_cells = authorization.get("cells")
+    if not isinstance(raw_cells, list):
+        raise ValueError("EXP-015 Stage A authorization cells are malformed")
+    for raw_cell in raw_cells:
+        assert isinstance(raw_cell, Mapping)
+        survivors = set(str(item) for item in raw_cell["survivor_fingerprints"])
+        raw_gates = raw_cell["strategy_gates"]
+        assert isinstance(raw_gates, Mapping)
+        for fingerprint, raw_gate in raw_gates.items():
+            fingerprint = str(fingerprint)
+            if fingerprint in survivors:
+                continue
+            assert isinstance(raw_gate, Mapping)
+            reasons[fingerprint] = (
+                "STAGE_A_CELL_RANK_CUTOFF"
+                if raw_gate.get("mandatory_gate_pass") is True
+                else "FAILED_STAGE_A_GATE"
+            )
+    return reasons
 
 
 def validate_exp015_stage_a_authorization(
@@ -1007,7 +1082,7 @@ def finalize_exp015_shortlist(
                 evidence_id=_FINAL_EVIDENCE_ID,
             )
             if fingerprint not in stage_a_set:
-                reason = "NOT_STAGE_A_SURVIVOR"
+                reason = _stage_a_reason_map(stage_a_authorization)[fingerprint]
             elif fingerprint not in stage_b_set:
                 reason = "FAILED_STAGE_B"
             elif fingerprint not in stage_c_set:
