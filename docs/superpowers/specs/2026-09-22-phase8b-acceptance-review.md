@@ -16,16 +16,63 @@ acceptance result/lifecycle consequence.
 DEC-054 freezes that review boundary before any real Phase 8B capture or
 acceptance result exists.
 
-## 2. Review command
+## 2. Spread-reference freeze and review commands
 
-DEC-054 adds only:
+DEC-054 adds:
 
-`review-campaign --campaign-dir <path> --closure-id <sha256> --spread-reference <path>`
+`freeze-spread-reference --campaign-dir <path> --dataset-root <path>`
 
-The command is source-only. It reads existing JSON artifacts and does not access
-MT5, a broker, credentials, orders, positions, or real money.
+and:
 
-## 3. Exact inputs
+`review-campaign --campaign-dir <path> --closure-id <sha256>`
+
+Both commands are source-only. They do not access MT5, a broker, credentials,
+orders, positions, or real money.
+
+The spread reference is frozen create-only at
+`<campaign-dir>/spread-reference.json` and the review command may consume only
+that exact campaign-bound artifact.
+
+## 3. Historical spread-reference construction
+
+The spread reference must be built from the accepted Phase 8A retrospective
+snapshot before any real Phase 8B acceptance result.
+
+For every exact required symbol, the builder loads only complete canonical 1m
+bars through `load_phase8a_retrospective_bars` across the full immutable
+`2015-01-01 .. 2026-08-21` accepted range.
+
+Manifest locations are fixed under the supplied dataset root:
+
+`manifests/processed/fmp-canonical-1m-v1/<SYMBOL>.json`
+
+No symbol, timeframe, start-date, end-date, percentile, or tolerance override is
+available.
+
+For each complete 1m bar:
+
+- historical entry spread = `ask_open - bid_open` in pips;
+- historical exit spread = `ask_close - bid_close` in pips.
+
+Per symbol, the artifact stores exact sample counts, median, and nearest-rank
+p95 for entry and exit spreads.
+
+The reference binds:
+
+- exact DEC-049 capture-preflight fingerprint;
+- exact champion-set fingerprint;
+- exact required symbols and slippage scenarios;
+- exact retrospective date range and source label;
+- exact canonical 1m method;
+- exact processed-manifest SHA-256 by symbol;
+- exact opened artifact months by symbol;
+- spread-reference builder code commit;
+- deterministic spread-reference fingerprint.
+
+The file and companion manifest are create-only. Re-running the freeze for the
+same campaign fails closed.
+
+## 4. Exact review inputs
 
 Review requires:
 
@@ -33,7 +80,7 @@ Review requires:
 - one exact DEC-053 closure directory named by `closure-id`;
 - the closure's exact `fmp-phase8b-campaign-evidence-v1` artifact;
 - the exact DEC-053 closure manifest and campaign-evidence byte SHA-256;
-- one exact valid DEC-051 `fmp-phase8b-spread-reference-v1` input;
+- the exact campaign-bound `spread-reference.json` created by this decision;
 - the current review code commit.
 
 The DEC-051 acceptance compiler independently requires exact equality across the
@@ -42,7 +89,7 @@ champion-set fingerprint, required symbols, and slippage scenarios.
 
 Any mismatch or tamper fails closed.
 
-## 4. Immutable review identity
+## 5. Immutable review identity
 
 Each review receives a deterministic ID binding:
 
@@ -64,7 +111,7 @@ The review directory durably stores:
 
 Repeating the exact review fails with `FileExistsError`.
 
-## 5. NEED_MORE_DATA is non-terminal
+## 6. NEED_MORE_DATA is non-terminal
 
 If DEC-051 returns:
 
@@ -78,7 +125,7 @@ the review:
 - leaves DEC-052 capture eligible for later clean segments;
 - permits a later DEC-053 closure and a different review ID.
 
-## 6. Terminal rejection
+## 7. Terminal rejection
 
 Any DEC-051 rejection outcome is terminal for this exact Phase 8B campaign:
 
@@ -96,7 +143,7 @@ order/broker/real-money/Phase-9 authorizations false.
 After that marker exists, future `capture-segment` and `review-campaign`
 invocations fail closed for that campaign.
 
-## 7. PASS and lifecycle transition
+## 8. PASS and lifecycle transition
 
 Only exact DEC-051 outcome:
 
@@ -132,7 +179,7 @@ The shadow-validation artifact binds:
   false;
 - deterministic shadow-validation fingerprint.
 
-## 8. PASS is terminal for shadow capture
+## 9. PASS is terminal for shadow capture
 
 PASS writes the same campaign terminal-marker protocol used by terminal
 rejection.
@@ -143,7 +190,7 @@ allowed activity is a separately frozen Phase 9 demo-design proposal.
 PASS does not transition strategies to `DEMO_ELIGIBLE` and does not authorize
 demo orders.
 
-## 9. Terminal marker
+## 10. Terminal marker
 
 The create-only marker is:
 
@@ -159,7 +206,7 @@ any order authorization.
 A pre-existing marker blocks another terminal review, another
 `review-campaign`, and future `capture-segment`.
 
-## 10. CLI boundary
+## 11. CLI boundary
 
 After DEC-054 the Phase 8B CLI may expose:
 
@@ -167,14 +214,20 @@ After DEC-054 the Phase 8B CLI may expose:
 - `qualify`;
 - `register`;
 - `authorize-start`;
+- `freeze-spread-reference`;
 - `capture-segment`;
 - `close-campaign`;
 - `review-campaign`.
 
+The first real `capture-segment` invocation requires the campaign-bound spread
+reference to already exist and validate against the exact preflight. This
+prevents choosing a different historical spread baseline after prospective
+results are visible.
+
 It still exposes no generic `run`, `start`, demo-order, live-order, broker,
 or real-money command.
 
-## 11. Safety
+## 12. Safety
 
 Throughout DEC-054:
 
