@@ -15,6 +15,18 @@ from .campaign_start import (
     validate_phase8b_campaign_start_authorization,
     write_phase8b_campaign_start_authorization,
 )
+from .capture import (
+    CAPTURE_RECORD_PROTOCOL,
+    PHASE8B_CAPTURE_EXPERIMENT_ID,
+    PHASE8B_CAPTURE_FOUNDATION_READY,
+    PHASE8B_CAPTURE_PREFLIGHT_ARTIFACT_PROTOCOL,
+    PHASE8B_CAPTURE_PREFLIGHT_PROTOCOL,
+    Phase8BCaptureFeedEnvelope,
+    build_phase8b_capture_preflight,
+    validate_phase8b_capture_preflight,
+    validate_phase8b_capture_record_envelope,
+    write_phase8b_capture_preflight,
+)
 from .design import (
     PHASE8B_DESIGN_FROZEN,
     PHASE8B_DESIGN_PROTOCOL,
@@ -41,6 +53,12 @@ from .registration import (
 )
 
 __all__ = [
+    "CAPTURE_RECORD_PROTOCOL",
+    "PHASE8B_CAPTURE_EXPERIMENT_ID",
+    "PHASE8B_CAPTURE_FOUNDATION_READY",
+    "PHASE8B_CAPTURE_PREFLIGHT_ARTIFACT_PROTOCOL",
+    "PHASE8B_CAPTURE_PREFLIGHT_PROTOCOL",
+    "Phase8BCaptureFeedEnvelope",
     "FeedQualificationOutcome",
     "FeedQualificationResult",
     "PHASE8B_CAMPAIGN_START_ARTIFACT_PROTOCOL",
@@ -58,6 +76,7 @@ __all__ = [
     "Phase8BQualificationOutcome",
     "READER_START_SEMANTICS",
     "build_phase8b_campaign_start_authorization",
+    "build_phase8b_capture_preflight",
     "build_phase8b_design",
     "build_phase8b_registration",
     "discover_phase8b_bridge_files",
@@ -66,9 +85,12 @@ __all__ = [
     "qualify_phase8b_feed",
     "summarize_phase8b_qualification",
     "validate_phase8b_campaign_start_authorization",
+    "validate_phase8b_capture_preflight",
+    "validate_phase8b_capture_record_envelope",
     "validate_phase8b_design",
     "validate_phase8b_registration",
     "write_phase8b_campaign_start_authorization",
+    "write_phase8b_capture_preflight",
     "write_phase8b_design_artifacts",
     "write_phase8b_qualification_artifacts",
     "write_phase8b_registration",

@@ -722,3 +722,21 @@ Only a fully valid artifact sets `campaign_start_authorized = true` and `prospec
 DEC-048 adds no capture/run/start loop. A later separately frozen protocol must consume the exact authorization and independently revalidate bridge identity before a live-shadow segment can start.
 
 Consequences: `EXP-20260922-019` is opened for source-free implementation of the exactly-once campaign-start authorization layer. No Phase 8B live-shadow segment has started.
+
+
+## DEC-049 — Phase 8B prospective capture foundation
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-prospective-capture-foundation.md` opens `EXP-20260922-020` as a source-free boundary between DEC-048 start authorization and any later prospective runtime.
+
+DEC-049 requires exact byte-digest and semantic cross-validation of the DEC-047 registration and DEC-048 start authorization, then independently revalidates every current required-symbol bridge session through fresh `Phase8BBridgeFileTail` readers that begin at EOF. Any changed session, account, server, protocol, symbol coverage, fixed bridge path, champion/strategy identity, liveness contract, cost scenario, or authorization flag fails closed.
+
+A valid preflight freezes protocol `fmp-phase8b-capture-preflight-v1`, exact upstream digests/fingerprints, campaign start boundary, champion set, strategy/symbol/timeframe sets, bridge identities, common demo account/server, fixed bridge paths, liveness/cost contract, code commit, UTC preflight timestamp, and `TAIL_AT_EOF_NO_BACKFILL` semantics. It may record only `capture_runtime_ready = true`; it does not start a live-shadow segment, satisfy acceptance, promote a strategy, or authorize any order path.
+
+DEC-049 also freezes the deterministic raw-record envelope that a later runtime must use for post-preflight bridge records. It retains the existing bridge-session validator semantics for duplicate ticks, source-time monotonicity, symbol/session/account/server continuity, and normalized quotes.
+
+No `capture`, `run`, `start`, `replay`, or `review` CLI command is added under DEC-049. A later separately approved runtime/replay/acceptance decision remains mandatory before any prospective segment can begin.
+
+Consequences: Phase 8B remains LOCKED for live-shadow capture. Demo/live orders, broker mutation, real-money trading, Phase 9, active-champion mutation, and acceptance/promotion remain LOCKED.
