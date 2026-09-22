@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import unittest
 
 from fmp.contracts import Direction
@@ -48,13 +48,14 @@ def _candidate(
     *,
     risk: float = 0.0025,
     applicable: bool = True,
+    observed_at_utc: datetime = NOW,
 ) -> PortfolioCandidate:
     return PortfolioCandidate(
         candidate_id=candidate_id,
         strategy_fingerprint=strategy.fingerprint,
         symbol=strategy.symbol,
         direction=direction,
-        observed_at_utc=NOW,
+        observed_at_utc=observed_at_utc,
         requested_risk_fraction=risk,
         applicability_passed=applicable,
     )
@@ -104,6 +105,31 @@ class Phase8APortfolioRouterTests(unittest.TestCase):
                 ("short", CandidateRejectionCode.DIRECTION_CONFLICT),
             ],
         )
+
+
+    def test_opposite_directions_on_same_symbol_at_different_times_do_not_conflict(self) -> None:
+        a = _strategy("session_breakout", "EURUSD")
+        b = _strategy("mean_reversion", "EURUSD", "5m")
+        champions = _champions(a, b)
+
+        result = route_shadow_candidates(
+            champions,
+            [
+                _candidate("long", a, Direction.LONG, observed_at_utc=NOW),
+                _candidate(
+                    "short",
+                    b,
+                    Direction.SHORT,
+                    observed_at_utc=NOW + timedelta(minutes=5),
+                ),
+            ],
+        )
+
+        self.assertEqual(
+            tuple(item.candidate_id for item in result.accepted),
+            ("long", "short"),
+        )
+        self.assertEqual(result.rejected, ())
 
     def test_multi_pair_candidates_are_deterministic_and_report_usd_risk_direction(self) -> None:
         eur = _strategy("session_breakout", "EURUSD")
