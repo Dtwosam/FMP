@@ -46,7 +46,7 @@ class SelectionPool:
 class SelectionScenarioMetrics:
     slippage_pips: float
     net_return: float
-    expectancy_usd: float
+    expectancy_usd: float | None
     profit_factor: float | None
     max_drawdown_fraction: float
     trade_count: int
@@ -64,13 +64,14 @@ class SelectionScenarioMetrics:
             raise ValueError("selection scenario slippage must be exactly 0.2, 0.5, or 1.0")
         for field in (
             "net_return",
-            "expectancy_usd",
             "max_drawdown_fraction",
             "annualized_compounded_return",
         ):
             value = float(getattr(self, field))
             if not math.isfinite(value):
                 raise ValueError(f"{field} must be finite")
+        if self.expectancy_usd is not None and not math.isfinite(self.expectancy_usd):
+            raise ValueError("expectancy_usd must be finite when present")
         if self.profit_factor is not None and (
             not math.isfinite(self.profit_factor) or self.profit_factor < 0
         ):
@@ -191,8 +192,12 @@ def evaluate_selection_gates(
         "at_least_two_strategies": len(record.strategy_fingerprints) >= 2,
         "net_return_positive_02": s02.net_return > 0,
         "net_return_positive_05": s05.net_return > 0,
-        "expectancy_positive_02": s02.expectancy_usd > 0,
-        "expectancy_positive_05": s05.expectancy_usd > 0,
+        "expectancy_positive_02": (
+            s02.expectancy_usd is not None and s02.expectancy_usd > 0
+        ),
+        "expectancy_positive_05": (
+            s05.expectancy_usd is not None and s05.expectancy_usd > 0
+        ),
         "profit_factor_gt_1_02": s02.profit_factor is not None and s02.profit_factor > 1.0,
         "profit_factor_gt_1_05": s05.profit_factor is not None and s05.profit_factor > 1.0,
         "max_drawdown_le_05_02": s02.max_drawdown_fraction <= 0.05,

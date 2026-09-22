@@ -496,7 +496,9 @@ Copy this section for each serious experiment:
 - Profit factor: not run.
 - Max drawdown: not run.
 - Conclusion: NEED_MORE_DATA
-- Follow-up: implement/test the deterministic pool freeze, set enumeration, gate calculation, annualization, and ranking machinery. Do not execute combination search until a separate challenger experiment supplies at least one additional qualified strategy.
+- Implementation status: deterministic pool/set/gate/ranking primitives were already frozen before challenger results. The current source-free branch adds the guarded runner and manual workflow: Phase 7 baseline + exact EXP-015 HISTORICAL_QUALIFIED shortlist reconstruction, byte-bound EXP-015 final evidence, immutable set-universe SHA-256, exact 2019-01-01..2026-08-21 joint-account evaluation, candidate-sequence and processed-manifest consistency across costs/sets, yearly/contribution/daily-return conversion, and deterministic winner/no-winner evidence. A zero-trade scenario now represents expectancy as null and therefore fails the positive-expectancy gate rather than raising.
+- Execution status: SEARCH BLOCKED / NOT RUN. EXP-015 Stage A/B/C are still undispatched, so no eligible challenger pool exists yet. A 12-strategy pool would enumerate 2,509 sets and 7,527 cost runs; practical sharding/caching may be added without changing the frozen set universe or gates before any large-pool dispatch.
+- Follow-up: source-free verify/merge the execution layer. Do not run DEC-042 until an exact successful EXP-015 final shortlist produces at least one new HISTORICAL_QUALIFIED challenger.
 
 
 - Identity correction: initially recorded with duplicate EXP-013 / DEC-041 identifiers already assigned to opening_range_momentum; renumbered before any portfolio combination search or result.
