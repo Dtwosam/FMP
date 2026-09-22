@@ -414,7 +414,7 @@ class Phase9DemoDesignTests(unittest.TestCase):
                 REVIEW_ID,
             )
 
-    def test_phase9_cli_exposes_design_only(self) -> None:
+    def test_phase9_cli_exposes_design_and_materialize_only(self) -> None:
         parser = build_parser()
         self.assertEqual(
             parser.parse_args(
@@ -428,7 +428,34 @@ class Phase9DemoDesignTests(unittest.TestCase):
             ).command,
             "design-demo",
         )
-        for forbidden in ("run-demo", "order", "trade", "run", "start"):
+        self.assertEqual(
+            parser.parse_args(
+                [
+                    "materialize-arm",
+                    "--design",
+                    "design.json",
+                    "--request",
+                    "request.json",
+                    "--session-arm",
+                    "session-arm.json",
+                    "--session-ready",
+                    "session-ready.json",
+                    "--out-dir",
+                    "arm",
+                ]
+            ).command,
+            "materialize-arm",
+        )
+        for forbidden in (
+            "run-demo",
+            "order",
+            "trade",
+            "run",
+            "start",
+            "submit-order",
+            "broker",
+            "order-send",
+        ):
             with self.subTest(command=forbidden):
                 with self.assertRaises(SystemExit):
                     parser.parse_args([forbidden])

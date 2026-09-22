@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Mapping
 
 from fmp.phase9.design import validate_phase9_demo_design
-from fmp.phase9.mt5_mutation import DEMO_EXECUTION_SOURCE_ARMED
+from fmp.phase9.execution_gate import DEMO_EXECUTION_SOURCE_ARMED
 from fmp.phase9.protocol import validate_phase9_demo_order_request
 from fmp.phase9.session import (
     validate_phase9_demo_session_arm,

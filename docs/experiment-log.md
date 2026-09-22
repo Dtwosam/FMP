@@ -849,3 +849,21 @@ Copy this section for each serious experiment:
 - Verification: exact source head `a62be09eda02f09b255211ea5dca8b63055ae361` passed 1023 tests plus workflow-YAML validation and compile checks in run `35771299138`; unchanged Phase 3 acceptance run `35771299314` passed.
 - Merge status: PR #152 merged DEC-060 to `main` at `71cb40bd00970696cee91f4c35755ca87c9f3eab`. The exact final PR head `5694c7b54d0729e0340539aa280f126d7cc420e9` passed 1023 tests plus workflow-YAML validation and compile checks in run `35771474118`; unchanged Phase 3 acceptance run `35771474159` passed.
 - Follow-up: a later separately frozen decision is required before a real arm can be materialized or the execution source gate may change.
+
+
+### EXP-20260922-032 — Phase 9 offline demo-arm materialization
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO REAL DEMO ORDER
+- Protocol decision: DEC-061 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: add one local-only operator command that materializes the exact DEC-060 execution-arm package from already-frozen JSON evidence without MT5/broker access.
+- CLI: adds only `materialize-arm --design --request --session-arm --session-ready --out-dir` beside `design-demo`.
+- Override policy: no CLI option exists for strategy, symbol, units, reserved risk, stop/target, account/server/provider, client-order ID, UTC arm window, approval reference, or order count.
+- Import boundary: `src/fmp/phase9/cli.py` directly imports only local artifact/validation code for materialization and does not directly import or instantiate the mutation backend, MetaTrader5 wrapper, or order-send runner.
+- Gate refactor: the hard source lock remains `DEMO_EXECUTION_SOURCE_ARMED=false` in neutral `execution_gate.py`; DEC-058 mutation source and DEC-060 arming validation both consume that lock without adding a setter/config/env/artifact override.
+- Persistence: materialization writes only create-only `execution-arm.json` and manifest; repository tests use temporary fixture directories only.
+- Broker access/order_check/order_send performed?: NO.
+- Demo execution/order, broker mutation, live order, real-money trading, and Phase 10 authorized?: NO.
+- Real operator arm for an actual broker session created?: NO.
+- Verification: exact source head `25f7a315266605097d51b92c2faca9364a1651db` passed 1025 tests plus workflow-YAML validation and compile checks in run `35772227156`; unchanged Phase 3 acceptance run `35772227085` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before a materialized arm can become runtime authority or the execution source gate can change.

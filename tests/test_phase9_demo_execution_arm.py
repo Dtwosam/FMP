@@ -5,7 +5,7 @@ import inspect
 import io
 import json
 import unittest
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -20,7 +20,8 @@ from fmp.phase9.arming import (
     validate_phase9_demo_execution_arm,
     write_phase9_demo_execution_arm,
 )
-from fmp.phase9.cli import build_parser
+import fmp.phase9.cli as phase9_cli
+from fmp.phase9.cli import build_parser, main
 from fmp.phase9.design import (
     PHASE9_DEMO_DESIGN_FROZEN,
     PHASE9_DEMO_DESIGN_PROTOCOL,
@@ -301,9 +302,106 @@ class Phase9DemoExecutionArmTests(unittest.TestCase):
                     session_ready=session_ready,
                 )
 
-    def test_phase9_cli_still_has_no_arm_or_execution_command(self) -> None:
+    def test_materialize_arm_cli_is_local_only_and_create_only(self) -> None:
+        design, request, session_arm, session_ready = _inputs()
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            design_path = root / "design.json"
+            request_path = root / "request.json"
+            session_arm_path = root / "session-arm.json"
+            session_ready_path = root / "session-ready.json"
+            out_dir = root / "materialized"
+            for path, value in (
+                (design_path, design),
+                (request_path, request),
+                (session_arm_path, session_arm),
+                (session_ready_path, session_ready),
+            ):
+                path.write_text(
+                    json.dumps(value, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                code = main(
+                    [
+                        "materialize-arm",
+                        "--design",
+                        str(design_path),
+                        "--request",
+                        str(request_path),
+                        "--session-arm",
+                        str(session_arm_path),
+                        "--session-ready",
+                        str(session_ready_path),
+                        "--out-dir",
+                        str(out_dir),
+                    ],
+                    code_commit_resolver=lambda: COMMIT,
+                )
+            self.assertEqual(code, 0)
+            self.assertTrue((out_dir / "execution-arm.json").is_file())
+            self.assertTrue((out_dir / "manifest.json").is_file())
+            output = json.loads(stdout.getvalue())
+            self.assertTrue(output["demo_execution_arm_artifact_ready"])
+            self.assertFalse(output["demo_execution_source_armed"])
+            self.assertFalse(output["demo_execution_authorized"])
+            self.assertFalse(output["demo_order_authorized"])
+            self.assertFalse(output["broker_mutation_authorized"])
+            self.assertFalse(output["phase10_authorized"])
+
+            with redirect_stdout(io.StringIO()):
+                with self.assertRaises(FileExistsError):
+                    main(
+                        [
+                            "materialize-arm",
+                            "--design",
+                            str(design_path),
+                            "--request",
+                            str(request_path),
+                            "--session-arm",
+                            str(session_arm_path),
+                            "--session-ready",
+                            str(session_ready_path),
+                            "--out-dir",
+                            str(out_dir),
+                        ],
+                        code_commit_resolver=lambda: COMMIT,
+                    )
+
+    def test_materialize_cli_has_no_direct_mutation_backend_dependency(self) -> None:
+        source = inspect.getsource(phase9_cli)
+        self.assertNotIn("mt5_mutation", source)
+        self.assertNotIn("MetaTrader5PythonDemoBackend", source)
+        self.assertNotIn("order_send", source)
+
+    def test_phase9_cli_still_has_no_execution_command(self) -> None:
         parser = build_parser()
-        for forbidden in ("arm-demo", "run-demo", "submit-order", "broker"):
+        parsed = parser.parse_args(
+            [
+                "materialize-arm",
+                "--design",
+                "design.json",
+                "--request",
+                "request.json",
+                "--session-arm",
+                "session-arm.json",
+                "--session-ready",
+                "session-ready.json",
+                "--out-dir",
+                "arm",
+            ]
+        )
+        self.assertEqual(parsed.command, "materialize-arm")
+        for forbidden in (
+            "arm-demo",
+            "run-demo",
+            "submit-order",
+            "broker",
+            "order-send",
+            "trade",
+        ):
             with self.subTest(forbidden=forbidden):
                 with redirect_stderr(io.StringIO()):
                     with self.assertRaises(SystemExit):
