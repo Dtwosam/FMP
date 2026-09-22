@@ -34,7 +34,7 @@ class Phase5FeatureProtocolStateTests(unittest.TestCase):
         self.assertIn(PHASE7_SHA, state)
         self.assertIn("**Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research", state)
         self.assertIn("**Phase status:** ACTIVE", state)
-        self.assertIn("## Phase 8 — ACTIVE AS AMENDED PHASE 8A / 8B AS AMENDED PHASE 8A / 8B", state)
+        self.assertIn("## Phase 8 — ACTIVE AS AMENDED PHASE 8A / 8B", state)
         self.assertIn("real-money trading", state.lower())
         self.assertIn("DEC-008 remains unchanged", state)
         self.assertIn("Phase 9/demo order placement: LOCKED", state)
