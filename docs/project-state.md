@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8 — Live shadow mode
 **Phase status:** ACTIVE
-**Next milestone:** Merge and source-free verify the DEC-038 bridge/market-liveness separation, then run fresh qualification, rebuild the historical reference, and register `EXP-20260922-011` from scratch before any scored observation.
+**Next milestone:** Run fresh local MT5 connector qualification for `EXP-20260922-011`; after PASS, rebuild the historical reference and register a fresh campaign under merged commit `71fca1ccbfd14edd71c736f61187558f6f6a7909` before any scored observation.
 
 ## Current baseline
 
@@ -345,8 +345,9 @@ DEC-036 remains authoritative for the frozen strategy, risk, cost, campaign mini
 - evidence protocol: `fmp-phase8-shadow-evidence-v2` unchanged; fresh campaign/reference and exact code-commit binding prevent old/new semantics from mixing
 - slippage scenarios: 0.2 and 0.5 pips gating; 1.0 pip diagnostic only
 - Phase 3 risk policy: unchanged; independent $100,000 virtual account per cost scenario
-- EXP-011 implementation merge/source-free verification: PENDING
-- EXP-011 connector qualification: PENDING after verified merge
+- EXP-011 implementation merge: PR #119 -> `main` at `71fca1ccbfd14edd71c736f61187558f6f6a7909`
+- EXP-011 source-free verification: tests run `35670553677` — SUCCESS, 786 tests PASS, workflow YAML PASS, compile PASS; deterministic Phase 3 acceptance run `35670553680` — SUCCESS; Phase 1 golden-sample run `35670553665` and network-smoke run `35670553672` — SKIPPED as expected
+- EXP-011 connector qualification: PENDING explicit operator-controlled local MT5 action
 - EXP-011 historical reference: PENDING fresh build under merged commit
 - EXP-011 campaign registration: PENDING fresh registration after qualification/reference
 - Phase 9/demo order placement: LOCKED
