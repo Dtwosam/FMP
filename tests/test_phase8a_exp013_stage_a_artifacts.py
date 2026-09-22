@@ -60,6 +60,8 @@ class Phase8AExp013StageAArtifactsTests(unittest.TestCase):
             "range_start": "2015-01-01",
             "range_end_exclusive": "2021-01-01",
             "runner_code_commit": COMMIT,
+            "symbol": "EURUSD",
+            "timeframe": "15m",
             "promotion_authorized": False,
         }
         validation = {
