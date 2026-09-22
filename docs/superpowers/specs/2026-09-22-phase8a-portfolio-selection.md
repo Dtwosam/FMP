@@ -2,21 +2,21 @@
 
 **Date:** 2026-09-22  
 **Status:** APPROVED  
-**Decision:** DEC-041  
-**Experiment:** EXP-20260922-013  
+**Decision:** DEC-042  
+**Experiment:** EXP-20260922-014  
 **Scope:** Predeclared retrospective portfolio selection only
 
 ## 1. Purpose
 
-DEC-039 expanded Phase 8A to a multi-pair, multi-strategy research architecture. DEC-040 then added a shared-account joint simulator. DEC-041 freezes the rules that may later choose a retrospective portfolio candidate **before any strategy-combination search is run**.
+DEC-039 expanded Phase 8A to a multi-pair, multi-strategy research architecture. DEC-040 then added a shared-account joint simulator. DEC-042 freezes the rules that may later choose a retrospective portfolio candidate **before any strategy-combination search is run**.
 
-This protocol is deliberately separate from strategy discovery. A strategy must first qualify under its own experiment. DEC-041 may combine already-qualified immutable strategy versions; it may not invent, retune, rescue, or resurrect strategies.
+This protocol is deliberately separate from strategy discovery. A strategy must first qualify under its own experiment. DEC-042 may combine already-qualified immutable strategy versions; it may not invent, retune, rescue, or resurrect strategies.
 
 All evidence under this protocol is retrospective and already seen. A selected set becomes at most a **prospective shadow candidate** after a later explicit acceptance review. It is not demo/live approval.
 
 ## 2. Eligible strategy pool
 
-A strategy version may enter the DEC-041 pool only if all of the following are true:
+A strategy version may enter the DEC-042 pool only if all of the following are true:
 
 - immutable `StrategyVersion` identity is present;
 - lifecycle is `HISTORICAL_QUALIFIED`, `SHADOW_CANDIDATE`, `SHADOW_VALIDATED`, or `DEMO_ELIGIBLE`;
@@ -25,7 +25,7 @@ A strategy version may enter the DEC-041 pool only if all of the following are t
 - signal timeframe is 5m, 15m, or 1h;
 - exact parameters, code commit, data identity, cost assumptions, and risk assumptions are known;
 - it has not been retired;
-- it was not created or materially changed after observing the DEC-041 selection results.
+- it was not created or materially changed after observing the DEC-042 selection results.
 
 `DISCOVERY`, `CHALLENGER`, and `RETIRED` records are ineligible.
 
@@ -37,7 +37,7 @@ The exact eligible pool is frozen before combination evaluation.
 
 - Minimum eligible pool size to search multi-strategy portfolios: 2.
 - Maximum eligible pool size: 12.
-- If more than 12 strategies are eligible, DEC-041 fails closed and no portfolio search runs. A separate predeclared pool-reduction amendment is required.
+- If more than 12 strategies are eligible, DEC-042 fails closed and no portfolio search runs. A separate predeclared pool-reduction amendment is required.
 
 This prevents an unbounded combinatorial search after results are visible.
 
@@ -73,7 +73,7 @@ Cost scenarios remain exactly 0.2, 0.5, and 1.0 adverse pips per fill.
 
 ## 6. Frozen retrospective selection range
 
-DEC-041 selection uses one continuous joint-account run over:
+DEC-042 selection uses one continuous joint-account run over:
 
 - start: `2019-01-01` inclusive;
 - end: `2026-08-21` exclusive.
@@ -134,7 +134,7 @@ If one or more sets pass, rank passing sets by the following immutable lexicogra
 7. fewer strategy identities;
 8. lexicographically smaller sorted strategy-fingerprint tuple.
 
-No weights are tuned after observation. No manual override may replace the ranking winner while still calling the result DEC-041.
+No weights are tuned after observation. No manual override may replace the ranking winner while still calling the result DEC-042.
 
 ## 9. Annualized return definition
 
@@ -156,7 +156,7 @@ If the relevant positive-PnL denominator is zero, the portfolio fails the associ
 
 ## 11. Evidence requirements
 
-DEC-041 evidence must bind:
+DEC-042 evidence must bind:
 
 - exact eligible pool and each lifecycle/evidence ID;
 - exact enumerated portfolio-set fingerprint list before ranking;
@@ -179,7 +179,7 @@ Evidence must state:
 
 ## 12. Search discipline
 
-DEC-041 cannot:
+DEC-042 cannot:
 
 - modify the eligible pool after any combination result is observed;
 - add a strategy because a first search disappointed;
@@ -208,8 +208,13 @@ A later prospective shadow campaign remains mandatory.
 
 ## 14. Next dependency: challenger discovery
 
-The current historical inventory contains only one previously qualified baseline strategy. Therefore DEC-041 cannot yet run a meaningful multi-strategy search.
+The current historical inventory contains only one previously qualified baseline strategy. Therefore DEC-042 cannot yet run a meaningful multi-strategy search.
 
-Before DEC-041 selection can execute, Phase 8A must produce at least one additional `HISTORICAL_QUALIFIED` immutable challenger through a separately predeclared discovery/qualification experiment.
+Before DEC-042 selection can execute, Phase 8A must produce at least one additional `HISTORICAL_QUALIFIED` immutable challenger through a separately predeclared discovery/qualification experiment.
 
-DEC-041 is frozen now so that future challenger discovery cannot tailor the portfolio-selection criteria after seeing candidate results.
+DEC-042 is frozen now so that future challenger discovery cannot tailor the portfolio-selection criteria after seeing candidate results.
+
+
+## Identity correction note
+
+This protocol was initially committed with duplicate identifiers `DEC-041` / `EXP-20260922-013`, which were already assigned to the predeclared `opening_range_momentum` challenger round. Before any DEC-042 portfolio combination search was run, the collision was detected and this protocol was renumbered to `DEC-042` / `EXP-20260922-014`. No benchmark, ranking, or selection result was produced under the duplicate identity.

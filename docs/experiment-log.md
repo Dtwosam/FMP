@@ -470,11 +470,11 @@ Copy this section for each serious experiment:
 - Follow-up: implement the frozen signal contract and deterministic retrospective grid runner; verify source-free tests and unchanged Phase 3 acceptance; only then dispatch Stage A. No Stage B source is opened by EXP-013 until an exact Stage A survivor authorization is derived.
 
 
-### EXP-20260922-013 — Phase 8A frozen portfolio selection
+### EXP-20260922-014 — Phase 8A frozen portfolio selection
 
 - Date: 2026-09-22
 - Status: ACTIVE — IMPLEMENTATION ONLY / SEARCH BLOCKED
-- Protocol decision: DEC-041 APPROVED
+- Protocol decision: DEC-042 APPROVED
 - Hypothesis: if Phase 8A produces at least two independently qualified immutable strategies, a bounded shared-account portfolio chosen under predeclared stability, concentration, cost, drawdown, and deterministic ranking rules can improve the economic case without post-result threshold changes.
 - Eligible lifecycle states: HISTORICAL_QUALIFIED, SHADOW_CANDIDATE, SHADOW_VALIDATED, DEMO_ELIGIBLE only.
 - Current eligible baseline count: 1 — the existing Phase 7 USDJPY 15m session-breakout survivor.
@@ -484,8 +484,8 @@ Copy this section for each serious experiment:
 - Retrospective selection range: 2019-01-01 inclusive through 2026-08-21 exclusive.
 - Execution: DEC-040 shared $100,000 account, canonical 1m BID/ASK execution, native 5m/15m/1h signal bars, unchanged Phase 3 risk.
 - Slippage scenarios: exactly 0.2, 0.5, and 1.0 pips adverse per fill; 0.2/0.5 gating, 1.0 diagnostic.
-- Mandatory gates: positive net return/expectancy, PF > 1.0, max drawdown <= 5%, and >=200 trades at both gating costs; additional 0.2-pip yearly-stability, strategy/pair concentration, and diversity gates per DEC-041.
-- Ranking: immutable lexicographic order frozen in DEC-041; no tunable score weights.
+- Mandatory gates: positive net return/expectancy, PF > 1.0, max drawdown <= 5%, and >=200 trades at both gating costs; additional 0.2-pip yearly-stability, strategy/pair concentration, and diversity gates per DEC-042.
+- Ranking: immutable lexicographic order frozen in DEC-042; no tunable score weights.
 - Evidence label: RETROSPECTIVE_ALREADY_SEEN.
 - Untouched OOS?: NO.
 - Promotion authorized?: NO.
@@ -496,3 +496,37 @@ Copy this section for each serious experiment:
 - Max drawdown: not run.
 - Conclusion: NEED_MORE_DATA
 - Follow-up: implement/test the deterministic pool freeze, set enumeration, gate calculation, annualization, and ranking machinery. Do not execute combination search until a separate challenger experiment supplies at least one additional qualified strategy.
+
+
+- Identity correction: initially recorded with duplicate EXP-013 / DEC-041 identifiers already assigned to opening_range_momentum; renumbered before any portfolio combination search or result.
+
+### EXP-20260922-015 — Phase 8A rule-based challenger discovery
+
+- Date: 2026-09-22
+- Status: ACTIVE — IMPLEMENTATION / NO HISTORICAL STAGE RUN YET
+- Protocol decision: DEC-043 APPROVED
+- Hypothesis: new predeclared parameter regions of the existing deterministic rule families can produce additional robust immutable challengers across EURUSD, GBPUSD, and USDJPY without reviving rejected Phase 4 points or tuning after later-period observation.
+- Pair(s): EURUSD, GBPUSD, USDJPY
+- Timeframe(s): 5m, 15m, 1h
+- Families: session_breakout, trend_continuation, mean_reversion, previous_day_rejection, volatility_breakout, session_sweep_rejection
+- Frozen candidate count: 567 new configurations, all non-overlapping with the original Phase 4 parameter grid.
+- Stage A: 2015-01-01 to 2019-01-01 exclusive; all 567 candidates; at most 2 survivors per pair/family/timeframe cell.
+- Stage B: 2019-01-01 to 2023-01-01 exclusive; only Stage A survivors; no retune.
+- Stage C: 2023-01-01 to 2026-08-21 exclusive; only Stage B passers; no retune.
+- Cost model: 0.2/0.5/1.0 pips adverse per fill; 0.2/0.5 gating, 1.0 diagnostic.
+- Risk: unchanged Phase 3 defaults; $100,000 starting equity per independent strategy/scenario run; 0.25% requested risk.
+- Final shortlist: at most 11 new HISTORICAL_QUALIFIED challengers under frozen cross-pair/family/cell caps.
+- Evidence label: RETROSPECTIVE_ALREADY_SEEN
+- Untouched OOS?: NO
+- Broker/shadow promotion authorized?: NO
+- Stage A opened?: NO
+- Stage B opened?: NO
+- Stage C opened?: NO
+- Trade count: not run.
+- Net return after costs: not run.
+- Expectancy/trade: not run.
+- Profit factor: not run.
+- Max drawdown: not run.
+- Conclusion: NEED_MORE_DATA
+- Follow-up: implement/test expanded parameter validators, deterministic 567-candidate challenger grid, stage gate/ranking logic, immutable stage authorization manifests, and evidence tooling before any Stage A historical run.
+- Identity correction: initially drafted as EXP-014 / DEC-042 during reconciliation; renumbered before any historical stage or benchmark result.
