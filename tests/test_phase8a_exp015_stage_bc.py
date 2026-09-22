@@ -51,12 +51,47 @@ def _authorization(survivor_fingerprints: tuple[str, ...]) -> dict[str, object]:
             ]
             fingerprints = sorted(item.strategy.fingerprint for item in records)
             survivors = sorted(survivor_set.intersection(fingerprints))
+            by_family = {}
+            for item in records:
+                by_family.setdefault(item.strategy.family, []).append(
+                    item.strategy.fingerprint
+                )
+            family_rankings = {}
+            strategy_gates = {}
+            survivor_set_for_cell = set(survivors)
+            for family, family_fingerprints in by_family.items():
+                selected = sorted(
+                    survivor_set_for_cell.intersection(family_fingerprints)
+                )
+                family_rankings[family] = {
+                    "passing_fingerprints": selected,
+                    "selected_fingerprints": selected,
+                }
+                for fingerprint in family_fingerprints:
+                    item = next(
+                        value
+                        for value in records
+                        if value.strategy.fingerprint == fingerprint
+                    )
+                    strategy_gates[fingerprint] = {
+                        "family": family,
+                        "parameters_json": item.strategy.parameters_json,
+                        "mandatory_gate_pass": fingerprint in survivor_set_for_cell,
+                        "annualized_return_02": 0.01
+                        if fingerprint in survivor_set_for_cell
+                        else None,
+                        "annualized_return_05": 0.01
+                        if fingerprint in survivor_set_for_cell
+                        else None,
+                    }
             cells.append(
                 {
                     "symbol": symbol,
                     "timeframe": timeframe,
                     "strategy_fingerprints": fingerprints,
                     "survivor_fingerprints": survivors,
+                    "family_rankings": family_rankings,
+                    "strategy_gates": strategy_gates,
                 }
             )
     return {
