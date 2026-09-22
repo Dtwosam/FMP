@@ -34,7 +34,7 @@ class Phase4SessionBreakoutEvidenceStateTests(unittest.TestCase):
 
     def test_project_state_preserves_phase4_candidate_and_later_gates(self):
         state = (ROOT / "docs" / "project-state.md").read_text(encoding="utf-8")
-        self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
+        self.assertIn("**Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research", state)
         self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn("## Phase 4 — PASS", state)
         self.assertIn("## Phase 5 — PASS", state)
@@ -45,7 +45,7 @@ class Phase4SessionBreakoutEvidenceStateTests(unittest.TestCase):
         self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", state)
         self.assertIn("trend continuation", state.lower())
         self.assertIn("Real-money trading: locked", state)
-        self.assertIn("## Phase 8 — ACTIVE", state)
+        self.assertIn("## Phase 8 — ACTIVE AS AMENDED PHASE 8A / 8B", state)
 
 
 if __name__ == "__main__":
