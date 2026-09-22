@@ -208,19 +208,43 @@ def run_backtest(
             )
             continue
 
-        next_bar = next(
-            (
-                bar
-                for bar in bars_by_symbol.get(decision.symbol, ())
-                if bar.timestamp_utc > decision.decision_timestamp_utc
-            ),
-            None,
-        )
         declared = decision.earliest_executable_timestamp_utc
-        if next_bar is None or declared != next_bar.timestamp_utc:
+        if config.execution_timing_mode == NEXT_SUPPLIED_BAR:
+            executable_bar = next(
+                (
+                    bar
+                    for bar in bars_by_symbol.get(decision.symbol, ())
+                    if bar.timestamp_utc > decision.decision_timestamp_utc
+                ),
+                None,
+            )
+            timing_valid = (
+                executable_bar is not None
+                and declared == executable_bar.timestamp_utc
+            )
+            explanation = (
+                "earliest executable timestamp must equal the first supplied "
+                "bar for the symbol strictly after the decision timestamp"
+            )
+        else:
+            executable_bar = next(
+                (
+                    bar
+                    for bar in bars_by_symbol.get(decision.symbol, ())
+                    if bar.timestamp_utc == declared
+                ),
+                None,
+            )
+            timing_valid = executable_bar is not None
+            explanation = (
+                "declared earliest executable timestamp must match an exact supplied "
+                "bar for the symbol"
+            )
+
+        if not timing_valid:
             evaluated = (
-                next_bar.timestamp_utc
-                if next_bar is not None
+                executable_bar.timestamp_utc
+                if executable_bar is not None
                 else decision.decision_timestamp_utc
             )
             rejections.append(
@@ -228,14 +252,12 @@ def run_backtest(
                     decision,
                     evaluated_timestamp_utc=evaluated,
                     code=RejectionCode.TIMING_CONTRACT,
-                    explanation=(
-                        "earliest executable timestamp must equal the first supplied "
-                        "bar for the symbol strictly after the decision timestamp"
-                    ),
+                    explanation=explanation,
                 )
             )
             continue
-        scheduled[next_bar.timestamp_utc].append(decision)
+        assert executable_bar is not None
+        scheduled[executable_bar.timestamp_utc].append(decision)
 
     for bucket in scheduled.values():
         bucket.sort(key=lambda item: item.decision_id)
