@@ -807,4 +807,5 @@ Copy this section for each serious experiment:
 - Demo execution/order, live order, FMP broker mutation, real-money trading, and Phase 10 authorized?: NO.
 - Live/demo execution status: NOT RUN.
 - Verification: exact source head `daf97700e123a025db626ea2d18bc1e7a8fecde2` passed 1011 tests plus workflow-YAML validation and compile checks in run `35767811967`; unchanged Phase 3 acceptance run `35767812096` passed.
-- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision must explicitly arm one bounded demo session and freeze its operator/journal/recovery boundary before any real practice-account order.
+- Merge status: PR #150 merged DEC-058 to `main` at `03617bcd609b61084f4dd09690f9d2166b391a61`. The exact final PR head `46825d1138392baff7b71465704df17260c28d88` passed 1011 tests plus workflow-YAML validation and compile checks in run `35768044631`; unchanged Phase 3 acceptance run `35768044648` passed. Post-merge `main` runs `35768227486` and `35768227484` also passed.
+- Follow-up: a later separately frozen decision must explicitly arm one bounded demo session and freeze its operator/journal/recovery boundary before any real practice-account order. No real Phase 8B PASS, Phase 9 design/preflight/session artifact, demo order, or broker mutation has been executed.
