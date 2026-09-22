@@ -37,11 +37,11 @@ Families:
 - volatility_breakout
 - session_sweep_rejection
 
-No ML overlay, discretionary regime override, alternate pair, or new family is allowed in EXP-014.
+No ML overlay, discretionary regime override, alternate pair, or new family is allowed in EXP-015.
 
 ## 3. New parameter regions
 
-The EXP-014 search uses only the following new values. These grids are deliberately non-overlapping with the original Phase 4 parameter points.
+The EXP-015 search uses only the following new values. These grids are deliberately non-overlapping with the original Phase 4 parameter points.
 
 ### session_breakout
 
@@ -92,7 +92,7 @@ No value may be added, removed, substituted, or rescued after results are observ
 
 ## 4. Strategy identity
 
-Every configuration receives a new immutable `StrategyVersion` identity under EXP-014. Old Phase 4–7 identities remain bound to their original code commits and evidence.
+Every configuration receives a new immutable `StrategyVersion` identity under EXP-015. Old Phase 4–7 identities remain bound to their original code commits and evidence.
 
 A new strategy identity must include:
 
@@ -246,7 +246,7 @@ The large search count is itself evidence of multiple-comparison risk and must b
 
 ## 10. Outcome
 
-Possible EXP-014 outcomes:
+Possible EXP-015 outcomes:
 
 - `CHALLENGER_DISCOVERY_PASS`: at least 1 and at most 11 new HISTORICAL_QUALIFIED challengers selected;
 - `NO_CHALLENGER_QUALIFIED`: zero candidates survive/qualify;
