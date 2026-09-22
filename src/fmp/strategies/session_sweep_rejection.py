@@ -13,7 +13,7 @@ from fmp.strategies.contracts import SignalCandidate
 
 LONDON = ZoneInfo("Europe/London")
 _TIMEFRAME_MINUTES = {"5m": 5, "15m": 15, "1h": 60}
-_ALLOWED_BUFFERS = frozenset({0, 2, 5})
+_ALLOWED_BUFFERS = frozenset({0, 1, 2, 3, 4, 5, 6, 8})
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,7 +23,7 @@ class SessionSweepRejectionConfig:
 
     def __post_init__(self) -> None:
         if self.buffer_pips not in _ALLOWED_BUFFERS:
-            raise ValueError("buffer_pips must be one of 0, 2, or 5")
+            raise ValueError("buffer_pips is outside the approved strategy grids")
         if self.timeframe not in _TIMEFRAME_MINUTES:
             raise ValueError("timeframe must be one of 5m, 15m, or 1h")
 
