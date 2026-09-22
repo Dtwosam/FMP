@@ -966,3 +966,7 @@ Copy this section for each serious experiment:
 - Live/demo execution status: NOT RUN.
 - Verification: exact source head `f105926b52b2b302bc549b50ce5ef21c4a269476` passed 1059 tests plus workflow-YAML validation and compile checks in run `35781835318`; unchanged Phase 3 acceptance run `35781835216` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. First-demo execution still requires a separately approved authorization decision.
+
+
+- Merge status: PR #158 merged DEC-066 to `main` at `95f7001d98593d9d181b5176ad1f347352f667a4`. The exact final PR head `3c00e33eb38509d562c03d6139912fdfb007aa7a` passed 1059 tests plus workflow-YAML validation and compile checks in run `35781992487`; unchanged Phase 3 acceptance run `35781992474` passed. Post-merge `main` runs `35782129020` and `35782128865` also passed.
+- Follow-up: Phase 9 demo evidence/acceptance criteria are frozen before any practice result. A separately approved first-demo execution authorization is still required before the source gate may be enabled in an operator path or any real practice-account order may be sent.
