@@ -587,4 +587,5 @@ Copy this section for each serious experiment:
 - Campaign start authorized?: NO.
 - Demo/live/broker mutation/real-money/Phase 9 authorized?: NO.
 - Runtime status: NOT RUN.
-- Follow-up: implement and source-free verify bridge parser/EA, qualification summary, immutable registration, CLI/tests; do not add capture/start under EXP-018.
+- Implementation status: current `phase8b/bridge-qualification-registration` branch contains the separate multi-symbol bridge parser/session validator/file-tail discovery, read-only Phase 8B MT5 EA, exact legacy-threshold per-symbol qualification, cross-feed account/server/session gate, deterministic qualification evidence, immutable exactly-once registration, and CLI/tests exposing only `design`, `qualify`, and `register`. No `run`/capture/start command exists.
+- Follow-up: source-free verify/merge DEC-047. A later separately frozen decision is still required before any Phase 8B live-shadow segment may start.
