@@ -13,7 +13,7 @@ from fmp.strategies.contracts import SignalCandidate
 
 LONDON = ZoneInfo("Europe/London")
 _TIMEFRAME_MINUTES = {"5m": 5, "15m": 15, "1h": 60}
-_ALLOWED_MULTIPLIERS = frozenset({0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5})
+_ALLOWED_MULTIPLIERS = frozenset({1.0, 1.5, 2.0})
 _REFERENCE_HOURS = 8
 
 
@@ -24,7 +24,7 @@ class VolatilityBreakoutConfig:
 
     def __post_init__(self) -> None:
         if self.range_multiplier not in _ALLOWED_MULTIPLIERS:
-            raise ValueError("range_multiplier is outside the approved strategy grids")
+            raise ValueError("range_multiplier must be one of 1.0, 1.5, or 2.0")
         if self.timeframe not in _TIMEFRAME_MINUTES:
             raise ValueError("timeframe must be one of 5m, 15m, or 1h")
 
