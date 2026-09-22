@@ -970,3 +970,20 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #158 merged DEC-066 to `main` at `95f7001d98593d9d181b5176ad1f347352f667a4`. The exact final PR head `3c00e33eb38509d562c03d6139912fdfb007aa7a` passed 1059 tests plus workflow-YAML validation and compile checks in run `35781992487`; unchanged Phase 3 acceptance run `35781992474` passed. Post-merge `main` runs `35782129020` and `35782128865` also passed.
 - Follow-up: Phase 9 demo evidence/acceptance criteria are frozen before any practice result. A separately approved first-demo execution authorization is still required before the source gate may be enabled in an operator path or any real practice-account order may be sent.
+
+
+### EXP-20260922-038 — Phase 9 first-demo authorization packet contract
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE CONTRACT VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-067 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: produce one immutable human-review packet for the exact future first practice order without recording approval or enabling execution.
+- Exact review binding: accepted DEMO account/server/provider, champion and strategy identity, family/timeframe, symbol/broker symbol, direction, units, MT5 volume, reserved USD risk, reference and checked prices, protective stop, optional target, fill mode, time-in-force, client-order ID, decision/executable timestamps, launch-preflight time, arm window, session operator reference, checked-request SHA-256, and exact DEC-064 execution-permit fingerprint.
+- Acceptance context: packet binds the frozen DEC-066 obligations of 40 completed trades, 8 elapsed weeks, 30 demo-session dates, two represented strategy families, two represented V1 pairs, median adverse entry slippage <=0.5 pip, and p95 <=1.0 pip.
+- Approval challenge: one deterministic authorization-challenge fingerprint is derived solely from the immutable order-review payload; builder-code changes do not change the challenge, while any review-detail change does.
+- Independent defense-in-depth: checked MT5 request hash, MT5 side, client comment, broker symbol, stop, and target are rechecked locally even after upstream DEC-064 validation.
+- Non-authorization: explicit execution approval remains unrecorded; source gate, demo execution/order, broker mutation, live order, real money, Phase 10, and Phase 11 remain false.
+- Source isolation: no MetaTrader5 mutation adapter, runner, order_send, or SEND_ATTEMPTED dependency; CLI unchanged.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `289dff872f3819c18ea37a2e33e27a35e27e3853` passed 1066 tests plus workflow-YAML validation and compile checks in run `35783034440`; unchanged Phase 3 acceptance run `35783034271` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required to record explicit approval against the exact challenge and define any operator-only source-gate activation.
