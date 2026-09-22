@@ -203,7 +203,7 @@ def _append_reconciliation(
     journal: Phase9DemoSessionJournal,
     event_time_utc: datetime,
     reconciliation: Mapping[str, object] | None,
-    error: BaseException | None,
+    error: Exception | None,
 ) -> dict[str, object]:
     healthy = (
         reconciliation is not None
@@ -237,7 +237,7 @@ def _reconcile_after_send(
     design: Mapping[str, object],
     request: Mapping[str, object],
     backend: Phase9DemoOneShotBackend,
-) -> tuple[dict[str, object] | None, BaseException | None]:
+) -> tuple[dict[str, object] | None, Exception | None]:
     try:
         broker_orders = [dict(row) for row in backend.broker_orders()]
         broker_positions = [dict(row) for row in backend.broker_positions()]
@@ -249,7 +249,7 @@ def _reconcile_after_send(
         )
         validate_phase9_demo_reconciliation(reconciliation)
         return reconciliation, None
-    except BaseException as exc:
+    except Exception as exc:
         return None, exc
 
 
@@ -406,7 +406,7 @@ def run_phase9_demo_one_shot(
     )
 
     send_result: dict[str, object] | None = None
-    send_error: BaseException | None = None
+    send_error: Exception | None = None
     try:
         raw_result = dict(backend.order_send(dict(checked_mt5_request)))
         expected_volume = checked_mt5_request.get("volume")
@@ -431,7 +431,7 @@ def run_phase9_demo_one_shot(
             event_type="SEND_RESULT",
             payload=dict(send_result),
         )
-    except BaseException as exc:
+    except Exception as exc:
         send_error = exc
         journal.append(
             event_time_utc=now_utc,
