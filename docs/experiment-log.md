@@ -747,3 +747,23 @@ Copy this section for each serious experiment:
 - Verification: PR #147 exact implementation head `c796c4988ebafb6d357b5a49de2d6ced928bd2a5` passed 993 tests plus workflow-YAML validation and compile checks in run `35759609550`; unchanged Phase 3 acceptance run `35759609484` passed.
 - Merge status: PR #147 merged DEC-055 to `main` at `559d8787daf014e64ba1b1d114f8384bed5ab84f`. The exact final PR head `660c92274e64f5a8786cf18e71d037bbaecc48ee` passed 993 tests plus workflow-YAML validation and compile checks in run `35759782638`; unchanged Phase 3 acceptance run `35759782621` passed.
 - Follow-up: a later separately frozen decision is required before any demo order adapter can be implemented or enabled. No real Phase 8B PASS or Phase 9 design artifact has been executed.
+
+
+### EXP-20260922-027 — Phase 9 locked demo-order protocol foundation
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE PROTOCOL VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-056 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: implement only the deterministic post-risk request, dry-run journal, reconciliation, and structurally locked adapter boundary required by DEC-055 before any future MT5 mutation transport exists.
+- Request source: exact existing Phase 3 `OrderIntent` values only; units and reserved risk are copied, never recomputed or widened.
+- Deterministic identity: `fmp-phase9-demo-order-request-v1` binds exact DEC-055 design/champion/strategy/decision/symbol/direction/units/stop-target/timing identity and derives `fmp9-<24 hex>` client order IDs.
+- Practice identity: provider, DEMO account fingerprint, server, and identity symbol mapping are copied from the exact DEC-055 design with no caller override surface.
+- Protective geometry: mandatory direction-aware stop and optional target are validated against a reference price that is not a fill and causes no broker action.
+- Dry-run evidence: `fmp-phase9-demo-dry-run-v1` validates the exact request while keeping submission, broker mutation, demo/live order, real-money, and Phase 10 flags false; writes are create-only.
+- Reconciliation: `fmp-phase9-demo-reconciliation-v1` normalizes caller-supplied fixtures only, replays duplicate/unknown/orphan/missing-stop diagnostics from the snapshot itself, and performs no broker read.
+- Adapter lock: `LockedDemoOrderAdapter` contains no broker/MT5 transport field; its only submission method validates the request then always raises `DemoExecutionLockedError`.
+- CLI scope: unchanged Phase 9 design-only CLI; no `run-demo`, `submit-order`, `order`, `trade`, broker, or mutation command.
+- Demo execution/order, live order, broker mutation, real-money trading, and Phase 10 authorized?: NO.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `97e8153ae7b8b00e0960ab95eba076dd027de982` passed 999 tests plus workflow-YAML validation and compile checks in run `35762091445`; unchanged Phase 3 acceptance run `35762091454` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is mandatory before any MT5 mutation transport can be implemented, wired, or enabled.

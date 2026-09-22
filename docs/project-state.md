@@ -372,10 +372,11 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-054 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, or demo trade has been executed;
-3. PR #147 merged DEC-055 / `EXP-20260922-026` to `main` at `559d8787daf014e64ba1b1d114f8384bed5ab84f`: separate source-only Phase 9 `design-demo`, exact terminal DEC-054 PASS/review byte binding, accepted MT5 demo identity preservation, unchanged Phase 3 risk policy, and frozen future order-bridge/protective-stop/reconciliation/idempotency controls; the exact final PR head `660c92274e64f5a8786cf18e71d037bbaecc48ee` passed 993 tests plus YAML/compile in run `35759782638` and unchanged Phase 3 acceptance run `35759782621` passed;
-4. DEC-055 may authorize future demo-adapter source implementation only; demo execution/order submission, broker mutation, real-money trading, Phase 10, and live execution remain locked.
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-055 are merged and verified on `main`;
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design artifact, or demo trade has been executed;
+3. DEC-056 / `EXP-20260922-027` is implemented on PR #148 source head `97e8153ae7b8b00e0960ab95eba076dd027de982`: deterministic post-risk demo request identities, exact accepted practice-account identity copying, mandatory protective-stop geometry, create-only dry-run evidence, replay-validated reconciliation snapshots, and a structurally locked adapter whose only `submit` path always raises;
+4. run `35762091445` passed 999 tests plus workflow-YAML validation and compile checks; unchanged Phase 3 acceptance run `35762091454` passed;
+5. demo execution/order submission, broker mutation, real-money trading, MT5 mutation transport, Phase 10, and live execution remain locked. A later separately frozen decision is required before any mutation transport can exist.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
