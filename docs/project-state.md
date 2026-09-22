@@ -357,18 +357,17 @@ Implementation progress:
 - PR #121 merged at `e9e7bd7dfa31b8a566cc299e8988856e21071d13`: deterministic strategy registry/lifecycle, immutable champion sets, multi-pair router, USD-direction exposure summaries, historical-inventory identity, explicit retrospective loader/evaluator, and DEC-039 documentation.
 - PR #122 merged at `63389442ab65cdd0e610fa76f6c93a47d23cc01f`: retrospective batch orchestration, deterministic artifacts, CLI, and manual 3-pair × 3-timeframe workflow over accepted Phase 2 artifacts.
 - PR #122 verified 819 tests PASS and unchanged Phase 3 acceptance PASS before merge.
-- DEC-040 is now the active implementation protocol for joint-account portfolio simulation.
+- DEC-040 is the active joint-account portfolio simulation protocol.
+- PR #123 merged at `b27ff8cb1e89471686b2bfe1107cd54d5e9101d9`: time-local conflict routing, explicit declared-earliest execution timing, canonical 1m execution-data role, and shared-account joint portfolio simulation.
+- PR #123 pre-merge verification: 828 tests PASS, compile PASS, unchanged Phase 3 acceptance PASS.
 
 Current milestone:
 
-1. correct same-symbol conflict routing to be signal-time-local;
-2. load canonical 1m execution bars without expanding strategy signal timeframes;
-3. generate signals on frozen 5m/15m/1h contracts;
-4. merge execution bars across EURUSD/GBPUSD/USDJPY;
-5. run all selected strategies through one shared Phase 3 account/risk state per cost scenario;
-6. report strategy/pair/timeframe contribution, candidate conflicts, risk rejections, daily-return distribution, and USD-direction diagnostics;
-7. keep all joint historical evidence retrospective/non-promotional;
-8. only after joint simulation is verified, predeclare a separate portfolio-selection protocol.
+1. package joint results in deterministic evidence bound to exact historical strategy fingerprints and their existing lifecycle/evidence records;
+2. expose manual `resolve` and `run` CLI commands for explicitly supplied strategy sets only;
+3. keep `promotion_authorized = false` and `historical_status_mutation_authorized = false` in every retrospective evidence envelope;
+4. verify evidence serialization is deterministic and UTC-safe;
+5. after this evidence layer is merged, predeclare a separate portfolio-selection protocol before any combinatorial search or winner selection.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 

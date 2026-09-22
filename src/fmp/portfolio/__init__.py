@@ -10,6 +10,13 @@ from .contracts import (
     StrategyRecord,
     StrategyVersion,
 )
+from .evidence import (
+    JOINT_EVIDENCE_ARTIFACT_PROTOCOL,
+    JOINT_EVIDENCE_PROTOCOL,
+    build_joint_evidence_envelope,
+    resolve_historical_strategy_records,
+    write_joint_evidence_artifacts,
+)
 from .historical_inventory import build_phase4_baseline_inventory
 from .joint_research import (
     JOINT_PORTFOLIO_PROTOCOL,
@@ -56,6 +63,8 @@ __all__ = [
     "CandidateRejection",
     "CandidateRejectionCode",
     "ChampionSet",
+    "JOINT_EVIDENCE_ARTIFACT_PROTOCOL",
+    "JOINT_EVIDENCE_PROTOCOL",
     "JOINT_PORTFOLIO_PROTOCOL",
     "LoadedRetrospectiveBars",
     "PortfolioCandidate",
@@ -68,12 +77,14 @@ __all__ = [
     "StrategyLifecycle",
     "StrategyRecord",
     "StrategyVersion",
+    "build_joint_evidence_envelope",
     "build_phase4_baseline_inventory",
     "build_strategy_config",
     "generate_strategy_candidates",
     "freeze_shadow_champion_set",
     "load_phase8a_retrospective_bars",
     "partition_direction_conflicts",
+    "resolve_historical_strategy_records",
     "route_shadow_candidates",
     "run_phase8a_joint_portfolio",
     "run_phase8a_retrospective_batch",
@@ -81,6 +92,7 @@ __all__ = [
     "select_historical_inventory",
     "summarize_candidate_exposure",
     "summarize_daily_returns",
+    "write_joint_evidence_artifacts",
     "write_phase8a_batch_artifacts",
     "transition_strategy",
 ]
