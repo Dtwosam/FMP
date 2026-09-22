@@ -607,3 +607,22 @@ Copy this section for each serious experiment:
 - Implementation status: the current DEC-048 branch adds deterministic registration/session revalidation, London start-date freezing, `TAIL_AT_EOF_NO_BACKFILL`, start-authorization fingerprinting, exactly-once artifacts, and the sole new CLI command `authorize-start`. The implementation contains no prospective capture loop.
 - Historical/live execution status: NOT RUN.
 - Follow-up: merge DEC-048 only after the final exact branch head passes the repository suite, compile checks, and unchanged Phase 3 acceptance. A later separately frozen capture/replay/acceptance protocol must independently revalidate DEC-048 evidence before any live-shadow segment can begin.
+
+
+### EXP-20260922-020 — Phase 8B prospective capture foundation
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE-FREE IMPLEMENTATION ONLY / NO LIVE-SHADOW SEGMENT
+- Protocol decision: DEC-049 APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+- Purpose: freeze and implement the exact source-free boundary between DEC-048 campaign-start authorization and a later live capture/replay/acceptance runtime.
+- Required inputs: one exact valid DEC-047 `fmp-phase8b-campaign-registration-v1` artifact plus one exact valid DEC-048 `fmp-phase8b-campaign-start-v1` artifact.
+- Upstream binding: exact registration/start-artifact SHA-256 values and semantic equality for champion set, strategies, symbols/timeframes, connector identity, fixed bridge files, account/server, bridge sessions, liveness, slippage, and all safety authorization flags.
+- Fresh-session gate: every required-symbol bridge is independently revalidated from a fresh EOF-tailing reader against the frozen registration/start identity.
+- Reader semantics: `TAIL_AT_EOF_NO_BACKFILL`.
+- New source-free artifact: `fmp-phase8b-capture-preflight-v1`, with deterministic fingerprint and `capture_runtime_ready = true` while `live_shadow_segment_started = false`.
+- Raw envelope: `fmp-phase8b-capture-record-v1` freezes deterministic post-preflight TICK/HEARTBEAT serialization with receive UTC/monotonic metadata and existing bridge-session duplicate/source-time/identity validation.
+- CLI scope: unchanged; no `capture`, `run`, `start`, `replay`, or `review` command.
+- Broker/demo/live/real-money/Phase 9 authorized?: NO.
+- Live execution status: NOT RUN.
+- Implementation status: PR #140 head `3058d2ae7ec914799acbe032d31a200bd118e255` adds DEC-049 docs, capture preflight/record-envelope APIs, exactly-once preflight artifacts, exports, and six focused contract tests. PR CI run `35745159288` passed 961 tests plus workflow-YAML validation and compile checks. Unchanged Phase 3 acceptance run `35745159404` passed.
+- Follow-up: merge only after the final branch head remains green. A later separately frozen runtime/replay/acceptance protocol is still required before any prospective Phase 8B segment may begin.
