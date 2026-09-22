@@ -1,0 +1,388 @@
+from __future__ import annotations
+
+import json
+import re
+from datetime import date
+from pathlib import Path
+from typing import Callable, Mapping
+
+from fmp.contracts import SUPPORTED_SYMBOLS
+from fmp.research.data import ELIGIBLE_TIMEFRAMES
+
+from .challengers import EXP013_ID, build_opening_range_momentum_challengers
+from .research_data import (
+    LoadedRetrospectiveBars,
+    PHASE8A_RETROSPECTIVE_LABEL,
+    RetrospectiveRange,
+    load_phase8a_retrospective_bars,
+)
+from .research_runner import (
+    SLIPPAGE_SCENARIOS,
+    Phase8ARetrospectivePlan,
+    run_phase8a_retrospective_strategy,
+)
+
+EXP013_STAGE_A_CELL_PROTOCOL = "fmp-phase8a-exp013-stage-a-cell-v1"
+EXP013_STAGE_A_GATE_PROTOCOL = "fmp-phase8a-exp013-stage-a-gate-v1"
+_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+
+_STAGE_A_RANGES = {
+    "development": RetrospectiveRange(
+        start=date(2015, 1, 1),
+        end_exclusive=date(2021, 1, 1),
+    ),
+    "validation": RetrospectiveRange(
+        start=date(2021, 1, 1),
+        end_exclusive=date(2024, 1, 1),
+    ),
+}
+
+
+def _stage_a_range(split_name: str) -> RetrospectiveRange:
+    try:
+        return _STAGE_A_RANGES[split_name]
+    except KeyError as exc:
+        raise ValueError(
+            "EXP-013 Stage A split_name must be 'development' or 'validation'"
+        ) from exc
+
+
+def _validate_loaded(
+    loaded: LoadedRetrospectiveBars,
+    *,
+    research_range: RetrospectiveRange,
+    symbol: str,
+) -> None:
+    if loaded.evidence_label != PHASE8A_RETROSPECTIVE_LABEL:
+        raise ValueError("EXP-013 Stage A source must be explicitly retrospective")
+    if loaded.start != research_range.start or loaded.end_exclusive != research_range.end_exclusive:
+        raise ValueError("EXP-013 loaded range does not match frozen Stage A split")
+    if not loaded.bars:
+        raise ValueError("EXP-013 Stage A requires at least one complete signal bar")
+    symbols = {item.symbol for item in loaded.bars}
+    if symbols != {symbol}:
+        raise ValueError("EXP-013 Stage A source bars do not match requested symbol")
+
+
+def run_exp013_stage_a_cell(
+    *,
+    dataset_root: Path,
+    manifest_path: Path,
+    symbol: str,
+    timeframe: str,
+    split_name: str,
+    code_commit: str,
+    bars_loader: Callable[..., LoadedRetrospectiveBars] = load_phase8a_retrospective_bars,
+    strategy_runner: Callable[..., Mapping[str, object]] = run_phase8a_retrospective_strategy,
+) -> dict[str, object]:
+    # Resolve and validate every protocol input before source I/O.
+    research_range = _stage_a_range(split_name)
+    if symbol not in SUPPORTED_SYMBOLS:
+        raise ValueError(f"unsupported EXP-013 symbol: {symbol!r}")
+    if timeframe not in ELIGIBLE_TIMEFRAMES:
+        raise ValueError(f"unsupported EXP-013 signal timeframe: {timeframe!r}")
+    if not _COMMIT_RE.fullmatch(code_commit):
+        raise ValueError("code_commit must be a 40-character lowercase hexadecimal SHA")
+
+    records = tuple(
+        item
+        for item in build_opening_range_momentum_challengers(code_commit=code_commit)
+        if item.strategy.symbol == symbol and item.strategy.timeframe == timeframe
+    )
+    if len(records) != 4:
+        raise RuntimeError("EXP-013 pair/timeframe cell must contain exactly four challengers")
+
+    loaded = bars_loader(
+        dataset_root=Path(dataset_root),
+        manifest_path=Path(manifest_path),
+        symbol=symbol,
+        timeframe=timeframe,
+        research_range=research_range,
+    )
+    _validate_loaded(loaded, research_range=research_range, symbol=symbol)
+
+    rows: list[dict[str, object]] = []
+    for record in sorted(records, key=lambda item: item.strategy.fingerprint):
+        expected_candidate_sha: str | None = None
+        for slippage_pips in SLIPPAGE_SCENARIOS:
+            plan = Phase8ARetrospectivePlan(
+                experiment_id=EXP013_ID,
+                strategy=record.strategy,
+                research_range=research_range,
+                slippage_pips=slippage_pips,
+                runner_code_commit=code_commit,
+            )
+            result = dict(
+                strategy_runner(
+                    plan=plan,
+                    dataset_root=Path(dataset_root),
+                    manifest_path=Path(manifest_path),
+                    bars_loader=lambda **_: loaded,
+                )
+            )
+            if result.get("strategy_fingerprint") != record.strategy.fingerprint:
+                raise ValueError("EXP-013 strategy runner returned the wrong strategy identity")
+            if result.get("processed_manifest_sha256") != loaded.processed_manifest_sha256:
+                raise ValueError("EXP-013 strategy runner returned the wrong manifest identity")
+            candidate_sha = result.get("candidate_sha256")
+            if not isinstance(candidate_sha, str) or not candidate_sha:
+                raise ValueError("EXP-013 strategy runner omitted candidate_sha256")
+            if expected_candidate_sha is None:
+                expected_candidate_sha = candidate_sha
+            elif candidate_sha != expected_candidate_sha:
+                raise ValueError(
+                    "EXP-013 candidate sequence changed across slippage scenarios"
+                )
+
+            metrics = result.get("metrics")
+            run_identity = result.get("run_identity")
+            if not isinstance(metrics, Mapping) or not isinstance(run_identity, Mapping):
+                raise ValueError("EXP-013 strategy runner returned malformed evidence")
+
+            rows.append(
+                {
+                    "strategy_fingerprint": record.strategy.fingerprint,
+                    "strategy_identity_json": record.strategy.identity_json,
+                    "family": record.strategy.family,
+                    "version": record.strategy.version,
+                    "parameters_json": record.strategy.parameters_json,
+                    "historical_lifecycle": record.lifecycle.value,
+                    "historical_evidence_id": record.evidence_id,
+                    "slippage_pips": slippage_pips,
+                    "candidate_sha256": candidate_sha,
+                    "run_identity": dict(run_identity),
+                    "metrics": dict(metrics),
+                }
+            )
+
+    return {
+        "protocol": EXP013_STAGE_A_CELL_PROTOCOL,
+        "experiment_id": EXP013_ID,
+        "evidence_label": PHASE8A_RETROSPECTIVE_LABEL,
+        "untouched_oos": False,
+        "promotion_authorized": False,
+        "historical_status_mutation_authorized": False,
+        "symbol": symbol,
+        "timeframe": timeframe,
+        "split_name": split_name,
+        "range_start": research_range.start.isoformat(),
+        "range_end_exclusive": research_range.end_exclusive.isoformat(),
+        "runner_code_commit": code_commit,
+        "processed_manifest_sha256": loaded.processed_manifest_sha256,
+        "opened_artifact_months": list(loaded.opened_artifact_months),
+        "strategy_identity_count": len(records),
+        "scenario_run_count": len(rows),
+        "slippage_scenarios": list(SLIPPAGE_SCENARIOS),
+        "rows": rows,
+    }
+
+
+def _validate_stage_a_cell(
+    value: Mapping[str, object],
+    *,
+    expected_split: str,
+) -> tuple[str, str, str, dict[str, dict[float, Mapping[str, object]]]]:
+    if value.get("protocol") != EXP013_STAGE_A_CELL_PROTOCOL:
+        raise ValueError("EXP-013 Stage A cell protocol mismatch")
+    if value.get("experiment_id") != EXP013_ID:
+        raise ValueError("EXP-013 experiment identity mismatch")
+    if value.get("evidence_label") != PHASE8A_RETROSPECTIVE_LABEL:
+        raise ValueError("EXP-013 Stage A cell is not retrospective")
+    if value.get("untouched_oos") is not False:
+        raise ValueError("EXP-013 Stage A cannot be marked untouched OOS")
+    if value.get("promotion_authorized") is not False:
+        raise ValueError("EXP-013 Stage A cell cannot authorize promotion")
+    if value.get("split_name") != expected_split:
+        raise ValueError(f"expected EXP-013 {expected_split} cell")
+
+    symbol = value.get("symbol")
+    timeframe = value.get("timeframe")
+    code_commit = value.get("runner_code_commit")
+    if not isinstance(symbol, str) or symbol not in SUPPORTED_SYMBOLS:
+        raise ValueError("invalid EXP-013 Stage A symbol")
+    if not isinstance(timeframe, str) or timeframe not in ELIGIBLE_TIMEFRAMES:
+        raise ValueError("invalid EXP-013 Stage A timeframe")
+    if not isinstance(code_commit, str) or not _COMMIT_RE.fullmatch(code_commit):
+        raise ValueError("invalid EXP-013 Stage A runner commit")
+
+    raw_rows = value.get("rows")
+    if not isinstance(raw_rows, list):
+        raise ValueError("EXP-013 Stage A rows must be a list")
+
+    indexed: dict[str, dict[float, Mapping[str, object]]] = {}
+    parameter_identity: dict[str, str] = {}
+    for row in raw_rows:
+        if not isinstance(row, Mapping):
+            raise ValueError("EXP-013 Stage A row must be an object")
+        fingerprint = row.get("strategy_fingerprint")
+        params = row.get("parameters_json")
+        slippage = row.get("slippage_pips")
+        if not isinstance(fingerprint, str) or not fingerprint:
+            raise ValueError("EXP-013 row strategy fingerprint is missing")
+        if not isinstance(params, str):
+            raise ValueError("EXP-013 row parameters_json is missing")
+        if not isinstance(slippage, (int, float)) or isinstance(slippage, bool):
+            raise ValueError("EXP-013 row slippage is invalid")
+        slippage_value = float(slippage)
+        if slippage_value not in SLIPPAGE_SCENARIOS:
+            raise ValueError("EXP-013 row has unsupported slippage")
+        if fingerprint in parameter_identity and parameter_identity[fingerprint] != params:
+            raise ValueError("EXP-013 strategy parameters changed within cell")
+        parameter_identity[fingerprint] = params
+        bucket = indexed.setdefault(fingerprint, {})
+        if slippage_value in bucket:
+            raise ValueError("duplicate EXP-013 strategy/slippage row")
+        bucket[slippage_value] = row
+
+    if len(indexed) != 4:
+        raise ValueError("EXP-013 Stage A cell must contain exactly four strategies")
+    if any(set(rows) != set(SLIPPAGE_SCENARIOS) for rows in indexed.values()):
+        raise ValueError("EXP-013 Stage A strategy is missing a slippage scenario")
+    return symbol, timeframe, code_commit, indexed
+
+
+def _mandatory_metrics_pass(row: Mapping[str, object]) -> bool:
+    metrics = row.get("metrics")
+    if not isinstance(metrics, Mapping):
+        raise ValueError("EXP-013 row metrics are missing")
+    phase3 = metrics.get("phase3_metrics")
+    if not isinstance(phase3, Mapping):
+        raise ValueError("EXP-013 phase3_metrics are missing")
+
+    net_return = phase3.get("net_return")
+    expectancy = phase3.get("expectancy_usd")
+    profit_factor = phase3.get("profit_factor")
+    max_drawdown = phase3.get("max_drawdown_fraction")
+    values = (net_return, expectancy, profit_factor, max_drawdown)
+    if any(isinstance(item, bool) or not isinstance(item, (int, float)) for item in values):
+        return False
+    return (
+        float(net_return) > 0.0
+        and float(expectancy) > 0.0
+        and float(profit_factor) > 1.0
+        and float(max_drawdown) <= 0.05
+    )
+
+
+def _trade_count(row: Mapping[str, object]) -> int:
+    metrics = row.get("metrics")
+    if not isinstance(metrics, Mapping):
+        raise ValueError("EXP-013 row metrics are missing")
+    value = metrics.get("trade_count")
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError("EXP-013 trade_count must be a non-negative integer")
+    return value
+
+
+def _parameters(row: Mapping[str, object]) -> dict[str, float]:
+    raw = row.get("parameters_json")
+    if not isinstance(raw, str):
+        raise ValueError("EXP-013 row parameters_json is missing")
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError("EXP-013 parameters_json is malformed") from exc
+    expected = {"body_fraction_threshold", "target_r_multiple"}
+    if not isinstance(value, dict) or set(value) != expected:
+        raise ValueError("EXP-013 parameters do not match frozen grid")
+    body = value["body_fraction_threshold"]
+    target = value["target_r_multiple"]
+    if body not in (0.5, 0.7) or target not in (1.0, 1.5):
+        raise ValueError("EXP-013 parameters are outside the frozen grid")
+    return {
+        "body_fraction_threshold": float(body),
+        "target_r_multiple": float(target),
+    }
+
+
+def _are_neighbors(left: Mapping[str, float], right: Mapping[str, float]) -> bool:
+    body_diff = left["body_fraction_threshold"] != right["body_fraction_threshold"]
+    target_diff = left["target_r_multiple"] != right["target_r_multiple"]
+    return body_diff ^ target_diff
+
+
+def evaluate_exp013_stage_a_cell_pair(
+    *,
+    development: Mapping[str, object],
+    validation: Mapping[str, object],
+) -> dict[str, object]:
+    dev_symbol, dev_timeframe, dev_commit, dev_rows = _validate_stage_a_cell(
+        development,
+        expected_split="development",
+    )
+    val_symbol, val_timeframe, val_commit, val_rows = _validate_stage_a_cell(
+        validation,
+        expected_split="validation",
+    )
+    if (dev_symbol, dev_timeframe, dev_commit) != (
+        val_symbol,
+        val_timeframe,
+        val_commit,
+    ):
+        raise ValueError("EXP-013 development/validation cell identity mismatch")
+    if set(dev_rows) != set(val_rows):
+        raise ValueError("EXP-013 development/validation strategy identities differ")
+
+    core_pass: dict[str, bool] = {}
+    sample_pass: dict[str, bool] = {}
+    params: dict[str, dict[str, float]] = {}
+
+    for fingerprint in sorted(dev_rows):
+        for slippage in SLIPPAGE_SCENARIOS:
+            if (
+                dev_rows[fingerprint][slippage].get("parameters_json")
+                != val_rows[fingerprint][slippage].get("parameters_json")
+            ):
+                raise ValueError("EXP-013 parameters changed across Stage A splits")
+        params[fingerprint] = _parameters(dev_rows[fingerprint][0.2])
+
+        mandatory_rows = (
+            dev_rows[fingerprint][0.2],
+            dev_rows[fingerprint][0.5],
+            val_rows[fingerprint][0.2],
+            val_rows[fingerprint][0.5],
+        )
+        core_pass[fingerprint] = all(
+            _mandatory_metrics_pass(row) for row in mandatory_rows
+        )
+        sample_pass[fingerprint] = (
+            _trade_count(dev_rows[fingerprint][0.2]) >= 100
+            and _trade_count(val_rows[fingerprint][0.2]) >= 50
+        )
+
+    config_gates: dict[str, dict[str, object]] = {}
+    survivors: list[str] = []
+    for fingerprint in sorted(dev_rows):
+        passing_neighbors = [
+            other
+            for other in sorted(dev_rows)
+            if other != fingerprint
+            and core_pass[other]
+            and _are_neighbors(params[fingerprint], params[other])
+        ]
+        neighbor_pass = bool(passing_neighbors)
+        survivor = core_pass[fingerprint] and sample_pass[fingerprint] and neighbor_pass
+        if survivor:
+            survivors.append(fingerprint)
+        config_gates[fingerprint] = {
+            "parameters": params[fingerprint],
+            "mandatory_profitability_drawdown_pass": core_pass[fingerprint],
+            "sample_pass": sample_pass[fingerprint],
+            "neighbor_pass": neighbor_pass,
+            "passing_neighbor_fingerprints": passing_neighbors,
+            "stage_a_survivor": survivor,
+        }
+
+    return {
+        "protocol": EXP013_STAGE_A_GATE_PROTOCOL,
+        "experiment_id": EXP013_ID,
+        "evidence_label": PHASE8A_RETROSPECTIVE_LABEL,
+        "untouched_oos": False,
+        "promotion_authorized": False,
+        "historical_status_mutation_authorized": False,
+        "symbol": dev_symbol,
+        "timeframe": dev_timeframe,
+        "runner_code_commit": dev_commit,
+        "survivor_fingerprints": survivors,
+        "config_gates": config_gates,
+    }
