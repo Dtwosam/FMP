@@ -569,4 +569,5 @@ Copy this section for each serious experiment:
 - Campaign start authorized?: NO.
 - Demo/live/broker mutation/real-money/Phase 9 authorized?: NO.
 - Historical/live run status: NOT RUN.
-- Follow-up: implement deterministic design compiler/artifact/CLI/workflow, then separately freeze Phase 8B multi-symbol connector qualification/registration before any campaign launch.
+- Implementation status: current `phase8b/design-contract` branch contains the deterministic design compiler/validator/artifact writer, source-free CLI, guarded main-only manual workflow, and tests that derive the exact symbol/file topology from an accepted DEC-045 champion set while keeping campaign/order authorizations false.
+- Follow-up: source-free verify/merge DEC-046 design implementation, then separately freeze and implement multi-symbol MT5 bridge qualification/registration before any Phase 8B campaign can start.
