@@ -30,6 +30,7 @@ from fmp.portfolio.selection_runner import (
 
 RUNNER_COMMIT = "f" * 40
 EXP015_COMMIT = "a" * 40
+ACCEPTANCE_COMMIT = "9" * 40
 
 
 def _stable_bytes(value: object) -> bytes:
@@ -314,6 +315,7 @@ class Phase8AAcceptanceReviewTests(unittest.TestCase):
             preflight_sha256=preflight_sha,
             selection=selection,
             selection_sha256=selection_sha,
+            code_commit=ACCEPTANCE_COMMIT,
         )
         self.assertEqual(
             result["outcome"],
@@ -357,6 +359,7 @@ class Phase8AAcceptanceReviewTests(unittest.TestCase):
             preflight_sha256=preflight_sha,
             selection=selection,
             selection_sha256=selection_sha,
+            code_commit=ACCEPTANCE_COMMIT,
         )
         self.assertEqual(result["outcome"], PHASE8A_RESEARCH_REJECTED)
         self.assertEqual(
@@ -380,6 +383,7 @@ class Phase8AAcceptanceReviewTests(unittest.TestCase):
             preflight_sha256=preflight_sha,
             selection=selection,
             selection_sha256=selection_sha,
+            code_commit=ACCEPTANCE_COMMIT,
         )
         self.assertEqual(result["outcome"], PHASE8A_RESEARCH_REJECTED)
         self.assertEqual(
@@ -403,6 +407,7 @@ class Phase8AAcceptanceReviewTests(unittest.TestCase):
                 preflight_sha256=preflight_sha,
                 selection=tampered,
                 selection_sha256=selection_sha,
+                code_commit=ACCEPTANCE_COMMIT,
             )
 
     def test_tampered_preflight_digest_fails_closed(self) -> None:
@@ -416,6 +421,7 @@ class Phase8AAcceptanceReviewTests(unittest.TestCase):
                 preflight_sha256="9" * 64,
                 selection=selection,
                 selection_sha256=selection_sha,
+                code_commit=ACCEPTANCE_COMMIT,
             )
 
     def test_acceptance_artifact_is_deterministic(self) -> None:
@@ -430,6 +436,7 @@ class Phase8AAcceptanceReviewTests(unittest.TestCase):
             preflight_sha256=preflight_sha,
             selection=selection,
             selection_sha256=selection_sha,
+            code_commit=ACCEPTANCE_COMMIT,
         )
         with TemporaryDirectory() as left_tmp, TemporaryDirectory() as right_tmp:
             left = Path(left_tmp)
