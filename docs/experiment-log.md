@@ -672,7 +672,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-023 — Phase 8B prospective capture segment journal
 
 - Date: 2026-09-22
-- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO LIVE SEGMENT CAPTURED
+- Status: ACTIVE — SOURCE IMPLEMENTATION MERGED / NO LIVE SEGMENT CAPTURED
 - Protocol decision: DEC-052 APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
 - Purpose: add the first explicit bounded operator-invoked quote-only capture surface while preserving fixed bridge identity, EOF/no-backfill semantics, deterministic DEC-050 processing/replay, and all order-path locks.
 - CLI scope: adds only `capture-segment --campaign-dir <path> --duration-seconds <1..86400>`; polling remains fixed at 0.10 seconds; generic run/start/review/campaign-close commands remain absent.
@@ -683,5 +683,5 @@ Copy this section for each serious experiment:
 - Broker/demo/live/real-money/Phase 9 authorized?: NO.
 - Acceptance/promotion authorized?: NO.
 - Live execution status: NOT RUN.
-- Implementation status: PR #144 head `a949e57eeed58a3f96dc3b59932ce8b2e91127ac` adds the DEC-052 journal/runtime module, public API exports, CLI command, and focused prospective-capture/CLI boundary tests. PR tests run `35751759857` passed 977 tests plus workflow-YAML validation and compile checks; unchanged Phase 3 acceptance run `35751759911` passed.
-- Follow-up: merge only after the exact final branch head remains green. A later separately frozen campaign-close protocol must aggregate clean replay-matching prospective segments and create the exact DEC-051 campaign-evidence artifact.
+- Implementation status: PR #144 merged DEC-052 to `main` at `8d28dc3dfdc1bb41112034f7b1a91fd54ad55e46`. The exact final PR head `0d61fcb6f678a8c76cef78b6ab93df5485abe791` passed 977 tests plus workflow-YAML validation and compile checks in run `35751972199`; unchanged Phase 3 acceptance run `35751972226` passed.
+- Follow-up: separately freeze and implement the multi-segment campaign-close protocol before DEC-051 acceptance can consume real prospective evidence.
