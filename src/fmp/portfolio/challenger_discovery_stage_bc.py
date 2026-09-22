@@ -536,6 +536,7 @@ def _index_and_validate_stage_rows(
     minimum_trades: int,
     stage_name: str,
     runner_code_commit: str,
+    manifest_by_symbol: Mapping[str, object],
 ) -> tuple[dict[str, dict[float, Mapping[str, object]]], list[str]]:
     raw_rows = result.get("rows")
     if not isinstance(raw_rows, list) or len(raw_rows) != len(records) * 3:
@@ -568,6 +569,10 @@ def _index_and_validate_stage_rows(
             raw.get("processed_manifest_sha256"),
             field=f"EXP-015 {stage_name} row manifest digest",
         )
+        if manifest_by_symbol.get(strategy.symbol) != manifest_sha:
+            raise ValueError(
+                f"EXP-015 {stage_name} row/top-level manifest mismatch"
+            )
         run_identity = raw.get("run_identity")
         if not isinstance(run_identity, Mapping):
             raise ValueError(f"EXP-015 {stage_name} run identity is malformed")
@@ -665,6 +670,7 @@ def _validate_stage_b_result(
         minimum_trades=40,
         stage_name="Stage B",
         runner_code_commit=str(stage_b["stage_b_runner_code_commit"]),
+        manifest_by_symbol=raw_manifests,
     )
     if stage_b.get("stage_b_pass_count") != len(passers):
         raise ValueError("EXP-015 Stage B pass count mismatch")
@@ -850,6 +856,7 @@ def _validate_stage_c_result(
         minimum_trades=30,
         stage_name="Stage C",
         runner_code_commit=str(stage_c["stage_c_runner_code_commit"]),
+        manifest_by_symbol=raw_manifests,
     )
     if stage_c.get("stage_c_pass_count") != len(passers):
         raise ValueError("EXP-015 Stage C pass count mismatch")
