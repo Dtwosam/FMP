@@ -4,7 +4,8 @@
 
 This workflow is **read-only**. It uses the FP Markets MT5 DEMO account only to
 export quote/heartbeat records through the repository's Phase 8B FILE_COMMON
-bridge. It never places an order and never authorizes broker mutation.
+bridge. It never places an order and never authorizes broker mutation. It does
+not authorize a demo order, live order, broker mutation, or real-money action.
 
 Keep **AutoTrading OFF** throughout Phase 8B.
 
