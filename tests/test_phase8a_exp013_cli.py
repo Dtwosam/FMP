@@ -11,6 +11,7 @@ from fmp.portfolio.exp013_cli import main
 
 
 COMMIT = "a" * 40
+SOURCE_SHA = "f" * 64
 
 
 def _cell_payload(symbol: str, timeframe: str, split_name: str) -> dict[str, object]:
@@ -27,6 +28,7 @@ def _cell_payload(symbol: str, timeframe: str, split_name: str) -> dict[str, obj
         "range_start": "2015-01-01" if split_name == "development" else "2021-01-01",
         "range_end_exclusive": "2021-01-01" if split_name == "development" else "2024-01-01",
         "runner_code_commit": COMMIT,
+        "strategy_source_sha256": SOURCE_SHA,
         "processed_manifest_sha256": "e" * 64,
         "opened_artifact_months": [],
         "strategy_identity_count": 4,
@@ -52,6 +54,7 @@ def _gate(symbol: str, timeframe: str) -> dict[str, object]:
         "symbol": symbol,
         "timeframe": timeframe,
         "runner_code_commit": COMMIT,
+        "strategy_source_sha256": SOURCE_SHA,
         "survivor_fingerprints": [],
         "config_gates": {
             fingerprint: {
