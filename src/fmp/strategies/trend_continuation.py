@@ -12,7 +12,8 @@ from fmp.strategies.contracts import SignalCandidate
 LONDON = ZoneInfo("Europe/London")
 _TIMEFRAME_MINUTES = {"5m": 5, "15m": 15, "1h": 60}
 _TREND_WINDOWS = {"A": (2, 8), "B": (4, 16), "C": (8, 32)}
-_ALLOWED_TARGET_R = frozenset({1.0, 1.5})
+_PHASE4_TARGET_R = frozenset({1.0, 1.5})
+_EXP015_TARGET_R = frozenset({0.75, 1.25, 1.75, 2.0})
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,12 +21,19 @@ class TrendContinuationConfig:
     trend_window_id: str
     target_r_multiple: float
     timeframe: str
+    parameter_region: str = "phase4"
 
     def __post_init__(self) -> None:
         if self.trend_window_id not in _TREND_WINDOWS:
             raise ValueError("trend_window_id must be one of A, B, or C")
-        if self.target_r_multiple not in _ALLOWED_TARGET_R:
-            raise ValueError("target_r_multiple must be one of 1.0 or 1.5")
+        if self.parameter_region == "phase4":
+            targets = _PHASE4_TARGET_R
+        elif self.parameter_region == "exp015":
+            targets = _EXP015_TARGET_R
+        else:
+            raise ValueError("unsupported trend-continuation parameter_region")
+        if self.target_r_multiple not in targets:
+            raise ValueError("target_r_multiple is outside the selected parameter region")
         if self.timeframe not in _TIMEFRAME_MINUTES:
             raise ValueError("timeframe must be one of 5m, 15m, or 1h")
 
