@@ -926,3 +926,17 @@ The command may parse and revalidate exact local artifacts and write the create-
 DEC-061 may not import or instantiate MetaTrader5 or a broker mutation backend and may not run order_check/order_send. DEC-058 `DEMO_EXECUTION_SOURCE_ARMED` remains false.
 
 Successful materialization proves only that an exact future arm artifact can be constructed offline. Demo execution/order submission, broker mutation, live orders, real money, and Phase 10 remain locked. A later separately approved decision is required before an arm may become runtime authority or any broker-connected execution command may exist.
+
+
+## DEC-062 — Phase 9 demo runtime arm authority contract
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-demo-runtime-authority.md` opens `EXP-20260922-033` for source-only runtime acceptance of one exact DEC-060/061 materialized execution arm.
+
+DEC-062 revalidates exact DEC-055 design, DEC-056 request, DEC-059 session arm/readiness, DEC-060 execution arm, current UTC inside the unchanged arm window, daily-halt inactive, valid DEC-059 journal identity, and zero prior `SEND_ATTEMPTED` events.
+
+A successful runtime-authority record may set only `demo_runtime_arm_authority_ready=true`. DEC-058 `DEMO_EXECUTION_SOURCE_ARMED` remains false and every demo/live order, broker-mutation, real-money, and Phase-10 authorization flag remains false.
+
+DEC-062 adds no broker-connected or order-capable CLI and performs no MT5/broker access. A later separately approved decision is mandatory before the source execution gate may change or a broker-connected runner may consume runtime-authority evidence.
