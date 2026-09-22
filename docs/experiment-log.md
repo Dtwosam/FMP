@@ -733,7 +733,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-026 — Phase 9 demo design proposal
 
 - Date: 2026-09-22
-- Status: ACTIVE — SOURCE DESIGN VERIFIED / NO DEMO ORDER
+- Status: ACTIVE — SOURCE DESIGN MERGED / NO DEMO ORDER
 - Protocol decision: DEC-055 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
 - Purpose: freeze a source-only Phase 9 demo architecture from one exact terminal DEC-054 PASS review while preserving accepted Phase 8B champion/account/server/symbol identity and unchanged Phase 3 risk policy.
 - Input boundary: exact DEC-049 preflight, exact terminal DEC-054 PASS review/acceptance/shadow-validation bytes, and exact campaign-terminal marker.
@@ -745,4 +745,5 @@ Copy this section for each serious experiment:
 - Authorization: `demo_adapter_source_authorized=true` only. Demo execution/order, live order, broker mutation, real-money trading, and Phase 10 remain false.
 - Live/demo execution status: NOT RUN.
 - Verification: PR #147 exact implementation head `c796c4988ebafb6d357b5a49de2d6ced928bd2a5` passed 993 tests plus workflow-YAML validation and compile checks in run `35759609550`; unchanged Phase 3 acceptance run `35759609484` passed.
-- Follow-up: merge only after the exact bookkeeping head remains green. A later separately frozen decision is required before any demo order adapter can be implemented or enabled.
+- Merge status: PR #147 merged DEC-055 to `main` at `559d8787daf014e64ba1b1d114f8384bed5ab84f`. The exact final PR head `660c92274e64f5a8786cf18e71d037bbaecc48ee` passed 993 tests plus workflow-YAML validation and compile checks in run `35759782638`; unchanged Phase 3 acceptance run `35759782621` passed.
+- Follow-up: a later separately frozen decision is required before any demo order adapter can be implemented or enabled. No real Phase 8B PASS or Phase 9 design artifact has been executed.
