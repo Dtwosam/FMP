@@ -964,6 +964,23 @@ def _campaign_evidence(
 ) -> dict[str, object]:
     if replay.get("match") is not True:
         raise ValueError("Phase 8B aggregate replay mismatch")
+    scenarios_for_terminal = aggregate.get("scenarios")
+    if not isinstance(scenarios_for_terminal, Mapping):
+        raise ValueError("Phase 8B aggregate scenarios are malformed")
+    for key in ("0.2", "0.5", "1.0"):
+        row = scenarios_for_terminal.get(key)
+        if not isinstance(row, Mapping):
+            raise ValueError(f"Phase 8B aggregate scenario {key} is malformed")
+        open_ids = row.get("open_decision_ids")
+        pending_ids = row.get("pending_decision_ids")
+        if not isinstance(open_ids, list) or not isinstance(pending_ids, list):
+            raise ValueError(
+                f"Phase 8B aggregate scenario {key} terminal state is malformed"
+            )
+        if open_ids or pending_ids:
+            raise ValueError(
+                "Phase 8B campaign closure requires zero open and pending decisions"
+            )
     first, last = _received_bounds(bundles)
     denominator = _denominator_dates(first, last)
     complete = _complete_dates(denominator, _segment_intervals(bundles))
