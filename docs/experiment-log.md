@@ -768,3 +768,23 @@ Copy this section for each serious experiment:
 - Verification: exact source head `97e8153ae7b8b00e0960ab95eba076dd027de982` passed 999 tests plus workflow-YAML validation and compile checks in run `35762091445`; unchanged Phase 3 acceptance run `35762091454` passed.
 - Merge status: PR #148 merged DEC-056 to `main` at `c069e33fec82fc1e516120ee23923955f054bf89`. The exact final PR head `b3cfb9e1e2d2f0a3306a026566ad4b25df55a99b` passed 999 tests plus workflow-YAML validation and compile checks in run `35762297677`; unchanged Phase 3 acceptance run `35762297505` passed. Post-merge `main` runs `35762518616` and `35762518646` also passed.
 - Follow-up: a later separately frozen decision is mandatory before any MT5 mutation transport can be implemented, wired, or enabled. No real Phase 8B PASS, Phase 9 design artifact, demo order, or broker mutation has been executed.
+
+
+### EXP-20260922-028 — Phase 9 MT5 demo preflight and order-check foundation
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-057 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: add only the MT5-specific practice-account, symbol-contract, current-quote, exact volume translation, protective-stop validation, and non-mutating order-check layer required before any future broker mutation transport exists.
+- Input boundary: exact DEC-055 demo design plus exact DEC-056 post-risk demo-order request.
+- Backend boundary: `MT5DemoCheckBackend` exposes account/symbol/tick snapshots and `order_check` only; it exposes no `order_send`, submit, modify, cancel, or close-position method.
+- Practice identity: exact accepted DEMO account fingerprint and server are asserted; no caller override surface exists.
+- Volume: Phase 3/DEC-056 units remain authoritative and are translated by exact `units / trade_contract_size`; non-representable broker volume-grid requests fail closed rather than being resized or rounded.
+- Market/stop validation: BUY uses current ask, SELL uses current bid; broker price grid and minimum stop-distance constraints are checked without widening/removing stops or targets.
+- Order-check semantics: deterministic `fmp-phase9-mt5-demo-order-check-request-v1`, fixed GTC, broker filling mode, check-only deviation 0, and only normalized MT5 `retcode=0` is check-passed.
+- Preflight evidence: successful source-only checks produce `fmp-phase9-mt5-demo-preflight-v1` with all execution/order/mutation/real-money/Phase-10 flags false; writes are create-only.
+- CLI scope: unchanged Phase 9 design-only CLI; no broker-connected or order-capable command was added.
+- Demo execution/order, live order, broker mutation, real-money trading, and Phase 10 authorized?: NO.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `19a6ad3f653b053d6c32e2f6e95dd05c999bddb1` passed 1005 tests plus workflow-YAML validation and compile checks in run `35766703078`; unchanged Phase 3 acceptance run `35766703266` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before any backend containing `order_send` or any broker mutation method can exist.
