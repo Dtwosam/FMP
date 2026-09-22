@@ -4,6 +4,11 @@ from .challenger_round1 import (
     evaluate_exp013_stage_a_cell_pair,
     run_exp013_stage_a_cell,
 )
+from .challenger_discovery import (
+    EXP015_ID,
+    EXP015_STRATEGY_VERSION,
+    build_exp015_challengers,
+)
 from .challengers import (
     EXP013_ID,
     OPENING_RANGE_MOMENTUM_SIGNAL_CONTRACT,
@@ -92,6 +97,8 @@ __all__ = [
     "PHASE8A_RETROSPECTIVE_START",
     "CandidateRejection",
     "CandidateRejectionCode",
+    "EXP015_ID",
+    "EXP015_STRATEGY_VERSION",
     "ChampionSet",
     "JOINT_EVIDENCE_ARTIFACT_PROTOCOL",
     "JOINT_EVIDENCE_PROTOCOL",
@@ -116,6 +123,7 @@ __all__ = [
     "annualized_compounded_return",
     "build_joint_evidence_envelope",
     "build_opening_range_momentum_challengers",
+    "build_exp015_challengers",
     "build_phase4_baseline_inventory",
     "build_strategy_config",
     "generate_strategy_candidates",
