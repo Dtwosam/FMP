@@ -21,6 +21,10 @@ from fmp.strategies.mean_reversion import (
     MeanReversionConfig,
     generate_mean_reversion_candidates,
 )
+from fmp.strategies.opening_range_momentum import (
+    OpeningRangeMomentumConfig,
+    generate_opening_range_momentum_candidates,
+)
 from fmp.strategies.previous_day_rejection import (
     PreviousDayRejectionConfig,
     generate_previous_day_rejection_candidates,
@@ -60,6 +64,7 @@ _EXPECTED_PARAMETERS = {
     "session_breakout": frozenset({"buffer_pips", "target_range_multiple"}),
     "trend_continuation": frozenset({"trend_window_id", "target_r_multiple"}),
     "mean_reversion": frozenset({"lookback_hours", "threshold_sigma"}),
+    "opening_range_momentum": frozenset({"body_fraction_threshold", "target_r_multiple"}),
     "previous_day_rejection": frozenset({"buffer_pips"}),
     "volatility_breakout": frozenset({"range_multiplier"}),
     "session_sweep_rejection": frozenset({"buffer_pips"}),
@@ -124,6 +129,8 @@ def build_strategy_config(strategy: StrategyVersion) -> object:
             return TrendContinuationConfig(timeframe=strategy.timeframe, **params)
         if strategy.family == "mean_reversion":
             return MeanReversionConfig(timeframe=strategy.timeframe, **params)
+        if strategy.family == "opening_range_momentum":
+            return OpeningRangeMomentumConfig(timeframe=strategy.timeframe, **params)
         if strategy.family == "previous_day_rejection":
             return PreviousDayRejectionConfig(timeframe=strategy.timeframe, **params)
         if strategy.family == "volatility_breakout":
@@ -146,6 +153,8 @@ def generate_strategy_candidates(
         return tuple(generate_trend_continuation_candidates(bars, config=config))
     if strategy.family == "mean_reversion":
         return tuple(generate_mean_reversion_candidates(bars, config=config))
+    if strategy.family == "opening_range_momentum":
+        return tuple(generate_opening_range_momentum_candidates(bars, config=config))
     if strategy.family == "previous_day_rejection":
         return tuple(generate_previous_day_rejection_candidates(bars, config=config))
     if strategy.family == "volatility_breakout":

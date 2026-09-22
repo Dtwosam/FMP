@@ -16,6 +16,7 @@ from fmp.portfolio.research_runner import (
     summarize_daily_returns,
 )
 from fmp.strategies.mean_reversion import MeanReversionConfig
+from fmp.strategies.opening_range_momentum import OpeningRangeMomentumConfig
 from fmp.strategies.session_breakout import SessionBreakoutConfig
 from fmp.strategies.trend_continuation import TrendContinuationConfig
 from fmp.strategies.volatility_breakout import VolatilityBreakoutConfig
@@ -135,6 +136,17 @@ class Phase8ARetrospectiveRunnerTests(unittest.TestCase):
         )
         self.assertIsInstance(vol, VolatilityBreakoutConfig)
 
+        opening = build_strategy_config(
+            _version(
+                "opening_range_momentum",
+                parameters={
+                    "body_fraction_threshold": 0.70,
+                    "target_r_multiple": 1.5,
+                },
+            )
+        )
+        self.assertIsInstance(opening, OpeningRangeMomentumConfig)
+
         with self.assertRaises(ValueError):
             build_strategy_config(
                 _version(
@@ -146,6 +158,17 @@ class Phase8ARetrospectiveRunnerTests(unittest.TestCase):
                     },
                 )
             )
+        with self.assertRaises(ValueError):
+            build_strategy_config(
+                _version(
+                    "opening_range_momentum",
+                    parameters={
+                        "body_fraction_threshold": 0.60,
+                        "target_r_multiple": 1.5,
+                    },
+                )
+            )
+
         with self.assertRaises(ValueError):
             build_strategy_config(
                 _version("unknown_family", parameters={"x": 1})

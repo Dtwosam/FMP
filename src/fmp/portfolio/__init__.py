@@ -1,3 +1,15 @@
+from .challenger_round1 import (
+    EXP013_STAGE_A_CELL_PROTOCOL,
+    EXP013_STAGE_A_GATE_PROTOCOL,
+    evaluate_exp013_stage_a_cell_pair,
+    run_exp013_stage_a_cell,
+)
+from .challengers import (
+    EXP013_ID,
+    OPENING_RANGE_MOMENTUM_SIGNAL_CONTRACT,
+    OPENING_RANGE_MOMENTUM_VERSION,
+    build_opening_range_momentum_challengers,
+)
 from .contracts import (
     PHASE8A_EXPERIMENT_ID,
     CandidateRejection,
@@ -54,6 +66,11 @@ from .router import (
 )
 
 __all__ = [
+    "EXP013_ID",
+    "EXP013_STAGE_A_CELL_PROTOCOL",
+    "EXP013_STAGE_A_GATE_PROTOCOL",
+    "OPENING_RANGE_MOMENTUM_SIGNAL_CONTRACT",
+    "OPENING_RANGE_MOMENTUM_VERSION",
     "PHASE8A_BATCH_ARTIFACT_PROTOCOL",
     "PHASE8A_BATCH_PROTOCOL",
     "PHASE8A_EXPERIMENT_ID",
@@ -78,14 +95,17 @@ __all__ = [
     "StrategyRecord",
     "StrategyVersion",
     "build_joint_evidence_envelope",
+    "build_opening_range_momentum_challengers",
     "build_phase4_baseline_inventory",
     "build_strategy_config",
     "generate_strategy_candidates",
+    "evaluate_exp013_stage_a_cell_pair",
     "freeze_shadow_champion_set",
     "load_phase8a_retrospective_bars",
     "partition_direction_conflicts",
     "resolve_historical_strategy_records",
     "route_shadow_candidates",
+    "run_exp013_stage_a_cell",
     "run_phase8a_joint_portfolio",
     "run_phase8a_retrospective_batch",
     "run_phase8a_retrospective_strategy",

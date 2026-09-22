@@ -560,3 +560,34 @@ Frozen joint-simulation rules:
 DEC-040 intentionally does not define a combination-search or portfolio-selection algorithm. A later predeclared selection protocol is required before joint historical results can choose a Phase 8B shadow-candidate portfolio. Retired strategies remain retired unless a separate new challenger experiment creates a genuinely new immutable strategy version.
 
 Consequences: Phase 8A remains ACTIVE under `EXP-20260922-012`. The next implementation milestone is time-local conflict routing, canonical 1m execution loading, deterministic candidate assembly, and shared-account joint backtesting. Phase 8B, Phase 9, broker mutation, demo orders, live orders, and real-money trading remain LOCKED.
+
+
+## DEC-041 — Phase 8A opening-range momentum challenger round 1
+
+**Date:** 2026-09-22
+**Status:** APPROVED / PREDECLARED BEFORE BENCHMARK RESULTS
+
+The approved `docs/superpowers/specs/2026-09-22-phase8a-challenger-round1-opening-range-momentum.md` opens `EXP-20260922-013` as the first genuinely new post-Phase-7 challenger family.
+
+The frozen family is `opening_range_momentum` / `fmp-opening-range-momentum-v1` across EURUSD, GBPUSD, and USDJPY on 5m, 15m, and 1h signal bars. It uses a 06:00–08:00 `Europe/London` midpoint reference range, an 08:00–12:00 signal window, exact 16:00 London flat, fixed 2-pip breakout buffer, body-direction confirmation, and a body-to-candle-range threshold. Stop geometry is fixed at 0.25 reference-range depth inside the breached boundary and targets are fixed R-multiples from the signal close.
+
+The only searched parameters are:
+
+- body fraction threshold: 0.50 or 0.70;
+- target R multiple: 1.0 or 1.5.
+
+This is exactly 4 configurations per pair/timeframe and 36 pair/timeframe/configuration identities total. Every configuration is evaluated at 0.2, 0.5, and 1.0 pips adverse slippage. No additional parameter, pair, timeframe, session window, stop depth, buffer, or target may be introduced under EXP-013 after benchmark results are inspected.
+
+Chronology is frozen:
+
+- Stage A development: 2015-01-01 through 2020-12-31;
+- Stage A validation: 2021-01-01 through 2023-12-31;
+- Stage B retrospective chronological confirmation: 2024-01-01 through 2026-08-20, only for exact Stage A survivors.
+
+All three ranges are labeled retrospective for this post-Phase-7 family. The Stage B range was already opened upstream and may not be called untouched OOS or prospective.
+
+Stage A requires positive net return, expectancy, and PF>1.0 at both 0.2 and 0.5 pips on development and validation, max drawdown <=5% on all mandatory cells, at least 100 development and 50 validation trades at 0.2 pips, plus a same-pair/timeframe neighboring configuration that also passes the mandatory profitability/drawdown gates. An isolated single-point winner is rejected. The 1.0-pip scenario is diagnostic.
+
+Stage B requires positive net return, expectancy, PF>1.0, and max drawdown <=5% at both 0.2 and 0.5 pips plus at least 75 completed 0.2-pip trades. A Stage B pass authorizes only `HISTORICAL_QUALIFIED` status for the immutable challenger. It does not authorize shadow validation, demo, live orders, or champion-set mutation.
+
+Consequences: `EXP-20260922-013` is ACTIVE for test-first implementation only. Phase 8A remains active; Phase 8B and all broker-order paths remain locked. No benchmark result has been inspected at the time of this decision.
