@@ -940,3 +940,17 @@ DEC-062 revalidates exact DEC-055 design, DEC-056 request, DEC-059 session arm/r
 A successful runtime-authority record may set only `demo_runtime_arm_authority_ready=true`. DEC-058 `DEMO_EXECUTION_SOURCE_ARMED` remains false and every demo/live order, broker-mutation, real-money, and Phase-10 authorization flag remains false.
 
 DEC-062 adds no broker-connected or order-capable CLI and performs no MT5/broker access. A later separately approved decision is mandatory before the source execution gate may change or a broker-connected runner may consume runtime-authority evidence.
+
+
+## DEC-063 — Phase 9 broker-connected demo launch preflight
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-demo-launch-preflight.md` opens `EXP-20260922-034` for the final fresh broker read/check verification layer before any separately approved first demo-order decision.
+
+DEC-063 consumes exact DEC-055 through DEC-062 evidence, revalidates current UTC/daily-halt/journal zero-attempt state before broker access, then permits only current account/symbol/tick reads, non-mutating `order_check`, and open-order/open-position reconciliation.
+
+The DEC-063 backend protocol intentionally exposes no `order_send`, submit, cancel, modify, close-position, or other mutation method. A successful launch preflight may set only `demo_launch_preflight_ready=true`; `DEMO_EXECUTION_SOURCE_ARMED` and every execution/order/mutation/live/real-money/Phase-10 authorization remain false.
+
+DEC-063 adds no broker-connected or order-capable CLI. Tests use fake in-memory read/check backends only. A later separately approved decision is mandatory before any runner may invoke `order_send` or the first real practice-account order may be sent.

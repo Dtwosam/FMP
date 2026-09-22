@@ -887,3 +887,21 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #154 merged DEC-062 to `main` at `d0046f2b8119d34bf991ecb5d7f08136536a780a`. The exact final PR head `5fc6290b1a23cdee1d7d5acc72fb25284b9e38d2` passed 1031 tests plus workflow-YAML validation and compile checks in run `35774454431`; unchanged Phase 3 acceptance run `35774454262` passed. Post-merge `main` runs `35774570313` and `35774570327` also passed.
 - Follow-up: a separately frozen decision is required before a broker-connected runtime preflight may consume the authority record; the source execution gate remains false and no demo order has been sent.
+
+
+### EXP-20260922-034 — Phase 9 broker-connected demo launch preflight
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-063 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: consume exact DEC-062 runtime-authority evidence and perform only the final fresh DEMO account/symbol/tick reads, non-mutating order_check, and open-order/open-position reconciliation required before any later first-demo-order decision.
+- Runtime guard: current UTC, daily halt, append-only journal prefix, exact journal identity, and zero SEND_ATTEMPTED events are revalidated before the first backend read.
+- Backend boundary: `Phase9DemoLaunchPreflightBackend` exposes only account/symbol/tick reads, `order_check`, broker-orders read, and broker-positions read. It exposes no `order_send`, submit, cancel, modify, or close-position method.
+- Fresh execution validation: exact DEC-057 no-resize volume, broker price-grid, stop-distance, target-geometry, filling-mode, practice-account identity, and retcode=0 order-check rules are reused.
+- Fresh reconciliation: exact DEC-056 reconciliation must remain healthy; no automatic broker repair is permitted.
+- Evidence: create-only `fmp-phase9-demo-launch-preflight-v1` binds exact runtime authority, current journal tip, account/symbol/tick evidence, order-check request/result, and reconciliation.
+- Authorization: only `demo_launch_preflight_ready=true`; `DEMO_EXECUTION_SOURCE_ARMED=false` and every demo/live order, broker-mutation, real-money, and Phase-10 flag remain false.
+- CLI: unchanged; no broker-connected or order-capable command was added.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `2f6a684f74058a7210e1613e2d9f6d729579b0bf` passed 1038 tests plus workflow-YAML validation and compile checks in run `35775307825`; unchanged Phase 3 acceptance run `35775308344` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before the execution source gate can change or any runner may invoke `order_send`.

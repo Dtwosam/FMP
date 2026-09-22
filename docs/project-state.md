@@ -373,10 +373,10 @@ Implementation progress:
 Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-062 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority artifact, demo order, or broker mutation has been executed;
-3. PR #154 merged DEC-062 / `EXP-20260922-033` to `main` at `d0046f2b8119d34bf991ecb5d7f08136536a780a`; exact final PR head `5fc6290b1a23cdee1d7d5acc72fb25284b9e38d2` passed 1031 tests plus YAML/compile in run `35774454431` and unchanged Phase 3 acceptance run `35774454262` passed; post-merge `main` runs `35774570313` and `35774570327` passed;
-4. DEC-062 keeps `DEMO_EXECUTION_SOURCE_ARMED=false`, adds no broker-connected or order-capable CLI, and cannot call MT5 or submit the first practice-account order;
-5. the next permitted source-only boundary is a fresh broker read/check preflight over exact runtime-authority evidence; demo execution/order submission, broker mutation, live trading, real-money trading, Phase 10, and deployment review remain locked.
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight artifact, demo order, or broker mutation has been executed;
+3. DEC-063 / `EXP-20260922-034` is implemented on PR #155 head `2f6a684f74058a7210e1613e2d9f6d729579b0bf`: runtime-authority/journal revalidation before backend access, fresh DEMO account/symbol/tick reads, non-mutating order_check, healthy reconciliation, and create-only launch-preflight evidence; run `35775307825` passed 1038 tests plus YAML/compile and unchanged Phase 3 acceptance run `35775308344` passed;
+4. DEC-063 keeps `DEMO_EXECUTION_SOURCE_ARMED=false`, exposes no mutation method in its backend protocol, adds no broker-connected CLI, and cannot submit the first practice-account order;
+5. demo execution/order submission, broker mutation, live trading, real-money trading, Phase 10, and deployment review remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
