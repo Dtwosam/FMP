@@ -151,6 +151,38 @@ class Phase8ARetrospectiveDataTests(unittest.TestCase):
             self.assertEqual(loaded.excluded_incomplete_count, 1)
             self.assertEqual(loaded.bars[0].timestamp_utc, timestamps[1])
 
+
+    def test_phase8a_loader_accepts_1m_for_execution_data_role(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            parquet = root / "EURUSD-1m-2024-01.parquet"
+            parquet.touch()
+            manifest = root / "EURUSD.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "fmp-canonical-1m-v1",
+                        "symbol": "EURUSD",
+                        "artifacts": {"1m:2024-01": {"path": parquet.name}},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ts = datetime(2024, 1, 2, 0, 0, tzinfo=timezone.utc)
+            loaded = load_phase8a_retrospective_bars(
+                dataset_root=root,
+                manifest_path=manifest,
+                symbol="EURUSD",
+                timeframe="1m",
+                research_range=RetrospectiveRange(
+                    start=date(2024, 1, 2),
+                    end_exclusive=date(2024, 1, 3),
+                ),
+                parquet_reader=lambda _: _frame("EURUSD", [ts]),
+            )
+            self.assertEqual(len(loaded.bars), 1)
+            self.assertEqual(loaded.bars[0].timestamp_utc, ts)
+
     def test_loader_rejects_manifest_symbol_mismatch_and_duplicate_bar_identity(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
