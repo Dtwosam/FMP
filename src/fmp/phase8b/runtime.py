@@ -74,6 +74,9 @@ PHASE8B_SEGMENT_PROTOCOL = "fmp-phase8b-segment-v1"
 PHASE8B_REPLAY_PROTOCOL = "fmp-phase8b-replay-v1"
 PHASE8B_SEGMENT_ARTIFACT_PROTOCOL = "fmp-phase8b-segment-artifacts-v1"
 PHASE8B_RUNTIME_REPLAY_KERNEL_READY = "PHASE8B_RUNTIME_REPLAY_KERNEL_READY"
+PHASE8B_RUNTIME_CHECKPOINT_PROTOCOL = "fmp-phase8b-runtime-checkpoint-v1"
+PHASE8B_RUNTIME_CONTINUITY_EXPERIMENT_ID = "EXP-20260922-024"
+BASELINE_RUNTIME_CHECKPOINT = "BASELINE_100K"
 
 STARTING_EQUITY_USD = 100_000.0
 SLIPPAGE_SCENARIOS = (0.2, 0.5, 1.0)
@@ -595,6 +598,8 @@ class _ScenarioState:
     completed_trades: list[TradeRecord]
     outcomes: dict[str, ShadowOutcome]
     rejections: dict[str, RejectionCode]
+    terminal_decision_ids: set[str]
+    segment_starting_equity_usd: float
 
 
 def _point_bar(quote: Phase8BQuote) -> QuoteBar:
@@ -624,6 +629,8 @@ class PortfolioShadowSimulator:
                 completed_trades=[],
                 outcomes={},
                 rejections={},
+                terminal_decision_ids=set(),
+                segment_starting_equity_usd=STARTING_EQUITY_USD,
             )
             for slippage in SLIPPAGE_SCENARIOS
         }
@@ -653,6 +660,7 @@ class PortfolioShadowSimulator:
                     state.open_positions,
                     state.outcomes,
                     state.rejections,
+                    state.terminal_decision_ids,
                 )
             ):
                 raise ValueError("duplicate Phase 8B shadow decision_id")
@@ -667,6 +675,7 @@ class PortfolioShadowSimulator:
                 if now_utc > earliest + timedelta(seconds=QUOTE_DEADLINE_SECONDS):
                     state.pending_decisions.pop(decision_id, None)
                     state.outcomes[decision_id] = ShadowOutcome.ENTRY_DEADLINE_MISSED
+                    state.terminal_decision_ids.add(decision_id)
             for decision_id in sorted(tuple(state.open_positions)):
                 opened = state.open_positions.get(decision_id)
                 if opened is None:
@@ -747,6 +756,7 @@ class PortfolioShadowSimulator:
                 if not assessment.approved:
                     assert assessment.rejection_code is not None
                     state.rejections[decision_id] = assessment.rejection_code
+                    state.terminal_decision_ids.add(decision_id)
                     continue
                 assert decision.stop_price is not None
                 intent = OrderIntent(
@@ -812,6 +822,7 @@ class PortfolioShadowSimulator:
             position_id=opened.position.position_id,
         )
         state.outcomes[decision_id] = outcome
+        state.terminal_decision_ids.add(decision_id)
 
     @staticmethod
     def _finalize(
@@ -878,6 +889,451 @@ class PortfolioShadowSimulator:
         )
         state.open_positions.pop(position.decision_id, None)
         state.outcomes[position.decision_id] = ShadowOutcome.COMPLETED
+        state.terminal_decision_ids.add(position.decision_id)
+
+
+def _require_mapping(value: object, *, field: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{field} must be an object")
+    return value
+
+
+def _finite_float(
+    value: object,
+    *,
+    field: str,
+    positive: bool = False,
+    nonnegative: bool = False,
+) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{field} must be numeric")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError(f"{field} must be finite")
+    if positive and result <= 0:
+        raise ValueError(f"{field} must be positive")
+    if nonnegative and result < 0:
+        raise ValueError(f"{field} must be non-negative")
+    return result
+
+
+def _positive_int(value: object, *, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ValueError(f"{field} must be a positive integer")
+    return value
+
+
+def _decision_from_record(value: object) -> Decision:
+    raw = _require_mapping(value, field="checkpoint decision")
+    try:
+        direction = Direction(raw.get("direction"))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("checkpoint decision direction is invalid") from exc
+    earliest_raw = raw.get("earliest_executable_timestamp_utc")
+    earliest = (
+        None
+        if earliest_raw is None
+        else _parse_utc(earliest_raw, field="checkpoint earliest executable timestamp")
+    )
+    risk_raw = raw.get("requested_risk_fraction")
+    risk = (
+        None
+        if risk_raw is None
+        else _finite_float(risk_raw, field="checkpoint requested risk", positive=True)
+    )
+    stop_raw = raw.get("stop_price")
+    stop = (
+        None
+        if stop_raw is None
+        else _finite_float(stop_raw, field="checkpoint stop price", positive=True)
+    )
+    target_raw = raw.get("target_price")
+    target = (
+        None
+        if target_raw is None
+        else _finite_float(target_raw, field="checkpoint target price", positive=True)
+    )
+    return Decision(
+        decision_id=str(raw.get("decision_id")),
+        symbol=str(raw.get("symbol")),
+        decision_timestamp_utc=_parse_utc(
+            raw.get("decision_timestamp_utc"),
+            field="checkpoint decision timestamp",
+        ),
+        direction=direction,
+        earliest_executable_timestamp_utc=earliest,
+        requested_risk_fraction=risk,
+        stop_price=stop,
+        target_price=target,
+        reason_code=(
+            None if raw.get("reason_code") is None else str(raw.get("reason_code"))
+        ),
+        reason_text=(
+            None if raw.get("reason_text") is None else str(raw.get("reason_text"))
+        ),
+    )
+
+
+def _scheduled_exit_from_record(value: object) -> ScheduledExit:
+    raw = _require_mapping(value, field="checkpoint scheduled exit")
+    return ScheduledExit(
+        decision_id=str(raw.get("decision_id")),
+        symbol=str(raw.get("symbol")),
+        timestamp_utc=_parse_utc(
+            raw.get("timestamp_utc"),
+            field="checkpoint scheduled exit timestamp",
+        ),
+    )
+
+
+def _position_from_record(value: object) -> Position:
+    raw = _require_mapping(value, field="checkpoint position")
+    try:
+        direction = Direction(raw.get("direction"))
+    except (TypeError, ValueError) as exc:
+        raise ValueError("checkpoint position direction is invalid") from exc
+    target_raw = raw.get("target_price")
+    target = (
+        None
+        if target_raw is None
+        else _finite_float(target_raw, field="checkpoint position target", positive=True)
+    )
+    return Position(
+        position_id=str(raw.get("position_id")),
+        decision_id=str(raw.get("decision_id")),
+        symbol=str(raw.get("symbol")),
+        direction=direction,
+        units=_positive_int(raw.get("units"), field="checkpoint position units"),
+        entry_timestamp_utc=_parse_utc(
+            raw.get("entry_timestamp_utc"),
+            field="checkpoint position entry timestamp",
+        ),
+        entry_reference_price=_finite_float(
+            raw.get("entry_reference_price"),
+            field="checkpoint entry reference price",
+            positive=True,
+        ),
+        entry_price=_finite_float(
+            raw.get("entry_price"),
+            field="checkpoint entry price",
+            positive=True,
+        ),
+        entry_commission_usd=_finite_float(
+            raw.get("entry_commission_usd"),
+            field="checkpoint entry commission",
+            nonnegative=True,
+        ),
+        stop_price=_finite_float(
+            raw.get("stop_price"),
+            field="checkpoint position stop",
+            positive=True,
+        ),
+        target_price=target,
+        reserved_risk_usd=_finite_float(
+            raw.get("reserved_risk_usd"),
+            field="checkpoint reserved risk",
+            positive=True,
+        ),
+    )
+
+
+def _risk_state_record(state: RiskState) -> dict[str, object]:
+    return {
+        "starting_equity_usd": state.starting_equity_usd,
+        "risk_equity_usd": state.risk_equity_usd,
+        "current_utc_date": (
+            None if state.current_utc_date is None else state.current_utc_date.isoformat()
+        ),
+        "day_start_equity_usd": state.day_start_equity_usd,
+        "day_realized_pnl_usd": state.day_realized_pnl_usd,
+        "daily_halt_active": state.daily_halt_active,
+        "halt_timestamp_utc": (
+            None
+            if state.halt_timestamp_utc is None
+            else _utc_string(state.halt_timestamp_utc)
+        ),
+        "reservations_usd": dict(sorted(state.reservations_usd.items())),
+    }
+
+
+def _checkpoint_scenario_record(state: _ScenarioState) -> dict[str, object]:
+    terminal = set(state.terminal_decision_ids)
+    terminal.update(state.outcomes)
+    terminal.update(state.rejections)
+    return {
+        "slippage_pips": state.slippage_pips,
+        "risk_config": state.risk_config.to_config(),
+        "risk_state": _risk_state_record(state.risk_state),
+        "pending_decisions": [
+            {
+                "decision": _jsonable(item.decision),
+                "scheduled_exit": _jsonable(item.scheduled_exit),
+            }
+            for _, item in sorted(state.pending_decisions.items())
+        ],
+        "open_positions": [
+            {
+                "position": _jsonable(item.position),
+                "scheduled_exit": _jsonable(item.scheduled_exit),
+            }
+            for _, item in sorted(state.open_positions.items())
+        ],
+        "terminal_decision_ids": sorted(terminal),
+    }
+
+
+def build_phase8b_runtime_checkpoint(
+    *,
+    simulator: PortfolioShadowSimulator,
+    preflight: Mapping[str, object],
+) -> dict[str, object]:
+    validate_phase8b_capture_preflight(preflight)
+    if set(simulator.states) != set(SLIPPAGE_SCENARIOS):
+        raise ValueError("Phase 8B runtime checkpoint scenario coverage mismatch")
+    payload = {
+        "protocol": PHASE8B_RUNTIME_CHECKPOINT_PROTOCOL,
+        "experiment_id": PHASE8B_RUNTIME_CONTINUITY_EXPERIMENT_ID,
+        "capture_preflight_fingerprint": preflight[
+            "capture_preflight_fingerprint"
+        ],
+        "champion_set_fingerprint": preflight[
+            "champion_set_fingerprint"
+        ],
+        "slippage_scenarios": list(SLIPPAGE_SCENARIOS),
+        "risk_config": RiskConfig().to_config(),
+        "scenarios": {
+            str(slippage): _checkpoint_scenario_record(simulator.states[slippage])
+            for slippage in SLIPPAGE_SCENARIOS
+        },
+        "demo_order_authorized": False,
+        "live_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "real_money_authorized": False,
+        "phase9_authorized": False,
+    }
+    return payload | {
+        "runtime_checkpoint_fingerprint": _canonical_digest(payload)
+    }
+
+
+def validate_phase8b_runtime_checkpoint(
+    checkpoint: Mapping[str, object],
+    *,
+    preflight: Mapping[str, object] | None = None,
+) -> None:
+    if checkpoint.get("protocol") != PHASE8B_RUNTIME_CHECKPOINT_PROTOCOL:
+        raise ValueError("Phase 8B runtime checkpoint protocol mismatch")
+    if checkpoint.get("experiment_id") != PHASE8B_RUNTIME_CONTINUITY_EXPERIMENT_ID:
+        raise ValueError("Phase 8B runtime checkpoint experiment mismatch")
+    fingerprint = _validate_sha256(
+        checkpoint.get("runtime_checkpoint_fingerprint"),
+        field="Phase 8B runtime checkpoint fingerprint",
+    )
+    payload = dict(checkpoint)
+    payload.pop("runtime_checkpoint_fingerprint", None)
+    if fingerprint != _canonical_digest(payload):
+        raise ValueError("Phase 8B runtime checkpoint fingerprint mismatch")
+    for field in ("capture_preflight_fingerprint", "champion_set_fingerprint"):
+        _validate_sha256(
+            checkpoint.get(field),
+            field=f"Phase 8B runtime checkpoint {field}",
+        )
+    if checkpoint.get("slippage_scenarios") != list(SLIPPAGE_SCENARIOS):
+        raise ValueError("Phase 8B runtime checkpoint slippage mismatch")
+    if checkpoint.get("risk_config") != RiskConfig().to_config():
+        raise ValueError("Phase 8B runtime checkpoint risk config mismatch")
+    if preflight is not None:
+        validate_phase8b_capture_preflight(preflight)
+        if checkpoint.get("capture_preflight_fingerprint") != preflight.get(
+            "capture_preflight_fingerprint"
+        ):
+            raise ValueError("Phase 8B runtime checkpoint preflight mismatch")
+        if checkpoint.get("champion_set_fingerprint") != preflight.get(
+            "champion_set_fingerprint"
+        ):
+            raise ValueError("Phase 8B runtime checkpoint champion mismatch")
+    scenarios = checkpoint.get("scenarios")
+    if not isinstance(scenarios, Mapping) or set(scenarios) != {"0.2", "0.5", "1.0"}:
+        raise ValueError("Phase 8B runtime checkpoint scenarios malformed")
+    for key, slippage in (("0.2", 0.2), ("0.5", 0.5), ("1.0", 1.0)):
+        raw = _require_mapping(scenarios[key], field=f"checkpoint scenario {key}")
+        if raw.get("slippage_pips") != slippage:
+            raise ValueError("Phase 8B runtime checkpoint scenario identity mismatch")
+        if raw.get("risk_config") != RiskConfig().to_config():
+            raise ValueError("Phase 8B runtime checkpoint scenario risk mismatch")
+        risk = _require_mapping(raw.get("risk_state"), field="checkpoint risk state")
+        starting = _finite_float(
+            risk.get("starting_equity_usd"),
+            field="checkpoint starting equity",
+            positive=True,
+        )
+        equity = _finite_float(
+            risk.get("risk_equity_usd"),
+            field="checkpoint risk equity",
+            positive=True,
+        )
+        _finite_float(
+            risk.get("day_start_equity_usd"),
+            field="checkpoint day-start equity",
+            nonnegative=True,
+        )
+        _finite_float(
+            risk.get("day_realized_pnl_usd"),
+            field="checkpoint day realized pnl",
+        )
+        current_date = risk.get("current_utc_date")
+        if current_date is not None:
+            try:
+                datetime.fromisoformat(str(current_date))
+            except ValueError as exc:
+                raise ValueError("checkpoint UTC date is invalid") from exc
+        if type(risk.get("daily_halt_active")) is not bool:
+            raise ValueError("checkpoint daily halt state is invalid")
+        halt = risk.get("halt_timestamp_utc")
+        if halt is not None:
+            _parse_utc(halt, field="checkpoint halt timestamp")
+        reservations = risk.get("reservations_usd")
+        if not isinstance(reservations, Mapping):
+            raise ValueError("checkpoint reservations are malformed")
+        normalized_reservations = {
+            str(position_id): _finite_float(
+                amount,
+                field="checkpoint reservation",
+                positive=True,
+            )
+            for position_id, amount in reservations.items()
+        }
+        if not math.isclose(starting, STARTING_EQUITY_USD, rel_tol=0.0, abs_tol=1e-9):
+            raise ValueError("checkpoint starting equity identity mismatch")
+        if sum(normalized_reservations.values()) > equity * RiskConfig().max_simultaneous_risk_fraction + 1e-8:
+            raise ValueError("checkpoint reservations exceed simultaneous risk limit")
+
+        pending_raw = raw.get("pending_decisions")
+        open_raw = raw.get("open_positions")
+        terminal_raw = raw.get("terminal_decision_ids")
+        if not isinstance(pending_raw, list) or not isinstance(open_raw, list):
+            raise ValueError("checkpoint position collections are malformed")
+        if not isinstance(terminal_raw, list) or any(
+            not isinstance(item, str) or not item for item in terminal_raw
+        ):
+            raise ValueError("checkpoint terminal decision IDs are malformed")
+        if terminal_raw != sorted(set(terminal_raw)):
+            raise ValueError("checkpoint terminal decision IDs must be unique and sorted")
+        pending_ids: set[str] = set()
+        for row in pending_raw:
+            item = _require_mapping(row, field="checkpoint pending decision")
+            decision = _decision_from_record(item.get("decision"))
+            scheduled = _scheduled_exit_from_record(item.get("scheduled_exit"))
+            if scheduled.decision_id != decision.decision_id or scheduled.symbol != decision.symbol:
+                raise ValueError("checkpoint pending scheduled-exit identity mismatch")
+            if decision.decision_id in pending_ids:
+                raise ValueError("duplicate checkpoint pending decision")
+            pending_ids.add(decision.decision_id)
+        open_ids: set[str] = set()
+        reservation_ids: set[str] = set()
+        for row in open_raw:
+            item = _require_mapping(row, field="checkpoint open position")
+            position = _position_from_record(item.get("position"))
+            scheduled = _scheduled_exit_from_record(item.get("scheduled_exit"))
+            if scheduled.decision_id != position.decision_id or scheduled.symbol != position.symbol:
+                raise ValueError("checkpoint open scheduled-exit identity mismatch")
+            if position.decision_id in open_ids:
+                raise ValueError("duplicate checkpoint open decision")
+            open_ids.add(position.decision_id)
+            reservation_ids.add(position.position_id)
+            amount = normalized_reservations.get(position.position_id)
+            if amount is None or not math.isclose(
+                amount,
+                position.reserved_risk_usd,
+                rel_tol=0.0,
+                abs_tol=1e-8,
+            ):
+                raise ValueError("checkpoint open-position reservation mismatch")
+        if set(normalized_reservations) != reservation_ids:
+            raise ValueError("checkpoint reservation/open-position coverage mismatch")
+        terminal_ids = set(terminal_raw)
+        if pending_ids & open_ids or pending_ids & terminal_ids or open_ids & terminal_ids:
+            raise ValueError("checkpoint decision state overlaps")
+    for field in (
+        "demo_order_authorized",
+        "live_order_authorized",
+        "broker_mutation_authorized",
+        "real_money_authorized",
+        "phase9_authorized",
+    ):
+        if checkpoint.get(field) is not False:
+            raise ValueError(f"Phase 8B runtime checkpoint requires {field}=false")
+
+
+def restore_phase8b_runtime_checkpoint(
+    checkpoint: Mapping[str, object],
+    *,
+    preflight: Mapping[str, object],
+) -> PortfolioShadowSimulator:
+    validate_phase8b_runtime_checkpoint(checkpoint, preflight=preflight)
+    simulator = PortfolioShadowSimulator()
+    scenarios = checkpoint["scenarios"]
+    assert isinstance(scenarios, Mapping)
+    for key, slippage in (("0.2", 0.2), ("0.5", 0.5), ("1.0", 1.0)):
+        raw = scenarios[key]
+        assert isinstance(raw, Mapping)
+        risk_raw = raw["risk_state"]
+        assert isinstance(risk_raw, Mapping)
+        risk_state = RiskState(
+            starting_equity_usd=float(risk_raw["starting_equity_usd"])
+        )
+        risk_state.risk_equity_usd = float(risk_raw["risk_equity_usd"])
+        current_date = risk_raw["current_utc_date"]
+        risk_state.current_utc_date = (
+            None
+            if current_date is None
+            else datetime.fromisoformat(str(current_date)).date()
+        )
+        risk_state.day_start_equity_usd = float(risk_raw["day_start_equity_usd"])
+        risk_state.day_realized_pnl_usd = float(risk_raw["day_realized_pnl_usd"])
+        risk_state.daily_halt_active = bool(risk_raw["daily_halt_active"])
+        risk_state.halt_timestamp_utc = (
+            None
+            if risk_raw["halt_timestamp_utc"] is None
+            else _parse_utc(
+                risk_raw["halt_timestamp_utc"],
+                field="checkpoint halt timestamp",
+            )
+        )
+        risk_state.reservations_usd = {
+            str(position_id): float(amount)
+            for position_id, amount in risk_raw["reservations_usd"].items()
+        }
+
+        pending: dict[str, _PendingDecision] = {}
+        for row in raw["pending_decisions"]:
+            decision = _decision_from_record(row["decision"])
+            scheduled = _scheduled_exit_from_record(row["scheduled_exit"])
+            pending[decision.decision_id] = _PendingDecision(
+                decision=decision,
+                scheduled_exit=scheduled,
+            )
+        opened: dict[str, _OpenPosition] = {}
+        for row in raw["open_positions"]:
+            position = _position_from_record(row["position"])
+            scheduled = _scheduled_exit_from_record(row["scheduled_exit"])
+            opened[position.decision_id] = _OpenPosition(
+                position=position,
+                scheduled_exit=scheduled,
+            )
+        simulator.states[slippage] = _ScenarioState(
+            slippage_pips=slippage,
+            risk_config=RiskConfig(),
+            risk_state=risk_state,
+            pending_decisions=pending,
+            open_positions=opened,
+            completed_trades=[],
+            outcomes={},
+            rejections={},
+            terminal_decision_ids=set(raw["terminal_decision_ids"]),
+            segment_starting_equity_usd=risk_state.risk_equity_usd,
+        )
+    return simulator
 
 
 def _scenario_record(state: _ScenarioState) -> dict[str, object]:
@@ -895,7 +1351,7 @@ def _scenario_record(state: _ScenarioState) -> dict[str, object]:
         for item in ordered_trades
     )
     metrics = compute_backtest_metrics(
-        starting_equity_usd=STARTING_EQUITY_USD,
+        starting_equity_usd=state.segment_starting_equity_usd,
         trades=ordered_trades,
         equity_checkpoints=checkpoints,
     )
@@ -1060,8 +1516,9 @@ def _run_simulation(
     candidates: Sequence[SignalCandidate],
     quotes: Sequence[Phase8BQuote],
     market_gaps: Sequence[_MarketGap],
+    simulator: PortfolioShadowSimulator | None = None,
 ) -> PortfolioShadowSimulator:
-    simulator = PortfolioShadowSimulator()
+    simulator = PortfolioShadowSimulator() if simulator is None else simulator
     decision_events: dict[datetime, list[tuple[Decision, ScheduledExit]]] = defaultdict(list)
     for candidate in candidates:
         if candidate.candidate_id not in accepted_ids:
@@ -1116,6 +1573,7 @@ def compile_phase8b_segment(
     preflight: Mapping[str, object],
     capture_records: Sequence[Mapping[str, object]],
     code_commit: str,
+    prior_checkpoint: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     validate_phase8b_capture_preflight(preflight)
     commit = _validate_commit(
@@ -1165,11 +1623,27 @@ def compile_phase8b_segment(
         bars=bars,
     )
     accepted_ids = {item.candidate_id for item in route.accepted}
+    if prior_checkpoint is None:
+        simulator = PortfolioShadowSimulator()
+        initial_checkpoint_fingerprint = BASELINE_RUNTIME_CHECKPOINT
+    else:
+        simulator = restore_phase8b_runtime_checkpoint(
+            prior_checkpoint,
+            preflight=preflight,
+        )
+        initial_checkpoint_fingerprint = str(
+            prior_checkpoint["runtime_checkpoint_fingerprint"]
+        )
     simulator = _run_simulation(
         accepted_ids=accepted_ids,
         candidates=candidates,
         quotes=quotes,
         market_gaps=market_gaps,
+        simulator=simulator,
+    )
+    terminal_checkpoint = build_phase8b_runtime_checkpoint(
+        simulator=simulator,
+        preflight=preflight,
     )
 
     fingerprints = [
@@ -1224,6 +1698,11 @@ def compile_phase8b_segment(
         "required_symbols": list(required_symbols),
         "required_timeframes": list(required_timeframes),
         "reader_start_semantics": preflight["reader_start_semantics"],
+        "initial_runtime_checkpoint_fingerprint": initial_checkpoint_fingerprint,
+        "terminal_runtime_checkpoint_fingerprint": terminal_checkpoint[
+            "runtime_checkpoint_fingerprint"
+        ],
+        "terminal_runtime_checkpoint": terminal_checkpoint,
         "capture_record_count": len(materialized),
         "capture_record_fingerprints": fingerprints,
         "capture_records_sha256": _capture_digest(fingerprints),
@@ -1294,6 +1773,31 @@ def validate_phase8b_segment(segment: Mapping[str, object]) -> None:
     payload.pop("segment_fingerprint", None)
     if fingerprint != _canonical_digest(payload):
         raise ValueError("Phase 8B segment fingerprint mismatch")
+    initial_checkpoint = segment.get("initial_runtime_checkpoint_fingerprint")
+    if initial_checkpoint != BASELINE_RUNTIME_CHECKPOINT:
+        _validate_sha256(
+            initial_checkpoint,
+            field="Phase 8B segment initial runtime checkpoint",
+        )
+    terminal_checkpoint = segment.get("terminal_runtime_checkpoint")
+    if not isinstance(terminal_checkpoint, Mapping):
+        raise ValueError("Phase 8B segment terminal checkpoint is malformed")
+    validate_phase8b_runtime_checkpoint(terminal_checkpoint)
+    terminal_fingerprint = _validate_sha256(
+        segment.get("terminal_runtime_checkpoint_fingerprint"),
+        field="Phase 8B segment terminal runtime checkpoint",
+    )
+    if terminal_checkpoint.get("runtime_checkpoint_fingerprint") != terminal_fingerprint:
+        raise ValueError("Phase 8B segment terminal checkpoint identity mismatch")
+    if terminal_checkpoint.get("capture_preflight_fingerprint") != segment.get(
+        "capture_preflight_fingerprint"
+    ):
+        raise ValueError("Phase 8B segment terminal checkpoint preflight mismatch")
+    if terminal_checkpoint.get("champion_set_fingerprint") != segment.get(
+        "champion_set_fingerprint"
+    ):
+        raise ValueError("Phase 8B segment terminal checkpoint champion mismatch")
+
     fingerprints = segment.get("capture_record_fingerprints")
     if not isinstance(fingerprints, list):
         raise ValueError("Phase 8B segment capture fingerprint list is malformed")
@@ -1322,16 +1826,28 @@ def replay_phase8b_segment(
     expected_segment: Mapping[str, object],
     preflight: Mapping[str, object],
     capture_records: Sequence[Mapping[str, object]],
+    prior_checkpoint: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     validate_phase8b_segment(expected_segment)
     if expected_segment.get("capture_preflight_fingerprint") != preflight.get(
         "capture_preflight_fingerprint"
     ):
         raise ValueError("Phase 8B replay preflight mismatch")
+    expected_initial = expected_segment.get(
+        "initial_runtime_checkpoint_fingerprint"
+    )
+    actual_initial = (
+        BASELINE_RUNTIME_CHECKPOINT
+        if prior_checkpoint is None
+        else prior_checkpoint.get("runtime_checkpoint_fingerprint")
+    )
+    if expected_initial != actual_initial:
+        raise ValueError("Phase 8B replay prior runtime checkpoint mismatch")
     replayed = compile_phase8b_segment(
         preflight=preflight,
         capture_records=capture_records,
         code_commit=str(expected_segment["segment_code_commit"]),
+        prior_checkpoint=prior_checkpoint,
     )
     expected_bytes = _canonical_bytes(expected_segment)
     replay_bytes = _canonical_bytes(replayed)
@@ -1403,16 +1919,22 @@ def write_phase8b_segment_artifacts(
 
 
 __all__ = [
+    "BASELINE_RUNTIME_CHECKPOINT",
     "LIVENESS_TIMEOUT_SECONDS",
+    "PHASE8B_RUNTIME_CHECKPOINT_PROTOCOL",
+    "PHASE8B_RUNTIME_CONTINUITY_EXPERIMENT_ID",
     "PHASE8B_REPLAY_PROTOCOL",
     "PHASE8B_RUNTIME_EXPERIMENT_ID",
     "PHASE8B_RUNTIME_REPLAY_KERNEL_READY",
     "PHASE8B_SEGMENT_ARTIFACT_PROTOCOL",
     "PHASE8B_SEGMENT_PROTOCOL",
     "PortfolioShadowSimulator",
+    "build_phase8b_runtime_checkpoint",
     "compile_phase8b_segment",
     "reconstruct_phase8b_champion_set",
     "replay_phase8b_segment",
+    "restore_phase8b_runtime_checkpoint",
+    "validate_phase8b_runtime_checkpoint",
     "validate_phase8b_segment",
     "write_phase8b_segment_artifacts",
 ]
