@@ -772,3 +772,19 @@ The legacy minimums remain: at least 40 completed 0.2-pip scorable trades, 8 ela
 Operational, timing, spread-parity, financial, safety, and replay gates are frozen exactly in the spec. PASS authorizes only exact champion lifecycle transition `SHADOW_CANDIDATE -> SHADOW_VALIDATED` and eligibility for a separate Phase 9 demo-design proposal. It does not authorize demo/live orders, broker mutation, real-money trading, or Phase 9 execution.
 
 No live capture command is added under DEC-051. A later separately frozen capture/close protocol must produce the exact prospective campaign-evidence artifact before this compiler can issue a real acceptance outcome.
+
+
+## DEC-052 — Phase 8B prospective receipt and campaign-evidence close compiler
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-campaign-evidence-close.md` opens `EXP-20260922-023` for source-free implementation of the immutable evidence bridge between a future live MT5 tail runtime and DEC-051 acceptance.
+
+DEC-052 defines a validator-only `fmp-phase8b-prospective-segment-receipt-v1` contract. Receipts must bind one exact DEC-049 capture preflight, one replay-matched DEC-050 segment/replay pair, the immutable champion/symbol/cost/session identities, non-overlapping segment/observation times, exact record identity/count/digest, London-date coverage, safety/integrity/timing evidence, and exact live spread samples linked to completed 0.2-pip decision IDs.
+
+The deterministic close compiler may consume only those externally produced prospective receipts plus their exact DEC-050 segment/replay evidence. It recomputes campaign trade metrics from combined completed trades, verifies risk-equity continuity and candidate-sequence identity, derives strategy-family/pair representation from frozen candidate metadata, recomputes per-symbol median/p95 live spreads, aggregates operational/timing/safety evidence, and emits the exact `fmp-phase8b-campaign-evidence-v1` schema required by DEC-051.
+
+DEC-052 deliberately provides no public helper that can relabel an arbitrary source-free segment as prospective and adds no live tail/capture/start/review command. A later separately frozen live-tail protocol must create actual prospective receipts from MT5 FILE_COMMON reads.
+
+Compilation success is not acceptance PASS. DEC-051 remains the only Phase 8B acceptance compiler. Demo/live orders, broker mutation, real-money trading, Phase 9 execution, and champion mutation remain locked.
