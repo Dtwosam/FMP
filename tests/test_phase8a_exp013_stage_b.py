@@ -111,7 +111,7 @@ def _loaded(symbol: str, research_range) -> LoadedRetrospectiveBars:
         evidence_label=PHASE8A_RETROSPECTIVE_LABEL,
         start=research_range.start,
         end_exclusive=research_range.end_exclusive,
-        processed_manifest_sha256=("e" if symbol == "EURUSD" else "j") * 64,
+        processed_manifest_sha256=("e" if symbol == "EURUSD" else "d") * 64,
         opened_artifact_months=("2024-01",),
     )
 
@@ -174,7 +174,7 @@ class Exp013StageBTests(unittest.TestCase):
             return {
                 "strategy_fingerprint": plan.strategy.fingerprint,
                 "processed_manifest_sha256": (
-                    "e" * 64 if plan.strategy.symbol == "EURUSD" else "j" * 64
+                    "e" * 64 if plan.strategy.symbol == "EURUSD" else "d" * 64
                 ),
                 "candidate_sha256": (
                     "1" * 63 + ("1" if plan.strategy.symbol == "EURUSD" else "2")
