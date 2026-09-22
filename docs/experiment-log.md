@@ -667,3 +667,21 @@ Copy this section for each serious experiment:
 - Fixed verification: PR tests run `35749385885` passed 973 tests plus workflow-YAML validation and compile checks; unchanged Phase 3 acceptance run `35749385867` passed.
 - Merge status: PR #143 merged DEC-051 to `main` at `2c9577be8eafb9e307e05214609206dfeb7c6c69`. Superseded PR #142 remained unmerged because its displayed head lagged the branch ref; a fresh exact-head PR was used instead.
 - Follow-up: a later separately frozen prospective capture/close protocol must create real `fmp-phase8b-campaign-evidence-v1` evidence; DEC-051 itself cannot create prospective evidence or start a live-shadow segment.
+
+
+### EXP-20260922-023 — Phase 8B prospective capture segment journal
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO LIVE SEGMENT CAPTURED
+- Protocol decision: DEC-052 APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+- Purpose: add the first explicit bounded operator-invoked quote-only capture surface while preserving fixed bridge identity, EOF/no-backfill semantics, deterministic DEC-050 processing/replay, and all order-path locks.
+- CLI scope: adds only `capture-segment --campaign-dir <path> --duration-seconds <1..86400>`; polling remains fixed at 0.10 seconds; generic run/start/review/campaign-close commands remain absent.
+- First-segment rule: if no DEC-049 capture preflight exists, build it from the exact registration/start artifacts and continue capture on the same fresh EOF readers.
+- Restart rule: later invocations use fresh EOF readers and therefore exclude records written while FMP was not observing; restart gaps are retained for later campaign-close accounting.
+- Durable evidence: create-only per-segment directory, fsynced capture-record JSONL, one fsynced audit row per retained record with receive-to-raw-append latency, fsynced operational events, DEC-050 segment/replay artifacts, and immutable `fmp-phase8b-prospective-segment-v1` close artifact.
+- Failure semantics: malformed/truncated/session-drift/identity failures terminate the invocation and may leave retained raw evidence, but no `prospective-segment.json` close artifact.
+- Broker/demo/live/real-money/Phase 9 authorized?: NO.
+- Acceptance/promotion authorized?: NO.
+- Live execution status: NOT RUN.
+- Implementation status: PR #144 head `a949e57eeed58a3f96dc3b59932ce8b2e91127ac` adds the DEC-052 journal/runtime module, public API exports, CLI command, and focused prospective-capture/CLI boundary tests. PR tests run `35751759857` passed 977 tests plus workflow-YAML validation and compile checks; unchanged Phase 3 acceptance run `35751759911` passed.
+- Follow-up: merge only after the exact final branch head remains green. A later separately frozen campaign-close protocol must aggregate clean replay-matching prospective segments and create the exact DEC-051 campaign-evidence artifact.
