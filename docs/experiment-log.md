@@ -645,3 +645,24 @@ Copy this section for each serious experiment:
 - Live execution status: NOT RUN.
 - Implementation status: PR #141 merged DEC-050 to `main` at `4a8431d17f3fd050839d7841fc27e5543b258dc4`, adding the runtime/replay kernel, deterministic segment/replay artifact support, Phase 8B API exports, and five focused runtime/replay tests. Exact final PR-head verification passed 966 tests plus workflow-YAML validation and compile checks; unchanged Phase 3 acceptance passed.
 - Follow-up: separately freeze and implement the Phase 8B acceptance compiler before any prospective Phase 8B segment may begin.
+
+
+### EXP-20260922-022 — Phase 8B acceptance compiler and prospective evidence contract
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE-FREE IMPLEMENTATION ONLY / NO LIVE-SHADOW SEGMENT
+- Protocol decision: DEC-051 APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+- Purpose: freeze and implement the deterministic Phase 8B acceptance compiler plus the exact prospective campaign-evidence and historical spread-reference contracts required before any champion can become SHADOW_VALIDATED.
+- Campaign-evidence protocol: `fmp-phase8b-campaign-evidence-v1`; prospective=true and closed=true are mandatory, with exact DEC-049 preflight, DEC-050 segment/replay, champion/strategy/symbol/cost identities and deterministic fingerprint validation.
+- Spread-reference protocol: `fmp-phase8b-spread-reference-v1`; exact symbol coverage, historical spread sample counts and median/p95 entry/exit values, bound to the same preflight/champion/cost identities.
+- Minimum evidence: >=40 completed 0.2-pip scorable trades, >=8 elapsed weeks, >=30 complete London dates, >=2 represented strategy families, and >=2 represented V1 pairs.
+- Operational gates: >=90% date coverage, zero malformed records silently admitted, zero stale-gap trades in financial metrics, complete operational logging, identical candidate sequence across scenarios, replay match, p99 processing <=250ms, and zero scored entry/scheduled-exit deadline violations.
+- Spread gate: live median/p95 entry/exit spread per traded required symbol <= historical value +0.5 pip.
+- Financial gates: at 0.2 and 0.5 pips, net return >0, expectancy >0, PF >1, max drawdown <=5%; 1.0 pip diagnostic only.
+- Outcome precedence: protocol failure -> safety rejection -> replay/integrity operational rejection -> NEED_MORE_DATA -> operational rejection -> market mismatch -> financial mismatch -> PASS.
+- PASS authority: exact champion SHADOW_CANDIDATE -> SHADOW_VALIDATED transition plus demo-design eligibility only; all demo/live/broker/real-money/Phase-9 execution authorizations remain false.
+- Live execution status: NOT RUN.
+- Initial PR CI: run `35749097079` correctly failed one tamper test because a derived 0.2-pip trade-count check fired before the immutable evidence fingerprint check; unchanged Phase 3 acceptance `35749097176` passed.
+- Fix: commit `8628f0810a55353da3bbe299635d0bd89fa4ab94` authenticates campaign and spread-reference fingerprints before derived consistency validation.
+- Fixed verification: PR tests run `35749385885` passed 973 tests plus workflow-YAML validation and compile checks; unchanged Phase 3 acceptance run `35749385867` passed.
+- Follow-up: merge only after the exact final branch head remains green. A later separately frozen prospective capture/close protocol must create real `fmp-phase8b-campaign-evidence-v1` evidence; DEC-051 itself cannot create prospective evidence or start a live-shadow segment.
