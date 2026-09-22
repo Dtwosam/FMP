@@ -14,6 +14,7 @@ from fmp.portfolio.challenger_round1 import (
 
 
 COMMIT = "a" * 40
+SOURCE_SHA = "f" * 64
 
 
 def _gate(symbol: str, timeframe: str, *, survivors: tuple[str, ...] = ()) -> dict[str, object]:
@@ -34,6 +35,7 @@ def _gate(symbol: str, timeframe: str, *, survivors: tuple[str, ...] = ()) -> di
         "symbol": symbol,
         "timeframe": timeframe,
         "runner_code_commit": COMMIT,
+        "strategy_source_sha256": SOURCE_SHA,
         "survivor_fingerprints": list(survivors),
         "config_gates": {
             fingerprint: {
@@ -60,6 +62,7 @@ class Phase8AExp013StageAArtifactsTests(unittest.TestCase):
             "range_start": "2015-01-01",
             "range_end_exclusive": "2021-01-01",
             "runner_code_commit": COMMIT,
+            "strategy_source_sha256": SOURCE_SHA,
             "symbol": "EURUSD",
             "timeframe": "15m",
             "promotion_authorized": False,
@@ -70,6 +73,7 @@ class Phase8AExp013StageAArtifactsTests(unittest.TestCase):
             "range_start": "2021-01-01",
             "range_end_exclusive": "2024-01-01",
             "runner_code_commit": COMMIT,
+            "strategy_source_sha256": SOURCE_SHA,
             "symbol": "EURUSD",
             "timeframe": "15m",
             "promotion_authorized": False,
