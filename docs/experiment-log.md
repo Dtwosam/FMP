@@ -829,3 +829,22 @@ Copy this section for each serious experiment:
 - Live/demo execution status: NOT RUN.
 - Verification: exact source head `c273bb5a21d865d09edefbd425f18c4049e58399` passed 1017 tests plus workflow-YAML validation and compile checks in run `35768964040`; unchanged Phase 3 acceptance run `35768964070` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before a real arm can be created or the DEC-058 execution lock can change.
+
+
+### EXP-20260922-031 — Phase 9 demo execution-arm artifact contract
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE CONTRACT VERIFIED / NO REAL ARM / NO DEMO ORDER
+- Protocol decision: DEC-060 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: implement only the deterministic future operator execution-arm artifact over exact DEC-055/056/059 identities while keeping the DEC-058 source gate false.
+- Input binding: exact demo design, exact post-risk request/client ID, exact DEC-059 session-arm and session-ready fingerprints, unchanged champion/strategy/symbol, accepted DEMO account/server, exact UTC window, exact operator approval reference, and max-new-orders=1.
+- Override policy: the builder exposes no caller parameters for account/server/symbol/units, arm window, or approval reference; those values are copied from already validated upstream artifacts.
+- Readiness guard: session-ready must be healthy, daily halt inactive, zero prior attempts, max-new-orders=1, and bound to the exact arm/design/request.
+- Source-gate guard: construction fails closed if DEC-058 `DEMO_EXECUTION_SOURCE_ARMED` is anything other than false.
+- Persistence: create-only `execution-arm.json` + manifest with deterministic fingerprint and byte SHA-256.
+- CLI scope: unchanged Phase 9 design-only CLI; no arming/run-demo/submit-order/broker command.
+- Demo execution/order, broker mutation, live order, real-money trading, and Phase 10 authorized?: NO.
+- Real operator arm created?: NO.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `a62be09eda02f09b255211ea5dca8b63055ae361` passed 1023 tests plus workflow-YAML validation and compile checks in run `35771299138`; unchanged Phase 3 acceptance run `35771299314` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before a real arm can be materialized or the execution source gate may change.
