@@ -87,7 +87,7 @@ class Phase4TrendContinuationStateTests(unittest.TestCase):
         self.assertIn("Final-test touched: YES — Stage 1 2024 and Stage 2 2025-2026", text)
         self.assertIn("Real-money trading: locked", text)
         self.assertIn("DEC-008 remains unchanged", text)
-        self.assertIn("## Phase 8 — ACTIVE AS AMENDED PHASE 8A / 8B AS AMENDED PHASE 8A / 8B", text)
+        self.assertIn("## Phase 8 — ACTIVE AS AMENDED PHASE 8A / 8B", text)
 
 
 if __name__ == "__main__":
