@@ -713,7 +713,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-025 — Phase 8B acceptance review and shadow-validation freeze
 
 - Date: 2026-09-22
-- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO REAL ACCEPTANCE RESULT
+- Status: ACTIVE — SOURCE IMPLEMENTATION MERGED / NO REAL ACCEPTANCE RESULT
 - Protocol decision: DEC-054 APPROVED BEFORE ANY PHASE 8B ACCEPTANCE RESULT
 - Purpose: freeze the final source-only Phase 8B review boundary over exact DEC-053 closures and one deterministic campaign-bound DEC-051 historical spread reference.
 - Pre-capture ordering: `authorize-start` now persists DEC-048 start authorization and DEC-049 capture preflight from the same fresh EOF readers, then stops without capturing a prospective record.
@@ -726,4 +726,5 @@ Copy this section for each serious experiment:
 - Demo/live orders, broker mutation, real-money trading, DEMO_ELIGIBLE transition, and Phase 9 execution authorized?: NO.
 - Live execution status: NOT RUN.
 - Verification: PR #146 implementation head `57b94fc0ec1f30fea0acb036364d1ca0667f8c8c` passed 988 tests plus workflow-YAML validation and compile checks in run `35758432987`; unchanged Phase 3 acceptance run `35758432967` passed.
-- Follow-up: merge only after the exact final bookkeeping head remains green. No real prospective capture, spread-reference freeze, campaign closure review, lifecycle transition, or Phase 9 design has been executed.
+- Merge status: PR #146 merged DEC-054 to `main` at `7e3e1f03fcdf9f2314cd96864eb1825b1b3c2a18`. The exact final PR head `aaa5500776fa4a8d7a4e5ddcfb0b8ec4d24498c5` passed 988 tests plus workflow-YAML validation and compile checks in run `35758599011`; unchanged Phase 3 acceptance run `35758598901` passed.
+- Follow-up: no real prospective capture, spread-reference freeze, campaign closure review, lifecycle transition, or Phase 9 design has been executed. A later separately frozen Phase 9 demo-design protocol may consume only an exact DEC-054 PASS/shadow-validation artifact.
