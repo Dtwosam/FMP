@@ -5,6 +5,16 @@ from .bridge import (
     discover_phase8b_bridge_files,
     parse_phase8b_bridge_line,
 )
+from .campaign_start import (
+    PHASE8B_CAMPAIGN_START_ARTIFACT_PROTOCOL,
+    PHASE8B_CAMPAIGN_START_AUTHORIZED,
+    PHASE8B_CAMPAIGN_START_EXPERIMENT_ID,
+    PHASE8B_CAMPAIGN_START_PROTOCOL,
+    READER_START_SEMANTICS,
+    build_phase8b_campaign_start_authorization,
+    validate_phase8b_campaign_start_authorization,
+    write_phase8b_campaign_start_authorization,
+)
 from .design import (
     PHASE8B_DESIGN_FROZEN,
     PHASE8B_DESIGN_PROTOCOL,
@@ -33,6 +43,10 @@ from .registration import (
 __all__ = [
     "FeedQualificationOutcome",
     "FeedQualificationResult",
+    "PHASE8B_CAMPAIGN_START_ARTIFACT_PROTOCOL",
+    "PHASE8B_CAMPAIGN_START_AUTHORIZED",
+    "PHASE8B_CAMPAIGN_START_EXPERIMENT_ID",
+    "PHASE8B_CAMPAIGN_START_PROTOCOL",
     "PHASE8B_DESIGN_FROZEN",
     "PHASE8B_DESIGN_PROTOCOL",
     "PHASE8B_EXPERIMENT_ID",
@@ -42,6 +56,8 @@ __all__ = [
     "Phase8BBridgeProtocolError",
     "Phase8BBridgeSessionValidator",
     "Phase8BQualificationOutcome",
+    "READER_START_SEMANTICS",
+    "build_phase8b_campaign_start_authorization",
     "build_phase8b_design",
     "build_phase8b_registration",
     "discover_phase8b_bridge_files",
@@ -49,8 +65,10 @@ __all__ = [
     "qualify_phase8b_design",
     "qualify_phase8b_feed",
     "summarize_phase8b_qualification",
+    "validate_phase8b_campaign_start_authorization",
     "validate_phase8b_design",
     "validate_phase8b_registration",
+    "write_phase8b_campaign_start_authorization",
     "write_phase8b_design_artifacts",
     "write_phase8b_qualification_artifacts",
     "write_phase8b_registration",
