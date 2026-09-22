@@ -84,11 +84,11 @@ No caller supplies a filling mode.
 
 ## 5. Send request
 
-The send request must be the exact freshly revalidated DEC-057 MT5 request,
-with deterministic additions only:
+The send request must be the exact freshly revalidated DEC-057 MT5 request.
 
-- `magic` derived from the DEC-056 request identity;
-- existing client-order ID as comment.
+The existing DEC-056 client-order ID remains the request comment. DEC-058 adds
+no post-check field or price/volume mutation between `order_check` and a
+future `order_send`.
 
 No mutation path may resize units, widen/remove stop, alter target, change
 symbol, or replace account/server identity.
