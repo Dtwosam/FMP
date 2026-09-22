@@ -756,3 +756,19 @@ The segment compiler is deterministic and source-free: it cannot tail MT5 contin
 DEC-050 does not implement the final Phase 8B acceptance decision. The legacy 8-week / 30-date / 40-trade, coverage, timing, spread-parity, profitability, drawdown, replay, and safety gates remain frozen for a later separately approved acceptance compiler.
 
 No `capture`, `run`, `start`, or `review` command is added under DEC-050. Demo/live orders, broker mutation, real-money trading, Phase 9, active-champion mutation, acceptance, and promotion remain locked.
+
+
+## DEC-051 — Phase 8B acceptance compiler and prospective evidence contract
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-acceptance-compiler.md` opens `EXP-20260922-022` for source-free implementation of the deterministic Phase 8B acceptance compiler and the exact prospective campaign-evidence contract that a future live runtime must satisfy.
+
+DEC-051 does not treat DEC-050 source-free segments as prospective evidence by themselves. Acceptance requires a separate exact `fmp-phase8b-campaign-evidence-v1` artifact binding the DEC-049 capture-preflight fingerprint, exact DEC-050 aggregate segment/replay fingerprints, frozen champion set, required symbols, cost scenarios, London-date coverage, timing/operational diagnostics, scenario financial metrics, trade representation, and live spread summaries. It also requires a separately frozen `fmp-phase8b-spread-reference-v1` artifact covering the exact required symbol set.
+
+The legacy minimums remain: at least 40 completed 0.2-pip scorable trades, 8 elapsed calendar weeks, and 30 fully observed London dates. DEC-051 adds a pre-result portfolio-representation minimum of at least two strategy families and two V1 pairs with completed scored trades, matching the purpose of validating a multi-strategy/multi-pair champion rather than allowing one component to carry the entire prospective result.
+
+Operational, timing, spread-parity, financial, safety, and replay gates are frozen exactly in the spec. PASS authorizes only exact champion lifecycle transition `SHADOW_CANDIDATE -> SHADOW_VALIDATED` and eligibility for a separate Phase 9 demo-design proposal. It does not authorize demo/live orders, broker mutation, real-money trading, or Phase 9 execution.
+
+No live capture command is added under DEC-051. A later separately frozen capture/close protocol must produce the exact prospective campaign-evidence artifact before this compiler can issue a real acceptance outcome.
