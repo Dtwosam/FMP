@@ -1014,3 +1014,17 @@ DEC-067 exposes the exact practice-account identity, strategy/symbol, direction,
 The packet also binds the pre-result DEC-066 demo-campaign obligations and emits one deterministic authorization-challenge fingerprint. Any later explicit first-demo approval must bind this exact challenge and packet; changing any order/account/risk/window detail requires a different challenge and new approval.
 
 DEC-067 does not itself record approval. It keeps `DEMO_EXECUTION_SOURCE_ARMED=False` and every demo-order, broker-mutation, live-order, real-money, Phase-10, and Phase-11 authorization false. It adds no broker-connected or order-capable CLI and performs no MT5 access.
+
+
+## DEC-068 — Phase 9 explicit approval record and gate-activation contract
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-explicit-approval-gate-contract.md` opens `EXP-20260922-039` for source-only explicit-approval and operator gate-activation schemas over one exact DEC-067 authorization challenge.
+
+A valid future approval record must bind the exact packet/challenge, permit/request/client identity, DEMO account/server, arm window, operator identity/reference, approval UTC, and the exact statement `APPROVE FIRST DEMO ORDER <challenge>`. Approval must occur inside the immutable launch/arm window.
+
+A valid future gate-activation contract must bind that exact approval and packet and be created inside the same arm window after approval.
+
+DEC-068 does not create a real approval artifact, does not change `DEMO_EXECUTION_SOURCE_ARMED=False`, does not wire the DEC-065 runner, and adds no broker-connected or execution CLI. Current repository evidence still contains no real Phase 8B acceptance/SHADOW_VALIDATED chain from which a real first-demo approval could be formed.
