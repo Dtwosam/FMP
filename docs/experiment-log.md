@@ -341,31 +341,63 @@ Copy this section for each serious experiment:
 ### EXP-20260917-010 — Phase 8 MT5 demo live-shadow evaluation
 
 - Date: 2026-09-17
-- Status: RUNNING
+- Status: INCONCLUSIVE / STOPPED FOR LIVENESS AMENDMENT
 - Hypothesis: The unchanged Phase 7-promoted USDJPY 15m session-breakout rule can be evaluated prospectively using a read-only FP Markets MT5 demo quote bridge without changing strategy, execution-simulation, risk, or acceptance semantics.
-- Code commit: implementation head `04ee440e5add9bfeaf8b6c59083e77424c17197e`; merged by PR #115 to `main` at `839514879927a8549572c2505a2d0e37da33669a`. Qualification/campaign evidence must bind the merged implementation identity.
+- Code commit: UTC-correct campaign implementation `97715805498784badcb617debabc2b81c15cf5a8`.
 - Data manifest/version: historical reference remains bound to accepted Phase 2 USDJPY identity and Phase 7 checkpoint; live evidence protocol `fmp-phase8-shadow-evidence-v2`.
 - Pair(s): USDJPY only
-- Timeframe(s): 15m strategy bars built from complete live 1m bid/ask bars
-- Data range: prospective live-shadow observations only after successful connector qualification; no backfill.
+- Timeframe(s): 15m strategy bars built from live 1m bid/ask bars
+- Data range: prospective live-shadow diagnostic capture only; no backfill.
 - Train period: not applicable; fixed rule, no refit.
 - Validation period: prospective Phase 8 registered campaign.
-- Final-test touched?: YES — Phase 7 already completed its approved final/walk-forward gate; Phase 8 is prospective live shadow, not historical retuning.
+- Final-test touched?: YES upstream in Phase 7; Phase 8 itself is prospective and performs no historical retuning.
 - Strategy/model: unchanged `session_breakout`, 5-pip buffer, 1.5x target-range multiple, London-session/DST semantics, exact 16:00 `Europe/London` flat, no ML overlay.
 - Features: live bid/ask quote stream only; no new feature/model fitting.
 - Parameters/search space: none.
 - Random seed (if relevant): not applicable.
-- Spread/cost model: observed live demo bid/ask spread; zero commission and zero financing in the frozen Phase 8 simulator.
+- Spread/cost model: observed live demo bid/ask spread; zero commission and zero financing.
 - Slippage model: 0.2, 0.5, and 1.0 adverse pips per fill; 0.2/0.5 gating, 1.0 diagnostic.
 - Risk assumptions: existing Phase 3 risk policy unchanged; three independent $100,000 virtual scenarios.
-- Trade count: pending prospective campaign.
+- Trade count: no scored acceptance result; this experiment is diagnostic only.
+- Net return after costs: not scored for acceptance.
+- Expectancy/trade: not scored for acceptance.
+- Profit factor: not scored for acceptance.
+- Max drawdown: not scored for acceptance.
+- Key operational result: clean UTC-source-time qualification passed, and the live bridge/capture remained active. Diagnostic quote-gap analysis over 46,721 normalized quotes found 102 gaps above 15 seconds, 23 above 30 seconds, 3 above 60 seconds, and a maximum gap of 4,301.580 seconds. During the long approximately 10:18–11:30 UTC no-tick interval on 2026-09-21, 870 valid bridge heartbeats continued.
+- Result summary: the original live runner treated any 15-second market no-tick interval as a whole-date stale continuity failure even when the bridge remained healthy. That behavior made valid-date eligibility depend on tick sparsity and invalidated the first prospective Tuesday within minutes. The issue is a liveness-protocol defect, not evidence for or against strategy profitability.
+- Conclusion: NEED_MORE_DATA
+- Reason: DEC-038 amends live-capture liveness semantics; evidence collected under the superseded EXP-010 runner semantics cannot be reclassified or counted toward the amended campaign.
+- Follow-up: preserve EXP-010 evidence for audit. Continue only with fresh `EXP-20260922-011` qualification/reference/registration after the DEC-038 implementation is merged and verified.
+
+### EXP-20260922-011 — Phase 8 MT5 demo live-shadow evaluation with separated bridge/market liveness
+
+- Date: 2026-09-22
+- Status: RUNNING
+- Protocol decision: DEC-038 APPROVED
+- Hypothesis: The unchanged Phase 7-promoted USDJPY 15m session-breakout rule can be evaluated prospectively when true bridge continuity failures are separated from heartbeat-healthy no-tick intervals, while unseen trade paths and missing strategy context still fail closed.
+- Code commit: pending verified merge of the DEC-038 implementation; all qualification/reference/campaign evidence must bind the resulting merged commit.
+- Data manifest/version: accepted Phase 2 USDJPY artifact `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`; processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`; Phase 7 checkpoint `fmp-v1-phase7-walk-forward` / `b6fb0176555b071fef6d1070edf3407b03cd60c9`; live evidence protocol remains `fmp-phase8-shadow-evidence-v2`.
+- Pair(s): USDJPY only
+- Timeframe(s): 15m strategy bars built from observed live 1m bid/ask bars
+- Data range: fresh prospective live-shadow campaign only after new qualification and registration; no EXP-010 evidence is scored or backfilled.
+- Train period: not applicable; fixed rule, no refit.
+- Validation period: prospective Phase 8 registered campaign.
+- Final-test touched?: YES upstream in Phase 7; Phase 8 remains prospective, not historical retuning.
+- Strategy/model: unchanged `session_breakout`, 5-pip buffer, 1.5x target-range multiple, London-session/DST semantics, exact 16:00 `Europe/London` flat, no ML overlay.
+- Features: live bid/ask quote stream only.
+- Parameters/search space: none.
+- Random seed (if relevant): not applicable.
+- Spread/cost model: observed live demo bid/ask spread; zero commission and zero financing.
+- Slippage model: exactly 0.2, 0.5, and 1.0 adverse pips per fill; 0.2/0.5 gating, 1.0 diagnostic.
+- Risk assumptions: unchanged Phase 3 policy; independent $100,000 virtual account per scenario.
+- Liveness semantics: 15-second bridge silence remains date-invalidating `stale`; 15-second no-tick intervals with healthy bridge records emit `market_quiet` and do not by themselves invalidate the date. Open simulated positions crossing such a gap become `OUTCOME_UNKNOWN_AFTER_GAP`; missing required bars remain incomplete; 5-second entry/scheduled-exit quote deadlines remain frozen.
+- Campaign minimums: at least 8 elapsed calendar weeks, 30 fully observed London dates, 40 completed scorable 0.2-pip trades, and at least 90% valid denominator-date coverage, plus all existing timing/spread/financial/replay/safety gates.
+- Trade count: pending fresh campaign.
 - Net return after costs: pending.
 - Expectancy/trade: pending.
 - Profit factor: pending.
 - Max drawdown: pending.
-- Key subperiod results: pending.
-- Robustness/cost sensitivity: pending.
-- Result summary: implementation and source-free verification are complete. PR #115 merged the read-only MT5 demo bridge to `main`; 783 tests passed, workflow YAML validation passed, Python compile passed, deterministic Phase 3 acceptance passed, Phase 1 acquisition workflows were skipped, and structural no-order safety checks passed. Live connector qualification remains pending and must be explicitly operator-started locally.
+- Result summary: implementation verification and fresh operator qualification are pending.
 - Conclusion: NEED_MORE_DATA
-- Reason: the amended provider path is merged and source-free verified, but it has not yet completed local MT5 connector qualification or the frozen multi-week campaign.
-- Follow-up: compile/attach `FMPPhase8QuoteBridge.mq5` locally on the approved FP Markets demo USDJPY chart with AutoTrading OFF, run bounded qualification, then build/freeze the historical spread reference and register the campaign only after qualification PASS.
+- Follow-up: merge and verify DEC-038 implementation, archive EXP-010 evidence unchanged, run fresh qualification, rebuild/freeze the historical reference under the merged code commit, register a fresh campaign, then begin prospective capture with AutoTrading OFF.
+
