@@ -13,17 +13,25 @@ from fmp.strategies.contracts import SignalCandidate
 
 LONDON = ZoneInfo("Europe/London")
 _TIMEFRAME_MINUTES = {"5m": 5, "15m": 15, "1h": 60}
-_ALLOWED_BUFFERS = frozenset({0, 2, 5})
+_PHASE4_BUFFERS = frozenset({0, 2, 5})
+_EXP015_BUFFERS = frozenset({1, 3, 4, 6, 8})
 
 
 @dataclass(frozen=True, slots=True)
 class SessionSweepRejectionConfig:
     buffer_pips: int
     timeframe: str
+    parameter_region: str = "phase4"
 
     def __post_init__(self) -> None:
-        if self.buffer_pips not in _ALLOWED_BUFFERS:
-            raise ValueError("buffer_pips must be one of 0, 2, or 5")
+        if self.parameter_region == "phase4":
+            allowed = _PHASE4_BUFFERS
+        elif self.parameter_region == "exp015":
+            allowed = _EXP015_BUFFERS
+        else:
+            raise ValueError("unsupported session-sweep-rejection parameter_region")
+        if self.buffer_pips not in allowed:
+            raise ValueError("buffer_pips is outside the selected parameter region")
         if self.timeframe not in _TIMEFRAME_MINUTES:
             raise ValueError("timeframe must be one of 5m, 15m, or 1h")
 
