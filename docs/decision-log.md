@@ -982,3 +982,21 @@ DEC-065 consumes exact DEC-055 through DEC-064 artifacts, validates the unchange
 After one attempted send the arm is spent regardless of broker outcome. The runner never retries, normalizes returned send evidence through DEC-058, performs one post-send reconciliation, records ambiguity explicitly, and permits no automatic broker repair.
 
 Repository source keeps `DEMO_EXECUTION_SOURCE_ARMED=False`, adds no broker-connected or execution CLI, and repository verification uses only fake in-memory backends. A later separately approved decision is mandatory before a real permit can be consumed or the first practice-account order can be sent.
+
+
+## DEC-066 — Phase 9 demo campaign evidence and acceptance contract
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-demo-acceptance.md` opens `EXP-20260922-037` for a source-only aggregate demo-evidence contract and deterministic acceptance compiler.
+
+DEC-066 freezes the Phase 9 evidence minimum before any practice result exists: at least 40 completed demo trades, 8 elapsed calendar weeks, 30 distinct demo-session dates, two represented strategy families, and two represented V1 pairs.
+
+PASS additionally requires structural safety, zero unresolved ambiguity/reconciliation/journal failures, a successful restart/recovery drill, and per-represented-pair actual adverse entry slippage with median <=0.5 pip and nearest-rank p95 <=1.0 pip.
+
+Demo profitability metrics are recorded as diagnostics rather than a DEC-066 PASS gate; Phase 10 remains responsible for the combined economic deployment review.
+
+A PASS outcome authorizes only eligibility for a separate Phase 10 deployment-review package. It does not authorize live orders, real money, Phase 11, strategy hot-swap, or any broker mutation.
+
+DEC-066 keeps `DEMO_EXECUTION_SOURCE_ARMED=False`, adds no order-capable CLI, and performs no broker access. A separately approved first-demo execution decision remains mandatory before any real practice-account order may be sent.
