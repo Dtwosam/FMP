@@ -908,3 +908,20 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #155 merged DEC-063 to `main` at `4d053c8edfc7ff1325da50530405cc876e33ba61`. The exact final PR head `d87bc0547584c9b9f756fe99325ff0b1da95e23c` passed 1038 tests plus workflow-YAML validation and compile checks in run `35775591842`; unchanged Phase 3 acceptance run `35775591852` passed. Post-merge `main` runs `35775737773` and `35775737735` also passed.
 - Follow-up: a separately frozen one-shot execution-permit contract is required before any future execution runner may be authorized; no real demo order has been sent.
+
+
+### EXP-20260922-035 — Phase 9 one-shot demo execution permit contract
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE CONTRACT VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-064 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: define only the immutable future one-shot execution-permit artifact over exact DEC-063 launch-preflight evidence.
+- Exact binding: DEC-055 design, DEC-056 request/client ID, DEC-059 session arm/readiness, DEC-060 execution arm, DEC-062 runtime authority, DEC-063 launch preflight, champion/strategy/symbol, accepted DEMO account/server, UTC arm window, operator approval reference, and max-new-orders=1.
+- Checked-request immutability: permit binds fresh order-check request/result fingerprints, healthy reconciliation fingerprint, and canonical SHA-256 of the exact checked MT5 request payload.
+- Arm semantics: permit copies the exact one-order window and does not spend or widen it; future execution must still durably journal SEND_ATTEMPTED before any mutation call.
+- Persistence: create-only `execution-permit.json` plus manifest.
+- Source isolation: permit source imports no MetaTrader5 backend, mutation adapter, or broker runner and adds no CLI.
+- Authorization: only `demo_execution_permit_artifact_ready=true`; `DEMO_EXECUTION_SOURCE_ARMED=false` and every execution/order/mutation/live/real-money/Phase-10 flag remain false.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `fc9fcc586fad03b90963ff636cb2275bbcbe1fd7` passed 1043 tests plus workflow-YAML validation and compile checks in run `35776256682`; unchanged Phase 3 acceptance run `35776256435` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before any real execution runner may consume the permit or invoke `order_send`.
