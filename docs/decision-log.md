@@ -866,3 +866,19 @@ DEC-057 consumes only exact DEC-055 demo designs and DEC-056 demo-order requests
 The DEC-057 backend boundary is read/check-only and exposes no `order_send`, close, modify, cancel, or other mutation method. The existing Phase 9 CLI remains design-only.
 
 DEC-057 may mark only MT5 demo preflight source readiness. Demo execution/order submission, broker mutation, live orders, real money, Phase 10, and live execution remain locked. A later separately approved decision is mandatory before any mutation-capable MT5 backend may exist.
+
+
+## DEC-058 — Phase 9 MT5 demo mutation transport source lock
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-mt5-demo-mutation-source.md` opens `EXP-20260922-029` for mutation-capable MT5 Python transport source behind a hard-disabled FMP execution gate.
+
+DEC-058 may normalize the already-connected MetaTrader5 terminal, derive the exact Phase 8B account fingerprint as `sha256(str(ACCOUNT_LOGIN))`, translate freshly revalidated DEC-057 market requests to MetaTrader5 constants, normalize `order_send` results, and read active orders/positions for reconciliation.
+
+The official FMP adapter remains compile-time disabled with `DEMO_EXECUTION_SOURCE_ARMED = False`. DEC-058 defines no builder, CLI flag, environment variable, config, artifact, setter, or public method that can change that value. The adapter checks the gate before any broker read or mutation and raises `DemoExecutionLockedError` while disabled.
+
+The raw backend is infrastructure only and is not exposed by the CLI. Tests may use only fake in-memory MetaTrader5-compatible modules.
+
+Demo execution/order submission, broker mutation through the FMP execution path, real-money trading, Phase 10, and live execution remain locked. A later separately approved decision must explicitly arm demo execution and freeze the operator/session/journal boundary before the first real practice-account order.
