@@ -1,145 +1,271 @@
-# Phase 8 MT5 Operator Handoff (macOS)
+# Phase 8B MT5 Operator Handoff — Multi-Strategy Portfolio Shadow
 
-> **PAUSED BY DEC-039 — DO NOT REGISTER OR START EXP-20260922-011.**  
-> The connector qualification/reference artifacts remain valid non-scored evidence, but Phase 8A portfolio research is now active. This handoff is retained for historical/technical reference until Phase 8B defines the multi-pair shadow campaign.
+**Status:** current operator reference for the Phase 8B prospective shadow campaign.
 
-Status: historical/operator reference for the read-only USDJPY bridge. **Campaign launch is paused under DEC-039.**
+This workflow is **read-only**. It uses the FP Markets MT5 DEMO account only to
+export quote/heartbeat records through the repository's Phase 8B FILE_COMMON
+bridge. It never places an order and never authorizes broker mutation. It does not authorize a demo order, live order, broker mutation, or real-money action.
 
-This workflow is **read-only**. It reads the FP Markets MT5 demo USDJPY quote feed through the local `FMPPhase8QuoteBridge.mq5` Expert Advisor. Keep **AutoTrading OFF** throughout. There are **no demo or live orders** in this workflow, and no step authorizes broker execution.
+Keep **AutoTrading OFF** throughout Phase 8B.
 
-Do not share your broker password, account password, access token, Client Secret, or other credentials in chat, GitHub, repository files, evidence, or command-line arguments. FMP does not need them for this MT5 file bridge.
+Do not place broker passwords, account passwords, access tokens, or other
+credentials in chat, GitHub, repository files, evidence artifacts, or command
+arguments.
 
-## 1. Confirm the MT5 demo session
+## 1. What Phase 8B is testing
 
-Before touching the bridge:
+Phase 8B prospectively tests the immutable portfolio accepted by Phase 8A.
 
-- MT5 must be logged into the FP Markets **demo** account.
-- The active server must be exactly `FPMarketsSC-Demo` or `FPMarketsSC-Demo2`.
-- `USDJPY` must be visible in Market Watch and receiving changing Bid/Ask quotes.
-- Keep **AutoTrading OFF**.
+The V1 research universe is:
 
-If the account, server, or symbol is wrong, stop. Do not substitute another broker, server, symbol, or live account into this campaign.
+- EURUSD
+- GBPUSD
+- USDJPY
 
-## 2. Install and compile the read-only EA
+The exact required symbols for a campaign come from the frozen Phase 8B design.
+A candidate may require two or three V1 pairs; do not add or remove a pair by
+hand.
 
-The repository source is:
+The Phase 7 USDJPY 15m session-breakout strategy is a historical
+baseline/control. Phase 8B is not a USDJPY-only campaign.
 
-`mt5/Experts/FMPPhase8QuoteBridge.mq5`
+## 2. Freeze the Phase 8B design
 
-On the Mac MT5 terminal:
-
-1. Choose **File -> Open Data Folder**.
-2. Open `MQL5/Experts`.
-3. Copy `FMPPhase8QuoteBridge.mq5` into that folder.
-4. Open the file in **MetaEditor** and compile it.
-5. Require a successful compile with no errors before continuing.
-6. Return to MT5. In Navigator, refresh Expert Advisors if needed.
-7. Open the `USDJPY` chart and attach `FMPPhase8QuoteBridge` to that chart only.
-8. Leave **AutoTrading OFF**.
-
-The EA fails closed unless the chart is `USDJPY`, the account is demo, and the server is one of the two approved demo servers. It has no order/trade execution surface.
-
-The bridge writes through MT5 `FILE_COMMON` to the fixed logical file:
-
-`FMP/phase8-usdjpy-feed.jsonl`
-
-FMP discovers that fixed file automatically. There is no supported `--path`, filename, server, credential, or instrument override.
-
-## 3. Run the bounded connector qualification
-
-From the FMP repository:
+Start from the exact accepted DEC-045 Phase 8A acceptance artifact:
 
 ```bash
-python scripts/phase8_shadow.py qualify --out evidence/phase8/qualification
+python scripts/phase8b_shadow.py design \
+  --acceptance <phase8a-acceptance.json> \
+  --code-commit "$(git rev-parse HEAD)" \
+  --out evidence/phase8b/design
 ```
 
-Qualification runs for at most ten minutes and uses only records appended after the reader starts. It does not run strategy logic.
+The design freezes the champion set, strategy fingerprints, required symbols,
+required timeframes, connector contract, liveness limits, and 0.2 / 0.5 /
+1.0-pip scenarios.
 
-Qualification also verifies that MT5 tick source times are aligned to UTC within the frozen 5-second quote deadline. The EA converts the broker/server tick clock to UTC before writing `source_time_msc`; a multi-hour broker clock offset must therefore fail qualification rather than shift the London-session bars.
+Do not edit the design after creation.
 
-Interpret the result exactly:
+## 3. Install the current multi-symbol read-only bridge
 
-- `PASS` — the connector qualification passed; continue to the historical reference step.
-- `INCONCLUSIVE` — market activity was insufficient or the bounded sample could not qualify without an integrity failure. Keep the evidence and retry later without changing the protocol.
-- `CONNECTOR_UNAVAILABLE` — the local bridge is missing, inactive, inaccessible, or not correctly attached. Check MT5, the EA, demo login, server, and USDJPY chart.
-- `CONNECTOR_REJECTED` — an integrity/session/source-time/safety condition failed. Stop, retain the evidence, and correct the defect before a fresh qualification.
+Use this repository EA:
 
-A qualification `PASS` is only permission to proceed with Phase 8 evidence collection. It is not Phase 8 PASS.
+`mt5/Experts/FMPPhase8BQuoteBridge.mq5`
 
-## 4. Build and freeze the historical spread reference
+Do **not** use the older `FMPPhase8QuoteBridge.mq5` USDJPY-only Phase 8 file for
+the Phase 8B campaign.
 
-Only after qualification `PASS`:
+On the MT5 terminal:
+
+1. Log in to the accepted FP Markets **DEMO** account.
+2. Require server `FPMarketsSC-Demo` or `FPMarketsSC-Demo2`.
+3. Keep AutoTrading OFF.
+4. Choose **File -> Open Data Folder**, then open `MQL5/Experts`.
+5. Copy `FMPPhase8BQuoteBridge.mq5` there and compile it in MetaEditor with no errors.
+6. Open one chart for every symbol listed in the frozen design's
+   `required_symbols`.
+7. Attach one instance of `FMPPhase8BQuoteBridge` to each required-symbol
+   chart.
+
+The EA accepts only EURUSD, GBPUSD, and USDJPY and writes fixed FILE_COMMON
+files:
+
+- EURUSD -> `FMP/phase8b-eurusd-feed.jsonl`
+- GBPUSD -> `FMP/phase8b-gbpusd-feed.jsonl`
+- USDJPY -> `FMP/phase8b-usdjpy-feed.jsonl`
+
+All required symbol instances must come from the same accepted DEMO
+account/server. There is no supported arbitrary path, symbol, server, or live
+account override.
+
+## 4. Qualify the required feeds
 
 ```bash
-python scripts/phase8_shadow.py build-reference \
-  --dataset-root <accepted-phase2-dataset-root> \
-  --processed-manifest <accepted-usdjpy-processed-manifest> \
-  --out evidence/phase8/reference
+python scripts/phase8b_shadow.py qualify \
+  --design evidence/phase8b/design/design.json \
+  --out evidence/phase8b/qualification
 ```
 
-Use only the already accepted Phase 2/7 USDJPY artifacts bound by the repository. Do not use MT5 historical candles to repair or replace them.
+Qualification is bounded and read-only. It requires the frozen bridge identity,
+DEMO account, approved server, source-time integrity, heartbeats, and quote
+activity for every required symbol.
 
-## 5. Register the new MT5 campaign once
+Interpret outcomes literally:
+
+- `PHASE8B_CONNECTOR_QUALIFIED` — all required feeds qualified.
+- `INCONCLUSIVE` — retain evidence and retry later without changing the
+  protocol.
+- `CONNECTOR_UNAVAILABLE` — a required bridge/file is missing or inaccessible.
+- `CONNECTOR_REJECTED` — an identity, integrity, source-time, or safety check
+  failed.
+
+Qualification is not Phase 8 PASS.
+
+## 5. Register the campaign once
+
+Only after connector qualification passes:
 
 ```bash
-python scripts/phase8_shadow.py register \
-  --reference evidence/phase8/reference \
-  --campaign-dir evidence/phase8/campaign
+python scripts/phase8b_shadow.py register \
+  --design evidence/phase8b/design/design.json \
+  --qualification evidence/phase8b/qualification/qualification.json \
+  --campaign-dir evidence/phase8b/campaign
 ```
 
-Registration freezes the connector/evidence identity and the existing Phase 8 thresholds. Do not edit the registration after scored observation begins.
+Registration freezes the exact campaign identity, champion set, required
+symbols, account/server, and per-symbol bridge-session IDs.
 
-## 6. Start an explicit shadow-capture segment
+Do not edit or overwrite registration evidence.
+
+## 6. Authorize the prospective start boundary
+
+With the same bridge sessions still running:
 
 ```bash
-python scripts/phase8_shadow.py run --campaign-dir evidence/phase8/campaign
+python scripts/phase8b_shadow.py authorize-start \
+  --campaign-dir evidence/phase8b/campaign
 ```
 
-This is an operator-started local capture, not a daemon. Stop the segment explicitly when intended.
+This creates the immutable campaign start plus capture preflight and establishes
+the tail-at-current-EOF/no-backfill boundary.
 
-A restart, disconnect, **bridge-liveness stale interval**, MT5 restart, or EA restart is a real continuity break. There is **no backfill** and no reconstruction of unseen price path. FMP must never use pre-reader transport content, MT5 candles, or another provider to fill a gap.
+If a bridge session changed since registration, stop and requalify/register a
+new campaign. Do not silently rebind the existing campaign.
 
-A no-tick period while bridge heartbeats remain healthy is recorded as `market_quiet` and, by itself, does **not** invalidate the entire London date. The safety gates remain fail-closed:
+## 7. Freeze the historical spread reference
 
-- if required 1m/15m market context is actually missing, the strategy date becomes incomplete/ineligible;
-- if a simulated position is open when a market-quiet gap crosses the 15-second threshold, that position outcome becomes unknown rather than being scored from an unseen price path;
-- entry and scheduled-exit quotes still must satisfy the frozen 5-second quote deadline;
-- no missing quote path is backfilled or reconstructed.
-
-## 7. Replay every finalized segment offline
-
-For every finalized segment:
+After start authorization/preflight and before capture:
 
 ```bash
-python scripts/phase8_shadow.py replay --segment-dir evidence/phase8/campaign/<segment>
+python scripts/phase8b_shadow.py freeze-spread-reference \
+  --campaign-dir evidence/phase8b/campaign \
+  --dataset-root <accepted-phase2-dataset-root>
 ```
 
-Any replay mismatch blocks acceptance for that segment. Retain failed evidence; do not rewrite it into a passing result.
+This uses the accepted retrospective canonical BID/ASK dataset only. It does not
+use future captured results to choose spread thresholds.
 
-## 8. Review the frozen campaign evidence
+## 8. Run the read-only readiness audit
 
-When enough real campaign evidence exists:
+Immediately before a prospective segment:
 
 ```bash
-python scripts/phase8_shadow.py review --campaign-dir evidence/phase8/campaign
+python scripts/phase8b_shadow.py readiness \
+  --campaign-dir evidence/phase8b/campaign
 ```
 
-The existing Phase 8 minimums and operational/market/financial/safety gates remain unchanged. A short campaign should return the existing need-more-data outcome rather than relaxing thresholds.
+The readiness command writes nothing to the campaign directory and consumes no
+post-EOF quote records. It checks the frozen artifact chain and the currently
+visible bridge-start identities.
 
-Even a final Phase 8 outcome of `PHASE8_PASS_ELIGIBLE_FOR_DEMO_DESIGN` **does not authorize** a demo order, live order, or real-money action. It permits only separate **Phase 9 design** work under its own later approval gates.
+Possible useful next actions are:
 
-## Troubleshooting the local bridge
+- `authorize-start`
+- `freeze-spread-reference`
+- `capture-segment`
 
-If FMP cannot discover the bridge file:
+A readiness result is **not authorization evidence** and does not prove current
+15-second liveness or 5-second quote freshness. The actual capture runtime
+revalidates independently.
 
-- confirm the EA is attached to the `USDJPY` chart;
-- confirm MT5 is still logged into the approved demo server;
-- inspect MT5's Experts/Journal messages for an EA startup rejection;
-- confirm the source compiled successfully in MetaEditor;
-- confirm the EA is using the fixed `FILE_COMMON` transport.
+## 9. Capture one bounded prospective segment
 
-If discovery finds more than one candidate file, stop and resolve the stale/duplicate MT5 terminal data roots. Do not add or use an arbitrary path override.
+Only by explicit operator action:
 
-If qualification reports `SOURCE_TIME_SKEW`, stop. Confirm that the installed EA is the current repository version, recompile it in MetaEditor, and requalify before starting a campaign. Do not reinterpret or backfill previously captured timestamps.
+```bash
+python scripts/phase8b_shadow.py capture-segment \
+  --campaign-dir evidence/phase8b/campaign \
+  --duration-seconds <1-to-86400>
+```
 
-If the EA restarts, it creates a new bridge session. Treat that as a restart boundary; do not claim continuity across it.
+Each invocation is one prospective segment. The fixed polling interval is
+source-controlled.
+
+The segment stores append-only/fsynced raw records, latency audit rows,
+operational events, compiled shadow evidence, and deterministic replay evidence.
+
+Important continuity rules:
+
+- no pre-reader content is admitted;
+- no missing interval is backfilled;
+- no MT5 candle is used to reconstruct unseen price path;
+- no alternate provider repairs a gap;
+- an EA/MT5/FMP restart is a real restart boundary;
+- malformed/truncated/session-replaced feeds fail closed;
+- a clean segment must replay exactly.
+
+A quiet market with healthy bridge heartbeats is distinct from a dead bridge.
+The frozen runtime handles that distinction.
+
+## 10. Close a campaign evidence snapshot
+
+After one or more clean segments:
+
+```bash
+python scripts/phase8b_shadow.py close-campaign \
+  --campaign-dir evidence/phase8b/campaign
+```
+
+The command prints a `closure_id`. Closing creates an immutable aggregate
+snapshot; it does not permanently stop further capture when the eventual review
+returns NEED_MORE_DATA.
+
+## 11. Review the closure
+
+```bash
+python scripts/phase8b_shadow.py review-campaign \
+  --campaign-dir evidence/phase8b/campaign \
+  --closure-id <closure-id>
+```
+
+Phase 8B acceptance remains frozen under DEC-051. Among other gates, acceptance
+requires at least:
+
+- 40 completed 0.2-pip scorable trades;
+- 8 elapsed weeks;
+- 30 complete London dates;
+- representation from at least 2 strategy families;
+- representation from at least 2 V1 pairs;
+- operational/replay/safety integrity;
+- frozen spread and financial thresholds.
+
+If the result is `PHASE8B_NEED_MORE_DATA`, keep the same valid campaign,
+capture additional clean prospective segments, create a new closure, and review
+that new closure. Do not relax thresholds.
+
+A terminal PASS creates the exact SHADOW_VALIDATED evidence needed for Phase 9
+design eligibility.
+
+## 12. What Phase 8B never authorizes
+
+Even a Phase 8B PASS does **not** authorize:
+
+- a demo order;
+- a live order;
+- broker mutation;
+- real-money trading;
+- Phase 10 deployment;
+- Phase 11.
+
+It only permits the separately gated Phase 9 demo-design/evidence chain already
+implemented in the repository.
+
+## 13. Troubleshooting
+
+If bridge discovery fails:
+
+- confirm `FMPPhase8BQuoteBridge.mq5` is attached to every required-symbol
+  chart;
+- confirm MT5 is still on the accepted DEMO account/server;
+- inspect MT5 Experts/Journal output for a bridge startup refusal;
+- confirm the current EA compiled successfully;
+- confirm there is only one discoverable FILE_COMMON file for each required
+  symbol.
+
+If a bridge session changes, do not claim continuity. A pre-registration change
+requires fresh qualification/registration; a post-start change becomes a real
+prospective continuity failure/restart boundary under the frozen campaign
+rules.
+
+If source-time skew fails, verify the current repository EA, recompile, and
+requalify. Never reinterpret or backfill captured timestamps.
