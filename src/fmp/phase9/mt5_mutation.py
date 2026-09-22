@@ -90,7 +90,10 @@ def _finite(
     result = float(value)
     if not math.isfinite(result):
         raise ValueError(f"{field} must be finite")
-    if not allow_zero and result <= 0:
+    if allow_zero:
+        if result < 0:
+            raise ValueError(f"{field} must be non-negative")
+    elif result <= 0:
         raise ValueError(f"{field} must be positive")
     return result
 
