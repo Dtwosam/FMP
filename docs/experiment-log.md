@@ -571,3 +571,20 @@ Copy this section for each serious experiment:
 - Historical/live run status: NOT RUN.
 - Implementation status: current `phase8b/design-contract` branch contains the deterministic design compiler/validator/artifact writer, source-free CLI, guarded main-only manual workflow, and tests that derive the exact symbol/file topology from an accepted DEC-045 champion set while keeping campaign/order authorizations false.
 - Follow-up: source-free verify/merge DEC-046 design implementation, then separately freeze and implement multi-symbol MT5 bridge qualification/registration before any Phase 8B campaign can start.
+
+
+### EXP-20260922-018 — Phase 8B bridge qualification and registration
+
+- Date: 2026-09-22
+- Status: ACTIVE — IMPLEMENTATION ONLY / NO CAMPAIGN
+- Protocol decision: DEC-047 APPROVED BEFORE ANY PHASE 8B CAMPAIGN
+- Purpose: implement the separate multi-symbol read-only MT5 bridge, per-symbol qualification, cross-feed identity gate, and immutable registration boundary for an accepted DEC-046 design.
+- Bridge protocol: fmp-mt5-demo-multisymbol-file-bridge-v1.
+- Required feeds: exact DEC-046 symbol subset only, using fixed FILE_COMMON files.
+- Per-symbol qualification: <=600 seconds, >=100 prices, >=6 heartbeats, bridge gap <=15 seconds, market gap <=15 seconds during qualification, source-time skew <=5 seconds.
+- Multi-symbol PASS: every required symbol PASS; same approved demo account fingerprint/server; distinct bridge session IDs; exact required-symbol coverage.
+- Qualification PASS authorizes registration only.
+- Campaign start authorized?: NO.
+- Demo/live/broker mutation/real-money/Phase 9 authorized?: NO.
+- Runtime status: NOT RUN.
+- Follow-up: implement and source-free verify bridge parser/EA, qualification summary, immutable registration, CLI/tests; do not add capture/start under EXP-018.
