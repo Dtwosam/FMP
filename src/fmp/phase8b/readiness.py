@@ -303,25 +303,6 @@ def build_phase8b_campaign_readiness(
     if not isinstance(registered_sessions, Mapping):
         raise ValueError("Phase 8B readiness registered sessions are malformed")
 
-    if campaign_terminal_present:
-        current = {
-            str(symbol): {}
-            for symbol in registration["required_symbols"]
-        }
-        result = _report(
-            outcome=Phase8BCampaignReadinessOutcome.TERMINAL,
-            inspected_at_utc=now,
-            registration=registration,
-            current_bridges=current,
-            next_action="none-terminal",
-            terminal_present=True,
-            start_authorization_present=start_authorization is not None,
-            capture_preflight_present=capture_preflight is not None,
-            spread_reference_present=spread_reference is not None,
-        )
-        validate_phase8b_campaign_readiness(result)
-        return result
-
     expected_sessions: Mapping[str, object] = registered_sessions
     if start_authorization is not None:
         validate_phase8b_campaign_start_authorization(start_authorization)
@@ -368,6 +349,42 @@ def build_phase8b_campaign_readiness(
         raise ValueError(
             "Phase 8B readiness start authorization exists without capture preflight"
         )
+
+    if spread_reference is not None:
+        if capture_preflight is None:
+            raise ValueError(
+                "Phase 8B readiness spread reference requires capture preflight"
+            )
+        validate_phase8b_spread_reference(spread_reference)
+        for field in (
+            "capture_preflight_fingerprint",
+            "champion_set_fingerprint",
+            "required_symbols",
+            "slippage_scenarios",
+        ):
+            if spread_reference.get(field) != capture_preflight.get(field):
+                raise ValueError(
+                    f"Phase 8B readiness spread-reference {field} mismatch"
+                )
+
+    if campaign_terminal_present:
+        current = {
+            str(symbol): {}
+            for symbol in registration["required_symbols"]
+        }
+        result = _report(
+            outcome=Phase8BCampaignReadinessOutcome.TERMINAL,
+            inspected_at_utc=now,
+            registration=registration,
+            current_bridges=current,
+            next_action="none-terminal",
+            terminal_present=True,
+            start_authorization_present=start_authorization is not None,
+            capture_preflight_present=capture_preflight is not None,
+            spread_reference_present=spread_reference is not None,
+        )
+        validate_phase8b_campaign_readiness(result)
+        return result
 
     try:
         current = _validate_current_bridge_identities(
@@ -419,18 +436,6 @@ def build_phase8b_campaign_readiness(
         outcome = Phase8BCampaignReadinessOutcome.NEEDS_SPREAD
         next_action = "freeze-spread-reference"
     else:
-        validate_phase8b_spread_reference(spread_reference)
-        assert capture_preflight is not None
-        for field in (
-            "capture_preflight_fingerprint",
-            "champion_set_fingerprint",
-            "required_symbols",
-            "slippage_scenarios",
-        ):
-            if spread_reference.get(field) != capture_preflight.get(field):
-                raise ValueError(
-                    f"Phase 8B readiness spread-reference {field} mismatch"
-                )
         outcome = Phase8BCampaignReadinessOutcome.READY
         next_action = "capture-segment"
 
@@ -513,6 +518,13 @@ def inspect_phase8b_campaign_readiness_directory(
                 def start_record(self):
                     raise FileNotFoundError("bridge unavailable")
             tails = {symbol: _Unavailable() for symbol in symbols}  # type: ignore[assignment]
+        except ValueError as exc:
+            message = str(exc)
+            class _Rejected:
+                @property
+                def start_record(self):
+                    raise ValueError(message)
+            tails = {symbol: _Rejected() for symbol in symbols}  # type: ignore[assignment]
 
     return build_phase8b_campaign_readiness(
         registration=registration,
