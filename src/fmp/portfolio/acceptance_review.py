@@ -345,7 +345,12 @@ def review_phase8a_acceptance(
     preflight_sha256: str,
     selection: Mapping[str, object],
     selection_sha256: str,
+    code_commit: str,
 ) -> dict[str, object]:
+    acceptance_commit = _validate_commit(
+        code_commit,
+        field="DEC-045 acceptance compiler commit",
+    )
     pool_records, selection_records, verified_selection_sha = (
         _validate_dec042_evidence(
             preflight=preflight,
@@ -376,6 +381,7 @@ def review_phase8a_acceptance(
         "dec042_preflight_sha256": preflight_sha256,
         "dec042_selection_sha256": verified_selection_sha,
         "dec042_runner_code_commit": selection["runner_code_commit"],
+        "acceptance_code_commit": acceptance_commit,
         "baseline_strategy_fingerprint": baseline.strategy.fingerprint,
         "baseline_control_02": {
             "annualized_compounded_return": baseline_scenarios[
