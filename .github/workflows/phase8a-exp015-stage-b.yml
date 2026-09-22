@@ -18,6 +18,14 @@ jobs:
     timeout-minutes: 360
 
     steps:
+      - name: Require main workflow dispatch
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "Phase 8A historical workflows must be dispatched from refs/heads/main" >&2
+            exit 1
+          fi
+
       - name: Checkout exact Stage B runner commit
         uses: actions/checkout@v6
         with:
