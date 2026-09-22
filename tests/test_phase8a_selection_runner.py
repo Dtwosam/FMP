@@ -7,7 +7,11 @@ import hashlib
 import json
 import unittest
 
-from fmp.portfolio.challenger_discovery import build_exp015_challengers
+from fmp.portfolio.challenger_discovery import (
+    build_exp015_challengers,
+    exp015_catalog_identity_sha256,
+)
+from fmp.portfolio.challenger_discovery_stage_a import exp015_strategy_source_sha256
 from fmp.portfolio.historical_inventory import build_phase4_baseline_inventory
 from fmp.portfolio.selection_runner import (
     DEC042_EXPERIMENT_ID,
@@ -37,7 +41,31 @@ def _baseline():
 
 def _exp015_final(count: int = 2) -> dict[str, object]:
     catalog = build_exp015_challengers(code_commit=EXP015_COMMIT)
-    selected = [item.strategy.fingerprint for item in catalog[:count]]
+    chosen = []
+    used_pairs = set()
+    used_families = set()
+    for item in catalog:
+        if len(chosen) >= count:
+            break
+        if (
+            len(chosen) < 2
+            and (
+                item.strategy.symbol in used_pairs
+                or item.strategy.family in used_families
+            )
+        ):
+            continue
+        chosen.append(item)
+        used_pairs.add(item.strategy.symbol)
+        used_families.add(item.strategy.family)
+    if len(chosen) < count:
+        chosen.extend(
+            item
+            for item in catalog
+            if item not in chosen
+        )
+        chosen = chosen[:count]
+    selected = [item.strategy.fingerprint for item in chosen]
     selected_set = set(selected)
     dispositions = []
     for item in catalog:
@@ -56,7 +84,11 @@ def _exp015_final(count: int = 2) -> dict[str, object]:
     pair_counts = {}
     family_counts = {}
     cell_counts = {}
-    for item in catalog[:count]:
+    selected_records = [
+        item for item in catalog if item.strategy.fingerprint in selected_set
+    ]
+    selected_records.sort(key=lambda item: selected.index(item.strategy.fingerprint))
+    for item in selected_records:
         s = item.strategy
         pair_counts[s.symbol] = pair_counts.get(s.symbol, 0) + 1
         family_counts[s.family] = family_counts.get(s.family, 0) + 1
@@ -71,8 +103,10 @@ def _exp015_final(count: int = 2) -> dict[str, object]:
         "stage_a_runner_code_commit": EXP015_COMMIT,
         "stage_b_runner_code_commit": "b" * 40,
         "stage_c_runner_code_commit": "c" * 40,
-        "catalog_identity_sha256": "d" * 64,
-        "strategy_source_sha256": "e" * 64,
+        "catalog_identity_sha256": exp015_catalog_identity_sha256(
+            code_commit=EXP015_COMMIT
+        ),
+        "strategy_source_sha256": exp015_strategy_source_sha256(),
         "tested_candidate_count": 567,
         "stage_a_survivor_count": count,
         "stage_b_pass_count": count,
@@ -145,7 +179,8 @@ def _joint_result(
         }
         for symbol in symbols
     }
-    manifests = {symbol: (symbol[0].lower() * 64) for symbol in symbols}
+    digest_chars = {"EURUSD": "e", "GBPUSD": "b", "USDJPY": "d"}
+    manifests = {symbol: (digest_chars[symbol] * 64) for symbol in symbols}
     return {
         "protocol": "fmp-phase8a-joint-portfolio-v1",
         "experiment_id": DEC042_EXPERIMENT_ID,
