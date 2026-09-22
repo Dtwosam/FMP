@@ -374,9 +374,9 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-067 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet artifact, explicit execution approval, demo order, or broker mutation has been executed;
-3. PR #159 merged DEC-067 / `EXP-20260922-038` to `main` at `a966147f31127b929d3a88e80d7ff7294a5c5fb4`; the exact final PR head `7c696843813df9be19cae9fd9cab4079ad38f300` passed 1066 tests plus YAML/compile in run `35783187529` and unchanged Phase 3 acceptance run `35783187315` passed; post-merge `main` runs `35783318956` and `35783319029` passed;
-4. DEC-067 provides an immutable human-review packet and deterministic authorization challenge over the exact future first practice order plus the frozen DEC-066 demo-campaign obligations, but records no execution approval and is not consumed by the runner;
-5. `DEMO_EXECUTION_SOURCE_ARMED=false`; the next boundary is a separately approved explicit approval-recording/source-gate activation contract. Broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
+3. DEC-068 / `EXP-20260922-039` is the active milestone: implement source-only exact challenge-bound approval-record and gate-activation contracts without creating a real approval artifact;
+4. DEC-068 must preserve the hard source lock, add no runner wiring or execution CLI, and tests may use only fixture approval statements/identities;
+5. real first-demo approval/execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
