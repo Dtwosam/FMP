@@ -374,7 +374,7 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-056 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design artifact, demo order, or broker mutation has been executed;
-3. DEC-057 / `EXP-20260922-028` is the active milestone: implement source-only MT5 DEMO practice-account assertion, exact symbol/contract normalization, no-resize units-to-volume translation, current-quote/protective-stop validation, deterministic order-check payload/evidence, and immutable demo-preflight artifacts;
+3. DEC-057 / `EXP-20260922-028` is implemented on PR #149 head `19a6ad3f653b053d6c32e2f6e95dd05c999bddb1`: source-only DEMO account/symbol/tick assertion, exact no-resize units-to-volume translation, price-grid/minimum-stop validation, deterministic MT5 order-check request/evidence, and create-only `fmp-phase9-mt5-demo-preflight-v1`; run `35766703078` passed 1005 tests plus YAML/compile and unchanged Phase 3 acceptance run `35766703266` passed;
 4. DEC-057 backend source is read/check-only and must contain no `order_send`, order modification, cancellation, close-position, or other broker mutation method; Phase 9 CLI remains design-only;
 5. demo execution/order submission, broker mutation, real-money trading, Phase 10, and live execution remain locked.
 
