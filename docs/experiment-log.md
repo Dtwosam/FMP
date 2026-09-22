@@ -589,3 +589,20 @@ Copy this section for each serious experiment:
 - Runtime status: NOT RUN.
 - Implementation status: current `phase8b/bridge-qualification-registration` branch contains the separate multi-symbol bridge parser/session validator/file-tail discovery, read-only Phase 8B MT5 EA, exact legacy-threshold per-symbol qualification, cross-feed account/server/session gate, deterministic qualification evidence, immutable exactly-once registration, and CLI/tests exposing only `design`, `qualify`, and `register`. No `run`/capture/start command exists.
 - Follow-up: source-free verify/merge DEC-047. A later separately frozen decision is still required before any Phase 8B live-shadow segment may start.
+
+
+### EXP-20260922-019 — Phase 8B campaign start authorization
+
+- Date: 2026-09-22
+- Status: ACTIVE — IMPLEMENTATION ONLY / NO LIVE-SHADOW SEGMENT
+- Protocol decision: DEC-048 APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+- Purpose: verify that the currently visible multi-symbol MT5 bridge sessions still exactly match one immutable DEC-047 campaign registration, freeze the prospective start boundary, and establish EOF-only reader semantics before any later capture runtime may begin.
+- Input: exact valid `fmp-phase8b-campaign-registration-v1` artifact and its SHA-256; fixed required-symbol bridge files only.
+- Start gate: every required symbol's active `BRIDGE_START` must match the registration on symbol, protocol, bridge session, account fingerprint, and server; required coverage must be exact.
+- Reader semantics: `TAIL_AT_EOF_NO_BACKFILL`; all pre-reader transport content is excluded from future prospective evidence.
+- Frozen boundary: explicit UTC start timestamp plus derived `Europe/London` first date, registration/champion/strategy identities, bridge sessions, liveness, quote deadline, and slippage scenarios.
+- Authorized on PASS: `campaign_start_authorized = true`; `prospective_capture_authorized = true`.
+- Still forbidden: promotion, demo/live orders, broker mutation, real money, Phase 9.
+- CLI scope: add only `authorize-start`; no `run`, `start`, `capture`, or `review` command under DEC-048.
+- Historical/live execution status: NOT RUN.
+- Follow-up: source-free verify/merge DEC-048. A later separately frozen capture/replay/acceptance protocol must independently revalidate DEC-048 evidence before any live-shadow segment can begin.
