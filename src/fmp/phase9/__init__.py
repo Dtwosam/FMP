@@ -53,6 +53,16 @@ from .mt5_preflight import (
     validate_phase9_mt5_order_check_request,
     write_phase9_mt5_demo_preflight,
 )
+from .runtime_authority import (
+    PHASE9_DEMO_RUNTIME_AUTHORITY_ARTIFACT_PROTOCOL,
+    PHASE9_DEMO_RUNTIME_AUTHORITY_DECISION,
+    PHASE9_DEMO_RUNTIME_AUTHORITY_EXPERIMENT_ID,
+    PHASE9_DEMO_RUNTIME_AUTHORITY_PROTOCOL,
+    PHASE9_DEMO_RUNTIME_AUTHORITY_READY,
+    build_phase9_demo_runtime_authority,
+    validate_phase9_demo_runtime_authority,
+    write_phase9_demo_runtime_authority,
+)
 from .session import (
     BoundedDemoSessionController,
     PHASE9_DEMO_SESSION_ARM_PROTOCOL,
@@ -94,6 +104,11 @@ from .protocol import (
 )
 
 __all__ = [
+    "PHASE9_DEMO_RUNTIME_AUTHORITY_ARTIFACT_PROTOCOL",
+    "PHASE9_DEMO_RUNTIME_AUTHORITY_DECISION",
+    "PHASE9_DEMO_RUNTIME_AUTHORITY_EXPERIMENT_ID",
+    "PHASE9_DEMO_RUNTIME_AUTHORITY_PROTOCOL",
+    "PHASE9_DEMO_RUNTIME_AUTHORITY_READY",
     "PHASE9_DEMO_EXECUTION_ARM_ARTIFACT_PROTOCOL",
     "PHASE9_DEMO_EXECUTION_ARM_CONTRACT_READY",
     "PHASE9_DEMO_EXECUTION_ARM_DECISION",
@@ -145,6 +160,7 @@ __all__ = [
     "PHASE9_MT5_ORDER_BRIDGE_PROTOCOL",
     "build_phase9_demo_design",
     "build_phase9_demo_execution_arm",
+    "build_phase9_demo_runtime_authority",
     "build_phase9_demo_session_arm",
     "build_phase9_demo_session_journal_event",
     "build_phase9_demo_session_ready",
@@ -162,6 +178,7 @@ __all__ = [
     "run_phase9_mt5_demo_preflight",
     "validate_phase9_demo_design",
     "validate_phase9_demo_execution_arm",
+    "validate_phase9_demo_runtime_authority",
     "validate_phase9_demo_session_arm",
     "validate_phase9_demo_session_journal",
     "validate_phase9_demo_session_ready",
@@ -173,6 +190,7 @@ __all__ = [
     "validate_phase9_demo_order_request",
     "validate_phase9_demo_reconciliation",
     "write_phase9_demo_design",
+    "write_phase9_demo_runtime_authority",
     "write_phase9_demo_execution_arm",
     "write_phase9_mt5_demo_preflight",
     "write_phase9_demo_dry_run",
