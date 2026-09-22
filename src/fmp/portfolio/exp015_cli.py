@@ -5,6 +5,10 @@ from collections.abc import Callable, Mapping, Sequence
 import json
 from pathlib import Path
 
+from .challenger_discovery import (
+    build_exp015_catalog_evidence,
+    write_exp015_catalog_artifacts,
+)
 from .challenger_discovery_stage_a import (
     aggregate_exp015_stage_a_gates,
     evaluate_exp015_stage_a_cell,
@@ -23,6 +27,13 @@ def build_parser() -> argparse.ArgumentParser:
         description="FMP EXP-015 frozen Stage A challenger-discovery tooling",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    catalog = subparsers.add_parser(
+        "catalog",
+        help="freeze the exact 567 EXP-015 strategy identities before Stage A results",
+    )
+    catalog.add_argument("--code-commit", required=True)
+    catalog.add_argument("--out", required=True, type=Path)
 
     cell = subparsers.add_parser(
         "stage-a-cell",
@@ -68,6 +79,22 @@ def main(
     stage_a_aggregate_command: Callable[[Sequence[Mapping[str, object]]], Mapping[str, object]] = aggregate_exp015_stage_a_gates,
 ) -> int:
     args = build_parser().parse_args(argv)
+
+    if args.command == "catalog":
+        evidence = build_exp015_catalog_evidence(code_commit=args.code_commit)
+        write_exp015_catalog_artifacts(evidence, args.out)
+        print(
+            json.dumps(
+                {
+                    "catalog": str(args.out / "catalog.json"),
+                    "manifest": str(args.out / "manifest.json"),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+        )
+        return 0
 
     if args.command == "stage-a-cell":
         cell = dict(
