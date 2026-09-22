@@ -1026,3 +1026,7 @@ Copy this section for each serious experiment:
 - Real evidence status: no real Phase 8B prospective campaign/acceptance/SHADOW_VALIDATED transition; no real Phase 9 artifact chain, approval, activation, demo order, or broker mutation.
 - Verification: exact source head `b52c026324b67216f2060d120b13c36d30a6677d` passed 1080 tests plus workflow-YAML validation and compile checks in run `35786753220`; unchanged Phase 3 acceptance run `35786753236` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. After DEC-069, source construction for the first practice-order path is complete, but real execution still requires the real Phase 8B/Phase 9 evidence chain plus explicit operator action in a separately approved armed runtime.
+
+
+- Merge status: PR #161 merged DEC-069 to `main` at `0569b2cafb97bf4529cc95224a0133423396d9b9`. The exact final PR head `123f89d9cd5e2559f57a1b24cfe61affceff8e25` passed 1080 tests plus workflow-YAML validation and compile checks in run `35786935231`; unchanged Phase 3 acceptance run `35786935239` passed. Post-merge `main` runs `35787170070` and `35787170138` also passed.
+- Follow-up: source construction for the first practice-order path is complete. No real Phase 8B acceptance or Phase 9 artifact/approval/activation chain exists yet, so the next meaningful milestone is real prospective evidence and explicit operator action in a separately approved armed runtime; repository execution remains hard-locked.
