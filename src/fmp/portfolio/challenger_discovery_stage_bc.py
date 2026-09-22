@@ -676,6 +676,35 @@ def _validate_stage_b_result(
     return indexed, tuple(passers), tuple(by_fp[item] for item in passers)
 
 
+def validate_exp015_stage_b_evidence(
+    *,
+    stage_a_authorization: Mapping[str, object],
+    stage_a_authorization_sha256: str,
+    stage_b_result: Mapping[str, object],
+) -> tuple[StrategyRecord, ...]:
+    stage_a_sha = _validate_sha256(
+        stage_a_authorization_sha256,
+        field="EXP-015 Stage A authorization digest",
+    )
+    stage_a_commit, catalog_sha, source_sha, stage_a_survivors, stage_a_records = (
+        _validate_stage_a_authorization(stage_a_authorization)
+    )
+    if source_sha != exp015_strategy_source_sha256():
+        raise ValueError("EXP-015 strategy source digest mismatch")
+    _, passers, records = _validate_stage_b_result(
+        stage_b=stage_b_result,
+        stage_a_sha=stage_a_sha,
+        stage_a_commit=stage_a_commit,
+        catalog_sha=catalog_sha,
+        source_sha=source_sha,
+        stage_a_survivors=stage_a_survivors,
+        stage_a_records=stage_a_records,
+    )
+    if not passers or stage_b_result.get("stage_c_source_open_authorized") is not True:
+        raise ValueError("EXP-015 Stage C source-open is not authorized")
+    return records
+
+
 def run_exp015_stage_c(
     *,
     stage_a_authorization: Mapping[str, object],
@@ -1128,6 +1157,7 @@ __all__ = [
     "run_exp015_stage_b",
     "run_exp015_stage_c",
     "validate_exp015_stage_a_authorization",
+    "validate_exp015_stage_b_evidence",
     "write_exp015_final_artifacts",
     "write_exp015_stage_b_artifacts",
     "write_exp015_stage_c_artifacts",
