@@ -351,7 +351,7 @@ DEC-036 remains authoritative for the frozen strategy, risk, cost, campaign mini
 - EXP-011 campaign registration: PENDING fresh registration after qualification/reference
 - Phase 9/demo order placement: LOCKED
 - production/live order placement and broker mutation: LOCKED
-- Real-money trading: locked
+- real-money trading: LOCKED
 
 Phase 8 is not PASS. The diagnostic EXP-010 campaign cannot be scored under DEC-038. PASS still requires a fresh EXP-011 campaign satisfying every unchanged campaign-minimum, timing, spread, financial, replay, evidence-integrity, and structural safety gate. `PHASE8_NEED_MORE_DATA` remains non-terminal.
 
