@@ -372,7 +372,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-011 — Phase 8 MT5 demo live-shadow evaluation with separated bridge/market liveness
 
 - Date: 2026-09-22
-- Status: RUNNING
+- Status: STOPPED BEFORE REGISTRATION / SUPERSEDED BY PHASE 8A
 - Protocol decision: DEC-038 APPROVED
 - Hypothesis: The unchanged Phase 7-promoted USDJPY 15m session-breakout rule can be evaluated prospectively when true bridge continuity failures are separated from heartbeat-healthy no-tick intervals, while unseen trade paths and missing strategy context still fail closed.
 - Code commit: DEC-038 implementation merged by PR #119 to `main` at `71fca1ccbfd14edd71c736f61187558f6f6a7909`; all qualification/reference/campaign evidence must bind this merged implementation identity.
@@ -392,12 +392,44 @@ Copy this section for each serious experiment:
 - Risk assumptions: unchanged Phase 3 policy; independent $100,000 virtual account per scenario.
 - Liveness semantics: 15-second bridge silence remains date-invalidating `stale`; 15-second no-tick intervals with healthy bridge records emit `market_quiet` and do not by themselves invalidate the date. Open simulated positions crossing such a gap become `OUTCOME_UNKNOWN_AFTER_GAP`; missing required bars remain incomplete; 5-second entry/scheduled-exit quote deadlines remain frozen.
 - Campaign minimums: at least 8 elapsed calendar weeks, 30 fully observed London dates, 40 completed scorable 0.2-pip trades, and at least 90% valid denominator-date coverage, plus all existing timing/spread/financial/replay/safety gates.
-- Trade count: pending fresh campaign.
+- Trade count: no EXP-011 campaign was registered; zero scored campaign trades.
+- Net return after costs: not scored.
+- Expectancy/trade: not scored.
+- Profit factor: not scored.
+- Max drawdown: not scored.
+- Result summary: DEC-038 implementation and source-free verification passed. The operator then completed a fresh local qualification under code commit `5cb884dfb15d7798b023658e025221a38dfec9fc`: PASS, 100 prices, 15 heartbeats, zero rejection codes, max bridge/market liveness gap 3.884147625s. A fresh historical reference was also built under the same commit with SHA-256 `e920b3254235d2bb0766762551b5eb9d21439d429c59aebd14c3e4bb16e8cc64` and 199 historical trades. Before campaign registration, the operator rejected the economic case for evaluating this strategy alone and approved DEC-039.
+- Conclusion: STOPPED
+- Reason: research objective changed before campaign registration; the sole Phase 7 strategy is too economically weak for the operator's revised multi-strategy/high-return objective despite having passed its prior robustness gate.
+- Follow-up: preserve qualification/reference and all EXP-009/010/011 evidence; do not register or start EXP-011. Continue under EXP-20260922-012 / Phase 8A.
+
+
+### EXP-20260922-012 — Phase 8A multi-pair, multi-strategy portfolio research
+
+- Date: 2026-09-22
+- Status: ACTIVE — IMPLEMENTATION
+- Protocol decision: DEC-039 APPROVED
+- Hypothesis: a versioned portfolio of independently tested strategies across EURUSD, GBPUSD, and USDJPY can materially improve capital utilization and the economic return profile relative to the sole Phase 7 USDJPY 15m session-breakout strategy without relying on martingale, loss chasing, hidden leverage escalation, or hot-swapped self-modification.
+- Code commit: implementation branch begins from `5cb884dfb15d7798b023658e025221a38dfec9fc`; exact result-producing commit(s) will be recorded as the experiment progresses.
+- Data manifest/version: accepted Phase 1/2 Dukascopy EURUSD/GBPUSD/USDJPY canonical 1m BID/ASK histories plus deterministic 5m/15m/1h derived bars. Existing accepted manifests/checksums remain authoritative.
+- Pair(s): EURUSD, GBPUSD, USDJPY
+- Timeframe(s): 5m, 15m, 1h where each strategy contract is valid.
+- Data range: accepted historical coverage through 2026-08-20 for retrospective research/robustness; later prospective observations only after a challenger version is frozen.
+- Train period: strategy-specific and must be predeclared before each new experiment result is inspected.
+- Validation period: strategy-specific chronological validation / retrospective walk-forward; no post-Phase-7 strategy may call 2024-2026 an untouched final test.
+- Final-test touched?: YES — the former final-test period was already opened by Phase 7.
+- Strategy/model: multi-strategy library; initial research reuses implemented baseline families and may add new predeclared strategy/regime experiments. No strategy version may mutate in place after its evidence identity is frozen.
+- Features: existing canonical bars and leakage-safe Phase 5 features may be used only under explicit experiment protocols; future information remains forbidden.
+- Parameters/search space: each strategy/version search surface must be predeclared in its own experiment record before promotion use. Earlier rejected parameter points remain rejected under their original experiments.
+- Random seed (if relevant): experiment-specific and recorded when stochastic methods are used.
+- Spread/cost model: historical BID/ASK spread remains authoritative; 0.2/0.5/1.0-pip adverse-slippage views remain the default sensitivity set unless a later strategy-specific decision justifies a different executable model.
+- Risk assumptions: existing Phase 3 risk contract remains the default: 0.25% requested risk, 0.50% hard per-trade max, 1.00% simultaneous open-risk max, 1.50% UTC day-start realized-loss halt. Portfolio exposure/correlation controls are added above, not around, this risk engine.
+- Economic objective: materially improve on the Phase 7 single-strategy economic case. The operator's aspiration includes possible +10% days; the experiment measures the frequency and risk required for such days rather than assuming or guaranteeing them.
+- Required reporting: daily return distribution, monthly/annualized net return, expectancy, profit factor, max drawdown, losing streaks, tail/concentration diagnostics, trade count, cost sensitivity, and contribution by pair/strategy/timeframe/session/regime.
+- Continuous-learning rule: new observations may create challengers, but active champions are immutable during registered campaigns. No challenger can automatically replace a champion or authorize demo/live orders.
+- Trade count: pending implementation and research runs.
 - Net return after costs: pending.
 - Expectancy/trade: pending.
 - Profit factor: pending.
 - Max drawdown: pending.
-- Result summary: DEC-038 implementation merged through PR #119. Source-free tests run `35670553677` passed all 786 tests plus workflow YAML validation and package compile; unchanged deterministic Phase 3 acceptance run `35670553680` succeeded; Phase 1 acquisition workflows `35670553665` and `35670553672` skipped as expected. Fresh operator qualification has not yet run.
 - Conclusion: NEED_MORE_DATA
-- Follow-up: preserve/archive EXP-010 evidence unchanged, update the local repository to merged commit `71fca1ccbfd14edd71c736f61187558f6f6a7909`, run fresh qualification, rebuild/freeze the historical reference under that commit, register a fresh campaign, then begin prospective capture with AutoTrading OFF.
-
+- Follow-up: implement and test the deterministic strategy registry/lifecycle contract first, then candidate aggregation/portfolio routing, exposure accounting, and the historical research orchestrator. Phase 8B live shadow remains locked until Phase 8A acceptance.
