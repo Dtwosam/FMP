@@ -1,0 +1,131 @@
+name: phase8a-retrospective-baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      research_start:
+        description: Retrospective research start date
+        required: true
+        default: '2015-01-01'
+      research_end_exclusive:
+        description: Retrospective research end date, exclusive
+        required: true
+        default: '2026-08-21'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  batch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        dataset:
+          - symbol: EURUSD
+            artifact_id: '10325737935'
+            zip_sha256: db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3
+          - symbol: GBPUSD
+            artifact_id: '10326096831'
+            zip_sha256: fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2
+          - symbol: USDJPY
+            artifact_id: '10327600628'
+            zip_sha256: 6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72
+        timeframe: [5m, 15m, 1h]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Download and verify accepted Phase 2 processed artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ matrix.dataset.artifact_id }}
+          EXPECTED_ZIP_SHA256: ${{ matrix.dataset.zip_sha256 }}
+          SYMBOL: ${{ matrix.dataset.symbol }}
+        run: |
+          set -euo pipefail
+          root=".phase2-accepted/${SYMBOL}"
+          zip_path=".phase2-accepted/${SYMBOL}.zip"
+          mkdir -p "${root}"
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip"             > "${zip_path}"
+          actual_sha256="$(sha256sum "${zip_path}" | awk '{print $1}')"
+          if [ "${actual_sha256}" != "${EXPECTED_ZIP_SHA256}" ]; then
+            echo "accepted Phase 2 artifact digest mismatch" >&2
+            exit 1
+          fi
+          unzip -q "${zip_path}" -d "${root}"
+
+      - name: Audit frozen historical inventory
+        env:
+          SYMBOL: ${{ matrix.dataset.symbol }}
+          TIMEFRAME: ${{ matrix.timeframe }}
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_research.py inventory             --symbol "${SYMBOL}"             --timeframe "${TIMEFRAME}"             > inventory.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("inventory.json").read_text(encoding="utf-8"))
+          assert payload["protocol"] == "fmp-phase8a-inventory-v1", payload
+          assert payload["promotion_authorized"] is False, payload
+          assert payload["strategy_identity_count"] == 30, payload
+          assert len(payload["strategies"]) == 30, payload
+          PY
+
+      - name: Run Phase 8A retrospective baseline cell
+        env:
+          SYMBOL: ${{ matrix.dataset.symbol }}
+          TIMEFRAME: ${{ matrix.timeframe }}
+          RESEARCH_START: ${{ inputs.research_start }}
+          RESEARCH_END_EXCLUSIVE: ${{ inputs.research_end_exclusive }}
+        run: |
+          set -euo pipefail
+          root=".phase2-accepted/${SYMBOL}"
+          manifest="${root}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json"
+          out=".phase8a-retrospective/${SYMBOL}-${TIMEFRAME}"
+          test -f "${manifest}"
+          python scripts/phase8a_research.py batch             --dataset-root "${root}"             --manifest "${manifest}"             --symbol "${SYMBOL}"             --timeframe "${TIMEFRAME}"             --start "${RESEARCH_START}"             --end-exclusive "${RESEARCH_END_EXCLUSIVE}"             --out "${out}"             --code-commit "${GITHUB_SHA}"
+
+      - name: Verify retrospective evidence cannot authorize promotion
+        env:
+          SYMBOL: ${{ matrix.dataset.symbol }}
+          TIMEFRAME: ${{ matrix.timeframe }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(".phase8a-retrospective") / f"{os.environ['SYMBOL']}-{os.environ['TIMEFRAME']}"
+          payload = json.loads((root / "batch.json").read_text(encoding="utf-8"))
+          manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+          assert payload["protocol"] == "fmp-phase8a-retrospective-batch-v1", payload
+          assert payload["evidence_label"] == "RETROSPECTIVE_ALREADY_SEEN", payload
+          assert payload["untouched_oos"] is False, payload
+          assert payload["promotion_authorized"] is False, payload
+          assert payload["historical_status_mutation_authorized"] is False, payload
+          assert payload["strategy_identity_count"] == 30, payload
+          assert payload["scenario_run_count"] == 90, payload
+          assert all(row["promotion_authorized"] is False for row in payload["results"]), payload
+          assert manifest["protocol"] == "fmp-phase8a-retrospective-batch-artifacts-v1", manifest
+          PY
+
+      - name: Upload Phase 8A retrospective evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase8a-retrospective-${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}-${{ github.sha }}
+          path: .phase8a-retrospective/${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}
+          include-hidden-files: true
+          if-no-files-found: error
