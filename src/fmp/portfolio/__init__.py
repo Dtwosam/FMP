@@ -16,9 +16,14 @@ from .challenger_discovery_stage_a import (
     write_exp015_stage_a_cell_artifacts,
 )
 from .challenger_discovery import (
+    EXP015_CATALOG_ARTIFACT_PROTOCOL,
+    EXP015_CATALOG_PROTOCOL,
     EXP015_ID,
     EXP015_STRATEGY_VERSION,
+    build_exp015_catalog_evidence,
     build_exp015_challengers,
+    exp015_catalog_identity_sha256,
+    write_exp015_catalog_artifacts,
 )
 from .challengers import (
     EXP013_ID,
@@ -108,6 +113,8 @@ __all__ = [
     "PHASE8A_RETROSPECTIVE_START",
     "CandidateRejection",
     "CandidateRejectionCode",
+    "EXP015_CATALOG_ARTIFACT_PROTOCOL",
+    "EXP015_CATALOG_PROTOCOL",
     "EXP015_ID",
     "EXP015_STAGE_A_AUTHORIZATION_PROTOCOL",
     "EXP015_STAGE_A_CELL_PROTOCOL",
@@ -138,6 +145,7 @@ __all__ = [
     "build_joint_evidence_envelope",
     "build_opening_range_momentum_challengers",
     "aggregate_exp015_stage_a_gates",
+    "build_exp015_catalog_evidence",
     "build_exp015_challengers",
     "build_phase4_baseline_inventory",
     "build_strategy_config",
@@ -146,6 +154,7 @@ __all__ = [
     "enumerate_portfolio_sets",
     "evaluate_exp015_stage_a_cell",
     "evaluate_selection_gates",
+    "exp015_catalog_identity_sha256",
     "exp015_strategy_source_sha256",
     "freeze_selection_pool",
     "freeze_shadow_champion_set",
@@ -162,6 +171,7 @@ __all__ = [
     "select_historical_inventory",
     "summarize_candidate_exposure",
     "summarize_daily_returns",
+    "write_exp015_catalog_artifacts",
     "write_exp015_stage_a_authorization_artifacts",
     "write_exp015_stage_a_cell_artifacts",
     "write_joint_evidence_artifacts",
