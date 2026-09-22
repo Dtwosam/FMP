@@ -201,7 +201,7 @@ class Phase8BMqlBridgeSafetyTests(unittest.TestCase):
         )
         for symbol, filename in BRIDGE_FILE_BY_SYMBOL.items():
             self.assertIn(symbol, source)
-            self.assertIn(filename.replace("/", "\\"), source)
+            self.assertIn(filename.replace("/", "\\\\"), source)
         self.assertIn("ACCOUNT_TRADE_MODE_DEMO", source)
         self.assertIn("FPMarketsSC-Demo", source)
         self.assertIn("FPMarketsSC-Demo2", source)
