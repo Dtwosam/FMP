@@ -60,10 +60,11 @@ On the MT5 terminal:
 1. Log in to the accepted FP Markets **DEMO** account.
 2. Require server `FPMarketsSC-Demo` or `FPMarketsSC-Demo2`.
 3. Keep AutoTrading OFF.
-4. Compile `FMPPhase8BQuoteBridge.mq5` in MetaEditor with no errors.
-5. Open one chart for every symbol listed in the frozen design's
+4. Choose **File -> Open Data Folder**, then open `MQL5/Experts`.
+5. Copy `FMPPhase8BQuoteBridge.mq5` there and compile it in MetaEditor with no errors.
+6. Open one chart for every symbol listed in the frozen design's
    `required_symbols`.
-6. Attach one instance of `FMPPhase8BQuoteBridge` to each required-symbol
+7. Attach one instance of `FMPPhase8BQuoteBridge` to each required-symbol
    chart.
 
 The EA accepts only EURUSD, GBPUSD, and USDJPY and writes fixed FILE_COMMON
