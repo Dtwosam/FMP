@@ -12,8 +12,8 @@ from fmp.strategies.contracts import SignalCandidate
 
 LONDON = ZoneInfo("Europe/London")
 _TIMEFRAME_MINUTES = {"5m": 5, "15m": 15, "1h": 60}
-_ALLOWED_LOOKBACK_HOURS = frozenset({4, 8, 16})
-_ALLOWED_THRESHOLDS = frozenset({1.5, 2.0})
+_ALLOWED_LOOKBACK_HOURS = frozenset({2, 4, 6, 8, 12, 16, 24})
+_ALLOWED_THRESHOLDS = frozenset({1.25, 1.5, 1.75, 2.0, 2.25, 2.5})
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,9 +24,9 @@ class MeanReversionConfig:
 
     def __post_init__(self) -> None:
         if self.lookback_hours not in _ALLOWED_LOOKBACK_HOURS:
-            raise ValueError("lookback_hours must be one of 4, 8, or 16")
+            raise ValueError("lookback_hours is outside the approved strategy grids")
         if self.threshold_sigma not in _ALLOWED_THRESHOLDS:
-            raise ValueError("threshold_sigma must be one of 1.5 or 2.0")
+            raise ValueError("threshold_sigma is outside the approved strategy grids")
         if self.timeframe not in _TIMEFRAME_MINUTES:
             raise ValueError("timeframe must be one of 5m, 15m, or 1h")
 
@@ -37,7 +37,7 @@ def duration_to_bars(timeframe: str, hours: int) -> int:
     except KeyError as exc:
         raise ValueError("timeframe must be one of 5m, 15m, or 1h") from exc
     if hours not in _ALLOWED_LOOKBACK_HOURS:
-        raise ValueError("hours must be one of 4, 8, or 16")
+        raise ValueError("hours is outside the approved strategy grids")
     duration_minutes = hours * 60
     if duration_minutes % width_minutes:
         raise ValueError("duration must be exactly divisible by timeframe width")
