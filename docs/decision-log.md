@@ -912,3 +912,17 @@ DEC-060 binds exact DEC-055 design, DEC-056 request/client identity, DEC-059 ses
 The DEC-058 compile-time source gate remains `DEMO_EXECUTION_SOURCE_ARMED = False`. DEC-060 creates no real operator arm during repository verification, adds no arming or execution CLI, performs no broker access, and cannot submit an order.
 
 A valid DEC-060 artifact means only that the arm-package contract is ready. Demo execution, demo-order submission, broker mutation, live orders, real money, and Phase 10 remain locked. A later separately approved decision is required before a real arm may be materialized or the source gate may change.
+
+
+## DEC-061 — Phase 9 offline demo-arm materialization
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-demo-arm-materialization.md` opens `EXP-20260922-032` for one local-only `materialize-arm` command over already-frozen DEC-055/056/059/060 JSON evidence.
+
+The command may parse and revalidate exact local artifacts and write the create-only DEC-060 execution-arm package. It exposes no semantic override for strategy, symbol, units, risk, stop/target, account/server/provider, client ID, UTC window, approval reference, or order count.
+
+DEC-061 may not import or instantiate MetaTrader5 or a broker mutation backend and may not run order_check/order_send. DEC-058 `DEMO_EXECUTION_SOURCE_ARMED` remains false.
+
+Successful materialization proves only that an exact future arm artifact can be constructed offline. Demo execution/order submission, broker mutation, live orders, real money, and Phase 10 remain locked. A later separately approved decision is required before an arm may become runtime authority or any broker-connected execution command may exist.
