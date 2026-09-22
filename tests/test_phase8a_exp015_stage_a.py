@@ -276,12 +276,21 @@ class Exp015StageATests(unittest.TestCase):
         self.assertEqual(auth["cell_count"], 9)
         self.assertEqual(auth["ranking_cell_count"], 54)
         self.assertEqual(auth["strategy_identity_count"], 567)
+        self.assertEqual(auth["catalog_identity_sha256"], CATALOG_SHA)
+        self.assertEqual(auth["maximum_stage_a_survivors"], 108)
         self.assertEqual(auth["survivor_count"], 0)
         self.assertFalse(auth["stage_b_source_open_authorized"])
         self.assertFalse(auth["promotion_authorized"])
 
         with self.assertRaises(ValueError):
             aggregate_exp015_stage_a_gates(gates[:-1])
+
+        bad_catalog = [dict(item) for item in gates]
+        bad_catalog[-1] = dict(bad_catalog[-1]) | {
+            "catalog_identity_sha256": "f" * 64,
+        }
+        with self.assertRaisesRegex(ValueError, "catalog identity mismatch"):
+            aggregate_exp015_stage_a_gates(bad_catalog)
 
         eurusd_5m_session = sorted(
             item.strategy.fingerprint
