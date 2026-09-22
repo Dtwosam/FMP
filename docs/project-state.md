@@ -3,9 +3,9 @@
 **Updated:** 2026-09-22
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
-**Current phase:** Phase 8 — Live shadow mode
+**Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE
-**Next milestone:** Run fresh local MT5 connector qualification for `EXP-20260922-011`; after PASS, rebuild the historical reference and register a fresh campaign under merged commit `71fca1ccbfd14edd71c736f61187558f6f6a7909` before any scored observation.
+**Next milestone:** Implement and verify the deterministic strategy registry/lifecycle contract and champion/challenger promotion lock for `EXP-20260922-012`; then add multi-pair candidate aggregation and portfolio exposure accounting before any new live-shadow campaign.
 
 ## Current baseline
 
@@ -319,40 +319,81 @@ The independently audited Stage 1 evidence is recorded in `docs/phase7-stage1-ev
 Phase 7 is formally PASS and checkpoint `fmp-v1-phase7-walk-forward` is frozen at `b6fb0176555b071fef6d1070edf3407b03cd60c9`. DEC-036 separately activates Phase 8 shadow-only implementation for the unchanged surviving `session_breakout` rule. Broker mutation, demo order placement, production/live order placement, and real-money trading remain locked; DEC-008 remains unchanged.
 
 
-## Phase 8 — ACTIVE
+## Phase 8 — ACTIVE AS AMENDED PHASE 8A / 8B
 
-DEC-036 remains authoritative for the frozen strategy, risk, cost, campaign minima, replay, and acceptance gates. DEC-037 remains authoritative for the read-only FP Markets MT5 demo connector. DEC-038 supersedes them only for live-capture interpretation of bridge silence versus heartbeat-healthy market no-tick intervals.
+DEC-039 changes Phase 8 from a single-strategy live-shadow campaign into two ordered subphases because the sole Phase 7 survivor is robust enough to have passed its historical gates but is not economically attractive enough for the operator's revised objective.
 
-`EXP-20260915-009` remains stopped before qualification. `EXP-20260917-010` is stopped as INCONCLUSIVE / DIAGNOSTIC after prospective evidence exposed the liveness-design defect. `EXP-20260922-011` is the active amended Phase 8 experiment and must start from fresh merged-code qualification/reference/campaign identity.
+### Phase 8A — Multi-pair, multi-strategy portfolio research — ACTIVE
 
-- prerequisite checkpoint: `fmp-v1-phase7-walk-forward` at `b6fb0176555b071fef6d1070edf3407b03cd60c9` — VERIFIED
-- approved base design: `docs/superpowers/specs/2026-09-15-phase8-shadow-design.md`
-- approved connector amendment: `docs/superpowers/specs/2026-09-17-phase8-mt5-bridge-amendment.md`
-- approved liveness amendment: `docs/superpowers/specs/2026-09-22-phase8-liveness-amendment.md`
-- sole strategy: USDJPY 15m `session_breakout`, 5-pip buffer, 1.5x target range, exact existing London-session/DST semantics, exact 16:00 `Europe/London` flat rule
-- ML overlay: none
-- selected live quote role: `FP_MARKETS_MT5_DEMO` via read-only `FMPPhase8QuoteBridge.mq5`, fixed `MT5_FILE_COMMON_JSONL` transport `FMP/phase8-usdjpy-feed.jsonl`
-- approved MT5 demo servers only: `FPMarketsSC-Demo`, `FPMarketsSC-Demo2`
-- last verified pre-amendment main commit: `97715805498784badcb617debabc2b81c15cf5a8`
-- EXP-010 clean UTC qualification: PASS on 2026-09-21 with 100 prices, 15 heartbeats, zero rejection codes, maximum bridge gap 3.935772 seconds, maximum market gap 4.644933667 seconds
-- EXP-010 diagnostic campaign: preserve unchanged; it does not count toward EXP-011 or Phase 8 acceptance
-- diagnostic liveness evidence: 46,721 normalized quotes; 102 quote gaps >15 seconds; 23 >30 seconds; 3 >60 seconds; maximum 4,301.580 seconds; 870 bridge heartbeats continued across the long approximately 10:18–11:30 UTC no-tick interval on 2026-09-21
-- amended 15-second liveness rule: bridge silence => `stale`, date ineligible, continuity failure; heartbeat-healthy no-tick interval => `market_quiet`, diagnostic only at the whole-date level
-- open simulated trade crossing `market_quiet`: `OUTCOME_UNKNOWN_AFTER_GAP`, not financially scored
-- required 1m/15m context: still must come from actually observed quotes; missing required context remains incomplete/ineligible
-- entry and scheduled-exit quote deadline: unchanged at 5 seconds
-- no backfill, tick interpolation, reconstructed bars, alternate-provider repair, or retroactive EXP-010 reclassification
-- evidence protocol: `fmp-phase8-shadow-evidence-v2` unchanged; fresh campaign/reference and exact code-commit binding prevent old/new semantics from mixing
-- slippage scenarios: 0.2 and 0.5 pips gating; 1.0 pip diagnostic only
-- Phase 3 risk policy: unchanged; independent $100,000 virtual account per cost scenario
-- EXP-011 implementation merge: PR #119 -> `main` at `71fca1ccbfd14edd71c736f61187558f6f6a7909`
-- EXP-011 source-free verification: tests run `35670553677` — SUCCESS, 786 tests PASS, workflow YAML PASS, compile PASS; deterministic Phase 3 acceptance run `35670553680` — SUCCESS; Phase 1 golden-sample run `35670553665` and network-smoke run `35670553672` — SKIPPED as expected
-- EXP-011 connector qualification: PENDING explicit operator-controlled local MT5 action
-- EXP-011 historical reference: PENDING fresh build under merged commit
-- EXP-011 campaign registration: PENDING fresh registration after qualification/reference
+Approved design: `docs/superpowers/specs/2026-09-22-phase8a-portfolio-research-redesign.md`
+
+Active experiment: `EXP-20260922-012`
+
+Core scope:
+
+- research universe: exactly EURUSD, GBPUSD, and USDJPY
+- historical source: reuse the accepted Dukascopy Phase 1/2 canonical 1m BID/ASK histories and deterministic 5m/15m/1h bars for all three pairs
+- strategy architecture: many immutable versioned strategy instances rather than one permanently selected strategy
+- initial family universe: session breakout, trend continuation, mean reversion, previous-day high/low rejection, rolling volatility breakout, and session high/low sweep/rejection; any new family or material parameter-region expansion requires a new predeclared experiment
+- lifecycle: `DISCOVERY -> CHALLENGER -> HISTORICAL_QUALIFIED -> SHADOW_CANDIDATE -> SHADOW_VALIDATED -> DEMO_ELIGIBLE`, with `RETIRED` preserved as durable evidence
+- active champion sets are immutable during registered campaigns; continuous learning may create challengers but may not hot-swap production/shadow strategy code
+- portfolio routing must evaluate eligible strategies across all three pairs and then apply conflict/correlated-exposure checks before the independent risk engine
+- existing Phase 3 risk defaults remain authoritative unless explicitly amended: 0.25% requested risk/trade, 0.50% hard maximum, 1.00% maximum simultaneous open risk, 1.50% UTC day-start realized-loss halt
+- operator economic objective: materially higher returns than the Phase 7 single-strategy result; possible +10% days are an aspiration to measure, not a guaranteed or mandatory daily pass gate
+- mandatory reporting includes daily return distribution, frequency of >=10% days, monthly/annualized return, expectancy, profit factor, drawdown, losing streaks, tail/concentration diagnostics, trade count, cost sensitivity, and pair/strategy/timeframe/session/regime contributions
+- return improvement may not be manufactured through martingale, loss chasing, silent leverage multiplication, or post-result parameter rescue
+
+Historical-data status:
+
+- Phase 7 already opened the former 2024-01-01 through 2026-08-20 final-test period
+- new post-Phase-7 strategies may use that history for retrospective discovery, diagnostics, and walk-forward robustness
+- they may **not** call it an untouched final test
+- genuinely new forward evidence begins only after a challenger version/protocol is frozen and later enters Phase 8B prospective shadow observation
+
+First implementation milestone:
+
+1. deterministic versioned strategy registry
+2. lifecycle-transition validation
+3. immutable champion-set / challenger separation
+4. tests proving non-eligible lifecycle states cannot enter an executable/shadow candidate set
+5. then multi-pair aggregation, regime/applicability routing, and portfolio exposure accounting
+
+### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
+
+`EXP-20260922-011` is preserved but will not be launched.
+
+Completed non-scored evidence:
+
+- source code updated to post-liveness-amendment main `5cb884dfb15d7798b023658e025221a38dfec9fc`
+- fresh local connector qualification: PASS
+- qualification: 100 prices, 15 heartbeats, zero rejection codes, maximum bridge/market liveness gap 3.884147625 seconds
+- fresh historical reference code commit: `5cb884dfb15d7798b023658e025221a38dfec9fc`
+- fresh reference SHA-256: `e920b3254235d2bb0766762551b5eb9d21439d429c59aebd14c3e4bb16e8cc64`
+- fresh reference historical trade count: 199
+- no EXP-011 campaign registration occurred
+- no EXP-011 live-shadow segment is authorized to start
+
+The older EXP-009 and EXP-010 evidence also remains preserved unchanged.
+
+### Phase 8B — Multi-strategy live shadow — LOCKED
+
+Phase 8B may begin only after Phase 8A produces and freezes one or more portfolio/shadow candidates under an acceptance review.
+
+Phase 8B must:
+
+- expand or replace the current USDJPY-only read-only bridge as needed to observe all approved portfolio instruments
+- preserve structural impossibility of broker order submission
+- freeze the champion strategy set and exact versions for each registered campaign
+- retain bridge/market liveness separation and fail-closed missing-path behavior from DEC-038
+- collect genuinely prospective evidence for post-Phase-7 challengers
+- prevent the research/learning path from mutating the active campaign
+
+### Execution locks
+
+- MT5 AutoTrading: OFF
 - Phase 9/demo order placement: LOCKED
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-Phase 8 is not PASS. The diagnostic EXP-010 campaign cannot be scored under DEC-038. PASS still requires a fresh EXP-011 campaign satisfying every unchanged campaign-minimum, timing, spread, financial, replay, evidence-integrity, and structural safety gate. `PHASE8_NEED_MORE_DATA` remains non-terminal.
+Phase 8 is not PASS. The active work is Phase 8A implementation and research under DEC-039 / EXP-012. Phase 8B remains locked until a portfolio candidate set is frozen and accepted.
 
