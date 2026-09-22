@@ -1048,3 +1048,7 @@ Copy this section for each serious experiment:
 - Safety: no prospective segment started, no campaign artifact written by readiness, no broker mutation, no order API, no Phase 9 action, and repository `DEMO_EXECUTION_SOURCE_ARMED=false`.
 - Verification: exact source head `a0bce886dc64e62eeafac9d642f63d13848c2ffb` passed 1085 tests plus workflow-YAML validation and compile checks in run `35789539447`; unchanged Phase 3 acceptance run `35789539375` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. The next meaningful action after merge is an explicit real operator Phase 8B campaign preparation/readiness/capture workflow; repository verification itself still performs none of those live actions.
+
+
+- Merge status: PR #162 merged DEC-070 to `main` at `5e918a9a9ed7b9ab112d62993eee6f4e7672e186`. The exact final PR head `5a26f9c6cd38040871a841c8a17567b1785ff753` passed 1085 tests plus workflow-YAML validation and compile checks in run `35789729752`; unchanged Phase 3 acceptance run `35789729689` passed. Post-merge `main` runs `35789967258` and `35789967219` also passed; the merge-commit test run executed 1085 tests.
+- Follow-up: Phase 8B source/operator preparation is complete. No real readiness inspection, prospective segment, campaign close/review, acceptance result, or SHADOW_VALIDATED transition has been executed. The next meaningful milestone is explicit real prospective shadow evidence on the accepted MT5 DEMO bridge; Phase 9 execution remains hard-locked.
