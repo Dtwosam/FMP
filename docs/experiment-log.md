@@ -467,8 +467,8 @@ Copy this section for each serious experiment:
 - Profit factor: pending
 - Max drawdown: pending
 - Conclusion: NEED_MORE_DATA
-- Implementation status: signal contract, 36 challenger identities, Stage A cell runner, and frozen gate logic were merged in PR #125. The operator workflow was missing from that merge; the current Stage A workflow/evidence branch adds deterministic development/validation/gate artifacts, nine-cell aggregation, and exact survivor-bound Stage B source-open authorization. No historical Stage A run has been dispatched yet.
-- Follow-up: merge and verify the Stage A workflow/evidence layer; then deliberately dispatch Stage A on the verified merged-main commit. No Stage B source is opened until the resulting nine-cell authorization artifact explicitly lists one or more exact survivor fingerprints.
+- Implementation status: PR #125 merged the signal contract, 36 challenger identities, Stage A cell runner, and frozen gate logic. PR #128 merged deterministic Stage A development/validation/gate artifacts, nine-cell authorization aggregation, and the frozen manual Stage A workflow. PR #129 merged strategy-source SHA-256 binding plus the guarded Stage B confirmation runner/workflow. PR #128 verified 868 tests PASS; PR #129 verified 875 tests PASS; unchanged Phase 3 acceptance passed for both. No EXP-013 Stage A or Stage B historical workflow has been dispatched.
+- Follow-up: deliberately dispatch Stage A only when an authorized workflow-dispatch path is available. No Stage B source may open unless the resulting nine-cell authorization artifact explicitly lists one or more exact survivor fingerprints and the opening-range strategy source SHA-256 still matches.
 
 
 ### EXP-20260922-014 — Phase 8A frozen portfolio selection
@@ -529,5 +529,6 @@ Copy this section for each serious experiment:
 - Profit factor: not run.
 - Max drawdown: not run.
 - Conclusion: NEED_MORE_DATA
-- Follow-up: implement/test expanded parameter validators, deterministic 567-candidate challenger grid, stage gate/ranking logic, immutable stage authorization manifests, and evidence tooling before any Stage A historical run.
+- Implementation status: current source-free branch expands only the approved old+EXP-015 strategy validator union and builds the exact 567 immutable CHALLENGER identities with tests proving all 63 candidates per pair/timeframe cell and zero raw parameter overlap with Phase 4. No EXP-015 source partition has been opened.
+- Follow-up: merge/verify the validator+catalog slice, then implement Stage A gate/ranking logic, immutable survivor authorization, and later Stage B/C guards before any EXP-015 historical run.
 - Identity correction: initially drafted as EXP-014 / DEC-042 during reconciliation; renumbered before any historical stage or benchmark result.
