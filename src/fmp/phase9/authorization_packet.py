@@ -186,6 +186,19 @@ def _review_payload(
         mt5_request.get("volume"),
         field="Phase 9 authorization packet volume",
     )
+    if execution_permit.get("checked_mt5_request_sha256") != _digest(
+        dict(mt5_request)
+    ):
+        raise ValueError("Phase 9 authorization packet checked request mismatch")
+    expected_type = (
+        "ORDER_TYPE_BUY"
+        if request.get("direction") == "LONG"
+        else "ORDER_TYPE_SELL"
+    )
+    if request.get("direction") not in {"LONG", "SHORT"}:
+        raise ValueError("Phase 9 authorization packet direction is invalid")
+    if mt5_request.get("type") != expected_type:
+        raise ValueError("Phase 9 authorization packet MT5 side mismatch")
     if mt5_request.get("comment") != request.get("client_order_id"):
         raise ValueError("Phase 9 authorization packet client comment mismatch")
     if mt5_request.get("symbol") != request.get("broker_symbol"):
