@@ -373,10 +373,10 @@ Implementation progress:
 Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-056 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design artifact, or demo trade has been executed;
-3. PR #148 merged DEC-056 / `EXP-20260922-027` to `main` at `c069e33fec82fc1e516120ee23923955f054bf89`: deterministic post-risk demo request identities, exact accepted practice-account identity copying, mandatory protective-stop geometry, create-only dry-run evidence, replay-validated reconciliation snapshots, and a structurally locked adapter whose only `submit` path always raises;
-4. the exact final PR head `b3cfb9e1e2d2f0a3306a026566ad4b25df55a99b` passed 999 tests plus workflow-YAML validation and compile checks in run `35762297677`; unchanged Phase 3 acceptance run `35762297505` passed. Post-merge `main` runs `35762518616` and `35762518646` also passed;
-5. demo execution/order submission, broker mutation, real-money trading, MT5 mutation transport, Phase 10, and live execution remain locked. A later separately frozen decision is required before any mutation transport can exist.
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design artifact, demo order, or broker mutation has been executed;
+3. DEC-057 / `EXP-20260922-028` is the active milestone: implement source-only MT5 DEMO practice-account assertion, exact symbol/contract normalization, no-resize units-to-volume translation, current-quote/protective-stop validation, deterministic order-check payload/evidence, and immutable demo-preflight artifacts;
+4. DEC-057 backend source is read/check-only and must contain no `order_send`, order modification, cancellation, close-position, or other broker mutation method; Phase 9 CLI remains design-only;
+5. demo execution/order submission, broker mutation, real-money trading, Phase 10, and live execution remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
