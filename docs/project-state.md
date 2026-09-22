@@ -329,7 +329,9 @@ DEC-036, DEC-037, and DEC-038 remain preserved as the historical single-strategy
 
 Approved design: `docs/superpowers/specs/2026-09-22-phase8a-portfolio-research-redesign.md`
 
-Active experiment: `EXP-20260922-012`
+Umbrella experiment: `EXP-20260922-012`
+
+Active challenger experiment: `EXP-20260922-013` / DEC-041
 
 Core scope:
 
@@ -360,15 +362,18 @@ Implementation progress:
 - DEC-040 is the active joint-account portfolio simulation protocol.
 - PR #123 merged at `b27ff8cb1e89471686b2bfe1107cd54d5e9101d9`: time-local conflict routing, explicit declared-earliest execution timing, canonical 1m execution-data role, and shared-account joint portfolio simulation.
 - PR #123 pre-merge verification: 828 tests PASS, compile PASS, unchanged Phase 3 acceptance PASS.
+- PR #124 merged at `b8c54cf4530e93827270d10a0fb5c1248a14716b`: exact-fingerprint joint evidence envelopes, deterministic artifact serialization, and explicit manual `resolve`/`run` CLI with hard non-promotion boundaries.
+- PR #124 pre-merge verification: 835 tests PASS, compile PASS, unchanged Phase 3 acceptance PASS.
+- DEC-041 / EXP-20260922-013 predeclares Challenger Round 1 before any new benchmark result: `opening_range_momentum` across all three V1 pairs and 5m/15m/1h.
 
 Current milestone:
 
-1. package joint results in deterministic evidence bound to exact historical strategy fingerprints and their existing lifecycle/evidence records;
-2. expose manual `resolve` and `run` CLI commands for explicitly supplied strategy sets only;
-3. keep `promotion_authorized = false` and `historical_status_mutation_authorized = false` in every retrospective evidence envelope;
-4. verify evidence serialization is deterministic and UTC-safe;
-5. after this evidence layer is merged, predeclare a separate portfolio-selection protocol before any combinatorial search or winner selection.
-
+1. implement the frozen `opening_range_momentum` signal contract from DEC-041;
+2. expose exactly four parameter configurations per pair/timeframe: body thresholds 0.50/0.70 × targets 1.0R/1.5R, with fixed 2-pip buffer and fixed 0.25-range stop depth;
+3. build the deterministic Stage A retrospective grid over 2015-2020 development and 2021-2023 validation;
+4. verify all 36 strategy identities and all 0.2/0.5/1.0-pip rows before deriving Stage A survivors;
+5. do not open EXP-013 Stage B 2024-2026 confirmation until exact Stage A survivor authorization is derived;
+6. retain all results as retrospective and preserve Phase 8B/demo/live locks.
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
 `EXP-20260922-011` is preserved but will not be launched.
