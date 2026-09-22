@@ -740,3 +740,19 @@ DEC-049 also freezes the deterministic raw-record envelope that a later runtime 
 No `capture`, `run`, `start`, `replay`, or `review` CLI command is added under DEC-049. A later separately approved runtime/replay/acceptance decision remains mandatory before any prospective segment can begin.
 
 Consequences: Phase 8B remains LOCKED for live-shadow capture. Demo/live orders, broker mutation, real-money trading, Phase 9, active-champion mutation, and acceptance/promotion remain LOCKED.
+
+
+## DEC-050 — Phase 8B multi-strategy runtime and deterministic replay kernel
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-runtime-replay-kernel.md` opens `EXP-20260922-021` for source-free implementation of the finite-sequence Phase 8B market-processing, multi-strategy routing, shared-account shadow simulation, segment-evidence, and deterministic replay kernel.
+
+DEC-050 consumes only one exact valid DEC-049 capture preflight plus an ordered finite sequence of exact `fmp-phase8b-capture-record-v1` envelopes. It revalidates every record, preserves per-symbol bridge/market liveness separation and `TAIL_AT_EOF_NO_BACKFILL`, derives only fully observed 1m and required 5m/15m/1h bars, reconstructs exact immutable strategy versions from their frozen identity JSON, reuses the existing strategy generators and portfolio router, and runs all accepted candidates through one shared Phase 3 risk state per 0.2/0.5/1.0-pip virtual-account scenario.
+
+The segment compiler is deterministic and source-free: it cannot tail MT5 continuously and cannot start a prospective campaign. Offline replay must reproduce the canonical segment payload byte-for-byte from the exact same preflight and raw record sequence.
+
+DEC-050 does not implement the final Phase 8B acceptance decision. The legacy 8-week / 30-date / 40-trade, coverage, timing, spread-parity, profitability, drawdown, replay, and safety gates remain frozen for a later separately approved acceptance compiler.
+
+No `capture`, `run`, `start`, or `review` command is added under DEC-050. Demo/live orders, broker mutation, real-money trading, Phase 9, active-champion mutation, acceptance, and promotion remain locked.
