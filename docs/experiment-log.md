@@ -991,3 +991,19 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #159 merged DEC-067 to `main` at `a966147f31127b929d3a88e80d7ff7294a5c5fb4`. The exact final PR head `7c696843813df9be19cae9fd9cab4079ad38f300` passed 1066 tests plus workflow-YAML validation and compile checks in run `35783187529`; unchanged Phase 3 acceptance run `35783187315` passed. Post-merge `main` runs `35783318956` and `35783319029` also passed.
 - Follow-up: the exact first-demo order can now be rendered as an immutable approval challenge, but no approval has been recorded. A separately approved decision must define explicit challenge-bound approval recording and any operator-only source-gate activation before a real practice order can be sent.
+
+
+### EXP-20260922-039 — Phase 9 explicit approval record and gate-activation contract
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE CONTRACT VERIFIED / NO REAL APPROVAL / NO DEMO ORDER
+- Protocol decision: DEC-068 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: define source-only challenge-bound explicit-approval and gate-activation artifacts without creating a real approval or enabling execution.
+- Approval binding: exact DEC-067 packet/challenge, DEC-064 permit, request/client identity, DEMO account/server, arm window, opaque operator identity/reference, approval UTC, and exact statement `APPROVE FIRST DEMO ORDER <challenge>`.
+- Approval timing: approval must be at/after launch preflight and inside the unchanged arm window.
+- Activation binding: exact approval/packet/challenge plus activation UTC; activation must follow approval and remain inside the same arm window.
+- Source semantics: fixture approval records may set `explicit_execution_approval_recorded=true`, but `demo_execution_source_armed=false`, runner activation remains unwired, and broker/live/real-money/Phase-10/Phase-11 authorizations remain false.
+- Source isolation: no MetaTrader5, mutation adapter, runner import, order_send, SEND_ATTEMPTED, gate setter, environment override, config hook, or execution CLI.
+- Real evidence status: no real Phase 8B acceptance/SHADOW_VALIDATED chain, no real Phase 9 artifact chain, no real approval record, and no demo order.
+- Verification: exact source head `df64999f99aa8d5114b0a462e5d23723cb868fe1` passed 1075 tests plus workflow-YAML validation and compile checks in run `35784906657`; unchanged Phase 3 acceptance run `35784906607` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately approved operator-action decision is required before any real approval artifact, source-gate activation, runner wiring, or practice order.
