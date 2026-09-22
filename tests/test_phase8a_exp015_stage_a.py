@@ -226,6 +226,7 @@ class Exp015StageATests(unittest.TestCase):
             "symbol": "EURUSD",
             "timeframe": "5m",
             "runner_code_commit": COMMIT,
+            "catalog_identity_sha256": CATALOG_SHA,
             "strategy_source_sha256": "d" * 64,
             "processed_manifest_sha256": "e" * 64,
             "range_start": "2015-01-01",
