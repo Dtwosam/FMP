@@ -374,7 +374,7 @@ Current milestone:
 
 1. EXP-013 Stage A and Stage B code/workflows are merged and verified but remain deliberately undispatched because the connected Mac is offline and no direct workflow-dispatch connector is available in this session;
 2. continue source-free EXP-015 implementation from the frozen DEC-043 protocol without opening any historical stage;
-3. source-free harden all authoritative Phase 8A manual workflows so they fail closed unless dispatched from `refs/heads/main`; no historical source may be opened from an unmerged feature branch;
+3. PR #134 merged the `refs/heads/main` dispatch guard at `bec47ec62c33ec3a574a721c002ee536dd5d8ca0` after 912 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS; the current source-free hardening additionally requires every downstream referenced workflow run to have originated from `main` and from the exact expected workflow file before any artifact/source is accepted;
 4. EXP-015 Stage A remains deliberately undispatched until an authorized workflow-dispatch path is available; Stage B/C and DEC-042 remain downstream-blocked by exact upstream evidence;
 5. when an authorized operator dispatch path is available, run EXP-013 Stage A first from verified `main`; only exact Stage A survivors may enter its Stage B;
 6. if EXP-013 or EXP-015 yields one or more HISTORICAL_QUALIFIED challengers, add only those exact immutable identities to the DEC-042 selection-eligible pool without changing any selection gate;
