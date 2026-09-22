@@ -434,6 +434,7 @@ def _run_stage(
                 "upstream_evidence_id": record.evidence_id,
                 "slippage_pips": slippage_pips,
                 "candidate_sha256": candidate_sha,
+                "processed_manifest_sha256": loaded.processed_manifest_sha256,
                 "run_identity": dict(run_identity),
                 "metrics": dict(metrics),
             }
@@ -534,6 +535,7 @@ def _index_and_validate_stage_rows(
     expected_years: Sequence[int],
     minimum_trades: int,
     stage_name: str,
+    runner_code_commit: str,
 ) -> tuple[dict[str, dict[float, Mapping[str, object]]], list[str]]:
     raw_rows = result.get("rows")
     if not isinstance(raw_rows, list) or len(raw_rows) != len(records) * 3:
@@ -562,6 +564,17 @@ def _index_and_validate_stage_rows(
             raw.get("candidate_sha256"),
             field=f"EXP-015 {stage_name} candidate digest",
         )
+        manifest_sha = _validate_sha256(
+            raw.get("processed_manifest_sha256"),
+            field=f"EXP-015 {stage_name} row manifest digest",
+        )
+        run_identity = raw.get("run_identity")
+        if not isinstance(run_identity, Mapping):
+            raise ValueError(f"EXP-015 {stage_name} run identity is malformed")
+        if run_identity.get("code_commit") != runner_code_commit:
+            raise ValueError(f"EXP-015 {stage_name} row runner commit mismatch")
+        if run_identity.get("processed_data_manifest_id") not in (None, manifest_sha):
+            raise ValueError(f"EXP-015 {stage_name} row manifest/run identity mismatch")
         bucket = indexed.setdefault(fingerprint, {})
         if slippage in bucket:
             raise ValueError(f"duplicate EXP-015 {stage_name} strategy/slippage row")
@@ -635,6 +648,14 @@ def _validate_stage_b_result(
         raise ValueError("EXP-015 Stage B scenario count mismatch")
     if stage_b.get("slippage_scenarios") != list(SLIPPAGE_SCENARIOS):
         raise ValueError("EXP-015 Stage B slippage scenario drift")
+    raw_manifests = stage_b.get("processed_manifest_sha256_by_symbol")
+    if not isinstance(raw_manifests, Mapping):
+        raise ValueError("EXP-015 Stage B manifest map is malformed")
+    expected_symbols = {item.strategy.symbol for item in stage_a_records}
+    if set(raw_manifests) != expected_symbols:
+        raise ValueError("EXP-015 Stage B manifest symbol coverage mismatch")
+    for value in raw_manifests.values():
+        _validate_sha256(value, field="EXP-015 Stage B processed manifest digest")
 
     indexed, passers = _index_and_validate_stage_rows(
         result=stage_b,
@@ -643,6 +664,7 @@ def _validate_stage_b_result(
         expected_years=_STAGE_B_YEARS,
         minimum_trades=40,
         stage_name="Stage B",
+        runner_code_commit=str(stage_b["stage_b_runner_code_commit"]),
     )
     if stage_b.get("stage_b_pass_count") != len(passers):
         raise ValueError("EXP-015 Stage B pass count mismatch")
@@ -782,6 +804,14 @@ def _validate_stage_c_result(
         raise ValueError("EXP-015 Stage C scenario count mismatch")
     if stage_c.get("slippage_scenarios") != list(SLIPPAGE_SCENARIOS):
         raise ValueError("EXP-015 Stage C slippage scenario drift")
+    raw_manifests = stage_c.get("processed_manifest_sha256_by_symbol")
+    if not isinstance(raw_manifests, Mapping):
+        raise ValueError("EXP-015 Stage C manifest map is malformed")
+    expected_symbols = {item.strategy.symbol for item in stage_b_records}
+    if set(raw_manifests) != expected_symbols:
+        raise ValueError("EXP-015 Stage C manifest symbol coverage mismatch")
+    for value in raw_manifests.values():
+        _validate_sha256(value, field="EXP-015 Stage C processed manifest digest")
 
     indexed, passers = _index_and_validate_stage_rows(
         result=stage_c,
@@ -790,6 +820,7 @@ def _validate_stage_c_result(
         expected_years=_STAGE_C_YEARS,
         minimum_trades=30,
         stage_name="Stage C",
+        runner_code_commit=str(stage_c["stage_c_runner_code_commit"]),
     )
     if stage_c.get("stage_c_pass_count") != len(passers):
         raise ValueError("EXP-015 Stage C pass count mismatch")
@@ -865,6 +896,8 @@ def finalize_exp015_shortlist(
     stage_a_commit, catalog_sha, source_sha, stage_a_survivors, stage_a_records = (
         _validate_stage_a_authorization(stage_a_authorization)
     )
+    if source_sha != exp015_strategy_source_sha256():
+        raise ValueError("EXP-015 strategy source digest mismatch")
     stage_b_rows, stage_b_passers, stage_b_records = _validate_stage_b_result(
         stage_b=stage_b_result,
         stage_a_sha=stage_a_sha,
