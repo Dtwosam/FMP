@@ -650,7 +650,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-022 — Phase 8B acceptance compiler and prospective evidence contract
 
 - Date: 2026-09-22
-- Status: ACTIVE — SOURCE-FREE IMPLEMENTATION ONLY / NO LIVE-SHADOW SEGMENT
+- Status: ACTIVE — SOURCE-FREE IMPLEMENTATION MERGED / NO LIVE-SHADOW SEGMENT
 - Protocol decision: DEC-051 APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
 - Purpose: freeze and implement the deterministic Phase 8B acceptance compiler plus the exact prospective campaign-evidence and historical spread-reference contracts required before any champion can become SHADOW_VALIDATED.
 - Campaign-evidence protocol: `fmp-phase8b-campaign-evidence-v1`; prospective=true and closed=true are mandatory, with exact DEC-049 preflight, DEC-050 segment/replay, champion/strategy/symbol/cost identities and deterministic fingerprint validation.
@@ -665,4 +665,5 @@ Copy this section for each serious experiment:
 - Initial PR CI: run `35749097079` correctly failed one tamper test because a derived 0.2-pip trade-count check fired before the immutable evidence fingerprint check; unchanged Phase 3 acceptance `35749097176` passed.
 - Fix: commit `8628f0810a55353da3bbe299635d0bd89fa4ab94` authenticates campaign and spread-reference fingerprints before derived consistency validation.
 - Fixed verification: PR tests run `35749385885` passed 973 tests plus workflow-YAML validation and compile checks; unchanged Phase 3 acceptance run `35749385867` passed.
-- Follow-up: merge only after the exact final branch head remains green. A later separately frozen prospective capture/close protocol must create real `fmp-phase8b-campaign-evidence-v1` evidence; DEC-051 itself cannot create prospective evidence or start a live-shadow segment.
+- Merge status: PR #143 merged DEC-051 to `main` at `2c9577be8eafb9e307e05214609206dfeb7c6c69`. Superseded PR #142 remained unmerged because its displayed head lagged the branch ref; a fresh exact-head PR was used instead.
+- Follow-up: a later separately frozen prospective capture/close protocol must create real `fmp-phase8b-campaign-evidence-v1` evidence; DEC-051 itself cannot create prospective evidence or start a live-shadow segment.
