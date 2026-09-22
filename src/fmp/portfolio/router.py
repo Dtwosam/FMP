@@ -101,21 +101,23 @@ def route_shadow_candidates(
             continue
         eligible.append(candidate)
 
-    directions_by_symbol: dict[str, set[Direction]] = {}
+    directions_by_bucket: dict[tuple[object, str], set[Direction]] = {}
     for candidate in eligible:
-        directions_by_symbol.setdefault(candidate.symbol, set()).add(candidate.direction)
-    conflicting_symbols = {
-        symbol for symbol, directions in directions_by_symbol.items() if len(directions) > 1
+        bucket = (candidate.observed_at_utc, candidate.symbol)
+        directions_by_bucket.setdefault(bucket, set()).add(candidate.direction)
+    conflicting_buckets = {
+        bucket for bucket, directions in directions_by_bucket.items() if len(directions) > 1
     }
 
     accepted: list[PortfolioCandidate] = []
     for candidate in eligible:
-        if candidate.symbol in conflicting_symbols:
+        bucket = (candidate.observed_at_utc, candidate.symbol)
+        if bucket in conflicting_buckets:
             rejected.append(
                 CandidateRejection(
                     candidate_id=candidate.candidate_id,
                     code=CandidateRejectionCode.DIRECTION_CONFLICT,
-                    explanation="opposing champion signals exist for the same symbol and timestamp set",
+                    explanation="opposing champion signals exist for the same symbol and signal-time bucket",
                 )
             )
         else:
