@@ -135,7 +135,7 @@ def build_strategy_config(strategy: StrategyVersion) -> object:
     raise ValueError(f"unsupported Phase 8A strategy family: {strategy.family!r}")
 
 
-def _generate_candidates(
+def generate_strategy_candidates(
     strategy: StrategyVersion,
     bars: Sequence[object],
 ) -> tuple[SignalCandidate, ...]:
@@ -240,7 +240,7 @@ def run_phase8a_retrospective_strategy(
     if not loaded.bars:
         raise ValueError("Phase 8A retrospective run requires at least one complete quote bar")
 
-    candidates = _generate_candidates(plan.strategy, loaded.bars)
+    candidates = generate_strategy_candidates(plan.strategy, loaded.bars)
     candidate_sha256 = _candidate_sha256(candidates)
     decisions, scheduled_exits = _adapt_candidates(candidates)
     candidate_metadata = {
