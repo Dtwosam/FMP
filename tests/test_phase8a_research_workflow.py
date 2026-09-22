@@ -28,9 +28,9 @@ class Phase8ARetrospectiveWorkflowTests(unittest.TestCase):
 
         self.assertIn("scripts/phase8a_research.py inventory", text)
         self.assertIn("scripts/phase8a_research.py batch", text)
-        self.assertIn("--code-commit \"\${GITHUB_SHA}\"", text)
-        self.assertIn("--start \"\${RESEARCH_START}\"", text)
-        self.assertIn("--end-exclusive \"\${RESEARCH_END_EXCLUSIVE}\"", text)
+        self.assertIn("--code-commit \"${GITHUB_SHA}\"", text)
+        self.assertIn("--start \"${RESEARCH_START}\"", text)
+        self.assertIn("--end-exclusive \"${RESEARCH_END_EXCLUSIVE}\"", text)
         self.assertIn("promotion_authorized", text)
         self.assertIn("upload-artifact", text)
 
