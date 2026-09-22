@@ -94,6 +94,41 @@ def _load_json(path: Path, *, label: str) -> dict[str, object]:
     return value
 
 
+def _require_review_artifact_digest(
+    *,
+    review_dir: Path,
+    manifest: Mapping[str, object],
+    relative_path: str,
+) -> None:
+    artifacts = manifest.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise ValueError("Phase 9 review-manifest artifacts are malformed")
+    matches = [
+        row
+        for row in artifacts
+        if isinstance(row, Mapping) and row.get("path") == relative_path
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            f"Phase 9 review manifest must bind exactly one {relative_path}"
+        )
+    expected = _validate_sha256(
+        matches[0].get("sha256"),
+        field=f"Phase 9 review artifact {relative_path} digest",
+    )
+    path = review_dir / relative_path
+    try:
+        actual = hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise ValueError(
+            f"cannot read Phase 9 review artifact: {relative_path}"
+        ) from exc
+    if actual != expected:
+        raise ValueError(
+            f"Phase 9 review artifact {relative_path} digest mismatch"
+        )
+
+
 def _validate_terminal_marker(
     terminal: Mapping[str, object],
     *,
@@ -494,6 +529,16 @@ def build_phase9_demo_design_from_campaign(
     manifest = _load_json(
         review_dir / "manifest.json",
         label="Phase 8B review manifest",
+    )
+    _require_review_artifact_digest(
+        review_dir=review_dir,
+        manifest=manifest,
+        relative_path="acceptance/acceptance.json",
+    )
+    _require_review_artifact_digest(
+        review_dir=review_dir,
+        manifest=manifest,
+        relative_path="shadow-validation.json",
     )
     acceptance = _load_json(
         review_dir / "acceptance" / "acceptance.json",
