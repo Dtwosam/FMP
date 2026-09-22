@@ -834,7 +834,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-031 — Phase 9 demo execution-arm artifact contract
 
 - Date: 2026-09-22
-- Status: ACTIVE — SOURCE CONTRACT VERIFIED / NO REAL ARM / NO DEMO ORDER
+- Status: ACTIVE — SOURCE CONTRACT MERGED / NO REAL ARM / NO DEMO ORDER
 - Protocol decision: DEC-060 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
 - Purpose: implement only the deterministic future operator execution-arm artifact over exact DEC-055/056/059 identities while keeping the DEC-058 source gate false.
 - Input binding: exact demo design, exact post-risk request/client ID, exact DEC-059 session-arm and session-ready fingerprints, unchanged champion/strategy/symbol, accepted DEMO account/server, exact UTC window, exact operator approval reference, and max-new-orders=1.
@@ -847,4 +847,5 @@ Copy this section for each serious experiment:
 - Real operator arm created?: NO.
 - Live/demo execution status: NOT RUN.
 - Verification: exact source head `a62be09eda02f09b255211ea5dca8b63055ae361` passed 1023 tests plus workflow-YAML validation and compile checks in run `35771299138`; unchanged Phase 3 acceptance run `35771299314` passed.
-- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before a real arm can be materialized or the execution source gate may change.
+- Merge status: PR #152 merged DEC-060 to `main` at `71cb40bd00970696cee91f4c35755ca87c9f3eab`. The exact final PR head `5694c7b54d0729e0340539aa280f126d7cc420e9` passed 1023 tests plus workflow-YAML validation and compile checks in run `35771474118`; unchanged Phase 3 acceptance run `35771474159` passed.
+- Follow-up: a later separately frozen decision is required before a real arm can be materialized or the execution source gate may change.
