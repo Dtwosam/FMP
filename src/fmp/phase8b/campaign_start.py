@@ -269,6 +269,17 @@ def validate_phase8b_campaign_start_authorization(
             field=f"Phase 8B campaign-start {field}",
         )
 
+    fingerprint = _validate_sha256(
+        authorization.get("start_authorization_fingerprint"),
+        field="Phase 8B start-authorization fingerprint",
+    )
+    payload = dict(authorization)
+    payload.pop("start_authorization_fingerprint", None)
+    if fingerprint != _canonical_digest(payload):
+        raise ValueError(
+            "Phase 8B start-authorization fingerprint mismatch"
+        )
+
     started = _parse_utc_string(
         authorization.get("campaign_start_utc"),
         field="Phase 8B campaign start timestamp",
@@ -359,18 +370,6 @@ def validate_phase8b_campaign_start_authorization(
             raise ValueError(
                 f"Phase 8B campaign-start requires {field}=false"
             )
-
-    fingerprint = _validate_sha256(
-        authorization.get("start_authorization_fingerprint"),
-        field="Phase 8B start-authorization fingerprint",
-    )
-    payload = dict(authorization)
-    payload.pop("start_authorization_fingerprint", None)
-    if fingerprint != _canonical_digest(payload):
-        raise ValueError(
-            "Phase 8B start-authorization fingerprint mismatch"
-        )
-
 
 def write_phase8b_campaign_start_authorization(
     authorization: Mapping[str, object],
