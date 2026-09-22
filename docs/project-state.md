@@ -372,13 +372,14 @@ Implementation progress:
 
 Current milestone:
 
-1. EXP-013 Stage A/B, EXP-015 Stage A/B/C/finalization, and DEC-042 selection code/workflows are merged and verified but remain deliberately undispatched because the connected Mac is offline and the available GitHub connector cannot start new workflow_dispatch runs;
-2. PR #134 merged the `refs/heads/main` dispatch guard at `bec47ec62c33ec3a574a721c002ee536dd5d8ca0`; PR #135 merged exact upstream-main/workflow-path provenance checks at `9e1732846f62d86fd7c9e8dc6294183d5c73bb14`, both with repository tests/compile and unchanged Phase 3 acceptance green;
-3. DEC-045 / EXP-20260922-016 is now the active source-free implementation milestone: build the deterministic Phase 8A acceptance review required by DEC-039 step 9, consuming only exact DEC-042 artifacts and opening no new market data;
-4. DEC-045 may freeze a `SHADOW_CANDIDATE` only if the exact DEC-042 selected portfolio replays as the top passing set and its 0.5-pip annualized compounded return is strictly greater than the Phase 7 baseline control over the same selection range; otherwise Phase 8A records a research rejection and Phase 8B remains locked;
-5. when an authorized workflow-dispatch path is available, historical execution remains ordered and evidence-gated: EXP-015 Stage A -> Stage B -> Stage C/finalize -> DEC-042 selection -> DEC-045 acceptance. EXP-013 remains available as a separately frozen challenger experiment but is not required to bypass this chain;
-6. only an accepted DEC-045 artifact may authorize Phase 8B read-only shadow design/capture for the exact frozen candidate set; demo/live/broker mutation/real-money/Phase 9 remain locked;
-7. retain all results as retrospective and preserve champion/challenger immutability.
+1. Phase 8A source-free implementation is complete through DEC-045: PR #136 merged the deterministic acceptance compiler/workflow to `main` at `796febdd0d70edf357cef29ebc315a76999707c3` after 923 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS;
+2. no EXP-015, DEC-042, or DEC-045 historical/result workflow has been dispatched because the connected Mac is offline and the available GitHub connector cannot start new workflow_dispatch runs;
+3. DEC-046 / EXP-20260922-017 is the active source-free milestone: compile an exact accepted DEC-045 shadow candidate into an immutable Phase 8B multi-symbol read-only design while leaving the legacy USDJPY EXP-011 runtime untouched;
+4. the Phase 8B design derives only the required EURUSD/GBPUSD/USDJPY symbol subset and 5m/15m/1h timeframe subset from the accepted champion set, freezes one fixed FILE_COMMON feed per required symbol, and retains DEC-038 liveness/missing-path semantics;
+5. a frozen DEC-046 design does not authorize connector qualification, campaign registration, campaign start, demo/live orders, broker mutation, real-money trading, or Phase 9; those require separately frozen downstream protocols;
+6. when an authorized workflow-dispatch path becomes available, historical execution remains ordered and evidence-gated: EXP-015 Stage A -> Stage B -> Stage C/finalize -> DEC-042 selection -> DEC-045 acceptance -> DEC-046 design;
+7. champion/challenger immutability and all execution locks remain in force.
+
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
 `EXP-20260922-011` is preserved but will not be launched.
@@ -399,6 +400,8 @@ The older EXP-009 and EXP-010 evidence also remains preserved unchanged.
 ### Phase 8B — Multi-strategy live shadow — LOCKED
 
 Phase 8B may begin only after Phase 8A produces and freezes one or more portfolio/shadow candidates under an acceptance review.
+
+DEC-046 freezes the source-free design/connector topology that may be compiled only from an exact accepted DEC-045 artifact. Design compilation alone does not register or start a campaign.
 
 Phase 8B must:
 

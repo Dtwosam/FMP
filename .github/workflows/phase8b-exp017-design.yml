@@ -1,0 +1,158 @@
+name: phase8b-exp017-design
+
+on:
+  workflow_dispatch:
+    inputs:
+      acceptance_run_id:
+        description: Successful accepted phase8a-exp016-acceptance workflow run ID
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  design:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Require main workflow dispatch
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "Phase 8B design must be dispatched from refs/heads/main" >&2
+            exit 1
+          fi
+
+      - name: Checkout exact Phase 8B design compiler commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Verify exact DEC-045 acceptance workflow run
+        id: acceptance_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACCEPTANCE_RUN_ID: ${{ inputs.acceptance_run_id }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${ACCEPTANCE_RUN_ID}" > acceptance-run.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(Path('acceptance-run.json').read_text(encoding='utf-8'))
+          assert run['name'] == 'phase8a-exp016-acceptance', run
+          assert run['event'] == 'workflow_dispatch', run
+          assert run['head_branch'] == 'main', run
+          assert run['path'] == '.github/workflows/phase8a-exp016-acceptance.yml', run
+          assert run['status'] == 'completed', run
+          assert run['conclusion'] == 'success', run
+          head_sha = run['head_sha']
+          assert isinstance(head_sha, str) and len(head_sha) == 40, run
+          with Path(os.environ['GITHUB_OUTPUT']).open('a', encoding='utf-8') as handle:
+              handle.write(f'head_sha={head_sha}\n')
+          PY
+
+      - name: Download exact DEC-045 acceptance artifact
+        uses: actions/download-artifact@v6
+        with:
+          run-id: ${{ inputs.acceptance_run_id }}
+          github-token: ${{ github.token }}
+          name: phase8a-exp016-acceptance-${{ steps.acceptance_run.outputs.head_sha }}
+          path: .phase8a-acceptance-input
+
+      - name: Resolve and verify accepted DEC-045 artifact
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find .phase8a-acceptance-input -type f -name acceptance.json | sort)
+          if [ "${#files[@]}" -ne 1 ]; then
+            echo "expected exactly one DEC-045 acceptance.json" >&2
+            exit 1
+          fi
+          cp "${files[0]}" phase8a-acceptance.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path('phase8a-acceptance.json').read_text(encoding='utf-8'))
+          run = json.loads(Path('acceptance-run.json').read_text(encoding='utf-8'))
+          assert result['protocol'] == 'fmp-phase8a-acceptance-v1', result
+          assert result['experiment_id'] == 'EXP-20260922-016', result
+          assert result['outcome'] == 'PHASE8A_SHADOW_CANDIDATE_ACCEPTED', result
+          assert result['acceptance_code_commit'] == run['head_sha'], result
+          assert result['shadow_candidate_authorized'] is True, result
+          assert result['phase8b_design_authorized'] is True, result
+          for field in (
+              'promotion_authorized',
+              'demo_order_authorized',
+              'live_order_authorized',
+              'broker_mutation_authorized',
+              'real_money_authorized',
+              'phase9_authorized',
+          ):
+              assert result[field] is False, (field, result)
+          PY
+
+      - name: Compile frozen Phase 8B design
+        run: |
+          set -euo pipefail
+          python scripts/phase8b_shadow.py design \
+            --acceptance phase8a-acceptance.json \
+            --code-commit "${GITHUB_SHA}" \
+            --out .phase8b-design
+
+      - name: Verify Phase 8B design artifact
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          acceptance_sha = hashlib.sha256(Path('phase8a-acceptance.json').read_bytes()).hexdigest()
+          design = json.loads(Path('.phase8b-design/design.json').read_text(encoding='utf-8'))
+          manifest = json.loads(Path('.phase8b-design/manifest.json').read_text(encoding='utf-8'))
+          assert design['protocol'] == 'fmp-phase8b-shadow-design-v1', design
+          assert design['experiment_id'] == 'EXP-20260922-017', design
+          assert design['outcome'] == 'PHASE8B_DESIGN_FROZEN', design
+          assert design['dec045_acceptance_sha256'] == acceptance_sha, design
+          assert design['phase8b_design_code_commit'] == os.environ['GITHUB_SHA'], design
+          assert design['strategy_count'] >= 2, design
+          assert set(design['required_symbols']).issubset({'EURUSD','GBPUSD','USDJPY'}), design
+          assert design['connector']['provider'] == 'FP_MARKETS_MT5_DEMO', design
+          assert design['connector']['transport'] == 'MT5_FILE_COMMON_JSONL', design
+          assert design['connector']['protocol'] == 'fmp-mt5-demo-multisymbol-file-bridge-v1', design
+          assert design['connector']['auto_trading_required_off'] is True, design
+          assert design['connector']['broker_order_surface_allowed'] is False, design
+          assert design['campaign_registration_authorized'] is False, design
+          assert design['campaign_start_authorized'] is False, design
+          assert design['demo_order_authorized'] is False, design
+          assert design['live_order_authorized'] is False, design
+          assert design['broker_mutation_authorized'] is False, design
+          assert design['real_money_authorized'] is False, design
+          assert design['phase9_authorized'] is False, design
+          assert len(design['design_fingerprint']) == 64, design
+          assert manifest['protocol'] == 'fmp-phase8b-shadow-design-artifacts-v1', manifest
+          assert manifest['campaign_registration_authorized'] is False, manifest
+          assert manifest['campaign_start_authorized'] is False, manifest
+          PY
+
+      - name: Upload Phase 8B design evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase8b-exp017-design-${{ github.sha }}
+          path: .phase8b-design
+          include-hidden-files: true
+          if-no-files-found: error

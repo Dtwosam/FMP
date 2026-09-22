@@ -553,3 +553,21 @@ Copy this section for each serious experiment:
 - Historical run status: NOT RUN.
 - Implementation status: current `phase8a/acceptance-review` branch contains the deterministic acceptance compiler, lifecycle/champion-set freeze, resolver, artifact writer, CLI, guarded main-only manual workflow, exact DEC-042 upstream provenance/artifact binding, full repository/compile checks, and deterministic Phase 3 verification before artifact creation. No DEC-042 or DEC-045 historical/result workflow has been dispatched.
 - Follow-up: source-free verify and merge the DEC-045 implementation; only then may a future successful DEC-042 run be reviewed.
+
+
+### EXP-20260922-017 — Phase 8B shadow design
+
+- Date: 2026-09-22
+- Status: ACTIVE — DESIGN IMPLEMENTATION ONLY / NO CAMPAIGN
+- Protocol decision: DEC-046 APPROVED BEFORE ANY PHASE 8B CAMPAIGN
+- Purpose: compile an exact accepted DEC-045 shadow candidate into an immutable multi-symbol read-only Phase 8B design without opening a live campaign.
+- Required input: exact `PHASE8A_SHADOW_CANDIDATE_ACCEPTED` DEC-045 artifact.
+- Supported symbols: EURUSD / GBPUSD / USDJPY only; exact required subset derived from accepted champion set.
+- Intended connector topology: one read-only MT5 EA per required symbol chart; fixed FILE_COMMON feed per symbol; common demo account fingerprint/server; no arbitrary path/symbol override; no broker-order surface.
+- Liveness: DEC-038 bridge/market separation retained independently per required symbol.
+- Campaign registration authorized?: NO.
+- Campaign start authorized?: NO.
+- Demo/live/broker mutation/real-money/Phase 9 authorized?: NO.
+- Historical/live run status: NOT RUN.
+- Implementation status: current `phase8b/design-contract` branch contains the deterministic design compiler/validator/artifact writer, source-free CLI, guarded main-only manual workflow, and tests that derive the exact symbol/file topology from an accepted DEC-045 champion set while keeping campaign/order authorizations false.
+- Follow-up: source-free verify/merge DEC-046 design implementation, then separately freeze and implement multi-symbol MT5 bridge qualification/registration before any Phase 8B campaign can start.

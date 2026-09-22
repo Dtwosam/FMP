@@ -672,3 +672,19 @@ If that rule passes, only the exact selected strategy records advance one lifecy
 Even an accepted candidate does not authorize demo orders, live orders, broker mutation, real-money trading, or Phase 9. It authorizes only Phase 8B read-only shadow design/capture for the exact frozen candidate set.
 
 Consequences: `EXP-20260922-016` is opened for source-free implementation of the acceptance compiler and manual evidence-review workflow. No DEC-042 selection result or Phase 8A acceptance result exists yet.
+
+
+## DEC-046 — Phase 8B multi-strategy read-only shadow design
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B CAMPAIGN
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-shadow-design.md` freezes the Phase 8B design boundary without modifying the legacy USDJPY-only Phase 8 evidence path.
+
+Only an exact DEC-045 `PHASE8A_SHADOW_CANDIDATE_ACCEPTED` artifact may produce a Phase 8B design. The design supports only EURUSD, GBPUSD, and USDJPY and derives the required symbol/timeframe union directly from the immutable accepted champion set.
+
+The intended connector topology is one read-only MT5 EA instance per required symbol chart, fixed FILE_COMMON paths per V1 symbol, demo account/server only, no arbitrary symbol/path override, and no broker-order surface. DEC-038 bridge/market liveness separation is retained independently per required symbol.
+
+A frozen design does not authorize campaign registration or capture. Every required feed must later pass Phase 8B qualification with common demo account/server identity before a separately frozen registration protocol can proceed.
+
+Consequences: `EXP-20260922-017` is opened for source-free design-manifest implementation only. Phase 8B campaign registration/start, Phase 9, demo/live orders, broker mutation, and real-money trading remain LOCKED.
