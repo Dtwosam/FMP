@@ -13,6 +13,10 @@ from .bridge import (
     Phase8BBridgeFileTail,
     discover_phase8b_bridge_files,
 )
+from .campaign_start import (
+    build_phase8b_campaign_start_authorization,
+    write_phase8b_campaign_start_authorization,
+)
 from .design import (
     build_phase8b_design,
     validate_phase8b_design,
@@ -90,6 +94,16 @@ def build_parser() -> argparse.ArgumentParser:
     register.add_argument("--design", required=True, type=Path)
     register.add_argument("--qualification", required=True, type=Path)
     register.add_argument("--campaign-dir", required=True, type=Path)
+
+    authorize_start = subparsers.add_parser(
+        "authorize-start",
+        help="freeze the exact prospective Phase 8B campaign start boundary",
+    )
+    authorize_start.add_argument(
+        "--campaign-dir",
+        required=True,
+        type=Path,
+    )
     return parser
 
 
@@ -231,6 +245,64 @@ def main(
                         "registration_fingerprint"
                     ],
                     "campaign_start_authorized": False,
+                    "artifact_count": len(manifest["artifacts"]),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    if args.command == "authorize-start":
+        registration_path = args.campaign_dir / "registration.json"
+        registration = _load_json_object(
+            registration_path,
+            label="Phase 8B campaign registration",
+        )
+        raw_symbols = registration.get("required_symbols")
+        if not isinstance(raw_symbols, list) or not raw_symbols:
+            raise ValueError(
+                "Phase 8B registration required_symbols is malformed"
+            )
+        symbols = tuple(str(item) for item in raw_symbols)
+        paths = dict(bridge_discoverer(symbols))
+        if set(paths) != set(symbols):
+            raise ValueError(
+                "Phase 8B bridge discovery coverage mismatch"
+            )
+        tails = {
+            symbol: tail_factory(Path(paths[symbol]), symbol)
+            for symbol in symbols
+        }
+        authorization = build_phase8b_campaign_start_authorization(
+            registration=registration,
+            registration_sha256=hashlib.sha256(
+                registration_path.read_bytes()
+            ).hexdigest(),
+            bridge_tails=tails,
+            code_commit=code_commit_resolver(),
+            started_at_utc=utc_now(),
+        )
+        manifest = write_phase8b_campaign_start_authorization(
+            authorization,
+            args.campaign_dir,
+        )
+        print(
+            json.dumps(
+                {
+                    "start_authorization": str(
+                        args.campaign_dir / "start-authorization.json"
+                    ),
+                    "manifest": str(
+                        args.campaign_dir
+                        / "start-authorization-manifest.json"
+                    ),
+                    "start_authorization_fingerprint": authorization[
+                        "start_authorization_fingerprint"
+                    ],
+                    "campaign_start_authorized": True,
+                    "prospective_capture_authorized": True,
                     "artifact_count": len(manifest["artifacts"]),
                 },
                 sort_keys=True,

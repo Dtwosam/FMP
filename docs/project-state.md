@@ -373,11 +373,11 @@ Implementation progress:
 Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045, and DEC-046 Phase 8B immutable design is merged to `main` at `960a590377c9a6d00c9c4fe26007ec855068cc84` after 931 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS;
-2. no EXP-015, DEC-042, DEC-045, or DEC-046 historical/result/design workflow has been dispatched because the connected Mac is offline and the available GitHub connector cannot start new workflow_dispatch runs;
-3. DEC-047 / EXP-20260922-018 is the active source-free milestone: implement the separate Phase 8B multi-symbol MT5 bridge, per-symbol conservative qualification, cross-feed demo identity gate, and immutable exactly-once registration boundary;
-4. the current DEC-047 branch preserves the legacy EXP-011 bridge unchanged and adds a new fixed read-only protocol/feed surface for only EURUSD, GBPUSD, and USDJPY;
-5. only an all-feed qualification PASS with the same demo account fingerprint/server and distinct bridge sessions may authorize campaign registration; registration still keeps campaign_start_authorized=false;
-6. no Phase 8B capture/run command exists under DEC-047; capture, acceptance thresholds, and prospective campaign rules require a later separately frozen decision before any live-shadow segment can start;
+2. no EXP-015, DEC-042, DEC-045, DEC-046, DEC-047, or DEC-048 result/campaign workflow has been dispatched; no Phase 8B live-shadow segment exists;
+3. PR #138 merged DEC-047 / EXP-20260922-018 multi-symbol read-only MT5 bridge, conservative per-feed qualification, cross-feed demo identity gate, and immutable exactly-once campaign registration to `main` at `bbe31302cf68f3e0dd494dc75623d96af4a082d5` after 949 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS;
+4. DEC-048 / EXP-20260922-019 is the active source-free milestone: validate one exact DEC-047 registration against the currently visible registered bridge sessions, freeze the UTC/London prospective start boundary, and establish `TAIL_AT_EOF_NO_BACKFILL` reader semantics;
+5. the current DEC-048 branch adds only `authorize-start`; a valid artifact may set `campaign_start_authorized=true` and `prospective_capture_authorized=true`, but no `run`, `start`, `capture`, or `review` command exists and DEC-048 itself starts no live-shadow segment;
+6. a later separately frozen capture/replay/acceptance protocol must independently validate the DEC-047 registration and DEC-048 start authorization before any prospective segment can begin; legacy 8-week / 30-date / 40-trade, coverage, timing, profitability, drawdown, replay, and safety gates remain the approved baseline unless that later decision explicitly freezes a Phase 8B-specific amendment before results;
 7. demo/live orders, broker mutation, real-money trading, Phase 9, and active-champion mutation remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
@@ -419,5 +419,5 @@ Phase 8B must:
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-Phase 8 is not PASS. The active work is Phase 8A implementation and research under DEC-039 / EXP-012. Phase 8B remains locked until a portfolio candidate set is frozen and accepted.
+Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-048, but all result-producing Phase 8A workflows and every Phase 8B qualification/registration/start/capture step remain unexecuted. No prospective shadow campaign has begun.
 

@@ -704,3 +704,21 @@ A PASS may authorize immutable campaign registration only. Registration binds th
 Campaign start remains unauthorized under DEC-047. Phase 8B capture requires a later separately frozen protocol. Demo/live orders, broker mutation, real-money trading, and Phase 9 remain LOCKED.
 
 Consequences: `EXP-20260922-018` is opened for implementation of the multi-symbol bridge/qualification/registration layer only.
+
+
+## DEC-048 — Phase 8B campaign start authorization
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-campaign-start-authorization.md` freezes the final boundary between DEC-047 registration and any future prospective capture.
+
+DEC-048 requires one exact valid DEC-047 registration and exact revalidation of every currently visible required-symbol `BRIDGE_START` against the registered symbol, protocol, bridge-session ID, account fingerprint, and approved server. Every `Phase8BBridgeFileTail` begins at the current EOF, so pre-reader records cannot enter future prospective evidence.
+
+A valid start artifact freezes the registration SHA-256/fingerprint, champion-set identity, exact strategy/symbol/timeframe sets, current registered bridge sessions, common demo account/server, UTC start time, first `Europe/London` date, liveness/quote/cost contract, and start-authorization code commit.
+
+Only a fully valid artifact sets `campaign_start_authorized = true` and `prospective_capture_authorized = true`. Broker/demo/live/real-money/Phase-9 authorization remains false.
+
+DEC-048 adds no capture/run/start loop. A later separately frozen protocol must consume the exact authorization and independently revalidate bridge identity before a live-shadow segment can start.
+
+Consequences: `EXP-20260922-019` is opened for source-free implementation of the exactly-once campaign-start authorization layer. No Phase 8B live-shadow segment has started.
