@@ -10,6 +10,7 @@ from decimal import Decimal
 from typing import Any, Mapping, Sequence
 
 from fmp.phase9.design import validate_phase9_demo_design
+from fmp.phase9.execution_gate import DEMO_EXECUTION_SOURCE_ARMED
 from fmp.phase9.mt5_preflight import (
     build_phase9_mt5_order_check,
     build_phase9_mt5_order_check_request,
@@ -30,7 +31,6 @@ PHASE9_MT5_SEND_RESULT_PROTOCOL = "fmp-phase9-mt5-demo-send-result-v1"
 PHASE9_MT5_MUTATION_SOURCE_READY = "PHASE9_MT5_MUTATION_SOURCE_READY"
 
 TRADE_RETCODE_DONE = 10009
-DEMO_EXECUTION_SOURCE_ARMED = False
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
