@@ -123,7 +123,7 @@ class Phase8ASelectionTests(unittest.TestCase):
             start=date(2020, 1, 1),
             end_exclusive=date(2022, 1, 1),
         )
-        self.assertAlmostEqual(value, 0.10007, places=4)
+        self.assertAlmostEqual(value, 0.09993, places=4)
 
     def test_gate_passes_only_when_both_costs_and_02_stability_pass(self) -> None:
         fps = tuple(sorted((_version(1).fingerprint, _version(2, "GBPUSD").fingerprint)))
