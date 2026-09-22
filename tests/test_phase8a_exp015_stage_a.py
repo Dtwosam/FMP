@@ -279,6 +279,20 @@ class Exp015StageATests(unittest.TestCase):
         with self.assertRaises(ValueError):
             aggregate_exp015_stage_a_gates(gates[:-1])
 
+        eurusd_5m_session = sorted(
+            item.strategy.fingerprint
+            for item in catalog
+            if item.strategy.symbol == "EURUSD"
+            and item.strategy.timeframe == "5m"
+            and item.strategy.family == "session_breakout"
+        )
+        bad = [dict(item) for item in gates]
+        bad[0] = dict(bad[0]) | {
+            "survivor_fingerprints": eurusd_5m_session[:3],
+        }
+        with self.assertRaisesRegex(ValueError, "family-cell survivor cap"):
+            aggregate_exp015_stage_a_gates(bad)
+
     def test_stage_a_artifacts_are_deterministic(self) -> None:
         cell = {
             "protocol": EXP015_STAGE_A_CELL_PROTOCOL,
