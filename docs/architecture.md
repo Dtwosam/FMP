@@ -31,16 +31,22 @@ Historical / Live Quote Source
        Feature Engine
             |
             v
-      Strategy Layer
+  Versioned Strategy Library
             |
-            +------> Optional Statistical/ML Filter
+            +------> Optional Statistical/ML / Regime Filter
+            |
+            v
+ Champion/Challenger Registry
+            |
+            v
+ Portfolio / Applicability Router
             |
             v
       Decision Engine
      LONG / SHORT / NO TRADE
             |
             v
-         Risk Engine
+ Portfolio-Aware Risk Engine
             |
             v
  Mode Adapter: Backtest | Shadow | Demo | Live
@@ -63,8 +69,11 @@ Produces transparent candidate signals/setup metadata. Strategy code must not si
 ### `models`
 Optional statistical/ML filtering or probability estimation. It is downstream of leakage-safe features and must be benchmarked against simpler baselines.
 
+### `portfolio`
+Owns versioned strategy-registration metadata, champion/challenger eligibility, deterministic candidate aggregation, applicability/regime routing metadata, conflict handling, and exposure summaries. It does not size positions and cannot promote a challenger by itself.
+
 ### `decision`
-Combines eligible signal/model evidence with market/execution conditions and emits `LONG`, `SHORT`, or `NO TRADE`, plus reason codes.
+Combines eligible portfolio-routed signal/model evidence with market/execution conditions and emits `LONG`, `SHORT`, or `NO TRADE`, plus reason codes.
 
 ### `risk`
 Owns position sizing, risk caps, daily halts, simultaneous-risk limits, and correlation/exposure constraints. It is independent of alpha logic.
@@ -85,6 +94,9 @@ The engine should pass structured records between modules rather than hiding sta
 - `QuoteBar` / canonical market row
 - `FeatureRow`
 - `SignalCandidate`
+- `StrategyVersion`
+- `ChampionSet`
+- `PortfolioCandidateSet`
 - `Decision`
 - `RiskAssessment`
 - `OrderIntent`
@@ -99,6 +111,7 @@ A major architectural requirement is **logic parity**:
 
 - Backtest mode may simulate execution, but it must not use a different strategy/risk rule set from shadow/demo.
 - Shadow mode produces the same decisions but prevents order submission.
+- A registered shadow/demo/live campaign freezes its champion strategy set; the continuous-research path may create challengers but cannot hot-swap them into the active campaign.
 - Demo mode sends orders only to a practice account.
 - Live mode remains disabled until Phase 11 is explicitly approved.
 
@@ -142,6 +155,38 @@ Do not prematurely build:
 - tick-level full-history research pipeline
 - LLM-based trading decisions
 - live broker failover
-- multi-asset portfolio engine
+- multi-asset portfolio engine outside the three approved V1 FX pairs
 
 These are outside V1 unless evidence creates a real requirement.
+
+
+## Continuous research and promotion loop
+
+DEC-039 adds a controlled research loop alongside, not inside, the active trading path:
+
+```text
+New historical / shadow / demo observations
+            |
+            v
+     Research evidence store
+            |
+            v
+ Challenger discovery / revision
+            |
+            v
+ Frozen historical evaluation
+            |
+            v
+ Explicit promotion gate
+            |
+            +----> reject / retire
+            |
+            v
+ Future champion-set version
+```
+
+The active campaign never reads an unapproved challenger as executable strategy logic. A learner may recommend or materialize a new challenger configuration, but promotion is a versioned evidence event.
+
+## Multi-pair portfolio boundary
+
+The Phase 8A portfolio is still forex-only and limited to EURUSD, GBPUSD, and USDJPY. It is not a general multi-asset engine. The router may combine approved strategy candidates across those pairs, while the risk module remains responsible for total risk, overlapping USD exposure, and correlated-position constraints.
