@@ -374,7 +374,7 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-059 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session artifact, demo order, or broker mutation has been executed;
-3. DEC-060 / `EXP-20260922-031` is the active milestone: implement only the exact future demo execution-arm artifact contract over DEC-055/056/059 identities, create-only persistence, and tamper-proof validation;
+3. DEC-060 / `EXP-20260922-031` is implemented on PR #152 head `a62be09eda02f09b255211ea5dca8b63055ae361`: deterministic future execution-arm artifact over exact DEC-055/056/059 identities, exact copied UTC window/approval/account/strategy binding, healthy-unused-session guard, source-gate-false guard, create-only persistence, and tamper-proof validation; run `35771299138` passed 1023 tests plus YAML/compile and unchanged Phase 3 acceptance run `35771299314` passed;
 4. DEC-060 must keep DEC-058 `DEMO_EXECUTION_SOURCE_ARMED=false`, add no arming/run/order/broker CLI, create no real operator arm, and perform no broker access;
 5. demo execution/order submission, broker mutation, live trading, real-money trading, Phase 10, and deployment review remain locked.
 
