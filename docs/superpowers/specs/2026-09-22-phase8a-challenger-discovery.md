@@ -2,17 +2,17 @@
 
 **Date:** 2026-09-22  
 **Status:** APPROVED  
-**Decision:** DEC-042  
-**Experiment:** EXP-20260922-014  
+**Decision:** DEC-043  
+**Experiment:** EXP-20260922-015  
 **Scope:** New immutable rule-based challengers across EURUSD / GBPUSD / USDJPY
 
 ## 1. Purpose
 
-DEC-041 cannot run a meaningful multi-strategy portfolio search because the current historical inventory contains only one selection-eligible strategy.
+DEC-042 cannot run a meaningful multi-strategy portfolio search because the current historical inventory contains only one selection-eligible strategy.
 
-DEC-042 defines a new, predeclared rule-based challenger experiment across all three V1 pairs and all three supported signal timeframes. It expands the parameter regions of the six already-implemented rule families without changing the historical identity or outcome of any Phase 4–7 configuration.
+DEC-043 defines a new, predeclared rule-based challenger experiment across all three V1 pairs and all three supported signal timeframes. It expands the parameter regions of the six already-implemented rule families without changing the historical identity or outcome of any Phase 4–7 configuration.
 
-All DEC-042 evidence is retrospective and already seen. The purpose is to create a bounded set of new immutable `HISTORICAL_QUALIFIED` challengers that can later enter DEC-041. Nothing in DEC-042 authorizes shadow, demo, live, or real-money trading.
+All DEC-043 evidence is retrospective and already seen. The purpose is to create a bounded set of new immutable `HISTORICAL_QUALIFIED` challengers that can later enter DEC-042. Nothing in DEC-043 authorizes shadow, demo, live, or real-money trading.
 
 ## 2. Fixed universe
 
@@ -104,7 +104,7 @@ A new strategy identity must include:
 - signal contract;
 - result-producing code commit.
 
-Expanding the validators to accept new DEC-042 parameter values does not reclassify any old result.
+Expanding the validators to accept new DEC-043 parameter values does not reclassify any old result.
 
 ## 5. Cost and risk
 
@@ -209,9 +209,9 @@ Walk down this ranking and select at most **11** new challengers, subject to:
 
 The selected set receives lifecycle `HISTORICAL_QUALIFIED` under EXP-014.
 
-Any EXP-014 candidate not selected in the final shortlist is recorded as `RETIRED` with its exact rejection/non-selection reason. No unselected candidate remains silently available for DEC-041.
+Any EXP-014 candidate not selected in the final shortlist is recorded as `RETIRED` with its exact rejection/non-selection reason. No unselected candidate remains silently available for DEC-042.
 
-With the existing Phase 7 baseline added later, DEC-041 can therefore receive at most 12 eligible strategies without changing its frozen pool-size rule.
+With the existing Phase 7 baseline added later, DEC-042 can therefore receive at most 12 eligible strategies without changing its frozen pool-size rule.
 
 ## 8. Stage authorization and data-opening discipline
 
@@ -252,7 +252,7 @@ Possible EXP-014 outcomes:
 - `NO_CHALLENGER_QUALIFIED`: zero candidates survive/qualify;
 - `PROTOCOL_FAILURE`: evidence identity, stage authorization, or deterministic replay fails.
 
-If `NO_CHALLENGER_QUALIFIED`, DEC-041 remains blocked and thresholds may not be relaxed retroactively.
+If `NO_CHALLENGER_QUALIFIED`, DEC-042 remains blocked and thresholds may not be relaxed retroactively.
 
 ## 11. Continuous-learning relationship
 
@@ -275,4 +275,9 @@ Throughout EXP-014:
 - no change to Phase 8B lock;
 - no automatic champion promotion.
 
-A historical qualifier is only eligible for later DEC-041 retrospective portfolio selection.
+A historical qualifier is only eligible for later DEC-042 retrospective portfolio selection.
+
+
+## Identity correction note
+
+This protocol was first drafted as `DEC-042` / `EXP-20260922-014` while the repository still contained an uncorrected duplicate identity for the portfolio-selection protocol. Before any Stage A historical run, it was renumbered to `DEC-043` / `EXP-20260922-015`. No historical stage, benchmark, shortlist, or qualification result was produced under the earlier draft identity.
