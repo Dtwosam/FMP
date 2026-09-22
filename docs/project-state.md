@@ -372,13 +372,13 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045: PR #136 merged the deterministic acceptance compiler/workflow to `main` at `796febdd0d70edf357cef29ebc315a76999707c3` after 923 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS;
-2. no EXP-015, DEC-042, or DEC-045 historical/result workflow has been dispatched because the connected Mac is offline and the available GitHub connector cannot start new workflow_dispatch runs;
-3. DEC-046 / EXP-20260922-017 is the active source-free milestone: compile an exact accepted DEC-045 shadow candidate into an immutable Phase 8B multi-symbol read-only design while leaving the legacy USDJPY EXP-011 runtime untouched;
-4. the Phase 8B design derives only the required EURUSD/GBPUSD/USDJPY symbol subset and 5m/15m/1h timeframe subset from the accepted champion set, freezes one fixed FILE_COMMON feed per required symbol, and retains DEC-038 liveness/missing-path semantics;
-5. a frozen DEC-046 design does not authorize connector qualification, campaign registration, campaign start, demo/live orders, broker mutation, real-money trading, or Phase 9; those require separately frozen downstream protocols;
-6. when an authorized workflow-dispatch path becomes available, historical execution remains ordered and evidence-gated: EXP-015 Stage A -> Stage B -> Stage C/finalize -> DEC-042 selection -> DEC-045 acceptance -> DEC-046 design;
-7. champion/challenger immutability and all execution locks remain in force.
+1. Phase 8A source-free implementation is complete through DEC-045, and DEC-046 Phase 8B immutable design is merged to `main` at `960a590377c9a6d00c9c4fe26007ec855068cc84` after 931 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS;
+2. no EXP-015, DEC-042, DEC-045, or DEC-046 historical/result/design workflow has been dispatched because the connected Mac is offline and the available GitHub connector cannot start new workflow_dispatch runs;
+3. DEC-047 / EXP-20260922-018 is the active source-free milestone: implement the separate Phase 8B multi-symbol MT5 bridge, per-symbol conservative qualification, cross-feed demo identity gate, and immutable exactly-once registration boundary;
+4. the current DEC-047 branch preserves the legacy EXP-011 bridge unchanged and adds a new fixed read-only protocol/feed surface for only EURUSD, GBPUSD, and USDJPY;
+5. only an all-feed qualification PASS with the same demo account fingerprint/server and distinct bridge sessions may authorize campaign registration; registration still keeps campaign_start_authorized=false;
+6. no Phase 8B capture/run command exists under DEC-047; capture, acceptance thresholds, and prospective campaign rules require a later separately frozen decision before any live-shadow segment can start;
+7. demo/live orders, broker mutation, real-money trading, Phase 9, and active-champion mutation remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
