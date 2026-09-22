@@ -1,3 +1,13 @@
+from .authorization_packet import (
+    PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_ARTIFACT_PROTOCOL,
+    PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_DECISION,
+    PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_EXPERIMENT_ID,
+    PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_PROTOCOL,
+    PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_READY,
+    build_phase9_first_demo_authorization_packet,
+    validate_phase9_first_demo_authorization_packet,
+    write_phase9_first_demo_authorization_packet,
+)
 from .acceptance import (
     MAX_MEDIAN_ADVERSE_SLIPPAGE_PIPS,
     MAX_P95_ADVERSE_SLIPPAGE_PIPS,
@@ -160,6 +170,11 @@ from .protocol import (
 )
 
 __all__ = [
+    "PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_ARTIFACT_PROTOCOL",
+    "PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_DECISION",
+    "PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_EXPERIMENT_ID",
+    "PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_PROTOCOL",
+    "PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_READY",
     "MAX_MEDIAN_ADVERSE_SLIPPAGE_PIPS",
     "MAX_P95_ADVERSE_SLIPPAGE_PIPS",
     "MIN_COMPLETED_TRADES",
@@ -250,6 +265,7 @@ __all__ = [
     "PHASE9_EXPERIMENT_ID",
     "PHASE9_MT5_ORDER_BRIDGE_PROTOCOL",
     "build_phase9_demo_campaign_evidence",
+    "build_phase9_first_demo_authorization_packet",
     "build_phase9_demo_design",
     "build_phase9_demo_execution_arm",
     "build_phase9_demo_execution_permit",
@@ -274,6 +290,7 @@ __all__ = [
     "run_phase9_mt5_demo_preflight",
     "validate_phase9_demo_acceptance",
     "validate_phase9_demo_campaign_evidence",
+    "validate_phase9_first_demo_authorization_packet",
     "validate_phase9_demo_design",
     "validate_phase9_demo_launch_preflight",
     "validate_phase9_demo_execution_arm",
@@ -291,6 +308,7 @@ __all__ = [
     "validate_phase9_demo_order_request",
     "validate_phase9_demo_reconciliation",
     "write_phase9_demo_acceptance",
+    "write_phase9_first_demo_authorization_packet",
     "write_phase9_demo_design",
     "write_phase9_demo_launch_preflight",
     "write_phase9_demo_runtime_authority",
