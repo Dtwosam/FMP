@@ -10,6 +10,7 @@ from fmp.contracts import QuoteBar
 from fmp.portfolio.challenger_discovery import (
     EXP015_ID,
     build_exp015_challengers,
+    exp015_catalog_identity_sha256,
 )
 from fmp.portfolio.challenger_discovery_stage_a import (
     EXP015_STAGE_A_AUTHORIZATION_PROTOCOL,
@@ -28,6 +29,7 @@ from fmp.portfolio.research_data import (
 
 
 COMMIT = "a" * 40
+CATALOG_SHA = exp015_catalog_identity_sha256(code_commit=COMMIT)
 
 
 def _bar(symbol: str) -> QuoteBar:
@@ -168,6 +170,7 @@ class Exp015StageATests(unittest.TestCase):
             "symbol": "EURUSD",
             "timeframe": "15m",
             "runner_code_commit": COMMIT,
+            "catalog_identity_sha256": CATALOG_SHA,
             "strategy_source_sha256": "d" * 64,
             "processed_manifest_sha256": "e" * 64,
             "range_start": "2015-01-01",
@@ -258,6 +261,7 @@ class Exp015StageATests(unittest.TestCase):
                         "symbol": symbol,
                         "timeframe": timeframe,
                         "runner_code_commit": COMMIT,
+                        "catalog_identity_sha256": CATALOG_SHA,
                         "strategy_source_sha256": "d" * 64,
                         "strategy_fingerprints": sorted(
                             item.strategy.fingerprint for item in records
