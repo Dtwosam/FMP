@@ -808,3 +808,19 @@ DEC-053 derives the DEC-051 evidence fields rather than accepting free-form summ
 Each `close-campaign` invocation creates an immutable closure snapshot; it is not a permanent capture shutdown, so a later snapshot may include additional clean segments after DEC-051 `PHASE8B_NEED_MORE_DATA`.
 
 The command is source-only over existing artifacts and does not access MT5 or any broker surface. Demo/live orders, broker mutation, real-money trading, Phase 9 execution, champion mutation, acceptance, and promotion remain locked.
+
+
+## DEC-054 — Phase 8B acceptance review and shadow-validation freeze
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B ACCEPTANCE RESULT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-acceptance-review.md` opens `EXP-20260922-025` for the final source-only Phase 8B review boundary.
+
+DEC-054 freezes deterministic construction of the required DEC-051 historical spread reference from only the accepted Phase 8A complete canonical 1m retrospective snapshot, with fixed 2015-01-01 through 2026-08-21 range, fixed manifest layout, exact preflight/champion/symbol/cost binding, open/close spread definitions, median, nearest-rank p95, and create-only campaign-bound evidence.
+
+A real `capture-segment` operator invocation is not permitted until that exact spread-reference artifact exists and validates against the campaign preflight. The historical market baseline therefore cannot be selected after prospective results become visible.
+
+DEC-054 also freezes explicit `review-campaign` over one exact DEC-053 closure and the campaign-bound spread reference. NEED_MORE_DATA is non-terminal and permits later clean capture/closure snapshots. PASS or any rejection writes a terminal campaign marker that blocks further Phase 8B capture/review for that campaign.
+
+Only exact PASS may create immutable SHADOW_CANDIDATE -> SHADOW_VALIDATED evidence using the existing registry transition function. Champion identity remains unchanged. PASS authorizes Phase 9 demo-design eligibility only; demo/live orders, broker mutation, real-money trading, Phase 9 execution, and DEMO_ELIGIBLE transition remain locked.
