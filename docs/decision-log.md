@@ -788,3 +788,19 @@ The deterministic close compiler may consume only those externally produced pros
 DEC-052 deliberately provides no public helper that can relabel an arbitrary source-free segment as prospective and adds no live tail/capture/start/review command. A later separately frozen live-tail protocol must create actual prospective receipts from MT5 FILE_COMMON reads.
 
 Compilation success is not acceptance PASS. DEC-051 remains the only Phase 8B acceptance compiler. Demo/live orders, broker mutation, real-money trading, Phase 9 execution, and champion mutation remain locked.
+
+
+## DEC-053 — Phase 8B runtime state-continuity amendment
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-runtime-state-continuity.md` opens `EXP-20260922-024` to correct a source-free runtime continuity gap found before DEC-052 implementation and before any live evidence.
+
+DEC-050's initial finite-sequence compiler correctly shares one Phase 3 risk account across strategies and symbols inside one segment, but each independent compiler call starts a new $100,000 simulator. That cannot be used across an 8-week prospective campaign split into multiple finite evidence files because equity, daily-halt state, pending decisions, and open positions would reset at every boundary.
+
+DEC-053 adds an exact `fmp-phase8b-runtime-checkpoint-v1` state contract, optional prior-checkpoint restore, deterministic terminal-checkpoint emission, and replay binding to the same prior state. A normal evidence-file boundary preserves state exactly; only a separately recorded restart/disconnect gap may invalidate unobserved market paths.
+
+DEC-052 campaign close is blocked until this amendment is merged. Later segments must bind the immediately preceding terminal checkpoint fingerprint and any baseline reset after the first segment fails closed.
+
+DEC-053 remains source-free and adds no live capture/order path.
