@@ -809,3 +809,23 @@ Copy this section for each serious experiment:
 - Verification: exact source head `daf97700e123a025db626ea2d18bc1e7a8fecde2` passed 1011 tests plus workflow-YAML validation and compile checks in run `35767811967`; unchanged Phase 3 acceptance run `35767812096` passed.
 - Merge status: PR #150 merged DEC-058 to `main` at `03617bcd609b61084f4dd09690f9d2166b391a61`. The exact final PR head `46825d1138392baff7b71465704df17260c28d88` passed 1011 tests plus workflow-YAML validation and compile checks in run `35768044631`; unchanged Phase 3 acceptance run `35768044648` passed. Post-merge `main` runs `35768227486` and `35768227484` also passed.
 - Follow-up: a later separately frozen decision must explicitly arm one bounded demo session and freeze its operator/journal/recovery boundary before any real practice-account order. No real Phase 8B PASS, Phase 9 design/preflight/session artifact, demo order, or broker mutation has been executed.
+
+
+### EXP-20260922-030 — Phase 9 bounded first demo-session contract
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE CONTRACT VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-059 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: freeze one exact post-risk request into a one-order, practice-only, UTC-day-bounded demo-session contract before the DEC-058 execution source lock can ever change.
+- Arm identity: exact DEC-055 design, DEC-056 request/client ID, champion, strategy, symbol, accepted DEMO account/server, one operator approval reference, and `max_new_orders=1`.
+- Risk-day guard: not-before/expiry must remain inside one UTC civil date; readiness requires `daily_halt_active=false`.
+- Startup safety: exact DEC-056 reconciliation must be healthy; duplicate/unknown/orphan/missing-stop states fail closed and no auto-mutation is attempted.
+- Ambiguity/idempotency: after one `SEND_ATTEMPTED` journal event the arm is spent regardless of eventual broker result.
+- Journal: `fmp-phase9-demo-session-journal-v1` is create-only, hash-chained, identity-stable, sequence-contiguous, and every append is flushed/fsynced.
+- Future send ordering: the durable SEND_ATTEMPTED event binds the freshly checked DEC-057 payload digest before any later-approved mutation call.
+- Source lock: DEC-058 `DEMO_EXECUTION_SOURCE_ARMED=false` is unchanged; `BoundedDemoSessionController` still reaches the locked adapter and fails before broker access.
+- CLI scope: unchanged design-only Phase 9 CLI; no arm/run/order/broker/mutation command and no repository-created real arm.
+- Phase 9 acceptance / Phase 10 authorized?: NO. One first practice order would not by itself satisfy deployment review.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `c273bb5a21d865d09edefbd425f18c4049e58399` passed 1017 tests plus workflow-YAML validation and compile checks in run `35768964040`; unchanged Phase 3 acceptance run `35768964070` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before a real arm can be created or the DEC-058 execution lock can change.
