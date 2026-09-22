@@ -82,6 +82,21 @@ from .qualification import (
     summarize_phase8b_qualification,
     write_phase8b_qualification_artifacts,
 )
+from .review import (
+    PHASE8B_CAMPAIGN_TERMINAL_PROTOCOL,
+    PHASE8B_REVIEW_DECISION,
+    PHASE8B_REVIEW_EXPERIMENT_ID,
+    PHASE8B_REVIEW_MANIFEST_PROTOCOL,
+    PHASE8B_SHADOW_VALIDATION_PROTOCOL,
+    PHASE8B_SPREAD_REFERENCE_ARTIFACT_PROTOCOL,
+    SHADOW_VALIDATION_EVIDENCE_ID,
+    SPREAD_METHOD,
+    build_phase8b_shadow_validation,
+    build_phase8b_spread_reference,
+    review_phase8b_campaign_directory,
+    validate_phase8b_shadow_validation,
+    write_phase8b_spread_reference,
+)
 from .runtime import (
     PHASE8B_REPLAY_PROTOCOL,
     PHASE8B_RUNTIME_EXPERIMENT_ID,
@@ -103,6 +118,14 @@ from .registration import (
 )
 
 __all__ = [
+    "PHASE8B_CAMPAIGN_TERMINAL_PROTOCOL",
+    "PHASE8B_REVIEW_DECISION",
+    "PHASE8B_REVIEW_EXPERIMENT_ID",
+    "PHASE8B_REVIEW_MANIFEST_PROTOCOL",
+    "PHASE8B_SHADOW_VALIDATION_PROTOCOL",
+    "PHASE8B_SPREAD_REFERENCE_ARTIFACT_PROTOCOL",
+    "SHADOW_VALIDATION_EVIDENCE_ID",
+    "SPREAD_METHOD",
     "AGGREGATION_MODE",
     "PHASE8B_CAMPAIGN_CLOSE_DECISION",
     "PHASE8B_CAMPAIGN_CLOSE_EXPERIMENT_ID",
@@ -155,6 +178,8 @@ __all__ = [
     "Phase8BQualificationOutcome",
     "READER_START_SEMANTICS",
     "build_phase8b_campaign_start_authorization",
+    "build_phase8b_shadow_validation",
+    "build_phase8b_spread_reference",
     "compile_phase8b_acceptance",
     "close_phase8b_campaign_directory",
     "capture_phase8b_prospective_segment",
@@ -167,6 +192,7 @@ __all__ = [
     "qualify_phase8b_design",
     "reconstruct_phase8b_champion_set",
     "replay_phase8b_segment",
+    "review_phase8b_campaign_directory",
     "qualify_phase8b_feed",
     "summarize_phase8b_qualification",
     "validate_phase8b_campaign_start_authorization",
@@ -179,6 +205,7 @@ __all__ = [
     "validate_phase8b_registration",
     "validate_phase8b_spread_reference",
     "validate_phase8b_segment",
+    "validate_phase8b_shadow_validation",
     "write_phase8b_campaign_start_authorization",
     "write_phase8b_acceptance_artifacts",
     "write_phase8b_capture_preflight",
@@ -186,4 +213,5 @@ __all__ = [
     "write_phase8b_qualification_artifacts",
     "write_phase8b_registration",
     "write_phase8b_segment_artifacts",
+    "write_phase8b_spread_reference",
 ]
