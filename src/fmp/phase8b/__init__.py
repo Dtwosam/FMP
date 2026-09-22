@@ -45,6 +45,19 @@ from .qualification import (
     summarize_phase8b_qualification,
     write_phase8b_qualification_artifacts,
 )
+from .runtime import (
+    PHASE8B_REPLAY_PROTOCOL,
+    PHASE8B_RUNTIME_EXPERIMENT_ID,
+    PHASE8B_RUNTIME_REPLAY_KERNEL_READY,
+    PHASE8B_SEGMENT_ARTIFACT_PROTOCOL,
+    PHASE8B_SEGMENT_PROTOCOL,
+    PortfolioShadowSimulator,
+    compile_phase8b_segment,
+    reconstruct_phase8b_champion_set,
+    replay_phase8b_segment,
+    validate_phase8b_segment,
+    write_phase8b_segment_artifacts,
+)
 from .registration import (
     PHASE8B_REGISTRATION_PROTOCOL,
     build_phase8b_registration,
@@ -53,6 +66,12 @@ from .registration import (
 )
 
 __all__ = [
+    "PHASE8B_REPLAY_PROTOCOL",
+    "PHASE8B_RUNTIME_EXPERIMENT_ID",
+    "PHASE8B_RUNTIME_REPLAY_KERNEL_READY",
+    "PHASE8B_SEGMENT_ARTIFACT_PROTOCOL",
+    "PHASE8B_SEGMENT_PROTOCOL",
+    "PortfolioShadowSimulator",
     "CAPTURE_RECORD_PROTOCOL",
     "PHASE8B_CAPTURE_EXPERIMENT_ID",
     "PHASE8B_CAPTURE_FOUNDATION_READY",
@@ -78,10 +97,13 @@ __all__ = [
     "build_phase8b_campaign_start_authorization",
     "build_phase8b_capture_preflight",
     "build_phase8b_design",
+    "compile_phase8b_segment",
     "build_phase8b_registration",
     "discover_phase8b_bridge_files",
     "parse_phase8b_bridge_line",
     "qualify_phase8b_design",
+    "reconstruct_phase8b_champion_set",
+    "replay_phase8b_segment",
     "qualify_phase8b_feed",
     "summarize_phase8b_qualification",
     "validate_phase8b_campaign_start_authorization",
@@ -89,9 +111,11 @@ __all__ = [
     "validate_phase8b_capture_record_envelope",
     "validate_phase8b_design",
     "validate_phase8b_registration",
+    "validate_phase8b_segment",
     "write_phase8b_campaign_start_authorization",
     "write_phase8b_capture_preflight",
     "write_phase8b_design_artifacts",
     "write_phase8b_qualification_artifacts",
     "write_phase8b_registration",
+    "write_phase8b_segment_artifacts",
 ]
