@@ -33,7 +33,27 @@ The spread reference is frozen create-only at
 `<campaign-dir>/spread-reference.json` and the review command may consume only
 that exact campaign-bound artifact.
 
-## 3. Historical spread-reference construction
+## 3. Pre-capture ordering amendment
+
+DEC-054 moves DEC-049 capture-preflight creation earlier in the operator flow.
+
+After DEC-054, `authorize-start` must, in one invocation:
+
+1. create and persist the exact DEC-048 start authorization;
+2. compute the exact persisted start-authorization SHA-256;
+3. build DEC-049 capture preflight using the same already-open fresh EOF readers;
+4. persist the preflight;
+5. stop without capturing any post-boundary market record.
+
+This remains quote-only and does not start a prospective segment.
+
+`freeze-spread-reference` then binds to that preflight.
+
+`capture-segment` subsequently requires both the preflight and the frozen
+spread reference to exist and validate. It no longer creates a preflight as a
+side effect.
+
+## 4. Historical spread-reference construction
 
 The spread reference must be built from the accepted Phase 8A retrospective
 snapshot before any real Phase 8B acceptance result.
@@ -72,7 +92,7 @@ The reference binds:
 The file and companion manifest are create-only. Re-running the freeze for the
 same campaign fails closed.
 
-## 4. Exact review inputs
+## 5. Exact review inputs
 
 Review requires:
 
@@ -89,7 +109,7 @@ champion-set fingerprint, required symbols, and slippage scenarios.
 
 Any mismatch or tamper fails closed.
 
-## 5. Immutable review identity
+## 6. Immutable review identity
 
 Each review receives a deterministic ID binding:
 
@@ -111,7 +131,7 @@ The review directory durably stores:
 
 Repeating the exact review fails with `FileExistsError`.
 
-## 6. NEED_MORE_DATA is non-terminal
+## 7. NEED_MORE_DATA is non-terminal
 
 If DEC-051 returns:
 
@@ -125,7 +145,7 @@ the review:
 - leaves DEC-052 capture eligible for later clean segments;
 - permits a later DEC-053 closure and a different review ID.
 
-## 7. Terminal rejection
+## 8. Terminal rejection
 
 Any DEC-051 rejection outcome is terminal for this exact Phase 8B campaign:
 
@@ -143,7 +163,7 @@ order/broker/real-money/Phase-9 authorizations false.
 After that marker exists, future `capture-segment` and `review-campaign`
 invocations fail closed for that campaign.
 
-## 8. PASS and lifecycle transition
+## 9. PASS and lifecycle transition
 
 Only exact DEC-051 outcome:
 
@@ -179,7 +199,7 @@ The shadow-validation artifact binds:
   false;
 - deterministic shadow-validation fingerprint.
 
-## 9. PASS is terminal for shadow capture
+## 10. PASS is terminal for shadow capture
 
 PASS writes the same campaign terminal-marker protocol used by terminal
 rejection.
@@ -190,7 +210,7 @@ allowed activity is a separately frozen Phase 9 demo-design proposal.
 PASS does not transition strategies to `DEMO_ELIGIBLE` and does not authorize
 demo orders.
 
-## 10. Terminal marker
+## 11. Terminal marker
 
 The create-only marker is:
 
@@ -206,7 +226,7 @@ any order authorization.
 A pre-existing marker blocks another terminal review, another
 `review-campaign`, and future `capture-segment`.
 
-## 11. CLI boundary
+## 12. CLI boundary
 
 After DEC-054 the Phase 8B CLI may expose:
 
@@ -227,7 +247,7 @@ results are visible.
 It still exposes no generic `run`, `start`, demo-order, live-order, broker,
 or real-money command.
 
-## 12. Safety
+## 13. Safety
 
 Throughout DEC-054:
 
