@@ -97,7 +97,7 @@ Every configuration receives a new immutable `StrategyVersion` identity under EX
 A new strategy identity must include:
 
 - family;
-- EXP-014 strategy version;
+- EXP-015 strategy version;
 - pair;
 - timeframe;
 - complete parameters;
@@ -149,7 +149,7 @@ Within each exact `(symbol, family, timeframe)` cell, passing candidates are ran
 
 At most **2** candidates per cell advance. No later stage may add a candidate not present in the frozen Stage A survivor manifest.
 
-Maximum Stage A survivors: 54.
+Maximum Stage A survivors: 108 (54 exact `(symbol, family, timeframe)` cells × at most 2 survivors per cell).
 
 ### Stage B — qualification
 
@@ -207,7 +207,7 @@ Walk down this ranking and select at most **11** new challengers, subject to:
 - at most 3 selected challengers per strategy family;
 - at most 2 selected challengers per exact `(pair, family, timeframe)` cell.
 
-The selected set receives lifecycle `HISTORICAL_QUALIFIED` under EXP-014.
+The selected set receives lifecycle `HISTORICAL_QUALIFIED` under EXP-015.
 
 Any EXP-015 candidate not selected in the final shortlist is recorded as `RETIRED` with its exact rejection/non-selection reason. No unselected candidate remains silently available for DEC-042.
 
@@ -256,7 +256,7 @@ If `NO_CHALLENGER_QUALIFIED`, DEC-042 remains blocked and thresholds may not be 
 
 ## 11. Continuous-learning relationship
 
-EXP-014 is the first controlled challenger-discovery implementation. The same champion/challenger separation applies later to new shadow/live observations:
+EXP-015 is the first controlled challenger-discovery implementation. The same champion/challenger separation applies later to new shadow/live observations:
 
 - active champions do not mutate;
 - new data may launch a new challenger experiment;
@@ -266,7 +266,7 @@ EXP-014 is the first controlled challenger-discovery implementation. The same ch
 
 ## 12. Safety boundary
 
-Throughout EXP-014:
+Throughout EXP-015:
 
 - no MT5 demo orders;
 - no broker mutation;
@@ -281,3 +281,8 @@ A historical qualifier is only eligible for later DEC-042 retrospective portfoli
 ## Identity correction note
 
 This protocol was first drafted as `DEC-042` / `EXP-20260922-014` while the repository still contained an uncorrected duplicate identity for the portfolio-selection protocol. Before any Stage A historical run, it was renumbered to `DEC-043` / `EXP-20260922-015`. No historical stage, benchmark, shortlist, or qualification result was produced under the earlier draft identity.
+
+
+## DEC-044 arithmetic correction
+
+Before any EXP-015 historical stage was opened, the Stage A survivor-cap arithmetic was audited. The specific rule allowing at most 2 survivors in each exact `(symbol, family, timeframe)` cell is retained. There are 3 symbols × 6 families × 3 timeframes = 54 exact cells, so the correct maximum Stage A survivor count is 108, not 54. This correction changes no parameter, gate, ranking rule, stage date, cost assumption, risk assumption, or final-shortlist cap.
