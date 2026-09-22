@@ -44,6 +44,7 @@ It binds exactly:
 - maximum new orders = 1;
 - exact fresh order-check request fingerprint;
 - exact fresh order-check result fingerprint;
+- SHA-256 of the exact checked MT5 request payload;
 - exact healthy reconciliation fingerprint;
 - exact launch-preflight journal event count and journal-tip fingerprint;
 - permit builder code commit;
@@ -69,8 +70,9 @@ The launch preflight must state:
 
 ## 4. Exact checked request
 
-The permit binds the exact DEC-063 order-check request fingerprint and order-check
-result fingerprint.
+The permit binds the exact DEC-063 order-check request fingerprint, order-check
+result fingerprint, and canonical SHA-256 of the exact checked MT5 request
+payload.
 
 It may not alter:
 
