@@ -374,9 +374,9 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-069 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet/approval/activation artifact, demo order, or broker mutation has been executed;
-3. PR #161 merged DEC-069 / `EXP-20260922-040` to `main` at `0569b2cafb97bf4529cc95224a0133423396d9b9`; the exact final PR head `123f89d9cd5e2559f57a1b24cfe61affceff8e25` passed 1080 tests plus YAML/compile in run `35786935231` and unchanged Phase 3 acceptance run `35786935239` passed; post-merge `main` runs `35787170070` and `35787170138` passed;
-4. DEC-069 completes the source-only first practice-order path: immutable artifact validation remains usable in an armed runtime, builders/writers remain unarmed-only, and one exact approved activation can delegate once to DEC-065 without duplicating send/retry/reconciliation logic;
-5. repository `DEMO_EXECUTION_SOURCE_ARMED=false`; the remaining work is real-world evidence/operator action, not more execution-path plumbing: run the real Phase 8B prospective campaign, obtain SHADOW_VALIDATED, materialize the exact Phase 9 chain, review/approve the actual DEC-067 challenge, and use a separately approved armed operator runtime. Broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked until those steps occur.
+3. DEC-070 / `EXP-20260922-041` is the active milestone: add a read-only Phase 8B campaign-readiness audit and update the operator handoff to the current multi-pair portfolio workflow;
+4. the readiness audit must write no campaign artifact, start no segment, consume no post-EOF quote data, and remain non-authoritative; `capture-segment` continues independent validation;
+5. repository `DEMO_EXECUTION_SOURCE_ARMED=false`; real prospective capture, SHADOW_VALIDATED, demo execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
