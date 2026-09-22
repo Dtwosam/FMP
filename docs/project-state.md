@@ -419,5 +419,5 @@ Phase 8B must:
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-048, but all result-producing Phase 8A workflows and every Phase 8B qualification/registration/start/capture step remain unexecuted. No prospective shadow campaign has begun.
+Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049, but all result-producing Phase 8A workflows and every Phase 8B qualification/registration/start/capture step remain unexecuted. No prospective shadow campaign has begun.
 
