@@ -374,7 +374,7 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-058 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session artifact, demo order, or broker mutation has been executed;
-3. DEC-059 / `EXP-20260922-030` is the active milestone: freeze one-request/one-order practice-session arm identity, healthy startup reconciliation, UTC-day window/daily-halt guards, append-only fsynced session journaling, send-attempt-before-mutation ordering, and post-send recovery semantics;
+3. DEC-059 / `EXP-20260922-030` is implemented on PR #151 head `c273bb5a21d865d09edefbd425f18c4049e58399`: one-request/one-order arm identity, UTC-day/daily-halt guards, healthy startup reconciliation, hash-chained fsynced journaling, arm-spent send-attempt semantics, and source-only session readiness; run `35768964040` passed 1017 tests plus YAML/compile and unchanged Phase 3 acceptance run `35768964070` passed;
 4. DEC-059 keeps `DEMO_EXECUTION_SOURCE_ARMED=false`, creates no real arm, exposes no arming/run/order CLI, and cannot submit the first practice-account order;
 5. Phase 9 acceptance thresholds, Phase 10, real-money trading, and live execution remain locked.
 
