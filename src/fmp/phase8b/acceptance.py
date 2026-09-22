@@ -260,6 +260,10 @@ def validate_phase8b_spread_reference(
         != PHASE8B_ACCEPTANCE_CONTRACT_DECISION
     ):
         raise ValueError("Phase 8B spread-reference contract mismatch")
+    _validate_fingerprint(
+        reference,
+        field="spread_reference_fingerprint",
+    )
     for field in (
         "capture_preflight_fingerprint",
         "champion_set_fingerprint",
@@ -289,10 +293,6 @@ def validate_phase8b_spread_reference(
             field=f"Phase 8B spread-reference {symbol}",
             require_samples=True,
         )
-    _validate_fingerprint(
-        reference,
-        field="spread_reference_fingerprint",
-    )
 
 
 def _validate_scenario_row(
@@ -342,6 +342,14 @@ def validate_phase8b_campaign_evidence(
         raise ValueError("Phase 8B campaign evidence must be prospective")
     if evidence.get("prospective_segment_closed") is not True:
         raise ValueError("Phase 8B campaign evidence must be closed")
+
+    # Authenticate the exact evidence bytes/structure before evaluating any
+    # derived cross-field consistency so mutations fail at the immutable
+    # boundary rather than surfacing as a secondary accounting error.
+    _validate_fingerprint(
+        evidence,
+        field="campaign_evidence_fingerprint",
+    )
 
     for field in (
         "capture_preflight_fingerprint",
@@ -524,10 +532,6 @@ def validate_phase8b_campaign_evidence(
         if evidence.get(field) is not False:
             raise ValueError(f"Phase 8B campaign evidence requires {field}=false")
 
-    _validate_fingerprint(
-        evidence,
-        field="campaign_evidence_fingerprint",
-    )
 
 
 def _safety_passes(evidence: Mapping[str, object]) -> bool:
