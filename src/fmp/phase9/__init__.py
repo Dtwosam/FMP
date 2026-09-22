@@ -93,6 +93,16 @@ from .session import (
     validate_phase9_demo_session_journal,
     validate_phase9_demo_session_ready,
 )
+from .permit import (
+    PHASE9_DEMO_EXECUTION_PERMIT_ARTIFACT_PROTOCOL,
+    PHASE9_DEMO_EXECUTION_PERMIT_CONTRACT_READY,
+    PHASE9_DEMO_EXECUTION_PERMIT_DECISION,
+    PHASE9_DEMO_EXECUTION_PERMIT_EXPERIMENT_ID,
+    PHASE9_DEMO_EXECUTION_PERMIT_PROTOCOL,
+    build_phase9_demo_execution_permit,
+    validate_phase9_demo_execution_permit,
+    write_phase9_demo_execution_permit,
+)
 from .protocol import (
     DemoExecutionLockedError,
     LockedDemoOrderAdapter,
@@ -115,6 +125,11 @@ from .protocol import (
 )
 
 __all__ = [
+    "PHASE9_DEMO_EXECUTION_PERMIT_ARTIFACT_PROTOCOL",
+    "PHASE9_DEMO_EXECUTION_PERMIT_CONTRACT_READY",
+    "PHASE9_DEMO_EXECUTION_PERMIT_DECISION",
+    "PHASE9_DEMO_EXECUTION_PERMIT_EXPERIMENT_ID",
+    "PHASE9_DEMO_EXECUTION_PERMIT_PROTOCOL",
     "PHASE9_DEMO_LAUNCH_PREFLIGHT_ARTIFACT_PROTOCOL",
     "PHASE9_DEMO_LAUNCH_PREFLIGHT_DECISION",
     "PHASE9_DEMO_LAUNCH_PREFLIGHT_EXPERIMENT_ID",
@@ -177,6 +192,7 @@ __all__ = [
     "PHASE9_MT5_ORDER_BRIDGE_PROTOCOL",
     "build_phase9_demo_design",
     "build_phase9_demo_execution_arm",
+    "build_phase9_demo_execution_permit",
     "build_phase9_demo_runtime_authority",
     "build_phase9_demo_session_arm",
     "build_phase9_demo_session_journal_event",
@@ -197,6 +213,7 @@ __all__ = [
     "validate_phase9_demo_design",
     "validate_phase9_demo_launch_preflight",
     "validate_phase9_demo_execution_arm",
+    "validate_phase9_demo_execution_permit",
     "validate_phase9_demo_runtime_authority",
     "validate_phase9_demo_session_arm",
     "validate_phase9_demo_session_journal",
@@ -212,6 +229,7 @@ __all__ = [
     "write_phase9_demo_launch_preflight",
     "write_phase9_demo_runtime_authority",
     "write_phase9_demo_execution_arm",
+    "write_phase9_demo_execution_permit",
     "write_phase9_mt5_demo_preflight",
     "write_phase9_demo_dry_run",
 ]
