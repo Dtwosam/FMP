@@ -12,8 +12,10 @@ from fmp.strategies.contracts import SignalCandidate
 
 LONDON = ZoneInfo("Europe/London")
 _TIMEFRAME_MINUTES = {"5m": 5, "15m": 15, "1h": 60}
-_ALLOWED_BUFFERS = frozenset({0, 2, 5})
-_ALLOWED_TARGET_MULTIPLES = frozenset({0.5, 1.0, 1.5})
+_PHASE4_BUFFERS = frozenset({0, 2, 5})
+_PHASE4_TARGET_MULTIPLES = frozenset({0.5, 1.0, 1.5})
+_EXP015_BUFFERS = frozenset({1, 3, 4, 6, 8})
+_EXP015_TARGET_MULTIPLES = frozenset({0.75, 1.25, 1.75, 2.0})
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,12 +23,21 @@ class SessionBreakoutConfig:
     buffer_pips: int
     target_range_multiple: float
     timeframe: str
+    parameter_region: str = "phase4"
 
     def __post_init__(self) -> None:
-        if self.buffer_pips not in _ALLOWED_BUFFERS:
-            raise ValueError("buffer_pips must be one of 0, 2, or 5")
-        if self.target_range_multiple not in _ALLOWED_TARGET_MULTIPLES:
-            raise ValueError("target_range_multiple must be one of 0.5, 1.0, or 1.5")
+        if self.parameter_region == "phase4":
+            buffers = _PHASE4_BUFFERS
+            targets = _PHASE4_TARGET_MULTIPLES
+        elif self.parameter_region == "exp015":
+            buffers = _EXP015_BUFFERS
+            targets = _EXP015_TARGET_MULTIPLES
+        else:
+            raise ValueError("unsupported session-breakout parameter_region")
+        if self.buffer_pips not in buffers:
+            raise ValueError("buffer_pips is outside the selected parameter region")
+        if self.target_range_multiple not in targets:
+            raise ValueError("target_range_multiple is outside the selected parameter region")
         if self.timeframe not in _TIMEFRAME_MINUTES:
             raise ValueError("timeframe must be one of 5m, 15m, or 1h")
 

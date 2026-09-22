@@ -365,21 +365,20 @@ Implementation progress:
 - PR #124 merged at `b8c54cf4530e93827270d10a0fb5c1248a14716b`: exact-fingerprint joint evidence envelopes, deterministic artifact serialization, and explicit manual `resolve`/`run` CLI with hard non-promotion boundaries.
 - PR #124 pre-merge verification: 835 tests PASS, compile PASS, unchanged Phase 3 acceptance PASS.
 - DEC-041 / EXP-20260922-013 is the original predeclared Challenger Round 1: `opening_range_momentum` across all three V1 pairs and 5m/15m/1h.
-- PR #125 merged the EXP-013 signal/catalog/Stage A runner implementation to `main` before any benchmark dispatch. It did **not** include an operator workflow. The current `phase8a/exp013-stage-a-workflow` branch adds the missing frozen manual Stage A workflow, deterministic cell artifacts, and exact Stage B authorization aggregation. No EXP-013 historical workflow has been dispatched.
+- PR #125 merged the EXP-013 signal/catalog/Stage A runner implementation to `main` before any benchmark dispatch. PR #128 then merged the missing frozen Stage A workflow/evidence layer at `c086936a650e74d48f71c1b5e9a133acbe29d957` after 868 tests PASS and unchanged Phase 3 acceptance PASS. PR #129 merged the source-digest hardening plus guarded Stage B confirmation path at `204187fa0eb56908d705bbde76e7423894015dae` after 875 tests PASS and unchanged Phase 3 acceptance PASS. No EXP-013 Stage A or Stage B historical workflow has been dispatched.
 - DEC-042 / EXP-20260922-014 is the frozen portfolio-selection protocol and machinery. It remains SEARCH BLOCKED until at least two strategies are historically qualified.
 - DEC-043 / EXP-20260922-015 predeclares a broader 567-configuration six-family challenger search as the next bounded discovery round/fallback. No EXP-015 historical stage has been opened.
 - Identity audit: the later selection work temporarily duplicated DEC-041/EXP-013 identifiers; the correction branch renumbers selection to DEC-042/EXP-014 and broad discovery to DEC-043/EXP-015. No benchmark/search result was produced under the duplicate identities.
 
 Current milestone:
 
-1. merge and source-free verify the decision/experiment identity correction;
-2. merge and source-free verify the missing EXP-013 Stage A workflow/evidence layer with exact code/data identities;
-3. deliberately dispatch EXP-013 Stage A only after that workflow is on verified `main`;
-4. derive Stage A survivor authorization deterministically from all 36 identities × 3 slippage scenarios across the frozen development/validation ranges;
-5. open EXP-013 Stage B 2024-2026 confirmation only for exact Stage A survivors;
-6. if EXP-013 yields one or more HISTORICAL_QUALIFIED challengers, add them to the DEC-042 selection-eligible pool without changing any selection gate;
-7. continue implementing EXP-015 as a broader discovery round if more challenger diversity is still required;
-8. retain all results as retrospective and preserve Phase 8B/demo/live locks.
+1. EXP-013 Stage A and Stage B code/workflows are merged and verified but remain deliberately undispatched because the connected Mac is offline and no direct workflow-dispatch connector is available in this session;
+2. continue source-free EXP-015 implementation from the frozen DEC-043 protocol without opening any historical stage;
+3. first merge expanded validators plus the exact 567-identity non-overlapping challenger catalog;
+4. then implement Stage A gate/ranking and immutable survivor authorization, followed by guarded Stage B/C manifests;
+5. when an authorized operator dispatch path is available, run EXP-013 Stage A first from verified `main`; only exact Stage A survivors may enter its Stage B;
+6. if EXP-013 or EXP-015 yields one or more HISTORICAL_QUALIFIED challengers, add only those exact immutable identities to the DEC-042 selection-eligible pool without changing any selection gate;
+7. retain all results as retrospective and preserve Phase 8B/demo/live locks.
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
 `EXP-20260922-011` is preserved but will not be launched.
