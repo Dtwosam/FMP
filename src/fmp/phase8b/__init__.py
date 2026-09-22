@@ -53,6 +53,17 @@ from .design import (
     validate_phase8b_design,
     write_phase8b_design_artifacts,
 )
+from .prospective import (
+    CAPTURE_POLL_INTERVAL_SECONDS,
+    MAX_SEGMENT_DURATION_SECONDS,
+    MIN_SEGMENT_DURATION_SECONDS,
+    PHASE8B_PROSPECTIVE_EXPERIMENT_ID,
+    PHASE8B_PROSPECTIVE_SEGMENT_ARTIFACT_PROTOCOL,
+    PHASE8B_PROSPECTIVE_SEGMENT_CLOSED,
+    PHASE8B_PROSPECTIVE_SEGMENT_PROTOCOL,
+    capture_phase8b_prospective_segment,
+    validate_phase8b_prospective_segment,
+)
 from .qualification import (
     FeedQualificationOutcome,
     FeedQualificationResult,
@@ -84,6 +95,13 @@ from .registration import (
 )
 
 __all__ = [
+    "CAPTURE_POLL_INTERVAL_SECONDS",
+    "MAX_SEGMENT_DURATION_SECONDS",
+    "MIN_SEGMENT_DURATION_SECONDS",
+    "PHASE8B_PROSPECTIVE_EXPERIMENT_ID",
+    "PHASE8B_PROSPECTIVE_SEGMENT_ARTIFACT_PROTOCOL",
+    "PHASE8B_PROSPECTIVE_SEGMENT_CLOSED",
+    "PHASE8B_PROSPECTIVE_SEGMENT_PROTOCOL",
     "PHASE8B_ACCEPTANCE_ARTIFACT_PROTOCOL",
     "PHASE8B_ACCEPTANCE_EXPERIMENT_ID",
     "PHASE8B_ACCEPTANCE_PROTOCOL",
@@ -125,6 +143,7 @@ __all__ = [
     "READER_START_SEMANTICS",
     "build_phase8b_campaign_start_authorization",
     "compile_phase8b_acceptance",
+    "capture_phase8b_prospective_segment",
     "build_phase8b_capture_preflight",
     "build_phase8b_design",
     "compile_phase8b_segment",
@@ -137,6 +156,7 @@ __all__ = [
     "qualify_phase8b_feed",
     "summarize_phase8b_qualification",
     "validate_phase8b_campaign_start_authorization",
+    "validate_phase8b_prospective_segment",
     "validate_phase8b_acceptance",
     "validate_phase8b_campaign_evidence",
     "validate_phase8b_capture_preflight",

@@ -6,7 +6,7 @@ from fmp.phase8b.cli import build_parser
 
 
 class Phase8BCliBoundaryTests(unittest.TestCase):
-    def test_cli_exposes_only_design_qualify_register_and_authorize_start(self) -> None:
+    def test_cli_exposes_only_frozen_phase8b_commands(self) -> None:
         parser = build_parser()
         self.assertEqual(
             parser.parse_args(
@@ -58,7 +58,19 @@ class Phase8BCliBoundaryTests(unittest.TestCase):
             ).command,
             "authorize-start",
         )
-        for forbidden in ("run", "capture", "start", "review"):
+        self.assertEqual(
+            parser.parse_args(
+                [
+                    "capture-segment",
+                    "--campaign-dir",
+                    "campaign",
+                    "--duration-seconds",
+                    "60",
+                ]
+            ).command,
+            "capture-segment",
+        )
+        for forbidden in ("run", "capture", "start", "review", "close-campaign"):
             with self.subTest(command=forbidden):
                 with self.assertRaises(SystemExit):
                     parser.parse_args([forbidden])
@@ -92,7 +104,16 @@ class Phase8BCliBoundaryTests(unittest.TestCase):
                 "campaign",
             ]
         )
-        for args in (qualify, register, authorize):
+        capture = parser.parse_args(
+            [
+                "capture-segment",
+                "--campaign-dir",
+                "campaign",
+                "--duration-seconds",
+                "60",
+            ]
+        )
+        for args in (qualify, register, authorize, capture):
             for forbidden in (
                 "symbol",
                 "path",

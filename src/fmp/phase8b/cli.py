@@ -17,11 +17,17 @@ from .campaign_start import (
     build_phase8b_campaign_start_authorization,
     write_phase8b_campaign_start_authorization,
 )
+from .capture import (
+    build_phase8b_capture_preflight,
+    validate_phase8b_capture_preflight,
+    write_phase8b_capture_preflight,
+)
 from .design import (
     build_phase8b_design,
     validate_phase8b_design,
     write_phase8b_design_artifacts,
 )
+from .prospective import capture_phase8b_prospective_segment
 from .qualification import (
     Phase8BQualificationOutcome,
     qualify_phase8b_design,
@@ -103,6 +109,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--campaign-dir",
         required=True,
         type=Path,
+    )
+
+    capture_segment = subparsers.add_parser(
+        "capture-segment",
+        help="capture one bounded prospective Phase 8B quote-only segment",
+    )
+    capture_segment.add_argument(
+        "--campaign-dir",
+        required=True,
+        type=Path,
+    )
+    capture_segment.add_argument(
+        "--duration-seconds",
+        required=True,
+        type=int,
     )
     return parser
 
@@ -304,6 +325,92 @@ def main(
                     "campaign_start_authorized": True,
                     "prospective_capture_authorized": True,
                     "artifact_count": len(manifest["artifacts"]),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    if args.command == "capture-segment":
+        campaign_dir = args.campaign_dir
+        registration_path = campaign_dir / "registration.json"
+        authorization_path = campaign_dir / "start-authorization.json"
+        preflight_path = campaign_dir / "capture-preflight.json"
+
+        registration = _load_json_object(
+            registration_path,
+            label="Phase 8B campaign registration",
+        )
+        authorization = _load_json_object(
+            authorization_path,
+            label="Phase 8B campaign start authorization",
+        )
+        raw_symbols = registration.get("required_symbols")
+        if not isinstance(raw_symbols, list) or not raw_symbols:
+            raise ValueError(
+                "Phase 8B registration required_symbols is malformed"
+            )
+        symbols = tuple(str(item) for item in raw_symbols)
+        paths = dict(bridge_discoverer(symbols))
+        if set(paths) != set(symbols):
+            raise ValueError(
+                "Phase 8B bridge discovery coverage mismatch"
+            )
+        tails = {
+            symbol: tail_factory(Path(paths[symbol]), symbol)
+            for symbol in symbols
+        }
+
+        commit = code_commit_resolver()
+        if preflight_path.exists():
+            preflight = _load_json_object(
+                preflight_path,
+                label="Phase 8B capture preflight",
+            )
+            validate_phase8b_capture_preflight(preflight)
+        else:
+            preflight = build_phase8b_capture_preflight(
+                registration=registration,
+                registration_sha256=hashlib.sha256(
+                    registration_path.read_bytes()
+                ).hexdigest(),
+                authorization=authorization,
+                authorization_sha256=hashlib.sha256(
+                    authorization_path.read_bytes()
+                ).hexdigest(),
+                bridge_tails=tails,
+                code_commit=commit,
+                prepared_at_utc=utc_now(),
+            )
+            write_phase8b_capture_preflight(
+                preflight,
+                campaign_dir,
+            )
+
+        result = capture_phase8b_prospective_segment(
+            preflight=preflight,
+            bridge_tails=tails,
+            code_commit=commit,
+            duration_seconds=args.duration_seconds,
+            segments_root=campaign_dir / "segments",
+            utc_now=utc_now,
+            monotonic_ns=monotonic_ns,
+            sleep=sleep,
+        )
+        segment_dir = campaign_dir / "segments" / str(result["segment_id"])
+        print(
+            json.dumps(
+                {
+                    "prospective_segment": str(
+                        segment_dir / "prospective-segment.json"
+                    ),
+                    "manifest": str(segment_dir / "manifest.json"),
+                    "segment_id": result["segment_id"],
+                    "replay_match": result["replay_match"],
+                    "prospective_segment_closed": True,
+                    "acceptance_authorized": False,
                 },
                 sort_keys=True,
                 separators=(",", ":"),
