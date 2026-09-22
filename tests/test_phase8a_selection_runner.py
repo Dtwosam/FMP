@@ -395,6 +395,7 @@ class Dec042SelectionRunnerTests(unittest.TestCase):
             "protocol": DEC042_RESULT_PROTOCOL,
             "experiment_id": DEC042_EXPERIMENT_ID,
             "promotion_authorized": False,
+            "shadow_candidate_authorized": False,
         }
         with TemporaryDirectory() as a, TemporaryDirectory() as b:
             left = Path(a)
