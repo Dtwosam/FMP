@@ -654,3 +654,21 @@ DEC-044 preserves the specific at-most-2-per-cell rule and corrects the maximum 
 No EXP-015 Stage A/B/C historical run, benchmark, survivor manifest, or shortlist existed when this correction was approved. The correction is protocol maintenance, not post-result tuning.
 
 Consequences: EXP-015 remains ACTIVE — IMPLEMENTATION / NO HISTORICAL STAGE RUN YET. Stage A implementation must enforce 567 frozen inputs, 54 exact ranking cells, at most 2 survivors per cell, and an absolute maximum of 108 Stage A survivors.
+
+
+## DEC-045 — Phase 8A acceptance review and shadow-candidate freeze
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY DEC-042 SELECTION RESULT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8a-acceptance-review.md` freezes the Phase 8A acceptance boundary required by DEC-039 step 9.
+
+DEC-042 remains retrospective portfolio selection only and continues to emit `shadow_candidate_authorized = false`. DEC-045 independently consumes the exact DEC-042 preflight/selection artifacts and deterministically replays the stored set universe, gate results, and ranking before any lifecycle transition is allowed.
+
+Before any DEC-042 result exists, DEC-045 operationally defines “materially improves the economic case” as: the exact DEC-042 selected multi-strategy portfolio must pass every frozen DEC-042 gate and its 0.5-pip annualized compounded return must be strictly greater than the Phase 7 baseline control evaluated over the same 2019-01-01 through 2026-08-21 range. No additional percentage-point hurdle, score weight, leverage change, or post-result margin may be introduced later.
+
+If that rule passes, only the exact selected strategy records advance one lifecycle step from `HISTORICAL_QUALIFIED` to `SHADOW_CANDIDATE`, an immutable champion/shadow-candidate set is frozen, and `phase8b_design_authorized = true`. If DEC-042 has no selected portfolio or the strict baseline-improvement gate fails, the outcome is `PHASE8A_RESEARCH_REJECTED` and no lifecycle transition occurs.
+
+Even an accepted candidate does not authorize demo orders, live orders, broker mutation, real-money trading, or Phase 9. It authorizes only Phase 8B read-only shadow design/capture for the exact frozen candidate set.
+
+Consequences: `EXP-20260922-016` is opened for source-free implementation of the acceptance compiler and manual evidence-review workflow. No DEC-042 selection result or Phase 8A acceptance result exists yet.
