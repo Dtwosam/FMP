@@ -787,4 +787,5 @@ Copy this section for each serious experiment:
 - Demo execution/order, live order, broker mutation, real-money trading, and Phase 10 authorized?: NO.
 - Live/demo execution status: NOT RUN.
 - Verification: exact source head `19a6ad3f653b053d6c32e2f6e95dd05c999bddb1` passed 1005 tests plus workflow-YAML validation and compile checks in run `35766703078`; unchanged Phase 3 acceptance run `35766703266` passed.
-- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before any backend containing `order_send` or any broker mutation method can exist.
+- Merge status: PR #149 merged DEC-057 to `main` at `366f271ca951108cf8fdb1df01604817baa076dc`. The exact final PR head `b5e97f06658f487ad553241616ff53049c7f2fba` passed 1005 tests plus workflow-YAML validation and compile checks in run `35766872553`; unchanged Phase 3 acceptance run `35766872565` passed. Post-merge `main` runs `35767028347` and `35767028362` also passed.
+- Follow-up: a later separately frozen decision is required before any backend containing `order_send` or any broker mutation method can exist. No real Phase 8B PASS, Phase 9 design/preflight artifact, demo order, or broker mutation has been executed.
