@@ -633,10 +633,24 @@ The chronological retrospective protocol is:
 
 No downstream stage may open a candidate absent from the exact upstream survivor manifest. No parameter retuning, same-cell rescue, replacement, or threshold relaxation is allowed after observation.
 
-Final shortlist ranking and diversity caps are frozen before Stage A results. At most 11 new challengers can become `HISTORICAL_QUALIFIED`, with no more than 4 per pair, 3 per family, and 2 per exact pair/family/timeframe cell. All other EXP-014 candidates are recorded as `RETIRED` with explicit reason. Adding the existing Phase 7 baseline later therefore keeps DEC-042's eligible pool at or below 12.
+Final shortlist ranking and diversity caps are frozen before Stage A results. At most 11 new challengers can become `HISTORICAL_QUALIFIED`, with no more than 4 per pair, 3 per family, and 2 per exact pair/family/timeframe cell. All other EXP-015 candidates are recorded as `RETIRED` with explicit reason. Adding the existing Phase 7 baseline later therefore keeps DEC-042's eligible pool at or below 12.
 
 All evidence is `RETROSPECTIVE_ALREADY_SEEN` with `untouched_oos = false`. The 0.2 and 0.5-pip scenarios gate; 1.0 pip remains diagnostic. The full 567-candidate search count is preserved as multiple-comparison evidence.
 
-Consequences: `EXP-20260922-015` becomes ACTIVE for implementation only. Stage A may not run until the new parameter validators, immutable challenger-grid generator, stage gates, authorization manifests, deterministic evidence, tests, and source-free verification are merged. DEC-042 combination search remains blocked until EXP-014 produces at least one additional qualified challenger. Phase 8B, Phase 9, broker mutation, demo/live orders, and real-money trading remain LOCKED.
+Consequences: `EXP-20260922-015` becomes ACTIVE for implementation only. Stage A may not run until the new parameter validators, immutable challenger-grid generator, stage gates, authorization manifests, deterministic evidence, tests, and source-free verification are merged. DEC-042 combination search remains blocked until EXP-015 produces at least one additional qualified challenger. Phase 8B, Phase 9, broker mutation, demo/live orders, and real-money trading remain LOCKED.
 
 Identity correction: this section was initially drafted as `DEC-042` / `EXP-20260922-014` while the selection-protocol duplicate was being reconciled. It was renumbered before any Stage A historical run or benchmark result.
+
+
+## DEC-044 — EXP-015 Stage A survivor-cap arithmetic correction
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY HISTORICAL STAGE
+
+An arithmetic inconsistency was found in DEC-043 before any EXP-015 historical data was opened. DEC-043 already freezes 3 symbols × 6 families × 3 timeframes = 54 exact `(symbol, family, timeframe)` cells and allows at most 2 Stage A survivors per exact cell. The written statement “Maximum Stage A survivors: 54” was therefore inconsistent with the specific per-cell rule.
+
+DEC-044 preserves the specific at-most-2-per-cell rule and corrects the maximum Stage A survivor count to 108. No parameter value, strategy family, pair, timeframe, date range, cost scenario, risk assumption, gate, ranking key, downstream authorization rule, or final-shortlist cap changes.
+
+No EXP-015 Stage A/B/C historical run, benchmark, survivor manifest, or shortlist existed when this correction was approved. The correction is protocol maintenance, not post-result tuning.
+
+Consequences: EXP-015 remains ACTIVE — IMPLEMENTATION / NO HISTORICAL STAGE RUN YET. Stage A implementation must enforce 567 frozen inputs, 54 exact ranking cells, at most 2 survivors per cell, and an absolute maximum of 108 Stage A survivors.
