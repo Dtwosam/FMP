@@ -37,9 +37,9 @@ class Exp015StageAWorkflowTests(unittest.TestCase):
 
     def test_workflow_verifies_exact_stage_a_evidence(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn('"2015-01-01"', text)
-        self.assertIn('"2019-01-01"', text)
-        self.assertIn('"RETROSPECTIVE_ALREADY_SEEN"', text)
+        self.assertIn("'2015-01-01'", text)
+        self.assertIn("'2019-01-01'", text)
+        self.assertIn("'RETROSPECTIVE_ALREADY_SEEN'", text)
         self.assertIn("catalog_identity_sha256", text)
         self.assertIn("strategy_identity_count", text)
         self.assertIn("scenario_run_count", text)
