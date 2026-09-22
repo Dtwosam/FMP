@@ -372,11 +372,11 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-064 are merged and verified on `main`;
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-065 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit artifact, demo order, or broker mutation has been executed;
-3. DEC-065 / `EXP-20260922-036` is implemented on PR #157 head `54efe65ff66e90ff5939a11ad5bad704d9b60b70`: exact permit/request replay, fsynced SEND_ATTEMPTED before future mutation, no retry, DEC-058 send-result normalization, explicit ambiguity handling, and one post-send reconciliation; run `35779123073` passed 1049 tests plus YAML/compile and unchanged Phase 3 acceptance run `35779123145` passed;
-4. DEC-065 keeps `DEMO_EXECUTION_SOURCE_ARMED=false`, adds no broker-connected or order-capable CLI, and repository tests may use only fake mutation backends;
-5. demo execution/order submission, live trading, real-money trading, Phase 10, and deployment review remain locked.
+3. PR #157 merged DEC-065 / `EXP-20260922-036` to `main` at `94eb6d4af4f146e751f2baed86f9b85fae4e8cac`; the exact final PR head `797ca4c9f3f3af20367d47a47e0c2e2972d9cdf6` passed 1049 tests plus YAML/compile in run `35779313105` and unchanged Phase 3 acceptance run `35779312681` passed; post-merge `main` runs `35779467788` and `35779467811` passed;
+4. DEC-065 provides the permit-aware one-shot runner source with exact checked-request replay, fsynced `SEND_ATTEMPTED`, no retry, explicit ambiguity handling, and one post-send reconciliation, but repository `DEMO_EXECUTION_SOURCE_ARMED=false` and no order-capable CLI exists;
+5. the next boundary is an explicit first-demo execution authorization decision; until that is separately approved, demo execution/order submission, broker mutation, live trading, real-money trading, Phase 10, and deployment review remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
