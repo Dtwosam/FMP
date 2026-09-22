@@ -374,7 +374,7 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-063 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit artifact, demo order, or broker mutation has been executed;
-3. DEC-064 / `EXP-20260922-035` is the active milestone: source-only one-shot execution-permit contract over the exact DEC-063 launch preflight, fresh order-check identities, healthy reconciliation, one-order arm/window, and create-only permit evidence;
+3. DEC-064 / `EXP-20260922-035` is implemented on PR #156 head `fc9fcc586fad03b90963ff636cb2275bbcbe1fd7`: immutable one-shot permit identity over exact DEC-063 launch evidence, exact checked MT5 request SHA-256, fresh order-check/reconciliation fingerprints, one-order arm/window, and create-only permit evidence; run `35776256682` passed 1043 tests plus YAML/compile and unchanged Phase 3 acceptance run `35776256435` passed;
 4. DEC-064 keeps `DEMO_EXECUTION_SOURCE_ARMED=false`, adds no CLI or broker access, and cannot submit the first practice-account order;
 5. demo execution/order submission, broker mutation, live trading, real-money trading, Phase 10, and deployment review remain locked.
 
