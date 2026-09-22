@@ -85,6 +85,7 @@ The symbol snapshot must bind the exact approved broker symbol and provide:
 - `digits`;
 - `point`;
 - `trade_stops_level_points`;
+- one normalized filling mode from `FOK`, `IOC`, or `RETURN`;
 - trade-enabled boolean.
 
 All numeric values must be finite and positive except
@@ -153,6 +154,8 @@ The deterministic payload binds:
 - current requested market price;
 - exact stop and optional target;
 - fixed time-in-force = GTC;
+- exact normalized broker filling mode from the symbol snapshot;
+- fixed check-only deviation = 0 points;
 - fixed comment derived from client order ID;
 - no credential material;
 - no mutation authorization.
@@ -177,8 +180,9 @@ A normalized check result binds:
 - `demo_order_submitted=false`;
 - `live_order_submitted=false`.
 
-Only explicitly frozen success return codes may set `check_passed=true`.
-DEC-057 itself does not treat a passing check as execution authorization.
+Only normalized MT5 order-check `retcode=0` (`Done`) may set `check_passed=true`.
+Any other return code fails the preflight. A passing check is still not execution
+authorization and does not imply that a later `order_send` would succeed.
 
 ## 11. Preflight evidence
 
