@@ -789,3 +789,22 @@ Copy this section for each serious experiment:
 - Verification: exact source head `19a6ad3f653b053d6c32e2f6e95dd05c999bddb1` passed 1005 tests plus workflow-YAML validation and compile checks in run `35766703078`; unchanged Phase 3 acceptance run `35766703266` passed.
 - Merge status: PR #149 merged DEC-057 to `main` at `366f271ca951108cf8fdb1df01604817baa076dc`. The exact final PR head `b5e97f06658f487ad553241616ff53049c7f2fba` passed 1005 tests plus workflow-YAML validation and compile checks in run `35766872553`; unchanged Phase 3 acceptance run `35766872565` passed. Post-merge `main` runs `35767028347` and `35767028362` also passed.
 - Follow-up: a later separately frozen decision is required before any backend containing `order_send` or any broker mutation method can exist. No real Phase 8B PASS, Phase 9 design/preflight artifact, demo order, or broker mutation has been executed.
+
+
+### EXP-20260922-029 — Phase 9 gated MT5 mutation transport source
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-058 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: implement the MetaTrader5 Python mutation-capable infrastructure source while keeping the official FMP demo execution path hard-disabled.
+- Identity continuity: current terminal login is hashed exactly as the Phase 8B bridge, `sha256(str(ACCOUNT_LOGIN))`; account mode/server/trade permissions are read from the connected terminal rather than accepted as caller overrides.
+- Symbol policy: actual symbol execution/filling properties determine RETURN/FOK/IOC behavior; Market Execution requires allowed FOK or IOC and otherwise fails closed.
+- Request integrity: future `order_send` receives the exact freshly checked DEC-057 request with no post-check resize, stop/target edit, symbol/account swap, or price-field mutation.
+- Result semantics: `fmp-phase9-mt5-demo-send-result-v1` normalizes retcode/tickets/fill volume/price/bid/ask/comment/request ID; only retcode 10009 with full confirmed volume is marked completed.
+- Reconciliation reads: active order/position fixtures are normalized with client-order comments and deterministic protective-stop presence identifiers.
+- Hard gate: `DEMO_EXECUTION_SOURCE_ARMED=false`; no DEC-058 setter, config, environment variable, artifact, or CLI can change it. The official adapter checks the gate before any broker read or mutation.
+- CLI scope: unchanged Phase 9 design-only CLI; no run-demo/order-send/trade/close/cancel/broker command was added.
+- Demo execution/order, live order, FMP broker mutation, real-money trading, and Phase 10 authorized?: NO.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `daf97700e123a025db626ea2d18bc1e7a8fecde2` passed 1011 tests plus workflow-YAML validation and compile checks in run `35767811967`; unchanged Phase 3 acceptance run `35767812096` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision must explicitly arm one bounded demo session and freeze its operator/journal/recovery boundary before any real practice-account order.
