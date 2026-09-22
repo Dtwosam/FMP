@@ -1,6 +1,6 @@
 # Phase 8 Bridge/Market Liveness Separation Amendment
 
-**Status:** APPROVED / ACTIVATED — DEC-038; implementation verification pending merge  
+**Status:** APPROVED / ACTIVATED — DEC-038; implementation merged and source-free verified  
 **Date:** 2026-09-22  
 **Repository:** `Dtwosam/FMP`  
 **Phase:** 8 — Live shadow mode  
