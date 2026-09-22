@@ -23,6 +23,14 @@ from .bridge import (
     discover_phase8b_bridge_files,
     parse_phase8b_bridge_line,
 )
+from .campaign_close import (
+    AGGREGATION_MODE,
+    PHASE8B_CAMPAIGN_CLOSE_DECISION,
+    PHASE8B_CAMPAIGN_CLOSE_EXPERIMENT_ID,
+    PHASE8B_CAMPAIGN_CLOSE_MANIFEST_PROTOCOL,
+    PHASE8B_CAMPAIGN_EVIDENCE_SNAPSHOT_READY,
+    close_phase8b_campaign_directory,
+)
 from .campaign_start import (
     PHASE8B_CAMPAIGN_START_ARTIFACT_PROTOCOL,
     PHASE8B_CAMPAIGN_START_AUTHORIZED,
@@ -95,6 +103,11 @@ from .registration import (
 )
 
 __all__ = [
+    "AGGREGATION_MODE",
+    "PHASE8B_CAMPAIGN_CLOSE_DECISION",
+    "PHASE8B_CAMPAIGN_CLOSE_EXPERIMENT_ID",
+    "PHASE8B_CAMPAIGN_CLOSE_MANIFEST_PROTOCOL",
+    "PHASE8B_CAMPAIGN_EVIDENCE_SNAPSHOT_READY",
     "CAPTURE_POLL_INTERVAL_SECONDS",
     "MAX_SEGMENT_DURATION_SECONDS",
     "MIN_SEGMENT_DURATION_SECONDS",
@@ -143,6 +156,7 @@ __all__ = [
     "READER_START_SEMANTICS",
     "build_phase8b_campaign_start_authorization",
     "compile_phase8b_acceptance",
+    "close_phase8b_campaign_directory",
     "capture_phase8b_prospective_segment",
     "build_phase8b_capture_preflight",
     "build_phase8b_design",
