@@ -299,6 +299,12 @@ def build_phase9_demo_campaign_evidence(
     if end < start:
         raise ValueError("Phase 9 last demo observation precedes first")
     dates = _validated_dates(demo_session_dates)
+    for item in dates:
+        day = datetime.fromisoformat(item).date()
+        if day < start.date() or day > end.date():
+            raise ValueError(
+                "Phase 9 demo-session date is outside observation range"
+            )
     families = _sorted_strings(
         represented_strategy_families,
         field="Phase 9 represented strategy families",
@@ -346,6 +352,8 @@ def build_phase9_demo_campaign_evidence(
         for field, value in counts.items()
     }
     normalized_slippage = _normalize_slippage(slippage_by_pair)
+    if not set(normalized_slippage).issubset(allowed_pairs):
+        raise ValueError("Phase 9 slippage pair is not in frozen champion")
     if not isinstance(financial_metrics, Mapping):
         raise ValueError("Phase 9 financial metrics must be an object")
     metrics = dict(financial_metrics)
@@ -471,6 +479,12 @@ def validate_phase9_demo_campaign_evidence(
     if not isinstance(pairs_raw, list):
         raise ValueError("Phase 9 represented pairs must be a list")
     dates = _validated_dates(dates_raw)
+    for item in dates:
+        day = datetime.fromisoformat(item).date()
+        if day < start.date() or day > end.date():
+            raise ValueError(
+                "Phase 9 demo-session date is outside observation range"
+            )
     families = _sorted_strings(
         families_raw,
         field="Phase 9 represented strategy families",
@@ -514,6 +528,8 @@ def validate_phase9_demo_campaign_evidence(
     if not isinstance(slippage, Mapping):
         raise ValueError("Phase 9 demo slippage summary must be an object")
     normalized_slippage = _normalize_slippage(slippage)
+    if not set(normalized_slippage).issubset(allowed_pairs):
+        raise ValueError("Phase 9 slippage pair is not in frozen champion")
     if dict(slippage) != normalized_slippage:
         raise ValueError("Phase 9 demo slippage summary is not canonical")
 
@@ -623,6 +639,11 @@ def _operational_checks(evidence: Mapping[str, object]) -> dict[str, object]:
         )
         for pair in represented_pairs
     }
+    slippage_sample_count = sum(
+        int(row["sample_count"])
+        for row in slippage.values()
+        if isinstance(row, Mapping)
+    )
     checks = {
         "journal_integrity_pass": (
             evidence["journal_integrity_failure_count"] == 0
@@ -647,6 +668,9 @@ def _operational_checks(evidence: Mapping[str, object]) -> dict[str, object]:
         ),
         "requested_vs_fill_pass": (
             evidence["requested_vs_fill_missing_count"] == 0
+        ),
+        "slippage_sample_accounting_pass": (
+            slippage_sample_count == evidence["completed_send_count"]
         ),
         "represented_pair_samples_pass": all(pair_samples.values()),
     }
