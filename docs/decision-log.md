@@ -772,3 +772,21 @@ The legacy minimums remain: at least 40 completed 0.2-pip scorable trades, 8 ela
 Operational, timing, spread-parity, financial, safety, and replay gates are frozen exactly in the spec. PASS authorizes only exact champion lifecycle transition `SHADOW_CANDIDATE -> SHADOW_VALIDATED` and eligibility for a separate Phase 9 demo-design proposal. It does not authorize demo/live orders, broker mutation, real-money trading, or Phase 9 execution.
 
 No live capture command is added under DEC-051. A later separately frozen capture/close protocol must produce the exact prospective campaign-evidence artifact before this compiler can issue a real acceptance outcome.
+
+
+## DEC-052 — Phase 8B prospective capture segment journal
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B LIVE-SHADOW SEGMENT
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-prospective-capture-segment.md` opens `EXP-20260922-023` for the first explicit operator-invoked prospective Phase 8B capture surface.
+
+DEC-052 adds only a bounded `capture-segment` command. The command may discover and tail only the exact fixed required-symbol MT5 FILE_COMMON demo bridge files already bound by DEC-047 through DEC-049. On the first invocation it must build DEC-049 capture preflight and continue with the same EOF-positioned readers; later invocations validate the exact existing preflight and create fresh EOF readers, making restart gaps explicit and non-backfilled.
+
+Every accepted TICK/HEARTBEAT is converted through the DEC-049 deterministic capture envelope and durably appended to create-only JSONL evidence. The record append is flushed/fsynced, and a separately fsynced audit row binds each record fingerprint to receive/completion monotonic timestamps and processing latency. Protocol/session/account/server drift, truncation, malformed records, and symbol mismatch fail closed.
+
+A clean bounded segment close runs the exact DEC-050 compiler and deterministic replay over the durable raw records, requires replay match, and freezes `fmp-phase8b-prospective-segment-v1` evidence binding the raw/audit/operational digests plus DEC-050 segment and replay fingerprints. An interrupted/unclosed segment is retained but can never count as closed campaign evidence.
+
+DEC-052 performs no multi-segment campaign aggregation and no acceptance review. A later separately frozen campaign-close protocol must aggregate only clean replay-matching DEC-052 segments and create the exact DEC-051 campaign-evidence artifact.
+
+Demo/live orders, broker mutation, real-money trading, Phase 9 execution, champion mutation, acceptance, and promotion remain locked.
