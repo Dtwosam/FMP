@@ -752,7 +752,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-027 — Phase 9 locked demo-order protocol foundation
 
 - Date: 2026-09-22
-- Status: ACTIVE — SOURCE PROTOCOL VERIFIED / NO DEMO ORDER
+- Status: ACTIVE — SOURCE PROTOCOL MERGED / NO DEMO ORDER
 - Protocol decision: DEC-056 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
 - Purpose: implement only the deterministic post-risk request, dry-run journal, reconciliation, and structurally locked adapter boundary required by DEC-055 before any future MT5 mutation transport exists.
 - Request source: exact existing Phase 3 `OrderIntent` values only; units and reserved risk are copied, never recomputed or widened.
@@ -766,4 +766,5 @@ Copy this section for each serious experiment:
 - Demo execution/order, live order, broker mutation, real-money trading, and Phase 10 authorized?: NO.
 - Live/demo execution status: NOT RUN.
 - Verification: exact source head `97e8153ae7b8b00e0960ab95eba076dd027de982` passed 999 tests plus workflow-YAML validation and compile checks in run `35762091445`; unchanged Phase 3 acceptance run `35762091454` passed.
-- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is mandatory before any MT5 mutation transport can be implemented, wired, or enabled.
+- Merge status: PR #148 merged DEC-056 to `main` at `c069e33fec82fc1e516120ee23923955f054bf89`. The exact final PR head `b3cfb9e1e2d2f0a3306a026566ad4b25df55a99b` passed 999 tests plus workflow-YAML validation and compile checks in run `35762297677`; unchanged Phase 3 acceptance run `35762297505` passed. Post-merge `main` runs `35762518616` and `35762518646` also passed.
+- Follow-up: a later separately frozen decision is mandatory before any MT5 mutation transport can be implemented, wired, or enabled. No real Phase 8B PASS, Phase 9 design artifact, demo order, or broker mutation has been executed.
