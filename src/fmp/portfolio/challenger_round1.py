@@ -204,7 +204,7 @@ def _validate_stage_a_cell(
     value: Mapping[str, object],
     *,
     expected_split: str,
-) -> tuple[str, str, str, dict[str, dict[float, Mapping[str, object]]]]:
+) -> tuple[str, str, str, str, dict[str, dict[float, Mapping[str, object]]]]:
     if value.get("protocol") != EXP013_STAGE_A_CELL_PROTOCOL:
         raise ValueError("EXP-013 Stage A cell protocol mismatch")
     if value.get("experiment_id") != EXP013_ID:
@@ -221,12 +221,18 @@ def _validate_stage_a_cell(
     symbol = value.get("symbol")
     timeframe = value.get("timeframe")
     code_commit = value.get("runner_code_commit")
+    strategy_source_sha256 = value.get("strategy_source_sha256")
     if not isinstance(symbol, str) or symbol not in SUPPORTED_SYMBOLS:
         raise ValueError("invalid EXP-013 Stage A symbol")
     if not isinstance(timeframe, str) or timeframe not in ELIGIBLE_TIMEFRAMES:
         raise ValueError("invalid EXP-013 Stage A timeframe")
     if not isinstance(code_commit, str) or not _COMMIT_RE.fullmatch(code_commit):
         raise ValueError("invalid EXP-013 Stage A runner commit")
+    if (
+        not isinstance(strategy_source_sha256, str)
+        or not re.fullmatch(r"[0-9a-f]{64}", strategy_source_sha256)
+    ):
+        raise ValueError("invalid EXP-013 Stage A strategy source digest")
 
     raw_rows = value.get("rows")
     if not isinstance(raw_rows, list):
@@ -261,7 +267,7 @@ def _validate_stage_a_cell(
         raise ValueError("EXP-013 Stage A cell must contain exactly four strategies")
     if any(set(rows) != set(SLIPPAGE_SCENARIOS) for rows in indexed.values()):
         raise ValueError("EXP-013 Stage A strategy is missing a slippage scenario")
-    return symbol, timeframe, code_commit, indexed
+    return symbol, timeframe, code_commit, strategy_source_sha256, indexed
 
 
 def _mandatory_metrics_pass(row: Mapping[str, object]) -> bool:
@@ -329,18 +335,19 @@ def evaluate_exp013_stage_a_cell_pair(
     development: Mapping[str, object],
     validation: Mapping[str, object],
 ) -> dict[str, object]:
-    dev_symbol, dev_timeframe, dev_commit, dev_rows = _validate_stage_a_cell(
+    dev_symbol, dev_timeframe, dev_commit, dev_source_sha, dev_rows = _validate_stage_a_cell(
         development,
         expected_split="development",
     )
-    val_symbol, val_timeframe, val_commit, val_rows = _validate_stage_a_cell(
+    val_symbol, val_timeframe, val_commit, val_source_sha, val_rows = _validate_stage_a_cell(
         validation,
         expected_split="validation",
     )
-    if (dev_symbol, dev_timeframe, dev_commit) != (
+    if (dev_symbol, dev_timeframe, dev_commit, dev_source_sha) != (
         val_symbol,
         val_timeframe,
         val_commit,
+        val_source_sha,
     ):
         raise ValueError("EXP-013 development/validation cell identity mismatch")
     if set(dev_rows) != set(val_rows):
@@ -406,6 +413,7 @@ def evaluate_exp013_stage_a_cell_pair(
         "symbol": dev_symbol,
         "timeframe": dev_timeframe,
         "runner_code_commit": dev_commit,
+        "strategy_source_sha256": dev_source_sha,
         "survivor_fingerprints": survivors,
         "config_gates": config_gates,
     }
