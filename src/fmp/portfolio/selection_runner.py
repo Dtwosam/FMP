@@ -9,7 +9,10 @@ from datetime import date
 from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
-from .challenger_discovery import exp015_catalog_identity_sha256
+from .challenger_discovery import (
+    build_exp015_challengers,
+    exp015_catalog_identity_sha256,
+)
 from .challenger_discovery_stage_a import exp015_strategy_source_sha256
 from .challenger_discovery_stage_bc import (
     EXP015_FINAL_PROTOCOL,
@@ -175,6 +178,13 @@ def _validate_exp015_final_result(
         if not isinstance(raw.get("reason"), str) or not str(raw["reason"]).strip():
             raise ValueError("EXP-015 lifecycle disposition reason is missing")
         by_fingerprint[fingerprint] = raw
+
+    catalog = {
+        item.strategy.fingerprint: item
+        for item in build_exp015_challengers(code_commit=stage_a_commit)
+    }
+    if set(by_fingerprint) != set(catalog):
+        raise ValueError("EXP-015 lifecycle dispositions do not cover exact catalog")
 
     resolved = resolve_exp015_historical_qualified_records(final_result)
     selected_from_dispositions = tuple(
@@ -546,6 +556,8 @@ def _validate_joint_result(
         raise ValueError("DEC-042 joint run_identity is malformed")
     if run_identity.get("code_commit") != code_commit:
         raise ValueError("DEC-042 joint run_identity commit mismatch")
+    if run_identity.get("slippage_pips") not in (None, slippage_pips):
+        raise ValueError("DEC-042 joint run_identity slippage mismatch")
 
     required_symbols = {item.strategy.symbol for item in records}
     manifests = result.get("processed_manifest_sha256_by_symbol")
