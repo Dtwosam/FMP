@@ -852,3 +852,17 @@ DEC-056 consumes only exact DEC-055 demo designs and existing Phase 3 post-risk 
 The implemented adapter foundation must contain no MT5/broker transport dependency. Its only submission method always raises `DemoExecutionLockedError`. Demo/live orders, broker mutation, real-money trading, Phase 10, and live execution remain locked.
 
 A later separately approved decision is mandatory before any MT5 mutation transport can be implemented, wired, or enabled.
+
+
+## DEC-057 — Phase 9 MT5 demo preflight and order-check foundation
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-mt5-demo-preflight.md` opens `EXP-20260922-028` for source-only MT5 practice-account assertion, symbol-contract normalization, exact units-to-volume translation, current-quote/stop validation, deterministic order-check payloads, normalized non-mutating order-check evidence, and immutable preflight evidence.
+
+DEC-057 consumes only exact DEC-055 demo designs and DEC-056 demo-order requests. Phase 3/DEC-056 units and reserved risk remain authoritative; the adapter may not resize risk or silently round volume to fit broker constraints.
+
+The DEC-057 backend boundary is read/check-only and exposes no `order_send`, close, modify, cancel, or other mutation method. The existing Phase 9 CLI remains design-only.
+
+DEC-057 may mark only MT5 demo preflight source readiness. Demo execution/order submission, broker mutation, live orders, real money, Phase 10, and live execution remain locked. A later separately approved decision is mandatory before any mutation-capable MT5 backend may exist.
