@@ -1,0 +1,202 @@
+name: phase8a-exp016-acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      selection_run_id:
+        description: Successful phase8a-exp014-selection workflow run ID
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Require main workflow dispatch
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "Phase 8A acceptance must be dispatched from refs/heads/main" >&2
+            exit 1
+          fi
+
+      - name: Checkout exact acceptance compiler commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Verify exact DEC-042 selection workflow run
+        id: selection_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SELECTION_RUN_ID: ${{ inputs.selection_run_id }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${SELECTION_RUN_ID}" > selection-run.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(Path('selection-run.json').read_text(encoding='utf-8'))
+          assert run['name'] == 'phase8a-exp014-selection', run
+          assert run['event'] == 'workflow_dispatch', run
+          assert run['head_branch'] == 'main', run
+          assert run['path'] == '.github/workflows/phase8a-exp014-selection.yml', run
+          assert run['status'] == 'completed', run
+          assert run['conclusion'] == 'success', run
+          head_sha = run['head_sha']
+          assert isinstance(head_sha, str) and len(head_sha) == 40, run
+          Path('selection-head-sha.txt').write_text(head_sha, encoding='utf-8')
+          with Path(os.environ['GITHUB_OUTPUT']).open('a', encoding='utf-8') as handle:
+              handle.write(f'head_sha={head_sha}\n')
+          PY
+
+      - name: Download exact DEC-042 preflight
+        uses: actions/download-artifact@v6
+        with:
+          run-id: ${{ inputs.selection_run_id }}
+          github-token: ${{ github.token }}
+          name: phase8a-exp014-selection-preflight-${{ steps.selection_run.outputs.head_sha }}
+          path: .dec042-preflight-input
+
+      - name: Download exact DEC-042 selection evidence
+        uses: actions/download-artifact@v6
+        with:
+          run-id: ${{ inputs.selection_run_id }}
+          github-token: ${{ github.token }}
+          name: phase8a-exp014-selection-${{ steps.selection_run.outputs.head_sha }}
+          path: .dec042-selection-input
+
+      - name: Resolve exact DEC-042 evidence files
+        run: |
+          set -euo pipefail
+          mapfile -t preflight_files < <(find .dec042-preflight-input -type f -name preflight.json | sort)
+          mapfile -t selection_files < <(find .dec042-selection-input -type f -name selection.json | sort)
+          if [ "${#preflight_files[@]}" -ne 1 ] || [ "${#selection_files[@]}" -ne 1 ]; then
+            echo "expected exactly one DEC-042 preflight.json and selection.json" >&2
+            exit 1
+          fi
+          cp "${preflight_files[0]}" dec042-preflight.json
+          cp "${selection_files[0]}" dec042-selection.json
+
+      - name: Validate repository workflow YAML
+        run: ruby scripts/validate_workflow_yaml.rb .github/workflows
+
+      - name: Run repository unit tests
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+
+      - name: Compile package
+        run: python -m compileall -q src tests
+
+      - name: Generate deterministic Phase 3 acceptance evidence
+        run: |
+          rm -rf .phase3-acceptance
+          python scripts/phase3_acceptance_fixture.py \
+            --out .phase3-acceptance \
+            --code-commit "${GITHUB_SHA}"
+
+      - name: Verify Phase 3 acceptance evidence
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path('.phase3-acceptance')
+          index = json.loads((root / 'acceptance-index.json').read_text(encoding='utf-8'))
+          expected = [
+              'ambiguity',
+              'daily-halt-reset',
+              'long-cost',
+              'short-target',
+              'simultaneous-risk',
+          ]
+          assert index['protocol'] == 'fmp-phase3-acceptance-fixture-v1', index
+          assert index['fixture_id'] == 'phase3-merged-main-acceptance-v1', index
+          assert index['code_commit'] == os.environ['GITHUB_SHA'], index
+          assert index['scenario_count'] == 5, index
+          assert [item['name'] for item in index['scenarios']] == expected, index
+          assert all(item['bytes_equal'] for item in index['scenarios']), index
+          PY
+
+      - name: Compile Phase 8A acceptance review
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_acceptance.py review \
+            --preflight dec042-preflight.json \
+            --selection dec042-selection.json \
+            --code-commit "${GITHUB_SHA}" \
+            --out .phase8a-acceptance
+
+      - name: Verify Phase 8A acceptance artifact
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          result = json.loads(Path('.phase8a-acceptance/acceptance.json').read_text(encoding='utf-8'))
+          manifest = json.loads(Path('.phase8a-acceptance/manifest.json').read_text(encoding='utf-8'))
+          preflight_sha = hashlib.sha256(Path('dec042-preflight.json').read_bytes()).hexdigest()
+          selection_sha = hashlib.sha256(Path('dec042-selection.json').read_bytes()).hexdigest()
+
+          assert result['protocol'] == 'fmp-phase8a-acceptance-v1', result
+          assert result['experiment_id'] == 'EXP-20260922-016', result
+          assert result['evidence_label'] == 'RETROSPECTIVE_ALREADY_SEEN', result
+          assert result['untouched_oos'] is False, result
+          assert result['promotion_authorized'] is False, result
+          assert result['demo_order_authorized'] is False, result
+          assert result['live_order_authorized'] is False, result
+          assert result['broker_mutation_authorized'] is False, result
+          assert result['real_money_authorized'] is False, result
+          assert result['phase9_authorized'] is False, result
+          assert result['acceptance_code_commit'] == os.environ['GITHUB_SHA'], result
+          assert result['dec042_preflight_sha256'] == preflight_sha, result
+          assert result['dec042_selection_sha256'] == selection_sha, result
+          assert result['outcome'] in (
+              'PHASE8A_SHADOW_CANDIDATE_ACCEPTED',
+              'PHASE8A_RESEARCH_REJECTED',
+          ), result
+          if result['outcome'] == 'PHASE8A_SHADOW_CANDIDATE_ACCEPTED':
+              assert result['shadow_candidate_authorized'] is True, result
+              assert result['phase8b_design_authorized'] is True, result
+              assert result['economic_improvement_gate_passed'] is True, result
+              candidate = result['shadow_candidate']
+              assert isinstance(candidate, dict), result
+              assert len(candidate['strategy_fingerprints']) >= 2, candidate
+              assert len(candidate['champion_set_fingerprint']) == 64, candidate
+              assert all(item['lifecycle'] == 'SHADOW_CANDIDATE' for item in candidate['strategies']), candidate
+          else:
+              assert result['shadow_candidate_authorized'] is False, result
+              assert result['phase8b_design_authorized'] is False, result
+              assert result['shadow_candidate'] is None, result
+
+          assert manifest['protocol'] == 'fmp-phase8a-acceptance-artifacts-v1', manifest
+          assert manifest['promotion_authorized'] is False, manifest
+          PY
+
+      - name: Upload Phase 8A acceptance evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase8a-exp016-acceptance-${{ github.sha }}
+          path: .phase8a-acceptance
+          include-hidden-files: true
+          if-no-files-found: error

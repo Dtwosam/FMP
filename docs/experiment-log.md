@@ -535,3 +535,21 @@ Copy this section for each serious experiment:
 - Implementation status continued: PR #132 merged guarded Stage B/C execution and final deterministic shortlist/lifecycle accounting to `main` at `3d36368811e155d41d45b73313827bca83a66518` after 898 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS. Stage B/C validate upstream artifact hashes, runner commits, catalog/source digests, processed manifests, yearly gates, and candidate-sequence identity before downstream source access. Finalization applies the frozen Stage B/C ranking and 11-total / 4-per-pair / 3-per-family / 2-per-cell caps, then records one explicit lifecycle disposition for all 567 candidates.
 - Follow-up: keep Stage A/B/C undispatched until an authorized workflow-dispatch path is available; all downstream stages remain cryptographically gated by exact upstream artifacts and the authoritative workflows must run only from merged `main`.
 - Identity correction: initially drafted as EXP-014 / DEC-042 during reconciliation; renumbered before any historical stage or benchmark result.
+
+
+### EXP-20260922-016 — Phase 8A acceptance review
+
+- Date: 2026-09-22
+- Status: ACTIVE — IMPLEMENTATION ONLY / NO ACCEPTANCE RESULT
+- Protocol decision: DEC-045 APPROVED BEFORE ANY DEC-042 SELECTION RESULT
+- Purpose: deterministically review exact DEC-042 preflight/selection evidence and either freeze one immutable multi-strategy shadow candidate or record a credible Phase 8A research rejection.
+- Inputs: exact successful DEC-042 manual run from main; exact preflight.json and selection.json bytes and SHA-256 values; exact frozen Phase 7 baseline control in the DEC-042 pool.
+- Economic-improvement gate: the DEC-042 selected portfolio must already pass all frozen DEC-042 gates and have strictly higher 0.5-pip annualized compounded return than the Phase 7 baseline control over the same 2019-01-01..2026-08-21 selection range.
+- Acceptance outcome: selected strategy records transition exactly HISTORICAL_QUALIFIED -> SHADOW_CANDIDATE and an immutable champion/shadow-candidate set is frozen.
+- Rejection outcome: no lifecycle transition; Phase 8B remains locked.
+- No new historical data may be opened and no strategy/backtest may run under EXP-016.
+- Evidence remains RETROSPECTIVE_ALREADY_SEEN; untouched_oos = false.
+- Broker/demo/live/real-money promotion remains false.
+- Historical run status: NOT RUN.
+- Implementation status: current `phase8a/acceptance-review` branch contains the deterministic acceptance compiler, lifecycle/champion-set freeze, resolver, artifact writer, CLI, guarded main-only manual workflow, exact DEC-042 upstream provenance/artifact binding, full repository/compile checks, and deterministic Phase 3 verification before artifact creation. No DEC-042 or DEC-045 historical/result workflow has been dispatched.
+- Follow-up: source-free verify and merge the DEC-045 implementation; only then may a future successful DEC-042 run be reviewed.
