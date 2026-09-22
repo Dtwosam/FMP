@@ -838,3 +838,17 @@ DEC-055 may consume only one exact DEC-054 terminal PASS review and its shadow-v
 The design freezes the future `fmp-mt5-demo-order-bridge-v1` requirements, exact accepted demo account/server/symbol identities, unchanged Phase 3 risk configuration, protective-stop/reconciliation/idempotency requirements, and secret-handling boundary.
 
 A valid design may authorize source implementation of a future demo adapter only. It cannot enable AutoTrading, submit demo/live orders, mutate broker state, risk real money, or authorize Phase 10.
+
+
+## DEC-056 — Phase 9 demo order protocol and locked adapter foundation
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-demo-order-protocol.md` opens `EXP-20260922-027` for source-only deterministic demo request, dry-run journal, reconciliation, restart/idempotency, and locked-adapter contracts.
+
+DEC-056 consumes only exact DEC-055 demo designs and existing Phase 3 post-risk `OrderIntent` objects. It freezes deterministic client-order identity, exact accepted demo account/server/provider/symbol binding, mandatory protective-stop geometry, dry-run evidence, and reconciliation discrepancy semantics.
+
+The implemented adapter foundation must contain no MT5/broker transport dependency. Its only submission method always raises `DemoExecutionLockedError`. Demo/live orders, broker mutation, real-money trading, Phase 10, and live execution remain locked.
+
+A later separately approved decision is mandatory before any MT5 mutation transport can be implemented, wired, or enabled.
