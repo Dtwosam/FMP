@@ -4,9 +4,9 @@ import unittest
 
 EXPECTED_PHASE7_TAG = "fmp-v1-phase7-walk-forward"
 EXPECTED_PHASE7_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
-EXPECTED_EXPERIMENT = "EXP-20260917-010"
-EXPECTED_DECISION = "DEC-037"
-OLD_EXPERIMENT = "EXP-20260915-009"
+EXPECTED_EXPERIMENT = "EXP-20260922-011"
+EXPECTED_DECISION = "DEC-038"
+OLD_EXPERIMENT = "EXP-20260915-009"\nDIAGNOSTIC_EXPERIMENT = "EXP-20260917-010"
 PROVIDER = "FP_MARKETS_MT5_DEMO"
 ALLOWED_SERVERS = ("FPMarketsSC-Demo", "FPMarketsSC-Demo2")
 
@@ -20,7 +20,7 @@ class Phase8ProtocolStateTests(unittest.TestCase):
         state = Path("docs/project-state.md").read_text(encoding="utf-8")
         sources = Path("docs/source-register.md").read_text(encoding="utf-8")
         amendment = Path(
-            "docs/superpowers/specs/2026-09-17-phase8-mt5-bridge-amendment.md"
+            "docs/superpowers/specs/2026-09-22-phase8-liveness-amendment.md"
         ).read_text(encoding="utf-8")
 
         self.assertIn(f"- {EXPECTED_DECISION} — Phase 8", decision_log)
@@ -29,6 +29,8 @@ class Phase8ProtocolStateTests(unittest.TestCase):
         self.assertIn("- Status: RUNNING", experiment_log)
         self.assertIn(OLD_EXPERIMENT, experiment_log)
         self.assertIn("STOPPED BEFORE QUALIFICATION", experiment_log)
+        self.assertIn(DIAGNOSTIC_EXPERIMENT, experiment_log)
+        self.assertIn("STOPPED FOR LIVENESS AMENDMENT", experiment_log)
         self.assertIn("**Current phase:** Phase 8 — Live shadow mode", state)
         self.assertIn("**Phase status:** ACTIVE", state)
         self.assertIn(EXPECTED_EXPERIMENT, state)
@@ -39,6 +41,9 @@ class Phase8ProtocolStateTests(unittest.TestCase):
             self.assertIn(server, sources)
         self.assertIn("2026-09-17", sources)
         self.assertIn("**Status:** APPROVED / ACTIVATED", amendment)
+        self.assertIn("market_quiet", amendment)
+        self.assertIn("OUTCOME_UNKNOWN_AFTER_GAP", amendment)
+        self.assertIn("5-second quote deadline", amendment)
         self.assertIn("DEC-008", decision_log)
         self.assertIn("Phase 9/demo order placement: LOCKED", state)
         self.assertIn("production/live order placement and broker mutation: LOCKED", state)
