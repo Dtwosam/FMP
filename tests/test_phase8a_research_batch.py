@@ -3,6 +3,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import json
 import unittest
+from datetime import datetime, timezone
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import json
+
 
 from fmp.portfolio import StrategyLifecycle
 from fmp.portfolio.research_batch import (
@@ -103,6 +108,31 @@ class Phase8ARetrospectiveBatchTests(unittest.TestCase):
                 symbol="EURUSD",
                 timeframe="15m",
                 families=("invented_after_results",),
+            )
+
+    def test_artifact_writer_serializes_utc_datetimes_deterministically(self) -> None:
+        result = {
+            "protocol": PHASE8A_BATCH_PROTOCOL,
+            "run_identity": {
+                "requested_start_utc": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                "requested_end_utc": datetime(2024, 1, 2, tzinfo=timezone.utc),
+            },
+        }
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest = write_phase8a_batch_artifacts(result, root)
+            stored = json.loads((root / "batch.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                stored["run_identity"]["requested_start_utc"],
+                "2024-01-01T00:00:00Z",
+            )
+            self.assertEqual(
+                stored["run_identity"]["requested_end_utc"],
+                "2024-01-02T00:00:00Z",
+            )
+            self.assertEqual(
+                manifest["protocol"],
+                "fmp-phase8a-retrospective-batch-artifacts-v1",
             )
 
 
