@@ -184,3 +184,49 @@ Keep them. A failed experiment prevents duplicate work and protects the project 
 ## 15. Notebooks
 
 Notebooks are for exploration and visualization, not hidden production logic. Any behavior required to reproduce a result must migrate into versioned library code with tests before that result can promote a strategy.
+
+
+## 16. Post-final-test research revisions
+
+DEC-039 recognizes that the original 2024-01-01 through 2026-08-20 final-test period was opened during Phase 7. That history remains valid market evidence, but it is no longer untouched for strategies invented or materially changed afterward.
+
+For post-Phase-7 research:
+
+- previously opened history may be reused for discovery, diagnostics, stress testing, and retrospective walk-forward analysis;
+- results from already inspected periods must be labeled retrospective, not untouched OOS;
+- every search surface must be predeclared before its results are used for promotion;
+- the number of strategy families, parameter variants, pair/timeframe cells, regime variants, and portfolio combinations inspected must be recorded where practical;
+- broad search results require stronger robustness/concentration review than a one-shot predeclared candidate;
+- no candidate may be promoted solely because it is the best result among a large search;
+- genuinely prospective evidence begins only after the exact challenger version and evaluation protocol are frozen.
+
+## 17. Multi-strategy and portfolio research
+
+A portfolio can contain multiple independently validated strategy versions across EURUSD, GBPUSD, and USDJPY, but diversification claims must be measured rather than assumed.
+
+Portfolio research must report:
+
+- per-strategy and per-pair contribution;
+- overlapping position periods;
+- net and gross USD-direction exposure where applicable;
+- concentration of positive PnL by strategy/pair/window;
+- portfolio maximum drawdown;
+- daily return distribution;
+- cost sensitivity;
+- performance with top contributors removed where meaningful.
+
+A portfolio result is not considered robust merely because weak strategies are aggregated together.
+
+## 18. Continuous-learning separation
+
+New observations may be used to research challengers, but the active champion set remains immutable during a registered shadow/demo/live campaign.
+
+A challenger must:
+
+1. receive a new immutable strategy/version identity;
+2. record the data available at discovery time;
+3. pass the applicable frozen historical/retrospective gates;
+4. enter a future prospective shadow campaign before any later demo eligibility;
+5. never replace a champion automatically.
+
+Self-modifying production behavior and post-loss emergency retuning remain forbidden.
