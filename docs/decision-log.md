@@ -688,3 +688,19 @@ The intended connector topology is one read-only MT5 EA instance per required sy
 A frozen design does not authorize campaign registration or capture. Every required feed must later pass Phase 8B qualification with common demo account/server identity before a separately frozen registration protocol can proceed.
 
 Consequences: `EXP-20260922-017` is opened for source-free design-manifest implementation only. Phase 8B campaign registration/start, Phase 9, demo/live orders, broker mutation, and real-money trading remain LOCKED.
+
+
+## DEC-047 — Phase 8B multi-symbol MT5 bridge qualification and registration
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B CAMPAIGN
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-bridge-qualification-registration.md` freezes the read-only connector qualification and immutable registration boundary for Phase 8B.
+
+DEC-047 introduces a separate `fmp-mt5-demo-multisymbol-file-bridge-v1` protocol and one fixed FILE_COMMON feed per required V1 symbol while preserving the legacy EXP-011 USDJPY bridge unchanged. Per-symbol qualification retains the existing conservative 600-second / 100-price / 6-heartbeat / 15-second liveness / 5-second source-time thresholds. The multi-symbol summary may PASS only when every required feed passes and all feeds share the same approved demo account fingerprint/server with distinct bridge session IDs.
+
+A PASS may authorize immutable campaign registration only. Registration binds the exact DEC-046 design, qualification evidence, champion set, required symbols/timeframes, bridge files, common demo identity, per-symbol bridge sessions, liveness/cost contract, code commit, and timestamp.
+
+Campaign start remains unauthorized under DEC-047. Phase 8B capture requires a later separately frozen protocol. Demo/live orders, broker mutation, real-money trading, and Phase 9 remain LOCKED.
+
+Consequences: `EXP-20260922-018` is opened for implementation of the multi-symbol bridge/qualification/registration layer only.
