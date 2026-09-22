@@ -31,7 +31,7 @@ def _usd_direction(candidate: PortfolioCandidate) -> Direction:
     raise ValueError(f"unsupported USD exposure symbol: {candidate.symbol!r}")
 
 
-def _summarize_exposure(candidates: tuple[PortfolioCandidate, ...]) -> PortfolioExposure:
+def summarize_candidate_exposure(candidates: tuple[PortfolioCandidate, ...]) -> PortfolioExposure:
     total = sum(item.requested_risk_fraction for item in candidates)
     usd_long = sum(
         item.requested_risk_fraction
@@ -51,6 +51,48 @@ def _summarize_exposure(candidates: tuple[PortfolioCandidate, ...]) -> Portfolio
         net_usd_directional_risk_fraction=usd_long - usd_short,
     )
 
+
+def partition_direction_conflicts(
+    candidates: Iterable[PortfolioCandidate],
+) -> tuple[tuple[PortfolioCandidate, ...], tuple[CandidateRejection, ...]]:
+    materialized = tuple(candidates)
+    ids = [item.candidate_id for item in materialized]
+    if len(set(ids)) != len(ids):
+        raise ValueError("duplicate portfolio candidate_id")
+    for candidate in materialized:
+        if not isinstance(candidate, PortfolioCandidate):
+            raise TypeError("candidates must contain PortfolioCandidate")
+
+    directions_by_bucket: dict[tuple[object, str], set[Direction]] = {}
+    for candidate in materialized:
+        bucket = (candidate.observed_at_utc, candidate.symbol)
+        directions_by_bucket.setdefault(bucket, set()).add(candidate.direction)
+    conflicting_buckets = {
+        bucket for bucket, directions in directions_by_bucket.items() if len(directions) > 1
+    }
+
+    accepted: list[PortfolioCandidate] = []
+    rejected: list[CandidateRejection] = []
+    for candidate in sorted(materialized, key=_candidate_sort_key):
+        bucket = (candidate.observed_at_utc, candidate.symbol)
+        if bucket in conflicting_buckets:
+            rejected.append(
+                CandidateRejection(
+                    candidate_id=candidate.candidate_id,
+                    code=CandidateRejectionCode.DIRECTION_CONFLICT,
+                    explanation=(
+                        "opposing champion signals exist for the same symbol and "
+                        "signal-time bucket"
+                    ),
+                )
+            )
+        else:
+            accepted.append(candidate)
+
+    return (
+        tuple(accepted),
+        tuple(sorted(rejected, key=lambda item: item.candidate_id)),
+    )
 
 def route_shadow_candidates(
     champion_set: ChampionSet,
@@ -101,33 +143,12 @@ def route_shadow_candidates(
             continue
         eligible.append(candidate)
 
-    directions_by_bucket: dict[tuple[object, str], set[Direction]] = {}
-    for candidate in eligible:
-        bucket = (candidate.observed_at_utc, candidate.symbol)
-        directions_by_bucket.setdefault(bucket, set()).add(candidate.direction)
-    conflicting_buckets = {
-        bucket for bucket, directions in directions_by_bucket.items() if len(directions) > 1
-    }
-
-    accepted: list[PortfolioCandidate] = []
-    for candidate in eligible:
-        bucket = (candidate.observed_at_utc, candidate.symbol)
-        if bucket in conflicting_buckets:
-            rejected.append(
-                CandidateRejection(
-                    candidate_id=candidate.candidate_id,
-                    code=CandidateRejectionCode.DIRECTION_CONFLICT,
-                    explanation="opposing champion signals exist for the same symbol and signal-time bucket",
-                )
-            )
-        else:
-            accepted.append(candidate)
-
-    accepted_tuple = tuple(sorted(accepted, key=_candidate_sort_key))
+    accepted_tuple, conflict_rejections = partition_direction_conflicts(eligible)
+    rejected.extend(conflict_rejections)
     rejected_tuple = tuple(sorted(rejected, key=lambda item: item.candidate_id))
     return PortfolioRouteResult(
         champion_set_fingerprint=champion_set.fingerprint,
         accepted=accepted_tuple,
         rejected=rejected_tuple,
-        exposure=_summarize_exposure(accepted_tuple),
+        exposure=summarize_candidate_exposure(accepted_tuple),
     )
