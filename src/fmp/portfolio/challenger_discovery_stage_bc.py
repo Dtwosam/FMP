@@ -1065,6 +1065,7 @@ def finalize_exp015_shortlist(
     stage_b_set = set(stage_b_passers)
     stage_c_set = set(stage_c_passers)
     selected_set = set(selected)
+    stage_a_reasons = _stage_a_reason_map(stage_a_authorization)
     dispositions: list[dict[str, object]] = []
     for fingerprint in sorted(catalog):
         record = catalog[fingerprint]
@@ -1082,7 +1083,7 @@ def finalize_exp015_shortlist(
                 evidence_id=_FINAL_EVIDENCE_ID,
             )
             if fingerprint not in stage_a_set:
-                reason = _stage_a_reason_map(stage_a_authorization)[fingerprint]
+                reason = stage_a_reasons[fingerprint]
             elif fingerprint not in stage_b_set:
                 reason = "FAILED_STAGE_B"
             elif fingerprint not in stage_c_set:
