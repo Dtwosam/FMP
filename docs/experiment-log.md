@@ -1030,3 +1030,21 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #161 merged DEC-069 to `main` at `0569b2cafb97bf4529cc95224a0133423396d9b9`. The exact final PR head `123f89d9cd5e2559f57a1b24cfe61affceff8e25` passed 1080 tests plus workflow-YAML validation and compile checks in run `35786935231`; unchanged Phase 3 acceptance run `35786935239` passed. Post-merge `main` runs `35787170070` and `35787170138` also passed.
 - Follow-up: source construction for the first practice-order path is complete. No real Phase 8B acceptance or Phase 9 artifact/approval/activation chain exists yet, so the next meaningful milestone is real prospective evidence and explicit operator action in a separately approved armed runtime; repository execution remains hard-locked.
+
+
+### EXP-20260922-041 — Phase 8B prospective campaign readiness audit
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO REAL CAPTURE
+- Protocol decision: DEC-070 APPROVED BEFORE ANY PHASE 8B PROSPECTIVE CAPTURE
+- Purpose: add a read-only, non-authoritative readiness inspection over the real Phase 8B campaign directory and current fixed bridge identities.
+- Readiness protocol: `fmp-phase8b-campaign-readiness-v1`.
+- CLI: `readiness --campaign-dir <path>` prints one point-in-time JSON report only and writes no campaign artifact.
+- Artifact checks: DEC-047 registration, optional DEC-048 start authorization, DEC-049 capture preflight, DEC-054 spread reference, and campaign terminal state are validated and cross-bound by exact SHA/fingerprint/portfolio identity.
+- Bridge checks: exact required-symbol coverage, connector protocol, DEMO mode, common account/server, and frozen bridge-session IDs. The audit opens tails at current EOF but never calls `read_available` and therefore consumes no post-EOF tick/heartbeat evidence.
+- Readiness semantics: ready only means current capture prerequisites align; it does not prove 15-second bridge liveness or 5-second quote freshness and is never consumed as authorization by `capture-segment`.
+- Next actions: `authorize-start`, `freeze-spread-reference`, or `capture-segment`; terminal campaigns report `none-terminal`.
+- Operator handoff: replaced the historical USDJPY-only workflow with the current `FMPPhase8BQuoteBridge.mq5` multi-symbol EURUSD/GBPUSD/USDJPY portfolio process while retaining AutoTrading OFF, fixed FILE_COMMON paths, approved DEMO servers, no-backfill semantics, and explicit non-authorization wording.
+- Safety: no prospective segment started, no campaign artifact written by readiness, no broker mutation, no order API, no Phase 9 action, and repository `DEMO_EXECUTION_SOURCE_ARMED=false`.
+- Verification: exact source head `a0bce886dc64e62eeafac9d642f63d13848c2ffb` passed 1085 tests plus workflow-YAML validation and compile checks in run `35789539447`; unchanged Phase 3 acceptance run `35789539375` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. The next meaningful action after merge is an explicit real operator Phase 8B campaign preparation/readiness/capture workflow; repository verification itself still performs none of those live actions.
