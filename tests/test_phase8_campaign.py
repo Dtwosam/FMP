@@ -91,7 +91,7 @@ class Phase8CampaignTests(unittest.TestCase):
             self.assertEqual(record["first_london_date"], "2026-09-16")
             self.assertEqual(record["code_commit"], CODE_COMMIT)
             self.assertEqual(record["reference_sha256"], digest)
-            self.assertEqual(record["phase8_experiment"], "EXP-20260917-010")
+            self.assertEqual(record["phase8_experiment"], "EXP-20260922-011")
             self.assertEqual(record["provider"], "FP_MARKETS_MT5_DEMO")
             self.assertEqual(record["connector_protocol"], "fmp-mt5-demo-file-bridge-v1")
             self.assertEqual(record["transport"], "MT5_FILE_COMMON_JSONL")

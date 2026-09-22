@@ -192,7 +192,7 @@ class Phase8Mt5RunnerTests(unittest.TestCase):
         self.assertEqual(len(latency), 1)
         self.assertEqual(latency[0]["processing_latency_ms"], 5.0)
 
-    def test_market_liveness_stales_even_while_bridge_heartbeats_continue(self) -> None:
+    def test_market_quiet_while_bridge_heartbeats_continue_is_diagnostic_only(self) -> None:
         runner, evidence, bars, simulator = self.make_runner()
         runner.process_bridge_record(
             bridge_start(), received_at_utc=START, receive_monotonic_ns=0
@@ -204,13 +204,15 @@ class Phase8Mt5RunnerTests(unittest.TestCase):
                 receive_monotonic_ns=seconds * 1_000_000_000,
             )
 
-        self.assertTrue(runner.stale)
+        self.assertFalse(runner.stale)
         self.assertEqual(bars.time_advance_calls, [])
         self.assertEqual(simulator.time_advance_calls, [])
-        self.assertEqual(len(bars.stale_intervals), 1)
+        self.assertEqual(bars.stale_intervals, [])
         self.assertEqual(len(simulator.stale_gaps), 1)
-        stale = [row for row in evidence.operational if row.get("event") == "stale"]
-        self.assertEqual(stale[-1]["liveness_reason"], "market")
+        self.assertFalse(runner.ineligible_london_dates)
+        quiet = [row for row in evidence.operational if row.get("event") == "market_quiet"]
+        self.assertEqual(len(quiet), 1)
+        self.assertEqual(quiet[0]["observed_gap_seconds"], 15.0)
 
     def test_bridge_liveness_gap_is_distinct_and_invalidates_date(self) -> None:
         runner, evidence, bars, simulator = self.make_runner()
@@ -228,7 +230,7 @@ class Phase8Mt5RunnerTests(unittest.TestCase):
         self.assertEqual(stale[-1]["liveness_reason"], "bridge")
         self.assertIn(START.astimezone().date(), runner.ineligible_london_dates)
 
-    def test_first_fresh_tick_recovers_runtime_but_date_stays_ineligible(self) -> None:
+    def test_first_fresh_tick_resumes_market_quiet_and_date_stays_eligible(self) -> None:
         runner, evidence, bars, simulator = self.make_runner()
         runner.process_bridge_record(
             bridge_start(), received_at_utc=START, receive_monotonic_ns=0
@@ -239,16 +241,19 @@ class Phase8Mt5RunnerTests(unittest.TestCase):
                 received_at_utc=START + timedelta(seconds=seconds),
                 receive_monotonic_ns=seconds * 1_000_000_000,
             )
-        self.assertTrue(runner.stale)
+        self.assertFalse(runner.stale)
 
         runner.process_bridge_record(
-            tick(1),
+            tick(16_000),
             received_at_utc=START + timedelta(seconds=16),
             receive_monotonic_ns=16_000_000_000,
         )
         self.assertFalse(runner.stale)
-        self.assertTrue(runner.ineligible_london_dates)
-        self.assertTrue(any(row.get("event") == "recovered" for row in evidence.operational))
+        self.assertFalse(runner.ineligible_london_dates)
+        self.assertTrue(
+            any(row.get("event") == "market_resumed" for row in evidence.operational)
+        )
+        self.assertFalse(any(row.get("event") == "recovered" for row in evidence.operational))
 
     def test_session_change_is_rejected_before_continuity_can_be_claimed(self) -> None:
         runner, evidence, bars, simulator = self.make_runner()

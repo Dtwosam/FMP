@@ -8,7 +8,7 @@ from enum import Enum
 from fmp.contracts import Decision, Direction, ScheduledExit
 
 
-PHASE8_EXPERIMENT_ID = "EXP-20260917-010"
+PHASE8_EXPERIMENT_ID = "EXP-20260922-011"
 PHASE7_CHECKPOINT_TAG = "fmp-v1-phase7-walk-forward"
 PHASE7_CHECKPOINT_SHA = "b6fb0176555b071fef6d1070edf3407b03cd60c9"
 
@@ -34,6 +34,9 @@ TARGET_RANGE_MULTIPLE = 1.5
 
 SLIPPAGE_SCENARIOS = (0.2, 0.5, 1.0)
 STARTING_EQUITY_USD = 100_000.0
+# Bridge silence at this threshold is a continuity failure. During live shadow
+# capture, market no-tick gaps at the same threshold are diagnostic only unless
+# they compromise required bar context or an open simulated trade path.
 LIVENESS_TIMEOUT_SECONDS = 15.0
 QUOTE_DEADLINE_SECONDS = 5.0
 

@@ -33,7 +33,7 @@ from fmp.shadow.contracts import (
 
 class Phase8ContractTests(unittest.TestCase):
     def test_frozen_phase8_identity_and_threshold_constants_are_exact(self) -> None:
-        self.assertEqual(PHASE8_EXPERIMENT_ID, "EXP-20260917-010")
+        self.assertEqual(PHASE8_EXPERIMENT_ID, "EXP-20260922-011")
         self.assertEqual(PHASE7_CHECKPOINT_TAG, "fmp-v1-phase7-walk-forward")
         self.assertEqual(PHASE7_CHECKPOINT_SHA, "b6fb0176555b071fef6d1070edf3407b03cd60c9")
         self.assertEqual(MT5_BRIDGE_PROTOCOL, "fmp-mt5-demo-file-bridge-v1")

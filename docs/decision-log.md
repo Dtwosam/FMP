@@ -43,6 +43,7 @@ Active decision index:
 - DEC-035 — Phase 7 walk-forward outcome and acceptance review — APPROVED
 - DEC-036 — Phase 8 live shadow protocol — APPROVED
 - DEC-037 — Phase 8 MT5 demo quote bridge amendment — APPROVED
+- DEC-038 — Phase 8 bridge/market liveness separation amendment — APPROVED
 
 ## DEC-014 — Phase 1 frozen snapshot accepted
 
@@ -486,3 +487,19 @@ The approved `docs/superpowers/specs/2026-09-17-phase8-mt5-bridge-amendment.md` 
 The selected connector is `FP_MARKETS_MT5_DEMO` through the read-only `FMPPhase8QuoteBridge` MQL5 Expert Advisor attached only to `USDJPY`. The bridge may run only on demo account mode and only on `FPMarketsSC-Demo` or `FPMarketsSC-Demo2`, writes the fixed `FILE_COMMON` transport `FMP/phase8-usdjpy-feed.jsonl`, and exposes no order/trade/position mutation surface. Direct Python `MetaTrader5` integration, MT5 live servers, generic broker fallback, demo order placement, production/live order placement, broker mutation, and real-money trading remain forbidden.
 
 `EXP-20260915-009` is stopped before qualification and produced no scored campaign evidence. `EXP-20260917-010` is the active Phase 8 MT5 demo live-shadow experiment. Successful connector qualification authorizes only historical-reference generation and campaign registration; it is not Phase 8 PASS. Phase 9 remains locked. `DEC-008` remains unchanged.
+
+
+## DEC-038 — Phase 8 bridge/market liveness separation amendment
+
+**Date:** 2026-09-22
+**Status:** APPROVED
+
+Prospective FP Markets MT5 demo evidence under `EXP-20260917-010` exposed a Phase 8 liveness-design defect rather than a strategy result. The local MT5/EA/file bridge continued to emit valid heartbeats while USDJPY sometimes produced no new tick for more than the original 15-second market-feed timeout. A diagnostic analysis of 46,721 normalized quotes found 102 quote-to-quote gaps above 15 seconds, 23 above 30 seconds, and 3 above 60 seconds, with a maximum gap of 4,301.580 seconds. During the long approximately 10:18–11:30 UTC no-tick interval on 2026-09-21, 870 valid bridge heartbeats were still received.
+
+The approved `docs/superpowers/specs/2026-09-22-phase8-liveness-amendment.md` therefore supersedes DEC-036/DEC-037 only for live-capture interpretation of the 15-second liveness threshold. Bridge silence of 15 seconds remains a true `stale` continuity failure: the London date becomes ineligible, open simulated trade paths become unknown, affected bar time is stale, and no backfill is permitted. By contrast, a 15-second no-tick period while valid bridge records continue is recorded as `market_quiet` and does not by itself invalidate the whole London date.
+
+Fail-closed market-path protections remain unchanged in substance. If a simulated position is open when `market_quiet` crosses the threshold, its outcome becomes `OUTCOME_UNKNOWN_AFTER_GAP` and is not financially scored. Required 1m/15m context must still be constructed from actually observed quotes; missing required context retains the existing incomplete-session/date-ineligible behavior. Entry and scheduled-exit quotes still have the frozen 5-second deadline. No tick, bar, stop/target path, or execution quote may be reconstructed or backfilled. Bounded connector qualification keeps its existing conservative market-liveness requirement.
+
+`EXP-20260917-010` is stopped as INCONCLUSIVE / DIAGNOSTIC under the superseded live-runner semantics. Its local evidence must be preserved and must not count toward the amended campaign. `EXP-20260922-011` is the new Phase 8 experiment identity. It requires fresh merged-code verification, connector qualification, historical-reference generation, and campaign registration before scored observation. The evidence protocol remains `fmp-phase8-shadow-evidence-v2`; exact campaign and segment code-commit binding prevents old/new semantics from being mixed.
+
+Consequences: Phase 8 remains ACTIVE and all original strategy, risk, cost, campaign-minimum, financial, spread, timing, replay, and structural no-order gates remain frozen except for the liveness interpretation explicitly amended above. Phase 9 remains locked. Demo order placement, production/live order placement, broker mutation, and real-money trading remain forbidden. DEC-008 remains unchanged.
