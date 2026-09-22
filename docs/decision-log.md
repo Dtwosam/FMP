@@ -1042,3 +1042,17 @@ DEC-069 revalidates the complete DEC-055-through-068 chain, current UTC inside t
 When and only when the repository source gate is true, the wrapper delegates to the exact DEC-065 runner; it does not rebuild the checked request, duplicate send logic, add retries, or reinterpret reconciliation/ambiguity outcomes.
 
 Repository `DEMO_EXECUTION_SOURCE_ARMED=False` remains unchanged. Tests may patch the gate only in-process and use fake in-memory mutation backends. No real Phase 8B/Phase 9 artifact chain, approval, activation, broker mutation, or demo order is created by DEC-069.
+
+
+## DEC-070 — Phase 8B prospective campaign readiness audit
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B PROSPECTIVE CAPTURE
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-campaign-readiness.md` opens `EXP-20260922-041` for a read-only, non-authoritative campaign-readiness audit plus an updated multi-pair operator handoff.
+
+DEC-070 validates the existing DEC-047 registration, optional DEC-048/049 start/preflight chain, optional DEC-054 spread reference, terminal state, and current fixed FILE_COMMON bridge identities for every exact required symbol. It prints a point-in-time JSON report only and writes no campaign artifact.
+
+The readiness audit may identify `authorize-start`, `freeze-spread-reference`, or `capture-segment` as the next operator action, but even a ready result does not start a segment and sets no acceptance, promotion, Phase 9, order, broker-mutation, live, or real-money authorization.
+
+DEC-070 also replaces the historical USDJPY-only operator handoff with the current Phase 8B portfolio workflow. No real bridge inspection or prospective capture is executed by repository verification.
