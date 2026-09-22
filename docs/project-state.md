@@ -374,7 +374,7 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-054 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, or demo trade has been executed;
-3. DEC-055 / `EXP-20260922-026` is implemented on PR #147 head `c796c4988ebafb6d357b5a49de2d6ced928bd2a5`: separate source-only Phase 9 `design-demo`, exact terminal DEC-054 PASS/review byte binding, accepted MT5 demo identity preservation, unchanged Phase 3 risk policy, and frozen future order-bridge/protective-stop/reconciliation/idempotency controls; run `35759609550` passed 993 tests plus YAML/compile and unchanged Phase 3 acceptance run `35759609484` passed;
+3. PR #147 merged DEC-055 / `EXP-20260922-026` to `main` at `559d8787daf014e64ba1b1d114f8384bed5ab84f`: separate source-only Phase 9 `design-demo`, exact terminal DEC-054 PASS/review byte binding, accepted MT5 demo identity preservation, unchanged Phase 3 risk policy, and frozen future order-bridge/protective-stop/reconciliation/idempotency controls; the exact final PR head `660c92274e64f5a8786cf18e71d037bbaecc48ee` passed 993 tests plus YAML/compile in run `35759782638` and unchanged Phase 3 acceptance run `35759782621` passed;
 4. DEC-055 may authorize future demo-adapter source implementation only; demo execution/order submission, broker mutation, real-money trading, Phase 10, and live execution remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
