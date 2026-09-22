@@ -1007,3 +1007,7 @@ Copy this section for each serious experiment:
 - Real evidence status: no real Phase 8B acceptance/SHADOW_VALIDATED chain, no real Phase 9 artifact chain, no real approval record, and no demo order.
 - Verification: exact source head `df64999f99aa8d5114b0a462e5d23723cb868fe1` passed 1075 tests plus workflow-YAML validation and compile checks in run `35784906657`; unchanged Phase 3 acceptance run `35784906607` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. A later separately approved operator-action decision is required before any real approval artifact, source-gate activation, runner wiring, or practice order.
+
+
+- Merge status: PR #160 merged DEC-068 to `main` at `88d23744b23faf5035b2c67075af73b0e1c25abc`. The exact final PR head `c54ca6ae1a0bce9d74465039e85008c643d5fa28` passed 1075 tests plus workflow-YAML validation and compile checks in run `35785056511`; unchanged Phase 3 acceptance run `35785056455` passed. Post-merge `main` runs `35785181147` and `35785181186` also passed.
+- Follow-up: challenge-bound approval and gate-activation schemas now exist, but no real approval record or activation has been created. A separately approved operator-action/runtime-wiring decision is required before the hard source gate can be enabled or the DEC-065 runner can consume a real activation contract.
