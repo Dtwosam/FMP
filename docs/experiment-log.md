@@ -505,13 +505,13 @@ Copy this section for each serious experiment:
 
 - Date: 2026-09-22
 - Status: ACTIVE — IMPLEMENTATION / NO HISTORICAL STAGE RUN YET
-- Protocol decision: DEC-043 APPROVED
+- Protocol decisions: DEC-043 APPROVED; DEC-044 APPROVED BEFORE ANY HISTORICAL STAGE
 - Hypothesis: new predeclared parameter regions of the existing deterministic rule families can produce additional robust immutable challengers across EURUSD, GBPUSD, and USDJPY without reviving rejected Phase 4 points or tuning after later-period observation.
 - Pair(s): EURUSD, GBPUSD, USDJPY
 - Timeframe(s): 5m, 15m, 1h
 - Families: session_breakout, trend_continuation, mean_reversion, previous_day_rejection, volatility_breakout, session_sweep_rejection
 - Frozen candidate count: 567 new configurations, all non-overlapping with the original Phase 4 parameter grid.
-- Stage A: 2015-01-01 to 2019-01-01 exclusive; all 567 candidates; at most 2 survivors per pair/family/timeframe cell.
+- Stage A: 2015-01-01 to 2019-01-01 exclusive; all 567 candidates; 54 exact pair/family/timeframe ranking cells; at most 2 survivors per cell; absolute maximum 108 survivors under DEC-044.
 - Stage B: 2019-01-01 to 2023-01-01 exclusive; only Stage A survivors; no retune.
 - Stage C: 2023-01-01 to 2026-08-21 exclusive; only Stage B passers; no retune.
 - Cost model: 0.2/0.5/1.0 pips adverse per fill; 0.2/0.5 gating, 1.0 diagnostic.
@@ -530,5 +530,6 @@ Copy this section for each serious experiment:
 - Max drawdown: not run.
 - Conclusion: NEED_MORE_DATA
 - Implementation status: current source-free branch expands only the approved old+EXP-015 strategy validator union and builds the exact 567 immutable CHALLENGER identities with tests proving all 63 candidates per pair/timeframe cell and zero raw parameter overlap with Phase 4. No EXP-015 source partition has been opened.
-- Follow-up: merge/verify the validator+catalog slice, then implement Stage A gate/ranking logic, immutable survivor authorization, and later Stage B/C guards before any EXP-015 historical run.
+- Implementation status: validator+catalog slice merged by PR #130 to `main` at `7e3eac44a14815ab65b1f85af9e2469517ed3efb` after 880 tests PASS and unchanged Phase 3 acceptance PASS. DEC-044 corrected the pre-run Stage A survivor arithmetic from 54 to 108 while retaining at most 2 survivors in each of 54 exact ranking cells.
+- Follow-up: implement and source-free verify Stage A gate/ranking logic plus immutable survivor authorization before any EXP-015 historical run.
 - Identity correction: initially drafted as EXP-014 / DEC-042 during reconciliation; renumbered before any historical stage or benchmark result.
