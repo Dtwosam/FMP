@@ -948,3 +948,21 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #157 merged DEC-065 to `main` at `94eb6d4af4f146e751f2baed86f9b85fae4e8cac`. The exact final PR head `797ca4c9f3f3af20367d47a47e0c2e2972d9cdf6` passed 1049 tests plus workflow-YAML validation and compile checks in run `35779313105`; unchanged Phase 3 acceptance run `35779312681` passed. Post-merge `main` runs `35779467788` and `35779467811` also passed.
 - Follow-up: source-only construction is complete through the permit-aware one-shot runner. A separately approved first-demo execution decision is required before the execution source gate may be true in an operator path or any real practice-account order may be sent.
+
+
+### EXP-20260922-037 — Phase 9 demo campaign evidence and acceptance contract
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE CONTRACT VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-066 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: freeze the amount and quality of Phase 9 practice-account evidence required before a Phase 10 deployment review, before any practice result exists.
+- Minimum evidence: at least 40 completed practice trades, 8 elapsed calendar weeks, 30 distinct demo-session dates, two represented strategy families, and two represented V1 pairs.
+- Safety gate: zero practice-account assertion failures, live orders, real-money access, unauthorized broker mutations, duplicate client-order submissions, retries after durable SEND_ATTEMPTED, completed sends without protective stops, and daily-halt violations.
+- Operational gate: zero journal-integrity failures, unresolved ambiguous sends, startup/post-send reconciliation failures, or restart/recovery failures; at least one restart/recovery drill; exact attempt accounting; requested-vs-fill completeness; and exact per-pair slippage sample accounting.
+- Execution-cost gate: for every represented V1 pair, completed-send adverse entry slippage median <=0.5 pip and nearest-rank p95 <=1.0 pip.
+- Financial evidence: demo return, expectancy, profit factor, and drawdown are diagnostic under DEC-066 and are reserved for the combined Phase 10 economic review rather than becoming a short-run demo promotion rule.
+- Outcomes: NEED_MORE_DATA, safety rejection, operational rejection, execution-cost rejection, or PASS eligible only for a separate Phase 10 deployment review.
+- Source isolation: compiler imports no MT5/backend/runner surface and performs no broker access.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `f105926b52b2b302bc549b50ce5ef21c4a269476` passed 1059 tests plus workflow-YAML validation and compile checks in run `35781835318`; unchanged Phase 3 acceptance run `35781835216` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. First-demo execution still requires a separately approved authorization decision.
