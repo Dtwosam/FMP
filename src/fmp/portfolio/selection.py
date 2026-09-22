@@ -29,7 +29,7 @@ class SelectionPool:
 
     def __post_init__(self) -> None:
         if not 2 <= len(self.records) <= 12:
-            raise ValueError("DEC-041 selection pool must contain between 2 and 12 strategies")
+            raise ValueError("DEC-042 selection pool must contain between 2 and 12 strategies")
         fingerprints = tuple(item.strategy.fingerprint for item in self.records)
         if fingerprints != tuple(sorted(fingerprints)):
             raise ValueError("selection pool must be sorted by strategy fingerprint")
@@ -129,7 +129,7 @@ class PortfolioGateResult:
 def freeze_selection_pool(records: Sequence[StrategyRecord]) -> SelectionPool:
     materialized = tuple(records)
     if not 2 <= len(materialized) <= 12:
-        raise ValueError("DEC-041 selection pool must contain between 2 and 12 strategies")
+        raise ValueError("DEC-042 selection pool must contain between 2 and 12 strategies")
     for record in materialized:
         if not isinstance(record, StrategyRecord):
             raise TypeError("selection pool must contain StrategyRecord")
