@@ -944,3 +944,7 @@ Copy this section for each serious experiment:
 - Live/demo execution status: NOT RUN.
 - Verification: exact source head `54efe65ff66e90ff5939a11ad5bad704d9b60b70` passed 1049 tests plus workflow-YAML validation and compile checks in run `35779123073`; unchanged Phase 3 acceptance run `35779123145` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before the execution source gate may be true in an operator path or the first practice-account order may actually be sent.
+
+
+- Merge status: PR #157 merged DEC-065 to `main` at `94eb6d4af4f146e751f2baed86f9b85fae4e8cac`. The exact final PR head `797ca4c9f3f3af20367d47a47e0c2e2972d9cdf6` passed 1049 tests plus workflow-YAML validation and compile checks in run `35779313105`; unchanged Phase 3 acceptance run `35779312681` passed. Post-merge `main` runs `35779467788` and `35779467811` also passed.
+- Follow-up: source-only construction is complete through the permit-aware one-shot runner. A separately approved first-demo execution decision is required before the execution source gate may be true in an operator path or any real practice-account order may be sent.
