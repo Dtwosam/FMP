@@ -488,10 +488,26 @@ def validate_phase9_demo_launch_preflight(
         "order_check_request_fingerprint"
     ):
         raise ValueError("Phase 9 launch order-check identity mismatch")
+    if value.get("account") != check_request.get("account"):
+        raise ValueError("Phase 9 launch account snapshot mismatch")
+    if value.get("symbol_snapshot") != check_request.get("symbol_snapshot"):
+        raise ValueError("Phase 9 launch symbol snapshot mismatch")
+    if value.get("tick_snapshot") != check_request.get("tick_snapshot"):
+        raise ValueError("Phase 9 launch tick snapshot mismatch")
     if check.get("check_passed") is not True:
         raise ValueError("Phase 9 launch order-check did not pass")
     if reconciliation.get("healthy") is not True:
         raise ValueError("Phase 9 launch reconciliation is unhealthy")
+    broker_orders = reconciliation.get("broker_orders")
+    broker_positions = reconciliation.get("broker_positions")
+    if not isinstance(broker_orders, list) or not isinstance(
+        broker_positions, list
+    ):
+        raise ValueError("Phase 9 launch reconciliation rows are malformed")
+    if value.get("broker_order_count") != len(broker_orders):
+        raise ValueError("Phase 9 launch broker-order count mismatch")
+    if value.get("broker_position_count") != len(broker_positions):
+        raise ValueError("Phase 9 launch broker-position count mismatch")
 
     if value.get("broker_reads_performed") is not True:
         raise ValueError("Phase 9 launch preflight requires broker reads")
