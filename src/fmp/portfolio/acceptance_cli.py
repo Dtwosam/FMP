@@ -38,6 +38,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     review.add_argument("--preflight", required=True, type=Path)
     review.add_argument("--selection", required=True, type=Path)
+    review.add_argument("--code-commit", required=True)
     review.add_argument("--out", required=True, type=Path)
     return parser
 
@@ -55,6 +56,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             preflight_sha256=preflight_sha,
             selection=selection,
             selection_sha256=selection_sha,
+            code_commit=args.code_commit,
         )
         write_phase8a_acceptance_artifacts(result, args.out)
         print(
