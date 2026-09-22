@@ -1,3 +1,13 @@
+from .arming import (
+    PHASE9_DEMO_EXECUTION_ARM_ARTIFACT_PROTOCOL,
+    PHASE9_DEMO_EXECUTION_ARM_CONTRACT_READY,
+    PHASE9_DEMO_EXECUTION_ARM_DECISION,
+    PHASE9_DEMO_EXECUTION_ARM_EXPERIMENT_ID,
+    PHASE9_DEMO_EXECUTION_ARM_PROTOCOL,
+    build_phase9_demo_execution_arm,
+    validate_phase9_demo_execution_arm,
+    write_phase9_demo_execution_arm,
+)
 from .design import (
     PHASE9_DECISION,
     PHASE9_DEMO_DESIGN_ARTIFACT_PROTOCOL,
@@ -84,6 +94,11 @@ from .protocol import (
 )
 
 __all__ = [
+    "PHASE9_DEMO_EXECUTION_ARM_ARTIFACT_PROTOCOL",
+    "PHASE9_DEMO_EXECUTION_ARM_CONTRACT_READY",
+    "PHASE9_DEMO_EXECUTION_ARM_DECISION",
+    "PHASE9_DEMO_EXECUTION_ARM_EXPERIMENT_ID",
+    "PHASE9_DEMO_EXECUTION_ARM_PROTOCOL",
     "BoundedDemoSessionController",
     "PHASE9_DEMO_SESSION_ARM_PROTOCOL",
     "PHASE9_DEMO_SESSION_CONTRACT_READY",
@@ -129,6 +144,7 @@ __all__ = [
     "PHASE9_EXPERIMENT_ID",
     "PHASE9_MT5_ORDER_BRIDGE_PROTOCOL",
     "build_phase9_demo_design",
+    "build_phase9_demo_execution_arm",
     "build_phase9_demo_session_arm",
     "build_phase9_demo_session_journal_event",
     "build_phase9_demo_session_ready",
@@ -145,6 +161,7 @@ __all__ = [
     "phase9_demo_session_attempt_count",
     "run_phase9_mt5_demo_preflight",
     "validate_phase9_demo_design",
+    "validate_phase9_demo_execution_arm",
     "validate_phase9_demo_session_arm",
     "validate_phase9_demo_session_journal",
     "validate_phase9_demo_session_ready",
@@ -156,6 +173,7 @@ __all__ = [
     "validate_phase9_demo_order_request",
     "validate_phase9_demo_reconciliation",
     "write_phase9_demo_design",
+    "write_phase9_demo_execution_arm",
     "write_phase9_mt5_demo_preflight",
     "write_phase9_demo_dry_run",
 ]
