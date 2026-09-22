@@ -374,7 +374,7 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-064 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit artifact, demo order, or broker mutation has been executed;
-3. DEC-065 / `EXP-20260922-036` is the active milestone: implement source-only permit-aware one-shot demo runner orchestration with exact checked-request replay, fsynced `SEND_ATTEMPTED` before any future send, no retry, DEC-058 send-result normalization, and one post-send reconciliation;
+3. DEC-065 / `EXP-20260922-036` is implemented on PR #157 head `54efe65ff66e90ff5939a11ad5bad704d9b60b70`: exact permit/request replay, fsynced SEND_ATTEMPTED before future mutation, no retry, DEC-058 send-result normalization, explicit ambiguity handling, and one post-send reconciliation; run `35779123073` passed 1049 tests plus YAML/compile and unchanged Phase 3 acceptance run `35779123145` passed;
 4. DEC-065 keeps `DEMO_EXECUTION_SOURCE_ARMED=false`, adds no broker-connected or order-capable CLI, and repository tests may use only fake mutation backends;
 5. demo execution/order submission, live trading, real-money trading, Phase 10, and deployment review remain locked.
 
