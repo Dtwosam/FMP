@@ -1,7 +1,12 @@
 from datetime import date
 import unittest
 
-from fmp.portfolio import StrategyLifecycle, StrategyRecord, StrategyVersion
+from fmp.portfolio import (
+    StrategyLifecycle,
+    StrategyRecord,
+    StrategyVersion,
+    build_phase4_baseline_inventory,
+)
 from fmp.portfolio.selection import (
     NO_PORTFOLIO_SELECTED,
     PORTFOLIO_SELECTION_PASS,
@@ -95,6 +100,23 @@ class Phase8ASelectionTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 freeze_selection_pool((_record(0), _record(1, state)))
+
+
+    def test_current_historical_inventory_has_only_one_selection_eligible_strategy(self) -> None:
+        eligible = tuple(
+            item
+            for item in build_phase4_baseline_inventory()
+            if item.lifecycle
+            in {
+                StrategyLifecycle.HISTORICAL_QUALIFIED,
+                StrategyLifecycle.SHADOW_CANDIDATE,
+                StrategyLifecycle.SHADOW_VALIDATED,
+                StrategyLifecycle.DEMO_ELIGIBLE,
+            }
+        )
+        self.assertEqual(len(eligible), 1)
+        with self.assertRaisesRegex(ValueError, "between 2 and 12"):
+            freeze_selection_pool(eligible)
 
     def test_pool_fails_closed_below_two_or_above_twelve(self) -> None:
         with self.assertRaises(ValueError):
