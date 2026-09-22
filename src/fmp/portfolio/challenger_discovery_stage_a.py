@@ -507,6 +507,10 @@ def aggregate_exp015_stage_a_gates(
             code_commit=code_commit,
         )
         expected = sorted(item.strategy.fingerprint for item in records)
+        family_by_fingerprint = {
+            item.strategy.fingerprint: item.strategy.family
+            for item in records
+        }
         raw_fingerprints = gate.get("strategy_fingerprints")
         if raw_fingerprints != expected:
             raise ValueError("EXP-015 Stage A gate strategy coverage mismatch")
@@ -520,6 +524,14 @@ def aggregate_exp015_stage_a_gates(
             raise ValueError("EXP-015 Stage A cell survivor cap exceeded")
         if not set(cell_survivors).issubset(set(expected)):
             raise ValueError("EXP-015 Stage A survivor is outside frozen cell")
+        family_counts: dict[str, int] = {}
+        for fingerprint in cell_survivors:
+            family = family_by_fingerprint[fingerprint]
+            family_counts[family] = family_counts.get(family, 0) + 1
+        if any(count > 2 for count in family_counts.values()):
+            raise ValueError(
+                "EXP-015 Stage A family-cell survivor cap exceeded"
+            )
 
         if all_fingerprints.intersection(expected):
             raise ValueError("EXP-015 Stage A strategy appears in multiple cells")
