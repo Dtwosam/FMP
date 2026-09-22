@@ -375,7 +375,7 @@ Copy this section for each serious experiment:
 - Status: RUNNING
 - Protocol decision: DEC-038 APPROVED
 - Hypothesis: The unchanged Phase 7-promoted USDJPY 15m session-breakout rule can be evaluated prospectively when true bridge continuity failures are separated from heartbeat-healthy no-tick intervals, while unseen trade paths and missing strategy context still fail closed.
-- Code commit: pending verified merge of the DEC-038 implementation; all qualification/reference/campaign evidence must bind the resulting merged commit.
+- Code commit: DEC-038 implementation merged by PR #119 to `main` at `71fca1ccbfd14edd71c736f61187558f6f6a7909`; all qualification/reference/campaign evidence must bind this merged implementation identity.
 - Data manifest/version: accepted Phase 2 USDJPY artifact `10327600628`, ZIP SHA-256 `6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72`; processed-manifest SHA-256 `e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d`; Phase 7 checkpoint `fmp-v1-phase7-walk-forward` / `b6fb0176555b071fef6d1070edf3407b03cd60c9`; live evidence protocol remains `fmp-phase8-shadow-evidence-v2`.
 - Pair(s): USDJPY only
 - Timeframe(s): 15m strategy bars built from observed live 1m bid/ask bars
@@ -397,7 +397,7 @@ Copy this section for each serious experiment:
 - Expectancy/trade: pending.
 - Profit factor: pending.
 - Max drawdown: pending.
-- Result summary: implementation verification and fresh operator qualification are pending.
+- Result summary: DEC-038 implementation merged through PR #119. Source-free tests run `35670553677` passed all 786 tests plus workflow YAML validation and package compile; unchanged deterministic Phase 3 acceptance run `35670553680` succeeded; Phase 1 acquisition workflows `35670553665` and `35670553672` skipped as expected. Fresh operator qualification has not yet run.
 - Conclusion: NEED_MORE_DATA
-- Follow-up: merge and verify DEC-038 implementation, archive EXP-010 evidence unchanged, run fresh qualification, rebuild/freeze the historical reference under the merged code commit, register a fresh campaign, then begin prospective capture with AutoTrading OFF.
+- Follow-up: preserve/archive EXP-010 evidence unchanged, update the local repository to merged commit `71fca1ccbfd14edd71c736f61187558f6f6a7909`, run fresh qualification, rebuild/freeze the historical reference under that commit, register a fresh campaign, then begin prospective capture with AutoTrading OFF.
 
