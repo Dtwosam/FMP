@@ -882,3 +882,19 @@ The official FMP adapter remains compile-time disabled with `DEMO_EXECUTION_SOUR
 The raw backend is infrastructure only and is not exposed by the CLI. Tests may use only fake in-memory MetaTrader5-compatible modules.
 
 Demo execution/order submission, broker mutation through the FMP execution path, real-money trading, Phase 10, and live execution remain locked. A later separately approved decision must explicitly arm demo execution and freeze the operator/session/journal boundary before the first real practice-account order.
+
+
+## DEC-059 — Phase 9 bounded first demo-session contract and journal
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-bounded-demo-session.md` opens `EXP-20260922-030` for source-only one-request practice-session authorization, readiness, durable journaling, at-most-one ambiguity handling, and recovery semantics.
+
+One DEC-059 arm binds one exact DEC-056 post-risk request, exact champion/strategy/symbol, exact accepted DEMO account/server, one UTC-day-bounded window, one operator-approval reference, and `max_new_orders=1`.
+
+DEC-059 keeps the DEC-058 source lock `DEMO_EXECUTION_SOURCE_ARMED = False`. No real arm artifact, arming CLI, broker-connected command, or demo order is created by this decision. Any submission path still reaches the locked DEC-058 adapter and fails before broker access.
+
+The session contract reuses DEC-056 reconciliation, requires healthy startup state and daily halt inactive, fsyncs `SEND_ATTEMPTED` before any future mutation, spends the arm after one attempted send regardless of broker outcome, and requires post-send reconciliation before session closure.
+
+DEC-059 does not define Phase 9 acceptance or Phase 10 eligibility. A later separately approved decision is mandatory before a real arm can exist, the source execution lock can change, or the first practice-account order can be submitted.

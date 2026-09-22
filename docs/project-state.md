@@ -373,10 +373,10 @@ Implementation progress:
 Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-058 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight artifact, demo order, or broker mutation has been executed;
-3. PR #150 merged DEC-058 / `EXP-20260922-029` to `main` at `03617bcd609b61084f4dd09690f9d2166b391a61`: MetaTrader5 Python mutation-capable backend source, exact existing-account fingerprint derivation, deterministic request translation, order-send result normalization, order/position reads, and a hard-disabled official adapter; the exact final PR head `46825d1138392baff7b71465704df17260c28d88` passed 1011 tests plus YAML/compile in run `35768044631` and unchanged Phase 3 acceptance run `35768044648` passed; post-merge `main` runs `35768227486` and `35768227484` also passed;
-4. `DEMO_EXECUTION_SOURCE_ARMED` remains source-default false with no DEC-058 setter/config/env/artifact/CLI path; the official adapter must reject before any broker read or mutation;
-5. demo execution/order submission through FMP, real-money trading, Phase 10, and live execution remain locked; DEC-059 must separately freeze any bounded demo-session authorization/journal boundary.
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session artifact, demo order, or broker mutation has been executed;
+3. DEC-059 / `EXP-20260922-030` is implemented on PR #151 head `c273bb5a21d865d09edefbd425f18c4049e58399`: one-request/one-order arm identity, UTC-day/daily-halt guards, healthy startup reconciliation, hash-chained fsynced journaling, arm-spent send-attempt semantics, and source-only session readiness; run `35768964040` passed 1017 tests plus YAML/compile and unchanged Phase 3 acceptance run `35768964070` passed;
+4. DEC-059 keeps `DEMO_EXECUTION_SOURCE_ARMED=false`, creates no real arm, exposes no arming/run/order CLI, and cannot submit the first practice-account order;
+5. Phase 9 acceptance thresholds, Phase 10, real-money trading, and live execution remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
