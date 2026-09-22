@@ -46,6 +46,7 @@ from fmp.strategies.volatility_breakout import (
     generate_volatility_breakout_candidates,
 )
 
+from .challenger_discovery import EXP015_STRATEGY_VERSION
 from .contracts import StrategyVersion
 from .research_data import (
     LoadedRetrospectiveBars,
@@ -122,21 +123,50 @@ def _parameters(strategy: StrategyVersion) -> dict[str, object]:
 
 def build_strategy_config(strategy: StrategyVersion) -> object:
     params = _parameters(strategy)
+    parameter_region = (
+        "exp015"
+        if strategy.version == EXP015_STRATEGY_VERSION
+        else "phase4"
+    )
     try:
         if strategy.family == "session_breakout":
-            return SessionBreakoutConfig(timeframe=strategy.timeframe, **params)
+            return SessionBreakoutConfig(
+                timeframe=strategy.timeframe,
+                parameter_region=parameter_region,
+                **params,
+            )
         if strategy.family == "trend_continuation":
-            return TrendContinuationConfig(timeframe=strategy.timeframe, **params)
+            return TrendContinuationConfig(
+                timeframe=strategy.timeframe,
+                parameter_region=parameter_region,
+                **params,
+            )
         if strategy.family == "mean_reversion":
-            return MeanReversionConfig(timeframe=strategy.timeframe, **params)
+            return MeanReversionConfig(
+                timeframe=strategy.timeframe,
+                parameter_region=parameter_region,
+                **params,
+            )
         if strategy.family == "opening_range_momentum":
             return OpeningRangeMomentumConfig(timeframe=strategy.timeframe, **params)
         if strategy.family == "previous_day_rejection":
-            return PreviousDayRejectionConfig(timeframe=strategy.timeframe, **params)
+            return PreviousDayRejectionConfig(
+                timeframe=strategy.timeframe,
+                parameter_region=parameter_region,
+                **params,
+            )
         if strategy.family == "volatility_breakout":
-            return VolatilityBreakoutConfig(timeframe=strategy.timeframe, **params)
+            return VolatilityBreakoutConfig(
+                timeframe=strategy.timeframe,
+                parameter_region=parameter_region,
+                **params,
+            )
         if strategy.family == "session_sweep_rejection":
-            return SessionSweepRejectionConfig(timeframe=strategy.timeframe, **params)
+            return SessionSweepRejectionConfig(
+                timeframe=strategy.timeframe,
+                parameter_region=parameter_region,
+                **params,
+            )
     except (TypeError, ValueError) as exc:
         raise ValueError(f"invalid frozen parameters for {strategy.family}: {exc}") from exc
     raise ValueError(f"unsupported Phase 8A strategy family: {strategy.family!r}")
