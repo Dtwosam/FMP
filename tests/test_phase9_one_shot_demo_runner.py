@@ -539,6 +539,52 @@ class Phase9OneShotRunnerTests(unittest.TestCase):
             ],
         )
 
+    def test_refingerprinted_completed_result_cannot_drop_evidence(self) -> None:
+        (
+            design,
+            request,
+            session_arm,
+            session_ready,
+            execution_arm,
+            runtime_authority,
+            launch,
+            permit,
+        ) = _chain()
+        backend = SendBackend()
+        with TemporaryDirectory() as tmp:
+            with Phase9DemoSessionJournal(
+                path=Path(tmp) / "session.jsonl",
+                arm=session_arm,
+                request=request,
+            ) as journal:
+                with patch(
+                    "fmp.phase9.runner.DEMO_EXECUTION_SOURCE_ARMED",
+                    True,
+                ):
+                    result = run_phase9_demo_one_shot(
+                        design=design,
+                        request=request,
+                        session_arm=session_arm,
+                        session_ready=session_ready,
+                        execution_arm=execution_arm,
+                        runtime_authority=runtime_authority,
+                        launch_preflight=launch,
+                        execution_permit=permit,
+                        journal=journal,
+                        backend=backend,
+                        now_utc=NOW + timedelta(seconds=1),
+                        daily_halt_active=False,
+                    )
+        changed = dict(result)
+        changed["send_result_fingerprint"] = None
+        changed.pop("one_shot_run_fingerprint")
+        changed["one_shot_run_fingerprint"] = _digest(changed)
+        with self.assertRaisesRegex(
+            ValueError,
+            "requires send and reconciliation evidence",
+        ):
+            validate_phase9_demo_one_shot_run(changed)
+
     def test_checked_request_tamper_fails_before_journal_or_backend(self) -> None:
         (
             design,
