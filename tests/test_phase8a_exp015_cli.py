@@ -55,6 +55,34 @@ def _gate(symbol: str, timeframe: str) -> dict[str, object]:
 
 
 class Exp015CliTests(unittest.TestCase):
+
+    def test_catalog_freezes_exact_567_identities_before_stage_a(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            out_dir = root / "catalog"
+            stdout = StringIO()
+            with redirect_stdout(stdout):
+                code = main(
+                    [
+                        "catalog",
+                        "--code-commit",
+                        COMMIT,
+                        "--out",
+                        str(out_dir),
+                    ]
+                )
+            self.assertEqual(code, 0)
+            stored = json.loads(
+                (out_dir / "catalog.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(stored["protocol"], "fmp-phase8a-exp015-catalog-v1")
+            self.assertEqual(stored["strategy_identity_count"], 567)
+            self.assertEqual(len(stored["strategies"]), 567)
+            self.assertEqual(len(stored["catalog_identity_sha256"]), 64)
+            self.assertFalse(stored["promotion_authorized"])
+            printed = json.loads(stdout.getvalue())
+            self.assertEqual(printed["catalog"], str(out_dir / "catalog.json"))
+
     def test_stage_a_cell_wires_fixed_cell_and_writes_artifacts(self) -> None:
         captured = {}
 
