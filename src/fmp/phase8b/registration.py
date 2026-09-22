@@ -132,6 +132,10 @@ def _validate_qualification(
                 f"Phase 8B qualification requires {field}=false"
             )
 
+    _validate_commit(
+        qualification.get("qualification_code_commit"),
+        field="Phase 8B qualification code commit",
+    )
     account = _validate_sha256(
         qualification.get("common_account_fingerprint"),
         field="Phase 8B common account fingerprint",
