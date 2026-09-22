@@ -954,3 +954,17 @@ DEC-063 consumes exact DEC-055 through DEC-062 evidence, revalidates current UTC
 The DEC-063 backend protocol intentionally exposes no `order_send`, submit, cancel, modify, close-position, or other mutation method. A successful launch preflight may set only `demo_launch_preflight_ready=true`; `DEMO_EXECUTION_SOURCE_ARMED` and every execution/order/mutation/live/real-money/Phase-10 authorization remain false.
 
 DEC-063 adds no broker-connected or order-capable CLI. Tests use fake in-memory read/check backends only. A later separately approved decision is mandatory before any runner may invoke `order_send` or the first real practice-account order may be sent.
+
+
+## DEC-064 — Phase 9 one-shot demo execution permit contract
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-demo-execution-permit.md` opens `EXP-20260922-035` for source-only construction, validation, and create-only persistence of one immutable future demo execution-permit artifact.
+
+DEC-064 consumes exact DEC-055 through DEC-063 evidence and binds the exact fresh order-check request/result, healthy reconciliation, one-order arm, client-order identity, accepted DEMO account/server, arm window, operator approval reference, journal count/tip, and launch-preflight fingerprint.
+
+A valid permit may set only `demo_execution_permit_artifact_ready=true`. `DEMO_EXECUTION_SOURCE_ARMED` remains false and every demo/live order, broker-mutation, real-money, and Phase-10 authorization flag remains false.
+
+DEC-064 adds no CLI, performs no broker access, and cannot invoke `order_send`. A later separately approved decision is mandatory before any real execution runner may consume the permit or the first practice-account order may be sent.
