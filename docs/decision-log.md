@@ -898,3 +898,17 @@ DEC-059 keeps the DEC-058 source lock `DEMO_EXECUTION_SOURCE_ARMED = False`. No 
 The session contract reuses DEC-056 reconciliation, requires healthy startup state and daily halt inactive, fsyncs `SEND_ATTEMPTED` before any future mutation, spends the arm after one attempted send regardless of broker outcome, and requires post-send reconciliation before session closure.
 
 DEC-059 does not define Phase 9 acceptance or Phase 10 eligibility. A later separately approved decision is mandatory before a real arm can exist, the source execution lock can change, or the first practice-account order can be submitted.
+
+
+## DEC-060 — Phase 9 demo execution-arm artifact source contract
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-demo-execution-arm.md` opens `EXP-20260922-031` for source-only construction, validation, and create-only persistence of one exact future demo execution-arm package.
+
+DEC-060 binds exact DEC-055 design, DEC-056 request/client identity, DEC-059 session-arm and session-ready evidence, champion/strategy/symbol, accepted DEMO account/server, exact UTC arm window, one operator approval reference, and `max_new_orders=1`.
+
+The DEC-058 compile-time source gate remains `DEMO_EXECUTION_SOURCE_ARMED = False`. DEC-060 creates no real operator arm during repository verification, adds no arming or execution CLI, performs no broker access, and cannot submit an order.
+
+A valid DEC-060 artifact means only that the arm-package contract is ready. Demo execution, demo-order submission, broker mutation, live orders, real money, and Phase 10 remain locked. A later separately approved decision is required before a real arm may be materialized or the source gate may change.
