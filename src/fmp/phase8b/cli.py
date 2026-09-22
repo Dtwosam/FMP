@@ -23,6 +23,7 @@ from .capture import (
     validate_phase8b_capture_preflight,
     write_phase8b_capture_preflight,
 )
+from .acceptance import validate_phase8b_spread_reference
 from .design import (
     build_phase8b_design,
     validate_phase8b_design,
@@ -37,6 +38,11 @@ from .qualification import (
 from .registration import (
     build_phase8b_registration,
     write_phase8b_registration,
+)
+from .review import (
+    build_phase8b_spread_reference,
+    review_phase8b_campaign_directory,
+    write_phase8b_spread_reference,
 )
 
 
@@ -112,6 +118,21 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
     )
 
+    freeze_spread = subparsers.add_parser(
+        "freeze-spread-reference",
+        help="freeze the campaign-bound Phase 8B retrospective spread reference",
+    )
+    freeze_spread.add_argument(
+        "--campaign-dir",
+        required=True,
+        type=Path,
+    )
+    freeze_spread.add_argument(
+        "--dataset-root",
+        required=True,
+        type=Path,
+    )
+
     capture_segment = subparsers.add_parser(
         "capture-segment",
         help="capture one bounded prospective Phase 8B quote-only segment",
@@ -135,6 +156,20 @@ def build_parser() -> argparse.ArgumentParser:
         "--campaign-dir",
         required=True,
         type=Path,
+    )
+
+    review_campaign = subparsers.add_parser(
+        "review-campaign",
+        help="review one immutable Phase 8B campaign-evidence closure",
+    )
+    review_campaign.add_argument(
+        "--campaign-dir",
+        required=True,
+        type=Path,
+    )
+    review_campaign.add_argument(
+        "--closure-id",
+        required=True,
     )
     return parser
 
@@ -307,35 +342,106 @@ def main(
             symbol: tail_factory(Path(paths[symbol]), symbol)
             for symbol in symbols
         }
+        commit = code_commit_resolver()
+        registration_sha = hashlib.sha256(
+            registration_path.read_bytes()
+        ).hexdigest()
         authorization = build_phase8b_campaign_start_authorization(
             registration=registration,
-            registration_sha256=hashlib.sha256(
-                registration_path.read_bytes()
-            ).hexdigest(),
+            registration_sha256=registration_sha,
             bridge_tails=tails,
-            code_commit=code_commit_resolver(),
+            code_commit=commit,
             started_at_utc=utc_now(),
         )
         manifest = write_phase8b_campaign_start_authorization(
             authorization,
             args.campaign_dir,
         )
+        authorization_path = args.campaign_dir / "start-authorization.json"
+        preflight = build_phase8b_capture_preflight(
+            registration=registration,
+            registration_sha256=registration_sha,
+            authorization=authorization,
+            authorization_sha256=hashlib.sha256(
+                authorization_path.read_bytes()
+            ).hexdigest(),
+            bridge_tails=tails,
+            code_commit=commit,
+            prepared_at_utc=utc_now(),
+        )
+        preflight_manifest = write_phase8b_capture_preflight(
+            preflight,
+            args.campaign_dir,
+        )
         print(
             json.dumps(
                 {
-                    "start_authorization": str(
-                        args.campaign_dir / "start-authorization.json"
-                    ),
-                    "manifest": str(
+                    "start_authorization": str(authorization_path),
+                    "start_authorization_manifest": str(
                         args.campaign_dir
                         / "start-authorization-manifest.json"
                     ),
                     "start_authorization_fingerprint": authorization[
                         "start_authorization_fingerprint"
                     ],
+                    "capture_preflight": str(
+                        args.campaign_dir / "capture-preflight.json"
+                    ),
+                    "capture_preflight_manifest": str(
+                        args.campaign_dir
+                        / "capture-preflight-manifest.json"
+                    ),
+                    "capture_preflight_fingerprint": preflight[
+                        "capture_preflight_fingerprint"
+                    ],
                     "campaign_start_authorized": True,
                     "prospective_capture_authorized": True,
+                    "live_shadow_segment_started": False,
+                    "artifact_count": (
+                        len(manifest["artifacts"])
+                        + len(preflight_manifest["artifacts"])
+                    ),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    if args.command == "freeze-spread-reference":
+        campaign_dir = args.campaign_dir
+        if (campaign_dir / "campaign-terminal.json").exists():
+            raise ValueError("Phase 8B campaign is already terminal")
+        preflight = _load_json_object(
+            campaign_dir / "capture-preflight.json",
+            label="Phase 8B capture preflight",
+        )
+        validate_phase8b_capture_preflight(preflight)
+        reference = build_phase8b_spread_reference(
+            preflight=preflight,
+            dataset_root=args.dataset_root,
+            code_commit=code_commit_resolver(),
+        )
+        manifest = write_phase8b_spread_reference(
+            reference,
+            campaign_dir,
+        )
+        print(
+            json.dumps(
+                {
+                    "spread_reference": str(
+                        campaign_dir / "spread-reference.json"
+                    ),
+                    "manifest": str(
+                        campaign_dir / "spread-reference-manifest.json"
+                    ),
+                    "spread_reference_fingerprint": reference[
+                        "spread_reference_fingerprint"
+                    ],
                     "artifact_count": len(manifest["artifacts"]),
+                    "capture_authorized": True,
+                    "acceptance_authorized": False,
                 },
                 sort_keys=True,
                 separators=(",", ":"),
@@ -346,22 +452,32 @@ def main(
 
     if args.command == "capture-segment":
         campaign_dir = args.campaign_dir
-        registration_path = campaign_dir / "registration.json"
-        authorization_path = campaign_dir / "start-authorization.json"
-        preflight_path = campaign_dir / "capture-preflight.json"
-
-        registration = _load_json_object(
-            registration_path,
-            label="Phase 8B campaign registration",
+        if (campaign_dir / "campaign-terminal.json").exists():
+            raise ValueError("Phase 8B campaign is already terminal")
+        preflight = _load_json_object(
+            campaign_dir / "capture-preflight.json",
+            label="Phase 8B capture preflight",
         )
-        authorization = _load_json_object(
-            authorization_path,
-            label="Phase 8B campaign start authorization",
+        validate_phase8b_capture_preflight(preflight)
+        reference = _load_json_object(
+            campaign_dir / "spread-reference.json",
+            label="Phase 8B spread reference",
         )
-        raw_symbols = registration.get("required_symbols")
+        validate_phase8b_spread_reference(reference)
+        for field in (
+            "capture_preflight_fingerprint",
+            "champion_set_fingerprint",
+            "required_symbols",
+            "slippage_scenarios",
+        ):
+            if reference.get(field) != preflight.get(field):
+                raise ValueError(
+                    f"Phase 8B spread-reference {field} mismatch"
+                )
+        raw_symbols = preflight.get("required_symbols")
         if not isinstance(raw_symbols, list) or not raw_symbols:
             raise ValueError(
-                "Phase 8B registration required_symbols is malformed"
+                "Phase 8B preflight required_symbols is malformed"
             )
         symbols = tuple(str(item) for item in raw_symbols)
         paths = dict(bridge_discoverer(symbols))
@@ -375,30 +491,6 @@ def main(
         }
 
         commit = code_commit_resolver()
-        if preflight_path.exists():
-            preflight = _load_json_object(
-                preflight_path,
-                label="Phase 8B capture preflight",
-            )
-            validate_phase8b_capture_preflight(preflight)
-        else:
-            preflight = build_phase8b_capture_preflight(
-                registration=registration,
-                registration_sha256=hashlib.sha256(
-                    registration_path.read_bytes()
-                ).hexdigest(),
-                authorization=authorization,
-                authorization_sha256=hashlib.sha256(
-                    authorization_path.read_bytes()
-                ).hexdigest(),
-                bridge_tails=tails,
-                code_commit=commit,
-                prepared_at_utc=utc_now(),
-            )
-            write_phase8b_capture_preflight(
-                preflight,
-                campaign_dir,
-            )
 
         result = capture_phase8b_prospective_segment(
             preflight=preflight,
@@ -452,6 +544,44 @@ def main(
                     ],
                     "acceptance_authorized": False,
                     "promotion_authorized": False,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    if args.command == "review-campaign":
+        result = review_phase8b_campaign_directory(
+            campaign_dir=args.campaign_dir,
+            closure_id=args.closure_id,
+            code_commit=code_commit_resolver(),
+        )
+        review_dir = (
+            args.campaign_dir / "reviews" / str(result["review_id"])
+        )
+        acceptance = result["acceptance"]
+        print(
+            json.dumps(
+                {
+                    "review_id": result["review_id"],
+                    "acceptance": str(
+                        review_dir / "acceptance" / "acceptance.json"
+                    ),
+                    "manifest": str(review_dir / "manifest.json"),
+                    "outcome": acceptance["outcome"],
+                    "shadow_validation": (
+                        None
+                        if result["shadow_validation"] is None
+                        else str(review_dir / "shadow-validation.json")
+                    ),
+                    "campaign_terminal": (
+                        result["terminal_marker"] is not None
+                    ),
+                    "demo_order_authorized": False,
+                    "live_order_authorized": False,
+                    "phase9_execution_authorized": False,
                 },
                 sort_keys=True,
                 separators=(",", ":"),
