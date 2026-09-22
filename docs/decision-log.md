@@ -611,3 +611,27 @@ All DEC-041 evidence remains `RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos = fals
 The current frozen historical inventory contains only one `HISTORICAL_QUALIFIED` strategy, the Phase 7 USDJPY 15m session-breakout survivor. Therefore DEC-041 cannot yet execute a meaningful multi-strategy search. At least one additional immutable challenger must first pass a separately predeclared discovery/qualification experiment.
 
 Consequences: Phase 8A remains ACTIVE. `EXP-20260922-013` is opened for implementation of the frozen selection machinery only; combination evaluation remains blocked until the qualified pool contains at least two strategies. Phase 8B, Phase 9, broker mutation, demo orders, live orders, and real-money trading remain LOCKED.
+
+
+## DEC-042 — Phase 8A rule-based challenger discovery and qualification
+
+**Date:** 2026-09-22
+**Status:** APPROVED
+
+The approved `docs/superpowers/specs/2026-09-22-phase8a-challenger-discovery.md` opens a new bounded rule-based challenger experiment because DEC-041 is correctly blocked by the current pool of only one qualified strategy.
+
+`EXP-20260922-014` searches only new, predeclared parameter regions for the six existing deterministic rule families across EURUSD, GBPUSD, USDJPY and 5m/15m/1h. The frozen search contains exactly 567 new immutable configurations. These parameter points do not overlap the original Phase 4 grid.
+
+The chronological retrospective protocol is:
+
+- Stage A discovery: 2015-01-01 through 2018-12-31 inclusive; all 567 candidates; strict 0.2/0.5 profitability, expectancy, PF > 1.05, max-DD <= 5%, and >=40-trade gates; at most 2 survivors per exact pair/family/timeframe cell.
+- Stage B qualification: 2019-01-01 through 2022-12-31 inclusive; only Stage A survivors; same gating plus at least 3 of 4 positive calendar years at 0.2 pips.
+- Stage C robustness: 2023-01-01 through 2026-08-20 inclusive; only Stage B passers; same profitability/PF/DD gates, >=30 trades, and at least 3 of the four 2023/2024/2025/2026-partial windows positive at 0.2 pips.
+
+No downstream stage may open a candidate absent from the exact upstream survivor manifest. No parameter retuning, same-cell rescue, replacement, or threshold relaxation is allowed after observation.
+
+Final shortlist ranking and diversity caps are frozen before Stage A results. At most 11 new challengers can become `HISTORICAL_QUALIFIED`, with no more than 4 per pair, 3 per family, and 2 per exact pair/family/timeframe cell. All other EXP-014 candidates are recorded as `RETIRED` with explicit reason. Adding the existing Phase 7 baseline later therefore keeps DEC-041's eligible pool at or below 12.
+
+All evidence is `RETROSPECTIVE_ALREADY_SEEN` with `untouched_oos = false`. The 0.2 and 0.5-pip scenarios gate; 1.0 pip remains diagnostic. The full 567-candidate search count is preserved as multiple-comparison evidence.
+
+Consequences: `EXP-20260922-014` becomes ACTIVE for implementation only. Stage A may not run until the new parameter validators, immutable challenger-grid generator, stage gates, authorization manifests, deterministic evidence, tests, and source-free verification are merged. DEC-041 combination search remains blocked until EXP-014 produces at least one additional qualified challenger. Phase 8B, Phase 9, broker mutation, demo/live orders, and real-money trading remain LOCKED.
