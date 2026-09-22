@@ -39,6 +39,10 @@ from .registration import (
     build_phase8b_registration,
     write_phase8b_registration,
 )
+from .readiness import (
+    Phase8BCampaignReadinessOutcome,
+    inspect_phase8b_campaign_readiness_directory,
+)
 from .review import (
     build_phase8b_spread_reference,
     review_phase8b_campaign_directory,
@@ -146,6 +150,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--duration-seconds",
         required=True,
         type=int,
+    )
+
+    readiness = subparsers.add_parser(
+        "readiness",
+        help="inspect current Phase 8B prospective-capture readiness without starting capture",
+    )
+    readiness.add_argument(
+        "--campaign-dir",
+        required=True,
+        type=Path,
     )
 
     close_campaign = subparsers.add_parser(
@@ -449,6 +463,31 @@ def main(
             )
         )
         return 0
+
+    if args.command == "readiness":
+        result = inspect_phase8b_campaign_readiness_directory(
+            campaign_dir=args.campaign_dir,
+            inspected_at_utc=utc_now(),
+            bridge_discoverer=bridge_discoverer,
+            tail_factory=tail_factory,
+        )
+        print(
+            json.dumps(
+                result,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+        )
+        return {
+            Phase8BCampaignReadinessOutcome.READY.value: 0,
+            Phase8BCampaignReadinessOutcome.NEEDS_START.value: 2,
+            Phase8BCampaignReadinessOutcome.NEEDS_SPREAD.value: 2,
+            Phase8BCampaignReadinessOutcome.TERMINAL.value: 2,
+            Phase8BCampaignReadinessOutcome.CONNECTOR_UNAVAILABLE.value: 3,
+            Phase8BCampaignReadinessOutcome.CONNECTOR_REJECTED.value: 4,
+            Phase8BCampaignReadinessOutcome.PROTOCOL_FAILURE.value: 5,
+        }[str(result["outcome"])]
 
     if args.command == "capture-segment":
         campaign_dir = args.campaign_dir
