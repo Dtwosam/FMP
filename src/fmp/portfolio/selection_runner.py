@@ -569,6 +569,20 @@ def _validate_joint_result(
             manifests[symbol],
             field=f"DEC-042 {symbol} processed-manifest digest",
         )
+    combined_manifest = hashlib.sha256(
+        json.dumps(
+            dict(sorted(manifest_map.items())),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    if result.get("combined_processed_manifest_sha256") != combined_manifest:
+        raise ValueError("DEC-042 combined processed-manifest digest mismatch")
+    if run_identity.get("processed_data_manifest_id") not in (None, combined_manifest):
+        raise ValueError("DEC-042 joint run_identity manifest mismatch")
+    if run_identity.get("timeframe") not in (None, "1m"):
+        raise ValueError("DEC-042 joint run_identity execution timeframe mismatch")
 
     metrics = result.get("metrics")
     if not isinstance(metrics, Mapping):
