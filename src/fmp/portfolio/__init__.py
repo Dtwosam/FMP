@@ -13,6 +13,7 @@ from .challenger_discovery_stage_bc import (
     run_exp015_stage_b,
     run_exp015_stage_c,
     validate_exp015_stage_a_authorization,
+    validate_exp015_stage_b_evidence,
     write_exp015_final_artifacts,
     write_exp015_stage_b_artifacts,
     write_exp015_stage_c_artifacts,
@@ -201,4 +202,5 @@ __all__ = [
     "write_phase8a_batch_artifacts",
     "transition_strategy",
     "validate_exp015_stage_a_authorization",
+    "validate_exp015_stage_b_evidence",
 ]
