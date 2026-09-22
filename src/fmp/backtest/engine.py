@@ -32,6 +32,10 @@ from fmp.contracts import (
     validate_quote_bars,
 )
 from fmp.reporting.backtest import compute_backtest_metrics
+
+NEXT_SUPPLIED_BAR = "NEXT_SUPPLIED_BAR"
+DECLARED_EARLIEST_BAR = "DECLARED_EARLIEST_BAR"
+_ALLOWED_EXECUTION_TIMING_MODES = frozenset({NEXT_SUPPLIED_BAR, DECLARED_EARLIEST_BAR})
 from fmp.risk import (
     RiskConfig,
     RiskState,
@@ -63,6 +67,7 @@ class BacktestConfig:
     requested_end_utc: datetime
     code_commit: str
     decision_config: Mapping[str, object]
+    execution_timing_mode: str = NEXT_SUPPLIED_BAR
 
     def __post_init__(self) -> None:
         if not math.isfinite(self.starting_equity_usd) or self.starting_equity_usd <= 0:
@@ -73,6 +78,8 @@ class BacktestConfig:
         _require_utc(self.requested_end_utc, field="requested_end_utc")
         if self.requested_end_utc < self.requested_start_utc:
             raise ValueError("requested end must not precede requested start")
+        if self.execution_timing_mode not in _ALLOWED_EXECUTION_TIMING_MODES:
+            raise ValueError("unsupported execution_timing_mode")
         for field, value in (
             ("processed_data_manifest_id", self.processed_data_manifest_id),
             ("schema_version", self.schema_version),
@@ -119,6 +126,8 @@ def _run_identity(
         "financing_model": dict(config.financing_model.to_config()),
         "decision_config": dict(config.decision_config),
     }
+    if config.execution_timing_mode != NEXT_SUPPLIED_BAR:
+        identity["execution_timing_mode"] = config.execution_timing_mode
     if scheduled_exits:
         identity["scheduled_exits"] = [
             {
@@ -199,19 +208,43 @@ def run_backtest(
             )
             continue
 
-        next_bar = next(
-            (
-                bar
-                for bar in bars_by_symbol.get(decision.symbol, ())
-                if bar.timestamp_utc > decision.decision_timestamp_utc
-            ),
-            None,
-        )
         declared = decision.earliest_executable_timestamp_utc
-        if next_bar is None or declared != next_bar.timestamp_utc:
+        if config.execution_timing_mode == NEXT_SUPPLIED_BAR:
+            executable_bar = next(
+                (
+                    bar
+                    for bar in bars_by_symbol.get(decision.symbol, ())
+                    if bar.timestamp_utc > decision.decision_timestamp_utc
+                ),
+                None,
+            )
+            timing_valid = (
+                executable_bar is not None
+                and declared == executable_bar.timestamp_utc
+            )
+            explanation = (
+                "earliest executable timestamp must equal the first supplied "
+                "bar for the symbol strictly after the decision timestamp"
+            )
+        else:
+            executable_bar = next(
+                (
+                    bar
+                    for bar in bars_by_symbol.get(decision.symbol, ())
+                    if bar.timestamp_utc == declared
+                ),
+                None,
+            )
+            timing_valid = executable_bar is not None
+            explanation = (
+                "declared earliest executable timestamp must match an exact supplied "
+                "bar for the symbol"
+            )
+
+        if not timing_valid:
             evaluated = (
-                next_bar.timestamp_utc
-                if next_bar is not None
+                executable_bar.timestamp_utc
+                if executable_bar is not None
                 else decision.decision_timestamp_utc
             )
             rejections.append(
@@ -219,14 +252,12 @@ def run_backtest(
                     decision,
                     evaluated_timestamp_utc=evaluated,
                     code=RejectionCode.TIMING_CONTRACT,
-                    explanation=(
-                        "earliest executable timestamp must equal the first supplied "
-                        "bar for the symbol strictly after the decision timestamp"
-                    ),
+                    explanation=explanation,
                 )
             )
             continue
-        scheduled[next_bar.timestamp_utc].append(decision)
+        assert executable_bar is not None
+        scheduled[executable_bar.timestamp_utc].append(decision)
 
     for bucket in scheduled.values():
         bucket.sort(key=lambda item: item.decision_id)

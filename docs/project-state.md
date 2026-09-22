@@ -352,13 +352,23 @@ Historical-data status:
 - they may **not** call it an untouched final test
 - genuinely new forward evidence begins only after a challenger version/protocol is frozen and later enters Phase 8B prospective shadow observation
 
-First implementation milestone:
+Implementation progress:
 
-1. deterministic versioned strategy registry
-2. lifecycle-transition validation
-3. immutable champion-set / challenger separation
-4. tests proving non-eligible lifecycle states cannot enter an executable/shadow candidate set
-5. then multi-pair aggregation, regime/applicability routing, and portfolio exposure accounting
+- PR #121 merged at `e9e7bd7dfa31b8a566cc299e8988856e21071d13`: deterministic strategy registry/lifecycle, immutable champion sets, multi-pair router, USD-direction exposure summaries, historical-inventory identity, explicit retrospective loader/evaluator, and DEC-039 documentation.
+- PR #122 merged at `63389442ab65cdd0e610fa76f6c93a47d23cc01f`: retrospective batch orchestration, deterministic artifacts, CLI, and manual 3-pair × 3-timeframe workflow over accepted Phase 2 artifacts.
+- PR #122 verified 819 tests PASS and unchanged Phase 3 acceptance PASS before merge.
+- DEC-040 is now the active implementation protocol for joint-account portfolio simulation.
+
+Current milestone:
+
+1. correct same-symbol conflict routing to be signal-time-local;
+2. load canonical 1m execution bars without expanding strategy signal timeframes;
+3. generate signals on frozen 5m/15m/1h contracts;
+4. merge execution bars across EURUSD/GBPUSD/USDJPY;
+5. run all selected strategies through one shared Phase 3 account/risk state per cost scenario;
+6. report strategy/pair/timeframe contribution, candidate conflicts, risk rejections, daily-return distribution, and USD-direction diagnostics;
+7. keep all joint historical evidence retrospective/non-promotional;
+8. only after joint simulation is verified, predeclare a separate portfolio-selection protocol.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 

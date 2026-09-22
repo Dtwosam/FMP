@@ -407,7 +407,7 @@ Copy this section for each serious experiment:
 
 - Date: 2026-09-22
 - Status: ACTIVE — IMPLEMENTATION
-- Protocol decision: DEC-039 APPROVED
+- Protocol decisions: DEC-039 APPROVED; DEC-040 APPROVED for joint-account retrospective simulation
 - Hypothesis: a versioned portfolio of independently tested strategies across EURUSD, GBPUSD, and USDJPY can materially improve capital utilization and the economic return profile relative to the sole Phase 7 USDJPY 15m session-breakout strategy without relying on martingale, loss chasing, hidden leverage escalation, or hot-swapped self-modification.
 - Code commit: implementation branch begins from `5cb884dfb15d7798b023658e025221a38dfec9fc`; exact result-producing commit(s) will be recorded as the experiment progresses.
 - Data manifest/version: accepted Phase 1/2 Dukascopy EURUSD/GBPUSD/USDJPY canonical 1m BID/ASK histories plus deterministic 5m/15m/1h derived bars. Existing accepted manifests/checksums remain authoritative.
@@ -432,4 +432,6 @@ Copy this section for each serious experiment:
 - Profit factor: pending.
 - Max drawdown: pending.
 - Conclusion: NEED_MORE_DATA
-- Follow-up: implement and test the deterministic strategy registry/lifecycle contract first, then candidate aggregation/portfolio routing, exposure accounting, and the historical research orchestrator. Phase 8B live shadow remains locked until Phase 8A acceptance.
+- Implementation progress: PR #121 merged the registry/lifecycle/router and explicit retrospective evaluator; PR #122 merged the deterministic retrospective batch/CLI/manual 3-pair × 3-timeframe workflow. PR #122 pre-merge verification completed with 819 tests PASS and unchanged Phase 3 acceptance PASS.
+- Joint-simulation protocol: DEC-040 freezes canonical 1m BID/ASK as the execution path, strategy-native 5m/15m/1h bars as the signal path, one shared $100,000 account/risk state per slippage scenario, and time-local same-symbol conflict handling. These results remain `RETROSPECTIVE_ALREADY_SEEN` and cannot authorize promotion.
+- Follow-up: implement DEC-040 joint-account simulation and portfolio contribution/exposure diagnostics. After that implementation is green, predeclare a separate portfolio-selection protocol before any historical combination search is allowed. Phase 8B live shadow remains locked until Phase 8A acceptance.

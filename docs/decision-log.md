@@ -532,3 +532,31 @@ Frozen scope and consequences:
 `EXP-20260922-011` is stopped before campaign registration. Its fresh connector qualification PASS and historical reference build are preserved as non-scored operational evidence. The reference SHA-256 is `e920b3254235d2bb0766762551b5eb9d21439d429c59aebd14c3e4bb16e8cc64`, bound to code commit `5cb884dfb15d7798b023658e025221a38dfec9fc`. No EXP-011 live-shadow segment is authorized to start.
 
 Consequences: Phase 8A becomes ACTIVE under new experiment `EXP-20260922-012`. Phase 8B, Phase 9 demo trading, broker mutation, live-order placement, and real-money trading remain LOCKED. The first Phase 8A implementation task is the deterministic versioned strategy registry plus champion/challenger promotion lock. Existing Phase 8 shadow tooling is preserved but not launched as EXP-011.
+
+
+## DEC-040 — Phase 8A joint portfolio simulation protocol
+
+**Date:** 2026-09-22
+**Status:** APPROVED
+
+The approved `docs/superpowers/specs/2026-09-22-phase8a-joint-portfolio-simulation.md` defines the next Phase 8A research layer after the versioned registry/router foundation and retrospective batch runner.
+
+The purpose is to evaluate explicitly supplied frozen strategy sets under one shared virtual account rather than summing independent strategy backtests. Strategy signals continue to use their exact 5m/15m/1h family contracts, while entries, stops, targets, time exits, PnL, and portfolio risk are evaluated on accepted canonical 1m BID/ASK bars after each signal becomes known.
+
+Frozen joint-simulation rules:
+
+- each 0.2/0.5/1.0-pip slippage scenario starts one shared $100,000 account;
+- all strategies and all three V1 pairs share the unchanged Phase 3 risk state;
+- requested risk remains 0.25%, hard per-trade max 0.50%, simultaneous open-risk max 1.00%, UTC day-start realized-loss halt 1.50%;
+- no strategy receives a private risk budget that bypasses the shared account;
+- same-symbol opposite-direction candidates conflict only when they have the same exact signal-known timestamp;
+- same-symbol opposite directions at different timestamps are not automatically rejected;
+- strategy-version signal timeframes remain limited to 5m/15m/1h, while 1m is an execution-data role only;
+- missing required 1m execution bars fail closed; no interpolation, synthetic fill, or pre-known execution is permitted;
+- evidence binds exact strategy fingerprints, pair manifests, range, runner commit, costs, risk identity, candidate ordering, and retrospective label;
+- all already-opened historical results remain `RETROSPECTIVE_ALREADY_SEEN` with `untouched_oos = false`;
+- joint portfolio results may report performance and interaction diagnostics but cannot select/promote a portfolio automatically.
+
+DEC-040 intentionally does not define a combination-search or portfolio-selection algorithm. A later predeclared selection protocol is required before joint historical results can choose a Phase 8B shadow-candidate portfolio. Retired strategies remain retired unless a separate new challenger experiment creates a genuinely new immutable strategy version.
+
+Consequences: Phase 8A remains ACTIVE under `EXP-20260922-012`. The next implementation milestone is time-local conflict routing, canonical 1m execution loading, deterministic candidate assembly, and shared-account joint backtesting. Phase 8B, Phase 9, broker mutation, demo orders, live orders, and real-money trading remain LOCKED.

@@ -4,7 +4,12 @@ import unittest
 from datetime import datetime, timedelta, timezone
 
 from fmp.backtest.costs import ZeroCommission, ZeroFinancing
-from fmp.backtest.engine import BacktestConfig, run_backtest
+from fmp.backtest.engine import (
+    DECLARED_EARLIEST_BAR,
+    NEXT_SUPPLIED_BAR,
+    BacktestConfig,
+    run_backtest,
+)
 from fmp.contracts import Decision, Direction, ExitReason, QuoteBar, RejectionCode, ScheduledExit
 from fmp.risk import RiskConfig
 
@@ -99,7 +104,11 @@ def long_decision(
     )
 
 
-def config(*, risk_config: RiskConfig | None = None) -> BacktestConfig:
+def config(
+    *,
+    risk_config: RiskConfig | None = None,
+    execution_timing_mode: str = NEXT_SUPPLIED_BAR,
+) -> BacktestConfig:
     return BacktestConfig(
         starting_equity_usd=10_000.0,
         slippage_pips=0.0,
@@ -113,6 +122,7 @@ def config(*, risk_config: RiskConfig | None = None) -> BacktestConfig:
         requested_end_utc=DAY + timedelta(days=1),
         code_commit="engine-test-commit",
         decision_config={"fixture": "phase3-engine-tests"},
+        execution_timing_mode=execution_timing_mode,
     )
 
 
@@ -132,6 +142,41 @@ class Phase3EngineTests(unittest.TestCase):
         self.assertEqual(run.trades, ())
         self.assertEqual(len(run.rejections), 1)
         self.assertEqual(run.rejections[0].code, RejectionCode.TIMING_CONTRACT)
+
+
+    def test_declared_earliest_mode_can_execute_after_intervening_1m_bars(self) -> None:
+        bars = [eurusd_bar(0), eurusd_bar(1), eurusd_bar(2), eurusd_bar(3)]
+        decision = long_decision("D-DECLARED", decision_minute=0, executable_minute=3)
+        run = run_backtest(
+            bars=bars,
+            decisions=[decision],
+            config=config(execution_timing_mode=DECLARED_EARLIEST_BAR),
+        )
+        self.assertEqual(len(run.trades), 1)
+        self.assertEqual(
+            run.trades[0].entry_timestamp_utc,
+            DAY + timedelta(minutes=3),
+        )
+        self.assertEqual(
+            run.run_identity["execution_timing_mode"],
+            DECLARED_EARLIEST_BAR,
+        )
+
+    def test_declared_earliest_mode_rejects_missing_exact_execution_bar(self) -> None:
+        bars = [eurusd_bar(0), eurusd_bar(1), eurusd_bar(3)]
+        decision = long_decision("D-MISSING", decision_minute=0, executable_minute=2)
+        run = run_backtest(
+            bars=bars,
+            decisions=[decision],
+            config=config(execution_timing_mode=DECLARED_EARLIEST_BAR),
+        )
+        self.assertEqual(run.trades, ())
+        self.assertEqual(len(run.rejections), 1)
+        self.assertEqual(run.rejections[0].code, RejectionCode.TIMING_CONTRACT)
+
+    def test_backtest_config_rejects_unknown_execution_timing_mode(self) -> None:
+        with self.assertRaises(ValueError):
+            config(execution_timing_mode="LOOKAHEAD")
 
     def test_no_trade_is_preserved_as_reasoned_record(self) -> None:
         decision = Decision(
