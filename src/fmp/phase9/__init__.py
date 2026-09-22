@@ -64,6 +64,17 @@ from .mt5_preflight import (
     validate_phase9_mt5_order_check_request,
     write_phase9_mt5_demo_preflight,
 )
+from .runner import (
+    PHASE9_DEMO_ONE_SHOT_AMBIGUOUS,
+    PHASE9_DEMO_ONE_SHOT_COMPLETED,
+    PHASE9_DEMO_ONE_SHOT_NOT_COMPLETED,
+    PHASE9_DEMO_ONE_SHOT_RUNNER_DECISION,
+    PHASE9_DEMO_ONE_SHOT_RUNNER_EXPERIMENT_ID,
+    PHASE9_DEMO_ONE_SHOT_RUN_PROTOCOL,
+    Phase9DemoOneShotBackend,
+    run_phase9_demo_one_shot,
+    validate_phase9_demo_one_shot_run,
+)
 from .runtime_authority import (
     PHASE9_DEMO_RUNTIME_AUTHORITY_ARTIFACT_PROTOCOL,
     PHASE9_DEMO_RUNTIME_AUTHORITY_DECISION,
@@ -125,6 +136,13 @@ from .protocol import (
 )
 
 __all__ = [
+    "PHASE9_DEMO_ONE_SHOT_AMBIGUOUS",
+    "PHASE9_DEMO_ONE_SHOT_COMPLETED",
+    "PHASE9_DEMO_ONE_SHOT_NOT_COMPLETED",
+    "PHASE9_DEMO_ONE_SHOT_RUNNER_DECISION",
+    "PHASE9_DEMO_ONE_SHOT_RUNNER_EXPERIMENT_ID",
+    "PHASE9_DEMO_ONE_SHOT_RUN_PROTOCOL",
+    "Phase9DemoOneShotBackend",
     "PHASE9_DEMO_EXECUTION_PERMIT_ARTIFACT_PROTOCOL",
     "PHASE9_DEMO_EXECUTION_PERMIT_CONTRACT_READY",
     "PHASE9_DEMO_EXECUTION_PERMIT_DECISION",
@@ -209,11 +227,13 @@ __all__ = [
     "build_phase9_demo_design_from_campaign",
     "phase9_demo_session_attempt_count",
     "run_phase9_demo_launch_preflight",
+    "run_phase9_demo_one_shot",
     "run_phase9_mt5_demo_preflight",
     "validate_phase9_demo_design",
     "validate_phase9_demo_launch_preflight",
     "validate_phase9_demo_execution_arm",
     "validate_phase9_demo_execution_permit",
+    "validate_phase9_demo_one_shot_run",
     "validate_phase9_demo_runtime_authority",
     "validate_phase9_demo_session_arm",
     "validate_phase9_demo_session_journal",
