@@ -968,3 +968,17 @@ DEC-064 consumes exact DEC-055 through DEC-063 evidence and binds the exact fres
 A valid permit may set only `demo_execution_permit_artifact_ready=true`. `DEMO_EXECUTION_SOURCE_ARMED` remains false and every demo/live order, broker-mutation, real-money, and Phase-10 authorization flag remains false.
 
 DEC-064 adds no CLI, performs no broker access, and cannot invoke `order_send`. A later separately approved decision is mandatory before any real execution runner may consume the permit or the first practice-account order may be sent.
+
+
+## DEC-065 — Phase 9 permit-aware one-shot demo runner source
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-one-shot-demo-runner.md` opens `EXP-20260922-036` for source-only orchestration of one future permit-bound practice order behind the unchanged DEC-058 execution gate.
+
+DEC-065 consumes exact DEC-055 through DEC-064 artifacts, validates the unchanged one-order arm window and journal prefix, requires the exact checked MT5 request bytes bound by the permit, and durably fsyncs `SEND_ATTEMPTED` before any future `order_send`.
+
+After one attempted send the arm is spent regardless of broker outcome. The runner never retries, normalizes returned send evidence through DEC-058, performs one post-send reconciliation, records ambiguity explicitly, and permits no automatic broker repair.
+
+Repository source keeps `DEMO_EXECUTION_SOURCE_ARMED=False`, adds no broker-connected or execution CLI, and repository verification uses only fake in-memory backends. A later separately approved decision is mandatory before a real permit can be consumed or the first practice-account order can be sent.
