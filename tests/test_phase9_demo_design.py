@@ -385,11 +385,24 @@ class Phase9DemoDesignTests(unittest.TestCase):
             review_dir = root / "reviews" / REVIEW_ID
             (review_dir / "acceptance").mkdir(parents=True)
             (root / "capture-preflight.json").write_bytes(_stable(preflight))
-            (review_dir / "manifest.json").write_bytes(_stable(manifest))
+            acceptance_bytes = _stable(acceptance)
+            shadow_bytes = _stable(shadow)
+            bound_manifest = dict(manifest)
+            bound_manifest["artifacts"] = [
+                {
+                    "path": "acceptance/acceptance.json",
+                    "sha256": hashlib.sha256(acceptance_bytes).hexdigest(),
+                },
+                {
+                    "path": "shadow-validation.json",
+                    "sha256": hashlib.sha256(shadow_bytes).hexdigest(),
+                },
+            ]
+            (review_dir / "manifest.json").write_bytes(_stable(bound_manifest))
             (review_dir / "acceptance" / "acceptance.json").write_bytes(
-                _stable(acceptance)
+                acceptance_bytes
             )
-            (review_dir / "shadow-validation.json").write_bytes(_stable(shadow))
+            (review_dir / "shadow-validation.json").write_bytes(shadow_bytes)
             (root / "campaign-terminal.json").write_bytes(_stable(terminal))
             result = build_phase9_demo_design_from_campaign(
                 campaign_dir=root,
