@@ -987,3 +987,7 @@ Copy this section for each serious experiment:
 - Live/demo execution status: NOT RUN.
 - Verification: exact source head `289dff872f3819c18ea37a2e33e27a35e27e3853` passed 1066 tests plus workflow-YAML validation and compile checks in run `35783034440`; unchanged Phase 3 acceptance run `35783034271` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required to record explicit approval against the exact challenge and define any operator-only source-gate activation.
+
+
+- Merge status: PR #159 merged DEC-067 to `main` at `a966147f31127b929d3a88e80d7ff7294a5c5fb4`. The exact final PR head `7c696843813df9be19cae9fd9cab4079ad38f300` passed 1066 tests plus workflow-YAML validation and compile checks in run `35783187529`; unchanged Phase 3 acceptance run `35783187315` passed. Post-merge `main` runs `35783318956` and `35783319029` also passed.
+- Follow-up: the exact first-demo order can now be rendered as an immutable approval challenge, but no approval has been recorded. A separately approved decision must define explicit challenge-bound approval recording and any operator-only source-gate activation before a real practice order can be sent.
