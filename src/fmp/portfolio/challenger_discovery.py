@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import hashlib
+import json
+import os
 import re
+from pathlib import Path
 
 from .contracts import StrategyLifecycle, StrategyRecord, StrategyVersion
 
 EXP015_ID = "EXP-20260922-015"
 EXP015_STRATEGY_VERSION = "fmp-exp015-rule-challenger-v1"
+EXP015_CATALOG_PROTOCOL = "fmp-phase8a-exp015-catalog-v1"
+EXP015_CATALOG_ARTIFACT_PROTOCOL = "fmp-phase8a-exp015-catalog-artifacts-v1"
 
 _SYMBOLS = ("EURUSD", "GBPUSD", "USDJPY")
 _TIMEFRAMES = ("5m", "15m", "1h")
@@ -142,8 +148,102 @@ def build_exp015_challengers(
     return tuple(sorted(records, key=lambda item: item.strategy.fingerprint))
 
 
+def exp015_catalog_identity_sha256(*, code_commit: str) -> str:
+    records = build_exp015_challengers(code_commit=code_commit)
+    payload = json.dumps(
+        [item.strategy.fingerprint for item in records],
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def build_exp015_catalog_evidence(*, code_commit: str) -> dict[str, object]:
+    records = build_exp015_challengers(code_commit=code_commit)
+    return {
+        "protocol": EXP015_CATALOG_PROTOCOL,
+        "experiment_id": EXP015_ID,
+        "promotion_authorized": False,
+        "historical_status_mutation_authorized": False,
+        "runner_code_commit": code_commit,
+        "strategy_identity_count": len(records),
+        "catalog_identity_sha256": exp015_catalog_identity_sha256(
+            code_commit=code_commit
+        ),
+        "strategies": [
+            {
+                "fingerprint": item.strategy.fingerprint,
+                "identity_json": item.strategy.identity_json,
+                "family": item.strategy.family,
+                "version": item.strategy.version,
+                "symbol": item.strategy.symbol,
+                "timeframe": item.strategy.timeframe,
+                "parameters_json": item.strategy.parameters_json,
+                "signal_contract_version": item.strategy.signal_contract_version,
+                "lifecycle": item.lifecycle.value,
+                "evidence_id": item.evidence_id,
+            }
+            for item in records
+        ],
+    }
+
+
+def _stable_json_bytes(value: object) -> bytes:
+    return (
+        json.dumps(
+            value,
+            sort_keys=True,
+            indent=2,
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n"
+    ).encode("utf-8")
+
+
+def _atomic_write(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.tmp")
+    temporary.write_bytes(data)
+    os.replace(temporary, path)
+
+
+def write_exp015_catalog_artifacts(
+    evidence: dict[str, object],
+    out_dir: Path,
+) -> dict[str, object]:
+    if evidence.get("protocol") != EXP015_CATALOG_PROTOCOL:
+        raise ValueError("EXP-015 catalog evidence protocol mismatch")
+    if evidence.get("promotion_authorized") is not False:
+        raise ValueError("EXP-015 catalog cannot authorize promotion")
+    root = Path(out_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    result_path = root / "catalog.json"
+    payload = _stable_json_bytes(evidence)
+    _atomic_write(result_path, payload)
+    manifest = {
+        "protocol": EXP015_CATALOG_ARTIFACT_PROTOCOL,
+        "experiment_id": EXP015_ID,
+        "promotion_authorized": False,
+        "artifacts": [
+            {
+                "path": result_path.name,
+                "size_bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+        ],
+    }
+    _atomic_write(root / "manifest.json", _stable_json_bytes(manifest))
+    return manifest
+
+
 __all__ = [
+    "EXP015_CATALOG_ARTIFACT_PROTOCOL",
+    "EXP015_CATALOG_PROTOCOL",
     "EXP015_ID",
     "EXP015_STRATEGY_VERSION",
+    "build_exp015_catalog_evidence",
     "build_exp015_challengers",
+    "exp015_catalog_identity_sha256",
+    "write_exp015_catalog_artifacts",
 ]
