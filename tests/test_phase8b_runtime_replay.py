@@ -25,11 +25,16 @@ from fmp.phase8b.design import (
     SLIPPAGE_SCENARIOS,
 )
 from fmp.phase8b.runtime import (
+    BASELINE_RUNTIME_CHECKPOINT,
+    PHASE8B_RUNTIME_CHECKPOINT_PROTOCOL,
     PHASE8B_RUNTIME_REPLAY_KERNEL_READY,
     PHASE8B_SEGMENT_PROTOCOL,
     PortfolioShadowSimulator,
+    build_phase8b_runtime_checkpoint,
     compile_phase8b_segment,
     replay_phase8b_segment,
+    restore_phase8b_runtime_checkpoint,
+    validate_phase8b_runtime_checkpoint,
 )
 from fmp.portfolio.contracts import ChampionSet, PHASE8A_EXPERIMENT_ID
 from fmp.portfolio.historical_inventory import build_phase4_baseline_inventory
@@ -308,6 +313,153 @@ class Phase8BRuntimeReplayKernelTests(unittest.TestCase):
         self.assertEqual(len(baseline.rejections), 1)
         rejected = next(iter(baseline.rejections.values()))
         self.assertEqual(rejected.value, "SIMULTANEOUS_RISK")
+
+
+    def test_runtime_checkpoint_roundtrip_preserves_open_risk_and_terminal_ids(self) -> None:
+        preflight = _preflight()
+        simulator = PortfolioShadowSimulator()
+        quote_time = PREPARED + timedelta(minutes=1)
+        decision = Decision(
+            decision_id="checkpoint-open",
+            symbol="EURUSD",
+            decision_timestamp_utc=PREPARED,
+            direction=Direction.LONG,
+            earliest_executable_timestamp_utc=quote_time,
+            requested_risk_fraction=0.0025,
+            stop_price=1.09,
+            target_price=1.11,
+        )
+        simulator.register_decision(
+            decision,
+            ScheduledExit(
+                decision_id=decision.decision_id,
+                symbol=decision.symbol,
+                timestamp_utc=quote_time + timedelta(hours=1),
+            ),
+        )
+
+        from fmp.phase8b.bridge import Phase8BQuote
+
+        simulator.on_quote(
+            Phase8BQuote(
+                source_time_utc=quote_time,
+                received_at_utc=quote_time,
+                receive_monotonic_ns=1,
+                symbol="EURUSD",
+                bid=1.10,
+                ask=1.1002,
+            )
+        )
+        rejected = Decision(
+            decision_id="checkpoint-rejected",
+            symbol="EURUSD",
+            decision_timestamp_utc=PREPARED + timedelta(seconds=1),
+            direction=Direction.LONG,
+            earliest_executable_timestamp_utc=quote_time,
+            requested_risk_fraction=0.005,
+            stop_price=1.09,
+            target_price=1.11,
+        )
+        simulator.register_decision(
+            rejected,
+            ScheduledExit(
+                decision_id=rejected.decision_id,
+                symbol=rejected.symbol,
+                timestamp_utc=quote_time + timedelta(hours=1),
+            ),
+        )
+        simulator.on_quote(
+            Phase8BQuote(
+                source_time_utc=quote_time,
+                received_at_utc=quote_time,
+                receive_monotonic_ns=2,
+                symbol="EURUSD",
+                bid=1.10,
+                ask=1.1002,
+            )
+        )
+
+        checkpoint = build_phase8b_runtime_checkpoint(
+            simulator=simulator,
+            preflight=preflight,
+        )
+        self.assertEqual(
+            checkpoint["protocol"],
+            PHASE8B_RUNTIME_CHECKPOINT_PROTOCOL,
+        )
+        validate_phase8b_runtime_checkpoint(
+            checkpoint,
+            preflight=preflight,
+        )
+        restored = restore_phase8b_runtime_checkpoint(
+            checkpoint,
+            preflight=preflight,
+        )
+        for slippage in (0.2, 0.5, 1.0):
+            original = simulator.states[slippage]
+            resumed = restored.states[slippage]
+            self.assertEqual(
+                resumed.risk_state.risk_equity_usd,
+                original.risk_state.risk_equity_usd,
+            )
+            self.assertEqual(
+                resumed.risk_state.reservations_usd,
+                original.risk_state.reservations_usd,
+            )
+            self.assertEqual(
+                sorted(resumed.open_positions),
+                sorted(original.open_positions),
+            )
+            self.assertIn("checkpoint-rejected", resumed.terminal_decision_ids)
+            with self.assertRaisesRegex(ValueError, "duplicate"):
+                restored.register_decision(
+                    rejected,
+                    ScheduledExit(
+                        decision_id=rejected.decision_id,
+                        symbol=rejected.symbol,
+                        timestamp_utc=quote_time + timedelta(hours=1),
+                    ),
+                )
+
+    def test_segment_checkpoint_chain_preserves_prior_state_identity(self) -> None:
+        preflight = _preflight()
+        records = _capture_records(preflight)
+        first = compile_phase8b_segment(
+            preflight=preflight,
+            capture_records=records,
+            code_commit=COMMIT,
+        )
+        self.assertEqual(
+            first["initial_runtime_checkpoint_fingerprint"],
+            BASELINE_RUNTIME_CHECKPOINT,
+        )
+        terminal = first["terminal_runtime_checkpoint"]
+        validate_phase8b_runtime_checkpoint(
+            terminal,
+            preflight=preflight,
+        )
+        second = compile_phase8b_segment(
+            preflight=preflight,
+            capture_records=(),
+            code_commit=COMMIT,
+            prior_checkpoint=terminal,
+        )
+        self.assertEqual(
+            second["initial_runtime_checkpoint_fingerprint"],
+            terminal["runtime_checkpoint_fingerprint"],
+        )
+        for key in ("0.2", "0.5", "1.0"):
+            self.assertEqual(
+                second["terminal_runtime_checkpoint"]["scenarios"][key]["risk_state"]["risk_equity_usd"],
+                terminal["scenarios"][key]["risk_state"]["risk_equity_usd"],
+            )
+        replay = replay_phase8b_segment(
+            expected_segment=second,
+            preflight=preflight,
+            capture_records=(),
+            prior_checkpoint=terminal,
+        )
+        self.assertTrue(replay["match"])
 
     def test_symbol_specific_stale_gap_invalidates_only_that_symbol(self) -> None:
         simulator = PortfolioShadowSimulator()
