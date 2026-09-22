@@ -1000,3 +1000,17 @@ Demo profitability metrics are recorded as diagnostics rather than a DEC-066 PAS
 A PASS outcome authorizes only eligibility for a separate Phase 10 deployment-review package. It does not authorize live orders, real money, Phase 11, strategy hot-swap, or any broker mutation.
 
 DEC-066 keeps `DEMO_EXECUTION_SOURCE_ARMED=False`, adds no order-capable CLI, and performs no broker access. A separately approved first-demo execution decision remains mandatory before any real practice-account order may be sent.
+
+
+## DEC-067 — Phase 9 first-demo authorization packet contract
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-first-demo-authorization-packet.md` opens `EXP-20260922-038` for a source-only immutable operator-review packet over one exact DEC-064 execution permit.
+
+DEC-067 exposes the exact practice-account identity, strategy/symbol, direction, units/volume, reserved risk, checked price, stop/target, client-order ID, arm window, and checked-request/permit fingerprints without allowing any caller override.
+
+The packet also binds the pre-result DEC-066 demo-campaign obligations and emits one deterministic authorization-challenge fingerprint. Any later explicit first-demo approval must bind this exact challenge and packet; changing any order/account/risk/window detail requires a different challenge and new approval.
+
+DEC-067 does not itself record approval. It keeps `DEMO_EXECUTION_SOURCE_ARMED=False` and every demo-order, broker-mutation, live-order, real-money, Phase-10, and Phase-11 authorization false. It adds no broker-connected or order-capable CLI and performs no MT5 access.
