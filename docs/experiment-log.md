@@ -604,5 +604,6 @@ Copy this section for each serious experiment:
 - Authorized on PASS: `campaign_start_authorized = true`; `prospective_capture_authorized = true`.
 - Still forbidden: promotion, demo/live orders, broker mutation, real money, Phase 9.
 - CLI scope: add only `authorize-start`; no `run`, `start`, `capture`, or `review` command under DEC-048.
+- Implementation status: the current DEC-048 branch adds deterministic registration/session revalidation, London start-date freezing, `TAIL_AT_EOF_NO_BACKFILL`, start-authorization fingerprinting, exactly-once artifacts, and the sole new CLI command `authorize-start`. The implementation contains no prospective capture loop.
 - Historical/live execution status: NOT RUN.
-- Follow-up: source-free verify/merge DEC-048. A later separately frozen capture/replay/acceptance protocol must independently revalidate DEC-048 evidence before any live-shadow segment can begin.
+- Follow-up: merge DEC-048 only after the final exact branch head passes the repository suite, compile checks, and unchanged Phase 3 acceptance. A later separately frozen capture/replay/acceptance protocol must independently revalidate DEC-048 evidence before any live-shadow segment can begin.
