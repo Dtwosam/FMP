@@ -72,16 +72,22 @@ No real operator arm is created by this decision or by repository verification.
 
 ## 5. Source isolation
 
-The DEC-061 CLI path may import only local artifact/validation modules.
+The DEC-061 `src/fmp/phase9/cli.py` module and its
+`materialize-arm` handler may import only local artifact/validation modules.
 
-It may not import:
+They may not directly import or instantiate:
 
 - `MetaTrader5`;
 - `MetaTrader5PythonDemoBackend`;
-- any broker mutation backend;
+- a broker mutation adapter/backend;
 - any order-send runner.
 
-The command therefore remains usable without a trading terminal.
+The broader `fmp.phase9` package may continue to re-export already-approved
+DEC-058 source symbols, but the DEC-061 command path must not reference or call
+them.
+
+The command therefore remains usable without a trading terminal or broker
+connection.
 
 ## 6. Authorization semantics
 
