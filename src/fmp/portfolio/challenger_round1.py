@@ -31,6 +31,21 @@ EXP013_STAGE_A_CELL_PROTOCOL = "fmp-phase8a-exp013-stage-a-cell-v1"
 EXP013_STAGE_A_GATE_PROTOCOL = "fmp-phase8a-exp013-stage-a-gate-v1"
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
+def opening_range_momentum_source_sha256() -> str:
+    source_path = (
+        Path(__file__).resolve().parents[1]
+        / "strategies"
+        / "opening_range_momentum.py"
+    )
+    try:
+        payload = source_path.read_bytes()
+    except OSError as exc:
+        raise ValueError(
+            "cannot read opening_range_momentum strategy source"
+        ) from exc
+    return hashlib.sha256(payload).hexdigest()
+
+
 _STAGE_A_RANGES = {
     "development": RetrospectiveRange(
         start=date(2015, 1, 1),
@@ -88,6 +103,8 @@ def run_exp013_stage_a_cell(
         raise ValueError(f"unsupported EXP-013 signal timeframe: {timeframe!r}")
     if not _COMMIT_RE.fullmatch(code_commit):
         raise ValueError("code_commit must be a 40-character lowercase hexadecimal SHA")
+
+    strategy_source_sha256 = opening_range_momentum_source_sha256()
 
     records = tuple(
         item
@@ -173,6 +190,7 @@ def run_exp013_stage_a_cell(
         "range_start": research_range.start.isoformat(),
         "range_end_exclusive": research_range.end_exclusive.isoformat(),
         "runner_code_commit": code_commit,
+        "strategy_source_sha256": strategy_source_sha256,
         "processed_manifest_sha256": loaded.processed_manifest_sha256,
         "opened_artifact_months": list(loaded.opened_artifact_months),
         "strategy_identity_count": len(records),
