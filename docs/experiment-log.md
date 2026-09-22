@@ -551,4 +551,5 @@ Copy this section for each serious experiment:
 - Evidence remains RETROSPECTIVE_ALREADY_SEEN; untouched_oos = false.
 - Broker/demo/live/real-money promotion remains false.
 - Historical run status: NOT RUN.
-- Follow-up: implement acceptance compiler, deterministic artifact writer, main-only manual workflow, exact DEC-042 upstream provenance checks, and repository/Phase 3 verification before any acceptance artifact can be written.
+- Implementation status: current `phase8a/acceptance-review` branch contains the deterministic acceptance compiler, lifecycle/champion-set freeze, resolver, artifact writer, CLI, guarded main-only manual workflow, exact DEC-042 upstream provenance/artifact binding, full repository/compile checks, and deterministic Phase 3 verification before artifact creation. No DEC-042 or DEC-045 historical/result workflow has been dispatched.
+- Follow-up: source-free verify and merge the DEC-045 implementation; only then may a future successful DEC-042 run be reviewed.
