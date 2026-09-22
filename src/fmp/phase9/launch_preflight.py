@@ -484,10 +484,27 @@ def validate_phase9_demo_launch_preflight(
     validate_phase9_mt5_order_check_request(check_request)
     validate_phase9_mt5_order_check(check)
     validate_phase9_demo_reconciliation(reconciliation)
+    for field, expected in (
+        ("demo_design_fingerprint", design["demo_design_fingerprint"]),
+        ("request_fingerprint", request["request_fingerprint"]),
+        ("client_order_id", request["client_order_id"]),
+    ):
+        if check_request.get(field) != expected:
+            raise ValueError(
+                f"Phase 9 launch order-check {field} mismatch"
+            )
     if check.get("order_check_request_fingerprint") != check_request.get(
         "order_check_request_fingerprint"
     ):
         raise ValueError("Phase 9 launch order-check identity mismatch")
+    expected_local_requests = [
+        {
+            "request_fingerprint": request["request_fingerprint"],
+            "client_order_id": request["client_order_id"],
+        }
+    ]
+    if reconciliation.get("local_requests") != expected_local_requests:
+        raise ValueError("Phase 9 launch reconciliation request mismatch")
     if value.get("account") != check_request.get("account"):
         raise ValueError("Phase 9 launch account snapshot mismatch")
     if value.get("symbol_snapshot") != check_request.get("symbol_snapshot"):
