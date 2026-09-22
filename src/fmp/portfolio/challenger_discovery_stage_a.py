@@ -14,7 +14,11 @@ from typing import Callable, Mapping, Sequence
 from fmp.contracts import SUPPORTED_SYMBOLS
 from fmp.research.data import ELIGIBLE_TIMEFRAMES
 
-from .challenger_discovery import EXP015_ID, build_exp015_challengers
+from .challenger_discovery import (
+    EXP015_ID,
+    build_exp015_challengers,
+    exp015_catalog_identity_sha256,
+)
 from .research_data import (
     LoadedRetrospectiveBars,
     PHASE8A_RETROSPECTIVE_LABEL,
@@ -205,6 +209,7 @@ def run_exp015_stage_a_cell(
         "symbol": symbol,
         "timeframe": timeframe,
         "runner_code_commit": code_commit,
+        "catalog_identity_sha256": exp015_catalog_identity_sha256(code_commit=code_commit),
         "strategy_source_sha256": exp015_strategy_source_sha256(),
         "processed_manifest_sha256": loaded.processed_manifest_sha256,
         "opened_artifact_months": list(loaded.opened_artifact_months),
@@ -320,12 +325,17 @@ def evaluate_exp015_stage_a_cell(
     symbol = cell.get("symbol")
     timeframe = cell.get("timeframe")
     code_commit = cell.get("runner_code_commit")
+    catalog_sha = cell.get("catalog_identity_sha256")
     source_sha = cell.get("strategy_source_sha256")
     if not isinstance(symbol, str) or not isinstance(timeframe, str):
         raise ValueError("EXP-015 Stage A cell identity is malformed")
     if not isinstance(code_commit, str):
         raise ValueError("EXP-015 Stage A runner commit is missing")
     _validate_commit(code_commit)
+    if not isinstance(catalog_sha, str) or not _SHA256_RE.fullmatch(catalog_sha):
+        raise ValueError("EXP-015 Stage A catalog digest is malformed")
+    if catalog_sha != exp015_catalog_identity_sha256(code_commit=code_commit):
+        raise ValueError("EXP-015 Stage A catalog identity mismatch")
     if not isinstance(source_sha, str) or not _SHA256_RE.fullmatch(source_sha):
         raise ValueError("EXP-015 Stage A strategy source digest is malformed")
     if cell.get("range_start") != _STAGE_A_RANGE.start.isoformat():
@@ -442,6 +452,7 @@ def evaluate_exp015_stage_a_cell(
         "symbol": symbol,
         "timeframe": timeframe,
         "runner_code_commit": code_commit,
+        "catalog_identity_sha256": catalog_sha,
         "strategy_source_sha256": source_sha,
         "strategy_fingerprints": expected_fingerprints,
         "survivor_fingerprints": survivors,
@@ -464,6 +475,7 @@ def aggregate_exp015_stage_a_gates(
     }
     seen_cells: set[tuple[str, str]] = set()
     commits: set[str] = set()
+    catalog_digests: set[str] = set()
     source_digests: set[str] = set()
     all_fingerprints: set[str] = set()
     survivors: set[str] = set()
@@ -486,6 +498,7 @@ def aggregate_exp015_stage_a_gates(
         symbol = gate.get("symbol")
         timeframe = gate.get("timeframe")
         code_commit = gate.get("runner_code_commit")
+        catalog_sha = gate.get("catalog_identity_sha256")
         source_sha = gate.get("strategy_source_sha256")
         if not isinstance(symbol, str) or not isinstance(timeframe, str):
             raise ValueError("EXP-015 Stage A gate cell identity is malformed")
@@ -496,9 +509,14 @@ def aggregate_exp015_stage_a_gates(
         if not isinstance(code_commit, str):
             raise ValueError("EXP-015 Stage A gate runner commit is missing")
         _validate_commit(code_commit)
+        if not isinstance(catalog_sha, str) or not _SHA256_RE.fullmatch(catalog_sha):
+            raise ValueError("EXP-015 Stage A gate catalog digest is malformed")
+        if catalog_sha != exp015_catalog_identity_sha256(code_commit=code_commit):
+            raise ValueError("EXP-015 Stage A gate catalog identity mismatch")
         if not isinstance(source_sha, str) or not _SHA256_RE.fullmatch(source_sha):
             raise ValueError("EXP-015 Stage A gate source digest is malformed")
         commits.add(code_commit)
+        catalog_digests.add(catalog_sha)
         source_digests.add(source_sha)
 
         records = _cell_records(
@@ -550,6 +568,8 @@ def aggregate_exp015_stage_a_gates(
         raise ValueError("EXP-015 Stage A authorization cell coverage mismatch")
     if len(commits) != 1:
         raise ValueError("EXP-015 Stage A gate runner commits differ")
+    if len(catalog_digests) != 1:
+        raise ValueError("EXP-015 Stage A catalog digests differ")
     if len(source_digests) != 1:
         raise ValueError("EXP-015 Stage A strategy source digests differ")
     code_commit = next(iter(commits))
@@ -571,6 +591,7 @@ def aggregate_exp015_stage_a_gates(
         "promotion_authorized": False,
         "historical_status_mutation_authorized": False,
         "runner_code_commit": code_commit,
+        "catalog_identity_sha256": next(iter(catalog_digests)),
         "strategy_source_sha256": next(iter(source_digests)),
         "cell_count": 9,
         "ranking_cell_count": 54,
