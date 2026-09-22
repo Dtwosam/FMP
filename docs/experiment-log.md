@@ -854,7 +854,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-032 — Phase 9 offline demo-arm materialization
 
 - Date: 2026-09-22
-- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO REAL DEMO ORDER
+- Status: ACTIVE — SOURCE IMPLEMENTATION MERGED / NO REAL DEMO ORDER
 - Protocol decision: DEC-061 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
 - Purpose: add one local-only operator command that materializes the exact DEC-060 execution-arm package from already-frozen JSON evidence without MT5/broker access.
 - CLI: adds only `materialize-arm --design --request --session-arm --session-ready --out-dir` beside `design-demo`.
@@ -866,4 +866,5 @@ Copy this section for each serious experiment:
 - Demo execution/order, broker mutation, live order, real-money trading, and Phase 10 authorized?: NO.
 - Real operator arm for an actual broker session created?: NO.
 - Verification: exact source head `25f7a315266605097d51b92c2faca9364a1651db` passed 1025 tests plus workflow-YAML validation and compile checks in run `35772227156`; unchanged Phase 3 acceptance run `35772227085` passed.
-- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before a materialized arm can become runtime authority or the execution source gate can change.
+- Merge status: PR #153 merged DEC-061 to `main` at `ad4dea51f537225f7bbb18335c68beebb9c58067`. The exact final PR head `b6584aff886dad7fac513cdeb57d3c86430b67c4` passed 1025 tests plus workflow-YAML validation and compile checks in run `35772414863`; unchanged Phase 3 acceptance run `35772414631` passed.
+- Follow-up: a later separately frozen decision is required before a materialized arm can become runtime authority or the execution source gate can change.
