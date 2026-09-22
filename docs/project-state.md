@@ -372,11 +372,11 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-065 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit artifact, demo order, or broker mutation has been executed;
-3. DEC-066 / `EXP-20260922-037` is implemented on PR #158 head `f105926b52b2b302bc549b50ce5ef21c4a269476`: aggregate demo evidence, frozen minimum sample, strict safety/operational checks, per-pair execution-cost parity, and deterministic Phase 10-review eligibility; run `35781835318` passed 1059 tests plus YAML/compile and unchanged Phase 3 acceptance run `35781835216` passed;
-4. the frozen minimum is 40 completed trades, 8 elapsed weeks, 30 demo-session dates, two represented strategy families, and two represented V1 pairs, followed by strict safety/operational gates and per-pair adverse-slippage parity at median <=0.5 pip and p95 <=1.0 pip;
-5. `DEMO_EXECUTION_SOURCE_ARMED=false`; first-demo execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-066 are merged and verified on `main`;
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance artifact, demo order, or broker mutation has been executed;
+3. PR #158 merged DEC-066 / `EXP-20260922-037` to `main` at `95f7001d98593d9d181b5176ad1f347352f667a4`; the exact final PR head `3c00e33eb38509d562c03d6139912fdfb007aa7a` passed 1059 tests plus YAML/compile in run `35781992487` and unchanged Phase 3 acceptance run `35781992474` passed; post-merge `main` runs `35782129020` and `35782128865` passed;
+4. the Phase 9 demo gate is now frozen pre-result: 40 completed trades, 8 elapsed weeks, 30 demo-session dates, two represented strategy families, two represented V1 pairs, strict safety/operational integrity, and per-pair adverse entry slippage median <=0.5 pip and p95 <=1.0 pip; financial results remain diagnostic for Phase 10;
+5. `DEMO_EXECUTION_SOURCE_ARMED=false`; the next boundary is a separately approved first-demo execution authorization. Broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
