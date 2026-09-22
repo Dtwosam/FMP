@@ -355,6 +355,13 @@ class Phase9DemoOrderProtocolTests(unittest.TestCase):
         )
         validate_phase9_demo_reconciliation(unhealthy)
 
+        tampered = dict(unhealthy)
+        tampered["duplicate_client_order_ids"] = []
+        tampered.pop("reconciliation_fingerprint", None)
+        tampered["reconciliation_fingerprint"] = _digest(tampered)
+        with self.assertRaisesRegex(ValueError, "does not replay"):
+            validate_phase9_demo_reconciliation(tampered)
+
 
 if __name__ == "__main__":
     unittest.main()
