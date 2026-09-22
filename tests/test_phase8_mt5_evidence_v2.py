@@ -118,7 +118,7 @@ class Phase8Mt5EvidenceV2Tests(unittest.TestCase):
                 )
 
             self.assertEqual(record["registration_version"], 2)
-            self.assertEqual(record["phase8_experiment"], "EXP-20260917-010")
+            self.assertEqual(record["phase8_experiment"], "EXP-20260922-011")
             self.assertEqual(record["provider"], "FP_MARKETS_MT5_DEMO")
             self.assertEqual(record["connector_protocol"], "fmp-mt5-demo-file-bridge-v1")
             self.assertEqual(record["transport"], "MT5_FILE_COMMON_JSONL")
