@@ -925,3 +925,22 @@ Copy this section for each serious experiment:
 - Live/demo execution status: NOT RUN.
 - Verification: exact source head `fc9fcc586fad03b90963ff636cb2275bbcbe1fd7` passed 1043 tests plus workflow-YAML validation and compile checks in run `35776256682`; unchanged Phase 3 acceptance run `35776256435` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before any real execution runner may consume the permit or invoke `order_send`.
+
+
+### EXP-20260922-036 — Phase 9 permit-aware one-shot demo runner source
+
+- Date: 2026-09-22
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO DEMO ORDER
+- Protocol decision: DEC-065 APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+- Purpose: implement the future one-shot permit-aware practice-order runner while keeping the DEC-058 execution source gate false.
+- Upstream binding: exact DEC-055 design, DEC-056 request/client identity, DEC-059 session arm/readiness and journal, DEC-060 execution arm, DEC-062 runtime authority, DEC-063 launch preflight, and DEC-064 execution permit.
+- Immediate checks: exact arm window, launch time ordering, daily halt inactive, exact permit journal count/tip, zero prior SEND_ATTEMPTED, one-order cap, practice-only identity, and exact checked MT5 request SHA-256.
+- One-shot spend: future armed-path simulation fsyncs SEND_ATTEMPTED before any mutation call and never retries order_send.
+- Send evidence: returned results are normalized through exact DEC-058 send-result semantics; broker-returned non-completion is distinct from transport ambiguity.
+- Ambiguity: order_send exceptions spend the arm, journal SESSION_HALTED, prohibit retry, and still attempt one post-send reconciliation.
+- Post-send reconciliation: exactly one broker-order/position read cycle is normalized through DEC-056 reconciliation; no automatic repair is allowed.
+- Source lock: repository `DEMO_EXECUTION_SOURCE_ARMED=false`; current source fails before journal mutation and broker access. Armed-path tests patch only the runner-local gate and use fake in-memory backends.
+- CLI: unchanged; no broker-connected or order-capable command added.
+- Live/demo execution status: NOT RUN.
+- Verification: exact source head `54efe65ff66e90ff5939a11ad5bad704d9b60b70` passed 1049 tests plus workflow-YAML validation and compile checks in run `35779123073`; unchanged Phase 3 acceptance run `35779123145` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. A later separately frozen decision is required before the execution source gate may be true in an operator path or the first practice-account order may actually be sent.
