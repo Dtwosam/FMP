@@ -83,6 +83,7 @@ For an acceptance outcome, evidence must include:
 - exact DEC-042 preflight SHA-256;
 - exact DEC-042 selection SHA-256;
 - DEC-042 runner commit;
+- exact DEC-045 acceptance-compiler commit;
 - exact selected strategy fingerprints;
 - each selected strategy's immutable identity JSON;
 - prior lifecycle/evidence ID;
