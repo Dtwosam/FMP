@@ -373,10 +373,10 @@ Implementation progress:
 Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-057 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design artifact, demo order, or broker mutation has been executed;
-3. PR #149 merged DEC-057 / `EXP-20260922-028` to `main` at `366f271ca951108cf8fdb1df01604817baa076dc`: source-only DEMO account/symbol/tick assertion, exact no-resize units-to-volume translation, price-grid/minimum-stop validation, deterministic MT5 order-check request/evidence, and create-only `fmp-phase9-mt5-demo-preflight-v1`; the exact final PR head `b5e97f06658f487ad553241616ff53049c7f2fba` passed 1005 tests plus YAML/compile in run `35766872553` and unchanged Phase 3 acceptance run `35766872565` passed; post-merge `main` runs `35767028347` and `35767028362` also passed;
-4. DEC-057 backend source is read/check-only and must contain no `order_send`, order modification, cancellation, close-position, or other broker mutation method; Phase 9 CLI remains design-only;
-5. demo execution/order submission, broker mutation, real-money trading, Phase 10, and live execution remain locked; a new separately frozen DEC-058 is required before mutation-capable MT5 source may exist.
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight artifact, demo order, or broker mutation has been executed;
+3. DEC-058 / `EXP-20260922-029` is the active milestone: implement the MetaTrader5 Python mutation-capable backend source, exact existing-account fingerprint derivation, request constant translation, order-send result normalization, and order/position read normalization behind a hard-disabled FMP execution gate;
+4. `DEMO_EXECUTION_SOURCE_ARMED` remains source-default false with no DEC-058 setter/config/env/artifact/CLI path; the official adapter must reject before any broker read or mutation;
+5. demo execution/order submission through FMP, real-money trading, Phase 10, and live execution remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
