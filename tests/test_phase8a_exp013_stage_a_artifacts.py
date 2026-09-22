@@ -17,8 +17,12 @@ COMMIT = "a" * 40
 
 
 def _gate(symbol: str, timeframe: str, *, survivors: tuple[str, ...] = ()) -> dict[str, object]:
+    cell_index = (
+        ("EURUSD", "GBPUSD", "USDJPY").index(symbol) * 3
+        + ("5m", "15m", "1h").index(timeframe)
+    )
     fingerprints = tuple(
-        f"{index:064x}" for index in range(1, 5)
+        f"{cell_index * 10 + index:064x}" for index in range(1, 5)
     )
     return {
         "protocol": "fmp-phase8a-exp013-stage-a-gate-v1",
