@@ -13,7 +13,8 @@ from fmp.strategies.contracts import SignalCandidate
 
 LONDON = ZoneInfo("Europe/London")
 _TIMEFRAME_MINUTES = {"5m": 5, "15m": 15, "1h": 60}
-_ALLOWED_MULTIPLIERS = frozenset({1.0, 1.5, 2.0})
+_PHASE4_MULTIPLIERS = frozenset({1.0, 1.5, 2.0})
+_EXP015_MULTIPLIERS = frozenset({0.75, 1.25, 1.75, 2.25, 2.5})
 _REFERENCE_HOURS = 8
 
 
@@ -21,10 +22,17 @@ _REFERENCE_HOURS = 8
 class VolatilityBreakoutConfig:
     range_multiplier: float
     timeframe: str
+    parameter_region: str = "phase4"
 
     def __post_init__(self) -> None:
-        if self.range_multiplier not in _ALLOWED_MULTIPLIERS:
-            raise ValueError("range_multiplier must be one of 1.0, 1.5, or 2.0")
+        if self.parameter_region == "phase4":
+            allowed = _PHASE4_MULTIPLIERS
+        elif self.parameter_region == "exp015":
+            allowed = _EXP015_MULTIPLIERS
+        else:
+            raise ValueError("unsupported volatility-breakout parameter_region")
+        if self.range_multiplier not in allowed:
+            raise ValueError("range_multiplier is outside the selected parameter region")
         if self.timeframe not in _TIMEFRAME_MINUTES:
             raise ValueError("timeframe must be one of 5m, 15m, or 1h")
 
