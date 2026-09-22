@@ -13,6 +13,8 @@ from fmp.contracts import QuoteBar, SUPPORTED_SYMBOLS
 from fmp.data.phase2.schema import CANONICAL_SCHEMA_VERSION
 from fmp.research.data import ELIGIBLE_TIMEFRAMES
 
+PHASE8A_DATA_TIMEFRAMES = frozenset(set(ELIGIBLE_TIMEFRAMES) | {"1m"})
+
 PHASE8A_RETROSPECTIVE_START = date(2015, 1, 1)
 PHASE8A_RETROSPECTIVE_END_EXCLUSIVE = date(2026, 8, 21)
 PHASE8A_RETROSPECTIVE_LABEL = "RETROSPECTIVE_ALREADY_SEEN"
@@ -192,8 +194,8 @@ def load_phase8a_retrospective_bars(
     start, end_exclusive = _validated_range(research_range)
     if symbol not in SUPPORTED_SYMBOLS:
         raise ValueError(f"unsupported Phase 8A symbol: {symbol!r}")
-    if timeframe not in ELIGIBLE_TIMEFRAMES:
-        raise ValueError(f"unsupported Phase 8A timeframe: {timeframe!r}")
+    if timeframe not in PHASE8A_DATA_TIMEFRAMES:
+        raise ValueError(f"unsupported Phase 8A data timeframe: {timeframe!r}")
 
     manifest, manifest_sha256 = _load_manifest(Path(manifest_path))
     if manifest.get("schema_version") != CANONICAL_SCHEMA_VERSION:
