@@ -364,9 +364,6 @@ def _load_bundles(
     capture_fingerprints: set[str] = set()
     prior_end: datetime | None = None
     for bundle in bundles:
-        if prior_end is not None and bundle.started_at_utc < prior_end:
-            raise ValueError("Phase 8B prospective segment intervals overlap")
-        prior_end = bundle.ended_at_utc
         identities = (
             (
                 prospective_fingerprints,
@@ -393,6 +390,9 @@ def _load_bundles(
             if fingerprint in capture_fingerprints:
                 raise ValueError("duplicate Phase 8B capture-record fingerprint")
             capture_fingerprints.add(fingerprint)
+        if prior_end is not None and bundle.started_at_utc < prior_end:
+            raise ValueError("Phase 8B prospective segment intervals overlap")
+        prior_end = bundle.ended_at_utc
     return tuple(bundles), unclosed
 
 
