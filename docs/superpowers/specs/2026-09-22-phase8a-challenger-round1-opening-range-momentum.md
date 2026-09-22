@@ -204,6 +204,8 @@ Risk:
 
 The existing Phase 3 risk engine remains authoritative.
 
+Individual EXP-013 Stage A and Stage B strategy benchmarks use the same signal-timeframe next-bar execution convention as the established Phase 4 retrospective family benchmarks: 5m signals execute on the next supplied 5m bar, 15m signals on the next supplied 15m bar, and 1h signals on the next supplied 1h bar. DEC-040 canonical 1m execution is reserved for later joint-account portfolio simulation of explicitly frozen strategy sets and is not used to alter EXP-013 single-strategy selection results.
+
 ## 9. Stage A gate
 
 A configuration is a Stage A survivor only if **all** of the following are true.
