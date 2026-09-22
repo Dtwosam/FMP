@@ -372,11 +372,11 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-069 are merged and verified on `main`;
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-070 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet/approval/activation artifact, demo order, or broker mutation has been executed;
-3. DEC-070 / `EXP-20260922-041` is implemented on PR #162 head `a0bce886dc64e62eeafac9d642f63d13848c2ffb`: read-only campaign readiness, exact current bridge-identity audit, deterministic next-action reporting, no post-EOF consumption, and an updated multi-pair MT5 operator handoff; run `35789539447` passed 1085 tests plus YAML/compile and unchanged Phase 3 acceptance run `35789539375` passed;
-4. the readiness audit must write no campaign artifact, start no segment, consume no post-EOF quote data, and remain non-authoritative; `capture-segment` continues independent validation;
-5. repository `DEMO_EXECUTION_SOURCE_ARMED=false`; real prospective capture, SHADOW_VALIDATED, demo execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
+3. PR #162 merged DEC-070 / `EXP-20260922-041` to `main` at `5e918a9a9ed7b9ab112d62993eee6f4e7672e186`; the exact final PR head `5a26f9c6cd38040871a841c8a17567b1785ff753` passed 1085 tests plus YAML/compile in run `35789729752` and unchanged Phase 3 acceptance run `35789729689` passed; post-merge `main` runs `35789967258` and `35789967219` passed, with 1085 tests on the merge commit;
+4. DEC-070 completes the source-side Phase 8B operator preparation path: the read-only readiness audit verifies the exact frozen campaign/artifact chain and current required-symbol bridge identities without consuming post-EOF market records or writing authorization evidence, and the operator handoff now reflects the current multi-strategy/multi-pair Phase 8B workflow;
+5. repository `DEMO_EXECUTION_SOURCE_ARMED=false`; the next meaningful milestone is real-world prospective evidence: explicitly prepare the accepted MT5 DEMO bridge/campaign, run bounded Phase 8B capture segments, close/review evidence, and obtain SHADOW_VALIDATED before materializing the real Phase 9 chain. Demo execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
