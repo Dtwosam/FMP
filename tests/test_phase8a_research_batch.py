@@ -1,9 +1,14 @@
+from datetime import datetime, timezone
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import json
 import unittest
 
 from fmp.portfolio import StrategyLifecycle
 from fmp.portfolio.research_batch import (
     PHASE8A_BATCH_PROTOCOL,
     select_historical_inventory,
+    write_phase8a_batch_artifacts,
 )
 
 
@@ -66,6 +71,27 @@ class Phase8ARetrospectiveBatchTests(unittest.TestCase):
             qualified[0].strategy.parameters_json,
             '{"buffer_pips":5,"target_range_multiple":1.5}',
         )
+
+    def test_artifact_writer_serializes_utc_backtest_identity_deterministically(self) -> None:
+        payload = {
+            "protocol": PHASE8A_BATCH_PROTOCOL,
+            "promotion_authorized": False,
+            "run_identity": {
+                "requested_start_utc": datetime(2024, 1, 1, tzinfo=timezone.utc),
+            },
+        }
+        with TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            manifest = write_phase8a_batch_artifacts(payload, out)
+            stored = json.loads((out / "batch.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                stored["run_identity"]["requested_start_utc"],
+                "2024-01-01T00:00:00Z",
+            )
+            self.assertEqual(
+                manifest["protocol"],
+                "fmp-phase8a-retrospective-batch-artifacts-v1",
+            )
 
     def test_invalid_pair_timeframe_or_family_fails_closed(self) -> None:
         with self.assertRaises(ValueError):
