@@ -468,3 +468,31 @@ Copy this section for each serious experiment:
 - Max drawdown: pending
 - Conclusion: NEED_MORE_DATA
 - Follow-up: implement the frozen signal contract and deterministic retrospective grid runner; verify source-free tests and unchanged Phase 3 acceptance; only then dispatch Stage A. No Stage B source is opened by EXP-013 until an exact Stage A survivor authorization is derived.
+
+
+### EXP-20260922-013 — Phase 8A frozen portfolio selection
+
+- Date: 2026-09-22
+- Status: ACTIVE — IMPLEMENTATION ONLY / SEARCH BLOCKED
+- Protocol decision: DEC-041 APPROVED
+- Hypothesis: if Phase 8A produces at least two independently qualified immutable strategies, a bounded shared-account portfolio chosen under predeclared stability, concentration, cost, drawdown, and deterministic ranking rules can improve the economic case without post-result threshold changes.
+- Eligible lifecycle states: HISTORICAL_QUALIFIED, SHADOW_CANDIDATE, SHADOW_VALIDATED, DEMO_ELIGIBLE only.
+- Current eligible baseline count: 1 — the existing Phase 7 USDJPY 15m session-breakout survivor.
+- Search status: BLOCKED until at least one additional immutable challenger reaches HISTORICAL_QUALIFIED under a separate predeclared discovery/qualification experiment.
+- Pool bounds: 2 to 12 eligible strategies.
+- Portfolio cardinality: evaluate all unique unordered sets of 1 through 6; 1-strategy sets are controls only.
+- Retrospective selection range: 2019-01-01 inclusive through 2026-08-21 exclusive.
+- Execution: DEC-040 shared $100,000 account, canonical 1m BID/ASK execution, native 5m/15m/1h signal bars, unchanged Phase 3 risk.
+- Slippage scenarios: exactly 0.2, 0.5, and 1.0 pips adverse per fill; 0.2/0.5 gating, 1.0 diagnostic.
+- Mandatory gates: positive net return/expectancy, PF > 1.0, max drawdown <= 5%, and >=200 trades at both gating costs; additional 0.2-pip yearly-stability, strategy/pair concentration, and diversity gates per DEC-041.
+- Ranking: immutable lexicographic order frozen in DEC-041; no tunable score weights.
+- Evidence label: RETROSPECTIVE_ALREADY_SEEN.
+- Untouched OOS?: NO.
+- Promotion authorized?: NO.
+- Trade count: not run.
+- Net return after costs: not run.
+- Expectancy/trade: not run.
+- Profit factor: not run.
+- Max drawdown: not run.
+- Conclusion: NEED_MORE_DATA
+- Follow-up: implement/test the deterministic pool freeze, set enumeration, gate calculation, annualization, and ranking machinery. Do not execute combination search until a separate challenger experiment supplies at least one additional qualified strategy.

@@ -591,3 +591,23 @@ Stage A requires positive net return, expectancy, and PF>1.0 at both 0.2 and 0.5
 Stage B requires positive net return, expectancy, PF>1.0, and max drawdown <=5% at both 0.2 and 0.5 pips plus at least 75 completed 0.2-pip trades. A Stage B pass authorizes only `HISTORICAL_QUALIFIED` status for the immutable challenger. It does not authorize shadow validation, demo, live orders, or champion-set mutation.
 
 Consequences: `EXP-20260922-013` is ACTIVE for test-first implementation only. Phase 8A remains active; Phase 8B and all broker-order paths remain locked. No benchmark result has been inspected at the time of this decision.
+
+
+## DEC-041 — Phase 8A portfolio selection protocol
+
+**Date:** 2026-09-22
+**Status:** APPROVED
+
+The approved `docs/superpowers/specs/2026-09-22-phase8a-portfolio-selection.md` freezes the Phase 8A portfolio-selection rules before any strategy-combination search is run.
+
+DEC-041 may combine only immutable strategy versions already qualified by their own evidence. `DISCOVERY`, `CHALLENGER`, and `RETIRED` records are ineligible. The pool must contain between 2 and 12 eligible strategies; larger pools fail closed and require a separately predeclared reduction protocol. Every unique unordered set of 1 through 6 strategies is evaluated, with 1-strategy sets retained only as controls.
+
+Every set uses the DEC-040 shared-account simulator over exactly `2019-01-01` inclusive through `2026-08-21` exclusive, with exact 0.2/0.5/1.0-pip adverse-slippage scenarios and unchanged Phase 3 risk. Mandatory selection gates at both 0.2 and 0.5 pips require positive net return and expectancy, profit factor above 1.0, maximum drawdown at or below 5%, and at least 200 completed trades. Additional 0.2-pip stability/concentration gates require at least 5 of 8 positive calendar-year windows, no positive year above 45% of total positive-year PnL, no strategy above 60% of total positive trade PnL, no pair above 70%, and completed-trade representation from at least two strategy families and two V1 pairs. The 1.0-pip scenario remains diagnostic. Frequency of >=10% days is reported but is not a pass gate.
+
+Passing sets are ranked lexicographically by: higher 0.5-pip annualized compounded return, lower 0.5-pip drawdown, higher 0.5-pip profit factor, higher 0.2-pip annualized compounded return, lower strategy concentration, lower pair concentration, fewer strategies, then sorted fingerprint tuple. No post-result weight or threshold changes are allowed.
+
+All DEC-041 evidence remains `RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos = false`, and `promotion_authorized = false`. A selection PASS can identify only a future shadow candidate for separate acceptance/prospective testing; it cannot authorize demo/live execution.
+
+The current frozen historical inventory contains only one `HISTORICAL_QUALIFIED` strategy, the Phase 7 USDJPY 15m session-breakout survivor. Therefore DEC-041 cannot yet execute a meaningful multi-strategy search. At least one additional immutable challenger must first pass a separately predeclared discovery/qualification experiment.
+
+Consequences: Phase 8A remains ACTIVE. `EXP-20260922-013` is opened for implementation of the frozen selection machinery only; combination evaluation remains blocked until the qualified pool contains at least two strategies. Phase 8B, Phase 9, broker mutation, demo orders, live orders, and real-money trading remain LOCKED.
