@@ -40,6 +40,7 @@ It binds exactly:
 - accepted DEMO account fingerprint and server;
 - exact arm not-before and expiry;
 - operator approval reference;
+- runtime-authority builder code commit;
 - runtime validation UTC;
 - current journal event count and journal-tip fingerprint;
 - zero prior `SEND_ATTEMPTED` count;
