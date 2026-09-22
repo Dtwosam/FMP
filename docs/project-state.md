@@ -373,10 +373,10 @@ Implementation progress:
 Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-068 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet artifact, explicit execution approval, gate activation, demo order, or broker mutation has been executed;
-3. PR #160 merged DEC-068 / `EXP-20260922-039` to `main` at `88d23744b23faf5035b2c67075af73b0e1c25abc`; the exact final PR head `c54ca6ae1a0bce9d74465039e85008c643d5fa28` passed 1075 tests plus YAML/compile in run `35785056511` and unchanged Phase 3 acceptance run `35785056455` passed; post-merge `main` runs `35785181147` and `35785181186` passed;
-4. DEC-068 provides source-only exact challenge-bound approval-record and gate-activation contracts, but no real approval artifact exists, `DEMO_EXECUTION_SOURCE_ARMED=false`, and the DEC-065 runner is not wired to activation artifacts;
-5. the next boundary is a separately approved operator-action/runtime-wiring decision. Real first-demo approval/execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet/approval/activation artifact, demo order, or broker mutation has been executed;
+3. DEC-069 / `EXP-20260922-040` is implemented on PR #161 head `b52c026324b67216f2060d120b13c36d30a6677d`: gate-state-independent immutable artifact validation plus approval-gated delegation to the exact DEC-065 one-shot runner; run `35786753220` passed 1080 tests plus YAML/compile and unchanged Phase 3 acceptance run `35786753236` passed;
+4. DEC-069 must fail before journal mutation/backend access while `DEMO_EXECUTION_SOURCE_ARMED=false`, add no execution CLI, and delegate all future send/retry/reconciliation behavior to DEC-065 unchanged;
+5. real operator approval/activation, first-demo execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 

@@ -120,6 +120,7 @@ def _validate_upstream(
     session_arm: Mapping[str, object],
     session_ready: Mapping[str, object],
     execution_arm: Mapping[str, object],
+    require_source_unarmed: bool,
 ) -> None:
     validate_phase9_demo_design(design)
     validate_phase9_demo_order_request(request, design=design)
@@ -137,7 +138,7 @@ def _validate_upstream(
         session_ready=session_ready,
     )
 
-    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+    if require_source_unarmed and DEMO_EXECUTION_SOURCE_ARMED is not False:
         raise ValueError(
             "DEC-062 runtime authority requires demo execution source unarmed"
         )
@@ -220,6 +221,7 @@ def build_phase9_demo_runtime_authority(
         session_arm=session_arm,
         session_ready=session_ready,
         execution_arm=execution_arm,
+        require_source_unarmed=True,
     )
     if not isinstance(daily_halt_active, bool):
         raise ValueError("Phase 9 runtime daily-halt state must be boolean")
@@ -332,6 +334,7 @@ def validate_phase9_demo_runtime_authority(
         session_arm=session_arm,
         session_ready=session_ready,
         execution_arm=execution_arm,
+        require_source_unarmed=False,
     )
     if value.get("protocol") != PHASE9_DEMO_RUNTIME_AUTHORITY_PROTOCOL:
         raise ValueError("Phase 9 runtime-authority protocol mismatch")
@@ -470,6 +473,10 @@ def write_phase9_demo_runtime_authority(
     execution_arm: Mapping[str, object],
     journal_rows: Sequence[Mapping[str, object]],
 ) -> dict[str, object]:
+    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+        raise ValueError(
+            "DEC-069 runtime-authority writer requires source unarmed"
+        )
     validate_phase9_demo_runtime_authority(
         value,
         design=design,

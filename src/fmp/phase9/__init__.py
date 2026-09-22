@@ -1,3 +1,10 @@
+from .approved_runtime import (
+    PHASE9_APPROVED_DEMO_RUNTIME_DECISION,
+    PHASE9_APPROVED_DEMO_RUNTIME_EXPERIMENT_ID,
+    PHASE9_APPROVED_DEMO_RUNTIME_PROTOCOL,
+    run_phase9_approved_demo_one_shot,
+    validate_phase9_approved_demo_runtime,
+)
 from .approval import (
     PHASE9_DEMO_GATE_ACTIVATION_ARTIFACT_PROTOCOL,
     PHASE9_DEMO_GATE_ACTIVATION_CONTRACT_PROTOCOL,
@@ -187,6 +194,9 @@ from .protocol import (
 )
 
 __all__ = [
+    "PHASE9_APPROVED_DEMO_RUNTIME_DECISION",
+    "PHASE9_APPROVED_DEMO_RUNTIME_EXPERIMENT_ID",
+    "PHASE9_APPROVED_DEMO_RUNTIME_PROTOCOL",
     "PHASE9_DEMO_GATE_ACTIVATION_ARTIFACT_PROTOCOL",
     "PHASE9_DEMO_GATE_ACTIVATION_CONTRACT_PROTOCOL",
     "PHASE9_DEMO_GATE_ACTIVATION_CONTRACT_READY",
@@ -314,8 +324,10 @@ __all__ = [
     "compile_phase9_demo_acceptance",
     "phase9_demo_session_attempt_count",
     "run_phase9_demo_launch_preflight",
+    "run_phase9_approved_demo_one_shot",
     "run_phase9_demo_one_shot",
     "run_phase9_mt5_demo_preflight",
+    "validate_phase9_approved_demo_runtime",
     "validate_phase9_demo_acceptance",
     "validate_phase9_demo_gate_activation_contract",
     "validate_phase9_demo_campaign_evidence",

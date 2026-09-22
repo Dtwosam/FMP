@@ -1028,3 +1028,17 @@ A valid future approval record must bind the exact packet/challenge, permit/requ
 A valid future gate-activation contract must bind that exact approval and packet and be created inside the same arm window after approval.
 
 DEC-068 does not create a real approval artifact, does not change `DEMO_EXECUTION_SOURCE_ARMED=False`, does not wire the DEC-065 runner, and adds no broker-connected or execution CLI. Current repository evidence still contains no real Phase 8B acceptance/SHADOW_VALIDATED chain from which a real first-demo approval could be formed.
+
+
+## DEC-069 — Phase 9 approval-gated one-shot runtime wiring
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 9 DEMO ORDER
+
+The approved `docs/superpowers/specs/2026-09-22-phase9-approved-runtime-wiring.md` opens `EXP-20260922-040` for source-only wiring from one exact DEC-068 activation contract to the existing DEC-065 one-shot runner.
+
+DEC-069 revalidates the complete DEC-055-through-068 chain, current UTC inside the immutable arm window, activation time ordering, daily-halt inactive, current journal integrity, and zero prior `SEND_ATTEMPTED` before delegation.
+
+When and only when the repository source gate is true, the wrapper delegates to the exact DEC-065 runner; it does not rebuild the checked request, duplicate send logic, add retries, or reinterpret reconciliation/ambiguity outcomes.
+
+Repository `DEMO_EXECUTION_SOURCE_ARMED=False` remains unchanged. Tests may patch the gate only in-process and use fake in-memory mutation backends. No real Phase 8B/Phase 9 artifact chain, approval, activation, broker mutation, or demo order is created by DEC-069.

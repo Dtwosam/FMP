@@ -88,6 +88,7 @@ def _validate_input_binding(
     request: Mapping[str, object],
     session_arm: Mapping[str, object],
     session_ready: Mapping[str, object],
+    require_source_unarmed: bool,
 ) -> None:
     validate_phase9_demo_design(design)
     validate_phase9_demo_order_request(request, design=design)
@@ -98,7 +99,7 @@ def _validate_input_binding(
     )
     validate_phase9_demo_session_ready(session_ready)
 
-    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+    if require_source_unarmed and DEMO_EXECUTION_SOURCE_ARMED is not False:
         raise ValueError(
             "DEC-060 source verification requires demo execution unarmed"
         )
@@ -140,6 +141,7 @@ def build_phase9_demo_execution_arm(
         request=request,
         session_arm=session_arm,
         session_ready=session_ready,
+        require_source_unarmed=True,
     )
     commit = _commit(
         code_commit,
@@ -207,6 +209,7 @@ def validate_phase9_demo_execution_arm(
         request=request,
         session_arm=session_arm,
         session_ready=session_ready,
+        require_source_unarmed=False,
     )
     if value.get("protocol") != PHASE9_DEMO_EXECUTION_ARM_PROTOCOL:
         raise ValueError("Phase 9 execution-arm protocol mismatch")
@@ -301,6 +304,10 @@ def write_phase9_demo_execution_arm(
     session_arm: Mapping[str, object],
     session_ready: Mapping[str, object],
 ) -> dict[str, object]:
+    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+        raise ValueError(
+            "DEC-069 execution-arm writer requires source unarmed"
+        )
     validate_phase9_demo_execution_arm(
         value,
         design=design,

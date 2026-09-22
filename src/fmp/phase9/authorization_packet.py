@@ -369,10 +369,6 @@ def validate_phase9_first_demo_authorization_packet(
         launch_preflight=launch_preflight,
         journal_rows=journal_rows,
     )
-    if DEMO_EXECUTION_SOURCE_ARMED is not False:
-        raise ValueError(
-            "DEC-067 packet validation requires demo execution source unarmed"
-        )
     if value.get("protocol") != PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_PROTOCOL:
         raise ValueError("Phase 9 authorization packet protocol mismatch")
     if value.get("experiment_id") != PHASE9_FIRST_DEMO_AUTHORIZATION_PACKET_EXPERIMENT_ID:
@@ -452,6 +448,10 @@ def write_phase9_first_demo_authorization_packet(
     execution_permit: Mapping[str, object],
     journal_rows: Sequence[Mapping[str, object]],
 ) -> dict[str, object]:
+    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+        raise ValueError(
+            "DEC-069 authorization-packet writer requires source unarmed"
+        )
     validate_phase9_first_demo_authorization_packet(
         value,
         design=design,

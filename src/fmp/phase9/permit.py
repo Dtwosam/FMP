@@ -91,6 +91,7 @@ def _validate_launch(
     runtime_authority: Mapping[str, object],
     launch_preflight: Mapping[str, object],
     journal_rows: Sequence[Mapping[str, object]],
+    require_source_unarmed: bool,
 ) -> None:
     validate_phase9_demo_launch_preflight(
         launch_preflight,
@@ -103,7 +104,7 @@ def _validate_launch(
         journal_rows=journal_rows,
     )
 
-    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+    if require_source_unarmed and DEMO_EXECUTION_SOURCE_ARMED is not False:
         raise ValueError(
             "DEC-064 permit construction requires demo execution source unarmed"
         )
@@ -152,6 +153,7 @@ def build_phase9_demo_execution_permit(
         runtime_authority=runtime_authority,
         launch_preflight=launch_preflight,
         journal_rows=journal_rows,
+        require_source_unarmed=True,
     )
     commit = _commit(
         code_commit,
@@ -274,6 +276,7 @@ def validate_phase9_demo_execution_permit(
         runtime_authority=runtime_authority,
         launch_preflight=launch_preflight,
         journal_rows=journal_rows,
+        require_source_unarmed=False,
     )
     if value.get("protocol") != PHASE9_DEMO_EXECUTION_PERMIT_PROTOCOL:
         raise ValueError("Phase 9 execution-permit protocol mismatch")
@@ -420,6 +423,10 @@ def write_phase9_demo_execution_permit(
     launch_preflight: Mapping[str, object],
     journal_rows: Sequence[Mapping[str, object]],
 ) -> dict[str, object]:
+    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+        raise ValueError(
+            "DEC-069 execution-permit writer requires source unarmed"
+        )
     validate_phase9_demo_execution_permit(
         value,
         design=design,

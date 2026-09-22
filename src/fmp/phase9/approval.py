@@ -136,6 +136,7 @@ def _validate_packet(
     launch_preflight: Mapping[str, object],
     execution_permit: Mapping[str, object],
     journal_rows: Sequence[Mapping[str, object]],
+    require_source_unarmed: bool,
 ) -> Mapping[str, object]:
     validate_phase9_first_demo_authorization_packet(
         packet,
@@ -149,7 +150,7 @@ def _validate_packet(
         execution_permit=execution_permit,
         journal_rows=journal_rows,
     )
-    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+    if require_source_unarmed and DEMO_EXECUTION_SOURCE_ARMED is not False:
         raise ValueError(
             "DEC-068 source contract requires demo execution source unarmed"
         )
@@ -216,6 +217,7 @@ def build_phase9_first_demo_explicit_approval(
         launch_preflight=launch_preflight,
         execution_permit=execution_permit,
         journal_rows=journal_rows,
+        require_source_unarmed=True,
     )
     challenge = _sha256(
         packet.get("authorization_challenge_fingerprint"),
@@ -325,6 +327,7 @@ def validate_phase9_first_demo_explicit_approval(
         launch_preflight=launch_preflight,
         execution_permit=execution_permit,
         journal_rows=journal_rows,
+        require_source_unarmed=False,
     )
     if value.get("protocol") != PHASE9_FIRST_DEMO_EXPLICIT_APPROVAL_PROTOCOL:
         raise ValueError("Phase 9 explicit approval protocol mismatch")
@@ -560,10 +563,6 @@ def validate_phase9_demo_gate_activation_contract(
         execution_permit=execution_permit,
         journal_rows=journal_rows,
     )
-    if DEMO_EXECUTION_SOURCE_ARMED is not False:
-        raise ValueError(
-            "DEC-068 activation validation requires source gate unarmed"
-        )
     if value.get("protocol") != PHASE9_DEMO_GATE_ACTIVATION_CONTRACT_PROTOCOL:
         raise ValueError("Phase 9 gate activation protocol mismatch")
     if value.get("experiment_id") != PHASE9_FIRST_DEMO_EXPLICIT_APPROVAL_EXPERIMENT_ID:
@@ -673,6 +672,10 @@ def write_phase9_first_demo_explicit_approval(
     execution_permit: Mapping[str, object],
     journal_rows: Sequence[Mapping[str, object]],
 ) -> dict[str, object]:
+    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+        raise ValueError(
+            "DEC-069 explicit-approval writer requires source unarmed"
+        )
     validate_phase9_first_demo_explicit_approval(
         value,
         packet=packet,
@@ -735,6 +738,10 @@ def write_phase9_demo_gate_activation_contract(
     execution_permit: Mapping[str, object],
     journal_rows: Sequence[Mapping[str, object]],
 ) -> dict[str, object]:
+    if DEMO_EXECUTION_SOURCE_ARMED is not False:
+        raise ValueError(
+            "DEC-069 gate-activation writer requires source unarmed"
+        )
     validate_phase9_demo_gate_activation_contract(
         value,
         approval=approval,
