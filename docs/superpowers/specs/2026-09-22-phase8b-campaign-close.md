@@ -111,6 +111,11 @@ The full campaign starts with one $100,000 virtual account per slippage
 scenario. It does not reset risk equity, open positions, pending decisions, or
 daily risk state at DEC-052 process boundaries.
 
+A DEC-053 closure snapshot may be written only when every aggregate slippage
+scenario has zero open and zero pending hypothetical decisions. This prevents a
+financially incomplete mid-trade snapshot from becoming eligible for DEC-051
+acceptance. The operator may capture another segment and close again later.
+
 The aggregate segment binds the exact ordered DEC-052 prospective-segment
 fingerprints in addition to the exact ordered raw capture-record fingerprints.
 
