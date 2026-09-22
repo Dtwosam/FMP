@@ -56,7 +56,26 @@ Before any journal mutation or backend call, DEC-069 must verify:
 With the repository value still false, runtime fails before broker access and
 before journal mutation.
 
-## 4. Delegation boundary
+## 4. Artifact validation versus source-gate state
+
+DEC-060/062/064/067/068 were created while the source gate was permanently
+false, and some validators currently inspect that live source state.
+
+DEC-069 must separate those concerns:
+
+- artifact builders and create-only writers continue to require the source gate
+  to be false;
+- immutable artifact validators verify the artifact's own embedded
+  `demo_execution_source_armed=false` / non-authorization fields and exact
+  fingerprints, but do not reject merely because the current runtime source
+  gate is armed;
+- no artifact may be rebuilt or rewritten after arming;
+- existing source-free construction behavior remains fail-closed.
+
+This separation is required so an operator runtime can validate already-frozen
+evidence before the one permitted send.
+
+## 5. Delegation boundary
 
 When and only when the source gate is true, DEC-069 delegates to the exact
 DEC-065 `run_phase9_demo_one_shot`.
@@ -72,7 +91,7 @@ DEC-069 must not duplicate or reinterpret:
 
 The DEC-065 runner remains authoritative for those behaviors.
 
-## 5. One-shot semantics
+## 6. One-shot semantics
 
 DEC-069 adds no retry loop.
 
@@ -81,7 +100,7 @@ A successful call may cause at most one DEC-065 mutation attempt.
 Any durable `SEND_ATTEMPTED` spends the arm exactly as already defined by
 DEC-059/065.
 
-## 6. Source result
+## 7. Source result
 
 DEC-069 defines:
 
@@ -102,7 +121,7 @@ The wrapper result binds:
 
 This wrapper does not redefine the one-shot outcome.
 
-## 7. Repository safety
+## 8. Repository safety
 
 DEC-069 must keep:
 
@@ -117,7 +136,7 @@ DEC-069 must keep:
 Tests may patch the source gate only in-process and may use only fake in-memory
 mutation backends.
 
-## 8. No current real execution eligibility
+## 9. No current real execution eligibility
 
 The repository still has no real Phase 8B acceptance/SHADOW_VALIDATED chain and
 no real DEC-055-through-068 artifact chain.
@@ -125,7 +144,7 @@ no real DEC-055-through-068 artifact chain.
 Therefore DEC-069 can verify only source behavior. It cannot legitimately run a
 real first practice order from current repository evidence.
 
-## 9. Next boundary
+## 10. Next boundary
 
 After DEC-069, source construction for the first practice-order path is complete.
 
