@@ -1,3 +1,12 @@
+from .challenger_round1_evidence import (
+    EXP013_STAGE_A_ARTIFACT_PROTOCOL,
+    EXP013_STAGE_A_AUTHORIZATION_PROTOCOL,
+    EXP013_STAGE_A_CELL_EVIDENCE_PROTOCOL,
+    build_exp013_stage_a_authorization,
+    build_exp013_stage_a_cell_evidence,
+    write_exp013_stage_a_authorization,
+    write_exp013_stage_a_cell_evidence,
+)
 from .challenger_round1 import (
     EXP013_STAGE_A_CELL_PROTOCOL,
     EXP013_STAGE_A_GATE_PROTOCOL,
@@ -80,6 +89,9 @@ from .router import (
 
 __all__ = [
     "EXP013_ID",
+    "EXP013_STAGE_A_ARTIFACT_PROTOCOL",
+    "EXP013_STAGE_A_AUTHORIZATION_PROTOCOL",
+    "EXP013_STAGE_A_CELL_EVIDENCE_PROTOCOL",
     "EXP013_STAGE_A_CELL_PROTOCOL",
     "EXP013_STAGE_A_GATE_PROTOCOL",
     "OPENING_RANGE_MOMENTUM_SIGNAL_CONTRACT",
@@ -114,6 +126,8 @@ __all__ = [
     "StrategyRecord",
     "StrategyVersion",
     "annualized_compounded_return",
+    "build_exp013_stage_a_authorization",
+    "build_exp013_stage_a_cell_evidence",
     "build_joint_evidence_envelope",
     "build_opening_range_momentum_challengers",
     "build_phase4_baseline_inventory",
@@ -136,6 +150,8 @@ __all__ = [
     "select_historical_inventory",
     "summarize_candidate_exposure",
     "summarize_daily_returns",
+    "write_exp013_stage_a_authorization",
+    "write_exp013_stage_a_cell_evidence",
     "write_joint_evidence_artifacts",
     "write_phase8a_batch_artifacts",
     "transition_strategy",
