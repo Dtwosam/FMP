@@ -57,13 +57,25 @@ jobs:
           from pathlib import Path
 
           expected = (
-              ('stage-a-run.json', 'phase8a-exp015-stage-a', 'stage-a-head-sha.txt'),
-              ('stage-b-run.json', 'phase8a-exp015-stage-b', 'stage-b-head-sha.txt'),
+              (
+                  'stage-a-run.json',
+                  'phase8a-exp015-stage-a',
+                  '.github/workflows/phase8a-exp015-stage-a.yml',
+                  'stage-a-head-sha.txt',
+              ),
+              (
+                  'stage-b-run.json',
+                  'phase8a-exp015-stage-b',
+                  '.github/workflows/phase8a-exp015-stage-b.yml',
+                  'stage-b-head-sha.txt',
+              ),
           )
-          for filename, name, out in expected:
+          for filename, name, workflow_path, out in expected:
               run = json.loads(Path(filename).read_text(encoding='utf-8'))
               assert run['name'] == name, run
               assert run['event'] == 'workflow_dispatch', run
+              assert run['head_branch'] == 'main', run
+              assert run['path'] == workflow_path, run
               assert run['status'] == 'completed', run
               assert run['conclusion'] == 'success', run
               head_sha = run['head_sha']
