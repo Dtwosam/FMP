@@ -812,31 +812,114 @@ def validate_phase9_demo_reconciliation(
             value.get(field),
             field=f"Phase 9 reconciliation {field}",
         )
-    for field in (
-        "duplicate_client_order_ids",
-        "unknown_broker_order_ids",
-        "orphan_broker_position_ids",
-        "missing_expected_protective_stop_ids",
-    ):
-        rows = value.get(field)
-        if (
-            not isinstance(rows, list)
-            or rows != sorted(rows)
-            or len(set(rows)) != len(rows)
-            or any(not isinstance(item, str) or not item for item in rows)
-        ):
-            raise ValueError(
-                f"Phase 9 reconciliation {field} is malformed"
-            )
-    discrepancies = any(
-        value[field]
-        for field in (
-            "duplicate_client_order_ids",
-            "unknown_broker_order_ids",
-            "orphan_broker_position_ids",
-            "missing_expected_protective_stop_ids",
-        )
+    _nonempty_string(
+        value.get("server"),
+        field="Phase 9 reconciliation server",
     )
+
+    local = value.get("local_requests")
+    orders = value.get("broker_orders")
+    positions = value.get("broker_positions")
+    if not isinstance(local, list):
+        raise ValueError("Phase 9 reconciliation local requests are malformed")
+    if not isinstance(orders, list):
+        raise ValueError("Phase 9 reconciliation broker orders are malformed")
+    if not isinstance(positions, list):
+        raise ValueError("Phase 9 reconciliation broker positions are malformed")
+
+    normalized_local: list[dict[str, str]] = []
+    for row in local:
+        if not isinstance(row, Mapping):
+            raise ValueError("Phase 9 reconciliation local request is malformed")
+        normalized_local.append(
+            {
+                "request_fingerprint": _validate_sha256(
+                    row.get("request_fingerprint"),
+                    field="Phase 9 reconciliation request fingerprint",
+                ),
+                "client_order_id": _nonempty_string(
+                    row.get("client_order_id"),
+                    field="Phase 9 reconciliation local client ID",
+                ),
+            }
+        )
+    if local != sorted(
+        normalized_local,
+        key=lambda item: (
+            item["client_order_id"],
+            item["request_fingerprint"],
+        ),
+    ):
+        raise ValueError("Phase 9 reconciliation local requests are not sorted")
+
+    normalized_orders = _normalized_broker_orders(orders)
+    normalized_positions = _normalized_broker_positions(positions)
+    if orders != normalized_orders:
+        raise ValueError("Phase 9 reconciliation broker orders are not normalized")
+    if positions != normalized_positions:
+        raise ValueError(
+            "Phase 9 reconciliation broker positions are not normalized"
+        )
+    order_ids = [str(item["broker_order_id"]) for item in normalized_orders]
+    position_ids = [
+        str(item["broker_position_id"]) for item in normalized_positions
+    ]
+    if len(set(order_ids)) != len(order_ids):
+        raise ValueError("Phase 9 reconciliation duplicate broker order ID")
+    if len(set(position_ids)) != len(position_ids):
+        raise ValueError("Phase 9 reconciliation duplicate broker position ID")
+
+    local_client_ids = [
+        item["client_order_id"] for item in normalized_local
+    ]
+    local_set = set(local_client_ids)
+    expected = {
+        "duplicate_client_order_ids": sorted(
+            set(_duplicates(local_client_ids))
+            | set(
+                _duplicates(
+                    [
+                        str(item["client_order_id"])
+                        for item in normalized_orders
+                    ]
+                )
+            )
+            | set(
+                _duplicates(
+                    [
+                        str(item["client_order_id"])
+                        for item in normalized_positions
+                    ]
+                )
+            )
+        ),
+        "unknown_broker_order_ids": sorted(
+            str(item["broker_order_id"])
+            for item in normalized_orders
+            if item["client_order_id"] not in local_set
+        ),
+        "orphan_broker_position_ids": sorted(
+            str(item["broker_position_id"])
+            for item in normalized_positions
+            if item["client_order_id"] not in local_set
+        ),
+        "missing_expected_protective_stop_ids": sorted(
+            {
+                str(item["client_order_id"])
+                for item in [*normalized_orders, *normalized_positions]
+                if item["client_order_id"] in local_set
+                and item["protective_stop_id"] is None
+            }
+        ),
+    }
+    for field, expected_rows in expected.items():
+        rows = value.get(field)
+        if rows != expected_rows:
+            raise ValueError(
+                f"Phase 9 reconciliation {field} does not replay"
+            )
+
+    discrepancies = any(expected.values())
     if value.get("healthy") is not (not discrepancies):
         raise ValueError("Phase 9 reconciliation healthy flag mismatch")
     for field in (
