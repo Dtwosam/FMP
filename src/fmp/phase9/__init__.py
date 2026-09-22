@@ -10,6 +10,20 @@ from .design import (
     validate_phase9_demo_design,
     write_phase9_demo_design,
 )
+from .mt5_mutation import (
+    DEMO_EXECUTION_SOURCE_ARMED,
+    GatedMT5DemoMutationAdapter,
+    MetaTrader5PythonDemoBackend,
+    PHASE9_MT5_MUTATION_DECISION,
+    PHASE9_MT5_MUTATION_EXPERIMENT_ID,
+    PHASE9_MT5_MUTATION_SOURCE_PROTOCOL,
+    PHASE9_MT5_MUTATION_SOURCE_READY,
+    PHASE9_MT5_SEND_RESULT_PROTOCOL,
+    TRADE_RETCODE_DONE,
+    build_phase9_mt5_mutation_source_foundation,
+    build_phase9_mt5_send_result,
+    validate_phase9_mt5_send_result,
+)
 from .mt5_preflight import (
     FILLING_MODES,
     MT5DemoCheckBackend,
@@ -51,6 +65,15 @@ from .protocol import (
 )
 
 __all__ = [
+    "DEMO_EXECUTION_SOURCE_ARMED",
+    "GatedMT5DemoMutationAdapter",
+    "MetaTrader5PythonDemoBackend",
+    "PHASE9_MT5_MUTATION_DECISION",
+    "PHASE9_MT5_MUTATION_EXPERIMENT_ID",
+    "PHASE9_MT5_MUTATION_SOURCE_PROTOCOL",
+    "PHASE9_MT5_MUTATION_SOURCE_READY",
+    "PHASE9_MT5_SEND_RESULT_PROTOCOL",
+    "TRADE_RETCODE_DONE",
     "FILLING_MODES",
     "MT5DemoCheckBackend",
     "ORDER_CHECK_SUCCESS_RETCODE",
@@ -78,8 +101,10 @@ __all__ = [
     "PHASE9_EXPERIMENT_ID",
     "PHASE9_MT5_ORDER_BRIDGE_PROTOCOL",
     "build_phase9_demo_design",
+    "build_phase9_mt5_mutation_source_foundation",
     "build_phase9_mt5_order_check",
     "build_phase9_mt5_order_check_request",
+    "build_phase9_mt5_send_result",
     "build_phase9_demo_dry_run",
     "build_phase9_demo_order_protocol_foundation",
     "build_phase9_demo_order_request",
@@ -90,6 +115,7 @@ __all__ = [
     "validate_phase9_mt5_demo_preflight",
     "validate_phase9_mt5_order_check",
     "validate_phase9_mt5_order_check_request",
+    "validate_phase9_mt5_send_result",
     "validate_phase9_demo_dry_run",
     "validate_phase9_demo_order_request",
     "validate_phase9_demo_reconciliation",
