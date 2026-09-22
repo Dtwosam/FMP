@@ -373,9 +373,9 @@ Implementation progress:
 Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-061 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm artifact, demo order, or broker mutation has been executed;
-3. PR #153 merged DEC-061 / `EXP-20260922-032` to `main` at `ad4dea51f537225f7bbb18335c68beebb9c58067`; the exact final PR head `b6584aff886dad7fac513cdeb57d3c86430b67c4` passed 1025 tests plus YAML/compile in run `35772414863` and unchanged Phase 3 acceptance run `35772414631` passed;
-4. DEC-061 keeps `DEMO_EXECUTION_SOURCE_ARMED=false`, adds only the local-only arm materializer, exposes no semantic order/account/risk overrides, and adds no broker-connected execution command;
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority artifact, demo order, or broker mutation has been executed;
+3. DEC-062 / `EXP-20260922-033` is the active milestone: source-only runtime validation of one exact materialized DEC-060/061 arm, exact UTC-window/daily-halt checks, journal identity replay, zero-prior-send-attempt proof, and create-only runtime-authority evidence;
+4. DEC-062 keeps `DEMO_EXECUTION_SOURCE_ARMED=false`, adds no broker-connected or order-capable CLI, and cannot call MT5 or submit the first practice-account order;
 5. demo execution/order submission, broker mutation, live trading, real-money trading, Phase 10, and deployment review remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
