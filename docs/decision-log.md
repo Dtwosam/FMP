@@ -1370,3 +1370,23 @@ DEC-091 also freezes deterministic aggregate model-result evidence before any au
 `AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED=false`. The authoritative bundle runner refuses before loading cells or calling the training core. No model-training workflow, CLI, operator dispatch mapping, historical fit, promotion, shadow action, demo order, broker mutation, live order, or real-money action is introduced.
 
 Consequences: the exact historical artifact consumption and result-evidence source is frozen, but the authoritative EXP-044 model result remains locked behind a later separately merged execution decision.
+
+
+## DEC-092 — Phase 8A EXP-044 frozen model-training workflow source
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY AUTHORITATIVE EXP-044 MODEL-TRAINING RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-model-workflow-source.md` freezes the manual workflow, CLI, and fail-closed execution-gate source that may later run the already-frozen DEC-088 through DEC-091 stack.
+
+The execution gate binds the unchanged DEC-091 artifact runner, DEC-090 training core, and DEC-088 protocol by exact Git blob identities `27c0848d16722a22b4762f5842396c2aebc92bec`, `34b50a3f907d26b1c5ec50a0a0b444a3417d04f7`, and `549b2a04f961d9d8ad83caea9c02b40ee54adec2`, plus the DEC-088 protocol fingerprint. Checked-out file bytes are converted to Git blob identities at runtime, so source drift fails closed.
+
+The frozen workflow `.github/workflows/phase8a-exp044-model-training.yml` is manual-only, main-only, and has no user inputs. Its first job calls the execution gate. All nine pair/timeframe jobs depend on that authorization preflight, and the aggregate evidence job depends on all model-cell jobs.
+
+The matrix freezes the exact nine feature artifact IDs/digests, nine outcome artifact IDs/digests, and readiness artifact ID/digest. When later authorized, each pair/timeframe job independently verifies downloaded ZIP SHA-256 before the DEC-091 manifest/parquet validation layer runs, then executes only the fixed 60m and 240m cells. No market-data acquisition, feature regeneration, outcome rematerialization, target/hyperparameter input, or alternate artifact discovery is present.
+
+The CLI requires the execution gate before readiness/artifact loading, estimator fitting, or aggregate result compilation, and binds result execution to the exact checked-out Git HEAD.
+
+Under DEC-092, `MODEL_RUN_DISPATCH_AUTHORIZED=false`, `AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED=false`, `MODEL_PROTOCOL_RESULT_AUTHORIZED=false`, and `MODEL_FIT_AUTHORIZED=false`. The operator reports `MODEL_RUN_WORKFLOW_SOURCE_FROZEN` with no dispatch command, so `advance --execute` remains non-mutating for model work.
+
+Consequences: executable workflow source is frozen and inspectable before any result exists, but no authoritative model-training run is yet authorized or dispatched. A later separate decision must bind the exact merged DEC-092 workflow/CLI/gate source and explicitly open one guarded historical model-run dispatch while keeping promotion and all trading permissions false.
