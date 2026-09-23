@@ -3,10 +3,49 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import date, datetime, timezone
 from pathlib import Path
 
 from tests.phase5_helpers import make_bars, sha256, write_dataset
+
+
+
+def _pair_fixture(root: Path) -> tuple[Path, Path]:
+    source = root / "source"
+    manifest = None
+    monthly_by_timeframe = {
+        "5m": {
+            "2025-03": make_bars(
+                timeframe="5m",
+                start=datetime(2025, 3, 3, tzinfo=timezone.utc),
+                count=60,
+            )
+        },
+        "15m": {
+            "2025-03": make_bars(
+                timeframe="15m",
+                start=datetime(2025, 3, 3, tzinfo=timezone.utc),
+                count=40,
+            )
+        },
+        "1h": {
+            "2025-03": make_bars(
+                timeframe="1h",
+                start=datetime(2025, 3, 3, tzinfo=timezone.utc),
+                count=32,
+            )
+        },
+    }
+    for timeframe, monthly in monthly_by_timeframe.items():
+        manifest = write_dataset(
+            source,
+            symbol="EURUSD",
+            timeframe=timeframe,
+            monthly_frames=monthly,
+        )
+    assert manifest is not None
+    return source, manifest
 
 
 class MarketLearningFeatureTests(unittest.TestCase):
@@ -182,6 +221,79 @@ class MarketLearningFeatureTests(unittest.TestCase):
                 json.loads((out / "manifest.json").read_text(encoding="utf-8")),
                 result,
             )
+
+    def test_pair_feature_generation_loads_each_timeframe_once(self) -> None:
+        from fmp.market_learning.features import (
+            load_market_feature_source,
+            materialize_market_feature_pair,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source, manifest = _pair_fixture(root)
+            with patch(
+                "fmp.market_learning.features.load_market_feature_source",
+                wraps=load_market_feature_source,
+            ) as loader:
+                result = materialize_market_feature_pair(
+                    dataset_root=source,
+                    manifest_path=manifest,
+                    symbol="EURUSD",
+                    start=date(2025, 3, 1),
+                    end_exclusive=date(2025, 4, 1),
+                    primary_root=root / "primary",
+                    verification_root=root / "verification",
+                    code_commit="a" * 40,
+                )
+            self.assertEqual(loader.call_count, 3)
+            self.assertEqual(set(result["primary"]), {"5m", "15m", "1h"})
+            self.assertEqual(result["primary"], result["verification"])
+
+    def test_pair_feature_generation_matches_single_cell_outputs(self) -> None:
+        from fmp.market_learning.features import (
+            materialize_market_feature_pair,
+            run_market_feature_generation,
+        )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source, manifest = _pair_fixture(root)
+            pair = materialize_market_feature_pair(
+                dataset_root=source,
+                manifest_path=manifest,
+                symbol="EURUSD",
+                start=date(2025, 3, 1),
+                end_exclusive=date(2025, 4, 1),
+                primary_root=root / "primary",
+                verification_root=root / "verification",
+                code_commit="b" * 40,
+            )
+
+            for timeframe in ("5m", "15m", "1h"):
+                single_root = root / "single" / f"EURUSD-{timeframe}"
+                single = run_market_feature_generation(
+                    dataset_root=source,
+                    manifest_path=manifest,
+                    symbol="EURUSD",
+                    timeframe=timeframe,
+                    start=date(2025, 3, 1),
+                    end_exclusive=date(2025, 4, 1),
+                    output_root=single_root,
+                    code_commit="b" * 40,
+                )
+                self.assertEqual(pair["primary"][timeframe], single)
+
+                pair_root = root / "primary" / f"EURUSD-{timeframe}"
+                for artifact in single["artifacts"]:
+                    rel = artifact["path"]
+                    self.assertEqual(
+                        (pair_root / rel).read_bytes(),
+                        (single_root / rel).read_bytes(),
+                    )
+                self.assertEqual(
+                    (pair_root / "manifest.json").read_bytes(),
+                    (single_root / "manifest.json").read_bytes(),
+                )
 
     def test_range_contract_rejects_invalid_requests(self) -> None:
         from fmp.market_learning.features import validate_market_feature_range
