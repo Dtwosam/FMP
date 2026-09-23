@@ -1414,3 +1414,27 @@ The read-only operator exposes `MODEL_RUN_DISPATCH_REQUIRED` only when no model 
 DEC-093 also adds deterministic aggregate model-result validation: the evidence fingerprint is recomputed; all 18 exact cells are required; each cell result fingerprint is required; selection/validation/retrospective-holdout status chains must be logically consistent; and all promotion/trading locks remain false.
 
 Consequences: exactly one historical EXP-044 model-result run is authorized after merge, but no run is dispatched by DEC-093 itself and no result is assumed. Any later promotion or shadow-candidate decision requires a separate review of the produced retrospective evidence.
+
+
+## DEC-094 — Phase 8A EXP-044 failed model-run review and V1 closure
+
+**Date:** 2026-09-23
+**Status:** APPROVED AFTER THE SINGLE DEC-093 MODEL RUN FAILED
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-model-run-failure-review.md` records the terminal outcome of the one DEC-093-authorized historical model workflow, run `35891605645`, attempt 1, from `main` SHA `e97fa03d0e94fd505d0f926eb730e01a41947880`.
+
+Authorization preflight succeeded. All nine matrix jobs completed. Five pair/timeframe jobs completed both 60m/240m model-cell computations and then failed because `actions/upload-artifact@v6` excluded the hidden `.results` directory by default: EURUSD 5m, EURUSD 1h, GBPUSD 15m, GBPUSD 1h, and USDJPY 1h. Their ephemeral JSON was not persisted and is not accepted as model evidence.
+
+Four pair/timeframe jobs failed during fitting because frozen L2 logistic regression with `lbfgs` did not converge within DEC-088's `max_iter=2000`: EURUSD 15m, GBPUSD 5m, USDJPY 5m, and USDJPY 15m. DEC-090 correctly treated each convergence warning as a hard failure.
+
+The aggregate model-evidence job was skipped and GitHub reports zero persisted artifacts for the run. Run `35891605645` remains immutable failed audit evidence and must not be rerun, retried, deleted, or automatically replaced.
+
+DEC-094 repairs only the workflow's evidence-persistence source: pair/timeframe upload now runs `if: always()`, includes hidden files, and warns rather than errors when no result file exists; aggregate upload also includes hidden files. This source repair does not authorize another EXP-044 V1 run.
+
+DEC-088's model universe and estimator parameters remain unchanged. In particular, DEC-094 does not increase logistic `max_iter`, change solver/tolerance/regularization, remove a family, change target/features/splits/thresholds, or otherwise rescue a result after observing V1 behavior.
+
+DEC-094 closes model dispatch, authoritative result execution, model-protocol result production, and fitting authorization. Promotion, shadow, demo, broker mutation, live-order, real-money, and trading authorizations remain false.
+
+The read-only operator machine-validates the exact run/job/failure/artifact inventory and reports `MODEL_RUN_FAILURE_REVIEWED`. EXP-044 V1 is closed with no authoritative aggregate model result.
+
+Consequences: any continued direct-market model research requires a separately predeclared successor experiment/protocol that explicitly acknowledges post-result adaptation and cannot describe the reused historical data as untouched OOS evidence.
