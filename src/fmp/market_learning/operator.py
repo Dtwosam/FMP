@@ -602,7 +602,10 @@ def dispatch_command_for_next_report(
     if report.get("read_only") is not True:
         raise ValueError("next report must be explicitly read-only")
     stage = report.get("stage")
-    if stage == "MODEL_RUN_DISPATCH_REQUIRED":
+    if stage in {
+        "MODEL_RUN_DISPATCH_REQUIRED",
+        "MODEL_RUN_REPLACEMENT_DISPATCH_REQUIRED",
+    }:
         for field in (
             "model_protocol_result_authorized",
             "model_fit_authorized",
@@ -634,7 +637,10 @@ def dispatch_command_for_next_report(
         if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
             raise ValueError("outcome dispatch plan requires a positive feature run id")
         command = outcome_dispatch_command(run_id)
-    elif stage == "MODEL_RUN_DISPATCH_REQUIRED":
+    elif stage in {
+        "MODEL_RUN_DISPATCH_REQUIRED",
+        "MODEL_RUN_REPLACEMENT_DISPATCH_REQUIRED",
+    }:
         command = model_dispatch_command()
     else:
         if "dispatch_command" in report:
