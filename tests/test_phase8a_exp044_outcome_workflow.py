@@ -44,13 +44,17 @@ class Exp044OutcomeWorkflowTests(unittest.TestCase):
         self.assertIn("fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2", text)
         self.assertIn("10327600628", text)
         self.assertIn("6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72", text)
-        self.assertIn("scripts/phase8a_market_outcomes.py", text)
+        self.assertIn("scripts/phase8a_market_outcome_pair.py", text)
         self.assertIn("scripts/phase8a_market_outcome_evidence.py", text)
 
     def test_workflow_revalidates_feature_evidence_and_keeps_model_locked(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("load_feature_evidence_index", text)
         self.assertIn("feature_evidence_fingerprint", text)
+        self.assertIn("--feature-root-5m", text)
+        self.assertIn("--feature-root-15m", text)
+        self.assertIn("--feature-root-1h", text)
+        self.assertIn("--out-root .exp044-outcomes", text)
         self.assertIn('manifest["model_fit_authorized"] is False', text)
         self.assertIn('manifest["promotion_authorized"] is False', text)
         self.assertIn('evidence["outcome_evidence_complete"] is True', text)
