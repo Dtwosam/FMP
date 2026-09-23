@@ -222,11 +222,13 @@ jobs:
           done
 
       - name: Upload pair/timeframe model-cell evidence
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: exp044-model-cell-results-${{ matrix.dataset.symbol }}-${{ matrix.dataset.timeframe }}-${{ github.sha }}
           path: .results
-          if-no-files-found: error
+          if-no-files-found: warn
+          include-hidden-files: true
 
   aggregate-model-evidence:
     needs: model-cells
@@ -273,3 +275,4 @@ jobs:
           name: exp044-model-result-evidence-${{ github.sha }}-from-feature-35867307338-outcome-35876715434
           path: .model-evidence/model-result-evidence.json
           if-no-files-found: error
+          include-hidden-files: true

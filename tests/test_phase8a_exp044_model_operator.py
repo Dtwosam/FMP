@@ -8,6 +8,7 @@ from fmp.market_learning.operator import (
     dispatch_command_for_next_report,
     model_dispatch_command,
     model_run_artifacts_endpoint,
+    model_run_jobs_endpoint,
     model_run_endpoint,
     model_runs_endpoint,
     select_model_result_artifact,
@@ -36,6 +37,10 @@ class Exp044ModelOperatorTests(unittest.TestCase):
         self.assertEqual(
             model_run_artifacts_endpoint(123),
             "repos/Dtwosam/FMP/actions/runs/123/artifacts?per_page=100",
+        )
+        self.assertEqual(
+            model_run_jobs_endpoint(123),
+            "repos/Dtwosam/FMP/actions/runs/123/jobs?per_page=100",
         )
         command = model_dispatch_command()
         self.assertEqual(
@@ -136,17 +141,24 @@ class Exp044ModelOperatorTests(unittest.TestCase):
                     )
                 )
 
-    def test_operator_source_has_one_shot_and_review_stages(self) -> None:
+    def test_operator_source_closes_v1_after_reviewed_failure(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
-        self.assertIn("MODEL_RUN_DISPATCH_REQUIRED", text)
-        self.assertIn("MODEL_RUN_IN_PROGRESS", text)
-        self.assertIn("MODEL_RUN_REVIEW_REQUIRED", text)
-        self.assertIn("MODEL_RESULT_REVIEW_REQUIRED", text)
-        self.assertIn("select_only_manual_main_run", text)
-        self.assertIn("select_model_result_artifact", text)
-        self.assertIn("validate_model_result_evidence", text)
+        self.assertIn("MODEL_RUN_EXECUTION_CLOSED", text)
+        self.assertIn("MODEL_RUN_AUTHORIZATION_CLOSED", text)
+        self.assertIn("MODEL_RUN_FAILURE_REVIEWED", text)
+        self.assertIn("REVIEWED_FAILED_MODEL_RUN_ID", text)
+        self.assertIn("model_run_jobs_endpoint", text)
+        self.assertIn("validate_reviewed_failed_model_run", text)
         self.assertIn(
-            "Do not promote or open shadow/demo/trading activity.",
+            "Do not rerun or replace run ",
+            text,
+        )
+        self.assertIn(
+            "35891605645. Any continued model research requires a ",
+            text,
+        )
+        self.assertNotIn(
+            'stage="MODEL_RUN_DISPATCH_REQUIRED"',
             text,
         )
 

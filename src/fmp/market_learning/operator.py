@@ -528,6 +528,12 @@ def model_run_artifacts_endpoint(run_id: int) -> str:
     return f"repos/{REPOSITORY}/actions/runs/{run_id}/artifacts?per_page=100"
 
 
+def model_run_jobs_endpoint(run_id: int) -> str:
+    if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+        raise ValueError("model run id must be a positive integer")
+    return f"repos/{REPOSITORY}/actions/runs/{run_id}/jobs?per_page=100"
+
+
 def outcome_run_endpoint(run_id: int) -> str:
     if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
         raise ValueError("outcome run id must be a positive integer")
@@ -683,6 +689,7 @@ __all__ = [
     "outcome_run_endpoint",
     "outcome_runs_endpoint",
     "model_run_artifacts_endpoint",
+    "model_run_jobs_endpoint",
     "model_run_endpoint",
     "model_runs_endpoint",
     "select_feature_evidence_artifact",
