@@ -1176,3 +1176,15 @@ The gate validates the exact frozen Phase 2 run `34782357048`, head SHA `158c1c1
 On 2026-09-23 the three frozen Phase 2 artifacts were non-expired and downloadable. The earliest recorded expiry was `2026-12-12T20:57:47Z`.
 
 DEC-078 performs no new Dukascopy acquisition and changes no research semantics or authorization. A failed/expired source must stop execution before heavy work; silent reacquisition or substitution is not authorized.
+
+
+## DEC-079 — Phase 8A EXP-044 outcome identity projection
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-outcome-identity-projection.md` reduces pair-outcome memory by retaining only six outcome-identity/timing columns after each feature parquet has passed exact byte-size, SHA-256, full 55-column schema, and row-count validation.
+
+A dedicated projected-identity outcome builder is frozen. Tests require it to produce exactly the same outcome rows and accounting as the original full-feature builder, and the existing full-frame/single-cell path remains available.
+
+DEC-079 changes no feature artifact, quote source, horizon, cost model, label, output schema, evidence rule, readiness rule, or authorization. No EXP-044 result-producing workflow had been dispatched before this amendment.

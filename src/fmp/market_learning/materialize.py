@@ -21,7 +21,12 @@ from .contracts import (
     MARKET_HISTORY_START,
 )
 from .evidence import load_feature_evidence_index
-from .outcomes import build_market_outcome_grid, write_market_outcome_artifacts
+from .outcomes import (
+    OUTCOME_FEATURE_IDENTITY_COLUMNS,
+    build_market_outcome_grid,
+    build_market_outcome_grid_from_identity,
+    write_market_outcome_artifacts,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,6 +84,7 @@ def load_verified_feature_cell(
     feature_evidence: Mapping[str, object],
     symbol: str,
     timeframe: str,
+    retain_columns: tuple[str, ...] | None = None,
 ) -> LoadedFeatureCell:
     root = Path(feature_root)
     manifest_path = root / "manifest.json"
@@ -116,6 +122,15 @@ def load_verified_feature_cell(
     if not isinstance(artifacts, list) or not artifacts:
         raise ValueError("feature cell artifacts must be a non-empty list")
 
+    if retain_columns is not None:
+        if not retain_columns:
+            raise ValueError("retained feature columns must not be empty")
+        unknown = [name for name in retain_columns if name not in FEATURE_COLUMNS]
+        if unknown:
+            raise ValueError(f"retained feature columns are unknown: {unknown}")
+        if len(set(retain_columns)) != len(retain_columns):
+            raise ValueError("retained feature columns must be unique")
+
     frames: list[pl.DataFrame] = []
     total_rows = 0
     paths: list[str] = []
@@ -139,9 +154,13 @@ def load_verified_feature_cell(
             raise ValueError(f"feature cell artifact size mismatch: {relative}")
         if not isinstance(expected_sha, str) or sha256_file(path) != expected_sha:
             raise ValueError(f"feature cell artifact checksum mismatch: {relative}")
-        frame = pl.read_parquet(path)
-        if tuple(frame.columns) != FEATURE_COLUMNS:
+        schema = pl.read_parquet_schema(path)
+        if tuple(schema.keys()) != FEATURE_COLUMNS:
             raise ValueError(f"feature cell schema mismatch: {relative}")
+        frame = pl.read_parquet(
+            path,
+            columns=list(retain_columns) if retain_columns is not None else None,
+        )
         if (
             not isinstance(expected_rows, int)
             or isinstance(expected_rows, bool)
@@ -290,6 +309,7 @@ def materialize_market_outcome_pair(
             feature_evidence=feature_evidence,
             symbol=symbol,
             timeframe=timeframe,
+            retain_columns=OUTCOME_FEATURE_IDENTITY_COLUMNS,
         )
         evidence_cell = _evidence_cell(
             feature_evidence,
@@ -344,7 +364,7 @@ def materialize_market_outcome_pair(
     base = Path(output_root)
     for timeframe in _PAIR_TIMEFRAMES:
         loaded = loaded_by_timeframe[timeframe]
-        build = build_market_outcome_grid(
+        build = build_market_outcome_grid_from_identity(
             loaded.frame,
             quotes,
             symbol=symbol,

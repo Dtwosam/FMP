@@ -13,7 +13,9 @@ from fmp.market_learning.labels import label_market_outcome
 from fmp.market_learning.outcomes import (
     MARKET_OUTCOME_SET_VERSION,
     OUTCOME_COLUMNS,
+    OUTCOME_FEATURE_IDENTITY_COLUMNS,
     build_market_outcome_grid,
+    build_market_outcome_grid_from_identity,
     write_market_outcome_artifacts,
 )
 from tests.phase5_helpers import make_bars
@@ -158,6 +160,42 @@ class MarketOutcomeGridTests(unittest.TestCase):
         self.assertEqual(
             row["best_direction_0p2"],
             scalar.label.best_direction.value,
+        )
+
+    def test_identity_projection_matches_full_feature_outcome_grid(self) -> None:
+        features = _feature_rows(count=5)
+        quotes = _minute_quotes(
+            start=features["available_at_utc"][0],
+            count=400,
+            base=1.1000,
+            step=0.00001,
+            spread=0.0002,
+        )
+        full = build_market_outcome_grid(
+            features,
+            quotes,
+            symbol="EURUSD",
+            timeframe="5m",
+        )
+        projected = build_market_outcome_grid_from_identity(
+            features.select(list(OUTCOME_FEATURE_IDENTITY_COLUMNS)),
+            quotes,
+            symbol="EURUSD",
+            timeframe="5m",
+        )
+        self.assertEqual(full.frame.to_dicts(), projected.frame.to_dicts())
+        self.assertEqual(full.source_feature_rows, projected.source_feature_rows)
+        self.assertEqual(
+            full.labeled_rows_by_horizon,
+            projected.labeled_rows_by_horizon,
+        )
+        self.assertEqual(
+            full.missing_entry_rows_by_horizon,
+            projected.missing_entry_rows_by_horizon,
+        )
+        self.assertEqual(
+            full.missing_exit_rows_by_horizon,
+            projected.missing_exit_rows_by_horizon,
         )
 
     def test_exact_timestamp_gaps_are_counted_and_never_shifted(self) -> None:

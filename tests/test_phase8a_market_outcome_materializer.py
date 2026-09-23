@@ -15,10 +15,12 @@ from fmp.market_learning.features import (
     write_market_feature_artifacts,
 )
 from fmp.market_learning.materialize import (
+    load_verified_feature_cell,
     load_verified_minute_quotes,
     materialize_market_outcome_cell,
     materialize_market_outcome_pair,
 )
+from fmp.market_learning.outcomes import OUTCOME_FEATURE_IDENTITY_COLUMNS
 from tests.phase5_helpers import make_bars, write_dataset
 
 
@@ -267,6 +269,22 @@ class MarketOutcomeMaterializerTests(unittest.TestCase):
                     code_commit=OUTCOME_COMMIT,
                 )
 
+
+    def test_projected_feature_loader_retains_only_outcome_identity_columns(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            feature_root, _, _, evidence = _fixture(root)
+            loaded = load_verified_feature_cell(
+                feature_root=feature_root,
+                feature_evidence=evidence,
+                symbol="EURUSD",
+                timeframe="5m",
+                retain_columns=OUTCOME_FEATURE_IDENTITY_COLUMNS,
+            )
+            self.assertEqual(
+                tuple(loaded.frame.columns),
+                OUTCOME_FEATURE_IDENTITY_COLUMNS,
+            )
 
     def test_pair_materializer_loads_quotes_once_and_matches_cell_semantics(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
