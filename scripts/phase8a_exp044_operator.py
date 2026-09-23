@@ -318,7 +318,7 @@ def _checkout_preflight() -> dict[str, object]:
 
 def _require_gh_auth() -> None:
     try:
-        _run(("gh", "auth", "status"), capture=False)
+        _run(("gh", "auth", "status"))
     except subprocess.CalledProcessError as exc:
         raise SystemExit("GitHub CLI authentication is required before EXP-044 dispatch") from exc
 

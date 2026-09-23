@@ -24,6 +24,14 @@ class Exp044NextActionScriptTests(unittest.TestCase):
         next_parser = parser[next_start:advance_start]
         self.assertNotIn("--execute", next_parser)
 
+    def test_gh_auth_check_is_silent_so_nested_next_remains_json(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        start = text.index("def _require_gh_auth()")
+        end = text.index("def parser()", start)
+        auth_block = text[start:end]
+        self.assertIn('_run(("gh", "auth", "status"))', auth_block)
+        self.assertNotIn("capture=False", auth_block)
+
     def test_advance_reuses_public_next_plan_and_requires_explicit_execute(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn('"advance"', text)
