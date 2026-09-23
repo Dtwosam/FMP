@@ -18,6 +18,10 @@ from fmp.market_learning.model_result_evidence import (
     load_model_result_evidence,
     validate_model_result_evidence,
 )
+from fmp.market_learning.model_run_failure_review import (
+    REVIEWED_FAILED_MODEL_RUN_ID,
+    validate_reviewed_failed_model_run,
+)
 from fmp.market_learning.model_run_gate import build_model_run_source_gate
 from fmp.market_learning.operator import (
     FEATURE_WORKFLOW_NAME,
@@ -34,6 +38,7 @@ from fmp.market_learning.operator import (
     feature_runs_endpoint,
     model_dispatch_command,
     model_run_artifacts_endpoint,
+    model_run_jobs_endpoint,
     model_run_endpoint,
     model_runs_endpoint,
     outcome_dispatch_command,
