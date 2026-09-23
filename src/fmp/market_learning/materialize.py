@@ -262,6 +262,129 @@ def load_verified_minute_quotes(
     return quotes
 
 
+
+_PAIR_TIMEFRAMES = ("5m", "15m", "1h")
+
+
+def materialize_market_outcome_pair(
+    *,
+    feature_roots: Mapping[str, Path],
+    feature_evidence: Mapping[str, object],
+    dataset_root: Path,
+    processed_manifest_path: Path,
+    symbol: str,
+    output_root: Path,
+    code_commit: str,
+) -> dict[str, dict[str, object]]:
+    if tuple(sorted(feature_roots)) != tuple(sorted(_PAIR_TIMEFRAMES)):
+        raise ValueError("pair outcome materialization requires exact 5m/15m/1h feature roots")
+
+    loaded_by_timeframe: dict[str, LoadedFeatureCell] = {}
+    processed_by_timeframe: dict[str, str] = {}
+    min_available_values: list[datetime] = []
+    max_available_values: list[datetime] = []
+
+    for timeframe in _PAIR_TIMEFRAMES:
+        loaded = load_verified_feature_cell(
+            feature_root=Path(feature_roots[timeframe]),
+            feature_evidence=feature_evidence,
+            symbol=symbol,
+            timeframe=timeframe,
+        )
+        evidence_cell = _evidence_cell(
+            feature_evidence,
+            symbol=symbol,
+            timeframe=timeframe,
+        )
+        processed_sha = str(evidence_cell["processed_manifest_sha256"])
+        loaded_by_timeframe[timeframe] = loaded
+        processed_by_timeframe[timeframe] = processed_sha
+
+        min_available = loaded.frame["available_at_utc"].min()
+        max_available = loaded.frame["available_at_utc"].max()
+        if not isinstance(min_available, datetime) or not isinstance(max_available, datetime):
+            raise ValueError("feature availability coverage is invalid")
+        min_available_values.append(min_available)
+        max_available_values.append(max_available)
+
+    processed_shas = set(processed_by_timeframe.values())
+    if len(processed_shas) != 1:
+        raise ValueError("pair feature cells do not share one Phase 2 processed manifest")
+    processed_sha = next(iter(processed_shas))
+
+    accepted_end = datetime(
+        MARKET_HISTORY_END_EXCLUSIVE.year,
+        MARKET_HISTORY_END_EXCLUSIVE.month,
+        MARKET_HISTORY_END_EXCLUSIVE.day,
+        tzinfo=timezone.utc,
+    )
+    accepted_start = datetime(
+        MARKET_HISTORY_START.year,
+        MARKET_HISTORY_START.month,
+        MARKET_HISTORY_START.day,
+        tzinfo=timezone.utc,
+    )
+    quote_start = max(min(min_available_values), accepted_start)
+    quote_end = min(max(max_available_values) + timedelta(minutes=241), accepted_end)
+
+    quotes = load_verified_minute_quotes(
+        dataset_root=Path(dataset_root),
+        processed_manifest_path=Path(processed_manifest_path),
+        expected_processed_manifest_sha256=processed_sha,
+        symbol=symbol,
+        start_utc=quote_start,
+        end_exclusive_utc=quote_end,
+    )
+
+    fingerprint = feature_evidence.get("evidence_fingerprint")
+    if not isinstance(fingerprint, str):
+        raise ValueError("feature evidence fingerprint is missing")
+
+    manifests: dict[str, dict[str, object]] = {}
+    base = Path(output_root)
+    for timeframe in _PAIR_TIMEFRAMES:
+        loaded = loaded_by_timeframe[timeframe]
+        build = build_market_outcome_grid(
+            loaded.frame,
+            quotes,
+            symbol=symbol,
+            timeframe=timeframe,
+        )
+        manifests[timeframe] = write_market_outcome_artifacts(
+            build=build,
+            output_root=base / f"{symbol}-{timeframe}",
+            symbol=symbol,
+            timeframe=timeframe,
+            code_commit=code_commit,
+            feature_manifest_sha256=loaded.manifest_sha256,
+            feature_evidence_fingerprint=fingerprint,
+            processed_manifest_sha256=processed_sha,
+        )
+    return manifests
+
+
+def run_market_outcome_pair_materialization(
+    *,
+    feature_roots: Mapping[str, Path],
+    feature_evidence_path: Path,
+    dataset_root: Path,
+    processed_manifest_path: Path,
+    symbol: str,
+    output_root: Path,
+    code_commit: str,
+) -> dict[str, dict[str, object]]:
+    evidence = load_feature_evidence_index(Path(feature_evidence_path))
+    return materialize_market_outcome_pair(
+        feature_roots=feature_roots,
+        feature_evidence=evidence,
+        dataset_root=Path(dataset_root),
+        processed_manifest_path=Path(processed_manifest_path),
+        symbol=symbol,
+        output_root=Path(output_root),
+        code_commit=code_commit,
+    )
+
+
 def materialize_market_outcome_cell(
     *,
     feature_root: Path,
@@ -362,5 +485,7 @@ __all__ = [
     "load_verified_feature_cell",
     "load_verified_minute_quotes",
     "materialize_market_outcome_cell",
+    "materialize_market_outcome_pair",
     "run_market_outcome_materialization",
+    "run_market_outcome_pair_materialization",
 ]
