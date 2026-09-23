@@ -1120,3 +1120,17 @@ A passing readiness result means only `data_preparation_complete=true` and `mode
 The readiness artifact must retain `model_protocol_result_authorized=false`, `model_fit_authorized=false`, `promotion_authorized=false`, and all shadow/demo/broker-mutation/live/real-money authorization flags false.
 
 DEC-074 chooses no model family, preprocessing, chronological split, target, prediction threshold, trading threshold, or financial acceptance gate. Those choices require a later predeclared decision before any fit. No readiness artifact exists until the authoritative feature and outcome workflows run successfully from merged `main`.
+
+
+## DEC-075 — Phase 8A EXP-044 execution observability
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 MODEL-TRAINING RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-execution-observability.md` adds a read-only deterministic status layer over the existing EXP-044 feature, outcome, and DEC-074 readiness evidence chain.
+
+The status layer validates exact manual workflow identity when run metadata is supplied, revalidates persisted readiness fingerprints, and reports the earliest unresolved state from feature dispatch through `MODEL_PROTOCOL_SOURCE_OPEN`.
+
+DEC-075 creates no research-result authorization. `MODEL_PROTOCOL_SOURCE_OPEN` may be reported only when a valid DEC-074 readiness artifact is supplied and cross-bound to the exact feature/outcome evidence chain. Even then, `model_protocol_result_authorized=false`, `model_fit_authorized=false`, promotion remains false, and all shadow/demo/broker/live/real-money authorizations remain false.
+
+DEC-075 does not change the next hard gate: the authoritative feature and outcome workflows must still run successfully from merged `main` before model-protocol source work may open.
