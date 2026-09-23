@@ -152,6 +152,29 @@ class Exp044ModelWorkflowSourceTests(unittest.TestCase):
             9,
         )
 
+    def test_workflow_preserves_hidden_cell_evidence_after_failure(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        start = text.index(
+            "Upload pair/timeframe model-cell evidence"
+        )
+        end = text.index(
+            "aggregate-model-evidence:",
+            start,
+        )
+        upload = text[start:end]
+        self.assertIn("if: always()", upload)
+        self.assertIn("include-hidden-files: true", upload)
+        self.assertIn("if-no-files-found: warn", upload)
+
+        aggregate_start = text.index(
+            "Upload aggregate model-result evidence"
+        )
+        aggregate = text[aggregate_start:]
+        self.assertIn(
+            "include-hidden-files: true",
+            aggregate,
+        )
+
     def test_workflow_does_not_regenerate_market_data(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for forbidden in (
