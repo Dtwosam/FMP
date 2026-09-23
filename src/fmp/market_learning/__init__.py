@@ -23,6 +23,13 @@ from .features import (
     write_market_feature_artifacts,
 )
 from .labels import label_market_outcome, label_market_outcomes
+from .outcomes import (
+    MARKET_OUTCOME_SET_VERSION,
+    OUTCOME_COLUMNS,
+    MarketOutcomeGridBuild,
+    build_market_outcome_grid,
+    write_market_outcome_artifacts,
+)
 
 __all__ = [
     "BASE_FEATURE_DEFINITION_VERSION",
@@ -38,11 +45,16 @@ __all__ = [
     "MarketObservation",
     "MarketOutcomeLabel",
     "MarketOutcomeResult",
+    "MarketOutcomeGridBuild",
+    "MARKET_OUTCOME_SET_VERSION",
+    "OUTCOME_COLUMNS",
     "build_market_feature_frame",
+    "build_market_outcome_grid",
     "label_market_outcome",
     "load_market_feature_source",
     "run_market_feature_generation",
     "validate_market_feature_range",
     "write_market_feature_artifacts",
+    "write_market_outcome_artifacts",
     "label_market_outcomes",
 ]
