@@ -1,0 +1,40 @@
+from pathlib import Path
+import unittest
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "scripts" / "phase8a_exp044_operator.py"
+
+
+class Exp044NextActionScriptTests(unittest.TestCase):
+    def test_next_mode_is_read_only_and_has_no_execute_argument(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('"next"', text)
+        self.assertIn('"read_only": True', text)
+        self.assertIn("PRESERVATION_DISPATCH_REQUIRED", text)
+        self.assertIn("FEATURE_DISPATCH_REQUIRED", text)
+        self.assertIn("OUTCOME_DISPATCH_REQUIRED", text)
+        self.assertIn("MODEL_PROTOCOL_SOURCE_OPEN", text)
+
+        parser_start = text.index("def parser()")
+        parser_end = text.index("def _print_report", parser_start)
+        parser = text[parser_start:parser_end]
+        next_start = parser.index('"next"')
+        preserve_start = parser.index('"preserve-phase2"', next_start)
+        next_parser = parser[next_start:preserve_start]
+        self.assertNotIn("--execute", next_parser)
+
+    def test_next_mode_never_submits_a_dispatch(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        main_start = text.index("def main(")
+        preserve_start = text.index('if args.command == "preserve-phase2"', main_start)
+        next_block = text[main_start:preserve_start]
+        self.assertIn('if args.command == "next"', next_block)
+        self.assertNotIn("_run(command, capture=False)", next_block)
+        self.assertNotIn('"dispatch_submitted"', next_block)
+        self.assertIn("select_only_manual_main_run", next_block)
+        self.assertIn("build_execution_status", next_block)
+
+
+if __name__ == "__main__":
+    unittest.main()
