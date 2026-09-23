@@ -374,9 +374,9 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-069 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet/approval/activation artifact, demo order, or broker mutation has been executed;
-3. DEC-070 / `EXP-20260922-041` is implemented on PR #162 head `a0bce886dc64e62eeafac9d642f63d13848c2ffb`: read-only campaign readiness, exact current bridge-identity audit, deterministic next-action reporting, no post-EOF consumption, and an updated multi-pair MT5 operator handoff; run `35789539447` passed 1085 tests plus YAML/compile and unchanged Phase 3 acceptance run `35789539375` passed;
-4. the readiness audit must write no campaign artifact, start no segment, consume no post-EOF quote data, and remain non-authoritative; `capture-segment` continues independent validation;
-5. repository `DEMO_EXECUTION_SOURCE_ARMED=false`; real prospective capture, SHADOW_VALIDATED, demo execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
+3. DEC-070 / `EXP-20260922-041` is the active milestone: add a read-only Phase 8B campaign readiness audit and replace the stale USDJPY-only operator handoff with the current multi-pair workflow;
+4. readiness must write no campaign artifact, start no capture, and never become authorization consumed by `capture-segment`;
+5. real prospective Phase 8B evidence, SHADOW_VALIDATED, Phase 9 materialization, demo execution, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
