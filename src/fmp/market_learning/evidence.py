@@ -129,8 +129,12 @@ def compile_feature_evidence(
     root: Path,
     expected_code_commit: str,
 ) -> dict[str, object]:
-    if not expected_code_commit.strip():
-        raise ValueError("expected_code_commit must be non-empty")
+    if len(expected_code_commit) != 40:
+        raise ValueError("expected_code_commit must be a 40-character Git commit")
+    try:
+        int(expected_code_commit, 16)
+    except ValueError as exc:
+        raise ValueError("expected_code_commit must be hexadecimal") from exc
     root = Path(root)
     manifest_paths = sorted(root.rglob("manifest.json"))
     if len(manifest_paths) != len(EXPECTED_CELLS):
@@ -205,7 +209,7 @@ def compile_feature_evidence(
         }:
             raise ValueError("EXP-044 generation range mismatch")
         opened_months = manifest.get("opened_source_months")
-        if tuple(opened_months) != expected_months if isinstance(opened_months, list) else True:
+        if not isinstance(opened_months, list) or tuple(opened_months) != expected_months:
             raise ValueError("EXP-044 opened source months are incomplete or out of order")
 
         if tuple(manifest.get("feature_columns", ())) != FEATURE_VALUE_COLUMNS:
@@ -244,8 +248,15 @@ def compile_feature_evidence(
             )
             artifact_paths.append(relative)
             artifact_rows += rows
-        if artifact_paths != sorted(artifact_paths) or len(set(artifact_paths)) != len(artifact_paths):
-            raise ValueError("EXP-044 feature artifacts must be sorted and unique")
+        expected_artifact_paths = [
+            (
+                f"data/features/{MARKET_FEATURE_SET_VERSION}/{symbol}/{timeframe}/"
+                f"{month[:4]}/{month[5:]}.parquet"
+            )
+            for month in expected_months
+        ]
+        if artifact_paths != expected_artifact_paths:
+            raise ValueError("EXP-044 feature artifact months are incomplete or out of order")
         if artifact_rows != row_count:
             raise ValueError("EXP-044 artifact row counts do not sum to manifest row count")
 
