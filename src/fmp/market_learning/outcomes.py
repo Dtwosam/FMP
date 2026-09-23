@@ -219,7 +219,7 @@ def build_market_outcome_grid(
         short_base = (
             (pl.col("entry_bid_open") - pl.col("exit_ask_open")) / pl.lit(pip)
         )
-        expressions: list[pl.Expr] = [
+        value_expressions: list[pl.Expr] = [
             pl.lit(horizon, dtype=pl.Int64).alias("horizon_minutes"),
             (
                 (
@@ -229,16 +229,20 @@ def build_market_outcome_grid(
                 / pl.lit(pip)
             ).alias("future_mid_move_pips"),
         ]
+        direction_expressions: list[pl.Expr] = []
 
         for slippage in SLIPPAGE_PIPS:
             suffix = _scenario_suffix(slippage)
             long_name = f"long_net_pips_{suffix}"
             short_name = f"short_net_pips_{suffix}"
             direction_name = f"best_direction_{suffix}"
-            long_expr = (long_base - pl.lit(2.0 * slippage)).alias(long_name)
-            short_expr = (short_base - pl.lit(2.0 * slippage)).alias(short_name)
-            expressions.extend([long_expr, short_expr])
-            expressions.append(
+            value_expressions.extend(
+                [
+                    (long_base - pl.lit(2.0 * slippage)).alias(long_name),
+                    (short_base - pl.lit(2.0 * slippage)).alias(short_name),
+                ]
+            )
+            direction_expressions.append(
                 pl.when(
                     (pl.col(long_name) > 0.0)
                     & (pl.col(long_name) > pl.col(short_name))
@@ -254,7 +258,8 @@ def build_market_outcome_grid(
             )
 
         out = (
-            usable.with_columns(expressions)
+            usable.with_columns(value_expressions)
+            .with_columns(direction_expressions)
             .with_columns(
                 pl.lit(MARKET_OUTCOME_SET_VERSION).alias("outcome_set_version"),
                 pl.lit(EVIDENCE_LABEL).alias("evidence_label"),
