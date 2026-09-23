@@ -1084,3 +1084,23 @@ DEC-072 adds deterministic closed/unclosed segment inventory to the read-only pr
 Unclosed directories remain excluded from aggregate simulation, replay, observation bounds, London-date completeness, trade counts, representation, and financial metrics. DEC-072 also adds diagnostic campaign-terminal context and a deterministic progress validator/fingerprint.
 
 DEC-072 writes no campaign evidence, repairs/deletes no interrupted segment, starts no capture, changes no DEC-051 acceptance threshold, and authorizes no promotion, Phase 9 action, broker mutation, order, live trading, or real-money action.
+
+
+## DEC-073 — Phase 8A direct market learning and controlled retraining amendment
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 MODEL-TRAINING RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-market-learning-foundation.md` opens `EXP-20260923-044` and amends the Phase 8A research architecture so FMP studies market behaviour directly from accepted Dukascopy-derived feature rows in addition to testing hand-written strategy families.
+
+Existing Phase 4/7 rule strategies and the frozen EXP-015 567-configuration search remain valid, immutable benchmarks/challenger sources. DEC-073 does not rewrite their identities, results, or gates.
+
+The new learning track starts from the accepted V1 universe (EURUSD, GBPUSD, USDJPY on 5m/15m/1h) and the leakage-safe Phase 5 feature definitions. The historical `fmp-feature-v1` artifact and its pre-2024 lock remain unchanged; broader retrospective coverage must be created as a new versioned market-learning feature materialization.
+
+The first frozen target foundation labels every eligible feature-row timestamp directly at exact 60-minute and 240-minute horizons. It records future midpoint movement and hypothetical LONG/SHORT net pips under exact 0.2, 0.5, and 1.0 pip adverse slippage per fill using historical BID/ASK execution sides. Missing exact horizon bars fail closed and are never shifted or interpolated.
+
+All historical EXP-044 evidence through 2026-08-20 is `RETROSPECTIVE_ALREADY_SEEN` with no untouched-OOS claim. The first source slice creates labels/contracts only. A later predeclared decision must freeze model families, preprocessing, chronological splits, target/threshold rules, and financial acceptance gates before any result-producing model fit.
+
+Continuous learning is explicitly champion/challenger based: active shadow/demo models are immutable; new prospective observations are appended to an immutable learning ledger; retraining happens offline at a frozen cutoff into a new challenger identity; promotion requires a separate evidence gate. No running model may rewrite itself after a trade or hot-swap itself into an active campaign.
+
+Consequences: Phase 8A remains ACTIVE; EXP-015 remains available as a parallel rule-based benchmark search; DEC-042 and Phase 8B retain their existing locks; no shadow/demo/live/broker/real-money authorization is created by DEC-073.

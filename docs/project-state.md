@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — RESULT-PRODUCING PHASE 8A WORKFLOWS UNRUN
-**Next milestone:** Dispatch `EXP-20260922-015` Stage A from merged `main`, preserve its exact authorization artifact, and open Stage B only if that artifact authorizes one or more frozen survivor fingerprints. DEC-042 portfolio selection remains blocked until EXP-015 produces at least one new `HISTORICAL_QUALIFIED` challenger; Phase 8B prospective capture remains locked behind DEC-045 acceptance.
+**Phase status:** ACTIVE — DEC-073 MARKET-LEARNING FOUNDATION SOURCE-ONLY; RESULT-PRODUCING PHASE 8A WORKFLOWS UNRUN
+**Next milestone:** Complete and verify the `EXP-20260923-044` direct market-learning foundation, then build its immutable full-history feature materialization and freeze the first result-producing model protocol. `EXP-20260922-015` remains a parallel frozen rule-based benchmark search. DEC-042 portfolio selection and Phase 8B prospective capture remain locked until their existing acceptance requirements are satisfied.
 
 ## Current baseline
 
@@ -331,13 +331,15 @@ Approved design: `docs/superpowers/specs/2026-09-22-phase8a-portfolio-research-r
 
 Umbrella experiment: `EXP-20260922-012`
 
-Active challenger experiment: `EXP-20260922-013` / DEC-041
+Active research tracks: `EXP-20260922-015` / DEC-043 (frozen rule-based challenger benchmark) and `EXP-20260923-044` / DEC-073 (direct market learning)
 
 Core scope:
 
 - research universe: exactly EURUSD, GBPUSD, and USDJPY
 - historical source: reuse the accepted Dukascopy Phase 1/2 canonical 1m BID/ASK histories and deterministic 5m/15m/1h bars for all three pairs
 - strategy architecture: many immutable versioned strategy instances rather than one permanently selected strategy
+- DEC-073 learning architecture: study future market behaviour directly from leakage-safe feature rows across all three pairs/timeframes, while retaining hand-written strategies as transparent benchmarks rather than the sole source of candidate trades
+- active model/champion identities remain immutable; new shadow/demo observations may train offline challengers later, but no running model may update itself in place or hot-swap into an active campaign
 - initial family universe: session breakout, trend continuation, mean reversion, previous-day high/low rejection, rolling volatility breakout, and session high/low sweep/rejection; any new family or material parameter-region expansion requires a new predeclared experiment
 - lifecycle: `DISCOVERY -> CHALLENGER -> HISTORICAL_QUALIFIED -> SHADOW_CANDIDATE -> SHADOW_VALIDATED -> DEMO_ELIGIBLE`, with `RETIRED` preserved as durable evidence
 - active champion sets are immutable during registered campaigns; continuous learning may create challengers but may not hot-swap production/shadow strategy code
@@ -372,11 +374,12 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-072 are merged and verified on `main`;
+1. Existing Phase 8A portfolio and Phase 8B safety/source infrastructure through DEC-072 is merged and verified; DEC-073 adds the source-only direct market-learning foundation without producing a training result;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 artifact chain, demo order, or broker mutation has been executed;
 3. PR #164 merged DEC-072 / `EXP-20260923-043` to `main` at `2732e00fa502219bf18de35ae861e72befe62661`; the exact final PR head `5efc050f31811e0f179638fc2c9bb83587eb22ef` passed 1092 tests plus YAML/compile in run `35803436296` and unchanged Phase 3 acceptance run `35803436276` passed; post-merge `main` runs `35803529547` and `35803529528` passed;
 4. DEC-072 fixes crash-before-first-close observability, adds deterministic closed/unclosed segment inventory and terminal context, validates progress fingerprints/count parity, and rejects renamed/copied closed directories whose path identity no longer matches the immutable segment ID; interrupted directories still never enter aggregate or acceptance evidence;
-5. source-side Phase 8B preparation, readiness, progress, and interrupted-capture observability are complete. The next meaningful milestone is real prospective MT5 DEMO evidence; Phase 9 execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
+5. source-side Phase 8B preparation, readiness, progress, and interrupted-capture observability are complete, but real prospective capture remains locked behind the Phase 8A acceptance chain; Phase 9 execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
+6. DEC-073 re-centers the active research path on learning market behaviour from the accepted Dukascopy history. The first source slice labels exact 60m/240m future outcomes from feature-row availability at 0.2/0.5/1.0-pip adverse slippage; the next source task is the versioned full-history feature materialization, followed by a separately frozen model-training protocol.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
