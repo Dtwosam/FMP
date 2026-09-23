@@ -23,17 +23,22 @@ from .model_successor_training import (
 
 
 SUCCESSOR_MODEL_EXECUTION_GATE_DECISION = "DEC-098"
+SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-099"
 SUCCESSOR_MODEL_WORKFLOW_FILE = "phase8a-exp045-model-training.yml"
 SUCCESSOR_MODEL_WORKFLOW_NAME = "phase8a-exp045-model-training"
 
 DEC097_MERGED_COMMIT = "f6c1090064cd3d85c7c3503dec1ef461eeba5da2"
+DEC098_MERGED_COMMIT = "292a86fa2aa497b31c0dd4e0284115b185f31ed4"
+DEC098_WORKFLOW_BLOB_SHA = "d3e4d11a8e8270417d6bbced27e756b7cc23c324"
+DEC098_CLI_BLOB_SHA = "ff0ed231e22589c3597672bb8bab1f62b321647d"
+DEC098_GATE_BLOB_SHA = "6bdb3dfe3d8b548610259cbdfc6245398f9fc199"
 DEC097_RUNNER_BLOB_SHA = "adebcc48130e8800741810c239528ef6c21eea6e"
 DEC096_CORE_BLOB_SHA = "3f0bc1bfa9640d08175e72cdf131bb97c94d562c"
 DEC095_PROTOCOL_BLOB_SHA = "44129fc5337fb55b9c7d81f5ba0561ea788bd264"
 DEC094_FAILURE_REVIEW_BLOB_SHA = "2260ad4ad08a7e9874bd28030be977a3e71436f9"
 LEGACY_DATA_LOADER_BLOB_SHA = "27c0848d16722a22b4762f5842396c2aebc92bec"
 
-SUCCESSOR_WORKFLOW_BLOB_SHA = "d3e4d11a8e8270417d6bbced27e756b7cc23c324"
+SUCCESSOR_WORKFLOW_BLOB_SHA = "3c7fc17d747bca474bd91e44cb753c5cf4cc153b"
 SUCCESSOR_CLI_BLOB_SHA = "ff0ed231e22589c3597672bb8bab1f62b321647d"
 SUCCESSOR_RUNTIME_REQUIREMENTS_BLOB_SHA = (
     "d25ab16056b9f5df283147d67b8f401f60ae7520"
@@ -47,10 +52,10 @@ MARKET_OUTCOMES_BLOB_SHA = "c83fefd4252b2fe426af97686f86e43021760c77"
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 SUCCESSOR_MODEL_WORKFLOW_SOURCE_FROZEN = True
-SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-SUCCESSOR_MODEL_FIT_AUTHORIZED = False
+SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+SUCCESSOR_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 TRADING_AUTHORIZED = False
 
@@ -200,6 +205,13 @@ def validate_successor_model_workflow_sources(
             SUCCESSOR_MODEL_EXECUTION_GATE_DECISION
         ),
         "dec097_merged_commit": DEC097_MERGED_COMMIT,
+        "dec098_merged_commit": DEC098_MERGED_COMMIT,
+        "dec098_workflow_blob_sha": DEC098_WORKFLOW_BLOB_SHA,
+        "dec098_cli_blob_sha": DEC098_CLI_BLOB_SHA,
+        "dec098_gate_blob_sha": DEC098_GATE_BLOB_SHA,
+        "successor_model_execution_authorization_decision": (
+            SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "successor_runner_blob_sha": actual["successor_runner"],
         "successor_core_blob_sha": actual["successor_core"],
         "successor_protocol_blob_sha": actual["successor_protocol"],
@@ -228,10 +240,11 @@ def build_successor_model_workflow_source_gate(
     )
     return {
         **source,
-        "stage": "SUCCESSOR_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+        "stage": "SUCCESSOR_MODEL_RUN_DISPATCH_REQUIRED",
         "next_action": (
-            "EXP-045 workflow/CLI source is frozen but historical result "
-            "execution remains disabled. Do not dispatch the workflow."
+            "DEC-099 authorizes at most one guarded historical EXP-045 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
         ),
         "successor_model_workflow_source_frozen": (
             SUCCESSOR_MODEL_WORKFLOW_SOURCE_FROZEN
@@ -304,6 +317,10 @@ __all__ = [
     "DEC096_CORE_BLOB_SHA",
     "DEC097_MERGED_COMMIT",
     "DEC097_RUNNER_BLOB_SHA",
+    "DEC098_CLI_BLOB_SHA",
+    "DEC098_GATE_BLOB_SHA",
+    "DEC098_MERGED_COMMIT",
+    "DEC098_WORKFLOW_BLOB_SHA",
     "FEATURE_SCHEMA_BLOB_SHA",
     "LEGACY_DATA_LOADER_BLOB_SHA",
     "MARKET_CONTRACTS_BLOB_SHA",
@@ -312,6 +329,7 @@ __all__ = [
     "PROMOTION_AUTHORIZED",
     "PYPROJECT_BLOB_SHA",
     "SUCCESSOR_CLI_BLOB_SHA",
+    "SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "SUCCESSOR_MODEL_EXECUTION_GATE_DECISION",
     "SUCCESSOR_MODEL_FIT_AUTHORIZED",
     "SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED",
