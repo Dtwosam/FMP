@@ -14,6 +14,7 @@ from fmp.market_learning.execution_status import build_execution_status
 from fmp.market_learning.operator import (
     FEATURE_WORKFLOW_NAME,
     OUTCOME_WORKFLOW_NAME,
+    PRESERVATION_WORKFLOW_NAME,
     REPOSITORY,
     artifact_download_endpoint,
     feature_dispatch_command,
@@ -24,6 +25,8 @@ from fmp.market_learning.operator import (
     outcome_run_artifacts_endpoint,
     outcome_run_endpoint,
     outcome_runs_endpoint,
+    preservation_dispatch_command,
+    preservation_runs_endpoint,
     select_feature_evidence_artifact,
     select_outcome_evidence_artifacts,
     shell_join,
@@ -197,6 +200,12 @@ def parser() -> argparse.ArgumentParser:
     )
     sub = out.add_subparsers(dest="command", required=True)
 
+    preserve = sub.add_parser(
+        "preserve-phase2",
+        help="prepare or dispatch exact Phase 2 release preservation",
+    )
+    preserve.add_argument("--execute", action="store_true")
+
     features = sub.add_parser("features", help="prepare or dispatch EXP-044 feature generation")
     features.add_argument("--execute", action="store_true")
 
@@ -221,6 +230,36 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     _require_gh_auth()
     checkout = _checkout_preflight()
+
+    if args.command == "preserve-phase2":
+        source_preflight = _source_artifact_preflight()
+        listing = _gh_json(preservation_runs_endpoint())
+        validate_no_existing_manual_runs(
+            listing,
+            workflow_name=PRESERVATION_WORKFLOW_NAME,
+        )
+        command = preservation_dispatch_command()
+        report: dict[str, object] = {
+            **checkout,
+            "source_preflight_ready": source_preflight["source_ready"],
+            "source_earliest_expires_at": source_preflight["earliest_expires_at"],
+            "stage": "preserve-phase2",
+            "existing_manual_main_runs": 0,
+            "ready_to_dispatch": True,
+            "execute_requested": bool(args.execute),
+            "dispatch_command": shell_join(command),
+            "model_fit_authorized": False,
+            "promotion_authorized": False,
+            "trading_authorized": False,
+        }
+        if not args.execute:
+            _print_report(report)
+            return 0
+        _run(command, capture=False)
+        report["dispatch_submitted"] = True
+        report["result_claimed"] = False
+        _print_report(report)
+        return 0
 
     if args.command == "features":
         source_preflight = _source_artifact_preflight()
