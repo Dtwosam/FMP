@@ -21,7 +21,16 @@ from .model_artifacts import (
     load_authoritative_cell_artifacts,
     validate_authoritative_readiness,
 )
-from .model_protocol import MODEL_CELLS
+from .model_protocol import (
+    CONFIDENCE_THRESHOLDS,
+    MODEL_CELLS,
+    MODEL_FAMILIES,
+)
+from .model_run_failure_review import (
+    MODEL_RUN_FAILURE_REVIEW_DECISION,
+    REVIEWED_FAILED_MODEL_HEAD_SHA,
+    REVIEWED_FAILED_MODEL_RUN_ID,
+)
 from .model_successor_protocol import (
     BASE_PROTOCOL_FINGERPRINT,
     PREDECESSOR_FAILED_MODEL_HEAD_SHA,
@@ -56,6 +65,9 @@ SUCCESSOR_TRAINING_CORE_COMMIT = (
 
 LEGACY_DATA_LOADER_BLOB_SHA = (
     "27c0848d16722a22b4762f5842396c2aebc92bec"
+)
+FAILURE_REVIEW_BLOB_SHA = (
+    "2260ad4ad08a7e9874bd28030be977a3e71436f9"
 )
 SUCCESSOR_PROTOCOL_BLOB_SHA = (
     "44129fc5337fb55b9c7d81f5ba0561ea788bd264"
@@ -129,6 +141,12 @@ def validate_successor_artifact_runner_sources(
             root / "src/fmp/market_learning/model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "failure_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_run_failure_review.py",
+            FAILURE_REVIEW_BLOB_SHA,
+        ),
         "successor_protocol": (
             root
             / "src/fmp/market_learning/"
@@ -156,6 +174,25 @@ def validate_successor_artifact_runner_sources(
             )
         actual[label] = actual_sha
 
+    if MODEL_RUN_FAILURE_REVIEW_DECISION != (
+        PREDECESSOR_FAILURE_REVIEW_DECISION
+    ):
+        raise ValueError(
+            "EXP-045 predecessor failure-review decision drift"
+        )
+    if REVIEWED_FAILED_MODEL_RUN_ID != (
+        PREDECESSOR_FAILED_MODEL_RUN_ID
+    ):
+        raise ValueError(
+            "EXP-045 predecessor failed-run id drift"
+        )
+    if REVIEWED_FAILED_MODEL_HEAD_SHA != (
+        PREDECESSOR_FAILED_MODEL_HEAD_SHA
+    ):
+        raise ValueError(
+            "EXP-045 predecessor failed-run head SHA drift"
+        )
+
     protocol_fingerprint = successor_protocol_fingerprint()
     return {
         "successor_model_artifact_runner_version": (
@@ -166,6 +203,9 @@ def validate_successor_artifact_runner_sources(
         ),
         "legacy_data_loader_blob_sha": actual[
             "legacy_data_loader"
+        ],
+        "failure_review_blob_sha": actual[
+            "failure_review"
         ],
         "successor_protocol_blob_sha": actual[
             "successor_protocol"
@@ -380,6 +420,124 @@ def _validate_successor_cell_result(
             "EXP-045 model result must preserve six selection variants"
         )
 
+    expected_slots = {
+        (family, float(threshold))
+        for family in MODEL_FAMILIES
+        for threshold in CONFIDENCE_THRESHOLDS
+    }
+    indexed_variants: dict[
+        tuple[str, float],
+        Mapping[str, object],
+    ] = {}
+    for raw in variants:
+        if not isinstance(raw, Mapping):
+            raise ValueError(
+                "EXP-045 model result variant is malformed"
+            )
+        family = raw.get("model_family")
+        threshold = raw.get("confidence_threshold")
+        if (
+            not isinstance(family, str)
+            or not isinstance(threshold, (int, float))
+            or isinstance(threshold, bool)
+        ):
+            raise ValueError(
+                "EXP-045 model result variant identity is malformed"
+            )
+        slot = (family, float(threshold))
+        if slot not in expected_slots:
+            raise ValueError(
+                f"unexpected EXP-045 model variant slot: {slot}"
+            )
+        if slot in indexed_variants:
+            raise ValueError(
+                "duplicate EXP-045 model variant slot"
+            )
+
+        family_record = families[family]
+        assert isinstance(family_record, Mapping)
+        family_status = family_record.get("status")
+        if raw.get("family_fit_status") != family_status:
+            raise ValueError(
+                "EXP-045 variant family-fit status mismatch"
+            )
+
+        if family_status == "FITTED":
+            if raw.get("evaluation_status") != "EVALUATED":
+                raise ValueError(
+                    "EXP-045 fitted-family variant must be evaluated"
+                )
+            if not isinstance(
+                raw.get("selection_gate_passed"),
+                bool,
+            ):
+                raise ValueError(
+                    "EXP-045 evaluated variant gate status is malformed"
+                )
+        else:
+            if family != "logistic_regression":
+                raise ValueError(
+                    "EXP-045 unavailable family must be logistic regression"
+                )
+            if raw.get("evaluation_status") != "FAMILY_UNAVAILABLE":
+                raise ValueError(
+                    "EXP-045 unavailable logistic variant status mismatch"
+                )
+            if raw.get("failure_reason") != "LBFGS_MAX_ITER_REACHED":
+                raise ValueError(
+                    "EXP-045 unavailable logistic variant reason mismatch"
+                )
+            if raw.get("selection_gate_passed") is not False:
+                raise ValueError(
+                    "EXP-045 unavailable logistic variant cannot pass"
+                )
+        indexed_variants[slot] = raw
+
+    if set(indexed_variants) != expected_slots:
+        raise ValueError(
+            "EXP-045 model result variant-slot inventory mismatch"
+        )
+
+    selection_status = selection.get("status")
+    selected_variant = selection.get("selected_variant")
+    if selection_status == "SELECTED":
+        if not isinstance(selected_variant, Mapping):
+            raise ValueError(
+                "EXP-045 selected cell is missing selected variant"
+            )
+        selected_family = selected_variant.get("model_family")
+        selected_threshold = selected_variant.get(
+            "confidence_threshold"
+        )
+        if (
+            not isinstance(selected_family, str)
+            or not isinstance(
+                selected_threshold,
+                (int, float),
+            )
+            or isinstance(selected_threshold, bool)
+        ):
+            raise ValueError(
+                "EXP-045 selected variant identity is malformed"
+            )
+        selected_slot = (
+            selected_family,
+            float(selected_threshold),
+        )
+        chosen = indexed_variants.get(selected_slot)
+        if (
+            chosen is None
+            or chosen.get("selection_gate_passed") is not True
+            or chosen.get("family_fit_status") != "FITTED"
+        ):
+            raise ValueError(
+                "EXP-045 selected variant is not an eligible passing slot"
+            )
+    elif selected_variant is not None:
+        raise ValueError(
+            "EXP-045 unselected cell must not name a selected variant"
+        )
+
     _validate_status_chain(
         selection=selection.get("status"),
         validation=validation.get("status"),
@@ -491,6 +649,9 @@ def compile_successor_model_result_evidence(
         ),
         "predecessor_failure_review_decision": (
             PREDECESSOR_FAILURE_REVIEW_DECISION
+        ),
+        "predecessor_failure_review_blob_sha": (
+            FAILURE_REVIEW_BLOB_SHA
         ),
         "predecessor_failed_model_run_id": (
             PREDECESSOR_FAILED_MODEL_RUN_ID
