@@ -5,12 +5,16 @@ import unittest
 from fmp.market_learning.operator import (
     FEATURE_WORKFLOW_NAME,
     OUTCOME_WORKFLOW_NAME,
+    artifact_download_endpoint,
     feature_dispatch_command,
+    feature_run_artifacts_endpoint,
     feature_run_endpoint,
     feature_runs_endpoint,
     outcome_dispatch_command,
     outcome_runs_endpoint,
+    select_feature_evidence_artifact,
     shell_join,
+    validate_feature_evidence_for_outcomes,
     validate_feature_run_for_outcomes,
     validate_no_existing_manual_runs,
     validate_operator_checkout,
@@ -170,6 +174,78 @@ class Exp044OperatorTests(unittest.TestCase):
         self.assertIn("phase8a-exp044-market-features.yml", shell_join(feature))
         self.assertIn("feature_run_id=123", shell_join(outcome))
 
+    def test_feature_evidence_artifact_selection_requires_exact_nonexpired_match(self) -> None:
+        expected_name = f"exp044-market-feature-evidence-{SHA}"
+        selected = select_feature_evidence_artifact(
+            {
+                "artifacts": [
+                    {"id": 44, "name": "unrelated", "expired": False},
+                    {"id": 45, "name": expected_name, "expired": False},
+                ]
+            },
+            feature_head_sha=SHA,
+        )
+        self.assertEqual(selected["artifact_id"], 45)
+        self.assertEqual(selected["artifact_name"], expected_name)
+        self.assertEqual(selected["feature_head_sha"], SHA)
+
+        with self.assertRaisesRegex(ValueError, "exactly one non-expired"):
+            select_feature_evidence_artifact(
+                {
+                    "artifacts": [
+                        {"id": 45, "name": expected_name, "expired": True},
+                    ]
+                },
+                feature_head_sha=SHA,
+            )
+        with self.assertRaisesRegex(ValueError, "exactly one non-expired"):
+            select_feature_evidence_artifact(
+                {
+                    "artifacts": [
+                        {"id": 45, "name": expected_name, "expired": False},
+                        {"id": 46, "name": expected_name, "expired": False},
+                    ]
+                },
+                feature_head_sha=SHA,
+            )
+
+    def test_feature_evidence_must_cross_bind_run_and_keep_locks_false(self) -> None:
+        evidence = {
+            "code_commit": SHA,
+            "feature_evidence_complete": True,
+            "verified_cell_count": 9,
+            "evidence_fingerprint": "d" * 64,
+            "model_fit_authorized": False,
+            "shadow_authorized": False,
+            "demo_order_authorized": False,
+            "broker_mutation_authorized": False,
+            "live_order_authorized": False,
+            "real_money_authorized": False,
+        }
+        report = validate_feature_evidence_for_outcomes(
+            evidence,
+            expected_code_commit=SHA,
+        )
+        self.assertTrue(report["feature_evidence_verified"])
+        self.assertEqual(report["feature_evidence_fingerprint"], "d" * 64)
+        self.assertEqual(report["feature_evidence_code_commit"], SHA)
+
+        wrong_commit = dict(evidence)
+        wrong_commit["code_commit"] = "b" * 40
+        with self.assertRaisesRegex(ValueError, "code commit mismatch"):
+            validate_feature_evidence_for_outcomes(
+                wrong_commit,
+                expected_code_commit=SHA,
+            )
+
+        unlocked = dict(evidence)
+        unlocked["model_fit_authorized"] = True
+        with self.assertRaisesRegex(ValueError, "must remain false"):
+            validate_feature_evidence_for_outcomes(
+                unlocked,
+                expected_code_commit=SHA,
+            )
+
     def test_api_endpoints_are_repository_and_workflow_scoped(self) -> None:
         self.assertEqual(
             feature_run_endpoint(123),
@@ -187,6 +263,14 @@ class Exp044OperatorTests(unittest.TestCase):
         )
         self.assertIn("branch=main", outcome_runs_endpoint())
         self.assertIn("event=workflow_dispatch", outcome_runs_endpoint())
+        self.assertEqual(
+            feature_run_artifacts_endpoint(123),
+            "repos/Dtwosam/FMP/actions/runs/123/artifacts?per_page=100",
+        )
+        self.assertEqual(
+            artifact_download_endpoint(456),
+            "repos/Dtwosam/FMP/actions/artifacts/456/zip",
+        )
 
     def test_invalid_run_ids_fail_closed(self) -> None:
         for value in (0, -1, True):
@@ -195,6 +279,10 @@ class Exp044OperatorTests(unittest.TestCase):
                     outcome_dispatch_command(value)  # type: ignore[arg-type]
                 with self.assertRaises(ValueError):
                     feature_run_endpoint(value)  # type: ignore[arg-type]
+                with self.assertRaises(ValueError):
+                    feature_run_artifacts_endpoint(value)  # type: ignore[arg-type]
+                with self.assertRaises(ValueError):
+                    artifact_download_endpoint(value)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
