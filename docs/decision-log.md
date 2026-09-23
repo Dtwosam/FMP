@@ -1659,3 +1659,20 @@ The source is `src/fmp/market_learning/model_successor_stability_artifacts.py` a
 
 DEC-106 remains non-executable: the authoritative bundle raises before readiness validation or artifact loading. No CLI/workflow/dispatch, model-fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization is introduced.
 
+## DEC-107 — Phase 8A EXP-046 locked model workflow source
+
+**Date:** 2026-09-23
+**Status:** SOURCE-ONLY; EXP-046 EXECUTION AUTHORIZATION CLOSED
+
+DEC-107 freezes the manual main-only input-free EXP-046 workflow, fail-closed CLI, pinned Python 3.12.14 runtime, and exact-source execution gate around merged DEC-104/105/106.
+
+The workflow source is `.github/workflows/phase8a-exp046-stability-model-training.yml` at Git blob `eb4690091a92021bb0c60f153800dc6cd9111cd5`. The CLI is `scripts/phase8a_exp046_model_run.py` at blob `525be24ec365d50f6f7a390f7eb4f6ac370440b9`. The runtime requirements are frozen at blob `d25ab16056b9f5df283147d67b8f401f60ae7520`. The execution gate is `src/fmp/market_learning/model_successor_stability_execution_gate.py` at blob `d20ab76ec7ce112f6a1ca5485e78a395bacdf49b`.
+
+The gate binds DEC-104 merge/protocol bytes, DEC-105 merge/core bytes, DEC-106 merge/artifact-runner bytes, the exact historical loader, workflow, CLI, runtime, pyproject, preprocessing, feature schema, contracts, and outcome source. Any byte drift fails closed.
+
+The workflow preserves the exact nine pair/timeframe historical artifact identities, 60m/240m horizons, readiness artifact, partial-result upload semantics, and deterministic aggregate evidence namespace. It contains no alternate trigger and no automatic dispatch.
+
+DEC-107 deliberately leaves model-run dispatch, authoritative result execution, protocol-result production, model fitting, promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization false. The workflow's authorization preflight therefore cannot pass under DEC-107.
+
+A later separate decision should freeze terminal-result review before any one-run authorization is considered.
+
