@@ -24,6 +24,7 @@ from .execution_status import (
     build_execution_status,
     compile_execution_status,
     load_workflow_run,
+    validate_workflow_run,
 )
 from .features import (
     LoadedMarketFeatureSource,
@@ -97,6 +98,7 @@ __all__ = [
     "load_market_feature_source",
     "load_training_readiness",
     "load_workflow_run",
+    "validate_workflow_run",
     "load_outcome_evidence_index",
     "load_verified_feature_cell",
     "load_verified_minute_quotes",
