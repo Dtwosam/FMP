@@ -1414,3 +1414,25 @@ The read-only operator exposes `MODEL_RUN_DISPATCH_REQUIRED` only when no model 
 DEC-093 also adds deterministic aggregate model-result validation: the evidence fingerprint is recomputed; all 18 exact cells are required; each cell result fingerprint is required; selection/validation/retrospective-holdout status chains must be logically consistent; and all promotion/trading locks remain false.
 
 Consequences: exactly one historical EXP-044 model-result run is authorized after merge, but no run is dispatched by DEC-093 itself and no result is assumed. Any later promotion or shadow-candidate decision requires a separate review of the produced retrospective evidence.
+
+
+## DEC-094 — Phase 8A EXP-044 reviewed model-run repair and replacement gate
+
+**Date:** 2026-09-23
+**Status:** APPROVED AFTER FAILED RUN 35891605645 AND BEFORE ANY REPLACEMENT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-model-run-repair.md` preserves failed model run `35891605645` and freezes a narrow reviewed-replacement repair.
+
+Run `35891605645` was the single DEC-093-authorized manual-main model run at head `e97fa03d0e94fd505d0f926eb730e01a41947880`. Authorization preflight passed, but the run completed with failure, uploaded zero artifacts, and skipped aggregate model-result evidence.
+
+The complete matrix failure inventory is now reviewed. EURUSD 5m/1h, GBPUSD 15m/1h, and USDJPY 1h completed both frozen model cells but failed because `actions/upload-artifact@v6` excluded the hidden `.results` directory. EURUSD 15m, GBPUSD 5m, and USDJPY 5m/15m all failed because frozen logistic regression reached its unchanged `max_iter=2000` and emitted `ConvergenceWarning`, which DEC-090 treated as a hard failure.
+
+DEC-094 does not tune the model. Logistic family/configuration, HGB family/configuration, preprocessing, thresholds, target, splits, gates, tie-break, and no-refit rule remain unchanged. A frozen logistic non-convergence is instead recorded as `FAILED_NON_CONVERGENCE` / `LBFGS_MAX_ITER_REACHED`; its three frozen variants remain represented but are ineligible, while the already-predeclared HGB family may continue.
+
+The workflow repair enables hidden-file upload for pair/timeframe and aggregate result evidence. Its preflight allows exactly one reviewed predecessor: failed run `35891605645`, status completed, conclusion failure, and head SHA `e97fa03d0e94fd505d0f926eb730e01a41947880`. Any other prior-run chain fails closed.
+
+The repaired training-core blob is `e2c93370d1b4956c9a1e7103eee01ee9c4ec91c3`; the reviewed-replacement workflow blob is `37164e5d2dd06848e5f76ef50a6731017300beaa`.
+
+The operator may expose `MODEL_RUN_REPLACEMENT_DISPATCH_REQUIRED` only while the latest model run is the reviewed failed predecessor. Once a replacement exists, no second replacement is automatic. Promotion/shadow/demo/broker/live/real-money/trading authorization remains false.
+
+Consequences: the failed first run remains permanent negative evidence; no authoritative model result exists yet; DEC-094 source authorizes no dispatch by itself. A replacement may be submitted only after merge and a fresh read-only operator report.
