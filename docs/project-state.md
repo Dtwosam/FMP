@@ -4,7 +4,7 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-045 CLOSED/REVIEWED + DEC-103 DIAGNOSTIC MERGED + EXP-046 TEMPORAL-STABILITY PROTOCOL FROZEN UNDER DEC-104; NO EXP-046 FIT OR RESULT
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 CLOSED/REVIEWED + DEC-103 DIAGNOSTIC MERGED + EXP-046 TEMPORAL-STABILITY PROTOCOL FROZEN UNDER DEC-104; NO EXP-046 FIT OR RESULT
 **Next milestone:** Merge DEC-104's source-only EXP-046 temporal-stability protocol, then implement a separate deterministic training/evaluation core that adds only the frozen four-window stability screen. No EXP-046 model fit, historical result execution, workflow, or run is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
