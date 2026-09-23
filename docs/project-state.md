@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 PROTOCOL/CORE/ARTIFACT/WORKFLOW SOURCES FROZEN; NO EXP-045 MODEL RESULT
-**Next milestone:** Merge DEC-098 workflow/CLI/execution-gate source while keeping dispatch/result/fit authorization false. Then a later separate decision may bind the exact merged DEC-098 identities and consider at most one guarded historical EXP-045 result run. Do not dispatch EXP-045 yet; promotion, shadow/demo execution, broker mutation, live orders, and real-money trading remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 PROTOCOL/CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-099 SINGLE-RUN AUTHORIZATION SOURCE; NO EXP-045 MODEL RESULT
+**Next milestone:** Merge DEC-099 while keeping promotion/shadow/demo/broker/live/real-money/trading locks false. After merge, separately re-check clean current `main` and zero prior EXP-045 manual-main runs before any single guarded historical model dispatch. Do not dispatch from this source-freeze step.
 
 ## Current baseline
 
@@ -400,6 +400,7 @@ Current milestone:
 22. DEC-096 implements the deterministic EXP-045 in-memory training/evaluation core, binds the exact DEC-090 base-core and DEC-095 protocol blobs, implements predeclared family-level logistic non-convergence handling, and keeps historical result execution and all promotion/trading authorization false.
 23. DEC-097 freezes the EXP-045 artifact-backed source and aggregate evidence contract, reuses the exact DEC-091 historical data loader under a blob binding, requires all 18 successor cells and deterministic fingerprints, and keeps authoritative model-result execution and all promotion/trading authorization false.
 24. DEC-098 freezes a manual main-only EXP-045 workflow, fail-closed CLI, pinned runtime, and exact-source execution gate. Dispatch/result/fit authorization remains false, so no EXP-045 historical result can be produced.
+25. DEC-099 binds merged DEC-098, confirms zero prior manual-main EXP-045 model runs, hardens the workflow with a first-run guard, and authorizes at most one historical result-producing run after merge. No run is dispatched by this decision; promotion and all trading permissions remain false.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
@@ -440,5 +441,5 @@ Phase 8B must:
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows completed successfully. One guarded EXP-044 V1 model-training workflow, run `35891605645`, executed under DEC-093 and failed; DEC-094 reviews that failure, records zero persisted model artifacts and no aggregate model result, and closes V1 execution without rerun or replacement authorization. DEC-095 freezes the EXP-045 successor protocol, DEC-096 implements its deterministic source-only training core, and DEC-097 freezes artifact-backed historical data consumption plus aggregate result evidence before any EXP-045 historical result. Every workflow/result-producing fit, promotion/shadow/demo/broker/live/real-money path remains separately gated. No prospective shadow campaign has begun.
+Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows completed successfully. One guarded EXP-044 V1 model-training workflow, run `35891605645`, executed under DEC-093 and failed; DEC-094 reviews that failure, records zero persisted model artifacts and no aggregate model result, and closes V1 execution without rerun or replacement authorization. DEC-095 freezes the EXP-045 successor protocol, DEC-096 implements its deterministic source-only training core, DEC-097 freezes artifact-backed historical data consumption plus aggregate result evidence, DEC-098 freezes the fail-closed workflow/CLI/gate source, and DEC-099 authorizes at most one guarded historical result run after merge without dispatching it. Promotion/shadow/demo/broker/live/real-money/trading paths remain locked. No prospective shadow campaign has begun.
 

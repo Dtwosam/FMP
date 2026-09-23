@@ -1522,3 +1522,21 @@ The pair/timeframe persistence behavior implements DEC-095 exactly: upload runs 
 Every result-producing job depends on authorization preflight. `SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED=false`, `AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED=false`, `SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED=false`, and `SUCCESSOR_MODEL_FIT_AUTHORIZED=false`. No operator dispatch mapping is added and no EXP-045 workflow run is submitted.
 
 Consequences: EXP-045 now has frozen protocol, training core, artifact runner/evidence contract, workflow, CLI, runtime, and execution-gate source, but still no historical model result. A later separate decision must bind the exact merged DEC-098 identities before at most one guarded historical result-producing run can be authorized. Promotion, shadow, demo, broker, live, real-money, and trading authorization remain false.
+
+## DEC-099 — Phase 8A EXP-045 single historical model-result authorization
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-045 HISTORICAL MODEL-RESULT RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp045-model-run-authorization.md` authorizes at most one guarded historical EXP-045 model-result workflow after DEC-099 is merged.
+
+DEC-098 merged at `292a86fa2aa497b31c0dd4e0284115b185f31ed4`. Before DEC-099 source work, GitHub reported zero manual-main `phase8a-exp045-model-training` runs. DEC-099 binds that merged commit plus the prior DEC-098 workflow blob `d3e4d11a8e8270417d6bbced27e756b7cc23c324`, CLI blob `ff0ed231e22589c3597672bb8bab1f62b321647d`, and execution-gate blob `6bdb3dfe3d8b548610259cbdfc6245398f9fc199`.
+
+The authorized workflow is hardened at Git blob `3c7fc17d747bca474bd91e44cb753c5cf4cc153b`. It remains manual-only, main-only, and input-free, and now rejects any prior manual-main EXP-045 model run before checking execution authorization. A failed or cancelled first run consumes the one-run slot; no rerun or replacement is automatically authorized.
+
+DEC-099 sets the outer model-run dispatch, authoritative result execution, protocol-result production, and model-fit authorization flags true only for that guarded first historical run. The unchanged DEC-095 protocol and DEC-096 training-core source locks remain false beneath the separate authorization layer.
+
+The frozen pair/timeframe inventory, 60m/240m horizons, persisted DEC-091/097 historical artifacts, Python 3.12.14 runtime, DEC-095 non-convergence policy, and DEC-097 all-18-cell aggregate evidence contract remain unchanged.
+
+DEC-099 does not dispatch the workflow. Promotion, shadow, demo, broker mutation, live-order, real-money, and trading authorization remain false. Any produced result remains post-result-informed retrospective evidence and requires a later separate review.
+
