@@ -4,7 +4,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from fmp.contracts import Direction, SUPPORTED_SYMBOLS
 from fmp.features.contracts import SUPPORTED_TIMEFRAMES, timeframe_delta
@@ -13,6 +13,9 @@ from fmp.features.contracts import SUPPORTED_TIMEFRAMES, timeframe_delta
 EXPERIMENT_ID = "EXP-20260923-044"
 PROTOCOL_VERSION = "fmp-market-learning-v1"
 MARKET_FEATURE_SET_VERSION = "fmp-market-feature-v1"
+BASE_FEATURE_DEFINITION_VERSION = "fmp-feature-v1"
+MARKET_HISTORY_START = date(2015, 1, 1)
+MARKET_HISTORY_END_EXCLUSIVE = date(2026, 8, 21)
 EVIDENCE_LABEL = "RETROSPECTIVE_ALREADY_SEEN"
 HORIZONS_MINUTES = (60, 240)
 SLIPPAGE_PIPS = (0.2, 0.5, 1.0)
@@ -138,10 +141,13 @@ class MarketOutcomeResult:
 
 
 __all__ = [
+    "BASE_FEATURE_DEFINITION_VERSION",
     "EVIDENCE_LABEL",
     "EXPERIMENT_ID",
     "HORIZONS_MINUTES",
     "MARKET_FEATURE_SET_VERSION",
+    "MARKET_HISTORY_END_EXCLUSIVE",
+    "MARKET_HISTORY_START",
     "PROTOCOL_VERSION",
     "SLIPPAGE_PIPS",
     "MarketObservation",
