@@ -8,7 +8,75 @@ permissions:
   actions: read
 
 jobs:
+  source-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require merged main dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Fetch frozen Phase 2 artifact metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .phase2-source-metadata
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/10325737935" > .phase2-source-metadata/EURUSD.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/10326096831" > .phase2-source-metadata/GBPUSD.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/10327600628" > .phase2-source-metadata/USDJPY.json
+
+      - name: Validate source availability and identity
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_market_source_preflight.py \
+            --metadata-root .phase2-source-metadata \
+            --minimum-valid-hours 12 \
+            --out .exp044-source-preflight/source-preflight.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path(".exp044-source-preflight/source-preflight.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          assert report["source_ready"] is True
+          assert report["historical_source"] == "Dukascopy"
+          assert report["new_acquisition_performed"] is False
+          assert len(report["artifacts"]) == 3
+          assert report["model_fit_authorized"] is False
+          assert report["promotion_authorized"] is False
+          assert report["shadow_authorized"] is False
+          assert report["demo_order_authorized"] is False
+          assert report["broker_mutation_authorized"] is False
+          assert report["live_order_authorized"] is False
+          assert report["real_money_authorized"] is False
+          PY
+
+      - name: Upload Phase 2 source preflight
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-phase2-source-preflight-${{ github.sha }}
+          path: .exp044-source-preflight/source-preflight.json
+          if-no-files-found: error
+
   generate:
+    needs: source-preflight
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
