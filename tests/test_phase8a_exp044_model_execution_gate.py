@@ -12,7 +12,9 @@ from fmp.market_learning.model_execution_gate import (
     DEC092_MERGED_COMMIT,
     DEC092_WORKFLOW_BLOB_SHA,
     DEC093_WORKFLOW_BLOB_SHA,
+    DEC094_WORKFLOW_BLOB_SHA,
     MODEL_EXECUTION_AUTHORIZATION_DECISION,
+    MODEL_EXECUTION_CLOSURE_DECISION,
     MODEL_FIT_AUTHORIZED,
     MODEL_PROTOCOL_RESULT_AUTHORIZED,
     MODEL_RUN_DISPATCH_AUTHORIZED,
@@ -22,18 +24,14 @@ from fmp.market_learning.model_execution_gate import (
     validate_authorized_model_execution_sources,
     validate_frozen_model_sources,
 )
-from fmp.market_learning.operator import (
-    dispatch_command_for_next_report,
-    model_dispatch_command,
-    shell_join,
-)
+from fmp.market_learning.operator import dispatch_command_for_next_report
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class Exp044ModelExecutionGateTests(unittest.TestCase):
-    def test_exact_frozen_sources_open_one_model_result_authorization(self) -> None:
+    def test_exact_sources_are_preserved_but_v1_execution_is_closed(self) -> None:
         source = validate_frozen_model_sources(repository_root=ROOT)
         self.assertEqual(
             source["artifact_runner_blob_sha"],
@@ -64,6 +62,10 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
             DEC093_WORKFLOW_BLOB_SHA,
         )
         self.assertEqual(
+            execution["dec094_workflow_blob_sha"],
+            DEC094_WORKFLOW_BLOB_SHA,
+        )
+        self.assertEqual(
             execution["dec092_cli_blob_sha"],
             DEC092_CLI_BLOB_SHA,
         )
@@ -73,50 +75,48 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
         )
         self.assertEqual(
             gate["stage"],
-            "MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+            "MODEL_RUN_EXECUTION_CLOSED",
         )
         self.assertEqual(
             gate["model_execution_authorization_decision"],
             MODEL_EXECUTION_AUTHORIZATION_DECISION,
         )
+        self.assertEqual(
+            gate["model_execution_closure_decision"],
+            MODEL_EXECUTION_CLOSURE_DECISION,
+        )
         self.assertIs(MODEL_RUN_WORKFLOW_SOURCE_FROZEN, True)
-        self.assertIs(MODEL_RUN_DISPATCH_AUTHORIZED, True)
+        self.assertIs(MODEL_RUN_DISPATCH_AUTHORIZED, False)
         self.assertIs(
             AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED,
-            True,
+            False,
         )
-        self.assertIs(MODEL_PROTOCOL_RESULT_AUTHORIZED, True)
-        self.assertIs(MODEL_FIT_AUTHORIZED, True)
-        self.assertIs(gate["model_run_dispatch_authorized"], True)
+        self.assertIs(MODEL_PROTOCOL_RESULT_AUTHORIZED, False)
+        self.assertIs(MODEL_FIT_AUTHORIZED, False)
+        self.assertIs(gate["model_run_dispatch_authorized"], False)
         self.assertIs(
             gate["authoritative_model_result_execution_authorized"],
-            True,
+            False,
         )
         self.assertIs(
             gate["model_protocol_result_authorized"],
-            True,
+            False,
         )
-        self.assertIs(gate["model_fit_authorized"], True)
+        self.assertIs(gate["model_fit_authorized"], False)
         self.assertIs(gate["promotion_authorized"], False)
         self.assertIs(gate["trading_authorized"], False)
 
-    def test_authoritative_execution_requires_exact_authorized_sources(self) -> None:
-        result = require_authoritative_model_execution(
-            repository_root=ROOT,
-            code_commit="a" * 40,
-        )
-        self.assertEqual(result["code_commit"], "a" * 40)
-        self.assertIs(result["model_run_dispatch_authorized"], True)
-        self.assertIs(
-            result["authoritative_model_result_execution_authorized"],
-            True,
-        )
-        self.assertIs(result["model_protocol_result_authorized"], True)
-        self.assertIs(result["model_fit_authorized"], True)
-        self.assertIs(result["promotion_authorized"], False)
-        self.assertIs(result["trading_authorized"], False)
+    def test_authoritative_execution_is_closed_after_reviewed_failure(self) -> None:
+        with self.assertRaisesRegex(
+            PermissionError,
+            "model-run dispatch is not authorized",
+        ):
+            require_authoritative_model_execution(
+                repository_root=ROOT,
+                code_commit="a" * 40,
+            )
 
-    def test_authorized_workflow_blob_drift_fails_closed(self) -> None:
+    def test_repaired_workflow_blob_drift_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             market = root / "src/fmp/market_learning"
@@ -180,8 +180,8 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
                 repository_root=root,
             )
             self.assertEqual(
-                validated["dec093_workflow_blob_sha"],
-                DEC093_WORKFLOW_BLOB_SHA,
+                validated["dec094_workflow_blob_sha"],
+                DEC094_WORKFLOW_BLOB_SHA,
             )
 
             workflow.write_text(
@@ -196,36 +196,10 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
                     repository_root=root,
                 )
 
-    def test_model_dispatch_plan_requires_all_execution_authorizations(self) -> None:
-        command = model_dispatch_command()
+    def test_reviewed_failure_stage_is_not_dispatchable(self) -> None:
         report = {
             "read_only": True,
-            "stage": "MODEL_RUN_DISPATCH_REQUIRED",
-            "dispatch_command": shell_join(command),
-            "model_protocol_result_authorized": True,
-            "model_fit_authorized": True,
-            "model_run_dispatch_authorized": True,
-            "authoritative_model_result_execution_authorized": True,
-            "promotion_authorized": False,
-            "trading_authorized": False,
-        }
-        self.assertEqual(
-            dispatch_command_for_next_report(report),
-            command,
-        )
-
-        blocked = dict(report)
-        blocked["model_fit_authorized"] = False
-        with self.assertRaisesRegex(
-            ValueError,
-            "model_fit_authorized must be true",
-        ):
-            dispatch_command_for_next_report(blocked)
-
-    def test_non_model_stages_still_require_model_locks_false(self) -> None:
-        report = {
-            "read_only": True,
-            "stage": "MODEL_RESULT_REVIEW_REQUIRED",
+            "stage": "MODEL_RUN_FAILURE_REVIEWED",
             "model_protocol_result_authorized": False,
             "model_fit_authorized": False,
             "promotion_authorized": False,
