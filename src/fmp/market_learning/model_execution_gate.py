@@ -22,6 +22,7 @@ from .model_training import (
 
 MODEL_EXECUTION_GATE_DECISION = "DEC-092"
 MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-093"
+MODEL_EXECUTION_CLOSURE_DECISION = "DEC-094"
 MODEL_WORKFLOW_FILE = "phase8a-exp044-model-training.yml"
 MODEL_WORKFLOW_NAME = "phase8a-exp044-model-training"
 
@@ -29,6 +30,7 @@ DEC091_MERGED_COMMIT = "397ef1410fe92b376431a66f5a7e3ee44d71dec6"
 DEC092_MERGED_COMMIT = "9645bae73ec1d113383c9957569c6e05a70b2e96"
 DEC092_WORKFLOW_BLOB_SHA = "004f6c0062b6e5c1e15dcd507ea19b288b821e40"
 DEC093_WORKFLOW_BLOB_SHA = "491a9ab5ac688402ef71506e1207463940c8931b"
+DEC094_WORKFLOW_BLOB_SHA = "2079b1fb9d8c4cc94085afc06ceb6953c1d087b2"
 DEC092_CLI_BLOB_SHA = "daae5b3a54a3412e799a8ec44206724859a74ba4"
 DEC092_GATE_BLOB_SHA = "74639615946dba49e742e0d6738b9c8d34855340"
 DEC092_OPERATOR_BLOB_SHA = "97a13779c7f5425697487a5a8772613e48362556"
@@ -44,10 +46,10 @@ DEC090_CORE_BLOB_SHA = "34b50a3f907d26b1c5ec50a0a0b444a3417d04f7"
 DEC088_PROTOCOL_BLOB_SHA = "549b2a04f961d9d8ad83caea9c02b40ee54adec2"
 
 MODEL_RUN_WORKFLOW_SOURCE_FROZEN = True
-MODEL_RUN_DISPATCH_AUTHORIZED = True
-AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED = True
-MODEL_PROTOCOL_RESULT_AUTHORIZED = True
-MODEL_FIT_AUTHORIZED = True
+MODEL_RUN_DISPATCH_AUTHORIZED = False
+AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED = False
+MODEL_PROTOCOL_RESULT_AUTHORIZED = False
+MODEL_FIT_AUTHORIZED = False
 
 
 def _git_blob_sha(path: Path) -> str:
@@ -134,7 +136,7 @@ def validate_authorized_model_execution_sources(
     expected = {
         "model_workflow": (
             root / ".github/workflows/phase8a-exp044-model-training.yml",
-            DEC093_WORKFLOW_BLOB_SHA,
+            DEC094_WORKFLOW_BLOB_SHA,
         ),
         "model_cli": (
             root / "scripts/phase8a_exp044_model_run.py",
@@ -182,7 +184,8 @@ def validate_authorized_model_execution_sources(
         **upstream,
         "dec092_merged_commit": DEC092_MERGED_COMMIT,
         "dec092_workflow_blob_sha": DEC092_WORKFLOW_BLOB_SHA,
-        "dec093_workflow_blob_sha": actual["model_workflow"],
+        "dec093_workflow_blob_sha": DEC093_WORKFLOW_BLOB_SHA,
+        "dec094_workflow_blob_sha": actual["model_workflow"],
         "dec092_cli_blob_sha": actual["model_cli"],
         "authorized_python_version": AUTHORIZED_PYTHON_VERSION,
         "runtime_requirements_blob_sha": actual["runtime_requirements"],
@@ -205,13 +208,16 @@ def build_model_workflow_source_gate(
     )
     return {
         **source,
-        "stage": "MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+        "stage": "MODEL_RUN_EXECUTION_CLOSED",
         "next_action": (
-            "DEC-093 authorizes exactly one guarded historical model-result run. "
-            "Inspect existing model workflow state before any dispatch."
+            "DEC-094 closes EXP-044 V1 model execution after reviewed run "
+            "35891605645 failed. Do not rerun or replace it."
         ),
         "model_execution_authorization_decision": (
             MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
+        "model_execution_closure_decision": (
+            MODEL_EXECUTION_CLOSURE_DECISION
         ),
         "model_run_dispatch_authorized": MODEL_RUN_DISPATCH_AUTHORIZED,
         "authoritative_model_result_execution_authorized": (
@@ -272,6 +278,7 @@ __all__ = [
     "DEC092_OPERATOR_BLOB_SHA",
     "DEC092_WORKFLOW_BLOB_SHA",
     "DEC093_WORKFLOW_BLOB_SHA",
+    "DEC094_WORKFLOW_BLOB_SHA",
     "EXP044_RUNTIME_REQUIREMENTS_BLOB_SHA",
     "FEATURE_SCHEMA_BLOB_SHA",
     "MARKET_CONTRACTS_BLOB_SHA",
@@ -280,6 +287,7 @@ __all__ = [
     "PYPROJECT_BLOB_SHA",
     "DEC091_RUNNER_BLOB_SHA",
     "MODEL_EXECUTION_AUTHORIZATION_DECISION",
+    "MODEL_EXECUTION_CLOSURE_DECISION",
     "MODEL_EXECUTION_GATE_DECISION",
     "MODEL_FIT_AUTHORIZED",
     "MODEL_PROTOCOL_RESULT_AUTHORIZED",
