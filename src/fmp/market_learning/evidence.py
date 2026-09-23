@@ -309,6 +309,103 @@ def compile_feature_evidence(
     return evidence
 
 
+
+def load_feature_evidence_index(path: Path) -> Mapping[str, object]:
+    try:
+        raw = Path(path).read_bytes()
+        value = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read EXP-044 feature evidence index: {path}") from exc
+    if not isinstance(value, dict):
+        raise ValueError("EXP-044 feature evidence index root must be an object")
+
+    fingerprint = value.get("evidence_fingerprint")
+    if not isinstance(fingerprint, str) or len(fingerprint) != 64:
+        raise ValueError("EXP-044 feature evidence fingerprint is invalid")
+    try:
+        int(fingerprint, 16)
+    except ValueError as exc:
+        raise ValueError("EXP-044 feature evidence fingerprint must be hexadecimal") from exc
+
+    unsigned = dict(value)
+    unsigned.pop("evidence_fingerprint", None)
+    if _sha256_bytes(_canonical_json(unsigned)) != fingerprint:
+        raise ValueError("EXP-044 feature evidence fingerprint mismatch")
+
+    if value.get("experiment_id") != EXPERIMENT_ID:
+        raise ValueError("EXP-044 feature evidence experiment identity mismatch")
+    if value.get("feature_set_version") != MARKET_FEATURE_SET_VERSION:
+        raise ValueError("EXP-044 feature evidence set identity mismatch")
+    if value.get("evidence_label") != EVIDENCE_LABEL:
+        raise ValueError("EXP-044 feature evidence label mismatch")
+    if value.get("feature_evidence_complete") is not True:
+        raise ValueError("EXP-044 feature evidence is not complete")
+    if value.get("expected_cell_count") != len(EXPECTED_CELLS):
+        raise ValueError("EXP-044 expected feature cell count mismatch")
+    if value.get("verified_cell_count") != len(EXPECTED_CELLS):
+        raise ValueError("EXP-044 verified feature cell count mismatch")
+    for flag in (
+        "model_fit_authorized",
+        "shadow_authorized",
+        "demo_order_authorized",
+        "broker_mutation_authorized",
+        "live_order_authorized",
+        "real_money_authorized",
+    ):
+        if value.get(flag) is not False:
+            raise ValueError(f"EXP-044 feature evidence {flag} must remain false")
+
+    code_commit = value.get("code_commit")
+    if not isinstance(code_commit, str) or len(code_commit) != 40:
+        raise ValueError("EXP-044 feature evidence code commit is invalid")
+    try:
+        int(code_commit, 16)
+    except ValueError as exc:
+        raise ValueError("EXP-044 feature evidence code commit must be hexadecimal") from exc
+
+    source = value.get("historical_source")
+    expected_source = {
+        "provider": "Dukascopy",
+        "reuse_existing_accepted_history": True,
+        "new_acquisition_performed": False,
+        "phase1_checkpoint": PHASE1_SOURCE_CHECKPOINT,
+        "phase1_frozen_plan_sha256": PHASE1_FROZEN_PLAN_SHA256,
+        "phase2_schema_version": PROCESSED_SCHEMA_VERSION,
+        "processed_manifest_sha256_by_symbol": dict(
+            sorted(EXPECTED_SOURCE_MANIFEST_SHA256.items())
+        ),
+    }
+    if source != expected_source:
+        raise ValueError("EXP-044 feature evidence historical source mismatch")
+
+    cells = value.get("cells")
+    if not isinstance(cells, list) or len(cells) != len(EXPECTED_CELLS):
+        raise ValueError("EXP-044 feature evidence cells are incomplete")
+    seen: list[tuple[str, str]] = []
+    for cell in cells:
+        if not isinstance(cell, Mapping):
+            raise ValueError("EXP-044 feature evidence cell must be an object")
+        identity = (cell.get("symbol"), cell.get("timeframe"))
+        if identity not in EXPECTED_CELLS:
+            raise ValueError(f"unexpected EXP-044 feature evidence cell: {identity!r}")
+        seen.append(identity)
+        manifest_sha = cell.get("manifest_sha256")
+        source_sha = cell.get("processed_manifest_sha256")
+        if not isinstance(manifest_sha, str) or len(manifest_sha) != 64:
+            raise ValueError("EXP-044 feature cell manifest sha256 is invalid")
+        if source_sha != EXPECTED_SOURCE_MANIFEST_SHA256[str(identity[0])]:
+            raise ValueError("EXP-044 feature cell source sha256 mismatch")
+        row_count = cell.get("row_count")
+        if not isinstance(row_count, int) or isinstance(row_count, bool) or row_count <= 0:
+            raise ValueError("EXP-044 feature cell row count is invalid")
+        if cell.get("artifact_count") != len(_expected_months()):
+            raise ValueError("EXP-044 feature cell artifact count mismatch")
+
+    if tuple(seen) != EXPECTED_CELLS:
+        raise ValueError("EXP-044 feature evidence cells are not exact and sorted")
+    return value
+
+
 def write_feature_evidence(*, evidence: Mapping[str, object], path: Path) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -322,5 +419,6 @@ __all__ = [
     "EXPECTED_CELLS",
     "EXPECTED_SOURCE_MANIFEST_SHA256",
     "compile_feature_evidence",
+    "load_feature_evidence_index",
     "write_feature_evidence",
 ]
