@@ -1056,3 +1056,17 @@ DEC-070 validates the existing DEC-047 registration, optional DEC-048/049 start/
 The readiness audit may identify `authorize-start`, `freeze-spread-reference`, or `capture-segment` as the next operator action, but even a ready result does not start a segment and sets no acceptance, promotion, Phase 9, order, broker-mutation, live, or real-money authorization.
 
 DEC-070 also replaces the historical USDJPY-only operator handoff with the current Phase 8B portfolio workflow. No real bridge inspection or prospective capture is executed by repository verification.
+
+
+## DEC-071 — Phase 8B prospective campaign progress preview
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY PHASE 8B ACCEPTANCE RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8b-campaign-progress.md` opens `EXP-20260923-042` for a read-only progress preview over existing clean DEC-052 prospective segments.
+
+DEC-071 reuses the exact DEC-053 campaign-close aggregation kernel for segment validation, duplicate/overlap checks, continuous aggregate simulation, replay, observation bounds, London-date coverage, completed 0.2-pip trades, and represented strategy-family/pair counts.
+
+The preview reports the exact DEC-051 minimums and remaining amounts but creates no closure, campaign-evidence artifact, acceptance result, review, lifecycle transition, or terminal marker. Meeting every minimum in the preview is not Phase 8B PASS.
+
+The CLI command `progress --campaign-dir <path>` prints JSON only and authorizes no promotion, SHADOW_VALIDATED transition, Phase 9 action, order, broker mutation, live trading, or real-money action.
