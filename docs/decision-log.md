@@ -1608,3 +1608,20 @@ The machine-checkable source is `src/fmp/market_learning/model_successor_post_re
 
 DEC-103 opens only successor-protocol source work. EXP-045 rerun/replacement, successor result execution/model fit, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
 
+## DEC-104 — Phase 8A EXP-046 temporal-stability successor protocol
+
+**Date:** 2026-09-23
+**Status:** APPROVED SOURCE-ONLY BEFORE ANY EXP-046 MODEL RESULT
+
+DEC-104 opens `EXP-20260923-046` as a separately identified, explicitly post-result-informed successor after DEC-103 froze the detailed EXP-045 diagnostic.
+
+EXP-046 preserves the exact 18 cells, 48 inputs, target, chronology, two model families/configurations, 0.50/0.60/0.70 confidence thresholds, 250-directional-candidate floor, original aggregate financial gate, validation/holdout scenarios, and logistic non-convergence policy.
+
+The sole protocol change is a temporal-stability screen inside the existing 2021-2022 selection split. Aggregate-gate-passing variants are additionally evaluated in four non-overlapping half-year windows: 2021H1, 2021H2, 2022H1, and 2022H2. Every window must contribute at least 10% of the variant's full selection-period directional candidates and must have positive total net pips, positive mean net pips, and gross positive pips greater than absolute gross negative pips. All four windows must pass.
+
+The 10% share is a concentration guard and does not replace or relax the aggregate 250-candidate floor. Low-count positive EXP-045 variants are not grandfathered into the successor.
+
+The protocol source is `src/fmp/market_learning/model_successor_stability_protocol.py` at Git blob `4c8da2259f1fd6d27862a50a47a0d8108b58bc2e`.
+
+DEC-104 authorizes no fit, historical result execution, workflow, model-family/config rescue, threshold/floor change, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision must implement the deterministic stability-aware training core before any result-producing execution can be considered.
+
