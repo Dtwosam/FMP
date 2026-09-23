@@ -295,7 +295,7 @@ def build_stability_operator_report(
         **common,
         "stage": "STABILITY_MODEL_TERMINAL_REVIEW_REQUIRED",
         "next_action": (
-            "Validate the terminal run through the frozen DEC-100 "
+            "Validate the terminal run through the frozen DEC-108 "
             "review contract; do not dispatch another run."
         ),
         "stability_model_run_dispatch_authorized": False,
