@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 SAFE SINGLE-STEP ADVANCE + SOURCE PRESERVATION/FALLBACK + DETERMINISTIC CONTINUATION SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** From a clean checkout of merged `main`, run DEC-087 `advance` to inspect the DEC-086 next state; use `advance --execute` only to submit the one planner-authorized preservation/feature/outcome workflow. The command replans immediately before mutation and aborts on state drift. With no preservation release or EXP-044 runs yet, the first executable state remains preservation. Only a recomputed `MODEL_PROTOCOL_SOURCE_OPEN` state may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Phase status:** ACTIVE — EXP-044 DATA PREPARATION VERIFIED + MODEL PROTOCOL SOURCE FROZEN; NO MODEL-TRAINING RESULT
+**Next milestone:** Merge DEC-088's predeclared EXP-044 model protocol from source-only code and tests. Do not fit a model. A later separate guarded decision must bind the merged protocol fingerprint and verified DEC-074 readiness chain before any result-producing fit can be authorized.
 
 ## Current baseline
 
@@ -386,6 +386,10 @@ Current milestone:
 10. Source now includes a separate manual outcome workflow that accepts only a successful `phase8a-exp044-market-features` run from `main`, revalidates its aggregate feature evidence, reuses the accepted Phase 2 Dukascopy artifacts, materializes all nine outcome cells, and emits one aggregate outcome-evidence fingerprint. This workflow has not been dispatched; no EXP-044 model fit is authorized.
 11. PR #173 merged that evidence-gated outcome workflow to `main` at `fc05230462d8743ba5780d3bd2633649e4019b00`. Exact PR head `e29437e2ab93462b1a669797e973b7b18dfacd33` passed 1129 tests plus workflow-YAML validation and compile in run `35846186938`; unchanged Phase 3 acceptance run `35846186891` passed. Post-merge main runs `35846386839` and `35846386975` also passed.
 12. DEC-074 adds a source-only data-preparation readiness gate: persisted feature and outcome evidence must revalidate and cross-bind exact evidence fingerprints, cell manifests, Phase 2 Dukascopy identities, and feature row counts before model-protocol source work may open. Readiness never authorizes fitting or promotion.
+
+
+13. Authoritative EXP-044 data preparation is now complete: feature run `35867307338` and replacement outcome run `35876715434` are verified; aggregate outcome evidence artifact `10758027876` and readiness artifact `10757578276` revalidate; DEC-075 reports `MODEL_PROTOCOL_SOURCE_OPEN`.
+14. DEC-088 freezes the first direct-market model-training protocol source across exactly 18 pair/timeframe/horizon cells. It creates no result authorization: model fitting, promotion, shadow/demo activity, broker mutation, live orders, and real-money trading remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
