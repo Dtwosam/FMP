@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 import unittest
@@ -208,6 +209,48 @@ class MarketLearningExecutionStatusTests(unittest.TestCase):
         self.assertFalse(status["broker_mutation_authorized"])
         self.assertFalse(status["live_order_authorized"])
         self.assertFalse(status["real_money_authorized"])
+
+    def test_recomputed_but_altered_readiness_fails_cross_check(self) -> None:
+        feature = _feature_evidence()
+        outcome = _outcome_evidence(feature)
+        readiness = build_training_readiness(
+            feature_evidence=feature,
+            outcome_evidence=outcome,
+        )
+        readiness["cells"][0]["feature_row_count"] = (
+            int(readiness["cells"][0]["feature_row_count"]) + 1
+        )
+        unsigned = dict(readiness)
+        unsigned.pop("readiness_fingerprint")
+        payload = (
+            json.dumps(
+                unsigned,
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+            + "\n"
+        ).encode("utf-8")
+        readiness["readiness_fingerprint"] = hashlib.sha256(payload).hexdigest()
+
+        with self.assertRaisesRegex(ValueError, "exactly match"):
+            build_execution_status(
+                feature_run=_run(
+                    run_id=111,
+                    name=FEATURE_WORKFLOW_NAME,
+                    path=FEATURE_WORKFLOW_PATH,
+                    head_sha=FEATURE_SHA,
+                ),
+                feature_evidence=feature,
+                outcome_run=_run(
+                    run_id=222,
+                    name=OUTCOME_WORKFLOW_NAME,
+                    path=OUTCOME_WORKFLOW_PATH,
+                    head_sha=OUTCOME_SHA,
+                ),
+                outcome_evidence=outcome,
+                readiness=readiness,
+            )
 
     def test_workflow_run_loader_rejects_non_main_or_non_manual_run(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
