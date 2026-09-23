@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 PROTOCOL/CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-099 SINGLE-RUN AUTHORIZATION MERGED + DEC-100 TERMINAL-REVIEW SOURCE FROZEN + DEC-101 SINGLE-STEP OPERATOR SOURCE FROZEN; NO EXP-045 MODEL RESULT
-**Next milestone:** Merge DEC-101's source-only EXP-045 operator. When an authenticated runner is online, execute its read-only `next` command from clean current `main`. Only if it reports `SUCCESSOR_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `advance --execute` submit exactly one guarded historical EXP-045 run. Any failed/cancelled/timed-out first run consumes the slot; do not retry automatically. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 PROTOCOL/CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-099 SINGLE-RUN AUTHORIZATION MERGED + DEC-100 TERMINAL-REVIEW SOURCE FROZEN + DEC-101 SINGLE-STEP OPERATOR MERGED; NO EXP-045 MODEL RESULT
+**Next milestone:** DEC-101 is merged at `d834d9071a21aeefaf72d2be2d2f41b205e5104b`. GitHub still reports zero manual-main `phase8a-exp045-model-training` runs. When an authenticated runner is online, run `python scripts/phase8a_exp045_operator.py next` from clean current `main`. Only if it reports `SUCCESSOR_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp045_operator.py advance --execute` submit exactly one guarded historical EXP-045 run. Any failed/cancelled/timed-out first run consumes the slot; do not retry automatically. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
