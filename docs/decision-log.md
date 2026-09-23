@@ -1576,3 +1576,18 @@ Once a run exists, operator dispatch authorization is consumed. Active runs are 
 
 DEC-101 adds no alternate trigger, rerun/replacement command, workflow input, protocol/model/runtime change, promotion, shadow/demo permission, broker mutation, live-order permission, real-money permission, or trading authorization. No EXP-045 workflow is dispatched by this decision.
 
+## DEC-102 — Phase 8A EXP-045 reviewed historical model result
+
+**Date:** 2026-09-23
+**Status:** REVIEWED AFTER THE SINGLE DEC-099-AUTHORIZED HISTORICAL RUN
+
+Run `35911916239` executed once from `main` at `6d42a5053c5f2f696071715640dab24973a40517` with `run_attempt=1` and completed successfully. All 11 expected jobs succeeded, all nine pair/timeframe artifacts persisted, and the aggregate result artifact `10774927034` persisted with ZIP digest `sha256:8602d0b5e9bb6ad746f5cd5c96e878e631d6ed090dcd7a236c0ee00c6fadd5a5`.
+
+The aggregate evidence fingerprint is `3e0ebac02dbba690b4c03dd10c3fdd30c5eb0d6356b881e38f9a3527f0135c55`, independently recomputed from canonical JSON. It contains all 18 exact model cells and remains labeled `RETROSPECTIVE_ALREADY_SEEN`, `prior_result_informed=true`, and `untouched_oos=false`.
+
+The result contains 17 `NO_MODEL_CHALLENGER` cells and one selected cell: GBPUSD 5m / 240m. That selected cell failed validation (`validation_status=REJECT`) and the retrospective holdout remained locked. Therefore validation-pass count, holdout-pass count, and accepted-model-candidate count are all zero. Six cells recorded the predeclared DEC-095 logistic `FAILED_NON_CONVERGENCE` family outcome; all HGB families fitted.
+
+DEC-102 classifies the reviewed result as `SUCCESSOR_MODEL_RESULT_REVIEWED_NO_ACCEPTED_CHALLENGER`. The one-run authorization is consumed and closed. No rerun/replacement, new fit, promotion, prospective shadow, demo order, broker mutation, live order, real-money action, or trading authorization is opened.
+
+The machine-checkable reviewed-result source is `src/fmp/market_learning/model_successor_result_decision.py` at Git blob `d672fc334702fcea2edc4a50cd331598fb192586`. Any further model research requires a separately predeclared, explicitly post-result-informed successor experiment.
+
