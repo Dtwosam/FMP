@@ -13,7 +13,12 @@ from fmp.market_learning.model_successor_execution_gate import (
     DEC096_CORE_BLOB_SHA,
     DEC097_MERGED_COMMIT,
     DEC097_RUNNER_BLOB_SHA,
+    DEC098_CLI_BLOB_SHA,
+    DEC098_GATE_BLOB_SHA,
+    DEC098_MERGED_COMMIT,
+    DEC098_WORKFLOW_BLOB_SHA,
     SUCCESSOR_CLI_BLOB_SHA,
+    SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
     SUCCESSOR_MODEL_EXECUTION_GATE_DECISION,
     SUCCESSOR_MODEL_FIT_AUTHORIZED,
     SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -37,13 +42,29 @@ CLI = ROOT / "scripts/phase8a_exp045_model_run.py"
 
 
 class Exp045ModelWorkflowSourceTests(unittest.TestCase):
-    def test_exact_source_gate_is_frozen_and_non_executable(self) -> None:
+    def test_exact_sources_open_one_guarded_result_authorization(self) -> None:
         source = validate_successor_model_workflow_sources(
             repository_root=ROOT,
         )
         self.assertEqual(
             source["dec097_merged_commit"],
             DEC097_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            source["dec098_merged_commit"],
+            DEC098_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            source["dec098_workflow_blob_sha"],
+            DEC098_WORKFLOW_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["dec098_cli_blob_sha"],
+            DEC098_CLI_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["dec098_gate_blob_sha"],
+            DEC098_GATE_BLOB_SHA,
         )
         self.assertEqual(
             source["successor_runner_blob_sha"],
@@ -77,17 +98,25 @@ class Exp045ModelWorkflowSourceTests(unittest.TestCase):
             source["authorized_python_version"],
             AUTHORIZED_PYTHON_VERSION,
         )
+        self.assertEqual(
+            source["successor_model_execution_authorization_decision"],
+            SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+        )
 
         gate = build_successor_model_workflow_source_gate(
             repository_root=ROOT,
         )
         self.assertEqual(
             gate["stage"],
-            "SUCCESSOR_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+            "SUCCESSOR_MODEL_RUN_DISPATCH_REQUIRED",
         )
         self.assertEqual(
             gate["successor_model_execution_gate_decision"],
             SUCCESSOR_MODEL_EXECUTION_GATE_DECISION,
+        )
+        self.assertEqual(
+            gate["successor_model_execution_authorization_decision"],
+            SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
         )
         self.assertIs(
             SUCCESSOR_MODEL_WORKFLOW_SOURCE_FROZEN,
@@ -95,44 +124,55 @@ class Exp045ModelWorkflowSourceTests(unittest.TestCase):
         )
         self.assertIs(
             SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED,
-            False,
+            True,
         )
         self.assertIs(
             AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED,
-            False,
+            True,
         )
         self.assertIs(
             SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED,
-            False,
+            True,
         )
-        self.assertIs(SUCCESSOR_MODEL_FIT_AUTHORIZED, False)
+        self.assertIs(SUCCESSOR_MODEL_FIT_AUTHORIZED, True)
         self.assertIs(
             gate["successor_model_run_dispatch_authorized"],
-            False,
+            True,
         )
         self.assertIs(
             gate[
                 "authoritative_successor_model_result_execution_authorized"
             ],
-            False,
+            True,
         )
         self.assertIs(
             gate["model_protocol_result_authorized"],
-            False,
+            True,
         )
-        self.assertIs(gate["model_fit_authorized"], False)
+        self.assertIs(gate["model_fit_authorized"], True)
         self.assertIs(gate["promotion_authorized"], False)
         self.assertIs(gate["trading_authorized"], False)
 
-    def test_execution_requirement_refuses_before_any_model_work(self) -> None:
-        with self.assertRaisesRegex(
-            PermissionError,
-            "model-run dispatch is not authorized",
-        ):
-            require_authoritative_successor_model_execution(
-                repository_root=ROOT,
-                code_commit="a" * 40,
-            )
+    def test_execution_requirement_accepts_exact_authorized_sources(self) -> None:
+        result = require_authoritative_successor_model_execution(
+            repository_root=ROOT,
+            code_commit="a" * 40,
+        )
+        self.assertEqual(result["code_commit"], "a" * 40)
+        self.assertIs(
+            result["successor_model_run_dispatch_authorized"],
+            True,
+        )
+        self.assertIs(
+            result[
+                "authoritative_successor_model_result_execution_authorized"
+            ],
+            True,
+        )
+        self.assertIs(result["model_protocol_result_authorized"], True)
+        self.assertIs(result["model_fit_authorized"], True)
+        self.assertIs(result["promotion_authorized"], False)
+        self.assertIs(result["trading_authorized"], False)
 
     def test_bound_source_drift_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -219,6 +259,29 @@ class Exp045ModelWorkflowSourceTests(unittest.TestCase):
         )
         self.assertIn(
             'test "$GITHUB_REF" = "refs/heads/main"',
+            text,
+        )
+
+    def test_workflow_enforces_first_manual_main_run_only(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        guard = text.index(
+            "Reject any prior manual main EXP-045 model run"
+        )
+        authorization = text.index(
+            "Require separately authorized EXP-045 result execution"
+        )
+        self.assertLess(guard, authorization)
+        self.assertIn(
+            "actions/workflows/phase8a-exp045-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
+            text,
+        )
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            "prior manual-main EXP-045 model run exists",
             text,
         )
 
