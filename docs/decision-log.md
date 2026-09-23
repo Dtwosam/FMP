@@ -1350,3 +1350,23 @@ The result preserves deterministic preprocessing/model fingerprints, probability
 DEC-090 intentionally adds no training workflow, no CLI, no artifact-backed authoritative runner, and no operator dispatch path. `MODEL_TRAINING_RESULT_EXECUTION_AUTHORIZED=false`. Synthetic unit-test fits are permitted only to validate source behavior; they are not historical EXP-044 evidence and grant no result authorization.
 
 Consequences: deterministic model-training source now exists, but the authoritative historical EXP-044 model fit remains locked. A later separate decision must bind the exact merged DEC-090 source identity and revalidate the DEC-088/DEC-074 chain before any artifact-backed result-producing fit can run.
+
+
+## DEC-091 — Phase 8A EXP-044 artifact-backed model-runner source
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY AUTHORITATIVE EXP-044 MODEL-TRAINING RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-model-artifact-runner.md` freezes the artifact-backed source required to consume the already-persisted EXP-044 feature/outcome evidence without regenerating market data.
+
+DEC-091 binds the DEC-088 protocol fingerprint `1caeec61c7b1a9a6863caafc4c3e85bc8cbcfd5f504f2f7473afe0d4b9c55605`, merged DEC-090 training-core commit `640274df9dcbefa0feee599bffdeb63a581db780`, feature run `35867307338`, outcome run `35876715434`, feature evidence fingerprint `1288f0fa0ca62069d651f86c21ff9d799e46f24c2eac2b555f177ee2dcfa0815`, outcome evidence fingerprint `b24ad576e8234870dabf73000dacd7053241bf9c2b23e9f15dc8125d40c17117`, and readiness fingerprint `412573f505ec7912ff934cc6338cf4591b604e0beddb2cb6abb79447c777b105`.
+
+The source freezes all nine feature-cell and all nine outcome-cell GitHub artifact IDs/digests. It recomputes the readiness fingerprint from readiness content, then binds each extracted cell directory to readiness through exact manifest SHA-256, processed Phase 2 manifest SHA-256, code commit, row counts, feature/outcome versions, evidence label, horizons, slippage scenarios, and upstream feature evidence identity.
+
+Every manifest-listed parquet file is independently checked for safe path, SHA-256, byte size, declared row count, actual row count, frozen column order, sorted unique artifact paths, concatenated row total, and schema fingerprint. Authoritative full-history cells require exactly 140 monthly partitions.
+
+DEC-091 also freezes deterministic aggregate model-result evidence before any authoritative result exists. That evidence requires all 18 DEC-088 cells, canonical ordering, per-cell result fingerprints, DEC-088/090 identities, upstream feature/outcome/readiness identities, and all promotion/trading locks false.
+
+`AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED=false`. The authoritative bundle runner refuses before loading cells or calling the training core. No model-training workflow, CLI, operator dispatch mapping, historical fit, promotion, shadow action, demo order, broker mutation, live order, or real-money action is introduced.
+
+Consequences: the exact historical artifact consumption and result-evidence source is frozen, but the authoritative EXP-044 model result remains locked behind a later separately merged execution decision.
