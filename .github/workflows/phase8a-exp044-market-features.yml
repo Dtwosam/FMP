@@ -134,3 +134,68 @@ jobs:
           path: .exp044-a/${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}
           include-hidden-files: true
           if-no-files-found: error
+
+
+  verify-evidence:
+    needs: generate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Download all nine generated feature artifacts
+        uses: actions/download-artifact@v6
+        with:
+          pattern: exp044-market-features-*-*-\${{ github.sha }}
+          path: .exp044-feature-evidence-input
+          merge-multiple: false
+
+      - name: Verify exact accepted Dukascopy feature evidence
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_market_feature_evidence.py \
+            --root .exp044-feature-evidence-input \
+            --code-commit "$GITHUB_SHA" \
+            --out .exp044-feature-evidence/feature-evidence.json
+
+      - name: Assert research-only evidence boundary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence = json.loads(
+              Path(".exp044-feature-evidence/feature-evidence.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          assert evidence["feature_evidence_complete"] is True
+          assert evidence["verified_cell_count"] == 9
+          assert evidence["historical_source"]["provider"] == "Dukascopy"
+          assert evidence["historical_source"]["reuse_existing_accepted_history"] is True
+          assert evidence["historical_source"]["new_acquisition_performed"] is False
+          assert evidence["model_fit_authorized"] is False
+          assert evidence["shadow_authorized"] is False
+          assert evidence["demo_order_authorized"] is False
+          assert evidence["broker_mutation_authorized"] is False
+          assert evidence["live_order_authorized"] is False
+          assert evidence["real_money_authorized"] is False
+          PY
+
+      - name: Upload aggregate EXP-044 feature evidence index
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-market-feature-evidence-\${{ github.sha }}
+          path: .exp044-feature-evidence/feature-evidence.json
+          if-no-files-found: error
