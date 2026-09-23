@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 import tempfile
 import zipfile
 from datetime import datetime, timedelta, timezone
@@ -18,6 +19,7 @@ from fmp.market_learning.operator import (
     REPOSITORY,
     artifact_download_endpoint,
     classify_manual_run,
+    dispatch_command_for_next_report,
     feature_dispatch_command,
     feature_run_artifacts_endpoint,
     feature_run_endpoint,
@@ -332,6 +334,12 @@ def parser() -> argparse.ArgumentParser:
         help="inspect live EXP-044 evidence and report exactly one next authoritative action",
     )
 
+    advance = sub.add_parser(
+        "advance",
+        help="prepare or execute exactly one DEC-086-authorized next dispatch",
+    )
+    advance.add_argument("--execute", action="store_true")
+
     preserve = sub.add_parser(
         "preserve-phase2",
         help="prepare or dispatch exact Phase 2 release preservation",
@@ -358,10 +366,55 @@ def _print_report(report: dict[str, object]) -> None:
     print(json.dumps(report, sort_keys=True, indent=2, allow_nan=False))
 
 
+def _read_next_plan_via_public_cli() -> dict[str, object]:
+    completed = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve()), "next"],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    try:
+        value = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise SystemExit("DEC-086 next planner did not return valid JSON") from exc
+    if not isinstance(value, dict):
+        raise SystemExit("DEC-086 next planner must return a JSON object")
+    return value
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     _require_gh_auth()
     checkout = _checkout_preflight()
+
+    if args.command == "advance":
+        plan = _read_next_plan_via_public_cli()
+        command = dispatch_command_for_next_report(plan)
+        report = {
+            **plan,
+            "advance_execute_requested": bool(args.execute),
+            "advance_dispatchable": command is not None,
+        }
+        if not args.execute or command is None:
+            report["dispatch_submitted"] = False
+            _print_report(report)
+            return 0
+
+        confirmed = _read_next_plan_via_public_cli()
+        if confirmed != plan:
+            raise SystemExit(
+                "EXP-044 live state changed between planning and execution; rerun advance"
+            )
+        confirmed_command = dispatch_command_for_next_report(confirmed)
+        if confirmed_command != command:
+            raise SystemExit("EXP-044 dispatch plan changed before execution")
+
+        _run(command, capture=False)
+        report["read_only"] = False
+        report["dispatch_submitted"] = True
+        report["result_claimed"] = False
+        _print_report(report)
+        return 0
 
     if args.command == "next":
         preservation = _published_preservation()
