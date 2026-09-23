@@ -104,6 +104,65 @@ def select_only_manual_main_run(
     return run
 
 
+def select_latest_manual_main_run_after_reviewed_failures(
+    payload: Mapping[str, object],
+    *,
+    workflow_name: str,
+    reviewed_failed_run_ids: set[int] | frozenset[int],
+) -> Mapping[str, object] | None:
+    runs = payload.get("workflow_runs")
+    if not isinstance(runs, list):
+        raise ValueError("workflow-run listing is malformed")
+
+    relevant: list[Mapping[str, object]] = []
+    for raw in runs:
+        if not isinstance(raw, Mapping):
+            raise ValueError("workflow-run listing contains a malformed row")
+        if raw.get("event") != "workflow_dispatch":
+            continue
+        if raw.get("head_branch") != "main":
+            continue
+
+        run_id = raw.get("id")
+        if (
+            not isinstance(run_id, int)
+            or isinstance(run_id, bool)
+            or run_id <= 0
+        ):
+            raise ValueError(f"{workflow_name} manual main run id is invalid")
+
+        status = raw.get("status")
+        conclusion = raw.get("conclusion")
+        if not isinstance(status, str) or not status:
+            raise ValueError(f"{workflow_name} manual main run status is invalid")
+        if conclusion is not None and not isinstance(conclusion, str):
+            raise ValueError(
+                f"{workflow_name} manual main run conclusion is invalid"
+            )
+
+        relevant.append(raw)
+
+    if not relevant:
+        return None
+
+    relevant.sort(key=lambda raw: int(raw["id"]))
+
+    for prior in relevant[:-1]:
+        run_id = int(prior["id"])
+        if (
+            run_id not in reviewed_failed_run_ids
+            or prior.get("status") != "completed"
+            or prior.get("conclusion") == "success"
+        ):
+            ids = ", ".join(str(raw["id"]) for raw in relevant)
+            raise ValueError(
+                f"{workflow_name} has multiple manual main runs outside the "
+                f"reviewed-failure replacement chain: {ids}"
+            )
+
+    return relevant[-1]
+
+
 def classify_manual_run(
     run: Mapping[str, object] | None,
     *,
@@ -456,7 +515,10 @@ def dispatch_command_for_next_report(
         command = preservation_dispatch_command()
     elif stage == "FEATURE_DISPATCH_REQUIRED":
         command = feature_dispatch_command()
-    elif stage == "OUTCOME_DISPATCH_REQUIRED":
+    elif stage in {
+        "OUTCOME_DISPATCH_REQUIRED",
+        "OUTCOME_REPLACEMENT_DISPATCH_REQUIRED",
+    }:
         run_id = report.get("feature_run_id")
         if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
             raise ValueError("outcome dispatch plan requires a positive feature run id")
@@ -504,6 +566,7 @@ __all__ = [
     "outcome_run_endpoint",
     "outcome_runs_endpoint",
     "select_feature_evidence_artifact",
+    "select_latest_manual_main_run_after_reviewed_failures",
     "select_only_manual_main_run",
     "select_outcome_evidence_artifacts",
     "classify_manual_run",

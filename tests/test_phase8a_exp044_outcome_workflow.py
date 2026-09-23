@@ -40,6 +40,17 @@ class Exp044OutcomeWorkflowTests(unittest.TestCase):
         self.assertNotIn("matrix.timeframe", text)
         self.assertNotIn("timeframe: [5m, 15m, 1h]", text)
         self.assertGreaterEqual(text.count("for timeframe in 5m 15m 1h; do"), 2)
+        self.assertIn(
+            '          assert manifest["labeled_rows"] > 0\n'
+            '          PY\n'
+            '          done',
+            text,
+        )
+        self.assertNotIn(
+            '            PY\n'
+            '          done',
+            text,
+        )
         self.assertEqual(text.count("ARTIFACT_ID:"), 1)
         for timeframe in ("5m", "15m", "1h"):
             expected = (

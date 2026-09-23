@@ -21,6 +21,7 @@ from fmp.market_learning.operator import (
     preservation_dispatch_command,
     preservation_runs_endpoint,
     select_feature_evidence_artifact,
+    select_latest_manual_main_run_after_reviewed_failures,
     select_only_manual_main_run,
     select_outcome_evidence_artifacts,
     shell_join,
@@ -132,6 +133,86 @@ class Exp044OperatorTests(unittest.TestCase):
                     ]
                 },
                 workflow_name=FEATURE_WORKFLOW_NAME,
+            )
+
+    def test_outcome_replacement_requires_reviewed_prior_failure(self) -> None:
+        selected = select_latest_manual_main_run_after_reviewed_failures(
+            {
+                "workflow_runs": [
+                    {
+                        "id": 10,
+                        "event": "workflow_dispatch",
+                        "head_branch": "main",
+                        "status": "completed",
+                        "conclusion": "failure",
+                    },
+                    {
+                        "id": 11,
+                        "event": "workflow_dispatch",
+                        "head_branch": "main",
+                        "status": "in_progress",
+                        "conclusion": None,
+                    },
+                ]
+            },
+            workflow_name=OUTCOME_WORKFLOW_NAME,
+            reviewed_failed_run_ids=frozenset({10}),
+        )
+        self.assertIsNotNone(selected)
+        self.assertEqual(selected["id"], 11)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "reviewed-failure replacement chain",
+        ):
+            select_latest_manual_main_run_after_reviewed_failures(
+                {
+                    "workflow_runs": [
+                        {
+                            "id": 10,
+                            "event": "workflow_dispatch",
+                            "head_branch": "main",
+                            "status": "completed",
+                            "conclusion": "failure",
+                        },
+                        {
+                            "id": 11,
+                            "event": "workflow_dispatch",
+                            "head_branch": "main",
+                            "status": "in_progress",
+                            "conclusion": None,
+                        },
+                    ]
+                },
+                workflow_name=OUTCOME_WORKFLOW_NAME,
+                reviewed_failed_run_ids=frozenset(),
+            )
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "reviewed-failure replacement chain",
+        ):
+            select_latest_manual_main_run_after_reviewed_failures(
+                {
+                    "workflow_runs": [
+                        {
+                            "id": 10,
+                            "event": "workflow_dispatch",
+                            "head_branch": "main",
+                            "status": "completed",
+                            "conclusion": "success",
+                        },
+                        {
+                            "id": 11,
+                            "event": "workflow_dispatch",
+                            "head_branch": "main",
+                            "status": "in_progress",
+                            "conclusion": None,
+                        },
+                    ]
+                },
+                workflow_name=OUTCOME_WORKFLOW_NAME,
+                reviewed_failed_run_ids=frozenset({10}),
             )
 
     def test_next_action_run_classification_is_deterministic(self) -> None:
@@ -268,6 +349,17 @@ class Exp044OperatorTests(unittest.TestCase):
         }
         self.assertEqual(
             dispatch_command_for_next_report(outcome),
+            outcome_dispatch_command(123),
+        )
+
+        replacement_outcome = {
+            **base,
+            "stage": "OUTCOME_REPLACEMENT_DISPATCH_REQUIRED",
+            "feature_run_id": 123,
+            "dispatch_command": shell_join(outcome_dispatch_command(123)),
+        }
+        self.assertEqual(
+            dispatch_command_for_next_report(replacement_outcome),
             outcome_dispatch_command(123),
         )
 
