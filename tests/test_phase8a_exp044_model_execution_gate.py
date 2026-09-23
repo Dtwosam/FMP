@@ -9,6 +9,8 @@ from fmp.market_learning.model_execution_gate import (
     DEC090_CORE_BLOB_SHA,
     DEC094_CORE_BLOB_SHA,
     DEC091_RUNNER_BLOB_SHA,
+    DEC094_ARTIFACT_RUNNER_BLOB_SHA,
+    DEC094_RESULT_VALIDATOR_BLOB_SHA,
     DEC092_CLI_BLOB_SHA,
     DEC092_MERGED_COMMIT,
     DEC092_WORKFLOW_BLOB_SHA,
@@ -39,8 +41,16 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
     def test_exact_frozen_sources_open_one_model_result_authorization(self) -> None:
         source = validate_frozen_model_sources(repository_root=ROOT)
         self.assertEqual(
-            source["artifact_runner_blob_sha"],
+            source["dec091_runner_blob_sha"],
             DEC091_RUNNER_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["artifact_runner_blob_sha"],
+            DEC094_ARTIFACT_RUNNER_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["result_validator_blob_sha"],
+            DEC094_RESULT_VALIDATOR_BLOB_SHA,
         )
         self.assertEqual(
             source["dec090_core_blob_sha"],
@@ -140,6 +150,7 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
                 "model_artifacts.py",
                 "model_training.py",
                 "model_protocol.py",
+                "model_result_evidence.py",
                 "contracts.py",
                 "outcomes.py",
             ):
