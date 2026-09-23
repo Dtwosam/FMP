@@ -1540,3 +1540,20 @@ The frozen pair/timeframe inventory, 60m/240m horizons, persisted DEC-091/097 hi
 
 DEC-099 does not dispatch the workflow. Promotion, shadow, demo, broker mutation, live-order, real-money, and trading authorization remain false. Any produced result remains post-result-informed retrospective evidence and requires a later separate review.
 
+## DEC-100 — Phase 8A EXP-045 predeclared terminal-result review
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-045 HISTORICAL MODEL RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp045-model-result-review.md` freezes the terminal-review contract for the one DEC-099-authorized EXP-045 historical model run before any result exists.
+
+The review implementation is frozen at Git blob `eb52bca50652ad13112d8e88d776230b0da3d293`. It changes no workflow, CLI, execution-gate, protocol, training-core, artifact-runner, runtime, feature, outcome, or historical-data bytes.
+
+DEC-100 requires the exact manual-main EXP-045 workflow identity, run attempt 1, exactly one authorization-preflight job, nine matrix jobs, one aggregate job, and artifacts restricted to the exact nine pair/timeframe result names plus the exact aggregate-result name tied to the workflow head SHA.
+
+A successful run requires all 11 jobs to succeed, all nine cell artifacts, the aggregate artifact, and successful DEC-097 aggregate-evidence revalidation against the exact execution commit. It then stops at `SUCCESSOR_MODEL_RESULT_REVIEW_REQUIRED`.
+
+A failed, cancelled, or timed-out first run may preserve a valid subset of pair/timeframe artifacts but cannot claim aggregate result evidence. It stops at `SUCCESSOR_MODEL_RUN_FAILURE_REVIEW_REQUIRED`.
+
+Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow, demo, broker mutation, live-order, real-money, and trading authorization remain false. EXP-045 evidence remains explicitly post-result-informed, retrospective, and not untouched OOS.
+

@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 PROTOCOL/CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-099 SINGLE-RUN AUTHORIZATION MERGED; NO EXP-045 MODEL RESULT
-**Next milestone:** DEC-099 is merged at `d5ab9b96fa055c30a4607840f5a9f032c5353a11`. A read-only post-merge check confirmed clean current `main` and zero prior manual-main `phase8a-exp045-model-training` runs. The next separate action may dispatch exactly one guarded historical EXP-045 run. Any failed/cancelled first run consumes the slot; do not retry automatically. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 PROTOCOL/CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-099 SINGLE-RUN AUTHORIZATION MERGED + DEC-100 TERMINAL-REVIEW SOURCE FROZEN; NO EXP-045 MODEL RESULT
+**Next milestone:** The single guarded EXP-045 historical run remains the next execution step. DEC-100 predeclares its terminal review before any result exists. Dispatch is currently blocked only because the authenticated desktop runner is offline; do not weaken the manual-only workflow or add an alternate trigger. When dispatch becomes available, re-check current `main` and zero prior manual-main runs, then submit exactly one run. Any failed/cancelled/timed-out first run consumes the slot; do not retry automatically. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
@@ -400,7 +400,7 @@ Current milestone:
 22. DEC-096 implements the deterministic EXP-045 in-memory training/evaluation core, binds the exact DEC-090 base-core and DEC-095 protocol blobs, implements predeclared family-level logistic non-convergence handling, and keeps historical result execution and all promotion/trading authorization false.
 23. DEC-097 freezes the EXP-045 artifact-backed source and aggregate evidence contract, reuses the exact DEC-091 historical data loader under a blob binding, requires all 18 successor cells and deterministic fingerprints, and keeps authoritative model-result execution and all promotion/trading authorization false.
 24. DEC-098 freezes a manual main-only EXP-045 workflow, fail-closed CLI, pinned runtime, and exact-source execution gate. Dispatch/result/fit authorization remains false, so no EXP-045 historical result can be produced.
-25. DEC-099 binds merged DEC-098, confirms zero prior manual-main EXP-045 model runs, hardens the workflow with a first-run guard, and authorizes at most one historical result-producing run after merge. No run is dispatched by this decision; promotion and all trading permissions remain false.
+25. DEC-099 binds merged DEC-098, confirms zero prior manual-main EXP-045 model runs, hardens the workflow with a first-run guard, and authorizes at most one historical result-producing run after merge. No run is dispatched by this decision; promotion and all trading permissions remain false.\n26. DEC-100 predeclares the terminal review for that one run before any result exists. Success requires the exact complete job/artifact inventory plus DEC-097 aggregate-evidence validation; non-success preserves only valid partial cell evidence, forbids aggregate claims, and authorizes no replacement run.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
