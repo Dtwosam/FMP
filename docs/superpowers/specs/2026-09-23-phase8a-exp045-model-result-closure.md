@@ -75,6 +75,13 @@ The DEC-102 result-record implementation is frozen at Git blob:
 
 `f0f84ad7e32b8d44a652dbeaed841c87661af4da`
 
+DEC-102 also closes the consumed outer execution authorization in
+`model_successor_execution_gate.py` at Git blob:
+
+`5191f850a88dcb470a12293a603665bc546d18ac`
+
+After DEC-102, dispatch, authoritative result execution, protocol-result production, and model fitting are all false at the outer gate. The frozen historical workflow still retains its independent prior-run rejection guard.
+
 ## 5. Aggregate result
 
 The aggregate contains exactly 18 model cells.
