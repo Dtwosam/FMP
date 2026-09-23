@@ -1,0 +1,182 @@
+name: phase8a-exp044-preserve-phase2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  preserve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require merged main dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Refuse conflicting preservation release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: fmp-phase2-accepted-artifacts-v1
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Preservation release already exists: $TAG" >&2
+            exit 1
+          fi
+
+      - name: Download and verify original accepted Phase 2 artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .phase2-preserve .phase2-verify
+
+          download_and_verify() {
+            symbol="$1"
+            artifact_id="$2"
+            expected_zip_sha="$3"
+            expected_size="$4"
+            expected_manifest_sha="$5"
+            zip=".phase2-preserve/phase2-full-history-${symbol}.zip"
+            root=".phase2-verify/${symbol}"
+
+            gh api \
+              -H 'Accept: application/vnd.github+json' \
+              "repos/$GITHUB_REPOSITORY/actions/artifacts/${artifact_id}/zip" \
+              > "$zip"
+
+            test "$(stat -c%s "$zip")" = "$expected_size"
+            test "$(sha256sum "$zip" | awk '{print $1}')" = "$expected_zip_sha"
+
+            mkdir -p "$root"
+            unzip -q "$zip" -d "$root"
+            manifest="$root/manifests/processed/fmp-canonical-1m-v1/${symbol}.json"
+            test -f "$manifest"
+            test "$(sha256sum "$manifest" | awk '{print $1}')" = "$expected_manifest_sha"
+          }
+
+          download_and_verify EURUSD 10325737935 \
+            db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3 \
+            182037581 \
+            fd7676282e6e667c39754b09b43a43288a0a877fec588cd2601a601e2b0edf6a
+
+          download_and_verify GBPUSD 10326096831 \
+            fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2 \
+            190706384 \
+            a6ee73e94781f48a43f2792328528d242455d4f7f4f2e0a5760446df21ba4d94
+
+          download_and_verify USDJPY 10327600628 \
+            6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72 \
+            160033414 \
+            e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d
+
+      - name: Build preservation manifest and release notes
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_phase2_preservation.py build \
+            --code-commit "$GITHUB_SHA" \
+            --out .phase2-preserve/phase2-preservation-manifest.json
+
+          cat > .phase2-preserve/release-notes.md <<'EOF'
+          Immutable preservation copy of the already accepted FMP Phase 2 artifacts.
+
+          Historical provider: Dukascopy
+          Original Phase 2 workflow run: 34782357048
+          Original Phase 2 head SHA: 158c1c121655867b7fb2886fe755585dfcd682ec
+
+          This release does not reacquire market data and does not change any accepted bytes.
+          The three ZIP files must retain the exact frozen SHA-256 identities recorded in
+          phase2-preservation-manifest.json.
+
+          This release authorizes no model fit, promotion, shadow/demo trading, broker
+          mutation, live orders, or real-money trading.
+          EOF
+
+      - name: Create draft preservation release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: fmp-phase2-accepted-artifacts-v1
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" \
+            -R "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --draft \
+            --title "FMP Phase 2 accepted artifacts v1" \
+            --notes-file .phase2-preserve/release-notes.md
+
+      - name: Upload exact preservation assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: fmp-phase2-accepted-artifacts-v1
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" \
+            -R "$GITHUB_REPOSITORY" \
+            .phase2-preserve/phase2-full-history-EURUSD.zip \
+            .phase2-preserve/phase2-full-history-GBPUSD.zip \
+            .phase2-preserve/phase2-full-history-USDJPY.zip \
+            .phase2-preserve/phase2-preservation-manifest.json
+
+      - name: Verify uploaded release assets before publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: fmp-phase2-accepted-artifacts-v1
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > .phase2-preserve/release-draft.json
+
+          python scripts/phase8a_phase2_preservation.py verify-release \
+            --manifest .phase2-preserve/phase2-preservation-manifest.json \
+            --release-json .phase2-preserve/release-draft.json
+
+      - name: Publish verified preservation release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: fmp-phase2-accepted-artifacts-v1
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" \
+            -R "$GITHUB_REPOSITORY" \
+            --draft=false
+
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > .phase2-preserve/release-published.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          release = json.loads(
+              Path(".phase2-preserve/release-published.json").read_text(encoding="utf-8")
+          )
+          assert release["tag_name"] == "fmp-phase2-accepted-artifacts-v1"
+          assert release["name"] == "FMP Phase 2 accepted artifacts v1"
+          assert release["draft"] is False
+          assert release["prerelease"] is False
+          assert len(release["assets"]) == 4
+          PY
+
+      - name: Upload preservation evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-phase2-release-preservation-${{ github.sha }}
+          path: |
+            .phase2-preserve/phase2-preservation-manifest.json
+            .phase2-preserve/release-draft.json
+            .phase2-preserve/release-published.json
+          if-no-files-found: error
