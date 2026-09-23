@@ -59,6 +59,8 @@ from .outcomes import (
 
 MODEL_TRAINING_CORE_VERSION = "fmp-exp044-model-training-core-v1"
 MODEL_TRAINING_CORE_DECISION = "DEC-090"
+MODEL_TRAINING_REPAIR_VERSION = "fmp-exp044-model-training-repair-v1"
+MODEL_TRAINING_REPAIR_DECISION = "DEC-094"
 MODEL_TRAINING_RESULT_EXECUTION_AUTHORIZED = False
 
 _SCENARIO_COLUMNS = {
@@ -1007,6 +1009,12 @@ def run_model_cell_core(
         "training_core_decision": (
             MODEL_TRAINING_CORE_DECISION
         ),
+        "training_repair_version": (
+            MODEL_TRAINING_REPAIR_VERSION
+        ),
+        "training_repair_decision": (
+            MODEL_TRAINING_REPAIR_DECISION
+        ),
         "protocol_decision": MODEL_PROTOCOL_DECISION,
         "protocol_version": MODEL_PROTOCOL_VERSION,
         "protocol_fingerprint": protocol_fingerprint(),
@@ -1123,6 +1131,8 @@ __all__ = [
     "FittedMarketModel",
     "MODEL_TRAINING_CORE_DECISION",
     "MODEL_TRAINING_CORE_VERSION",
+    "MODEL_TRAINING_REPAIR_DECISION",
+    "MODEL_TRAINING_REPAIR_VERSION",
     "MODEL_TRAINING_RESULT_EXECUTION_AUTHORIZED",
     "run_model_cell_core",
 ]
