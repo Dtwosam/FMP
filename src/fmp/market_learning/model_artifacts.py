@@ -25,6 +25,8 @@ from .model_protocol import (
 from .model_training import (
     MODEL_TRAINING_CORE_DECISION,
     MODEL_TRAINING_CORE_VERSION,
+    MODEL_TRAINING_REPAIR_DECISION,
+    MODEL_TRAINING_REPAIR_VERSION,
     run_model_cell_core,
 )
 from .outcomes import (
@@ -40,6 +42,9 @@ AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED = False
 
 AUTHORITATIVE_TRAINING_CORE_COMMIT = (
     "640274df9dcbefa0feee599bffdeb63a581db780"
+)
+AUTHORITATIVE_TRAINING_REPAIR_BLOB_SHA = (
+    "a6092dbe1d36f81e1929bf1f18ba43f4ec494ebc"
 )
 AUTHORITATIVE_PROTOCOL_COMMIT = (
     "a9305ba9c42b7224e5d4b3f7d26f268447cdf469"
@@ -717,6 +722,10 @@ def compile_model_result_evidence(
             raise ValueError("EXP-044 model result training-core version mismatch")
         if result.get("training_core_decision") != MODEL_TRAINING_CORE_DECISION:
             raise ValueError("EXP-044 model result training-core decision mismatch")
+        if result.get("training_repair_version") != MODEL_TRAINING_REPAIR_VERSION:
+            raise ValueError("EXP-044 model result training-repair version mismatch")
+        if result.get("training_repair_decision") != MODEL_TRAINING_REPAIR_DECISION:
+            raise ValueError("EXP-044 model result training-repair decision mismatch")
         if result.get("protocol_decision") != MODEL_PROTOCOL_DECISION:
             raise ValueError("EXP-044 model result protocol decision mismatch")
         if result.get("protocol_version") != MODEL_PROTOCOL_VERSION:
@@ -771,6 +780,9 @@ def compile_model_result_evidence(
         "training_core_version": MODEL_TRAINING_CORE_VERSION,
         "training_core_decision": MODEL_TRAINING_CORE_DECISION,
         "training_core_commit": AUTHORITATIVE_TRAINING_CORE_COMMIT,
+        "training_repair_version": MODEL_TRAINING_REPAIR_VERSION,
+        "training_repair_decision": MODEL_TRAINING_REPAIR_DECISION,
+        "training_repair_blob_sha": AUTHORITATIVE_TRAINING_REPAIR_BLOB_SHA,
         "protocol_decision": MODEL_PROTOCOL_DECISION,
         "protocol_version": MODEL_PROTOCOL_VERSION,
         "protocol_commit": AUTHORITATIVE_PROTOCOL_COMMIT,
@@ -840,6 +852,7 @@ __all__ = [
     "AUTHORITATIVE_READINESS_ARTIFACT_ID",
     "AUTHORITATIVE_READINESS_FINGERPRINT",
     "AUTHORITATIVE_TRAINING_CORE_COMMIT",
+    "AUTHORITATIVE_TRAINING_REPAIR_BLOB_SHA",
     "MODEL_ARTIFACT_RUNNER_DECISION",
     "MODEL_ARTIFACT_RUNNER_VERSION",
     "VerifiedCellArtifacts",
