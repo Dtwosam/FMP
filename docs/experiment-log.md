@@ -1072,3 +1072,20 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #163 merged DEC-071 to `main` at `e45f6a496885863be69f87fd2caa8c3f577b784e`. The exact final PR head `021aa2bc8f9337d4f1830985c2ec4ca03cd16f4f` passed 1089 tests plus workflow-YAML validation and compile checks in run `35801932548`; unchanged Phase 3 acceptance run `35801932553` passed. Post-merge `main` runs `35802013847` and `35802013896` also passed.
 - Follow-up: Phase 8B now has read-only pre-capture readiness and in-campaign progress tooling. No real prospective capture, closure/review, acceptance result, SHADOW_VALIDATED transition, or Phase 9 artifact chain has been executed; real MT5 DEMO prospective evidence remains the next operational milestone.
+
+
+### EXP-20260923-043 — Phase 8B interrupted segment observability amendment
+
+- Date: 2026-09-23
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO REAL CAPTURE
+- Protocol decision: DEC-072 APPROVED BEFORE ANY PHASE 8B ACCEPTANCE RESULT
+- Purpose: make DEC-071 progress truthfully report retained interrupted DEC-052 segment directories even when no clean segment has closed yet.
+- Inventory: shared deterministic segment inventory reports sorted closed and unclosed segment-directory identities; non-directory entries remain outside campaign segment evidence.
+- Empty/interrupted behavior: no closed segment still returns `PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS`, but the true unclosed count/IDs are preserved rather than forced to zero.
+- Mixed behavior: unclosed directories remain excluded from aggregate simulation, replay, coverage, trade counts, representation, and financial metrics.
+- Identity hardening: a closed segment directory name must equal the immutable `segment_id` inside `prospective-segment.json`; renamed/copied closed directories fail closed before aggregation.
+- Progress integrity: result now includes campaign terminal context, deterministic progress fingerprint, and validator-enforced count/list parity, sorted uniqueness, disjoint inventories, and all authorization flags false.
+- Campaign-close parity: DEC-053 evidence still receives only the unclosed directory count; acceptance semantics are unchanged.
+- Safety: no capture, repair, deletion, closure/review/acceptance artifact, broker mutation, Phase 9 action, or order is executed.
+- Verification: exact corrected source head `1654564b4fc3cd971d369ea5717d0f7268aaf326` passed 1092 tests plus workflow-YAML validation and compile checks in run `35803297613`; unchanged Phase 3 acceptance run `35803297604` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. Real prospective MT5 DEMO evidence remains the next operational milestone.
