@@ -245,6 +245,34 @@ class MarketOutcomeGridTests(unittest.TestCase):
                     processed_manifest_sha256="a" * 64,
                 )
 
+    def test_artifact_writer_rejects_targets_beyond_accepted_history(self) -> None:
+        features = _feature_rows(
+            start=datetime(2026, 8, 20, 20, 0, tzinfo=UTC),
+            count=3,
+        )
+        quotes = _minute_quotes(
+            start=features["available_at_utc"][0],
+            count=500,
+        )
+        build = build_market_outcome_grid(
+            features,
+            quotes,
+            symbol="EURUSD",
+            timeframe="5m",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, "beyond accepted history"):
+                write_market_outcome_artifacts(
+                    build=build,
+                    output_root=Path(tmp),
+                    symbol="EURUSD",
+                    timeframe="5m",
+                    code_commit="b" * 40,
+                    feature_manifest_sha256="c" * 64,
+                    feature_evidence_fingerprint="d" * 64,
+                    processed_manifest_sha256="a" * 64,
+                )
+
     def test_artifact_writer_is_deterministic_and_keeps_model_fit_locked(self) -> None:
         features = _feature_rows(count=3)
         quotes = _minute_quotes(
