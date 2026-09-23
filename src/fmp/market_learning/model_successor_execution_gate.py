@@ -24,6 +24,11 @@ from .model_successor_training import (
 
 SUCCESSOR_MODEL_EXECUTION_GATE_DECISION = "DEC-098"
 SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-099"
+SUCCESSOR_MODEL_EXECUTION_CLOSURE_DECISION = "DEC-102"
+REVIEWED_SUCCESSOR_MODEL_RUN_ID = 35911916239
+REVIEWED_SUCCESSOR_MODEL_HEAD_SHA = (
+    "6d42a5053c5f2f696071715640dab24973a40517"
+)
 SUCCESSOR_MODEL_WORKFLOW_FILE = "phase8a-exp045-model-training.yml"
 SUCCESSOR_MODEL_WORKFLOW_NAME = "phase8a-exp045-model-training"
 
@@ -52,10 +57,10 @@ MARKET_OUTCOMES_BLOB_SHA = "c83fefd4252b2fe426af97686f86e43021760c77"
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 SUCCESSOR_MODEL_WORKFLOW_SOURCE_FROZEN = True
-SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED = True
-AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED = True
-SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
-SUCCESSOR_MODEL_FIT_AUTHORIZED = True
+SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED = False
+AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED = False
+SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
+SUCCESSOR_MODEL_FIT_AUTHORIZED = False
 PROMOTION_AUTHORIZED = False
 TRADING_AUTHORIZED = False
 
@@ -240,25 +245,28 @@ def build_successor_model_workflow_source_gate(
     )
     return {
         **source,
-        "stage": "SUCCESSOR_MODEL_RUN_DISPATCH_REQUIRED",
+        "stage": "SUCCESSOR_MODEL_RUN_EXECUTION_CLOSED",
         "next_action": (
-            "DEC-099 authorizes at most one guarded historical EXP-045 "
-            "model-result run after merge. This source change does not "
-            "dispatch the workflow."
+            "DEC-102 records the one DEC-099-authorized EXP-045 run as "
+            "successfully completed but validation-rejected. The one-run "
+            "authorization is consumed; do not rerun, replace, or promote."
         ),
         "successor_model_workflow_source_frozen": (
             SUCCESSOR_MODEL_WORKFLOW_SOURCE_FROZEN
         ),
-        "successor_model_run_dispatch_authorized": (
-            SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED
+        "successor_model_execution_closure_decision": (
+            SUCCESSOR_MODEL_EXECUTION_CLOSURE_DECISION
         ),
-        "authoritative_successor_model_result_execution_authorized": (
-            AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED
+        "reviewed_successor_model_run_id": (
+            REVIEWED_SUCCESSOR_MODEL_RUN_ID
         ),
-        "model_protocol_result_authorized": (
-            SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED
+        "reviewed_successor_model_head_sha": (
+            REVIEWED_SUCCESSOR_MODEL_HEAD_SHA
         ),
-        "model_fit_authorized": SUCCESSOR_MODEL_FIT_AUTHORIZED,
+        "successor_model_run_dispatch_authorized": False,
+        "authoritative_successor_model_result_execution_authorized": False,
+        "model_protocol_result_authorized": False,
+        "model_fit_authorized": False,
         "promotion_authorized": PROMOTION_AUTHORIZED,
         "trading_authorized": TRADING_AUTHORIZED,
     }
@@ -279,7 +287,8 @@ def require_authoritative_successor_model_execution(
 
     if SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED is not True:
         raise PermissionError(
-            "EXP-045 model-run dispatch is not authorized"
+            "DEC-102 closes EXP-045 model-run dispatch after reviewed "
+            "run 35911916239"
         )
     if (
         AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED
@@ -327,9 +336,12 @@ __all__ = [
     "MARKET_OUTCOMES_BLOB_SHA",
     "PREPROCESSING_BLOB_SHA",
     "PROMOTION_AUTHORIZED",
+    "REVIEWED_SUCCESSOR_MODEL_HEAD_SHA",
+    "REVIEWED_SUCCESSOR_MODEL_RUN_ID",
     "PYPROJECT_BLOB_SHA",
     "SUCCESSOR_CLI_BLOB_SHA",
     "SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION",
+    "SUCCESSOR_MODEL_EXECUTION_CLOSURE_DECISION",
     "SUCCESSOR_MODEL_EXECUTION_GATE_DECISION",
     "SUCCESSOR_MODEL_FIT_AUTHORIZED",
     "SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED",
