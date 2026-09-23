@@ -1148,3 +1148,17 @@ The exact nine logical feature cells and nine logical outcome cells remain uncha
 This reduces accepted Phase 2 ZIP downloads from nine to three per workflow without changing any research result or authorization. No EXP-044 feature or outcome workflow had been dispatched before DEC-076.
 
 Both workflows remain manual and merged-main only. DEC-076 authorizes no model fit, promotion, shadow/demo action, broker mutation, live order, or real-money action.
+
+
+## DEC-077 — Phase 8A EXP-044 pair outcome materialization
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-pair-outcome-materialization.md` adds a pair-level outcome materializer that verifies and loads one symbol's accepted Phase 2 one-minute history once, then reuses that exact quote frame for the 5m, 15m, and 1h outcome cells.
+
+Tests require the pair-level path to produce manifests identical to three independent single-cell materializations for the same inputs. The existing single-cell API remains available.
+
+DEC-077 changes no Dukascopy identity, feature definition, horizon, slippage rule, label rule, output schema, artifact identity, aggregate evidence, DEC-074 readiness, or DEC-075 status semantics.
+
+No EXP-044 feature or outcome workflow had been dispatched before DEC-077. Model fitting, promotion, shadow/demo actions, broker mutation, live orders, and real-money actions remain unauthorized.
