@@ -156,7 +156,7 @@ jobs:
       - name: Download all nine generated feature artifacts
         uses: actions/download-artifact@v6
         with:
-          pattern: exp044-market-features-*-*-\${{ github.sha }}
+          pattern: exp044-market-features-*-*-${{ github.sha }}
           path: .exp044-feature-evidence-input
           merge-multiple: false
 
@@ -196,6 +196,6 @@ jobs:
       - name: Upload aggregate EXP-044 feature evidence index
         uses: actions/upload-artifact@v6
         with:
-          name: exp044-market-feature-evidence-\${{ github.sha }}
+          name: exp044-market-feature-evidence-${{ github.sha }}
           path: .exp044-feature-evidence/feature-evidence.json
           if-no-files-found: error
