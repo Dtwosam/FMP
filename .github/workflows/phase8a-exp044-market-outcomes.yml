@@ -55,6 +55,7 @@ jobs:
 
           run = json.loads(Path("feature-run.json").read_text(encoding="utf-8"))
           assert run["name"] == "phase8a-exp044-market-features", run["name"]
+          assert run["path"] == ".github/workflows/phase8a-exp044-market-features.yml", run["path"]
           assert run["event"] == "workflow_dispatch", run["event"]
           assert run["head_branch"] == "main", run["head_branch"]
           assert run["status"] == "completed", run["status"]
@@ -211,7 +212,7 @@ jobs:
           mkdir -p "${root}"
           gh api             -H 'Accept: application/vnd.github+json'             "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip"             > "${zip_path}"
           actual_sha256="$(sha256sum "${zip_path}" | awk '{print $1}')"
-          test "${actual_sha256}" = "${EXPECTED_ZIP_SHA256"
+          test "${actual_sha256}" = "${EXPECTED_ZIP_SHA256}"
           unzip -q "${zip_path}" -d "${root}"
           test -f "${manifest_path}"
           actual_manifest_sha256="$(sha256sum "${manifest_path}" | awk '{print $1}')"
