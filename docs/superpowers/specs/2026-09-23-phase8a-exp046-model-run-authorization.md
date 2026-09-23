@@ -91,6 +91,14 @@ DEC-109 sets the separate outer execution-gate flags true:
 
 The underlying DEC-104 protocol, DEC-105 training core, and DEC-106 artifact runner remain individually non-executable in their own source modules.
 
+The DEC-109 authorized execution-gate source is:
+
+`src/fmp/market_learning/model_successor_stability_execution_gate.py`
+
+with Git blob:
+
+`535a321967e6e9bff9c6a4d36b316ccaa0f79d4d`
+
 This layered structure preserves the distinction between frozen research source and later explicit execution authorization.
 
 ## 7. Authorized historical scope
