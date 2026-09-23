@@ -25,6 +25,7 @@ from fmp.market_learning.operator import (
     outcome_run_artifacts_endpoint,
     outcome_run_endpoint,
     outcome_runs_endpoint,
+    release_asset_download_endpoint,
     preservation_dispatch_command,
     preservation_runs_endpoint,
     select_feature_evidence_artifact,
@@ -38,9 +39,14 @@ from fmp.market_learning.operator import (
 )
 from fmp.market_learning.outcome_evidence import load_outcome_evidence_index
 from fmp.market_learning.readiness import load_training_readiness
+from fmp.market_learning.source_availability import compile_source_availability
 from fmp.market_learning.source_preflight import (
     SOURCE_ARTIFACTS,
     compile_source_preflight,
+)
+from fmp.market_learning.source_preservation import (
+    PRESERVATION_TAG,
+    select_preservation_manifest_asset,
 )
 
 
@@ -65,7 +71,24 @@ def _gh_json(endpoint: str) -> dict[str, object]:
     return value
 
 
-def _source_artifact_preflight() -> dict[str, object]:
+def _gh_json_optional(endpoint: str) -> dict[str, object] | None:
+    completed = subprocess.run(
+        ["gh", "api", endpoint],
+        text=True,
+        capture_output=True,
+    )
+    if completed.returncode != 0:
+        return None
+    try:
+        value = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"GitHub API returned invalid JSON for {endpoint}") from exc
+    if not isinstance(value, dict):
+        raise SystemExit(f"GitHub API returned a non-object for {endpoint}")
+    return value
+
+
+def _original_source_preflight() -> dict[str, object]:
     metadata: dict[str, dict[str, object]] = {}
     for spec in SOURCE_ARTIFACTS:
         metadata[spec.symbol] = _gh_json(
@@ -77,6 +100,64 @@ def _source_artifact_preflight() -> dict[str, object]:
         minimum_remaining=timedelta(hours=12),
     )
 
+
+def _download_release_json_asset(*, asset_id: int) -> Mapping[str, object]:
+    with tempfile.TemporaryDirectory(prefix="fmp-phase2-release-") as tmp:
+        path = Path(tmp) / "asset.json"
+        with path.open("wb") as handle:
+            subprocess.run(
+                [
+                    "gh",
+                    "api",
+                    "-H",
+                    "Accept: application/octet-stream",
+                    release_asset_download_endpoint(asset_id),
+                ],
+                check=True,
+                stdout=handle,
+            )
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise SystemExit("preservation manifest release asset is invalid JSON") from exc
+        if not isinstance(value, dict):
+            raise SystemExit("preservation manifest release asset must be an object")
+        return value
+
+
+def _source_artifact_preflight() -> dict[str, object]:
+    metadata: dict[str, dict[str, object]] = {}
+    for spec in SOURCE_ARTIFACTS:
+        value = _gh_json_optional(
+            f"repos/{REPOSITORY}/actions/artifacts/{spec.artifact_id}"
+        )
+        metadata[spec.symbol] = value if value is not None else {"unavailable": True}
+
+    now = datetime.now(timezone.utc)
+    minimum = timedelta(hours=12)
+    try:
+        return compile_source_availability(
+            metadata_by_symbol=metadata,
+            now_utc=now,
+            minimum_remaining=minimum,
+        )
+    except ValueError:
+        release = _gh_json_optional(
+            f"repos/{REPOSITORY}/releases/tags/{PRESERVATION_TAG}"
+        )
+        if release is None:
+            raise SystemExit(
+                "original Phase 2 artifacts are unavailable and the preservation release is missing"
+            )
+        selected = select_preservation_manifest_asset(release)
+        manifest = _download_release_json_asset(asset_id=int(selected["asset_id"]))
+        return compile_source_availability(
+            metadata_by_symbol=metadata,
+            now_utc=now,
+            minimum_remaining=minimum,
+            release=release,
+            preservation_manifest=manifest,
+        )
 
 def _safe_extract_zip(archive_path: Path, destination: Path) -> None:
     root = destination.resolve()
@@ -232,7 +313,7 @@ def main(argv: list[str] | None = None) -> int:
     checkout = _checkout_preflight()
 
     if args.command == "preserve-phase2":
-        source_preflight = _source_artifact_preflight()
+        source_preflight = _original_source_preflight()
         listing = _gh_json(preservation_runs_endpoint())
         validate_no_existing_manual_runs(
             listing,
@@ -272,7 +353,8 @@ def main(argv: list[str] | None = None) -> int:
         report: dict[str, object] = {
             **checkout,
             "source_preflight_ready": source_preflight["source_ready"],
-            "source_earliest_expires_at": source_preflight["earliest_expires_at"],
+            "source_mode": source_preflight["source_mode"],
+            "source_earliest_expires_at": source_preflight.get("earliest_expires_at"),
             "stage": "features",
             "existing_manual_main_runs": 0,
             "ready_to_dispatch": True,
@@ -358,7 +440,8 @@ def main(argv: list[str] | None = None) -> int:
         **feature,
         **feature_evidence_summary,
         "source_preflight_ready": source_preflight["source_ready"],
-        "source_earliest_expires_at": source_preflight["earliest_expires_at"],
+        "source_mode": source_preflight["source_mode"],
+        "source_earliest_expires_at": source_preflight.get("earliest_expires_at"),
         "stage": "outcomes",
         "existing_manual_main_runs": 0,
         "ready_to_dispatch": True,
