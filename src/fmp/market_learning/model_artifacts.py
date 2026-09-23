@@ -650,6 +650,7 @@ def run_authoritative_model_bundle(
     readiness: Mapping[str, object],
     feature_roots: Mapping[tuple[str, str], Path],
     outcome_roots: Mapping[tuple[str, str], Path],
+    code_commit: str,
 ) -> dict[str, object]:
     if AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED is not True:
         raise PermissionError(
@@ -682,7 +683,7 @@ def run_authoritative_model_bundle(
         )
     return compile_model_result_evidence(
         cell_results,
-        code_commit=AUTHORITATIVE_TRAINING_CORE_COMMIT,
+        code_commit=code_commit,
     )
 
 
