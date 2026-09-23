@@ -543,6 +543,7 @@ def compile_successor_model_result_evidence(
 
 def run_authoritative_successor_model_bundle(
     *,
+    repository_root: Path,
     readiness: Mapping[str, object],
     feature_roots: Mapping[tuple[str, str], Path],
     outcome_roots: Mapping[tuple[str, str], Path],
@@ -559,6 +560,9 @@ def run_authoritative_successor_model_bundle(
 
     # Intentionally unreachable under DEC-097. A later separately
     # merged execution decision must open this gate.
+    validate_successor_artifact_runner_sources(
+        repository_root=repository_root,
+    )
     indexed = validate_authoritative_readiness(readiness)
     cell_results: list[dict[str, object]] = []
     for cell in MODEL_CELLS:
