@@ -14,9 +14,14 @@ from fmp.market_learning.evidence import load_feature_evidence_index
 from fmp.market_learning.execution_status import build_execution_status
 from fmp.market_learning.model_execution_gate import build_model_workflow_source_gate
 from fmp.market_learning.model_protocol import protocol_fingerprint
+from fmp.market_learning.model_result_evidence import (
+    load_model_result_evidence,
+    validate_model_result_evidence,
+)
 from fmp.market_learning.model_run_gate import build_model_run_source_gate
 from fmp.market_learning.operator import (
     FEATURE_WORKFLOW_NAME,
+    MODEL_WORKFLOW_NAME,
     OUTCOME_WORKFLOW_NAME,
     PRESERVATION_WORKFLOW_NAME,
     REPOSITORY,
@@ -27,6 +32,10 @@ from fmp.market_learning.operator import (
     feature_run_artifacts_endpoint,
     feature_run_endpoint,
     feature_runs_endpoint,
+    model_dispatch_command,
+    model_run_artifacts_endpoint,
+    model_run_endpoint,
+    model_runs_endpoint,
     outcome_dispatch_command,
     outcome_run_artifacts_endpoint,
     outcome_run_endpoint,
@@ -36,11 +45,13 @@ from fmp.market_learning.operator import (
     preservation_runs_endpoint,
     select_feature_evidence_artifact,
     select_latest_manual_main_run_after_reviewed_failures,
+    select_model_result_artifact,
     select_only_manual_main_run,
     select_outcome_evidence_artifacts,
     shell_join,
     validate_feature_evidence_for_outcomes,
     validate_feature_run_for_outcomes,
+    validate_model_run_for_result,
     validate_no_existing_manual_runs,
     validate_operator_checkout,
     validate_outcome_run_for_readiness,
@@ -294,6 +305,8 @@ def _next_report(
     stage: str,
     next_action: str,
     dispatch_command: Sequence[str] | None = None,
+    model_protocol_result_authorized: bool = False,
+    model_fit_authorized: bool = False,
     **details: object,
 ) -> dict[str, object]:
     report: dict[str, object] = {
@@ -302,8 +315,10 @@ def _next_report(
         "stage": stage,
         "next_action": next_action,
         "read_only": True,
-        "model_protocol_result_authorized": False,
-        "model_fit_authorized": False,
+        "model_protocol_result_authorized": (
+            model_protocol_result_authorized
+        ),
+        "model_fit_authorized": model_fit_authorized,
         "promotion_authorized": False,
         "trading_authorized": False,
     }
@@ -686,52 +701,175 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(
                 "EXP-044 model-workflow source gate returned an invalid stage"
             )
+        for field in (
+            "model_run_dispatch_authorized",
+            "authoritative_model_result_execution_authorized",
+            "model_protocol_result_authorized",
+            "model_fit_authorized",
+        ):
+            if workflow_gate.get(field) is not True:
+                raise SystemExit(
+                    f"EXP-044 DEC-093 authorization field is not open: {field}"
+                )
+
         readiness_report_details = {
             **feature_report_details,
             **outcome,
             **selected,
         }
+        workflow_report_details = {
+            **readiness_report_details,
+            "readiness_verified": status["readiness_verified"],
+            "model_protocol_source_open_authorized": status[
+                "model_protocol_source_open_authorized"
+            ],
+            "model_protocol_frozen": gate["model_protocol_frozen"],
+            "model_run_source_open_authorized": gate[
+                "model_run_source_open_authorized"
+            ],
+            "model_protocol_decision": gate["model_protocol_decision"],
+            "model_protocol_version": gate["model_protocol_version"],
+            "model_protocol_source_commit": gate[
+                "model_protocol_source_commit"
+            ],
+            "model_protocol_fingerprint": gate[
+                "model_protocol_fingerprint"
+            ],
+            "model_run_workflow_source_frozen": workflow_gate[
+                "model_run_workflow_source_frozen"
+            ],
+            "model_execution_authorization_decision": workflow_gate[
+                "model_execution_authorization_decision"
+            ],
+            "dec092_merged_commit": workflow_gate[
+                "dec092_merged_commit"
+            ],
+            "dec093_workflow_blob_sha": workflow_gate[
+                "dec093_workflow_blob_sha"
+            ],
+            "dec092_cli_blob_sha": workflow_gate[
+                "dec092_cli_blob_sha"
+            ],
+            "artifact_runner_blob_sha": workflow_gate[
+                "artifact_runner_blob_sha"
+            ],
+            "training_core_blob_sha": workflow_gate[
+                "training_core_blob_sha"
+            ],
+            "model_protocol_blob_sha": workflow_gate[
+                "model_protocol_blob_sha"
+            ],
+        }
+
+        model_listing = _gh_json(model_runs_endpoint())
+        model_run = select_only_manual_main_run(
+            model_listing,
+            workflow_name=MODEL_WORKFLOW_NAME,
+        )
+        model_state = classify_manual_run(
+            model_run,
+            workflow_name=MODEL_WORKFLOW_NAME,
+        )
+        if model_state["run_state"] == "MISSING":
+            _print_report(
+                _next_report(
+                    checkout=checkout,
+                    stage="MODEL_RUN_DISPATCH_REQUIRED",
+                    next_action=(
+                        "Dispatch exactly one guarded EXP-044 historical model-result "
+                        "run from merged main."
+                    ),
+                    dispatch_command=model_dispatch_command(),
+                    model_protocol_result_authorized=True,
+                    model_fit_authorized=True,
+                    preservation_release_verified=True,
+                    **workflow_report_details,
+                    model_run_state="MISSING",
+                    model_run_dispatch_authorized=True,
+                    authoritative_model_result_execution_authorized=True,
+                )
+            )
+            return 0
+
+        if model_state["run_state"] == "IN_PROGRESS":
+            _print_report(
+                _next_report(
+                    checkout=checkout,
+                    stage="MODEL_RUN_IN_PROGRESS",
+                    next_action=(
+                        "Inspect the existing model workflow run; do not create "
+                        "another model run."
+                    ),
+                    preservation_release_verified=True,
+                    **workflow_report_details,
+                    model_run_state="IN_PROGRESS",
+                    model_run_id=model_state["run_id"],
+                    model_run_dispatch_authorized=False,
+                    authoritative_model_result_execution_authorized=False,
+                )
+            )
+            return 0
+
+        if model_state["run_state"] == "FAILED":
+            _print_report(
+                _next_report(
+                    checkout=checkout,
+                    stage="MODEL_RUN_REVIEW_REQUIRED",
+                    next_action=(
+                        "Review the failed model workflow evidence; do not retry "
+                        "or replace it automatically."
+                    ),
+                    preservation_release_verified=True,
+                    **workflow_report_details,
+                    model_run_state="FAILED",
+                    model_run_id=model_state["run_id"],
+                    model_run_dispatch_authorized=False,
+                    authoritative_model_result_execution_authorized=False,
+                )
+            )
+            return 0
+
+        model_run_id = int(model_state["run_id"])
+        model_run_exact = _gh_json(model_run_endpoint(model_run_id))
+        model = validate_model_run_for_result(
+            model_run_exact,
+            expected_run_id=model_run_id,
+        )
+        model_artifacts = _gh_json(
+            model_run_artifacts_endpoint(model_run_id)
+        )
+        model_selected = select_model_result_artifact(
+            model_artifacts,
+            model_head_sha=str(model["model_head_sha"]),
+        )
+        model_evidence = _download_json_artifact(
+            artifact_id=int(model_selected["model_result_artifact_id"]),
+            expected_filename="model-result-evidence.json",
+            loader=lambda path: load_model_result_evidence(
+                path,
+                expected_code_commit=str(model["model_head_sha"]),
+            ),
+        )
+        model_summary = validate_model_result_evidence(
+            model_evidence,
+            expected_code_commit=str(model["model_head_sha"]),
+        )
         _print_report(
             _next_report(
                 checkout=checkout,
-                stage=str(workflow_gate["stage"]),
-                next_action=str(workflow_gate["next_action"]),
+                stage="MODEL_RESULT_REVIEW_REQUIRED",
+                next_action=(
+                    "Review the verified retrospective EXP-044 model-result "
+                    "evidence. Do not promote or open shadow/demo/trading activity."
+                ),
                 preservation_release_verified=True,
-                **readiness_report_details,
-                readiness_verified=status["readiness_verified"],
-                model_protocol_source_open_authorized=status[
-                    "model_protocol_source_open_authorized"
-                ],
-                model_protocol_frozen=gate["model_protocol_frozen"],
-                model_run_source_open_authorized=gate[
-                    "model_run_source_open_authorized"
-                ],
-                model_protocol_decision=gate["model_protocol_decision"],
-                model_protocol_version=gate["model_protocol_version"],
-                model_protocol_source_commit=gate[
-                    "model_protocol_source_commit"
-                ],
-                model_protocol_fingerprint=gate[
-                    "model_protocol_fingerprint"
-                ],
-                model_run_workflow_source_frozen=workflow_gate[
-                    "model_run_workflow_source_frozen"
-                ],
-                model_run_dispatch_authorized=workflow_gate[
-                    "model_run_dispatch_authorized"
-                ],
-                authoritative_model_result_execution_authorized=workflow_gate[
-                    "authoritative_model_result_execution_authorized"
-                ],
-                artifact_runner_blob_sha=workflow_gate[
-                    "artifact_runner_blob_sha"
-                ],
-                training_core_blob_sha=workflow_gate[
-                    "training_core_blob_sha"
-                ],
-                model_protocol_blob_sha=workflow_gate[
-                    "model_protocol_blob_sha"
-                ],
+                **workflow_report_details,
+                **model,
+                **model_selected,
+                **model_summary,
+                model_run_state="SUCCESS",
+                model_run_dispatch_authorized=False,
+                authoritative_model_result_execution_authorized=False,
             )
         )
         return 0
