@@ -1238,3 +1238,17 @@ The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-operator-readines
 Given exact feature and outcome run IDs, it verifies both successful manual-main workflow identities, downloads the exact non-expired aggregate feature evidence, aggregate outcome evidence, and DEC-074 readiness artifacts, runs the existing fingerprint loaders, and passes the complete chain to DEC-075 execution status.
 
 The mode succeeds only when DEC-075 recomputes `MODEL_PROTOCOL_SOURCE_OPEN`. It performs no dispatch and keeps model-protocol-result, model-fit, promotion, shadow/demo/broker/live/real-money authorizations false.
+
+
+## DEC-084 — Phase 8A EXP-044 Phase 2 release preservation
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-phase2-release-preservation.md` adds a manual merged-main workflow that preserves the exact already accepted Phase 2 Actions ZIP bytes as GitHub release assets before the original Actions artifacts expire.
+
+The workflow re-verifies the original artifact IDs, exact ZIP byte sizes, ZIP SHA-256 identities, and embedded processed-manifest SHA-256 identities before creating a draft release. The uploaded release ZIP assets must expose the same frozen sizes and SHA-256 digests before publication.
+
+The frozen release tag is `fmp-phase2-accepted-artifacts-v1`. No asset replacement is permitted and no new Dukascopy acquisition occurs.
+
+DEC-081/082/083 operator behavior remains intact; DEC-084 adds a dry-run-by-default `preserve-phase2` operator stage. DEC-084 creates no research result, no new accepted dataset, and no model/trading authorization.
