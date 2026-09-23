@@ -26,6 +26,7 @@ from .model_successor_stability_training import (
 
 
 STABILITY_MODEL_EXECUTION_GATE_DECISION = "DEC-107"
+STABILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-109"
 STABILITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp046-stability-model-training.yml"
 )
@@ -42,6 +43,25 @@ DEC105_MERGED_COMMIT = (
 DEC106_MERGED_COMMIT = (
     "f1316addb56741fcd9b6b12f57e66b677c515188"
 )
+DEC107_MERGED_COMMIT = (
+    "0ac50f49ed677ee767c02ca8c964fab569315127"
+)
+DEC108_MERGED_COMMIT = (
+    "16ef2773a6f1bf6eae54d981ebd6f843e25d4e2a"
+)
+
+DEC107_WORKFLOW_BLOB_SHA = (
+    "eb4690091a92021bb0c60f153800dc6cd9111cd5"
+)
+DEC107_CLI_BLOB_SHA = (
+    "525be24ec365d50f6f7a390f7eb4f6ac370440b9"
+)
+DEC107_GATE_BLOB_SHA = (
+    "d20ab76ec7ce112f6a1ca5485e78a395bacdf49b"
+)
+DEC108_REVIEW_BLOB_SHA = (
+    "e5ff3c6a0cb65ba14bb3bd43d5dd1d4a5a491cf6"
+)
 
 DEC106_RUNNER_BLOB_SHA = (
     "2d8d6f82cd15f5bdb75bb384fe3efe1dc560857a"
@@ -57,7 +77,7 @@ LEGACY_DATA_LOADER_BLOB_SHA = (
 )
 
 STABILITY_WORKFLOW_BLOB_SHA = (
-    "eb4690091a92021bb0c60f153800dc6cd9111cd5"
+    "3fc199f72665fad2a5d66c346645e9362b1e48e3"
 )
 STABILITY_CLI_BLOB_SHA = (
     "525be24ec365d50f6f7a390f7eb4f6ac370440b9"
@@ -84,10 +104,10 @@ MARKET_OUTCOMES_BLOB_SHA = (
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 STABILITY_MODEL_WORKFLOW_SOURCE_FROZEN = True
-STABILITY_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_STABILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-STABILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-STABILITY_MODEL_FIT_AUTHORIZED = False
+STABILITY_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_STABILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+STABILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+STABILITY_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -235,6 +255,12 @@ def validate_stability_model_workflow_sources(
             "model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_stability_result_review.py",
+            DEC108_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -301,6 +327,15 @@ def validate_stability_model_workflow_sources(
         "dec104_merged_commit": DEC104_MERGED_COMMIT,
         "dec105_merged_commit": DEC105_MERGED_COMMIT,
         "dec106_merged_commit": DEC106_MERGED_COMMIT,
+        "dec107_merged_commit": DEC107_MERGED_COMMIT,
+        "dec108_merged_commit": DEC108_MERGED_COMMIT,
+        "dec107_workflow_blob_sha": DEC107_WORKFLOW_BLOB_SHA,
+        "dec107_cli_blob_sha": DEC107_CLI_BLOB_SHA,
+        "dec107_gate_blob_sha": DEC107_GATE_BLOB_SHA,
+        "dec108_review_blob_sha": actual["terminal_review"],
+        "stability_model_execution_authorization_decision": (
+            STABILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "stability_runner_blob_sha": actual[
             "stability_runner"
         ],
@@ -348,11 +383,14 @@ def build_stability_model_workflow_source_gate(
     )
     return {
         **source,
-        "stage": "STABILITY_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+        "stage": "STABILITY_MODEL_RUN_DISPATCH_REQUIRED",
         "next_action": (
-            "A later separate decision may authorize at most a "
-            "guarded EXP-046 historical model-result run. "
-            "DEC-107 does not authorize or dispatch execution."
+            "DEC-109 authorizes at most one guarded historical EXP-046 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
+        ),
+        "stability_model_execution_authorization_decision": (
+            STABILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
         ),
         "stability_model_workflow_source_frozen": (
             STABILITY_MODEL_WORKFLOW_SOURCE_FROZEN
@@ -445,6 +483,12 @@ __all__ = [
     "DEC105_MERGED_COMMIT",
     "DEC106_MERGED_COMMIT",
     "DEC106_RUNNER_BLOB_SHA",
+    "DEC108_REVIEW_BLOB_SHA",
+    "DEC107_GATE_BLOB_SHA",
+    "DEC107_CLI_BLOB_SHA",
+    "DEC107_WORKFLOW_BLOB_SHA",
+    "DEC108_MERGED_COMMIT",
+    "DEC107_MERGED_COMMIT",
     "DEMO_ORDER_AUTHORIZED",
     "FEATURE_SCHEMA_BLOB_SHA",
     "LEGACY_DATA_LOADER_BLOB_SHA",
@@ -457,6 +501,7 @@ __all__ = [
     "REAL_MONEY_AUTHORIZED",
     "SHADOW_AUTHORIZED",
     "STABILITY_CLI_BLOB_SHA",
+    "STABILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "STABILITY_MODEL_EXECUTION_GATE_DECISION",
     "STABILITY_MODEL_FIT_AUTHORIZED",
     "STABILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED",
