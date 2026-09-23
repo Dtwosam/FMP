@@ -1200,3 +1200,17 @@ The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-reused-source-fea
 Tests require exact manifest and parquet equivalence with the existing single-cell feature generator and exactly one source-loader invocation per timeframe.
 
 DEC-080 changes no source identity, feature definition, feature schema, artifact identity, evidence rule, readiness rule, outcome rule, model authorization, or trading authorization. No EXP-044 result-producing workflow had been dispatched before this amendment.
+
+
+## DEC-081 — Phase 8A EXP-044 manual operator launch helper
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-operator-launch-helper.md` adds a dry-run-by-default operator CLI for the existing manual EXP-044 workflow-dispatch gates.
+
+The helper requires an authenticated GitHub CLI, a clean local `main` exactly matching freshly fetched `origin/main`, and the exact `Dtwosam/FMP` origin. It refuses duplicate manual-main feature/outcome runs. Outcome preparation additionally validates the exact successful feature workflow run before constructing the dispatch command.
+
+Actual dispatch requires an explicit `--execute` flag. Successful submission claims no research result and creates no model/trading authorization.
+
+DEC-081 does not change either workflow trigger and does not bypass the manual gate.

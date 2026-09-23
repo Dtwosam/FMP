@@ -1,0 +1,201 @@
+from __future__ import annotations
+
+import unittest
+
+from fmp.market_learning.operator import (
+    FEATURE_WORKFLOW_NAME,
+    OUTCOME_WORKFLOW_NAME,
+    feature_dispatch_command,
+    feature_run_endpoint,
+    feature_runs_endpoint,
+    outcome_dispatch_command,
+    outcome_runs_endpoint,
+    shell_join,
+    validate_feature_run_for_outcomes,
+    validate_no_existing_manual_runs,
+    validate_operator_checkout,
+)
+
+
+SHA = "a" * 40
+
+
+class Exp044OperatorTests(unittest.TestCase):
+    def test_clean_exact_main_checkout_is_required(self) -> None:
+        report = validate_operator_checkout(
+            branch="main",
+            head_sha=SHA,
+            origin_main_sha=SHA,
+            porcelain_status="",
+            origin_url="https://github.com/Dtwosam/FMP.git",
+        )
+        self.assertEqual(report["head_sha"], SHA)
+        self.assertTrue(report["clean_worktree"])
+        self.assertTrue(report["origin_verified"])
+
+        with self.assertRaisesRegex(ValueError, "main branch"):
+            validate_operator_checkout(
+                branch="feature",
+                head_sha=SHA,
+                origin_main_sha=SHA,
+                porcelain_status="",
+                origin_url="https://github.com/Dtwosam/FMP.git",
+            )
+        with self.assertRaisesRegex(ValueError, "exactly match"):
+            validate_operator_checkout(
+                branch="main",
+                head_sha=SHA,
+                origin_main_sha="b" * 40,
+                porcelain_status="",
+                origin_url="https://github.com/Dtwosam/FMP.git",
+            )
+        with self.assertRaisesRegex(ValueError, "clean working tree"):
+            validate_operator_checkout(
+                branch="main",
+                head_sha=SHA,
+                origin_main_sha=SHA,
+                porcelain_status=" M file.txt",
+                origin_url="https://github.com/Dtwosam/FMP.git",
+            )
+        with self.assertRaisesRegex(ValueError, "origin remote"):
+            validate_operator_checkout(
+                branch="main",
+                head_sha=SHA,
+                origin_main_sha=SHA,
+                porcelain_status="",
+                origin_url="https://github.com/example/other.git",
+            )
+
+    def test_no_existing_manual_main_run_is_required(self) -> None:
+        validate_no_existing_manual_runs(
+            {"workflow_runs": []},
+            workflow_name=FEATURE_WORKFLOW_NAME,
+        )
+        validate_no_existing_manual_runs(
+            {
+                "workflow_runs": [
+                    {
+                        "id": 1,
+                        "event": "push",
+                        "head_branch": "main",
+                    },
+                    {
+                        "id": 2,
+                        "event": "workflow_dispatch",
+                        "head_branch": "other",
+                    },
+                ]
+            },
+            workflow_name=FEATURE_WORKFLOW_NAME,
+        )
+        with self.assertRaisesRegex(ValueError, "already has manual main run"):
+            validate_no_existing_manual_runs(
+                {
+                    "workflow_runs": [
+                        {
+                            "id": 123,
+                            "event": "workflow_dispatch",
+                            "head_branch": "main",
+                        }
+                    ]
+                },
+                workflow_name=FEATURE_WORKFLOW_NAME,
+            )
+
+    def test_outcome_feature_run_must_match_exact_successful_manual_main_run(self) -> None:
+        run = {
+            "id": 123,
+            "name": FEATURE_WORKFLOW_NAME,
+            "path": ".github/workflows/phase8a-exp044-market-features.yml",
+            "event": "workflow_dispatch",
+            "head_branch": "main",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": SHA,
+        }
+        report = validate_feature_run_for_outcomes(run, expected_run_id=123)
+        self.assertTrue(report["feature_run_verified"])
+        self.assertEqual(report["feature_run_id"], 123)
+        self.assertEqual(report["feature_head_sha"], SHA)
+
+        cases = (
+            ("name", "wrong", "name mismatch"),
+            ("path", ".github/workflows/wrong.yml", "path mismatch"),
+            ("event", "push", "workflow_dispatch"),
+            ("head_branch", "other", "originate from main"),
+            ("status", "in_progress", "not completed"),
+            ("conclusion", "failure", "did not succeed"),
+        )
+        for field, value, pattern in cases:
+            invalid = dict(run)
+            invalid[field] = value
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, pattern):
+                    validate_feature_run_for_outcomes(
+                        invalid,
+                        expected_run_id=123,
+                    )
+
+    def test_dispatch_commands_are_exact_manual_main_workflows(self) -> None:
+        feature = feature_dispatch_command()
+        self.assertEqual(
+            feature,
+            (
+                "gh",
+                "workflow",
+                "run",
+                "phase8a-exp044-market-features.yml",
+                "--ref",
+                "main",
+                "-R",
+                "Dtwosam/FMP",
+            ),
+        )
+        outcome = outcome_dispatch_command(123)
+        self.assertEqual(
+            outcome,
+            (
+                "gh",
+                "workflow",
+                "run",
+                "phase8a-exp044-market-outcomes.yml",
+                "--ref",
+                "main",
+                "-R",
+                "Dtwosam/FMP",
+                "-f",
+                "feature_run_id=123",
+            ),
+        )
+        self.assertIn("phase8a-exp044-market-features.yml", shell_join(feature))
+        self.assertIn("feature_run_id=123", shell_join(outcome))
+
+    def test_api_endpoints_are_repository_and_workflow_scoped(self) -> None:
+        self.assertEqual(
+            feature_run_endpoint(123),
+            "repos/Dtwosam/FMP/actions/runs/123",
+        )
+        self.assertIn(
+            "phase8a-exp044-market-features.yml/runs",
+            feature_runs_endpoint(),
+        )
+        self.assertIn("branch=main", feature_runs_endpoint())
+        self.assertIn("event=workflow_dispatch", feature_runs_endpoint())
+        self.assertIn(
+            "phase8a-exp044-market-outcomes.yml/runs",
+            outcome_runs_endpoint(),
+        )
+        self.assertIn("branch=main", outcome_runs_endpoint())
+        self.assertIn("event=workflow_dispatch", outcome_runs_endpoint())
+
+    def test_invalid_run_ids_fail_closed(self) -> None:
+        for value in (0, -1, True):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    outcome_dispatch_command(value)  # type: ignore[arg-type]
+                with self.assertRaises(ValueError):
+                    feature_run_endpoint(value)  # type: ignore[arg-type]
+
+
+if __name__ == "__main__":
+    unittest.main()
