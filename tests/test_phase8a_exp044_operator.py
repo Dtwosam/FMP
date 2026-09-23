@@ -11,13 +11,17 @@ from fmp.market_learning.operator import (
     feature_run_endpoint,
     feature_runs_endpoint,
     outcome_dispatch_command,
+    outcome_run_artifacts_endpoint,
+    outcome_run_endpoint,
     outcome_runs_endpoint,
     select_feature_evidence_artifact,
+    select_outcome_evidence_artifacts,
     shell_join,
     validate_feature_evidence_for_outcomes,
     validate_feature_run_for_outcomes,
     validate_no_existing_manual_runs,
     validate_operator_checkout,
+    validate_outcome_run_for_readiness,
 )
 
 
@@ -174,6 +178,92 @@ class Exp044OperatorTests(unittest.TestCase):
         self.assertIn("phase8a-exp044-market-features.yml", shell_join(feature))
         self.assertIn("feature_run_id=123", shell_join(outcome))
 
+    def test_outcome_run_must_be_exact_successful_manual_main_run(self) -> None:
+        run = {
+            "id": 456,
+            "name": OUTCOME_WORKFLOW_NAME,
+            "path": ".github/workflows/phase8a-exp044-market-outcomes.yml",
+            "event": "workflow_dispatch",
+            "head_branch": "main",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "b" * 40,
+        }
+        report = validate_outcome_run_for_readiness(
+            run,
+            expected_run_id=456,
+        )
+        self.assertTrue(report["outcome_run_verified"])
+        self.assertEqual(report["outcome_run_id"], 456)
+        self.assertEqual(report["outcome_head_sha"], "b" * 40)
+
+        cases = (
+            ("name", "wrong", "name mismatch"),
+            ("path", ".github/workflows/wrong.yml", "path mismatch"),
+            ("event", "push", "workflow_dispatch"),
+            ("head_branch", "other", "originate from main"),
+            ("status", "in_progress", "not completed"),
+            ("conclusion", "failure", "did not succeed"),
+        )
+        for field, value, pattern in cases:
+            invalid = dict(run)
+            invalid[field] = value
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, pattern):
+                    validate_outcome_run_for_readiness(
+                        invalid,
+                        expected_run_id=456,
+                    )
+
+    def test_outcome_evidence_artifacts_require_exact_bound_pair(self) -> None:
+        feature_sha = "a" * 40
+        outcome_sha = "b" * 40
+        outcome_name = (
+            f"exp044-market-outcome-evidence-{outcome_sha}-from-{feature_sha}"
+        )
+        readiness_name = (
+            f"exp044-market-learning-readiness-{outcome_sha}-from-{feature_sha}"
+        )
+        selected = select_outcome_evidence_artifacts(
+            {
+                "artifacts": [
+                    {"id": 70, "name": outcome_name, "expired": False},
+                    {"id": 71, "name": readiness_name, "expired": False},
+                    {"id": 72, "name": "unrelated", "expired": False},
+                ]
+            },
+            outcome_head_sha=outcome_sha,
+            feature_head_sha=feature_sha,
+        )
+        self.assertEqual(selected["outcome_evidence_artifact_id"], 70)
+        self.assertEqual(selected["readiness_artifact_id"], 71)
+        self.assertEqual(selected["outcome_evidence_artifact_name"], outcome_name)
+        self.assertEqual(selected["readiness_artifact_name"], readiness_name)
+
+        with self.assertRaisesRegex(ValueError, "non-expired outcome_evidence"):
+            select_outcome_evidence_artifacts(
+                {
+                    "artifacts": [
+                        {"id": 70, "name": outcome_name, "expired": True},
+                        {"id": 71, "name": readiness_name, "expired": False},
+                    ]
+                },
+                outcome_head_sha=outcome_sha,
+                feature_head_sha=feature_sha,
+            )
+        with self.assertRaisesRegex(ValueError, "non-expired readiness"):
+            select_outcome_evidence_artifacts(
+                {
+                    "artifacts": [
+                        {"id": 70, "name": outcome_name, "expired": False},
+                        {"id": 71, "name": readiness_name, "expired": False},
+                        {"id": 73, "name": readiness_name, "expired": False},
+                    ]
+                },
+                outcome_head_sha=outcome_sha,
+                feature_head_sha=feature_sha,
+            )
+
     def test_feature_evidence_artifact_selection_requires_exact_nonexpired_match(self) -> None:
         expected_name = f"exp044-market-feature-evidence-{SHA}"
         selected = select_feature_evidence_artifact(
@@ -271,6 +361,14 @@ class Exp044OperatorTests(unittest.TestCase):
             artifact_download_endpoint(456),
             "repos/Dtwosam/FMP/actions/artifacts/456/zip",
         )
+        self.assertEqual(
+            outcome_run_endpoint(456),
+            "repos/Dtwosam/FMP/actions/runs/456",
+        )
+        self.assertEqual(
+            outcome_run_artifacts_endpoint(456),
+            "repos/Dtwosam/FMP/actions/runs/456/artifacts?per_page=100",
+        )
 
     def test_invalid_run_ids_fail_closed(self) -> None:
         for value in (0, -1, True):
@@ -283,6 +381,10 @@ class Exp044OperatorTests(unittest.TestCase):
                     feature_run_artifacts_endpoint(value)  # type: ignore[arg-type]
                 with self.assertRaises(ValueError):
                     artifact_download_endpoint(value)  # type: ignore[arg-type]
+                with self.assertRaises(ValueError):
+                    outcome_run_endpoint(value)  # type: ignore[arg-type]
+                with self.assertRaises(ValueError):
+                    outcome_run_artifacts_endpoint(value)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
