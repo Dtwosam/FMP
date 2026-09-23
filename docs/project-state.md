@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 DATA-PREPARATION READINESS SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** Dispatch `phase8a-exp044-market-features` from merged `main` using the existing accepted Dukascopy Phase 2 artifacts, then dispatch `phase8a-exp044-market-outcomes` with that successful feature-run ID. A successful outcome run must emit a DEC-074 readiness artifact proving the feature and outcome evidence cross-match. Only that artifact may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Phase status:** ACTIVE — EXP-044 DATA-PREPARATION + EXECUTION OBSERVABILITY SOURCE-ONLY; NO MODEL-TRAINING RESULT
+**Next milestone:** Dispatch `phase8a-exp044-market-features` from merged `main` using the existing accepted Dukascopy Phase 2 artifacts, then dispatch `phase8a-exp044-market-outcomes` with that successful feature-run ID. DEC-075 execution observability can report the exact missing step, but only a valid DEC-074 readiness artifact may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 
