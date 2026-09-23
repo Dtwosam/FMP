@@ -10,7 +10,7 @@ permissions:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -28,7 +28,6 @@ jobs:
             artifact_id: '10327600628'
             zip_sha256: 6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72
             manifest_sha256: e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d
-        timeframe: [5m, 15m, 1h]
 
     steps:
       - name: Checkout
@@ -68,70 +67,102 @@ jobs:
           actual_manifest_sha256="$(sha256sum "${manifest_path}" | awk '{print $1}')"
           test "${actual_manifest_sha256}" = "${EXPECTED_MANIFEST_SHA256}"
 
-      - name: Generate first full-history feature artifact set
+      - name: Generate first full-history feature artifact sets
         env:
           SYMBOL: ${{ matrix.dataset.symbol }}
-          TIMEFRAME: ${{ matrix.timeframe }}
         run: |
           set -euo pipefail
-          out=".exp044-a/${SYMBOL}-${TIMEFRAME}"
-          python scripts/phase8a_market_features.py             --dataset-root ".phase2-accepted/${SYMBOL}"             --manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json"             --symbol "${SYMBOL}"             --timeframe "${TIMEFRAME}"             --start 2015-01-01             --end-exclusive 2026-08-21             --out "${out}"             --code-commit "${GITHUB_SHA}"
+          for timeframe in 5m 15m 1h; do
+            out=".exp044-a/${SYMBOL}-${timeframe}"
+            python scripts/phase8a_market_features.py \
+              --dataset-root ".phase2-accepted/${SYMBOL}" \
+              --manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json" \
+              --symbol "${SYMBOL}" \
+              --timeframe "${timeframe}" \
+              --start 2015-01-01 \
+              --end-exclusive 2026-08-21 \
+              --out "${out}" \
+              --code-commit "${GITHUB_SHA}"
+          done
 
-      - name: Generate second full-history feature artifact set
+      - name: Generate second full-history feature artifact sets
         env:
           SYMBOL: ${{ matrix.dataset.symbol }}
-          TIMEFRAME: ${{ matrix.timeframe }}
         run: |
           set -euo pipefail
-          out=".exp044-b/${SYMBOL}-${TIMEFRAME}"
-          python scripts/phase8a_market_features.py             --dataset-root ".phase2-accepted/${SYMBOL}"             --manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json"             --symbol "${SYMBOL}"             --timeframe "${TIMEFRAME}"             --start 2015-01-01             --end-exclusive 2026-08-21             --out "${out}"             --code-commit "${GITHUB_SHA}"
+          for timeframe in 5m 15m 1h; do
+            out=".exp044-b/${SYMBOL}-${timeframe}"
+            python scripts/phase8a_market_features.py \
+              --dataset-root ".phase2-accepted/${SYMBOL}" \
+              --manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json" \
+              --symbol "${SYMBOL}" \
+              --timeframe "${timeframe}" \
+              --start 2015-01-01 \
+              --end-exclusive 2026-08-21 \
+              --out "${out}" \
+              --code-commit "${GITHUB_SHA}"
+          done
 
       - name: Verify deterministic regeneration and full accepted coverage
         env:
           SYMBOL: ${{ matrix.dataset.symbol }}
-          TIMEFRAME: ${{ matrix.timeframe }}
         run: |
           set -euo pipefail
-          a=".exp044-a/${SYMBOL}-${TIMEFRAME}"
-          b=".exp044-b/${SYMBOL}-${TIMEFRAME}"
-          cmp "${a}/manifest.json" "${b}/manifest.json"
           python - <<'PY'
           import json
           import os
           from pathlib import Path
 
           symbol = os.environ["SYMBOL"]
-          timeframe = os.environ["TIMEFRAME"]
-          a = Path(".exp044-a") / f"{symbol}-{timeframe}"
-          b = Path(".exp044-b") / f"{symbol}-{timeframe}"
-          manifest = json.loads((a / "manifest.json").read_text(encoding="utf-8"))
-          assert manifest["experiment_id"] == "EXP-20260923-044"
-          assert manifest["feature_set_version"] == "fmp-market-feature-v1"
-          assert manifest["base_feature_definition_version"] == "fmp-feature-v1"
-          assert manifest["evidence_label"] == "RETROSPECTIVE_ALREADY_SEEN"
-          assert manifest["untouched_oos"] is False
-          assert manifest["model_training_authorized"] is False
-          assert manifest["promotion_authorized"] is False
-          assert manifest["symbol"] == symbol
-          assert manifest["timeframe"] == timeframe
-          assert manifest["code_commit"] == os.environ["GITHUB_SHA"]
-          assert len(manifest["opened_source_months"]) == 140
-          assert manifest["opened_source_months"][0] == "2015-01"
-          assert manifest["opened_source_months"][-1] == "2026-08"
-          assert manifest["output_end_utc"] <= "2026-08-21T00:00:00Z"
-          for artifact in manifest["artifacts"]:
-              relative = artifact["path"]
-              left = a / relative
-              right = b / relative
-              assert left.is_file() and right.is_file(), relative
-              assert left.read_bytes() == right.read_bytes(), relative
+          for timeframe in ("5m", "15m", "1h"):
+              a = Path(".exp044-a") / f"{symbol}-{timeframe}"
+              b = Path(".exp044-b") / f"{symbol}-{timeframe}"
+              assert (a / "manifest.json").read_bytes() == (b / "manifest.json").read_bytes()
+
+              manifest = json.loads((a / "manifest.json").read_text(encoding="utf-8"))
+              assert manifest["experiment_id"] == "EXP-20260923-044"
+              assert manifest["feature_set_version"] == "fmp-market-feature-v1"
+              assert manifest["base_feature_definition_version"] == "fmp-feature-v1"
+              assert manifest["evidence_label"] == "RETROSPECTIVE_ALREADY_SEEN"
+              assert manifest["untouched_oos"] is False
+              assert manifest["model_training_authorized"] is False
+              assert manifest["promotion_authorized"] is False
+              assert manifest["symbol"] == symbol
+              assert manifest["timeframe"] == timeframe
+              assert manifest["code_commit"] == os.environ["GITHUB_SHA"]
+              assert len(manifest["opened_source_months"]) == 140
+              assert manifest["opened_source_months"][0] == "2015-01"
+              assert manifest["opened_source_months"][-1] == "2026-08"
+              assert manifest["output_end_utc"] <= "2026-08-21T00:00:00Z"
+              for artifact in manifest["artifacts"]:
+                  relative = artifact["path"]
+                  left = a / relative
+                  right = b / relative
+                  assert left.is_file() and right.is_file(), relative
+                  assert left.read_bytes() == right.read_bytes(), relative
           PY
 
-      - name: Upload EXP-044 feature evidence
+      - name: Upload EXP-044 5m feature evidence
         uses: actions/upload-artifact@v6
         with:
-          name: exp044-market-features-${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}-${{ github.sha }}
-          path: .exp044-a/${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}
+          name: exp044-market-features-${{ matrix.dataset.symbol }}-5m-${{ github.sha }}
+          path: .exp044-a/${{ matrix.dataset.symbol }}-5m
+          include-hidden-files: true
+          if-no-files-found: error
+
+      - name: Upload EXP-044 15m feature evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-market-features-${{ matrix.dataset.symbol }}-15m-${{ github.sha }}
+          path: .exp044-a/${{ matrix.dataset.symbol }}-15m
+          include-hidden-files: true
+          if-no-files-found: error
+
+      - name: Upload EXP-044 1h feature evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-market-features-${{ matrix.dataset.symbol }}-1h-${{ github.sha }}
+          path: .exp044-a/${{ matrix.dataset.symbol }}-1h
           include-hidden-files: true
           if-no-files-found: error
 
