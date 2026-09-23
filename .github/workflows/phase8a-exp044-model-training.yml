@@ -22,6 +22,11 @@ jobs:
           test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
           test "$GITHUB_REF" = "refs/heads/main"
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
       - name: Reject any prior manual main model run
         env:
           GH_TOKEN: ${{ github.token }}
@@ -59,11 +64,6 @@ jobs:
                   f"prior manual-main EXP-044 model run exists: {ids}"
               )
           PY
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
 
       - name: Install package
         run: python -m pip install -e .
