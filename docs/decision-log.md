@@ -1480,3 +1480,25 @@ The successor result identity carries `EXP-20260923-045`, DEC-096 core identity,
 Promotion, shadow, demo, broker mutation, live-order, real-money, and trading authorizations remain false.
 
 Consequences: deterministic EXP-045 training source now exists, but no EXP-045 historical result exists or is authorized. A later separate decision may freeze an artifact-backed runner/evidence contract; a still-later execution decision is required before any result-producing fit.
+
+
+## DEC-097 — Phase 8A EXP-045 artifact-backed runner and aggregate evidence source
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-045 HISTORICAL MODEL RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp045-model-artifact-runner.md` freezes the artifact-backed EXP-045 source boundary after DEC-095 froze the successor protocol and DEC-096 implemented the deterministic training core.
+
+DEC-097 binds the DEC-091 verified historical data-loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`, DEC-094 failed-run review blob `2260ad4ad08a7e9874bd28030be977a3e71436f9`, DEC-095 successor protocol blob `44129fc5337fb55b9c7d81f5ba0561ea788bd264`, and DEC-096 successor training-core blob `3f0bc1bfa9640d08175e72cdf131bb97c94d562c`. The DEC-097 runner source itself is frozen at Git blob `adebcc48130e8800741810c239528ef6c21eea6e`.
+
+EXP-045 reuses only the already-verified EXP-044 feature/outcome/readiness artifacts as historical source data. It does not regenerate data or inherit EXP-044 model-result identity. Aggregate evidence records `source_data_experiment_id=EXP-20260923-044` while model-result identity remains `EXP-20260923-045`.
+
+The old DEC-091 loader is reused only for readiness/manifest/parquet byte validation under an exact blob binding. EXP-045 cell computation uses only the DEC-096 successor core, and aggregate result identity is compiled by the new DEC-097 source.
+
+The aggregate compiler requires all 18 exact cells, recomputes every cell result fingerprint, validates the exact successor/core/protocol/predecessor identities, requires exactly the two frozen family identities, permits only the predeclared logistic `FAILED_NON_CONVERGENCE` family state, preserves six variant slots, and validates successor chronology states including `NO_MODEL_FAMILY_AVAILABLE`, `NO_MODEL_CHALLENGER`, validation rejection, and validation/holdout pass/reject states.
+
+Aggregate evidence is deterministic, canonically ordered, carries the future execution code commit, rebinds the exact historical feature/outcome/readiness evidence, and keeps all result/fit/promotion/shadow/demo/broker/live/real-money/trading locks false. Persisted aggregate JSON is independently revalidated by recomputing its canonical fingerprint and checking all 18 cell summaries before it can be returned to a later review/operator layer.
+
+`AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED=false` and `SUCCESSOR_MODEL_FIT_AUTHORIZED=false`. The artifact-backed runner refuses before readiness validation, artifact loading, or model fitting. DEC-097 adds no CLI, workflow, operator dispatch, or historical result.
+
+Consequences: EXP-045 now has frozen protocol, deterministic training core, verified artifact-consumption source, and aggregate evidence contract, but still no historical model result. A later separate decision may freeze workflow/CLI/execution-gate source; another separate authorization is required before any result-producing fit.
