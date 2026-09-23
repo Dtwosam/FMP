@@ -13,6 +13,7 @@ from fmp.market_learning.model_successor_artifacts import (
     AUTHORITATIVE_FEATURE_ARTIFACTS,
     AUTHORITATIVE_OUTCOME_ARTIFACTS,
     AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED,
+    FAILURE_REVIEW_BLOB_SHA,
     LEGACY_DATA_LOADER_BLOB_SHA,
     SUCCESSOR_MODEL_ARTIFACT_RUNNER_DECISION,
     SUCCESSOR_MODEL_ARTIFACT_RUNNER_VERSION,
@@ -20,8 +21,10 @@ from fmp.market_learning.model_successor_artifacts import (
     SUCCESSOR_PROTOCOL_BLOB_SHA,
     SUCCESSOR_TRAINING_CORE_BLOB_SHA,
     compile_successor_model_result_evidence,
+    load_successor_model_result_evidence,
     run_authoritative_successor_model_bundle,
     validate_successor_artifact_runner_sources,
+    validate_successor_model_result_evidence,
     write_successor_model_result_evidence,
 )
 from fmp.market_learning.model_successor_protocol import (
@@ -189,6 +192,10 @@ class Exp045SuccessorArtifactRunnerTests(unittest.TestCase):
             LEGACY_DATA_LOADER_BLOB_SHA,
         )
         self.assertEqual(
+            report["failure_review_blob_sha"],
+            FAILURE_REVIEW_BLOB_SHA,
+        )
+        self.assertEqual(
             report["successor_protocol_blob_sha"],
             SUCCESSOR_PROTOCOL_BLOB_SHA,
         )
@@ -226,6 +233,7 @@ class Exp045SuccessorArtifactRunnerTests(unittest.TestCase):
             target.mkdir(parents=True)
             for name in (
                 "model_artifacts.py",
+                "model_run_failure_review.py",
                 "model_successor_protocol.py",
                 "model_successor_training.py",
             ):
@@ -379,6 +387,9 @@ class Exp045SuccessorArtifactRunnerTests(unittest.TestCase):
                 row["evaluation_status"] = (
                     "FAMILY_UNAVAILABLE"
                 )
+                row["failure_reason"] = (
+                    "LBFGS_MAX_ITER_REACHED"
+                )
                 row["selection_gate_passed"] = False
         first.pop("result_fingerprint")
         first["result_fingerprint"] = _sha256(first)
@@ -395,6 +406,78 @@ class Exp045SuccessorArtifactRunnerTests(unittest.TestCase):
         ]
         self.assertEqual(len(matching), 1)
         self.assertFalse(evidence["promotion_authorized"])
+
+    def test_variant_slot_tamper_fails_closed_even_with_recomputed_cell_fingerprint(self) -> None:
+        results = _all_results()
+        first = results[0]
+        selection = first["selection"]
+        assert isinstance(selection, dict)
+        variants = selection["variants"]
+        assert isinstance(variants, list)
+        first_variant = variants[0]
+        assert isinstance(first_variant, dict)
+        first_variant["confidence_threshold"] = 0.6
+        first.pop("result_fingerprint")
+        first["result_fingerprint"] = _sha256(first)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "duplicate EXP-045 model variant slot",
+        ):
+            compile_successor_model_result_evidence(
+                results,
+                code_commit=COMMIT,
+            )
+
+    def test_persisted_aggregate_evidence_revalidates_and_tamper_fails(self) -> None:
+        evidence = compile_successor_model_result_evidence(
+            _all_results(),
+            code_commit=COMMIT,
+        )
+        summary = validate_successor_model_result_evidence(
+            evidence,
+            expected_code_commit=COMMIT,
+        )
+        self.assertTrue(
+            summary["successor_model_result_evidence_verified"]
+        )
+        self.assertEqual(summary["verified_cell_count"], 18)
+        self.assertTrue(summary["prior_result_informed"])
+        self.assertFalse(summary["untouched_oos"])
+        self.assertFalse(summary["promotion_authorized"])
+        self.assertFalse(summary["trading_authorized"])
+
+        tampered = json.loads(json.dumps(evidence))
+        tampered["cells"][0]["selection_status"] = "SELECTED"
+        with self.assertRaisesRegex(
+            ValueError,
+            "content fingerprint mismatch",
+        ):
+            validate_successor_model_result_evidence(
+                tampered,
+                expected_code_commit=COMMIT,
+            )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "successor-evidence.json"
+            path.write_text(
+                json.dumps(
+                    evidence,
+                    sort_keys=True,
+                    indent=2,
+                    allow_nan=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            loaded = load_successor_model_result_evidence(
+                path,
+                expected_code_commit=COMMIT,
+            )
+            self.assertEqual(
+                loaded["evidence_fingerprint"],
+                evidence["evidence_fingerprint"],
+            )
 
     def test_aggregate_evidence_is_deterministic_and_write_is_create_only(self) -> None:
         first = compile_successor_model_result_evidence(
