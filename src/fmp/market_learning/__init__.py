@@ -31,6 +31,10 @@ from .materialize import (
     materialize_market_outcome_cell,
     run_market_outcome_materialization,
 )
+from .outcome_evidence import (
+    compile_outcome_evidence,
+    write_outcome_evidence,
+)
 from .outcomes import (
     MARKET_OUTCOME_SET_VERSION,
     OUTCOME_COLUMNS,
@@ -59,6 +63,7 @@ __all__ = [
     "OUTCOME_COLUMNS",
     "build_market_feature_frame",
     "build_market_outcome_grid",
+    "compile_outcome_evidence",
     "label_market_outcome",
     "load_feature_evidence_index",
     "load_market_feature_source",
@@ -70,5 +75,6 @@ __all__ = [
     "validate_market_feature_range",
     "write_market_feature_artifacts",
     "write_market_outcome_artifacts",
+    "write_outcome_evidence",
     "label_market_outcomes",
 ]
