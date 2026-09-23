@@ -49,6 +49,19 @@ class Exp044OutcomeWorkflowTests(unittest.TestCase):
         self.assertIn('evidence["broker_mutation_authorized"] is False', text)
         self.assertIn('evidence["live_order_authorized"] is False', text)
         self.assertIn('evidence["real_money_authorized"] is False', text)
+        self.assertIn("scripts/phase8a_market_learning_readiness.py", text)
+        self.assertIn('readiness["data_preparation_complete"] is True', text)
+        self.assertIn(
+            'readiness["model_protocol_source_open_authorized"] is True',
+            text,
+        )
+        self.assertIn(
+            'readiness["model_protocol_result_authorized"] is False',
+            text,
+        )
+        self.assertIn('readiness["model_fit_authorized"] is False', text)
+        self.assertIn('readiness["promotion_authorized"] is False', text)
+        self.assertIn("exp044-market-learning-readiness-", text)
 
 
 if __name__ == "__main__":

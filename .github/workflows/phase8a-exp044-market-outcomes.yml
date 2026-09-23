@@ -308,9 +308,81 @@ jobs:
           assert evidence["real_money_authorized"] is False
           PY
 
+      - name: Download source aggregate feature evidence for readiness
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FEATURE_RUN_ID: ${{ inputs.feature_run_id }}
+          FEATURE_SHA: ${{ needs.validate-feature-run.outputs.feature_sha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$FEATURE_RUN_ID/artifacts?per_page=100" > readiness-feature-artifacts.json
+          artifact_id="$(
+            python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              Path("readiness-feature-artifacts.json").read_text(encoding="utf-8")
+          )
+          expected = f"exp044-market-feature-evidence-{os.environ['FEATURE_SHA']}"
+          matches = [
+              item for item in payload.get("artifacts", [])
+              if item.get("name") == expected and not item.get("expired", False)
+          ]
+          if len(matches) != 1:
+              raise SystemExit(f"expected exactly one non-expired {expected!r} artifact")
+          print(matches[0]["id"])
+          PY
+          )"
+          mkdir -p .exp044-readiness-feature-evidence
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > .exp044-readiness-feature-evidence.zip
+          unzip -q .exp044-readiness-feature-evidence.zip             -d .exp044-readiness-feature-evidence
+
+      - name: Compile data-preparation readiness
+        run: |
+          set -euo pipefail
+          feature_evidence="$(
+            find .exp044-readiness-feature-evidence               -type f -name 'feature-evidence.json' -print -quit
+          )"
+          test -n "$feature_evidence"
+          python scripts/phase8a_market_learning_readiness.py             --feature-evidence "$feature_evidence"             --outcome-evidence .exp044-outcome-evidence/outcome-evidence.json             --out .exp044-training-readiness/readiness.json
+
+      - name: Assert readiness opens protocol source only
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          readiness = json.loads(
+              Path(".exp044-training-readiness/readiness.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          assert readiness["data_preparation_complete"] is True
+          assert readiness["verified_cell_count"] == 9
+          assert readiness["model_protocol_source_open_authorized"] is True
+          assert readiness["model_protocol_result_authorized"] is False
+          assert readiness["model_fit_authorized"] is False
+          assert readiness["promotion_authorized"] is False
+          assert readiness["shadow_authorized"] is False
+          assert readiness["demo_order_authorized"] is False
+          assert readiness["broker_mutation_authorized"] is False
+          assert readiness["live_order_authorized"] is False
+          assert readiness["real_money_authorized"] is False
+          PY
+
       - name: Upload aggregate EXP-044 outcome evidence
         uses: actions/upload-artifact@v6
         with:
           name: exp044-market-outcome-evidence-${{ github.sha }}-from-${{ needs.validate-feature-run.outputs.feature_sha }}
           path: .exp044-outcome-evidence/outcome-evidence.json
+          if-no-files-found: error
+
+      - name: Upload EXP-044 training readiness
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-market-learning-readiness-${{ github.sha }}-from-${{ needs.validate-feature-run.outputs.feature_sha }}
+          path: .exp044-training-readiness/readiness.json
           if-no-files-found: error

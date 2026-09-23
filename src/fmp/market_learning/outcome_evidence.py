@@ -311,6 +311,112 @@ def compile_outcome_evidence(
     return evidence
 
 
+
+def load_outcome_evidence_index(path: Path) -> Mapping[str, object]:
+    try:
+        raw = Path(path).read_bytes()
+        value = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read EXP-044 outcome evidence index: {path}") from exc
+    if not isinstance(value, dict):
+        raise ValueError("EXP-044 outcome evidence index root must be an object")
+
+    fingerprint = _validate_sha256(
+        value.get("evidence_fingerprint"),
+        field="EXP-044 outcome evidence fingerprint",
+    )
+    unsigned = dict(value)
+    unsigned.pop("evidence_fingerprint", None)
+    if _sha256_bytes(_canonical_json(unsigned)) != fingerprint:
+        raise ValueError("EXP-044 outcome evidence fingerprint mismatch")
+
+    if value.get("experiment_id") != EXPERIMENT_ID:
+        raise ValueError("EXP-044 outcome evidence experiment identity mismatch")
+    if value.get("outcome_set_version") != MARKET_OUTCOME_SET_VERSION:
+        raise ValueError("EXP-044 outcome evidence set identity mismatch")
+    if value.get("feature_set_version") != MARKET_FEATURE_SET_VERSION:
+        raise ValueError("EXP-044 outcome evidence feature-set identity mismatch")
+    if value.get("evidence_label") != EVIDENCE_LABEL:
+        raise ValueError("EXP-044 outcome evidence label mismatch")
+    if value.get("outcome_evidence_complete") is not True:
+        raise ValueError("EXP-044 outcome evidence is not complete")
+    if value.get("expected_cell_count") != len(EXPECTED_CELLS):
+        raise ValueError("EXP-044 expected outcome cell count mismatch")
+    if value.get("verified_cell_count") != len(EXPECTED_CELLS):
+        raise ValueError("EXP-044 verified outcome cell count mismatch")
+
+    for flag in (
+        "model_fit_authorized",
+        "shadow_authorized",
+        "demo_order_authorized",
+        "broker_mutation_authorized",
+        "live_order_authorized",
+        "real_money_authorized",
+    ):
+        if value.get(flag) is not False:
+            raise ValueError(f"EXP-044 outcome evidence {flag} must remain false")
+
+    _validate_commit(value.get("code_commit"), field="EXP-044 outcome evidence code commit")
+    _validate_sha256(
+        value.get("feature_evidence_fingerprint"),
+        field="EXP-044 outcome feature evidence fingerprint",
+    )
+
+    cells = value.get("cells")
+    if not isinstance(cells, list) or len(cells) != len(EXPECTED_CELLS):
+        raise ValueError("EXP-044 outcome evidence cells are incomplete")
+    seen: list[tuple[str, str]] = []
+    for cell in cells:
+        if not isinstance(cell, Mapping):
+            raise ValueError("EXP-044 outcome evidence cell must be an object")
+        identity = (cell.get("symbol"), cell.get("timeframe"))
+        if identity not in EXPECTED_CELLS:
+            raise ValueError(f"unexpected EXP-044 outcome evidence cell: {identity!r}")
+        seen.append(identity)
+        _validate_sha256(
+            cell.get("manifest_sha256"),
+            field="EXP-044 outcome cell manifest sha256",
+        )
+        _validate_sha256(
+            cell.get("feature_manifest_sha256"),
+            field="EXP-044 outcome cell feature manifest sha256",
+        )
+        if (
+            cell.get("processed_manifest_sha256")
+            != EXPECTED_SOURCE_MANIFEST_SHA256[str(identity[0])]
+        ):
+            raise ValueError("EXP-044 outcome cell source sha256 mismatch")
+        source_rows = cell.get("source_feature_rows")
+        labeled_rows = cell.get("labeled_rows")
+        artifact_count = cell.get("artifact_count")
+        if (
+            not isinstance(source_rows, int)
+            or isinstance(source_rows, bool)
+            or source_rows <= 0
+        ):
+            raise ValueError("EXP-044 outcome cell source row count is invalid")
+        if (
+            not isinstance(labeled_rows, int)
+            or isinstance(labeled_rows, bool)
+            or labeled_rows <= 0
+        ):
+            raise ValueError("EXP-044 outcome cell labeled row count is invalid")
+        if (
+            not isinstance(artifact_count, int)
+            or isinstance(artifact_count, bool)
+            or artifact_count <= 0
+        ):
+            raise ValueError("EXP-044 outcome cell artifact count is invalid")
+        start = _parse_utc(cell.get("output_start_utc"), field="outcome cell output_start_utc")
+        end = _parse_utc(cell.get("output_end_utc"), field="outcome cell output_end_utc")
+        if start >= end:
+            raise ValueError("EXP-044 outcome cell coverage is invalid")
+
+    if tuple(seen) != EXPECTED_CELLS:
+        raise ValueError("EXP-044 outcome evidence cells are not exact and sorted")
+    return value
+
+
 def write_outcome_evidence(*, evidence: Mapping[str, object], path: Path) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -320,4 +426,8 @@ def write_outcome_evidence(*, evidence: Mapping[str, object], path: Path) -> Non
     destination.write_text(payload, encoding="utf-8")
 
 
-__all__ = ["compile_outcome_evidence", "write_outcome_evidence"]
+__all__ = [
+    "compile_outcome_evidence",
+    "load_outcome_evidence_index",
+    "write_outcome_evidence",
+]

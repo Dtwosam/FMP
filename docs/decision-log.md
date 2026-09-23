@@ -1104,3 +1104,19 @@ All historical EXP-044 evidence through 2026-08-20 is `RETROSPECTIVE_ALREADY_SEE
 Continuous learning is explicitly champion/challenger based: active shadow/demo models are immutable; new prospective observations are appended to an immutable learning ledger; retraining happens offline at a frozen cutoff into a new challenger identity; promotion requires a separate evidence gate. No running model may rewrite itself after a trade or hot-swap itself into an active campaign.
 
 Consequences: Phase 8A remains ACTIVE; EXP-015 remains available as a parallel rule-based benchmark search; DEC-042 and Phase 8B retain their existing locks; no shadow/demo/live/broker/real-money authorization is created by DEC-073.
+
+
+## DEC-074 — Phase 8A market-learning data-preparation readiness gate
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 MODEL-TRAINING RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-market-learning-readiness.md` adds a mandatory evidence gate between EXP-044 historical data preparation and any model-training protocol.
+
+A readiness artifact may exist only after the persisted aggregate feature evidence and persisted aggregate outcome evidence both revalidate successfully. The outcome evidence must bind the exact supplied feature-evidence fingerprint. For each of the nine EURUSD/GBPUSD/USDJPY × 5m/15m/1h cells, the outcome evidence must also bind the exact feature-manifest SHA-256, the same accepted Phase 2 Dukascopy processed-manifest SHA-256, and the same feature-row count.
+
+A passing readiness result means only `data_preparation_complete=true` and `model_protocol_source_open_authorized=true`. It permits drafting and freezing a separate model-training protocol. It does not authorize a result-producing training run.
+
+The readiness artifact must retain `model_protocol_result_authorized=false`, `model_fit_authorized=false`, `promotion_authorized=false`, and all shadow/demo/broker-mutation/live/real-money authorization flags false.
+
+DEC-074 chooses no model family, preprocessing, chronological split, target, prediction threshold, trading threshold, or financial acceptance gate. Those choices require a later predeclared decision before any fit. No readiness artifact exists until the authoritative feature and outcome workflows run successfully from merged `main`.

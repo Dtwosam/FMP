@@ -11,7 +11,11 @@ from fmp.market_learning.evidence import (
     EXPECTED_CELLS,
     EXPECTED_SOURCE_MANIFEST_SHA256,
 )
-from fmp.market_learning.outcome_evidence import compile_outcome_evidence
+from fmp.market_learning.outcome_evidence import (
+    compile_outcome_evidence,
+    load_outcome_evidence_index,
+    write_outcome_evidence,
+)
 from fmp.market_learning.outcomes import (
     MARKET_OUTCOME_SET_VERSION,
     OUTCOME_COLUMNS,
@@ -117,6 +121,28 @@ class MarketOutcomeEvidenceTests(unittest.TestCase):
             self.assertFalse(first["live_order_authorized"])
             self.assertFalse(first["real_money_authorized"])
             self.assertEqual(len(first["evidence_fingerprint"]), 64)
+
+    def test_persisted_outcome_evidence_round_trip_and_tamper_detection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _complete_root(root)
+            evidence = compile_outcome_evidence(
+                root=root,
+                expected_code_commit=CODE_COMMIT,
+                expected_feature_evidence_fingerprint=FEATURE_EVIDENCE_FINGERPRINT,
+            )
+            path = root / "outcome-evidence.json"
+            write_outcome_evidence(evidence=evidence, path=path)
+            self.assertEqual(load_outcome_evidence_index(path), evidence)
+
+            tampered = json.loads(path.read_text(encoding="utf-8"))
+            tampered["verified_cell_count"] = 8
+            path.write_text(
+                json.dumps(tampered, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "fingerprint mismatch"):
+                load_outcome_evidence_index(path)
 
     def test_missing_cell_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
