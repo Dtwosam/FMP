@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 CLOSED/REVIEWED + EXP-046 DEC-109 ONE-RUN AUTHORIZATION MERGED + DEC-110 SINGLE-STEP OPERATOR SOURCE FROZEN; NO EXP-046 MODEL RESULT
-**Next milestone:** Merge DEC-110's source-only EXP-046 operator. After merge, from a clean current `main`, run `python scripts/phase8a_exp046_operator.py next`. Only if it reports `STABILITY_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp046_operator.py advance --execute` submit the single guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 CLOSED/REVIEWED + EXP-046 DEC-109 ONE-RUN AUTHORIZATION MERGED + DEC-110 SINGLE-STEP OPERATOR MERGED; NO EXP-046 MODEL RESULT
+**Next milestone:** DEC-110 is merged at `bc11b8c86c6536ba432b9f497a9e50467a5058ff`. GitHub still reports zero manual-main `phase8a-exp046-stability-model-training` runs. From a clean current `main`, run `python scripts/phase8a_exp046_operator.py next`. Only if it reports `STABILITY_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp046_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
