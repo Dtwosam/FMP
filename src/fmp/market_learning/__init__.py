@@ -40,7 +40,9 @@ from .materialize import (
     load_verified_feature_cell,
     load_verified_minute_quotes,
     materialize_market_outcome_cell,
+    materialize_market_outcome_pair,
     run_market_outcome_materialization,
+    run_market_outcome_pair_materialization,
 )
 from .outcome_evidence import (
     compile_outcome_evidence,
@@ -103,8 +105,10 @@ __all__ = [
     "load_verified_feature_cell",
     "load_verified_minute_quotes",
     "materialize_market_outcome_cell",
+    "materialize_market_outcome_pair",
     "run_market_feature_generation",
     "run_market_outcome_materialization",
+    "run_market_outcome_pair_materialization",
     "validate_market_feature_range",
     "write_market_feature_artifacts",
     "write_market_outcome_artifacts",

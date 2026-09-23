@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 PAIR-BATCHED DATA-PREPARATION SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** Dispatch the pair-batched `phase8a-exp044-market-features` workflow from merged `main` using the existing accepted Dukascopy Phase 2 artifacts, then dispatch the pair-batched `phase8a-exp044-market-outcomes` workflow with that successful feature-run ID. DEC-075 execution observability can report the exact missing step, but only a valid DEC-074 readiness artifact may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Phase status:** ACTIVE — EXP-044 PAIR-REUSED DATA-PREPARATION SOURCE-ONLY; NO MODEL-TRAINING RESULT
+**Next milestone:** Dispatch the pair-batched `phase8a-exp044-market-features` workflow from merged `main` using the existing accepted Dukascopy Phase 2 artifacts, then dispatch `phase8a-exp044-market-outcomes` with that successful feature-run ID. DEC-077 makes each outcome pair job verify/read the one-minute Phase 2 history once and reuse it for 5m/15m/1h while preserving the same nine outcome cells. DEC-075 can report the exact missing step, but only a valid DEC-074 readiness artifact may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 
