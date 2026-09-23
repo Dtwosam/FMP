@@ -702,6 +702,266 @@ def compile_successor_model_result_evidence(
     return evidence
 
 
+def validate_successor_model_result_evidence(
+    evidence: Mapping[str, object],
+    *,
+    expected_code_commit: str,
+) -> dict[str, object]:
+    if not isinstance(evidence, Mapping):
+        raise ValueError(
+            "EXP-045 model-result evidence must be an object"
+        )
+
+    commit = _validate_commit(
+        expected_code_commit,
+        field="EXP-045 expected model-run code commit",
+    )
+    unsigned = dict(evidence)
+    supplied_fingerprint = _validate_sha256(
+        unsigned.pop("evidence_fingerprint", None),
+        field="EXP-045 aggregate evidence fingerprint",
+    )
+    if _sha256(_canonical_json(unsigned)) != supplied_fingerprint:
+        raise ValueError(
+            "EXP-045 aggregate evidence content fingerprint mismatch"
+        )
+
+    exact = {
+        "evidence_version": (
+            SUCCESSOR_MODEL_RESULT_EVIDENCE_VERSION
+        ),
+        "runner_version": (
+            SUCCESSOR_MODEL_ARTIFACT_RUNNER_VERSION
+        ),
+        "runner_decision": (
+            SUCCESSOR_MODEL_ARTIFACT_RUNNER_DECISION
+        ),
+        "experiment_id": SUCCESSOR_EXPERIMENT_ID,
+        "training_core_version": (
+            SUCCESSOR_TRAINING_CORE_VERSION
+        ),
+        "training_core_decision": (
+            SUCCESSOR_TRAINING_CORE_DECISION
+        ),
+        "training_core_commit": (
+            SUCCESSOR_TRAINING_CORE_COMMIT
+        ),
+        "training_core_blob_sha": (
+            SUCCESSOR_TRAINING_CORE_BLOB_SHA
+        ),
+        "protocol_decision": SUCCESSOR_PROTOCOL_DECISION,
+        "protocol_version": SUCCESSOR_PROTOCOL_VERSION,
+        "protocol_commit": SUCCESSOR_PROTOCOL_COMMIT,
+        "protocol_blob_sha": SUCCESSOR_PROTOCOL_BLOB_SHA,
+        "protocol_fingerprint": (
+            successor_protocol_fingerprint()
+        ),
+        "base_protocol_fingerprint": (
+            BASE_PROTOCOL_FINGERPRINT
+        ),
+        "predecessor_failure_review_decision": (
+            PREDECESSOR_FAILURE_REVIEW_DECISION
+        ),
+        "predecessor_failure_review_blob_sha": (
+            FAILURE_REVIEW_BLOB_SHA
+        ),
+        "predecessor_failed_model_run_id": (
+            PREDECESSOR_FAILED_MODEL_RUN_ID
+        ),
+        "predecessor_failed_model_head_sha": (
+            PREDECESSOR_FAILED_MODEL_HEAD_SHA
+        ),
+        "prior_result_informed": PRIOR_RESULT_INFORMED,
+        "evidence_label": EVIDENCE_LABEL,
+        "untouched_oos": UNTOUCHED_OOS,
+        "code_commit": commit,
+        "source_data_experiment_id": "EXP-20260923-044",
+        "feature_run_id": AUTHORITATIVE_FEATURE_RUN_ID,
+        "feature_evidence_artifact_id": (
+            AUTHORITATIVE_FEATURE_EVIDENCE_ARTIFACT_ID
+        ),
+        "feature_evidence_fingerprint": (
+            AUTHORITATIVE_FEATURE_EVIDENCE_FINGERPRINT
+        ),
+        "outcome_run_id": AUTHORITATIVE_OUTCOME_RUN_ID,
+        "outcome_evidence_artifact_id": (
+            AUTHORITATIVE_OUTCOME_EVIDENCE_ARTIFACT_ID
+        ),
+        "outcome_evidence_fingerprint": (
+            AUTHORITATIVE_OUTCOME_EVIDENCE_FINGERPRINT
+        ),
+        "readiness_artifact_id": (
+            AUTHORITATIVE_READINESS_ARTIFACT_ID
+        ),
+        "readiness_fingerprint": (
+            AUTHORITATIVE_READINESS_FINGERPRINT
+        ),
+        "verified_cell_count": len(MODEL_CELLS),
+        "model_protocol_result_authorized": False,
+        "model_fit_authorized": False,
+        "promotion_authorized": False,
+        "shadow_authorized": False,
+        "demo_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "live_order_authorized": False,
+        "real_money_authorized": False,
+        "trading_authorized": False,
+    }
+    for field, expected in exact.items():
+        if evidence.get(field) != expected:
+            raise ValueError(
+                f"EXP-045 aggregate evidence {field} mismatch"
+            )
+
+    cells = evidence.get("cells")
+    if not isinstance(cells, list) or len(cells) != len(MODEL_CELLS):
+        raise ValueError(
+            "EXP-045 aggregate evidence must contain exactly 18 cells"
+        )
+
+    expected_cells = {
+        (cell.symbol, cell.timeframe, cell.horizon_minutes)
+        for cell in MODEL_CELLS
+    }
+    indexed: dict[
+        tuple[str, str, int],
+        Mapping[str, object],
+    ] = {}
+    selected_count = 0
+    no_challenger_count = 0
+    no_family_count = 0
+    validation_pass_count = 0
+    holdout_pass_count = 0
+    logistic_nonconvergence_count = 0
+
+    for raw in cells:
+        if not isinstance(raw, Mapping):
+            raise ValueError(
+                "EXP-045 aggregate cell summary is malformed"
+            )
+        symbol = raw.get("symbol")
+        timeframe = raw.get("timeframe")
+        horizon = raw.get("horizon_minutes")
+        if (
+            not isinstance(symbol, str)
+            or not isinstance(timeframe, str)
+            or not isinstance(horizon, int)
+            or isinstance(horizon, bool)
+        ):
+            raise ValueError(
+                "EXP-045 aggregate cell identity is malformed"
+            )
+        identity = (symbol, timeframe, horizon)
+        if identity not in expected_cells:
+            raise ValueError(
+                f"unexpected EXP-045 aggregate cell: {identity}"
+            )
+        if identity in indexed:
+            raise ValueError(
+                "duplicate EXP-045 aggregate cell"
+            )
+
+        _validate_sha256(
+            raw.get("result_fingerprint"),
+            field="EXP-045 aggregate cell result fingerprint",
+        )
+        selection = raw.get("selection_status")
+        validation = raw.get("validation_status")
+        holdout = raw.get("retrospective_holdout_status")
+        _validate_status_chain(
+            selection=selection,
+            validation=validation,
+            holdout=holdout,
+        )
+
+        logistic_status = raw.get("logistic_fit_status")
+        if logistic_status not in {
+            "FITTED",
+            "FAILED_NON_CONVERGENCE",
+        }:
+            raise ValueError(
+                "EXP-045 aggregate logistic fit status mismatch"
+            )
+        if raw.get("hgb_fit_status") != "FITTED":
+            raise ValueError(
+                "EXP-045 aggregate HGB fit status mismatch"
+            )
+
+        if selection == "SELECTED":
+            selected_count += 1
+        elif selection == "NO_MODEL_CHALLENGER":
+            no_challenger_count += 1
+        elif selection == "NO_MODEL_FAMILY_AVAILABLE":
+            no_family_count += 1
+        if validation == "PASS":
+            validation_pass_count += 1
+        if holdout == "PASS":
+            holdout_pass_count += 1
+        if logistic_status == "FAILED_NON_CONVERGENCE":
+            logistic_nonconvergence_count += 1
+        indexed[identity] = raw
+
+    if set(indexed) != expected_cells:
+        missing = sorted(expected_cells - set(indexed))
+        raise ValueError(
+            f"EXP-045 aggregate evidence is missing cells: {missing}"
+        )
+
+    return {
+        "successor_model_result_evidence_verified": True,
+        "successor_model_result_evidence_fingerprint": (
+            supplied_fingerprint
+        ),
+        "successor_model_result_code_commit": commit,
+        "verified_cell_count": len(MODEL_CELLS),
+        "selected_cell_count": selected_count,
+        "no_model_challenger_count": no_challenger_count,
+        "no_model_family_available_count": no_family_count,
+        "validation_pass_count": validation_pass_count,
+        "retrospective_holdout_pass_count": holdout_pass_count,
+        "logistic_nonconvergence_cell_count": (
+            logistic_nonconvergence_count
+        ),
+        "prior_result_informed": True,
+        "untouched_oos": False,
+        "promotion_authorized": False,
+        "shadow_authorized": False,
+        "demo_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "live_order_authorized": False,
+        "real_money_authorized": False,
+        "trading_authorized": False,
+    }
+
+
+def load_successor_model_result_evidence(
+    path: Path,
+    *,
+    expected_code_commit: str,
+) -> dict[str, object]:
+    try:
+        value = json.loads(
+            Path(path).read_text(encoding="utf-8")
+        )
+    except (
+        OSError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ) as exc:
+        raise ValueError(
+            f"cannot read EXP-045 model-result evidence: {path}"
+        ) from exc
+    if not isinstance(value, dict):
+        raise ValueError(
+            "EXP-045 model-result evidence root must be an object"
+        )
+    validate_successor_model_result_evidence(
+        value,
+        expected_code_commit=expected_code_commit,
+    )
+    return value
+
+
 def run_authoritative_successor_model_bundle(
     *,
     repository_root: Path,
@@ -797,6 +1057,7 @@ __all__ = [
     "AUTHORITATIVE_FEATURE_ARTIFACTS",
     "AUTHORITATIVE_OUTCOME_ARTIFACTS",
     "AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED",
+    "FAILURE_REVIEW_BLOB_SHA",
     "LEGACY_DATA_LOADER_BLOB_SHA",
     "SUCCESSOR_MODEL_ARTIFACT_RUNNER_DECISION",
     "SUCCESSOR_MODEL_ARTIFACT_RUNNER_VERSION",
@@ -807,7 +1068,9 @@ __all__ = [
     "SUCCESSOR_TRAINING_CORE_BLOB_SHA",
     "SUCCESSOR_TRAINING_CORE_COMMIT",
     "compile_successor_model_result_evidence",
+    "load_successor_model_result_evidence",
     "run_authoritative_successor_model_bundle",
     "validate_successor_artifact_runner_sources",
+    "validate_successor_model_result_evidence",
     "write_successor_model_result_evidence",
 ]
