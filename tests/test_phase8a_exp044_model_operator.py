@@ -150,7 +150,11 @@ class Exp044ModelOperatorTests(unittest.TestCase):
         self.assertIn("model_run_jobs_endpoint", text)
         self.assertIn("validate_reviewed_failed_model_run", text)
         self.assertIn(
-            "Do not rerun or replace run 35891605645.",
+            "Do not rerun or replace run ",
+            text,
+        )
+        self.assertIn(
+            "35891605645. Any continued model research requires a ",
             text,
         )
         self.assertNotIn(
