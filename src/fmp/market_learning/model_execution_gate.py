@@ -41,8 +41,10 @@ FEATURE_SCHEMA_BLOB_SHA = "afbddc84676faadb8660b4da03c6abeb10cd2a13"
 MARKET_CONTRACTS_BLOB_SHA = "4c5a75232e66715c0829e545d8659f59fb8b7724"
 MARKET_OUTCOMES_BLOB_SHA = "c83fefd4252b2fe426af97686f86e43021760c77"
 DEC091_RUNNER_BLOB_SHA = "27c0848d16722a22b4762f5842396c2aebc92bec"
+DEC094_ARTIFACT_RUNNER_BLOB_SHA = "f050f82e9d0dbf641bf02d206d5ecd877e4446fa"
+DEC094_RESULT_VALIDATOR_BLOB_SHA = "d3952de139d75cb048949b1184d86b4b36320c45"
 DEC090_CORE_BLOB_SHA = "34b50a3f907d26b1c5ec50a0a0b444a3417d04f7"
-DEC094_CORE_BLOB_SHA = "e2c93370d1b4956c9a1e7103eee01ee9c4ec91c3"
+DEC094_CORE_BLOB_SHA = "a6092dbe1d36f81e1929bf1f18ba43f4ec494ebc"
 REVIEWED_FAILED_MODEL_RUN_ID = 35891605645
 DEC088_PROTOCOL_BLOB_SHA = "549b2a04f961d9d8ad83caea9c02b40ee54adec2"
 
@@ -93,7 +95,11 @@ def validate_frozen_model_sources(
     expected = {
         "artifact_runner": (
             root / "src/fmp/market_learning/model_artifacts.py",
-            DEC091_RUNNER_BLOB_SHA,
+            DEC094_ARTIFACT_RUNNER_BLOB_SHA,
+        ),
+        "result_validator": (
+            root / "src/fmp/market_learning/model_result_evidence.py",
+            DEC094_RESULT_VALIDATOR_BLOB_SHA,
         ),
         "training_core": (
             root / "src/fmp/market_learning/model_training.py",
@@ -119,7 +125,9 @@ def validate_frozen_model_sources(
     return {
         "model_run_workflow_source_frozen": MODEL_RUN_WORKFLOW_SOURCE_FROZEN,
         "dec091_merged_commit": DEC091_MERGED_COMMIT,
+        "dec091_runner_blob_sha": DEC091_RUNNER_BLOB_SHA,
         "artifact_runner_blob_sha": actual["artifact_runner"],
+        "result_validator_blob_sha": actual["result_validator"],
         "dec090_core_blob_sha": DEC090_CORE_BLOB_SHA,
         "training_core_blob_sha": actual["training_core"],
         "model_protocol_blob_sha": actual["model_protocol"],
@@ -272,6 +280,8 @@ __all__ = [
     "DEC088_PROTOCOL_BLOB_SHA",
     "DEC090_CORE_BLOB_SHA",
     "DEC091_MERGED_COMMIT",
+    "DEC094_ARTIFACT_RUNNER_BLOB_SHA",
+    "DEC094_RESULT_VALIDATOR_BLOB_SHA",
     "DEC092_CLI_BLOB_SHA",
     "DEC092_GATE_BLOB_SHA",
     "DEC092_MERGED_COMMIT",
