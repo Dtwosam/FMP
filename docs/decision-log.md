@@ -1390,3 +1390,27 @@ The CLI requires the execution gate before readiness/artifact loading, estimator
 Under DEC-092, `MODEL_RUN_DISPATCH_AUTHORIZED=false`, `AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED=false`, `MODEL_PROTOCOL_RESULT_AUTHORIZED=false`, and `MODEL_FIT_AUTHORIZED=false`. The operator reports `MODEL_RUN_WORKFLOW_SOURCE_FROZEN` with no dispatch command, so `advance --execute` remains non-mutating for model work.
 
 Consequences: executable workflow source is frozen and inspectable before any result exists, but no authoritative model-training run is yet authorized or dispatched. A later separate decision must bind the exact merged DEC-092 workflow/CLI/gate source and explicitly open one guarded historical model-run dispatch while keeping promotion and all trading permissions false.
+
+
+## DEC-093 — Phase 8A EXP-044 single historical model-result authorization
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE THE FIRST AUTHORITATIVE EXP-044 MODEL-TRAINING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-model-run-authorization.md` authorizes exactly one result-producing historical EXP-044 model workflow after DEC-093 is merged.
+
+The authorization is constrained to the unchanged DEC-088 protocol, DEC-090 training core, DEC-091 artifact runner/evidence contract, exact persisted feature run `35867307338`, exact persisted outcome run `35876715434`, and readiness artifact `10757578276`.
+
+DEC-092 was merged at `9645bae73ec1d113383c9957569c6e05a70b2e96`. Before DEC-093 source work, GitHub reported zero manual-main `phase8a-exp044-model-training` runs. DEC-093 records the prior DEC-092 workflow/CLI/gate/operator blobs for audit, then intentionally hardens the workflow before opening execution.
+
+The hardened workflow enforces the one-run invariant internally: it verifies the current manual-main run, lists all manual-main runs of the same workflow, excludes only its own `GITHUB_RUN_ID`, and fails if any prior run exists. A failed first model run consumes the slot and is not automatically retried or replaced.
+
+The authorized runtime is pinned to Python `3.12.14` plus the exact dependency set in `requirements/exp044-model-run.txt`: NumPy 2.5.3, SciPy 1.18.1, scikit-learn 1.9.1, joblib 1.6.0, threadpoolctl 3.7.0, cloudpickle 3.1.2, narwhals 2.26.0, Polars 1.44.2, and polars-runtime-32 1.44.2. Runtime authorization also validates exact Git blobs for the dependency manifest, pyproject, preprocessing, feature schema, market contracts, and outcome source/schema in addition to the already-frozen protocol/training/artifact code.
+
+DEC-093 sets model-run dispatch, authoritative result execution, protocol-result production, and model fitting authorization true only for the guarded first run. Promotion, shadow, demo, broker mutation, live-order, real-money, and trading authorization remain false.
+
+The read-only operator exposes `MODEL_RUN_DISPATCH_REQUIRED` only when no model run exists. Once any model run exists, dispatch authorization is consumed at the operator layer. In-progress runs report `MODEL_RUN_IN_PROGRESS`, failures report `MODEL_RUN_REVIEW_REQUIRED`, and a successful run is independently revalidated before reporting `MODEL_RESULT_REVIEW_REQUIRED`.
+
+DEC-093 also adds deterministic aggregate model-result validation: the evidence fingerprint is recomputed; all 18 exact cells are required; each cell result fingerprint is required; selection/validation/retrospective-holdout status chains must be logically consistent; and all promotion/trading locks remain false.
+
+Consequences: exactly one historical EXP-044 model-result run is authorized after merge, but no run is dispatched by DEC-093 itself and no result is assumed. Any later promotion or shadow-candidate decision requires a separate review of the produced retrospective evidence.
