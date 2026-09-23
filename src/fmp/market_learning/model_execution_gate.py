@@ -21,7 +21,7 @@ from .model_training import (
 
 
 MODEL_EXECUTION_GATE_DECISION = "DEC-092"
-MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-093"
+MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-094"
 MODEL_WORKFLOW_FILE = "phase8a-exp044-model-training.yml"
 MODEL_WORKFLOW_NAME = "phase8a-exp044-model-training"
 
@@ -29,6 +29,7 @@ DEC091_MERGED_COMMIT = "397ef1410fe92b376431a66f5a7e3ee44d71dec6"
 DEC092_MERGED_COMMIT = "9645bae73ec1d113383c9957569c6e05a70b2e96"
 DEC092_WORKFLOW_BLOB_SHA = "004f6c0062b6e5c1e15dcd507ea19b288b821e40"
 DEC093_WORKFLOW_BLOB_SHA = "491a9ab5ac688402ef71506e1207463940c8931b"
+DEC094_WORKFLOW_BLOB_SHA = "37164e5d2dd06848e5f76ef50a6731017300beaa"
 DEC092_CLI_BLOB_SHA = "daae5b3a54a3412e799a8ec44206724859a74ba4"
 DEC092_GATE_BLOB_SHA = "74639615946dba49e742e0d6738b9c8d34855340"
 DEC092_OPERATOR_BLOB_SHA = "97a13779c7f5425697487a5a8772613e48362556"
@@ -41,6 +42,8 @@ MARKET_CONTRACTS_BLOB_SHA = "4c5a75232e66715c0829e545d8659f59fb8b7724"
 MARKET_OUTCOMES_BLOB_SHA = "c83fefd4252b2fe426af97686f86e43021760c77"
 DEC091_RUNNER_BLOB_SHA = "27c0848d16722a22b4762f5842396c2aebc92bec"
 DEC090_CORE_BLOB_SHA = "34b50a3f907d26b1c5ec50a0a0b444a3417d04f7"
+DEC094_CORE_BLOB_SHA = "e2c93370d1b4956c9a1e7103eee01ee9c4ec91c3"
+REVIEWED_FAILED_MODEL_RUN_ID = 35891605645
 DEC088_PROTOCOL_BLOB_SHA = "549b2a04f961d9d8ad83caea9c02b40ee54adec2"
 
 MODEL_RUN_WORKFLOW_SOURCE_FROZEN = True
@@ -94,7 +97,7 @@ def validate_frozen_model_sources(
         ),
         "training_core": (
             root / "src/fmp/market_learning/model_training.py",
-            DEC090_CORE_BLOB_SHA,
+            DEC094_CORE_BLOB_SHA,
         ),
         "model_protocol": (
             root / "src/fmp/market_learning/model_protocol.py",
@@ -117,6 +120,7 @@ def validate_frozen_model_sources(
         "model_run_workflow_source_frozen": MODEL_RUN_WORKFLOW_SOURCE_FROZEN,
         "dec091_merged_commit": DEC091_MERGED_COMMIT,
         "artifact_runner_blob_sha": actual["artifact_runner"],
+        "dec090_core_blob_sha": DEC090_CORE_BLOB_SHA,
         "training_core_blob_sha": actual["training_core"],
         "model_protocol_blob_sha": actual["model_protocol"],
         "model_protocol_fingerprint": AUTHORITATIVE_PROTOCOL_FINGERPRINT,
@@ -134,7 +138,7 @@ def validate_authorized_model_execution_sources(
     expected = {
         "model_workflow": (
             root / ".github/workflows/phase8a-exp044-model-training.yml",
-            DEC093_WORKFLOW_BLOB_SHA,
+            DEC094_WORKFLOW_BLOB_SHA,
         ),
         "model_cli": (
             root / "scripts/phase8a_exp044_model_run.py",
@@ -182,7 +186,9 @@ def validate_authorized_model_execution_sources(
         **upstream,
         "dec092_merged_commit": DEC092_MERGED_COMMIT,
         "dec092_workflow_blob_sha": DEC092_WORKFLOW_BLOB_SHA,
-        "dec093_workflow_blob_sha": actual["model_workflow"],
+        "dec093_workflow_blob_sha": DEC093_WORKFLOW_BLOB_SHA,
+        "dec094_workflow_blob_sha": actual["model_workflow"],
+        "reviewed_failed_model_run_id": REVIEWED_FAILED_MODEL_RUN_ID,
         "dec092_cli_blob_sha": actual["model_cli"],
         "authorized_python_version": AUTHORIZED_PYTHON_VERSION,
         "runtime_requirements_blob_sha": actual["runtime_requirements"],
@@ -207,8 +213,8 @@ def build_model_workflow_source_gate(
         **source,
         "stage": "MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
         "next_action": (
-            "DEC-093 authorizes exactly one guarded historical model-result run. "
-            "Inspect existing model workflow state before any dispatch."
+            "DEC-094 authorizes exactly one reviewed replacement model-result run "
+            "after failed run 35891605645. Inspect workflow state before dispatch."
         ),
         "model_execution_authorization_decision": (
             MODEL_EXECUTION_AUTHORIZATION_DECISION
@@ -272,6 +278,8 @@ __all__ = [
     "DEC092_OPERATOR_BLOB_SHA",
     "DEC092_WORKFLOW_BLOB_SHA",
     "DEC093_WORKFLOW_BLOB_SHA",
+    "DEC094_CORE_BLOB_SHA",
+    "DEC094_WORKFLOW_BLOB_SHA",
     "EXP044_RUNTIME_REQUIREMENTS_BLOB_SHA",
     "FEATURE_SCHEMA_BLOB_SHA",
     "MARKET_CONTRACTS_BLOB_SHA",
@@ -285,6 +293,7 @@ __all__ = [
     "MODEL_PROTOCOL_RESULT_AUTHORIZED",
     "MODEL_RUN_DISPATCH_AUTHORIZED",
     "MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+    "REVIEWED_FAILED_MODEL_RUN_ID",
     "MODEL_WORKFLOW_FILE",
     "MODEL_WORKFLOW_NAME",
     "build_model_workflow_source_gate",
