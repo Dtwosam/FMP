@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — EXP-044 FULL-HISTORY FEATURE MATERIALIZATION SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** Verify and dispatch the manual `phase8a-exp044-market-features` workflow from merged `main` to materialize the nine EURUSD/GBPUSD/USDJPY × 5m/15m/1h full-history feature cells. After exact artifacts are verified, freeze a separate result-producing model-training protocol before fitting. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Next milestone:** Dispatch the manual `phase8a-exp044-market-features` workflow from merged `main`. It reuses the already accepted Phase 2 Dukascopy artifacts—no new Dukascopy acquisition—and must materialize all nine EURUSD/GBPUSD/USDJPY × 5m/15m/1h cells, then emit one aggregate evidence index that verifies the exact source hashes and artifact bytes. Only after that evidence is preserved may a separate result-producing model-training protocol be frozen. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 
@@ -380,7 +380,7 @@ Current milestone:
 4. DEC-072 fixes crash-before-first-close observability, adds deterministic closed/unclosed segment inventory and terminal context, validates progress fingerprints/count parity, and rejects renamed/copied closed directories whose path identity no longer matches the immutable segment ID; interrupted directories still never enter aggregate or acceptance evidence;
 5. source-side Phase 8B preparation, readiness, progress, and interrupted-capture observability are complete, but real prospective capture remains locked behind the Phase 8A acceptance chain; Phase 9 execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 6. DEC-073 re-centers the active research path on learning market behaviour from the accepted Dukascopy history. PR #166 merged the exact 60m/240m direct-outcome-label foundation; PR #167 merged the separate `fmp-market-feature-v1` full-history materialization source while preserving the historical Phase 5 lock.
-7. The next hard gate is the manual `phase8a-exp044-market-features` dispatch from merged `main`, producing and verifying nine exact historical feature artifacts. No EXP-044 model fit is authorized before that evidence and a separately frozen model-training protocol.
+7. The next hard gate is the manual `phase8a-exp044-market-features` dispatch from merged `main`. That workflow reuses the existing accepted Phase 2 Dukascopy artifacts, performs no new Dukascopy acquisition, verifies all nine feature cells against their frozen Phase 2 manifest identities, and emits one deterministic aggregate evidence fingerprint. No EXP-044 model fit is authorized before that evidence and a separately frozen model-training protocol.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 

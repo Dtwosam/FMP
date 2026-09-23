@@ -132,6 +132,15 @@ class MarketLearningFeatureTests(unittest.TestCase):
             self.assertFalse(left["untouched_oos"])
             self.assertFalse(left["model_training_authorized"])
             self.assertFalse(left["promotion_authorized"])
+            source = left["historical_source"]
+            self.assertEqual(source["provider"], "Dukascopy")
+            self.assertTrue(source["reuse_existing_accepted_history"])
+            self.assertFalse(source["new_acquisition_performed"])
+            self.assertEqual(source["phase1_checkpoint"], "fmp-v1-phase1-source-of-truth")
+            self.assertEqual(
+                source["phase1_frozen_plan_sha256"],
+                "2328a5417e04dcda862bd93066243ebf95d480443e8d098d08c9e0e1f78b3be6",
+            )
             rel = left["artifacts"][0]["path"]
             self.assertIn(f"data/features/{MARKET_FEATURE_SET_VERSION}/", rel)
             self.assertEqual(sha256(Path(tmp1) / rel), sha256(Path(tmp2) / rel))

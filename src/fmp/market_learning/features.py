@@ -9,7 +9,12 @@ from typing import Callable, Iterable, Mapping
 
 import polars as pl
 
-from fmp.data.phase2.artifacts import sha256_file, write_parquet_partition
+from fmp.data.phase2.artifacts import (
+    PHASE1_FROZEN_PLAN_SHA256,
+    PHASE1_SOURCE_CHECKPOINT,
+    sha256_file,
+    write_parquet_partition,
+)
 from fmp.features.contracts import (
     PROCESSED_SCHEMA_VERSION,
     validate_symbol,
@@ -359,6 +364,14 @@ def write_market_feature_artifacts(
         "untouched_oos": False,
         "model_training_authorized": False,
         "promotion_authorized": False,
+        "historical_source": {
+            "provider": "Dukascopy",
+            "reuse_existing_accepted_history": True,
+            "new_acquisition_performed": False,
+            "phase1_checkpoint": PHASE1_SOURCE_CHECKPOINT,
+            "phase1_frozen_plan_sha256": PHASE1_FROZEN_PLAN_SHA256,
+            "phase2_schema_version": PROCESSED_SCHEMA_VERSION,
+        },
         "code_commit": code_commit,
         "processed_manifest_sha256": processed_manifest_sha256,
         "symbol": symbol,
