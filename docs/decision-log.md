@@ -1162,3 +1162,17 @@ Tests require the pair-level path to produce manifests identical to three indepe
 DEC-077 changes no Dukascopy identity, feature definition, horizon, slippage rule, label rule, output schema, artifact identity, aggregate evidence, DEC-074 readiness, or DEC-075 status semantics.
 
 No EXP-044 feature or outcome workflow had been dispatched before DEC-077. Model fitting, promotion, shadow/demo actions, broker mutation, live orders, and real-money actions remain unauthorized.
+
+
+## DEC-078 — Phase 8A EXP-044 source artifact availability preflight
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-source-artifact-preflight.md` adds a read-only source-artifact gate before both EXP-044 feature generation and outcome materialization.
+
+The gate validates the exact frozen Phase 2 run `34782357048`, head SHA `158c1c121655867b7fb2886fe755585dfcd682ec`, artifact IDs/names, ZIP SHA-256 digests, sizes, main-branch identity, non-expired state, and at least 12 hours of remaining GitHub artifact lifetime.
+
+On 2026-09-23 the three frozen Phase 2 artifacts were non-expired and downloadable. The earliest recorded expiry was `2026-12-12T20:57:47Z`.
+
+DEC-078 performs no new Dukascopy acquisition and changes no research semantics or authorization. A failed/expired source must stop execution before heavy work; silent reacquisition or substitution is not authorized.
