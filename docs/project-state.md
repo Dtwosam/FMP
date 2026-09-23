@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 FEATURE + OUTCOME EVIDENCE WORKFLOWS SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** Dispatch `phase8a-exp044-market-features` from merged `main` using the existing accepted Dukascopy Phase 2 artifacts. After its nine feature cells and aggregate feature-evidence fingerprint are preserved, dispatch `phase8a-exp044-market-outcomes` with that successful feature-run ID to materialize and verify all nine 60m/240m outcome cells. Only after both evidence layers exist may a separate result-producing model-training protocol be frozen. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Phase status:** ACTIVE — EXP-044 DATA-PREPARATION READINESS SOURCE-ONLY; NO MODEL-TRAINING RESULT
+**Next milestone:** Dispatch `phase8a-exp044-market-features` from merged `main` using the existing accepted Dukascopy Phase 2 artifacts, then dispatch `phase8a-exp044-market-outcomes` with that successful feature-run ID. A successful outcome run must emit a DEC-074 readiness artifact proving the feature and outcome evidence cross-match. Only that artifact may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 
@@ -384,6 +384,8 @@ Current milestone:
 8. PR #171 merged the vectorized `fmp-market-outcome-grid-v1` source to `main` at `4dfd9b4cc5d62d2585b027946a3056415fcd3ab7`. Exact final PR head `cd6805af35865e589ad606ecd7065f1060ca474a` passed 1117 tests plus workflow-YAML validation and compile in run `35845107487`; unchanged Phase 3 acceptance run `35845107495` passed.
 9. PR #172 merged persisted feature-evidence revalidation and the file-based outcome materializer to `main` at `428541b310ccc806662818d2141bfe356df023d1`. Exact final PR head `be55f852713c1544063b0590cd36207cd1417277` passed 1122 tests plus workflow-YAML validation and compile in run `35845611187`; unchanged Phase 3 acceptance run `35845611278` passed.
 10. Source now includes a separate manual outcome workflow that accepts only a successful `phase8a-exp044-market-features` run from `main`, revalidates its aggregate feature evidence, reuses the accepted Phase 2 Dukascopy artifacts, materializes all nine outcome cells, and emits one aggregate outcome-evidence fingerprint. This workflow has not been dispatched; no EXP-044 model fit is authorized.
+11. PR #173 merged that evidence-gated outcome workflow to `main` at `fc05230462d8743ba5780d3bd2633649e4019b00`. Exact PR head `e29437e2ab93462b1a669797e973b7b18dfacd33` passed 1129 tests plus workflow-YAML validation and compile in run `35846186938`; unchanged Phase 3 acceptance run `35846186891` passed. Post-merge main runs `35846386839` and `35846386975` also passed.
+12. DEC-074 adds a source-only data-preparation readiness gate: persisted feature and outcome evidence must revalidate and cross-bind exact evidence fingerprints, cell manifests, Phase 2 Dukascopy identities, and feature row counts before model-protocol source work may open. Readiness never authorizes fitting or promotion.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
