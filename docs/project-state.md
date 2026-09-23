@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 SAFE LAUNCH + SOURCE PRESERVATION/FALLBACK + DETERMINISTIC CONTINUATION SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** From a clean checkout of merged `main`, run the DEC-086 read-only `next` planner. With no preservation release or EXP-044 runs yet, it must resolve to preservation first; after that it deterministically advances through feature dispatch/evidence, outcome dispatch/evidence, and DEC-074/075 readiness without duplicate-run selection or skipped gates. DEC-085 preserves exact Actions/release source identity. Only a recomputed `MODEL_PROTOCOL_SOURCE_OPEN` state may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Phase status:** ACTIVE — EXP-044 SAFE SINGLE-STEP ADVANCE + SOURCE PRESERVATION/FALLBACK + DETERMINISTIC CONTINUATION SOURCE-ONLY; NO MODEL-TRAINING RESULT
+**Next milestone:** From a clean checkout of merged `main`, run DEC-087 `advance` to inspect the DEC-086 next state; use `advance --execute` only to submit the one planner-authorized preservation/feature/outcome workflow. The command replans immediately before mutation and aborts on state drift. With no preservation release or EXP-044 runs yet, the first executable state remains preservation. Only a recomputed `MODEL_PROTOCOL_SOURCE_OPEN` state may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 

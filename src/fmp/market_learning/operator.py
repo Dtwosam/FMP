@@ -437,6 +437,41 @@ def outcome_dispatch_command(feature_run_id: int) -> tuple[str, ...]:
     )
 
 
+def dispatch_command_for_next_report(
+    report: Mapping[str, object],
+) -> tuple[str, ...] | None:
+    if report.get("read_only") is not True:
+        raise ValueError("next report must be explicitly read-only")
+    for field in (
+        "model_protocol_result_authorized",
+        "model_fit_authorized",
+        "promotion_authorized",
+        "trading_authorized",
+    ):
+        if report.get(field) is not False:
+            raise ValueError(f"next report {field} must remain false")
+
+    stage = report.get("stage")
+    if stage == "PRESERVATION_DISPATCH_REQUIRED":
+        command = preservation_dispatch_command()
+    elif stage == "FEATURE_DISPATCH_REQUIRED":
+        command = feature_dispatch_command()
+    elif stage == "OUTCOME_DISPATCH_REQUIRED":
+        run_id = report.get("feature_run_id")
+        if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+            raise ValueError("outcome dispatch plan requires a positive feature run id")
+        command = outcome_dispatch_command(run_id)
+    else:
+        if "dispatch_command" in report:
+            raise ValueError("non-dispatch next report must not contain a dispatch command")
+        return None
+
+    rendered = report.get("dispatch_command")
+    if rendered != shell_join(command):
+        raise ValueError("next report dispatch command does not match planned stage")
+    return command
+
+
 def shell_join(command: Sequence[str]) -> str:
     safe = []
     for part in command:
@@ -472,6 +507,7 @@ __all__ = [
     "select_only_manual_main_run",
     "select_outcome_evidence_artifacts",
     "classify_manual_run",
+    "dispatch_command_for_next_report",
     "shell_join",
     "validate_feature_evidence_for_outcomes",
     "validate_feature_run_for_outcomes",

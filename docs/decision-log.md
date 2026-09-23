@@ -1278,3 +1278,15 @@ The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-operator-continua
 The planner requires at most one manual-main run per preservation/feature/outcome workflow, fails closed on duplicates, reports in-progress and failed-run review states without automatic retries, validates the published DEC-084 preservation release, reuses DEC-082 feature-evidence validation, reuses DEC-083 outcome/readiness inspection, and delegates final readiness classification to DEC-075.
 
 The `next` mode has no `--execute` argument and never submits `gh workflow run`. Dispatch commands may be printed only as the next operator action. All model/trading authorization remains false.
+
+
+## DEC-087 — Phase 8A EXP-044 single-step operator advance
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-single-step-advance.md` adds a dry-run-by-default `advance` mode that consumes the public DEC-086 `next` planner rather than duplicating gate logic.
+
+Only preservation-, feature-, or outcome-dispatch-required states may map to a command. The command must exactly match the DEC-086 report. With `--execute`, the planner is run a second time and the two reports must be identical before exactly one workflow dispatch may be submitted.
+
+In-progress, review-required, duplicate, readiness, and protocol-source-open states are non-executable. Failed workflows are never automatically retried. Dispatch submission claims no result and creates no model/trading authorization.

@@ -8,6 +8,7 @@ from fmp.market_learning.operator import (
     PRESERVATION_WORKFLOW_NAME,
     artifact_download_endpoint,
     classify_manual_run,
+    dispatch_command_for_next_report,
     feature_dispatch_command,
     feature_run_artifacts_endpoint,
     feature_run_endpoint,
@@ -230,6 +231,78 @@ class Exp044OperatorTests(unittest.TestCase):
                         invalid,
                         expected_run_id=123,
                     )
+
+    def test_next_report_dispatch_binding_is_exact_and_fail_closed(self) -> None:
+        base = {
+            "read_only": True,
+            "model_protocol_result_authorized": False,
+            "model_fit_authorized": False,
+            "promotion_authorized": False,
+            "trading_authorized": False,
+        }
+        preservation = {
+            **base,
+            "stage": "PRESERVATION_DISPATCH_REQUIRED",
+            "dispatch_command": shell_join(preservation_dispatch_command()),
+        }
+        self.assertEqual(
+            dispatch_command_for_next_report(preservation),
+            preservation_dispatch_command(),
+        )
+
+        feature = {
+            **base,
+            "stage": "FEATURE_DISPATCH_REQUIRED",
+            "dispatch_command": shell_join(feature_dispatch_command()),
+        }
+        self.assertEqual(
+            dispatch_command_for_next_report(feature),
+            feature_dispatch_command(),
+        )
+
+        outcome = {
+            **base,
+            "stage": "OUTCOME_DISPATCH_REQUIRED",
+            "feature_run_id": 123,
+            "dispatch_command": shell_join(outcome_dispatch_command(123)),
+        }
+        self.assertEqual(
+            dispatch_command_for_next_report(outcome),
+            outcome_dispatch_command(123),
+        )
+
+        for stage in (
+            "PRESERVATION_RUN_IN_PROGRESS",
+            "PRESERVATION_REVIEW_REQUIRED",
+            "FEATURE_RUN_IN_PROGRESS",
+            "FEATURE_REVIEW_REQUIRED",
+            "OUTCOME_RUN_IN_PROGRESS",
+            "OUTCOME_REVIEW_REQUIRED",
+            "MODEL_PROTOCOL_SOURCE_OPEN",
+        ):
+            with self.subTest(stage=stage):
+                self.assertIsNone(
+                    dispatch_command_for_next_report({**base, "stage": stage})
+                )
+
+        tampered = dict(feature)
+        tampered["dispatch_command"] = "gh workflow run wrong.yml"
+        with self.assertRaisesRegex(ValueError, "does not match planned stage"):
+            dispatch_command_for_next_report(tampered)
+
+        unlocked = dict(feature)
+        unlocked["model_fit_authorized"] = True
+        with self.assertRaisesRegex(ValueError, "must remain false"):
+            dispatch_command_for_next_report(unlocked)
+
+        invalid_outcome = {
+            **base,
+            "stage": "OUTCOME_DISPATCH_REQUIRED",
+            "feature_run_id": 0,
+            "dispatch_command": "invalid",
+        }
+        with self.assertRaisesRegex(ValueError, "positive feature run id"):
+            dispatch_command_for_next_report(invalid_outcome)
 
     def test_preservation_dispatch_is_exact_manual_main_workflow(self) -> None:
         command = preservation_dispatch_command()

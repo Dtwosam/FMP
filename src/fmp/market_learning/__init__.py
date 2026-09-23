@@ -53,6 +53,7 @@ from .operator import (
     REPOSITORY as OPERATOR_REPOSITORY,
     artifact_download_endpoint,
     classify_manual_run,
+    dispatch_command_for_next_report,
     feature_dispatch_command,
     feature_run_artifacts_endpoint,
     feature_run_endpoint,
