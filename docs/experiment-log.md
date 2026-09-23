@@ -1093,3 +1093,18 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #164 merged DEC-072 to `main` at `2732e00fa502219bf18de35ae861e72befe62661`. The exact final PR head `5efc050f31811e0f179638fc2c9bb83587eb22ef` passed 1092 tests plus workflow-YAML validation and compile checks in run `35803436296`; unchanged Phase 3 acceptance run `35803436276` passed. Post-merge `main` runs `35803529547` and `35803529528` also passed.
 - Follow-up: interrupted prospective capture is now visible from the first failed attempt onward without being repaired or counted. No real prospective segment, campaign close/review, acceptance result, SHADOW_VALIDATED transition, or Phase 9 artifact chain has been executed; real MT5 DEMO prospective evidence remains the next operational milestone.
+
+
+### EXP-20260923-044 — Phase 8A direct market-learning foundation
+
+- Date: 2026-09-23
+- Status: ACTIVE — SOURCE FOUNDATION / NO MODEL-TRAINING RESULT
+- Protocol decision: DEC-073 APPROVED BEFORE ANY EXP-044 MODEL-TRAINING RESULT
+- Purpose: restore the broader FMP learning objective by learning future market behaviour directly from leakage-safe market-state rows rather than training only on signals emitted by hand-written strategies.
+- Universe: EURUSD, GBPUSD, USDJPY × 5m/15m/1h over accepted Phase 2 Dukascopy-derived BID/ASK history.
+- Existing features: first generation reuses the 48 Phase 5 leakage-safe feature definitions; the historical `fmp-feature-v1` artifact is not rewritten or unlocked.
+- Direct labels: exact 60m and 240m horizons from feature-row `available_at_utc`; future midpoint move plus hypothetical LONG/SHORT net pips at 0.2/0.5/1.0-pip adverse slippage; exact missing horizon is unavailable rather than shifted/interpolated.
+- Evidence status: historical evidence is `RETROSPECTIVE_ALREADY_SEEN`; `untouched_oos=false`; no promotion authorization.
+- Continuous learning: future shadow/demo observations may feed a later offline challenger retrain, but the active champion is immutable and cannot self-update after trades.
+- Current deliverable: source-only market observation identity, deterministic outcome-label contracts/labeler, and unit tests. No full-history feature extension, model fit, selection result, portfolio admission, shadow capture, demo order, broker mutation, live order, or real-money action.
+- Follow-up: after the source foundation is green, build the versioned full-history learning feature materialization. Freeze a separate model-training protocol before any result-producing fit.
