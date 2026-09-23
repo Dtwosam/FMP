@@ -24,6 +24,22 @@ class Exp044NextActionScriptTests(unittest.TestCase):
         next_parser = parser[next_start:preserve_start]
         self.assertNotIn("--execute", next_parser)
 
+    def test_advance_reuses_public_next_plan_and_requires_explicit_execute(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn('"advance"', text)
+        self.assertIn("_read_next_plan_via_public_cli()", text)
+        self.assertIn("dispatch_command_for_next_report", text)
+        self.assertIn("confirmed != plan", text)
+        self.assertIn('"dispatch_submitted"] = True', text)
+
+        parser_start = text.index("def parser()")
+        parser_end = text.index("def _print_report", parser_start)
+        parser = text[parser_start:parser_end]
+        advance_start = parser.index('"advance"')
+        preserve_start = parser.index('"preserve-phase2"', advance_start)
+        advance_parser = parser[advance_start:preserve_start]
+        self.assertIn("--execute", advance_parser)
+
     def test_next_mode_never_submits_a_dispatch(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         main_start = text.index("def main(")
