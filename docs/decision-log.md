@@ -1056,3 +1056,17 @@ DEC-070 validates the existing DEC-047 registration, optional DEC-048/049 start/
 The readiness audit may identify `authorize-start`, `freeze-spread-reference`, or `capture-segment` as the next operator action, but even a ready result does not start a segment and sets no acceptance, promotion, Phase 9, order, broker-mutation, live, or real-money authorization.
 
 DEC-070 also replaces the historical USDJPY-only operator handoff with the current Phase 8B portfolio workflow. No real bridge inspection or prospective capture is executed by repository verification.
+
+
+## DEC-070 — Phase 8B prospective campaign readiness audit
+
+**Date:** 2026-09-22
+**Status:** APPROVED BEFORE ANY PHASE 8B PROSPECTIVE CAPTURE
+
+The approved `docs/superpowers/specs/2026-09-22-phase8b-campaign-readiness.md` opens `EXP-20260922-041` for a read-only, non-authoritative readiness audit over the current multi-pair Phase 8B campaign directory and bridge identities.
+
+DEC-070 adds a `readiness --campaign-dir <path>` command that prints point-in-time JSON only. It validates registration, optional start/preflight/spread-reference artifacts, terminal state, and current fixed bridge identities, then reports the exact next operator action without creating or changing any campaign artifact.
+
+The audit never starts capture and is never consumed by `capture-segment` as authorization. Capture continues to revalidate independently at invocation time.
+
+DEC-070 also replaces the historical USDJPY-only operator handoff with the current Phase 8B portfolio workflow, where required symbols come from the frozen design and may include EURUSD, GBPUSD, and USDJPY. AutoTrading remains OFF and no broker mutation or Phase 9 execution is authorized.
