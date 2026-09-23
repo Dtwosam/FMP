@@ -28,6 +28,7 @@ MODEL_WORKFLOW_NAME = "phase8a-exp044-model-training"
 DEC091_MERGED_COMMIT = "397ef1410fe92b376431a66f5a7e3ee44d71dec6"
 DEC092_MERGED_COMMIT = "9645bae73ec1d113383c9957569c6e05a70b2e96"
 DEC092_WORKFLOW_BLOB_SHA = "004f6c0062b6e5c1e15dcd507ea19b288b821e40"
+DEC093_WORKFLOW_BLOB_SHA = "a3c6c986ec3ae1b6b5ea944cefac18e2cb8ce8ef"
 DEC092_CLI_BLOB_SHA = "daae5b3a54a3412e799a8ec44206724859a74ba4"
 DEC092_GATE_BLOB_SHA = "74639615946dba49e742e0d6738b9c8d34855340"
 DEC092_OPERATOR_BLOB_SHA = "97a13779c7f5425697487a5a8772613e48362556"
@@ -115,7 +116,7 @@ def validate_frozen_model_sources(
     }
 
 
-def validate_dec092_execution_sources(
+def validate_authorized_model_execution_sources(
     *,
     repository_root: Path,
 ) -> dict[str, object]:
@@ -126,7 +127,7 @@ def validate_dec092_execution_sources(
     expected = {
         "model_workflow": (
             root / ".github/workflows/phase8a-exp044-model-training.yml",
-            DEC092_WORKFLOW_BLOB_SHA,
+            DEC093_WORKFLOW_BLOB_SHA,
         ),
         "model_cli": (
             root / "scripts/phase8a_exp044_model_run.py",
@@ -137,19 +138,20 @@ def validate_dec092_execution_sources(
     for label, (path, expected_sha) in expected.items():
         if not path.is_file():
             raise ValueError(
-                f"missing DEC-092 EXP-044 execution source file: {path}"
+                f"missing authorized EXP-044 execution source file: {path}"
             )
         actual_sha = _git_blob_sha(path)
         if actual_sha != expected_sha:
             raise ValueError(
-                f"EXP-044 DEC-092 {label} Git blob mismatch: "
+                f"EXP-044 authorized {label} Git blob mismatch: "
                 f"{actual_sha} != {expected_sha}"
             )
         actual[label] = actual_sha
     return {
         **upstream,
         "dec092_merged_commit": DEC092_MERGED_COMMIT,
-        "dec092_workflow_blob_sha": actual["model_workflow"],
+        "dec092_workflow_blob_sha": DEC092_WORKFLOW_BLOB_SHA,
+        "dec093_workflow_blob_sha": actual["model_workflow"],
         "dec092_cli_blob_sha": actual["model_cli"],
         "dec092_gate_blob_sha": DEC092_GATE_BLOB_SHA,
         "dec092_operator_blob_sha": DEC092_OPERATOR_BLOB_SHA,
@@ -160,7 +162,7 @@ def build_model_workflow_source_gate(
     *,
     repository_root: Path,
 ) -> dict[str, object]:
-    source = validate_dec092_execution_sources(
+    source = validate_authorized_model_execution_sources(
         repository_root=repository_root,
     )
     return {
@@ -189,7 +191,7 @@ def require_authoritative_model_execution(
     repository_root: Path,
     code_commit: str,
 ) -> dict[str, object]:
-    source = validate_dec092_execution_sources(
+    source = validate_authorized_model_execution_sources(
         repository_root=repository_root,
     )
     commit = _validate_commit(
@@ -230,6 +232,7 @@ __all__ = [
     "DEC092_MERGED_COMMIT",
     "DEC092_OPERATOR_BLOB_SHA",
     "DEC092_WORKFLOW_BLOB_SHA",
+    "DEC093_WORKFLOW_BLOB_SHA",
     "DEC091_RUNNER_BLOB_SHA",
     "MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "MODEL_EXECUTION_GATE_DECISION",
@@ -241,6 +244,6 @@ __all__ = [
     "MODEL_WORKFLOW_NAME",
     "build_model_workflow_source_gate",
     "require_authoritative_model_execution",
-    "validate_dec092_execution_sources",
+    "validate_authorized_model_execution_sources",
     "validate_frozen_model_sources",
 ]
