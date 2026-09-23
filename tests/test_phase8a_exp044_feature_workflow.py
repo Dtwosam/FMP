@@ -26,7 +26,10 @@ class Exp044FeatureWorkflowTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("matrix.timeframe", text)
         self.assertNotIn("timeframe: [5m, 15m, 1h]", text)
-        self.assertGreaterEqual(text.count("for timeframe in 5m 15m 1h; do"), 2)
+        self.assertIn("scripts/phase8a_market_feature_pair.py", text)
+        self.assertIn("--primary-root .exp044-a", text)
+        self.assertIn("--verification-root .exp044-b", text)
+        self.assertNotIn("scripts/phase8a_market_features.py", text)
         self.assertEqual(text.count("ARTIFACT_ID:"), 1)
         for symbol in ("EURUSD", "GBPUSD", "USDJPY"):
             self.assertIn(symbol, text)
