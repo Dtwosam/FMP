@@ -1676,3 +1676,18 @@ DEC-107 deliberately leaves model-run dispatch, authoritative result execution, 
 
 A later separate decision should freeze terminal-result review before any one-run authorization is considered.
 
+## DEC-108 — Phase 8A EXP-046 predeclared terminal-result review
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-046 HISTORICAL MODEL RESULT
+
+DEC-108 freezes the terminal review contract before any EXP-046 historical model result and before any EXP-046 run authorization.
+
+The review accepts only attempt-1 manual-main `phase8a-exp046-stability-model-training` runs, exactly one authorization-preflight job, nine matrix jobs, one aggregate job, and artifacts restricted to the exact nine pair/timeframe names plus the exact aggregate-result name tied to the workflow head SHA.
+
+A successful run must have all 11 jobs succeed, all nine cell artifacts, the aggregate artifact, and successful DEC-106 aggregate-evidence revalidation against the exact execution commit. It stops at `STABILITY_MODEL_RESULT_REVIEW_REQUIRED`.
+
+A failed, cancelled, or timed-out first run may preserve a valid subset of cell artifacts but cannot claim aggregate result evidence. It stops at `STABILITY_MODEL_RUN_FAILURE_REVIEW_REQUIRED`.
+
+The implementation is frozen at Git blob `e5ff3c6a0cb65ba14bb3bd43d5dd1d4a5a491cf6`. Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization remain false. DEC-108 changes no DEC-107 execution authorization.
+
