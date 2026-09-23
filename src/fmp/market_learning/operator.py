@@ -11,6 +11,9 @@ FEATURE_WORKFLOW_NAME = "phase8a-exp044-market-features"
 OUTCOME_WORKFLOW_FILE = "phase8a-exp044-market-outcomes.yml"
 OUTCOME_WORKFLOW_PATH = ".github/workflows/phase8a-exp044-market-outcomes.yml"
 OUTCOME_WORKFLOW_NAME = "phase8a-exp044-market-outcomes"
+MODEL_WORKFLOW_FILE = "phase8a-exp044-model-training.yml"
+MODEL_WORKFLOW_PATH = ".github/workflows/phase8a-exp044-model-training.yml"
+MODEL_WORKFLOW_NAME = "phase8a-exp044-model-training"
 PRESERVATION_WORKFLOW_FILE = "phase8a-exp044-preserve-phase2.yml"
 PRESERVATION_WORKFLOW_NAME = "phase8a-exp044-preserve-phase2"
 
@@ -281,6 +284,71 @@ def validate_outcome_run_for_readiness(
     }
 
 
+def validate_model_run_for_result(
+    run: Mapping[str, object],
+    *,
+    expected_run_id: int,
+) -> dict[str, object]:
+    if not isinstance(expected_run_id, int) or isinstance(expected_run_id, bool) or expected_run_id <= 0:
+        raise ValueError("model run id must be a positive integer")
+    if run.get("id") != expected_run_id:
+        raise ValueError("model workflow run id mismatch")
+    if run.get("name") != MODEL_WORKFLOW_NAME:
+        raise ValueError("model workflow run name mismatch")
+    if run.get("path") != MODEL_WORKFLOW_PATH:
+        raise ValueError("model workflow run path mismatch")
+    if run.get("event") != "workflow_dispatch":
+        raise ValueError("model workflow run must be workflow_dispatch")
+    if run.get("head_branch") != "main":
+        raise ValueError("model workflow run must originate from main")
+    if run.get("status") != "completed":
+        raise ValueError("model workflow run is not completed")
+    if run.get("conclusion") != "success":
+        raise ValueError("model workflow run did not succeed")
+    head_sha = _validate_sha(run.get("head_sha"), field="model workflow head_sha")
+    return {
+        "model_run_id": expected_run_id,
+        "model_head_sha": head_sha,
+        "model_run_verified": True,
+    }
+
+
+def select_model_result_artifact(
+    payload: Mapping[str, object],
+    *,
+    model_head_sha: str,
+) -> dict[str, object]:
+    sha = _validate_sha(model_head_sha, field="model-result head SHA")
+    artifacts = payload.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise ValueError("model-result artifact listing is malformed")
+    expected = (
+        f"exp044-model-result-evidence-{sha}-"
+        "from-feature-35867307338-outcome-35876715434"
+    )
+    matches: list[Mapping[str, object]] = []
+    for raw in artifacts:
+        if not isinstance(raw, Mapping):
+            raise ValueError("model-result artifact listing contains a malformed row")
+        if raw.get("name") != expected:
+            continue
+        if raw.get("expired") is not False:
+            continue
+        matches.append(raw)
+    if len(matches) != 1:
+        raise ValueError(
+            f"expected exactly one non-expired model-result artifact: {expected}"
+        )
+    artifact_id = matches[0].get("id")
+    if not isinstance(artifact_id, int) or isinstance(artifact_id, bool) or artifact_id <= 0:
+        raise ValueError("model-result artifact id is invalid")
+    return {
+        "model_result_artifact_id": artifact_id,
+        "model_result_artifact_name": expected,
+        "model_head_sha": sha,
+    }
+
+
 def select_feature_evidence_artifact(
     payload: Mapping[str, object],
     *,
@@ -371,6 +439,13 @@ def outcome_runs_endpoint() -> str:
     )
 
 
+def model_runs_endpoint() -> str:
+    return (
+        f"repos/{REPOSITORY}/actions/workflows/{MODEL_WORKFLOW_FILE}/runs"
+        "?branch=main&event=workflow_dispatch&per_page=100"
+    )
+
+
 def select_outcome_evidence_artifacts(
     payload: Mapping[str, object],
     *,
@@ -441,6 +516,18 @@ def outcome_run_artifacts_endpoint(run_id: int) -> str:
     return f"repos/{REPOSITORY}/actions/runs/{run_id}/artifacts?per_page=100"
 
 
+def model_run_endpoint(run_id: int) -> str:
+    if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+        raise ValueError("model run id must be a positive integer")
+    return f"repos/{REPOSITORY}/actions/runs/{run_id}"
+
+
+def model_run_artifacts_endpoint(run_id: int) -> str:
+    if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+        raise ValueError("model run id must be a positive integer")
+    return f"repos/{REPOSITORY}/actions/runs/{run_id}/artifacts?per_page=100"
+
+
 def outcome_run_endpoint(run_id: int) -> str:
     if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
         raise ValueError("outcome run id must be a positive integer")
@@ -496,21 +583,45 @@ def outcome_dispatch_command(feature_run_id: int) -> tuple[str, ...]:
     )
 
 
+def model_dispatch_command() -> tuple[str, ...]:
+    return (
+        "gh",
+        "workflow",
+        "run",
+        MODEL_WORKFLOW_FILE,
+        "--ref",
+        "main",
+        "-R",
+        REPOSITORY,
+    )
+
+
 def dispatch_command_for_next_report(
     report: Mapping[str, object],
 ) -> tuple[str, ...] | None:
     if report.get("read_only") is not True:
         raise ValueError("next report must be explicitly read-only")
-    for field in (
-        "model_protocol_result_authorized",
-        "model_fit_authorized",
-        "promotion_authorized",
-        "trading_authorized",
-    ):
+    stage = report.get("stage")
+    if stage == "MODEL_RUN_DISPATCH_REQUIRED":
+        for field in (
+            "model_protocol_result_authorized",
+            "model_fit_authorized",
+            "model_run_dispatch_authorized",
+            "authoritative_model_result_execution_authorized",
+        ):
+            if report.get(field) is not True:
+                raise ValueError(f"model dispatch report {field} must be true")
+    else:
+        for field in (
+            "model_protocol_result_authorized",
+            "model_fit_authorized",
+        ):
+            if report.get(field) is not False:
+                raise ValueError(f"next report {field} must remain false")
+    for field in ("promotion_authorized", "trading_authorized"):
         if report.get(field) is not False:
             raise ValueError(f"next report {field} must remain false")
 
-    stage = report.get("stage")
     if stage == "PRESERVATION_DISPATCH_REQUIRED":
         command = preservation_dispatch_command()
     elif stage == "FEATURE_DISPATCH_REQUIRED":
@@ -523,6 +634,8 @@ def dispatch_command_for_next_report(
         if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
             raise ValueError("outcome dispatch plan requires a positive feature run id")
         command = outcome_dispatch_command(run_id)
+    elif stage == "MODEL_RUN_DISPATCH_REQUIRED":
+        command = model_dispatch_command()
     else:
         if "dispatch_command" in report:
             raise ValueError("non-dispatch next report must not contain a dispatch command")
@@ -551,6 +664,9 @@ __all__ = [
     "OUTCOME_WORKFLOW_FILE",
     "OUTCOME_WORKFLOW_NAME",
     "OUTCOME_WORKFLOW_PATH",
+    "MODEL_WORKFLOW_FILE",
+    "MODEL_WORKFLOW_NAME",
+    "MODEL_WORKFLOW_PATH",
     "PRESERVATION_WORKFLOW_FILE",
     "PRESERVATION_WORKFLOW_NAME",
     "REPOSITORY",
@@ -562,13 +678,18 @@ __all__ = [
     "feature_run_endpoint",
     "feature_runs_endpoint",
     "outcome_dispatch_command",
+    "model_dispatch_command",
     "outcome_run_artifacts_endpoint",
     "outcome_run_endpoint",
     "outcome_runs_endpoint",
+    "model_run_artifacts_endpoint",
+    "model_run_endpoint",
+    "model_runs_endpoint",
     "select_feature_evidence_artifact",
     "select_latest_manual_main_run_after_reviewed_failures",
     "select_only_manual_main_run",
     "select_outcome_evidence_artifacts",
+    "select_model_result_artifact",
     "classify_manual_run",
     "dispatch_command_for_next_report",
     "shell_join",
@@ -577,4 +698,5 @@ __all__ = [
     "validate_no_existing_manual_runs",
     "validate_operator_checkout",
     "validate_outcome_run_for_readiness",
+    "validate_model_run_for_result",
 ]
