@@ -26,6 +26,27 @@ class Exp044ModelWorkflowSourceTests(unittest.TestCase):
             text,
         )
 
+    def test_workflow_enforces_first_manual_main_run_only(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        guard = text.index("Reject any prior manual main model run")
+        authorization = text.index(
+            "Require separately authorized result execution"
+        )
+        self.assertLess(guard, authorization)
+        self.assertIn(
+            "actions/workflows/phase8a-exp044-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
+            text,
+        )
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            "prior manual-main EXP-044 model run exists",
+            text,
+        )
+
     def test_authorization_preflight_blocks_every_result_job(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         authorization = text.index("authorization-preflight:")
