@@ -66,6 +66,12 @@ def _feature_evidence() -> dict[str, object]:
         "code_commit": FEATURE_SHA,
         "evidence_fingerprint": "c" * 64,
         "feature_evidence_complete": True,
+        "model_fit_authorized": False,
+        "shadow_authorized": False,
+        "demo_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "live_order_authorized": False,
+        "real_money_authorized": False,
         "cells": cells,
     }
 
@@ -93,6 +99,12 @@ def _outcome_evidence(feature: dict[str, object]) -> dict[str, object]:
         "feature_evidence_fingerprint": feature["evidence_fingerprint"],
         "evidence_fingerprint": "d" * 64,
         "outcome_evidence_complete": True,
+        "model_fit_authorized": False,
+        "shadow_authorized": False,
+        "demo_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "live_order_authorized": False,
+        "real_money_authorized": False,
         "cells": cells,
     }
 
