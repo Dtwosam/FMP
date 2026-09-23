@@ -12,7 +12,8 @@ from typing import Callable, Mapping, Sequence
 
 from fmp.market_learning.evidence import load_feature_evidence_index
 from fmp.market_learning.execution_status import build_execution_status
-from fmp.market_learning.model_execution_gate import build_model_workflow_source_gate\nfrom fmp.market_learning.model_protocol import protocol_fingerprint
+from fmp.market_learning.model_execution_gate import build_model_workflow_source_gate
+from fmp.market_learning.model_protocol import protocol_fingerprint
 from fmp.market_learning.model_run_gate import build_model_run_source_gate
 from fmp.market_learning.operator import (
     FEATURE_WORKFLOW_NAME,
