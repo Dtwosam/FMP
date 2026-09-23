@@ -7,6 +7,7 @@ from fmp.market_learning.operator import (
     OUTCOME_WORKFLOW_NAME,
     PRESERVATION_WORKFLOW_NAME,
     artifact_download_endpoint,
+    classify_manual_run,
     feature_dispatch_command,
     feature_run_artifacts_endpoint,
     feature_run_endpoint,
@@ -19,6 +20,7 @@ from fmp.market_learning.operator import (
     preservation_dispatch_command,
     preservation_runs_endpoint,
     select_feature_evidence_artifact,
+    select_only_manual_main_run,
     select_outcome_evidence_artifacts,
     shell_join,
     validate_feature_evidence_for_outcomes,
@@ -77,6 +79,87 @@ class Exp044OperatorTests(unittest.TestCase):
                 porcelain_status="",
                 origin_url="https://github.com/example/other.git",
             )
+
+    def test_next_action_run_selection_is_exact_and_fail_closed(self) -> None:
+        self.assertIsNone(
+            select_only_manual_main_run(
+                {"workflow_runs": []},
+                workflow_name=FEATURE_WORKFLOW_NAME,
+            )
+        )
+        selected = select_only_manual_main_run(
+            {
+                "workflow_runs": [
+                    {"id": 1, "event": "push", "head_branch": "main"},
+                    {
+                        "id": 2,
+                        "event": "workflow_dispatch",
+                        "head_branch": "other",
+                    },
+                    {
+                        "id": 3,
+                        "event": "workflow_dispatch",
+                        "head_branch": "main",
+                        "status": "in_progress",
+                        "conclusion": None,
+                    },
+                ]
+            },
+            workflow_name=FEATURE_WORKFLOW_NAME,
+        )
+        self.assertIsNotNone(selected)
+        self.assertEqual(selected["id"], 3)
+
+        with self.assertRaisesRegex(ValueError, "multiple manual main runs"):
+            select_only_manual_main_run(
+                {
+                    "workflow_runs": [
+                        {
+                            "id": 3,
+                            "event": "workflow_dispatch",
+                            "head_branch": "main",
+                            "status": "completed",
+                            "conclusion": "success",
+                        },
+                        {
+                            "id": 4,
+                            "event": "workflow_dispatch",
+                            "head_branch": "main",
+                            "status": "completed",
+                            "conclusion": "failure",
+                        },
+                    ]
+                },
+                workflow_name=FEATURE_WORKFLOW_NAME,
+            )
+
+    def test_next_action_run_classification_is_deterministic(self) -> None:
+        missing = classify_manual_run(
+            None,
+            workflow_name=FEATURE_WORKFLOW_NAME,
+        )
+        self.assertEqual(missing["run_state"], "MISSING")
+        self.assertFalse(missing["run_present"])
+
+        cases = (
+            ("queued", None, "IN_PROGRESS"),
+            ("in_progress", None, "IN_PROGRESS"),
+            ("completed", "success", "SUCCESS"),
+            ("completed", "failure", "FAILED"),
+            ("completed", "cancelled", "FAILED"),
+        )
+        for status, conclusion, expected in cases:
+            with self.subTest(status=status, conclusion=conclusion):
+                result = classify_manual_run(
+                    {
+                        "id": 10,
+                        "status": status,
+                        "conclusion": conclusion,
+                    },
+                    workflow_name=FEATURE_WORKFLOW_NAME,
+                )
+                self.assertEqual(result["run_state"], expected)
+                self.assertEqual(result["run_id"], 10)
 
     def test_no_existing_manual_main_run_is_required(self) -> None:
         validate_no_existing_manual_runs(
