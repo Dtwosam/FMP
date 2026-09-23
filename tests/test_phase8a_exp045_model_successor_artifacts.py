@@ -387,10 +387,13 @@ class Exp045SuccessorArtifactRunnerTests(unittest.TestCase):
             results,
             code_commit=COMMIT,
         )
-        self.assertEqual(
-            evidence["cells"][0]["logistic_fit_status"],
-            "FAILED_NON_CONVERGENCE",
-        )
+        matching = [
+            row
+            for row in evidence["cells"]
+            if row["logistic_fit_status"]
+            == "FAILED_NON_CONVERGENCE"
+        ]
+        self.assertEqual(len(matching), 1)
         self.assertFalse(evidence["promotion_authorized"])
 
     def test_aggregate_evidence_is_deterministic_and_write_is_create_only(self) -> None:
