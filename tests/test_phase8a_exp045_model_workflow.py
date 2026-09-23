@@ -18,7 +18,10 @@ from fmp.market_learning.model_successor_execution_gate import (
     DEC098_MERGED_COMMIT,
     DEC098_WORKFLOW_BLOB_SHA,
     SUCCESSOR_CLI_BLOB_SHA,
+    REVIEWED_SUCCESSOR_MODEL_HEAD_SHA,
+    REVIEWED_SUCCESSOR_MODEL_RUN_ID,
     SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+    SUCCESSOR_MODEL_EXECUTION_CLOSURE_DECISION,
     SUCCESSOR_MODEL_EXECUTION_GATE_DECISION,
     SUCCESSOR_MODEL_FIT_AUTHORIZED,
     SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -42,7 +45,7 @@ CLI = ROOT / "scripts/phase8a_exp045_model_run.py"
 
 
 class Exp045ModelWorkflowSourceTests(unittest.TestCase):
-    def test_exact_sources_open_one_guarded_result_authorization(self) -> None:
+    def test_exact_sources_close_consumed_result_authorization(self) -> None:
         source = validate_successor_model_workflow_sources(
             repository_root=ROOT,
         )
@@ -108,7 +111,7 @@ class Exp045ModelWorkflowSourceTests(unittest.TestCase):
         )
         self.assertEqual(
             gate["stage"],
-            "SUCCESSOR_MODEL_RUN_DISPATCH_REQUIRED",
+            "SUCCESSOR_MODEL_RUN_EXECUTION_CLOSED",
         )
         self.assertEqual(
             gate["successor_model_execution_gate_decision"],
@@ -118,61 +121,62 @@ class Exp045ModelWorkflowSourceTests(unittest.TestCase):
             gate["successor_model_execution_authorization_decision"],
             SUCCESSOR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
         )
+        self.assertEqual(
+            gate["successor_model_execution_closure_decision"],
+            SUCCESSOR_MODEL_EXECUTION_CLOSURE_DECISION,
+        )
+        self.assertEqual(
+            gate["reviewed_successor_model_run_id"],
+            REVIEWED_SUCCESSOR_MODEL_RUN_ID,
+        )
+        self.assertEqual(
+            gate["reviewed_successor_model_head_sha"],
+            REVIEWED_SUCCESSOR_MODEL_HEAD_SHA,
+        )
         self.assertIs(
             SUCCESSOR_MODEL_WORKFLOW_SOURCE_FROZEN,
             True,
         )
         self.assertIs(
             SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED,
-            True,
+            False,
         )
         self.assertIs(
             AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED,
-            True,
+            False,
         )
         self.assertIs(
             SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED,
-            True,
+            False,
         )
-        self.assertIs(SUCCESSOR_MODEL_FIT_AUTHORIZED, True)
+        self.assertIs(SUCCESSOR_MODEL_FIT_AUTHORIZED, False)
         self.assertIs(
             gate["successor_model_run_dispatch_authorized"],
-            True,
+            False,
         )
         self.assertIs(
             gate[
                 "authoritative_successor_model_result_execution_authorized"
             ],
-            True,
+            False,
         )
         self.assertIs(
             gate["model_protocol_result_authorized"],
-            True,
+            False,
         )
-        self.assertIs(gate["model_fit_authorized"], True)
+        self.assertIs(gate["model_fit_authorized"], False)
         self.assertIs(gate["promotion_authorized"], False)
         self.assertIs(gate["trading_authorized"], False)
 
-    def test_execution_requirement_accepts_exact_authorized_sources(self) -> None:
-        result = require_authoritative_successor_model_execution(
-            repository_root=ROOT,
-            code_commit="a" * 40,
-        )
-        self.assertEqual(result["code_commit"], "a" * 40)
-        self.assertIs(
-            result["successor_model_run_dispatch_authorized"],
-            True,
-        )
-        self.assertIs(
-            result[
-                "authoritative_successor_model_result_execution_authorized"
-            ],
-            True,
-        )
-        self.assertIs(result["model_protocol_result_authorized"], True)
-        self.assertIs(result["model_fit_authorized"], True)
-        self.assertIs(result["promotion_authorized"], False)
-        self.assertIs(result["trading_authorized"], False)
+    def test_execution_requirement_rejects_consumed_authorization(self) -> None:
+        with self.assertRaisesRegex(
+            PermissionError,
+            "DEC-102 closes EXP-045 model-run dispatch",
+        ):
+            require_authoritative_successor_model_execution(
+                repository_root=ROOT,
+                code_commit="a" * 40,
+            )
 
     def test_bound_source_drift_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
