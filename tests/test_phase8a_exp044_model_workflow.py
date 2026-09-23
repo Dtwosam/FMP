@@ -26,7 +26,7 @@ class Exp044ModelWorkflowSourceTests(unittest.TestCase):
             text,
         )
 
-    def test_workflow_enforces_first_manual_main_run_only(self) -> None:
+    def test_workflow_allows_only_reviewed_failed_replacement_predecessor(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         guard = text.index("Reject any prior manual main model run")
         authorization = text.index(
@@ -42,8 +42,30 @@ class Exp044ModelWorkflowSourceTests(unittest.TestCase):
             'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
             text,
         )
+        self.assertIn("35891605645", text)
         self.assertIn(
-            "prior manual-main EXP-044 model run exists",
+            "e97fa03d0e94fd505d0f926eb730e01a41947880",
+            text,
+        )
+        self.assertIn("if len(prior) != 1:", text)
+        self.assertIn(
+            'predecessor.get("conclusion") != "failure"',
+            text,
+        )
+        self.assertIn(
+            "prior EXP-044 model run is not the reviewed",
+            text,
+        )
+
+    def test_workflow_uploads_hidden_result_directories(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertEqual(
+            text.count("include-hidden-files: true"),
+            2,
+        )
+        self.assertIn("path: .results", text)
+        self.assertIn(
+            "path: .model-evidence/model-result-evidence.json",
             text,
         )
 
