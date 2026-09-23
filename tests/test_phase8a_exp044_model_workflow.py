@@ -97,7 +97,7 @@ class Exp044ModelWorkflowSourceTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("for horizon in 60 240; do", text)
         self.assertIn(
-            "--horizon-minutes "$horizon"",
+            '--horizon-minutes "$horizon"',
             text,
         )
         self.assertEqual(
