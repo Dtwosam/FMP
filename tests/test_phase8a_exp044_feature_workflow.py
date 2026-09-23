@@ -21,9 +21,9 @@ class Exp044FeatureWorkflowTests(unittest.TestCase):
         self.assertIn("fmp-phase2-accepted-artifacts-v1", text)
         self.assertIn('SOURCE_MODE: ${{ needs.source-preflight.outputs.source_mode }}', text)
         self.assertIn("phase2-full-history-${SYMBOL}.zip", text)
-        self.assertIn("actions/artifacts/10325737935", text)
-        self.assertIn("actions/artifacts/10326096831", text)
-        self.assertIn("actions/artifacts/10327600628", text)
+        self.assertIn("fetch_or_placeholder EURUSD 10325737935", text)
+        self.assertIn("fetch_or_placeholder GBPUSD 10326096831", text)
+        self.assertIn("fetch_or_placeholder USDJPY 10327600628", text)
         self.assertIn("--minimum-valid-hours 12", text)
         self.assertIn('report["source_ready"] is True', text)
 
