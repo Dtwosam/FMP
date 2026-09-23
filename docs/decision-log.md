@@ -1134,3 +1134,17 @@ The status layer validates exact manual workflow identity when run metadata is s
 DEC-075 creates no research-result authorization. `MODEL_PROTOCOL_SOURCE_OPEN` may be reported only when a valid DEC-074 readiness artifact is supplied and cross-bound to the exact feature/outcome evidence chain. Even then, `model_protocol_result_authorized=false`, `model_fit_authorized=false`, promotion remains false, and all shadow/demo/broker/live/real-money authorizations remain false.
 
 DEC-075 does not change the next hard gate: the authoritative feature and outcome workflows must still run successfully from merged `main` before model-protocol source work may open.
+
+
+## DEC-076 — Phase 8A EXP-044 pair-batched workflow execution
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-pair-batched-workflows.md` changes the feature and outcome workflow topology from pair × timeframe jobs to one job per pair, processing 5m, 15m, and 1h sequentially after one verified download of that pair's accepted Phase 2 Dukascopy artifact.
+
+The exact nine logical feature cells and nine logical outcome cells remain unchanged. Per-timeframe artifact names, source artifact IDs and SHA-256 identities, feature definitions, outcome labels, cost assumptions, aggregate evidence, DEC-074 readiness, and DEC-075 status semantics remain unchanged.
+
+This reduces accepted Phase 2 ZIP downloads from nine to three per workflow without changing any research result or authorization. No EXP-044 feature or outcome workflow had been dispatched before DEC-076.
+
+Both workflows remain manual and merged-main only. DEC-076 authorizes no model fit, promotion, shadow/demo action, broker mutation, live order, or real-money action.
