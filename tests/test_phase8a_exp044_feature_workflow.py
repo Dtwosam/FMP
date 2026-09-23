@@ -26,7 +26,10 @@ class Exp044FeatureWorkflowTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertNotIn("matrix.timeframe", text)
         self.assertNotIn("timeframe: [5m, 15m, 1h]", text)
-        self.assertGreaterEqual(text.count("for timeframe in 5m 15m 1h; do"), 2)
+        self.assertIn("scripts/phase8a_market_feature_pair.py", text)
+        self.assertIn("--primary-root .exp044-a", text)
+        self.assertIn("--verification-root .exp044-b", text)
+        self.assertNotIn("scripts/phase8a_market_features.py", text)
         self.assertEqual(text.count("ARTIFACT_ID:"), 1)
         for symbol in ("EURUSD", "GBPUSD", "USDJPY"):
             self.assertIn(symbol, text)
@@ -53,7 +56,7 @@ class Exp044FeatureWorkflowTests(unittest.TestCase):
         for artifact_id, digest in expected:
             self.assertIn(artifact_id, text)
             self.assertIn(digest, text)
-        self.assertIn("scripts/phase8a_market_features.py", text)
+        self.assertIn("scripts/phase8a_market_feature_pair.py", text)
         self.assertIn("scripts/phase8a_market_feature_evidence.py", text)
 
     def test_research_only_locks_are_preserved(self) -> None:

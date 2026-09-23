@@ -406,6 +406,145 @@ def write_market_feature_artifacts(
     return manifest
 
 
+
+_PAIR_TIMEFRAMES = ("5m", "15m", "1h")
+
+
+def _build_scoped_market_features(
+    *,
+    loaded: LoadedMarketFeatureSource,
+    symbol: str,
+    timeframe: str,
+    start: date,
+    end_exclusive: date,
+) -> pl.DataFrame:
+    features = build_market_feature_frame(
+        loaded.frame,
+        symbol=symbol,
+        timeframe=timeframe,
+        processed_manifest_sha256=loaded.processed_manifest_sha256,
+    )
+    start_utc = datetime(start.year, start.month, start.day, tzinfo=timezone.utc)
+    end_utc = datetime(
+        end_exclusive.year,
+        end_exclusive.month,
+        end_exclusive.day,
+        tzinfo=timezone.utc,
+    )
+    features = features.filter(
+        (pl.col("available_at_utc") >= start_utc)
+        & (pl.col("available_at_utc") < end_utc)
+    )
+    if features.is_empty():
+        raise ValueError(
+            "market-learning feature generation produced no rows in requested range"
+        )
+    return features
+
+
+def materialize_market_feature_pair(
+    *,
+    dataset_root: Path,
+    manifest_path: Path,
+    symbol: str,
+    start: date,
+    end_exclusive: date,
+    primary_root: Path,
+    verification_root: Path,
+    code_commit: str,
+) -> dict[str, dict[str, dict[str, object]]]:
+    validate_symbol(symbol)
+    validate_market_feature_range(start, end_exclusive)
+    if not code_commit.strip():
+        raise ValueError("code_commit must be non-empty")
+
+    primary: dict[str, dict[str, object]] = {}
+    verification: dict[str, dict[str, object]] = {}
+
+    for timeframe in _PAIR_TIMEFRAMES:
+        loaded = load_market_feature_source(
+            dataset_root=Path(dataset_root),
+            manifest_path=Path(manifest_path),
+            symbol=symbol,
+            timeframe=timeframe,
+            start=start,
+            end_exclusive=end_exclusive,
+        )
+
+        first = _build_scoped_market_features(
+            loaded=loaded,
+            symbol=symbol,
+            timeframe=timeframe,
+            start=start,
+            end_exclusive=end_exclusive,
+        )
+        primary[timeframe] = write_market_feature_artifacts(
+            features=first,
+            output_root=Path(primary_root) / f"{symbol}-{timeframe}",
+            symbol=symbol,
+            timeframe=timeframe,
+            processed_manifest_sha256=loaded.processed_manifest_sha256,
+            code_commit=code_commit,
+            opened_months=loaded.opened_months,
+            requested_start=start,
+            requested_end_exclusive=end_exclusive,
+        )
+        del first
+
+        second = _build_scoped_market_features(
+            loaded=loaded,
+            symbol=symbol,
+            timeframe=timeframe,
+            start=start,
+            end_exclusive=end_exclusive,
+        )
+        verification[timeframe] = write_market_feature_artifacts(
+            features=second,
+            output_root=Path(verification_root) / f"{symbol}-{timeframe}",
+            symbol=symbol,
+            timeframe=timeframe,
+            processed_manifest_sha256=loaded.processed_manifest_sha256,
+            code_commit=code_commit,
+            opened_months=loaded.opened_months,
+            requested_start=start,
+            requested_end_exclusive=end_exclusive,
+        )
+        del second
+
+        if primary[timeframe] != verification[timeframe]:
+            raise RuntimeError(
+                f"EXP-044 deterministic feature manifest mismatch: {symbol} {timeframe}"
+            )
+
+    return {
+        "primary": primary,
+        "verification": verification,
+    }
+
+
+def run_market_feature_pair_generation(
+    *,
+    dataset_root: Path,
+    manifest_path: Path,
+    symbol: str,
+    start: date,
+    end_exclusive: date,
+    primary_root: Path,
+    verification_root: Path,
+    code_commit: str,
+) -> dict[str, dict[str, dict[str, object]]]:
+    return materialize_market_feature_pair(
+        dataset_root=Path(dataset_root),
+        manifest_path=Path(manifest_path),
+        symbol=symbol,
+        start=start,
+        end_exclusive=end_exclusive,
+        primary_root=Path(primary_root),
+        verification_root=Path(verification_root),
+        code_commit=code_commit,
+    )
+
+
 def run_market_feature_generation(
     *,
     dataset_root: Path,
@@ -431,28 +570,13 @@ def run_market_feature_generation(
         start=start,
         end_exclusive=end_exclusive,
     )
-    features = build_market_feature_frame(
-        loaded.frame,
+    features = _build_scoped_market_features(
+        loaded=loaded,
         symbol=symbol,
         timeframe=timeframe,
-        processed_manifest_sha256=loaded.processed_manifest_sha256,
+        start=start,
+        end_exclusive=end_exclusive,
     )
-
-    start_utc = datetime(start.year, start.month, start.day, tzinfo=timezone.utc)
-    end_utc = datetime(
-        end_exclusive.year,
-        end_exclusive.month,
-        end_exclusive.day,
-        tzinfo=timezone.utc,
-    )
-    features = features.filter(
-        (pl.col("available_at_utc") >= start_utc)
-        & (pl.col("available_at_utc") < end_utc)
-    )
-    if features.is_empty():
-        raise ValueError(
-            "market-learning feature generation produced no rows in requested range"
-        )
     return write_market_feature_artifacts(
         features=features,
         output_root=Path(output_root),
@@ -470,7 +594,9 @@ __all__ = [
     "LoadedMarketFeatureSource",
     "build_market_feature_frame",
     "load_market_feature_source",
+    "materialize_market_feature_pair",
     "run_market_feature_generation",
+    "run_market_feature_pair_generation",
     "validate_market_feature_range",
     "write_market_feature_artifacts",
 ]

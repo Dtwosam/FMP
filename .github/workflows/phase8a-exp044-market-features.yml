@@ -135,41 +135,20 @@ jobs:
           actual_manifest_sha256="$(sha256sum "${manifest_path}" | awk '{print $1}')"
           test "${actual_manifest_sha256}" = "${EXPECTED_MANIFEST_SHA256}"
 
-      - name: Generate first full-history feature artifact sets
+      - name: Generate deterministic full-history feature artifact sets
         env:
           SYMBOL: ${{ matrix.dataset.symbol }}
         run: |
           set -euo pipefail
-          for timeframe in 5m 15m 1h; do
-            out=".exp044-a/${SYMBOL}-${timeframe}"
-            python scripts/phase8a_market_features.py \
-              --dataset-root ".phase2-accepted/${SYMBOL}" \
-              --manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json" \
-              --symbol "${SYMBOL}" \
-              --timeframe "${timeframe}" \
-              --start 2015-01-01 \
-              --end-exclusive 2026-08-21 \
-              --out "${out}" \
-              --code-commit "${GITHUB_SHA}"
-          done
-
-      - name: Generate second full-history feature artifact sets
-        env:
-          SYMBOL: ${{ matrix.dataset.symbol }}
-        run: |
-          set -euo pipefail
-          for timeframe in 5m 15m 1h; do
-            out=".exp044-b/${SYMBOL}-${timeframe}"
-            python scripts/phase8a_market_features.py \
-              --dataset-root ".phase2-accepted/${SYMBOL}" \
-              --manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json" \
-              --symbol "${SYMBOL}" \
-              --timeframe "${timeframe}" \
-              --start 2015-01-01 \
-              --end-exclusive 2026-08-21 \
-              --out "${out}" \
-              --code-commit "${GITHUB_SHA}"
-          done
+          python scripts/phase8a_market_feature_pair.py \
+            --dataset-root ".phase2-accepted/${SYMBOL}" \
+            --manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json" \
+            --symbol "${SYMBOL}" \
+            --start 2015-01-01 \
+            --end-exclusive 2026-08-21 \
+            --primary-root .exp044-a \
+            --verification-root .exp044-b \
+            --code-commit "${GITHUB_SHA}"
 
       - name: Verify deterministic regeneration and full accepted coverage
         env:

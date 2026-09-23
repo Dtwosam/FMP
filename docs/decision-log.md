@@ -1188,3 +1188,15 @@ The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-outcome-identity-
 A dedicated projected-identity outcome builder is frozen. Tests require it to produce exactly the same outcome rows and accounting as the original full-feature builder, and the existing full-frame/single-cell path remains available.
 
 DEC-079 changes no feature artifact, quote source, horizon, cost model, label, output schema, evidence rule, readiness rule, or authorization. No EXP-044 result-producing workflow had been dispatched before this amendment.
+
+
+## DEC-080 — Phase 8A EXP-044 reused-source feature determinism
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-reused-source-feature-determinism.md` changes feature workflow execution so each pair/timeframe Phase 2 source is validated/read once, then the EXP-044 feature frame is built twice sequentially from that same verified source for the existing deterministic A/B output comparison.
+
+Tests require exact manifest and parquet equivalence with the existing single-cell feature generator and exactly one source-loader invocation per timeframe.
+
+DEC-080 changes no source identity, feature definition, feature schema, artifact identity, evidence rule, readiness rule, outcome rule, model authorization, or trading authorization. No EXP-044 result-producing workflow had been dispatched before this amendment.
