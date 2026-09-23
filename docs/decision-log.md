@@ -1458,3 +1458,25 @@ DEC-095 also predeclares evidence persistence learned from EXP-044: completed pa
 All result, fit, promotion, shadow, demo, broker, live, real-money, and trading authorizations remain false. DEC-095 creates no EXP-045 workflow and dispatches nothing.
 
 Consequences: EXP-044 V1 remains closed as failed negative evidence. EXP-045 is source-predeclared but has no model result. A later separate decision may implement the deterministic EXP-045 training core; another later decision must separately authorize any historical result-producing fit.
+
+
+## DEC-096 — Phase 8A EXP-045 deterministic successor training core
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-045 HISTORICAL MODEL RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp045-model-training-core.md` implements the deterministic in-memory training/evaluation core for the exact DEC-095 successor protocol.
+
+DEC-096 binds the closed DEC-090 base training-core blob `34b50a3f907d26b1c5ec50a0a0b444a3417d04f7` and the DEC-095 successor protocol blob `44129fc5337fb55b9c7d81f5ba0561ea788bd264`. The new successor training-core source is frozen at Git blob `3f0bc1bfa9640d08175e72cdf131bb97c94d562c`.
+
+The implementation reuses DEC-090's already-tested frame validation, preprocessing, estimator construction, probability checking, candidate conversion, financial gate, tie-break, validation, and retrospective-holdout mechanics without changing any estimator parameter.
+
+DEC-095's new family-failure control flow is implemented explicitly. Each family is attempted once. If unchanged logistic regression raises the exact DEC-090 convergence failure, EXP-045 records `FAILED_NON_CONVERGENCE` / `LBFGS_MAX_ITER_REACHED`, does not retry, preserves three `FAMILY_UNAVAILABLE` threshold slots, and allows unchanged HGB to continue. Any other family-fit exception still fails the cell closed.
+
+The successor result identity carries `EXP-20260923-045`, DEC-096 core identity, DEC-095 protocol identity/fingerprint, DEC-088 base protocol fingerprint, predecessor failed run `35891605645`, `prior_result_informed=true`, and `untouched_oos=false`. No selected model is ever refit after fit.
+
+`SUCCESSOR_TRAINING_RESULT_EXECUTION_AUTHORIZED=false` and `MODEL_FIT_AUTHORIZED=false`. DEC-096 creates no artifact-backed historical runner, CLI, GitHub Actions workflow, or operator dispatch path. Synthetic test fits are source validation only and are not EXP-045 historical evidence.
+
+Promotion, shadow, demo, broker mutation, live-order, real-money, and trading authorizations remain false.
+
+Consequences: deterministic EXP-045 training source now exists, but no EXP-045 historical result exists or is authorized. A later separate decision may freeze an artifact-backed runner/evidence contract; a still-later execution decision is required before any result-producing fit.
