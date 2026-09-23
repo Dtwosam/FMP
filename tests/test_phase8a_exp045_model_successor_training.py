@@ -364,7 +364,7 @@ class Exp045SuccessorTrainingCoreTests(unittest.TestCase):
             second["result_fingerprint"],
         )
 
-    def test_execution_authorization_remains_false_and_no_workflow_exists(self) -> None:
+    def test_execution_authorization_remains_false_with_gated_workflow_source(self) -> None:
         self.assertFalse(
             SUCCESSOR_TRAINING_RESULT_EXECUTION_AUTHORIZED
         )
@@ -374,7 +374,11 @@ class Exp045SuccessorTrainingCoreTests(unittest.TestCase):
             / ".github/workflows/"
             "phase8a-exp045-model-training.yml"
         )
-        self.assertFalse(workflow.exists())
+        self.assertTrue(workflow.exists())
+        self.assertIn(
+            "Require separately authorized EXP-045 result execution",
+            workflow.read_text(encoding="utf-8"),
+        )
 
     def test_source_has_no_dispatch_or_workflow_side_effect(self) -> None:
         source = (

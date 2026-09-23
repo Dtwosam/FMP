@@ -1502,3 +1502,23 @@ Aggregate evidence is deterministic, canonically ordered, carries the future exe
 `AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED=false` and `SUCCESSOR_MODEL_FIT_AUTHORIZED=false`. The artifact-backed runner refuses before readiness validation, artifact loading, or model fitting. DEC-097 adds no CLI, workflow, operator dispatch, or historical result.
 
 Consequences: EXP-045 now has frozen protocol, deterministic training core, verified artifact-consumption source, and aggregate evidence contract, but still no historical model result. A later separate decision may freeze workflow/CLI/execution-gate source; another separate authorization is required before any result-producing fit.
+
+
+## DEC-098 — Phase 8A EXP-045 frozen model-workflow source
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-045 HISTORICAL MODEL RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp045-model-workflow-source.md` freezes the manual EXP-045 workflow, fail-closed CLI, pinned numerical runtime, and execution-gate source around the already-merged DEC-095/096/097 chain.
+
+DEC-098 binds merged DEC-097 commit `f6c1090064cd3d85c7c3503dec1ef461eeba5da2`, DEC-097 runner blob `adebcc48130e8800741810c239528ef6c21eea6e`, DEC-096 core blob `3f0bc1bfa9640d08175e72cdf131bb97c94d562c`, DEC-095 protocol blob `44129fc5337fb55b9c7d81f5ba0561ea788bd264`, DEC-094 failure-review blob `2260ad4ad08a7e9874bd28030be977a3e71436f9`, and the DEC-091 historical data-loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`.
+
+The frozen workflow blob is `d3e4d11a8e8270417d6bbced27e756b7cc23c324`, the CLI blob is `ff0ed231e22589c3597672bb8bab1f62b321647d`, and the execution-gate source blob is `6bdb3dfe3d8b548610259cbdfc6245398f9fc199`.
+
+The workflow is manual-only, main-only, and exposes no user inputs. It freezes all nine persisted feature/outcome artifact pairs, the readiness artifact, the exact 60m/240m cell horizons, Python 3.12.14, and the pinned EXP-045 numerical runtime.
+
+The pair/timeframe persistence behavior implements DEC-095 exactly: upload runs even after a cell failure, includes hidden `.results`, and warns when no result exists. Aggregate evidence remains all-or-nothing and includes hidden aggregate files.
+
+Every result-producing job depends on authorization preflight. `SUCCESSOR_MODEL_RUN_DISPATCH_AUTHORIZED=false`, `AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED=false`, `SUCCESSOR_MODEL_PROTOCOL_RESULT_AUTHORIZED=false`, and `SUCCESSOR_MODEL_FIT_AUTHORIZED=false`. No operator dispatch mapping is added and no EXP-045 workflow run is submitted.
+
+Consequences: EXP-045 now has frozen protocol, training core, artifact runner/evidence contract, workflow, CLI, runtime, and execution-gate source, but still no historical model result. A later separate decision must bind the exact merged DEC-098 identities before at most one guarded historical result-producing run can be authorized. Promotion, shadow, demo, broker, live, real-money, and trading authorization remain false.
