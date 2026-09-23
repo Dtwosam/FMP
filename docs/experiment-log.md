@@ -1089,3 +1089,7 @@ Copy this section for each serious experiment:
 - Safety: no capture, repair, deletion, closure/review/acceptance artifact, broker mutation, Phase 9 action, or order is executed.
 - Verification: exact corrected source head `1654564b4fc3cd971d369ea5717d0f7268aaf326` passed 1092 tests plus workflow-YAML validation and compile checks in run `35803297613`; unchanged Phase 3 acceptance run `35803297604` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. Real prospective MT5 DEMO evidence remains the next operational milestone.
+
+
+- Merge status: PR #164 merged DEC-072 to `main` at `2732e00fa502219bf18de35ae861e72befe62661`. The exact final PR head `5efc050f31811e0f179638fc2c9bb83587eb22ef` passed 1092 tests plus workflow-YAML validation and compile checks in run `35803436296`; unchanged Phase 3 acceptance run `35803436276` passed. Post-merge `main` runs `35803529547` and `35803529528` also passed.
+- Follow-up: interrupted prospective capture is now visible from the first failed attempt onward without being repaired or counted. No real prospective segment, campaign close/review, acceptance result, SHADOW_VALIDATED transition, or Phase 9 artifact chain has been executed; real MT5 DEMO prospective evidence remains the next operational milestone.
