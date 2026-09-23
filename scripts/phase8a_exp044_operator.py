@@ -17,6 +17,7 @@ from fmp.market_learning.operator import (
     PRESERVATION_WORKFLOW_NAME,
     REPOSITORY,
     artifact_download_endpoint,
+    classify_manual_run,
     feature_dispatch_command,
     feature_run_artifacts_endpoint,
     feature_run_endpoint,
@@ -29,6 +30,7 @@ from fmp.market_learning.operator import (
     preservation_dispatch_command,
     preservation_runs_endpoint,
     select_feature_evidence_artifact,
+    select_only_manual_main_run,
     select_outcome_evidence_artifacts,
     shell_join,
     validate_feature_evidence_for_outcomes,
@@ -47,6 +49,7 @@ from fmp.market_learning.source_preflight import (
 from fmp.market_learning.source_preservation import (
     PRESERVATION_TAG,
     select_preservation_manifest_asset,
+    validate_published_release_metadata,
 )
 
 
@@ -257,6 +260,49 @@ def _download_outcome_readiness_bundle(
     return selected, outcome_evidence, readiness
 
 
+def _published_preservation() -> dict[str, object] | None:
+    release = _gh_json_optional(
+        f"repos/{REPOSITORY}/releases/tags/{PRESERVATION_TAG}"
+    )
+    if release is None:
+        return None
+    selected = select_preservation_manifest_asset(release)
+    manifest = _download_release_json_asset(asset_id=int(selected["asset_id"]))
+    verified = validate_published_release_metadata(
+        release=release,
+        manifest=manifest,
+    )
+    return {
+        "release": release,
+        "manifest": manifest,
+        "verified": verified,
+    }
+
+
+def _next_report(
+    *,
+    checkout: Mapping[str, object],
+    stage: str,
+    next_action: str,
+    dispatch_command: Sequence[str] | None = None,
+    **details: object,
+) -> dict[str, object]:
+    report: dict[str, object] = {
+        **dict(checkout),
+        **details,
+        "stage": stage,
+        "next_action": next_action,
+        "read_only": True,
+        "model_protocol_result_authorized": False,
+        "model_fit_authorized": False,
+        "promotion_authorized": False,
+        "trading_authorized": False,
+    }
+    if dispatch_command is not None:
+        report["dispatch_command"] = shell_join(dispatch_command)
+    return report
+
+
 def _checkout_preflight() -> dict[str, object]:
     _run(("git", "fetch", "--quiet", "origin", "main"), capture=False)
     return validate_operator_checkout(
@@ -280,6 +326,11 @@ def parser() -> argparse.ArgumentParser:
         description="Safely prepare or perform the manual EXP-044 GitHub workflow dispatch"
     )
     sub = out.add_subparsers(dest="command", required=True)
+
+    sub.add_parser(
+        "next",
+        help="inspect live EXP-044 evidence and report exactly one next authoritative action",
+    )
 
     preserve = sub.add_parser(
         "preserve-phase2",
@@ -311,6 +362,232 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     _require_gh_auth()
     checkout = _checkout_preflight()
+
+    if args.command == "next":
+        preservation = _published_preservation()
+        preservation_listing = _gh_json(preservation_runs_endpoint())
+        preservation_run = select_only_manual_main_run(
+            preservation_listing,
+            workflow_name=PRESERVATION_WORKFLOW_NAME,
+        )
+        preservation_state = classify_manual_run(
+            preservation_run,
+            workflow_name=PRESERVATION_WORKFLOW_NAME,
+        )
+
+        if preservation is None:
+            run_state = preservation_state["run_state"]
+            if run_state == "MISSING":
+                source_preflight = _original_source_preflight()
+                _print_report(
+                    _next_report(
+                        checkout=checkout,
+                        stage="PRESERVATION_DISPATCH_REQUIRED",
+                        next_action=(
+                            "Dispatch exact Phase 2 preservation before EXP-044 "
+                            "feature generation."
+                        ),
+                        dispatch_command=preservation_dispatch_command(),
+                        source_preflight_ready=source_preflight["source_ready"],
+                        source_earliest_expires_at=source_preflight[
+                            "earliest_expires_at"
+                        ],
+                        preservation_release_verified=False,
+                        preservation_run_state=run_state,
+                    )
+                )
+                return 0
+            if run_state == "IN_PROGRESS":
+                _print_report(
+                    _next_report(
+                        checkout=checkout,
+                        stage="PRESERVATION_RUN_IN_PROGRESS",
+                        next_action=(
+                            "Inspect the existing preservation workflow run; do not "
+                            "create a duplicate."
+                        ),
+                        preservation_release_verified=False,
+                        preservation_run_state=run_state,
+                        preservation_run_id=preservation_state["run_id"],
+                    )
+                )
+                return 0
+            if run_state == "FAILED":
+                _print_report(
+                    _next_report(
+                        checkout=checkout,
+                        stage="PRESERVATION_REVIEW_REQUIRED",
+                        next_action=(
+                            "Review the failed preservation workflow evidence; do not "
+                            "retry automatically."
+                        ),
+                        preservation_release_verified=False,
+                        preservation_run_state=run_state,
+                        preservation_run_id=preservation_state["run_id"],
+                    )
+                )
+                return 0
+            raise SystemExit(
+                "preservation workflow succeeded but the exact published release is missing"
+            )
+
+        feature_listing = _gh_json(feature_runs_endpoint())
+        feature_run = select_only_manual_main_run(
+            feature_listing,
+            workflow_name=FEATURE_WORKFLOW_NAME,
+        )
+        feature_state = classify_manual_run(
+            feature_run,
+            workflow_name=FEATURE_WORKFLOW_NAME,
+        )
+        if feature_state["run_state"] == "MISSING":
+            source_preflight = _source_artifact_preflight()
+            _print_report(
+                _next_report(
+                    checkout=checkout,
+                    stage="FEATURE_DISPATCH_REQUIRED",
+                    next_action="Dispatch EXP-044 feature generation from merged main.",
+                    dispatch_command=feature_dispatch_command(),
+                    preservation_release_verified=True,
+                    preservation_tag=PRESERVATION_TAG,
+                    source_mode=source_preflight["source_mode"],
+                    feature_run_state="MISSING",
+                )
+            )
+            return 0
+        if feature_state["run_state"] == "IN_PROGRESS":
+            _print_report(
+                _next_report(
+                    checkout=checkout,
+                    stage="FEATURE_RUN_IN_PROGRESS",
+                    next_action=(
+                        "Inspect the existing feature workflow run; do not create a duplicate."
+                    ),
+                    preservation_release_verified=True,
+                    feature_run_state="IN_PROGRESS",
+                    feature_run_id=feature_state["run_id"],
+                )
+            )
+            return 0
+        if feature_state["run_state"] == "FAILED":
+            _print_report(
+                _next_report(
+                    checkout=checkout,
+                    stage="FEATURE_REVIEW_REQUIRED",
+                    next_action=(
+                        "Review the failed feature workflow evidence; do not retry automatically."
+                    ),
+                    preservation_release_verified=True,
+                    feature_run_state="FAILED",
+                    feature_run_id=feature_state["run_id"],
+                )
+            )
+            return 0
+
+        feature_run_id = int(feature_state["run_id"])
+        feature_run_exact = _gh_json(feature_run_endpoint(feature_run_id))
+        feature = validate_feature_run_for_outcomes(
+            feature_run_exact,
+            expected_run_id=feature_run_id,
+        )
+        feature_evidence_summary, feature_evidence = _download_feature_evidence(
+            feature_run_id=feature_run_id,
+            feature_head_sha=str(feature["feature_head_sha"]),
+        )
+
+        outcome_listing = _gh_json(outcome_runs_endpoint())
+        outcome_run = select_only_manual_main_run(
+            outcome_listing,
+            workflow_name=OUTCOME_WORKFLOW_NAME,
+        )
+        outcome_state = classify_manual_run(
+            outcome_run,
+            workflow_name=OUTCOME_WORKFLOW_NAME,
+        )
+        if outcome_state["run_state"] == "MISSING":
+            source_preflight = _source_artifact_preflight()
+            _print_report(
+                _next_report(
+                    checkout=checkout,
+                    stage="OUTCOME_DISPATCH_REQUIRED",
+                    next_action=(
+                        "Dispatch EXP-044 outcomes using the exact verified feature run."
+                    ),
+                    dispatch_command=outcome_dispatch_command(feature_run_id),
+                    preservation_release_verified=True,
+                    source_mode=source_preflight["source_mode"],
+                    **feature,
+                    **feature_evidence_summary,
+                    outcome_run_state="MISSING",
+                )
+            )
+            return 0
+        if outcome_state["run_state"] == "IN_PROGRESS":
+            _print_report(
+                _next_report(
+                    checkout=checkout,
+                    stage="OUTCOME_RUN_IN_PROGRESS",
+                    next_action=(
+                        "Inspect the existing outcome workflow run; do not create a duplicate."
+                    ),
+                    **feature,
+                    **feature_evidence_summary,
+                    outcome_run_state="IN_PROGRESS",
+                    outcome_run_id=outcome_state["run_id"],
+                )
+            )
+            return 0
+        if outcome_state["run_state"] == "FAILED":
+            _print_report(
+                _next_report(
+                    checkout=checkout,
+                    stage="OUTCOME_REVIEW_REQUIRED",
+                    next_action=(
+                        "Review the failed outcome workflow evidence; do not retry automatically."
+                    ),
+                    **feature,
+                    **feature_evidence_summary,
+                    outcome_run_state="FAILED",
+                    outcome_run_id=outcome_state["run_id"],
+                )
+            )
+            return 0
+
+        outcome_run_id = int(outcome_state["run_id"])
+        outcome_run_exact = _gh_json(outcome_run_endpoint(outcome_run_id))
+        outcome = validate_outcome_run_for_readiness(
+            outcome_run_exact,
+            expected_run_id=outcome_run_id,
+        )
+        selected, outcome_evidence, readiness = _download_outcome_readiness_bundle(
+            outcome_run_id=outcome_run_id,
+            outcome_head_sha=str(outcome["outcome_head_sha"]),
+            feature_head_sha=str(feature["feature_head_sha"]),
+        )
+        status = build_execution_status(
+            feature_run=feature_run_exact,
+            feature_evidence=feature_evidence,
+            outcome_run=outcome_run_exact,
+            outcome_evidence=outcome_evidence,
+            readiness=readiness,
+        )
+        _print_report(
+            _next_report(
+                checkout=checkout,
+                stage=str(status["stage"]),
+                next_action=str(status["next_action"]),
+                preservation_release_verified=True,
+                **feature,
+                **feature_evidence_summary,
+                **outcome,
+                **selected,
+                readiness_verified=status["readiness_verified"],
+                model_protocol_source_open_authorized=status[
+                    "model_protocol_source_open_authorized"
+                ],
+            )
+        )
+        return 0
 
     if args.command == "preserve-phase2":
         source_preflight = _original_source_preflight()
