@@ -173,6 +173,24 @@ def _release_assets_by_name(
     return by_name
 
 
+def select_preservation_manifest_asset(
+    release: Mapping[str, object],
+) -> dict[str, object]:
+    by_name = _release_assets_by_name(release)
+    raw = by_name.get("phase2-preservation-manifest.json")
+    if raw is None:
+        raise ValueError("preservation release manifest asset is missing")
+    asset_id = raw.get("id")
+    if not isinstance(asset_id, int) or isinstance(asset_id, bool) or asset_id <= 0:
+        raise ValueError("preservation release manifest asset id is invalid")
+    if raw.get("state") != "uploaded":
+        raise ValueError("preservation release manifest asset is not uploaded")
+    return {
+        "asset_id": asset_id,
+        "name": "phase2-preservation-manifest.json",
+    }
+
+
 def validate_published_release_metadata(
     *,
     release: Mapping[str, object],
@@ -326,6 +344,7 @@ __all__ = [
     "PRESERVATION_VERSION",
     "build_preservation_manifest",
     "release_asset_name",
+    "select_preservation_manifest_asset",
     "validate_preservation_manifest",
     "validate_published_release_metadata",
     "validate_release_metadata",
