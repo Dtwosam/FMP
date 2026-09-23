@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 SINGLE HISTORICAL RUN REVIEWED UNDER DEC-102; NO ACCEPTED EXP-045 MODEL CHALLENGER
-**Next milestone:** Merge DEC-102's exact result review for run `35911916239`. The one EXP-045 run slot is consumed and closed. The reviewed result contains no accepted model challenger: 17/18 cells had no challenger and the only selected cell (GBPUSD 5m / 240m) failed validation. Any continuation must start as a separately identified, explicitly post-result-informed successor protocol frozen before execution. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 REVIEWED UNDER DEC-102 + DEC-103 POST-RESULT DIAGNOSTIC SOURCE FROZEN; NO ACCEPTED MODEL CHALLENGER
+**Next milestone:** Merge DEC-103's source-only post-result diagnostic, then freeze a separately identified successor model protocol before any new fit. DEC-103 preserves the EXP-045 250-candidate floor, forbids promotion of low-count positive selection variants, and identifies temporal stability as the dominant observed failure mode. No successor result execution or model fit is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
@@ -404,6 +404,7 @@ Current milestone:
 26. DEC-100 predeclares the terminal review for that one run before any result exists. Success requires the exact complete job/artifact inventory plus DEC-097 aggregate-evidence validation; non-success preserves only valid partial cell evidence, forbids aggregate claims, and authorizes no replacement run.
 27. DEC-101 freezes a clean-main, double-plan single-step operator for the DEC-099-authorized run. It exposes exactly one dispatch command only while no EXP-045 run exists, routes terminal state through DEC-100, and adds no retry or alternate trigger.
 28. DEC-102 reviews the single EXP-045 run `35911916239` as successful execution with complete 18-cell aggregate evidence but no accepted challenger. Seventeen cells had no challenger; GBPUSD 5m / 240m was selected and rejected at validation. The run slot is consumed and all result/fit/promotion/shadow/demo/broker/live/real-money/trading authorizations are closed.
+29. DEC-103 freezes detailed post-result diagnostics before any successor protocol: 90 variants evaluated, one complete selection-gate pass, 25 low-count positive variants not validation-tested, and the sole selected challenger collapsing from 460 selection candidates to 83 validation candidates with negative validation net performance. Only successor-protocol source work is opened; no execution.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
@@ -444,5 +445,5 @@ Phase 8B must:
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows completed successfully. One guarded EXP-044 V1 model-training workflow, run `35891605645`, executed under DEC-093 and failed; DEC-094 reviews that failure, records zero persisted model artifacts and no aggregate model result, and closes V1 execution without rerun or replacement authorization. DEC-095 through DEC-101 freeze and authorize the single guarded EXP-045 historical model run. Run `35911916239` completed successfully at `6d42a5053c5f2f696071715640dab24973a40517`; DEC-102 reviews its complete 18-cell aggregate evidence and records no accepted model challenger. The one-run slot is consumed. Any further model work requires a separately predeclared post-result-informed successor experiment. Promotion/shadow/demo/broker/live/real-money/trading paths remain locked. No prospective shadow campaign has begun.
+Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows completed successfully. One guarded EXP-044 V1 model-training workflow, run `35891605645`, executed under DEC-093 and failed; DEC-094 reviews that failure, records zero persisted model artifacts and no aggregate model result, and closes V1 execution without rerun or replacement authorization. DEC-095 through DEC-101 freeze and authorize the single guarded EXP-045 historical model run. Run `35911916239` completed successfully at `6d42a5053c5f2f696071715640dab24973a40517`; DEC-102 reviews its complete 18-cell aggregate evidence and records no accepted model challenger. DEC-103 freezes the detailed post-result diagnostic and opens only successor-protocol source work, with no new fit or result execution. The EXP-045 run slot remains consumed. Promotion/shadow/demo/broker/live/real-money/trading paths remain locked. No prospective shadow campaign has begun.
 
