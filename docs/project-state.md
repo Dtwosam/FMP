@@ -374,7 +374,7 @@ Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-071 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 artifact chain, demo order, or broker mutation has been executed;
-3. DEC-072 / `EXP-20260923-043` is the active milestone: fix read-only progress observability so interrupted/unclosed DEC-052 segment directories are reported correctly even before any clean segment closes;
+3. DEC-072 / `EXP-20260923-043` is implemented on PR #164 head `1654564b4fc3cd971d369ea5717d0f7268aaf326`: deterministic closed/unclosed segment inventory, correct crash-before-first-close visibility, terminal context, progress fingerprint/validator, and closed-directory identity hardening; run `35803297613` passed 1092 tests plus YAML/compile and unchanged Phase 3 acceptance run `35803297604` passed;
 4. DEC-072 must keep interrupted directories excluded from all aggregate/acceptance evidence, add no repair/delete behavior, start no capture, and preserve every promotion/order/broker/live/real-money authorization false;
 5. the next real operational milestone remains prospective MT5 DEMO evidence; Phase 9 execution remains hard-locked.
 
