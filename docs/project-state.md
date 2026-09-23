@@ -3,7 +3,7 @@
 **Updated:** 2026-09-23
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
-**Current phase:** Phase 8 — Phase 8A historical evidence pending; Phase 8B source preparation complete but operationally locked
+**Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — RESULT-PRODUCING PHASE 8A WORKFLOWS UNRUN
 **Next milestone:** Dispatch `EXP-20260922-015` Stage A from merged `main`, preserve its exact authorization artifact, and open Stage B only if that artifact authorizes one or more frozen survivor fingerprints. DEC-042 portfolio selection remains blocked until EXP-015 produces at least one new `HISTORICAL_QUALIFIED` challenger; Phase 8B prospective capture remains locked behind DEC-045 acceptance.
 
