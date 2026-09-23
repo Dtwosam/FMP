@@ -137,13 +137,21 @@ def _frames(
 class Exp044ModelTrainingCoreTests(unittest.TestCase):
     def test_source_exists_but_historical_result_execution_remains_locked(self) -> None:
         self.assertIs(MODEL_TRAINING_RESULT_EXECUTION_AUTHORIZED, False)
-        self.assertFalse(
-            (
-                ROOT
-                / ".github/workflows/"
-                "phase8a-exp044-model-training.yml"
-            ).exists()
+        workflow = (
+            ROOT
+            / ".github/workflows/"
+            "phase8a-exp044-model-training.yml"
         )
+        if workflow.exists():
+            text = workflow.read_text(encoding="utf-8")
+            self.assertIn(
+                "Require separately authorized result execution",
+                text,
+            )
+            self.assertIn(
+                "scripts/phase8a_exp044_model_run.py require-execution",
+                text,
+            )
 
     def test_core_fits_each_family_once_and_never_refits_after_selection(self) -> None:
         import fmp.market_learning.model_training as training

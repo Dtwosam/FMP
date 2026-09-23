@@ -12,6 +12,7 @@ from typing import Callable, Mapping, Sequence
 
 from fmp.market_learning.evidence import load_feature_evidence_index
 from fmp.market_learning.execution_status import build_execution_status
+from fmp.market_learning.model_execution_gate import build_model_workflow_source_gate
 from fmp.market_learning.model_protocol import protocol_fingerprint
 from fmp.market_learning.model_run_gate import build_model_run_source_gate
 from fmp.market_learning.operator import (
@@ -678,6 +679,13 @@ def main(argv: list[str] | None = None) -> int:
         )
         if gate.get("stage") != "MODEL_PROTOCOL_FROZEN":
             raise SystemExit("EXP-044 model-run source gate returned an invalid stage")
+        workflow_gate = build_model_workflow_source_gate(
+            repository_root=Path(__file__).resolve().parents[1],
+        )
+        if workflow_gate.get("stage") != "MODEL_RUN_WORKFLOW_SOURCE_FROZEN":
+            raise SystemExit(
+                "EXP-044 model-workflow source gate returned an invalid stage"
+            )
         readiness_report_details = {
             **feature_report_details,
             **outcome,
@@ -686,8 +694,8 @@ def main(argv: list[str] | None = None) -> int:
         _print_report(
             _next_report(
                 checkout=checkout,
-                stage=str(gate["stage"]),
-                next_action=str(gate["next_action"]),
+                stage=str(workflow_gate["stage"]),
+                next_action=str(workflow_gate["next_action"]),
                 preservation_release_verified=True,
                 **readiness_report_details,
                 readiness_verified=status["readiness_verified"],
@@ -705,6 +713,24 @@ def main(argv: list[str] | None = None) -> int:
                 ],
                 model_protocol_fingerprint=gate[
                     "model_protocol_fingerprint"
+                ],
+                model_run_workflow_source_frozen=workflow_gate[
+                    "model_run_workflow_source_frozen"
+                ],
+                model_run_dispatch_authorized=workflow_gate[
+                    "model_run_dispatch_authorized"
+                ],
+                authoritative_model_result_execution_authorized=workflow_gate[
+                    "authoritative_model_result_execution_authorized"
+                ],
+                artifact_runner_blob_sha=workflow_gate[
+                    "artifact_runner_blob_sha"
+                ],
+                training_core_blob_sha=workflow_gate[
+                    "training_core_blob_sha"
+                ],
+                model_protocol_blob_sha=workflow_gate[
+                    "model_protocol_blob_sha"
                 ],
             )
         )
