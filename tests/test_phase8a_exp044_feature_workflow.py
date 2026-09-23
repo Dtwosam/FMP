@@ -56,7 +56,7 @@ class Exp044FeatureWorkflowTests(unittest.TestCase):
         for artifact_id, digest in expected:
             self.assertIn(artifact_id, text)
             self.assertIn(digest, text)
-        self.assertIn("scripts/phase8a_market_features.py", text)
+        self.assertIn("scripts/phase8a_market_feature_pair.py", text)
         self.assertIn("scripts/phase8a_market_feature_evidence.py", text)
 
     def test_research_only_locks_are_preserved(self) -> None:
