@@ -1214,3 +1214,15 @@ The helper requires an authenticated GitHub CLI, a clean local `main` exactly ma
 Actual dispatch requires an explicit `--execute` flag. Successful submission claims no research result and creates no model/trading authorization.
 
 DEC-081 does not change either workflow trigger and does not bypass the manual gate.
+
+
+## DEC-082 — Phase 8A EXP-044 operator source/evidence preflight
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-operator-evidence-preflight.md` strengthens the DEC-081 manual launch helper.
+
+Before either stage, the helper now reuses DEC-078 to validate the live metadata and remaining lifetime of the exact accepted Phase 2 artifacts. Before outcome preparation, it additionally requires and downloads the exact non-expired aggregate feature-evidence artifact bound to the successful feature-run head SHA, fingerprint-validates the evidence, cross-binds its code commit to that run, and keeps every model/trading authorization false.
+
+The workflows remain the final authority and independently repeat these checks. DEC-082 changes no workflow trigger, research semantic, or authorization.
