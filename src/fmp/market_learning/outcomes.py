@@ -51,6 +51,15 @@ OUTCOME_COLUMNS = (
     "processed_manifest_sha256",
 )
 
+OUTCOME_FEATURE_IDENTITY_COLUMNS = (
+    "symbol",
+    "timeframe",
+    "bar_start_utc",
+    "available_at_utc",
+    "feature_set_version",
+    "processed_manifest_sha256",
+)
+
 _REQUIRED_QUOTE_COLUMNS = (
     "timestamp_utc",
     "symbol",
@@ -79,6 +88,55 @@ def _validate_sha256(value: str, *, field: str) -> None:
         int(value, 16)
     except ValueError as exc:
         raise ValueError(f"{field} must be hexadecimal") from exc
+
+
+def _validate_feature_identity_frame(
+    features: pl.DataFrame,
+    *,
+    symbol: str,
+    timeframe: str,
+) -> None:
+    missing = [
+        name for name in OUTCOME_FEATURE_IDENTITY_COLUMNS if name not in features.columns
+    ]
+    if missing:
+        raise ValueError(f"market-outcome feature identity is missing columns: {missing}")
+    if features.is_empty():
+        raise ValueError("market-learning feature frame must not be empty")
+    if set(features["symbol"].to_list()) != {symbol}:
+        raise ValueError("market-learning feature symbol identity mismatch")
+    if set(features["timeframe"].to_list()) != {timeframe}:
+        raise ValueError("market-learning feature timeframe identity mismatch")
+    if set(features["feature_set_version"].to_list()) != {MARKET_FEATURE_SET_VERSION}:
+        raise ValueError("market-learning feature-set identity mismatch")
+    processed = set(features["processed_manifest_sha256"].to_list())
+    if len(processed) != 1:
+        raise ValueError("market-learning feature source manifest identity is not singular")
+    _validate_sha256(str(next(iter(processed))), field="processed_manifest_sha256")
+
+    accepted_start = datetime(
+        MARKET_HISTORY_START.year,
+        MARKET_HISTORY_START.month,
+        MARKET_HISTORY_START.day,
+        tzinfo=timezone.utc,
+    )
+    accepted_end = datetime(
+        MARKET_HISTORY_END_EXCLUSIVE.year,
+        MARKET_HISTORY_END_EXCLUSIVE.month,
+        MARKET_HISTORY_END_EXCLUSIVE.day,
+        tzinfo=timezone.utc,
+    )
+    if features.filter(
+        (pl.col("available_at_utc") < accepted_start)
+        | (pl.col("available_at_utc") >= accepted_end)
+    ).height:
+        raise ValueError("market-learning features are outside accepted historical coverage")
+
+    unique = features.select(
+        pl.struct(["symbol", "timeframe", "bar_start_utc"]).n_unique()
+    ).item()
+    if unique != features.height:
+        raise ValueError("duplicate market-learning feature identity")
 
 
 def _validate_feature_frame(
@@ -166,18 +224,48 @@ def build_market_outcome_grid(
 ) -> MarketOutcomeGridBuild:
     _validate_feature_frame(features, symbol=symbol, timeframe=timeframe)
     _validate_quote_frame(minute_quotes, symbol=symbol)
-
     feature_identity = features.select(
-        [
-            "symbol",
-            "timeframe",
-            "bar_start_utc",
-            "available_at_utc",
-            "feature_set_version",
-            "processed_manifest_sha256",
-        ]
+        list(OUTCOME_FEATURE_IDENTITY_COLUMNS)
     ).sort(["symbol", "timeframe", "bar_start_utc"])
+    return _build_market_outcome_grid_from_validated_identity(
+        feature_identity,
+        minute_quotes,
+        symbol=symbol,
+        timeframe=timeframe,
+    )
 
+
+def build_market_outcome_grid_from_identity(
+    feature_identity: pl.DataFrame,
+    minute_quotes: pl.DataFrame,
+    *,
+    symbol: str,
+    timeframe: str,
+) -> MarketOutcomeGridBuild:
+    _validate_feature_identity_frame(
+        feature_identity,
+        symbol=symbol,
+        timeframe=timeframe,
+    )
+    _validate_quote_frame(minute_quotes, symbol=symbol)
+    identity = feature_identity.select(
+        list(OUTCOME_FEATURE_IDENTITY_COLUMNS)
+    ).sort(["symbol", "timeframe", "bar_start_utc"])
+    return _build_market_outcome_grid_from_validated_identity(
+        identity,
+        minute_quotes,
+        symbol=symbol,
+        timeframe=timeframe,
+    )
+
+
+def _build_market_outcome_grid_from_validated_identity(
+    feature_identity: pl.DataFrame,
+    minute_quotes: pl.DataFrame,
+    *,
+    symbol: str,
+    timeframe: str,
+) -> MarketOutcomeGridBuild:
     entry_quotes = minute_quotes.select(
         [
             "symbol",
@@ -305,7 +393,7 @@ def build_market_outcome_grid(
             + missing_entry[horizon]
             + missing_exit[horizon]
         )
-        if accounted != features.height:
+        if accounted != feature_identity.height:
             raise ValueError("market-outcome horizon row accounting mismatch")
 
     combined = pl.concat(frames, how="vertical").sort(
@@ -321,7 +409,7 @@ def build_market_outcome_grid(
 
     return MarketOutcomeGridBuild(
         frame=combined,
-        source_feature_rows=features.height,
+        source_feature_rows=feature_identity.height,
         labeled_rows_by_horizon=dict(sorted(labeled.items())),
         missing_entry_rows_by_horizon=dict(sorted(missing_entry.items())),
         missing_exit_rows_by_horizon=dict(sorted(missing_exit.items())),
@@ -504,7 +592,9 @@ def write_market_outcome_artifacts(
 __all__ = [
     "MARKET_OUTCOME_SET_VERSION",
     "OUTCOME_COLUMNS",
+    "OUTCOME_FEATURE_IDENTITY_COLUMNS",
     "MarketOutcomeGridBuild",
     "build_market_outcome_grid",
+    "build_market_outcome_grid_from_identity",
     "write_market_outcome_artifacts",
 ]
