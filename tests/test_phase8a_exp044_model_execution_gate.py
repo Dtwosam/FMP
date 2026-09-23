@@ -125,11 +125,36 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
                 "model_artifacts.py",
                 "model_training.py",
                 "model_protocol.py",
+                "contracts.py",
+                "outcomes.py",
             ):
                 shutil.copy2(
                     ROOT / "src/fmp/market_learning" / name,
                     market / name,
                 )
+
+            models = root / "src/fmp/models"
+            models.mkdir(parents=True)
+            shutil.copy2(
+                ROOT / "src/fmp/models/preprocessing.py",
+                models / "preprocessing.py",
+            )
+            features = root / "src/fmp/features"
+            features.mkdir(parents=True)
+            shutil.copy2(
+                ROOT / "src/fmp/features/schema.py",
+                features / "schema.py",
+            )
+            requirements = root / "requirements"
+            requirements.mkdir()
+            shutil.copy2(
+                ROOT / "requirements/exp044-model-run.txt",
+                requirements / "exp044-model-run.txt",
+            )
+            shutil.copy2(
+                ROOT / "pyproject.toml",
+                root / "pyproject.toml",
+            )
 
             workflow = (
                 root
