@@ -54,7 +54,7 @@ def _minute_quotes(
     step: float | None = None,
     spread: float | None = None,
 ) -> pl.DataFrame:
-    return make_bars(
+    frame = make_bars(
         symbol=symbol,
         timeframe="5m",
         start=start,
@@ -62,15 +62,13 @@ def _minute_quotes(
         base=base,
         step=step,
         spread=spread,
-    ).with_columns(
+    )
+    timestamps = [start + timedelta(minutes=i) for i in range(count)]
+    return frame.with_columns(
+        pl.Series("timestamp_utc", timestamps),
         pl.lit("1m").alias("timeframe"),
         pl.lit(1).alias("source_minutes"),
         pl.lit(1).alias("expected_open_minutes"),
-    ).with_columns(
-        (
-            pl.col("timestamp_utc").first()
-            + pl.int_range(0, pl.len()) * pl.duration(minutes=1)
-        ).alias("timestamp_utc")
     )
 
 
