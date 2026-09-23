@@ -13,6 +13,8 @@ from fmp.market_learning.evidence import (
     EXPECTED_CELLS,
     EXPECTED_SOURCE_MANIFEST_SHA256,
     compile_feature_evidence,
+    load_feature_evidence_index,
+    write_feature_evidence,
 )
 
 
@@ -147,6 +149,36 @@ class MarketFeatureEvidenceTests(unittest.TestCase):
             self.assertFalse(source["new_acquisition_performed"])
             self.assertEqual(source["provider"], "Dukascopy")
             self.assertEqual(len(first["evidence_fingerprint"]), 64)
+
+    def test_persisted_evidence_round_trip_revalidates_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_complete_root(root)
+            evidence = compile_feature_evidence(
+                root=root,
+                expected_code_commit=CODE_COMMIT,
+            )
+            path = root / "feature-evidence.json"
+            write_feature_evidence(evidence=evidence, path=path)
+            loaded = load_feature_evidence_index(path)
+            self.assertEqual(loaded, evidence)
+
+    def test_persisted_evidence_fingerprint_tamper_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_complete_root(root)
+            evidence = compile_feature_evidence(
+                root=root,
+                expected_code_commit=CODE_COMMIT,
+            )
+            evidence["verified_cell_count"] = 8
+            path = root / "feature-evidence.json"
+            path.write_text(
+                json.dumps(evidence, sort_keys=True, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "fingerprint mismatch"):
+                load_feature_evidence_index(path)
 
     def test_missing_cell_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
