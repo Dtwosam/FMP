@@ -1052,3 +1052,19 @@ Copy this section for each serious experiment:
 
 - Merge status: PR #162 merged DEC-070 to `main` at `5e918a9a9ed7b9ab112d62993eee6f4e7672e186`. The exact final PR head `5a26f9c6cd38040871a841c8a17567b1785ff753` passed 1085 tests plus workflow-YAML validation and compile checks in run `35789729752`; unchanged Phase 3 acceptance run `35789729689` passed. Post-merge `main` runs `35789967258` and `35789967219` also passed; the merge-commit test run executed 1085 tests.
 - Follow-up: Phase 8B source/operator preparation is complete. No real readiness inspection, prospective segment, campaign close/review, acceptance result, or SHADOW_VALIDATED transition has been executed. The next meaningful milestone is explicit real prospective shadow evidence on the accepted MT5 DEMO bridge; Phase 9 execution remains hard-locked.
+
+
+### EXP-20260923-042 — Phase 8B prospective campaign progress preview
+
+- Date: 2026-09-23
+- Status: ACTIVE — SOURCE IMPLEMENTATION VERIFIED / NO REAL CAPTURE
+- Protocol decision: DEC-071 APPROVED BEFORE ANY PHASE 8B ACCEPTANCE RESULT
+- Purpose: provide a read-only in-campaign progress preview over clean DEC-052 prospective segments without creating closure/review/acceptance evidence.
+- Aggregation parity: reuses the exact DEC-053 segment loader, duplicate/overlap checks, continuous aggregate simulation, deterministic replay, observation bounds, London-date coverage, and strategy-family/pair representation logic.
+- Minimum parity: exact DEC-051 definitions for 8 elapsed weeks, 30 complete London dates, 40 completed 0.2-pip trades, 2 represented strategy families, and 2 represented pairs, including remaining amounts.
+- Closeability diagnostic: reports whether all 0.2/0.5/1.0 scenarios currently have zero open/pending decisions and whether aggregate replay matches.
+- Empty-campaign behavior: no clean closed segment returns PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS rather than protocol failure.
+- Persistence: stdout JSON only; no closure directory, campaign-evidence artifact, review, acceptance, lifecycle transition, or terminal marker.
+- Safety: all promotion/SHADOW_VALIDATED/Phase-9/order/broker/live/real-money authorization flags remain false.
+- Verification: exact source head `2252f8889683992cdacce0d6080363ec3b19772f` passed 1089 tests plus workflow-YAML validation and compile checks in run `35801819236`; unchanged Phase 3 acceptance run `35801819264` passed.
+- Follow-up: merge only after the exact final bookkeeping head remains green. Real prospective MT5 DEMO evidence remains the next operational milestone.
