@@ -1708,3 +1708,22 @@ The first manual-main attempt consumes the one-run slot whether it succeeds, fai
 
 DEC-109 does not dispatch the workflow. Promotion, prospective shadow, demo orders, broker mutation, live orders, real-money actions, and trading authorization remain false.
 
+## DEC-110 — Phase 8A EXP-046 single-step operator source
+
+**Date:** 2026-09-23
+**Status:** SOURCE-ONLY BEFORE ANY EXP-046 HISTORICAL MODEL RESULT
+
+DEC-110 freezes the clean-main, exact-origin, one-way EXP-046 operator that may perform the separate dispatch step already authorized by DEC-109.
+
+DEC-110 is built after DEC-109 merged at `f134ebeac12a0e7f6d085a7fdcec291999ff30d6`, while GitHub still reported zero manual-main `phase8a-exp046-stability-model-training` runs.
+
+The operator core is `src/fmp/market_learning/model_successor_stability_operator.py` at Git blob `c3fbe7591307592fe4e05cc783549524bddafad8`. The executable wrapper is `scripts/phase8a_exp046_operator.py` at blob `de942c5703dfddcc3b277387de98572bbe9bf562`.
+
+Only the missing-run state is dispatchable. It maps to exactly `gh workflow run phase8a-exp046-stability-model-training.yml --ref main -R Dtwosam/FMP`. Once a run exists, operator dispatch authorization is consumed.
+
+`advance --execute` runs the public `next` planner twice and requires the complete second plan plus reconstructed command to equal the first before submitting a dispatch. Any state drift aborts.
+
+Terminal runs fetch exact run/jobs/artifacts and are passed through DEC-108. Successful runs additionally download and revalidate the exact DEC-106 aggregate evidence.
+
+DEC-110 adds no alternate trigger, rerun/replacement command, protocol/model/runtime change, promotion, shadow/demo permission, broker mutation, live-order permission, real-money permission, or trading authorization. It does not dispatch EXP-046.
+
