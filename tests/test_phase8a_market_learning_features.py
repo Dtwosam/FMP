@@ -14,6 +14,7 @@ from tests.phase5_helpers import make_bars, sha256, write_dataset
 def _pair_fixture(root: Path) -> tuple[Path, Path]:
     source = root / "source"
     manifest = None
+    all_artifacts: dict[str, dict[str, object]] = {}
     monthly_by_timeframe = {
         "5m": {
             "2025-03": make_bars(
@@ -44,7 +45,23 @@ def _pair_fixture(root: Path) -> tuple[Path, Path]:
             timeframe=timeframe,
             monthly_frames=monthly,
         )
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+        all_artifacts.update(payload["artifacts"])
     assert manifest is not None
+    manifest.write_text(
+        json.dumps(
+            {
+                "manifest_version": 1,
+                "symbol": "EURUSD",
+                "schema_version": "fmp-canonical-1m-v1",
+                "artifacts": all_artifacts,
+            },
+            sort_keys=True,
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     return source, manifest
 
 
