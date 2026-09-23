@@ -1438,3 +1438,23 @@ DEC-094 closes model dispatch, authoritative result execution, model-protocol re
 The read-only operator machine-validates the exact run/job/failure/artifact inventory and reports `MODEL_RUN_FAILURE_REVIEWED`. EXP-044 V1 is closed with no authoritative aggregate model result.
 
 Consequences: any continued direct-market model research requires a separately predeclared successor experiment/protocol that explicitly acknowledges post-result adaptation and cannot describe the reused historical data as untouched OOS evidence.
+
+
+## DEC-095 — Phase 8A EXP-045 successor model protocol
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-045 MODEL RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp045-model-successor-protocol.md` opens `EXP-20260923-045` as a separately identified successor after DEC-094 closed EXP-044 V1.
+
+EXP-045 explicitly binds failed predecessor run `35891605645`, predecessor head SHA `e97fa03d0e94fd505d0f926eb730e01a41947880`, DEC-094 failure review, and the DEC-088 base protocol fingerprint `1caeec61c7b1a9a6863caafc4c3e85bc8cbcfd5f504f2f7473afe0d4b9c55605`. It is marked `prior_result_informed=true` and `untouched_oos=false`.
+
+The successor preserves the 18 direct-market cells, exact 48 feature inputs, `best_direction_0p5` target, chronology, confidence thresholds, financial gates, no-refit rule, and both frozen model-family configurations. Logistic regression remains `lbfgs` with `max_iter=2000`; no solver fallback, iteration increase, preprocessing change, or post-result tuning is authorized.
+
+DEC-095 predeclares the family-failure policy before any EXP-045 result. Each family is attempted once. If unchanged logistic regression emits `ConvergenceWarning` at its frozen limit, it is recorded as `FAILED_NON_CONVERGENCE` / `LBFGS_MAX_ITER_REACHED`; its three threshold variants remain present as `FAMILY_UNAVAILABLE` and ineligible, while the unchanged HGB family may continue. Any other family-fit failure remains fail-closed. If no family fits, the cell is `NO_MODEL_FAMILY_AVAILABLE`, distinct from a financial `NO_MODEL_CHALLENGER`.
+
+DEC-095 also predeclares evidence persistence learned from EXP-044: completed pair/timeframe result JSON must be preserved even if a later cell fails, hidden result files must be included, missing result files warn without masking the original computation failure, aggregate hidden files must be included, and authoritative aggregate evidence still requires all 18 complete cells.
+
+All result, fit, promotion, shadow, demo, broker, live, real-money, and trading authorizations remain false. DEC-095 creates no EXP-045 workflow and dispatches nothing.
+
+Consequences: EXP-044 V1 remains closed as failed negative evidence. EXP-045 is source-predeclared but has no model result. A later separate decision may implement the deterministic EXP-045 training core; another later decision must separately authorize any historical result-producing fit.

@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 DATA PREPARATION VERIFIED + MODEL PROTOCOL SOURCE FROZEN + DEC-094 FAILED MODEL RUN REVIEWED / V1 EXECUTION CLOSED; NO AUTHORITATIVE AGGREGATE MODEL RESULT
-**Next milestone:** Merge DEC-094 and verify the read-only operator reports `MODEL_RUN_FAILURE_REVIEWED` for run `35891605645`. Do not rerun or replace EXP-044 V1. Any continued direct-market model research requires a separately predeclared successor experiment/protocol; promotion, shadow/demo execution, broker mutation, live orders, and real-money trading remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED AFTER FAILED MODEL RUN + EXP-045 SUCCESSOR MODEL PROTOCOL SOURCE FROZEN; NO EXP-045 MODEL RESULT
+**Next milestone:** Merge DEC-095 source/tests. Then, in a separate decision, implement the deterministic EXP-045 training core against the exact successor protocol fingerprint. Do not fit EXP-045 yet; promotion, shadow/demo execution, broker mutation, live orders, and real-money trading remain locked.
 
 ## Current baseline
 
@@ -396,6 +396,7 @@ Current milestone:
 18. DEC-092 freezes a manual main-only no-input model-training workflow, fail-closed CLI, and operator stage `MODEL_RUN_WORKFLOW_SOURCE_FROZEN`. Dispatch/result/fit authorization remains false, so the workflow cannot progress beyond authorization preflight.
 19. DEC-093 authorizes exactly one guarded historical model-result run, adds a workflow-internal prior-run rejection guard, pins the numerical runtime, and freezes post-run aggregate evidence validation. No model run has been dispatched by this decision; promotion and all trading permissions remain false.
 20. DEC-094 reviews the executed run `35891605645` as terminal failure: five pair/timeframe computations completed but their hidden `.results` evidence was not persisted; four pair/timeframe jobs hard-failed because frozen logistic regression did not converge within `max_iter=2000`; aggregate evidence was skipped and zero artifacts persisted. The upload defect is repaired source-only, EXP-044 V1 execution is closed, and no rerun/replacement or parameter rescue is authorized.
+21. DEC-095 opens `EXP-20260923-045` as a post-result-informed retrospective successor. It keeps DEC-088 model configurations unchanged, predeclares logistic non-convergence as an ineligible family-level outcome, freezes evidence-persistence requirements, and keeps every result/fit/promotion/trading authorization false.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
@@ -436,5 +437,5 @@ Phase 8B must:
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows completed successfully. One guarded EXP-044 V1 model-training workflow, run `35891605645`, executed under DEC-093 and failed; DEC-094 reviews that failure, records zero persisted model artifacts and no aggregate model result, and closes V1 execution without rerun or replacement authorization. Every promotion/shadow/demo/broker/live/real-money path remains separately gated. No prospective shadow campaign has begun.
+Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows completed successfully. One guarded EXP-044 V1 model-training workflow, run `35891605645`, executed under DEC-093 and failed; DEC-094 reviews that failure, records zero persisted model artifacts and no aggregate model result, and closes V1 execution without rerun or replacement authorization. DEC-095 now freezes the source-only EXP-045 successor protocol before any EXP-045 result. Every result-producing fit, promotion/shadow/demo/broker/live/real-money path remains separately gated. No prospective shadow campaign has begun.
 
