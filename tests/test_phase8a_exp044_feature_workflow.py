@@ -15,10 +15,15 @@ class Exp044FeatureWorkflowTests(unittest.TestCase):
         self.assertIn('test "$GITHUB_REF" = "refs/heads/main"', text)
         self.assertIn("source-preflight:", text)
         self.assertIn("needs: source-preflight", text)
-        self.assertIn("scripts/phase8a_market_source_preflight.py", text)
-        self.assertIn("actions/artifacts/10325737935", text)
-        self.assertIn("actions/artifacts/10326096831", text)
-        self.assertIn("actions/artifacts/10327600628", text)
+        self.assertIn("scripts/phase8a_market_source_availability.py", text)
+        self.assertIn("source_mode:", text)
+        self.assertIn('report["source_mode"] in {"actions", "release"}', text)
+        self.assertIn("fmp-phase2-accepted-artifacts-v1", text)
+        self.assertIn('SOURCE_MODE: ${{ needs.source-preflight.outputs.source_mode }}', text)
+        self.assertIn("phase2-full-history-${SYMBOL}.zip", text)
+        self.assertIn("fetch_or_placeholder EURUSD 10325737935", text)
+        self.assertIn("fetch_or_placeholder GBPUSD 10326096831", text)
+        self.assertIn("fetch_or_placeholder USDJPY 10327600628", text)
         self.assertIn("--minimum-valid-hours 12", text)
         self.assertIn('report["source_ready"] is True', text)
 
@@ -49,13 +54,14 @@ class Exp044FeatureWorkflowTests(unittest.TestCase):
     def test_existing_accepted_phase2_identities_are_unchanged(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         expected = (
-            ("10325737935", "db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3"),
-            ("10326096831", "fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2"),
-            ("10327600628", "6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72"),
+            ("10325737935", "db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3", "182037581"),
+            ("10326096831", "fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2", "190706384"),
+            ("10327600628", "6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72", "160033414"),
         )
-        for artifact_id, digest in expected:
+        for artifact_id, digest, size in expected:
             self.assertIn(artifact_id, text)
             self.assertIn(digest, text)
+            self.assertIn(size, text)
         self.assertIn("scripts/phase8a_market_feature_pair.py", text)
         self.assertIn("scripts/phase8a_market_feature_evidence.py", text)
 

@@ -8,6 +8,9 @@ from fmp.market_learning.source_preservation import (
     PRESERVATION_VERSION,
     build_preservation_manifest,
     release_asset_name,
+    select_preservation_manifest_asset,
+    validate_preservation_manifest,
+    validate_published_release_metadata,
     validate_release_metadata,
 )
 
@@ -79,6 +82,72 @@ class Phase2SourcePreservationTests(unittest.TestCase):
             "real_money_authorized",
         ):
             self.assertFalse(manifest[flag])
+
+    def test_preservation_manifest_validator_rejects_identity_drift(self) -> None:
+        manifest = build_preservation_manifest(code_commit=COMMIT)
+        result = validate_preservation_manifest(manifest)
+        self.assertTrue(result["preservation_manifest_verified"])
+        self.assertEqual(result["preservation_code_commit"], COMMIT)
+
+        tampered = dict(manifest)
+        tampered["assets"] = [dict(row) for row in manifest["assets"]]
+        tampered["assets"][0]["zip_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "EURUSD identity mismatch"):
+            validate_preservation_manifest(tampered)
+
+    def test_preservation_manifest_asset_selection_requires_exact_uploaded_asset(self) -> None:
+        manifest = build_preservation_manifest(code_commit=COMMIT)
+        release = _release(manifest)
+        for index, asset in enumerate(release["assets"], start=100):
+            asset["id"] = index
+        selected = select_preservation_manifest_asset(release)
+        self.assertEqual(selected["asset_id"], 103)
+        self.assertEqual(selected["name"], "phase2-preservation-manifest.json")
+
+        release["assets"][-1]["state"] = "starter"
+        with self.assertRaisesRegex(ValueError, "not uploaded"):
+            select_preservation_manifest_asset(release)
+
+    def test_published_release_verification_returns_exact_download_ids(self) -> None:
+        manifest = build_preservation_manifest(code_commit=COMMIT)
+        release = _release(manifest)
+        release["draft"] = False
+        for index, asset in enumerate(release["assets"], start=100):
+            asset["id"] = index
+        result = validate_published_release_metadata(
+            release=release,
+            manifest=manifest,
+        )
+        self.assertTrue(result["published_release_verified"])
+        self.assertEqual(result["verified_zip_asset_count"], 3)
+        self.assertEqual(
+            [row["symbol"] for row in result["assets"]],
+            ["EURUSD", "GBPUSD", "USDJPY"],
+        )
+        self.assertEqual(
+            [row["asset_id"] for row in result["assets"]],
+            [100, 101, 102],
+        )
+        self.assertEqual(result["manifest_asset_id"], 103)
+
+    def test_published_release_rejects_tampered_or_draft_assets(self) -> None:
+        manifest = build_preservation_manifest(code_commit=COMMIT)
+        release = _release(manifest)
+        for index, asset in enumerate(release["assets"], start=100):
+            asset["id"] = index
+        with self.assertRaisesRegex(ValueError, "must not be draft"):
+            validate_published_release_metadata(
+                release=release,
+                manifest=manifest,
+            )
+
+        release["draft"] = False
+        release["assets"][1]["digest"] = "sha256:" + "0" * 64
+        with self.assertRaisesRegex(ValueError, "digest mismatch"):
+            validate_published_release_metadata(
+                release=release,
+                manifest=manifest,
+            )
 
     def test_release_verification_accepts_exact_uploaded_assets(self) -> None:
         manifest = build_preservation_manifest(code_commit=COMMIT)

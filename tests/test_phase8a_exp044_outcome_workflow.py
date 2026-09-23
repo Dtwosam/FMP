@@ -24,7 +24,12 @@ class Exp044OutcomeWorkflowTests(unittest.TestCase):
         self.assertIn('run["conclusion"] == "success"', text)
         self.assertIn("source-preflight:", text)
         self.assertIn("needs: [validate-feature-run, source-preflight]", text)
-        self.assertIn("scripts/phase8a_market_source_preflight.py", text)
+        self.assertIn("scripts/phase8a_market_source_availability.py", text)
+        self.assertIn("source_mode:", text)
+        self.assertIn('report["source_mode"] in {"actions", "release"}', text)
+        self.assertIn("fmp-phase2-accepted-artifacts-v1", text)
+        self.assertIn('SOURCE_MODE: ${{ needs.source-preflight.outputs.source_mode }}', text)
+        self.assertIn("phase2-full-history-${SYMBOL}.zip", text)
         self.assertIn("--minimum-valid-hours 12", text)
         self.assertIn('report["source_ready"] is True', text)
 
@@ -49,6 +54,9 @@ class Exp044OutcomeWorkflowTests(unittest.TestCase):
         self.assertIn("fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2", text)
         self.assertIn("10327600628", text)
         self.assertIn("6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72", text)
+        self.assertIn("160033414", text)
+        self.assertIn("190706384", text)
+        self.assertIn("182037581", text)
         self.assertIn("scripts/phase8a_market_outcome_pair.py", text)
         self.assertIn("scripts/phase8a_market_outcome_evidence.py", text)
 
