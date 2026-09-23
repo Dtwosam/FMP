@@ -1625,3 +1625,20 @@ The protocol source is `src/fmp/market_learning/model_successor_stability_protoc
 
 DEC-104 authorizes no fit, historical result execution, workflow, model-family/config rescue, threshold/floor change, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision must implement the deterministic stability-aware training core before any result-producing execution can be considered.
 
+## DEC-105 — Phase 8A EXP-046 temporal-stability training core
+
+**Date:** 2026-09-23
+**Status:** SOURCE-ONLY; NO EXP-046 HISTORICAL RESULT AUTHORIZED
+
+DEC-105 implements the deterministic in-memory training/evaluation core for the DEC-104 EXP-046 temporal-stability protocol.
+
+It binds the DEC-104 merge commit `bb2ee82a7d081138e1c0847e8c406d6c3ac68589`, DEC-104 protocol blob `4c8da2259f1fd6d27862a50a47a0d8108b58bc2e`, and the DEC-096 predecessor training-core blob `3f0bc1bfa9640d08175e72cdf131bb97c94d562c`.
+
+The core preserves the exact predecessor fit/scoring mechanics and scores the full 2021-2022 selection split once per fitted family. Only variants that pass the unchanged aggregate selection gate are evaluated in the four DEC-104 half-year stability windows. Each window slices the already-produced selection probabilities at exact chronological row indices, requires at least 10% of the full-selection directional candidates plus positive financial signs, and all four windows must pass. The aggregate 250-candidate floor is not reapplied per window.
+
+Only variants passing both the aggregate gate and all stability windows enter the unchanged predecessor tie-break. Validation and retrospective holdout remain unchanged and no refit is allowed.
+
+The source is `src/fmp/market_learning/model_successor_stability_training.py` at Git blob `6733d3c530fba944b9ea0c62783ed2110552e532`.
+
+DEC-105 remains source-only. Authoritative result execution, model-fit authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
+
