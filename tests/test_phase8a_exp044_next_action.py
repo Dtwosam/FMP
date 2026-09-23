@@ -17,7 +17,9 @@ class Exp044NextActionScriptTests(unittest.TestCase):
         self.assertIn("OUTCOME_REPLACEMENT_DISPATCH_REQUIRED", text)
         self.assertIn("MODEL_PROTOCOL_SOURCE_OPEN", text)
         self.assertIn("MODEL_PROTOCOL_FROZEN", text)
-        self.assertIn("MODEL_RUN_WORKFLOW_SOURCE_FROZEN", text)
+        self.assertIn("MODEL_RUN_EXECUTION_CLOSED", text)
+        self.assertIn("MODEL_RUN_FAILURE_REVIEWED", text)
+        self.assertIn("validate_reviewed_failed_model_run", text)
         self.assertIn("build_model_workflow_source_gate", text)
         self.assertIn("build_model_run_source_gate", text)
 
