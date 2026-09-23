@@ -69,8 +69,10 @@ from .source_preflight import (
 from .outcomes import (
     MARKET_OUTCOME_SET_VERSION,
     OUTCOME_COLUMNS,
+    OUTCOME_FEATURE_IDENTITY_COLUMNS,
     MarketOutcomeGridBuild,
     build_market_outcome_grid,
+    build_market_outcome_grid_from_identity,
     write_market_outcome_artifacts,
 )
 
@@ -94,6 +96,7 @@ __all__ = [
     "MarketOutcomeGridBuild",
     "MARKET_OUTCOME_SET_VERSION",
     "OUTCOME_COLUMNS",
+    "OUTCOME_FEATURE_IDENTITY_COLUMNS",
     "OUTCOME_WORKFLOW_NAME",
     "OUTCOME_WORKFLOW_PATH",
     "PHASE2_SOURCE_HEAD_SHA",
@@ -105,6 +108,7 @@ __all__ = [
     "build_execution_status",
     "build_market_feature_frame",
     "build_market_outcome_grid",
+    "build_market_outcome_grid_from_identity",
     "build_training_readiness",
     "compile_execution_status",
     "compile_outcome_evidence",
