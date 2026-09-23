@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import asdict
 import hashlib
 import json
 from types import MappingProxyType
@@ -115,6 +114,17 @@ def validate_base_protocol_identity() -> None:
         )
 
 
+def _split_payload(split: object) -> dict[str, object]:
+    name = getattr(split, "name")
+    start = getattr(split, "start")
+    end_exclusive = getattr(split, "end_exclusive")
+    return {
+        "name": str(name),
+        "start": start.isoformat(),
+        "end_exclusive": end_exclusive.isoformat(),
+    }
+
+
 def successor_protocol_payload() -> dict[str, object]:
     validate_base_protocol_identity()
     return {
@@ -146,11 +156,14 @@ def successor_protocol_payload() -> dict[str, object]:
             "classes": list(TARGET_CLASSES),
         },
         "chronology": {
-            "splits": [asdict(split) for split in PROTOCOL_SPLITS],
-            "fit_split": asdict(FIT_SPLIT),
-            "selection_split": asdict(SELECTION_SPLIT),
-            "validation_split": asdict(VALIDATION_SPLIT),
-            "retrospective_holdout_split": asdict(
+            "splits": [
+                _split_payload(split)
+                for split in PROTOCOL_SPLITS
+            ],
+            "fit_split": _split_payload(FIT_SPLIT),
+            "selection_split": _split_payload(SELECTION_SPLIT),
+            "validation_split": _split_payload(VALIDATION_SPLIT),
+            "retrospective_holdout_split": _split_payload(
                 RETROSPECTIVE_HOLDOUT_SPLIT
             ),
             "no_refit_after_fit": True,
