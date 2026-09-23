@@ -1214,3 +1214,17 @@ The helper requires an authenticated GitHub CLI, a clean local `main` exactly ma
 Actual dispatch requires an explicit `--execute` flag. Successful submission claims no research result and creates no model/trading authorization.
 
 DEC-081 does not change either workflow trigger and does not bypass the manual gate.
+
+
+## DEC-082 — Phase 8A EXP-044 Phase 2 release preservation
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-phase2-release-preservation.md` adds a manual merged-main workflow that preserves the exact already accepted Phase 2 Actions ZIP bytes as GitHub release assets before the original Actions artifacts expire.
+
+The workflow re-verifies the original artifact IDs, exact ZIP byte sizes, ZIP SHA-256 identities, and embedded processed-manifest SHA-256 identities before creating a draft release. The uploaded release ZIP assets must expose the same frozen sizes and SHA-256 digests before the release may be published.
+
+The frozen release tag is `fmp-phase2-accepted-artifacts-v1`. No asset replacement is permitted and no new Dukascopy acquisition occurs.
+
+DEC-081 is extended with a dry-run-by-default `preserve-phase2` operator command. DEC-082 creates no research result, no new accepted dataset, and no model/trading authorization.
