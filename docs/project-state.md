@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 SAFE LAUNCH + SOURCE PRESERVATION + FULL READINESS INSPECTION SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** From a clean checkout of merged `main`, use the DEC-084 preservation command to preserve the exact accepted Phase 2 ZIP bytes before their Actions copies expire, then dispatch `phase8a-exp044-market-features` using the DEC-081/082 helper. Dispatch outcomes only after exact feature evidence is verified, then use DEC-083 to inspect the full readiness chain. Only a recomputed `MODEL_PROTOCOL_SOURCE_OPEN` state may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Phase status:** ACTIVE — EXP-044 SAFE LAUNCH + SOURCE PRESERVATION/FALLBACK + FULL READINESS INSPECTION SOURCE-ONLY; NO MODEL-TRAINING RESULT
+**Next milestone:** From a clean checkout of merged `main`, run DEC-084 preservation while the original Phase 2 Actions artifacts are healthy, then dispatch `phase8a-exp044-market-features`. DEC-085 makes feature/outcome execution prefer the complete original Actions bundle and fall back only to the complete exact-byte preservation release when required; mixed sources are forbidden. Dispatch outcomes only after exact feature evidence is verified, then use DEC-083 to inspect the full readiness chain. Only a recomputed `MODEL_PROTOCOL_SOURCE_OPEN` state may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 
