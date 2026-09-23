@@ -39,6 +39,7 @@ from .campaign_close import (
     PHASE8B_CAMPAIGN_CLOSE_MANIFEST_PROTOCOL,
     PHASE8B_CAMPAIGN_EVIDENCE_SNAPSHOT_READY,
     close_phase8b_campaign_directory,
+    preview_phase8b_campaign_progress_directory,
 )
 from .campaign_start import (
     PHASE8B_CAMPAIGN_START_ARTIFACT_PROTOCOL,
@@ -196,6 +197,7 @@ __all__ = [
     "build_phase8b_spread_reference",
     "compile_phase8b_acceptance",
     "close_phase8b_campaign_directory",
+    "preview_phase8b_campaign_progress_directory",
     "capture_phase8b_prospective_segment",
     "build_phase8b_capture_preflight",
     "build_phase8b_design",

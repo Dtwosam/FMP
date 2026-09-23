@@ -13,7 +13,10 @@ from .bridge import (
     Phase8BBridgeFileTail,
     discover_phase8b_bridge_files,
 )
-from .campaign_close import close_phase8b_campaign_directory
+from .campaign_close import (
+    close_phase8b_campaign_directory,
+    preview_phase8b_campaign_progress_directory,
+)
 from .campaign_start import (
     build_phase8b_campaign_start_authorization,
     write_phase8b_campaign_start_authorization,
@@ -157,6 +160,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="inspect current Phase 8B prospective-capture readiness without starting capture",
     )
     readiness.add_argument(
+        "--campaign-dir",
+        required=True,
+        type=Path,
+    )
+
+    progress = subparsers.add_parser(
+        "progress",
+        help="preview current Phase 8B evidence progress without creating closure evidence",
+    )
+    progress.add_argument(
         "--campaign-dir",
         required=True,
         type=Path,
@@ -554,6 +567,21 @@ def main(
                     "prospective_segment_closed": True,
                     "acceptance_authorized": False,
                 },
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+            )
+        )
+        return 0
+
+    if args.command == "progress":
+        result = preview_phase8b_campaign_progress_directory(
+            campaign_dir=args.campaign_dir,
+            code_commit=code_commit_resolver(),
+        )
+        print(
+            json.dumps(
+                result,
                 sort_keys=True,
                 separators=(",", ":"),
                 ensure_ascii=False,

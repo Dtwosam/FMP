@@ -197,7 +197,26 @@ Important continuity rules:
 A quiet market with healthy bridge heartbeats is distinct from a dead bridge.
 The frozen runtime handles that distinction.
 
-## 10. Close a campaign evidence snapshot
+## 10. Inspect campaign progress without closing
+
+After one or more clean segments, you may inspect current evidence progress
+without creating a closure:
+
+```bash
+python scripts/phase8b_shadow.py progress \
+  --campaign-dir evidence/phase8b/campaign
+```
+
+The progress command reuses the exact campaign-close aggregation kernel but
+writes no closure, review, acceptance, or terminal artifact. It reports current
+elapsed weeks, complete London dates, completed 0.2-pip trades, represented
+strategy families/pairs, remaining DEC-051 minimums, replay status, and whether
+the current aggregate is closeable.
+
+Meeting all minimums in this preview is not Phase 8B PASS. Formal close and
+review remain mandatory.
+
+## 11. Close a campaign evidence snapshot
 
 After one or more clean segments:
 
@@ -210,7 +229,7 @@ The command prints a `closure_id`. Closing creates an immutable aggregate
 snapshot; it does not permanently stop further capture when the eventual review
 returns NEED_MORE_DATA.
 
-## 11. Review the closure
+## 12. Review the closure
 
 ```bash
 python scripts/phase8b_shadow.py review-campaign \
@@ -236,7 +255,7 @@ that new closure. Do not relax thresholds.
 A terminal PASS creates the exact SHADOW_VALIDATED evidence needed for Phase 9
 design eligibility.
 
-## 12. What Phase 8B never authorizes
+## 13. What Phase 8B never authorizes
 
 Even a Phase 8B PASS does **not** authorize:
 
@@ -250,7 +269,7 @@ Even a Phase 8B PASS does **not** authorize:
 It only permits the separately gated Phase 9 demo-design/evidence chain already
 implemented in the repository.
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 If bridge discovery fails:
 

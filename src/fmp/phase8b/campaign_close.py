@@ -13,6 +13,11 @@ from typing import Mapping, Sequence
 from zoneinfo import ZoneInfo
 
 from .acceptance import (
+    MIN_COMPLETE_LONDON_DATES,
+    MIN_COMPLETED_TRADES,
+    MIN_ELAPSED_WEEKS,
+    MIN_REPRESENTED_FAMILIES,
+    MIN_REPRESENTED_PAIRS,
     PHASE8B_ACCEPTANCE_CONTRACT_DECISION,
     PHASE8B_CAMPAIGN_EVIDENCE_PROTOCOL,
     validate_phase8b_campaign_evidence,
@@ -1074,6 +1079,211 @@ def _campaign_evidence(
     return evidence
 
 
+PHASE8B_CAMPAIGN_PROGRESS_PROTOCOL = "fmp-phase8b-campaign-progress-v1"
+PHASE8B_CAMPAIGN_PROGRESS_DECISION = "DEC-071"
+PHASE8B_CAMPAIGN_PROGRESS_EXPERIMENT_ID = "EXP-20260923-042"
+PHASE8B_CAMPAIGN_PROGRESS_AVAILABLE = "PHASE8B_CAMPAIGN_PROGRESS_AVAILABLE"
+PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS = "PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS"
+
+
+def _remaining(required: float, current: float) -> float:
+    return max(0.0, required - current)
+
+
+def preview_phase8b_campaign_progress_directory(
+    *,
+    campaign_dir: Path,
+    code_commit: str,
+) -> dict[str, object]:
+    root = Path(campaign_dir)
+    preflight = _load_json(
+        root / "capture-preflight.json",
+        label="Phase 8B capture preflight",
+    )
+    validate_phase8b_capture_preflight(preflight)
+    commit = _validate_commit(
+        code_commit,
+        field="Phase 8B campaign-progress code commit",
+    )
+
+    try:
+        bundles, unclosed_count = _load_bundles(root, preflight=preflight)
+    except ValueError as exc:
+        if str(exc) not in {
+            "Phase 8B campaign has no segment directory",
+            "Phase 8B campaign has no closed prospective segments",
+        }:
+            raise
+        return {
+            "protocol": PHASE8B_CAMPAIGN_PROGRESS_PROTOCOL,
+            "decision": PHASE8B_CAMPAIGN_PROGRESS_DECISION,
+            "experiment_id": PHASE8B_CAMPAIGN_PROGRESS_EXPERIMENT_ID,
+            "outcome": PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS,
+            "campaign_progress_code_commit": commit,
+            "capture_preflight_fingerprint": preflight[
+                "capture_preflight_fingerprint"
+            ],
+            "champion_set_fingerprint": preflight[
+                "champion_set_fingerprint"
+            ],
+            "eligible_closed_segment_count": 0,
+            "unclosed_segment_directory_count": 0,
+            "minimum_evidence": {
+                "elapsed_weeks": 0.0,
+                "elapsed_weeks_required": MIN_ELAPSED_WEEKS,
+                "elapsed_weeks_pass": False,
+                "elapsed_weeks_remaining": float(MIN_ELAPSED_WEEKS),
+                "complete_london_dates": 0,
+                "complete_london_dates_required": MIN_COMPLETE_LONDON_DATES,
+                "complete_london_dates_pass": False,
+                "complete_london_dates_remaining": MIN_COMPLETE_LONDON_DATES,
+                "completed_trade_count_0_2": 0,
+                "completed_trade_count_required": MIN_COMPLETED_TRADES,
+                "completed_trade_count_pass": False,
+                "completed_trade_count_remaining": MIN_COMPLETED_TRADES,
+                "represented_strategy_family_count": 0,
+                "represented_strategy_family_count_required": MIN_REPRESENTED_FAMILIES,
+                "represented_strategy_family_count_pass": False,
+                "represented_strategy_family_count_remaining": MIN_REPRESENTED_FAMILIES,
+                "represented_pair_count": 0,
+                "represented_pair_count_required": MIN_REPRESENTED_PAIRS,
+                "represented_pair_count_pass": False,
+                "represented_pair_count_remaining": MIN_REPRESENTED_PAIRS,
+                "all_minimums_pass": False,
+            },
+            "currently_closeable": False,
+            "aggregate_replay_match": None,
+            "acceptance_authorized": False,
+            "promotion_authorized": False,
+            "shadow_validation_authorized": False,
+            "demo_order_authorized": False,
+            "live_order_authorized": False,
+            "broker_mutation_authorized": False,
+            "real_money_authorized": False,
+            "phase9_authorized": False,
+        }
+
+    aggregate, quotes = _compile_aggregate_segment(
+        preflight=preflight,
+        bundles=bundles,
+        code_commit=commit,
+    )
+    replay = _build_replay(
+        expected_segment=aggregate,
+        preflight=preflight,
+        bundles=bundles,
+    )
+    replay_match = replay.get("match") is True
+
+    first, last = _received_bounds(bundles)
+    denominator = _denominator_dates(first, last)
+    complete = _complete_dates(denominator, _segment_intervals(bundles))
+    elapsed_weeks = (last - first).total_seconds() / (7 * 24 * 60 * 60)
+
+    scenarios = aggregate.get("scenarios")
+    if not isinstance(scenarios, Mapping):
+        raise ValueError("Phase 8B campaign-progress scenarios are malformed")
+    baseline = scenarios.get("0.2")
+    if not isinstance(baseline, Mapping):
+        raise ValueError("Phase 8B campaign-progress baseline is malformed")
+    completed = baseline.get("completed_trades")
+    if not isinstance(completed, list):
+        raise ValueError("Phase 8B campaign-progress completed trades malformed")
+    families, pairs = _representation(aggregate)
+
+    closeable = replay_match
+    for key in ("0.2", "0.5", "1.0"):
+        row = scenarios.get(key)
+        if not isinstance(row, Mapping):
+            raise ValueError(
+                f"Phase 8B campaign-progress scenario {key} is malformed"
+            )
+        open_ids = row.get("open_decision_ids")
+        pending_ids = row.get("pending_decision_ids")
+        if not isinstance(open_ids, list) or not isinstance(pending_ids, list):
+            raise ValueError(
+                f"Phase 8B campaign-progress scenario {key} terminal state malformed"
+            )
+        if open_ids or pending_ids:
+            closeable = False
+
+    minimums = {
+        "elapsed_weeks": elapsed_weeks,
+        "elapsed_weeks_required": MIN_ELAPSED_WEEKS,
+        "elapsed_weeks_pass": elapsed_weeks >= MIN_ELAPSED_WEEKS,
+        "elapsed_weeks_remaining": _remaining(
+            float(MIN_ELAPSED_WEEKS), elapsed_weeks
+        ),
+        "complete_london_dates": len(complete),
+        "complete_london_dates_required": MIN_COMPLETE_LONDON_DATES,
+        "complete_london_dates_pass": len(complete)
+        >= MIN_COMPLETE_LONDON_DATES,
+        "complete_london_dates_remaining": max(
+            0, MIN_COMPLETE_LONDON_DATES - len(complete)
+        ),
+        "completed_trade_count_0_2": len(completed),
+        "completed_trade_count_required": MIN_COMPLETED_TRADES,
+        "completed_trade_count_pass": len(completed) >= MIN_COMPLETED_TRADES,
+        "completed_trade_count_remaining": max(
+            0, MIN_COMPLETED_TRADES - len(completed)
+        ),
+        "represented_strategy_family_count": len(families),
+        "represented_strategy_family_count_required": MIN_REPRESENTED_FAMILIES,
+        "represented_strategy_family_count_pass": len(families)
+        >= MIN_REPRESENTED_FAMILIES,
+        "represented_strategy_family_count_remaining": max(
+            0, MIN_REPRESENTED_FAMILIES - len(families)
+        ),
+        "represented_pair_count": len(pairs),
+        "represented_pair_count_required": MIN_REPRESENTED_PAIRS,
+        "represented_pair_count_pass": len(pairs) >= MIN_REPRESENTED_PAIRS,
+        "represented_pair_count_remaining": max(
+            0, MIN_REPRESENTED_PAIRS - len(pairs)
+        ),
+    }
+    minimums["all_minimums_pass"] = all(
+        minimums[field] is True
+        for field in (
+            "elapsed_weeks_pass",
+            "complete_london_dates_pass",
+            "completed_trade_count_pass",
+            "represented_strategy_family_count_pass",
+            "represented_pair_count_pass",
+        )
+    )
+
+    return {
+        "protocol": PHASE8B_CAMPAIGN_PROGRESS_PROTOCOL,
+        "decision": PHASE8B_CAMPAIGN_PROGRESS_DECISION,
+        "experiment_id": PHASE8B_CAMPAIGN_PROGRESS_EXPERIMENT_ID,
+        "outcome": PHASE8B_CAMPAIGN_PROGRESS_AVAILABLE,
+        "campaign_progress_code_commit": commit,
+        "capture_preflight_fingerprint": preflight[
+            "capture_preflight_fingerprint"
+        ],
+        "champion_set_fingerprint": preflight["champion_set_fingerprint"],
+        "eligible_closed_segment_count": len(bundles),
+        "unclosed_segment_directory_count": unclosed_count,
+        "first_observation_utc": _utc_string(first),
+        "last_observation_utc": _utc_string(last),
+        "denominator_london_date_count": len(denominator),
+        "complete_london_date_count": len(complete),
+        "represented_strategy_families": families,
+        "represented_pairs": pairs,
+        "minimum_evidence": minimums,
+        "currently_closeable": closeable,
+        "aggregate_replay_match": replay_match,
+        "acceptance_authorized": False,
+        "promotion_authorized": False,
+        "shadow_validation_authorized": False,
+        "demo_order_authorized": False,
+        "live_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "real_money_authorized": False,
+        "phase9_authorized": False,
+    }
+
+
 def close_phase8b_campaign_directory(
     *,
     campaign_dir: Path,
@@ -1186,5 +1396,11 @@ __all__ = [
     "PHASE8B_CAMPAIGN_CLOSE_EXPERIMENT_ID",
     "PHASE8B_CAMPAIGN_CLOSE_MANIFEST_PROTOCOL",
     "PHASE8B_CAMPAIGN_EVIDENCE_SNAPSHOT_READY",
+    "PHASE8B_CAMPAIGN_PROGRESS_AVAILABLE",
+    "PHASE8B_CAMPAIGN_PROGRESS_DECISION",
+    "PHASE8B_CAMPAIGN_PROGRESS_EXPERIMENT_ID",
+    "PHASE8B_CAMPAIGN_PROGRESS_PROTOCOL",
+    "PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS",
     "close_phase8b_campaign_directory",
+    "preview_phase8b_campaign_progress_directory",
 ]

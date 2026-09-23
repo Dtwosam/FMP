@@ -373,10 +373,10 @@ Implementation progress:
 Current milestone:
 
 1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-070 are merged and verified on `main`;
-2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 design/preflight/session/arm/runtime-authority/launch-preflight/permit/campaign-acceptance/authorization-packet/approval/activation artifact, demo order, or broker mutation has been executed;
-3. PR #162 merged DEC-070 / `EXP-20260922-041` to `main` at `5e918a9a9ed7b9ab112d62993eee6f4e7672e186`; the exact final PR head `5a26f9c6cd38040871a841c8a17567b1785ff753` passed 1085 tests plus YAML/compile in run `35789729752` and unchanged Phase 3 acceptance run `35789729689` passed; post-merge `main` runs `35789967258` and `35789967219` passed, with 1085 tests on the merge commit;
-4. DEC-070 completes the source-side Phase 8B operator preparation path: the read-only readiness audit verifies the exact frozen campaign/artifact chain and current required-symbol bridge identities without consuming post-EOF market records or writing authorization evidence, and the operator handoff now reflects the current multi-strategy/multi-pair Phase 8B workflow;
-5. repository `DEMO_EXECUTION_SOURCE_ARMED=false`; the next meaningful milestone is real-world prospective evidence: explicitly prepare the accepted MT5 DEMO bridge/campaign, run bounded Phase 8B capture segments, close/review evidence, and obtain SHADOW_VALIDATED before materializing the real Phase 9 chain. Demo execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
+2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 artifact chain, demo order, or broker mutation has been executed;
+3. DEC-071 / `EXP-20260923-042` is implemented on PR #163 head `2252f8889683992cdacce0d6080363ec3b19772f`: read-only progress preview over the exact DEC-053 aggregation kernel with exact DEC-051 minimum/remaining counts and closeability diagnostics; run `35801819236` passed 1089 tests plus YAML/compile and unchanged Phase 3 acceptance run `35801819264` passed;
+4. progress must write no closure/review/acceptance/terminal artifact and cannot authorize promotion or Phase 9;
+5. real prospective Phase 8B evidence remains the next operational milestone; demo/live/real-money execution remains locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
