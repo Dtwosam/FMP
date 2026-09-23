@@ -189,6 +189,134 @@ def compile_training_readiness(
     )
 
 
+
+def _validate_sha256(value: object, *, field: str) -> str:
+    if not isinstance(value, str) or len(value) != 64:
+        raise ValueError(f"{field} must be a 64-character sha256")
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError(f"{field} must be hexadecimal") from exc
+    return value
+
+
+def _validate_commit(value: object, *, field: str) -> str:
+    if not isinstance(value, str) or len(value) != 40:
+        raise ValueError(f"{field} must be a 40-character Git commit")
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError(f"{field} must be hexadecimal") from exc
+    return value
+
+
+def load_training_readiness(path: Path) -> Mapping[str, object]:
+    try:
+        raw = Path(path).read_bytes()
+        value = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read EXP-044 training readiness: {path}") from exc
+    if not isinstance(value, dict):
+        raise ValueError("EXP-044 training readiness root must be an object")
+
+    fingerprint = _validate_sha256(
+        value.get("readiness_fingerprint"),
+        field="EXP-044 readiness fingerprint",
+    )
+    unsigned = dict(value)
+    unsigned.pop("readiness_fingerprint", None)
+    if _sha256(_canonical_json(unsigned)) != fingerprint:
+        raise ValueError("EXP-044 readiness fingerprint mismatch")
+
+    if value.get("readiness_version") != READINESS_VERSION:
+        raise ValueError("EXP-044 readiness version mismatch")
+    if value.get("experiment_id") != EXPERIMENT_ID:
+        raise ValueError("EXP-044 readiness experiment identity mismatch")
+    if value.get("feature_set_version") != MARKET_FEATURE_SET_VERSION:
+        raise ValueError("EXP-044 readiness feature-set identity mismatch")
+    if value.get("outcome_set_version") != MARKET_OUTCOME_SET_VERSION:
+        raise ValueError("EXP-044 readiness outcome-set identity mismatch")
+    if value.get("evidence_label") != EVIDENCE_LABEL:
+        raise ValueError("EXP-044 readiness evidence label mismatch")
+    _validate_sha256(
+        value.get("feature_evidence_fingerprint"),
+        field="EXP-044 readiness feature evidence fingerprint",
+    )
+    _validate_sha256(
+        value.get("outcome_evidence_fingerprint"),
+        field="EXP-044 readiness outcome evidence fingerprint",
+    )
+    _validate_commit(
+        value.get("feature_code_commit"),
+        field="EXP-044 readiness feature code commit",
+    )
+    _validate_commit(
+        value.get("outcome_code_commit"),
+        field="EXP-044 readiness outcome code commit",
+    )
+
+    if value.get("verified_cell_count") != len(EXPECTED_CELLS):
+        raise ValueError("EXP-044 readiness verified cell count mismatch")
+    if value.get("data_preparation_complete") is not True:
+        raise ValueError("EXP-044 readiness data preparation is not complete")
+    if value.get("model_protocol_source_open_authorized") is not True:
+        raise ValueError("EXP-044 readiness must authorize protocol source only")
+
+    for flag in (
+        "model_protocol_result_authorized",
+        "model_fit_authorized",
+        "promotion_authorized",
+        "shadow_authorized",
+        "demo_order_authorized",
+        "broker_mutation_authorized",
+        "live_order_authorized",
+        "real_money_authorized",
+    ):
+        if value.get(flag) is not False:
+            raise ValueError(f"EXP-044 readiness {flag} must remain false")
+
+    cells = value.get("cells")
+    if not isinstance(cells, list) or len(cells) != len(EXPECTED_CELLS):
+        raise ValueError("EXP-044 readiness cells are incomplete")
+    seen: list[tuple[str, str]] = []
+    for cell in cells:
+        if not isinstance(cell, Mapping):
+            raise ValueError("EXP-044 readiness cell must be an object")
+        identity = (cell.get("symbol"), cell.get("timeframe"))
+        if identity not in EXPECTED_CELLS:
+            raise ValueError(f"unexpected EXP-044 readiness cell: {identity!r}")
+        seen.append(identity)
+        _validate_sha256(
+            cell.get("feature_manifest_sha256"),
+            field="EXP-044 readiness feature manifest sha256",
+        )
+        _validate_sha256(
+            cell.get("processed_manifest_sha256"),
+            field="EXP-044 readiness Phase 2 manifest sha256",
+        )
+        _validate_sha256(
+            cell.get("outcome_manifest_sha256"),
+            field="EXP-044 readiness outcome manifest sha256",
+        )
+        feature_rows = cell.get("feature_row_count")
+        outcome_rows = cell.get("labeled_outcome_rows")
+        if (
+            not isinstance(feature_rows, int)
+            or isinstance(feature_rows, bool)
+            or feature_rows <= 0
+        ):
+            raise ValueError("EXP-044 readiness feature row count is invalid")
+        if (
+            not isinstance(outcome_rows, int)
+            or isinstance(outcome_rows, bool)
+            or outcome_rows <= 0
+        ):
+            raise ValueError("EXP-044 readiness outcome row count is invalid")
+    if tuple(seen) != EXPECTED_CELLS:
+        raise ValueError("EXP-044 readiness cells are not exact and sorted")
+    return value
+
+
 def write_training_readiness(
     *,
     readiness: Mapping[str, object],
@@ -208,5 +336,6 @@ __all__ = [
     "READINESS_VERSION",
     "build_training_readiness",
     "compile_training_readiness",
+    "load_training_readiness",
     "write_training_readiness",
 ]
