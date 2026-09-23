@@ -118,6 +118,75 @@ def validate_feature_run_for_outcomes(
     }
 
 
+def select_feature_evidence_artifact(
+    payload: Mapping[str, object],
+    *,
+    feature_head_sha: str,
+) -> dict[str, object]:
+    sha = _validate_sha(feature_head_sha, field="feature evidence head SHA")
+    artifacts = payload.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise ValueError("feature artifact listing is malformed")
+    expected = f"exp044-market-feature-evidence-{sha}"
+    matches: list[Mapping[str, object]] = []
+    for raw in artifacts:
+        if not isinstance(raw, Mapping):
+            raise ValueError("feature artifact listing contains a malformed row")
+        if raw.get("name") != expected:
+            continue
+        if raw.get("expired") is not False:
+            continue
+        matches.append(raw)
+    if len(matches) != 1:
+        raise ValueError(
+            f"expected exactly one non-expired aggregate feature evidence artifact: {expected}"
+        )
+    artifact_id = matches[0].get("id")
+    if not isinstance(artifact_id, int) or isinstance(artifact_id, bool) or artifact_id <= 0:
+        raise ValueError("aggregate feature evidence artifact id is invalid")
+    return {
+        "artifact_id": artifact_id,
+        "artifact_name": expected,
+        "feature_head_sha": sha,
+    }
+
+
+def validate_feature_evidence_for_outcomes(
+    evidence: Mapping[str, object],
+    *,
+    expected_code_commit: str,
+) -> dict[str, object]:
+    sha = _validate_sha(expected_code_commit, field="expected feature evidence commit")
+    if evidence.get("code_commit") != sha:
+        raise ValueError("aggregate feature evidence code commit mismatch")
+    if evidence.get("feature_evidence_complete") is not True:
+        raise ValueError("aggregate feature evidence is not complete")
+    if evidence.get("verified_cell_count") != 9:
+        raise ValueError("aggregate feature evidence must contain exactly nine cells")
+    fingerprint = evidence.get("evidence_fingerprint")
+    if not isinstance(fingerprint, str) or len(fingerprint) != 64:
+        raise ValueError("aggregate feature evidence fingerprint is invalid")
+    try:
+        int(fingerprint, 16)
+    except ValueError as exc:
+        raise ValueError("aggregate feature evidence fingerprint must be hexadecimal") from exc
+    for field in (
+        "model_fit_authorized",
+        "shadow_authorized",
+        "demo_order_authorized",
+        "broker_mutation_authorized",
+        "live_order_authorized",
+        "real_money_authorized",
+    ):
+        if evidence.get(field) is not False:
+            raise ValueError(f"aggregate feature evidence {field} must remain false")
+    return {
+        "feature_evidence_verified": True,
+        "feature_evidence_fingerprint": fingerprint,
+        "feature_evidence_code_commit": sha,
+    }
+
+
 def feature_runs_endpoint() -> str:
     return (
         f"repos/{REPOSITORY}/actions/workflows/{FEATURE_WORKFLOW_FILE}/runs"
@@ -130,6 +199,18 @@ def outcome_runs_endpoint() -> str:
         f"repos/{REPOSITORY}/actions/workflows/{OUTCOME_WORKFLOW_FILE}/runs"
         "?branch=main&event=workflow_dispatch&per_page=100"
     )
+
+
+def feature_run_artifacts_endpoint(run_id: int) -> str:
+    if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+        raise ValueError("feature run id must be a positive integer")
+    return f"repos/{REPOSITORY}/actions/runs/{run_id}/artifacts?per_page=100"
+
+
+def artifact_download_endpoint(artifact_id: int) -> str:
+    if not isinstance(artifact_id, int) or isinstance(artifact_id, bool) or artifact_id <= 0:
+        raise ValueError("artifact id must be a positive integer")
+    return f"repos/{REPOSITORY}/actions/artifacts/{artifact_id}/zip"
 
 
 def feature_run_endpoint(run_id: int) -> str:
@@ -186,12 +267,16 @@ __all__ = [
     "OUTCOME_WORKFLOW_NAME",
     "OUTCOME_WORKFLOW_PATH",
     "REPOSITORY",
+    "artifact_download_endpoint",
     "feature_dispatch_command",
+    "feature_run_artifacts_endpoint",
     "feature_run_endpoint",
     "feature_runs_endpoint",
     "outcome_dispatch_command",
     "outcome_runs_endpoint",
+    "select_feature_evidence_artifact",
     "shell_join",
+    "validate_feature_evidence_for_outcomes",
     "validate_feature_run_for_outcomes",
     "validate_no_existing_manual_runs",
     "validate_operator_checkout",
