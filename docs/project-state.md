@@ -372,11 +372,11 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-071 are merged and verified on `main`;
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-072 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 artifact chain, demo order, or broker mutation has been executed;
-3. DEC-072 / `EXP-20260923-043` is implemented on PR #164 head `1654564b4fc3cd971d369ea5717d0f7268aaf326`: deterministic closed/unclosed segment inventory, correct crash-before-first-close visibility, terminal context, progress fingerprint/validator, and closed-directory identity hardening; run `35803297613` passed 1092 tests plus YAML/compile and unchanged Phase 3 acceptance run `35803297604` passed;
-4. DEC-072 must keep interrupted directories excluded from all aggregate/acceptance evidence, add no repair/delete behavior, start no capture, and preserve every promotion/order/broker/live/real-money authorization false;
-5. the next real operational milestone remains prospective MT5 DEMO evidence; Phase 9 execution remains hard-locked.
+3. PR #164 merged DEC-072 / `EXP-20260923-043` to `main` at `2732e00fa502219bf18de35ae861e72befe62661`; the exact final PR head `5efc050f31811e0f179638fc2c9bb83587eb22ef` passed 1092 tests plus YAML/compile in run `35803436296` and unchanged Phase 3 acceptance run `35803436276` passed; post-merge `main` runs `35803529547` and `35803529528` passed;
+4. DEC-072 fixes crash-before-first-close observability, adds deterministic closed/unclosed segment inventory and terminal context, validates progress fingerprints/count parity, and rejects renamed/copied closed directories whose path identity no longer matches the immutable segment ID; interrupted directories still never enter aggregate or acceptance evidence;
+5. source-side Phase 8B preparation, readiness, progress, and interrupted-capture observability are complete. The next meaningful milestone is real prospective MT5 DEMO evidence; Phase 9 execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
