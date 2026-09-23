@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-073 MARKET-LEARNING FOUNDATION SOURCE-ONLY; RESULT-PRODUCING PHASE 8A WORKFLOWS UNRUN
-**Next milestone:** Complete and verify the `EXP-20260923-044` direct market-learning foundation, then build its immutable full-history feature materialization and freeze the first result-producing model protocol. `EXP-20260922-015` remains a parallel frozen rule-based benchmark search. DEC-042 portfolio selection and Phase 8B prospective capture remain locked until their existing acceptance requirements are satisfied.
+**Phase status:** ACTIVE — EXP-044 FULL-HISTORY FEATURE MATERIALIZATION SOURCE-ONLY; NO MODEL-TRAINING RESULT
+**Next milestone:** Verify and dispatch the manual `phase8a-exp044-market-features` workflow from merged `main` to materialize the nine EURUSD/GBPUSD/USDJPY × 5m/15m/1h full-history feature cells. After exact artifacts are verified, freeze a separate result-producing model-training protocol before fitting. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 
