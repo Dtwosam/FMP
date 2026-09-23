@@ -5,11 +5,14 @@ import unittest
 from fmp.market_learning.operator import (
     FEATURE_WORKFLOW_NAME,
     OUTCOME_WORKFLOW_NAME,
+    PRESERVATION_WORKFLOW_NAME,
     feature_dispatch_command,
     feature_run_endpoint,
     feature_runs_endpoint,
     outcome_dispatch_command,
     outcome_runs_endpoint,
+    preservation_dispatch_command,
+    preservation_runs_endpoint,
     shell_join,
     validate_feature_run_for_outcomes,
     validate_no_existing_manual_runs,
@@ -135,6 +138,29 @@ class Exp044OperatorTests(unittest.TestCase):
                         invalid,
                         expected_run_id=123,
                     )
+
+    def test_preservation_dispatch_is_exact_manual_main_workflow(self) -> None:
+        command = preservation_dispatch_command()
+        self.assertEqual(
+            command,
+            (
+                "gh",
+                "workflow",
+                "run",
+                "phase8a-exp044-preserve-phase2.yml",
+                "--ref",
+                "main",
+                "-R",
+                "Dtwosam/FMP",
+            ),
+        )
+        self.assertIn("phase8a-exp044-preserve-phase2.yml", shell_join(command))
+        self.assertIn(
+            "phase8a-exp044-preserve-phase2.yml/runs",
+            preservation_runs_endpoint(),
+        )
+        self.assertIn("branch=main", preservation_runs_endpoint())
+        self.assertIn("event=workflow_dispatch", preservation_runs_endpoint())
 
     def test_dispatch_commands_are_exact_manual_main_workflows(self) -> None:
         feature = feature_dispatch_command()
