@@ -27,7 +27,17 @@ class Exp044OutcomeWorkflowTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
         for symbol in ("EURUSD", "GBPUSD", "USDJPY"):
             self.assertIn(symbol, text)
-        self.assertIn("timeframe: [5m, 15m, 1h]", text)
+        self.assertNotIn("matrix.timeframe", text)
+        self.assertNotIn("timeframe: [5m, 15m, 1h]", text)
+        self.assertGreaterEqual(text.count("for timeframe in 5m 15m 1h; do"), 2)
+        self.assertEqual(text.count("ARTIFACT_ID:"), 1)
+        for timeframe in ("5m", "15m", "1h"):
+            expected = (
+                "exp044-market-outcomes-$" + "{{ matrix.dataset.symbol }}-"
+                + timeframe
+                + "-$" + "{{ github.sha }}-from-"
+            )
+            self.assertIn(expected, text)
         self.assertIn("10325737935", text)
         self.assertIn("db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3", text)
         self.assertIn("10326096831", text)
