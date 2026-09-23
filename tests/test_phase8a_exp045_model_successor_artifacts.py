@@ -523,12 +523,16 @@ class Exp045SuccessorArtifactRunnerTests(unittest.TestCase):
             "AUTHORITATIVE_SUCCESSOR_MODEL_RESULT_EXECUTION_AUTHORIZED = False",
             source,
         )
-        self.assertFalse(
-            (
-                ROOT
-                / ".github/workflows/"
-                "phase8a-exp045-model-training.yml"
-            ).exists()
+        workflow = (
+            ROOT
+            / ".github/workflows/"
+            "phase8a-exp045-model-training.yml"
+        )
+        self.assertTrue(workflow.exists())
+        workflow_text = workflow.read_text(encoding="utf-8")
+        self.assertIn(
+            "Require separately authorized EXP-045 result execution",
+            workflow_text,
         )
 
 
