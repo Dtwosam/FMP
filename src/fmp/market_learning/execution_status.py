@@ -7,7 +7,7 @@ from typing import Mapping
 
 from .evidence import load_feature_evidence_index
 from .outcome_evidence import load_outcome_evidence_index
-from .readiness import load_training_readiness
+from .readiness import build_training_readiness, load_training_readiness
 
 
 STATUS_VERSION = "fmp-exp044-execution-status-v1"
@@ -261,6 +261,13 @@ def build_execution_status(
             outcome_evidence_verified=True,
             readiness_verified=False,
         )
+
+    rebuilt_readiness = build_training_readiness(
+        feature_evidence=feature_evidence,
+        outcome_evidence=outcome_evidence,
+    )
+    if dict(readiness) != rebuilt_readiness:
+        raise ValueError("readiness does not exactly match the supplied evidence chain")
 
     if (
         readiness.get("feature_evidence_fingerprint")
