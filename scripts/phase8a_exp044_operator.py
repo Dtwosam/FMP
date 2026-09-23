@@ -547,6 +547,10 @@ def main(argv: list[str] | None = None) -> int:
             feature_run_id=feature_run_id,
             feature_head_sha=str(feature["feature_head_sha"]),
         )
+        feature_report_details = {
+            **feature,
+            **feature_evidence_summary,
+        }
 
         outcome_listing = _gh_json(outcome_runs_endpoint())
         outcome_run = select_only_manual_main_run(
@@ -569,8 +573,7 @@ def main(argv: list[str] | None = None) -> int:
                     dispatch_command=outcome_dispatch_command(feature_run_id),
                     preservation_release_verified=True,
                     source_mode=source_preflight["source_mode"],
-                    **feature,
-                    **feature_evidence_summary,
+                    **feature_report_details,
                     outcome_run_state="MISSING",
                 )
             )
@@ -583,8 +586,7 @@ def main(argv: list[str] | None = None) -> int:
                     next_action=(
                         "Inspect the existing outcome workflow run; do not create a duplicate."
                     ),
-                    **feature,
-                    **feature_evidence_summary,
+                    **feature_report_details,
                     outcome_run_state="IN_PROGRESS",
                     outcome_run_id=outcome_state["run_id"],
                 )
@@ -598,8 +600,7 @@ def main(argv: list[str] | None = None) -> int:
                     next_action=(
                         "Review the failed outcome workflow evidence; do not retry automatically."
                     ),
-                    **feature,
-                    **feature_evidence_summary,
+                    **feature_report_details,
                     outcome_run_state="FAILED",
                     outcome_run_id=outcome_state["run_id"],
                 )
@@ -624,16 +625,18 @@ def main(argv: list[str] | None = None) -> int:
             outcome_evidence=outcome_evidence,
             readiness=readiness,
         )
+        readiness_report_details = {
+            **feature_report_details,
+            **outcome,
+            **selected,
+        }
         _print_report(
             _next_report(
                 checkout=checkout,
                 stage=str(status["stage"]),
                 next_action=str(status["next_action"]),
                 preservation_release_verified=True,
-                **feature,
-                **feature_evidence_summary,
-                **outcome,
-                **selected,
+                **readiness_report_details,
                 readiness_verified=status["readiness_verified"],
                 model_protocol_source_open_authorized=status[
                     "model_protocol_source_open_authorized"
