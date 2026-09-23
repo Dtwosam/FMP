@@ -885,13 +885,43 @@ def run_model_cell_core(
             "three target classes"
         )
 
-    fitted = {
-        family: _fit_family(
-            family,
-            fit_frame,
+    fitted: dict[str, FittedMarketModel] = {}
+    family_fit: dict[str, dict[str, object]] = {}
+    for family in MODEL_FAMILIES:
+        try:
+            fitted_model = _fit_family(
+                family,
+                fit_frame,
+            )
+        except RuntimeError as exc:
+            if (
+                family == "logistic_regression"
+                and str(exc)
+                == "EXP-044 logistic regression failed to converge"
+            ):
+                family_fit[family] = {
+                    "status": "FAILED_NON_CONVERGENCE",
+                    "failure_reason": (
+                        "LBFGS_MAX_ITER_REACHED"
+                    ),
+                }
+                continue
+            raise
+        fitted[family] = fitted_model
+        family_fit[family] = {
+            "status": "FITTED",
+            "preprocessor_fingerprint": (
+                fitted_model.preprocessor_fingerprint
+            ),
+            "model_fingerprint": (
+                fitted_model.model_fingerprint
+            ),
+        }
+
+    if not fitted:
+        raise RuntimeError(
+            "EXP-044 model cell has no successfully fitted family"
         )
-        for family in MODEL_FAMILIES
-    }
 
     selection_frame = split_frames[SELECTION_SPLIT.name]
     variants: list[dict[str, object]] = []
@@ -899,6 +929,30 @@ def run_model_cell_core(
     selection_probability_digests: dict[str, str] = {}
 
     for family in MODEL_FAMILIES:
+        if family not in fitted:
+            selection_diagnostics[family] = {
+                "status": "FAMILY_UNAVAILABLE",
+                "failure_reason": (
+                    family_fit[family]["failure_reason"]
+                ),
+            }
+            selection_probability_digests[family] = None
+            for threshold in CONFIDENCE_THRESHOLDS:
+                variants.append(
+                    {
+                        "model_family": family,
+                        "confidence_threshold": threshold,
+                        "family_fit_status": (
+                            family_fit[family]["status"]
+                        ),
+                        "evaluation_status": (
+                            "FAMILY_UNAVAILABLE"
+                        ),
+                        "selection_gate_passed": False,
+                    }
+                )
+            continue
+
         (
             probabilities,
             diagnostics,
@@ -926,6 +980,8 @@ def run_model_cell_core(
             variants.append(
                 {
                     "model_family": family,
+                    "family_fit_status": "FITTED",
+                    "evaluation_status": "EVALUATED",
                     **evaluated,
                     "selection_gate_passed": bool(
                         scenario["gate"]["passed"]
@@ -972,21 +1028,7 @@ def run_model_cell_core(
         "fit": {
             "row_count": fit_frame.height,
             "target_class_counts": fit_counts,
-            "families": {
-                family: {
-                    "preprocessor_fingerprint": (
-                        fitted[
-                            family
-                        ].preprocessor_fingerprint
-                    ),
-                    "model_fingerprint": (
-                        fitted[
-                            family
-                        ].model_fingerprint
-                    ),
-                }
-                for family in MODEL_FAMILIES
-            },
+            "families": family_fit,
         },
         "selection": {
             "status": (
