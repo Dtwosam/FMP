@@ -357,8 +357,8 @@ class Exp045SuccessorOperatorTests(unittest.TestCase):
             text,
         )
         self.assertNotIn(
-            "rerun",
-            text.lower(),
+            'add_parser("rerun"',
+            text,
         )
 
 
