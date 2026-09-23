@@ -12,6 +12,7 @@ from fmp.phase8b.campaign_close import (
     PHASE8B_CAMPAIGN_PROGRESS_AVAILABLE,
     PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS,
     preview_phase8b_campaign_progress_directory,
+    validate_phase8b_campaign_progress,
 )
 
 
@@ -52,22 +53,18 @@ def _aggregate(*, open_ids=None, pending_ids=None, completed=12):
     }
 
 
+def _bundle(segment_id: str):
+    return SimpleNamespace(prospective={"segment_id": segment_id})
+
+
 class Phase8BCampaignProgressTests(unittest.TestCase):
     def test_empty_campaign_reports_no_closed_segments_and_writes_nothing(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             _write_preflight(root)
             before = sorted(str(p.relative_to(root)) for p in root.rglob("*"))
-            with (
-                patch(
-                    "fmp.phase8b.campaign_close.validate_phase8b_capture_preflight"
-                ),
-                patch(
-                    "fmp.phase8b.campaign_close._load_bundles",
-                    side_effect=ValueError(
-                        "Phase 8B campaign has no closed prospective segments"
-                    ),
-                ),
+            with patch(
+                "fmp.phase8b.campaign_close.validate_phase8b_capture_preflight"
             ):
                 result = preview_phase8b_campaign_progress_directory(
                     campaign_dir=root,
@@ -77,15 +74,58 @@ class Phase8BCampaignProgressTests(unittest.TestCase):
 
         self.assertEqual(result["outcome"], PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS)
         self.assertEqual(result["eligible_closed_segment_count"], 0)
+        self.assertEqual(result["closed_segment_ids"], [])
+        self.assertEqual(result["unclosed_segment_directory_count"], 0)
+        self.assertEqual(result["unclosed_segment_ids"], [])
+        self.assertFalse(result["campaign_terminal_present"])
         self.assertFalse(result["minimum_evidence"]["all_minimums_pass"])
         self.assertFalse(result["currently_closeable"])
+        validate_phase8b_campaign_progress(result)
+        self.assertEqual(before, after)
+
+    def test_first_interrupted_capture_is_visible_before_any_clean_close(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_preflight(root)
+            (root / "segments" / "interrupted-b").mkdir(parents=True)
+            (root / "segments" / "interrupted-a").mkdir(parents=True)
+            (root / "campaign-terminal.json").write_text(
+                "{}",
+                encoding="utf-8",
+            )
+            before = sorted(str(p.relative_to(root)) for p in root.rglob("*"))
+            with patch(
+                "fmp.phase8b.campaign_close.validate_phase8b_capture_preflight"
+            ):
+                result = preview_phase8b_campaign_progress_directory(
+                    campaign_dir=root,
+                    code_commit=COMMIT,
+                )
+            after = sorted(str(p.relative_to(root)) for p in root.rglob("*"))
+
+        self.assertEqual(result["outcome"], PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS)
+        self.assertEqual(result["eligible_closed_segment_count"], 0)
+        self.assertEqual(
+            result["unclosed_segment_directory_count"],
+            2,
+        )
+        self.assertEqual(
+            result["unclosed_segment_ids"],
+            ["interrupted-a", "interrupted-b"],
+        )
+        self.assertTrue(result["campaign_terminal_present"])
+        validate_phase8b_campaign_progress(result)
         self.assertEqual(before, after)
 
     def test_progress_uses_dec051_minimums_and_remaining_amounts(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             _write_preflight(root)
-            bundles = (SimpleNamespace(), SimpleNamespace(), SimpleNamespace())
+            bundles = (
+                _bundle("closed-a"),
+                _bundle("closed-b"),
+                _bundle("closed-c"),
+            )
             first = datetime(2026, 1, 1, tzinfo=UTC)
             last = datetime(2026, 2, 12, tzinfo=UTC)  # exactly 6 weeks
             with (
@@ -93,8 +133,23 @@ class Phase8BCampaignProgressTests(unittest.TestCase):
                     "fmp.phase8b.campaign_close.validate_phase8b_capture_preflight"
                 ),
                 patch(
+                    "fmp.phase8b.campaign_close._segment_inventory",
+                    return_value=(
+                        True,
+                        (
+                            Path("closed-a"),
+                            Path("closed-b"),
+                            Path("closed-c"),
+                        ),
+                        ("interrupted-a", "interrupted-b"),
+                    ),
+                ),
+                patch(
                     "fmp.phase8b.campaign_close._load_bundles",
-                    return_value=(bundles, 2),
+                    return_value=(
+                        bundles,
+                        ("interrupted-a", "interrupted-b"),
+                    ),
                 ),
                 patch(
                     "fmp.phase8b.campaign_close._compile_aggregate_segment",
@@ -145,21 +200,36 @@ class Phase8BCampaignProgressTests(unittest.TestCase):
         self.assertEqual(minimums["represented_pair_count_remaining"], 1)
         self.assertFalse(minimums["all_minimums_pass"])
         self.assertEqual(result["eligible_closed_segment_count"], 3)
+        self.assertEqual(
+            result["closed_segment_ids"],
+            ["closed-a", "closed-b", "closed-c"],
+        )
         self.assertEqual(result["unclosed_segment_directory_count"], 2)
+        self.assertEqual(
+            result["unclosed_segment_ids"],
+            ["interrupted-a", "interrupted-b"],
+        )
         self.assertTrue(result["aggregate_replay_match"])
         self.assertTrue(result["currently_closeable"])
+        self.assertFalse(result["campaign_terminal_present"])
+        validate_phase8b_campaign_progress(result)
 
     def test_open_or_pending_decision_makes_preview_not_closeable(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             _write_preflight(root)
+            bundle = _bundle("closed-a")
             with (
                 patch(
                     "fmp.phase8b.campaign_close.validate_phase8b_capture_preflight"
                 ),
                 patch(
+                    "fmp.phase8b.campaign_close._segment_inventory",
+                    return_value=(True, (Path("closed-a"),), ()),
+                ),
+                patch(
                     "fmp.phase8b.campaign_close._load_bundles",
-                    return_value=((SimpleNamespace(),), 0),
+                    return_value=((bundle,), ()),
                 ),
                 patch(
                     "fmp.phase8b.campaign_close._compile_aggregate_segment",
@@ -206,21 +276,59 @@ class Phase8BCampaignProgressTests(unittest.TestCase):
 
         self.assertTrue(result["minimum_evidence"]["all_minimums_pass"])
         self.assertFalse(result["currently_closeable"])
+        validate_phase8b_campaign_progress(result)
 
-    def test_progress_authorizes_nothing(self) -> None:
+    def test_renamed_closed_segment_directory_fails_closed(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             _write_preflight(root)
+            segment = root / "segments" / "renamed-segment"
+            segment.mkdir(parents=True)
+            (segment / "prospective-segment.json").write_text(
+                json.dumps({"segment_id": "original-segment"}),
+                encoding="utf-8",
+            )
             with (
                 patch(
                     "fmp.phase8b.campaign_close.validate_phase8b_capture_preflight"
                 ),
                 patch(
-                    "fmp.phase8b.campaign_close._load_bundles",
-                    side_effect=ValueError(
-                        "Phase 8B campaign has no segment directory"
-                    ),
+                    "fmp.phase8b.campaign_close.validate_phase8b_prospective_segment"
                 ),
+            ):
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "directory identity mismatch",
+                ):
+                    preview_phase8b_campaign_progress_directory(
+                        campaign_dir=root,
+                        code_commit=COMMIT,
+                    )
+
+    def test_progress_validator_rejects_inventory_count_tamper(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_preflight(root)
+            (root / "segments" / "interrupted-a").mkdir(parents=True)
+            with patch(
+                "fmp.phase8b.campaign_close.validate_phase8b_capture_preflight"
+            ):
+                result = preview_phase8b_campaign_progress_directory(
+                    campaign_dir=root,
+                    code_commit=COMMIT,
+                )
+
+        changed = dict(result)
+        changed["unclosed_segment_directory_count"] = 0
+        with self.assertRaisesRegex(ValueError, "unclosed count mismatch"):
+            validate_phase8b_campaign_progress(changed)
+
+    def test_progress_authorizes_nothing(self) -> None:
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _write_preflight(root)
+            with patch(
+                "fmp.phase8b.campaign_close.validate_phase8b_capture_preflight"
             ):
                 result = preview_phase8b_campaign_progress_directory(
                     campaign_dir=root,

@@ -227,6 +227,8 @@ def _load_bundle(
         label="Phase 8B prospective segment",
     )
     validate_phase8b_prospective_segment(prospective)
+    if prospective.get("segment_id") != directory.name:
+        raise ValueError("Phase 8B prospective segment directory identity mismatch")
     if prospective.get("capture_preflight_fingerprint") != preflight.get(
         "capture_preflight_fingerprint"
     ):
@@ -339,21 +341,38 @@ def _load_bundle(
     )
 
 
+def _segment_inventory(
+    campaign_dir: Path,
+) -> tuple[bool, tuple[Path, ...], tuple[str, ...]]:
+    segments_root = campaign_dir / "segments"
+    if not segments_root.is_dir():
+        return False, (), ()
+    closed: list[Path] = []
+    unclosed: list[str] = []
+    for directory in sorted(
+        item for item in segments_root.iterdir() if item.is_dir()
+    ):
+        if (directory / "prospective-segment.json").is_file():
+            closed.append(directory)
+        else:
+            unclosed.append(directory.name)
+    return True, tuple(closed), tuple(unclosed)
+
+
 def _load_bundles(
     campaign_dir: Path,
     *,
     preflight: Mapping[str, object],
-) -> tuple[tuple[_SegmentBundle, ...], int]:
-    segments_root = campaign_dir / "segments"
-    if not segments_root.is_dir():
+) -> tuple[tuple[_SegmentBundle, ...], tuple[str, ...]]:
+    segments_present, closed_directories, unclosed_ids = _segment_inventory(
+        campaign_dir
+    )
+    if not segments_present:
         raise ValueError("Phase 8B campaign has no segment directory")
-    bundles: list[_SegmentBundle] = []
-    unclosed = 0
-    for directory in sorted(item for item in segments_root.iterdir() if item.is_dir()):
-        if not (directory / "prospective-segment.json").is_file():
-            unclosed += 1
-            continue
-        bundles.append(_load_bundle(directory, preflight=preflight))
+    bundles = [
+        _load_bundle(directory, preflight=preflight)
+        for directory in closed_directories
+    ]
     if not bundles:
         raise ValueError("Phase 8B campaign has no closed prospective segments")
 
@@ -398,7 +417,7 @@ def _load_bundles(
         if prior_end is not None and bundle.started_at_utc < prior_end:
             raise ValueError("Phase 8B prospective segment intervals overlap")
         prior_end = bundle.ended_at_utc
-    return tuple(bundles), unclosed
+    return tuple(bundles), unclosed_ids
 
 
 def _received_bounds(
@@ -1080,14 +1099,100 @@ def _campaign_evidence(
 
 
 PHASE8B_CAMPAIGN_PROGRESS_PROTOCOL = "fmp-phase8b-campaign-progress-v1"
-PHASE8B_CAMPAIGN_PROGRESS_DECISION = "DEC-071"
-PHASE8B_CAMPAIGN_PROGRESS_EXPERIMENT_ID = "EXP-20260923-042"
+PHASE8B_CAMPAIGN_PROGRESS_DECISION = "DEC-072"
+PHASE8B_CAMPAIGN_PROGRESS_EXPERIMENT_ID = "EXP-20260923-043"
 PHASE8B_CAMPAIGN_PROGRESS_AVAILABLE = "PHASE8B_CAMPAIGN_PROGRESS_AVAILABLE"
 PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS = "PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS"
 
 
 def _remaining(required: float, current: float) -> float:
     return max(0.0, required - current)
+
+
+def _segment_id_list(value: object, *, field: str) -> list[str]:
+    if not isinstance(value, list):
+        raise ValueError(f"{field} must be a list")
+    result: list[str] = []
+    for item in value:
+        if not isinstance(item, str) or not item:
+            raise ValueError(f"{field} contains invalid segment ID")
+        result.append(item)
+    if result != sorted(result) or len(set(result)) != len(result):
+        raise ValueError(f"{field} must be sorted and unique")
+    return result
+
+
+def validate_phase8b_campaign_progress(
+    value: Mapping[str, object],
+) -> None:
+    if value.get("protocol") != PHASE8B_CAMPAIGN_PROGRESS_PROTOCOL:
+        raise ValueError("Phase 8B campaign-progress protocol mismatch")
+    if value.get("decision") != PHASE8B_CAMPAIGN_PROGRESS_DECISION:
+        raise ValueError("Phase 8B campaign-progress decision mismatch")
+    if value.get("experiment_id") != PHASE8B_CAMPAIGN_PROGRESS_EXPERIMENT_ID:
+        raise ValueError("Phase 8B campaign-progress experiment mismatch")
+    if value.get("outcome") not in {
+        PHASE8B_CAMPAIGN_PROGRESS_AVAILABLE,
+        PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS,
+    }:
+        raise ValueError("Phase 8B campaign-progress outcome mismatch")
+    _validate_commit(
+        value.get("campaign_progress_code_commit"),
+        field="Phase 8B campaign-progress code commit",
+    )
+    for field in (
+        "capture_preflight_fingerprint",
+        "champion_set_fingerprint",
+        "campaign_progress_fingerprint",
+    ):
+        _validate_sha256(
+            value.get(field),
+            field=f"Phase 8B campaign-progress {field}",
+        )
+
+    closed_ids = _segment_id_list(
+        value.get("closed_segment_ids"),
+        field="Phase 8B campaign-progress closed_segment_ids",
+    )
+    unclosed_ids = _segment_id_list(
+        value.get("unclosed_segment_ids"),
+        field="Phase 8B campaign-progress unclosed_segment_ids",
+    )
+    if set(closed_ids).intersection(unclosed_ids):
+        raise ValueError("Phase 8B campaign-progress segment inventories overlap")
+    if value.get("eligible_closed_segment_count") != len(closed_ids):
+        raise ValueError("Phase 8B campaign-progress closed count mismatch")
+    if value.get("unclosed_segment_directory_count") != len(unclosed_ids):
+        raise ValueError("Phase 8B campaign-progress unclosed count mismatch")
+    if not isinstance(value.get("campaign_terminal_present"), bool):
+        raise ValueError("Phase 8B campaign-progress terminal flag is invalid")
+
+    if value.get("outcome") == PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS:
+        if closed_ids:
+            raise ValueError("Phase 8B empty progress contains closed segments")
+        if value.get("currently_closeable") is not False:
+            raise ValueError("Phase 8B empty progress cannot be closeable")
+        if value.get("aggregate_replay_match") is not None:
+            raise ValueError("Phase 8B empty progress replay must be null")
+
+    for field in (
+        "acceptance_authorized",
+        "promotion_authorized",
+        "shadow_validation_authorized",
+        "demo_order_authorized",
+        "live_order_authorized",
+        "broker_mutation_authorized",
+        "real_money_authorized",
+        "phase9_authorized",
+    ):
+        if value.get(field) is not False:
+            raise ValueError(f"Phase 8B campaign-progress requires {field}=false")
+
+    fingerprint = value["campaign_progress_fingerprint"]
+    payload = dict(value)
+    payload.pop("campaign_progress_fingerprint", None)
+    if fingerprint != _canonical_digest(payload):
+        raise ValueError("Phase 8B campaign-progress fingerprint mismatch")
 
 
 def preview_phase8b_campaign_progress_directory(
@@ -1106,15 +1211,21 @@ def preview_phase8b_campaign_progress_directory(
         field="Phase 8B campaign-progress code commit",
     )
 
+    segments_present, closed_directories, unclosed_ids = _segment_inventory(root)
+    closed_ids = sorted(directory.name for directory in closed_directories)
+    terminal_present = (root / "campaign-terminal.json").is_file()
+
     try:
-        bundles, unclosed_count = _load_bundles(root, preflight=preflight)
+        bundles, loaded_unclosed_ids = _load_bundles(root, preflight=preflight)
     except ValueError as exc:
         if str(exc) not in {
             "Phase 8B campaign has no segment directory",
             "Phase 8B campaign has no closed prospective segments",
         }:
             raise
-        return {
+        if segments_present and tuple(unclosed_ids) != tuple(sorted(unclosed_ids)):
+            raise ValueError("Phase 8B unclosed segment inventory is not canonical")
+        payload = {
             "protocol": PHASE8B_CAMPAIGN_PROGRESS_PROTOCOL,
             "decision": PHASE8B_CAMPAIGN_PROGRESS_DECISION,
             "experiment_id": PHASE8B_CAMPAIGN_PROGRESS_EXPERIMENT_ID,
@@ -1162,6 +1273,22 @@ def preview_phase8b_campaign_progress_directory(
             "real_money_authorized": False,
             "phase9_authorized": False,
         }
+        payload["closed_segment_ids"] = closed_ids
+        payload["unclosed_segment_ids"] = list(unclosed_ids)
+        payload["unclosed_segment_directory_count"] = len(unclosed_ids)
+        payload["campaign_terminal_present"] = terminal_present
+        result = payload | {
+            "campaign_progress_fingerprint": _canonical_digest(payload)
+        }
+        validate_phase8b_campaign_progress(result)
+        return result
+
+    if tuple(loaded_unclosed_ids) != tuple(unclosed_ids):
+        raise ValueError("Phase 8B campaign-progress unclosed inventory drift")
+    closed_ids = sorted(
+        str(item.prospective["segment_id"])
+        for item in bundles
+    )
 
     aggregate, quotes = _compile_aggregate_segment(
         preflight=preflight,
@@ -1252,7 +1379,7 @@ def preview_phase8b_campaign_progress_directory(
         )
     )
 
-    return {
+    payload = {
         "protocol": PHASE8B_CAMPAIGN_PROGRESS_PROTOCOL,
         "decision": PHASE8B_CAMPAIGN_PROGRESS_DECISION,
         "experiment_id": PHASE8B_CAMPAIGN_PROGRESS_EXPERIMENT_ID,
@@ -1263,7 +1390,10 @@ def preview_phase8b_campaign_progress_directory(
         ],
         "champion_set_fingerprint": preflight["champion_set_fingerprint"],
         "eligible_closed_segment_count": len(bundles),
-        "unclosed_segment_directory_count": unclosed_count,
+        "closed_segment_ids": closed_ids,
+        "unclosed_segment_directory_count": len(unclosed_ids),
+        "unclosed_segment_ids": list(unclosed_ids),
+        "campaign_terminal_present": terminal_present,
         "first_observation_utc": _utc_string(first),
         "last_observation_utc": _utc_string(last),
         "denominator_london_date_count": len(denominator),
@@ -1282,6 +1412,11 @@ def preview_phase8b_campaign_progress_directory(
         "real_money_authorized": False,
         "phase9_authorized": False,
     }
+    result = payload | {
+        "campaign_progress_fingerprint": _canonical_digest(payload)
+    }
+    validate_phase8b_campaign_progress(result)
+    return result
 
 
 def close_phase8b_campaign_directory(
@@ -1299,7 +1434,7 @@ def close_phase8b_campaign_directory(
         code_commit,
         field="Phase 8B campaign-close code commit",
     )
-    bundles, unclosed_count = _load_bundles(root, preflight=preflight)
+    bundles, unclosed_ids = _load_bundles(root, preflight=preflight)
     prospective_fingerprints = [
         str(item.prospective["prospective_segment_fingerprint"])
         for item in bundles
@@ -1331,7 +1466,7 @@ def close_phase8b_campaign_directory(
     evidence = _campaign_evidence(
         preflight=preflight,
         bundles=bundles,
-        unclosed_count=unclosed_count,
+        unclosed_count=len(unclosed_ids),
         aggregate=aggregate,
         replay=replay,
         quotes=quotes,
@@ -1403,4 +1538,5 @@ __all__ = [
     "PHASE8B_PROGRESS_NO_CLOSED_SEGMENTS",
     "close_phase8b_campaign_directory",
     "preview_phase8b_campaign_progress_directory",
+    "validate_phase8b_campaign_progress",
 ]

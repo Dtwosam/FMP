@@ -339,7 +339,7 @@ class Phase8BCampaignCloseTests(unittest.TestCase):
                     code_commit=CLOSE_COMMIT,
                 )
 
-    def test_duplicate_closed_segment_fingerprint_fails_closed(self) -> None:
+    def test_copied_closed_segment_directory_identity_fails_closed(self) -> None:
         preflight = _preflight()
         with TemporaryDirectory() as tmp:
             campaign = Path(tmp)
@@ -353,7 +353,7 @@ class Phase8BCampaignCloseTests(unittest.TestCase):
             original = campaign / "segments" / segment["segment_id"]
             duplicate = campaign / "segments" / "duplicate-copy"
             shutil.copytree(original, duplicate)
-            with self.assertRaisesRegex(ValueError, "duplicate"):
+            with self.assertRaisesRegex(ValueError, "directory identity mismatch"):
                 close_phase8b_campaign_directory(
                     campaign_dir=campaign,
                     code_commit=CLOSE_COMMIT,
