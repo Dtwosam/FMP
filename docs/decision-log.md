@@ -1431,7 +1431,7 @@ DEC-094 does not tune the model. Logistic family/configuration, HGB family/confi
 
 The workflow repair enables hidden-file upload for pair/timeframe and aggregate result evidence. Its preflight allows exactly one reviewed predecessor: failed run `35891605645`, status completed, conclusion failure, and head SHA `e97fa03d0e94fd505d0f926eb730e01a41947880`. Any other prior-run chain fails closed.
 
-The repaired training-core blob is `e2c93370d1b4956c9a1e7103eee01ee9c4ec91c3`; the reviewed-replacement workflow blob is `37164e5d2dd06848e5f76ef50a6731017300beaa`.
+The repaired training-core blob is `a6092dbe1d36f81e1929bf1f18ba43f4ec494ebc`; the repaired aggregate compiler blob is `f050f82e9d0dbf641bf02d206d5ecd877e4446fa`; the repaired result-validator blob is `d3952de139d75cb048949b1184d86b4b36320c45`; and the reviewed-replacement workflow blob is `37164e5d2dd06848e5f76ef50a6731017300beaa`.
 
 The operator may expose `MODEL_RUN_REPLACEMENT_DISPATCH_REQUIRED` only while the latest model run is the reviewed failed predecessor. Once a replacement exists, no second replacement is automatic. Promotion/shadow/demo/broker/live/real-money/trading authorization remains false.
 
