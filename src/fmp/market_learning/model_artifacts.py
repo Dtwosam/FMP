@@ -499,8 +499,12 @@ def load_verified_outcome_cell(
 def validate_authoritative_readiness(
     readiness: Mapping[str, object],
 ) -> dict[tuple[str, str], Mapping[str, object]]:
-    if readiness.get("readiness_fingerprint") != AUTHORITATIVE_READINESS_FINGERPRINT:
+    unsigned = dict(readiness)
+    supplied_fingerprint = unsigned.pop("readiness_fingerprint", None)
+    if supplied_fingerprint != AUTHORITATIVE_READINESS_FINGERPRINT:
         raise ValueError("EXP-044 authoritative readiness fingerprint mismatch")
+    if _sha256_bytes(_canonical_json(unsigned)) != supplied_fingerprint:
+        raise ValueError("EXP-044 authoritative readiness content fingerprint mismatch")
     if readiness.get("experiment_id") != EXPERIMENT_ID:
         raise ValueError("EXP-044 authoritative readiness experiment mismatch")
     if readiness.get("evidence_label") != EVIDENCE_LABEL:
