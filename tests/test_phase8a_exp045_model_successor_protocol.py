@@ -217,12 +217,15 @@ class Exp045SuccessorModelProtocolTests(unittest.TestCase):
         self.assertNotIn(".fit(", source)
         self.assertNotIn("workflow_dispatch", source)
         self.assertNotIn("gh workflow run", source)
-        self.assertFalse(
-            (
-                ROOT
-                / ".github/workflows/"
-                "phase8a-exp045-model-training.yml"
-            ).exists()
+        workflow = (
+            ROOT
+            / ".github/workflows/"
+            "phase8a-exp045-model-training.yml"
+        )
+        self.assertTrue(workflow.exists())
+        self.assertIn(
+            "Require separately authorized EXP-045 result execution",
+            workflow.read_text(encoding="utf-8"),
         )
 
     def test_dec095_documents_successor_boundary(self) -> None:
