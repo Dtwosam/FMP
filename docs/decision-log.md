@@ -1642,3 +1642,20 @@ The source is `src/fmp/market_learning/model_successor_stability_training.py` at
 
 DEC-105 remains source-only. Authoritative result execution, model-fit authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
 
+## DEC-106 — Phase 8A EXP-046 artifact-backed runner/evidence contract
+
+**Date:** 2026-09-23
+**Status:** SOURCE-ONLY; AUTHORITATIVE EXP-046 RESULT EXECUTION CLOSED
+
+DEC-106 freezes the artifact-backed historical-data runner and deterministic aggregate evidence contract around merged DEC-104/DEC-105.
+
+It binds DEC-104 merge `bb2ee82a7d081138e1c0847e8c406d6c3ac68589` and protocol blob `4c8da2259f1fd6d27862a50a47a0d8108b58bc2e`, DEC-105 merge `7aa3d86f6c1fce61dd7e35d9ba9830b1fa7355b5` and training-core blob `6733d3c530fba944b9ea0c62783ed2110552e532`, plus the verified historical artifact-loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`.
+
+The runner reuses only the exact verified EXP-044 feature/outcome/readiness artifacts. Cell-result validation requires all six family/threshold slots, exact aggregate-gate/stability/final-gate consistency, exact four DEC-104 windows for every aggregate-pass variant, recomputed candidate shares and financial-sign gates, valid chronology status chains, and canonical cell fingerprints.
+
+Aggregate evidence requires all 18 exact cells, recomputes its canonical fingerprint, preserves exact historical source evidence identities, and records per-cell aggregate-pass/stable-pass/stability-reject variant counts.
+
+The source is `src/fmp/market_learning/model_successor_stability_artifacts.py` at Git blob `2d8d6f82cd15f5bdb75bb384fe3efe1dc560857a`.
+
+DEC-106 remains non-executable: the authoritative bundle raises before readiness validation or artifact loading. No CLI/workflow/dispatch, model-fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization is introduced.
+
