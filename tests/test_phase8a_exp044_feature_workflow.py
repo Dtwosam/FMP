@@ -13,6 +13,14 @@ class Exp044FeatureWorkflowTests(unittest.TestCase):
         self.assertNotIn("schedule:", text)
         self.assertNotIn("pull_request:", text)
         self.assertIn('test "$GITHUB_REF" = "refs/heads/main"', text)
+        self.assertIn("source-preflight:", text)
+        self.assertIn("needs: source-preflight", text)
+        self.assertIn("scripts/phase8a_market_source_preflight.py", text)
+        self.assertIn("actions/artifacts/10325737935", text)
+        self.assertIn("actions/artifacts/10326096831", text)
+        self.assertIn("actions/artifacts/10327600628", text)
+        self.assertIn("--minimum-valid-hours 12", text)
+        self.assertIn('report["source_ready"] is True', text)
 
     def test_workflow_batches_by_pair_but_preserves_nine_cell_outputs(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
