@@ -161,7 +161,15 @@ DEC-094 keeps the DEC-088 protocol identity and DEC-091 artifact-runner source u
 
 The repaired training-core Git blob is:
 
-`e2c93370d1b4956c9a1e7103eee01ee9c4ec91c3`
+`a6092dbe1d36f81e1929bf1f18ba43f4ec494ebc`
+
+The repaired aggregate compiler Git blob is:
+
+`f050f82e9d0dbf641bf02d206d5ecd877e4446fa`
+
+The repaired post-run result validator Git blob is:
+
+`d3952de139d75cb048949b1184d86b4b36320c45`
 
 The reviewed-replacement workflow Git blob is:
 
