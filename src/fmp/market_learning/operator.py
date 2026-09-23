@@ -63,6 +63,79 @@ def validate_operator_checkout(
     }
 
 
+def select_only_manual_main_run(
+    payload: Mapping[str, object],
+    *,
+    workflow_name: str,
+) -> Mapping[str, object] | None:
+    runs = payload.get("workflow_runs")
+    if not isinstance(runs, list):
+        raise ValueError("workflow-run listing is malformed")
+    relevant: list[Mapping[str, object]] = []
+    for raw in runs:
+        if not isinstance(raw, Mapping):
+            raise ValueError("workflow-run listing contains a malformed row")
+        if raw.get("event") != "workflow_dispatch":
+            continue
+        if raw.get("head_branch") != "main":
+            continue
+        relevant.append(raw)
+    if len(relevant) > 1:
+        ids = [
+            str(raw.get("id"))
+            for raw in relevant
+        ]
+        raise ValueError(
+            f"{workflow_name} has multiple manual main runs: {', '.join(ids)}"
+        )
+    if not relevant:
+        return None
+
+    run = relevant[0]
+    run_id = run.get("id")
+    if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+        raise ValueError(f"{workflow_name} manual main run id is invalid")
+    status = run.get("status")
+    conclusion = run.get("conclusion")
+    if not isinstance(status, str) or not status:
+        raise ValueError(f"{workflow_name} manual main run status is invalid")
+    if conclusion is not None and not isinstance(conclusion, str):
+        raise ValueError(f"{workflow_name} manual main run conclusion is invalid")
+    return run
+
+
+def classify_manual_run(
+    run: Mapping[str, object] | None,
+    *,
+    workflow_name: str,
+) -> dict[str, object]:
+    if run is None:
+        return {
+            "workflow_name": workflow_name,
+            "run_present": False,
+            "run_state": "MISSING",
+            "run_id": None,
+        }
+
+    run_id = run.get("id")
+    status = run.get("status")
+    conclusion = run.get("conclusion")
+    if status != "completed":
+        state = "IN_PROGRESS"
+    elif conclusion == "success":
+        state = "SUCCESS"
+    else:
+        state = "FAILED"
+    return {
+        "workflow_name": workflow_name,
+        "run_present": True,
+        "run_state": state,
+        "run_id": run_id,
+        "status": status,
+        "conclusion": conclusion,
+    }
+
+
 def validate_no_existing_manual_runs(
     payload: Mapping[str, object],
     *,
@@ -396,7 +469,9 @@ __all__ = [
     "outcome_run_endpoint",
     "outcome_runs_endpoint",
     "select_feature_evidence_artifact",
+    "select_only_manual_main_run",
     "select_outcome_evidence_artifacts",
+    "classify_manual_run",
     "shell_join",
     "validate_feature_evidence_for_outcomes",
     "validate_feature_run_for_outcomes",
