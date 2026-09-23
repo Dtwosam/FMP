@@ -7,9 +7,10 @@ import tempfile
 import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Sequence
+from typing import Callable, Mapping, Sequence
 
 from fmp.market_learning.evidence import load_feature_evidence_index
+from fmp.market_learning.execution_status import build_execution_status
 from fmp.market_learning.operator import (
     FEATURE_WORKFLOW_NAME,
     OUTCOME_WORKFLOW_NAME,
@@ -20,14 +21,20 @@ from fmp.market_learning.operator import (
     feature_run_endpoint,
     feature_runs_endpoint,
     outcome_dispatch_command,
+    outcome_run_artifacts_endpoint,
+    outcome_run_endpoint,
     outcome_runs_endpoint,
     select_feature_evidence_artifact,
+    select_outcome_evidence_artifacts,
     shell_join,
     validate_feature_evidence_for_outcomes,
     validate_feature_run_for_outcomes,
     validate_no_existing_manual_runs,
     validate_operator_checkout,
+    validate_outcome_run_for_readiness,
 )
+from fmp.market_learning.outcome_evidence import load_outcome_evidence_index
+from fmp.market_learning.readiness import load_training_readiness
 from fmp.market_learning.source_preflight import (
     SOURCE_ARTIFACTS,
     compile_source_preflight,
@@ -80,21 +87,15 @@ def _safe_extract_zip(archive_path: Path, destination: Path) -> None:
         archive.extractall(destination)
 
 
-def _download_feature_evidence(
+def _download_json_artifact(
     *,
-    feature_run_id: int,
-    feature_head_sha: str,
-) -> dict[str, object]:
-    artifacts = _gh_json(feature_run_artifacts_endpoint(feature_run_id))
-    selected = select_feature_evidence_artifact(
-        artifacts,
-        feature_head_sha=feature_head_sha,
-    )
-    artifact_id = int(selected["artifact_id"])
-
-    with tempfile.TemporaryDirectory(prefix="fmp-exp044-feature-evidence-") as tmp:
+    artifact_id: int,
+    expected_filename: str,
+    loader: Callable[[Path], Mapping[str, object]],
+) -> Mapping[str, object]:
+    with tempfile.TemporaryDirectory(prefix="fmp-exp044-artifact-") as tmp:
         root = Path(tmp)
-        archive_path = root / "feature-evidence.zip"
+        archive_path = root / "artifact.zip"
         extracted = root / "extracted"
         extracted.mkdir()
         with archive_path.open("wb") as handle:
@@ -110,20 +111,66 @@ def _download_feature_evidence(
                 stdout=handle,
             )
         _safe_extract_zip(archive_path, extracted)
-        matches = sorted(extracted.rglob("feature-evidence.json"))
+        matches = sorted(extracted.rglob(expected_filename))
         if len(matches) != 1:
             raise SystemExit(
-                "aggregate feature evidence ZIP must contain exactly one feature-evidence.json"
+                f"artifact ZIP must contain exactly one {expected_filename}"
             )
-        evidence = load_feature_evidence_index(matches[0])
-        verified = validate_feature_evidence_for_outcomes(
-            evidence,
-            expected_code_commit=feature_head_sha,
-        )
-    return {
-        **selected,
-        **verified,
-    }
+        return loader(matches[0])
+
+
+def _download_feature_evidence(
+    *,
+    feature_run_id: int,
+    feature_head_sha: str,
+) -> tuple[dict[str, object], Mapping[str, object]]:
+    artifacts = _gh_json(feature_run_artifacts_endpoint(feature_run_id))
+    selected = select_feature_evidence_artifact(
+        artifacts,
+        feature_head_sha=feature_head_sha,
+    )
+    artifact_id = int(selected["artifact_id"])
+    evidence = _download_json_artifact(
+        artifact_id=artifact_id,
+        expected_filename="feature-evidence.json",
+        loader=load_feature_evidence_index,
+    )
+    verified = validate_feature_evidence_for_outcomes(
+        evidence,
+        expected_code_commit=feature_head_sha,
+    )
+    return (
+        {
+            **selected,
+            **verified,
+        },
+        evidence,
+    )
+
+
+def _download_outcome_readiness_bundle(
+    *,
+    outcome_run_id: int,
+    outcome_head_sha: str,
+    feature_head_sha: str,
+) -> tuple[dict[str, object], Mapping[str, object], Mapping[str, object]]:
+    artifacts = _gh_json(outcome_run_artifacts_endpoint(outcome_run_id))
+    selected = select_outcome_evidence_artifacts(
+        artifacts,
+        outcome_head_sha=outcome_head_sha,
+        feature_head_sha=feature_head_sha,
+    )
+    outcome_evidence = _download_json_artifact(
+        artifact_id=int(selected["outcome_evidence_artifact_id"]),
+        expected_filename="outcome-evidence.json",
+        loader=load_outcome_evidence_index,
+    )
+    readiness = _download_json_artifact(
+        artifact_id=int(selected["readiness_artifact_id"]),
+        expected_filename="readiness.json",
+        loader=load_training_readiness,
+    )
+    return selected, outcome_evidence, readiness
 
 
 def _checkout_preflight() -> dict[str, object]:
@@ -156,6 +203,13 @@ def parser() -> argparse.ArgumentParser:
     outcomes = sub.add_parser("outcomes", help="prepare or dispatch EXP-044 outcome materialization")
     outcomes.add_argument("--feature-run-id", type=int, required=True)
     outcomes.add_argument("--execute", action="store_true")
+
+    readiness = sub.add_parser(
+        "readiness",
+        help="verify the completed feature/outcome/readiness evidence chain",
+    )
+    readiness.add_argument("--feature-run-id", type=int, required=True)
+    readiness.add_argument("--outcome-run-id", type=int, required=True)
     return out
 
 
@@ -167,9 +221,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     _require_gh_auth()
     checkout = _checkout_preflight()
-    source_preflight = _source_artifact_preflight()
 
     if args.command == "features":
+        source_preflight = _source_artifact_preflight()
         listing = _gh_json(feature_runs_endpoint())
         validate_no_existing_manual_runs(
             listing,
@@ -204,10 +258,56 @@ def main(argv: list[str] | None = None) -> int:
         run,
         expected_run_id=feature_run_id,
     )
-    feature_evidence = _download_feature_evidence(
+    feature_evidence_summary, feature_evidence = _download_feature_evidence(
         feature_run_id=feature_run_id,
         feature_head_sha=str(feature["feature_head_sha"]),
     )
+
+    if args.command == "readiness":
+        outcome_run_id = args.outcome_run_id
+        outcome_run = _gh_json(outcome_run_endpoint(outcome_run_id))
+        outcome = validate_outcome_run_for_readiness(
+            outcome_run,
+            expected_run_id=outcome_run_id,
+        )
+        selected, outcome_evidence, readiness = _download_outcome_readiness_bundle(
+            outcome_run_id=outcome_run_id,
+            outcome_head_sha=str(outcome["outcome_head_sha"]),
+            feature_head_sha=str(feature["feature_head_sha"]),
+        )
+        status = build_execution_status(
+            feature_run=run,
+            feature_evidence=feature_evidence,
+            outcome_run=outcome_run,
+            outcome_evidence=outcome_evidence,
+            readiness=readiness,
+        )
+        if status.get("stage") != "MODEL_PROTOCOL_SOURCE_OPEN":
+            raise SystemExit(
+                f"EXP-044 evidence chain is not protocol-source-open: {status.get('stage')}"
+            )
+        _print_report(
+            {
+                **checkout,
+                **feature,
+                **feature_evidence_summary,
+                **outcome,
+                **selected,
+                "stage": status["stage"],
+                "next_action": status["next_action"],
+                "readiness_verified": status["readiness_verified"],
+                "model_protocol_source_open_authorized": status[
+                    "model_protocol_source_open_authorized"
+                ],
+                "model_protocol_result_authorized": False,
+                "model_fit_authorized": False,
+                "promotion_authorized": False,
+                "trading_authorized": False,
+            }
+        )
+        return 0
+
+    source_preflight = _source_artifact_preflight()
     listing = _gh_json(outcome_runs_endpoint())
     validate_no_existing_manual_runs(
         listing,
@@ -217,7 +317,7 @@ def main(argv: list[str] | None = None) -> int:
     report = {
         **checkout,
         **feature,
-        **feature_evidence,
+        **feature_evidence_summary,
         "source_preflight_ready": source_preflight["source_ready"],
         "source_earliest_expires_at": source_preflight["earliest_expires_at"],
         "stage": "outcomes",

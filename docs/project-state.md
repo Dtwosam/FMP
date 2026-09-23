@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 SOURCE/EVIDENCE-PREFLIGHT + SAFE MANUAL LAUNCH SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** Manually dispatch `phase8a-exp044-market-features` from a clean checkout of merged `main`. DEC-081/082 provide a dry-run-by-default operator helper that verifies repository/main identity, GitHub CLI auth, duplicate-run state, and the exact Phase 2 source artifacts before an explicit `--execute`. Before outcome dispatch, the helper additionally downloads and validates the exact aggregate feature-evidence artifact bound to the successful feature run; the outcome workflow independently repeats those checks. Only a valid DEC-074 readiness artifact may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Phase status:** ACTIVE — EXP-044 SAFE LAUNCH + FULL READINESS INSPECTION SOURCE-ONLY; NO MODEL-TRAINING RESULT
+**Next milestone:** Manually dispatch `phase8a-exp044-market-features` from a clean checkout of merged `main` using the DEC-081/082 helper, then dispatch outcomes only after exact feature evidence is verified. DEC-083 adds a read-only readiness inspection that downloads the exact aggregate outcome evidence and DEC-074 readiness artifacts and requires DEC-075 to recompute the chain as `MODEL_PROTOCOL_SOURCE_OPEN`. Only that state may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 
