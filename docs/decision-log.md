@@ -1290,3 +1290,27 @@ The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-single-step-advan
 Only preservation-, feature-, or outcome-dispatch-required states may map to a command. The command must exactly match the DEC-086 report. With `--execute`, the planner is run a second time and the two reports must be identical before exactly one workflow dispatch may be submitted.
 
 In-progress, review-required, duplicate, readiness, and protocol-source-open states are non-executable. Failed workflows are never automatically retried. Dispatch submission claims no result and creates no model/trading authorization.
+
+
+## DEC-088 — Phase 8A EXP-044 predeclared model-training protocol
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 MODEL-TRAINING RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-model-training-protocol.md` freezes the first direct-market model protocol only after DEC-074 readiness was actually satisfied by authoritative feature run `35867307338` and successful outcome run `35876715434`.
+
+The exact V1 model universe is 18 independent cells: EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m. Each cell uses exactly the 48 frozen `FEATURE_VALUE_COLUMNS`; there is no pooled cross-pair, cross-timeframe, or cross-horizon model.
+
+The only V1 target is the three-class `best_direction_0p5` outcome. Models therefore predict `LONG`, `SHORT`, or `NO_TRADE` after the already-frozen historical BID/ASK and 0.5-pip-per-fill target-cost semantics. Future outcome values and result-derived feature selection are forbidden as inputs.
+
+Chronology is frozen as fit 2015-2020, selection 2021-2022, validation 2023-2024, and retrospective holdout 2025-01-01 through 2026-08-20. A row is admitted only if its exact target exit also remains before that split's end-exclusive boundary, creating the required 60m/240m boundary purge. The 2025-2026 holdout remains `RETROSPECTIVE_ALREADY_SEEN`, not untouched OOS evidence.
+
+Preprocessing is fit-period median imputation for both families, fit-period standardization for logistic regression only, and fail-closed all-null fit columns. The only model families are fixed L2 logistic regression and shallow histogram gradient boosting under `scikit-learn==1.9.1`, with no hyperparameter search, class reweighting, resampling, calibration, AutoML, or neural-network expansion.
+
+Candidate confidence cutoffs are exactly 0.50, 0.60, and 0.70. A trade candidate exists only when LONG or SHORT is the strict unique highest-probability class and meets the fixed cutoff; ties and insufficient confidence are `NO_TRADE`. Probability never changes position size.
+
+Selection requires at least 250 directional candidates plus strictly positive total and mean 0.5-pip net pips and gross positive pips greater than absolute gross negative pips. At most one variant per cell survives under the frozen deterministic tie-break. There is no refit after selection. Validation and the gated retrospective holdout must independently satisfy the same conditions at both 0.5- and 1.0-pip adverse slippage; 0.2 pip remains diagnostic.
+
+DEC-088 creates a canonical machine-readable protocol payload/fingerprint but authorizes no result-producing fit. `model_protocol_result_authorized=false`, `model_fit_authorized=false`, promotion and shadow/demo/broker/live/real-money authorizations remain false. A later separate guarded decision must bind the exact merged DEC-088 protocol fingerprint and the verified DEC-074 readiness chain before a model-training workflow may run.
+
+Consequences: EXP-044 data preparation remains complete; the model protocol is frozen source-only; result-producing fit remains locked; no historical qualification, portfolio admission, shadow action, demo order, broker mutation, live order, or real-money action is created by DEC-088.
