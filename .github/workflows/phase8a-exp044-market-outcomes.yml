@@ -236,21 +236,27 @@ jobs:
           feature_evidence="$(find .feature-evidence -type f -name 'feature-evidence.json' -print -quit)"
           test -n "$feature_evidence"
 
-          for timeframe in 5m 15m 1h; do
-            feature_root="$(dirname "$(find ".feature-cell/${timeframe}" -type f -name 'manifest.json' -print -quit)")"
-            test -n "$feature_root"
-            out=".exp044-outcomes/${SYMBOL}-${timeframe}"
-            python scripts/phase8a_market_outcomes.py \
-              --feature-root "$feature_root" \
-              --feature-evidence "$feature_evidence" \
-              --dataset-root ".phase2-accepted/${SYMBOL}" \
-              --processed-manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json" \
-              --symbol "${SYMBOL}" \
-              --timeframe "${timeframe}" \
-              --out "${out}" \
-              --code-commit "${GITHUB_SHA}"
+          feature_root_5m="$(dirname "$(find ".feature-cell/5m" -type f -name 'manifest.json' -print -quit)")"
+          feature_root_15m="$(dirname "$(find ".feature-cell/15m" -type f -name 'manifest.json' -print -quit)")"
+          feature_root_1h="$(dirname "$(find ".feature-cell/1h" -type f -name 'manifest.json' -print -quit)")"
+          test -n "$feature_root_5m"
+          test -n "$feature_root_15m"
+          test -n "$feature_root_1h"
 
-            OUTCOME_MANIFEST="${out}/manifest.json" TIMEFRAME="${timeframe}" python - <<'PY'
+          python scripts/phase8a_market_outcome_pair.py \
+            --feature-root-5m "$feature_root_5m" \
+            --feature-root-15m "$feature_root_15m" \
+            --feature-root-1h "$feature_root_1h" \
+            --feature-evidence "$feature_evidence" \
+            --dataset-root ".phase2-accepted/${SYMBOL}" \
+            --processed-manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json" \
+            --symbol "${SYMBOL}" \
+            --out-root .exp044-outcomes \
+            --code-commit "${GITHUB_SHA}"
+
+          for timeframe in 5m 15m 1h; do
+            OUTCOME_MANIFEST=".exp044-outcomes/${SYMBOL}-${timeframe}/manifest.json" \
+            TIMEFRAME="${timeframe}" python - <<'PY'
             import json
             import os
             from pathlib import Path
