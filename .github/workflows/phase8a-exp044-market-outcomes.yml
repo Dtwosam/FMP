@@ -1,0 +1,315 @@
+name: phase8a-exp044-market-outcomes
+
+on:
+  workflow_dispatch:
+    inputs:
+      feature_run_id:
+        description: Successful phase8a-exp044-market-features workflow run ID from main
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate-feature-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      feature_sha: ${{ steps.feature_run.outputs.feature_sha }}
+      feature_evidence_fingerprint: ${{ steps.feature_evidence.outputs.fingerprint }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require merged main dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Validate feature workflow run
+        id: feature_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FEATURE_RUN_ID: ${{ inputs.feature_run_id }}
+        run: |
+          set -euo pipefail
+          case "$FEATURE_RUN_ID" in
+            ''|*[!0-9]*) echo "feature_run_id must contain digits only" >&2; exit 1 ;;
+          esac
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$FEATURE_RUN_ID" > feature-run.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(Path("feature-run.json").read_text(encoding="utf-8"))
+          assert run["name"] == "phase8a-exp044-market-features", run["name"]
+          assert run["event"] == "workflow_dispatch", run["event"]
+          assert run["head_branch"] == "main", run["head_branch"]
+          assert run["status"] == "completed", run["status"]
+          assert run["conclusion"] == "success", run["conclusion"]
+          sha = run["head_sha"]
+          assert isinstance(sha, str) and len(sha) == 40
+          int(sha, 16)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"feature_sha={sha}\n")
+          PY
+
+      - name: Download aggregate feature evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FEATURE_RUN_ID: ${{ inputs.feature_run_id }}
+          FEATURE_SHA: ${{ steps.feature_run.outputs.feature_sha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$FEATURE_RUN_ID/artifacts?per_page=100" > feature-artifacts.json
+          artifact_id="$(
+            python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(Path("feature-artifacts.json").read_text(encoding="utf-8"))
+          expected = f"exp044-market-feature-evidence-{os.environ['FEATURE_SHA']}"
+          matches = [
+              item for item in payload.get("artifacts", [])
+              if item.get("name") == expected and not item.get("expired", False)
+          ]
+          if len(matches) != 1:
+              raise SystemExit(f"expected exactly one non-expired {expected!r} artifact")
+          print(matches[0]["id"])
+          PY
+          )"
+          mkdir -p .feature-evidence
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > .feature-evidence.zip
+          unzip -q .feature-evidence.zip -d .feature-evidence
+
+      - name: Revalidate aggregate feature evidence
+        id: feature_evidence
+        env:
+          FEATURE_SHA: ${{ steps.feature_run.outputs.feature_sha }}
+        run: |
+          set -euo pipefail
+          evidence_path="$(find .feature-evidence -type f -name 'feature-evidence.json' -print -quit)"
+          test -n "$evidence_path"
+          EVIDENCE_PATH="$evidence_path" python - <<'PY'
+          import os
+          from pathlib import Path
+
+          from fmp.market_learning.evidence import load_feature_evidence_index
+
+          evidence = load_feature_evidence_index(Path(os.environ["EVIDENCE_PATH"]))
+          assert evidence["code_commit"] == os.environ["FEATURE_SHA"]
+          fingerprint = evidence["evidence_fingerprint"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"fingerprint={fingerprint}\n")
+          PY
+
+  materialize:
+    needs: validate-feature-run
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        dataset:
+          - symbol: EURUSD
+            artifact_id: '10325737935'
+            zip_sha256: db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3
+            manifest_sha256: fd7676282e6e667c39754b09b43a43288a0a877fec588cd2601a601e2b0edf6a
+          - symbol: GBPUSD
+            artifact_id: '10326096831'
+            zip_sha256: fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2
+            manifest_sha256: a6ee73e94781f48a43f2792328528d242455d4f7f4f2e0a5760446df21ba4d94
+          - symbol: USDJPY
+            artifact_id: '10327600628'
+            zip_sha256: 6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72
+            manifest_sha256: e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d
+        timeframe: [5m, 15m, 1h]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require merged main dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Download verified feature evidence and requested feature cell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FEATURE_RUN_ID: ${{ inputs.feature_run_id }}
+          FEATURE_SHA: ${{ needs.validate-feature-run.outputs.feature_sha }}
+          SYMBOL: ${{ matrix.dataset.symbol }}
+          TIMEFRAME: ${{ matrix.timeframe }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$FEATURE_RUN_ID/artifacts?per_page=100" > feature-artifacts.json
+          python - <<'PY' > artifact-ids.txt
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(Path("feature-artifacts.json").read_text(encoding="utf-8"))
+          names = {
+              "evidence": f"exp044-market-feature-evidence-{os.environ['FEATURE_SHA']}",
+              "cell": (
+                  f"exp044-market-features-{os.environ['SYMBOL']}-"
+                  f"{os.environ['TIMEFRAME']}-{os.environ['FEATURE_SHA']}"
+              ),
+          }
+          for label, expected in names.items():
+              matches = [
+                  item for item in payload.get("artifacts", [])
+                  if item.get("name") == expected and not item.get("expired", False)
+              ]
+              if len(matches) != 1:
+                  raise SystemExit(f"expected exactly one non-expired {expected!r} artifact")
+              print(f"{label}={matches[0]['id']}")
+          PY
+          evidence_id="$(grep '^evidence=' artifact-ids.txt | cut -d= -f2)"
+          cell_id="$(grep '^cell=' artifact-ids.txt | cut -d= -f2)"
+          mkdir -p .feature-evidence .feature-cell
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$evidence_id/zip"             > .feature-evidence.zip
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$cell_id/zip"             > .feature-cell.zip
+          unzip -q .feature-evidence.zip -d .feature-evidence
+          unzip -q .feature-cell.zip -d .feature-cell
+
+      - name: Download and verify accepted Phase 2 Dukascopy artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ matrix.dataset.artifact_id }}
+          EXPECTED_ZIP_SHA256: ${{ matrix.dataset.zip_sha256 }}
+          EXPECTED_MANIFEST_SHA256: ${{ matrix.dataset.manifest_sha256 }}
+          SYMBOL: ${{ matrix.dataset.symbol }}
+        run: |
+          set -euo pipefail
+          root=".phase2-accepted/${SYMBOL}"
+          zip_path=".phase2-accepted/${SYMBOL}.zip"
+          manifest_path="${root}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json"
+          mkdir -p "${root}"
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip"             > "${zip_path}"
+          actual_sha256="$(sha256sum "${zip_path}" | awk '{print $1}')"
+          test "${actual_sha256}" = "${EXPECTED_ZIP_SHA256"
+          unzip -q "${zip_path}" -d "${root}"
+          test -f "${manifest_path}"
+          actual_manifest_sha256="$(sha256sum "${manifest_path}" | awk '{print $1}')"
+          test "${actual_manifest_sha256}" = "${EXPECTED_MANIFEST_SHA256}"
+
+      - name: Materialize verified market outcomes
+        env:
+          SYMBOL: ${{ matrix.dataset.symbol }}
+          TIMEFRAME: ${{ matrix.timeframe }}
+          EXPECTED_FEATURE_FINGERPRINT: ${{ needs.validate-feature-run.outputs.feature_evidence_fingerprint }}
+        run: |
+          set -euo pipefail
+          feature_root="$(dirname "$(find .feature-cell -type f -name 'manifest.json' -print -quit)")"
+          feature_evidence="$(find .feature-evidence -type f -name 'feature-evidence.json' -print -quit)"
+          test -n "$feature_root"
+          test -n "$feature_evidence"
+          out=".exp044-outcomes/${SYMBOL}-${TIMEFRAME}"
+          python scripts/phase8a_market_outcomes.py             --feature-root "$feature_root"             --feature-evidence "$feature_evidence"             --dataset-root ".phase2-accepted/${SYMBOL}"             --processed-manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json"             --symbol "${SYMBOL}"             --timeframe "${TIMEFRAME}"             --out "${out}"             --code-commit "${GITHUB_SHA}"
+          OUTCOME_MANIFEST="${out}/manifest.json" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path(os.environ["OUTCOME_MANIFEST"]).read_text(encoding="utf-8")
+          )
+          assert manifest["experiment_id"] == "EXP-20260923-044"
+          assert manifest["outcome_set_version"] == "fmp-market-outcome-grid-v1"
+          assert manifest["feature_evidence_fingerprint"] == os.environ["EXPECTED_FEATURE_FINGERPRINT"]
+          assert manifest["model_fit_authorized"] is False
+          assert manifest["promotion_authorized"] is False
+          assert manifest["labeled_rows"] > 0
+          PY
+
+      - name: Upload EXP-044 outcome cell
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-market-outcomes-${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}-${{ github.sha }}-from-${{ needs.validate-feature-run.outputs.feature_sha }}
+          path: .exp044-outcomes/${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}
+          include-hidden-files: true
+          if-no-files-found: error
+
+  verify-outcomes:
+    needs: [validate-feature-run, materialize]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: python -m pip install -e .
+
+      - name: Download all nine outcome cells
+        uses: actions/download-artifact@v6
+        with:
+          pattern: exp044-market-outcomes-*-*-${{ github.sha }}-from-${{ needs.validate-feature-run.outputs.feature_sha }}
+          path: .exp044-outcome-evidence-input
+          merge-multiple: false
+
+      - name: Verify aggregate outcome evidence
+        env:
+          FEATURE_EVIDENCE_FINGERPRINT: ${{ needs.validate-feature-run.outputs.feature_evidence_fingerprint }}
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_market_outcome_evidence.py             --root .exp044-outcome-evidence-input             --code-commit "$GITHUB_SHA"             --feature-evidence-fingerprint "$FEATURE_EVIDENCE_FINGERPRINT"             --out .exp044-outcome-evidence/outcome-evidence.json
+
+      - name: Assert outcome evidence remains research-only
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence = json.loads(
+              Path(".exp044-outcome-evidence/outcome-evidence.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          assert evidence["outcome_evidence_complete"] is True
+          assert evidence["verified_cell_count"] == 9
+          assert evidence["model_fit_authorized"] is False
+          assert evidence["shadow_authorized"] is False
+          assert evidence["demo_order_authorized"] is False
+          assert evidence["broker_mutation_authorized"] is False
+          assert evidence["live_order_authorized"] is False
+          assert evidence["real_money_authorized"] is False
+          PY
+
+      - name: Upload aggregate EXP-044 outcome evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-market-outcome-evidence-${{ github.sha }}-from-${{ needs.validate-feature-run.outputs.feature_sha }}
+          path: .exp044-outcome-evidence/outcome-evidence.json
+          if-no-files-found: error
