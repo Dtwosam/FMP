@@ -71,6 +71,7 @@ from fmp.market_learning.source_preservation import (
 
 
 REVIEWED_FAILED_OUTCOME_RUN_IDS = frozenset({35869906438})
+REVIEWED_FAILED_MODEL_RUN_IDS = frozenset({35891605645})
 
 
 def _run(command: Sequence[str], *, capture: bool = True) -> str:
@@ -747,6 +748,12 @@ def main(argv: list[str] | None = None) -> int:
             "dec093_workflow_blob_sha": workflow_gate[
                 "dec093_workflow_blob_sha"
             ],
+            "dec094_workflow_blob_sha": workflow_gate[
+                "dec094_workflow_blob_sha"
+            ],
+            "reviewed_failed_model_run_id": workflow_gate[
+                "reviewed_failed_model_run_id"
+            ],
             "dec092_cli_blob_sha": workflow_gate[
                 "dec092_cli_blob_sha"
             ],
@@ -762,9 +769,10 @@ def main(argv: list[str] | None = None) -> int:
         }
 
         model_listing = _gh_json(model_runs_endpoint())
-        model_run = select_only_manual_main_run(
+        model_run = select_latest_manual_main_run_after_reviewed_failures(
             model_listing,
             workflow_name=MODEL_WORKFLOW_NAME,
+            reviewed_failed_run_ids=REVIEWED_FAILED_MODEL_RUN_IDS,
         )
         model_state = classify_manual_run(
             model_run,
@@ -774,19 +782,16 @@ def main(argv: list[str] | None = None) -> int:
             _print_report(
                 _next_report(
                     checkout=checkout,
-                    stage="MODEL_RUN_DISPATCH_REQUIRED",
+                    stage="MODEL_RUN_REVIEW_REQUIRED",
                     next_action=(
-                        "Dispatch exactly one guarded EXP-044 historical model-result "
-                        "run from merged main."
+                        "DEC-094 replacement authorization requires the reviewed "
+                        "failed model run 35891605645. Do not dispatch."
                     ),
-                    dispatch_command=model_dispatch_command(),
-                    model_protocol_result_authorized=True,
-                    model_fit_authorized=True,
                     preservation_release_verified=True,
                     **workflow_report_details,
                     model_run_state="MISSING",
-                    model_run_dispatch_authorized=True,
-                    authoritative_model_result_execution_authorized=True,
+                    model_run_dispatch_authorized=False,
+                    authoritative_model_result_execution_authorized=False,
                 )
             )
             return 0
@@ -811,18 +816,41 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if model_state["run_state"] == "FAILED":
+            failed_run_id = int(model_state["run_id"])
+            if failed_run_id in REVIEWED_FAILED_MODEL_RUN_IDS:
+                _print_report(
+                    _next_report(
+                        checkout=checkout,
+                        stage="MODEL_RUN_REPLACEMENT_DISPATCH_REQUIRED",
+                        next_action=(
+                            "Dispatch exactly one reviewed replacement EXP-044 "
+                            "historical model-result run from merged main."
+                        ),
+                        dispatch_command=model_dispatch_command(),
+                        model_protocol_result_authorized=True,
+                        model_fit_authorized=True,
+                        preservation_release_verified=True,
+                        **workflow_report_details,
+                        model_run_state="REVIEWED_FAILED",
+                        model_run_id=failed_run_id,
+                        model_run_dispatch_authorized=True,
+                        authoritative_model_result_execution_authorized=True,
+                    )
+                )
+                return 0
+
             _print_report(
                 _next_report(
                     checkout=checkout,
                     stage="MODEL_RUN_REVIEW_REQUIRED",
                     next_action=(
-                        "Review the failed model workflow evidence; do not retry "
-                        "or replace it automatically."
+                        "Review the failed replacement model workflow evidence; "
+                        "do not retry or replace it automatically."
                     ),
                     preservation_release_verified=True,
                     **workflow_report_details,
                     model_run_state="FAILED",
-                    model_run_id=model_state["run_id"],
+                    model_run_id=failed_run_id,
                     model_run_dispatch_authorized=False,
                     authoritative_model_result_execution_authorized=False,
                 )
