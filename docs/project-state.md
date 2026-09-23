@@ -4,7 +4,7 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 DATA PREPARATION VERIFIED + DEC-088/089 PROTOCOL GATES + DEC-090 TRAINING CORE SOURCE; NO AUTHORITATIVE MODEL-TRAINING RESULT
+**Phase status:** ACTIVE — EXP-044 DATA PREPARATION VERIFIED + MODEL PROTOCOL SOURCE FROZEN + DEC-089 MODEL-RUN SOURCE GATE + DEC-090 TRAINING CORE SOURCE; NO AUTHORITATIVE MODEL-TRAINING RESULT
 **Next milestone:** Merge DEC-090's deterministic in-memory training core with synthetic-only tests. Do not run it on authoritative EXP-044 artifacts. A later separate gate must bind the merged core source identity before any artifact-backed model workflow or result-producing historical fit can be authorized.
 
 ## Current baseline
