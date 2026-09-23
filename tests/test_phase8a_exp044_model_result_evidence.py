@@ -157,9 +157,14 @@ class Exp044ModelResultEvidenceTests(unittest.TestCase):
         evidence = _evidence()
         cells = evidence["cells"]
         assert isinstance(cells, list)
-        first = cells[0]
-        assert isinstance(first, dict)
-        first["validation_status"] = "PASS"
+        target = next(
+            cell
+            for cell in cells
+            if isinstance(cell, dict)
+            and cell.get("selection_status")
+            == "NO_MODEL_CHALLENGER"
+        )
+        target["validation_status"] = "PASS"
         _recompute_fingerprint(evidence)
         with self.assertRaisesRegex(
             ValueError,
