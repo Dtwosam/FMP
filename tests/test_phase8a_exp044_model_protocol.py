@@ -194,7 +194,7 @@ class Exp044ModelProtocolTests(unittest.TestCase):
         self.assertIn("There is no refit after the fit split.", spec)
         self.assertIn("model_fit_authorized", spec)
         self.assertIn("RESULT RUN STILL LOCKED", spec)
-        self.assertIn("MODEL PROTOCOL SOURCE FROZEN", state)
+        self.assertIn("EXP-044 V1 CLOSED", state)
 
 
 if __name__ == "__main__":
