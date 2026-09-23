@@ -1314,3 +1314,21 @@ Selection requires at least 250 directional candidates plus strictly positive to
 DEC-088 creates a canonical machine-readable protocol payload/fingerprint but authorizes no result-producing fit. `model_protocol_result_authorized=false`, `model_fit_authorized=false`, promotion and shadow/demo/broker/live/real-money authorizations remain false. A later separate guarded decision must bind the exact merged DEC-088 protocol fingerprint and the verified DEC-074 readiness chain before a model-training workflow may run.
 
 Consequences: EXP-044 data preparation remains complete; the model protocol is frozen source-only; result-producing fit remains locked; no historical qualification, portfolio admission, shadow action, demo order, broker mutation, live order, or real-money action is created by DEC-088.
+
+
+## DEC-089 — Phase 8A EXP-044 model-run source gate
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 MODEL-TRAINING RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-model-run-source-gate.md` adds a source-only fail-closed gate after DEC-088.
+
+The gate binds the exact merged DEC-088 protocol fingerprint `1caeec61c7b1a9a6863caafc4c3e85bc8cbcfd5f504f2f7473afe0d4b9c55605` from source commit `a9305ba9c42b7224e5d4b3f7d26f268447cdf469` to the already verified DEC-074 preparation chain: feature run `35867307338`, feature evidence fingerprint `1288f0fa0ca62069d651f86c21ff9d799e46f24c2eac2b555f177ee2dcfa0815`, outcome run `35876715434`, aggregate outcome-evidence artifact `10758027876`, and readiness artifact `10757578276`.
+
+DEC-075 must still reconstruct `MODEL_PROTOCOL_SOURCE_OPEN` from the actual persisted evidence contents before DEC-089 may report `MODEL_PROTOCOL_FROZEN`. Artifact IDs are additional frozen identities, not substitutes for evidence validation.
+
+`MODEL_PROTOCOL_FROZEN` sets `model_run_source_open_authorized=true` only. It remains non-dispatchable under DEC-087 and authorizes no model-training workflow execution.
+
+DEC-089 adds no estimator fit, no training workflow, and no result-producing run. `model_protocol_result_authorized=false`, `model_fit_authorized=false`, promotion and all shadow/demo/broker/live/real-money authorizations remain false.
+
+Consequences: the first EXP-044 model protocol is now frozen and machine-bound to its verified preparation evidence, while actual model-run implementation and every result-producing fit remain behind a later separate decision.

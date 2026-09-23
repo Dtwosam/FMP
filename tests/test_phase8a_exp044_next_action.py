@@ -16,6 +16,8 @@ class Exp044NextActionScriptTests(unittest.TestCase):
         self.assertIn("OUTCOME_DISPATCH_REQUIRED", text)
         self.assertIn("OUTCOME_REPLACEMENT_DISPATCH_REQUIRED", text)
         self.assertIn("MODEL_PROTOCOL_SOURCE_OPEN", text)
+        self.assertIn("MODEL_PROTOCOL_FROZEN", text)
+        self.assertIn("build_model_run_source_gate", text)
 
         parser_start = text.index("def parser()")
         parser_end = text.index("def _print_report", parser_start)

@@ -371,6 +371,7 @@ class Exp044OperatorTests(unittest.TestCase):
             "OUTCOME_RUN_IN_PROGRESS",
             "OUTCOME_REVIEW_REQUIRED",
             "MODEL_PROTOCOL_SOURCE_OPEN",
+            "MODEL_PROTOCOL_FROZEN",
         ):
             with self.subTest(stage=stage):
                 self.assertIsNone(
