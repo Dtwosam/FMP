@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 SOURCE-PREFLIGHT + REUSED-SOURCE DATA-PREPARATION + SAFE MANUAL LAUNCH SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** Manually dispatch `phase8a-exp044-market-features` from a clean checkout of merged `main`. DEC-081 provides a dry-run-by-default operator helper that verifies repository/main identity, GitHub CLI auth, and duplicate-run state before an explicit `--execute`. DEC-078 validates the exact accepted Phase 2 Dukascopy artifacts inside the workflow; DEC-080 keeps deterministic dual feature generation while reusing one verified source load per timeframe. Then dispatch `phase8a-exp044-market-outcomes` only with the exact successful feature-run ID. Only a valid DEC-074 readiness artifact may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Phase status:** ACTIVE — EXP-044 SOURCE-PREFLIGHT + RELEASE-PRESERVATION + SAFE MANUAL LAUNCH SOURCE-ONLY; NO MODEL-TRAINING RESULT
+**Next milestone:** From a clean checkout of merged `main`, first dispatch the DEC-082 Phase 2 preservation workflow so the exact accepted ZIP bytes are release-backed before the original Actions copies expire, then dispatch `phase8a-exp044-market-features`. DEC-081 provides dry-run-by-default operator commands for both steps. DEC-078/080 retain exact source-identity and deterministic-feature checks. Then dispatch `phase8a-exp044-market-outcomes` only with the exact successful feature-run ID. Only a valid DEC-074 readiness artifact may open source work on a separately frozen model-training protocol; model fitting itself remains unauthorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 
