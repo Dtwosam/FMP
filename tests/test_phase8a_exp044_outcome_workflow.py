@@ -22,6 +22,11 @@ class Exp044OutcomeWorkflowTests(unittest.TestCase):
         self.assertIn('run["event"] == "workflow_dispatch"', text)
         self.assertIn('run["head_branch"] == "main"', text)
         self.assertIn('run["conclusion"] == "success"', text)
+        self.assertIn("source-preflight:", text)
+        self.assertIn("needs: [validate-feature-run, source-preflight]", text)
+        self.assertIn("scripts/phase8a_market_source_preflight.py", text)
+        self.assertIn("--minimum-valid-hours 12", text)
+        self.assertIn('report["source_ready"] is True', text)
 
     def test_workflow_covers_exact_nine_cells_and_existing_phase2_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
