@@ -14,6 +14,7 @@ from .contracts import (
     MarketOutcomeLabel,
     MarketOutcomeResult,
 )
+from .evidence import load_feature_evidence_index
 from .features import (
     LoadedMarketFeatureSource,
     build_market_feature_frame,
@@ -23,6 +24,13 @@ from .features import (
     write_market_feature_artifacts,
 )
 from .labels import label_market_outcome, label_market_outcomes
+from .materialize import (
+    LoadedFeatureCell,
+    load_verified_feature_cell,
+    load_verified_minute_quotes,
+    materialize_market_outcome_cell,
+    run_market_outcome_materialization,
+)
 from .outcomes import (
     MARKET_OUTCOME_SET_VERSION,
     OUTCOME_COLUMNS,
@@ -41,6 +49,7 @@ __all__ = [
     "MARKET_HISTORY_START",
     "PROTOCOL_VERSION",
     "SLIPPAGE_PIPS",
+    "LoadedFeatureCell",
     "LoadedMarketFeatureSource",
     "MarketObservation",
     "MarketOutcomeLabel",
@@ -51,8 +60,13 @@ __all__ = [
     "build_market_feature_frame",
     "build_market_outcome_grid",
     "label_market_outcome",
+    "load_feature_evidence_index",
     "load_market_feature_source",
+    "load_verified_feature_cell",
+    "load_verified_minute_quotes",
+    "materialize_market_outcome_cell",
     "run_market_feature_generation",
+    "run_market_outcome_materialization",
     "validate_market_feature_range",
     "write_market_feature_artifacts",
     "write_market_outcome_artifacts",
