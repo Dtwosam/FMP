@@ -37,18 +37,12 @@ def _validate_commit(value: object, *, field: str) -> str:
     return value
 
 
-def load_workflow_run(
-    path: Path,
+def validate_workflow_run(
+    value: Mapping[str, object],
     *,
     expected_name: str,
     expected_path: str,
 ) -> Mapping[str, object]:
-    try:
-        value = json.loads(Path(path).read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise ValueError(f"cannot read GitHub workflow-run metadata: {path}") from exc
-    if not isinstance(value, dict):
-        raise ValueError("GitHub workflow-run metadata root must be an object")
     if value.get("name") != expected_name:
         raise ValueError("workflow-run name mismatch")
     if value.get("path") != expected_path:
@@ -68,6 +62,25 @@ def load_workflow_run(
     if conclusion is not None and not isinstance(conclusion, str):
         raise ValueError("workflow-run conclusion is invalid")
     return value
+
+
+def load_workflow_run(
+    path: Path,
+    *,
+    expected_name: str,
+    expected_path: str,
+) -> Mapping[str, object]:
+    try:
+        value = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read GitHub workflow-run metadata: {path}") from exc
+    if not isinstance(value, dict):
+        raise ValueError("GitHub workflow-run metadata root must be an object")
+    return validate_workflow_run(
+        value,
+        expected_name=expected_name,
+        expected_path=expected_path,
+    )
 
 
 def _base_status(
@@ -119,6 +132,19 @@ def build_execution_status(
     outcome_evidence: Mapping[str, object] | None = None,
     readiness: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
+    if feature_run is not None:
+        validate_workflow_run(
+            feature_run,
+            expected_name=FEATURE_WORKFLOW_NAME,
+            expected_path=FEATURE_WORKFLOW_PATH,
+        )
+    if outcome_run is not None:
+        validate_workflow_run(
+            outcome_run,
+            expected_name=OUTCOME_WORKFLOW_NAME,
+            expected_path=OUTCOME_WORKFLOW_PATH,
+        )
+
     if feature_run is None:
         if any(
             item is not None
@@ -324,4 +350,5 @@ __all__ = [
     "build_execution_status",
     "compile_execution_status",
     "load_workflow_run",
+    "validate_workflow_run",
 ]
