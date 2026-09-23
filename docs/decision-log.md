@@ -1576,3 +1576,22 @@ Once a run exists, operator dispatch authorization is consumed. Active runs are 
 
 DEC-101 adds no alternate trigger, rerun/replacement command, workflow input, protocol/model/runtime change, promotion, shadow/demo permission, broker mutation, live-order permission, real-money permission, or trading authorization. No EXP-045 workflow is dispatched by this decision.
 
+## DEC-102 — Phase 8A EXP-045 successful historical result review and closure
+
+**Date:** 2026-09-23
+**Status:** REVIEWED — SUCCESSFUL WORKFLOW, NO VALIDATED MODEL CANDIDATE
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp045-model-result-closure.md` records and closes the only DEC-099-authorized EXP-045 historical model run.
+
+GitHub Actions run `35911916239`, attempt 1, executed from `main` at `6d42a5053c5f2f696071715640dab24973a40517`. Authorization preflight, all nine pair/timeframe jobs, and aggregate evidence completed successfully. The run produced all nine pair/timeframe artifacts plus aggregate artifact `10774927034`.
+
+The aggregate artifact ZIP digest is `sha256:8602d0b5e9bb6ad746f5cd5c96e878e631d6ed090dcd7a236c0ee00c6fadd5a5`. Its canonical aggregate evidence fingerprint is `3e0ebac02dbba690b4c03dd10c3fdd30c5eb0d6356b881e38f9a3527f0135c55`, independently recomputed and matched.
+
+Exactly 18 cells were verified. Seventeen returned `NO_MODEL_CHALLENGER`; one cell was selected; zero cells passed validation; zero cells reached a retrospective holdout pass. Six logistic fits ended in the predeclared `FAILED_NON_CONVERGENCE` family state, while histogram gradient boosting fitted in all 18 cells.
+
+The only selected challenger was GBPUSD 5m / 240m, `hist_gradient_boosting` at confidence 0.6. At the frozen 0.5-pip selection scenario it had 460 directional candidates and approximately +2353.7 total net pips, so selection passed. On the separately frozen validation slice it had only 83 directional candidates and approximately -1397.5 total net pips at 0.5-pip slippage, so validation was `REJECT`. Its retrospective holdout remained `LOCKED_VALIDATION_REJECT`.
+
+The result-record implementation is frozen at Git blob `f0f84ad7e32b8d44a652dbeaed841c87661af4da`. DEC-102 also closes the consumed outer execution authorization at execution-gate blob `5191f850a88dcb470a12293a603665bc546d18ac`: dispatch, authoritative result execution, protocol-result production, and model fitting are false after the reviewed run.
+
+EXP-045 is therefore closed with no validated model candidate and no replacement run. The evidence remains post-result-informed retrospective evidence, not untouched OOS or prospective evidence. Promotion, shadow admission, demo orders, broker mutation, live orders, real-money trading, and trading authorization remain false. Any further learned-model research requires a separately predeclared successor experiment that treats EXP-045 as prior information.
+
