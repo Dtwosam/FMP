@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 DATA PREPARATION VERIFIED + MODEL PROTOCOL SOURCE FROZEN + MODEL CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-093 SINGLE MODEL-RUN AUTHORIZATION; NO MODEL RESULT YET
-**Next milestone:** Merge DEC-093, then run the read-only EXP-044 operator from a clean, up-to-date local `main`. If and only if it reports `MODEL_RUN_DISPATCH_REQUIRED`, the operator may separately submit exactly one historical model workflow. Do not promote, open shadow/demo execution, or trade.
+**Phase status:** ACTIVE — EXP-044 FIRST MODEL RUN FAILED + DEC-094 REVIEWED REPAIR SOURCE; NO AUTHORITATIVE MODEL RESULT
+**Next milestone:** Merge DEC-094, then run the read-only EXP-044 operator from clean, up-to-date `main`. Only `MODEL_RUN_REPLACEMENT_DISPATCH_REQUIRED` may authorize exactly one reviewed replacement for failed run `35891605645`. Do not rerun the failed run, promote, open shadow/demo execution, or trade.
 
 ## Current baseline
 
@@ -395,6 +395,7 @@ Current milestone:
 17. DEC-091 freezes the exact persisted feature/outcome artifact inventory, revalidates readiness and every manifest-listed parquet partition, and predeclares deterministic 18-cell result evidence. `AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED=false`, so no historical fit can execute.
 18. DEC-092 freezes a manual main-only no-input model-training workflow, fail-closed CLI, and operator stage `MODEL_RUN_WORKFLOW_SOURCE_FROZEN`. Dispatch/result/fit authorization remains false, so the workflow cannot progress beyond authorization preflight.
 19. DEC-093 authorizes exactly one guarded historical model-result run, adds a workflow-internal prior-run rejection guard, pins the numerical runtime, and freezes post-run aggregate evidence validation. No model run has been dispatched by this decision; promotion and all trading permissions remain false.
+20. DEC-094 preserves failed run `35891605645`, classifies five hidden-artifact upload failures plus four frozen-logistic non-convergence failures, records non-convergent logistic as an ineligible family without tuning, fixes hidden uploads, and freezes exactly one reviewed replacement gate.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
@@ -435,5 +436,5 @@ Phase 8B must:
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows have completed successfully, but no EXP-044 model-training workflow has been authorized or run; the remaining Phase 8A result workflows and every Phase 8B qualification/registration/start/capture step remain separately gated. No prospective shadow campaign has begun.
+Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows completed successfully. The first authorized EXP-044 model-training run `35891605645` completed with failure and produced no aggregate result artifact; DEC-094 reviewed-repair source is pending/active, and every replacement, promotion, Phase 8B qualification/registration/start/capture step remains separately gated. No prospective shadow campaign has begun.
 
