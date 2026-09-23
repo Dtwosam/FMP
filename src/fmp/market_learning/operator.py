@@ -291,6 +291,12 @@ def feature_run_artifacts_endpoint(run_id: int) -> str:
     return f"repos/{REPOSITORY}/actions/runs/{run_id}/artifacts?per_page=100"
 
 
+def release_asset_download_endpoint(asset_id: int) -> str:
+    if not isinstance(asset_id, int) or isinstance(asset_id, bool) or asset_id <= 0:
+        raise ValueError("release asset id must be a positive integer")
+    return f"repos/{REPOSITORY}/releases/assets/{asset_id}"
+
+
 def artifact_download_endpoint(artifact_id: int) -> str:
     if not isinstance(artifact_id, int) or isinstance(artifact_id, bool) or artifact_id <= 0:
         raise ValueError("artifact id must be a positive integer")
