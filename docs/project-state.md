@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 FULL-HISTORY FEATURE MATERIALIZATION SOURCE-ONLY; NO MODEL-TRAINING RESULT
-**Next milestone:** Dispatch the manual `phase8a-exp044-market-features` workflow from merged `main`. It reuses the already accepted Phase 2 Dukascopy artifacts—no new Dukascopy acquisition—and must materialize all nine EURUSD/GBPUSD/USDJPY × 5m/15m/1h cells, then emit one aggregate evidence index that verifies the exact source hashes and artifact bytes. Only after that evidence is preserved may a separate result-producing model-training protocol be frozen. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
+**Phase status:** ACTIVE — EXP-044 FEATURE + OUTCOME DATASET SOURCE-ONLY; NO MODEL-TRAINING RESULT
+**Next milestone:** Dispatch the manual `phase8a-exp044-market-features` workflow from merged `main`. It reuses the already accepted Phase 2 Dukascopy artifacts—no new Dukascopy acquisition—and must materialize all nine feature cells plus the aggregate evidence fingerprint. The source tree now also contains the vectorized future-outcome grid needed to turn those verified features into 60m/240m supervised targets, but outcome artifacts cannot be written without the preserved feature-evidence fingerprint and no model fit is authorized. `EXP-20260922-015` remains a parallel rule-based benchmark search; DEC-042 and Phase 8B remain locked.
 
 ## Current baseline
 
