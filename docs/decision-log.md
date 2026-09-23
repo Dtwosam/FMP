@@ -1557,3 +1557,22 @@ A failed, cancelled, or timed-out first run may preserve a valid subset of pair/
 
 Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow, demo, broker mutation, live-order, real-money, and trading authorization remain false. EXP-045 evidence remains explicitly post-result-informed, retrospective, and not untouched OOS.
 
+## DEC-101 — Phase 8A EXP-045 single-step operator source
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-045 HISTORICAL MODEL RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp045-single-step-operator.md` freezes the source-only operator that may perform the separate post-merge dispatch step already authorized by DEC-099.
+
+DEC-101 is built after DEC-100 merged at `974127deef7ed2e5e745efc80da0336544a70a7d`, while GitHub still reported zero manual-main `phase8a-exp045-model-training` runs and the authenticated desktop runner remained offline.
+
+The operator core is frozen at Git blob `dcb391c53182ec9775015273983d3e131248adcf`; the executable wrapper is frozen at Git blob `01d41a454df7653d58514cd1b9e129c9288e1709`.
+
+The operator requires clean current `main`, exact `origin/main`, the expected repository remote, working GitHub CLI authentication, the exact DEC-099 execution gate, and at most one manual-main EXP-045 workflow run.
+
+Only the missing-run state is dispatchable. It maps to exactly `gh workflow run phase8a-exp045-model-training.yml --ref main -R Dtwosam/FMP`. `advance --execute` invokes the public `next` planner twice and requires the complete second plan plus reconstructed command to equal the first before submitting the dispatch.
+
+Once a run exists, operator dispatch authorization is consumed. Active runs are non-dispatchable. Terminal runs fetch exact run/jobs/artifacts; successful runs additionally download the exact aggregate artifact and revalidate it before the complete state is passed through the frozen DEC-100 review contract.
+
+DEC-101 adds no alternate trigger, rerun/replacement command, workflow input, protocol/model/runtime change, promotion, shadow/demo permission, broker mutation, live-order permission, real-money permission, or trading authorization. No EXP-045 workflow is dispatched by this decision.
+
