@@ -120,7 +120,7 @@ jobs:
   materialize:
     needs: validate-feature-run
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       max-parallel: 3
@@ -138,7 +138,6 @@ jobs:
             artifact_id: '10327600628'
             zip_sha256: 6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72
             manifest_sha256: e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d
-        timeframe: [5m, 15m, 1h]
 
     steps:
       - name: Checkout
@@ -157,13 +156,12 @@ jobs:
       - name: Install package
         run: python -m pip install -e .
 
-      - name: Download verified feature evidence and requested feature cell
+      - name: Download verified feature evidence and all pair feature cells
         env:
           GH_TOKEN: ${{ github.token }}
           FEATURE_RUN_ID: ${{ inputs.feature_run_id }}
           FEATURE_SHA: ${{ needs.validate-feature-run.outputs.feature_sha }}
           SYMBOL: ${{ matrix.dataset.symbol }}
-          TIMEFRAME: ${{ matrix.timeframe }}
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$FEATURE_RUN_ID/artifacts?per_page=100" > feature-artifacts.json
@@ -175,11 +173,12 @@ jobs:
           payload = json.loads(Path("feature-artifacts.json").read_text(encoding="utf-8"))
           names = {
               "evidence": f"exp044-market-feature-evidence-{os.environ['FEATURE_SHA']}",
-              "cell": (
-                  f"exp044-market-features-{os.environ['SYMBOL']}-"
-                  f"{os.environ['TIMEFRAME']}-{os.environ['FEATURE_SHA']}"
-              ),
           }
+          for timeframe in ("5m", "15m", "1h"):
+              names[timeframe] = (
+                  f"exp044-market-features-{os.environ['SYMBOL']}-"
+                  f"{timeframe}-{os.environ['FEATURE_SHA']}"
+              )
           for label, expected in names.items():
               matches = [
                   item for item in payload.get("artifacts", [])
@@ -190,12 +189,22 @@ jobs:
               print(f"{label}={matches[0]['id']}")
           PY
           evidence_id="$(grep '^evidence=' artifact-ids.txt | cut -d= -f2)"
-          cell_id="$(grep '^cell=' artifact-ids.txt | cut -d= -f2)"
           mkdir -p .feature-evidence .feature-cell
-          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$evidence_id/zip"             > .feature-evidence.zip
-          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$cell_id/zip"             > .feature-cell.zip
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts/$evidence_id/zip" \
+            > .feature-evidence.zip
           unzip -q .feature-evidence.zip -d .feature-evidence
-          unzip -q .feature-cell.zip -d .feature-cell
+
+          for timeframe in 5m 15m 1h; do
+            cell_id="$(grep "^${timeframe}=" artifact-ids.txt | cut -d= -f2)"
+            mkdir -p ".feature-cell/${timeframe}"
+            gh api \
+              -H 'Accept: application/vnd.github+json' \
+              "repos/$GITHUB_REPOSITORY/actions/artifacts/$cell_id/zip" \
+              > ".feature-cell-${timeframe}.zip"
+            unzip -q ".feature-cell-${timeframe}.zip" -d ".feature-cell/${timeframe}"
+          done
 
       - name: Download and verify accepted Phase 2 Dukascopy artifact
         env:
@@ -221,37 +230,65 @@ jobs:
       - name: Materialize verified market outcomes
         env:
           SYMBOL: ${{ matrix.dataset.symbol }}
-          TIMEFRAME: ${{ matrix.timeframe }}
           EXPECTED_FEATURE_FINGERPRINT: ${{ needs.validate-feature-run.outputs.feature_evidence_fingerprint }}
         run: |
           set -euo pipefail
-          feature_root="$(dirname "$(find .feature-cell -type f -name 'manifest.json' -print -quit)")"
           feature_evidence="$(find .feature-evidence -type f -name 'feature-evidence.json' -print -quit)"
-          test -n "$feature_root"
           test -n "$feature_evidence"
-          out=".exp044-outcomes/${SYMBOL}-${TIMEFRAME}"
-          python scripts/phase8a_market_outcomes.py             --feature-root "$feature_root"             --feature-evidence "$feature_evidence"             --dataset-root ".phase2-accepted/${SYMBOL}"             --processed-manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json"             --symbol "${SYMBOL}"             --timeframe "${TIMEFRAME}"             --out "${out}"             --code-commit "${GITHUB_SHA}"
-          OUTCOME_MANIFEST="${out}/manifest.json" python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
 
-          manifest = json.loads(
-              Path(os.environ["OUTCOME_MANIFEST"]).read_text(encoding="utf-8")
-          )
-          assert manifest["experiment_id"] == "EXP-20260923-044"
-          assert manifest["outcome_set_version"] == "fmp-market-outcome-grid-v1"
-          assert manifest["feature_evidence_fingerprint"] == os.environ["EXPECTED_FEATURE_FINGERPRINT"]
-          assert manifest["model_fit_authorized"] is False
-          assert manifest["promotion_authorized"] is False
-          assert manifest["labeled_rows"] > 0
-          PY
+          for timeframe in 5m 15m 1h; do
+            feature_root="$(dirname "$(find ".feature-cell/${timeframe}" -type f -name 'manifest.json' -print -quit)")"
+            test -n "$feature_root"
+            out=".exp044-outcomes/${SYMBOL}-${timeframe}"
+            python scripts/phase8a_market_outcomes.py \
+              --feature-root "$feature_root" \
+              --feature-evidence "$feature_evidence" \
+              --dataset-root ".phase2-accepted/${SYMBOL}" \
+              --processed-manifest ".phase2-accepted/${SYMBOL}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json" \
+              --symbol "${SYMBOL}" \
+              --timeframe "${timeframe}" \
+              --out "${out}" \
+              --code-commit "${GITHUB_SHA}"
 
-      - name: Upload EXP-044 outcome cell
+            OUTCOME_MANIFEST="${out}/manifest.json" TIMEFRAME="${timeframe}" python - <<'PY'
+            import json
+            import os
+            from pathlib import Path
+
+            manifest = json.loads(
+                Path(os.environ["OUTCOME_MANIFEST"]).read_text(encoding="utf-8")
+            )
+            assert manifest["experiment_id"] == "EXP-20260923-044"
+            assert manifest["outcome_set_version"] == "fmp-market-outcome-grid-v1"
+            assert manifest["feature_evidence_fingerprint"] == os.environ["EXPECTED_FEATURE_FINGERPRINT"]
+            assert manifest["timeframe"] == os.environ["TIMEFRAME"]
+            assert manifest["model_fit_authorized"] is False
+            assert manifest["promotion_authorized"] is False
+            assert manifest["labeled_rows"] > 0
+            PY
+          done
+
+      - name: Upload EXP-044 5m outcome cell
         uses: actions/upload-artifact@v6
         with:
-          name: exp044-market-outcomes-${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}-${{ github.sha }}-from-${{ needs.validate-feature-run.outputs.feature_sha }}
-          path: .exp044-outcomes/${{ matrix.dataset.symbol }}-${{ matrix.timeframe }}
+          name: exp044-market-outcomes-${{ matrix.dataset.symbol }}-5m-${{ github.sha }}-from-${{ needs.validate-feature-run.outputs.feature_sha }}
+          path: .exp044-outcomes/${{ matrix.dataset.symbol }}-5m
+          include-hidden-files: true
+          if-no-files-found: error
+
+      - name: Upload EXP-044 15m outcome cell
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-market-outcomes-${{ matrix.dataset.symbol }}-15m-${{ github.sha }}-from-${{ needs.validate-feature-run.outputs.feature_sha }}
+          path: .exp044-outcomes/${{ matrix.dataset.symbol }}-15m
+          include-hidden-files: true
+          if-no-files-found: error
+
+      - name: Upload EXP-044 1h outcome cell
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp044-market-outcomes-${{ matrix.dataset.symbol }}-1h-${{ github.sha }}-from-${{ needs.validate-feature-run.outputs.feature_sha }}
+          path: .exp044-outcomes/${{ matrix.dataset.symbol }}-1h
           include-hidden-files: true
           if-no-files-found: error
 
