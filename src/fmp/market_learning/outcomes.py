@@ -18,6 +18,8 @@ from .contracts import (
     EXPERIMENT_ID,
     HORIZONS_MINUTES,
     MARKET_FEATURE_SET_VERSION,
+    MARKET_HISTORY_END_EXCLUSIVE,
+    MARKET_HISTORY_START,
     SLIPPAGE_PIPS,
 )
 
@@ -100,6 +102,24 @@ def _validate_feature_frame(
     if len(processed) != 1:
         raise ValueError("market-learning feature source manifest identity is not singular")
     _validate_sha256(str(next(iter(processed))), field="processed_manifest_sha256")
+
+    accepted_start = datetime(
+        MARKET_HISTORY_START.year,
+        MARKET_HISTORY_START.month,
+        MARKET_HISTORY_START.day,
+        tzinfo=timezone.utc,
+    )
+    accepted_end = datetime(
+        MARKET_HISTORY_END_EXCLUSIVE.year,
+        MARKET_HISTORY_END_EXCLUSIVE.month,
+        MARKET_HISTORY_END_EXCLUSIVE.day,
+        tzinfo=timezone.utc,
+    )
+    if features.filter(
+        (pl.col("available_at_utc") < accepted_start)
+        | (pl.col("available_at_utc") >= accepted_end)
+    ).height:
+        raise ValueError("market-learning features are outside accepted historical coverage")
 
     unique = features.select(
         pl.struct(["symbol", "timeframe", "bar_start_utc"]).n_unique()
@@ -279,6 +299,15 @@ def build_market_outcome_grid(
         missing_entry[horizon] = missing_entry_count
         missing_exit[horizon] = missing_exit_count
 
+    for horizon in HORIZONS_MINUTES:
+        accounted = (
+            labeled[horizon]
+            + missing_entry[horizon]
+            + missing_exit[horizon]
+        )
+        if accounted != features.height:
+            raise ValueError("market-outcome horizon row accounting mismatch")
+
     combined = pl.concat(frames, how="vertical").sort(
         ["symbol", "timeframe", "bar_start_utc", "horizon_minutes"]
     )
@@ -366,6 +395,23 @@ def write_market_outcome_artifacts(
         processed_manifest_sha256
     }:
         raise ValueError("market-outcome Phase 2 identity mismatch")
+
+    accepted_end = datetime(
+        MARKET_HISTORY_END_EXCLUSIVE.year,
+        MARKET_HISTORY_END_EXCLUSIVE.month,
+        MARKET_HISTORY_END_EXCLUSIVE.day,
+        tzinfo=timezone.utc,
+    )
+    if build.frame.filter(pl.col("exit_timestamp_utc") >= accepted_end).height:
+        raise ValueError("market-outcome targets extend beyond accepted history")
+    for horizon in HORIZONS_MINUTES:
+        if (
+            build.labeled_rows_by_horizon.get(horizon, 0)
+            + build.missing_entry_rows_by_horizon.get(horizon, 0)
+            + build.missing_exit_rows_by_horizon.get(horizon, 0)
+            != build.source_feature_rows
+        ):
+            raise ValueError("market-outcome manifest row accounting mismatch")
 
     root = Path(output_root)
     artifacts: list[dict[str, object]] = []
