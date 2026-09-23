@@ -4,7 +4,7 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 PROTOCOL/TRAINING CORE/ARTIFACT RUNNER SOURCES FROZEN; NO EXP-045 MODEL RESULT
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 MODEL PROTOCOL SOURCE FROZEN + TRAINING CORE/ARTIFACT RUNNER SOURCES FROZEN; NO EXP-045 MODEL RESULT
 **Next milestone:** Merge DEC-097 source/tests. Then freeze a separate manual EXP-045 workflow/CLI/execution-gate source bound to the exact DEC-095/096/097 identities, while keeping execution authorization false. Do not run a historical EXP-045 fit yet; promotion, shadow/demo execution, broker mutation, live orders, and real-money trading remain locked.
 
 ## Current baseline
