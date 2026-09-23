@@ -189,6 +189,69 @@ class Exp044ModelTrainingCoreTests(unittest.TestCase):
         self.assertFalse(result["real_money_authorized"])
         self.assertEqual(len(result["result_fingerprint"]), 64)
 
+    def test_logistic_nonconvergence_is_recorded_without_tuning_or_aborting_hgb(self) -> None:
+        import fmp.market_learning.model_training as training
+
+        features, outcomes = _frames()
+        original = training._fit_family
+
+        def fit_with_logistic_failure(
+            family: str,
+            fit_frame: pl.DataFrame,
+        ):
+            if family == "logistic_regression":
+                raise RuntimeError(
+                    "EXP-044 logistic regression failed to converge"
+                )
+            return original(family, fit_frame)
+
+        with patch.object(
+            training,
+            "_fit_family",
+            side_effect=fit_with_logistic_failure,
+        ):
+            result = run_model_cell_core(
+                features=features,
+                outcomes=outcomes,
+                cell=CELL,
+            )
+
+        logistic = result["fit"]["families"]["logistic_regression"]
+        hgb = result["fit"]["families"]["hist_gradient_boosting"]
+        self.assertEqual(
+            logistic["status"],
+            "FAILED_NON_CONVERGENCE",
+        )
+        self.assertEqual(
+            logistic["failure_reason"],
+            "LBFGS_MAX_ITER_REACHED",
+        )
+        self.assertEqual(hgb["status"], "FITTED")
+        variants = result["selection"]["variants"]
+        self.assertEqual(len(variants), 6)
+        logistic_variants = [
+            row
+            for row in variants
+            if row["model_family"] == "logistic_regression"
+        ]
+        self.assertEqual(len(logistic_variants), 3)
+        self.assertTrue(
+            all(
+                row["family_fit_status"]
+                == "FAILED_NON_CONVERGENCE"
+                and row["evaluation_status"]
+                == "FAMILY_UNAVAILABLE"
+                and row["selection_gate_passed"] is False
+                for row in logistic_variants
+            )
+        )
+        selected = result["selection"]["selected_variant"]
+        if selected is not None:
+            self.assertEqual(
+                selected["model_family"],
+                "hist_gradient_boosting",
+            )
+
     def test_core_is_deterministic_for_identical_synthetic_inputs(self) -> None:
         features, outcomes = _frames()
         first = run_model_cell_core(
