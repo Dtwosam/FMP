@@ -372,11 +372,11 @@ Implementation progress:
 
 Current milestone:
 
-1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-070 are merged and verified on `main`;
+1. Phase 8A source-free implementation is complete through DEC-045; DEC-046 through DEC-071 are merged and verified on `main`;
 2. no real DEC-052 prospective segment, DEC-051 acceptance result, SHADOW_VALIDATED transition, Phase 9 artifact chain, demo order, or broker mutation has been executed;
-3. DEC-071 / `EXP-20260923-042` is implemented on PR #163 head `2252f8889683992cdacce0d6080363ec3b19772f`: read-only progress preview over the exact DEC-053 aggregation kernel with exact DEC-051 minimum/remaining counts and closeability diagnostics; run `35801819236` passed 1089 tests plus YAML/compile and unchanged Phase 3 acceptance run `35801819264` passed;
-4. progress must write no closure/review/acceptance/terminal artifact and cannot authorize promotion or Phase 9;
-5. real prospective Phase 8B evidence remains the next operational milestone; demo/live/real-money execution remains locked.
+3. PR #163 merged DEC-071 / `EXP-20260923-042` to `main` at `e45f6a496885863be69f87fd2caa8c3f577b784e`; the exact final PR head `021aa2bc8f9337d4f1830985c2ec4ca03cd16f4f` passed 1089 tests plus YAML/compile in run `35801932548` and unchanged Phase 3 acceptance run `35801932553` passed; post-merge `main` runs `35802013847` and `35802013896` passed;
+4. DEC-071 adds a read-only `progress --campaign-dir` preview that reuses the exact DEC-053 aggregation kernel and DEC-051 minimum definitions, reports remaining evidence and current closeability, and writes no closure/review/acceptance/terminal artifact;
+5. source-side Phase 8B preparation and monitoring tooling is complete; the next meaningful milestone is real prospective MT5 DEMO evidence. Demo execution, broker mutation, live trading, real-money trading, Phase 10 decision, and Phase 11 remain locked.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
