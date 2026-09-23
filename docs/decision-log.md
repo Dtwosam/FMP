@@ -1266,3 +1266,15 @@ The resolver prefers the complete original DEC-078 Actions bundle. If that bundl
 Mixed Actions/release execution is forbidden. Pair jobs independently reverify ZIP size, ZIP SHA-256, and embedded processed-manifest SHA-256 regardless of source mode.
 
 `preserve-phase2` remains strict to the original Actions artifacts. Feature/outcome operator stages may use the exact release fallback. DEC-085 performs no new data acquisition and creates no model/trading authorization.
+
+
+## DEC-086 — Phase 8A EXP-044 operator continuation planner
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY EXP-044 RESULT-PRODUCING RUN
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-operator-continuation-planner.md` adds a read-only `next` mode to the EXP-044 operator.
+
+The planner requires at most one manual-main run per preservation/feature/outcome workflow, fails closed on duplicates, reports in-progress and failed-run review states without automatic retries, validates the published DEC-084 preservation release, reuses DEC-082 feature-evidence validation, reuses DEC-083 outcome/readiness inspection, and delegates final readiness classification to DEC-075.
+
+The `next` mode has no `--execute` argument and never submits `gh workflow run`. Dispatch commands may be printed only as the next operator action. All model/trading authorization remains false.
