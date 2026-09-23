@@ -15,7 +15,6 @@ import polars as pl
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import log_loss
 
 from fmp.features.schema import FEATURE_COLUMNS
 from fmp.models.preprocessing import (
@@ -543,6 +542,30 @@ def _classification_diagnostics(
     ):
         confusion[str(actual)][str(predicted)] += 1
 
+    class_index = {
+        name: index
+        for index, name in enumerate(TARGET_CLASSES)
+    }
+    selected_probability = np.asarray(
+        [
+            probabilities[row_index, class_index[str(label)]]
+            for row_index, label in enumerate(labels.tolist())
+        ],
+        dtype=np.float64,
+    )
+    epsilon = np.finfo(np.float64).eps
+    multiclass_log_loss = float(
+        -np.mean(
+            np.log(
+                np.clip(
+                    selected_probability,
+                    epsilon,
+                    1.0,
+                )
+            )
+        )
+    )
+
     counts = _target_counts(frame)
     return {
         "row_count": frame.height,
@@ -551,13 +574,7 @@ def _classification_diagnostics(
             name: float(counts[name] / frame.height)
             for name in TARGET_CLASSES
         },
-        "multiclass_log_loss": float(
-            log_loss(
-                labels,
-                probabilities,
-                labels=list(TARGET_CLASSES),
-            )
-        ),
+        "multiclass_log_loss": multiclass_log_loss,
         "confusion_matrix": confusion,
     }
 
