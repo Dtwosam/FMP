@@ -4,7 +4,7 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 DATA PREPARATION VERIFIED + MODEL PROTOCOL/CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-093 SINGLE MODEL-RUN AUTHORIZATION; NO MODEL RESULT YET
+**Phase status:** ACTIVE — EXP-044 DATA PREPARATION VERIFIED + MODEL PROTOCOL SOURCE FROZEN + MODEL CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-093 SINGLE MODEL-RUN AUTHORIZATION; NO MODEL RESULT YET
 **Next milestone:** Merge DEC-093, then run the read-only EXP-044 operator from a clean, up-to-date local `main`. If and only if it reports `MODEL_RUN_DISPATCH_REQUIRED`, the operator may separately submit exactly one historical model workflow. Do not promote, open shadow/demo execution, or trade.
 
 ## Current baseline
