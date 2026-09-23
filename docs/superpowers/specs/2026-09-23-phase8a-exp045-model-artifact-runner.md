@@ -23,6 +23,8 @@ DEC-097 binds exactly:
 
 - DEC-091 verified historical data-loader source Git blob:
   `27c0848d16722a22b4762f5842396c2aebc92bec`;
+- DEC-094 failed-run review source Git blob:
+  `2260ad4ad08a7e9874bd28030be977a3e71436f9`;
 - DEC-095 successor protocol source Git blob:
   `44129fc5337fb55b9c7d81f5ba0561ea788bd264`;
 - DEC-096 successor training-core source Git blob:
@@ -30,7 +32,7 @@ DEC-097 binds exactly:
 
 The DEC-097 runner source itself is frozen at Git blob:
 
-`95c4701b6e83cba461b3861a4c6df0e40d342560`
+`adebcc48130e8800741810c239528ef6c21eea6e`
 
 The successor protocol fingerprint is recomputed at runtime.
 
@@ -197,6 +199,10 @@ The deterministic aggregate evidence records:
 The aggregate evidence itself receives a canonical SHA-256 fingerprint.
 
 Cell ordering is canonical, so result order from callers does not change the aggregate evidence.
+
+The persisted-evidence validator removes the supplied aggregate fingerprint, recomputes canonical SHA-256, requires the exact future execution commit, revalidates all fixed protocol/core/predecessor/source-data identities, requires all 18 canonical cell summaries, validates chronology chains and family-fit statuses, and keeps every promotion/trading flag false.
+
+A file loader performs the same validation before returning persisted aggregate JSON to any later operator/review layer.
 
 ## 10. Write semantics
 
