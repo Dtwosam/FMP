@@ -1591,3 +1591,20 @@ DEC-102 classifies the reviewed result as `SUCCESSOR_MODEL_RESULT_REVIEWED_NO_AC
 
 The machine-checkable reviewed-result source is `src/fmp/market_learning/model_successor_result_decision.py` at Git blob `d672fc334702fcea2edc4a50cd331598fb192586`. Any further model research requires a separately predeclared, explicitly post-result-informed successor experiment.
 
+## DEC-103 — Phase 8A EXP-045 post-result diagnostic gate
+
+**Date:** 2026-09-23
+**Status:** POST-RESULT DIAGNOSTIC; NO SUCCESSOR EXECUTION AUTHORIZED
+
+DEC-103 freezes the detailed diagnostic of all 18 EXP-045 cell results after DEC-102 reviewed run `35911916239`.
+
+Of 108 configured family/threshold slots, 90 were evaluated; 18 logistic slots were unavailable because six cells recorded the predeclared `FAILED_NON_CONVERGENCE` family outcome. Thirty-seven evaluated variants met the 250-directional-candidate count criterion, but 36 of those failed one or more financial-sign criteria. Twenty-six evaluated variants had positive gross/mean/total financial signs, but 25 of those had fewer than 250 directional candidates. Only one variant passed the complete selection gate.
+
+That selected variant was GBPUSD 5m / 240m HGB at confidence 0.6. It had 460 selection candidates, +5.1167 mean net pips, and +2353.7 total net pips under the 0.5-pip scenario. In validation it produced only 83 candidates, −16.8373 mean net pips, and −1397.5 total net pips. Candidate count/rate fell to about 18% of the selection level and financial sign reversed.
+
+DEC-103 therefore records `TEMPORAL_STABILITY_FAILURE_DOMINANT` as the descriptive post-result diagnostic. It explicitly forbids retroactively lowering the 250-candidate floor or promoting the 25 low-count positive selection variants, because those identities were not validation-tested.
+
+The machine-checkable source is `src/fmp/market_learning/model_successor_post_result_diagnostics.py` at Git blob `f1ccda0d393b851cd7c1db1399da57a920a0a7c1`.
+
+DEC-103 opens only successor-protocol source work. EXP-045 rerun/replacement, successor result execution/model fit, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
+
