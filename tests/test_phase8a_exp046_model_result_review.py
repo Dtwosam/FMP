@@ -100,7 +100,7 @@ class Exp046ModelTerminalReviewTests(unittest.TestCase):
         )
         names = _cell_artifact_names() + [aggregate_name]
         summary = {
-            "successor_model_result_evidence_verified": True,
+            "stability_model_result_evidence_verified": True,
             "selected_cell_count": 4,
             "validation_pass_count": 2,
             "retrospective_holdout_pass_count": 1,
@@ -111,7 +111,7 @@ class Exp046ModelTerminalReviewTests(unittest.TestCase):
 
         with patch(
             "fmp.market_learning.model_successor_stability_result_review."
-            "validate_successor_model_result_evidence",
+            "validate_stability_model_result_evidence",
             return_value=summary,
         ) as validate:
             result = validate_stability_model_terminal_review(
