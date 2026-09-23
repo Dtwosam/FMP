@@ -23,6 +23,8 @@ from fmp.market_learning.model_result_evidence import (
 from fmp.market_learning.model_training import (
     MODEL_TRAINING_CORE_DECISION,
     MODEL_TRAINING_CORE_VERSION,
+    MODEL_TRAINING_REPAIR_DECISION,
+    MODEL_TRAINING_REPAIR_VERSION,
 )
 from fmp.market_learning.model_artifacts import (
     AUTHORITATIVE_PROTOCOL_FINGERPRINT,
@@ -71,6 +73,8 @@ def _cell_results() -> list[dict[str, object]]:
             {
                 "training_core_version": MODEL_TRAINING_CORE_VERSION,
                 "training_core_decision": MODEL_TRAINING_CORE_DECISION,
+                "training_repair_version": MODEL_TRAINING_REPAIR_VERSION,
+                "training_repair_decision": MODEL_TRAINING_REPAIR_DECISION,
                 "protocol_decision": MODEL_PROTOCOL_DECISION,
                 "protocol_version": MODEL_PROTOCOL_VERSION,
                 "protocol_fingerprint": AUTHORITATIVE_PROTOCOL_FINGERPRINT,
