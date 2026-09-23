@@ -58,10 +58,29 @@ jobs:
               and item.get("head_branch") == "main"
               and item.get("id") != int(os.environ["GITHUB_RUN_ID"])
           ]
-          if prior:
+          reviewed_failed = {
+              35891605645: (
+                  "e97fa03d0e94fd505d0f926eb730e01a41947880"
+              ),
+          }
+          if len(prior) != 1:
               ids = [item.get("id") for item in prior]
               raise SystemExit(
-                  f"prior manual-main EXP-044 model run exists: {ids}"
+                  "replacement requires exactly the reviewed failed "
+                  f"EXP-044 model run: {ids}"
+              )
+          predecessor = prior[0]
+          predecessor_id = predecessor.get("id")
+          if (
+              predecessor_id not in reviewed_failed
+              or predecessor.get("status") != "completed"
+              or predecessor.get("conclusion") != "failure"
+              or predecessor.get("head_sha")
+              != reviewed_failed[predecessor_id]
+          ):
+              raise SystemExit(
+                  "prior EXP-044 model run is not the reviewed "
+                  "failed predecessor"
               )
           PY
 
@@ -227,6 +246,7 @@ jobs:
           name: exp044-model-cell-results-${{ matrix.dataset.symbol }}-${{ matrix.dataset.timeframe }}-${{ github.sha }}
           path: .results
           if-no-files-found: error
+          include-hidden-files: true
 
   aggregate-model-evidence:
     needs: model-cells
@@ -273,3 +293,4 @@ jobs:
           name: exp044-model-result-evidence-${{ github.sha }}-from-feature-35867307338-outcome-35876715434
           path: .model-evidence/model-result-evidence.json
           if-no-files-found: error
+          include-hidden-files: true
