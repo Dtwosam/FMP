@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 PROTOCOL/CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-099 SINGLE-RUN AUTHORIZATION SOURCE; NO EXP-045 MODEL RESULT
-**Next milestone:** Merge DEC-099 while keeping promotion/shadow/demo/broker/live/real-money/trading locks false. After merge, separately re-check clean current `main` and zero prior EXP-045 manual-main runs before any single guarded historical model dispatch. Do not dispatch from this source-freeze step.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 PROTOCOL/CORE/ARTIFACT/WORKFLOW SOURCES FROZEN + DEC-099 SINGLE-RUN AUTHORIZATION MERGED; NO EXP-045 MODEL RESULT
+**Next milestone:** DEC-099 is merged at `d5ab9b96fa055c30a4607840f5a9f032c5353a11`. A read-only post-merge check confirmed clean current `main` and zero prior manual-main `phase8a-exp045-model-training` runs. The next separate action may dispatch exactly one guarded historical EXP-045 run. Any failed/cancelled first run consumes the slot; do not retry automatically. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
