@@ -1332,3 +1332,21 @@ DEC-075 must still reconstruct `MODEL_PROTOCOL_SOURCE_OPEN` from the actual pers
 DEC-089 adds no estimator fit, no training workflow, and no result-producing run. `model_protocol_result_authorized=false`, `model_fit_authorized=false`, promotion and all shadow/demo/broker/live/real-money authorizations remain false.
 
 Consequences: the first EXP-044 model protocol is now frozen and machine-bound to its verified preparation evidence, while actual model-run implementation and every result-producing fit remain behind a later separate decision.
+
+
+## DEC-090 — Phase 8A EXP-044 deterministic model-training core
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY AUTHORITATIVE EXP-044 MODEL-TRAINING RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8a-exp044-model-training-core.md` implements the deterministic in-memory training/evaluation core for the unchanged DEC-088 protocol after DEC-089 froze that protocol/evidence identity.
+
+The implementation validates exact feature/outcome identities, exact horizon timing, scenario-direction consistency, chronological split membership, all-three-class fit support, and the frozen processed-manifest identity before model calculations.
+
+The two DEC-088 model families are each fit exactly once on the fit split. The fixed three confidence thresholds create exactly six selection variants. The core applies the predeclared 0.5-pip selection gate and deterministic tie-break, never refits after selection, opens validation only for a selected variant, and opens the retrospective holdout only after both 0.5- and 1.0-pip validation gates pass. The 0.2-pip scenario remains diagnostic.
+
+The result preserves deterministic preprocessing/model fingerprints, probability and candidate-identity digests, classification diagnostics, financial metrics, every rejected variant, and a canonical result fingerprint. Promotion/shadow/demo/broker/live/real-money flags remain false in the core result.
+
+DEC-090 intentionally adds no training workflow, no CLI, no artifact-backed authoritative runner, and no operator dispatch path. `MODEL_TRAINING_RESULT_EXECUTION_AUTHORIZED=false`. Synthetic unit-test fits are permitted only to validate source behavior; they are not historical EXP-044 evidence and grant no result authorization.
+
+Consequences: deterministic model-training source now exists, but the authoritative historical EXP-044 model fit remains locked. A later separate decision must bind the exact merged DEC-090 source identity and revalidate the DEC-088/DEC-074 chain before any artifact-backed result-producing fit can run.
