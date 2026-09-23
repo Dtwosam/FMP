@@ -32,6 +32,7 @@ from fmp.market_learning.operator import (
     preservation_dispatch_command,
     preservation_runs_endpoint,
     select_feature_evidence_artifact,
+    select_latest_manual_main_run_after_reviewed_failures,
     select_only_manual_main_run,
     select_outcome_evidence_artifacts,
     shell_join,
@@ -53,6 +54,9 @@ from fmp.market_learning.source_preservation import (
     select_preservation_manifest_asset,
     validate_published_release_metadata,
 )
+
+
+REVIEWED_FAILED_OUTCOME_RUN_IDS = frozenset({35869906438})
 
 
 def _run(command: Sequence[str], *, capture: bool = True) -> str:
@@ -553,9 +557,10 @@ def main(argv: list[str] | None = None) -> int:
         }
 
         outcome_listing = _gh_json(outcome_runs_endpoint())
-        outcome_run = select_only_manual_main_run(
+        outcome_run = select_latest_manual_main_run_after_reviewed_failures(
             outcome_listing,
             workflow_name=OUTCOME_WORKFLOW_NAME,
+            reviewed_failed_run_ids=REVIEWED_FAILED_OUTCOME_RUN_IDS,
         )
         outcome_state = classify_manual_run(
             outcome_run,
@@ -593,6 +598,37 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 0
         if outcome_state["run_state"] == "FAILED":
+            failed_run_id = int(outcome_state["run_id"])
+            failed_head_sha = (
+                outcome_run.get("head_sha")
+                if outcome_run is not None
+                else None
+            )
+            if (
+                failed_run_id in REVIEWED_FAILED_OUTCOME_RUN_IDS
+                and isinstance(failed_head_sha, str)
+                and failed_head_sha != checkout["head_sha"]
+            ):
+                source_preflight = _source_artifact_preflight()
+                _print_report(
+                    _next_report(
+                        checkout=checkout,
+                        stage="OUTCOME_REPLACEMENT_DISPATCH_REQUIRED",
+                        next_action=(
+                            "Dispatch one replacement EXP-044 outcome run after "
+                            "the reviewed workflow-shell failure."
+                        ),
+                        dispatch_command=outcome_dispatch_command(feature_run_id),
+                        preservation_release_verified=True,
+                        source_mode=source_preflight["source_mode"],
+                        **feature_report_details,
+                        outcome_run_state="FAILED",
+                        reviewed_failed_outcome_run_id=failed_run_id,
+                        reviewed_failed_outcome_head_sha=failed_head_sha,
+                    )
+                )
+                return 0
+
             _print_report(
                 _next_report(
                     checkout=checkout,

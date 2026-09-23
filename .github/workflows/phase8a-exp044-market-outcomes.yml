@@ -402,21 +402,21 @@ jobs:
           for timeframe in 5m 15m 1h; do
             OUTCOME_MANIFEST=".exp044-outcomes/${SYMBOL}-${timeframe}/manifest.json" \
             TIMEFRAME="${timeframe}" python - <<'PY'
-            import json
-            import os
-            from pathlib import Path
+          import json
+          import os
+          from pathlib import Path
 
-            manifest = json.loads(
-                Path(os.environ["OUTCOME_MANIFEST"]).read_text(encoding="utf-8")
-            )
-            assert manifest["experiment_id"] == "EXP-20260923-044"
-            assert manifest["outcome_set_version"] == "fmp-market-outcome-grid-v1"
-            assert manifest["feature_evidence_fingerprint"] == os.environ["EXPECTED_FEATURE_FINGERPRINT"]
-            assert manifest["timeframe"] == os.environ["TIMEFRAME"]
-            assert manifest["model_fit_authorized"] is False
-            assert manifest["promotion_authorized"] is False
-            assert manifest["labeled_rows"] > 0
-            PY
+          manifest = json.loads(
+              Path(os.environ["OUTCOME_MANIFEST"]).read_text(encoding="utf-8")
+          )
+          assert manifest["experiment_id"] == "EXP-20260923-044"
+          assert manifest["outcome_set_version"] == "fmp-market-outcome-grid-v1"
+          assert manifest["feature_evidence_fingerprint"] == os.environ["EXPECTED_FEATURE_FINGERPRINT"]
+          assert manifest["timeframe"] == os.environ["TIMEFRAME"]
+          assert manifest["model_fit_authorized"] is False
+          assert manifest["promotion_authorized"] is False
+          assert manifest["labeled_rows"] > 0
+          PY
           done
 
       - name: Upload EXP-044 5m outcome cell
