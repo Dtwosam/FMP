@@ -3,21 +3,34 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import tempfile
+import zipfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Sequence
 
+from fmp.market_learning.evidence import load_feature_evidence_index
 from fmp.market_learning.operator import (
     FEATURE_WORKFLOW_NAME,
     OUTCOME_WORKFLOW_NAME,
+    REPOSITORY,
+    artifact_download_endpoint,
     feature_dispatch_command,
+    feature_run_artifacts_endpoint,
     feature_run_endpoint,
     feature_runs_endpoint,
     outcome_dispatch_command,
     outcome_runs_endpoint,
+    select_feature_evidence_artifact,
     shell_join,
+    validate_feature_evidence_for_outcomes,
     validate_feature_run_for_outcomes,
     validate_no_existing_manual_runs,
     validate_operator_checkout,
+)
+from fmp.market_learning.source_preflight import (
+    SOURCE_ARTIFACTS,
+    compile_source_preflight,
 )
 
 
@@ -40,6 +53,77 @@ def _gh_json(endpoint: str) -> dict[str, object]:
     if not isinstance(value, dict):
         raise SystemExit(f"GitHub API returned a non-object for {endpoint}")
     return value
+
+
+def _source_artifact_preflight() -> dict[str, object]:
+    metadata: dict[str, dict[str, object]] = {}
+    for spec in SOURCE_ARTIFACTS:
+        metadata[spec.symbol] = _gh_json(
+            f"repos/{REPOSITORY}/actions/artifacts/{spec.artifact_id}"
+        )
+    return compile_source_preflight(
+        metadata_by_symbol=metadata,
+        now_utc=datetime.now(timezone.utc),
+        minimum_remaining=timedelta(hours=12),
+    )
+
+
+def _safe_extract_zip(archive_path: Path, destination: Path) -> None:
+    root = destination.resolve()
+    with zipfile.ZipFile(archive_path) as archive:
+        for member in archive.infolist():
+            target = (destination / member.filename).resolve()
+            try:
+                target.relative_to(root)
+            except ValueError as exc:
+                raise SystemExit("feature evidence ZIP contains an unsafe path") from exc
+        archive.extractall(destination)
+
+
+def _download_feature_evidence(
+    *,
+    feature_run_id: int,
+    feature_head_sha: str,
+) -> dict[str, object]:
+    artifacts = _gh_json(feature_run_artifacts_endpoint(feature_run_id))
+    selected = select_feature_evidence_artifact(
+        artifacts,
+        feature_head_sha=feature_head_sha,
+    )
+    artifact_id = int(selected["artifact_id"])
+
+    with tempfile.TemporaryDirectory(prefix="fmp-exp044-feature-evidence-") as tmp:
+        root = Path(tmp)
+        archive_path = root / "feature-evidence.zip"
+        extracted = root / "extracted"
+        extracted.mkdir()
+        with archive_path.open("wb") as handle:
+            subprocess.run(
+                [
+                    "gh",
+                    "api",
+                    "-H",
+                    "Accept: application/vnd.github+json",
+                    artifact_download_endpoint(artifact_id),
+                ],
+                check=True,
+                stdout=handle,
+            )
+        _safe_extract_zip(archive_path, extracted)
+        matches = sorted(extracted.rglob("feature-evidence.json"))
+        if len(matches) != 1:
+            raise SystemExit(
+                "aggregate feature evidence ZIP must contain exactly one feature-evidence.json"
+            )
+        evidence = load_feature_evidence_index(matches[0])
+        verified = validate_feature_evidence_for_outcomes(
+            evidence,
+            expected_code_commit=feature_head_sha,
+        )
+    return {
+        **selected,
+        **verified,
+    }
 
 
 def _checkout_preflight() -> dict[str, object]:
@@ -83,6 +167,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     _require_gh_auth()
     checkout = _checkout_preflight()
+    source_preflight = _source_artifact_preflight()
 
     if args.command == "features":
         listing = _gh_json(feature_runs_endpoint())
@@ -93,6 +178,8 @@ def main(argv: list[str] | None = None) -> int:
         command = feature_dispatch_command()
         report: dict[str, object] = {
             **checkout,
+            "source_preflight_ready": source_preflight["source_ready"],
+            "source_earliest_expires_at": source_preflight["earliest_expires_at"],
             "stage": "features",
             "existing_manual_main_runs": 0,
             "ready_to_dispatch": True,
@@ -117,6 +204,10 @@ def main(argv: list[str] | None = None) -> int:
         run,
         expected_run_id=feature_run_id,
     )
+    feature_evidence = _download_feature_evidence(
+        feature_run_id=feature_run_id,
+        feature_head_sha=str(feature["feature_head_sha"]),
+    )
     listing = _gh_json(outcome_runs_endpoint())
     validate_no_existing_manual_runs(
         listing,
@@ -126,6 +217,9 @@ def main(argv: list[str] | None = None) -> int:
     report = {
         **checkout,
         **feature,
+        **feature_evidence,
+        "source_preflight_ready": source_preflight["source_ready"],
+        "source_earliest_expires_at": source_preflight["earliest_expires_at"],
         "stage": "outcomes",
         "existing_manual_main_runs": 0,
         "ready_to_dispatch": True,
