@@ -1068,3 +1068,7 @@ Copy this section for each serious experiment:
 - Safety: all promotion/SHADOW_VALIDATED/Phase-9/order/broker/live/real-money authorization flags remain false.
 - Verification: exact source head `2252f8889683992cdacce0d6080363ec3b19772f` passed 1089 tests plus workflow-YAML validation and compile checks in run `35801819236`; unchanged Phase 3 acceptance run `35801819264` passed.
 - Follow-up: merge only after the exact final bookkeeping head remains green. Real prospective MT5 DEMO evidence remains the next operational milestone.
+
+
+- Merge status: PR #163 merged DEC-071 to `main` at `e45f6a496885863be69f87fd2caa8c3f577b784e`. The exact final PR head `021aa2bc8f9337d4f1830985c2ec4ca03cd16f4f` passed 1089 tests plus workflow-YAML validation and compile checks in run `35801932548`; unchanged Phase 3 acceptance run `35801932553` passed. Post-merge `main` runs `35802013847` and `35802013896` also passed.
+- Follow-up: Phase 8B now has read-only pre-capture readiness and in-campaign progress tooling. No real prospective capture, closure/review, acceptance result, SHADOW_VALIDATED transition, or Phase 9 artifact chain has been executed; real MT5 DEMO prospective evidence remains the next operational milestone.
