@@ -136,14 +136,17 @@ jobs:
           - symbol: EURUSD
             artifact_id: '10325737935'
             zip_sha256: db0e65490bc1ff80f6d7a0498dd64322563f838a7f70c740617c41bd19e423c3
+            size_bytes: '182037581'
             manifest_sha256: fd7676282e6e667c39754b09b43a43288a0a877fec588cd2601a601e2b0edf6a
           - symbol: GBPUSD
             artifact_id: '10326096831'
             zip_sha256: fe42669ed46788d8c7db33b903db79c29034a666acd52213c3c28ec7d4ea88c2
+            size_bytes: '190706384'
             manifest_sha256: a6ee73e94781f48a43f2792328528d242455d4f7f4f2e0a5760446df21ba4d94
           - symbol: USDJPY
             artifact_id: '10327600628'
             zip_sha256: 6ee632b38d45a26dcc58be6d6c9555606605e356aee25b135c089b4969426b72
+            size_bytes: '160033414'
             manifest_sha256: e47ee5339868a741097404bed49411cca36b03609ebe395261bb70b6e63bdd3d
 
     steps:
@@ -163,22 +166,48 @@ jobs:
       - name: Install package
         run: python -m pip install -e .
 
-      - name: Download and verify accepted Phase 2 artifact
+      - name: Download and verify resolved Phase 2 Dukascopy artifact
         env:
           GH_TOKEN: ${{ github.token }}
           ARTIFACT_ID: ${{ matrix.dataset.artifact_id }}
           EXPECTED_ZIP_SHA256: ${{ matrix.dataset.zip_sha256 }}
+          EXPECTED_ZIP_SIZE: ${{ matrix.dataset.size_bytes }}
           EXPECTED_MANIFEST_SHA256: ${{ matrix.dataset.manifest_sha256 }}
           SYMBOL: ${{ matrix.dataset.symbol }}
+          SOURCE_MODE: ${{ needs.source-preflight.outputs.source_mode }}
+          PRESERVATION_TAG: fmp-phase2-accepted-artifacts-v1
         run: |
           set -euo pipefail
           root=".phase2-accepted/${SYMBOL}"
           zip_path=".phase2-accepted/${SYMBOL}.zip"
           manifest_path="${root}/manifests/processed/fmp-canonical-1m-v1/${SYMBOL}.json"
           mkdir -p "${root}"
-          gh api             -H 'Accept: application/vnd.github+json'             "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip"             > "${zip_path}"
+
+          case "${SOURCE_MODE}" in
+            actions)
+              gh api \
+                -H 'Accept: application/vnd.github+json' \
+                "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" \
+                > "${zip_path}"
+              ;;
+            release)
+              mkdir -p .phase2-release-download
+              gh release download "${PRESERVATION_TAG}" \
+                -R "${GITHUB_REPOSITORY}" \
+                --pattern "phase2-full-history-${SYMBOL}.zip" \
+                --dir .phase2-release-download
+              mv ".phase2-release-download/phase2-full-history-${SYMBOL}.zip" "${zip_path}"
+              ;;
+            *)
+              echo "unsupported source mode: ${SOURCE_MODE}" >&2
+              exit 1
+              ;;
+          esac
+
+          test "$(stat -c%s "${zip_path}")" = "${EXPECTED_ZIP_SIZE}"
           actual_sha256="$(sha256sum "${zip_path}" | awk '{print $1}')"
           test "${actual_sha256}" = "${EXPECTED_ZIP_SHA256}"
+
           unzip -q "${zip_path}" -d "${root}"
           test -f "${manifest_path}"
           actual_manifest_sha256="$(sha256sum "${manifest_path}" | awk '{print $1}')"
