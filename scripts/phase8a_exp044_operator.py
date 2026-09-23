@@ -702,9 +702,9 @@ def main(argv: list[str] | None = None) -> int:
         workflow_gate = build_model_workflow_source_gate(
             repository_root=Path(__file__).resolve().parents[1],
         )
-        if workflow_gate.get("stage") != "MODEL_RUN_WORKFLOW_SOURCE_FROZEN":
+        if workflow_gate.get("stage") != "MODEL_RUN_EXECUTION_CLOSED":
             raise SystemExit(
-                "EXP-044 model-workflow source gate returned an invalid stage"
+                "EXP-044 model execution closure gate returned an invalid stage"
             )
         for field in (
             "model_run_dispatch_authorized",
@@ -712,9 +712,9 @@ def main(argv: list[str] | None = None) -> int:
             "model_protocol_result_authorized",
             "model_fit_authorized",
         ):
-            if workflow_gate.get(field) is not True:
+            if workflow_gate.get(field) is not False:
                 raise SystemExit(
-                    f"EXP-044 DEC-093 authorization field is not open: {field}"
+                    f"EXP-044 DEC-094 closure field must be false: {field}"
                 )
 
         readiness_report_details = {
@@ -746,11 +746,17 @@ def main(argv: list[str] | None = None) -> int:
             "model_execution_authorization_decision": workflow_gate[
                 "model_execution_authorization_decision"
             ],
+            "model_execution_closure_decision": workflow_gate[
+                "model_execution_closure_decision"
+            ],
             "dec092_merged_commit": workflow_gate[
                 "dec092_merged_commit"
             ],
             "dec093_workflow_blob_sha": workflow_gate[
                 "dec093_workflow_blob_sha"
+            ],
+            "dec094_workflow_blob_sha": workflow_gate[
+                "dec094_workflow_blob_sha"
             ],
             "dec092_cli_blob_sha": workflow_gate[
                 "dec092_cli_blob_sha"
@@ -779,19 +785,16 @@ def main(argv: list[str] | None = None) -> int:
             _print_report(
                 _next_report(
                     checkout=checkout,
-                    stage="MODEL_RUN_DISPATCH_REQUIRED",
+                    stage="MODEL_RUN_AUTHORIZATION_CLOSED",
                     next_action=(
-                        "Dispatch exactly one guarded EXP-044 historical model-result "
-                        "run from merged main."
+                        "DEC-094 closes EXP-044 V1 execution. No model run may "
+                        "be dispatched or replaced."
                     ),
-                    dispatch_command=model_dispatch_command(),
-                    model_protocol_result_authorized=True,
-                    model_fit_authorized=True,
                     preservation_release_verified=True,
                     **workflow_report_details,
                     model_run_state="MISSING",
-                    model_run_dispatch_authorized=True,
-                    authoritative_model_result_execution_authorized=True,
+                    model_run_dispatch_authorized=False,
+                    authoritative_model_result_execution_authorized=False,
                 )
             )
             return 0
@@ -800,10 +803,10 @@ def main(argv: list[str] | None = None) -> int:
             _print_report(
                 _next_report(
                     checkout=checkout,
-                    stage="MODEL_RUN_IN_PROGRESS",
+                    stage="MODEL_RUN_REVIEW_REQUIRED",
                     next_action=(
-                        "Inspect the existing model workflow run; do not create "
-                        "another model run."
+                        "A model run is unexpectedly still active under the "
+                        "DEC-094 closure. Do not dispatch another run."
                     ),
                     preservation_release_verified=True,
                     **workflow_report_details,
@@ -815,64 +818,40 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 0
 
-        if model_state["run_state"] == "FAILED":
-            _print_report(
-                _next_report(
-                    checkout=checkout,
-                    stage="MODEL_RUN_REVIEW_REQUIRED",
-                    next_action=(
-                        "Review the failed model workflow evidence; do not retry "
-                        "or replace it automatically."
-                    ),
-                    preservation_release_verified=True,
-                    **workflow_report_details,
-                    model_run_state="FAILED",
-                    model_run_id=model_state["run_id"],
-                    model_run_dispatch_authorized=False,
-                    authoritative_model_result_execution_authorized=False,
-                )
+        if model_state["run_state"] != "FAILED":
+            raise SystemExit(
+                "EXP-044 DEC-094 requires the reviewed failed model run"
             )
-            return 0
 
         model_run_id = int(model_state["run_id"])
+        if model_run_id != REVIEWED_FAILED_MODEL_RUN_ID:
+            raise SystemExit(
+                "EXP-044 model failure review run identity mismatch"
+            )
         model_run_exact = _gh_json(model_run_endpoint(model_run_id))
-        model = validate_model_run_for_result(
-            model_run_exact,
-            expected_run_id=model_run_id,
-        )
+        model_jobs = _gh_json(model_run_jobs_endpoint(model_run_id))
         model_artifacts = _gh_json(
             model_run_artifacts_endpoint(model_run_id)
         )
-        model_selected = select_model_result_artifact(
-            model_artifacts,
-            model_head_sha=str(model["model_head_sha"]),
-        )
-        model_evidence = _download_json_artifact(
-            artifact_id=int(model_selected["model_result_artifact_id"]),
-            expected_filename="model-result-evidence.json",
-            loader=lambda path: load_model_result_evidence(
-                path,
-                expected_code_commit=str(model["model_head_sha"]),
-            ),
-        )
-        model_summary = validate_model_result_evidence(
-            model_evidence,
-            expected_code_commit=str(model["model_head_sha"]),
+        failure_review = validate_reviewed_failed_model_run(
+            run=model_run_exact,
+            jobs_payload=model_jobs,
+            artifacts_payload=model_artifacts,
         )
         _print_report(
             _next_report(
                 checkout=checkout,
-                stage="MODEL_RESULT_REVIEW_REQUIRED",
+                stage="MODEL_RUN_FAILURE_REVIEWED",
                 next_action=(
-                    "Review the verified retrospective EXP-044 model-result "
-                    "evidence. Do not promote or open shadow/demo/trading activity."
+                    "EXP-044 V1 is closed. Do not rerun or replace run "
+                    "35891605645. Any continued model research requires a "
+                    "separately predeclared successor protocol/experiment."
                 ),
                 preservation_release_verified=True,
                 **workflow_report_details,
-                **model,
-                **model_selected,
-                **model_summary,
-                model_run_state="SUCCESS",
+                **failure_review,
+                model_run_state="FAILED",
+                model_run_id=model_run_id,
                 model_run_dispatch_authorized=False,
                 authoritative_model_result_execution_authorized=False,
             )
