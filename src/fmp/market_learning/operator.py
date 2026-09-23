@@ -118,6 +118,35 @@ def validate_feature_run_for_outcomes(
     }
 
 
+def validate_outcome_run_for_readiness(
+    run: Mapping[str, object],
+    *,
+    expected_run_id: int,
+) -> dict[str, object]:
+    if not isinstance(expected_run_id, int) or isinstance(expected_run_id, bool) or expected_run_id <= 0:
+        raise ValueError("outcome run id must be a positive integer")
+    if run.get("id") != expected_run_id:
+        raise ValueError("outcome workflow run id mismatch")
+    if run.get("name") != OUTCOME_WORKFLOW_NAME:
+        raise ValueError("outcome workflow run name mismatch")
+    if run.get("path") != OUTCOME_WORKFLOW_PATH:
+        raise ValueError("outcome workflow run path mismatch")
+    if run.get("event") != "workflow_dispatch":
+        raise ValueError("outcome workflow run must be workflow_dispatch")
+    if run.get("head_branch") != "main":
+        raise ValueError("outcome workflow run must originate from main")
+    if run.get("status") != "completed":
+        raise ValueError("outcome workflow run is not completed")
+    if run.get("conclusion") != "success":
+        raise ValueError("outcome workflow run did not succeed")
+    head_sha = _validate_sha(run.get("head_sha"), field="outcome workflow head_sha")
+    return {
+        "outcome_run_id": expected_run_id,
+        "outcome_head_sha": head_sha,
+        "outcome_run_verified": True,
+    }
+
+
 def select_feature_evidence_artifact(
     payload: Mapping[str, object],
     *,
@@ -201,6 +230,52 @@ def outcome_runs_endpoint() -> str:
     )
 
 
+def select_outcome_evidence_artifacts(
+    payload: Mapping[str, object],
+    *,
+    outcome_head_sha: str,
+    feature_head_sha: str,
+) -> dict[str, object]:
+    outcome_sha = _validate_sha(outcome_head_sha, field="outcome evidence head SHA")
+    feature_sha = _validate_sha(feature_head_sha, field="source feature head SHA")
+    artifacts = payload.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise ValueError("outcome artifact listing is malformed")
+
+    expected = {
+        "outcome_evidence": (
+            f"exp044-market-outcome-evidence-{outcome_sha}-from-{feature_sha}"
+        ),
+        "readiness": (
+            f"exp044-market-learning-readiness-{outcome_sha}-from-{feature_sha}"
+        ),
+    }
+    selected: dict[str, object] = {}
+    for label, name in expected.items():
+        matches: list[Mapping[str, object]] = []
+        for raw in artifacts:
+            if not isinstance(raw, Mapping):
+                raise ValueError("outcome artifact listing contains a malformed row")
+            if raw.get("name") != name:
+                continue
+            if raw.get("expired") is not False:
+                continue
+            matches.append(raw)
+        if len(matches) != 1:
+            raise ValueError(
+                f"expected exactly one non-expired {label} artifact: {name}"
+            )
+        artifact_id = matches[0].get("id")
+        if not isinstance(artifact_id, int) or isinstance(artifact_id, bool) or artifact_id <= 0:
+            raise ValueError(f"{label} artifact id is invalid")
+        selected[f"{label}_artifact_id"] = artifact_id
+        selected[f"{label}_artifact_name"] = name
+
+    selected["outcome_head_sha"] = outcome_sha
+    selected["feature_head_sha"] = feature_sha
+    return selected
+
+
 def feature_run_artifacts_endpoint(run_id: int) -> str:
     if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
         raise ValueError("feature run id must be a positive integer")
@@ -211,6 +286,18 @@ def artifact_download_endpoint(artifact_id: int) -> str:
     if not isinstance(artifact_id, int) or isinstance(artifact_id, bool) or artifact_id <= 0:
         raise ValueError("artifact id must be a positive integer")
     return f"repos/{REPOSITORY}/actions/artifacts/{artifact_id}/zip"
+
+
+def outcome_run_artifacts_endpoint(run_id: int) -> str:
+    if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+        raise ValueError("outcome run id must be a positive integer")
+    return f"repos/{REPOSITORY}/actions/runs/{run_id}/artifacts?per_page=100"
+
+
+def outcome_run_endpoint(run_id: int) -> str:
+    if not isinstance(run_id, int) or isinstance(run_id, bool) or run_id <= 0:
+        raise ValueError("outcome run id must be a positive integer")
+    return f"repos/{REPOSITORY}/actions/runs/{run_id}"
 
 
 def feature_run_endpoint(run_id: int) -> str:
@@ -273,11 +360,15 @@ __all__ = [
     "feature_run_endpoint",
     "feature_runs_endpoint",
     "outcome_dispatch_command",
+    "outcome_run_artifacts_endpoint",
+    "outcome_run_endpoint",
     "outcome_runs_endpoint",
     "select_feature_evidence_artifact",
+    "select_outcome_evidence_artifacts",
     "shell_join",
     "validate_feature_evidence_for_outcomes",
     "validate_feature_run_for_outcomes",
     "validate_no_existing_manual_runs",
     "validate_operator_checkout",
+    "validate_outcome_run_for_readiness",
 ]
