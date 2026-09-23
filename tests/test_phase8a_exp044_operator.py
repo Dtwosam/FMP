@@ -15,6 +15,7 @@ from fmp.market_learning.operator import (
     outcome_run_artifacts_endpoint,
     outcome_run_endpoint,
     outcome_runs_endpoint,
+    release_asset_download_endpoint,
     preservation_dispatch_command,
     preservation_runs_endpoint,
     select_feature_evidence_artifact,
@@ -388,6 +389,10 @@ class Exp044OperatorTests(unittest.TestCase):
             "repos/Dtwosam/FMP/actions/artifacts/456/zip",
         )
         self.assertEqual(
+            release_asset_download_endpoint(789),
+            "repos/Dtwosam/FMP/releases/assets/789",
+        )
+        self.assertEqual(
             outcome_run_endpoint(456),
             "repos/Dtwosam/FMP/actions/runs/456",
         )
@@ -407,6 +412,8 @@ class Exp044OperatorTests(unittest.TestCase):
                     feature_run_artifacts_endpoint(value)  # type: ignore[arg-type]
                 with self.assertRaises(ValueError):
                     artifact_download_endpoint(value)  # type: ignore[arg-type]
+                with self.assertRaises(ValueError):
+                    release_asset_download_endpoint(value)  # type: ignore[arg-type]
                 with self.assertRaises(ValueError):
                     outcome_run_endpoint(value)  # type: ignore[arg-type]
                 with self.assertRaises(ValueError):
