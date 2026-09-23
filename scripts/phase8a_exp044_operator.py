@@ -12,6 +12,8 @@ from typing import Callable, Mapping, Sequence
 
 from fmp.market_learning.evidence import load_feature_evidence_index
 from fmp.market_learning.execution_status import build_execution_status
+from fmp.market_learning.model_protocol import protocol_fingerprint
+from fmp.market_learning.model_run_gate import build_model_run_source_gate
 from fmp.market_learning.operator import (
     FEATURE_WORKFLOW_NAME,
     OUTCOME_WORKFLOW_NAME,
@@ -661,6 +663,21 @@ def main(argv: list[str] | None = None) -> int:
             outcome_evidence=outcome_evidence,
             readiness=readiness,
         )
+        gate = build_model_run_source_gate(
+            execution_status=status,
+            protocol_fingerprint_value=protocol_fingerprint(),
+            feature_run_id=feature_run_id,
+            feature_evidence_fingerprint=str(
+                feature_evidence_summary["feature_evidence_fingerprint"]
+            ),
+            outcome_run_id=outcome_run_id,
+            outcome_evidence_artifact_id=int(
+                selected["outcome_evidence_artifact_id"]
+            ),
+            readiness_artifact_id=int(selected["readiness_artifact_id"]),
+        )
+        if gate.get("stage") != "MODEL_PROTOCOL_FROZEN":
+            raise SystemExit("EXP-044 model-run source gate returned an invalid stage")
         readiness_report_details = {
             **feature_report_details,
             **outcome,
@@ -669,13 +686,25 @@ def main(argv: list[str] | None = None) -> int:
         _print_report(
             _next_report(
                 checkout=checkout,
-                stage=str(status["stage"]),
-                next_action=str(status["next_action"]),
+                stage=str(gate["stage"]),
+                next_action=str(gate["next_action"]),
                 preservation_release_verified=True,
                 **readiness_report_details,
                 readiness_verified=status["readiness_verified"],
                 model_protocol_source_open_authorized=status[
                     "model_protocol_source_open_authorized"
+                ],
+                model_protocol_frozen=gate["model_protocol_frozen"],
+                model_run_source_open_authorized=gate[
+                    "model_run_source_open_authorized"
+                ],
+                model_protocol_decision=gate["model_protocol_decision"],
+                model_protocol_version=gate["model_protocol_version"],
+                model_protocol_source_commit=gate[
+                    "model_protocol_source_commit"
+                ],
+                model_protocol_fingerprint=gate[
+                    "model_protocol_fingerprint"
                 ],
             )
         )
