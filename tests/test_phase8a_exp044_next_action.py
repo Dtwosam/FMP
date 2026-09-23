@@ -20,8 +20,8 @@ class Exp044NextActionScriptTests(unittest.TestCase):
         parser_end = text.index("def _print_report", parser_start)
         parser = text[parser_start:parser_end]
         next_start = parser.index('"next"')
-        preserve_start = parser.index('"preserve-phase2"', next_start)
-        next_parser = parser[next_start:preserve_start]
+        advance_start = parser.index('"advance"', next_start)
+        next_parser = parser[next_start:advance_start]
         self.assertNotIn("--execute", next_parser)
 
     def test_advance_reuses_public_next_plan_and_requires_explicit_execute(self) -> None:
@@ -43,8 +43,9 @@ class Exp044NextActionScriptTests(unittest.TestCase):
     def test_next_mode_never_submits_a_dispatch(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         main_start = text.index("def main(")
-        preserve_start = text.index('if args.command == "preserve-phase2"', main_start)
-        next_block = text[main_start:preserve_start]
+        next_start = text.index('if args.command == "next"', main_start)
+        preserve_start = text.index('if args.command == "preserve-phase2"', next_start)
+        next_block = text[next_start:preserve_start]
         self.assertIn('if args.command == "next"', next_block)
         self.assertNotIn("_run(command, capture=False)", next_block)
         self.assertNotIn('"dispatch_submitted"', next_block)
