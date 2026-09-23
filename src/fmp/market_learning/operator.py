@@ -11,6 +11,8 @@ FEATURE_WORKFLOW_NAME = "phase8a-exp044-market-features"
 OUTCOME_WORKFLOW_FILE = "phase8a-exp044-market-outcomes.yml"
 OUTCOME_WORKFLOW_PATH = ".github/workflows/phase8a-exp044-market-outcomes.yml"
 OUTCOME_WORKFLOW_NAME = "phase8a-exp044-market-outcomes"
+PRESERVATION_WORKFLOW_FILE = "phase8a-exp044-preserve-phase2.yml"
+PRESERVATION_WORKFLOW_NAME = "phase8a-exp044-preserve-phase2"
 
 _SHA40 = re.compile(r"^[0-9a-fA-F]{40}$")
 
@@ -216,6 +218,13 @@ def validate_feature_evidence_for_outcomes(
     }
 
 
+def preservation_runs_endpoint() -> str:
+    return (
+        f"repos/{REPOSITORY}/actions/workflows/{PRESERVATION_WORKFLOW_FILE}/runs"
+        "?branch=main&event=workflow_dispatch&per_page=100"
+    )
+
+
 def feature_runs_endpoint() -> str:
     return (
         f"repos/{REPOSITORY}/actions/workflows/{FEATURE_WORKFLOW_FILE}/runs"
@@ -306,6 +315,19 @@ def feature_run_endpoint(run_id: int) -> str:
     return f"repos/{REPOSITORY}/actions/runs/{run_id}"
 
 
+def preservation_dispatch_command() -> tuple[str, ...]:
+    return (
+        "gh",
+        "workflow",
+        "run",
+        PRESERVATION_WORKFLOW_FILE,
+        "--ref",
+        "main",
+        "-R",
+        REPOSITORY,
+    )
+
+
 def feature_dispatch_command() -> tuple[str, ...]:
     return (
         "gh",
@@ -353,10 +375,14 @@ __all__ = [
     "OUTCOME_WORKFLOW_FILE",
     "OUTCOME_WORKFLOW_NAME",
     "OUTCOME_WORKFLOW_PATH",
+    "PRESERVATION_WORKFLOW_FILE",
+    "PRESERVATION_WORKFLOW_NAME",
     "REPOSITORY",
     "artifact_download_endpoint",
     "feature_dispatch_command",
     "feature_run_artifacts_endpoint",
+    "preservation_dispatch_command",
+    "preservation_runs_endpoint",
     "feature_run_endpoint",
     "feature_runs_endpoint",
     "outcome_dispatch_command",
