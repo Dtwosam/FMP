@@ -280,10 +280,13 @@ Build and evaluate a versioned portfolio of strategies across EURUSD, GBPUSD, an
 - strategy/portfolio contribution and concentration reporting
 - daily return distribution and high-return-day frequency reporting
 - continuous-research path that can create challengers but cannot mutate an active champion set
-- predeclared experiment protocols for every new strategy family, material parameter-region expansion, or promotion search
+- direct market-learning track over leakage-safe feature rows across EURUSD, GBPUSD, and USDJPY, with fixed future-outcome labels independent of hand-written strategy signals
+- versioned full-history feature materialization for the learning track; historical Phase 5 artifacts remain immutable and their old final-test lock is not silently weakened
+- offline champion/challenger retraining from frozen historical/prospective cutoffs; active shadow/demo models never self-modify in place
+- predeclared experiment protocols for every new strategy family, material parameter-region expansion, model family, target, threshold surface, retraining rule, or promotion search
 
 #### Historical-data rule
-The 2024-01-01 through 2026-08-20 period was opened during Phase 7. Post-Phase-7 strategies may use it for retrospective research and walk-forward robustness, but it is no longer an untouched final test for newly invented or materially changed strategies. Genuine new forward evidence starts only after a challenger is frozen.
+The 2024-01-01 through 2026-08-20 period was opened during Phase 7. Post-Phase-7 strategies and models may use it for retrospective research and chronological robustness, but it is no longer an untouched final test for newly invented or materially changed logic. Historical learning evidence through 2026-08-20 must be labeled retrospective/already seen. Genuine new forward evidence starts only after a challenger is frozen. The old `fmp-feature-v1` pre-2024 artifact remains immutable; later coverage requires a new versioned materialization rather than weakening the historical Phase 5 contract.
 
 #### Acceptance gate
 PASS only when:
@@ -295,6 +298,8 @@ PASS only when:
 - historical runs bind exact code/data/config/cost/risk identities;
 - performance reporting includes return, expectancy, PF, drawdown, trade count, concentration, cost sensitivity, and daily return distribution;
 - repeated historical search is explicitly treated as overfitting/multiple-comparison risk;
+- the direct market-learning question is answered under a frozen chronological protocol using all three V1 pairs/timeframes, with either a qualified immutable model-derived challenger or a credible rejection retained as evidence;
+- future learning from shadow/demo data uses immutable champion/challenger retraining rather than online mutation of the active model;
 - at least one frozen portfolio/shadow candidate materially improves the economic case over the Phase 7 single-strategy baseline, or a credible rejection is recorded;
 - repository-wide regression tests and unchanged Phase 3 execution/risk acceptance remain green.
 
