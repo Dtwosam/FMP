@@ -1070,3 +1070,17 @@ DEC-071 reuses the exact DEC-053 campaign-close aggregation kernel for segment v
 The preview reports the exact DEC-051 minimums and remaining amounts but creates no closure, campaign-evidence artifact, acceptance result, review, lifecycle transition, or terminal marker. Meeting every minimum in the preview is not Phase 8B PASS.
 
 The CLI command `progress --campaign-dir <path>` prints JSON only and authorizes no promotion, SHADOW_VALIDATED transition, Phase 9 action, order, broker mutation, live trading, or real-money action.
+
+
+## DEC-072 — Phase 8B interrupted segment observability amendment
+
+**Date:** 2026-09-23
+**Status:** APPROVED BEFORE ANY PHASE 8B ACCEPTANCE RESULT
+
+The approved `docs/superpowers/specs/2026-09-23-phase8b-interrupted-segment-observability.md` opens `EXP-20260923-043` to fix DEC-071 progress visibility for interrupted DEC-052 capture directories.
+
+DEC-072 adds deterministic closed/unclosed segment inventory to the read-only progress report. In particular, a campaign whose first capture crashes before producing `prospective-segment.json` must report the retained unclosed directory instead of incorrectly reporting zero unclosed segments.
+
+Unclosed directories remain excluded from aggregate simulation, replay, observation bounds, London-date completeness, trade counts, representation, and financial metrics. DEC-072 also adds diagnostic campaign-terminal context and a deterministic progress validator/fingerprint.
+
+DEC-072 writes no campaign evidence, repairs/deletes no interrupted segment, starts no capture, changes no DEC-051 acceptance threshold, and authorizes no promotion, Phase 9 action, broker mutation, order, live trading, or real-money action.
