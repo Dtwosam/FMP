@@ -214,7 +214,7 @@ class Exp046WorkflowSourceTests(unittest.TestCase):
             text,
         )
         self.assertIn(
-            "READINESS_ARTIFACT_ID: "10757578276"",
+            'READINESS_ARTIFACT_ID: "10757578276"',
             text,
         )
 
