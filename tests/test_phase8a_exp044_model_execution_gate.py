@@ -7,16 +7,19 @@ from fmp.market_learning.model_execution_gate import (
     AUTHORITATIVE_MODEL_RESULT_EXECUTION_AUTHORIZED,
     DEC088_PROTOCOL_BLOB_SHA,
     DEC090_CORE_BLOB_SHA,
+    DEC094_CORE_BLOB_SHA,
     DEC091_RUNNER_BLOB_SHA,
     DEC092_CLI_BLOB_SHA,
     DEC092_MERGED_COMMIT,
     DEC092_WORKFLOW_BLOB_SHA,
     DEC093_WORKFLOW_BLOB_SHA,
+    DEC094_WORKFLOW_BLOB_SHA,
     MODEL_EXECUTION_AUTHORIZATION_DECISION,
     MODEL_FIT_AUTHORIZED,
     MODEL_PROTOCOL_RESULT_AUTHORIZED,
     MODEL_RUN_DISPATCH_AUTHORIZED,
     MODEL_RUN_WORKFLOW_SOURCE_FROZEN,
+    REVIEWED_FAILED_MODEL_RUN_ID,
     build_model_workflow_source_gate,
     require_authoritative_model_execution,
     validate_authorized_model_execution_sources,
@@ -40,8 +43,12 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
             DEC091_RUNNER_BLOB_SHA,
         )
         self.assertEqual(
-            source["training_core_blob_sha"],
+            source["dec090_core_blob_sha"],
             DEC090_CORE_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["training_core_blob_sha"],
+            DEC094_CORE_BLOB_SHA,
         )
         self.assertEqual(
             source["model_protocol_blob_sha"],
@@ -62,6 +69,14 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
         self.assertEqual(
             execution["dec093_workflow_blob_sha"],
             DEC093_WORKFLOW_BLOB_SHA,
+        )
+        self.assertEqual(
+            execution["dec094_workflow_blob_sha"],
+            DEC094_WORKFLOW_BLOB_SHA,
+        )
+        self.assertEqual(
+            execution["reviewed_failed_model_run_id"],
+            REVIEWED_FAILED_MODEL_RUN_ID,
         )
         self.assertEqual(
             execution["dec092_cli_blob_sha"],
@@ -183,6 +198,10 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
                 validated["dec093_workflow_blob_sha"],
                 DEC093_WORKFLOW_BLOB_SHA,
             )
+            self.assertEqual(
+                validated["dec094_workflow_blob_sha"],
+                DEC094_WORKFLOW_BLOB_SHA,
+            )
 
             workflow.write_text(
                 workflow.read_text(encoding="utf-8") + "\n# drift\n",
@@ -200,7 +219,7 @@ class Exp044ModelExecutionGateTests(unittest.TestCase):
         command = model_dispatch_command()
         report = {
             "read_only": True,
-            "stage": "MODEL_RUN_DISPATCH_REQUIRED",
+            "stage": "MODEL_RUN_REPLACEMENT_DISPATCH_REQUIRED",
             "dispatch_command": shell_join(command),
             "model_protocol_result_authorized": True,
             "model_fit_authorized": True,
