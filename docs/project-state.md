@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 DATA PREPARATION VERIFIED + MODEL PROTOCOL SOURCE FROZEN + DEC-089 MODEL-RUN SOURCE GATE; NO MODEL-TRAINING RESULT
-**Next milestone:** Merge DEC-089's source-only model-run gate. It binds the exact DEC-088 protocol fingerprint to the verified DEC-074 readiness chain while remaining non-dispatchable. Do not fit a model; deterministic model-run implementation and any result authorization require a later separate decision.
+**Phase status:** ACTIVE — EXP-044 DATA PREPARATION VERIFIED + MODEL PROTOCOL SOURCE FROZEN + DEC-089 MODEL-RUN SOURCE GATE + DEC-090 TRAINING CORE SOURCE; NO AUTHORITATIVE MODEL-TRAINING RESULT
+**Next milestone:** Merge DEC-090's deterministic in-memory training core with synthetic-only tests. Do not run it on authoritative EXP-044 artifacts. A later separate gate must bind the merged core source identity before any artifact-backed model workflow or result-producing historical fit can be authorized.
 
 ## Current baseline
 
@@ -391,6 +391,7 @@ Current milestone:
 13. Authoritative EXP-044 data preparation is now complete: feature run `35867307338` and replacement outcome run `35876715434` are verified; aggregate outcome evidence artifact `10758027876` and readiness artifact `10757578276` revalidate; DEC-075 reports `MODEL_PROTOCOL_SOURCE_OPEN`.
 14. DEC-088 freezes the first direct-market model-training protocol source across exactly 18 pair/timeframe/horizon cells. It creates no result authorization: model fitting, promotion, shadow/demo activity, broker mutation, live orders, and real-money trading remain locked.
 15. DEC-089 binds the exact merged DEC-088 protocol fingerprint to the verified DEC-074 evidence chain and exposes only `model_run_source_open_authorized=true`. The resulting `MODEL_PROTOCOL_FROZEN` stage is non-dispatchable and still authorizes no model fit.
+16. DEC-090 implements the deterministic in-memory two-family training/selection/validation/retrospective-holdout core with synthetic-only tests. No authoritative artifact loader, model-training workflow, CLI, or dispatch path exists; `MODEL_TRAINING_RESULT_EXECUTION_AUTHORIZED=false`.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
