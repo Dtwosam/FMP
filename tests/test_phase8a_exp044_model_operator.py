@@ -99,11 +99,11 @@ class Exp044ModelOperatorTests(unittest.TestCase):
                 model_head_sha=SHA,
             )
 
-    def test_model_dispatch_stage_is_the_only_model_dispatchable_state(self) -> None:
+    def test_reviewed_replacement_stage_is_dispatchable_once(self) -> None:
         command = model_dispatch_command()
         report = {
             "read_only": True,
-            "stage": "MODEL_RUN_DISPATCH_REQUIRED",
+            "stage": "MODEL_RUN_REPLACEMENT_DISPATCH_REQUIRED",
             "dispatch_command": shell_join(command),
             "model_protocol_result_authorized": True,
             "model_fit_authorized": True,
@@ -138,11 +138,15 @@ class Exp044ModelOperatorTests(unittest.TestCase):
 
     def test_operator_source_has_one_shot_and_review_stages(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
-        self.assertIn("MODEL_RUN_DISPATCH_REQUIRED", text)
+        self.assertIn("MODEL_RUN_REPLACEMENT_DISPATCH_REQUIRED", text)
+        self.assertIn("REVIEWED_FAILED_MODEL_RUN_IDS", text)
         self.assertIn("MODEL_RUN_IN_PROGRESS", text)
         self.assertIn("MODEL_RUN_REVIEW_REQUIRED", text)
         self.assertIn("MODEL_RESULT_REVIEW_REQUIRED", text)
-        self.assertIn("select_only_manual_main_run", text)
+        self.assertIn(
+            "select_latest_manual_main_run_after_reviewed_failures",
+            text,
+        )
         self.assertIn("select_model_result_artifact", text)
         self.assertIn("validate_model_result_evidence", text)
         self.assertIn(
