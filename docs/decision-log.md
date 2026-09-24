@@ -2265,3 +2265,20 @@ Candidate-budget anchors remain 250/500/1000. Aggregate minimum count and financ
 The protocol source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_protocol.py` at Git blob `b41b817b03aa0cc03a9d893227caa399b46d3cf8`. Focused tests are `tests/test_phase8a_exp050_temporal_jackknife_utility_protocol.py` at blob `f458891e6160bb4e3af6c7a4b82b69b37771efe7`. The detailed spec is `docs/superpowers/specs/2026-09-24-phase8a-exp050-temporal-jackknife-utility-protocol.md`.
 
 DEC-141 keeps model-protocol result production, model fit, historical result execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization false. A later separate decision may implement only the deterministic in-memory EXP-050 training/evaluation core against this exact protocol source.
+
+## DEC-142 — Phase 8A EXP-050 temporal-jackknife utility training core
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / NO AUTHORITATIVE EXP-050 FIT
+
+DEC-142 implements the deterministic in-memory EXP-050 training/evaluation core against the exact DEC-141 protocol. It binds DEC-141 merge `4729da0e769f76f44b97ff6349ee25c5b7c0f5c7`, DEC-141 protocol blob `b41b817b03aa0cc03a9d893227caa399b46d3cf8`, and predecessor EXP-049 training-core blob `e1018b20210b7bb8d666071d8eb878aba5899111`.
+
+The implementation intentionally reuses the exact DEC-133 utility scoring, cutoff, realized-financial, temporal-stability, and selection-tie-break helpers under that predecessor-core blob binding. New code is limited to the DEC-141 fit-view topology, view-frame assembly, view-aware scoring/digests, and EXP-050 result identity.
+
+The core reconstructs the three predecessor two-year fit regimes and builds exactly three leave-one-regime-out views. Each view concatenates exactly two frozen regime frames, excludes the third, verifies row-count accounting, and fits the same LONG/SHORT 0.5-pip HGB regressors. There remain exactly six regressors per cell.
+
+Selection still requires unanimous positive utility across all three views and uses minimum agreed-direction predicted utility as the robust score. Candidate budgets remain 250/500/1000; aggregate and four-window temporal-stability gates remain unchanged; the exact selection-derived cutoff is reused unchanged in validation and retrospective holdout.
+
+The training core is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_training.py` at Git blob `ec97a9941af052d6e223e4bafab9a9989ec57ff0`. Focused tests are `tests/test_phase8a_exp050_temporal_jackknife_utility_training.py` at blob `f7066a775659b1b391b0e29af13601cff015ebb5`. The detailed spec is `docs/superpowers/specs/2026-09-24-phase8a-exp050-temporal-jackknife-utility-training-core.md`.
+
+DEC-142 keeps authoritative EXP-050 model fit/result execution, workflow execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization false. A later separate decision may freeze an artifact-backed runner/evidence contract against this exact training-core blob.
