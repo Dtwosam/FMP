@@ -6,11 +6,11 @@ from typing import Mapping, Sequence
 
 REPOSITORY = "Dtwosam/FMP"
 DEC137_MERGED_COMMIT = "33227b25cd1a888c3e0c7db3a50bd0cb61f5aad6"
-REGIME_UTILITY_MODEL_WORKFLOW_FILE = "phase8a-exp049-regime-consensus-model-training.yml"
+REGIME_UTILITY_MODEL_WORKFLOW_FILE = "phase8a-exp049-regime-utility-model-training.yml"
 REGIME_UTILITY_MODEL_WORKFLOW_PATH = (
-    ".github/workflows/phase8a-exp049-regime-consensus-model-training.yml"
+    ".github/workflows/phase8a-exp049-regime-utility-model-training.yml"
 )
-REGIME_UTILITY_MODEL_WORKFLOW_NAME = "phase8a-exp049-regime-consensus-model-training"
+REGIME_UTILITY_MODEL_WORKFLOW_NAME = "phase8a-exp049-regime-utility-model-training"
 
 _SHA40 = re.compile(r"^[0-9a-fA-F]{40}$")
 
@@ -420,7 +420,7 @@ def select_regime_utility_aggregate_artifact(
             "EXP-049 artifact listing is malformed"
         )
     expected = (
-        f"exp049-regime-consensus-model-result-evidence-{sha}-"
+        f"exp049-regime-utility-model-result-evidence-{sha}-"
         "from-feature-35867307338-outcome-35876715434"
     )
     matches: list[Mapping[str, object]] = []
