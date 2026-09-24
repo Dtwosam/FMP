@@ -2631,3 +2631,20 @@ All DEC-158 environment protections remain, including non-editable dependency in
 
 DEC-159 changes no DEC-155 authorization flag and dispatches nothing. After merge, its workflow-file change must automatically rerun the read-only plan and prove the exact `MISSING` / `RUN_DISPATCH_REQUIRED` state before any executor decision is considered.
 
+## DEC-160 — Phase 8A EXP-051 one-shot operator executor
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE; EXECUTION ONLY THROUGH DEC-156
+
+DEC-159 merged at `a997808602ab3a9f4ca53982895c05cb0a358e67`. Its automatic read-only plan run `36065565456` completed successfully on attempt 1 and persisted artifact `10835714803`, named `exp051-dec156-read-only-operator-plan-a997808602ab3a9f4ca53982895c05cb0a358e67`. That plan proved the exact merged DEC-156 state was read-only, `MISSING`, and `TEMPORAL_CALIBRATED_UTILITY_MODEL_RUN_DISPATCH_REQUIRED`, with the DEC-155 outer historical-run flags true and all replacement/promotion/shadow/demo/broker/live/real-money/trading locks false.
+
+DEC-160 adds exactly one repository-hosted executor whose only execution action is `python scripts/phase8a_exp051_operator.py advance --execute`. The executor contains no direct `gh workflow run phase8a-exp051-temporal-calibrated-utility-model-training.yml` command and no model-workflow dispatch REST endpoint. All live dispatch logic remains inside DEC-156, including clean-main validation, live zero-run selection, first and second `next` plans, parsed-plan equality, frozen-command equality, and fail-closed refusal if any run appears.
+
+The executor workflow is `.github/workflows/phase8a-exp051-operator-execute.yml` at blob `0c93bdf44bfbe63b997d62f116f20de776873d06`. It triggers only when that workflow file itself is introduced or changed on `main`, has `contents: read` and `actions: write`, installs the pinned runtime without mutating the checkout, requires a clean worktree, independently revalidates the exact successful DEC-159 plan run/artifact, and writes its execution receipt under `RUNNER_TEMP`.
+
+The receipt is accepted only when DEC-156 reports `advance_execute_requested = true`, `advance_dispatchable = true`, `dispatch_submitted = true`, `result_claimed = false`, and the original live state was `MISSING` / `RUN_DISPATCH_REQUIRED`. It must also keep replacement/promotion/shadow/demo/broker/live/real-money/trading locks false.
+
+Focused tests are `tests/test_phase8a_exp051_operator_executor.py` at blob `6b734dc9f06488e584a10ff99407c78a3c04548f`. The detailed executor record is `docs/superpowers/specs/2026-09-24-phase8a-exp051-operator-executor.md` at blob `258684ee56aa9ad916842561909ebbf77287f85d`.
+
+DEC-160 does not alter the research protocol and authorizes no retry, replacement, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading. After merge, the executor's automatic push run is the only new action; if DEC-156 submits the model workflow, that resulting manual-main EXP-051 run becomes the consumed DEC-155 attempt 1 and must be observed to terminal state and reviewed through DEC-154 without rerun.
+
