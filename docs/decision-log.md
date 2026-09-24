@@ -1901,3 +1901,20 @@ The regression suite explicitly forbids `dec107_merged_commit` in the public CLI
 
 DEC-120 changes no workflow, historical artifact, model protocol, training core, result evidence, execution authorization, terminal-review contract, or dispatch semantics. It dispatches nothing. Replacement-run, promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization remain false.
 
+## DEC-121 — Phase 8A EXP-047 reviewed historical density-model result
+
+**Date:** 2026-09-24
+**Status:** REVIEWED AFTER THE SINGLE DEC-118-AUTHORIZED HISTORICAL RUN
+
+Run `35993400007` executed once from `main` at `5c4d81c0ebc9f930b2361d54cb0245a3d8c886d2` with `run_attempt=1` and completed successfully. All 11 expected jobs succeeded, all nine pair/timeframe artifacts persisted, and aggregate result artifact `10805174168` persisted with ZIP digest `sha256:7e685380301ac82b5a64724d340cc4a3aa366e2e25098f31da0b97218135188a`.
+
+The aggregate evidence fingerprint is `f047310749a2742d75d2e448243080d368b6a5cdf66bc119ec33e59cc192352f`, independently recomputed from canonical JSON. It contains all 18 exact cells and remains labeled `RETROSPECTIVE_ALREADY_SEEN`, `prior_result_informed=true`, and `untouched_oos=false`.
+
+All 18 cells end at `NO_DENSITY_STABLE_MODEL_CHALLENGER`. Twelve budget variants passed the unchanged aggregate selection gate, but all 12 were rejected by the frozen four-window temporal-stability screen. No variant passed stability, so validation and retrospective holdout remained locked for every cell. No budget variant was unavailable. HGB fitted in all 18 cells and logistic remained excluded under DEC-112/DEC-113.
+
+The 12 aggregate passes are concentrated in six cells: GBPUSD 1h/60m (1), GBPUSD 5m/240m (2), USDJPY 15m/60m (1), USDJPY 15m/240m (2), USDJPY 5m/60m (3), and USDJPY 5m/240m (3). The dominant rejection pattern is insufficient 2021 candidate share, often zero or near-zero, with additional negative later-window financial performance in some higher-density variants.
+
+DEC-121 classifies the reviewed result as `DENSITY_MODEL_RESULT_REVIEWED_NO_STABLE_CHALLENGER`. The one-run authorization is consumed and closed. No rerun/replacement, new fit, promotion, prospective shadow, demo order, broker mutation, live order, real-money action, or trading authorization is opened.
+
+The machine-checkable reviewed-result source is `src/fmp/market_learning/model_successor_density_result_decision.py` at Git blob `1c1cffc360949609b2d4ae404a165154f3ce7b0f`. Any further model research requires a separately predeclared, explicitly post-result-informed successor diagnostic/protocol.
+
