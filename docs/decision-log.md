@@ -1886,3 +1886,18 @@ Terminal success requires the exact aggregate artifact tied to the run head SHA,
 
 DEC-119 contains no rerun/replacement or alternate trigger and dispatches nothing by itself. The first EXP-047 attempt consumes the DEC-118 slot on any terminal outcome. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
 
+## DEC-120 — Phase 8A EXP-047 operator gate-metadata repair
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY REPAIR; EXP-047 RUN SLOT UNCONSUMED
+
+After DEC-119 merged, the local EXP-047 `next` command failed before planning because the CLI attempted to read nonexistent gate key `dec107_merged_commit`. Live GitHub still showed zero manual-main EXP-047 runs, so the DEC-118 one-run slot remained unconsumed.
+
+DEC-120 moves gate metadata projection into the operator core through `density_operator_gate_metadata(...)`. It validates exact `DEC-116` / `DEC-118` decision identities plus the DEC-113 through DEC-117 merge/source chain and fails closed on missing or malformed metadata.
+
+The repaired operator core is Git blob `00d4bbb4e239bc6ceba903a869a676bce816dacf`; the repaired executable wrapper is blob `0ad604619ef6f7067c494146960a092818a7b163`; focused regression tests are blob `6192b7213ed5a786e5301f8859e547a504098495`.
+
+The regression suite explicitly forbids `dec107_merged_commit` in the public CLI and verifies missing current EXP-047 predecessor metadata fails closed.
+
+DEC-120 changes no workflow, historical artifact, model protocol, training core, result evidence, execution authorization, terminal-review contract, or dispatch semantics. It dispatches nothing. Replacement-run, promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization remain false.
+
