@@ -1935,3 +1935,22 @@ The machine-checkable source is `src/fmp/market_learning/model_successor_density
 
 DEC-122 explicitly forbids post-hoc relaxation of the 10% stability share floor, removal of the 2021 stability windows, simple widening of density anchors as a result-producing change, EXP-047 rerun/replacement, successor fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading. It opens only successor-protocol source work.
 
+## DEC-123 — Phase 8A EXP-048 HGB fit-regime consensus successor protocol
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY BEFORE ANY EXP-048 MODEL RESULT
+
+DEC-123 opens `EXP-20260924-048` as a separately identified, explicitly post-result-informed HGB-only successor after DEC-122 froze temporal/regime concentration as the dominant EXP-047 failure mode.
+
+EXP-048 preserves the exact universe, 48 inputs, target, outer chronology, HGB hyperparameters/runtime, 250/500/1000 density anchors, 250-candidate aggregate floor, aggregate financial gate, validation/holdout scenarios, and DEC-104 four-window stability screen.
+
+The sole research change is the fit architecture. The 2015-2020 fit period is partitioned into three contiguous non-overlapping two-year windows: 2015-2016, 2017-2018, and 2019-2020. Each window fits its own HGB model with the frozen configuration.
+
+A scored row is consensus-eligible only when all three regime models have the same unique LONG or SHORT top class. Disagreement, a NO_TRADE top class, or a top-class tie makes the row ineligible. Consensus confidence is the minimum probability assigned to the agreed directional class across the three models.
+
+The unchanged 250/500/1000 selection density anchors are derived from consensus confidence and the exact selection-derived cutoff is reused unchanged on validation and retrospective holdout. All aggregate and temporal-stability gates remain mandatory. No fallback to a full-fit model or subset of regime models is authorized.
+
+The protocol source is `src/fmp/market_learning/model_successor_regime_consensus_protocol.py` at Git blob `39b6b3f5adc7f34ffd8cebcf881138d6ca3eab84`.
+
+DEC-123 authorizes no fit, historical result execution, workflow, dispatch, logistic reintroduction, stability relaxation, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision must implement the deterministic regime-consensus core before any result-producing execution can be considered.
+
