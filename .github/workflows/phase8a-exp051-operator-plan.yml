@@ -1,0 +1,100 @@
+name: phase8a-exp051-operator-plan
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-exp051-operator-plan.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  read-only-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require push on merged main
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned EXP-051 runtime
+        run: python -m pip install -r requirements/exp051-model-run.txt -e .
+
+      - name: Run exact DEC-156 read-only operator plan
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_exp051_operator.py next | tee operator-plan.json
+
+      - name: Verify zero-run dispatch plan
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          plan = json.loads(
+              Path("operator-plan.json").read_text(encoding="utf-8")
+          )
+
+          assert plan["operator_decision"] == "DEC-156"
+          assert plan["read_only"] is True
+          assert plan["run_present"] is False
+          assert plan["run_state"] == "MISSING"
+          assert plan["run_id"] is None
+          assert plan["stage"] == (
+              "TEMPORAL_CALIBRATED_UTILITY_MODEL_"
+              "RUN_DISPATCH_REQUIRED"
+          )
+          assert plan["dispatch_command"] == (
+              "gh workflow run "
+              "phase8a-exp051-temporal-calibrated-utility-model-training.yml "
+              "--ref main -R Dtwosam/FMP"
+          )
+
+          for field in (
+              "temporal_calibrated_utility_model_run_dispatch_authorized",
+              "authoritative_temporal_calibrated_utility_model_result_execution_authorized",
+              "model_protocol_result_authorized",
+              "model_fit_authorized",
+          ):
+              assert plan[field] is True, field
+
+          for field in (
+              "replacement_model_run_authorized",
+              "promotion_authorized",
+              "shadow_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert plan[field] is False, field
+          PY
+
+      - name: Upload immutable read-only operator plan
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp051-dec156-read-only-operator-plan-${{ github.sha }}
+          path: operator-plan.json
+          if-no-files-found: error
