@@ -103,7 +103,19 @@ class Exp051OperatorPlanRunnerTests(unittest.TestCase):
         )
         self.assertIn(
             "python -m pip install -r "
+            "requirements/exp051-model-run.txt",
+            text,
+        )
+        self.assertNotIn(
             "requirements/exp051-model-run.txt -e .",
+            text,
+        )
+        self.assertIn(
+            "PYTHONPATH: ${{ github.workspace }}/src",
+            text,
+        )
+        self.assertIn(
+            'test -z "$(git status --porcelain)"',
             text,
         )
         self.assertIn(
