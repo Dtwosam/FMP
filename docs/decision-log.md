@@ -2142,3 +2142,20 @@ A no-challenger result cannot hide a stable variant. Full-fit, HGB-classifier, a
 The artifact/evidence source is `src/fmp/market_learning/model_successor_regime_utility_artifacts.py` at Git blob `6b3ec2fc8c6a8e6089d71e21d3243cea50a6fa13`. Focused tests are `tests/test_phase8a_exp049_regime_utility_artifacts.py` at Git blob `0c7c746ee0e7365e5e4dd0fef96cc4c3eac7418a`.
 
 The authoritative bundle checks `AUTHORITATIVE_REGIME_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED` before loading readiness or historical feature/outcome artifacts. DEC-134 keeps that flag false, keeps authoritative model fit false, and opens no workflow, dispatch, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization. A later separate decision may freeze a manual-main workflow/CLI while keeping dispatch closed until terminal review and one-run authorization are separately predeclared.
+
+## DEC-135 — Phase 8A EXP-049 locked model workflow source
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; EXP-049 EXECUTION AUTHORIZATION CLOSED
+
+DEC-135 freezes the manual main-only, input-free EXP-049 workflow, model CLI, Python 3.12.14 numerical runtime, and fail-closed exact-source execution gate around merged DEC-132/DEC-133/DEC-134.
+
+The workflow is `.github/workflows/phase8a-exp049-regime-utility-model-training.yml` at Git blob `955152835ec1cedf39d6d31e54d6028a7953fab5`. The CLI is `scripts/phase8a_exp049_model_run.py` at blob `cba5ece4eda8e02a7ca07a780d8caa69a239e094`. Runtime requirements are `requirements/exp049-model-run.txt` at blob `d25ab16056b9f5df283147d67b8f401f60ae7520`. The execution gate is `src/fmp/market_learning/model_successor_regime_utility_execution_gate.py` at Git blob `9d2ffc670a1572febb0e4a29bfda426f8252e5ee`.
+
+The gate binds DEC-132 merge/protocol bytes, DEC-133 merge/core bytes, DEC-134 merge/artifact-runner bytes, the accepted historical artifact loader, workflow, CLI, runtime requirements, pyproject, preprocessing, feature schema, market-learning contracts, and outcome schema. Any bound byte drift fails closed.
+
+The workflow preserves the exact nine accepted pair/timeframe artifact identities, both 60m/240m horizons, exact readiness artifact, partial-result upload semantics, and deterministic EXP-049 aggregate-evidence namespace. It has no inputs, schedule, pull-request trigger, alternate trigger, or first-run guard.
+
+DEC-135 is intentionally pre-authorization: model-run dispatch, authoritative result execution, protocol-result production, and model fitting remain false, so the preflight cannot pass before readiness loading, historical artifact loading, or fitting. A first-run guard may only be introduced by a later authorization decision after terminal review is separately predeclared and zero prior manual-main EXP-049 runs are independently verified.
+
+Focused tests are `tests/test_phase8a_exp049_model_workflow.py` at Git blob `906474f199d595579b29c96b683299fa269c7e8d`. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
