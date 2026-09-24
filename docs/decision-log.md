@@ -2576,3 +2576,20 @@ The operator core is `src/fmp/market_learning/model_successor_temporal_calibrate
 
 DEC-156 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo execution, broker mutation, live order, real-money action, and trading authorization remain false. After merge and green repository checks, a read-only clean-main operator plan must be inspected before any separately authorized first dispatch.
 
+## DEC-157 — Phase 8A EXP-051 read-only operator plan runner
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY READ-ONLY RUNNER; NO EXP-051 DISPATCH
+
+DEC-157 adds a repository-hosted read-only runner for the exact merged DEC-156 operator `next` path. It exists only to obtain the clean-main zero-run plan while the user's local Desktop Commander execution environment is unavailable.
+
+The runner is `.github/workflows/phase8a-exp051-operator-plan.yml` at Git blob `ede8d1a7e7e4f4bd2dcad643e354b606b8ecb925`. It triggers only on a push to `main` that changes that workflow file, checks out `main` with full history, requires local HEAD to equal `origin/main`, installs the frozen Python 3.12.14 EXP-051 runtime, and executes only `python scripts/phase8a_exp051_operator.py next`.
+
+The runner contains no `workflow_dispatch` trigger, no schedule, no pull-request trigger, no operator `advance` call, no `advance --execute` call, and no direct `gh workflow run phase8a-exp051-temporal-calibrated-utility-model-training.yml` command. It therefore cannot submit the historical model workflow.
+
+The persisted plan must prove `operator_decision = DEC-156`, `read_only = true`, no run present, `run_state = MISSING`, and stage `TEMPORAL_CALIBRATED_UTILITY_MODEL_RUN_DISPATCH_REQUIRED`. It also rechecks the exact frozen dispatch command as plan evidence, the four DEC-155 outer historical-run flags as true, and all replacement/promotion/shadow/demo/broker/live/real-money/trading locks as false.
+
+A successful runner persists `operator-plan.json` in artifact `exp051-dec156-read-only-operator-plan-<commit>`. Focused tests are `tests/test_phase8a_exp051_operator_plan_runner.py` at blob `0ba4ee0d163d2e5611baa7fa91974f82e9dcf384`. The detailed spec is `docs/superpowers/specs/2026-09-24-phase8a-exp051-operator-plan-runner.md` at blob `d81999642a13d244a2bdf9c985fb3a82ae64b201`.
+
+DEC-157 changes no model-run authorization and consumes no run slot. It authorizes no retry, replacement, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading. After merge, the automatic read-only plan must be inspected before any separate environment-specific executor may invoke the existing DEC-156 `advance --execute` path.
+
