@@ -2519,3 +2519,24 @@ DEC-153 keeps run dispatch, authoritative result execution, model-protocol resul
 
 Before any historical run authorization, a separate decision must predeclare exact attempt-1 terminal review, required job/artifact inventory, complete-success and partial-failure evidence semantics, and no-rerun/replacement policy. DEC-153 dispatches nothing.
 
+## DEC-154 — Phase 8A EXP-051 predeclared terminal-result review
+
+**Date:** 2026-09-24
+**Status:** APPROVED BEFORE ANY EXP-051 HISTORICAL MODEL RESULT OR RUN AUTHORIZATION
+
+DEC-154 freezes the exact terminal-review contract for a possible future first `EXP-20260924-051` historical model run before any result-producing authorization exists.
+
+Only attempt-1 manual-main runs of `phase8a-exp051-temporal-calibrated-utility-model-training` are reviewable. The review binds DEC-153 merge `b0fb55aca2d818e7306a15b200b1e10fcc151ad2`, workflow blob `4ab7480e31e91cbfe39eb5e289eccadde428d1a4`, CLI blob `c88b05a14bc961391ff59e29f742c1dac27272b6`, and execution-gate blob `37a0b7af464c464beff0976addc1464f68e916cc`.
+
+Exactly 11 completed jobs are accepted: one authorization preflight, nine matrix jobs, and one aggregate job. Artifacts are restricted to the exact nine pair/timeframe cell-result names plus the exact aggregate-result name tied to the workflow head SHA.
+
+A successful run requires all 11 jobs to succeed, all nine cell artifacts, the aggregate artifact, and successful DEC-152 aggregate-evidence revalidation against the execution commit. DEC-152 independently requires complete 18-cell evidence with 108 regressors, 108 calibration references, calibrated/raw cutoff evidence, frozen chronology/status chains, and canonical fingerprints. A successful review stops at `TEMPORAL_CALIBRATED_UTILITY_MODEL_RESULT_REVIEW_REQUIRED`.
+
+A failed, cancelled, or timed-out first attempt may preserve only a valid subset of cell artifacts. It cannot claim an aggregate artifact or aggregate evidence and stops at `TEMPORAL_CALIBRATED_UTILITY_MODEL_RUN_FAILURE_REVIEW_REQUIRED`.
+
+The review source is `src/fmp/market_learning/model_successor_temporal_calibrated_utility_result_review.py` at Git blob `bd46dfd1cb8674ab8088d858b378ca37c5d75687`. Focused tests are `tests/test_phase8a_exp051_model_result_review.py` at blob `132ec628d41f6ef84797c683e8114f3b3d935a22`. The detailed review contract is `docs/superpowers/specs/2026-09-24-phase8a-exp051-temporal-calibrated-utility-result-review.md` at blob `44a820cde551b7c89a1ef65e5475d13b49a6479e`.
+
+Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization remain false. DEC-154 changes none of DEC-153's false dispatch/result/protocol-result/model-fit flags.
+
+A later separate decision may independently verify zero prior manual-main EXP-051 runs, add a first-run rejection guard, and authorize at most one outer historical attempt without dispatching it.
+
