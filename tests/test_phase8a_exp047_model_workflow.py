@@ -12,7 +12,14 @@ from fmp.market_learning.model_successor_density_execution_gate import (
     DEC114_MERGED_COMMIT,
     DEC115_MERGED_COMMIT,
     DEC115_RUNNER_BLOB_SHA,
+    DEC116_CLI_BLOB_SHA,
+    DEC116_GATE_BLOB_SHA,
+    DEC116_MERGED_COMMIT,
+    DEC116_WORKFLOW_BLOB_SHA,
+    DEC117_MERGED_COMMIT,
+    DEC117_REVIEW_BLOB_SHA,
     DENSITY_CLI_BLOB_SHA,
+    DENSITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
     DENSITY_MODEL_EXECUTION_GATE_DECISION,
     DENSITY_MODEL_FIT_AUTHORIZED,
     DENSITY_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -39,7 +46,7 @@ REQUIREMENTS = ROOT / "requirements/exp047-model-run.txt"
 
 
 class Exp047WorkflowSourceTests(unittest.TestCase):
-    def test_exact_sources_remain_non_executable(
+    def test_exact_sources_open_one_guarded_result_authorization(
         self,
     ) -> None:
         source = validate_density_model_workflow_sources(
@@ -64,6 +71,40 @@ class Exp047WorkflowSourceTests(unittest.TestCase):
         self.assertEqual(
             source["dec115_merged_commit"],
             DEC115_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            source["dec116_merged_commit"],
+            DEC116_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            source["dec117_merged_commit"],
+            DEC117_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            source["dec116_workflow_blob_sha"],
+            DEC116_WORKFLOW_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["dec116_cli_blob_sha"],
+            DEC116_CLI_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["dec116_gate_blob_sha"],
+            DEC116_GATE_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["dec117_review_blob_sha"],
+            DEC117_REVIEW_BLOB_SHA,
+        )
+        self.assertEqual(
+            source[
+                "density_model_execution_authorization_decision"
+            ],
+            DENSITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+        )
+        self.assertEqual(
+            DENSITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+            "DEC-118",
         )
         self.assertEqual(
             source["density_runner_blob_sha"],
@@ -99,23 +140,23 @@ class Exp047WorkflowSourceTests(unittest.TestCase):
         )
         self.assertEqual(
             gate["stage"],
-            "DENSITY_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+            "DENSITY_MODEL_RUN_DISPATCH_REQUIRED",
         )
         self.assertTrue(
             gate["density_model_workflow_source_frozen"]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate["density_model_run_dispatch_authorized"]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "authoritative_density_model_result_execution_authorized"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate["model_protocol_result_authorized"]
         )
-        self.assertFalse(gate["model_fit_authorized"])
+        self.assertTrue(gate["model_fit_authorized"])
         self.assertFalse(gate["promotion_authorized"])
         self.assertFalse(gate["shadow_authorized"])
         self.assertFalse(gate["demo_order_authorized"])
@@ -129,28 +170,42 @@ class Exp047WorkflowSourceTests(unittest.TestCase):
         self.assertTrue(
             DENSITY_MODEL_WORKFLOW_SOURCE_FROZEN
         )
-        self.assertFalse(
+        self.assertTrue(
             DENSITY_MODEL_RUN_DISPATCH_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             AUTHORITATIVE_DENSITY_MODEL_RESULT_EXECUTION_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             DENSITY_MODEL_PROTOCOL_RESULT_AUTHORIZED
         )
-        self.assertFalse(DENSITY_MODEL_FIT_AUTHORIZED)
+        self.assertTrue(DENSITY_MODEL_FIT_AUTHORIZED)
         self.assertFalse(PROMOTION_AUTHORIZED)
         self.assertFalse(TRADING_AUTHORIZED)
 
-    def test_execution_requirement_fails_closed(self) -> None:
-        with self.assertRaisesRegex(
-            PermissionError,
-            "model-run dispatch is not authorized",
-        ):
-            require_authoritative_density_model_execution(
-                repository_root=ROOT,
-                code_commit="a" * 40,
-            )
+    def test_execution_requirement_accepts_exact_authorized_sources(
+        self,
+    ) -> None:
+        result = require_authoritative_density_model_execution(
+            repository_root=ROOT,
+            code_commit="a" * 40,
+        )
+        self.assertEqual(result["code_commit"], "a" * 40)
+        self.assertTrue(
+            result["density_model_run_dispatch_authorized"]
+        )
+        self.assertTrue(
+            result[
+                "authoritative_density_model_result_execution_authorized"
+            ]
+        )
+        self.assertTrue(
+            result["model_protocol_result_authorized"]
+        )
+        self.assertTrue(result["model_fit_authorized"])
+        self.assertFalse(result["promotion_authorized"])
+        self.assertFalse(result["shadow_authorized"])
+        self.assertFalse(result["trading_authorized"])
 
     def test_workflow_is_manual_main_only_and_input_free(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -173,20 +228,44 @@ class Exp047WorkflowSourceTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
 
-    def test_workflow_has_no_run_authorization_guard_yet(
+    def test_workflow_enforces_first_manual_main_run_only(
         self,
     ) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn(
-            "Reject any prior manual main EXP-047 model run",
-            text,
+        guard = text.index(
+            "Reject any prior manual main EXP-047 model run"
         )
-        self.assertNotIn(
-            "prior manual-main EXP-047 model run exists",
+        authorization = text.index(
+            "Require separately authorized EXP-047 result execution"
+        )
+        self.assertLess(guard, authorization)
+        self.assertIn(
+            "actions/workflows/"
+            "phase8a-exp047-density-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
             text,
         )
         self.assertIn(
-            "Require separately authorized EXP-047 result execution",
+            'current["id"] == int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            'current["name"] == '
+            '"phase8a-exp047-density-model-training"',
+            text,
+        )
+        self.assertIn(
+            'current["path"] == '
+            '".github/workflows/'
+            'phase8a-exp047-density-model-training.yml"',
+            text,
+        )
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            "prior manual-main EXP-047 model run exists",
             text,
         )
 

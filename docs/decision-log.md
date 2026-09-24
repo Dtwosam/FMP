@@ -1850,3 +1850,20 @@ The implementation is frozen at Git blob `466e163edc42145b7cf2d698c48c713e0e804a
 
 A later separate decision may consider at most one guarded historical EXP-047 run only after independently verifying zero prior manual-main runs and adding a first-run rejection guard.
 
+## DEC-118 — Phase 8A EXP-047 single historical model-run authorization
+
+**Date:** 2026-09-24
+**Status:** AUTHORIZED SOURCE; NO EXP-047 RUN DISPATCHED BY THIS DECISION
+
+Before DEC-118 source work, GitHub reported zero manual-main `phase8a-exp047-density-model-training` runs.
+
+DEC-118 binds merged DEC-116 at `b133424949c906d2683692e9d2ad746a33397ffc`, merged DEC-117 at `691448db95a0ab43e2ceb319b1f215c88a856613`, the pre-authorization workflow blob `7ae75dbca58266736be6a6cdf66bf58b61ec3b63`, CLI blob `28941013c2cf9942a94667d58ec6b76de9d13cd2`, pre-authorization gate blob `8a581384a32c10246d123902c0cb30711456c268`, and DEC-117 review blob `466e163edc42145b7cf2d698c48c713e0e804a95`.
+
+The workflow is hardened at Git blob `34926f0863086e15fe8646b0d93dc3eebd1b2cc6`. Before installation or fitting it verifies its exact current run identity, lists manual-main runs for the exact EXP-047 workflow, excludes only its current run id, and fails if any prior run exists.
+
+The authorized DEC-118 execution-gate source is frozen at Git blob `e20ee40678448df00af6885c7419506d476bcb75`. It opens only the outer model-run dispatch, authoritative historical result execution, protocol-result production, and model-fit flags. The unchanged DEC-113/114/115 source-level execution locks remain false underneath the separate authorization layer.
+
+The first manual-main attempt consumes the one-run slot whether it succeeds, fails, is cancelled, or times out. No rerun or replacement is automatically authorized. Any terminal result must use DEC-117 review.
+
+DEC-118 does not dispatch the workflow. Promotion, prospective shadow, demo orders, broker mutation, live orders, real-money actions, and trading authorization remain false.
+
