@@ -2282,3 +2282,22 @@ Selection still requires unanimous positive utility across all three views and u
 The training core is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_training.py` at Git blob `ec97a9941af052d6e223e4bafab9a9989ec57ff0`. Focused tests are `tests/test_phase8a_exp050_temporal_jackknife_utility_training.py` at blob `f7066a775659b1b391b0e29af13601cff015ebb5`. The detailed spec is `docs/superpowers/specs/2026-09-24-phase8a-exp050-temporal-jackknife-utility-training-core.md`.
 
 DEC-142 keeps authoritative EXP-050 model fit/result execution, workflow execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization false. A later separate decision may freeze an artifact-backed runner/evidence contract against this exact training-core blob.
+
+## DEC-143 — Phase 8A EXP-050 artifact-backed result-evidence contract
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-143 freezes the artifact-backed runner/evidence contract for `EXP-20260924-050`. It binds DEC-141 protocol source, DEC-142 training core, the accepted historical feature/outcome/readiness identities, the accepted historical artifact loader, and the generic DEC-134 financial/stability validation helpers under exact Git-blob bindings.
+
+Exact source identities include DEC-142 merge `fa6fd14a880a84a44795efe4099679ed0f642497`, DEC-142 training-core blob `ec97a9941af052d6e223e4bafab9a9989ec57ff0`, DEC-141 protocol blob `b41b817b03aa0cc03a9d893227caa399b46d3cf8`, predecessor EXP-049 training-core blob `e1018b20210b7bb8d666071d8eb878aba5899111`, DEC-134 artifact-helper blob `6b3ec2fc8c6a8e6089d71e21d3243cea50a6fa13`, and accepted historical loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`.
+
+The contract requires complete 18-cell aggregate evidence and exactly 108 jackknife-view/target regressors. It independently validates exact included/excluded regime identities for all three views, target summaries and fit fingerprints, complete view/target prediction digests, unanimous positive-utility consensus accounting, exact 250/500/1000 budget semantics, realized aggregate financial gates, temporal-stability evidence, selection/validation/holdout status chains, and both cell-level and aggregate canonical fingerprints.
+
+A no-challenger result cannot hide a stable variant. Full-fit fallback, view-weight search, view fallback, HGB classifier fallback, and logistic fallback remain forbidden or excluded.
+
+The authoritative bundle checks `AUTHORITATIVE_TEMPORAL_JACKKNIFE_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED` before readiness validation or historical artifact loading. DEC-143 keeps that flag false and keeps authoritative model fit false.
+
+The artifact/evidence source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_artifacts.py` at Git blob `60076ccb45b3468bce68f88f667225e0b5662d92`. Focused tests are `tests/test_phase8a_exp050_temporal_jackknife_utility_artifacts.py` at blob `2247d07528cf20ed1d57f41305da83cbac648e7a`. The detailed contract is `docs/superpowers/specs/2026-09-24-phase8a-exp050-temporal-jackknife-utility-artifact-contract.md`.
+
+DEC-143 opens no workflow, dispatch, historical result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization. A later separate decision may freeze a manual-main workflow/CLI while keeping execution closed until terminal review and one-run authorization are separately predeclared.
