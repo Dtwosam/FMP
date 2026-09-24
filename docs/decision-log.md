@@ -2092,3 +2092,21 @@ The machine-checkable source is `src/fmp/market_learning/model_successor_regime_
 
 DEC-131 explicitly forbids post-hoc relaxation of candidate-share or financial stability rules, removal of the 2021 windows, EXP-048 rerun/replacement, successor fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading. It opens only successor-protocol source work.
 
+## DEC-132 — Phase 8A EXP-049 HGB regime-utility successor protocol
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY BEFORE ANY EXP-049 MODEL RESULT
+
+DEC-132 opens `EXP-20260924-049` as a separately identified, explicitly post-result-informed HGB-only successor after DEC-131 froze `WINDOW_FINANCIAL_INSTABILITY_DOMINANT` as the descriptive EXP-048 failure classification.
+
+EXP-049 preserves the exact three-pair / three-timeframe / two-horizon universe, 48 feature inputs, outer chronology, three disjoint EXP-048 fit-regime windows, HGB structural settings/runtime, 250/500/1000 candidate-budget anchors, 250-candidate aggregate floor, aggregate financial gate, four half-year stability windows, 10% per-window candidate-share floor, per-window financial signs, validation/holdout scenarios, and no-refit forward rule.
+
+The sole research change is the model objective. Each fit regime now fits two `HistGradientBoostingRegressor` models on the already materialized 0.5-pip cost-aware outcomes `long_net_pips_0p5` and `short_net_pips_0p5`, for exactly six regressors per cell. Structural HGB settings remain frozen; squared-error loss is used for the regression objective.
+
+Within a regime, a row receives a directional vote only when one predicted directional utility is uniquely larger and strictly positive. A row is eligible only when all three fit regimes vote for the same LONG or SHORT direction. Its robust-utility score is the minimum predicted net pips for that agreed direction across the three regimes.
+
+The unchanged 250/500/1000 budgets derive one numeric robust-utility cutoff from the selection split. Ties may exceed the nominal budget. The exact selection-derived cutoff is reused unchanged on validation and retrospective holdout. No half-year-specific cutoff, utility recalibration, gate relaxation, 2021-window removal, density rescue, classifier fallback, or logistic reintroduction is authorized.
+
+The protocol source is `src/fmp/market_learning/model_successor_regime_utility_protocol.py` at Git blob `ad2fcb22656fc7a1490f4cdf87fb25c62895a1ac`. Focused tests are `tests/test_phase8a_exp049_regime_utility_protocol.py` at Git blob `647523e86bcf7d54755ea745866ab7c66c89dc6d`.
+
+DEC-132 authorizes no model fit, historical result execution, workflow, dispatch, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision must implement and bind the deterministic EXP-049 training/evaluation core before any result-producing execution can be considered.
