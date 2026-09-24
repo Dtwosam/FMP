@@ -123,7 +123,15 @@ class Exp051OperatorPlanRunnerTests(unittest.TestCase):
             text,
         )
         self.assertIn(
-            "path: operator-plan.json",
+            "path: ${{ runner.temp }}/operator-plan.json",
+            text,
+        )
+        self.assertIn(
+            'Path(os.environ["RUNNER_TEMP"])',
+            text,
+        )
+        self.assertNotIn(
+            "| tee operator-plan.json",
             text,
         )
         self.assertIn(
