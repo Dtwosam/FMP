@@ -19,6 +19,7 @@ from fmp.market_learning.model_successor_regime_consensus_artifacts import (
 )
 from fmp.market_learning.model_successor_regime_consensus_protocol import (
     REGIME_CONSENSUS_EXPERIMENT_ID,
+    TEMPORAL_STABILITY_WINDOWS,
     REGIME_CONSENSUS_PROTOCOL_DECISION,
     REGIME_CONSENSUS_PROTOCOL_VERSION,
     regime_consensus_protocol_fingerprint,
@@ -75,6 +76,72 @@ def _unavailable_variant(budget: int) -> dict[str, object]:
             "windows": [],
         },
         "selection_gate_passed": False,
+    }
+
+
+def _stable_variant(budget: int) -> dict[str, object]:
+    criteria = {
+        "directional_candidate_count>=250": True,
+        "total_net_pips>0": True,
+        "mean_net_pips>0": True,
+        "gross_positive_pips>absolute_gross_negative_pips": True,
+    }
+    windows = [
+        {
+            "name": str(window["name"]),
+            "start": str(window["start"]),
+            "end_exclusive": str(window["end_exclusive"]),
+            "row_count": 100,
+            "metrics": {
+                "directional_candidate_count": 25,
+                "total_net_pips": 25.0,
+                "mean_net_pips": 1.0,
+                "gross_positive_pips": 25.0,
+                "absolute_gross_negative_pips": 0.0,
+            },
+            "gate": {
+                "passed": True,
+                "criteria": {
+                    "directional_candidate_share>=0.10": True,
+                    "total_net_pips>0": True,
+                    "mean_net_pips>0": True,
+                    "gross_positive_pips>absolute_gross_negative_pips": True,
+                },
+                "directional_candidate_share": 0.10,
+            },
+        }
+        for window in TEMPORAL_STABILITY_WINDOWS
+    ]
+    return {
+        "model_family": "hist_gradient_boosting",
+        "candidate_budget_anchor": budget,
+        "evaluation_status": "EVALUATED",
+        "status": "AVAILABLE",
+        "eligible_consensus_row_count": 1000,
+        "selection_derived_cutoff": 0.7,
+        "selection_candidate_count_at_cutoff": 250,
+        "scenarios": {
+            "0.5": {
+                "metrics": {
+                    "directional_candidate_count": 250,
+                    "total_net_pips": 250.0,
+                    "mean_net_pips": 1.0,
+                    "gross_positive_pips": 250.0,
+                    "absolute_gross_negative_pips": 0.0,
+                },
+                "gate": {
+                    "passed": True,
+                    "criteria": criteria,
+                },
+            }
+        },
+        "aggregate_selection_gate_passed": True,
+        "temporal_stability": {
+            "status": "PASS",
+            "minimum_directional_candidate_share_per_window": 0.10,
+            "windows": windows,
+        },
+        "selection_gate_passed": True,
     }
 
 
@@ -301,6 +368,67 @@ class Exp048RegimeConsensusArtifactTests(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError,
             "consensus eligible count mismatch",
+        ):
+            compile_regime_consensus_model_result_evidence(
+                rows,
+                code_commit=CODE_COMMIT,
+            )
+
+    def test_variant_consensus_count_drift_fails_closed(self) -> None:
+        rows = _all_cell_results()
+        rows[0]["selection"]["variants"][0][
+            "eligible_consensus_row_count"
+        ] = 1
+        rows[0]["result_fingerprint"] = _sha256(
+            _canonical_json(
+                {
+                    key: value
+                    for key, value in rows[0].items()
+                    if key != "result_fingerprint"
+                }
+            )
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "variant consensus eligible count mismatch",
+        ):
+            compile_regime_consensus_model_result_evidence(
+                rows,
+                code_commit=CODE_COMMIT,
+            )
+
+    def test_no_challenger_cannot_hide_stable_variant(self) -> None:
+        rows = _all_cell_results()
+        rows[0]["selection"]["consensus"] = {
+            **_consensus(),
+            "consensus_direction_counts": {
+                "LONG": 1000,
+                "SHORT": 0,
+                "NO_TRADE": 0,
+            },
+            "consensus_eligible_row_count": 1000,
+            "consensus_eligible_rate": 1.0,
+            "minimum_consensus_confidence": 0.5,
+            "maximum_consensus_confidence": 0.9,
+            "row_count": 1000,
+        }
+        rows[0]["selection"]["row_count"] = 1000
+        rows[0]["split_row_counts"]["selection"] = 1000
+        rows[0]["selection"]["variants"][0] = _stable_variant(250)
+        for item in rows[0]["selection"]["variants"][1:]:
+            item["eligible_consensus_row_count"] = 1000
+        rows[0]["result_fingerprint"] = _sha256(
+            _canonical_json(
+                {
+                    key: value
+                    for key, value in rows[0].items()
+                    if key != "result_fingerprint"
+                }
+            )
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "no-challenger status hides stable variant",
         ):
             compile_regime_consensus_model_result_evidence(
                 rows,
