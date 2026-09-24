@@ -247,9 +247,17 @@ Training core:
 
 `src/fmp/market_learning/model_successor_temporal_calibrated_utility_training.py`
 
+Training core Git blob:
+
+`959fbfd52f41c08de3c1a26769e0e7fd2545b92a`
+
 Focused tests:
 
 `tests/test_phase8a_exp051_temporal_calibrated_utility_training.py`
+
+Focused test Git blob:
+
+`70d1e3ae39566fd7ee0ea53c030f0cc65f89b3ab`
 
 Training-core version:
 
