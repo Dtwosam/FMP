@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046 CLOSED/REVIEWED + EXP-047 DEC-118 ONE-RUN AUTHORIZATION + DEC-119 SINGLE-STEP OPERATOR MERGED; NO EXP-047 RESULT
-**Next milestone:** DEC-119 is merged at `275cf7de38631918b914182e3c8ada07727d38d5`. GitHub still reports zero manual-main `phase8a-exp047-density-model-training` runs. From clean current `main`, run `python scripts/phase8a_exp047_operator.py next`. Only if it reports `DENSITY_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp047_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046 CLOSED/REVIEWED + EXP-047 DEC-118 ONE-RUN AUTHORIZATION + DEC-119 OPERATOR MERGED + DEC-120 OPERATOR METADATA REPAIR SOURCE FROZEN; NO EXP-047 RESULT
+**Next milestone:** Merge DEC-120's fail-closed EXP-047 operator metadata repair. The failed local `next` attempt dispatched nothing and GitHub still reports zero manual-main EXP-047 runs. After merge and local fast-forward to current `main`, rerun `python scripts/phase8a_exp047_operator.py next`. Only if it reports `DENSITY_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp047_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
@@ -421,6 +421,7 @@ Current milestone:
 43. DEC-117 predeclares EXP-047 terminal review before any run authorization. Only attempt-1 exact workflow/job/artifact identities are accepted; successful aggregate evidence must revalidate through DEC-115, non-success may preserve partial cell artifacts, reruns are rejected, and no replacement/promotion/trading authorization is opened.
 44. DEC-118 verifies zero prior manual-main EXP-047 runs, hardens the workflow with a first-run rejection guard, and opens at most one outer historical result-producing authorization after merge. The first attempt consumes the slot; no run is dispatched by DEC-118 and all promotion/trading permissions remain false.
 45. DEC-119 freezes a clean-main, double-plan one-way operator for the DEC-118-authorized EXP-047 run. Only the zero-run state is dispatchable; active/terminal states cannot expose a second dispatch, and terminal evidence routes through DEC-117.
+46. DEC-120 repairs the DEC-119 public `next` metadata projection before any EXP-047 run occurred. A stale `dec107_merged_commit` lookup is replaced by fail-closed validation of the actual DEC-113 through DEC-117 gate chain; the DEC-118 one-run slot remains unconsumed.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 

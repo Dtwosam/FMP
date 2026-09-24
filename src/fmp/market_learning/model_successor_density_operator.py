@@ -306,6 +306,41 @@ def build_density_operator_report(
     }
 
 
+def density_operator_gate_metadata(
+    gate: Mapping[str, object],
+) -> dict[str, object]:
+    decisions = {
+        "density_model_execution_gate_decision": "DEC-116",
+        "density_model_execution_authorization_decision": "DEC-118",
+    }
+    for field, expected in decisions.items():
+        if gate.get(field) != expected:
+            raise ValueError(
+                f"EXP-047 operator gate {field} mismatch"
+            )
+
+    sha_fields = (
+        "dec113_merged_commit",
+        "dec114_merged_commit",
+        "dec115_merged_commit",
+        "dec116_merged_commit",
+        "dec117_merged_commit",
+        "dec116_workflow_blob_sha",
+        "dec116_cli_blob_sha",
+        "dec116_gate_blob_sha",
+        "dec117_review_blob_sha",
+        "density_workflow_blob_sha",
+        "density_cli_blob_sha",
+    )
+    metadata: dict[str, object] = dict(decisions)
+    for field in sha_fields:
+        metadata[field] = _validate_sha(
+            gate.get(field),
+            field=f"EXP-047 operator gate {field}",
+        )
+    return metadata
+
+
 def dispatch_command_for_density_report(
     report: Mapping[str, object],
 ) -> tuple[str, ...] | None:
@@ -426,6 +461,7 @@ __all__ = [
     "DENSITY_MODEL_WORKFLOW_PATH",
     "build_density_operator_report",
     "classify_density_model_run",
+    "density_operator_gate_metadata",
     "dispatch_command_for_density_report",
     "select_density_aggregate_artifact",
     "select_density_manual_main_run",
