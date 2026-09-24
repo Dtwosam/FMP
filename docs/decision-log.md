@@ -2433,3 +2433,24 @@ The diagnostic source is `src/fmp/market_learning/model_successor_temporal_jackk
 
 DEC-149 does not authorize lowering candidate-share or financial stability, removing a 2021 window, changing jackknife views, weakening unanimous positive-utility consensus, lowering the positive-utility requirement, adding smaller budget anchors as a result-producing rescue, rerunning or replacing EXP-050, successor fitting/result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. It opens only separately frozen successor-protocol source work.
 
+## DEC-150 — Phase 8A EXP-051 out-of-fit calibrated utility successor protocol
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / NO EXP-051 MODEL EXECUTION AUTHORIZED
+
+DEC-150 opens `EXP-20260924-051` as a post-result-informed successor to DEC-148/DEC-149. It binds EXP-050 run `36049824739`, execution commit `25d48828b981c4309f4a859d2a33a56094638f21`, evidence fingerprint `866b4a8f26553bad8c80a7b2e0e68aedb50bfa42b3c767ce91478c9dfd720023`, DEC-149 merge `d8874bf213c420fb506cc9ee8c4dfb2caffbb9e1`, DEC-149 diagnostic blob `f23465ca30249ce8abab3c9fdf07ce39a8679a9a`, DEC-148 reviewed-result blob `70402f6c21f4ed22b4991025c98e6c1664215215`, and EXP-050 protocol blob `b41b817b03aa0cc03a9d893227caa399b46d3cf8`.
+
+DEC-149 recorded increased utility-eligible coverage versus EXP-049 but zero stable challengers: 28 of 54 budget variants were available, three passed the aggregate gate, all three passes were concentrated in USDJPY 5m / 60m, and all three had zero candidates in 2021 H1. DEC-150 does not lower the positive-utility rule, change the three jackknife views, weaken unanimous direction consensus, add smaller budget anchors, remove a 2021 window, or relax candidate-share or financial stability.
+
+The sole EXP-051 research change is an out-of-fit calibration of the ranking scale. Each frozen EXP-050 jackknife view continues to fit the same LONG and SHORT 0.5-pip HGB utility regressors on the same four fit years. After fitting, each view scores exactly its excluded two-year fit regime separately for LONG and SHORT. The sorted finite predictions form six immutable calibration-reference vectors per cell. Realized outcomes and all selection/validation/holdout rows are excluded from calibration.
+
+EXP-050 eligibility remains unchanged: every view must choose the same unique LONG or SHORT direction and each chosen raw predicted utility must be greater than zero. For an eligible row, each view's agreed-direction raw utility is mapped to the right empirical CDF of that view/target excluded-regime reference. The EXP-051 ranking score is the minimum calibrated percentile across the three views. The predecessor minimum raw utility is retained as a secondary score.
+
+Candidate budgets remain 250/500/1000. Selection ranks by calibrated percentile descending, raw robust utility descending, then row identity ascending; the budget-th calibrated/raw score pair becomes the frozen cutoff. Validation and retrospective holdout reuse the exact six regressors, six calibration references, unanimous direction rule, and selection-derived cutoff pair without refit or recalibration.
+
+Aggregate financial gates, the four half-year temporal-stability windows, the 10% per-window candidate-share floor, all per-window financial signs, validation/holdout chronology, and no-refit semantics remain unchanged. EXP-051 does not reserve candidates by year or window and does not use selection-period dates to construct calibration, so the stability screen remains capable of rejecting the successor completely.
+
+The protocol source is `src/fmp/market_learning/model_successor_temporal_calibrated_utility_protocol.py` at Git blob `c39309c4115cae1ea058e56f30cae4af6407e36e`. Focused tests are `tests/test_phase8a_exp051_temporal_calibrated_utility_protocol.py` at blob `ac2814dea9c4f4d2771b5abe8b5d602e9b86b059`. The detailed spec is `docs/superpowers/specs/2026-09-24-phase8a-exp051-temporal-calibrated-utility-protocol.md` at blob `8f548ce735d52c5d5b8aa483b2db8668672c395e`.
+
+DEC-150 keeps model-protocol result production, model fit, historical result execution, workflow dispatch, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. A later separate decision may implement only the deterministic in-memory EXP-051 training/evaluation core against this exact protocol source.
+
