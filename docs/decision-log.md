@@ -1918,3 +1918,20 @@ DEC-121 classifies the reviewed result as `DENSITY_MODEL_RESULT_REVIEWED_NO_STAB
 
 The machine-checkable reviewed-result source is `src/fmp/market_learning/model_successor_density_result_decision.py` at Git blob `1c1cffc360949609b2d4ae404a165154f3ce7b0f`. Any further model research requires a separately predeclared, explicitly post-result-informed successor diagnostic/protocol.
 
+## DEC-122 — Phase 8A EXP-047 post-result temporal-concentration diagnostic
+
+**Date:** 2026-09-24
+**Status:** POST-RESULT DIAGNOSTIC; NO NEW MODEL EXECUTION AUTHORIZED
+
+DEC-122 freezes the detailed diagnostic of the completed EXP-047 density experiment after DEC-121 reviewed run `35993400007`.
+
+EXP-047 evaluated 54 HGB density variants with zero unavailable budgets. Twelve variants passed the aggregate financial gate and all 12 were rejected by the frozen four-window stability screen. Every aggregate pass fails the 10% per-window candidate-share criterion in at least one window. Ten of the 12 also fail one or more per-window financial-sign criteria; only two are share-only rejects.
+
+Six aggregate-passing variants produce zero candidates across both 2021 half-years. Other passes often produce only a handful of 2021 candidates. The evidence therefore shows that broader candidate-density generation can create aggregate-financial passes but does not resolve temporal/regime concentration.
+
+DEC-122 records `TEMPORAL_REGIME_CONCENTRATION_DOMINANT` as the descriptive post-result classification. It does not claim a causal market mechanism.
+
+The machine-checkable source is `src/fmp/market_learning/model_successor_density_post_result_diagnostics.py` at Git blob `ceb18c634af55051d2bbd5c749a7bc5862eba470`.
+
+DEC-122 explicitly forbids post-hoc relaxation of the 10% stability share floor, removal of the 2021 stability windows, simple widening of density anchors as a result-producing change, EXP-047 rerun/replacement, successor fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading. It opens only successor-protocol source work.
+
