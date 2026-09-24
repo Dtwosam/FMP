@@ -2413,3 +2413,23 @@ All three aggregate passes are USDJPY 5m / 60m at budgets 250, 500, and 1000. Th
 The result-decision source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_result_decision.py` at Git blob `70402f6c21f4ed22b4991025c98e6c1664215215`. Focused tests are `tests/test_phase8a_exp050_model_result_decision.py` at blob `cce218e5a05d7c567884aae5b1e08e632489377a`. The reviewed-result record is `docs/superpowers/specs/2026-09-24-phase8a-exp050-reviewed-model-result.md` at blob `887814acd498257b35012d736d8e9080ec8674a0`.
 
 The DEC-146 one-run slot is consumed. Model-run dispatch, replacement-run authorization, authoritative result execution, protocol-result production, model fitting, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization are all closed. No second EXP-050 run is authorized. Any post-result diagnostic or successor protocol requires a later separate decision and may not alter this reviewed evidence.
+
+## DEC-149 — Phase 8A EXP-050 post-result temporal-jackknife utility diagnostic
+
+**Date:** 2026-09-24
+**Status:** POST-RESULT DIAGNOSTIC; SUCCESSOR SOURCE WORK ONLY
+
+DEC-149 freezes the post-result diagnostic over the immutable DEC-148 / EXP-050 evidence before any later successor protocol is written. It performs no new model fit, changes no reviewed gate, and authorizes no historical result execution.
+
+The source binding is DEC-148, workflow run `36049824739`, execution commit `25d48828b981c4309f4a859d2a33a56094638f21`, evidence fingerprint `866b4a8f26553bad8c80a7b2e0e68aedb50bfa42b3c767ce91478c9dfd720023`, DEC-148 merge `50ae34098ece275959d52ca9d104a07374a7ff6a`, and reviewed-result source blob `70402f6c21f4ed22b4991025c98e6c1664215215`.
+
+Of the 54 predeclared budget variants, 26 are unavailable and 28 are available. Three available variants pass the unchanged aggregate selection gate and 25 reject there. All three passes are the USDJPY 5m / 60m cell at budget anchors 250, 500, and 1000; zero pass temporal stability.
+
+All three aggregate passes have zero candidates in 2021 H1. The 250 and 500 variants also have zero candidates in 2021 H2; the 1000 variant has one 2021 H2 candidate and fails both share and financial signs there. The 500 and 1000 variants have positive 2022 H1 financial signs but still miss the 10% candidate-share floor. All three pass the 2022 H2 window.
+
+Relative to EXP-049, the reviewed utility-eligible selection-row count increases from 14,158 to 26,392, available budget variants increase from 23 to 28, and unavailable variants decrease from 31 to 26. DEC-149 records the descriptive diagnostic classification `UTILITY_COVERAGE_INCREASED_BUT_EARLY_TEMPORAL_COVERAGE_LIMITED`. This is not a causal market claim and does not reinterpret any failed stability window as passing.
+
+The diagnostic source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_post_result_diagnostics.py` at Git blob `f23465ca30249ce8abab3c9fdf07ce39a8679a9a`. Focused tests are `tests/test_phase8a_exp050_post_result_diagnostics.py` at blob `d2ff1d90b1c37e5a392742a3dfc960113b6d7bd1`. The diagnostic spec is `docs/superpowers/specs/2026-09-24-phase8a-exp050-post-result-diagnostics.md` at blob `fdf915fa167b548331f28b05043f0f525cc0c099`.
+
+DEC-149 does not authorize lowering candidate-share or financial stability, removing a 2021 window, changing jackknife views, weakening unanimous positive-utility consensus, lowering the positive-utility requirement, adding smaller budget anchors as a result-producing rescue, rerunning or replacing EXP-050, successor fitting/result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. It opens only separately frozen successor-protocol source work.
+
