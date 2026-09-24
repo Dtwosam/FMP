@@ -18,6 +18,7 @@ from fmp.market_learning.model_successor_density_execution_gate import (
 from fmp.market_learning.model_successor_density_operator import (
     DENSITY_MODEL_WORKFLOW_NAME,
     build_density_operator_report,
+    density_operator_gate_metadata,
     dispatch_command_for_density_report,
     select_density_aggregate_artifact,
     select_density_manual_main_run,
@@ -203,21 +204,7 @@ def _next_report() -> dict[str, object]:
     report.update(
         {
             "operator_decision": OPERATOR_DECISION,
-            "density_model_execution_gate_decision": gate[
-                "density_model_execution_gate_decision"
-            ],
-            "density_model_execution_authorization_decision": gate[
-                "density_model_execution_authorization_decision"
-            ],
-            "dec107_merged_commit": gate[
-                "dec107_merged_commit"
-            ],
-            "density_workflow_blob_sha": gate[
-                "density_workflow_blob_sha"
-            ],
-            "density_cli_blob_sha": gate[
-                "density_cli_blob_sha"
-            ],
+            **density_operator_gate_metadata(gate),
         }
     )
 
