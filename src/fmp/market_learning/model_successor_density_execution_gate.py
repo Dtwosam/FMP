@@ -26,6 +26,7 @@ from .model_successor_density_training import (
 
 
 DENSITY_MODEL_EXECUTION_GATE_DECISION = "DEC-116"
+DENSITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-118"
 DENSITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp047-density-model-training.yml"
 )
@@ -42,6 +43,25 @@ DEC114_MERGED_COMMIT = (
 DEC115_MERGED_COMMIT = (
     "93f1b25cb4260d6b25f484c33014e322cc1ea9af"
 )
+DEC116_MERGED_COMMIT = (
+    "b133424949c906d2683692e9d2ad746a33397ffc"
+)
+DEC117_MERGED_COMMIT = (
+    "691448db95a0ab43e2ceb319b1f215c88a856613"
+)
+
+DEC116_WORKFLOW_BLOB_SHA = (
+    "7ae75dbca58266736be6a6cdf66bf58b61ec3b63"
+)
+DEC116_CLI_BLOB_SHA = (
+    "28941013c2cf9942a94667d58ec6b76de9d13cd2"
+)
+DEC116_GATE_BLOB_SHA = (
+    "8a581384a32c10246d123902c0cb30711456c268"
+)
+DEC117_REVIEW_BLOB_SHA = (
+    "466e163edc42145b7cf2d698c48c713e0e804a95"
+)
 
 DEC115_RUNNER_BLOB_SHA = (
     "2d3997ca97fb4568187be54914fe76e8dbf76ff5"
@@ -57,7 +77,7 @@ LEGACY_DATA_LOADER_BLOB_SHA = (
 )
 
 DENSITY_WORKFLOW_BLOB_SHA = (
-    "7ae75dbca58266736be6a6cdf66bf58b61ec3b63"
+    "34926f0863086e15fe8646b0d93dc3eebd1b2cc6"
 )
 DENSITY_CLI_BLOB_SHA = (
     "28941013c2cf9942a94667d58ec6b76de9d13cd2"
@@ -84,10 +104,10 @@ MARKET_OUTCOMES_BLOB_SHA = (
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 DENSITY_MODEL_WORKFLOW_SOURCE_FROZEN = True
-DENSITY_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_DENSITY_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-DENSITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-DENSITY_MODEL_FIT_AUTHORIZED = False
+DENSITY_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_DENSITY_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+DENSITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+DENSITY_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -235,6 +255,12 @@ def validate_density_model_workflow_sources(
             "model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_density_result_review.py",
+            DEC117_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -301,6 +327,15 @@ def validate_density_model_workflow_sources(
         "dec113_merged_commit": DEC113_MERGED_COMMIT,
         "dec114_merged_commit": DEC114_MERGED_COMMIT,
         "dec115_merged_commit": DEC115_MERGED_COMMIT,
+        "dec116_merged_commit": DEC116_MERGED_COMMIT,
+        "dec117_merged_commit": DEC117_MERGED_COMMIT,
+        "dec116_workflow_blob_sha": DEC116_WORKFLOW_BLOB_SHA,
+        "dec116_cli_blob_sha": DEC116_CLI_BLOB_SHA,
+        "dec116_gate_blob_sha": DEC116_GATE_BLOB_SHA,
+        "dec117_review_blob_sha": actual["terminal_review"],
+        "density_model_execution_authorization_decision": (
+            DENSITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "density_runner_blob_sha": actual[
             "density_runner"
         ],
@@ -348,11 +383,14 @@ def build_density_model_workflow_source_gate(
     )
     return {
         **source,
-        "stage": "DENSITY_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+        "stage": "DENSITY_MODEL_RUN_DISPATCH_REQUIRED",
         "next_action": (
-            "A later separate decision may authorize at most a "
-            "guarded EXP-047 historical model-result run. "
-            "DEC-116 does not authorize or dispatch execution."
+            "DEC-118 authorizes at most one guarded historical EXP-047 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
+        ),
+        "density_model_execution_authorization_decision": (
+            DENSITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
         ),
         "density_model_workflow_source_frozen": (
             DENSITY_MODEL_WORKFLOW_SOURCE_FROZEN
@@ -445,8 +483,15 @@ __all__ = [
     "DEC114_MERGED_COMMIT",
     "DEC115_MERGED_COMMIT",
     "DEC115_RUNNER_BLOB_SHA",
+    "DEC116_CLI_BLOB_SHA",
+    "DEC116_GATE_BLOB_SHA",
+    "DEC116_MERGED_COMMIT",
+    "DEC116_WORKFLOW_BLOB_SHA",
+    "DEC117_MERGED_COMMIT",
+    "DEC117_REVIEW_BLOB_SHA",
     "DEMO_ORDER_AUTHORIZED",
     "DENSITY_CLI_BLOB_SHA",
+    "DENSITY_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "DENSITY_MODEL_EXECUTION_GATE_DECISION",
     "DENSITY_MODEL_FIT_AUTHORIZED",
     "DENSITY_MODEL_PROTOCOL_RESULT_AUTHORIZED",
