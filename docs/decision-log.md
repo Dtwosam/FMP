@@ -2110,3 +2110,20 @@ The unchanged 250/500/1000 budgets derive one numeric robust-utility cutoff from
 The protocol source is `src/fmp/market_learning/model_successor_regime_utility_protocol.py` at Git blob `ad2fcb22656fc7a1490f4cdf87fb25c62895a1ac`. Focused tests are `tests/test_phase8a_exp049_regime_utility_protocol.py` at Git blob `647523e86bcf7d54755ea745866ab7c66c89dc6d`.
 
 DEC-132 authorizes no model fit, historical result execution, workflow, dispatch, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision must implement and bind the deterministic EXP-049 training/evaluation core before any result-producing execution can be considered.
+
+## DEC-133 — Phase 8A EXP-049 deterministic regime-utility training core
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / NO AUTHORITATIVE EXP-049 FIT
+
+DEC-133 implements the deterministic in-memory training/evaluation core for the DEC-132 protocol and binds the exact DEC-132 merge `d17326eebf6b456211225d7bad3a182a0307b707`, protocol blob `ad2fcb22656fc7a1490f4cdf87fb25c62895a1ac`, base EXP-044 training helper blob `34b50a3f907d26b1c5ec50a0a0b444a3417d04f7`, and density/stability helper blob `8ed51edc12c8d7d23cf9cc362e6b0ea7564d4945`.
+
+For every cell, the core rebuilds the exact three fit-regime windows and fits exactly two `HistGradientBoostingRegressor` models per regime on `long_net_pips_0p5` and `short_net_pips_0p5`. Each target receives regime-local median preprocessing, finite-target checks, deterministic preprocessor/model fingerprints, and row-bound prediction digests.
+
+Scoring implements the frozen DEC-132 rule exactly: a regime votes LONG or SHORT only when that predicted utility is uniquely larger and strictly positive; all three regimes must vote the same direction; robust utility is the minimum agreed-direction prediction across regimes. The 250/500/1000 selection cutoffs rank robust utility deterministically, and ties may exceed the nominal budget.
+
+Realized selection still must pass the unchanged 0.5-pip aggregate gate and all four unchanged temporal-stability windows before any variant is selected. Validation reuses the exact six fitted regressors and exact selection-derived numeric cutoff without refit/recalibration. Retrospective holdout remains locked unless validation passes.
+
+The training core is `src/fmp/market_learning/model_successor_regime_utility_training.py` at Git blob `e1018b20210b7bb8d666071d8eb878aba5899111`. Focused tests are `tests/test_phase8a_exp049_regime_utility_training.py` at Git blob `0606d8208b8c7edac40f1073e5b5e8248dfc107b`.
+
+DEC-133 adds no workflow, dispatch path, authoritative historical fit, result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization. A later separate decision must freeze an artifact-backed runner/evidence contract before any historical execution can be considered.
