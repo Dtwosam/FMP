@@ -1816,3 +1816,20 @@ The source is `src/fmp/market_learning/model_successor_density_artifacts.py` at 
 
 DEC-115 remains non-executable: the authoritative bundle raises before readiness validation, artifact loading, or model fitting. No workflow/dispatch, model-fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization is introduced.
 
+## DEC-116 — Phase 8A EXP-047 locked model workflow source
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; EXP-047 EXECUTION AUTHORIZATION CLOSED
+
+DEC-116 freezes the manual main-only, input-free EXP-047 workflow, CLI, pinned Python 3.12.14 numerical runtime, and fail-closed exact-source execution gate around merged DEC-113/114/115.
+
+The workflow is `.github/workflows/phase8a-exp047-density-model-training.yml` at Git blob `7ae75dbca58266736be6a6cdf66bf58b61ec3b63`. The CLI is `scripts/phase8a_exp047_model_run.py` at blob `28941013c2cf9942a94667d58ec6b76de9d13cd2`. The runtime requirements are frozen at blob `d25ab16056b9f5df283147d67b8f401f60ae7520`. The execution gate is `src/fmp/market_learning/model_successor_density_execution_gate.py` at blob `8a581384a32c10246d123902c0cb30711456c268`.
+
+The gate binds DEC-113 merge/protocol bytes, DEC-114 merge/core bytes, DEC-115 merge/artifact-runner bytes, the exact historical loader, workflow, CLI, runtime, pyproject, preprocessing, feature schema, contracts, and outcome source. Any byte drift fails closed.
+
+The workflow preserves the exact nine pair/timeframe historical artifact identities, 60m/240m horizons, readiness artifact, partial-result upload semantics, and deterministic aggregate evidence namespace. It has no user inputs, alternate trigger, or automatic dispatch. Because DEC-116 is pre-authorization, it intentionally has no first-run rejection guard yet; a later authorization decision must add one before opening a one-run slot.
+
+DEC-116 leaves model-run dispatch, authoritative result execution, protocol-result production, model fitting, promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization false. The workflow authorization preflight therefore cannot pass.
+
+A later separate decision must predeclare terminal-result review before any one-run authorization is considered.
+
