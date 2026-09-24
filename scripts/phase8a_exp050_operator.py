@@ -166,7 +166,7 @@ def _validated_source_gate() -> dict[str, object]:
         != "TEMPORAL_JACKKNIFE_UTILITY_MODEL_RUN_DISPATCH_REQUIRED"
     ):
         raise SystemExit(
-            "EXP-050 DEC-137 source gate returned an invalid stage"
+            "EXP-050 DEC-146 source gate returned an invalid stage"
         )
 
     for field in (
@@ -177,7 +177,7 @@ def _validated_source_gate() -> dict[str, object]:
     ):
         if gate.get(field) is not True:
             raise SystemExit(
-                f"EXP-050 DEC-137 source gate {field} must be true"
+                f"EXP-050 DEC-146 source gate {field} must be true"
             )
 
     for field in (
@@ -186,7 +186,7 @@ def _validated_source_gate() -> dict[str, object]:
     ):
         if gate.get(field) is not False:
             raise SystemExit(
-                f"EXP-050 DEC-137 source gate {field} must be false"
+                f"EXP-050 DEC-146 source gate {field} must be false"
             )
     return gate
 
@@ -250,7 +250,7 @@ def _next_report() -> dict[str, object]:
     report.update(review)
     report["read_only"] = True
     report["next_action"] = (
-        "Review the frozen DEC-136 terminal evidence. "
+        "Review the frozen DEC-145 terminal evidence. "
         "Do not rerun automatically or promote/trade."
     )
     return report
@@ -312,7 +312,7 @@ def parser() -> argparse.ArgumentParser:
     advance = sub.add_parser(
         "advance",
         help=(
-            "prepare or execute exactly one DEC-137-authorized "
+            "prepare or execute exactly one DEC-146-authorized "
             "dispatch"
         ),
     )
