@@ -26,6 +26,7 @@ from .model_successor_regime_consensus_training import (
 
 
 REGIME_CONSENSUS_MODEL_EXECUTION_GATE_DECISION = "DEC-126"
+REGIME_CONSENSUS_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-128"
 REGIME_CONSENSUS_MODEL_WORKFLOW_FILE = (
     "phase8a-exp048-regime-consensus-model-training.yml"
 )
@@ -42,6 +43,25 @@ DEC124_MERGED_COMMIT = (
 DEC125_MERGED_COMMIT = (
     "c695ea8add9227896d26b5641f4f8b51f4bb310e"
 )
+DEC126_MERGED_COMMIT = (
+    "e2713ab33648901d42f9a9e1c4b8e7f0ff7920a6"
+)
+DEC127_MERGED_COMMIT = (
+    "589782a92f9f1db2008bff99065cb070017311ca"
+)
+
+DEC126_WORKFLOW_BLOB_SHA = (
+    "09d6d9fa710d18637648de23ae45968628032765"
+)
+DEC126_CLI_BLOB_SHA = (
+    "f4a6941512824c1d60bff98175dd2fce9353aa68"
+)
+DEC126_GATE_BLOB_SHA = (
+    "b70e2a8854439f20b25a9549820fad9c95612390"
+)
+DEC127_REVIEW_BLOB_SHA = (
+    "0cd943cb4bb8780a6adfab02b0743c8415dcd5fe"
+)
 
 DEC125_RUNNER_BLOB_SHA = (
     "b62f3ff775f30c96fa2f6f1a15256fd696ea5c2e"
@@ -57,7 +77,7 @@ LEGACY_DATA_LOADER_BLOB_SHA = (
 )
 
 REGIME_CONSENSUS_WORKFLOW_BLOB_SHA = (
-    "09d6d9fa710d18637648de23ae45968628032765"
+    "89a2c78af2c3d0925d7c8a2773af9291caacd95d"
 )
 REGIME_CONSENSUS_CLI_BLOB_SHA = (
     "f4a6941512824c1d60bff98175dd2fce9353aa68"
@@ -84,10 +104,10 @@ MARKET_OUTCOMES_BLOB_SHA = (
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 REGIME_CONSENSUS_MODEL_WORKFLOW_SOURCE_FROZEN = True
-REGIME_CONSENSUS_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_REGIME_CONSENSUS_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-REGIME_CONSENSUS_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-REGIME_CONSENSUS_MODEL_FIT_AUTHORIZED = False
+REGIME_CONSENSUS_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_REGIME_CONSENSUS_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+REGIME_CONSENSUS_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+REGIME_CONSENSUS_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -244,6 +264,12 @@ def validate_regime_consensus_model_workflow_sources(
             / "src/fmp/market_learning/model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_regime_consensus_result_review.py",
+            DEC127_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -308,6 +334,15 @@ def validate_regime_consensus_model_workflow_sources(
         "dec123_merged_commit": DEC123_MERGED_COMMIT,
         "dec124_merged_commit": DEC124_MERGED_COMMIT,
         "dec125_merged_commit": DEC125_MERGED_COMMIT,
+        "dec126_merged_commit": DEC126_MERGED_COMMIT,
+        "dec127_merged_commit": DEC127_MERGED_COMMIT,
+        "dec126_workflow_blob_sha": DEC126_WORKFLOW_BLOB_SHA,
+        "dec126_cli_blob_sha": DEC126_CLI_BLOB_SHA,
+        "dec126_gate_blob_sha": DEC126_GATE_BLOB_SHA,
+        "dec127_review_blob_sha": actual["terminal_review"],
+        "regime_consensus_model_execution_authorization_decision": (
+            REGIME_CONSENSUS_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "regime_consensus_runner_blob_sha": actual[
             "regime_consensus_runner"
         ],
@@ -355,14 +390,14 @@ def build_regime_consensus_model_workflow_source_gate(
     )
     return {
         **source,
-        "stage": (
-            "REGIME_CONSENSUS_MODEL_RUN_"
-            "WORKFLOW_SOURCE_FROZEN"
-        ),
+        "stage": "REGIME_CONSENSUS_MODEL_RUN_DISPATCH_REQUIRED",
         "next_action": (
-            "Predeclare the exact EXP-048 terminal-result review "
-            "contract before any historical result-run authorization. "
-            "DEC-126 does not authorize or dispatch execution."
+            "DEC-128 authorizes at most one guarded historical EXP-048 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
+        ),
+        "regime_consensus_model_execution_authorization_decision": (
+            REGIME_CONSENSUS_MODEL_EXECUTION_AUTHORIZATION_DECISION
         ),
         "regime_consensus_model_workflow_source_frozen": (
             REGIME_CONSENSUS_MODEL_WORKFLOW_SOURCE_FROZEN
