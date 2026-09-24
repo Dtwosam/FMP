@@ -2360,3 +2360,22 @@ A failed, cancelled, or timed-out first attempt may preserve only a valid subset
 The review source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_result_review.py` at blob `e93f7f26e6f0cf8541c9dffd0d359acf0a7ec64e`. Focused tests are `tests/test_phase8a_exp050_model_result_review.py` at blob `54dd7a4c973a685efcc7a4b732c2be46e64e7aff`. The detailed review contract is `docs/superpowers/specs/2026-09-24-phase8a-exp050-model-result-review.md`.
 
 Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. DEC-145 changes none of DEC-144's false dispatch/result/protocol-result/model-fit flags. A later separate decision may independently verify zero prior manual-main runs, add a first-run guard, and authorize at most one outer historical attempt without dispatching it.
+
+## DEC-146 — Phase 8A EXP-050 single historical model-run authorization
+
+**Date:** 2026-09-24
+**Status:** AUTHORIZED SOURCE; NO EXP-050 RUN DISPATCHED BY THIS DECISION
+
+DEC-146 independently verifies zero prior manual-main `phase8a-exp050-temporal-jackknife-utility-model-training` runs after DEC-145 merged. The latest 100 repository Actions runs extend back to `2026-09-24T15:43:22Z`, before DEC-144 first put the workflow on `main` at `2026-09-24T18:13:58Z`; none match the exact workflow path with `workflow_dispatch` on `main`.
+
+DEC-146 binds DEC-144 merge `9f2986c783823cf7d9647ed4b0a50c66470bea21`, pre-authorization workflow blob `ec8ed4ab3f0b8a18ffc735af92172e059ed29955`, CLI blob `70c5e9b8d22888b9727e234fd80ea3e3ba4e5e09`, pre-authorization gate blob `4814f0db86bec943d7282ab13586559b1eb8caa7`, DEC-145 merge `b2907cced930afa4d877596a8268ec3bc49ceb9c`, and DEC-145 review blob `e93f7f26e6f0cf8541c9dffd0d359acf0a7ec64e`.
+
+The workflow is hardened with a first-run rejection guard before runtime installation or fitting. It validates the exact current run identity, lists exact manual-main EXP-050 workflow runs, excludes only the current `GITHUB_RUN_ID`, and fails if any prior matching run exists. The hardened workflow blob is `7a5875c69d8cdf33e9aaae58fc321dba0537ce0b`.
+
+The authorized execution gate is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_execution_gate.py` at blob `4b1e6723928f122fc2eaa3ba7564283088664296` and records `TEMPORAL_JACKKNIFE_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-146"`. Only the outer dispatch/result/protocol-result/model-fit flags are true. The underlying DEC-141 protocol, DEC-142 training core, and DEC-143 artifact-runner source-level result/fit locks remain false and are explicitly validated.
+
+The first manual-main EXP-050 attempt consumes the slot on success, failure, cancellation, or timeout. No rerun, automatic retry, or replacement run is authorized. Any terminal outcome must route through DEC-145.
+
+Focused workflow tests are `tests/test_phase8a_exp050_model_workflow.py` at blob `c5893e6a18fd9d0330001d4b35f5e34bbb8c33c1`. The detailed authorization record is `docs/superpowers/specs/2026-09-24-phase8a-exp050-single-model-run-authorization.md`.
+
+DEC-146 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. A later separate decision must freeze a clean-main one-way operator before any dispatch.

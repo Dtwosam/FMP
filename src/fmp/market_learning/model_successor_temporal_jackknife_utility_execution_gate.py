@@ -26,6 +26,7 @@ from .model_successor_temporal_jackknife_utility_training import (
 
 
 TEMPORAL_JACKKNIFE_UTILITY_MODEL_EXECUTION_GATE_DECISION = "DEC-144"
+TEMPORAL_JACKKNIFE_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-146"
 TEMPORAL_JACKKNIFE_UTILITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp050-temporal-jackknife-utility-model-training.yml"
 )
@@ -42,6 +43,25 @@ DEC142_MERGED_COMMIT = (
 DEC143_MERGED_COMMIT = (
     "f0f584f2bfa1d6f0858af46312e41ffde5fe7d71"
 )
+DEC144_MERGED_COMMIT = (
+    "9f2986c783823cf7d9647ed4b0a50c66470bea21"
+)
+DEC145_MERGED_COMMIT = (
+    "b2907cced930afa4d877596a8268ec3bc49ceb9c"
+)
+
+DEC144_WORKFLOW_BLOB_SHA = (
+    "ec8ed4ab3f0b8a18ffc735af92172e059ed29955"
+)
+DEC144_CLI_BLOB_SHA = (
+    "70c5e9b8d22888b9727e234fd80ea3e3ba4e5e09"
+)
+DEC144_GATE_BLOB_SHA = (
+    "4814f0db86bec943d7282ab13586559b1eb8caa7"
+)
+DEC145_REVIEW_BLOB_SHA = (
+    "e93f7f26e6f0cf8541c9dffd0d359acf0a7ec64e"
+)
 
 DEC143_RUNNER_BLOB_SHA = (
     "60076ccb45b3468bce68f88f667225e0b5662d92"
@@ -57,7 +77,7 @@ LEGACY_DATA_LOADER_BLOB_SHA = (
 )
 
 TEMPORAL_JACKKNIFE_UTILITY_WORKFLOW_BLOB_SHA = (
-    "ec8ed4ab3f0b8a18ffc735af92172e059ed29955"
+    "7a5875c69d8cdf33e9aaae58fc321dba0537ce0b"
 )
 TEMPORAL_JACKKNIFE_UTILITY_CLI_BLOB_SHA = (
     "70c5e9b8d22888b9727e234fd80ea3e3ba4e5e09"
@@ -84,10 +104,10 @@ MARKET_OUTCOMES_BLOB_SHA = (
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 TEMPORAL_JACKKNIFE_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN = True
-TEMPORAL_JACKKNIFE_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_TEMPORAL_JACKKNIFE_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-TEMPORAL_JACKKNIFE_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-TEMPORAL_JACKKNIFE_UTILITY_MODEL_FIT_AUTHORIZED = False
+TEMPORAL_JACKKNIFE_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_TEMPORAL_JACKKNIFE_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+TEMPORAL_JACKKNIFE_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+TEMPORAL_JACKKNIFE_UTILITY_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -240,6 +260,12 @@ def validate_temporal_jackknife_utility_model_workflow_sources(
             / "src/fmp/market_learning/model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_temporal_jackknife_utility_result_review.py",
+            DEC145_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -304,6 +330,15 @@ def validate_temporal_jackknife_utility_model_workflow_sources(
         "dec141_merged_commit": DEC141_MERGED_COMMIT,
         "dec142_merged_commit": DEC142_MERGED_COMMIT,
         "dec143_merged_commit": DEC143_MERGED_COMMIT,
+        "dec144_merged_commit": DEC144_MERGED_COMMIT,
+        "dec145_merged_commit": DEC145_MERGED_COMMIT,
+        "dec144_workflow_blob_sha": DEC144_WORKFLOW_BLOB_SHA,
+        "dec144_cli_blob_sha": DEC144_CLI_BLOB_SHA,
+        "dec144_gate_blob_sha": DEC144_GATE_BLOB_SHA,
+        "dec145_review_blob_sha": actual["terminal_review"],
+        "temporal_jackknife_utility_model_execution_authorization_decision": (
+            TEMPORAL_JACKKNIFE_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "temporal_jackknife_utility_runner_blob_sha": actual[
             "temporal_jackknife_runner"
         ],
@@ -355,12 +390,15 @@ def build_temporal_jackknife_utility_model_workflow_source_gate(
         **source,
         "stage": (
             "TEMPORAL_JACKKNIFE_UTILITY_MODEL_"
-            "RUN_WORKFLOW_SOURCE_FROZEN"
+            "RUN_DISPATCH_REQUIRED"
         ),
         "next_action": (
-            "A later separate decision may authorize at most a guarded "
-            "EXP-050 historical model-result run. DEC-144 does not "
-            "authorize or dispatch execution."
+            "DEC-146 authorizes at most one guarded historical EXP-050 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
+        ),
+        "temporal_jackknife_utility_model_execution_authorization_decision": (
+            TEMPORAL_JACKKNIFE_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
         ),
         "temporal_jackknife_utility_model_workflow_source_frozen": (
             TEMPORAL_JACKKNIFE_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN
@@ -461,6 +499,12 @@ __all__ = [
     "DEC142_MERGED_COMMIT",
     "DEC143_MERGED_COMMIT",
     "DEC143_RUNNER_BLOB_SHA",
+    "DEC144_CLI_BLOB_SHA",
+    "DEC144_GATE_BLOB_SHA",
+    "DEC144_MERGED_COMMIT",
+    "DEC144_WORKFLOW_BLOB_SHA",
+    "DEC145_MERGED_COMMIT",
+    "DEC145_REVIEW_BLOB_SHA",
     "DEMO_ORDER_AUTHORIZED",
     "FEATURE_SCHEMA_BLOB_SHA",
     "LEGACY_DATA_LOADER_BLOB_SHA",
@@ -473,6 +517,7 @@ __all__ = [
     "REAL_MONEY_AUTHORIZED",
     "SHADOW_AUTHORIZED",
     "TEMPORAL_JACKKNIFE_UTILITY_CLI_BLOB_SHA",
+    "TEMPORAL_JACKKNIFE_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "TEMPORAL_JACKKNIFE_UTILITY_MODEL_EXECUTION_GATE_DECISION",
     "TEMPORAL_JACKKNIFE_UTILITY_MODEL_FIT_AUTHORIZED",
     "TEMPORAL_JACKKNIFE_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED",
