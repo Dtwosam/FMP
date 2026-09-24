@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046 CLOSED/REVIEWED + EXP-047 DEC-118 ONE-RUN AUTHORIZATION + DEC-119 OPERATOR MERGED + DEC-120 OPERATOR METADATA REPAIR SOURCE FROZEN; NO EXP-047 RESULT
-**Next milestone:** Merge DEC-120's fail-closed EXP-047 operator metadata repair. The failed local `next` attempt dispatched nothing and GitHub still reports zero manual-main EXP-047 runs. After merge and local fast-forward to current `main`, rerun `python scripts/phase8a_exp047_operator.py next`. Only if it reports `DENSITY_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp047_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046 CLOSED/REVIEWED + EXP-047 DEC-118 ONE-RUN AUTHORIZATION + DEC-119 OPERATOR + DEC-120 METADATA REPAIR MERGED; NO EXP-047 RESULT
+**Next milestone:** DEC-120 is merged at `f8a2636b77f176118e54fd552dccf1dcc20fdeca`. The failed pre-repair local `next` attempt dispatched nothing and GitHub still reports zero manual-main EXP-047 runs. After local fast-forward to current `main`, rerun `python scripts/phase8a_exp047_operator.py next`. Only if it reports `DENSITY_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp047_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
