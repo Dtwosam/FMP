@@ -2301,3 +2301,24 @@ The authoritative bundle checks `AUTHORITATIVE_TEMPORAL_JACKKNIFE_UTILITY_MODEL_
 The artifact/evidence source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_artifacts.py` at Git blob `60076ccb45b3468bce68f88f667225e0b5662d92`. Focused tests are `tests/test_phase8a_exp050_temporal_jackknife_utility_artifacts.py` at blob `2247d07528cf20ed1d57f41305da83cbac648e7a`. The detailed contract is `docs/superpowers/specs/2026-09-24-phase8a-exp050-temporal-jackknife-utility-artifact-contract.md`.
 
 DEC-143 opens no workflow, dispatch, historical result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization. A later separate decision may freeze a manual-main workflow/CLI while keeping execution closed until terminal review and one-run authorization are separately predeclared.
+
+## DEC-144 — Phase 8A EXP-050 manual-main workflow source gate
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / EXECUTION AUTHORIZATION CLOSED
+
+DEC-144 freezes the input-free manual-main workflow, public CLI, Python 3.12.14 numerical runtime, and exact-source execution gate for `EXP-20260924-050`.
+
+The gate binds DEC-141 merge `4729da0e769f76f44b97ff6349ee25c5b7c0f5c7` and protocol blob `b41b817b03aa0cc03a9d893227caa399b46d3cf8`; DEC-142 merge `fa6fd14a880a84a44795efe4099679ed0f642497` and training-core blob `ec97a9941af052d6e223e4bafab9a9989ec57ff0`; DEC-143 merge `f0f584f2bfa1d6f0858af46312e41ffde5fe7d71` and artifact/evidence blob `60076ccb45b3468bce68f88f667225e0b5662d92`; and the accepted historical loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`.
+
+The frozen workflow is `.github/workflows/phase8a-exp050-temporal-jackknife-utility-model-training.yml` at blob `ec8ed4ab3f0b8a18ffc735af92172e059ed29955`. It is manual `workflow_dispatch` only, input-free, main-only, read-only for contents/actions, and contains no schedule or pull-request trigger. DEC-144 intentionally contains no first-run guard; that guard belongs to a later one-run authorization decision only after terminal review is frozen and zero prior manual-main EXP-050 runs are independently verified.
+
+The public CLI is `scripts/phase8a_exp050_model_run.py` at blob `70c5e9b8d22888b9727e234fd80ea3e3ba4e5e09`. It exposes only `status`, `require-execution`, `run-cell`, and `aggregate`; it contains no dispatch command and evaluates the execution requirement before readiness loading, artifact loading, fitting, or aggregation.
+
+The pinned runtime is `requirements/exp050-model-run.txt` at blob `d25ab16056b9f5df283147d67b8f401f60ae7520`, with Python 3.12.14 and the same pinned numerical packages as EXP-049. The exact accepted nine pair/timeframe source cells and 60m/240m horizons remain unchanged.
+
+The execution gate is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_execution_gate.py` at blob `4814f0db86bec943d7282ab13586559b1eb8caa7`. Focused tests are `tests/test_phase8a_exp050_model_workflow.py` at blob `cce991971cef68fdeeb14cb2c26ecf54ba35985f`.
+
+DEC-144 keeps run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization false. Therefore the workflow source is complete but `require-execution` fails closed at the dispatch-authorization check.
+
+Before any historical run authorization, a separate decision must predeclare the exact attempt-1 terminal review, required job/artifact inventory, complete-success and partial-failure evidence semantics, and no-rerun/replacement policy. DEC-144 dispatches nothing.
