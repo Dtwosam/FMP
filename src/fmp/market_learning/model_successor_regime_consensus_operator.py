@@ -310,7 +310,7 @@ def regime_consensus_operator_gate_metadata(
     gate: Mapping[str, object],
 ) -> dict[str, object]:
     decisions = {
-        "regime_consensus_model_execution_gate_decision": "DEC-116",
+        "regime_consensus_model_execution_gate_decision": "DEC-126",
         "regime_consensus_model_execution_authorization_decision": "DEC-128",
     }
     for field, expected in decisions.items():
