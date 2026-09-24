@@ -1744,3 +1744,20 @@ DEC-111 classifies the reviewed result as `STABILITY_MODEL_RESULT_REVIEWED_NO_ST
 
 The machine-checkable reviewed-result source is `src/fmp/market_learning/model_successor_stability_result_decision.py` at Git blob `eb8970b21a48bb52c1ba75af64680f945abcbaa5`. Any further model research requires a separately predeclared, explicitly post-result-informed successor experiment.
 
+## DEC-112 — Phase 8A model cross-run reproducibility audit
+
+**Date:** 2026-09-24
+**Status:** POST-RESULT DIAGNOSTIC; NO NEW MODEL EXECUTION AUTHORIZED
+
+DEC-112 compares the persisted EXP-045 and EXP-046 result artifacts before any further successor protocol is designed. The two runs used byte-identical pinned runtime requirements at Git blob `d25ab16056b9f5df283147d67b8f401f60ae7520`, and DEC-105 reused the exact DEC-096 successor-training blob `3f0bc1bfa9640d08175e72cdf131bb97c94d562c`.
+
+The HGB path is materially reproducible: all 18 model fingerprints match and all 54 thresholded candidate identity sets match across runs. Raw probability digests match only 4/18 cells, so DEC-112 distinguishes stable candidate decisions from bitwise floating-point equality.
+
+The logistic path is not reproducible at family availability. Five cells changed between `FITTED` and `FAILED_NON_CONVERGENCE`: EURUSD 15m/240m, EURUSD 5m/60m, EURUSD 5m/240m, GBPUSD 5m/240m, and USDJPY 15m/240m. Among ten cells fitted in both runs, only 4 model fingerprints and 4 probability digests match; 29/30 thresholded candidate identity sets match.
+
+Exactly one aggregate-gate outcome changed because of this variation: EURUSD 5m/60m logistic 0.6 was unavailable in EXP-045, but passed the aggregate gate and then failed the frozen stability screen in EXP-046. EXP-046 still had zero stability-pass variants and zero accepted model candidates, so the DEC-111 final result is unchanged.
+
+The machine-checkable source is `src/fmp/market_learning/model_successor_cross_run_reproducibility.py` at Git blob `cf4f6ee1a7d387c3a48269a9f6aea8212dd56b1b`.
+
+DEC-112 opens only successor-protocol source work. Logistic-family reuse for a new result-producing successor, execution of any numerical remedy, stability-screen relaxation, EXP-046 rerun/replacement, successor fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
+
