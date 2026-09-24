@@ -2454,3 +2454,22 @@ The protocol source is `src/fmp/market_learning/model_successor_temporal_calibra
 
 DEC-150 keeps model-protocol result production, model fit, historical result execution, workflow dispatch, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. A later separate decision may implement only the deterministic in-memory EXP-051 training/evaluation core against this exact protocol source.
 
+## DEC-151 — Phase 8A EXP-051 temporal-calibrated utility training core
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / NO AUTHORITATIVE EXP-051 FIT
+
+DEC-151 implements the deterministic in-memory EXP-051 training/evaluation core against the exact DEC-150 protocol. It binds DEC-150 merge `b80a1f688afe8f5056aa31c1a2ff5b4ebbc11833`, DEC-150 protocol blob `c39309c4115cae1ea058e56f30cae4af6407e36e`, and predecessor EXP-050 training-core blob `ec97a9941af052d6e223e4bafab9a9989ec57ff0`.
+
+The core preserves the exact EXP-050 three-view jackknife fit topology and six HGB utility regressors per cell. It reuses the predecessor fit and scoring helpers through the frozen training-core binding; no HGB structure, target, feature set, fit window, direction-eligibility rule, budget anchor, aggregate financial gate, temporal-stability gate, validation chronology, or holdout chronology is changed.
+
+After each view is fitted, DEC-151 scores the exact two-year fit regime excluded from that view separately for LONG and SHORT. Finite predictions are sorted into six immutable out-of-fit calibration-reference vectors per cell. Each reference records its excluded-regime identity, row count, prediction summary, row-bound prediction digest, and sorted-reference digest. Realized outcomes and all selection/validation/holdout rows remain outside calibration.
+
+Selection and forward scoring preserve EXP-050 unanimous positive raw-utility direction eligibility. For eligible rows, the core maps each view's agreed-direction raw utility to the right empirical CDF of the frozen view/target reference, takes the minimum percentile across views as robust calibrated utility, and retains the predecessor minimum raw utility as secondary score.
+
+For budgets 250/500/1000, rows rank by calibrated utility descending, raw robust utility descending, then row identity ascending. The budget-th row freezes a calibrated/raw cutoff pair. Candidate application, aggregate financial metrics, four-window temporal stability, validation, and retrospective holdout reuse that same pair unchanged. Exact calibrated/raw ties may exceed the nominal budget; budgets remain unavailable when fewer than the requested number of EXP-050-eligible rows exist.
+
+The training core is `src/fmp/market_learning/model_successor_temporal_calibrated_utility_training.py` at Git blob `959fbfd52f41c08de3c1a26769e0e7fd2545b92a`. Focused tests are `tests/test_phase8a_exp051_temporal_calibrated_utility_training.py` at blob `70d1e3ae39566fd7ee0ea53c030f0cc65f89b3ab`. The detailed spec is `docs/superpowers/specs/2026-09-24-phase8a-exp051-temporal-calibrated-utility-training-core.md` at blob `a353ae2c67666b0d492b2cfe35c1078e0e4561ef`.
+
+DEC-151 keeps authoritative EXP-051 artifact loading, model-result execution, workflow dispatch, authoritative model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. A later separate decision may freeze an artifact-backed EXP-051 runner/evidence contract against this exact training-core blob.
+
