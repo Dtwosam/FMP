@@ -244,13 +244,13 @@ def validate_regime_utility_model_workflow_sources(
         "cli": (
             root
             / "scripts/"
-            "phase8a_exp047_model_run.py",
+            "phase8a_exp049_model_run.py",
             REGIME_UTILITY_CLI_BLOB_SHA,
         ),
         "runtime_requirements": (
             root
             / "requirements/"
-            "exp047-model-run.txt",
+            "exp049-model-run.txt",
             REGIME_UTILITY_RUNTIME_REQUIREMENTS_BLOB_SHA,
         ),
         "pyproject": (
