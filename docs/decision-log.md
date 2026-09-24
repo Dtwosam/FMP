@@ -1954,3 +1954,22 @@ The protocol source is `src/fmp/market_learning/model_successor_regime_consensus
 
 DEC-123 authorizes no fit, historical result execution, workflow, dispatch, logistic reintroduction, stability relaxation, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision must implement the deterministic regime-consensus core before any result-producing execution can be considered.
 
+## DEC-124 — Phase 8A EXP-048 deterministic regime-consensus training core
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; NO EXP-048 HISTORICAL RESULT AUTHORIZED
+
+DEC-124 implements the deterministic in-memory training/evaluation core for the DEC-123 `EXP-20260924-048` HGB fit-regime consensus protocol.
+
+The core binds DEC-123 merge `39674f482e57922ac61fb0a6dff15a5ef621efd3`, DEC-123 protocol blob `39b6b3f5adc7f34ffd8cebcf881138d6ca3eab84`, base training-core blob `34b50a3f907d26b1c5ec50a0a0b444a3417d04f7`, and unchanged EXP-047 density-helper core blob `8ed51edc12c8d7d23cf9cc362e6b0ea7564d4945`. Source validation fails closed on byte drift.
+
+Each cell fits exactly three HGB models on the frozen 2015-2016, 2017-2018, and 2019-2020 regime windows. Every regime must contain all three target classes and each model fits its own preprocessing state. No full-fit fallback and no logistic fit are present.
+
+A row is consensus-eligible only when all three regime models have the same unique LONG or SHORT top class. Consensus confidence is the minimum probability assigned to that agreed class across the three models. The unchanged 250/500/1000 density anchors are derived from consensus confidence with row-id tie ordering, and cutoff ties may exceed the nominal budget.
+
+The unchanged aggregate gate, 250-candidate floor, four-window temporal-stability screen, validation gate, and retrospective-holdout gate remain mandatory. The exact selection-derived cutoff and the same three frozen regime models are reused forward without refit or cutoff recomputation.
+
+The implementation is `src/fmp/market_learning/model_successor_regime_consensus_training.py` at Git blob `d902f9601ef3b04e0deaead18951d43350cb09be`. Focused tests are frozen at blob `d2ce56fd55f3a2210642d568f8e3bc7a31a61271`.
+
+DEC-124 authorizes no authoritative model fit, historical result execution, workflow, dispatch, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision may freeze the artifact-backed EXP-048 runner/evidence contract.
+
