@@ -12,8 +12,15 @@ from fmp.market_learning.model_successor_regime_consensus_execution_gate import 
     DEC124_MERGED_COMMIT,
     DEC125_MERGED_COMMIT,
     DEC125_RUNNER_BLOB_SHA,
+    DEC126_CLI_BLOB_SHA,
+    DEC126_GATE_BLOB_SHA,
+    DEC126_MERGED_COMMIT,
+    DEC126_WORKFLOW_BLOB_SHA,
+    DEC127_MERGED_COMMIT,
+    DEC127_REVIEW_BLOB_SHA,
     PROMOTION_AUTHORIZED,
     REGIME_CONSENSUS_CLI_BLOB_SHA,
+    REGIME_CONSENSUS_MODEL_EXECUTION_AUTHORIZATION_DECISION,
     REGIME_CONSENSUS_MODEL_EXECUTION_GATE_DECISION,
     REGIME_CONSENSUS_MODEL_FIT_AUTHORIZED,
     REGIME_CONSENSUS_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -39,7 +46,7 @@ REQUIREMENTS = ROOT / "requirements/exp048-model-run.txt"
 
 
 class Exp048WorkflowSourceTests(unittest.TestCase):
-    def test_exact_sources_remain_non_executable(self) -> None:
+    def test_exact_sources_open_one_guarded_result_authorization(self) -> None:
         source = validate_regime_consensus_model_workflow_sources(
             repository_root=ROOT,
         )
@@ -64,6 +71,40 @@ class Exp048WorkflowSourceTests(unittest.TestCase):
         self.assertEqual(
             source["dec125_merged_commit"],
             DEC125_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            source["dec126_merged_commit"],
+            DEC126_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            source["dec127_merged_commit"],
+            DEC127_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            source["dec126_workflow_blob_sha"],
+            DEC126_WORKFLOW_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["dec126_cli_blob_sha"],
+            DEC126_CLI_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["dec126_gate_blob_sha"],
+            DEC126_GATE_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["dec127_review_blob_sha"],
+            DEC127_REVIEW_BLOB_SHA,
+        )
+        self.assertEqual(
+            source[
+                "regime_consensus_model_execution_authorization_decision"
+            ],
+            REGIME_CONSENSUS_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+        )
+        self.assertEqual(
+            REGIME_CONSENSUS_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+            "DEC-128",
         )
         self.assertEqual(
             source["regime_consensus_runner_blob_sha"],
@@ -99,27 +140,27 @@ class Exp048WorkflowSourceTests(unittest.TestCase):
         )
         self.assertEqual(
             gate["stage"],
-            "REGIME_CONSENSUS_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+            "REGIME_CONSENSUS_MODEL_RUN_DISPATCH_REQUIRED",
         )
         self.assertTrue(
             gate[
                 "regime_consensus_model_workflow_source_frozen"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "regime_consensus_model_run_dispatch_authorized"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "authoritative_regime_consensus_model_result_execution_authorized"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate["model_protocol_result_authorized"]
         )
-        self.assertFalse(gate["model_fit_authorized"])
+        self.assertTrue(gate["model_fit_authorized"])
         self.assertFalse(gate["promotion_authorized"])
         self.assertFalse(gate["shadow_authorized"])
         self.assertFalse(gate["demo_order_authorized"])
@@ -133,30 +174,46 @@ class Exp048WorkflowSourceTests(unittest.TestCase):
         self.assertTrue(
             REGIME_CONSENSUS_MODEL_WORKFLOW_SOURCE_FROZEN
         )
-        self.assertFalse(
+        self.assertTrue(
             REGIME_CONSENSUS_MODEL_RUN_DISPATCH_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             AUTHORITATIVE_REGIME_CONSENSUS_MODEL_RESULT_EXECUTION_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             REGIME_CONSENSUS_MODEL_PROTOCOL_RESULT_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             REGIME_CONSENSUS_MODEL_FIT_AUTHORIZED
         )
         self.assertFalse(PROMOTION_AUTHORIZED)
         self.assertFalse(TRADING_AUTHORIZED)
 
-    def test_execution_requirement_fails_closed(self) -> None:
-        with self.assertRaisesRegex(
-            PermissionError,
-            "model-run dispatch is not authorized",
-        ):
-            require_authoritative_regime_consensus_model_execution(
-                repository_root=ROOT,
-                code_commit="a" * 40,
-            )
+    def test_execution_requirement_accepts_exact_authorized_sources(
+        self,
+    ) -> None:
+        result = require_authoritative_regime_consensus_model_execution(
+            repository_root=ROOT,
+            code_commit="a" * 40,
+        )
+        self.assertEqual(result["code_commit"], "a" * 40)
+        self.assertTrue(
+            result[
+                "regime_consensus_model_run_dispatch_authorized"
+            ]
+        )
+        self.assertTrue(
+            result[
+                "authoritative_regime_consensus_model_result_execution_authorized"
+            ]
+        )
+        self.assertTrue(
+            result["model_protocol_result_authorized"]
+        )
+        self.assertTrue(result["model_fit_authorized"])
+        self.assertFalse(result["promotion_authorized"])
+        self.assertFalse(result["shadow_authorized"])
+        self.assertFalse(result["trading_authorized"])
 
     def test_workflow_is_manual_main_only_and_input_free(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -179,23 +236,44 @@ class Exp048WorkflowSourceTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
 
-    def test_workflow_has_no_run_authorization_guard_yet(self) -> None:
+    def test_workflow_enforces_first_manual_main_run_only(
+        self,
+    ) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn(
-            "Reject any prior manual main EXP-048 model run",
-            text,
+        guard = text.index(
+            "Reject any prior manual main EXP-048 model run"
         )
-        self.assertNotIn(
-            "prior manual-main EXP-048 model run exists",
-            text,
+        authorization = text.index(
+            "Require separately authorized EXP-048 result execution"
         )
-        self.assertNotIn(
+        self.assertLess(guard, authorization)
+        self.assertIn(
             "actions/workflows/"
-            "phase8a-exp048-regime-consensus-model-training.yml/runs",
+            "phase8a-exp048-regime-consensus-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
             text,
         )
         self.assertIn(
-            "Require separately authorized EXP-048 result execution",
+            'current["id"] == int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            'current["name"] == '
+            '"phase8a-exp048-regime-consensus-model-training"',
+            text,
+        )
+        self.assertIn(
+            'current["path"] == '
+            '".github/workflows/'
+            'phase8a-exp048-regime-consensus-model-training.yml"',
+            text,
+        )
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            "prior manual-main EXP-048 model run exists",
             text,
         )
 
