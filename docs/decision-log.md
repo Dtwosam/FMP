@@ -2007,3 +2007,18 @@ DEC-126 is intentionally pre-authorization: model-run dispatch, authoritative re
 
 Promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization remain false.
 
+## DEC-127 — Phase 8A EXP-048 predeclared terminal-result review
+
+**Date:** 2026-09-24
+**Status:** APPROVED BEFORE ANY EXP-048 HISTORICAL MODEL RESULT OR RUN AUTHORIZATION
+
+DEC-127 freezes the terminal review contract before any EXP-048 historical result and before any run authorization.
+
+Only attempt-1 manual-main `phase8a-exp048-regime-consensus-model-training` runs are reviewable. Exactly one authorization-preflight job, nine matrix jobs, one aggregate job, and artifacts restricted to the exact nine pair/timeframe names plus the exact aggregate-result name tied to the workflow head SHA are accepted.
+
+A successful run must have all 11 jobs succeed, all nine cell artifacts, the aggregate artifact, and successful DEC-125 aggregate-evidence revalidation against the execution commit. It stops at `REGIME_CONSENSUS_MODEL_RESULT_REVIEW_REQUIRED`.
+
+A failed, cancelled, or timed-out first run may preserve a valid subset of cell artifacts but cannot claim aggregate result evidence. It stops at `REGIME_CONSENSUS_MODEL_RUN_FAILURE_REVIEW_REQUIRED`.
+
+The implementation is frozen at Git blob `0cd943cb4bb8780a6adfab02b0743c8415dcd5fe`. Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization remain false. DEC-127 changes no DEC-126 execution authorization.
+
