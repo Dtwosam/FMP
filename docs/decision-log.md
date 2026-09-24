@@ -2178,3 +2178,18 @@ The review binds DEC-135 merge `0fe11d26fd74355e39f7379f3eeba869d848271c`, workf
 The implementation is `src/fmp/market_learning/model_successor_regime_utility_result_review.py` at Git blob `1c48405fa8b754ee8d6756dac701332ac72816bd`. Focused tests are frozen at blob `7d072b0ced240afe33135e6fde689bae511fbc54`.
 
 Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. DEC-136 changes no DEC-135 execution authorization. A later separate decision may verify zero prior runs, add a first-run guard, and authorize at most one outer historical attempt without dispatching it.
+
+## DEC-137 — Phase 8A EXP-049 single historical model-run authorization
+
+**Date:** 2026-09-24
+**Status:** AUTHORIZED SOURCE; NO EXP-049 RUN DISPATCHED BY THIS DECISION
+
+DEC-137 independently verifies zero prior manual-main `phase8a-exp049-regime-utility-model-training` runs after DEC-136 merged. The latest 30 repository Actions runs extended back to 15:41:59Z, before the workflow first entered `main` with DEC-135 at 16:06:45Z, and none matched the exact EXP-049 workflow name/path.
+
+It binds DEC-135 merge `0fe11d26fd74355e39f7379f3eeba869d848271c`, pre-authorization workflow blob `955152835ec1cedf39d6d31e54d6028a7953fab5`, CLI blob `cba5ece4eda8e02a7ca07a780d8caa69a239e094`, pre-authorization gate blob `9d2ffc670a1572febb0e4a29bfda426f8252e5ee`, DEC-136 merge `3f7f6e00ecd8580266d5728a516bff3b700ade0a`, and DEC-136 review blob `1c48405fa8b754ee8d6756dac701332ac72816bd`.
+
+The workflow is hardened with a first-run rejection guard before runtime installation or model fitting. It verifies the current run's exact workflow name/path, `workflow_dispatch` event, and `main` branch, lists exact manual-main EXP-049 runs, excludes only the current `GITHUB_RUN_ID`, and fails if any prior run exists. The hardened workflow blob is `2d012acdea55f363938156844ae7a74899a2bd40`.
+
+The authorized outer execution gate is `src/fmp/market_learning/model_successor_regime_utility_execution_gate.py` at Git blob `dda941efb7542dbc4fcaa890154df4f39f006f07` and records `REGIME_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-137"`. Only the outer dispatch/result/protocol-result/model-fit flags are true; underlying DEC-132/DEC-133/DEC-134 source-level execution and fit locks remain false and are validated as frozen dependencies.
+
+The first manual-main EXP-049 attempt consumes the slot on success, failure, cancellation, or timeout. No rerun/replacement is authorized. DEC-137 itself dispatches nothing. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. A later separate decision must freeze a clean-main one-way operator before any dispatch.

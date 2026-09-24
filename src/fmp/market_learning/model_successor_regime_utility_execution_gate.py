@@ -26,6 +26,7 @@ from .model_successor_regime_utility_training import (
 
 
 REGIME_UTILITY_MODEL_EXECUTION_GATE_DECISION = "DEC-135"
+REGIME_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-137"
 REGIME_UTILITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp049-regime-utility-model-training.yml"
 )
@@ -42,6 +43,25 @@ DEC133_MERGED_COMMIT = (
 DEC134_MERGED_COMMIT = (
     "1576336d8faaf146aaa11d4213b21e69134ceaa7"
 )
+DEC135_MERGED_COMMIT = (
+    "0fe11d26fd74355e39f7379f3eeba869d848271c"
+)
+DEC136_MERGED_COMMIT = (
+    "3f7f6e00ecd8580266d5728a516bff3b700ade0a"
+)
+
+DEC135_WORKFLOW_BLOB_SHA = (
+    "955152835ec1cedf39d6d31e54d6028a7953fab5"
+)
+DEC135_CLI_BLOB_SHA = (
+    "cba5ece4eda8e02a7ca07a780d8caa69a239e094"
+)
+DEC135_GATE_BLOB_SHA = (
+    "9d2ffc670a1572febb0e4a29bfda426f8252e5ee"
+)
+DEC136_REVIEW_BLOB_SHA = (
+    "1c48405fa8b754ee8d6756dac701332ac72816bd"
+)
 
 DEC134_RUNNER_BLOB_SHA = (
     "6b3ec2fc8c6a8e6089d71e21d3243cea50a6fa13"
@@ -57,7 +77,7 @@ LEGACY_DATA_LOADER_BLOB_SHA = (
 )
 
 REGIME_UTILITY_WORKFLOW_BLOB_SHA = (
-    "955152835ec1cedf39d6d31e54d6028a7953fab5"
+    "2d012acdea55f363938156844ae7a74899a2bd40"
 )
 REGIME_UTILITY_CLI_BLOB_SHA = (
     "cba5ece4eda8e02a7ca07a780d8caa69a239e094"
@@ -84,10 +104,10 @@ MARKET_OUTCOMES_BLOB_SHA = (
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 REGIME_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN = True
-REGIME_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_REGIME_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-REGIME_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-REGIME_UTILITY_MODEL_FIT_AUTHORIZED = False
+REGIME_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_REGIME_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+REGIME_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+REGIME_UTILITY_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -235,6 +255,12 @@ def validate_regime_utility_model_workflow_sources(
             "model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_regime_utility_result_review.py",
+            DEC136_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -301,6 +327,15 @@ def validate_regime_utility_model_workflow_sources(
         "dec132_merged_commit": DEC132_MERGED_COMMIT,
         "dec133_merged_commit": DEC133_MERGED_COMMIT,
         "dec134_merged_commit": DEC134_MERGED_COMMIT,
+        "dec135_merged_commit": DEC135_MERGED_COMMIT,
+        "dec136_merged_commit": DEC136_MERGED_COMMIT,
+        "dec135_workflow_blob_sha": DEC135_WORKFLOW_BLOB_SHA,
+        "dec135_cli_blob_sha": DEC135_CLI_BLOB_SHA,
+        "dec135_gate_blob_sha": DEC135_GATE_BLOB_SHA,
+        "dec136_review_blob_sha": actual["terminal_review"],
+        "regime_utility_model_execution_authorization_decision": (
+            REGIME_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "regime_utility_runner_blob_sha": actual[
             "regime_utility_runner"
         ],
@@ -348,11 +383,14 @@ def build_regime_utility_model_workflow_source_gate(
     )
     return {
         **source,
-        "stage": "REGIME_UTILITY_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+        "stage": "REGIME_UTILITY_MODEL_RUN_DISPATCH_REQUIRED",
         "next_action": (
-            "A later separate decision may authorize at most a "
-            "guarded EXP-049 historical model-result run. "
-            "DEC-135 does not authorize or dispatch execution."
+            "DEC-137 authorizes at most one guarded historical EXP-049 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
+        ),
+        "regime_utility_model_execution_authorization_decision": (
+            REGIME_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
         ),
         "regime_utility_model_workflow_source_frozen": (
             REGIME_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN
@@ -445,8 +483,15 @@ __all__ = [
     "DEC133_MERGED_COMMIT",
     "DEC134_MERGED_COMMIT",
     "DEC134_RUNNER_BLOB_SHA",
+    "DEC135_CLI_BLOB_SHA",
+    "DEC135_GATE_BLOB_SHA",
+    "DEC135_MERGED_COMMIT",
+    "DEC135_WORKFLOW_BLOB_SHA",
+    "DEC136_MERGED_COMMIT",
+    "DEC136_REVIEW_BLOB_SHA",
     "DEMO_ORDER_AUTHORIZED",
     "REGIME_UTILITY_CLI_BLOB_SHA",
+    "REGIME_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "REGIME_UTILITY_MODEL_EXECUTION_GATE_DECISION",
     "REGIME_UTILITY_MODEL_FIT_AUTHORIZED",
     "REGIME_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED",
