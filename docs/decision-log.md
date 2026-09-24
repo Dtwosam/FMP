@@ -2225,3 +2225,22 @@ DEC-134 evidence revalidation succeeds. The canonical evidence fingerprint is `2
 The result-decision source is `src/fmp/market_learning/model_successor_regime_utility_result_decision.py` at Git blob `dce13838f32fbb8aa0e403c550b669f778dd0742`; focused tests are `tests/test_phase8a_exp049_model_result_decision.py` at blob `f47c22ba6199ff2a7b7be11dc4ebdacca9bc3652`; the reviewed-result record is `docs/superpowers/specs/2026-09-24-phase8a-exp049-reviewed-model-result.md` at blob `c744f3ad11286220e9574553aa81e54373574cb3`.
 
 The DEC-137 one-run slot is consumed. Model-run dispatch, replacement-run authorization, authoritative result execution, protocol-result production, model fitting, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization are all closed. No second EXP-049 run is authorized. Any post-result diagnostic or successor protocol requires a later separate decision and may not alter this reviewed evidence.
+
+## DEC-140 — Phase 8A EXP-049 post-result regime-utility diagnostic
+
+**Date:** 2026-09-24
+**Status:** POST-RESULT DIAGNOSTIC; SUCCESSOR SOURCE WORK ONLY
+
+DEC-140 freezes the post-result diagnostic over the immutable DEC-139 / EXP-049 evidence before any successor protocol is written. It performs no new model fit, changes no reviewed gate, and authorizes no historical result execution.
+
+The source binding is DEC-139, workflow run `36029925264`, execution commit `eeb735bca7d38c3246f22a9606dfafe9c3df8279`, evidence fingerprint `29ecbb5bf3ce00f35c825e977d9b3fff1777e165ce9bef311fefcb7bfbdb091e`, DEC-139 merge `3535e47d2224802eadf154330ef57519c8ea674c`, and reviewed-result source blob `dce13838f32fbb8aa0e403c550b669f778dd0742`.
+
+Of the 54 predeclared budget variants, 31 are unavailable because the frozen positive regime-utility consensus produces fewer utility-eligible rows than the requested budget. Twenty-three variants are available; eight pass the unchanged aggregate selection gate and 15 reject there. Thirteen of 18 cells have at least one unavailable budget and seven cells have all three budgets unavailable.
+
+All eight aggregate passes occur at the 240-minute horizon across four cells: EURUSD 1h, GBPUSD 5m, USDJPY 15m, and USDJPY 5m. All eight fail the frozen 10% candidate-share requirement in both 2021 half-year windows, and all eight also fail at least one per-window financial-sign requirement. Six fail financial signs in 2022 H2. Two have zero candidates in at least one 2021 half, and USDJPY 5m / 240m / budget 250 has zero candidates in both 2021 halves.
+
+DEC-140 records the descriptive diagnostic classification `UTILITY_COVERAGE_AND_DUAL_TEMPORAL_STABILITY_LIMITED`. This is not a causal market claim. It records that positive-utility coverage limits many budget variants and that every aggregate-financial pass still fails both share and financial temporal stability.
+
+The diagnostic source is `src/fmp/market_learning/model_successor_regime_utility_post_result_diagnostics.py` at Git blob `e286be2574d4cee60322a4b65213af76ab34b381`. Focused tests are `tests/test_phase8a_exp049_post_result_diagnostics.py` at blob `6fa290bacab4363ab823771f6ca04aa19f8095be`. The diagnostic spec is `docs/superpowers/specs/2026-09-24-phase8a-exp049-post-result-diagnostics.md` at blob `ea4a9e3a9ef962aecb0d6e88857dc5b8e65527ff`.
+
+DEC-140 does not authorize lowering the positive-utility rule, adding smaller budget anchors as a result-producing rescue, relaxing candidate-share or financial stability, removing the 2021 windows, rerunning or replacing EXP-049, successor fitting/result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. It opens only separately frozen successor-protocol source work.
