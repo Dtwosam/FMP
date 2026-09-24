@@ -2473,3 +2473,26 @@ The training core is `src/fmp/market_learning/model_successor_temporal_calibrate
 
 DEC-151 keeps authoritative EXP-051 artifact loading, model-result execution, workflow dispatch, authoritative model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. A later separate decision may freeze an artifact-backed EXP-051 runner/evidence contract against this exact training-core blob.
 
+## DEC-152 — Phase 8A EXP-051 temporal-calibrated utility artifact-backed result-evidence contract
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-152 freezes the artifact-backed runner and aggregate evidence contract for `EXP-20260924-051`. It binds DEC-150 merge `b80a1f688afe8f5056aa31c1a2ff5b4ebbc11833` and protocol blob `c39309c4115cae1ea058e56f30cae4af6407e36e`; DEC-151 merge `68028ef37b72e3f0695b475928434ede40ad7690` and training-core blob `959fbfd52f41c08de3c1a26769e0e7fd2545b92a`; predecessor EXP-050 training-core blob `ec97a9941af052d6e223e4bafab9a9989ec57ff0`; accepted historical loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`; and generic regime-utility artifact-helper blob `6b3ec2fc8c6a8e6089d71e21d3243cea50a6fa13`.
+
+The contract requires exactly the frozen 18 model cells, six HGB regressors per cell, and six excluded-regime calibration references per cell. Across a complete aggregate result it therefore independently verifies 108 regressors and 108 calibration references, in addition to exact cell identity, accepted data-manifest identity, split row counts, selection/validation/holdout chronology, and canonical cell/result fingerprints.
+
+Each calibration reference must bind the exact jackknife view and excluded regime, contain both LONG and SHORT target records, carry positive row counts, finite and ordered prediction summaries, and expose both the row-bound prediction digest and sorted-reference digest. Full-fit fallback, view-weight search, view fallback, selection-window calibration, HGB classification, and logistic fallback remain explicitly forbidden or excluded.
+
+Selection and forward consensus evidence now validates both positive raw robust-utility bounds and calibrated robust-utility bounds inside [0,1], complete three-view/two-target prediction digests, and the calibrated-consensus fingerprint. Available budget variants must carry a finite calibrated cutoff in [0,1], a positive finite raw cutoff, exact 0.5-pip realized financial evidence, and the unchanged temporal-stability screen. Budget-unavailable variants must keep both cutoffs null.
+
+The no-challenger state is `NO_TEMPORAL_CALIBRATED_UTILITY_STABLE_MODEL_CHALLENGER`. A selected variant must uniquely match one stable persisted variant by HGB family, budget anchor, calibrated cutoff, and raw cutoff. Validation and retrospective holdout preserve the frozen status chain and exact pair cutoff without recalibration.
+
+The aggregate evidence contract reuses the accepted authoritative feature, outcome, and readiness identities, validates exact all-cell completeness, recomputes the aggregate summary from validated cells, and requires exactly 108 verified regressors and 108 verified calibration references. The aggregate fingerprint is recomputed from canonical JSON.
+
+The artifact/evidence source is `src/fmp/market_learning/model_successor_temporal_calibrated_utility_artifacts.py` at Git blob `3b25ad8dee80ad2d68a421b01b3e7789b1de9f1a`. Focused tests are `tests/test_phase8a_exp051_temporal_calibrated_utility_artifacts.py` at blob `1c0bec0b6f337266d97fc3b79efa1afdab60e8b1`. The detailed contract is `docs/superpowers/specs/2026-09-24-phase8a-exp051-temporal-calibrated-utility-artifact-contract.md` at blob `42b68626a5a91464cd8a225a3157d00fddc7a694`.
+
+The authoritative bundle checks `AUTHORITATIVE_TEMPORAL_CALIBRATED_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED` before source validation, readiness validation, historical artifact loading, fitting, or result compilation. DEC-152 keeps that flag false and keeps authoritative model fit false.
+
+DEC-152 opens no workflow, dispatch, historical result execution, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading authorization. A later separate decision may freeze a manual-main workflow, public CLI, pinned numerical runtime, and exact-source execution gate while keeping execution authorization closed.
+
