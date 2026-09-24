@@ -11,6 +11,11 @@ from fmp.market_learning.model_successor_density_protocol import (
     DENSITY_PROTOCOL_DECISION,
     DENSITY_SUCCESSOR_EXPERIMENT_ID,
     EXCLUDED_MODEL_FAMILIES,
+    PREDECESSOR_HGB_AGGREGATE_GATE_PASS_COUNT,
+    PREDECESSOR_HGB_COUNT_GATE_PASS_COUNT,
+    PREDECESSOR_HGB_POSITIVE_BUT_LOW_COUNT,
+    PREDECESSOR_HGB_POSITIVE_FINANCIAL_SIGN_COUNT,
+    PREDECESSOR_HGB_VARIANT_COUNT,
     density_protocol_fingerprint,
     density_protocol_payload,
     validate_density_predecessor_identity,
@@ -77,6 +82,44 @@ class Exp047DensityProtocolTests(unittest.TestCase):
                     authorization[field],
                     False,
                 )
+
+    def test_predecessor_hgb_density_diagnostic_is_bound(
+        self,
+    ) -> None:
+        payload = density_protocol_payload()
+        predecessor = payload["predecessor"]
+        assert isinstance(predecessor, dict)
+        diagnostic = predecessor["hgb_density_diagnostic"]
+        assert isinstance(diagnostic, dict)
+
+        self.assertEqual(
+            PREDECESSOR_HGB_VARIANT_COUNT,
+            54,
+        )
+        self.assertEqual(
+            PREDECESSOR_HGB_COUNT_GATE_PASS_COUNT,
+            23,
+        )
+        self.assertEqual(
+            PREDECESSOR_HGB_POSITIVE_FINANCIAL_SIGN_COUNT,
+            13,
+        )
+        self.assertEqual(
+            PREDECESSOR_HGB_AGGREGATE_GATE_PASS_COUNT,
+            1,
+        )
+        self.assertEqual(
+            PREDECESSOR_HGB_POSITIVE_BUT_LOW_COUNT,
+            12,
+        )
+        self.assertEqual(
+            diagnostic["evaluated_variant_count"],
+            54,
+        )
+        self.assertEqual(
+            diagnostic["positive_but_low_count_count"],
+            12,
+        )
 
     def test_logistic_is_excluded_and_hgb_is_unchanged(
         self,
