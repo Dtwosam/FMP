@@ -18,9 +18,9 @@ DEC-147 itself does not execute the dispatch command.
 The operator binds:
 
 - DEC-146 merge: `dd40df2522cf3ae9cfa5802d3d2a95a995570981`;
-- execution-gate decision: `DEC-135`;
+- execution-gate decision: `DEC-144`;
 - execution-authorization decision: `DEC-146`;
-- merged DEC-132 through DEC-145 identities returned by the exact source gate;
+- merged DEC-141 through DEC-145 identities returned by the exact source gate;
 - hardened EXP-050 workflow and CLI source identities;
 - DEC-145 terminal-review identity.
 
