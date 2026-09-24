@@ -6,15 +6,21 @@ import unittest
 from fmp.market_learning.model_successor_temporal_calibrated_utility_execution_gate import (
     AUTHORIZED_PYTHON_VERSION,
     AUTHORITATIVE_TEMPORAL_CALIBRATED_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED,
-    BROKER_MUTATION_AUTHORIZED,
     DEC150_MERGED_COMMIT,
     DEC150_PROTOCOL_BLOB_SHA,
     DEC151_CORE_BLOB_SHA,
     DEC151_MERGED_COMMIT,
     DEC152_MERGED_COMMIT,
     DEC152_RUNNER_BLOB_SHA,
+    DEC153_CLI_BLOB_SHA,
+    DEC153_GATE_BLOB_SHA,
+    DEC153_MERGED_COMMIT,
+    DEC153_WORKFLOW_BLOB_SHA,
+    DEC154_MERGED_COMMIT,
+    DEC154_REVIEW_BLOB_SHA,
     PROMOTION_AUTHORIZED,
     TEMPORAL_CALIBRATED_UTILITY_CLI_BLOB_SHA,
+    TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
     TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_GATE_DECISION,
     TEMPORAL_CALIBRATED_UTILITY_MODEL_FIT_AUTHORIZED,
     TEMPORAL_CALIBRATED_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -42,7 +48,7 @@ REQUIREMENTS = ROOT / "requirements/exp051-model-run.txt"
 class Exp051TemporalCalibratedUtilityWorkflowTests(
     unittest.TestCase
 ):
-    def test_exact_source_chain_and_closed_authorization(
+    def test_exact_sources_open_one_guarded_result_authorization(
         self,
     ) -> None:
         source = (
@@ -61,6 +67,17 @@ class Exp051TemporalCalibratedUtilityWorkflowTests(
             "DEC-153",
         )
         self.assertEqual(
+            source[
+                "temporal_calibrated_utility_model_execution_authorization_decision"
+            ],
+            TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+        )
+        self.assertEqual(
+            TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+            "DEC-155",
+        )
+
+        self.assertEqual(
             source["dec150_merged_commit"],
             DEC150_MERGED_COMMIT,
         )
@@ -73,9 +90,55 @@ class Exp051TemporalCalibratedUtilityWorkflowTests(
             DEC152_MERGED_COMMIT,
         )
         self.assertEqual(
-            DEC152_MERGED_COMMIT,
-            "9f8fc93096fb29579924932c5c3b526598afaf28",
+            source["dec153_merged_commit"],
+            DEC153_MERGED_COMMIT,
         )
+        self.assertEqual(
+            DEC153_MERGED_COMMIT,
+            "b0fb55aca2d818e7306a15b200b1e10fcc151ad2",
+        )
+        self.assertEqual(
+            source["dec154_merged_commit"],
+            DEC154_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            DEC154_MERGED_COMMIT,
+            "fce3859d8eaf9b779c539f3c49b464b4ee72c467",
+        )
+
+        self.assertEqual(
+            source["dec153_workflow_blob_sha"],
+            DEC153_WORKFLOW_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC153_WORKFLOW_BLOB_SHA,
+            "4ab7480e31e91cbfe39eb5e289eccadde428d1a4",
+        )
+        self.assertEqual(
+            source["dec153_cli_blob_sha"],
+            DEC153_CLI_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC153_CLI_BLOB_SHA,
+            "c88b05a14bc961391ff59e29f742c1dac27272b6",
+        )
+        self.assertEqual(
+            source["dec153_gate_blob_sha"],
+            DEC153_GATE_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC153_GATE_BLOB_SHA,
+            "37a0b7af464c464beff0976addc1464f68e916cc",
+        )
+        self.assertEqual(
+            source["dec154_review_blob_sha"],
+            DEC154_REVIEW_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC154_REVIEW_BLOB_SHA,
+            "bd46dfd1cb8674ab8088d858b378ca37c5d75687",
+        )
+
         self.assertEqual(
             source["temporal_calibrated_utility_runner_blob_sha"],
             DEC152_RUNNER_BLOB_SHA,
@@ -93,6 +156,10 @@ class Exp051TemporalCalibratedUtilityWorkflowTests(
             TEMPORAL_CALIBRATED_UTILITY_WORKFLOW_BLOB_SHA,
         )
         self.assertEqual(
+            TEMPORAL_CALIBRATED_UTILITY_WORKFLOW_BLOB_SHA,
+            "8c0f77a2585715bdc758e6a158c0c5db6cc4e8c9",
+        )
+        self.assertEqual(
             source["temporal_calibrated_utility_cli_blob_sha"],
             TEMPORAL_CALIBRATED_UTILITY_CLI_BLOB_SHA,
         )
@@ -105,64 +172,87 @@ class Exp051TemporalCalibratedUtilityWorkflowTests(
             AUTHORIZED_PYTHON_VERSION,
         )
 
-        gate = build_temporal_calibrated_utility_model_workflow_source_gate(
-            repository_root=ROOT,
+        gate = (
+            build_temporal_calibrated_utility_model_workflow_source_gate(
+                repository_root=ROOT,
+            )
         )
         self.assertEqual(
             gate["stage"],
-            "TEMPORAL_CALIBRATED_UTILITY_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+            "TEMPORAL_CALIBRATED_UTILITY_MODEL_RUN_DISPATCH_REQUIRED",
         )
         self.assertTrue(
             gate[
                 "temporal_calibrated_utility_model_workflow_source_frozen"
             ]
         )
-        for field in (
-            "temporal_calibrated_utility_model_run_dispatch_authorized",
-            "authoritative_temporal_calibrated_utility_model_result_execution_authorized",
-            "model_protocol_result_authorized",
-            "model_fit_authorized",
-            "promotion_authorized",
-            "shadow_authorized",
-            "demo_order_authorized",
-            "broker_mutation_authorized",
-            "live_order_authorized",
-            "real_money_authorized",
-            "trading_authorized",
-        ):
-            with self.subTest(field=field):
-                self.assertIs(gate[field], False)
+        self.assertTrue(
+            gate[
+                "temporal_calibrated_utility_model_run_dispatch_authorized"
+            ]
+        )
+        self.assertTrue(
+            gate[
+                "authoritative_temporal_calibrated_utility_model_result_execution_authorized"
+            ]
+        )
+        self.assertTrue(
+            gate["model_protocol_result_authorized"]
+        )
+        self.assertTrue(gate["model_fit_authorized"])
+        self.assertFalse(gate["promotion_authorized"])
+        self.assertFalse(gate["shadow_authorized"])
+        self.assertFalse(gate["demo_order_authorized"])
+        self.assertFalse(gate["broker_mutation_authorized"])
+        self.assertFalse(gate["live_order_authorized"])
+        self.assertFalse(gate["real_money_authorized"])
+        self.assertFalse(gate["trading_authorized"])
 
         self.assertTrue(
             TEMPORAL_CALIBRATED_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN
         )
-        self.assertFalse(
+        self.assertTrue(
             TEMPORAL_CALIBRATED_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             AUTHORITATIVE_TEMPORAL_CALIBRATED_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             TEMPORAL_CALIBRATED_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             TEMPORAL_CALIBRATED_UTILITY_MODEL_FIT_AUTHORIZED
         )
         self.assertFalse(PROMOTION_AUTHORIZED)
-        self.assertFalse(BROKER_MUTATION_AUTHORIZED)
         self.assertFalse(TRADING_AUTHORIZED)
 
-    def test_execution_requirement_fails_at_dispatch_authorization(
+    def test_execution_requirement_accepts_exact_authorized_sources(
         self,
     ) -> None:
-        with self.assertRaisesRegex(
-            PermissionError,
-            "EXP-051 model-run dispatch is not authorized",
-        ):
+        result = (
             require_authoritative_temporal_calibrated_utility_model_execution(
                 repository_root=ROOT,
                 code_commit="a" * 40,
             )
+        )
+        self.assertEqual(result["code_commit"], "a" * 40)
+        self.assertTrue(
+            result[
+                "temporal_calibrated_utility_model_run_dispatch_authorized"
+            ]
+        )
+        self.assertTrue(
+            result[
+                "authoritative_temporal_calibrated_utility_model_result_execution_authorized"
+            ]
+        )
+        self.assertTrue(
+            result["model_protocol_result_authorized"]
+        )
+        self.assertTrue(result["model_fit_authorized"])
+        self.assertFalse(result["promotion_authorized"])
+        self.assertFalse(result["shadow_authorized"])
+        self.assertFalse(result["trading_authorized"])
 
     def test_workflow_is_manual_main_only_and_input_free(
         self,
@@ -187,19 +277,44 @@ class Exp051TemporalCalibratedUtilityWorkflowTests(
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
 
-    def test_workflow_has_no_first_run_guard_yet(self) -> None:
+    def test_workflow_enforces_first_manual_main_run_only(
+        self,
+    ) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn(
-            "Reject any prior manual main EXP-051 model run",
-            text,
+        guard = text.index(
+            "Reject any prior manual main EXP-051 model run"
         )
-        self.assertNotIn(
-            "prior manual-main EXP-051 model run exists",
-            text,
+        authorization = text.index(
+            "Require separately authorized EXP-051 result execution"
         )
-        self.assertNotIn(
+        self.assertLess(guard, authorization)
+        self.assertIn(
             "actions/workflows/"
-            "phase8a-exp051-temporal-calibrated-utility-model-training.yml/runs",
+            "phase8a-exp051-temporal-calibrated-utility-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
+            text,
+        )
+        self.assertIn(
+            'current["id"] == int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            'current["name"] == '
+            '"phase8a-exp051-temporal-calibrated-utility-model-training"',
+            text,
+        )
+        self.assertIn(
+            'current["path"] == '
+            '".github/workflows/'
+            'phase8a-exp051-temporal-calibrated-utility-model-training.yml"',
+            text,
+        )
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            "prior manual-main EXP-051 model run exists",
             text,
         )
 
@@ -235,7 +350,9 @@ class Exp051TemporalCalibratedUtilityWorkflowTests(
             text,
         )
         self.assertEqual(
-            text.count("scripts/phase8a_exp051_model_run.py"),
+            text.count(
+                "scripts/phase8a_exp051_model_run.py"
+            ),
             6,
         )
 
@@ -259,7 +376,7 @@ class Exp051TemporalCalibratedUtilityWorkflowTests(
             text,
         )
 
-    def test_cli_gate_precedes_readiness_fit_and_aggregate(
+    def test_cli_has_no_dispatch_or_execution_bypass(
         self,
     ) -> None:
         text = CLI.read_text(encoding="utf-8")
