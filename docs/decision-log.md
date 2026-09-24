@@ -2379,3 +2379,20 @@ The first manual-main EXP-050 attempt consumes the slot on success, failure, can
 Focused workflow tests are `tests/test_phase8a_exp050_model_workflow.py` at blob `c5893e6a18fd9d0330001d4b35f5e34bbb8c33c1`. The detailed authorization record is `docs/superpowers/specs/2026-09-24-phase8a-exp050-single-model-run-authorization.md`.
 
 DEC-146 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. A later separate decision must freeze a clean-main one-way operator before any dispatch.
+
+## DEC-147 — Phase 8A EXP-050 clean-main single-step operator
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY OPERATOR; NO EXP-050 RUN DISPATCHED BY THIS DECISION
+
+DEC-147 freezes the one-way operator around the single historical EXP-050 attempt authorized by DEC-146.
+
+The operator core is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_operator.py` at Git blob `d0284ff447fb0f1560a5fb42e558c8708a76de49`. The public CLI is `scripts/phase8a_exp050_operator.py` at blob `e0b5c31793226740abf73c944e80c2ae0fb995c8`. Focused tests are `tests/test_phase8a_exp050_operator.py` at blob `067cc3b9f6ac15f69f33b326e5395b9b49a0cf37`.
+
+The operator binds DEC-146 merge `dd40df2522cf3ae9cfa5802d3d2a95a995570981`, requires a clean local `main` exactly matching fetched `origin/main`, verifies the `Dtwosam/FMP` remote, and reads only the exact manual-main `phase8a-exp050-temporal-jackknife-utility-model-training` workflow state.
+
+The state machine is one-way. Only a missing run may expose the exact dispatch command. An active or terminal run exposes no dispatch path, and more than one manual-main run fails closed. The public CLI is read-only by default; `advance --execute` re-runs the public `next` planner and refuses dispatch if live state changes between planning and execution.
+
+Terminal success requires the exact non-expired aggregate artifact tied to the run head SHA, loads the DEC-143 aggregate evidence, and routes the full terminal evidence through DEC-145. Non-success routes through DEC-145 without aggregate evidence. No rerun or replacement path exists.
+
+DEC-147 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. After merge and normal regression gates, the operator may be inspected from clean current `main`; only an exact zero-run read-only plan may expose the single DEC-146-authorized dispatch.
