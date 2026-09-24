@@ -139,9 +139,17 @@ Review source:
 
 `src/fmp/market_learning/model_successor_temporal_calibrated_utility_result_review.py`
 
+Git blob:
+
+`bd46dfd1cb8674ab8088d858b378ca37c5d75687`
+
 Focused tests:
 
 `tests/test_phase8a_exp051_model_result_review.py`
+
+Git blob:
+
+`132ec628d41f6ef84797c683e8114f3b3d935a22`
 
 ## 10. Next gate
 
