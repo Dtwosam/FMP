@@ -170,7 +170,7 @@ Protocol source:
 
 Git blob:
 
-`e104383600f13ccc9d1bdc2176a778f9cd5bf539`
+`39b6b3f5adc7f34ffd8cebcf881138d6ca3eab84`
 
 Focused tests:
 
