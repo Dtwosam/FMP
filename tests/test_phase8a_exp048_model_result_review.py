@@ -110,7 +110,7 @@ class Exp048ModelTerminalReviewTests(unittest.TestCase):
         }
 
         with patch(
-            "fmp.market_learning.model_successor_density_result_review."
+            "fmp.market_learning.model_successor_regime_consensus_result_review."
             "validate_regime_consensus_model_result_evidence",
             return_value=summary,
         ) as validate:
