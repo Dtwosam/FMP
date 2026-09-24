@@ -26,6 +26,7 @@ from .model_successor_temporal_calibrated_utility_training import (
 
 
 TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_GATE_DECISION = "DEC-153"
+TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-155"
 TEMPORAL_CALIBRATED_UTILITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp051-temporal-calibrated-utility-model-training.yml"
 )
@@ -42,6 +43,25 @@ DEC151_MERGED_COMMIT = (
 DEC152_MERGED_COMMIT = (
     "9f8fc93096fb29579924932c5c3b526598afaf28"
 )
+DEC153_MERGED_COMMIT = (
+    "b0fb55aca2d818e7306a15b200b1e10fcc151ad2"
+)
+DEC154_MERGED_COMMIT = (
+    "fce3859d8eaf9b779c539f3c49b464b4ee72c467"
+)
+
+DEC153_WORKFLOW_BLOB_SHA = (
+    "4ab7480e31e91cbfe39eb5e289eccadde428d1a4"
+)
+DEC153_CLI_BLOB_SHA = (
+    "c88b05a14bc961391ff59e29f742c1dac27272b6"
+)
+DEC153_GATE_BLOB_SHA = (
+    "37a0b7af464c464beff0976addc1464f68e916cc"
+)
+DEC154_REVIEW_BLOB_SHA = (
+    "bd46dfd1cb8674ab8088d858b378ca37c5d75687"
+)
 
 DEC152_RUNNER_BLOB_SHA = (
     "3b25ad8dee80ad2d68a421b01b3e7789b1de9f1a"
@@ -57,7 +77,7 @@ LEGACY_DATA_LOADER_BLOB_SHA = (
 )
 
 TEMPORAL_CALIBRATED_UTILITY_WORKFLOW_BLOB_SHA = (
-    "4ab7480e31e91cbfe39eb5e289eccadde428d1a4"
+    "8c0f77a2585715bdc758e6a158c0c5db6cc4e8c9"
 )
 TEMPORAL_CALIBRATED_UTILITY_CLI_BLOB_SHA = (
     "c88b05a14bc961391ff59e29f742c1dac27272b6"
@@ -84,12 +104,12 @@ MARKET_OUTCOMES_BLOB_SHA = (
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 TEMPORAL_CALIBRATED_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN = True
-TEMPORAL_CALIBRATED_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = False
+TEMPORAL_CALIBRATED_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = True
 AUTHORITATIVE_TEMPORAL_CALIBRATED_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = (
-    False
+    True
 )
-TEMPORAL_CALIBRATED_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-TEMPORAL_CALIBRATED_UTILITY_MODEL_FIT_AUTHORIZED = False
+TEMPORAL_CALIBRATED_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+TEMPORAL_CALIBRATED_UTILITY_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -237,6 +257,12 @@ def validate_temporal_calibrated_utility_model_workflow_sources(
             / "src/fmp/market_learning/model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_temporal_calibrated_utility_result_review.py",
+            DEC154_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -301,6 +327,15 @@ def validate_temporal_calibrated_utility_model_workflow_sources(
         "dec150_merged_commit": DEC150_MERGED_COMMIT,
         "dec151_merged_commit": DEC151_MERGED_COMMIT,
         "dec152_merged_commit": DEC152_MERGED_COMMIT,
+        "dec153_merged_commit": DEC153_MERGED_COMMIT,
+        "dec154_merged_commit": DEC154_MERGED_COMMIT,
+        "dec153_workflow_blob_sha": DEC153_WORKFLOW_BLOB_SHA,
+        "dec153_cli_blob_sha": DEC153_CLI_BLOB_SHA,
+        "dec153_gate_blob_sha": DEC153_GATE_BLOB_SHA,
+        "dec154_review_blob_sha": actual["terminal_review"],
+        "temporal_calibrated_utility_model_execution_authorization_decision": (
+            TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "temporal_calibrated_utility_runner_blob_sha": actual[
             "temporal_calibrated_runner"
         ],
@@ -352,12 +387,15 @@ def build_temporal_calibrated_utility_model_workflow_source_gate(
         **source,
         "stage": (
             "TEMPORAL_CALIBRATED_UTILITY_MODEL_"
-            "RUN_WORKFLOW_SOURCE_FROZEN"
+            "RUN_DISPATCH_REQUIRED"
         ),
         "next_action": (
-            "A later separate decision must predeclare terminal review "
-            "before any guarded EXP-051 historical model-result run may "
-            "be considered. DEC-153 does not authorize or dispatch execution."
+            "DEC-155 authorizes at most one guarded historical EXP-051 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
+        ),
+        "temporal_calibrated_utility_model_execution_authorization_decision": (
+            TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
         ),
         "temporal_calibrated_utility_model_workflow_source_frozen": (
             TEMPORAL_CALIBRATED_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN
@@ -460,6 +498,12 @@ __all__ = [
     "DEC151_MERGED_COMMIT",
     "DEC152_MERGED_COMMIT",
     "DEC152_RUNNER_BLOB_SHA",
+    "DEC153_CLI_BLOB_SHA",
+    "DEC153_GATE_BLOB_SHA",
+    "DEC153_MERGED_COMMIT",
+    "DEC153_WORKFLOW_BLOB_SHA",
+    "DEC154_MERGED_COMMIT",
+    "DEC154_REVIEW_BLOB_SHA",
     "DEMO_ORDER_AUTHORIZED",
     "FEATURE_SCHEMA_BLOB_SHA",
     "LEGACY_DATA_LOADER_BLOB_SHA",
@@ -472,6 +516,7 @@ __all__ = [
     "REAL_MONEY_AUTHORIZED",
     "SHADOW_AUTHORIZED",
     "TEMPORAL_CALIBRATED_UTILITY_CLI_BLOB_SHA",
+    "TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_GATE_DECISION",
     "TEMPORAL_CALIBRATED_UTILITY_MODEL_FIT_AUTHORIZED",
     "TEMPORAL_CALIBRATED_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED",
