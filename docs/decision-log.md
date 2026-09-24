@@ -2075,3 +2075,20 @@ DEC-130 classifies the reviewed result as `REGIME_CONSENSUS_MODEL_RESULT_REVIEWE
 
 The machine-checkable reviewed-result source is `src/fmp/market_learning/model_successor_regime_consensus_result_decision.py` at Git blob `0556da8c036a55ba3b94d933f67f439eb306f9c2`. Any further model research requires a separately predeclared, explicitly post-result-informed successor diagnostic/protocol.
 
+## DEC-131 — Phase 8A EXP-048 post-result stability diagnostic
+
+**Date:** 2026-09-24
+**Status:** POST-RESULT DIAGNOSTIC; NO NEW MODEL EXECUTION AUTHORIZED
+
+DEC-131 freezes the detailed diagnostic of the completed EXP-048 regime-consensus experiment after DEC-130 reviewed run `36006524422`.
+
+EXP-048 evaluates 54 variants, with 17 aggregate selection passes and zero stability passes. All 17 aggregate passes fail at least one per-window financial-sign criterion. Thirteen also fail the frozen 10% candidate-share requirement; four satisfy candidate-share stability in every window but still fail a financial window. No aggregate pass fails only the share rule.
+
+No aggregate-passing variant has zero candidates across both 2021 half-years, although five have zero candidates in one 2021 half-year. The observed failure therefore shifts descriptively away from the most extreme inactivity pattern seen under EXP-047 and toward per-window financial instability.
+
+DEC-131 records `WINDOW_FINANCIAL_INSTABILITY_DOMINANT` as the descriptive post-result classification. It does not claim a causal market mechanism.
+
+The machine-checkable source is `src/fmp/market_learning/model_successor_regime_consensus_post_result_diagnostics.py` at Git blob `165ab1e0e10a9fb6453ad0880ea1df97d0a35fa8`.
+
+DEC-131 explicitly forbids post-hoc relaxation of candidate-share or financial stability rules, removal of the 2021 windows, EXP-048 rerun/replacement, successor fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading. It opens only successor-protocol source work.
+
