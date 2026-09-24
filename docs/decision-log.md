@@ -2022,3 +2022,18 @@ A failed, cancelled, or timed-out first run may preserve a valid subset of cell 
 
 The implementation is frozen at Git blob `0cd943cb4bb8780a6adfab02b0743c8415dcd5fe`. Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization remain false. DEC-127 changes no DEC-126 execution authorization.
 
+## DEC-128 — Phase 8A EXP-048 single historical model-run authorization
+
+**Date:** 2026-09-24
+**Status:** AUTHORIZED SOURCE; NO EXP-048 RUN DISPATCHED BY THIS DECISION
+
+DEC-128 independently verifies zero prior manual-main `phase8a-exp048-regime-consensus-model-training` runs after DEC-127 merged, hardens the workflow with a first-run rejection guard, and opens at most one outer historical result-producing attempt.
+
+The guard verifies the current run's exact workflow name/path, `workflow_dispatch` event, and `main` branch, lists exact manual-main EXP-048 runs, excludes only the current `GITHUB_RUN_ID`, and fails if any prior run exists. The hardened workflow blob is `89a2c78af2c3d0925d7c8a2773af9291caacd95d`.
+
+The authorization gate binds DEC-126 merge `e2713ab33648901d42f9a9e1c4b8e7f0ff7920a6`, pre-authorization workflow blob `09d6d9fa710d18637648de23ae45968628032765`, CLI blob `f4a6941512824c1d60bff98175dd2fce9353aa68`, pre-authorization gate blob `b70e2a8854439f20b25a9549820fad9c95612390`, DEC-127 merge `589782a92f9f1db2008bff99065cb070017311ca`, and DEC-127 review blob `0cd943cb4bb8780a6adfab02b0743c8415dcd5fe`.
+
+The authorized gate source is Git blob `3312667537eedfc2cd41d1ec91c877e1b05770f9` and records `REGIME_CONSENSUS_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-128"`. Only the outer dispatch/result/protocol-result/model-fit flags are true; the underlying DEC-123/124/125 source-level execution locks remain false.
+
+The first manual-main attempt consumes the slot on success, failure, cancellation, or timeout. No rerun/replacement is authorized. DEC-128 itself dispatches nothing. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
+
