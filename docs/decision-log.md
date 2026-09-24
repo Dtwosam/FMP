@@ -2593,3 +2593,22 @@ A successful runner persists `operator-plan.json` in artifact `exp051-dec156-rea
 
 DEC-157 changes no model-run authorization and consumes no run slot. It authorizes no retry, replacement, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading. After merge, the automatic read-only plan must be inspected before any separate environment-specific executor may invoke the existing DEC-156 `advance --execute` path.
 
+## DEC-158 — Phase 8A EXP-051 read-only operator plan runner environment repair
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY REPAIR; NO EXP-051 DISPATCH
+
+DEC-157 merged at `c80e1224cd092539cb904c1f58bdeb8b072aed63` and automatically started read-only plan run `36064683930`. That run passed exact merged-main checkout, push/main identity checks, Python setup, and pinned runtime installation, then the exact DEC-156 `next` invocation failed closed with `ValueError: EXP-051 dispatch requires a clean working tree`.
+
+The failure consumed no EXP-051 run slot and submitted no model workflow. It confirmed that DEC-156's independent clean-worktree gate was operating correctly.
+
+The cause was DEC-157's editable repository install, `python -m pip install -r requirements/exp051-model-run.txt -e .`, which mutated the checkout with local package-install metadata before DEC-156 inspected the worktree.
+
+DEC-158 repairs only the runner environment. It exports `PYTHONPATH=${{ github.workspace }}/src`, installs only `requirements/exp051-model-run.txt` without `-e .`, and adds an explicit `test -z "$(git status --porcelain)"` check before invoking the operator. The repaired runner is `.github/workflows/phase8a-exp051-operator-plan.yml` at blob `e1bf3a4db4804ec237638c5b87bf9fb99b2c5ed3`.
+
+Focused tests are `tests/test_phase8a_exp051_operator_plan_runner.py` at blob `1534a732930036b4bf3a1ed120cf7338f85b873f`. The detailed repair record is `docs/superpowers/specs/2026-09-24-phase8a-exp051-operator-plan-runner-repair.md` at blob `8f202980a4326f29c1a61949cece6c58c8d3f778`.
+
+The trigger, read-only permissions, exact DEC-156 `next` invocation, zero-run plan validation, plan artifact, and absence of `advance`, `advance --execute`, direct model-workflow dispatch, retry, replacement, promotion, and trading paths remain unchanged.
+
+DEC-158 changes no DEC-155 authorization flag and dispatches nothing. After merge, the workflow-file change must automatically rerun the repaired read-only plan and prove the exact `MISSING` / `RUN_DISPATCH_REQUIRED` state before any executor decision is considered.
+
