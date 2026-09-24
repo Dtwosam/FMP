@@ -2396,3 +2396,20 @@ The state machine is one-way. Only a missing run may expose the exact dispatch c
 Terminal success requires the exact non-expired aggregate artifact tied to the run head SHA, loads the DEC-143 aggregate evidence, and routes the full terminal evidence through DEC-145. Non-success routes through DEC-145 without aggregate evidence. No rerun or replacement path exists.
 
 DEC-147 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. After merge and normal regression gates, the operator may be inspected from clean current `main`; only an exact zero-run read-only plan may expose the single DEC-146-authorized dispatch.
+
+## DEC-148 — Phase 8A EXP-050 reviewed historical temporal-jackknife utility result
+
+**Date:** 2026-09-24
+**Status:** REVIEWED / EXP-050 HISTORICAL RUN CLOSED
+
+DEC-148 reviews the single DEC-146-authorized EXP-050 historical model run `36049824739`. The run completed successfully on attempt 1 at execution commit `25d48828b981c4309f4a859d2a33a56094638f21`; all 11 required jobs succeeded and all nine pair/timeframe cell artifacts plus the aggregate artifact were persisted.
+
+The reviewed aggregate artifact is id `10829959147`, name `exp050-temporal-jackknife-utility-model-result-evidence-25d48828b981c4309f4a859d2a33a56094638f21-from-feature-35867307338-outcome-35876715434`, with GitHub artifact digest `sha256:4a2b223425c2e8df60e13ec0ad22c46da618957999a7a7d23908ff9fd3b20275`. The downloaded ZIP independently hashes to the same value and contains exactly one `model-result-evidence.json`.
+
+DEC-143 aggregate-evidence revalidation succeeds. The canonical evidence fingerprint is `866b4a8f26553bad8c80a7b2e0e68aedb50bfa42b3c767ce91478c9dfd720023`, and all 18 individual cell-result fingerprints recompute exactly. All 18 cells and all 108 regressors verify. Three variants pass the unchanged aggregate selection gate, zero pass the frozen temporal-stability gate, all 18 cells terminate at `NO_TEMPORAL_JACKKNIFE_UTILITY_STABLE_MODEL_CHALLENGER`, and validation/retrospective holdout remain locked. Twenty-six budget variants are unavailable and the verified utility-eligible selection-row total is 26,392.
+
+All three aggregate passes are USDJPY 5m / 60m at budgets 250, 500, and 1000. They produce 250, 501, and 1000 selection candidates respectively, with 0.5-pip selection total net pips of 612.9, 247.4, and 504.3. All three fail temporal stability. All three have zero candidates in 2021 H1; the 250 and 500 variants also have zero candidates in 2021 H2; the 1000 variant has one 2021 H2 candidate and fails both share and financial signs there. The 500 and 1000 variants have positive 2022 H1 financial signs but miss the 10% share floor. All three pass the 2022 H2 stability window.
+
+The result-decision source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_result_decision.py` at Git blob `70402f6c21f4ed22b4991025c98e6c1664215215`. Focused tests are `tests/test_phase8a_exp050_model_result_decision.py` at blob `cce218e5a05d7c567884aae5b1e08e632489377a`. The reviewed-result record is `docs/superpowers/specs/2026-09-24-phase8a-exp050-reviewed-model-result.md` at blob `887814acd498257b35012d736d8e9080ec8674a0`.
+
+The DEC-146 one-run slot is consumed. Model-run dispatch, replacement-run authorization, authoritative result execution, protocol-result production, model fitting, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization are all closed. No second EXP-050 run is authorized. Any post-result diagnostic or successor protocol requires a later separate decision and may not alter this reviewed evidence.
