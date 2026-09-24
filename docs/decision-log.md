@@ -2496,3 +2496,26 @@ The authoritative bundle checks `AUTHORITATIVE_TEMPORAL_CALIBRATED_UTILITY_MODEL
 
 DEC-152 opens no workflow, dispatch, historical result execution, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading authorization. A later separate decision may freeze a manual-main workflow, public CLI, pinned numerical runtime, and exact-source execution gate while keeping execution authorization closed.
 
+## DEC-153 — Phase 8A EXP-051 manual-main workflow source gate
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / EXECUTION AUTHORIZATION CLOSED
+
+DEC-153 freezes the manual-main, input-free workflow, public CLI, Python 3.12.14 numerical runtime, and exact-source execution gate for `EXP-20260924-051`. It binds DEC-150 merge `b80a1f688afe8f5056aa31c1a2ff5b4ebbc11833` and protocol blob `c39309c4115cae1ea058e56f30cae4af6407e36e`; DEC-151 merge `68028ef37b72e3f0695b475928434ede40ad7690` and training-core blob `959fbfd52f41c08de3c1a26769e0e7fd2545b92a`; DEC-152 merge `9f8fc93096fb29579924932c5c3b526598afaf28` and artifact/evidence blob `3b25ad8dee80ad2d68a421b01b3e7789b1de9f1a`; and the accepted historical loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`.
+
+The frozen workflow is `.github/workflows/phase8a-exp051-temporal-calibrated-utility-model-training.yml` at blob `4ab7480e31e91cbfe39eb5e289eccadde428d1a4`. It is manual `workflow_dispatch` only, input-free, main-only, read-only for contents/actions, and contains no schedule or pull-request trigger. DEC-153 intentionally contains no first-run guard; that guard belongs to a later one-run authorization decision only after terminal review is frozen and zero prior manual-main EXP-051 runs are independently verified.
+
+The workflow preserves the exact accepted nine pair/timeframe source cells and both 60m/240m horizons. It reuses the accepted feature, outcome, and readiness artifact IDs and ZIP digests, preserves partial pair/timeframe evidence under an `if: always()` upload, and compiles complete aggregate evidence only through the DEC-152 contract.
+
+The public CLI is `scripts/phase8a_exp051_model_run.py` at blob `c88b05a14bc961391ff59e29f742c1dac27272b6`. It exposes only `status`, `require-execution`, `run-cell`, and `aggregate`; contains no dispatch command; and evaluates the DEC-153 execution requirement before readiness loading, historical artifact loading, fitting, or aggregation.
+
+The pinned runtime is `requirements/exp051-model-run.txt` at blob `d25ab16056b9f5df283147d67b8f401f60ae7520`, with Python 3.12.14 and the same numerical package versions as EXP-050.
+
+The exact-source execution gate is `src/fmp/market_learning/model_successor_temporal_calibrated_utility_execution_gate.py` at blob `37a0b7af464c464beff0976addc1464f68e916cc`. It revalidates the DEC-150/151/152 source chain and exact workflow/CLI/runtime/common-source blobs while requiring all upstream protocol/core/runner execution and fit flags to remain false.
+
+Focused tests are `tests/test_phase8a_exp051_model_workflow.py` at blob `572c179a3be96fd7ae23d575d206d308232da78c`. The detailed source contract is `docs/superpowers/specs/2026-09-24-phase8a-exp051-temporal-calibrated-utility-workflow-source.md` at blob `7235bf7d9c018ae2718251680a674284f31aabfc`.
+
+DEC-153 keeps run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. Therefore `require-execution` fails closed at the dispatch-authorization check.
+
+Before any historical run authorization, a separate decision must predeclare exact attempt-1 terminal review, required job/artifact inventory, complete-success and partial-failure evidence semantics, and no-rerun/replacement policy. DEC-153 dispatches nothing.
+
