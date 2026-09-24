@@ -1950,7 +1950,7 @@ A scored row is consensus-eligible only when all three regime models have the sa
 
 The unchanged 250/500/1000 selection density anchors are derived from consensus confidence and the exact selection-derived cutoff is reused unchanged on validation and retrospective holdout. All aggregate and temporal-stability gates remain mandatory. No fallback to a full-fit model or subset of regime models is authorized.
 
-The protocol source is `src/fmp/market_learning/model_successor_regime_consensus_protocol.py` at Git blob `e104383600f13ccc9d1bdc2176a778f9cd5bf539`.
+The protocol source is `src/fmp/market_learning/model_successor_regime_consensus_protocol.py` at Git blob `39b6b3f5adc7f34ffd8cebcf881138d6ca3eab84`.
 
 DEC-123 authorizes no fit, historical result execution, workflow, dispatch, logistic reintroduction, stability relaxation, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision must implement the deterministic regime-consensus core before any result-producing execution can be considered.
 
