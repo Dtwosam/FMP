@@ -1867,3 +1867,22 @@ The first manual-main attempt consumes the one-run slot whether it succeeds, fai
 
 DEC-118 does not dispatch the workflow. Promotion, prospective shadow, demo orders, broker mutation, live orders, real-money actions, and trading authorization remain false.
 
+## DEC-119 — Phase 8A EXP-047 single-step operator
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; NO EXP-047 RUN DISPATCHED BY THIS DECISION
+
+DEC-119 freezes the clean-main one-way operator for the single DEC-118-authorized EXP-047 historical run.
+
+The operator core is `src/fmp/market_learning/model_successor_density_operator.py` at Git blob `fb809b541f4b6f2805746f54c6c2073bc9aadb0a`. The executable wrapper is `scripts/phase8a_exp047_operator.py` at blob `1ac82196c1bd2cd1eb8c7edbce23deea55829ed0`. Focused tests are frozen at blob `9aa937f3edfaf7ce452db3a38e726c4e92154446`.
+
+The operator requires clean current `main`, exact fetched `origin/main`, verified `Dtwosam/FMP` origin, and GitHub CLI authentication. It inspects only manual-main runs for `phase8a-exp047-density-model-training.yml` and fails if more than one exists.
+
+Only the zero-run state is dispatchable. It exposes exactly `gh workflow run phase8a-exp047-density-model-training.yml --ref main -R Dtwosam/FMP`. Active and terminal states remove the dispatch command and turn result/fit authorization back off.
+
+`advance --execute` invokes the public `next` planner twice and requires the complete second plan and reconstructed command to equal the first before dispatch.
+
+Terminal success requires the exact aggregate artifact tied to the run head SHA, revalidates `model-result-evidence.json` through DEC-115, and routes the complete terminal state through DEC-117. Non-success routes exact partial evidence through DEC-117 without an aggregate evidence claim.
+
+DEC-119 contains no rerun/replacement or alternate trigger and dispatches nothing by itself. The first EXP-047 attempt consumes the DEC-118 slot on any terminal outcome. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
+
