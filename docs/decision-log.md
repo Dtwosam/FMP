@@ -1833,3 +1833,20 @@ DEC-116 leaves model-run dispatch, authoritative result execution, protocol-resu
 
 A later separate decision must predeclare terminal-result review before any one-run authorization is considered.
 
+## DEC-117 — Phase 8A EXP-047 predeclared terminal-result review
+
+**Date:** 2026-09-24
+**Status:** APPROVED BEFORE ANY EXP-047 HISTORICAL MODEL RESULT OR RUN AUTHORIZATION
+
+DEC-117 freezes the terminal review contract before any EXP-047 historical model result and before any EXP-047 run authorization.
+
+The reviewer accepts only attempt-1 manual-main `phase8a-exp047-density-model-training` runs, exactly one authorization-preflight job, nine matrix jobs, one aggregate job, and artifacts restricted to the exact nine pair/timeframe names plus the exact aggregate-result name tied to the workflow head SHA.
+
+A successful run must have all 11 jobs succeed, all nine cell artifacts, the aggregate artifact, and successful DEC-115 aggregate-evidence revalidation against the exact execution commit. It stops at `DENSITY_MODEL_RESULT_REVIEW_REQUIRED`.
+
+A failed, cancelled, or timed-out first run may preserve a valid subset of cell artifacts but cannot claim aggregate result evidence. It stops at `DENSITY_MODEL_RUN_FAILURE_REVIEW_REQUIRED`.
+
+The implementation is frozen at Git blob `466e163edc42145b7cf2d698c48c713e0e804a95`. Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization remain false. DEC-117 changes no DEC-116 execution authorization.
+
+A later separate decision may consider at most one guarded historical EXP-047 run only after independently verifying zero prior manual-main runs and adding a first-run rejection guard.
+
