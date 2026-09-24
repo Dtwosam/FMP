@@ -10,6 +10,7 @@ from fmp.market_learning.model_successor_density_operator import (
     DENSITY_MODEL_WORKFLOW_PATH,
     build_density_operator_report,
     classify_density_model_run,
+    density_operator_gate_metadata,
     dispatch_command_for_density_report,
     select_density_aggregate_artifact,
     select_density_manual_main_run,
@@ -269,6 +270,49 @@ class Exp047DensityOperatorTests(unittest.TestCase):
         )
         self.assertIsNone(
             dispatch_command_for_density_report(terminal)
+        )
+
+    def test_gate_metadata_matches_dec118_source_shape(self) -> None:
+        gate = {
+            "density_model_execution_gate_decision": "DEC-116",
+            "density_model_execution_authorization_decision": "DEC-118",
+            "dec113_merged_commit": "1" * 40,
+            "dec114_merged_commit": "2" * 40,
+            "dec115_merged_commit": "3" * 40,
+            "dec116_merged_commit": "4" * 40,
+            "dec117_merged_commit": "5" * 40,
+            "dec116_workflow_blob_sha": "6" * 40,
+            "dec116_cli_blob_sha": "7" * 40,
+            "dec116_gate_blob_sha": "8" * 40,
+            "dec117_review_blob_sha": "9" * 40,
+            "density_workflow_blob_sha": "a" * 40,
+            "density_cli_blob_sha": "b" * 40,
+        }
+        metadata = density_operator_gate_metadata(gate)
+        self.assertEqual(
+            metadata["dec117_merged_commit"],
+            "5" * 40,
+        )
+        self.assertEqual(
+            metadata["density_workflow_blob_sha"],
+            "a" * 40,
+        )
+        self.assertNotIn("dec107_merged_commit", metadata)
+
+        drifted = dict(gate)
+        drifted.pop("dec117_merged_commit")
+        with self.assertRaisesRegex(
+            ValueError,
+            "dec117_merged_commit",
+        ):
+            density_operator_gate_metadata(drifted)
+
+    def test_public_cli_has_no_stale_dec107_gate_key(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        self.assertNotIn("dec107_merged_commit", text)
+        self.assertIn(
+            "density_operator_gate_metadata(gate)",
+            text,
         )
 
     def test_dispatch_report_tamper_fails_closed(self) -> None:
