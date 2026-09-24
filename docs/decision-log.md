@@ -2540,3 +2540,22 @@ Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/
 
 A later separate decision may independently verify zero prior manual-main EXP-051 runs, add a first-run rejection guard, and authorize at most one outer historical attempt without dispatching it.
 
+## DEC-155 — Phase 8A EXP-051 single historical model-run authorization
+
+**Date:** 2026-09-24
+**Status:** AUTHORIZED SOURCE; NO EXP-051 RUN DISPATCHED BY THIS DECISION
+
+After DEC-154 merged, repository Actions history was independently inspected. The latest 100 runs extend back to `2026-09-24T17:24:51Z`, before DEC-153 first put the EXP-051 workflow on `main` at `2026-09-24T21:12:27Z`. Across that entire possible workflow lifetime, zero runs match the exact EXP-051 workflow path with `workflow_dispatch` on `main`.
+
+DEC-155 binds DEC-153 merge `b0fb55aca2d818e7306a15b200b1e10fcc151ad2`, pre-authorization workflow blob `4ab7480e31e91cbfe39eb5e289eccadde428d1a4`, CLI blob `c88b05a14bc961391ff59e29f742c1dac27272b6`, pre-authorization execution-gate blob `37a0b7af464c464beff0976addc1464f68e916cc`, DEC-154 merge `fce3859d8eaf9b779c539f3c49b464b4ee72c467`, and DEC-154 review blob `bd46dfd1cb8674ab8088d858b378ca37c5d75687`.
+
+The workflow is hardened with a first-run rejection guard before runtime installation or model fitting. It verifies the exact current run identity, lists exact manual-main EXP-051 workflow runs, excludes only the current `GITHUB_RUN_ID`, and fails if any prior matching run exists. The hardened workflow blob is `8c0f77a2585715bdc758e6a158c0c5db6cc4e8c9`.
+
+The authorized execution gate is `src/fmp/market_learning/model_successor_temporal_calibrated_utility_execution_gate.py` at blob `cfb16316f2bf9f09e037f48b3f80867562231bf8` and records `TEMPORAL_CALIBRATED_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-155"`. Only the outer dispatch/result/protocol-result/model-fit flags are true. The underlying DEC-150 protocol, DEC-151 training core, and DEC-152 artifact-runner source-level result/fit locks remain false and are explicitly validated.
+
+The first manual-main EXP-051 attempt consumes the slot on success, failure, cancellation, or timeout. No rerun, automatic retry, or replacement run is authorized. Any terminal outcome must route through DEC-154.
+
+Focused workflow tests are `tests/test_phase8a_exp051_model_workflow.py` at blob `2c46fe19d2875e5d3fd7625d9d685f3e5797f41e`. The detailed authorization record is `docs/superpowers/specs/2026-09-24-phase8a-exp051-single-model-run-authorization.md` at blob `44ce3ae831ca553ad05300441b47cd6a706d7152`.
+
+DEC-155 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization remain false. A later separate decision must freeze a clean-main, one-way operator before any dispatch.
+
