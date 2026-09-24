@@ -233,7 +233,7 @@ class Exp048WorkflowSourceTests(unittest.TestCase):
             text.count(
                 "scripts/phase8a_exp048_model_run.py"
             ),
-            5,
+            6,
         )
 
     def test_workflow_preserves_partial_and_aggregate_evidence(self) -> None:
