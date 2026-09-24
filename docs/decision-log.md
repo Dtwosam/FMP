@@ -2244,3 +2244,24 @@ DEC-140 records the descriptive diagnostic classification `UTILITY_COVERAGE_AND_
 The diagnostic source is `src/fmp/market_learning/model_successor_regime_utility_post_result_diagnostics.py` at Git blob `e286be2574d4cee60322a4b65213af76ab34b381`. Focused tests are `tests/test_phase8a_exp049_post_result_diagnostics.py` at blob `6fa290bacab4363ab823771f6ca04aa19f8095be`. The diagnostic spec is `docs/superpowers/specs/2026-09-24-phase8a-exp049-post-result-diagnostics.md` at blob `ea4a9e3a9ef962aecb0d6e88857dc5b8e65527ff`.
 
 DEC-140 does not authorize lowering the positive-utility rule, adding smaller budget anchors as a result-producing rescue, relaxing candidate-share or financial stability, removing the 2021 windows, rerunning or replacing EXP-049, successor fitting/result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. It opens only separately frozen successor-protocol source work.
+
+## DEC-141 — Phase 8A EXP-050 temporal-jackknife regime-utility successor protocol
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / NO EXP-050 MODEL EXECUTION AUTHORIZED
+
+DEC-141 opens `EXP-20260924-050` as a post-result-informed successor to DEC-139/DEC-140. It is bound to EXP-049 run `36029925264`, execution commit `eeb735bca7d38c3246f22a9606dfafe9c3df8279`, evidence fingerprint `29ecbb5bf3ce00f35c825e977d9b3fff1777e165ce9bef311fefcb7bfbdb091e`, DEC-140 merge `04f06deb4d68f9936438eec20dbb9610683bbc2e`, DEC-140 diagnostic blob `e286be2574d4cee60322a4b65213af76ab34b381`, and DEC-139 reviewed-result blob `dce13838f32fbb8aa0e403c550b669f778dd0742`.
+
+DEC-140 recorded two simultaneous limitations: 31 of 54 predeclared budget variants were unavailable for insufficient positive regime-utility consensus rows, while all eight aggregate-financial passes failed both candidate-share and financial temporal stability. DEC-141 does not lower the positive-utility threshold, add smaller budget anchors, weaken stability, remove a 2021 window, or authorize an EXP-049 rerun.
+
+The sole EXP-050 research change is the utility-regressor fit-view construction. The three frozen predecessor two-year regimes remain unchanged, but each of three deterministic temporal-jackknife views fits on the union of exactly two regimes while leaving the third entirely out. Each view therefore uses four fit years; each predecessor regime is excluded by one view and included by two. The middle view intentionally unions 2015-2016 with 2019-2020 and does not interpolate or use rows from the excluded 2017-2018 block.
+
+Each view fits exactly the same two cost-aware HGB regressors as EXP-049: LONG and SHORT net pips at 0.5-pip adverse slippage. Structural HGB configuration is unchanged. The model inventory remains six regressors per cell.
+
+Eligibility remains fail-closed and unanimous. Each view must choose the unique higher LONG/SHORT prediction and that predicted utility must be greater than zero. All three views must choose the same direction. Robust utility remains the minimum predicted net pips for the agreed direction across the three views. Majority voting, view weighting, fit-view fallback, full-fit fallback, classifier fallback, logistic reintroduction, and utility-threshold relaxation are not authorized.
+
+Candidate-budget anchors remain 250/500/1000. Aggregate minimum count and financial signs, the four half-year temporal-stability windows, the 10% per-window share floor, all per-window financial signs, validation and retrospective-holdout scenarios, selection-derived cutoff reuse, and no-refit semantics remain unchanged.
+
+The protocol source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_protocol.py` at Git blob `b41b817b03aa0cc03a9d893227caa399b46d3cf8`. Focused tests are `tests/test_phase8a_exp050_temporal_jackknife_utility_protocol.py` at blob `f458891e6160bb4e3af6c7a4b82b69b37771efe7`. The detailed spec is `docs/superpowers/specs/2026-09-24-phase8a-exp050-temporal-jackknife-utility-protocol.md`.
+
+DEC-141 keeps model-protocol result production, model fit, historical result execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization false. A later separate decision may implement only the deterministic in-memory EXP-050 training/evaluation core against this exact protocol source.
