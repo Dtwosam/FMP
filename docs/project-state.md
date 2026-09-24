@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047/EXP-048/EXP-049 CLOSED/REVIEWED; EXP-050 DEC-146 ONE GUARDED HISTORICAL RUN AUTHORIZED; NOT DISPATCHED
-**Next milestone:** Freeze a clean-main, one-way EXP-050 operator that exposes the single DEC-146 dispatch only while no run exists, double-checks live state before execution, and routes terminal evidence through DEC-145. DEC-146 itself dispatches nothing; no retry/replacement is authorized. Promotion and all trading paths remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047/EXP-048/EXP-049 CLOSED/REVIEWED; EXP-050 DEC-147 ONE-WAY OPERATOR SOURCE FROZEN; NOT DISPATCHED
+**Next milestone:** Merge DEC-147 and pass normal regressions, then inspect the read-only EXP-050 operator plan from clean current main. Only the exact zero-run state may expose the single DEC-146 dispatch; active/terminal states cannot expose a second run. No retry/replacement is authorized. Promotion and all trading paths remain locked.
 
 ## Current baseline
 
@@ -488,5 +488,5 @@ Phase 8B must:
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-DEC-143 freezes the artifact-backed result-evidence contract against the exact DEC-141/142 sources and accepted historical feature/outcome/readiness identities, validates complete three-view / 18-cell / 108-regressor evidence, and keeps the authoritative bundle locked before readiness or historical artifact loading. DEC-144 freezes the manual-main workflow, CLI, pinned runtime, and exact-source execution gate while keeping dispatch/result/fit authorization false. DEC-145 predeclares the exact attempt-1 terminal review. DEC-146 independently verifies zero prior manual-main EXP-050 runs, hardens the workflow with a first-run guard, and opens exactly one outer historical result-producing slot without dispatching it; the first attempt consumes the slot on any terminal outcome and must route through DEC-145. The next gate is a clean-main one-way operator. Promotion/shadow/demo/broker/live/real-money/trading paths remain locked. No prospective shadow campaign has begun.
+DEC-143 freezes the artifact-backed result-evidence contract against the exact DEC-141/142 sources and accepted historical feature/outcome/readiness identities, validates complete three-view / 18-cell / 108-regressor evidence, and keeps the authoritative bundle locked before readiness or historical artifact loading. DEC-144 freezes the manual-main workflow, CLI, pinned runtime, and exact-source execution gate while keeping dispatch/result/fit authorization false. DEC-145 predeclares the exact attempt-1 terminal review. DEC-146 independently verifies zero prior manual-main EXP-050 runs, hardens the workflow with a first-run guard, and opens exactly one outer historical result-producing slot without dispatching it; the first attempt consumes the slot on any terminal outcome and must route through DEC-145. DEC-147 freezes the clean-main double-plan one-way operator; only a zero-run state can expose the single DEC-146 dispatch, while active/terminal states cannot expose a second run and terminal evidence routes through DEC-145. The next gate is read-only operator inspection from clean merged main before any dispatch. Promotion/shadow/demo/broker/live/real-money/trading paths remain locked. No prospective shadow campaign has begun.
 
