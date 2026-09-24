@@ -260,9 +260,17 @@ Protocol source:
 
 `src/fmp/market_learning/model_successor_temporal_jackknife_utility_protocol.py`
 
+Protocol source Git blob:
+
+`b41b817b03aa0cc03a9d893227caa399b46d3cf8`
+
 Focused tests:
 
 `tests/test_phase8a_exp050_temporal_jackknife_utility_protocol.py`
+
+Focused test Git blob:
+
+`f458891e6160bb4e3af6c7a4b82b69b37771efe7`
 
 Protocol version:
 
