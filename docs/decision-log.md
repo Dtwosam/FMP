@@ -1990,3 +1990,20 @@ The implementation is `src/fmp/market_learning/model_successor_regime_consensus_
 
 DEC-125 remains non-executable: the authoritative bundle raises before readiness validation, historical artifact loading, or model fitting. No workflow/dispatch, authoritative fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization is introduced.
 
+## DEC-126 — Phase 8A EXP-048 locked model workflow source
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; EXP-048 EXECUTION AUTHORIZATION CLOSED
+
+DEC-126 freezes the manual main-only, input-free EXP-048 workflow, model CLI, Python 3.12.14 numerical runtime, and fail-closed exact-source execution gate around merged DEC-123/124/125.
+
+The workflow is `.github/workflows/phase8a-exp048-regime-consensus-model-training.yml` at Git blob `09d6d9fa710d18637648de23ae45968628032765`. The CLI is `scripts/phase8a_exp048_model_run.py` at blob `f4a6941512824c1d60bff98175dd2fce9353aa68`. The runtime requirements are frozen at blob `d25ab16056b9f5df283147d67b8f401f60ae7520`. The execution gate is `src/fmp/market_learning/model_successor_regime_consensus_execution_gate.py` at blob `b70e2a8854439f20b25a9549820fad9c95612390`.
+
+The gate binds DEC-123 merge/protocol bytes, DEC-124 merge/core bytes, DEC-125 merge/artifact-runner bytes, the historical artifact loader, workflow, CLI, runtime, pyproject, preprocessing, feature schema, contracts, and outcomes source. Any byte drift fails closed.
+
+The workflow preserves the exact nine pair/timeframe historical artifact identities, both 60m/240m horizons, exact readiness artifact, partial-result upload semantics, and deterministic EXP-048 aggregate-evidence namespace. It has no inputs, alternate trigger, automatic dispatch, or prior-run guard.
+
+DEC-126 is intentionally pre-authorization: model-run dispatch, authoritative result execution, protocol-result production, and model fitting remain false, so the preflight cannot pass. A later authorization decision must add the first-run guard only after terminal review is predeclared and zero prior runs are independently verified.
+
+Promotion, shadow/demo, broker mutation, live-order, real-money, and trading authorization remain false.
+
