@@ -1780,3 +1780,22 @@ The protocol source is `src/fmp/market_learning/model_successor_density_protocol
 
 DEC-113 authorizes no fit, historical result execution, workflow, dispatch, logistic reintroduction, threshold-floor/stability relaxation, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision must implement the deterministic density-aware HGB core before any result-producing execution can be considered.
 
+## DEC-114 — Phase 8A EXP-047 HGB candidate-density training core
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; NO EXP-047 HISTORICAL RESULT AUTHORIZED
+
+DEC-114 implements the deterministic in-memory training/evaluation core for merged DEC-113 `EXP-20260924-047`.
+
+It binds DEC-113 merge `060bde94835158d62d47640aaf1a77ec56b483ff`, DEC-113 protocol blob `871936729a1090d675f6f5181ef04c8f32494394`, and the unchanged base training-core blob `34b50a3f907d26b1c5ec50a0a0b444a3417d04f7`.
+
+The core fits only hist-gradient boosting. Logistic regression is explicitly excluded with zero fit attempts.
+
+Selection is scored once per cell. Directional rows are ranked by unique top-class directional probability descending and row identity ascending. Budget anchors 250/500/1000 derive selection cutoffs from the corresponding ranked row; all eligible rows at or above the cutoff are included, so cutoff ties may expand candidate count.
+
+The unchanged 250-candidate aggregate floor and financial gate remain mandatory. Only aggregate passes reach the unchanged DEC-104 four-window stability screen. Validation and retrospective holdout reuse the exact selection-derived cutoff without recomputing a budget or quantile.
+
+The implementation is `src/fmp/market_learning/model_successor_density_training.py` at Git blob `8ed51edc12c8d7d23cf9cc362e6b0ea7564d4945`.
+
+DEC-114 remains source-only. Authoritative result execution, model-fit authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. A later separate decision must freeze an artifact-backed runner/evidence contract before any result-producing execution can be considered.
+
