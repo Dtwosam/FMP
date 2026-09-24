@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046 CLOSED/REVIEWED + DEC-112 CROSS-RUN REPRODUCIBILITY DIAGNOSTIC FROZEN; NO ACCEPTED MODEL CHALLENGER
-**Next milestone:** Merge DEC-112's source-only cross-run reproducibility audit, then freeze a separately identified successor protocol that explicitly addresses the logistic family-availability reproducibility finding before any new fit. HGB material candidate decisions are reproducible; logistic result-producing reuse remains closed. No successor fit/result execution is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Next milestone:** DEC-112 is merged at `42c6a20388a406a0c350d9ea9e0cfdb64b6d7fbc`. Freeze a separately identified successor protocol that explicitly addresses the logistic family-availability reproducibility finding before any new fit. HGB material candidate decisions are reproducible; logistic result-producing reuse remains closed unless a future predeclared protocol either excludes logistic or freezes a reproducibility remedy. No successor fit/result execution is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
