@@ -1727,3 +1727,20 @@ Terminal runs fetch exact run/jobs/artifacts and are passed through DEC-108. Suc
 
 DEC-110 adds no alternate trigger, rerun/replacement command, protocol/model/runtime change, promotion, shadow/demo permission, broker mutation, live-order permission, real-money permission, or trading authorization. It does not dispatch EXP-046.
 
+## DEC-111 — Phase 8A EXP-046 reviewed historical stability-model result
+
+**Date:** 2026-09-24
+**Status:** REVIEWED AFTER THE SINGLE DEC-109-AUTHORIZED HISTORICAL RUN
+
+Run `35978474425` executed once from `main` at `dabafcc290d2b383531532d873c7d6c697198d5a` with `run_attempt=1` and completed successfully. All 11 expected jobs succeeded, all nine pair/timeframe artifacts persisted, and aggregate result artifact `10800835426` persisted with ZIP digest `sha256:f52ffa5d98eb196a33b97c6c09172a97c2c4ad712a41603ec7aef535825cb5d2`.
+
+The aggregate evidence fingerprint is `499c91e4508f07bf8a637657969175fbba8e93d07236b94ded06ae884b386214`, independently recomputed from canonical JSON. It contains all 18 exact cells and remains labeled `RETROSPECTIVE_ALREADY_SEEN`, `prior_result_informed=true`, and `untouched_oos=false`.
+
+All 18 cells end at `NO_STABLE_MODEL_CHALLENGER`. Two variants passed the unchanged predecessor aggregate selection gate and both were rejected by the DEC-104 four-window stability screen: EURUSD 5m / 60m logistic at confidence 0.6, and GBPUSD 5m / 240m HGB at confidence 0.6. No variant passed the stability screen, so validation and retrospective holdout remained locked for every cell. Five cells recorded the predeclared logistic `FAILED_NON_CONVERGENCE` family outcome; HGB fitted in all cells.
+
+EURUSD 5m / 60m had 288 aggregate selection candidates and +3.7097 mean net pips, but only one candidate in each 2021 half-year; both 2021 windows were financially negative. GBPUSD 5m / 240m had 460 aggregate selection candidates and +5.1167 mean net pips, but only 6 and 35 candidates in 2021H1/2021H2, below the frozen 10% per-window share floor.
+
+DEC-111 classifies the reviewed result as `STABILITY_MODEL_RESULT_REVIEWED_NO_STABLE_CHALLENGER`. The one-run authorization is consumed and closed. No rerun/replacement, new fit, promotion, prospective shadow, demo order, broker mutation, live order, real-money action, or trading authorization is opened.
+
+The machine-checkable reviewed-result source is `src/fmp/market_learning/model_successor_stability_result_decision.py` at Git blob `eb8970b21a48bb52c1ba75af64680f945abcbaa5`. Any further model research requires a separately predeclared, explicitly post-result-informed successor experiment.
+
