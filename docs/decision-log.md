@@ -1727,3 +1727,20 @@ Terminal runs fetch exact run/jobs/artifacts and are passed through DEC-108. Suc
 
 DEC-110 adds no alternate trigger, rerun/replacement command, protocol/model/runtime change, promotion, shadow/demo permission, broker mutation, live-order permission, real-money permission, or trading authorization. It does not dispatch EXP-046.
 
+## DEC-111 — Phase 8A EXP-046 reviewed historical stability-model result
+
+**Date:** 2026-09-24
+**Status:** REVIEWED AFTER THE SINGLE DEC-109-AUTHORIZED HISTORICAL RUN
+
+Run `35978474425` executed once from `main` at `dabafcc290d2b383531532d873c7d6c697198d5a`, `run_attempt=1`, and completed successfully. All 11 DEC-108 jobs succeeded, all nine pair/timeframe artifacts persisted, and aggregate artifact `10800835426` persisted with ZIP digest `sha256:f52ffa5d98eb196a33b97c6c09172a97c2c4ad712a41603ec7aef535825cb5d2`.
+
+The aggregate evidence fingerprint is `499c91e4508f07bf8a637657969175fbba8e93d07236b94ded06ae884b386214` and independently recomputes exactly from canonical JSON. All 18 cells report `NO_STABLE_MODEL_CHALLENGER`; zero cells are selected, zero validation/retrospective-holdout gates run to PASS, and accepted-model-candidate count is zero.
+
+Exactly two variants pass the unchanged aggregate selection gate and both are rejected by the DEC-104 temporal-stability screen. EURUSD 5m / 60m logistic at 0.6 has 288 aggregate candidates but only one candidate in each 2021 half, with negative net pips in both windows. GBPUSD 5m / 240m HGB at 0.6 retains the EXP-045 aggregate evidence (460 candidates, +5.1167 mean net pips) but only 1.3043% and 7.6087% of its candidates occur in 2021H1/H2, below the frozen 10% per-window share floor.
+
+A cross-run audit against the frozen EXP-045 cell artifacts finds HGB fully reproducible: 18/18 preprocessor fingerprints and 18/18 model fingerprints are exact. Logistic preprocessing is exact in all 10 cells fitted in both runs, but only 4/10 logistic model fingerprints match, 6/10 differ, and five cell fit statuses change between `FITTED` and `FAILED_NON_CONVERGENCE`. The EXP-045 and EXP-046 pinned numerical package sets are identical and DEC-105 imports the exact DEC-096 fitting implementation. DEC-111 therefore records an unresolved logistic cross-run numerical-reproducibility defect without attributing a specific root cause.
+
+DEC-111 classifies the reviewed result as `STABILITY_MODEL_RESULT_REVIEWED_NO_STABLE_CHALLENGER`. The EXP-046 one-run slot is consumed and closed. Rerun/replacement, authoritative result execution, model fit, successor-protocol source-open, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. A separate source-only reproducibility diagnostic is required before any successor protocol may open.
+
+The machine-checkable reviewed-result source is `src/fmp/market_learning/model_successor_stability_result_decision.py` at Git blob `de344ef314df7c7707b24cd9b5f59568b2582fa6`.
+
