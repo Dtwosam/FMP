@@ -26,6 +26,7 @@ from .model_successor_regime_utility_training import (
 
 
 REGIME_UTILITY_MODEL_EXECUTION_GATE_DECISION = "DEC-135"
+REGIME_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-137"
 REGIME_UTILITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp049-regime-utility-model-training.yml"
 )
