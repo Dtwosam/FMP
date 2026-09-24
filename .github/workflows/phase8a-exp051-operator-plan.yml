@@ -50,16 +50,21 @@ jobs:
       - name: Run exact DEC-156 read-only operator plan
         run: |
           set -euo pipefail
-          python scripts/phase8a_exp051_operator.py next | tee operator-plan.json
+          python scripts/phase8a_exp051_operator.py next \
+            > "$RUNNER_TEMP/operator-plan.json"
 
       - name: Verify zero-run dispatch plan
         run: |
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
 
           plan = json.loads(
-              Path("operator-plan.json").read_text(encoding="utf-8")
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "operator-plan.json"
+              ).read_text(encoding="utf-8")
           )
 
           assert plan["operator_decision"] == "DEC-156"
@@ -102,5 +107,5 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: exp051-dec156-read-only-operator-plan-${{ github.sha }}
-          path: operator-plan.json
+          path: ${{ runner.temp }}/operator-plan.json
           if-no-files-found: error
