@@ -303,9 +303,17 @@ Artifact/evidence source:
 
 `src/fmp/market_learning/model_successor_temporal_calibrated_utility_artifacts.py`
 
+Git blob:
+
+`3b25ad8dee80ad2d68a421b01b3e7789b1de9f1a`
+
 Focused tests:
 
 `tests/test_phase8a_exp051_temporal_calibrated_utility_artifacts.py`
+
+Git blob:
+
+`1c0bec0b6f337266d97fc3b79efa1afdab60e8b1`
 
 Artifact-runner version:
 
