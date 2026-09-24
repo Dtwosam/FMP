@@ -2648,3 +2648,20 @@ Focused tests are `tests/test_phase8a_exp051_operator_executor.py` at blob `6b73
 
 DEC-160 does not alter the research protocol and authorizes no retry, replacement, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading. After merge, the executor's automatic push run is the only new action; if DEC-156 submits the model workflow, that resulting manual-main EXP-051 run becomes the consumed DEC-155 attempt 1 and must be observed to terminal state and reviewed through DEC-154 without rerun.
 
+## DEC-161 — Phase 8A EXP-051 reviewed temporal-calibrated utility model result
+
+**Date:** 2026-09-24
+**Status:** REVIEWED; NO STABLE CHALLENGER; RUN SLOT CLOSED
+
+The single DEC-155-authorized EXP-051 historical workflow run `36066217609` completed successfully on attempt 1 at execution commit `3443b95ae3c524c74df4b2daebe9c526eb01ec9c`. All 11 DEC-154-required jobs completed successfully: authorization preflight, nine pair/timeframe matrix jobs, and aggregate-model-evidence. The run produced all nine expected cell artifacts plus aggregate artifact `10837836415`, named `exp051-temporal-calibrated-utility-model-result-evidence-3443b95ae3c524c74df4b2daebe9c526eb01ec9c-from-feature-35867307338-outcome-35876715434`, with GitHub artifact digest `sha256:ffbd18124dfe94c6eb25ae92fa4fda9650a26bd152173b000549b9a6e9fcace0`. The downloaded ZIP independently hashes to the same value and contains exactly one `model-result-evidence.json`.
+
+The aggregate evidence binds DEC-150/151/152, code commit `3443b95ae3c524c74df4b2daebe9c526eb01ec9c`, 18 cells, 108 regressors, and 108 excluded-regime calibration references. The stored evidence fingerprint `7dd836ed1c76c8eefd09b2b75e1eef9e875f5c6261c6fbb2cac8e3209781aaea` recomputes exactly, and all 18 individual cell-result fingerprints also recompute exactly.
+
+DEC-152 summary evidence records zero selected cells, 18 no-stable-challenger cells, one aggregate-selection-pass variant, zero stable-selection-pass variants, 26 unavailable budget variants, 26,392 utility-eligible selection rows, zero validation-pass cells, and zero retrospective-holdout-pass cells.
+
+The sole aggregate pass is USDJPY 5m / 60m at budget 250 with 250 selected candidates and 1,288.1 total net pips. Its frozen calibrated/raw cutoff pair is approximately 0.9971023442510035 / 1.852905399735933. Temporal stability still rejects: 2021 H1 has zero candidates, 2021 H2 has zero candidates, 2022 H1 has three candidates with -28.1 total net pips, and only 2022 H2 passes with 247 candidates and 1,316.2 total net pips. No validation or holdout stage is unlocked.
+
+The reviewed-result source is `src/fmp/market_learning/model_successor_temporal_calibrated_utility_result_decision.py` at Git blob `14bc6f2e9172aa325aeb556b7abeacf2c756c475`. Focused tests are `tests/test_phase8a_exp051_model_result_decision.py` at blob `691ec9d8a0bda18812374467d5f31ad44a02619a`. The detailed reviewed-result spec is `docs/superpowers/specs/2026-09-24-phase8a-exp051-reviewed-model-result.md` at blob `852057f95605b4aa58f0fbcb6c584e4b270a2180`.
+
+DEC-161 closes the consumed EXP-051 run slot. Model-run dispatch, replacement run, authoritative result execution, protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization are all false. No second EXP-051 run is authorized. The next gate is a separate post-result diagnostic over immutable DEC-161 evidence before any later successor protocol is considered.
+
