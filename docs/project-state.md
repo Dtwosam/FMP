@@ -1,11 +1,11 @@
 # FMP Project State
 
-**Updated:** 2026-09-23
+**Updated:** 2026-09-24
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 CLOSED/REVIEWED + EXP-046 DEC-109 ONE-RUN AUTHORIZATION MERGED + DEC-110 SINGLE-STEP OPERATOR MERGED; NO EXP-046 MODEL RESULT
-**Next milestone:** DEC-110 is merged at `bc11b8c86c6536ba432b9f497a9e50467a5058ff`. GitHub still reports zero manual-main `phase8a-exp046-stability-model-training` runs. From a clean current `main`, run `python scripts/phase8a_exp046_operator.py next`. Only if it reports `STABILITY_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp046_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045 CLOSED/REVIEWED + EXP-046 SINGLE HISTORICAL RUN REVIEWED UNDER DEC-111; NO STABLE EXP-046 MODEL CHALLENGER
+**Next milestone:** Merge DEC-111's exact result review for run `35978474425`. The EXP-046 one-run slot is consumed and closed. The reviewed result contains zero stable challengers: two variants passed the predecessor aggregate gate and both failed the frozen temporal-stability screen. Any continuation must start as a separately identified, explicitly post-result-informed successor diagnostic/protocol frozen before execution. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
@@ -412,6 +412,7 @@ Current milestone:
 34. DEC-108 predeclares terminal review before any EXP-046 authorization or result. It accepts only attempt-1 exact workflow/job/artifact identities, validates successful aggregate evidence through DEC-106, preserves valid partial evidence on non-success, rejects reruns, and authorizes no replacement/promotion/trading.
 35. DEC-109 verifies zero prior manual-main EXP-046 runs, hardens the workflow with a first-run rejection guard, and opens at most one outer historical result-producing authorization after merge. The first attempt consumes the slot; no run is dispatched by DEC-109 and all promotion/trading permissions remain false.
 36. DEC-110 freezes a clean-main, double-plan one-way operator for the DEC-109-authorized EXP-046 run. Only the zero-run state is dispatchable; active/terminal states cannot expose a second dispatch, and terminal evidence routes through DEC-108.
+37. DEC-111 reviews the single EXP-046 run `35978474425` as successful execution with complete 18-cell aggregate evidence but no stable challenger. Two variants passed the predecessor aggregate gate and both failed the DEC-104 temporal-stability screen; validation and holdout stayed locked. The run slot is consumed and all result/fit/promotion/shadow/demo/broker/live/real-money/trading authorizations are closed.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
 
@@ -452,5 +453,5 @@ Phase 8B must:
 - production/live order placement and broker mutation: LOCKED
 - real-money trading: LOCKED
 
-Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows completed successfully. One guarded EXP-044 V1 model-training workflow, run `35891605645`, executed under DEC-093 and failed; DEC-094 reviews that failure, records zero persisted model artifacts and no aggregate model result, and closes V1 execution without rerun or replacement authorization. DEC-095 through DEC-101 freeze and authorize the single guarded EXP-045 historical model run. Run `35911916239` completed successfully at `6d42a5053c5f2f696071715640dab24973a40517`; DEC-102 records no accepted model challenger and DEC-103 freezes the post-result diagnostic. DEC-104 through DEC-108 freeze the EXP-046 protocol, core, evidence, workflow, and terminal review. DEC-109 opens at most one guarded historical run with a first-run rejection guard, and DEC-110 freezes the clean-main double-plan operator without dispatching it. No EXP-046 result-producing workflow run has occurred. Promotion/shadow/demo/broker/live/real-money/trading paths remain locked. No prospective shadow campaign has begun.
+Phase 8 is not PASS. Phase 8B source-free preparation is active under DEC-046 through DEC-049. EXP-044 feature and outcome data-preparation workflows completed successfully. One guarded EXP-044 V1 model-training workflow, run `35891605645`, executed under DEC-093 and failed; DEC-094 reviews that failure, records zero persisted model artifacts and no aggregate model result, and closes V1 execution without rerun or replacement authorization. DEC-095 through DEC-101 freeze and authorize the single guarded EXP-045 historical model run. Run `35911916239` completed successfully at `6d42a5053c5f2f696071715640dab24973a40517`; DEC-102 records no accepted model challenger and DEC-103 freezes the post-result diagnostic. DEC-104 through DEC-110 freeze, authorize, and safely operate the single guarded EXP-046 historical model run. Run `35978474425` completed successfully at `dabafcc290d2b383531532d873c7d6c697198d5a`; DEC-111 reviews its complete 18-cell aggregate evidence and records no stable model challenger. Two variants passed the predecessor aggregate selection gate and both were rejected by the frozen temporal-stability screen, so validation and retrospective holdout remained locked throughout. The EXP-046 run slot is consumed. Promotion/shadow/demo/broker/live/real-money/trading paths remain locked. No prospective shadow campaign has begun.
 
