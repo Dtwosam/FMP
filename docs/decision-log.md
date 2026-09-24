@@ -1799,3 +1799,22 @@ The implementation is `src/fmp/market_learning/model_successor_density_training.
 
 DEC-114 remains source-only. Authoritative result execution, model-fit authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. A later separate decision must freeze an artifact-backed runner/evidence contract before any result-producing execution can be considered.
 
+## DEC-114 — Phase 8A EXP-047 deterministic HGB density training core
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; NO EXP-047 HISTORICAL RESULT AUTHORIZED
+
+DEC-114 implements the deterministic in-memory training/evaluation core for the DEC-113 `EXP-20260924-047` HGB-only candidate-density protocol.
+
+The core binds DEC-113 merge `060bde94835158d62d47640aaf1a77ec56b483ff`, DEC-113 protocol blob `871936729a1090d675f6f5181ef04c8f32494394`, and predecessor base-training blob `34b50a3f907d26b1c5ec50a0a0b444a3417d04f7`. Source validation fails closed on byte drift.
+
+Only hist-gradient boosting is fitted. Logistic regression is explicitly excluded with zero fit attempts under the DEC-112/DEC-113 reproducibility boundary.
+
+For each cell, HGB is fitted once on the unchanged fit split and the selection split is scored once. Budget anchors 250/500/1000 derive deterministic numeric cutoffs by sorting unique LONG/SHORT top-class rows by directional confidence descending and row identity ascending. The budget-th confidence becomes the cutoff; all rows at or above it are candidates, so cutoff ties may exceed the nominal budget. Variants with too few eligible directional rows are unavailable.
+
+The unchanged aggregate financial gate and 250-candidate floor remain mandatory. Only aggregate passes enter the unchanged four-window DEC-104 stability screen, using the same selection-derived cutoff. Selected variants use the exact cutoff unchanged on validation and retrospective holdout without recomputation or refit.
+
+The implementation is `src/fmp/market_learning/model_successor_density_training.py` at Git blob `8ed51edc12c8d7d23cf9cc362e6b0ea7564d4945`.
+
+DEC-114 authorizes no authoritative model fit, historical result execution, workflow, dispatch, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision may freeze the artifact-backed EXP-047 runner/evidence contract.
+
