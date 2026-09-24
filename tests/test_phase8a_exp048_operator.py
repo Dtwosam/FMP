@@ -57,7 +57,7 @@ def _checkout() -> dict[str, object]:
     }
 
 
-class Exp047RegimeConsensusOperatorTests(unittest.TestCase):
+class Exp048RegimeConsensusOperatorTests(unittest.TestCase):
     def test_checkout_requires_clean_exact_main(self) -> None:
         report = validate_regime_consensus_operator_checkout(
             branch="main",
@@ -272,9 +272,9 @@ class Exp047RegimeConsensusOperatorTests(unittest.TestCase):
             dispatch_command_for_regime_consensus_report(terminal)
         )
 
-    def test_gate_metadata_matches_dec118_source_shape(self) -> None:
+    def test_gate_metadata_matches_dec128_source_shape(self) -> None:
         gate = {
-            "regime_consensus_model_execution_gate_decision": "DEC-116",
+            "regime_consensus_model_execution_gate_decision": "DEC-126",
             "regime_consensus_model_execution_authorization_decision": "DEC-128",
             "dec123_merged_commit": "1" * 40,
             "dec124_merged_commit": "2" * 40,
