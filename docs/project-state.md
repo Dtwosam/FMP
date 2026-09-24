@@ -4,7 +4,7 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-045/EXP-046 CLOSED/REVIEWED + DEC-112 REPRODUCIBILITY DIAGNOSTIC FROZEN + EXP-047 HGB DENSITY PROTOCOL FROZEN UNDER DEC-113; NO EXP-047 FIT OR RESULT
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046 CLOSED/REVIEWED + DEC-112 REPRODUCIBILITY DIAGNOSTIC FROZEN + EXP-047 HGB DENSITY PROTOCOL FROZEN UNDER DEC-113; NO EXP-047 FIT OR RESULT
 **Next milestone:** Merge DEC-113's source-only EXP-047 HGB candidate-density protocol, then implement a separate deterministic training/evaluation core that adds only the frozen selection-derived 250/500/1000 density anchors around the unchanged HGB fit and unchanged aggregate/stability gates. Logistic result-producing reuse remains closed. No EXP-047 model fit, historical result execution, workflow, or run is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
