@@ -27,6 +27,46 @@ jobs:
         with:
           python-version: "3.12.14"
 
+      - name: Reject any prior manual main EXP-048 model run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > current-model-run.json
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp048-regime-consensus-model-training.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
+            > model-runs.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          current = json.loads(
+              Path("current-model-run.json").read_text(encoding="utf-8")
+          )
+          assert current["id"] == int(os.environ["GITHUB_RUN_ID"])
+          assert current["name"] == "phase8a-exp048-regime-consensus-model-training"
+          assert current["path"] == ".github/workflows/phase8a-exp048-regime-consensus-model-training.yml"
+          assert current["event"] == "workflow_dispatch"
+          assert current["head_branch"] == "main"
+
+          listing = json.loads(
+              Path("model-runs.json").read_text(encoding="utf-8")
+          )
+          prior = [
+              item
+              for item in listing.get("workflow_runs", [])
+              if item.get("event") == "workflow_dispatch"
+              and item.get("head_branch") == "main"
+              and item.get("id") != int(os.environ["GITHUB_RUN_ID"])
+          ]
+          if prior:
+              ids = [item.get("id") for item in prior]
+              raise SystemExit(
+                  f"prior manual-main EXP-048 model run exists: {ids}"
+              )
+          PY
+
       - name: Install pinned EXP-048 runtime
         run: python -m pip install -r requirements/exp048-model-run.txt -e .
 
