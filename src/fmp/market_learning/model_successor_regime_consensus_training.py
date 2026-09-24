@@ -752,6 +752,7 @@ def run_regime_consensus_model_cell_core(
         fitted_models[regime_name] = fitted
         fit_evidence[regime_name] = {
             "status": "FITTED",
+            "fit_attempt_count": 1,
             "row_count": fit_frame.height,
             "target_class_counts": counts,
             "preprocessor_fingerprint": (
