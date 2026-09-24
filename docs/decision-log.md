@@ -2210,3 +2210,18 @@ The state machine is one-way. Only a missing run may expose the exact dispatch c
 Terminal success requires the exact non-expired aggregate artifact tied to the run head SHA, loads the DEC-134 aggregate evidence, and routes the full terminal evidence through DEC-136. Non-success routes through DEC-136 without aggregate evidence. No rerun or replacement path exists.
 
 DEC-138 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. After merge and normal regression gates, the operator may be inspected from clean current `main`; only an exact zero-run read-only plan may expose the single DEC-137-authorized dispatch.
+
+## DEC-139 — Phase 8A EXP-049 reviewed historical regime-utility result
+
+**Date:** 2026-09-24
+**Status:** REVIEWED / EXP-049 HISTORICAL RUN CLOSED
+
+DEC-139 reviews the single DEC-137-authorized EXP-049 historical model run `36029925264`. The run completed successfully on attempt 1 at execution commit `eeb735bca7d38c3246f22a9606dfafe9c3df8279`; all 11 required jobs succeeded and all nine pair/timeframe cell artifacts plus the aggregate artifact were persisted.
+
+The reviewed aggregate artifact is id `10822530555`, name `exp049-regime-utility-model-result-evidence-eeb735bca7d38c3246f22a9606dfafe9c3df8279-from-feature-35867307338-outcome-35876715434`, with GitHub artifact digest `sha256:2cafb18dc1130f4fe0bf229b7df1deda24bfb7b1295f9a6ad688c1f5c1fd407c`. The downloaded ZIP independently hashes to the same value and contains exactly one `model-result-evidence.json`.
+
+DEC-134 evidence revalidation succeeds. The canonical evidence fingerprint is `29ecbb5bf3ce00f35c825e977d9b3fff1777e165ce9bef311fefcb7bfbdb091e`. All 18 cells and all 108 regime/target regressors verify. Eight regime-utility density variants pass the unchanged aggregate selection gate, zero pass the frozen temporal-stability gate, all 18 cells terminate at `NO_REGIME_UTILITY_STABLE_MODEL_CHALLENGER`, and validation/retrospective holdout remain locked. Thirty-one budget variants are unavailable for insufficient utility rows and the verified utility-eligible selection-row total is 14,158.
+
+The result-decision source is `src/fmp/market_learning/model_successor_regime_utility_result_decision.py` at Git blob `dce13838f32fbb8aa0e403c550b669f778dd0742`; focused tests are `tests/test_phase8a_exp049_model_result_decision.py` at blob `f47c22ba6199ff2a7b7be11dc4ebdacca9bc3652`; the reviewed-result record is `docs/superpowers/specs/2026-09-24-phase8a-exp049-reviewed-model-result.md` at blob `c744f3ad11286220e9574553aa81e54373574cb3`.
+
+The DEC-137 one-run slot is consumed. Model-run dispatch, replacement-run authorization, authoritative result execution, protocol-result production, model fitting, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization are all closed. No second EXP-049 run is authorized. Any post-result diagnostic or successor protocol requires a later separate decision and may not alter this reviewed evidence.
