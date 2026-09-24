@@ -1973,3 +1973,20 @@ The implementation is `src/fmp/market_learning/model_successor_regime_consensus_
 
 DEC-124 authorizes no authoritative model fit, historical result execution, workflow, dispatch, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision may freeze the artifact-backed EXP-048 runner/evidence contract.
 
+## DEC-125 — Phase 8A EXP-048 regime-consensus artifact/evidence contract
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; AUTHORITATIVE EXP-048 RESULT EXECUTION CLOSED
+
+DEC-125 freezes the artifact-backed historical-data runner and aggregate-evidence contract around merged DEC-123/DEC-124.
+
+It binds DEC-123 merge `39674f482e57922ac61fb0a6dff15a5ef621efd3`, protocol blob `39b6b3f5adc7f34ffd8cebcf881138d6ca3eab84`, DEC-124 merge `83c5b40eebae884cda9b2b65a8494dcd63bcbb7a`, training-core blob `d902f9601ef3b04e0deaead18951d43350cb09be`, and the exact historical artifact loader.
+
+The contract reuses only the accepted EXP-044 feature/outcome/readiness artifacts and validates all 18 exact EXP-048 cell results. It requires exactly three regime-model fits per cell with one attempt each, exact preprocessor/model fingerprints, explicit prohibition of full-fit fallback, logistic exclusion, valid consensus accounting/digests, and exact 250/500/1000 consensus-budget inventory.
+
+DEC-125 recomputes aggregate financial-gate criteria, the four-window candidate-share/financial stability criteria, and validation/holdout financial gates. Every budget variant must reconcile to the same selection consensus-eligible row count. A selected cell must name the actual deterministic stable winner; a no-challenger result cannot hide a stable-passing variant. Forward stages must reuse the exact selected budget/cutoff.
+
+The implementation is `src/fmp/market_learning/model_successor_regime_consensus_artifacts.py` at Git blob `b62f3ff775f30c96fa2f6f1a15256fd696ea5c2e`. Focused tests are frozen at blob `16a58dcc577952a9bf5bedf3f2e48bea38f679bc`.
+
+DEC-125 remains non-executable: the authoritative bundle raises before readiness validation, historical artifact loading, or model fitting. No workflow/dispatch, authoritative fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization is introduced.
+
