@@ -2127,3 +2127,18 @@ Realized selection still must pass the unchanged 0.5-pip aggregate gate and all 
 The training core is `src/fmp/market_learning/model_successor_regime_utility_training.py` at Git blob `e1018b20210b7bb8d666071d8eb878aba5899111`. Focused tests are `tests/test_phase8a_exp049_regime_utility_training.py` at Git blob `0606d8208b8c7edac40f1073e5b5e8248dfc107b`.
 
 DEC-133 adds no workflow, dispatch path, authoritative historical fit, result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization. A later separate decision must freeze an artifact-backed runner/evidence contract before any historical execution can be considered.
+
+## DEC-134 — Phase 8A EXP-049 artifact-backed result-evidence contract
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-134 freezes the artifact-backed runner/evidence contract for `EXP-20260924-049`. It binds the exact DEC-132 protocol, merged DEC-133 training core `a6420e35a9219c81e65c5179843488f94b6668d3`, DEC-133 training-core Git blob `e1018b20210b7bb8d666071d8eb878aba5899111`, accepted historical artifact loader Git blob `27c0848d16722a22b4762f5842396c2aebc92bec`, and the existing authoritative feature/outcome/readiness identities.
+
+The contract requires complete 18-cell result evidence and exactly 108 regime/target regressors. It independently validates each target summary and fit fingerprint, nested regime/target prediction digests, unanimous positive-utility consensus accounting, the exact 250/500/1000 budget semantics, recomputed aggregate financial gates, all four unchanged temporal-stability windows, selection/validation/holdout status chains, and both cell-level and aggregate evidence fingerprints.
+
+A no-challenger result cannot hide a stable variant. Full-fit, HGB-classifier, and logistic fallbacks remain forbidden. Any unlocked validation or retrospective-holdout block must preserve the exact selection-derived positive utility cutoff and internally recomputable financial gate evidence.
+
+The artifact/evidence source is `src/fmp/market_learning/model_successor_regime_utility_artifacts.py` at Git blob `6b3ec2fc8c6a8e6089d71e21d3243cea50a6fa13`. Focused tests are `tests/test_phase8a_exp049_regime_utility_artifacts.py` at Git blob `0c7c746ee0e7365e5e4dd0fef96cc4c3eac7418a`.
+
+The authoritative bundle checks `AUTHORITATIVE_REGIME_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED` before loading readiness or historical feature/outcome artifacts. DEC-134 keeps that flag false, keeps authoritative model fit false, and opens no workflow, dispatch, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization. A later separate decision may freeze a manual-main workflow/CLI while keeping dispatch closed until terminal review and one-run authorization are separately predeclared.
