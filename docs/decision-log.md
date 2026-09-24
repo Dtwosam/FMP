@@ -2193,3 +2193,20 @@ The workflow is hardened with a first-run rejection guard before runtime install
 The authorized outer execution gate is `src/fmp/market_learning/model_successor_regime_utility_execution_gate.py` at Git blob `dda941efb7542dbc4fcaa890154df4f39f006f07` and records `REGIME_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-137"`. Only the outer dispatch/result/protocol-result/model-fit flags are true; underlying DEC-132/DEC-133/DEC-134 source-level execution and fit locks remain false and are validated as frozen dependencies.
 
 The first manual-main EXP-049 attempt consumes the slot on success, failure, cancellation, or timeout. No rerun/replacement is authorized. DEC-137 itself dispatches nothing. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. A later separate decision must freeze a clean-main one-way operator before any dispatch.
+
+## DEC-138 — Phase 8A EXP-049 clean-main single-step operator
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY OPERATOR; NO EXP-049 RUN DISPATCHED BY THIS DECISION
+
+DEC-138 freezes the one-way operator around the single historical EXP-049 attempt authorized by DEC-137.
+
+The operator core is `src/fmp/market_learning/model_successor_regime_utility_operator.py` at Git blob `f523ff3e2353c0c347e136f9a998a2b1434a561b`. The public CLI is `scripts/phase8a_exp049_operator.py` at blob `9f1c3881e45322e5dda267bc7adaff1c86317ec2`. Focused tests are `tests/test_phase8a_exp049_operator.py` at blob `ec73bb478c62966edfeb066d43b871511642574b`.
+
+The operator binds DEC-137 merge `33227b25cd1a888c3e0c7db3a50bd0cb61f5aad6`, requires a clean local `main` exactly matching fetched `origin/main`, verifies the `Dtwosam/FMP` remote, and reads only the exact manual-main `phase8a-exp049-regime-utility-model-training` workflow state.
+
+The state machine is one-way. Only a missing run may expose the exact dispatch command. An active or terminal run exposes no dispatch path, and more than one manual-main run fails closed. The public CLI is read-only by default; `advance --execute` re-runs the public `next` planner and refuses dispatch if live state changes between planning and execution.
+
+Terminal success requires the exact non-expired aggregate artifact tied to the run head SHA, loads the DEC-134 aggregate evidence, and routes the full terminal evidence through DEC-136. Non-success routes through DEC-136 without aggregate evidence. No rerun or replacement path exists.
+
+DEC-138 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. After merge and normal regression gates, the operator may be inspected from clean current `main`; only an exact zero-run read-only plan may expose the single DEC-137-authorized dispatch.
