@@ -1761,3 +1761,22 @@ The machine-checkable source is `src/fmp/market_learning/model_successor_cross_r
 
 DEC-112 opens only successor-protocol source work. Logistic-family reuse for a new result-producing successor, execution of any numerical remedy, stability-screen relaxation, EXP-046 rerun/replacement, successor fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
 
+## DEC-113 — Phase 8A EXP-047 HGB candidate-density successor protocol
+
+**Date:** 2026-09-24
+**Status:** APPROVED SOURCE-ONLY BEFORE ANY EXP-047 MODEL RESULT
+
+DEC-113 opens `EXP-20260924-047` as a separately identified, explicitly post-result-informed HGB-only successor after DEC-112 froze the EXP-045/046 cross-run reproducibility audit.
+
+EXP-047 excludes logistic regression from result-producing participation. DEC-112 established that HGB material candidate decisions reproduce across runs while logistic family availability changes in five cells. No logistic numerical remedy is introduced by DEC-113.
+
+The predecessor HGB density diagnostic is frozen at 54 evaluated HGB variants: 23 meet the existing 250-candidate criterion, 13 have positive gross/mean/total financial signs, 12 of those positive variants remain below 250 candidates, and only one passes the full aggregate gate. That single aggregate pass failed the existing temporal-stability screen.
+
+DEC-113 therefore preserves the exact data, 48 inputs, target, chronology, HGB configuration, 250-candidate floor, aggregate financial gate, and DEC-104 four-window temporal-stability screen. The sole research change is the candidate-density mapping.
+
+The frozen selection candidate-budget anchors are 250, 500, and 1000. Selection rows with a unique LONG/SHORT top class are ranked by directional top-class probability descending and row identity ascending. The confidence of the budget-th row becomes the selection-derived numeric cutoff; all eligible rows at or above that cutoff are candidates, so ties may exceed the nominal budget. The exact cutoff is then applied unchanged to validation and retrospective holdout; no later-split quantile/budget recomputation is permitted.
+
+The protocol source is `src/fmp/market_learning/model_successor_density_protocol.py` at Git blob `871936729a1090d675f6f5181ef04c8f32494394`.
+
+DEC-113 authorizes no fit, historical result execution, workflow, dispatch, logistic reintroduction, threshold-floor/stability relaxation, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. A later separate decision must implement the deterministic density-aware HGB core before any result-producing execution can be considered.
+
