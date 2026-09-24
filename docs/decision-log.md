@@ -2322,3 +2322,41 @@ The execution gate is `src/fmp/market_learning/model_successor_temporal_jackknif
 DEC-144 keeps run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization false. Therefore the workflow source is complete but `require-execution` fails closed at the dispatch-authorization check.
 
 Before any historical run authorization, a separate decision must predeclare the exact attempt-1 terminal review, required job/artifact inventory, complete-success and partial-failure evidence semantics, and no-rerun/replacement policy. DEC-144 dispatches nothing.
+
+## DEC-145 — Phase 8A EXP-050 predeclared terminal-result review
+
+**Date:** 2026-09-24
+**Status:** APPROVED BEFORE ANY EXP-050 RUN AUTHORIZATION
+
+DEC-145 freezes the exact terminal-review contract for the future first `EXP-20260924-050` historical model run before any result-producing authorization exists.
+
+The review binds DEC-144 merge `9f2986c783823cf7d9647ed4b0a50c66470bea21`, workflow blob `ec8ed4ab3f0b8a18ffc735af92172e059ed29955`, CLI blob `70c5e9b8d22888b9727e234fd80ea3e3ba4e5e09`, and execution-gate blob `4814f0db86bec943d7282ab13586559b1eb8caa7`.
+
+Only attempt 1 of the exact manual-main `phase8a-exp050-temporal-jackknife-utility-model-training` workflow is reviewable. The terminal payload must contain exactly 11 completed jobs: one authorization preflight, nine model-cell matrix jobs, and one aggregate job. Rerun attempts are rejected.
+
+A successful run requires all 11 jobs to succeed, all nine exact non-expired cell artifacts, the exact aggregate artifact, and independent DEC-143 aggregate-evidence revalidation against the run head SHA. The success stage is `TEMPORAL_JACKKNIFE_UTILITY_MODEL_RESULT_REVIEW_REQUIRED`.
+
+A first-attempt failure, cancellation, or timeout may preserve only a subset of valid cell artifacts. It may not claim an aggregate artifact or aggregate result evidence. The failure stage is `TEMPORAL_JACKKNIFE_UTILITY_MODEL_RUN_FAILURE_REVIEW_REQUIRED`, with preflight/matrix outcome counts and persisted cell-artifact count recorded.
+
+The review source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_result_review.py` at Git blob `e93f7f26e6f0cf8541c9dffd0d359acf0a7ec64e`. Focused tests are `tests/test_phase8a_exp050_model_result_review.py` at blob `54dd7a4c973a685efcc7a4b732c2be46e64e7aff`.
+
+DEC-145 authorizes no dispatch, replacement run, fitting, promotion, shadow/demo, broker mutation, live order, real-money action, or trading. After merge, a later separate decision may independently verify zero prior manual-main EXP-050 runs, add the first-run rejection guard, and authorize at most one outer historical result-producing attempt without dispatching it.
+
+## DEC-145 — Phase 8A EXP-050 predeclared terminal-result review
+
+**Date:** 2026-09-24
+**Status:** APPROVED BEFORE ANY EXP-050 HISTORICAL RESULT OR RUN AUTHORIZATION
+
+DEC-145 freezes the exact terminal review for a possible future `EXP-20260924-050` run before any authorization or result exists.
+
+Only attempt-1 manual-main runs of `phase8a-exp050-temporal-jackknife-utility-model-training` are reviewable. The review binds DEC-144 merge `9f2986c783823cf7d9647ed4b0a50c66470bea21`, workflow blob `ec8ed4ab3f0b8a18ffc735af92172e059ed29955`, CLI blob `70c5e9b8d22888b9727e234fd80ea3e3ba4e5e09`, and execution-gate blob `4814f0db86bec943d7282ab13586559b1eb8caa7`.
+
+Exactly 11 completed jobs are accepted: one authorization preflight, nine matrix jobs, and one aggregate job. Artifacts are restricted to the exact nine pair/timeframe cell-result names plus the exact aggregate-result name tied to the workflow head SHA.
+
+A successful run requires all 11 jobs to succeed, all nine cell artifacts, the aggregate artifact, and successful DEC-143 aggregate-evidence revalidation against the execution commit. It stops at `TEMPORAL_JACKKNIFE_UTILITY_MODEL_RESULT_REVIEW_REQUIRED`.
+
+A failed, cancelled, or timed-out first attempt may preserve only a valid subset of cell artifacts. It cannot claim an aggregate artifact or aggregate evidence and stops at `TEMPORAL_JACKKNIFE_UTILITY_MODEL_RUN_FAILURE_REVIEW_REQUIRED`.
+
+The review source is `src/fmp/market_learning/model_successor_temporal_jackknife_utility_result_review.py` at blob `e93f7f26e6f0cf8541c9dffd0d359acf0a7ec64e`. Focused tests are `tests/test_phase8a_exp050_model_result_review.py` at blob `54dd7a4c973a685efcc7a4b732c2be46e64e7aff`. The detailed review contract is `docs/superpowers/specs/2026-09-24-phase8a-exp050-model-result-review.md`.
+
+Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. DEC-145 changes none of DEC-144's false dispatch/result/protocol-result/model-fit flags. A later separate decision may independently verify zero prior manual-main runs, add a first-run guard, and authorize at most one outer historical attempt without dispatching it.
