@@ -1156,6 +1156,12 @@ def _validate_regime_consensus_cell_result(
         aggregate, final, unavailable = (
             _validate_variant(raw)
         )
+        if raw.get("eligible_consensus_row_count") != (
+            eligible_consensus_rows
+        ):
+            raise ValueError(
+                "EXP-048 variant consensus eligible count mismatch"
+            )
         aggregate_pass_count += int(aggregate)
         stable_pass_count += int(final)
         stability_reject_count += int(
@@ -1168,6 +1174,32 @@ def _validate_regime_consensus_cell_result(
         raise ValueError(
             "EXP-048 consensus budget inventory mismatch"
         )
+
+    passing = [
+        raw
+        for raw in indexed.values()
+        if raw.get("selection_gate_passed") is True
+    ]
+    expected_selected = (
+        max(
+            passing,
+            key=lambda raw: (
+                float(
+                    raw["scenarios"]["0.5"]["metrics"][
+                        "total_net_pips"
+                    ]
+                ),
+                int(
+                    raw["scenarios"]["0.5"]["metrics"][
+                        "directional_candidate_count"
+                    ]
+                ),
+                -int(raw["candidate_budget_anchor"]),
+            ),
+        )
+        if passing
+        else None
+    )
 
     selected_variant = selection.get("selected_variant")
     selection_status = selection.get("status")
@@ -1211,6 +1243,20 @@ def _validate_regime_consensus_cell_result(
             raise ValueError(
                 "EXP-048 selected variant is not consensus-stable eligible"
             )
+        if (
+            expected_selected is None
+            or int(
+                expected_selected["candidate_budget_anchor"]
+            )
+            != budget
+            or float(
+                expected_selected["selection_derived_cutoff"]
+            )
+            != float(cutoff)
+        ):
+            raise ValueError(
+                "EXP-048 selected variant is not deterministic winner"
+            )
         selected_budget = budget
         selected_cutoff = float(cutoff)
     elif (
@@ -1220,6 +1266,10 @@ def _validate_regime_consensus_cell_result(
         if selected_variant is not None:
             raise ValueError(
                 "EXP-048 unselected cell cannot name a variant"
+            )
+        if expected_selected is not None:
+            raise ValueError(
+                "EXP-048 no-challenger status hides stable variant"
             )
     else:
         raise ValueError(
