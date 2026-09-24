@@ -2665,3 +2665,26 @@ The reviewed-result source is `src/fmp/market_learning/model_successor_temporal_
 
 DEC-161 closes the consumed EXP-051 run slot. Model-run dispatch, replacement run, authoritative result execution, protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization are all false. No second EXP-051 run is authorized. The next gate is a separate post-result diagnostic over immutable DEC-161 evidence before any later successor protocol is considered.
 
+## DEC-162 — Phase 8A EXP-051 post-result diagnostics
+
+**Date:** 2026-09-25
+**Status:** APPROVED POST-RESULT DIAGNOSTIC / SUCCESSOR SOURCE DESIGN MAY OPEN
+
+DEC-162 compares immutable reviewed EXP-050 and EXP-051 evidence after DEC-161 closes the consumed EXP-051 run slot. It binds DEC-161 merge `0a67a2353f3f2f2c5106074bd9e7e620a37d1649`, DEC-161 result-decision blob `14bc6f2e9172aa325aeb556b7abeacf2c756c475`, DEC-149 merge `d8874bf213c420fb506cc9ee8c4dfb2caffbb9e1`, DEC-149 diagnostic blob `f23465ca30249ce8abab3c9fdf07ce39a8679a9a`, and the exact EXP-050/EXP-051 reviewed evidence fingerprints.
+
+The comparison confirms that calibrated ranking changes candidate ordering without changing raw direction eligibility or budget availability: both experiments contain 26,392 utility-eligible selection rows, 28 available budget variants, and 26 unavailable variants.
+
+Aggregate passes contract from three in EXP-050 to one in EXP-051. Both experiments' aggregate passes remain concentrated in USDJPY 5m / 60m. EXP-050 passes budgets 250/500/1000, while EXP-051 passes budget 250 only. Stable-selection passes remain zero in both experiments.
+
+For the common budget-250 variant, EXP-051 changes the candidate identity digest, shifts the direction mix from 249 LONG / 1 SHORT to 239 LONG / 11 SHORT, and improves realized selection total net pips from `612.8999999999933` to `1288.1000000000117`, a delta of `675.2000000000185`. Mean net pips rises by `2.7008000000000743`.
+
+That improvement does not broaden early temporal support. Both EXP-050 and EXP-051 select zero candidates in 2021 H1 and 2021 H2. EXP-051 adds three 2022 H1 candidates, but they lose `-28.100000000000477` net pips and represent only 1.2% of the full candidate count. The calibrated rank instead concentrates 247 of 250 candidates in 2022 H2, where realized total net pips rises to `1316.2000000000123`.
+
+Broader calibrated ranks degrade: EXP-050 budget 500 passes the aggregate gate with `247.4000000000135` pips, while EXP-051 budget 500 rejects with `-766.5999999999894`; EXP-050 budget 1000 passes with `504.3000000000052`, while EXP-051 budget 1000 rejects with `-3.200000000010732`.
+
+DEC-162 therefore classifies the result as `TOP_250_FINANCIAL_QUALITY_IMPROVED_BUT_EARLY_TEMPORAL_COVERAGE_UNCHANGED_AND_BROAD_BUDGETS_DEGRADED`. The remaining blocker is robust temporal support in the ranked candidate set, not merely raw utility scale mismatch.
+
+The diagnostic source is `src/fmp/market_learning/model_successor_temporal_calibrated_utility_post_result_diagnostics.py` at blob `00b9cbb5b0c95bd161d429d1f973d1e807f02a48`. Focused tests are `tests/test_phase8a_exp051_post_result_diagnostics.py` at blob `4c914eb34b5413ae26455f05b6ea6f347a995d1e`. The detailed diagnostic spec is `docs/superpowers/specs/2026-09-25-phase8a-exp051-post-result-diagnostics.md` at blob `85859be4f89bbf13e65c372d29c018ad290dd84a`.
+
+DEC-162 authorizes only source design for a later successor protocol. It does not authorize rerun/replacement of EXP-051, gate relaxation, selection-window recalibration, use of realized selection outcomes in ranking, successor result execution, successor model fitting, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading.
+
