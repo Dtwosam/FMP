@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046 CLOSED/REVIEWED + EXP-047 DEC-118 ONE-RUN AUTHORIZATION MERGED + DEC-119 SINGLE-STEP OPERATOR SOURCE FROZEN; NO EXP-047 RESULT
-**Next milestone:** Merge DEC-119's source-only EXP-047 single-step operator. After merge, from clean current `main`, run `python scripts/phase8a_exp047_operator.py next`. Only if it reports `DENSITY_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp047_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046 CLOSED/REVIEWED + EXP-047 DEC-118 ONE-RUN AUTHORIZATION + DEC-119 SINGLE-STEP OPERATOR MERGED; NO EXP-047 RESULT
+**Next milestone:** DEC-119 is merged at `275cf7de38631918b914182e3c8ada07727d38d5`. GitHub still reports zero manual-main `phase8a-exp047-density-model-training` runs. From clean current `main`, run `python scripts/phase8a_exp047_operator.py next`. Only if it reports `DENSITY_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp047_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
