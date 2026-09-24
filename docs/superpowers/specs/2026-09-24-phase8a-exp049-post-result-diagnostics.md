@@ -167,9 +167,17 @@ Source:
 
 `src/fmp/market_learning/model_successor_regime_utility_post_result_diagnostics.py`
 
+Git blob:
+
+`e286be2574d4cee60322a4b65213af76ab34b381`
+
 Focused tests:
 
 `tests/test_phase8a_exp049_post_result_diagnostics.py`
+
+Git blob:
+
+`6fa290bacab4363ab823771f6ca04aa19f8095be`
 
 DEC-140 opens only:
 
