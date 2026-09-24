@@ -2058,3 +2058,20 @@ Terminal success requires the exact aggregate artifact tied to the run head SHA,
 
 DEC-129 contains no rerun/replacement or alternate trigger and dispatches nothing by itself. The first EXP-048 attempt consumes the DEC-128 slot on any terminal outcome. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
 
+## DEC-130 — Phase 8A EXP-048 reviewed historical regime-consensus result
+
+**Date:** 2026-09-24
+**Status:** REVIEWED AFTER THE SINGLE DEC-128-AUTHORIZED HISTORICAL RUN
+
+Run `36006524422` executed once from `main` at `60b2796a64f0a4f7f95660d45ef7ab7fac519e9c` with `run_attempt=1` and completed successfully. All 11 expected jobs succeeded, all nine pair/timeframe artifacts persisted, and aggregate result artifact `10811660325` persisted with ZIP digest `sha256:ea6f228baac35b7a858942452b8fb4fa44d312387a1c5812d164b5a954170d9f`.
+
+The aggregate evidence fingerprint is `acd3a9d7708c345b05082026de9eecc515abb9090a901126034e91173eb30647`, independently recomputed from canonical JSON. It contains all 18 exact cells and remains labeled `RETROSPECTIVE_ALREADY_SEEN`, `prior_result_informed=true`, and `untouched_oos=false`.
+
+All 18 cells end at `NO_REGIME_CONSENSUS_STABLE_MODEL_CHALLENGER`. Seventeen density-budget variants pass the unchanged aggregate selection gate and all 17 are rejected by the frozen temporal-stability screen. No variant passes stability, so validation and retrospective holdout remain locked for every cell. No budget variant is unavailable. The 18 cells contain 431,086 consensus-eligible selection rows in aggregate.
+
+Aggregate passes occur in seven cells: EURUSD 15m/240m (3), EURUSD 1h/240m (3), EURUSD 5m/240m (2), GBPUSD 1h/60m (1), GBPUSD 5m/60m (2), USDJPY 5m/60m (3), and USDJPY 5m/240m (3). Every aggregate pass still fails the unchanged temporal-stability screen.
+
+DEC-130 classifies the reviewed result as `REGIME_CONSENSUS_MODEL_RESULT_REVIEWED_NO_STABLE_CHALLENGER`. The one-run authorization is consumed and closed. No rerun/replacement, new fit, promotion, prospective shadow, demo order, broker mutation, live order, real-money action, or trading authorization is opened.
+
+The machine-checkable reviewed-result source is `src/fmp/market_learning/model_successor_regime_consensus_result_decision.py` at Git blob `0556da8c036a55ba3b94d933f67f439eb306f9c2`. Any further model research requires a separately predeclared, explicitly post-result-informed successor diagnostic/protocol.
+
