@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from fmp.market_learning.model_successor_density_result_review import (
+from fmp.market_learning.model_successor_regime_consensus_result_review import (
     EXPECTED_DATASETS,
     REGIME_CONSENSUS_MODEL_RESULT_REVIEW_DECISION,
     validate_regime_consensus_model_terminal_review,
@@ -91,6 +91,21 @@ def _artifacts(
 
 
 class Exp048ModelTerminalReviewTests(unittest.TestCase):
+    def test_review_imports_exp048_module_not_density_predecessor(
+        self,
+    ) -> None:
+        source = __import__(
+            "pathlib"
+        ).Path(__file__).read_text(encoding="utf-8")
+        self.assertIn(
+            "model_successor_regime_consensus_result_review",
+            source,
+        )
+        self.assertNotIn(
+            "model_successor_density_result_review import",
+            source,
+        )
+
     def test_success_requires_complete_aggregate_and_stays_non_promotional(
         self,
     ) -> None:
