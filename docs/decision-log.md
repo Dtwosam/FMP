@@ -2127,3 +2127,20 @@ Realized selection still must pass the unchanged 0.5-pip aggregate gate and all 
 The training core is `src/fmp/market_learning/model_successor_regime_utility_training.py` at Git blob `e1018b20210b7bb8d666071d8eb878aba5899111`. Focused tests are `tests/test_phase8a_exp049_regime_utility_training.py` at Git blob `0606d8208b8c7edac40f1073e5b5e8248dfc107b`.
 
 DEC-133 adds no workflow, dispatch path, authoritative historical fit, result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization. A later separate decision must freeze an artifact-backed runner/evidence contract before any historical execution can be considered.
+
+## DEC-134 — Phase 8A EXP-049 regime-utility artifact/evidence contract
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; AUTHORITATIVE EXP-049 RESULT EXECUTION CLOSED
+
+DEC-134 freezes the artifact-backed historical-data runner and aggregate-evidence contract around merged DEC-132/DEC-133.
+
+It binds DEC-132 merge `d17326eebf6b456211225d7bad3a182a0307b707`, protocol blob `ad2fcb22656fc7a1490f4cdf87fb25c62895a1ac`, DEC-133 merge `a6420e35a9219c81e65c5179843488f94b6668d3`, training-core blob `e1018b20210b7bb8d666071d8eb878aba5899111`, and the unchanged accepted EXP-044 historical artifact loader.
+
+The contract reuses only the accepted feature/outcome/readiness artifacts and validates all 18 exact EXP-049 cells. Every cell must contain exactly three fit regimes, two financial regressors per regime, six regressors total, exact per-target preprocessing/model fingerprints, exact utility-consensus prediction digests, exact 250/500/1000 budget inventory, unchanged aggregate financial gates, unchanged four-window candidate-share/financial stability gates, and exact forward cutoff reuse.
+
+A no-challenger cell cannot hide a stable-passing budget, and a selected cell must name the deterministic winner under the frozen tie-break. Validation and retrospective holdout must preserve the exact selected budget/cutoff and six-regressor identity.
+
+The implementation is `src/fmp/market_learning/model_successor_regime_utility_artifacts.py` at Git blob `edd8fbb447df1b4336e5174706a8e39b40c4573a`. Focused tests are frozen at blob `7ed29dbd8c079a99919fd9a7d1d6cb9ab19f3f96`.
+
+DEC-134 remains non-executable: the authoritative bundle raises before readiness validation, historical artifact loading, or model fitting. No workflow/dispatch, authoritative fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization is introduced. A later separate decision may freeze the manual workflow/CLI/runtime/execution gate.
