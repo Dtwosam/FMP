@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047/EXP-048 CLOSED/REVIEWED + DEC-131 WINDOW-FINANCIAL-INSTABILITY DIAGNOSTIC FROZEN; NO ACCEPTED MODEL CHALLENGER
-**Next milestone:** Merge DEC-131's source-only post-result diagnostic, then freeze a separately identified successor protocol that explicitly targets per-window financial generalization without weakening the reviewed candidate-share or financial stability gates. No successor model fit or historical result execution is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Next milestone:** DEC-131 is merged at `c07127c9651818b3dea817976a0e87ea76765f38`. Freeze a separately identified successor protocol that explicitly targets per-window financial generalization without weakening the reviewed candidate-share or financial stability gates. No successor model fit or historical result execution is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
