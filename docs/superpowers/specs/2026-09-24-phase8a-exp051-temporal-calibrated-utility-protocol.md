@@ -268,9 +268,17 @@ Protocol source:
 
 `src/fmp/market_learning/model_successor_temporal_calibrated_utility_protocol.py`
 
+Git blob:
+
+`c39309c4115cae1ea058e56f30cae4af6407e36e`
+
 Focused tests:
 
 `tests/test_phase8a_exp051_temporal_calibrated_utility_protocol.py`
+
+Git blob:
+
+`ac2814dea9c4f4d2771b5abe8b5d602e9b86b059`
 
 Protocol version:
 
