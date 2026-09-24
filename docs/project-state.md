@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047 CLOSED/REVIEWED + EXP-048 DEC-128 ONE-RUN AUTHORIZATION MERGED + DEC-129 SINGLE-STEP OPERATOR SOURCE FROZEN; NO EXP-048 RESULT
-**Next milestone:** Merge DEC-129's source-only EXP-048 single-step operator. After merge, from clean current `main`, run `python scripts/phase8a_exp048_operator.py next`. Only if it reports `REGIME_CONSENSUS_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp048_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047 CLOSED/REVIEWED + EXP-048 DEC-128 ONE-RUN AUTHORIZATION + DEC-129 SINGLE-STEP OPERATOR MERGED; NO EXP-048 RESULT
+**Next milestone:** DEC-129 is merged at `74bb704aded8e8eef3a1ba8124f2f9e2f33e037d`. GitHub still reports zero manual-main `phase8a-exp048-regime-consensus-model-training` runs. From clean current `main`, run `python scripts/phase8a_exp048_operator.py next`. Only if it reports `REGIME_CONSENSUS_MODEL_RUN_DISPATCH_REQUIRED` may a separate explicit `python scripts/phase8a_exp048_operator.py advance --execute` submit exactly one guarded historical run. The first attempt consumes the slot on any terminal outcome; no automatic retry/replacement. Promotion, shadow/demo execution, broker mutation, live orders, real-money trading, and trading authorization remain locked.
 
 ## Current baseline
 
