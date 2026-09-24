@@ -17,6 +17,7 @@ from fmp.market_learning.model_successor_regime_consensus_training import (
     _consensus_direction_confidence,
     _derive_consensus_cutoff,
     _fit_regime_splits,
+    _selection_key,
     validate_regime_consensus_training_sources,
 )
 
@@ -288,6 +289,31 @@ class Exp048RegimeConsensusTrainingCoreTests(
         self.assertEqual(
             candidates.tolist(),
             ["LONG", "SHORT", "NO_TRADE", "NO_TRADE"],
+        )
+
+    def test_selection_tie_break_prefers_smaller_budget(
+        self,
+    ) -> None:
+        def row(budget: int) -> dict[str, object]:
+            return {
+                "candidate_budget_anchor": budget,
+                "scenarios": {
+                    "0.5": {
+                        "metrics": {
+                            "total_net_pips": 123.0,
+                            "directional_candidate_count": 500,
+                        }
+                    }
+                },
+            }
+
+        selected = max(
+            [row(1000), row(250), row(500)],
+            key=_selection_key,
+        )
+        self.assertEqual(
+            selected["candidate_budget_anchor"],
+            250,
         )
 
     def test_source_is_non_executable_and_has_no_dispatch(
