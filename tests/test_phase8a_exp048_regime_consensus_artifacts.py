@@ -117,7 +117,7 @@ def _stable_variant(budget: int) -> dict[str, object]:
         "candidate_budget_anchor": budget,
         "evaluation_status": "EVALUATED",
         "status": "AVAILABLE",
-        "eligible_consensus_row_count": 1000,
+        "eligible_consensus_row_count": 250,
         "selection_derived_cutoff": 0.7,
         "selection_candidate_count_at_cutoff": 250,
         "scenarios": {
@@ -402,12 +402,12 @@ class Exp048RegimeConsensusArtifactTests(unittest.TestCase):
         rows[0]["selection"]["consensus"] = {
             **_consensus(),
             "consensus_direction_counts": {
-                "LONG": 1000,
+                "LONG": 250,
                 "SHORT": 0,
-                "NO_TRADE": 0,
+                "NO_TRADE": 750,
             },
-            "consensus_eligible_row_count": 1000,
-            "consensus_eligible_rate": 1.0,
+            "consensus_eligible_row_count": 250,
+            "consensus_eligible_rate": 0.25,
             "minimum_consensus_confidence": 0.5,
             "maximum_consensus_confidence": 0.9,
             "row_count": 1000,
@@ -416,7 +416,7 @@ class Exp048RegimeConsensusArtifactTests(unittest.TestCase):
         rows[0]["split_row_counts"]["selection"] = 1000
         rows[0]["selection"]["variants"][0] = _stable_variant(250)
         for item in rows[0]["selection"]["variants"][1:]:
-            item["eligible_consensus_row_count"] = 1000
+            item["eligible_consensus_row_count"] = 250
         rows[0]["result_fingerprint"] = _sha256(
             _canonical_json(
                 {
