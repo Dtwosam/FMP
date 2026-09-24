@@ -2159,3 +2159,22 @@ The workflow preserves the exact nine accepted pair/timeframe artifact identitie
 DEC-135 is intentionally pre-authorization: model-run dispatch, authoritative result execution, protocol-result production, and model fitting remain false, so the preflight cannot pass before readiness loading, historical artifact loading, or fitting. A first-run guard may only be introduced by a later authorization decision after terminal review is separately predeclared and zero prior manual-main EXP-049 runs are independently verified.
 
 Focused tests are `tests/test_phase8a_exp049_model_workflow.py` at Git blob `906474f199d595579b29c96b683299fa269c7e8d`. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
+
+## DEC-136 — Phase 8A EXP-049 predeclared terminal-result review
+
+**Date:** 2026-09-24
+**Status:** APPROVED BEFORE ANY EXP-049 HISTORICAL MODEL RESULT OR RUN AUTHORIZATION
+
+DEC-136 freezes the exact terminal review contract before any EXP-049 historical result and before any run authorization.
+
+Only attempt-1 manual-main `phase8a-exp049-regime-utility-model-training` runs are reviewable. Exactly one authorization-preflight job, nine matrix jobs, one aggregate job, and artifacts restricted to the exact nine pair/timeframe names plus the exact aggregate-result name tied to the workflow head SHA are accepted.
+
+A successful run must have all 11 jobs succeed, all nine cell artifacts, the aggregate artifact, and successful DEC-134 aggregate-evidence revalidation against the execution commit. It stops at `REGIME_UTILITY_MODEL_RESULT_REVIEW_REQUIRED`.
+
+A failed, cancelled, or timed-out first run may preserve a valid subset of cell artifacts but cannot claim aggregate result evidence or an aggregate artifact. It stops at `REGIME_UTILITY_MODEL_RUN_FAILURE_REVIEW_REQUIRED`.
+
+The review binds DEC-135 merge `0fe11d26fd74355e39f7379f3eeba869d848271c`, workflow blob `955152835ec1cedf39d6d31e54d6028a7953fab5`, CLI blob `cba5ece4eda8e02a7ca07a780d8caa69a239e094`, and execution-gate blob `9d2ffc670a1572febb0e4a29bfda426f8252e5ee`.
+
+The implementation is `src/fmp/market_learning/model_successor_regime_utility_result_review.py` at Git blob `1c48405fa8b754ee8d6756dac701332ac72816bd`. Focused tests are frozen at blob `7d072b0ced240afe33135e6fde689bae511fbc54`.
+
+Any rerun attempt is rejected. Replacement-run authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. DEC-136 changes no DEC-135 execution authorization. A later separate decision may verify zero prior runs, add a first-run guard, and authorize at most one outer historical attempt without dispatching it.
