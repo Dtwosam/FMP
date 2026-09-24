@@ -279,9 +279,9 @@ class Exp049RegimeUtilityOperatorTests(unittest.TestCase):
             dispatch_command_for_regime_utility_report(terminal)
         )
 
-    def test_gate_metadata_matches_dec128_source_shape(self) -> None:
+    def test_gate_metadata_matches_dec137_source_shape(self) -> None:
         gate = {
-            "regime_utility_model_execution_gate_decision": "DEC-126",
+            "regime_utility_model_execution_gate_decision": "DEC-135",
             "regime_utility_model_execution_authorization_decision": "DEC-137",
             "dec132_merged_commit": "1" * 40,
             "dec133_merged_commit": "2" * 40,
@@ -304,7 +304,7 @@ class Exp049RegimeUtilityOperatorTests(unittest.TestCase):
             metadata["regime_utility_workflow_blob_sha"],
             "a" * 40,
         )
-        self.assertNotIn("dec107_merged_commit", metadata)
+        self.assertNotIn("dec127_merged_commit", metadata)
 
         drifted = dict(gate)
         drifted.pop("dec136_merged_commit")
@@ -314,9 +314,10 @@ class Exp049RegimeUtilityOperatorTests(unittest.TestCase):
         ):
             regime_utility_operator_gate_metadata(drifted)
 
-    def test_public_cli_has_no_stale_dec107_gate_key(self) -> None:
+    def test_public_cli_binds_utility_gate_metadata(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
-        self.assertNotIn("dec107_merged_commit", text)
+        self.assertNotIn("regime_consensus", text)
+        self.assertNotIn("EXP-048", text)
         self.assertIn(
             "regime_utility_operator_gate_metadata(gate)",
             text,
