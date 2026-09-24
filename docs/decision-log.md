@@ -1799,3 +1799,20 @@ The implementation is `src/fmp/market_learning/model_successor_density_training.
 
 DEC-114 remains source-only. Authoritative result execution, model-fit authorization, promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false. A later separate decision must freeze an artifact-backed runner/evidence contract before any result-producing execution can be considered.
 
+## DEC-115 — Phase 8A EXP-047 artifact-backed runner/evidence contract
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; AUTHORITATIVE EXP-047 RESULT EXECUTION CLOSED
+
+DEC-115 freezes the artifact-backed historical-data runner and deterministic aggregate evidence contract around merged DEC-113/DEC-114.
+
+It binds DEC-113 merge `060bde94835158d62d47640aaf1a77ec56b483ff` and protocol blob `871936729a1090d675f6f5181ef04c8f32494394`, DEC-114 merge `3e236169ae71074630ece7d78516d5e6586abe1f` and training-core blob `8ed51edc12c8d7d23cf9cc362e6b0ea7564d4945`, plus the verified historical artifact-loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`.
+
+The runner reuses only the exact accepted historical feature/outcome/readiness artifacts. Each cell must contain exactly three HGB density variants at anchors 250/500/1000, logistic must remain `EXCLUDED_BY_DEC112_DEC113`, cutoff candidate counts and aggregate-gate status must reconcile, aggregate passes must carry the exact four temporal-stability windows, and cell fingerprints must recompute exactly.
+
+Aggregate evidence requires all 18 exact cells and preserves the exact historical data identities, DEC-113/114 source identities, cell result fingerprints/status summaries, density/stability accounting, and all downstream authorization locks.
+
+The source is `src/fmp/market_learning/model_successor_density_artifacts.py` at Git blob `2d3997ca97fb4568187be54914fe76e8dbf76ff5`.
+
+DEC-115 remains non-executable: the authoritative bundle raises before readiness validation, artifact loading, or model fitting. No workflow/dispatch, model-fit/result execution, promotion, shadow/demo, broker mutation, live order, real-money action, or trading authorization is introduced.
+
