@@ -220,7 +220,6 @@ def validate_regime_consensus_predecessor_identity() -> None:
     for previous, current in zip(
         windows,
         windows[1:],
-        strict=True,
     ):
         if previous["end_exclusive"] != current["start"]:
             raise ValueError(
