@@ -59,6 +59,12 @@ PREDECESSOR_RESULT_EVIDENCE_FINGERPRINT = (
     "ba8e93d07236b94ded06ae884b386214"
 )
 
+PREDECESSOR_HGB_VARIANT_COUNT = 54
+PREDECESSOR_HGB_COUNT_GATE_PASS_COUNT = 23
+PREDECESSOR_HGB_POSITIVE_FINANCIAL_SIGN_COUNT = 13
+PREDECESSOR_HGB_AGGREGATE_GATE_PASS_COUNT = 1
+PREDECESSOR_HGB_POSITIVE_BUT_LOW_COUNT = 12
+
 PRIOR_RESULT_INFORMED = True
 UNTOUCHED_OOS = False
 
@@ -163,6 +169,16 @@ def validate_density_predecessor_identity() -> None:
         raise ValueError(
             "EXP-047 requires logistic result-producing reuse closed"
         )
+    if (
+        PREDECESSOR_HGB_VARIANT_COUNT != 54
+        or PREDECESSOR_HGB_COUNT_GATE_PASS_COUNT != 23
+        or PREDECESSOR_HGB_POSITIVE_FINANCIAL_SIGN_COUNT != 13
+        or PREDECESSOR_HGB_AGGREGATE_GATE_PASS_COUNT != 1
+        or PREDECESSOR_HGB_POSITIVE_BUT_LOW_COUNT != 12
+    ):
+        raise ValueError(
+            "EXP-047 predecessor HGB diagnostic accounting drift"
+        )
     if MIN_DIRECTIONAL_CANDIDATES != 250:
         raise ValueError(
             "EXP-047 minimum directional candidate count drift"
@@ -195,6 +211,23 @@ def density_protocol_payload() -> dict[str, object]:
                 PREDECESSOR_RESULT_EVIDENCE_FINGERPRINT
             ),
             "accepted_model_candidate_count": 0,
+            "hgb_density_diagnostic": {
+                "evaluated_variant_count": (
+                    PREDECESSOR_HGB_VARIANT_COUNT
+                ),
+                "count_gate_pass_count": (
+                    PREDECESSOR_HGB_COUNT_GATE_PASS_COUNT
+                ),
+                "positive_financial_sign_count": (
+                    PREDECESSOR_HGB_POSITIVE_FINANCIAL_SIGN_COUNT
+                ),
+                "aggregate_gate_pass_count": (
+                    PREDECESSOR_HGB_AGGREGATE_GATE_PASS_COUNT
+                ),
+                "positive_but_low_count_count": (
+                    PREDECESSOR_HGB_POSITIVE_BUT_LOW_COUNT
+                ),
+            },
             "prior_result_informed": PRIOR_RESULT_INFORMED,
             "untouched_oos": UNTOUCHED_OOS,
         },
@@ -364,6 +397,11 @@ __all__ = [
     "MODEL_CONFIG_CHANGE_AUTHORIZED",
     "MODEL_FIT_AUTHORIZED",
     "MODEL_PROTOCOL_RESULT_AUTHORIZED",
+    "PREDECESSOR_HGB_AGGREGATE_GATE_PASS_COUNT",
+    "PREDECESSOR_HGB_COUNT_GATE_PASS_COUNT",
+    "PREDECESSOR_HGB_POSITIVE_BUT_LOW_COUNT",
+    "PREDECESSOR_HGB_POSITIVE_FINANCIAL_SIGN_COUNT",
+    "PREDECESSOR_HGB_VARIANT_COUNT",
     "PREDECESSOR_RESULT_EVIDENCE_FINGERPRINT",
     "PRIOR_RESULT_INFORMED",
     "PROMOTION_AUTHORIZED",
