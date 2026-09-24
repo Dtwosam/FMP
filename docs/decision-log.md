@@ -2037,3 +2037,24 @@ The authorized gate source is Git blob `3312667537eedfc2cd41d1ec91c877e1b05770f9
 
 The first manual-main attempt consumes the slot on success, failure, cancellation, or timeout. No rerun/replacement is authorized. DEC-128 itself dispatches nothing. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
 
+## DEC-129 — Phase 8A EXP-048 single-step operator
+
+**Date:** 2026-09-24
+**Status:** SOURCE-ONLY; NO EXP-048 RUN DISPATCHED BY THIS DECISION
+
+DEC-129 freezes the clean-main one-way operator for the single DEC-128-authorized EXP-048 historical run.
+
+The operator core is `src/fmp/market_learning/model_successor_regime_consensus_operator.py` at Git blob `86789ed022c1cf3460ac724b8444f4464c6c464f`. The executable wrapper is `scripts/phase8a_exp048_operator.py` at blob `9b6c7e5f0952f0621543b9a561987cbfc00ef2b0`. Focused tests are frozen at blob `3ee1a9d15f67c17ef02e9890d8d3750907d0b6e8`.
+
+The operator requires clean current `main`, exact fetched `origin/main`, verified `Dtwosam/FMP` origin, and GitHub CLI authentication. It inspects only manual-main runs for `phase8a-exp048-regime-consensus-model-training.yml` and fails if more than one exists.
+
+Only the zero-run state is dispatchable. It exposes exactly `gh workflow run phase8a-exp048-regime-consensus-model-training.yml --ref main -R Dtwosam/FMP`. Active and terminal states remove the dispatch command and turn result/fit authorization back off.
+
+The operator validates exact DEC-126/DEC-128 gate identities plus the DEC-123 through DEC-127 merge/source chain, avoiding the stale metadata-key class previously repaired under DEC-120.
+
+`advance --execute` invokes the public `next` planner twice and requires the complete second plan and reconstructed command to equal the first before dispatch.
+
+Terminal success requires the exact aggregate artifact tied to the run head SHA, revalidates `model-result-evidence.json` through DEC-125, and routes the complete terminal state through DEC-127. Non-success routes exact partial evidence through DEC-127 without an aggregate evidence claim.
+
+DEC-129 contains no rerun/replacement or alternate trigger and dispatches nothing by itself. The first EXP-048 attempt consumes the DEC-128 slot on any terminal outcome. Promotion, shadow/demo, broker mutation, live order, real-money action, and trading authorization remain false.
+
