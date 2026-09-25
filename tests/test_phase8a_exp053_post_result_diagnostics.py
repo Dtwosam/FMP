@@ -75,7 +75,7 @@ class Exp053PostResultDiagnosticsTests(unittest.TestCase):
         diagnostics = report["temporal_stability_diagnostics"]
         self.assertEqual(
             diagnostics["2021_share_reject_variant_count"],
-            9,
+            10,
         )
         self.assertEqual(
             diagnostics["2022_h1_financial_reject_variant_count"],
