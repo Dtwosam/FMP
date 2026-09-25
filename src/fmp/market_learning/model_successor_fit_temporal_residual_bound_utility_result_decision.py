@@ -40,7 +40,7 @@ REVIEWED_VERIFIED_RESIDUAL_REFERENCE_COUNT = 432
 REVIEWED_TOTAL_VARIANT_COUNT = 54
 REVIEWED_AVAILABLE_BUDGET_VARIANT_COUNT = 28
 REVIEWED_UNAVAILABLE_BUDGET_VARIANT_COUNT = 26
-REVIEWED_UTILITY_ELIGIBLE_SELECTION_ROW_COUNT = 25540
+REVIEWED_UTILITY_ELIGIBLE_SELECTION_ROW_COUNT = 26392
 REVIEWED_SELECTED_CELL_COUNT = 0
 REVIEWED_NO_STABLE_MODEL_CHALLENGER_COUNT = 18
 REVIEWED_VALIDATION_PASS_CELL_COUNT = 0
@@ -210,19 +210,20 @@ def _summary(
         for variant in variants:
             if not isinstance(variant, Mapping):
                 raise ValueError("DEC-196 aggregate variant malformed")
+            count = variant.get("eligible_selection_row_count")
+            if (
+                not isinstance(count, int)
+                or isinstance(count, bool)
+                or count < 0
+            ):
+                raise ValueError(
+                    "DEC-196 eligible selection row count malformed"
+                )
+            cell_eligible_counts.add(count)
+
             status = variant.get("status")
             if status == "AVAILABLE":
                 available_variants += 1
-                count = variant.get("eligible_selection_row_count")
-                if (
-                    not isinstance(count, int)
-                    or isinstance(count, bool)
-                    or count < 0
-                ):
-                    raise ValueError(
-                        "DEC-196 eligible selection row count malformed"
-                    )
-                cell_eligible_counts.add(count)
             else:
                 unavailable_variants += 1
 
