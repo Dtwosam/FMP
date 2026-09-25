@@ -112,7 +112,7 @@ Focused tests:
 
 Git blob:
 
-`ae0c146176edf8a8a970e61df742fec1e4950b49`
+`7338dd5cba39e98c9e56a1b352444a543a1e227c`
 
 Artifact-contract version:
 
