@@ -3348,3 +3348,19 @@ Workflow blob is `da5b498deb7c8d15993eaeb686127f138ce9f161`; CLI blob is `41eeb0
 DEC-201 deliberately contains no first-run guard and opens no outer historical-run slot. Model-run dispatch, authoritative result execution, model-protocol result production, and model fitting all remain false, so `require-execution` fails closed before readiness or artifact loading. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
 
 The next safe gate is a separate predeclared attempt-1 terminal-review contract. Only after that review is frozen may a later decision prove zero prior EXP-055 runs, add a first-run rejection guard, and consider one explicitly bounded historical-result slot.
+
+
+## DEC-202 — Phase 8A EXP-055 predeclared terminal review
+
+**Date:** 2026-09-25
+**Status:** APPROVED REVIEW SOURCE / EXECUTION CLOSED
+
+DEC-202 binds merged DEC-201 commit `a5825ec8008cbb9bf9783b15135faed1d7f5fb73`, workflow blob `da5b498deb7c8d15993eaeb686127f138ce9f161`, CLI blob `41eeb09fe0730f5184e71a9f7413a3bc5f568e63`, and execution-gate blob `e252f0550ca1c0bdc2ea16d32bc0b6a854b1c39c`.
+
+The review accepts only the exact manual-main EXP-055 workflow on attempt 1. A successful terminal review requires exactly 11 completed successful jobs, all nine expected non-expired pair/timeframe cell artifacts, the exact non-expired aggregate artifact, and aggregate evidence that deterministically recompiles under DEC-200 for the reviewed head commit.
+
+Successful aggregate revalidation verifies 18 cells, 108 regressors, 108 pooled calibration references, 432 utility-support references, 216 feature-support references, 432 residual references, the fixed twelve-bound residual-breadth inventory, and the exact evidence fingerprint. Non-success outcomes may preserve only produced cell artifacts; they cannot claim aggregate evidence/artifact and open no rerun, retry, or replacement path.
+
+Terminal-review source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_result_review.py` at blob `341d228b2521441c7d4b32d92349bc001cc78a91`. Focused tests are `tests/test_phase8a_exp055_model_result_review.py` at blob `37cf99ae72c5e444d077c98c8e2f8d8221c9b8c3`.
+
+DEC-202 does not authorize workflow dispatch, authoritative result execution, model-protocol result production, model fitting, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. The next safe gate is a separate zero-prior-run proof plus first-run guard and, at most, one bounded outer historical-result slot.
