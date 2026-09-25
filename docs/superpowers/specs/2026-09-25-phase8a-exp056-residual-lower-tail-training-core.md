@@ -138,7 +138,7 @@ Training core:
 
 Git blob:
 
-`484fb25375138ecd16e5d6954dbdbebebf8568f2`
+`c472ed48e7b79d22056d43deb0fe09166ccf34c9`
 
 Focused tests:
 
