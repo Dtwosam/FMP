@@ -1332,37 +1332,37 @@ def run_fit_temporal_residual_regime_floor_utility_model_cell_core(
             ),
             "full_fit_single_model": {
                 "status": (
-                    "FORBIDDEN_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC209"
+                    "FORBIDDEN_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC231"
                 ),
                 "fit_attempt_count": 0,
             },
             "view_weight_search": {
                 "status": (
-                    "FORBIDDEN_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC209"
+                    "FORBIDDEN_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC231"
                 ),
                 "fit_attempt_count": 0,
             },
             "view_fallback": {
                 "status": (
-                    "FORBIDDEN_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC209"
+                    "FORBIDDEN_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC231"
                 ),
                 "fit_attempt_count": 0,
             },
             "selection_window_calibration": {
                 "status": (
-                    "FORBIDDEN_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC209"
+                    "FORBIDDEN_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC231"
                 ),
                 "fit_attempt_count": 0,
             },
             "hist_gradient_boosting_classifier": {
                 "status": (
-                    "EXCLUDED_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC209"
+                    "EXCLUDED_BY_DEC150_DEC163_DEC174_DEC185_DEC198_DEC231"
                 ),
                 "fit_attempt_count": 0,
             },
             "logistic_regression": {
                 "status": (
-                    "EXCLUDED_BY_DEC112_DEC150_DEC163_DEC174_DEC185_DEC198_DEC209"
+                    "EXCLUDED_BY_DEC112_DEC150_DEC163_DEC174_DEC185_DEC198_DEC231"
                 ),
                 "fit_attempt_count": 0,
             },
@@ -1372,7 +1372,7 @@ def run_fit_temporal_residual_regime_floor_utility_model_cell_core(
                 "SELECTED"
                 if selected is not None
                 else (
-                    "NO_FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_"
+                    "NO_FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_"
                     "STABLE_MODEL_CHALLENGER"
                 )
             ),
