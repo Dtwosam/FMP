@@ -28,6 +28,9 @@ from .model_successor_fit_temporal_residual_lower_tail_utility_repair_training i
 FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_EXECUTION_GATE_DECISION = (
     "DEC-223"
 )
+FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_EXECUTION_AUTHORIZATION_DECISION = (
+    "DEC-225"
+)
 FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_WORKFLOW_FILE = (
     "phase8a-exp057-fit-temporal-residual-lower-tail-utility-model-training.yml"
 )
@@ -38,6 +41,13 @@ FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_WORKFLOW_NAME = (
 DEC220_MERGED_COMMIT = "865ab1569a0765078ed099008a5722f8a6d310b4"
 DEC221_MERGED_COMMIT = "6ea34dd3c62f72c55376e891eeb44d96ad5de54b"
 DEC222_MERGED_COMMIT = "51e9ccde9feaada7932384fc4547b721c1341588"
+DEC223_MERGED_COMMIT = "160c618352739a1ae12b86c80be9573e4c2f234a"
+DEC224_MERGED_COMMIT = "e0f2328334d6da6b52cad53f23c9a3b05eeb72cd"
+
+DEC223_WORKFLOW_BLOB_SHA = "db9d8ccaa7da674124963acc6ab4e65e6c2ad83f"
+DEC223_CLI_BLOB_SHA = "889b2daa4e44175e0479377d6c8ea39846da596d"
+DEC223_GATE_BLOB_SHA = "07c7db8bc7fc29cf595aa617f1d66ec4f77e4879"
+DEC224_REVIEW_BLOB_SHA = "1a5f3e86b4d445ba4a77f3496f81de2b16b333cd"
 
 DEC222_RUNNER_BLOB_SHA = "d69eb668ade480b66faf992190b3a4929f414960"
 DEC221_CORE_BLOB_SHA = "ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd"
@@ -45,7 +55,7 @@ DEC220_PROTOCOL_BLOB_SHA = "2f355526476a4d41967bb46e1bfad6aa525cbfa9"
 LEGACY_DATA_LOADER_BLOB_SHA = "27c0848d16722a22b4762f5842396c2aebc92bec"
 
 FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_WORKFLOW_BLOB_SHA = (
-    "db9d8ccaa7da674124963acc6ab4e65e6c2ad83f"
+    "2f28eea9f1e9cb941a91553bd6a7dc93245da7f8"
 )
 FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_CLI_BLOB_SHA = (
     "889b2daa4e44175e0479377d6c8ea39846da596d"
@@ -62,10 +72,10 @@ MARKET_OUTCOMES_BLOB_SHA = "c83fefd4252b2fe426af97686f86e43021760c77"
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_WORKFLOW_SOURCE_FROZEN = True
-FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_FIT_AUTHORIZED = False
+FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -171,6 +181,12 @@ def validate_fit_temporal_residual_lower_tail_utility_repair_model_workflow_sour
             root / "src/fmp/market_learning/model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_fit_temporal_residual_lower_tail_utility_repair_result_review.py",
+            DEC224_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -222,6 +238,15 @@ def validate_fit_temporal_residual_lower_tail_utility_repair_model_workflow_sour
         "dec220_merged_commit": DEC220_MERGED_COMMIT,
         "dec221_merged_commit": DEC221_MERGED_COMMIT,
         "dec222_merged_commit": DEC222_MERGED_COMMIT,
+        "dec223_merged_commit": DEC223_MERGED_COMMIT,
+        "dec224_merged_commit": DEC224_MERGED_COMMIT,
+        "dec223_workflow_blob_sha": DEC223_WORKFLOW_BLOB_SHA,
+        "dec223_cli_blob_sha": DEC223_CLI_BLOB_SHA,
+        "dec223_gate_blob_sha": DEC223_GATE_BLOB_SHA,
+        "dec224_review_blob_sha": actual["terminal_review"],
+        "fit_temporal_residual_lower_tail_utility_repair_model_execution_authorization_decision": (
+            FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "fit_temporal_residual_lower_tail_utility_repair_runner_blob_sha": actual[
             "residual_lower_tail_repair_runner"
         ],
@@ -244,10 +269,10 @@ def validate_fit_temporal_residual_lower_tail_utility_repair_model_workflow_sour
         "market_outcomes_blob_sha": actual["market_outcomes"],
         "authorized_python_version": AUTHORIZED_PYTHON_VERSION,
         "fit_temporal_residual_lower_tail_utility_repair_model_workflow_source_frozen": True,
-        "fit_temporal_residual_lower_tail_utility_repair_model_run_dispatch_authorized": False,
-        "authoritative_fit_temporal_residual_lower_tail_utility_repair_model_result_execution_authorized": False,
-        "model_protocol_result_authorized": False,
-        "model_fit_authorized": False,
+        "fit_temporal_residual_lower_tail_utility_repair_model_run_dispatch_authorized": True,
+        "authoritative_fit_temporal_residual_lower_tail_utility_repair_model_result_execution_authorized": True,
+        "model_protocol_result_authorized": True,
+        "model_fit_authorized": True,
         "promotion_authorized": False,
         "shadow_authorized": False,
         "demo_order_authorized": False,
@@ -271,12 +296,12 @@ def build_fit_temporal_residual_lower_tail_utility_repair_model_workflow_source_
         **source,
         "stage": (
             "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_"
-            "RUN_WORKFLOW_SOURCE_FROZEN"
+            "RUN_DISPATCH_REQUIRED"
         ),
         "next_action": (
-            "A later separate decision must predeclare terminal review "
-            "before any guarded EXP-057 historical model-result run may "
-            "be considered. DEC-223 does not authorize or dispatch execution."
+            "DEC-225 authorizes at most one guarded historical EXP-057 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
         ),
     }
 
@@ -301,8 +326,8 @@ def require_authoritative_fit_temporal_residual_lower_tail_utility_repair_model_
     )
     if not all(required_true):
         raise PermissionError(
-            "DEC-223 freezes EXP-057 workflow source but does not "
-            "authorize historical model-result execution"
+            "DEC-225 EXP-057 historical model-result execution "
+            "authorization is not open"
         )
 
     return {
@@ -325,9 +350,16 @@ __all__ = [
     "DEC221_MERGED_COMMIT",
     "DEC222_MERGED_COMMIT",
     "DEC222_RUNNER_BLOB_SHA",
+    "DEC223_CLI_BLOB_SHA",
+    "DEC223_GATE_BLOB_SHA",
+    "DEC223_MERGED_COMMIT",
+    "DEC223_WORKFLOW_BLOB_SHA",
+    "DEC224_MERGED_COMMIT",
+    "DEC224_REVIEW_BLOB_SHA",
     "DEMO_ORDER_AUTHORIZED",
     "FEATURE_SCHEMA_BLOB_SHA",
     "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_CLI_BLOB_SHA",
+    "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_EXECUTION_GATE_DECISION",
     "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_FIT_AUTHORIZED",
     "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_PROTOCOL_RESULT_AUTHORIZED",
