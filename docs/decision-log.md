@@ -3282,3 +3282,21 @@ The frozen diagnostic classification is `RESIDUAL_BOUND_NARROWED_AGGREGATE_PASSE
 Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_bound_utility_post_result_diagnostics.py` at blob `3f53e79b52d3a2e4de1e7f61e142ecc55197aa87`. Focused tests are `tests/test_phase8a_exp054_post_result_diagnostics.py` at blob `a3509469a83d2a32adf8717a6a646671f2019f29`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp054-post-result-diagnostics.md`.
 
 DEC-197 keeps false EXP-054 rerun/replacement, stability-share/financial relaxation, removal of early stability windows, selection-window recalibration, selection-outcome ranking, selection-window quotas, successor result execution, successor model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading. Only a later successor protocol source design may open.
+
+
+## DEC-198 — Phase 8A EXP-055 fit-temporal residual-breadth utility protocol
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-198 binds merged DEC-197 commit `81271caa2ed3c2acc3257169c2f47572461cfc46`, DEC-197 diagnostic blob `3f53e79b52d3a2e4de1e7f61e142ecc55197aa87`, DEC-196 reviewed-result blob `17235435604bc5c0bd8950037bd8c49a0c6fb81a`, EXP-054 protocol blob `3ffac844f9ed5308512dc3313e850cc84fb6d144`, and EXP-054 evidence fingerprint `307b576f06c6aa2fb01a267232a0de553bfa79c1bdbe6bf5d55b2bfc3b40787c`.
+
+DEC-197 classifies EXP-054 as `RESIDUAL_BOUND_NARROWED_AGGREGATE_PASSES_AND_IMPROVED_SOME_DOWNSIDE_WINDOWS_BUT_DID_NOT_CREATE_TEMPORAL_BREADTH`. EXP-055 addresses only that fit-period breadth question. It preserves EXP-054 row eligibility, six regressors, pooled calibration, 24 utility-support references, 12 feature-support references, 24 residual references, q=0.25 downside residuals, budgets, chronology, aggregate financial gates, four selection-period temporal-stability windows, 10% per-window share floor, per-window financial requirements, and no-refit forward semantics.
+
+For each already eligible row and agreed direction, EXP-055 reuses the twelve EXP-054 downside-adjusted lower-bound utilities and defines `fit_temporal_residual_breadth` as the number strictly greater than zero divided by 12. No new reference vector is created and no selection, validation, or holdout outcome enters this score. The score is ranking-only and does not change eligibility.
+
+Ranking becomes residual breadth descending, residual-bound utility descending, feature support descending, utility support descending, pooled calibrated utility descending, raw utility descending, then row identity ascending. Each budget freezes the corresponding six-part cutoff, and validation/holdout may only reuse the exact frozen models, references, breadth rule, and selection-derived cutoff without refit, recalibration, quota, or window-specific tuning.
+
+Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_protocol.py` at blob `0ef3f932cade1a62e1faf946e9a9b87cf9c98744`. Focused tests are `tests/test_phase8a_exp055_fit_temporal_residual_breadth_utility_protocol.py` at blob `b5bb56110eb15f2280749bbe2355153baa17e906`. The detailed protocol spec is `docs/superpowers/specs/2026-09-25-phase8a-exp055-fit-temporal-residual-breadth-utility-protocol.md`.
+
+DEC-198 keeps model protocol result production, model fitting, historical result execution, EXP-054 residual-bound rule changes, stability relaxation, selection-window calibration, selection-window quotas, realized selection-outcome ranking, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next safe gate is a separate deterministic in-memory EXP-055 training/evaluation core against this exact protocol.
