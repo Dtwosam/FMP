@@ -3868,3 +3868,19 @@ Eligible rows rank by regime-floor utility, residual lower-tail mean, residual b
 The completed source exposes `run_fit_temporal_residual_regime_floor_utility_model_cell_core`, plus regime-floor-aware forward and temporal-stability evaluators. Training core source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_training.py` at blob `77f2010574b3d8ecc958930d5bfadf7ddb4f2231`. Focused tests are `tests/test_phase8a_exp058_fit_regime_floor_training.py` at blob `8eebe590bd9125b8d778136e654c83442de62436`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp058-regime-floor-training-core.md`.
 
 DEC-232 contains no artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading path. All such authorizations remain false. The next safe gate after merge is a separate non-executable EXP-058 artifact/evidence contract bound to this exact core.
+
+
+## DEC-233 — Phase 8A EXP-058 artifact/evidence contract
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-233 binds DEC-232 merge `24cb20bb0b1e3aa25f1ea87e1cfbba22587a0ae6`, DEC-232 training-core blob `77f2010574b3d8ecc958930d5bfadf7ddb4f2231`, and predecessor EXP-057 artifact-contract blob `d69eb668ade480b66faf992190b3a4929f414960`.
+
+The contract validates complete EXP-058 cell evidence before aggregate compilation. Each cell must bind the exact experiment/protocol/training decisions, deterministic cell fingerprint, six regressors, six pooled references, 24 utility-support references, 12 feature-support references, 24 exact residual references, the twelve-bound residual-breadth inventory, the twelve-bound lower-tail source inventory, fixed lower-tail count of 3, exactly three residual fit regimes with four windows each, the twelve-bound regime-floor source inventory, regime-floor-aware consensus diagnostics/digest, and the three frozen budget variants. Available variants require a finite regime-floor/lower-tail/breadth/residual-bound/feature-support/utility-support/pooled/raw cutoff octuple; unavailable budgets expose no cutoff and cannot pass selection.
+
+Complete aggregate evidence requires all 18 exact cells and verifies 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, 432 residual references, 12 breadth bounds per eligible row, 12 lower-tail source bounds per eligible row, lower-tail count 3, regime count 3, four windows per regime, and 12 regime-floor source bounds per eligible row. Aggregate evidence receives a deterministic fingerprint under the frozen canonical serializer.
+
+Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_artifacts.py` at blob `5a34f354b68e14bb7116c79f15f9cfebe149a811`. Focused tests are `tests/test_phase8a_exp058_regime_floor_artifacts.py` at blob `ae0c146176edf8a8a970e61df742fec1e4950b49`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp058-artifact-evidence-contract.md`.
+
+DEC-233 remains non-executable: authoritative result execution, model fit, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate manual-main workflow/CLI/runtime source freeze with execution still closed.
