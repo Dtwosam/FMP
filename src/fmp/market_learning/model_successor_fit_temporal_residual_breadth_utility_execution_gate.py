@@ -26,6 +26,7 @@ from .model_successor_fit_temporal_residual_breadth_utility_training import (
 
 
 FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_EXECUTION_GATE_DECISION = "DEC-201"
+FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-203"
 FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp055-fit-temporal-residual-breadth-utility-model-training.yml"
 )
@@ -36,6 +37,13 @@ FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_WORKFLOW_NAME = (
 DEC198_MERGED_COMMIT = "670f5d615b837b9268f8fb807aa198e7d14d0f1a"
 DEC199_MERGED_COMMIT = "aaa80ce43a4dbd38e52e418dd16b61642d22b2b5"
 DEC200_MERGED_COMMIT = "879d4a6c038277e6f69a2db971710b5ce1eaf103"
+DEC201_MERGED_COMMIT = "a5825ec8008cbb9bf9783b15135faed1d7f5fb73"
+DEC202_MERGED_COMMIT = "2f5be5d1f7aea4f69f6979e90a0784408b349d3f"
+
+DEC201_WORKFLOW_BLOB_SHA = "da5b498deb7c8d15993eaeb686127f138ce9f161"
+DEC201_CLI_BLOB_SHA = "41eeb09fe0730f5184e71a9f7413a3bc5f568e63"
+DEC201_GATE_BLOB_SHA = "e252f0550ca1c0bdc2ea16d32bc0b6a854b1c39c"
+DEC202_REVIEW_BLOB_SHA = "341d228b2521441c7d4b32d92349bc001cc78a91"
 
 DEC200_RUNNER_BLOB_SHA = "65ca27a20d4e4fadd73c22b0b5693dc9d7ebeafb"
 DEC199_CORE_BLOB_SHA = "c9517b7516940c78621448088c3933aa1c57e281"
@@ -43,7 +51,7 @@ DEC198_PROTOCOL_BLOB_SHA = "0ef3f932cade1a62e1faf946e9a9b87cf9c98744"
 LEGACY_DATA_LOADER_BLOB_SHA = "27c0848d16722a22b4762f5842396c2aebc92bec"
 
 FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_WORKFLOW_BLOB_SHA = (
-    "da5b498deb7c8d15993eaeb686127f138ce9f161"
+    "f38e792dde45a977b19d1790bdfe94543d99eb36"
 )
 FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_CLI_BLOB_SHA = (
     "41eeb09fe0730f5184e71a9f7413a3bc5f568e63"
@@ -60,10 +68,10 @@ MARKET_OUTCOMES_BLOB_SHA = "c83fefd4252b2fe426af97686f86e43021760c77"
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN = True
-FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_FIT_AUTHORIZED = False
+FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -166,6 +174,12 @@ def validate_fit_temporal_residual_breadth_utility_model_workflow_sources(
             root / "src/fmp/market_learning/model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_fit_temporal_residual_breadth_utility_result_review.py",
+            DEC202_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -217,6 +231,15 @@ def validate_fit_temporal_residual_breadth_utility_model_workflow_sources(
         "dec198_merged_commit": DEC198_MERGED_COMMIT,
         "dec199_merged_commit": DEC199_MERGED_COMMIT,
         "dec200_merged_commit": DEC200_MERGED_COMMIT,
+        "dec201_merged_commit": DEC201_MERGED_COMMIT,
+        "dec202_merged_commit": DEC202_MERGED_COMMIT,
+        "dec201_workflow_blob_sha": DEC201_WORKFLOW_BLOB_SHA,
+        "dec201_cli_blob_sha": DEC201_CLI_BLOB_SHA,
+        "dec201_gate_blob_sha": DEC201_GATE_BLOB_SHA,
+        "dec202_review_blob_sha": actual["terminal_review"],
+        "fit_temporal_residual_breadth_utility_model_execution_authorization_decision": (
+            FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "fit_temporal_residual_breadth_utility_runner_blob_sha": actual[
             "residual_breadth_runner"
         ],
@@ -239,10 +262,10 @@ def validate_fit_temporal_residual_breadth_utility_model_workflow_sources(
         "market_outcomes_blob_sha": actual["market_outcomes"],
         "authorized_python_version": AUTHORIZED_PYTHON_VERSION,
         "fit_temporal_residual_breadth_utility_model_workflow_source_frozen": True,
-        "fit_temporal_residual_breadth_utility_model_run_dispatch_authorized": False,
-        "authoritative_fit_temporal_residual_breadth_utility_model_result_execution_authorized": False,
-        "model_protocol_result_authorized": False,
-        "model_fit_authorized": False,
+        "fit_temporal_residual_breadth_utility_model_run_dispatch_authorized": True,
+        "authoritative_fit_temporal_residual_breadth_utility_model_result_execution_authorized": True,
+        "model_protocol_result_authorized": True,
+        "model_fit_authorized": True,
         "promotion_authorized": False,
         "shadow_authorized": False,
         "demo_order_authorized": False,
@@ -266,12 +289,12 @@ def build_fit_temporal_residual_breadth_utility_model_workflow_source_gate(
         **source,
         "stage": (
             "FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_"
-            "RUN_WORKFLOW_SOURCE_FROZEN"
+            "RUN_DISPATCH_REQUIRED"
         ),
         "next_action": (
-            "A later separate decision must predeclare terminal review "
-            "before any guarded EXP-055 historical model-result run may "
-            "be considered. DEC-201 does not authorize or dispatch execution."
+            "DEC-203 authorizes at most one guarded historical EXP-055 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
         ),
     }
 
@@ -296,8 +319,8 @@ def require_authoritative_fit_temporal_residual_breadth_utility_model_execution(
     )
     if not all(required_true):
         raise PermissionError(
-            "DEC-201 freezes EXP-055 workflow source but does not "
-            "authorize historical model-result execution"
+            "DEC-203 EXP-055 historical model-result execution "
+            "authorization is not open"
         )
 
     return {
@@ -320,9 +343,16 @@ __all__ = [
     "DEC199_MERGED_COMMIT",
     "DEC200_MERGED_COMMIT",
     "DEC200_RUNNER_BLOB_SHA",
+    "DEC201_CLI_BLOB_SHA",
+    "DEC201_GATE_BLOB_SHA",
+    "DEC201_MERGED_COMMIT",
+    "DEC201_WORKFLOW_BLOB_SHA",
+    "DEC202_MERGED_COMMIT",
+    "DEC202_REVIEW_BLOB_SHA",
     "DEMO_ORDER_AUTHORIZED",
     "FEATURE_SCHEMA_BLOB_SHA",
     "FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_CLI_BLOB_SHA",
+    "FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_EXECUTION_GATE_DECISION",
     "FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_FIT_AUTHORIZED",
     "FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED",
