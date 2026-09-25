@@ -2889,3 +2889,24 @@ The diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_s
 
 DEC-173 keeps EXP-052 rerun/replacement, stability-gate relaxation, removal of early windows, selection-window recalibration, selection-outcome ranking, selection-window quotas, successor result execution, successor fitting, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. Only successor protocol source design may open.
 
+## DEC-174 — Phase 8A EXP-053 fit-temporal feature-support utility protocol
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY PROTOCOL / NO EXP-053 FIT
+
+DEC-174 opens EXP-053 as a narrow source-only successor to DEC-173. It binds DEC-173 merge `da3eb522f4178b635a261fe9ec6022d3cf94cbc8`, DEC-173 diagnostic blob `af57f0eb6c00e18bb587203dc81530702e657e87`, DEC-172 result-decision blob `c9983c33792a8b143989b928a9c2af0c4ecda1e5`, predecessor EXP-052 protocol blob `01d5080560ec5d41653694b4df086ff2f10e770d`, and predecessor result-evidence fingerprint `34e397e027a069db9344d56546b654f00bd34aff73240e5bca1d55e7b3dab7eb`.
+
+EXP-053 preserves the complete EXP-052 utility pipeline: three jackknife views, six HGB utility regressors, positive-utility unanimous direction eligibility, six pooled excluded-regime utility references, 24 fit-half-year utility-support references, the 250/500/1000 budget anchors, unchanged aggregate financial gate, unchanged four-window temporal-stability gate, validation/holdout chronology, and no-refit forward semantics.
+
+The sole new protocol signal is fit-temporal feature support. For each jackknife view and each of its four excluded-regime fit half-years, the already-fitted view preprocessor transforms fit-only feature rows. A frozen half-year feature reference records per-dimension center/scale over positive-scale dimensions and the sorted mean-squared standardized reference distances. There are exactly four references per view and 12 feature-support references per cell. No realized outcome and no selection, validation, or holdout row enters any feature-support reference.
+
+A scored row is transformed through each frozen view preprocessor. Its feature support against each view-by-half-year reference is the survival percentile `count(reference_distance >= row_distance) / reference_count`. Robust fit-temporal feature support is the minimum across all 12 references.
+
+Selection ranking becomes: robust fit-temporal feature support descending, EXP-052 robust fit-temporal utility support descending, pooled calibrated utility descending, robust raw utility descending, then row identity. The budget-th row freezes a feature-support / utility-support / pooled / raw cutoff quadruple, reused unchanged in validation and holdout.
+
+DEC-174 explicitly forbids selection-window calibration, selection-window quotas, selection-outcome ranking, gate relaxation, feature-set changes, target changes, model-topology changes, and per-window tuning. Model-protocol result production, model fit, historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization remain false.
+
+The protocol source is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_protocol.py` at blob `11ae3fc8e68687cc04957ed9243d8c5969227fb8`. Focused tests are `tests/test_phase8a_exp053_fit_temporal_feature_support_utility_protocol.py` at blob `42dd04bdabe791deaf0d58c42b2f5a6d5181ac30`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-fit-temporal-feature-support-utility-protocol.md` at blob `56ee7b7c12d62184615195c323ca62630ac94fae`.
+
+The next gate is a deterministic in-memory EXP-053 training/evaluation core against this exact protocol source. That core must remain source-only and must not load accepted historical artifacts or authorize authoritative fitting/result execution.
+
