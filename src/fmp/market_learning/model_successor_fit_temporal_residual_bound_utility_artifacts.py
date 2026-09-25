@@ -29,13 +29,13 @@ from .model_successor_fit_temporal_support_utility_protocol import (
 )
 
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_VERSION = (
-    "fmp-exp054-fit-temporal-residual-bound-utility-artifact-contract-v1"
+    "fmp-exp054-fit-temporal-residual-bound-utility-artifact-contract-v2"
 )
-FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_DECISION = "DEC-187"
+FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_DECISION = "DEC-188"
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EVIDENCE_VERSION = 1
 
-DEC186_MERGED_COMMIT = "0fc2192152824ca2c3411517dff192d240ea9cd2"
-DEC186_TRAINING_CORE_BLOB_SHA = "672e5ca6003181c831ab51259dee7176f0962f6e"
+DEC187_MERGED_COMMIT = "1c56ec7241d5795791ac83f1b58ac875b74e9645"
+DEC188_TRAINING_CORE_BLOB_SHA = "4f3f189c104d41352433397421f021896c03a5e9"
 
 AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = False
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_FIT_AUTHORIZED = False
@@ -81,9 +81,9 @@ def validate_fit_temporal_residual_bound_utility_artifact_contract_sources(
     if not path.is_file():
         raise ValueError(f"missing EXP-054 training dependency: {path}")
     actual = _git_blob_sha(path)
-    if actual != DEC186_TRAINING_CORE_BLOB_SHA:
+    if actual != DEC188_TRAINING_CORE_BLOB_SHA:
         raise ValueError(
-            f"EXP-054 training-core Git blob mismatch: {actual} != {DEC186_TRAINING_CORE_BLOB_SHA}"
+            f"EXP-054 training-core Git blob mismatch: {actual} != {DEC188_TRAINING_CORE_BLOB_SHA}"
         )
     training = validate_fit_temporal_residual_bound_utility_training_sources(
         repository_root=root
@@ -98,8 +98,8 @@ def validate_fit_temporal_residual_bound_utility_artifact_contract_sources(
     return {
         "artifact_contract_version": FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_VERSION,
         "artifact_contract_decision": FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_DECISION,
-        "dec186_merged_commit": DEC186_MERGED_COMMIT,
-        "dec186_training_core_blob_sha": actual,
+        "dec187_merged_commit": DEC187_MERGED_COMMIT,
+        "dec188_training_core_blob_sha": actual,
         "protocol_fingerprint": fingerprint,
         "authoritative_result_execution_authorized": False,
         "model_fit_authorized": False,
@@ -119,10 +119,11 @@ def _expected_views() -> dict[str, dict[str, object]]:
     }
 
 
-def _expected_windows() -> dict[str, set[str]]:
-    out: dict[str, set[str]] = {}
+def _expected_windows() -> dict[str, dict[str, dict[str, object]]]:
+    out: dict[str, dict[str, dict[str, object]]] = {}
     for raw in FIT_TEMPORAL_SUPPORT_WINDOWS:
-        out.setdefault(str(raw["parent_regime"]), set()).add(str(raw["name"]))
+        parent = str(raw["parent_regime"])
+        out.setdefault(parent, {})[str(raw["name"])] = dict(raw)
     return out
 
 
@@ -149,15 +150,18 @@ def validate_fit_temporal_residual_references(fit: Mapping[str, object]) -> int:
             raise ValueError("EXP-054 residual target inventory mismatch")
         for target in FINANCIAL_TARGET_COLUMNS:
             target_windows = targets.get(target)
-            if not isinstance(target_windows, Mapping) or set(target_windows) != windows[excluded]:
+            if not isinstance(target_windows, Mapping) or set(target_windows) != set(windows[excluded]):
                 raise ValueError("EXP-054 residual window inventory mismatch")
             for name, supplied in target_windows.items():
                 if not isinstance(supplied, Mapping):
                     raise ValueError("EXP-054 residual window malformed")
+                expected_window = windows[excluded][name]
                 if (
                     supplied.get("status") != "FROZEN"
                     or supplied.get("name") != name
                     or supplied.get("parent_regime") != excluded
+                    or supplied.get("start") != expected_window["start"]
+                    or supplied.get("end_exclusive") != expected_window["end_exclusive"]
                     or supplied.get("target_column") != target
                 ):
                     raise ValueError("EXP-054 residual window identity mismatch")
@@ -236,18 +240,41 @@ def compile_fit_temporal_residual_bound_utility_model_result_evidence(
     return payload
 
 
+def write_fit_temporal_residual_bound_utility_model_result_evidence(
+    evidence: Mapping[str, object],
+    *,
+    path: Path,
+) -> None:
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(
+        dict(evidence),
+        sort_keys=True,
+        indent=2,
+        allow_nan=False,
+    ) + "\n"
+    if (
+        destination.exists()
+        and destination.read_text(encoding="utf-8") != payload
+    ):
+        raise ValueError(
+            "conflicting existing EXP-054 model-result evidence"
+        )
+    destination.write_text(payload, encoding="utf-8")
+
+
 def run_authoritative_fit_temporal_residual_bound_utility_model_bundle(**_: object) -> dict[str, object]:
     if AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED is not True:
         raise PermissionError(
-            "DEC-187 source is non-executable for authoritative EXP-054 model fitting"
+            "DEC-188 source is non-executable for authoritative EXP-054 model fitting"
         )
     raise PermissionError("EXP-054 authoritative runner is not armed")
 
 
 __all__ = [
     "AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED",
-    "DEC186_MERGED_COMMIT",
-    "DEC186_TRAINING_CORE_BLOB_SHA",
+    "DEC187_MERGED_COMMIT",
+    "DEC188_TRAINING_CORE_BLOB_SHA",
     "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_DECISION",
     "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_VERSION",
     "compile_fit_temporal_residual_bound_utility_model_result_evidence",
@@ -255,4 +282,5 @@ __all__ = [
     "validate_fit_temporal_residual_bound_utility_artifact_contract_sources",
     "validate_fit_temporal_residual_references",
     "validate_residual_bound_cutoff",
+    "write_fit_temporal_residual_bound_utility_model_result_evidence",
 ]

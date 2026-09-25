@@ -17,6 +17,7 @@ from fmp.market_learning.model_successor_fit_temporal_residual_bound_utility_tra
     _downside_residual,
     _robust_residual_bound_utility,
     build_fit_temporal_residual_bound_training_core_gate,
+    run_fit_temporal_residual_bound_utility_model_cell_core,
     validate_fit_temporal_residual_bound_utility_training_sources,
 )
 
@@ -31,7 +32,7 @@ class Exp054FitTemporalResidualBoundTrainingTests(unittest.TestCase):
         )
         self.assertEqual(
             FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_TRAINING_CORE_DECISION,
-            "DEC-186",
+            "DEC-188",
         )
         self.assertEqual(
             DEC185_MERGED_COMMIT,
@@ -165,6 +166,26 @@ class Exp054FitTemporalResidualBoundTrainingTests(unittest.TestCase):
         self.assertEqual(candidates[248], "LONG")
         self.assertEqual(candidates[249], "LONG")
         self.assertEqual(candidates[250], "NO_TRADE")
+
+    def test_completed_core_exposes_full_cell_runner(self) -> None:
+        self.assertTrue(callable(run_fit_temporal_residual_bound_utility_model_cell_core))
+        source = (
+            ROOT
+            / "src/fmp/market_learning/"
+            "model_successor_fit_temporal_residual_bound_utility_training.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "def _evaluate_forward_split_residual_bound(",
+            source,
+        )
+        self.assertIn(
+            "fit_temporal_residual_references",
+            source,
+        )
+        self.assertIn(
+            "selection_derived_residual_bound_cutoff",
+            source,
+        )
 
     def test_training_gate_keeps_execution_locked(self) -> None:
         gate = build_fit_temporal_residual_bound_training_core_gate()

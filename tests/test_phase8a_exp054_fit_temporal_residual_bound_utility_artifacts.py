@@ -6,8 +6,8 @@ import unittest
 from fmp.market_learning.model_protocol import MODEL_CELLS
 from fmp.market_learning.model_successor_fit_temporal_residual_bound_utility_artifacts import (
     AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED,
-    DEC186_MERGED_COMMIT,
-    DEC186_TRAINING_CORE_BLOB_SHA,
+    DEC187_MERGED_COMMIT,
+    DEC188_TRAINING_CORE_BLOB_SHA,
     FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_DECISION,
     compile_fit_temporal_residual_bound_utility_model_result_evidence,
     run_authoritative_fit_temporal_residual_bound_utility_model_bundle,
@@ -28,9 +28,15 @@ SHA = "a" * 64
 
 
 def _refs() -> dict[str, object]:
-    by_parent: dict[str, list[str]] = {}
+    by_parent: dict[str, list[tuple[str, str, str]]] = {}
     for raw in FIT_TEMPORAL_SUPPORT_WINDOWS:
-        by_parent.setdefault(str(raw["parent_regime"]), []).append(str(raw["name"]))
+        by_parent.setdefault(str(raw["parent_regime"]), []).append(
+            (
+                str(raw["name"]),
+                str(raw["start"]),
+                str(raw["end_exclusive"]),
+            )
+        )
     out: dict[str, object] = {}
     for raw in FIT_JACKKNIFE_VIEWS:
         name = str(raw["name"])
@@ -45,13 +51,15 @@ def _refs() -> dict[str, object]:
                         "status": "FROZEN",
                         "name": window,
                         "parent_regime": excluded,
+                        "start": start,
+                        "end_exclusive": end,
                         "target_column": target,
                         "row_count": 10,
                         "prediction_digest": SHA,
                         "sorted_residual_digest": SHA,
                         "downside_residual": -0.25,
                     }
-                    for window in by_parent[excluded]
+                    for window, start, end in by_parent[excluded]
                 }
                 for target in FINANCIAL_TARGET_COLUMNS
             },
@@ -64,9 +72,9 @@ class Exp054ArtifactContractTests(unittest.TestCase):
         report = validate_fit_temporal_residual_bound_utility_artifact_contract_sources(
             repository_root=ROOT
         )
-        self.assertEqual(FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_DECISION, "DEC-187")
-        self.assertEqual(DEC186_MERGED_COMMIT, "0fc2192152824ca2c3411517dff192d240ea9cd2")
-        self.assertEqual(report["dec186_training_core_blob_sha"], DEC186_TRAINING_CORE_BLOB_SHA)
+        self.assertEqual(FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_ARTIFACT_RUNNER_DECISION, "DEC-188")
+        self.assertEqual(DEC187_MERGED_COMMIT, "1c56ec7241d5795791ac83f1b58ac875b74e9645")
+        self.assertEqual(report["dec188_training_core_blob_sha"], DEC188_TRAINING_CORE_BLOB_SHA)
         self.assertFalse(report["authoritative_result_execution_authorized"])
         self.assertFalse(report["model_fit_authorized"])
 
@@ -130,7 +138,7 @@ class Exp054ArtifactContractTests(unittest.TestCase):
         self.assertFalse(
             AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED
         )
-        with self.assertRaisesRegex(PermissionError, "DEC-187 source is non-executable"):
+        with self.assertRaisesRegex(PermissionError, "DEC-188 source is non-executable"):
             run_authoritative_fit_temporal_residual_bound_utility_model_bundle()
 
     def test_source_has_no_dispatch_or_broker_path(self) -> None:
