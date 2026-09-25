@@ -3114,3 +3114,35 @@ Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residua
 
 DEC-185 explicitly keeps model protocol result production, model fitting, historical result execution, rerun/replacement behavior, selection-window calibration, selection-outcome ranking, selection-window quotas, gate relaxation, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next gate is a separate deterministic in-memory training/evaluation core.
 
+
+
+## DEC-186 — Phase 8A EXP-054 residual-bound training primitives
+
+**Date:** 2026-09-25
+**Status:** MERGED SOURCE-ONLY / SUPERSEDED BY DEC-188 COMPLETION
+
+DEC-186 merged at `0fc2192152824ca2c3411517dff192d240ea9cd2` and bound DEC-185 while adding deterministic residual-reference construction, exact lower-quartile residual extraction, twelve-bound robust utility scoring, and five-part lexicographic cutoff primitives. The merged training source blob was `672e5ca6003181c831ab51259dee7176f0962f6e`.
+
+DEC-186 did not authorize model fit, authoritative result execution, workflow dispatch, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. Subsequent review found that the source did not yet expose the complete cell-level selection/validation/holdout runner required before a historical workflow could be frozen. DEC-188 therefore supersedes DEC-186 as the complete EXP-054 in-memory training/evaluation core rather than treating the missing runner as implicitly authorized behavior.
+
+## DEC-187 — Phase 8A EXP-054 initial artifact evidence contract
+
+**Date:** 2026-09-25
+**Status:** MERGED SOURCE-ONLY / REBOUND BY DEC-188
+
+DEC-187 merged at `1c56ec7241d5795791ac83f1b58ac875b74e9645`. It introduced the non-executable EXP-054 artifact/evidence contract, requiring 24 target-specific residual references per cell and 432 across the 18-cell universe, exact view/target/window identity, finite downside residuals, digest binding, five-part cutoff validation, deterministic evidence fingerprinting, and a fail-closed authoritative bundle entry point.
+
+The initial artifact source was bound to the DEC-186 training blob and kept authoritative result execution and model fitting false. Because DEC-188 completes the previously missing cell runner, DEC-188 also rebinds and strengthens the artifact contract to the completed training blob. DEC-187 itself opened no historical result-producing slot.
+
+## DEC-188 — Phase 8A EXP-054 completed deterministic core and evidence rebind
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-188 completes the EXP-054 deterministic in-memory training/evaluation core before any workflow source is permitted to open. It preserves the exact DEC-185 model family, chronological splits, six jackknife regressors, pooled calibration references, fit-temporal utility-support references, fit-temporal feature-support references, budgets, financial gates, temporal-stability windows, and no-refit forward semantics.
+
+The completed core adds the missing end-to-end cell path: it fits only the frozen jackknife regressors, builds the 24 target-specific residual references from excluded fit half-years, scores the unchanged EXP-053 unanimous positive-utility eligibility, computes robust residual-bound utility from twelve downside-adjusted bounds, derives the frozen residual-bound/feature-support/utility-support/pooled/raw cutoff quintuple, evaluates the unchanged aggregate and temporal-stability gates, and only if selection passes applies the exact frozen models/references/cutoff to validation and retrospective holdout without refit or recalibration.
+
+The completed training source is `src/fmp/market_learning/model_successor_fit_temporal_residual_bound_utility_training.py` at blob `4f3f189c104d41352433397421f021896c03a5e9`. The amended artifact contract is version `fmp-exp054-fit-temporal-residual-bound-utility-artifact-contract-v2`, binds that exact training blob, validates exact residual window dates as well as identities/digests, and remains fail-closed before any artifact loading or authoritative model execution.
+
+DEC-188 keeps model protocol result production, model fitting authority, historical result execution, workflow dispatch, rerun/replacement behavior, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next safe gate, only after DEC-188 source and tests are green and merged, is a separate manual-main workflow/CLI/runtime source freeze with execution still closed.
