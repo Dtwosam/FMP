@@ -3095,3 +3095,22 @@ Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_featu
 
 DEC-184 keeps false EXP-053 rerun/replacement, stability-share/financial relaxation, removal of early windows, selection-window recalibration, selection-outcome ranking, selection-window quotas, successor result execution, successor model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading. Only a later successor protocol source design may open.
 
+## DEC-185 — Phase 8A EXP-054 fit-temporal residual-bound utility protocol
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-185 opens EXP-054 from the exact DEC-184 diagnostic, which proves that EXP-053 broadened aggregate financial passes to 10 across six cells but still produced zero stable challengers because every aggregate pass missed the 2021 share floor somewhere and nine of ten failed 2022 H1 financially.
+
+EXP-054 preserves the entire EXP-053 model/eligibility/gate pipeline and adds one source-only mechanism: 24 target-specific out-of-fit residual references per cell, built from the three frozen jackknife views, four excluded-regime fit half-years per view, and two frozen LONG/SHORT utility targets. Each reference scores an excluded fit half-year with the view model, freezes residuals as realized fit-period target minus prediction, and records a fixed lower-quartile downside residual at zero-based index floor(0.25*(n-1)) with no interpolation.
+
+For an already EXP-053-eligible row and its unanimous direction, DEC-185 forms 12 downside-adjusted lower-bound utilities by adding the appropriate frozen residual to each view prediction across its four excluded half-years. The minimum is the robust fit-temporal residual-bound utility. This score becomes the primary selection ranking signal, followed by feature support, utility support, pooled calibrated utility, raw utility, and row identity. Eligibility itself does not change.
+
+Selection freezes a five-part residual-bound/feature-support/utility-support/pooled/raw cutoff. Validation and holdout, if ever unlocked, must reuse the exact six regressors, six pooled references, 24 utility-support references, 12 feature-support references, 24 residual references, and exact selection-derived quintuple with no refit or recalibration.
+
+The protocol binds DEC-184 merge `f40f4b8c7d88cc2eb6c571956021ecc10b7a38a3`, DEC-184 diagnostic blob `a2fce33c15422abeb8323a6e3014ebf5a3a52794`, DEC-183 result-decision blob `7001c2b7944bd7b75a0c70e6fb1a775ff50ba6b5`, EXP-053 protocol blob `11ae3fc8e68687cc04957ed9243d8c5969227fb8`, and EXP-053 reviewed evidence fingerprint `cb32abc0e4ecd3df8b639d77b6770e255aa87701eb19180dfdfb25c37dfe48e1`.
+
+Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_bound_utility_protocol.py` at blob `3ffac844f9ed5308512dc3313e850cc84fb6d144`. Focused tests are `tests/test_phase8a_exp054_fit_temporal_residual_bound_utility_protocol.py` at blob `9216230ca6e3c05ab352acd4ebd87f1354ab9f70`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp054-fit-temporal-residual-bound-utility-protocol.md`.
+
+DEC-185 explicitly keeps model protocol result production, model fitting, historical result execution, rerun/replacement behavior, selection-window calibration, selection-outcome ranking, selection-window quotas, gate relaxation, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next gate is a separate deterministic in-memory training/evaluation core.
+
