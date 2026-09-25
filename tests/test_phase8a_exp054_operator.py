@@ -317,7 +317,7 @@ class Exp054FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
     def test_public_cli_binds_dec189_and_dec190(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn(
-            "load_fit_temporal_residual_bound_utility_model_result_evidence",
+            '"EXP-054 aggregate evidence code commit mismatch"',
             text,
         )
         self.assertIn(
