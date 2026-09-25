@@ -3852,3 +3852,19 @@ Selection-window outcomes, recalibration, quotas, per-window cutoff tuning, gate
 Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_protocol.py` at blob `8e10cc3760a4a7dd019ea1ecc7c60189fe1770e2`. Focused tests are `tests/test_phase8a_exp058_fit_regime_floor_protocol.py` at blob `ddd14530237faa164202362bf24886c7c03cba0a`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp058-fit-regime-floor-protocol.md`.
 
 The next safe gate is a deterministic in-memory EXP-058 training/evaluation core only.
+
+
+## DEC-232 — Phase 8A EXP-058 deterministic residual regime-floor training core
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-232 binds DEC-231 merge `a6926703d787a7fe0e2ba34261d14c4c4d362df2`, DEC-231 protocol blob `8e10cc3760a4a7dd019ea1ecc7c60189fe1770e2`, and predecessor DEC-221 repaired lower-tail training-core blob `ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd`.
+
+The implementation reuses the repaired EXP-057 fit/reference/financial/stability/forward machinery and adds only the DEC-231 regime-floor score and its eight-part cutoff. For each already eligible row and agreed direction, the exact twelve frozen downside-adjusted residual bounds are grouped by the three jackknife views. Each view contributes four bounds from the excluded two-year fit regime; the core computes the arithmetic mean of each four-bound group and defines the regime-floor utility as the minimum of the three means. No new reference vector is created and no selection, validation, or holdout outcome enters the score.
+
+Eligible rows rank by regime-floor utility, residual lower-tail mean, residual breadth, residual-bound utility, feature support, utility support, pooled calibrated utility, raw utility, then row identity. Each 250/500/1000 budget freezes the corresponding eight-part cutoff. Aggregate financial gates, the four temporal-stability windows, the 10% candidate-share floor, validation/holdout chronology, and no-refit semantics remain unchanged.
+
+The completed source exposes `run_fit_temporal_residual_regime_floor_utility_model_cell_core`, plus regime-floor-aware forward and temporal-stability evaluators. Training core source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_training.py` at blob `e7343f2dcff747fbedc128074258226f23a405fa`. Focused tests are `tests/test_phase8a_exp058_fit_regime_floor_training.py` at blob `87c55efb7ab02a7538a916fc87aa932b5484381b`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp058-regime-floor-training-core.md`.
+
+DEC-232 contains no artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading path. All such authorizations remain false. The next safe gate after merge is a separate non-executable EXP-058 artifact/evidence contract bound to this exact core.
