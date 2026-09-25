@@ -95,7 +95,7 @@ Focused tests:
 
 Git blob:
 
-`e71e6214184904c1e332ffc442a55f40756e26b6`
+`433744641b5767242404e85b09000bee15665aab`
 
 They verify main-push/path-only scope, absence of manual/scheduled/PR triggers, exact `next` invocation, absence of execution paths, non-editable dependency installation, external output, clean-main checks, and downstream locks.
 
