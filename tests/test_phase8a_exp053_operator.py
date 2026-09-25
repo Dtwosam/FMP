@@ -126,12 +126,12 @@ class Exp053FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
         self.assertEqual(
             shell_join(command),
             "gh workflow run "
-            "phase8a-exp053-fit-temporal-support-utility-model-training.yml "
+            "phase8a-exp053-fit-temporal-feature-support-utility-model-training.yml "
             "--ref main -R Dtwosam/FMP",
         )
         endpoint = fit_temporal_feature_support_utility_model_runs_endpoint()
         self.assertIn(
-            "phase8a-exp053-fit-temporal-support-utility-model-training.yml/runs",
+            "phase8a-exp053-fit-temporal-feature-support-utility-model-training.yml/runs",
             endpoint,
         )
         self.assertIn("branch=main", endpoint)
@@ -297,7 +297,7 @@ class Exp053FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
 
     def test_aggregate_artifact_selection_is_exact(self) -> None:
         expected = (
-            "exp053-fit-temporal-support-utility-model-result-evidence-"
+            "exp053-fit-temporal-feature-support-utility-model-result-evidence-"
             f"{SHA}-from-feature-35867307338-outcome-35876715434"
         )
         selected = select_fit_temporal_feature_support_utility_aggregate_artifact(
