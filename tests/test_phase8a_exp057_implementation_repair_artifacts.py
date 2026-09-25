@@ -191,7 +191,7 @@ class Exp057RepairArtifactContractTests(unittest.TestCase):
             "6ea34dd3c62f72c55376e891eeb44d96ad5de54b",
         )
         self.assertEqual(
-            report["dec210_training_core_blob_sha"],
+            report["dec221_training_core_blob_sha"],
             DEC221_TRAINING_CORE_BLOB_SHA,
         )
         self.assertEqual(
