@@ -2969,3 +2969,20 @@ The execution gate is `src/fmp/market_learning/model_successor_fit_temporal_feat
 
 DEC-177 keeps workflow dispatch, authoritative result execution, protocol-result production, model fit, replacement run, promotion, shadow/demo execution, broker mutation, live order, real-money action, and trading false. The next gate is a separately frozen attempt-1 terminal-review contract.
 
+## DEC-178 — Phase 8A EXP-053 predeclared terminal-result review
+
+**Date:** 2026-09-25
+**Status:** APPROVED BEFORE ANY EXP-053 HISTORICAL RUN AUTHORIZATION
+
+DEC-178 freezes the exact attempt-1 terminal-review contract for EXP-053 before any result-producing authorization exists. It binds DEC-177 merge `7faa5e765f08a47062444ebce3756bf9435ef1d4`, workflow blob `0a6704f75e83b06b7555dbb9dc912cda31443bbc`, CLI blob `dbd146100d81be6ffc492de448d8dc4e0a2f4e73`, and execution-gate blob `600ea84946fe908d143f3fbe2082b3505733cdf5`.
+
+Only an attempt-1 manual-main run of the exact EXP-053 workflow is reviewable. The terminal job inventory must contain exactly one authorization preflight, nine completed matrix jobs, and one aggregate job. Rerun attempts are rejected.
+
+A successful run requires all 11 jobs successful, all nine exact pair/timeframe cell artifacts, the exact aggregate artifact, and supplied aggregate evidence that passes DEC-176 validation against the run head commit. That evidence must independently prove 18 cells, 108 regressors, 108 pooled references, 432 fit-temporal utility-support references, 216 fit-temporal feature-support references, exact four-part cutoff evidence, unchanged financial/stability gates, forward chronology, and canonical fingerprints.
+
+A non-success attempt may preserve valid partial cell artifacts but cannot claim an aggregate artifact or aggregate result evidence. The review records preflight/matrix outcomes and persisted cell-artifact count. No terminal outcome authorizes rerun or replacement.
+
+The review source is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_result_review.py` at blob `c1586f8ddf48ad1125adaed7d8d8f0a476862beb`. Focused tests are `tests/test_phase8a_exp053_model_result_review.py` at blob `8a13c038afe0c73ba353f7fc645aa4279bd42b6a`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-fit-temporal-feature-support-utility-result-review.md` at blob `30fad8b0f30e7bf9fbbb70fe095478c0295994f2`.
+
+DEC-178 authorizes no dispatch, model fit, historical result execution, replacement run, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading. The next gate is a separate zero-run verification plus first-run guard and at-most-one outer run authorization.
+
