@@ -3548,3 +3548,19 @@ Successful aggregate revalidation verifies 18 cells, 108 regressors, 108 pooled 
 Terminal-review source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_result_review.py` at blob `0bfc50d39d04d82e95c731b7284c7be143191efd`. Focused tests are `tests/test_phase8a_exp056_model_result_review.py` at blob `bf1494a3995eb40a5af9ea2210a8cbc0c20add0b`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp056-terminal-review.md`.
 
 DEC-213 does not authorize workflow dispatch, authoritative result execution, model-protocol result production, model fitting, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. The next safe gate is a separate zero-prior-run proof plus first-run guard and, at most, one bounded outer historical-result slot.
+
+
+## DEC-214 — Phase 8A EXP-056 first-run authorization gate
+
+**Date:** 2026-09-25
+**Status:** APPROVED ONE-SLOT SOURCE AUTHORIZATION / NOT DISPATCHED
+
+Before DEC-214 source was completed, the latest 100 repository GitHub Actions runs were queried. That set contained one manual-main workflow-dispatch run and zero runs whose exact workflow name/path matched `phase8a-exp056-fit-temporal-residual-lower-tail-utility-model-training` / `.github/workflows/phase8a-exp056-fit-temporal-residual-lower-tail-utility-model-training.yml`. No EXP-056 historical model-result attempt had consumed the first-run slot.
+
+DEC-214 binds DEC-212 merge `3da30377a5d358471e79a32466f93fd80cf3a02f`, DEC-212 workflow blob `83e5434c065167294b854b58308fec6d39d800db`, DEC-212 CLI blob `30e79ef7ef20d12d75fc97103b9411b7b467ecef`, DEC-212 execution-gate blob `a81f746c8b19abc63f1bb83da0c32f1023644b94`, DEC-213 merge `af6083303e1fac29265c7ffc59eb355a313d892d`, and DEC-213 terminal-review blob `0bfc50d39d04d82e95c731b7284c7be143191efd`.
+
+The exact manual-main workflow now contains a first-run rejection guard before execution authorization. The guard verifies its own exact run identity and fails closed if any other manual-main EXP-056 workflow run already exists. The guarded workflow blob is `cf9585ebdfea689c7b0e3ca82ac4c43488559b2a`.
+
+Only the outer historical-result slot is opened. The DEC-214 execution gate may expose workflow dispatch, authoritative historical-result execution, model-protocol result production, and model fitting for at most one guarded attempt. The underlying DEC-209/210/211 protocol/core/artifact authorization constants remain false. Execution-gate blob is `ad3c5f8cc176952c8c8a2fcf2a626c30a5be307c`; focused workflow-test blob is `1c47614e30be29f5f1d14d0ce58dae7aa69c4674`.
+
+DEC-214 itself does not dispatch the workflow. The first manual-main EXP-056 attempt consumes the slot on any terminal outcome and must route through DEC-213. No rerun, retry, or replacement attempt is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate clean-main double-plan one-way operator that may derive at most one dispatch only while the exact EXP-056 workflow state remains missing.
