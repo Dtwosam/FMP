@@ -1504,9 +1504,9 @@ def build_fit_temporal_residual_lower_tail_training_core_gate(
         "residual_lower_tail_fraction": (
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_FRACTION
         ),
-        "residual_lower_tail_authorized": (
-            FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_AUTHORIZED
-        ),
+        "residual_lower_tail_retained": True,
+        "residual_lower_tail_change_authorized": False,
+        "implementation_dependency_repair_authorized": True,
         "result_execution_authorized": False,
         "model_fit_authorized": False,
         "promotion_authorized": False,
@@ -1529,6 +1529,7 @@ __all__ = [
     "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_TRAINING_CORE_VERSION",
     "LIVE_ORDER_AUTHORIZED",
     "MODEL_FIT_AUTHORIZED",
+    "FAILED_EXP056_TRAINING_CORE_BLOB_SHA",
     "EXP055_PREDECESSOR_TRAINING_CORE_BLOB_SHA",
     "PROMOTION_AUTHORIZED",
     "REAL_MONEY_AUTHORIZED",
