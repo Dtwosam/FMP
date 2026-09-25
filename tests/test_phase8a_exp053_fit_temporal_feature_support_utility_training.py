@@ -145,28 +145,55 @@ class Exp053FitTemporalFeatureSupportTrainingTests(unittest.TestCase):
     def test_feature_support_cutoff_is_primary_and_lexicographic(
         self,
     ) -> None:
-        directions = np.asarray(
-            ["LONG", "LONG", "SHORT", "LONG"],
+        row_count = 251
+        directions = np.full(
+            row_count,
+            "LONG",
             dtype=object,
         )
-        raw = np.asarray(
-            [10.0, 50.0, 20.0, 30.0],
+        raw = np.full(
+            row_count,
+            10.0,
             dtype=np.float64,
         )
-        pooled = np.asarray(
-            [0.90, 0.99, 0.80, 0.70],
+        pooled = np.full(
+            row_count,
+            0.80,
             dtype=np.float64,
         )
-        utility = np.asarray(
-            [0.80, 0.99, 0.70, 0.60],
+        utility = np.full(
+            row_count,
+            0.80,
             dtype=np.float64,
         )
-        feature = np.asarray(
-            [0.95, 0.50, 0.90, 0.85],
+        feature = np.full(
+            row_count,
+            1.0,
             dtype=np.float64,
         )
-        row_ids = ("a", "b", "c", "d")
 
+        # 248 unquestionably top-ranked rows, one cutoff row,
+        # and two lower feature-support rows with stronger
+        # secondary scores that must still rank below it.
+        feature[248] = 0.85
+        utility[248] = 0.60
+        pooled[248] = 0.70
+        raw[248] = 30.0
+
+        feature[249] = 0.50
+        utility[249] = 0.99
+        pooled[249] = 0.99
+        raw[249] = 50.0
+
+        feature[250] = 0.40
+        utility[250] = 1.00
+        pooled[250] = 1.00
+        raw[250] = 100.0
+
+        row_ids = tuple(
+            f"row-{index:03d}"
+            for index in range(row_count)
+        )
         record = _derive_feature_support_cutoff(
             directions=directions,
             raw_utility=raw,
@@ -174,34 +201,34 @@ class Exp053FitTemporalFeatureSupportTrainingTests(unittest.TestCase):
             fit_temporal_support=utility,
             feature_support=feature,
             row_ids=row_ids,
-            budget=3,
+            budget=250,
         )
         self.assertEqual(record["status"], "AVAILABLE")
         self.assertEqual(
             record[
                 "selection_derived_feature_support_cutoff"
             ],
-            0.85,
+            0.50,
         )
         self.assertEqual(
             record[
                 "selection_derived_support_cutoff"
             ],
-            0.60,
+            0.99,
         )
         self.assertEqual(
             record[
                 "selection_derived_pooled_calibrated_cutoff"
             ],
-            0.70,
+            0.99,
         )
         self.assertEqual(
             record["selection_derived_raw_cutoff"],
-            30.0,
+            50.0,
         )
         self.assertEqual(
             record["selection_candidate_count_at_cutoff"],
-            3,
+            250,
         )
 
         candidates = _candidate_directions_feature_support(
@@ -210,37 +237,48 @@ class Exp053FitTemporalFeatureSupportTrainingTests(unittest.TestCase):
             pooled_calibrated_utility=pooled,
             fit_temporal_support=utility,
             feature_support=feature,
-            feature_cutoff=0.85,
-            utility_cutoff=0.60,
-            pooled_cutoff=0.70,
-            raw_cutoff=30.0,
+            feature_cutoff=0.50,
+            utility_cutoff=0.99,
+            pooled_cutoff=0.99,
+            raw_cutoff=50.0,
         )
         self.assertEqual(
-            candidates.tolist(),
-            ["LONG", "NO_TRADE", "SHORT", "LONG"],
+            int(np.count_nonzero(candidates != "NO_TRADE")),
+            250,
         )
+        self.assertEqual(candidates[248], "LONG")
+        self.assertEqual(candidates[249], "LONG")
+        self.assertEqual(candidates[250], "NO_TRADE")
 
     def test_exact_quadruple_tie_may_exceed_budget(
         self,
     ) -> None:
+        row_count = 251
         directions = np.asarray(
-            ["LONG", "SHORT", "LONG", "SHORT"],
+            [
+                "LONG" if index % 2 == 0 else "SHORT"
+                for index in range(row_count)
+            ],
             dtype=object,
         )
-        raw = np.asarray(
-            [5.0, 5.0, 5.0, 1.0],
+        raw = np.full(
+            row_count,
+            5.0,
             dtype=np.float64,
         )
-        pooled = np.asarray(
-            [0.7, 0.7, 0.7, 0.1],
+        pooled = np.full(
+            row_count,
+            0.7,
             dtype=np.float64,
         )
-        utility = np.asarray(
-            [0.8, 0.8, 0.8, 0.1],
+        utility = np.full(
+            row_count,
+            0.8,
             dtype=np.float64,
         )
-        feature = np.asarray(
-            [0.9, 0.9, 0.9, 0.1],
+        feature = np.full(
+            row_count,
+            0.9,
             dtype=np.float64,
         )
         record = _derive_feature_support_cutoff(
@@ -249,12 +287,15 @@ class Exp053FitTemporalFeatureSupportTrainingTests(unittest.TestCase):
             pooled_calibrated_utility=pooled,
             fit_temporal_support=utility,
             feature_support=feature,
-            row_ids=("a", "b", "c", "d"),
-            budget=3,
+            row_ids=tuple(
+                f"row-{index:03d}"
+                for index in range(row_count)
+            ),
+            budget=250,
         )
         self.assertEqual(
             record["selection_candidate_count_at_cutoff"],
-            3,
+            251,
         )
 
     def test_source_has_no_artifact_loading_or_dispatch_path(
