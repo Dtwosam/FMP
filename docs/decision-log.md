@@ -3174,3 +3174,17 @@ A successful terminal review requires the exact manual-main EXP-054 workflow, at
 A terminal non-success may preserve only the cell artifacts actually produced. It cannot claim aggregate result evidence or an aggregate artifact, and it does not open a retry, rerun, or replacement attempt. The terminal outcome must route through this review before any later result decision.
 
 DEC-190 does not authorize workflow dispatch, authoritative result execution, model-protocol result production, model fitting, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. After DEC-190 is merged and green, the next safe gate is a separate proof that no prior manual-main EXP-054 model run exists, followed by a first-run guard and at most one explicitly bounded outer historical-result slot. No run is dispatched by DEC-190.
+
+
+## DEC-191 — Phase 8A EXP-054 first-run authorization gate
+
+**Date:** 2026-09-25
+**Status:** APPROVED ONE-SLOT SOURCE AUTHORIZATION / NOT DISPATCHED
+
+Before DEC-191 source was opened, repository-wide GitHub Actions history was queried for manual-main workflow dispatches. The repository reported 25 such runs and zero runs whose workflow name/path matched the EXP-054 model workflow `phase8a-exp054-fit-temporal-residual-bound-utility-model-training` / `.github/workflows/phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml`. No EXP-054 historical model-result attempt had therefore consumed the first-run slot.
+
+DEC-191 binds merged DEC-190 commit `3aa05c66a90d4300917f277fe47637bfc483f44e` and review blob `8902699599b3e2343c8095107bc41959d2f707cf`, while preserving the DEC-189 workflow/CLI/execution-gate source identities. It hardens the manual-main workflow with a first-run rejection guard: the running workflow verifies its own identity and rejects execution if any other manual-main EXP-054 model-workflow run already exists.
+
+Only the outer historical-result slot is opened. The execution gate may expose model-run dispatch, authoritative historical result production, model-protocol result production, and model fitting for at most one guarded attempt after this source is merged. DEC-191 itself does not dispatch the workflow, execute a model run, retry or rerun any attempt, or create a replacement path. The first manual-main attempt consumes the slot on any terminal outcome and must route through the predeclared DEC-190 terminal review.
+
+Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate clean-main, one-way operator that can prove the exact zero-run state and derive at most one workflow-dispatch action; that operator must not itself be conflated with this authorization source.
