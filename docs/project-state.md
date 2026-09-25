@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047/EXP-048/EXP-049/EXP-050/EXP-051/EXP-052/EXP-053 CLOSED/REVIEWED; EXP-053 DEC-174–184 CHAIN + POST-RESULT DIAGNOSTIC FROZEN; NO STABLE MODEL CHALLENGER
-**Next milestone:** A later source-only successor protocol may be proposed only if it directly addresses both residual failures frozen by DEC-184: early selection-period candidate-share insufficiency and 2022 H1 financial instability, without selection-outcome leakage, selection-window recalibration/quotas, or gate relaxation. Any fitting or historical result execution remains separately locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047/EXP-048/EXP-049/EXP-050/EXP-051/EXP-052/EXP-053 CLOSED/REVIEWED; EXP-054 DEC-185 SOURCE-ONLY PROTOCOL FROZEN; NO EXP-054 RESULT AUTHORIZED
+**Next milestone:** After DEC-185 merges and green checks, implement a deterministic in-memory EXP-054 training/evaluation core against the exact residual-bound protocol. Artifact loading, authoritative fit, workflow dispatch, historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked.
 
 ## Current baseline
 
@@ -486,6 +486,7 @@ Current milestone:
 108. Run `36126977702` succeeds on attempt 1 and proves the exact DEC-180 MISSING/RUN_DISPATCH_REQUIRED state at `7e5d042ab7cc46c18de0f72bd4302ec9dd676e84`, with immutable plan artifact `10860591486` / digest `sha256:9ca87fe6ec7c0ff8193ee4eef943e82053721c3fd762e5e69d7fa711471f6066`. DEC-182 freezes a one-shot main-push executor whose only execution-capable action is DEC-180 `advance --execute`; it contains no direct model-workflow dispatch, retry, rerun, or replacement path.
 109. DEC-183 closes EXP-053 after successful attempt-1 run `36127730584` at `1a6e3670215665f2aed04d28c66c674408080953`: 18 cells, 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, 10 aggregate passes, zero stable passes, and zero selected cells.
 110. DEC-184 freezes the EXP-050/051/052/053 post-result diagnostic. Feature support expands aggregate passes from 1 to 10 across six cells, but all 10 still miss the 2021 share floor somewhere and 9 of 10 fail 2022 H1 financially. Only successor source design may open; rerun/execution/promotion/trading remain locked.
+111. DEC-185 opens source-only EXP-054 with 24 target-specific out-of-fit fit-half-year residual references per cell. A fixed lower-quartile residual creates a conservative residual-bound utility score that ranks already EXP-053-eligible rows first, while feature support, utility support, pooled calibration, raw utility, budgets, chronology, financial gates, and temporal-stability gates remain unchanged. No fit or result execution is authorized.
 109. DEC-182 executor run `36127676468` submits the single EXP-053 model attempt through DEC-180; its later receipt-verification step fails on empty/non-JSON receipt output after dispatch and opens no second attempt. Run `36127730584` completes successfully on attempt 1 at `1a6e3670215665f2aed04d28c66c674408080953`. DEC-183 reviews complete 18-cell / 108-regressor / 108-pooled-reference / 432-utility-support-reference / 216-feature-support-reference evidence, records 10 aggregate financial passes with zero temporal-stability passes, accepts no model candidate, and closes the consumed EXP-053 slot.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
