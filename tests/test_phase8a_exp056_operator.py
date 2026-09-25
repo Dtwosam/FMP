@@ -59,7 +59,7 @@ def _checkout() -> dict[str, object]:
     }
 
 
-class Exp056ResidualBreadthOperatorTests(unittest.TestCase):
+class Exp056ResidualLowerTailOperatorTests(unittest.TestCase):
     def test_authorization_merge_identity_is_frozen(self) -> None:
         self.assertEqual(
             DEC214_MERGED_COMMIT,
@@ -256,8 +256,9 @@ class Exp056ResidualBreadthOperatorTests(unittest.TestCase):
                 terminal
             )
         )
+        self.assertIn("DEC-213", terminal["next_action"])
 
-    def test_gate_metadata_matches_dec203_source_shape(self) -> None:
+    def test_gate_metadata_matches_dec214_source_shape(self) -> None:
         gate = {
             "fit_temporal_residual_lower_tail_utility_model_execution_gate_decision": (
                 "DEC-212"
@@ -315,7 +316,7 @@ class Exp056ResidualBreadthOperatorTests(unittest.TestCase):
         self.assertEqual(selected["artifact_id"], 55)
         self.assertEqual(selected["artifact_name"], expected)
 
-    def test_public_cli_binds_dec201_and_dec202(self) -> None:
+    def test_public_cli_binds_dec212_and_dec213(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn(
             '"EXP-056 aggregate evidence code commit mismatch"',
@@ -329,6 +330,8 @@ class Exp056ResidualBreadthOperatorTests(unittest.TestCase):
             "fit_temporal_residual_lower_tail_utility_operator_gate_metadata",
             text,
         )
+        self.assertIn('OPERATOR_DECISION = "DEC-215"', text)
+        self.assertIn("DEC-214 source gate", text)
         self.assertNotIn("EXP-051", text)
 
     def test_dispatch_report_tamper_fails_closed(self) -> None:
