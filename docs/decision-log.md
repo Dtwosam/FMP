@@ -3410,3 +3410,19 @@ The runner checks out exact merged `main`, requires local HEAD to equal `origin/
 A successful DEC-205 plan must prove `operator_decision = DEC-204`, `run_present = false`, `run_state = MISSING`, the exact `FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_RUN_DISPATCH_REQUIRED` stage, and the frozen dispatch command as read-only plan evidence. The four bounded DEC-203 historical-run fields remain true in the plan; replacement/promotion/shadow/demo/broker/live/real-money/trading fields remain false.
 
 Workflow blob is `43f7c06aee4d551abc9e098186c8d1d75b740828`; focused test blob is `3b934e99e0b499946fb4372b27eaf3cdc06851c3`. DEC-205 changes no authorization, contains no `advance` or direct dispatch path, and consumes no historical slot. Only after the merged-main read-only proof succeeds may a separate one-shot executor be considered.
+
+
+## DEC-206 — Phase 8A EXP-055 one-shot operator executor
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE; AUTOMATIC EXECUTION ONLY AFTER MERGE
+
+DEC-206 binds successful DEC-205 read-only proof run `36162871611` at merged-main commit `e91594cec316412336e04361b6032a09229af0ab`. That run completed successfully on attempt 1 and persisted non-expired artifact `10875772980`, named `exp055-dec204-read-only-operator-plan-e91594cec316412336e04361b6032a09229af0ab`, with digest `sha256:16b6f8e573b30873d4b4599da6d5bda1b12eacbb06fc322e9659e474662d0f75`.
+
+The proof establishes DEC-204 on clean current main, no existing manual-main EXP-055 run, `MISSING`, `FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_RUN_DISPATCH_REQUIRED`, the exact frozen dispatch command as plan evidence, the four bounded DEC-203 historical-run fields true, and all replacement/promotion/shadow/demo/broker/live/real-money/trading locks false.
+
+DEC-206 adds exactly one main-push/path-scoped executor. Its sole execution-capable action is `python scripts/phase8a_exp055_operator.py advance --execute`. It contains no direct model-workflow dispatch command, no dispatch REST endpoint, no retry, no GitHub rerun, and no replacement path. Before execution it independently revalidates the exact successful plan run and artifact identity/digest, then relies on DEC-204 to perform fresh clean-main zero-run checks and double planning immediately before any dispatch.
+
+Executor workflow blob is `ca9e6e06a945fc6e2866ea1ea85532767fecd155`; focused test blob is `9f43afacf5a10be00c4220a4b439e34cf0929e52`.
+
+DEC-206 authorizes no second executor attempt and no replacement model run. If its initial merged-main executor causes DEC-204 to submit the EXP-055 model workflow, that first manual-main run consumes the DEC-203 slot on any terminal outcome and must route through DEC-202. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.

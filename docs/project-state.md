@@ -574,3 +574,6 @@ DEC-204 freezes the clean-main double-plan one-way operator for EXP-055. Only an
 
 
 DEC-205 adds the repository-hosted read-only proof for the exact DEC-204 `next` plan. It is main-push/path scoped, uses only read permissions, preserves a clean checkout, writes plan output under `RUNNER_TEMP`, invokes only the operator's read-only `next` action, and cannot dispatch or rerun the EXP-055 model workflow. The DEC-203 one-slot authorization remains unconsumed until a later separately frozen executor actually submits the guarded workflow. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked.
+
+
+DEC-206 binds successful merged-main read-only proof run `36162871611` and its exact non-expired plan artifact, then freezes a separate one-shot executor whose only execution-capable action is DEC-204 `advance --execute`. The executor has no independent model-workflow dispatch, rerun, retry, or replacement path; DEC-204 still performs fresh clean-main zero-run checks and double planning immediately before any dispatch. If the initial merged-main executor submits the EXP-055 historical workflow, that attempt consumes the DEC-203 slot on any terminal outcome and must route through DEC-202. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked.
