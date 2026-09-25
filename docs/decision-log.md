@@ -3364,3 +3364,19 @@ Successful aggregate revalidation verifies 18 cells, 108 regressors, 108 pooled 
 Terminal-review source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_result_review.py` at blob `341d228b2521441c7d4b32d92349bc001cc78a91`. Focused tests are `tests/test_phase8a_exp055_model_result_review.py` at blob `37cf99ae72c5e444d077c98c8e2f8d8221c9b8c3`.
 
 DEC-202 does not authorize workflow dispatch, authoritative result execution, model-protocol result production, model fitting, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. The next safe gate is a separate zero-prior-run proof plus first-run guard and, at most, one bounded outer historical-result slot.
+
+
+## DEC-203 — Phase 8A EXP-055 first-run authorization gate
+
+**Date:** 2026-09-25
+**Status:** APPROVED ONE-SLOT SOURCE AUTHORIZATION / NOT DISPATCHED
+
+Before DEC-203 source was completed, the latest 100 repository GitHub Actions runs were queried. That set contained one manual-main workflow-dispatch run and zero runs whose exact workflow name/path matched `phase8a-exp055-fit-temporal-residual-breadth-utility-model-training` / `.github/workflows/phase8a-exp055-fit-temporal-residual-breadth-utility-model-training.yml`. No EXP-055 historical model-result attempt had consumed the first-run slot.
+
+DEC-203 binds DEC-201 merge `a5825ec8008cbb9bf9783b15135faed1d7f5fb73`, DEC-201 workflow blob `da5b498deb7c8d15993eaeb686127f138ce9f161`, DEC-201 CLI blob `41eeb09fe0730f5184e71a9f7413a3bc5f568e63`, DEC-201 execution-gate blob `e252f0550ca1c0bdc2ea16d32bc0b6a854b1c39c`, DEC-202 merge `2f5be5d1f7aea4f69f6979e90a0784408b349d3f`, and DEC-202 terminal-review blob `341d228b2521441c7d4b32d92349bc001cc78a91`.
+
+The manual-main workflow now contains a first-run rejection guard before execution authorization. The guard verifies its own exact run identity and fails closed if any other manual-main EXP-055 workflow run already exists. The guarded workflow blob is `f38e792dde45a977b19d1790bdfe94543d99eb36`.
+
+Only the outer historical-result slot is opened. The DEC-203 execution gate may expose workflow dispatch, authoritative historical-result execution, model-protocol result production, and model fitting for at most one guarded attempt. The underlying DEC-198/199/200 protocol/core/artifact authorization constants remain false. Execution-gate blob is `ed86be7f49e57b957dd256dc99cc4d5b7b301479`; focused workflow-test blob is `31a194fa69cdd21a695edd6a46d2a934d1917c85`.
+
+DEC-203 itself does not dispatch the workflow. The first manual-main EXP-055 attempt consumes the slot on any terminal outcome and must route through DEC-202. No rerun, retry, or replacement attempt is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate clean-main double-plan one-way operator that may derive at most one dispatch only while the exact EXP-055 workflow state remains missing.
