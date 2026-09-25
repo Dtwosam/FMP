@@ -3696,3 +3696,19 @@ The contract preserves the inherited complete-evidence requirements: 18 exact ce
 Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_artifacts.py` at blob `d69eb668ade480b66faf992190b3a4929f414960`. Focused tests are `tests/test_phase8a_exp057_implementation_repair_artifacts.py` at blob `616bb6d8e1ab68336fdff4f04fb4018f36b51ffb`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp057-artifact-evidence-contract.md`.
 
 DEC-222 remains non-executable: authoritative result execution, model fit, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate manual-main EXP-057 workflow/CLI/runtime source freeze with execution still closed.
+
+
+## DEC-223 — Phase 8A EXP-057 workflow/CLI/runtime source freeze
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / EXECUTION CLOSED
+
+DEC-223 binds DEC-220 merge `865ab1569a0765078ed099008a5722f8a6d310b4` and repair-protocol blob `2f355526476a4d41967bb46e1bfad6aa525cbfa9`, DEC-221 merge `6ea34dd3c62f72c55376e891eeb44d96ad5de54b` and repaired training-core blob `ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd`, and DEC-222 merge `51e9ccde9feaada7932384fc4547b721c1341588` and artifact-contract blob `d69eb668ade480b66faf992190b3a4929f414960`.
+
+The frozen manual-main/input-free workflow is `.github/workflows/phase8a-exp057-fit-temporal-residual-lower-tail-utility-model-training.yml` at blob `db9d8ccaa7da674124963acc6ab4e65e6c2ad83f`. It retains read-only permissions, Python 3.12.14, the exact nine pair/timeframe datasets, 60m/240m horizons, frozen feature/outcome/readiness artifacts, partial cell evidence, and deterministic aggregate evidence.
+
+Public CLI `scripts/phase8a_exp057_model_run.py` is blob `889b2daa4e44175e0479377d6c8ea39846da596d`; runtime lock `requirements/exp057-model-run.txt` is blob `d25ab16056b9f5df283147d67b8f401f60ae7520`. The CLI requires execution authorization before readiness/artifact loading, calls the repaired DEC-222 aggregate compiler/writer and repaired DEC-221 training module, binds the actual exported deterministic cell runner, and contains no direct workflow-dispatch path.
+
+Exact-source execution gate `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_execution_gate.py` is blob `07c7db8bc7fc29cf595aa617f1d66ec4f77e4879`. Focused tests are `tests/test_phase8a_exp057_model_workflow.py` at blob `63d12da6af913bd981081002b11e6ce3393cdb7e`.
+
+DEC-223 intentionally has no first-run guard and opens no historical slot. Model-run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate predeclared attempt-1 terminal-review contract.
