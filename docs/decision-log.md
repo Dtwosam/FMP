@@ -3146,3 +3146,17 @@ The completed core adds the missing end-to-end cell path: it fits only the froze
 The completed training source is `src/fmp/market_learning/model_successor_fit_temporal_residual_bound_utility_training.py` at blob `4f3f189c104d41352433397421f021896c03a5e9`. The amended artifact contract is version `fmp-exp054-fit-temporal-residual-bound-utility-artifact-contract-v2`, binds that exact training blob, validates exact residual window dates as well as identities/digests, and remains fail-closed before any artifact loading or authoritative model execution.
 
 DEC-188 keeps model protocol result production, model fitting authority, historical result execution, workflow dispatch, rerun/replacement behavior, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next safe gate, only after DEC-188 source and tests are green and merged, is a separate manual-main workflow/CLI/runtime source freeze with execution still closed.
+
+
+## DEC-189 — Phase 8A EXP-054 model workflow source freeze
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / EXECUTION CLOSED
+
+DEC-189 binds merged DEC-188 commit `9ed9adcb4c01c2281323418b1f8468ddc6ce2993`, completed training-core blob `4f3f189c104d41352433397421f021896c03a5e9`, amended artifact-contract blob `37a5cd982e0a5b6634d5dc036c44cef706d487f3`, and DEC-185 protocol blob `3ffac844f9ed5308512dc3313e850cc84fb6d144`.
+
+It freezes a manual-main, input-free EXP-054 workflow, public CLI, and pinned Python 3.12.14 numerical runtime. The workflow preserves the exact accepted feature/outcome/readiness artifact identities used by EXP-053, covers all nine pair/timeframe datasets and both 60m/240m horizons, preserves partial cell evidence on failure, and defines deterministic aggregate evidence assembly.
+
+DEC-189 deliberately contains no first-run guard and does not open an outer historical-run slot. The workflow source can exist on main, but its authorization preflight fails closed because model-run dispatch, authoritative result execution, model protocol result production, and model fitting remain false. A later separate terminal-review decision must be frozen before any later authorization decision may consider one guarded EXP-054 historical result-producing attempt.
+
+Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
