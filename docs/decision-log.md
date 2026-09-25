@@ -3316,3 +3316,19 @@ For each already eligible row, the core reuses the exact twelve EXP-054 downside
 The completed source exposes `run_fit_temporal_residual_breadth_utility_model_cell_core`, so DEC-199 is a full deterministic in-memory cell core rather than a partial helper gate. Source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_training.py` at blob `c9517b7516940c78621448088c3933aa1c57e281`. Focused tests are `tests/test_phase8a_exp055_fit_temporal_residual_breadth_utility_training.py` at blob `cb2f4173fcefcb1a282300eb04374c0b8f468dbf`.
 
 DEC-199 contains no artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading path. All such authorizations remain false. The next safe gate after merge is a separate non-executable EXP-055 artifact/evidence contract bound to this exact core.
+
+
+## DEC-200 — Phase 8A EXP-055 artifact/evidence contract
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-200 binds DEC-199 merge `aaa80ce43a4dbd38e52e418dd16b61642d22b2b5`, DEC-199 training-core blob `c9517b7516940c78621448088c3933aa1c57e281`, and predecessor EXP-054 artifact-contract blob `37a5cd982e0a5b6634d5dc036c44cef706d487f3`.
+
+The contract validates complete EXP-055 cell evidence before aggregate compilation. Each cell must bind the exact experiment/protocol/training decisions, deterministic cell fingerprint, six regressors, six pooled references, 24 utility-support references, 12 feature-support references, 24 exact residual references, the twelve-bound residual-breadth inventory, breadth-aware consensus diagnostics/digest, and the three frozen budget variants. Available variants require a finite breadth/residual-bound/feature-support/utility-support/pooled/raw cutoff sextuple; unavailable budgets expose no cutoff and cannot pass selection.
+
+Complete aggregate evidence requires all 18 exact cells and verifies 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, 432 residual references, and the fixed twelve-bound breadth inventory. Aggregate evidence receives a deterministic fingerprint under the frozen canonical serializer.
+
+Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_artifacts.py` at blob `65ca27a20d4e4fadd73c22b0b5693dc9d7ebeafb`. Focused tests are `tests/test_phase8a_exp055_fit_temporal_residual_breadth_utility_artifacts.py` at blob `ff57999b49a916efe6f6e10a2f8b8d3f8bb244fd`.
+
+DEC-200 remains non-executable: authoritative result execution, model fit, workflow dispatch, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate manual-main workflow/CLI/runtime source freeze with execution still closed.
