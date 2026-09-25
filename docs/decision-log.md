@@ -3160,3 +3160,17 @@ It freezes a manual-main, input-free EXP-054 workflow, public CLI, and pinned Py
 DEC-189 deliberately contains no first-run guard and does not open an outer historical-run slot. The workflow source can exist on main, but its authorization preflight fails closed because model-run dispatch, authoritative result execution, model protocol result production, and model fitting remain false. A later separate terminal-review decision must be frozen before any later authorization decision may consider one guarded EXP-054 historical result-producing attempt.
 
 Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+
+## DEC-190 — Phase 8A EXP-054 predeclared terminal review
+
+**Date:** 2026-09-25
+**Status:** APPROVED REVIEW SOURCE / EXECUTION CLOSED
+
+DEC-190 predeclares the exact terminal review for any later separately authorized first EXP-054 historical model-result attempt. It binds DEC-189 merge `53896a567bfce34a274398756ef96051ed7a12d9`, workflow blob `f8b8f863e6993e8da6f0a0fdabe443dd3b9a6dd8`, CLI blob `3224836570952741a83cda057da4fff7ebc78d97`, and execution-gate blob `41572a295466f7d92b03732d8899fa4c3f6a172f`.
+
+A successful terminal review requires the exact manual-main EXP-054 workflow, attempt 1 only, all 11 required jobs completed successfully, all nine pair/timeframe cell artifacts present and non-expired, the aggregate artifact present and non-expired, and aggregate evidence that exactly reproduces under the DEC-188 deterministic evidence compiler for the reviewed head commit. Complete evidence must cover all 18 model cells and 432 fit-temporal residual references.
+
+A terminal non-success may preserve only the cell artifacts actually produced. It cannot claim aggregate result evidence or an aggregate artifact, and it does not open a retry, rerun, or replacement attempt. The terminal outcome must route through this review before any later result decision.
+
+DEC-190 does not authorize workflow dispatch, authoritative result execution, model-protocol result production, model fitting, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. After DEC-190 is merged and green, the next safe gate is a separate proof that no prior manual-main EXP-054 model run exists, followed by a first-run guard and at most one explicitly bounded outer historical-result slot. No run is dispatched by DEC-190.
