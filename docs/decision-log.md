@@ -3776,3 +3776,21 @@ A successful proof must establish `operator_decision = DEC-226`, `read_only = tr
 Workflow `.github/workflows/phase8a-exp057-operator-plan.yml` is blob `c69af21d6d2c6c3b4ba0412a9668dd1f0d0a20ad`. Focused tests `tests/test_phase8a_exp057_operator_plan_runner.py` are blob `0d88c76dd6023c9f147068b7bdd512e085441b3f`. The bound operator source is blob `58d0002e4d74a75fec77d3074249e505857b8603`; the public operator CLI is blob `2ba08d3f4411a84ff3708cc338d26f3d90bbaad4`.
 
 DEC-227 cannot invoke `advance`, `advance --execute`, a direct workflow dispatch, rerun, retry, replacement, or model-result claim. It consumes no historical slot. Only after a successful merged-main proof and exact artifact binding may a separate one-shot executor be considered.
+
+
+## DEC-228 — Phase 8A EXP-057 one-shot operator executor
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE; AUTOMATIC EXECUTION ONLY AFTER MERGE
+
+DEC-228 binds successful DEC-227 read-only proof run `36192020278` at merged-main commit `7fc1396bbe983070dcbed410f43ce779f286986d`. The run completed successfully on attempt 1 and persisted non-expired artifact `10888591924`, named `exp057-dec226-read-only-operator-plan-7fc1396bbe983070dcbed410f43ce779f286986d`, with digest `sha256:92904a1e937494fcb065c414ac70fef9e4d4907bc86510d4bfaa98943982b9cf`.
+
+The proof artifact independently confirms DEC-226 on clean current main, no existing manual-main EXP-057 run, `MISSING`, the exact `FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RUN_DISPATCH_REQUIRED` stage, the exact frozen dispatch command as read-only plan evidence, the four bounded DEC-225 historical-run fields true, and all replacement/promotion/shadow/demo/broker/live/real-money/trading locks false.
+
+DEC-228 adds exactly one main-push/path-scoped executor. Its sole execution-capable action is `python scripts/phase8a_exp057_operator.py advance --execute`. It contains no independent model-workflow dispatch command, dispatch REST endpoint, GitHub rerun command, retry, or replacement path. Before execution it revalidates the exact DEC-227 run/artifact metadata, downloads and rehashes the plan ZIP, rechecks `operator-plan.json`, and relies on DEC-226 for fresh clean-main/live-state double planning.
+
+After operator submission, the executor independently queries the exact EXP-057 workflow listing and requires exactly one manual-main run at the executor merge SHA on attempt 1. This observation loop does not redispatch or rerun anything.
+
+Executor workflow `.github/workflows/phase8a-exp057-operator-execute.yml` is blob `600e428e4af0f13f56c69144e218bf5c998402a1`. Focused tests `tests/test_phase8a_exp057_operator_executor.py` are blob `b526852eff3254bbd54c6afc43cb62f8f7c706a8`.
+
+DEC-228 authorizes no second executor attempt and no replacement model run. If the initial merged-main executor submits the EXP-057 historical workflow, that first attempt consumes the DEC-225 slot on any terminal outcome and must route through DEC-224. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
