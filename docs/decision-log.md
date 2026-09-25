@@ -3580,3 +3580,17 @@ The public CLI supports read-only `next`, non-executing `advance`, and a double-
 Operator source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_operator.py` at blob `de7e4134ba29c619d9d12c9f372bfee96fc1c902`. Public CLI is `scripts/phase8a_exp056_operator.py` at blob `db626a1703cb2238948d4f832ce6e8db093880f4`. Focused tests are `tests/test_phase8a_exp056_operator.py` at blob `e20ae3068c9d7e24c49fb0fbb8057d597db9addf`.
 
 DEC-215 does not itself dispatch the model workflow or consume the DEC-214 slot. Replacement model runs, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a repository-hosted read-only plan runner that invokes only `next`.
+
+
+## DEC-216 — Phase 8A EXP-056 repository-hosted read-only plan runner
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / READ-ONLY / NOT DISPATCHED
+
+DEC-216 binds DEC-215 merge `328a42ebe2248ca8200bf5d8f50d37fd28186d87` and adds a repository-hosted read-only proof for the exact DEC-215 `next` plan. Workflow `.github/workflows/phase8a-exp056-operator-plan.yml` is main-push/path scoped, grants only `contents: read` and `actions: read`, has no manual/scheduled/PR trigger, and invokes only `python scripts/phase8a_exp056_operator.py next`.
+
+The runner checks out exact merged `main`, requires local HEAD to equal `origin/main`, installs the pinned EXP-056 numerical runtime without editable installation, proves the worktree remains clean, and writes plan output only to `RUNNER_TEMP`.
+
+A successful DEC-216 plan must prove `operator_decision = DEC-215`, `run_present = false`, `run_state = MISSING`, the exact `FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_MODEL_RUN_DISPATCH_REQUIRED` stage, and the frozen dispatch command as read-only plan evidence. The four bounded DEC-214 historical-run fields remain true in the plan; replacement/promotion/shadow/demo/broker/live/real-money/trading fields remain false.
+
+Workflow blob is `921c4a93aa271b4db3816f8e4e2adb178a0a0318`; focused test blob is `874549bd519c9412050230376effb8b954e3be0b`. DEC-216 changes no authorization, contains no `advance` or direct dispatch path, and consumes no historical slot. Only after the merged-main read-only proof succeeds may a separate one-shot executor be considered.
