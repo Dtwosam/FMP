@@ -214,9 +214,9 @@ def validate_fit_temporal_residual_lower_tail_utility_model_workflow_sources(
         "fit_temporal_residual_lower_tail_utility_model_execution_gate_decision": (
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_MODEL_EXECUTION_GATE_DECISION
         ),
-        "dec198_merged_commit": DEC209_MERGED_COMMIT,
-        "dec199_merged_commit": DEC210_MERGED_COMMIT,
-        "dec200_merged_commit": DEC211_MERGED_COMMIT,
+        "dec209_merged_commit": DEC209_MERGED_COMMIT,
+        "dec210_merged_commit": DEC210_MERGED_COMMIT,
+        "dec211_merged_commit": DEC211_MERGED_COMMIT,
         "fit_temporal_residual_lower_tail_utility_runner_blob_sha": actual[
             "residual_lower_tail_runner"
         ],
