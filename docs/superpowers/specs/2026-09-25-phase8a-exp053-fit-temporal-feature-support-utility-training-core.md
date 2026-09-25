@@ -232,6 +232,6 @@ DEC-175 keeps false:
 
 A later separate decision may freeze the EXP-053 artifact/evidence contract against this exact DEC-175 core.
 
-That contract must independently validate all 18 cells, 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references? No: feature-support references are exactly 12 per cell, therefore **216 across 18 cells**, plus the four-part cutoff and unchanged forward-status chain.
+That contract must independently validate all 18 cells, 108 regressors, 108 pooled references, 432 utility-support references, **216 feature-support references** (12 per cell across 18 cells), plus the four-part cutoff and unchanged forward-status chain.
 
 It must remain non-executable before readiness or accepted historical artifact loading.
