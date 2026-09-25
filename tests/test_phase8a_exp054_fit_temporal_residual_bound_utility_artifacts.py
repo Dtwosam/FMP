@@ -28,7 +28,7 @@ SHA = "a" * 64
 
 
 def _refs() -> dict[str, object]:
-    by_parent: dict[str, list[str]] = {}
+    by_parent: dict[str, list[tuple[str, str, str]]] = {}
     for raw in FIT_TEMPORAL_SUPPORT_WINDOWS:
         by_parent.setdefault(str(raw["parent_regime"]), []).append(
             (
