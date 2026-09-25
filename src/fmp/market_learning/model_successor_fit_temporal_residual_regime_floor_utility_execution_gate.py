@@ -114,22 +114,19 @@ def validate_fit_temporal_residual_regime_floor_utility_model_workflow_sources(
     if FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_PROTOCOL_DECISION != "DEC-231":
         raise ValueError("EXP-058 protocol decision drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_PROTOCOL_VERSION != (
-        "fmp-exp058-fit-temporal-residual-lower-tail-utility-"
-        "implementation-repair-protocol-v1"
+        "fmp-exp058-fit-temporal-residual-regime-floor-utility-protocol-v1"
     ):
         raise ValueError("EXP-058 protocol version drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_TRAINING_CORE_DECISION != "DEC-232":
         raise ValueError("EXP-058 training-core decision drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_TRAINING_CORE_VERSION != (
-        "fmp-exp058-fit-temporal-residual-lower-tail-utility-"
-        "implementation-repair-training-core-v1"
+        "fmp-exp058-fit-temporal-residual-regime-floor-utility-training-core-v1"
     ):
         raise ValueError("EXP-058 training-core version drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_ARTIFACT_RUNNER_DECISION != "DEC-233":
         raise ValueError("EXP-058 artifact-contract decision drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_ARTIFACT_RUNNER_VERSION != (
-        "fmp-exp058-fit-temporal-residual-lower-tail-utility-"
-        "implementation-repair-artifact-contract-v1"
+        "fmp-exp058-fit-temporal-residual-regime-floor-utility-artifact-contract-v1"
     ):
         raise ValueError("EXP-058 artifact-contract version constant drift")
 
