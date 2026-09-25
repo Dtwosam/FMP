@@ -3630,3 +3630,21 @@ Because no cell result artifact exists, EXP-056 has no model-selection result, a
 Reviewed failed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_result_decision.py` at blob `75fc25ae97c03730ab75a3036059f761d8234630`. Focused tests are `tests/test_phase8a_exp056_failed_result_decision.py` at blob `9062d2aa990786e87cc6162e4c1f99b54bcc2d4a`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp056-reviewed-failed-result.md`.
 
 DEC-218 closes model-run dispatch, replacement, authoritative result execution, model-protocol result production, and model fit. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. No second EXP-056 attempt is authorized. The next safe gate is a separate source-only implementation-defect diagnostic only.
+
+
+## DEC-219 — Phase 8A EXP-056 implementation-failure diagnostic
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY DIAGNOSTIC
+
+DEC-219 binds DEC-218 merge `2f2171f0166f22c19482a905d6906d1cfd672275`, DEC-218 result-decision blob `75fc25ae97c03730ab75a3036059f761d8234630`, EXP-056 training-core blob `c472ed48e7b79d22056d43deb0fe09166ccf34c9`, EXP-055 predecessor training-core blob `c9517b7516940c78621448088c3933aa1c57e281`, and EXP-054 base training-core blob `4f3f189c104d41352433397421f021896c03a5e9`.
+
+The diagnostic performs a deterministic AST audit of every direct EXP-056 `_predecessor` and `_base` dereference against the actual top-level names exported by the frozen sources. It identifies exactly seven invalid EXP-056 accesses to inherited EXP-054 constants/rules through the intermediate EXP-055 module: `FIT_TEMPORAL_FEATURE_SUPPORT_PERCENTILE_RULE`, `FIT_TEMPORAL_FEATURE_SUPPORT_REFERENCE_COUNT_PER_CELL`, `FIT_TEMPORAL_RESIDUAL_REFERENCE_COUNT_PER_CELL`, `FIT_TEMPORAL_SUPPORT_REFERENCE_COUNT_PER_CELL`, `MIN_STABILITY_WINDOW_CANDIDATE_SHARE`, `ROBUST_FIT_TEMPORAL_FEATURE_SUPPORT_SCORE_RULE`, and `ROBUST_FIT_TEMPORAL_SUPPORT_SCORE_RULE`. All seven exist on the frozen EXP-054 `_base` module.
+
+The failed historical attempt directly observed two members of that seven-name set: missing `MIN_STABILITY_WINDOW_CANDIDATE_SHARE` in eight matrix jobs and missing `FIT_TEMPORAL_SUPPORT_REFERENCE_COUNT_PER_CELL` in one later path. The other five are latent invalid dereferences not reached by the failed run.
+
+DEC-219 classifies the failure as `EXP056_IMPLEMENTATION_FAILED_BEFORE_EVIDENCE_DUE_INTERMEDIATE_PREDECESSOR_EXPORT_DRIFT`. The exact future repair boundary is implementation-only: for a new successor experiment, replace those seven `_predecessor.<name>` accesses with `_base.<name>`, retain legitimate EXP-055 breadth-specific accesses on `_predecessor`, and change no protocol semantics, data identity, model family, chronology, ranking, budgets, financial gates, temporal-stability gates, validation, or holdout rules.
+
+Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_failure_diagnostics.py` at blob `d94fb02c5037aec4c2cd2a1b020aa1317193d862`. Focused tests are `tests/test_phase8a_exp056_implementation_failure_diagnostics.py` at blob `71d3fb31e21f2873423375358ecc05097c36370d`.
+
+DEC-219 keeps EXP-056 rerun/replacement, successor model fit, successor historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. It opens successor protocol source design only, under a new experiment identity.
