@@ -154,7 +154,7 @@ def _validated_source_gate() -> dict[str, object]:
         "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_MODEL_RUN_DISPATCH_REQUIRED"
     ):
         raise SystemExit(
-            "EXP-056 DEC-203 source gate returned an invalid stage"
+            "EXP-056 DEC-214 source gate returned an invalid stage"
         )
     for field in (
         "fit_temporal_residual_lower_tail_utility_model_run_dispatch_authorized",
@@ -164,12 +164,12 @@ def _validated_source_gate() -> dict[str, object]:
     ):
         if gate.get(field) is not True:
             raise SystemExit(
-                f"EXP-056 DEC-203 source gate {field} must be true"
+                f"EXP-056 DEC-214 source gate {field} must be true"
             )
     for field in ("promotion_authorized", "trading_authorized"):
         if gate.get(field) is not False:
             raise SystemExit(
-                f"EXP-056 DEC-203 source gate {field} must be false"
+                f"EXP-056 DEC-214 source gate {field} must be false"
             )
     return gate
 
@@ -293,7 +293,7 @@ def parser() -> argparse.ArgumentParser:
     advance = sub.add_parser(
         "advance",
         help=(
-            "prepare or execute exactly one DEC-203-authorized dispatch"
+            "prepare or execute exactly one DEC-214-authorized dispatch"
         ),
     )
     advance.add_argument("--execute", action="store_true")
