@@ -571,3 +571,6 @@ DEC-203 verifies zero exact prior EXP-055 manual-main model runs in the latest 1
 
 
 DEC-204 freezes the clean-main double-plan one-way operator for EXP-055. Only an exact zero-run `MISSING` state may expose the single DEC-203-authorized dispatch command; `IN_PROGRESS` and `TERMINAL` states cannot produce replacement dispatches, and terminal evidence must route through DEC-202. The operator verifies clean current main and exact origin identity before planning, and its public CLI re-plans immediately before any explicit execution. DEC-204 itself does not dispatch or consume the EXP-055 slot. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked. The next safe gate is a repository-hosted read-only plan proof only.
+
+
+DEC-205 adds the repository-hosted read-only proof for the exact DEC-204 `next` plan. It is main-push/path scoped, uses only read permissions, preserves a clean checkout, writes plan output under `RUNNER_TEMP`, invokes only the operator's read-only `next` action, and cannot dispatch or rerun the EXP-055 model workflow. The DEC-203 one-slot authorization remains unconsumed until a later separately frozen executor actually submits the guarded workflow. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked.
