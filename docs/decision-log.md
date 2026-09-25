@@ -3814,3 +3814,23 @@ DEC-229 therefore records `FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL
 Reviewed result-decision source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_result_decision.py` at blob `185e2cdf089cb6f1a12619af58fd32860366498f`. Focused tests are `tests/test_phase8a_exp057_model_result_decision.py` at blob `a1fd0bdd1a8ce87538460351630053efabda6ce3`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp057-reviewed-result.md`.
 
 DEC-229 closes model-run dispatch, replacement, authoritative result execution, model-protocol result production, and model fit. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. No second EXP-057 attempt is authorized. The next safe gate is post-result diagnostic analysis only.
+
+
+## DEC-230 — Phase 8A EXP-057 post-result diagnostic
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY DIAGNOSTIC
+
+DEC-230 binds DEC-229 merge `7a2c53712a85f69e106a707dc1245e664c68bcbb`, DEC-229 result-decision blob `185e2cdf089cb6f1a12619af58fd32860366498f`, DEC-208 diagnostic blob `5ff61be317b225d9d7ec656b4789c4561d52b522`, and DEC-207 EXP-055 result-decision blob `e2226117ebf10b762557d43549390c46c243bbae`.
+
+EXP-055 is used as the nearest prior successful model-result baseline because EXP-056 failed before producing model evidence. EXP-055 and EXP-057 retain identical 54-variant accounting, 28 available variants, 26 unavailable variants, 26,392 utility-eligible selection rows, zero stable passes, and zero accepted model candidates.
+
+EXP-057 retains the EXP-055 USDJPY 5m / 60m aggregate passes at budgets 250 and 1000 and adds budget 500, increasing aggregate-pass count from 2 to 3 without increasing stable-pass count. Across the same 28 available variants, aggregate 0.5-pip total net pips improve on 15 variants and worsen on 13, with none unchanged.
+
+In the common USDJPY 5m / 60m cell, aggregate total net pips move from 576.6 to 301.4 at budget 250, from -470.8 to 89.0 at budget 500, and from 40.5 to 362.1 at budget 1000. The new budget-500 pass remains concentrated `0/0/3/497` across the four temporal windows. Budget 250 remains fully concentrated in 2022 H2 at `0/0/0/250`. Budget 1000 changes from `0/1/83/916` to `0/1/73/926`, increasing late-window concentration and leaving the 2022 H1 share below the unchanged 10% floor.
+
+DEC-230 classifies the result as `LOWER_TAIL_RANKING_CHANGED_CANDIDATE_FINANCIAL_MIX_AND_ADDED_AGGREGATE_PASS_BUT_DID_NOT_CREATE_TEMPORAL_STABILITY`. The lower-tail ranking changes candidate identity and aggregate financial outcomes but still does not transfer fit-time information into selection-time chronological breadth.
+
+Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_post_result_diagnostics.py` at blob `09e88b85a51b858296a3af7d146251606f1d5533`. Focused tests are `tests/test_phase8a_exp057_post_result_diagnostics.py` at blob `c3486a0b9b5daf43fdf5cc66b6ddc6546d12b0cd`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp057-post-result-diagnostic.md`.
+
+DEC-230 keeps EXP-057 rerun/replacement, all temporal-gate relaxation, selection-window ranking/recalibration/quota tuning, successor fit/result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. Only successor protocol source design is open.
