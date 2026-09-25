@@ -3228,3 +3228,19 @@ DEC-194 removes that nonexistent import. The operator now parses the downloaded 
 The DEC-193 workflow trigger is also widened to its own workflow file, the EXP-054 operator CLI, and the EXP-054 operator module so future operator-source corrections automatically rerun the read-only proof on merged `main`. The workflow still has read-only permissions and invokes only DEC-192 `next`; it contains no advance, execute, direct model-workflow dispatch, retry, rerun, or replacement path.
 
 DEC-194 consumes no DEC-191 historical-run slot and does not authorize model-workflow dispatch, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. A successful corrected merged-main DEC-193 read-only proof remains required before any one-shot executor source may open.
+
+
+## DEC-195 — Phase 8A EXP-054 one-shot operator executor
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE; AUTOMATIC EXECUTION ONLY AFTER MERGE
+
+DEC-195 binds the successful corrected DEC-193 read-only proof after DEC-194. Plan run `36151472585` completed successfully on attempt 1 at `c4746803f116af2727bbbd73d5d58ed031b9adf8` and persisted non-expired artifact `10871223861`, named `exp054-dec192-read-only-operator-plan-c4746803f116af2727bbbd73d5d58ed031b9adf8`, with digest `sha256:83508d99b1fbf9be621ea309fa7012451977a0146a02cbba520b0edf9dab9c72`.
+
+The proof establishes DEC-192 on clean current main, no existing manual-main EXP-054 run, `MISSING`, `FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_DISPATCH_REQUIRED`, the exact frozen dispatch command as plan evidence, the four DEC-191 historical-run fields true, and all replacement/promotion/shadow/demo/broker/live/real-money/trading locks false.
+
+DEC-195 adds exactly one main-push/path-scoped executor. Its only execution-capable line is `python scripts/phase8a_exp054_operator.py advance --execute`. It contains no direct model-workflow dispatch command, no dispatch REST endpoint, no retry, no GitHub rerun, and no replacement path. Before execution it independently revalidates the exact successful plan run and artifact identity/digest, then relies on DEC-192 to perform fresh clean-main zero-run checks and double planning immediately before any dispatch.
+
+The executor workflow is `.github/workflows/phase8a-exp054-operator-execute.yml` at blob `b051668d47c249fb42c3d27ecf5bdf9159f88279`. Focused tests are `tests/test_phase8a_exp054_operator_executor.py` at blob `b0a2cfbe22e0162ea41b65a60d50bc882730efa3`.
+
+DEC-195 authorizes no second executor attempt and no replacement model run. If its initial merged-main executor causes DEC-192 to submit the EXP-054 model workflow, that first manual-main run consumes the DEC-191 slot on any terminal outcome and must route through DEC-190. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.

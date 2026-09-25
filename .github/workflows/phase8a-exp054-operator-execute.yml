@@ -1,0 +1,144 @@
+name: phase8a-exp054-operator-execute
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-exp054-operator-execute.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  execute-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONPATH: ${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require push on merged main
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned EXP-054 runtime without mutating checkout
+        run: python -m pip install -r requirements/exp054-model-run.txt
+
+      - name: Require clean worktree after runtime install
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+
+      - name: Verify frozen DEC-193/194 read-only plan evidence
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36151472585" > "$RUNNER_TEMP/plan-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36151472585/artifacts?per_page=100" > "$RUNNER_TEMP/plan-artifacts.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads(
+              (temp / "plan-run.json").read_text(encoding="utf-8")
+          )
+          artifacts = json.loads(
+              (temp / "plan-artifacts.json").read_text(encoding="utf-8")
+          )
+
+          assert run["id"] == 36151472585
+          assert run["name"] == "phase8a-exp054-operator-plan"
+          assert run["path"] == ".github/workflows/phase8a-exp054-operator-plan.yml"
+          assert run["event"] == "push"
+          assert run["head_branch"] == "main"
+          assert run["head_sha"] == "c4746803f116af2727bbbd73d5d58ed031b9adf8"
+          assert run["status"] == "completed"
+          assert run["conclusion"] == "success"
+          assert run["run_attempt"] == 1
+
+          matches = [
+              item
+              for item in artifacts.get("artifacts", [])
+              if item.get("id") == 10871223861
+              and item.get("name")
+              == (
+                  "exp054-dec192-read-only-operator-plan-"
+                  "c4746803f116af2727bbbd73d5d58ed031b9adf8"
+              )
+              and item.get("digest")
+              == "sha256:83508d99b1fbf9be621ea309fa7012451977a0146a02cbba520b0edf9dab9c72"
+              and item.get("expired") is False
+          ]
+          assert len(matches) == 1
+          PY
+
+      - name: Execute exact DEC-192 one-way operator
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_exp054_operator.py advance --execute \
+            > "$RUNNER_TEMP/operator-execution.json"
+
+      - name: Verify dispatch receipt only
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          receipt = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "operator-execution.json"
+              ).read_text(encoding="utf-8")
+          )
+
+          assert receipt["operator_decision"] == "DEC-192"
+          assert receipt["advance_execute_requested"] is True
+          assert receipt["advance_dispatchable"] is True
+          assert receipt["dispatch_submitted"] is True
+          assert receipt["result_claimed"] is False
+          assert receipt["run_present"] is False
+          assert receipt["run_state"] == "MISSING"
+          assert receipt["stage"] == (
+              "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_"
+              "RUN_DISPATCH_REQUIRED"
+          )
+
+          for field in (
+              "replacement_model_run_authorized",
+              "promotion_authorized",
+              "shadow_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert receipt[field] is False, field
+          PY
+
+      - name: Upload immutable operator execution receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp054-dec192-operator-execution-receipt-${{ github.sha }}
+          path: ${{ runner.temp }}/operator-execution.json
+          if-no-files-found: error
