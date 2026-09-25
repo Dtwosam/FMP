@@ -83,7 +83,7 @@ Authorized execution gate:
 
 Git blob:
 
-`776f385062e3a7dc8c56b07a9ae4e1bf4061abdb`
+`61ce58a616d9778445550af332f6f31cb5fa04e7`
 
 It records:
 
@@ -180,7 +180,7 @@ Hardened workflow blob:
 
 Execution-gate blob:
 
-`776f385062e3a7dc8c56b07a9ae4e1bf4061abdb`
+`61ce58a616d9778445550af332f6f31cb5fa04e7`
 
 Focused workflow tests:
 
