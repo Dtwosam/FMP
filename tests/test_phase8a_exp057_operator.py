@@ -51,7 +51,7 @@ def _run(
 def _checkout() -> dict[str, object]:
     return {
         "repository": REPOSITORY,
-        "dec214_merged_commit": DEC225_MERGED_COMMIT,
+        "dec225_merged_commit": DEC225_MERGED_COMMIT,
         "branch": "main",
         "head_sha": SHA,
         "clean_worktree": True,
@@ -76,7 +76,7 @@ class Exp057ResidualLowerTailOperatorTests(unittest.TestCase):
         )
         self.assertEqual(report["head_sha"], SHA)
         self.assertEqual(
-            report["dec214_merged_commit"],
+            report["dec225_merged_commit"],
             DEC225_MERGED_COMMIT,
         )
 
@@ -258,7 +258,7 @@ class Exp057ResidualLowerTailOperatorTests(unittest.TestCase):
         )
         self.assertIn("DEC-224", terminal["next_action"])
 
-    def test_gate_metadata_matches_dec214_source_shape(self) -> None:
+    def test_gate_metadata_matches_dec225_source_shape(self) -> None:
         gate = {
             "fit_temporal_residual_lower_tail_utility_repair_model_execution_gate_decision": (
                 "DEC-223"
@@ -266,31 +266,31 @@ class Exp057ResidualLowerTailOperatorTests(unittest.TestCase):
             "fit_temporal_residual_lower_tail_utility_repair_model_execution_authorization_decision": (
                 "DEC-225"
             ),
-            "dec209_merged_commit": "1" * 40,
-            "dec210_merged_commit": "2" * 40,
-            "dec211_merged_commit": "3" * 40,
-            "dec212_merged_commit": "4" * 40,
-            "dec213_merged_commit": "5" * 40,
-            "dec212_workflow_blob_sha": "6" * 40,
-            "dec212_cli_blob_sha": "7" * 40,
-            "dec212_gate_blob_sha": "8" * 40,
-            "dec213_review_blob_sha": "9" * 40,
-            "fit_temporal_residual_lower_tail_utility_workflow_blob_sha": "a" * 40,
-            "fit_temporal_residual_lower_tail_utility_cli_blob_sha": "b" * 40,
+            "dec220_merged_commit": "1" * 40,
+            "dec221_merged_commit": "2" * 40,
+            "dec222_merged_commit": "3" * 40,
+            "dec223_merged_commit": "4" * 40,
+            "dec224_merged_commit": "5" * 40,
+            "dec223_workflow_blob_sha": "6" * 40,
+            "dec223_cli_blob_sha": "7" * 40,
+            "dec223_gate_blob_sha": "8" * 40,
+            "dec224_review_blob_sha": "9" * 40,
+            "fit_temporal_residual_lower_tail_utility_repair_workflow_blob_sha": "a" * 40,
+            "fit_temporal_residual_lower_tail_utility_repair_cli_blob_sha": "b" * 40,
         }
         metadata = fit_temporal_residual_lower_tail_utility_repair_operator_gate_metadata(
             gate
         )
-        self.assertEqual(metadata["dec213_merged_commit"], "5" * 40)
+        self.assertEqual(metadata["dec224_merged_commit"], "5" * 40)
         self.assertEqual(
-            metadata["fit_temporal_residual_lower_tail_utility_workflow_blob_sha"],
+            metadata["fit_temporal_residual_lower_tail_utility_repair_workflow_blob_sha"],
             "a" * 40,
         )
         drifted = dict(gate)
-        drifted.pop("dec213_merged_commit")
+        drifted.pop("dec224_merged_commit")
         with self.assertRaisesRegex(
             ValueError,
-            "dec213_merged_commit",
+            "dec224_merged_commit",
         ):
             fit_temporal_residual_lower_tail_utility_repair_operator_gate_metadata(
                 drifted
@@ -316,7 +316,7 @@ class Exp057ResidualLowerTailOperatorTests(unittest.TestCase):
         self.assertEqual(selected["artifact_id"], 55)
         self.assertEqual(selected["artifact_name"], expected)
 
-    def test_public_cli_binds_dec212_and_dec213(self) -> None:
+    def test_public_cli_binds_dec225_and_dec224(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn(
             '"EXP-057 aggregate evidence code commit mismatch"',
