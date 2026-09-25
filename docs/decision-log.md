@@ -3794,3 +3794,23 @@ After operator submission, the executor independently queries the exact EXP-057 
 Executor workflow `.github/workflows/phase8a-exp057-operator-execute.yml` is blob `600e428e4af0f13f56c69144e218bf5c998402a1`. Focused tests `tests/test_phase8a_exp057_operator_executor.py` are blob `b526852eff3254bbd54c6afc43cb62f8f7c706a8`.
 
 DEC-228 authorizes no second executor attempt and no replacement model run. If the initial merged-main executor submits the EXP-057 historical workflow, that first attempt consumes the DEC-225 slot on any terminal outcome and must route through DEC-224. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+
+## DEC-229 — Phase 8A EXP-057 reviewed historical result
+
+**Date:** 2026-09-25
+**Status:** REVIEWED SUCCESSFUL RUN / NO STABLE MODEL CHALLENGER
+
+DEC-228 merged at `491a2e2715b4da7013737ecaebc65a58ac3417f9`. Executor run `36192533986` completed successfully and submitted the sole DEC-225-authorized EXP-057 historical workflow. Model run `36192572271` completed on attempt 1 with conclusion `success`, so the EXP-057 slot is consumed.
+
+DEC-224 successful terminal review applies exactly: all 11 jobs completed successfully, all nine expected cell artifacts plus the aggregate artifact are non-expired, and the aggregate evidence deterministically recompiles under DEC-222. Reviewed aggregate artifact `10890155292` has digest `sha256:6aeeb1efa22bc515907f05c2c48bc234da2bc3d40a44117f1c0fb1d3824de3fe`; aggregate evidence fingerprint is `4bf67108e0df38d4f213d08898fadd338285ac7a2ce56920b61e4dba0f3eec4c`.
+
+Reviewed evidence contains 18 cells, 108 regressors, 108 pooled calibration references, 432 utility-support references, 216 feature-support references, 432 residual references, 12 residual-breadth bounds, 12 residual lower-tail source bounds, fixed lower-tail count 3, 54 budget variants, 28 available variants, 26 unavailable variants, and 26,392 utility-eligible selection rows.
+
+Exactly three variants pass the aggregate selection gate: USDJPY 5m / 60m at budgets 250, 500, and 1000. Their four temporal-window candidate counts are respectively `0/0/0/250`, `0/0/3/497`, and `0/1/73/926`. All three fail temporal stability. Consequently there are zero stable selection passes, zero selected cells, zero validation passes, zero holdout passes, and zero accepted model candidates.
+
+DEC-229 therefore records `FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RESULT_REVIEWED_NO_STABLE_CHALLENGER`. The EXP-057 implementation repair completed successfully and eliminated the EXP-056 dependency-export execution failure, but it did not produce a stable challenger.
+
+Reviewed result-decision source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_result_decision.py` at blob `185e2cdf089cb6f1a12619af58fd32860366498f`. Focused tests are `tests/test_phase8a_exp057_model_result_decision.py` at blob `a1fd0bdd1a8ce87538460351630053efabda6ce3`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp057-reviewed-result.md`.
+
+DEC-229 closes model-run dispatch, replacement, authoritative result execution, model-protocol result production, and model fit. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. No second EXP-057 attempt is authorized. The next safe gate is post-result diagnostic analysis only.
