@@ -3055,3 +3055,24 @@ Focused tests are `tests/test_phase8a_exp053_operator_executor.py` at blob `7cb0
 
 DEC-182 does not authorize any second executor attempt or replacement run. If its initial merged-main executor causes DEC-180 to submit the EXP-053 model workflow, that first manual-main run consumes the DEC-179 slot on any terminal outcome and must route through DEC-178. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
 
+## DEC-183 — Phase 8A EXP-053 reviewed historical model result
+
+**Date:** 2026-09-25
+**Status:** REVIEWED / CLOSED / NO STABLE CHALLENGER
+
+DEC-183 closes the single DEC-179-authorized EXP-053 historical run. DEC-182 executor run `36127676468` successfully executes the DEC-180 dispatch step, creating model run `36127730584`; its later receipt-verification step fails because the captured receipt is empty/non-JSON. That post-dispatch bookkeeping failure does not undo the submitted run and does not authorize another executor, rerun, or replacement.
+
+Model run `36127730584` completes successfully on attempt 1 at `1a6e3670215665f2aed04d28c66c674408080953`. All 11 required jobs succeed. All nine exact cell artifacts plus the aggregate artifact are non-expired.
+
+Aggregate artifact `10860962726`, named `exp053-fit-temporal-feature-support-utility-model-result-evidence-1a6e3670215665f2aed04d28c66c674408080953-from-feature-35867307338-outcome-35876715434`, has GitHub digest `sha256:2f52fdcf2b7e3634d7f58a33f55d31d6e20ca787e0f7dfb056233a846fb47330`. The downloaded ZIP independently reproduces that digest and contains exactly one `model-result-evidence.json`.
+
+The aggregate evidence fingerprint `cb32abc0e4ecd3df8b639d77b6770e255aa87701eb19180dfdfb25c37dfe48e1` recomputes exactly under the DEC-176 canonical serializer. All 18 cell result fingerprints also recompute exactly. DEC-176 evidence proves 18 cells, 108 regressors, 108 pooled calibration references, 432 fit-temporal utility-support references, and 216 fit-temporal feature-support references.
+
+EXP-053 produces 10 aggregate-selection-pass variants but zero stable-selection-pass variants. Aggregate passes occur in GBPUSD 15m/240m budget 250; GBPUSD 5m/240m budgets 250/500/1000; USDJPY 15m/60m budget 250; USDJPY 15m/240m budgets 250/500/1000; USDJPY 1h/240m budget 250; and USDJPY 5m/60m budget 1000. None clears all four unchanged half-year temporal-stability windows. Failures are driven by thin/zero 2021 coverage and/or negative 2022 H1 performance, with some GBPUSD variants additionally missing the 10% 2021 share floor.
+
+No cell is selected. Validation and retrospective holdout remain locked for all 18 cells. Accepted model candidate count is zero.
+
+Reviewed-result source is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_result_decision.py` at blob `7001c2b7944bd7b75a0c70e6fb1a775ff50ba6b5`. Focused tests are `tests/test_phase8a_exp053_model_result_decision.py` at blob `d90d51497ce6adf4ebef2fafe511588f716639eb`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-reviewed-model-result.md`.
+
+DEC-183 closes model-run dispatch, replacement, authoritative result execution, protocol-result production, model fit, promotion, shadow/demo execution, broker mutation, live order, real-money action, and trading. No second EXP-053 run is authorized. The next safe gate is a separate post-result diagnostic over immutable EXP-050 through EXP-053 evidence.
+
