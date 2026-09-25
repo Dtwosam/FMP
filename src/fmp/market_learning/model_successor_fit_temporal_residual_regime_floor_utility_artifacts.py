@@ -384,7 +384,7 @@ def _validate_selection_block(selection: Mapping[str, object]) -> None:
     status = selection.get("status")
     if selected is None:
         if status != (
-            "NO_FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_"
+            "NO_FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_"
             "STABLE_MODEL_CHALLENGER"
         ):
             raise ValueError("EXP-058 no-selection status mismatch")
