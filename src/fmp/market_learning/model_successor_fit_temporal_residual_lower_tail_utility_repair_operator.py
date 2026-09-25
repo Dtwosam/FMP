@@ -59,7 +59,7 @@ def validate_fit_temporal_residual_lower_tail_utility_repair_operator_checkout(
         raise ValueError("origin remote does not match Dtwosam/FMP")
     return {
         "repository": REPOSITORY,
-        "dec214_merged_commit": DEC225_MERGED_COMMIT,
+        "dec225_merged_commit": DEC225_MERGED_COMMIT,
         "branch": "main",
         "head_sha": head,
         "clean_worktree": True,
@@ -288,17 +288,17 @@ def fit_temporal_residual_lower_tail_utility_repair_operator_gate_metadata(
             raise ValueError(f"EXP-057 operator gate {field} mismatch")
 
     sha_fields = (
-        "dec209_merged_commit",
-        "dec210_merged_commit",
-        "dec211_merged_commit",
-        "dec212_merged_commit",
-        "dec213_merged_commit",
-        "dec212_workflow_blob_sha",
-        "dec212_cli_blob_sha",
-        "dec212_gate_blob_sha",
-        "dec213_review_blob_sha",
-        "fit_temporal_residual_lower_tail_utility_workflow_blob_sha",
-        "fit_temporal_residual_lower_tail_utility_cli_blob_sha",
+        "dec220_merged_commit",
+        "dec221_merged_commit",
+        "dec222_merged_commit",
+        "dec223_merged_commit",
+        "dec224_merged_commit",
+        "dec223_workflow_blob_sha",
+        "dec223_cli_blob_sha",
+        "dec223_gate_blob_sha",
+        "dec224_review_blob_sha",
+        "fit_temporal_residual_lower_tail_utility_repair_workflow_blob_sha",
+        "fit_temporal_residual_lower_tail_utility_repair_cli_blob_sha",
     )
     metadata: dict[str, object] = dict(decisions)
     for field in sha_fields:
