@@ -260,9 +260,13 @@ class Exp058FitTemporalResidualRegimeFloorTrainingTests(unittest.TestCase):
             source,
         )
         self.assertIn(
-            "fit_temporal_residual_lower_tail_mean",
+            "_predecessor._score_fit_temporal_residual_lower_tail_consensus",
             source,
         )
+        self.assertIn('"dec231_merged_commit"', source)
+        self.assertIn('"dec231_protocol_blob_sha"', source)
+        self.assertNotIn('"dec220_merged_commit"', source)
+        self.assertNotIn('"dec220_protocol_blob_sha"', source)
         self.assertIn(
             "fit_temporal_residual_breadth",
             source,
