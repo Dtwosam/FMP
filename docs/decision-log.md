@@ -2910,3 +2910,22 @@ The protocol source is `src/fmp/market_learning/model_successor_fit_temporal_fea
 
 The next gate is a deterministic in-memory EXP-053 training/evaluation core against this exact protocol source. That core must remain source-only and must not load accepted historical artifacts or authorize authoritative fitting/result execution.
 
+## DEC-175 — Phase 8A EXP-053 deterministic fit-temporal feature-support training core
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY IN-MEMORY CORE / NO EXP-053 HISTORICAL FIT
+
+DEC-175 implements the deterministic in-memory EXP-053 training/evaluation core against the exact DEC-174 protocol. It binds DEC-174 merge `9687eb8ea3920e87d6681adf7366a3ce0bba7154`, DEC-174 protocol blob `11ae3fc8e68687cc04957ed9243d8c5969227fb8`, and predecessor EXP-052 training-core blob `fe5664438752a161134bbed6f55d9985f1c1470a`. The predecessor source-level model-fit and result-execution locks remain false.
+
+The core preserves the complete EXP-052 utility pipeline: three jackknife views, six HGB utility regressors, six pooled excluded-regime calibration references, 24 fit-half-year utility-support references, unchanged positive-utility unanimous direction eligibility, 250/500/1000 budget anchors, the unchanged aggregate financial gate, the unchanged four-window temporal-stability gate, validation/holdout chronology, and no-refit forward semantics.
+
+The only new model-selection signal is fit-temporal feature support. For each jackknife view and each of the four half-years in its excluded fit regime, the already-fitted view preprocessor transforms fit-only feature rows. The core freezes per-dimension center/scale, excludes only zero-scale dimensions from distance calculation, fails closed if no active dimension remains, computes mean-squared standardized reference distances, sorts those distances, and persists deterministic center/scale/mask/reference-distance digests. Exactly 12 feature-support references are produced per cell.
+
+For every scored row, feature support against a reference is `count(reference_distance >= row_distance) / reference_count`, ties included. Robust fit-temporal feature support is the minimum across all 12 references. EXP-052 direction eligibility remains unchanged.
+
+Selection ranking is frozen as feature support descending, fit-temporal utility support descending, pooled calibrated utility descending, raw utility descending, then row identity. Every available budget freezes the exact feature-support / utility-support / pooled / raw cutoff quadruple. Forward validation and holdout reuse the exact regressors, all 42 utility/feature references, and the exact selection-derived quadruple without refit or rebuilt references.
+
+The training-core source is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_training.py` at Git blob `4fd0e48302f97e188a8124e1543bde0ffdb43b6f`. Focused tests are `tests/test_phase8a_exp053_fit_temporal_feature_support_utility_training.py` at blob `a9b888311a8bbbb239243cf24418d3056df28524`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-fit-temporal-feature-support-utility-training-core.md`.
+
+DEC-175 authorizes no accepted historical artifact loading, authoritative result execution, model fit, workflow dispatch, replacement run, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading. The next gate is a separate artifact/evidence contract that must independently validate 18 cells, 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, the four-part cutoff, and the unchanged forward-status chain while remaining non-executable.
+
