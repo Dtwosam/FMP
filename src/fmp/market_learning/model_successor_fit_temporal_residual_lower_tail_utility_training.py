@@ -1009,8 +1009,7 @@ def run_fit_temporal_residual_lower_tail_utility_model_cell_core(
             ),
             raw_utility=selection_raw_utility,
             residual_lower_tail_cutoff=residual_lower_tail_cutoff,
-            residual_lower_tail_cutoff=residual_lower_tail_cutoff,
-        residual_breadth_cutoff=residual_breadth_cutoff,
+            residual_breadth_cutoff=residual_breadth_cutoff,
             residual_bound_cutoff=residual_bound_cutoff,
             feature_cutoff=feature_cutoff,
             utility_cutoff=utility_cutoff,
@@ -1401,6 +1400,7 @@ def run_fit_temporal_residual_lower_tail_utility_model_cell_core(
             _base.VALIDATION_SPLIT.name
         ],
         cell=cell,
+        residual_lower_tail_cutoff=residual_lower_tail_cutoff,
         residual_breadth_cutoff=residual_breadth_cutoff,
         residual_bound_cutoff=residual_bound_cutoff,
         feature_cutoff=feature_cutoff,
