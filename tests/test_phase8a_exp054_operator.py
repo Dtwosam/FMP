@@ -51,7 +51,7 @@ def _run(
 def _checkout() -> dict[str, object]:
     return {
         "repository": REPOSITORY,
-        "dec179_merged_commit": DEC191_MERGED_COMMIT,
+        "dec191_merged_commit": DEC191_MERGED_COMMIT,
         "branch": "main",
         "head_sha": SHA,
         "clean_worktree": True,
@@ -76,7 +76,7 @@ class Exp054FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
         )
         self.assertEqual(report["head_sha"], SHA)
         self.assertEqual(
-            report["dec179_merged_commit"],
+            report["dec191_merged_commit"],
             DEC191_MERGED_COMMIT,
         )
 
@@ -126,12 +126,12 @@ class Exp054FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
         self.assertEqual(
             shell_join(command),
             "gh workflow run "
-            "phase8a-exp054-fit-temporal-feature-support-utility-model-training.yml "
+            "phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml "
             "--ref main -R Dtwosam/FMP",
         )
         endpoint = fit_temporal_residual_bound_utility_model_runs_endpoint()
         self.assertIn(
-            "phase8a-exp054-fit-temporal-feature-support-utility-model-training.yml/runs",
+            "phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml/runs",
             endpoint,
         )
         self.assertIn("branch=main", endpoint)
@@ -268,8 +268,7 @@ class Exp054FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
             "dec185_merged_commit": "1" * 40,
             "dec188_merged_commit": "2" * 40,
             "dec189_merged_commit": "3" * 40,
-            "dec189_merged_commit": "4" * 40,
-            "dec190_merged_commit": "5" * 40,
+            "dec190_merged_commit": "4" * 40,
             "dec189_workflow_blob_sha": "6" * 40,
             "dec189_cli_blob_sha": "7" * 40,
             "dec189_gate_blob_sha": "8" * 40,
@@ -280,7 +279,7 @@ class Exp054FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
         metadata = fit_temporal_residual_bound_utility_operator_gate_metadata(
             gate
         )
-        self.assertEqual(metadata["dec190_merged_commit"], "5" * 40)
+        self.assertEqual(metadata["dec190_merged_commit"], "4" * 40)
         self.assertEqual(
             metadata["fit_temporal_residual_bound_utility_workflow_blob_sha"],
             "a" * 40,
@@ -297,7 +296,7 @@ class Exp054FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
 
     def test_aggregate_artifact_selection_is_exact(self) -> None:
         expected = (
-            "exp054-fit-temporal-feature-support-utility-model-result-evidence-"
+            "exp054-fit-temporal-residual-bound-utility-model-result-evidence-"
             f"{SHA}-from-feature-35867307338-outcome-35876715434"
         )
         selected = select_fit_temporal_residual_bound_utility_aggregate_artifact(
