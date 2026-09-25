@@ -2817,3 +2817,20 @@ The operator core is `src/fmp/market_learning/model_successor_fit_temporal_suppo
 
 DEC-169 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo execution, broker mutation, live order, real-money action, and trading authorization remain false. After merge and green repository checks, a read-only clean-main operator plan must be inspected before any separately authorized first dispatch.
 
+## DEC-170 — Phase 8A EXP-052 read-only operator plan runner
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY READ-ONLY RUNNER; NO EXP-052 DISPATCH
+
+DEC-170 adds a repository-hosted read-only plan runner around the merged DEC-169 operator. It binds DEC-168 authorization merge `673b96906002b898dd09ff913a0efe6b9be369e3`, DEC-169 operator merge `6288eea1308186db20202e5662ca1665b17f65f6`, operator-core blob `9e57fa87215d8e7ca373d226f8e2fec873a0fd10`, public-CLI blob `1c4c212e3bcc16c1e241efeb9ef5986d0bc5b24d`, and focused operator-test blob `9550f0126c4fe959d0ad979a096c03bcbc9f0199`.
+
+The workflow `.github/workflows/phase8a-exp052-operator-plan.yml` at blob `12f1d64b0cd97897864d90ef5f914d296e2788c2` triggers only when that workflow file itself is introduced or changed on `main`. It has read-only contents/Actions permissions and contains no manual dispatch trigger, schedule, pull-request trigger, `advance`, `advance --execute`, or direct model-workflow dispatch path.
+
+DEC-170 incorporates the clean-worktree lessons from EXP-051: it sets `PYTHONPATH` to the checked-out source tree, installs only `requirements/exp052-model-run.txt` without editable installation, asserts the worktree is still clean, and writes `operator-plan.json` only under `RUNNER_TEMP`.
+
+The runner executes exactly `python scripts/phase8a_exp052_operator.py next`. A successful plan must prove `operator_decision = DEC-169`, `read_only = true`, no run present, `run_state = MISSING`, and stage `FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_RUN_DISPATCH_REQUIRED`, with the exact frozen dispatch command present only as plan evidence. The four DEC-168 outer historical-run flags must remain true while replacement/promotion/shadow/demo/broker/live/real-money/trading locks remain false.
+
+Focused tests are `tests/test_phase8a_exp052_operator_plan_runner.py` at blob `ec653df6782c5f442c94eb973b13759712a1cc5d`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp052-operator-plan-runner.md` at blob `73debedab093bf8803fc59293f2d4d0060f49a91`.
+
+DEC-170 changes no model-run authorization and consumes no run slot. After merge, the automatic read-only plan must succeed before any separate environment-specific executor may invoke the existing DEC-169 `advance --execute` path.
+
