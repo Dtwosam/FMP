@@ -3380,3 +3380,19 @@ The manual-main workflow now contains a first-run rejection guard before executi
 Only the outer historical-result slot is opened. The DEC-203 execution gate may expose workflow dispatch, authoritative historical-result execution, model-protocol result production, and model fitting for at most one guarded attempt. The underlying DEC-198/199/200 protocol/core/artifact authorization constants remain false. Execution-gate blob is `ed86be7f49e57b957dd256dc99cc4d5b7b301479`; focused workflow-test blob is `31a194fa69cdd21a695edd6a46d2a934d1917c85`.
 
 DEC-203 itself does not dispatch the workflow. The first manual-main EXP-055 attempt consumes the slot on any terminal outcome and must route through DEC-202. No rerun, retry, or replacement attempt is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate clean-main double-plan one-way operator that may derive at most one dispatch only while the exact EXP-055 workflow state remains missing.
+
+
+## DEC-204 — Phase 8A EXP-055 clean-main one-way operator
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NOT DISPATCHED
+
+DEC-204 binds DEC-203 merge `420861c171e327d0363ed684ce57d8e8f3126d60` and freezes a clean-main, one-way EXP-055 operator. Before planning, the operator requires local `main`, clean worktree, exact equality between local HEAD and fetched `origin/main`, and an origin remote that resolves exactly to `Dtwosam/FMP`.
+
+The operator accepts at most one exact manual-main EXP-055 workflow run and classifies live state as `MISSING`, `IN_PROGRESS`, or `TERMINAL`. Only `MISSING` may expose the exact frozen dispatch command `gh workflow run phase8a-exp055-fit-temporal-residual-breadth-utility-model-training.yml --ref main -R Dtwosam/FMP`. In-progress and terminal states never expose a dispatch or replacement action; terminal evidence routes through DEC-202.
+
+The public CLI supports read-only `next`, non-executing `advance`, and a double-plan `advance --execute` path. Any state drift between the first and second plan fails closed. No rerun or replacement command exists.
+
+Operator source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_operator.py` at blob `5d7ee9fea71626fc370bfec81f9747d8af79b5b0`. Public CLI is `scripts/phase8a_exp055_operator.py` at blob `c8ca1f558b1f89b6db15d294145d116ac7441ac0`. Focused tests are `tests/test_phase8a_exp055_operator.py` at blob `394cde7441ecb0a14f4044898280c4cdecbbfd82`.
+
+DEC-204 does not itself dispatch the model workflow or consume the DEC-203 slot. Replacement model runs, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a repository-hosted read-only plan runner that invokes only `next`.
