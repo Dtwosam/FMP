@@ -7,14 +7,14 @@ from typing import Mapping, Sequence
 REPOSITORY = "Dtwosam/FMP"
 DEC203_MERGED_COMMIT = "420861c171e327d0363ed684ce57d8e8f3126d60"
 FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_WORKFLOW_FILE = (
-    "phase8a-exp055-fit-temporal-residual-bound-utility-model-training.yml"
+    "phase8a-exp055-fit-temporal-residual-breadth-utility-model-training.yml"
 )
 FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_WORKFLOW_PATH = (
     ".github/workflows/"
-    "phase8a-exp055-fit-temporal-residual-bound-utility-model-training.yml"
+    "phase8a-exp055-fit-temporal-residual-breadth-utility-model-training.yml"
 )
 FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_MODEL_WORKFLOW_NAME = (
-    "phase8a-exp055-fit-temporal-residual-bound-utility-model-training"
+    "phase8a-exp055-fit-temporal-residual-breadth-utility-model-training"
 )
 
 _SHA40 = re.compile(r"^[0-9a-fA-F]{40}$")
@@ -59,7 +59,7 @@ def validate_fit_temporal_residual_breadth_utility_operator_checkout(
         raise ValueError("origin remote does not match Dtwosam/FMP")
     return {
         "repository": REPOSITORY,
-        "dec191_merged_commit": DEC203_MERGED_COMMIT,
+        "dec203_merged_commit": DEC203_MERGED_COMMIT,
         "branch": "main",
         "head_sha": head,
         "clean_worktree": True,
@@ -377,7 +377,7 @@ def select_fit_temporal_residual_breadth_utility_aggregate_artifact(
     if not isinstance(artifacts, list):
         raise ValueError("EXP-055 artifact listing is malformed")
     expected = (
-        f"exp055-fit-temporal-residual-bound-utility-model-result-evidence-{sha}-"
+        f"exp055-fit-temporal-residual-breadth-utility-model-result-evidence-{sha}-"
         "from-feature-35867307338-outcome-35876715434"
     )
     matches: list[Mapping[str, object]] = []
