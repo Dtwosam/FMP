@@ -3852,3 +3852,19 @@ Selection-window outcomes, recalibration, quotas, per-window cutoff tuning, gate
 Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_protocol.py` at blob `8e10cc3760a4a7dd019ea1ecc7c60189fe1770e2`. Focused tests are `tests/test_phase8a_exp058_fit_regime_floor_protocol.py` at blob `ddd14530237faa164202362bf24886c7c03cba0a`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp058-fit-regime-floor-protocol.md`.
 
 The next safe gate is a deterministic in-memory EXP-058 training/evaluation core only.
+
+
+## DEC-232 — Phase 8A EXP-058 deterministic fit-regime-floor training core
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-232 binds DEC-231 merge `a6926703d787a7fe0e2ba34261d14c4c4d362df2`, DEC-231 protocol blob `8e10cc3760a4a7dd019ea1ecc7c60189fe1770e2`, and EXP-057 predecessor training-core blob `ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd`.
+
+The EXP-058 core preserves the complete repaired EXP-057 fitting, reference, financial-gate, temporal-stability, validation, holdout, and no-refit machinery and adds exactly one score. For each unchanged eligible LONG/SHORT row, the same four downside-adjusted lower bounds within each of the three jackknife-excluded two-year fit regimes are averaged; the minimum of the three regime means is the fit-temporal residual regime-floor utility.
+
+Eligible rows rank regime-floor first, then the unchanged lower-tail, breadth, residual-bound, feature-support, utility-support, pooled-calibrated, and raw-utility stack, followed by row identity. Each unchanged budget freezes an eight-part numeric cutoff, and validation/holdout reuse that exact cutoff plus the same frozen models/references without refit or recalibration.
+
+Training core is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_training.py` at blob `a930089290b1d3be71592dadebfbbd1c59095b77`. Focused tests are `tests/test_phase8a_exp058_fit_regime_floor_training.py` at blob `03149abcf5683455d273a2ccd9df3a0b33e5b9e5`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp058-fit-regime-floor-training-core.md`.
+
+DEC-232 remains non-executable. Authoritative artifact loading, readiness execution, workflow dispatch, historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate non-executable EXP-058 artifact/evidence contract.
