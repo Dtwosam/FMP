@@ -2868,3 +2868,24 @@ The reviewed-result source is `src/fmp/market_learning/model_successor_fit_tempo
 
 DEC-172 closes the consumed EXP-052 run slot. Model-run dispatch, replacement run, authoritative result execution, protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization are all false. No second EXP-052 run is authorized. The next gate is a separate post-result diagnostic over immutable EXP-050/051/052 evidence before any later successor protocol is considered.
 
+## DEC-173 — Phase 8A EXP-052 post-result diagnostics
+
+**Date:** 2026-09-25
+**Status:** APPROVED POST-RESULT DIAGNOSTIC / SUCCESSOR SOURCE DESIGN MAY OPEN
+
+DEC-173 compares immutable reviewed EXP-050, EXP-051, and EXP-052 evidence after DEC-172 closes the consumed EXP-052 run slot. It binds DEC-172 merge `c06eb90953d1e38bd4db11ec6d7fc0d49ad0310c`, DEC-172 result-decision blob `c9983c33792a8b143989b928a9c2af0c4ecda1e5`, DEC-162 merge `3d8453c544fc4b06c691d1068828ec6da9fc7110`, DEC-162 diagnostic blob `00b9cbb5b0c95bd161d429d1f973d1e807f02a48`, and the exact EXP-050/051/052 reviewed evidence fingerprints.
+
+All three experiments preserve 26,392 utility-eligible selection rows, 28 available variants, and 26 unavailable variants. Aggregate passes are 3 / 1 / 1 for EXP-050 / EXP-051 / EXP-052, while stable passes remain zero in all three. Every aggregate pass remains confined to USDJPY 5m / 60m.
+
+At budget 250, realized total net pips are `612.8999999999933`, `1288.1000000000117`, and `1247.500000000025` for EXP-050/051/052. EXP-052 is `40.59999999998672` pips below EXP-051 but `634.6000000000317` above EXP-050. Candidate identity changes in every experiment.
+
+Temporal support does not improve. Budget-250 selection-window candidate counts are `[0,0,0,250]` in EXP-050, `[0,0,3,247]` in EXP-051, and `[0,0,0,250]` in EXP-052. The fit-half-year support-first rank removes the only three 2022-H1 candidates introduced by EXP-051 and again places the entire 250-candidate aggregate-pass set in 2022 H2.
+
+Broader ranking improves at budget 500 relative to EXP-051, from `-766.5999999999894` to `-31.50000000000273`, but still fails the aggregate gate. Budget 1000 remains unchanged at `-3.200000000010732` and also fails. EXP-050 remains the only experiment with aggregate passes at budgets 500 and 1000.
+
+DEC-173 therefore classifies the result as `FIT_TEMPORAL_SUPPORT_DID_NOT_TRANSFER_TO_SELECTION_TIME_AND_TOP250_FINANCIAL_QUALITY_SLIGHTLY_DECLINED`. Fit-period temporal-support percentiles changed row identity but did not demonstrate transfer into selection-period temporal support.
+
+The diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_support_utility_post_result_diagnostics.py` at blob `af57f0eb6c00e18bb587203dc81530702e657e87`. Focused tests are `tests/test_phase8a_exp052_post_result_diagnostics.py` at blob `e2850ede0f072b7739c6ce3e48e8d574df3a79de`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp052-post-result-diagnostics.md` at blob `0b27c546fb2da53a0ca9d3d570167f60a8490345`.
+
+DEC-173 keeps EXP-052 rerun/replacement, stability-gate relaxation, removal of early windows, selection-window recalibration, selection-outcome ranking, selection-window quotas, successor result execution, successor fitting, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. Only successor protocol source design may open.
+
