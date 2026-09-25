@@ -3612,3 +3612,21 @@ After operator submission, the executor independently queries the exact EXP-056 
 Executor workflow `.github/workflows/phase8a-exp056-operator-execute.yml` is blob `4c3d34059692b646d36f41d1353edf8e58e662ca`. Focused tests `tests/test_phase8a_exp056_operator_executor.py` are blob `10a4cd1355fc9ee068ea32097b3f3aa7ea6fc2ef`.
 
 DEC-217 authorizes no second executor attempt and no replacement model run. If the initial merged-main executor submits the EXP-056 historical workflow, that first attempt consumes the DEC-214 slot on any terminal outcome and must route through DEC-213. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+
+## DEC-218 — Phase 8A EXP-056 reviewed failed historical result
+
+**Date:** 2026-09-25
+**Status:** REVIEWED FAILED ATTEMPT / NO MODEL RESULT
+
+DEC-217 merged at `3ce20d7445f6837cae067c0c561002215b05b2f9`. Executor run `36175790573` completed successfully and submitted the sole DEC-214-authorized EXP-056 historical workflow. Model run `36175841645` then completed on attempt 1 with conclusion `failure`, so the EXP-056 slot is consumed.
+
+DEC-213 non-success review applies exactly: authorization-preflight succeeded, all nine matrix jobs failed, aggregate-model-evidence was skipped, zero cell artifacts persisted, no aggregate artifact exists, and no aggregate result evidence is claimed. No replacement run is authorized.
+
+All nine matrix failures are implementation dependency/export errors in the EXP-056 lower-tail training core's delegation through `model_successor_fit_temporal_residual_breadth_utility_training`. Eight jobs terminate because that predecessor module has no exported `MIN_STABILITY_WINDOW_CANDIDATE_SHARE`; one job reaches a later path and terminates because it has no exported `FIT_TEMPORAL_SUPPORT_REFERENCE_COUNT_PER_CELL`. DEC-218 classifies the failure as `IMPLEMENTATION_DEPENDENCY_EXPORT_DRIFT_PREVENTED_ALL_EXP056_CELL_RESULTS`.
+
+Because no cell result artifact exists, EXP-056 has no model-selection result, aggregate financial result, evidence fingerprint, selected variant, validation result, holdout result, or accepted candidate. This failure must not be interpreted as evidence for or against the intended lower-tail ranking.
+
+Reviewed failed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_result_decision.py` at blob `75fc25ae97c03730ab75a3036059f761d8234630`. Focused tests are `tests/test_phase8a_exp056_failed_result_decision.py` at blob `9062d2aa990786e87cc6162e4c1f99b54bcc2d4a`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp056-reviewed-failed-result.md`.
+
+DEC-218 closes model-run dispatch, replacement, authoritative result execution, model-protocol result production, and model fit. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. No second EXP-056 attempt is authorized. The next safe gate is a separate source-only implementation-defect diagnostic only.
