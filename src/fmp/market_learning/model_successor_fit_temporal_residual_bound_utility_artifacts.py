@@ -48,8 +48,9 @@ REAL_MONEY_AUTHORIZED = False
 TRADING_AUTHORIZED = False
 
 
-def _sha256(value: str) -> str:
-    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+def _sha256(value: str | bytes) -> str:
+    payload = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _validate_sha256(value: object, *, field: str) -> str:
