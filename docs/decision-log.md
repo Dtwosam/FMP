@@ -2762,3 +2762,22 @@ DEC-166 freezes `FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN = tru
 
 The next gate is a separately frozen attempt-1 terminal-review contract before any one-run authorization or dispatch can be considered.
 
+## DEC-167 — Phase 8A EXP-052 predeclared terminal-result review
+
+**Date:** 2026-09-25
+**Status:** APPROVED BEFORE ANY EXP-052 HISTORICAL RESULT OR RUN AUTHORIZATION
+
+DEC-167 freezes the exact terminal-review contract for the future first EXP-052 historical model run before any result-producing authorization exists. It binds DEC-166 merge `2883cc46c65ff7c672c9f8d7192fc7fb240a9835`, workflow blob `a49af5daeb14177a44154ef96b135f64a98a85bf`, CLI blob `728691476a2285ec4cdec594a020aa5c84b04c5e`, and execution-gate blob `139028be1c354a99599a3ed6505a1a4725889c02`.
+
+Only attempt 1 of the exact `phase8a-exp052-fit-temporal-support-utility-model-training` workflow on manual `main` is reviewable. The run must be completed and conclude success, failure, cancellation, or timeout. Any rerun attempt greater than 1 fails closed.
+
+The terminal job payload must contain exactly 11 completed jobs: one authorization preflight, nine model-cell matrix jobs, and one aggregate job. Artifact names are restricted to the exact nine pair/timeframe cell namespaces plus the single aggregate namespace for the reviewed run head SHA.
+
+A successful terminal run requires successful preflight, all nine successful matrix jobs, successful aggregate job, all nine cell artifacts, the aggregate artifact, and supplied aggregate evidence. That aggregate evidence is revalidated through DEC-165 against the run head commit and therefore must independently prove 18 cells, 108 regressors, 108 pooled references, 432 fit-temporal-support references, cutoff triples, frozen financial/stability gates, status chronology, and canonical fingerprints.
+
+Failure, cancellation, or timeout may preserve valid partial cell artifacts but cannot claim aggregate evidence or aggregate artifact. DEC-167 records partial-job counts and opens no retry or replacement path.
+
+The review source is `src/fmp/market_learning/model_successor_fit_temporal_support_utility_result_review.py` at Git blob `dbccea23117adbc50fa54345ec418fde54f254a3`. Focused tests are `tests/test_phase8a_exp052_model_result_review.py` at blob `a03655452521c0bad378c045f323fa63f52e2cb6`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp052-fit-temporal-support-utility-result-review.md` at blob `9af455ad0868d3e6765c8cd0294a946687713775`.
+
+DEC-167 authorizes no dispatch, historical result execution, model fit, replacement run, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. After merge, a later decision may independently verify zero prior manual-main EXP-052 runs, add a first-run rejection guard, and authorize at most one outer historical result-producing attempt without dispatching it.
+
