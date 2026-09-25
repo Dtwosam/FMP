@@ -120,7 +120,7 @@ class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             DEC166_WORKFLOW_BLOB_SHA,
-            "c4310d4d4a58436eca75afaf147fa570ac725088",
+            "a49af5daeb14177a44154ef96b135f64a98a85bf",
         )
         self.assertEqual(
             source["dec166_cli_blob_sha"],
@@ -178,7 +178,7 @@ class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             FIT_TEMPORAL_SUPPORT_UTILITY_WORKFLOW_BLOB_SHA,
-            "a49af5daeb14177a44154ef96b135f64a98a85bf",
+            "c4310d4d4a58436eca75afaf147fa570ac725088",
         )
         self.assertEqual(
             source["fit_temporal_support_utility_cli_blob_sha"],
