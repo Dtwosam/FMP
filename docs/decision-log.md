@@ -3034,6 +3034,6 @@ The runner preserves DEC-180's clean-worktree gate by setting `PYTHONPATH` to th
 
 The runner executes exactly `python scripts/phase8a_exp053_operator.py next`. A successful plan must prove `operator_decision = DEC-180`, `read_only = true`, no run present, `run_state = MISSING`, and stage `FIT_TEMPORAL_FEATURE_SUPPORT_UTILITY_MODEL_RUN_DISPATCH_REQUIRED`, with the exact frozen dispatch command present only as plan evidence. The four DEC-179 outer historical-run flags must remain true while replacement/promotion/shadow/demo/broker/live/real-money/trading locks remain false.
 
-Focused tests are `tests/test_phase8a_exp053_operator_plan_runner.py` at blob `e71e6214184904c1e332ffc442a55f40756e26b6`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-operator-plan-runner.md` at blob `13117a2885fe424db9d2c9b53cc3326342213e2c`.
+Focused tests are `tests/test_phase8a_exp053_operator_plan_runner.py` at blob `433744641b5767242404e85b09000bee15665aab`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-operator-plan-runner.md` at blob `13117a2885fe424db9d2c9b53cc3326342213e2c`.
 
 DEC-181 changes no model-run authorization and consumes no run slot. After merge, the automatic read-only plan must succeed before any separate one-shot executor may invoke the existing DEC-180 `advance --execute` path.
