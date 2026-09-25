@@ -67,7 +67,7 @@ EXP052_AGGREGATE_PASS_VARIANT = ("USDJPY", "5m", 60, 250)
 EXP053_RETAINS_EXP052_PASS_VARIANT = False
 
 EXP053_ZERO_2021_H1_PASS_VARIANT_COUNT = 5
-EXP053_2021_SHARE_REJECT_VARIANT_COUNT = 9
+EXP053_2021_SHARE_REJECT_VARIANT_COUNT = 10
 EXP053_2022_H1_FINANCIAL_REJECT_VARIANT_COUNT = 9
 EXP053_ANY_2022_H1_FINANCIAL_PASS_VARIANT_COUNT = 1
 
@@ -180,7 +180,7 @@ def build_fit_temporal_feature_support_post_result_diagnostic_gate(
         )
     ):
         raise ValueError("DEC-184 stable-pass count drift")
-    if EXP053_2021_SHARE_REJECT_VARIANT_COUNT != 9:
+    if EXP053_2021_SHARE_REJECT_VARIANT_COUNT != 10:
         raise ValueError("DEC-184 2021 share-reject count drift")
     if EXP053_2022_H1_FINANCIAL_REJECT_VARIANT_COUNT != 9:
         raise ValueError("DEC-184 2022-H1 financial-reject count drift")
