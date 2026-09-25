@@ -3680,3 +3680,19 @@ The implementation exposes the full deterministic `run_fit_temporal_residual_low
 Training core is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_training.py` at blob `ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd`. Focused tests are `tests/test_phase8a_exp057_implementation_repair_training.py` at blob `c5bfc3cb94cc3b03523063ad19b571328854dc4c`.
 
 DEC-221 remains non-executable. Result execution, artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate non-executable EXP-057 artifact/evidence contract bound to this exact repaired core.
+
+
+## DEC-222 — Phase 8A EXP-057 artifact/evidence contract
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-222 binds DEC-221 merge `6ea34dd3c62f72c55376e891eeb44d96ad5de54b`, repaired training-core blob `ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd`, and predecessor EXP-056 artifact-contract blob `f554011c092f5c4ec5d3f9b8e2330bfc974376f8`.
+
+Every EXP-057 cell must bind the exact DEC-220/221 repair provenance, including DEC-220 merge `865ab1569a0765078ed099008a5722f8a6d310b4`, repair-protocol blob `2f355526476a4d41967bb46e1bfad6aa525cbfa9`, failed EXP-056 core blob `c472ed48e7b79d22056d43deb0fe09166ccf34c9`, and EXP-055 predecessor-core blob `c9517b7516940c78621448088c3933aa1c57e281`.
+
+The contract preserves the inherited complete-evidence requirements: 18 exact cells, 108 regressors, 108 pooled calibration references, 432 utility-support references, 216 feature-support references, 432 residual references, 12 residual-breadth bounds per eligible row, 12 lower-tail source bounds per eligible row, fixed lower-tail count 3, the three frozen budgets, seven-part lower-tail cutoffs, deterministic cell fingerprints, and deterministic aggregate fingerprinting.
+
+Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_artifacts.py` at blob `d69eb668ade480b66faf992190b3a4929f414960`. Focused tests are `tests/test_phase8a_exp057_implementation_repair_artifacts.py` at blob `616bb6d8e1ab68336fdff4f04fb4018f36b51ffb`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp057-artifact-evidence-contract.md`.
+
+DEC-222 remains non-executable: authoritative result execution, model fit, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate manual-main EXP-057 workflow/CLI/runtime source freeze with execution still closed.
