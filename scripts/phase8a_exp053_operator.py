@@ -146,7 +146,7 @@ def _validated_source_gate() -> dict[str, object]:
         "FIT_TEMPORAL_FEATURE_SUPPORT_UTILITY_MODEL_RUN_DISPATCH_REQUIRED"
     ):
         raise SystemExit(
-            "EXP-053 DEC-168 source gate returned an invalid stage"
+            "EXP-053 DEC-179 source gate returned an invalid stage"
         )
     for field in (
         "fit_temporal_feature_support_utility_model_run_dispatch_authorized",
@@ -156,12 +156,12 @@ def _validated_source_gate() -> dict[str, object]:
     ):
         if gate.get(field) is not True:
             raise SystemExit(
-                f"EXP-053 DEC-168 source gate {field} must be true"
+                f"EXP-053 DEC-179 source gate {field} must be true"
             )
     for field in ("promotion_authorized", "trading_authorized"):
         if gate.get(field) is not False:
             raise SystemExit(
-                f"EXP-053 DEC-168 source gate {field} must be false"
+                f"EXP-053 DEC-179 source gate {field} must be false"
             )
     return gate
 
