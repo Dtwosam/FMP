@@ -3532,3 +3532,19 @@ Workflow blob is `83e5434c065167294b854b58308fec6d39d800db`; CLI blob is `30e79e
 DEC-212 deliberately contains no first-run guard and opens no outer historical-run slot. Model-run dispatch, authoritative result execution, model-protocol result production, and model fitting all remain false, so `require-execution` fails closed before readiness or artifact loading. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
 
 The next safe gate is a separate predeclared attempt-1 terminal-review contract. Only after that review is frozen may a later decision prove zero prior EXP-056 runs, add a first-run rejection guard, and consider one explicitly bounded historical-result slot.
+
+
+## DEC-212 — Phase 8A EXP-056 workflow/CLI/runtime source freeze
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / EXECUTION CLOSED
+
+DEC-212 binds DEC-209 merge `d2e1aabba6c0f283da6802fe315a5a29b22b503c` and protocol blob `14d8fe5d0530f44acaa7084c6d78d1c19bd21d8d`, DEC-210 merge `029159999fae7eaa67811f8b3d8bf2bf8834e491` and training-core blob `c472ed48e7b79d22056d43deb0fe09166ccf34c9`, and DEC-211 merge `193312de6d03dc8286956f7594602f67688b1d23` and artifact-contract blob `f554011c092f5c4ec5d3f9b8e2330bfc974376f8`.
+
+The frozen manual-main/input-free workflow is `.github/workflows/phase8a-exp056-fit-temporal-residual-lower-tail-utility-model-training.yml` at blob `83e5434c065167294b854b58308fec6d39d800db`. It retains read-only permissions, Python 3.12.14, the exact nine pair/timeframe datasets, 60m/240m horizons, frozen feature/outcome/readiness artifacts, partial cell evidence, and deterministic aggregate evidence.
+
+Public CLI `scripts/phase8a_exp056_model_run.py` is blob `30e79ef7ef20d12d75fc97103b9411b7b467ecef`; runtime lock `requirements/exp056-model-run.txt` is blob `d25ab16056b9f5df283147d67b8f401f60ae7520`. The CLI requires execution authorization before readiness/artifact loading, model-core execution, or aggregate compilation and contains no direct workflow-dispatch path.
+
+Exact-source execution gate `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_execution_gate.py` is blob `a81f746c8b19abc63f1bb83da0c32f1023644b94`. Focused tests are `tests/test_phase8a_exp056_model_workflow.py` at blob `938f2abd2f1488affcb3ce0e7a3d64c2ec0f0165`.
+
+DEC-212 intentionally has no first-run guard and opens no historical slot. Model-run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate predeclared attempt-1 terminal-review contract before any first-run authorization or dispatch machinery may open.
