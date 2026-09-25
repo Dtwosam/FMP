@@ -32,7 +32,7 @@ class Exp054OperatorExecutorTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: write", text)
 
-    def test_executor_uses_only_existing_dec180_execute_path(
+    def test_executor_uses_only_existing_dec192_execute_path(
         self,
     ) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
