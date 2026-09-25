@@ -3664,3 +3664,19 @@ The only newly authorized implementation change is the DEC-219 seven-name depend
 Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_protocol.py` at blob `2f355526476a4d41967bb46e1bfad6aa525cbfa9`. Focused tests are `tests/test_phase8a_exp057_implementation_repair_protocol.py` at blob `272b3683b1f21e76a0a3b0d2c5904d1604ae2efa`.
 
 DEC-220 keeps protocol semantic changes, model-protocol result production, model fitting, historical result execution, all model/data/chronology/ranking/gate changes, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next safe gate is a source-only deterministic EXP-057 training/evaluation core implementing exactly the seven authorized dependency-root changes.
+
+
+## DEC-221 — Phase 8A EXP-057 deterministic implementation-repair training core
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-221 binds DEC-220 merge `865ab1569a0765078ed099008a5722f8a6d310b4`, DEC-220 protocol blob `2f355526476a4d41967bb46e1bfad6aa525cbfa9`, failed EXP-056 training-core blob `c472ed48e7b79d22056d43deb0fe09166ccf34c9`, and EXP-055 predecessor training-core blob `c9517b7516940c78621448088c3933aa1c57e281`.
+
+The new EXP-057 core retains the complete EXP-056 model/data/chronology/ranking/gate/forward pipeline and applies exactly the seven DEC-219 dependency-root repairs. The invalid direct `_predecessor` accesses for `FIT_TEMPORAL_FEATURE_SUPPORT_PERCENTILE_RULE`, `FIT_TEMPORAL_FEATURE_SUPPORT_REFERENCE_COUNT_PER_CELL`, `FIT_TEMPORAL_RESIDUAL_REFERENCE_COUNT_PER_CELL`, `FIT_TEMPORAL_SUPPORT_REFERENCE_COUNT_PER_CELL`, `MIN_STABILITY_WINDOW_CANDIDATE_SHARE`, `ROBUST_FIT_TEMPORAL_FEATURE_SUPPORT_SCORE_RULE`, and `ROBUST_FIT_TEMPORAL_SUPPORT_SCORE_RULE` are absent; those inherited EXP-054 names resolve through `_base`. Legitimate EXP-055 breadth-specific accesses remain on `_predecessor`.
+
+The implementation exposes the full deterministic `run_fit_temporal_residual_lower_tail_utility_model_cell_core`, preserving six-regressor jackknife fitting, pooled calibration, utility/feature/residual references, residual-bound utility, residual breadth, fixed worst-three lower-tail mean, lower-tail-first seven-part ranking/cutoffs, aggregate financial gates, four temporal-stability windows, validation/holdout, and no-refit semantics.
+
+Training core is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_training.py` at blob `ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd`. Focused tests are `tests/test_phase8a_exp057_implementation_repair_training.py` at blob `c5bfc3cb94cc3b03523063ad19b571328854dc4c`.
+
+DEC-221 remains non-executable. Result execution, artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate non-executable EXP-057 artifact/evidence contract bound to this exact repaired core.
