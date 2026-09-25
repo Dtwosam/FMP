@@ -3300,3 +3300,19 @@ Ranking becomes residual breadth descending, residual-bound utility descending, 
 Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_protocol.py` at blob `0ef3f932cade1a62e1faf946e9a9b87cf9c98744`. Focused tests are `tests/test_phase8a_exp055_fit_temporal_residual_breadth_utility_protocol.py` at blob `b5bb56110eb15f2280749bbe2355153baa17e906`. The detailed protocol spec is `docs/superpowers/specs/2026-09-25-phase8a-exp055-fit-temporal-residual-breadth-utility-protocol.md`.
 
 DEC-198 keeps model protocol result production, model fitting, historical result execution, EXP-054 residual-bound rule changes, stability relaxation, selection-window calibration, selection-window quotas, realized selection-outcome ranking, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next safe gate is a separate deterministic in-memory EXP-055 training/evaluation core against this exact protocol.
+
+
+## DEC-199 — Phase 8A EXP-055 deterministic residual-breadth training core
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-199 binds DEC-198 merge `670f5d615b837b9268f8fb807aa198e7d14d0f1a`, protocol blob `0ef3f932cade1a62e1faf946e9a9b87cf9c98744`, and frozen DEC-188 predecessor training-core blob `4f3f189c104d41352433397421f021896c03a5e9`.
+
+The implementation delegates unchanged EXP-054 fitting, calibration, utility-support, feature-support, residual-reference, financial-gate, temporal-stability, and forward chronology mechanics to the predecessor core. It adds only the DEC-198 breadth calculation, breadth-aware consensus digest, breadth-first six-part cutoff, breadth-aware stability application, and breadth-aware forward evaluation.
+
+For each already eligible row, the core reuses the exact twelve EXP-054 downside-adjusted lower bounds and computes fit-temporal residual breadth as the fraction strictly greater than zero. No new reference vectors are created. Candidate ranking is breadth, residual-bound utility, feature support, utility support, pooled calibrated utility, raw utility, then row identity. Budgets and all stability/financial gates remain unchanged.
+
+The completed source exposes `run_fit_temporal_residual_breadth_utility_model_cell_core`, so DEC-199 is a full deterministic in-memory cell core rather than a partial helper gate. Source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_training.py` at blob `c9517b7516940c78621448088c3933aa1c57e281`. Focused tests are `tests/test_phase8a_exp055_fit_temporal_residual_breadth_utility_training.py` at blob `cb2f4173fcefcb1a282300eb04374c0b8f468dbf`.
+
+DEC-199 contains no artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading path. All such authorizations remain false. The next safe gate after merge is a separate non-executable EXP-055 artifact/evidence contract bound to this exact core.
