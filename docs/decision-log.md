@@ -3200,3 +3200,17 @@ DEC-192 binds the DEC-191 one-slot authorization merged at `70925fdc418c76ab378a
 The operator classifies the exact EXP-054 manual-main workflow state as `MISSING`, `IN_PROGRESS`, or `TERMINAL`. Only `MISSING` may expose the single frozen `gh workflow run phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml --ref main -R Dtwosam/FMP` command. Before execution the public CLI recomputes the plan and requires byte-for-byte-equivalent structured state; any drift fails closed. Existing or terminal runs never expose a replacement dispatch. Terminal evidence routes through the frozen DEC-190 review contract.
 
 DEC-192 does not itself dispatch the EXP-054 workflow, consume the DEC-191 slot, authorize a retry/rerun/replacement, or authorize promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. The next safe gate after this source and its tests are green and merged is a separate repository-hosted read-only plan runner that proves the live zero-run state without containing a dispatch path.
+
+
+## DEC-193 — Phase 8A EXP-054 repository-hosted read-only plan runner
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / READ-ONLY / NOT DISPATCHED
+
+DEC-193 binds merged DEC-192 commit `c93f8ef5a524c6366af24d65276b808eb152e9f7` and adds a repository-hosted read-only GitHub Actions runner for the exact DEC-192 `next` plan. The workflow is path-scoped to its own introduction or change on `main`, has no manual, scheduled, or pull-request trigger, and grants only read permissions for repository contents and Actions state.
+
+The runner checks out exact merged `main`, requires local HEAD to equal fetched `origin/main`, installs the pinned EXP-054 numerical runtime without editable installation, proves the worktree remains clean, and writes the plan only under `RUNNER_TEMP`. It invokes only `python scripts/phase8a_exp054_operator.py next`; it contains no `advance` or `advance --execute` call and has no direct dispatch endpoint or rerun path.
+
+A successful DEC-193 plan artifact must prove `operator_decision = DEC-192`, `run_present = false`, `run_state = MISSING`, the exact `FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_DISPATCH_REQUIRED` stage, the frozen one-shot dispatch command as plan evidence, the four historical-run authorization fields true, and replacement/promotion/shadow/demo/broker/live/real-money/trading fields false.
+
+DEC-193 changes no model-run authorization and consumes no run slot. Only after the merged-main read-only plan succeeds may a separate one-shot executor gate be considered. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
