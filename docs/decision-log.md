@@ -2739,3 +2739,26 @@ The artifact/evidence source is `src/fmp/market_learning/model_successor_fit_tem
 
 DEC-165 keeps authoritative EXP-052 result execution and model fit false. The authoritative bundle rejects before source/readiness validation or historical artifact loading while the outer execution flag remains false. Workflow dispatch, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization remain false. The next gate is a separately frozen manual-main workflow/CLI/pinned-runtime source and exact-source execution gate, still non-executable.
 
+## DEC-166 — Phase 8A EXP-052 manual-main workflow source gate
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-166 freezes the manual-main, input-free EXP-052 workflow source, public CLI, pinned numerical runtime, and exact-source execution gate against the merged DEC-163/164/165 source chain.
+
+The frozen workflow is `.github/workflows/phase8a-exp052-fit-temporal-support-utility-model-training.yml` at Git blob `a49af5daeb14177a44154ef96b135f64a98a85bf`. It exposes only `workflow_dispatch`, accepts no user inputs, has no schedule or pull-request trigger, requires `refs/heads/main`, preserves the exact nine pair/timeframe historical artifact matrix, runs both 60m and 240m horizons, uses `max-parallel: 3`, and preserves partial cell artifacts plus the aggregate evidence artifact shape.
+
+DEC-166 intentionally omits any first-run rejection guard. It contains no prior-run query, run-slot accounting, retry authorization, or replacement authorization. A later decision must freeze terminal review first and then independently verify run history before any one-run authorization is considered.
+
+The public CLI is `scripts/phase8a_exp052_model_run.py` at blob `728691476a2285ec4cdec594a020aa5c84b04c5e`. Its non-status commands require the separate execution gate before readiness loading, authoritative artifact loading, cell fitting, or aggregate compilation. It contains no direct GitHub workflow-dispatch command.
+
+The pinned runtime is `requirements/exp052-model-run.txt` at blob `d25ab16056b9f5df283147d67b8f401f60ae7520`, using Python `3.12.14` and the exact reviewed predecessor numerical package versions.
+
+The exact-source gate is `src/fmp/market_learning/model_successor_fit_temporal_support_utility_execution_gate.py` at blob `139028be1c354a99599a3ed6505a1a4725889c02`. It binds DEC-163 merge `9108cd170b2eccf73bddb6cbf8d6d7118dbd9cd1` and protocol blob `01d5080560ec5d41653694b4df086ff2f10e770d`; DEC-164 merge `d9f893504b2d790eb73bc49edf4c0919ef2ff914` and core blob `fe5664438752a161134bbed6f55d9985f1c1470a`; DEC-165 merge `0753e85546bcef430863eceb99bdc38f43572477` and artifact-contract blob `ae06184b9a84405119b6ed434a8973139d8ae006`; the accepted historical loader; workflow; CLI; runtime; pyproject; preprocessing; feature schema; market contracts; and outcomes.
+
+Focused tests are `tests/test_phase8a_exp052_model_workflow.py` at blob `3c40d8c8fbcbde98005e394cf15b25fb7629505f`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp052-fit-temporal-support-utility-workflow-source.md` at blob `ac1de3e0b81744078f2b6f358ad40b06eae617f4`.
+
+DEC-166 freezes `FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN = true` while keeping model-run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. Calling the execution requirement therefore fails closed.
+
+The next gate is a separately frozen attempt-1 terminal-review contract before any one-run authorization or dispatch can be considered.
+
