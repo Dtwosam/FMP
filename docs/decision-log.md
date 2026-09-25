@@ -2781,3 +2781,22 @@ The review source is `src/fmp/market_learning/model_successor_fit_temporal_suppo
 
 DEC-167 authorizes no dispatch, historical result execution, model fit, replacement run, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. After merge, a later decision may independently verify zero prior manual-main EXP-052 runs, add a first-run rejection guard, and authorize at most one outer historical result-producing attempt without dispatching it.
 
+## DEC-168 — Phase 8A EXP-052 single historical model-run authorization
+
+**Date:** 2026-09-25
+**Status:** AUTHORIZED SOURCE; NO EXP-052 RUN DISPATCHED BY THIS DECISION
+
+After DEC-167 merged, repository Actions history was independently inspected. The latest 100 runs extend back to `2026-09-24T21:06:09Z`, before DEC-166 first put the EXP-052 workflow on `main` at `2026-09-25T00:39:05Z`. Across that complete possible workflow lifetime, zero runs match the exact EXP-052 workflow path with `workflow_dispatch` on `main`.
+
+DEC-168 binds DEC-166 merge `2883cc46c65ff7c672c9f8d7192fc7fb240a9835`, pre-authorization workflow blob `a49af5daeb14177a44154ef96b135f64a98a85bf`, CLI blob `728691476a2285ec4cdec594a020aa5c84b04c5e`, pre-authorization execution-gate blob `139028be1c354a99599a3ed6505a1a4725889c02`, DEC-167 merge `32af27a80cdb50a8be069b21ffe1757f0b6aaa10`, and DEC-167 review blob `dbccea23117adbc50fa54345ec418fde54f254a3`.
+
+The workflow is hardened with a first-run rejection guard before runtime installation or model fitting. It verifies the exact current run identity, lists exact manual-main EXP-052 workflow runs, excludes only the current `GITHUB_RUN_ID`, and fails if any prior matching run exists. The hardened workflow blob is `c4310d4d4a58436eca75afaf147fa570ac725088`.
+
+The authorized execution gate is `src/fmp/market_learning/model_successor_fit_temporal_support_utility_execution_gate.py` at blob `7d5fb31ee5e31d042f06426a699b06fb84237338` and records `FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-168"`. Only the outer dispatch/result/protocol-result/model-fit flags are true. The underlying DEC-163 protocol, DEC-164 training core, and DEC-165 artifact-runner source-level result/fit locks remain false and are explicitly validated.
+
+The first manual-main EXP-052 attempt consumes the slot on success, failure, cancellation, or timeout. No rerun, automatic retry, or replacement run is authorized. Any terminal outcome must route through DEC-167.
+
+Focused workflow tests are `tests/test_phase8a_exp052_model_workflow.py` at blob `407113e0a55e9f24b3bb23fed91e19de4327d8fb`. The detailed authorization record is `docs/superpowers/specs/2026-09-25-phase8a-exp052-single-model-run-authorization.md` at blob `11ac877d0c208c3817a49323aa97a00f32dec47f`.
+
+DEC-168 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo execution, broker mutation, live order, real-money action, and trading authorization remain false. A later separate decision must freeze a clean-main, one-way operator before any dispatch.
+
