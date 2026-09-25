@@ -1,0 +1,110 @@
+name: phase8a-exp056-operator-plan
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-exp056-operator-plan.yml
+      - scripts/phase8a_exp056_operator.py
+      - src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_operator.py
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  read-only-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONPATH: ${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require push on merged main
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned EXP-056 runtime without mutating checkout
+        run: python -m pip install -r requirements/exp056-model-run.txt
+
+      - name: Require clean checkout after dependency installation
+        run: test -z "$(git status --porcelain)"
+
+      - name: Run exact DEC-215 read-only operator plan
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_exp056_operator.py next > "$RUNNER_TEMP/operator-plan.json"
+
+      - name: Verify zero-run dispatch plan
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          plan = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "operator-plan.json"
+              ).read_text(encoding="utf-8")
+          )
+
+          assert plan["operator_decision"] == "DEC-215"
+          assert plan["read_only"] is True
+          assert plan["run_present"] is False
+          assert plan["run_state"] == "MISSING"
+          assert plan["run_id"] is None
+          assert plan["stage"] == (
+              "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_MODEL_"
+              "RUN_DISPATCH_REQUIRED"
+          )
+          assert plan["dispatch_command"] == (
+              "gh workflow run "
+              "phase8a-exp056-fit-temporal-residual-lower-tail-utility-model-training.yml "
+              "--ref main -R Dtwosam/FMP"
+          )
+
+          for field in (
+              "fit_temporal_residual_breadth_utility_model_run_dispatch_authorized",
+              "authoritative_fit_temporal_residual_breadth_utility_model_result_execution_authorized",
+              "model_protocol_result_authorized",
+              "model_fit_authorized",
+          ):
+              assert plan[field] is True, field
+
+          for field in (
+              "replacement_model_run_authorized",
+              "promotion_authorized",
+              "shadow_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert plan[field] is False, field
+          PY
+
+      - name: Upload immutable read-only operator plan
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp056-dec215-read-only-operator-plan-${{ github.sha }}
+          path: ${{ runner.temp }}/operator-plan.json
+          if-no-files-found: error
