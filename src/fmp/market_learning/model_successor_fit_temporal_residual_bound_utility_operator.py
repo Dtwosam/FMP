@@ -59,7 +59,7 @@ def validate_fit_temporal_residual_bound_utility_operator_checkout(
         raise ValueError("origin remote does not match Dtwosam/FMP")
     return {
         "repository": REPOSITORY,
-        "dec179_merged_commit": DEC191_MERGED_COMMIT,
+        "dec191_merged_commit": DEC191_MERGED_COMMIT,
         "branch": "main",
         "head_sha": head,
         "clean_worktree": True,
