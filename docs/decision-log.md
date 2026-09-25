@@ -3244,3 +3244,23 @@ DEC-195 adds exactly one main-push/path-scoped executor. Its only execution-capa
 The executor workflow is `.github/workflows/phase8a-exp054-operator-execute.yml` at blob `b051668d47c249fb42c3d27ecf5bdf9159f88279`. Focused tests are `tests/test_phase8a_exp054_operator_executor.py` at blob `b0a2cfbe22e0162ea41b65a60d50bc882730efa3`.
 
 DEC-195 authorizes no second executor attempt and no replacement model run. If its initial merged-main executor causes DEC-192 to submit the EXP-054 model workflow, that first manual-main run consumes the DEC-191 slot on any terminal outcome and must route through DEC-190. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+
+## DEC-196 — Phase 8A EXP-054 reviewed historical model result
+
+**Date:** 2026-09-25
+**Status:** REVIEWED / CLOSED / NO STABLE CHALLENGER
+
+DEC-195 merged at `5ca369a87f8a761c3232b75f95a701043721fd36`. Executor run `36152291368` successfully submits the sole DEC-191-authorized EXP-054 historical model workflow before its receipt-verification step fails because the captured operator receipt is empty/non-JSON. That post-dispatch bookkeeping failure does not undo the submitted model run and does not authorize another executor, rerun, retry, or replacement.
+
+Model run `36152351767` completes successfully on attempt 1 at `5ca369a87f8a761c3232b75f95a701043721fd36`. All 11 DEC-190-required jobs succeed: authorization preflight, all nine pair/timeframe model-cell jobs, and aggregate-model-evidence. All nine exact cell artifacts plus the aggregate artifact are present and non-expired.
+
+Aggregate artifact `10873466808`, named `exp054-fit-temporal-residual-bound-utility-model-result-evidence-5ca369a87f8a761c3232b75f95a701043721fd36-from-feature-35867307338-outcome-35876715434`, has GitHub digest `sha256:d9adb29cb1bc4d9c6b2bbc65e80c168d90a7d0df909d0c1fb1377347b2ee223b`. The downloaded ZIP independently reproduces that digest and contains exactly one `model-result-evidence.json`.
+
+The aggregate evidence fingerprint `307b576f06c6aa2fb01a267232a0de553bfa79c1bdbe6bf5d55b2bfc3b40787c` recomputes exactly under the frozen canonical serializer. All 18 cell result fingerprints also recompute exactly. Complete reviewed evidence contains 18 cells, 108 regressors, 108 pooled calibration references, 432 fit-temporal utility-support references, 216 fit-temporal feature-support references, and 432 fit-temporal residual references.
+
+Across 54 budget variants, 28 are available and 26 unavailable. The unchanged eligibility pipeline yields 26,392 utility-eligible selection rows. EXP-054 produces exactly two aggregate-selection-pass variants: USDJPY 5m / 60m / budget 250 and USDJPY 5m / 60m / budget 1000. Both fail the unchanged temporal-stability gate. Stable-selection-pass count is zero, selected-cell count is zero, validation and retrospective holdout remain locked for all 18 cells, and accepted model candidate count is zero.
+
+Reviewed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_bound_utility_result_decision.py` at blob `17235435604bc5c0bd8950037bd8c49a0c6fb81a`. Focused tests are `tests/test_phase8a_exp054_model_result_decision.py` at blob `4f773a996455f12652b653a29cf554dbb9a3401e`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp054-reviewed-model-result.md`.
+
+DEC-196 closes model-run dispatch, replacement, authoritative result execution, model-protocol result production, and model fit. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. No second EXP-054 run is authorized. The next safe gate is a separate post-result diagnostic over immutable EXP-053 and EXP-054 reviewed evidence.
