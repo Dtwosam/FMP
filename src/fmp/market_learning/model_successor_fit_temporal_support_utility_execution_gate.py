@@ -26,6 +26,7 @@ from .model_successor_fit_temporal_support_utility_training import (
 
 
 FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_GATE_DECISION = "DEC-166"
+FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-168"
 FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp052-fit-temporal-support-utility-model-training.yml"
 )
@@ -36,6 +37,13 @@ FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_WORKFLOW_NAME = (
 DEC163_MERGED_COMMIT = "9108cd170b2eccf73bddb6cbf8d6d7118dbd9cd1"
 DEC164_MERGED_COMMIT = "d9f893504b2d790eb73bc49edf4c0919ef2ff914"
 DEC165_MERGED_COMMIT = "0753e85546bcef430863eceb99bdc38f43572477"
+DEC166_MERGED_COMMIT = "2883cc46c65ff7c672c9f8d7192fc7fb240a9835"
+DEC167_MERGED_COMMIT = "32af27a80cdb50a8be069b21ffe1757f0b6aaa10"
+
+DEC166_WORKFLOW_BLOB_SHA = "a49af5daeb14177a44154ef96b135f64a98a85bf"
+DEC166_CLI_BLOB_SHA = "728691476a2285ec4cdec594a020aa5c84b04c5e"
+DEC166_GATE_BLOB_SHA = "139028be1c354a99599a3ed6505a1a4725889c02"
+DEC167_REVIEW_BLOB_SHA = "dbccea23117adbc50fa54345ec418fde54f254a3"
 
 DEC165_RUNNER_BLOB_SHA = "ae06184b9a84405119b6ed434a8973139d8ae006"
 DEC164_CORE_BLOB_SHA = "fe5664438752a161134bbed6f55d9985f1c1470a"
@@ -43,7 +51,7 @@ DEC163_PROTOCOL_BLOB_SHA = "01d5080560ec5d41653694b4df086ff2f10e770d"
 LEGACY_DATA_LOADER_BLOB_SHA = "27c0848d16722a22b4762f5842396c2aebc92bec"
 
 FIT_TEMPORAL_SUPPORT_UTILITY_WORKFLOW_BLOB_SHA = (
-    "a49af5daeb14177a44154ef96b135f64a98a85bf"
+    "c4310d4d4a58436eca75afaf147fa570ac725088"
 )
 FIT_TEMPORAL_SUPPORT_UTILITY_CLI_BLOB_SHA = (
     "728691476a2285ec4cdec594a020aa5c84b04c5e"
@@ -60,12 +68,12 @@ MARKET_OUTCOMES_BLOB_SHA = "c83fefd4252b2fe426af97686f86e43021760c77"
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN = True
-FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = False
+FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = True
 AUTHORITATIVE_FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = (
-    False
+    True
 )
-FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_FIT_AUTHORIZED = False
+FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -166,6 +174,12 @@ def validate_fit_temporal_support_utility_model_workflow_sources(
             root / "src/fmp/market_learning/model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_fit_temporal_support_utility_result_review.py",
+            DEC167_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -217,6 +231,15 @@ def validate_fit_temporal_support_utility_model_workflow_sources(
         "dec163_merged_commit": DEC163_MERGED_COMMIT,
         "dec164_merged_commit": DEC164_MERGED_COMMIT,
         "dec165_merged_commit": DEC165_MERGED_COMMIT,
+        "dec166_merged_commit": DEC166_MERGED_COMMIT,
+        "dec167_merged_commit": DEC167_MERGED_COMMIT,
+        "dec166_workflow_blob_sha": DEC166_WORKFLOW_BLOB_SHA,
+        "dec166_cli_blob_sha": DEC166_CLI_BLOB_SHA,
+        "dec166_gate_blob_sha": DEC166_GATE_BLOB_SHA,
+        "dec167_review_blob_sha": actual["terminal_review"],
+        "fit_temporal_support_utility_model_execution_authorization_decision": (
+            FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "fit_temporal_support_utility_runner_blob_sha": actual[
             "fit_temporal_support_runner"
         ],
@@ -237,12 +260,12 @@ def validate_fit_temporal_support_utility_model_workflow_sources(
         "market_outcomes_blob_sha": actual["market_outcomes"],
         "authorized_python_version": AUTHORIZED_PYTHON_VERSION,
         "fit_temporal_support_utility_model_workflow_source_frozen": True,
-        "fit_temporal_support_utility_model_run_dispatch_authorized": False,
+        "fit_temporal_support_utility_model_run_dispatch_authorized": True,
         "authoritative_fit_temporal_support_utility_model_result_execution_authorized": (
-            False
+            True
         ),
-        "model_protocol_result_authorized": False,
-        "model_fit_authorized": False,
+        "model_protocol_result_authorized": True,
+        "model_fit_authorized": True,
         "promotion_authorized": False,
         "shadow_authorized": False,
         "demo_order_authorized": False,
@@ -264,12 +287,15 @@ def build_fit_temporal_support_utility_model_workflow_source_gate(
         **source,
         "stage": (
             "FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_"
-            "RUN_WORKFLOW_SOURCE_FROZEN"
+            "RUN_DISPATCH_REQUIRED"
         ),
         "next_action": (
-            "A later separate decision must predeclare terminal review "
-            "before any guarded EXP-052 historical model-result run may "
-            "be considered. DEC-166 does not authorize or dispatch execution."
+            "DEC-168 authorizes at most one guarded historical EXP-052 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
+        ),
+        "fit_temporal_support_utility_model_execution_authorization_decision": (
+            FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
         ),
     }
 
@@ -292,8 +318,7 @@ def require_authoritative_fit_temporal_support_utility_model_execution(
     )
     if not all(required_true):
         raise PermissionError(
-            "DEC-166 freezes EXP-052 workflow source but does not "
-            "authorize historical model-result execution"
+            "DEC-168 historical EXP-052 execution authorization is closed"
         )
 
     return {
@@ -313,9 +338,16 @@ __all__ = [
     "DEC164_MERGED_COMMIT",
     "DEC165_MERGED_COMMIT",
     "DEC165_RUNNER_BLOB_SHA",
+    "DEC166_CLI_BLOB_SHA",
+    "DEC166_GATE_BLOB_SHA",
+    "DEC166_MERGED_COMMIT",
+    "DEC166_WORKFLOW_BLOB_SHA",
+    "DEC167_MERGED_COMMIT",
+    "DEC167_REVIEW_BLOB_SHA",
     "DEMO_ORDER_AUTHORIZED",
     "FEATURE_SCHEMA_BLOB_SHA",
     "FIT_TEMPORAL_SUPPORT_UTILITY_CLI_BLOB_SHA",
+    "FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_GATE_DECISION",
     "FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_FIT_AUTHORIZED",
     "FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED",

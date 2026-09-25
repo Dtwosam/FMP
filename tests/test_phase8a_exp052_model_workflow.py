@@ -12,7 +12,14 @@ from fmp.market_learning.model_successor_fit_temporal_support_utility_execution_
     DEC164_MERGED_COMMIT,
     DEC165_MERGED_COMMIT,
     DEC165_RUNNER_BLOB_SHA,
+    DEC166_CLI_BLOB_SHA,
+    DEC166_GATE_BLOB_SHA,
+    DEC166_MERGED_COMMIT,
+    DEC166_WORKFLOW_BLOB_SHA,
+    DEC167_MERGED_COMMIT,
+    DEC167_REVIEW_BLOB_SHA,
     FIT_TEMPORAL_SUPPORT_UTILITY_CLI_BLOB_SHA,
+    FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
     FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_GATE_DECISION,
     FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_FIT_AUTHORIZED,
     FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -39,7 +46,7 @@ REQUIREMENTS = ROOT / "requirements/exp052-model-run.txt"
 
 
 class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
-    def test_exact_sources_are_frozen_but_execution_closed(
+    def test_exact_sources_open_one_guarded_result_authorization(
         self,
     ) -> None:
         source = (
@@ -56,6 +63,16 @@ class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
         self.assertEqual(
             FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_GATE_DECISION,
             "DEC-166",
+        )
+        self.assertEqual(
+            source[
+                "fit_temporal_support_utility_model_execution_authorization_decision"
+            ],
+            FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+        )
+        self.assertEqual(
+            FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+            "DEC-168",
         )
         self.assertEqual(
             source["dec163_merged_commit"],
@@ -80,6 +97,54 @@ class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
         self.assertEqual(
             DEC165_MERGED_COMMIT,
             "0753e85546bcef430863eceb99bdc38f43572477",
+        )
+        self.assertEqual(
+            source["dec166_merged_commit"],
+            DEC166_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            DEC166_MERGED_COMMIT,
+            "2883cc46c65ff7c672c9f8d7192fc7fb240a9835",
+        )
+        self.assertEqual(
+            source["dec167_merged_commit"],
+            DEC167_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            DEC167_MERGED_COMMIT,
+            "32af27a80cdb50a8be069b21ffe1757f0b6aaa10",
+        )
+        self.assertEqual(
+            source["dec166_workflow_blob_sha"],
+            DEC166_WORKFLOW_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC166_WORKFLOW_BLOB_SHA,
+            "a49af5daeb14177a44154ef96b135f64a98a85bf",
+        )
+        self.assertEqual(
+            source["dec166_cli_blob_sha"],
+            DEC166_CLI_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC166_CLI_BLOB_SHA,
+            "728691476a2285ec4cdec594a020aa5c84b04c5e",
+        )
+        self.assertEqual(
+            source["dec166_gate_blob_sha"],
+            DEC166_GATE_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC166_GATE_BLOB_SHA,
+            "139028be1c354a99599a3ed6505a1a4725889c02",
+        )
+        self.assertEqual(
+            source["dec167_review_blob_sha"],
+            DEC167_REVIEW_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC167_REVIEW_BLOB_SHA,
+            "dbccea23117adbc50fa54345ec418fde54f254a3",
         )
         self.assertEqual(
             source["fit_temporal_support_utility_runner_blob_sha"],
@@ -113,7 +178,7 @@ class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             FIT_TEMPORAL_SUPPORT_UTILITY_WORKFLOW_BLOB_SHA,
-            "a49af5daeb14177a44154ef96b135f64a98a85bf",
+            "c4310d4d4a58436eca75afaf147fa570ac725088",
         )
         self.assertEqual(
             source["fit_temporal_support_utility_cli_blob_sha"],
@@ -141,7 +206,7 @@ class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
             gate["stage"],
             (
                 "FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_"
-                "RUN_WORKFLOW_SOURCE_FROZEN"
+                "RUN_DISPATCH_REQUIRED"
             ),
         )
         self.assertTrue(
@@ -149,20 +214,20 @@ class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
                 "fit_temporal_support_utility_model_workflow_source_frozen"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "fit_temporal_support_utility_model_run_dispatch_authorized"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "authoritative_fit_temporal_support_utility_model_result_execution_authorized"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate["model_protocol_result_authorized"]
         )
-        self.assertFalse(gate["model_fit_authorized"])
+        self.assertTrue(gate["model_fit_authorized"])
         self.assertFalse(gate["promotion_authorized"])
         self.assertFalse(gate["shadow_authorized"])
         self.assertFalse(gate["trading_authorized"])
@@ -170,30 +235,46 @@ class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
         self.assertTrue(
             FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             AUTHORITATIVE_FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_SUPPORT_UTILITY_MODEL_FIT_AUTHORIZED
         )
         self.assertFalse(PROMOTION_AUTHORIZED)
         self.assertFalse(TRADING_AUTHORIZED)
 
-    def test_execution_requirement_fails_closed(self) -> None:
-        with self.assertRaisesRegex(
-            PermissionError,
-            "DEC-166 freezes EXP-052 workflow source",
-        ):
+    def test_execution_requirement_accepts_exact_authorized_sources(
+        self,
+    ) -> None:
+        result = (
             require_authoritative_fit_temporal_support_utility_model_execution(
                 repository_root=ROOT,
                 code_commit="a" * 40,
             )
+        )
+        self.assertEqual(result["code_commit"], "a" * 40)
+        self.assertTrue(
+            result[
+                "fit_temporal_support_utility_model_run_dispatch_authorized"
+            ]
+        )
+        self.assertTrue(
+            result[
+                "authoritative_fit_temporal_support_utility_model_result_execution_authorized"
+            ]
+        )
+        self.assertTrue(result["model_protocol_result_authorized"])
+        self.assertTrue(result["model_fit_authorized"])
+        self.assertFalse(result["promotion_authorized"])
+        self.assertFalse(result["shadow_authorized"])
+        self.assertFalse(result["trading_authorized"])
 
     def test_workflow_is_manual_main_only_and_input_free(
         self,
@@ -218,20 +299,44 @@ class Exp052FitTemporalSupportWorkflowTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
 
-    def test_workflow_has_no_first_run_guard_before_authorization(
+    def test_workflow_enforces_first_manual_main_run_only(
         self,
     ) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn(
-            "Reject any prior manual main EXP-052 model run",
-            text,
+        guard = text.index(
+            "Reject any prior manual main EXP-052 model run"
         )
-        self.assertNotIn(
-            "prior manual-main EXP-052 model run exists",
+        authorization = text.index(
+            "Require separately authorized EXP-052 result execution"
+        )
+        self.assertLess(guard, authorization)
+        self.assertIn(
+            "actions/workflows/"
+            "phase8a-exp052-fit-temporal-support-utility-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
             text,
         )
         self.assertIn(
-            "Require separately authorized EXP-052 result execution",
+            'current["id"] == int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            'current["name"] == '
+            '"phase8a-exp052-fit-temporal-support-utility-model-training"',
+            text,
+        )
+        self.assertIn(
+            'current["path"] == '
+            '".github/workflows/'
+            'phase8a-exp052-fit-temporal-support-utility-model-training.yml"',
+            text,
+        )
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            "prior manual-main EXP-052 model run exists",
             text,
         )
 
