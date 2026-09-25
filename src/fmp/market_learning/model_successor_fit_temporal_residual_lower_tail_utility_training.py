@@ -1114,14 +1114,14 @@ def run_fit_temporal_residual_lower_tail_utility_model_cell_core(
         "training_core_decision": (
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_TRAINING_CORE_DECISION
         ),
-        "dec198_merged_commit": DEC209_MERGED_COMMIT,
-        "dec198_protocol_blob_sha": DEC209_PROTOCOL_BLOB_SHA,
+        "dec209_merged_commit": DEC209_MERGED_COMMIT,
+        "dec209_protocol_blob_sha": DEC209_PROTOCOL_BLOB_SHA,
         "predecessor_training_core_blob_sha": (
             PREDECESSOR_TRAINING_CORE_BLOB_SHA
         ),
         "predecessor_training_core_decision": (
             _predecessor
-            .FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_TRAINING_CORE_DECISION
+            .FIT_TEMPORAL_RESIDUAL_BREADTH_UTILITY_TRAINING_CORE_DECISION
         ),
         "protocol_decision": (
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_PROTOCOL_DECISION
