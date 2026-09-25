@@ -3834,3 +3834,21 @@ DEC-230 classifies the result as `LOWER_TAIL_RANKING_CHANGED_CANDIDATE_FINANCIAL
 Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_post_result_diagnostics.py` at blob `09e88b85a51b858296a3af7d146251606f1d5533`. Focused tests are `tests/test_phase8a_exp057_post_result_diagnostics.py` at blob `c3486a0b9b5daf43fdf5cc66b6ddc6546d12b0cd`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp057-post-result-diagnostic.md`.
 
 DEC-230 keeps EXP-057 rerun/replacement, all temporal-gate relaxation, selection-window ranking/recalibration/quota tuning, successor fit/result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. Only successor protocol source design is open.
+
+
+## DEC-231 — Phase 8A EXP-058 fit-temporal residual regime-floor utility protocol
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-231 binds DEC-230 merge `b3877047fabc779b7fcc88dde847c02b5a6f5b98`, DEC-230 diagnostic blob `09e88b85a51b858296a3af7d146251606f1d5533`, DEC-229 result-decision blob `185e2cdf089cb6f1a12619af58fd32860366498f`, EXP-057 protocol blob `2f355526476a4d41967bb46e1bfad6aa525cbfa9`, and EXP-057 evidence fingerprint `4bf67108e0df38d4f213d08898fadd338285ac7a2ce56920b61e4dba0f3eec4c`.
+
+EXP-058 preserves EXP-057 eligibility, features, targets, chronology, HGB configuration, three jackknife views, calibration/support/residual reference families, residual-bound utility, residual breadth, lower-tail mean, budgets, aggregate financial gates, four-window temporal stability, validation/holdout chronology, and no-refit semantics. It adds one fit-only ranking score derived from the existing twelve downside-adjusted lower bounds: within each jackknife view, average the four bounds belonging to that view's excluded two-year fit regime; then take the minimum of the three regime means. No new reference vector is created.
+
+Eligible rows rank by regime-floor utility first, followed by the existing EXP-057 lower-tail, breadth, residual-bound, feature-support, utility-support, pooled-calibrated, and raw-utility stack, then row identity. Each budget freezes an eight-part numeric cutoff; exact eight-part ties may exceed budget. Forward validation/holdout reuse frozen models/references, the three derived fit-regime means, and the exact selection-derived cutoff without refit or recalibration.
+
+Selection-window outcomes, recalibration, quotas, per-window cutoff tuning, gate relaxation, removal of early windows, validation/holdout outcome ranking, model fit, historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_protocol.py` at blob `8e10cc3760a4a7dd019ea1ecc7c60189fe1770e2`. Focused tests are `tests/test_phase8a_exp058_fit_regime_floor_protocol.py` at blob `ddd14530237faa164202362bf24886c7c03cba0a`. Detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp058-fit-regime-floor-protocol.md`.
+
+The next safe gate is a deterministic in-memory EXP-058 training/evaluation core only.
