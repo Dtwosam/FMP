@@ -3500,3 +3500,19 @@ For each already eligible row, the core reuses the exact twelve EXP-055 downside
 The completed source exposes `run_fit_temporal_residual_lower_tail_utility_model_cell_core`, so DEC-210 is a full deterministic in-memory cell core rather than a partial helper gate. Source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_training.py` at blob `c472ed48e7b79d22056d43deb0fe09166ccf34c9`. Focused tests are `tests/test_phase8a_exp056_fit_temporal_residual_lower_tail_utility_training.py` at blob `abe1866e0b014591cbfe9dc19afb97d48318b31c`.
 
 DEC-210 contains no artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading path. All such authorizations remain false. The next safe gate after merge is a separate non-executable EXP-056 artifact/evidence contract bound to this exact core.
+
+
+## DEC-211 — Phase 8A EXP-056 artifact/evidence contract
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-211 binds DEC-210 merge `029159999fae7eaa67811f8b3d8bf2bf8834e491`, DEC-210 training-core blob `c472ed48e7b79d22056d43deb0fe09166ccf34c9`, and predecessor EXP-055 artifact-contract blob `65ca27a20d4e4fadd73c22b0b5693dc9d7ebeafb`.
+
+The contract validates complete EXP-056 cell evidence before aggregate compilation. Each cell must bind the exact experiment/protocol/training decisions, deterministic cell fingerprint, six regressors, six pooled references, 24 utility-support references, 12 feature-support references, 24 exact residual references, the twelve-bound residual-breadth inventory, the twelve-bound residual lower-tail source inventory, fixed worst-three lower-tail count, lower-tail-aware consensus diagnostics/digest, and the three frozen budget variants. Available variants require a finite lower-tail/breadth/residual-bound/feature-support/utility-support/pooled/raw cutoff septuple; unavailable budgets expose no cutoff and cannot pass selection.
+
+Complete aggregate evidence requires all 18 exact cells and verifies 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, 432 residual references, 12 residual-breadth bounds per eligible row, 12 lower-tail source bounds per eligible row, and a fixed lower-tail count of 3. Aggregate evidence receives a deterministic fingerprint under the frozen canonical serializer.
+
+Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_artifacts.py` at blob `f554011c092f5c4ec5d3f9b8e2330bfc974376f8`. Focused tests are `tests/test_phase8a_exp056_fit_temporal_residual_lower_tail_utility_artifacts.py` at blob `6ece494a68757f67b664bfcf0967ab2dbda41fb8`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp056-artifact-evidence-contract.md`.
+
+DEC-211 remains non-executable: authoritative result execution, model fit, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate manual-main workflow/CLI/runtime source freeze with execution still closed.
