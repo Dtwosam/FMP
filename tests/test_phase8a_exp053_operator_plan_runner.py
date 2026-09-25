@@ -29,7 +29,7 @@ class Exp053OperatorPlanRunnerTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
 
-    def test_runner_executes_only_dec169_next_plan(self) -> None:
+    def test_runner_executes_only_dec180_next_plan(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
             "python scripts/phase8a_exp053_operator.py next",
@@ -110,7 +110,7 @@ class Exp053OperatorPlanRunnerTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('python-version: "3.12.14"', text)
         self.assertIn(
-            "exp053-dec169-read-only-operator-plan-",
+            "exp053-dec180-read-only-operator-plan-",
             text,
         )
         self.assertIn(
