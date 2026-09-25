@@ -77,21 +77,21 @@ class Exp054FitTemporalResidualBoundTrainingTests(unittest.TestCase):
         residual_references = {}
         for view_index, view_name in enumerate(("a", "b", "c")):
             view_predictions[view_name] = {
-                "net_pnl_0_5pip_long": np.asarray(
+                "long_net_pips_0p5": np.asarray(
                     [10.0 + view_index, 99.0, 99.0],
                     dtype=np.float64,
                 ),
-                "net_pnl_0_5pip_short": np.asarray(
+                "short_net_pips_0p5": np.asarray(
                     [99.0, 20.0 + view_index, 99.0],
                     dtype=np.float64,
                 ),
             }
             residual_references[view_name] = {
-                "net_pnl_0_5pip_long": {
+                "long_net_pips_0p5": {
                     f"w{i}": float(-i - view_index)
                     for i in range(4)
                 },
-                "net_pnl_0_5pip_short": {
+                "short_net_pips_0p5": {
                     f"w{i}": float(-2 * i - view_index)
                     for i in range(4)
                 },
