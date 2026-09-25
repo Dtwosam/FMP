@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - .github/workflows/phase8a-exp054-operator-plan.yml
+      - scripts/phase8a_exp054_operator.py
+      - src/fmp/market_learning/model_successor_fit_temporal_residual_bound_utility_operator.py
 
 permissions:
   contents: read
