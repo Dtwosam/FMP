@@ -11,7 +11,14 @@ from fmp.market_learning.model_successor_fit_temporal_residual_lower_tail_utilit
     DEC221_CORE_BLOB_SHA,
     DEC221_MERGED_COMMIT,
     DEC222_RUNNER_BLOB_SHA,
+    DEC223_CLI_BLOB_SHA,
+    DEC223_GATE_BLOB_SHA,
+    DEC223_MERGED_COMMIT,
+    DEC223_WORKFLOW_BLOB_SHA,
+    DEC224_MERGED_COMMIT,
+    DEC224_REVIEW_BLOB_SHA,
     FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_CLI_BLOB_SHA,
+    FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
     FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_EXECUTION_GATE_DECISION,
     FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_FIT_AUTHORIZED,
     FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -38,7 +45,7 @@ REQUIREMENTS = ROOT / "requirements/exp057-model-run.txt"
 
 
 class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
-    def test_exact_sources_are_frozen_but_execution_closed(self) -> None:
+    def test_exact_sources_open_one_guarded_result_authorization(self) -> None:
         source = (
             validate_fit_temporal_residual_lower_tail_utility_repair_model_workflow_sources(
                 repository_root=ROOT,
@@ -66,6 +73,34 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
             source["dec222_merged_commit"],
             "51e9ccde9feaada7932384fc4547b721c1341588",
         )
+        self.assertEqual(source["dec223_merged_commit"], DEC223_MERGED_COMMIT)
+        self.assertEqual(
+            DEC223_MERGED_COMMIT,
+            "160c618352739a1ae12b86c80be9573e4c2f234a",
+        )
+        self.assertEqual(source["dec224_merged_commit"], DEC224_MERGED_COMMIT)
+        self.assertEqual(
+            DEC224_MERGED_COMMIT,
+            "e0f2328334d6da6b52cad53f23c9a3b05eeb72cd",
+        )
+        self.assertEqual(
+            source[
+                "fit_temporal_residual_lower_tail_utility_repair_model_execution_authorization_decision"
+            ],
+            FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+        )
+        self.assertEqual(
+            FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+            "DEC-225",
+        )
+        self.assertEqual(source["dec223_workflow_blob_sha"], DEC223_WORKFLOW_BLOB_SHA)
+        self.assertEqual(DEC223_WORKFLOW_BLOB_SHA, "db9d8ccaa7da674124963acc6ab4e65e6c2ad83f")
+        self.assertEqual(source["dec223_cli_blob_sha"], DEC223_CLI_BLOB_SHA)
+        self.assertEqual(DEC223_CLI_BLOB_SHA, "889b2daa4e44175e0479377d6c8ea39846da596d")
+        self.assertEqual(source["dec223_gate_blob_sha"], DEC223_GATE_BLOB_SHA)
+        self.assertEqual(DEC223_GATE_BLOB_SHA, "07c7db8bc7fc29cf595aa617f1d66ec4f77e4879")
+        self.assertEqual(source["dec224_review_blob_sha"], DEC224_REVIEW_BLOB_SHA)
+        self.assertEqual(DEC224_REVIEW_BLOB_SHA, "1a5f3e86b4d445ba4a77f3496f81de2b16b333cd")
         self.assertEqual(
             source["fit_temporal_residual_lower_tail_utility_repair_runner_blob_sha"],
             DEC222_RUNNER_BLOB_SHA,
@@ -96,7 +131,7 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_WORKFLOW_BLOB_SHA,
-            "db9d8ccaa7da674124963acc6ab4e65e6c2ad83f",
+            "2f28eea9f1e9cb941a91553bd6a7dc93245da7f8",
         )
         self.assertEqual(
             source["fit_temporal_residual_lower_tail_utility_repair_cli_blob_sha"],
@@ -117,25 +152,25 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             gate["stage"],
-            "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+            "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RUN_DISPATCH_REQUIRED",
         )
         self.assertTrue(
             gate[
                 "fit_temporal_residual_lower_tail_utility_repair_model_workflow_source_frozen"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "fit_temporal_residual_lower_tail_utility_repair_model_run_dispatch_authorized"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "authoritative_fit_temporal_residual_lower_tail_utility_repair_model_result_execution_authorized"
             ]
         )
-        self.assertFalse(gate["model_protocol_result_authorized"])
-        self.assertFalse(gate["model_fit_authorized"])
+        self.assertTrue(gate["model_protocol_result_authorized"])
+        self.assertTrue(gate["model_fit_authorized"])
         self.assertFalse(gate["promotion_authorized"])
         self.assertFalse(gate["shadow_authorized"])
         self.assertFalse(gate["trading_authorized"])
@@ -143,28 +178,42 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
         self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_WORKFLOW_SOURCE_FROZEN
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RUN_DISPATCH_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RESULT_EXECUTION_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_PROTOCOL_RESULT_AUTHORIZED
         )
-        self.assertFalse(FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_FIT_AUTHORIZED)
+        self.assertTrue(FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_FIT_AUTHORIZED)
         self.assertFalse(PROMOTION_AUTHORIZED)
         self.assertFalse(TRADING_AUTHORIZED)
 
-    def test_execution_requirement_fails_closed(self) -> None:
-        with self.assertRaisesRegex(
-            PermissionError,
-            "DEC-223 freezes EXP-057 workflow source",
-        ):
+    def test_execution_requirement_accepts_exact_authorized_sources(self) -> None:
+        result = (
             require_authoritative_fit_temporal_residual_lower_tail_utility_repair_model_execution(
                 repository_root=ROOT,
                 code_commit="a" * 40,
             )
+        )
+        self.assertEqual(result["code_commit"], "a" * 40)
+        self.assertTrue(
+            result[
+                "fit_temporal_residual_lower_tail_utility_repair_model_run_dispatch_authorized"
+            ]
+        )
+        self.assertTrue(
+            result[
+                "authoritative_fit_temporal_residual_lower_tail_utility_repair_model_result_execution_authorized"
+            ]
+        )
+        self.assertTrue(result["model_protocol_result_authorized"])
+        self.assertTrue(result["model_fit_authorized"])
+        self.assertFalse(result["promotion_authorized"])
+        self.assertFalse(result["shadow_authorized"])
+        self.assertFalse(result["trading_authorized"])
 
     def test_workflow_is_manual_main_only_and_input_free(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -187,18 +236,42 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
 
-    def test_workflow_has_no_first_run_guard_before_authorization(self) -> None:
+    def test_workflow_enforces_first_manual_main_run_only(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn(
-            "Reject any prior manual main EXP-057 model run",
-            text,
+        guard = text.index(
+            "Reject any prior manual main EXP-057 model run"
         )
-        self.assertNotIn(
-            "prior manual-main EXP-057 model run exists",
+        authorization = text.index(
+            "Require separately authorized EXP-057 result execution"
+        )
+        self.assertLess(guard, authorization)
+        self.assertIn(
+            "actions/workflows/"
+            "phase8a-exp057-fit-temporal-residual-lower-tail-utility-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
             text,
         )
         self.assertIn(
-            "Require separately authorized EXP-057 result execution",
+            'current["id"] == int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            'current["name"] == '
+            '"phase8a-exp057-fit-temporal-residual-lower-tail-utility-model-training"',
+            text,
+        )
+        self.assertIn(
+            'current["path"] == '
+            '".github/workflows/'
+            'phase8a-exp057-fit-temporal-residual-lower-tail-utility-model-training.yml"',
+            text,
+        )
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            "prior manual-main EXP-057 model run exists",
             text,
         )
 
