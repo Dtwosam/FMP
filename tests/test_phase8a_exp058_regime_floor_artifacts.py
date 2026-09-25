@@ -97,7 +97,7 @@ def _cell(symbol: str, timeframe: str, horizon: int) -> dict[str, object]:
             "8e10cc3760a4a7dd019ea1ecc7c60189fe1770e2"
         ),
         "predecessor_training_core_blob_sha": (
-            "77f2010574b3d8ecc958930d5bfadf7ddb4f2231"
+            "ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd"
         ),
         "cell": {
             "symbol": symbol,
