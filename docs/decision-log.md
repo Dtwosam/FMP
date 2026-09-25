@@ -3188,3 +3188,15 @@ DEC-191 binds merged DEC-190 commit `3aa05c66a90d4300917f277fe47637bfc483f44e` a
 Only the outer historical-result slot is opened. The execution gate may expose model-run dispatch, authoritative historical result production, model-protocol result production, and model fitting for at most one guarded attempt after this source is merged. DEC-191 itself does not dispatch the workflow, execute a model run, retry or rerun any attempt, or create a replacement path. The first manual-main attempt consumes the slot on any terminal outcome and must route through the predeclared DEC-190 terminal review.
 
 Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate clean-main, one-way operator that can prove the exact zero-run state and derive at most one workflow-dispatch action; that operator must not itself be conflated with this authorization source.
+
+
+## DEC-192 — Phase 8A EXP-054 clean-main one-way operator
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NOT DISPATCHED
+
+DEC-192 binds the DEC-191 one-slot authorization merged at `70925fdc418c76ab378a56235a766435fe6aedb6` and adds a clean-main, double-plan, one-way operator for the exact EXP-054 manual-main workflow. The operator verifies the local repository is on clean `main`, exactly matches fetched `origin/main`, and points at `Dtwosam/FMP` before deriving any action.
+
+The operator classifies the exact EXP-054 manual-main workflow state as `MISSING`, `IN_PROGRESS`, or `TERMINAL`. Only `MISSING` may expose the single frozen `gh workflow run phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml --ref main -R Dtwosam/FMP` command. Before execution the public CLI recomputes the plan and requires byte-for-byte-equivalent structured state; any drift fails closed. Existing or terminal runs never expose a replacement dispatch. Terminal evidence routes through the frozen DEC-190 review contract.
+
+DEC-192 does not itself dispatch the EXP-054 workflow, consume the DEC-191 slot, authorize a retry/rerun/replacement, or authorize promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. The next safe gate after this source and its tests are green and merged is a separate repository-hosted read-only plan runner that proves the live zero-run state without containing a dispatch path.
