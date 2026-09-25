@@ -3021,3 +3021,19 @@ Terminal runs are routed through DEC-178. For a successful run, the operator fet
 The operator core is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_operator.py` at Git blob `47455c4be8cae5e65c2157000c05f514d551ad32`. The public CLI is `scripts/phase8a_exp053_operator.py` at blob `04bad97e1c9b215b7ac8b699ddc2cb6c329331b3`. Focused tests are `tests/test_phase8a_exp053_operator.py` at blob `685feea42865fc198ce70fb27dcce0903673b79b`. The detailed operator spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-single-step-operator.md` at blob `021e21cd81e887938622a8a4f7e6fa6573e073ba`.
 
 DEC-180 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo execution, broker mutation, live order, real-money action, and trading authorization remain false. After merge and green repository checks, a read-only clean-main operator plan must be inspected before any separately authorized first dispatch.
+## DEC-181 — Phase 8A EXP-053 read-only operator plan runner
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY READ-ONLY RUNNER; NO EXP-053 DISPATCH
+
+DEC-181 adds a repository-hosted read-only plan runner around the merged DEC-180 operator. It binds DEC-179 authorization merge `7711a726cde6fc3e827259bf9f8a0878e28eb5b4`, DEC-180 operator merge `459cca3f046c7bc143941bb0d42e4810ad3625dd`, operator-core blob `47455c4be8cae5e65c2157000c05f514d551ad32`, public-CLI blob `04bad97e1c9b215b7ac8b699ddc2cb6c329331b3`, and focused operator-test blob `685feea42865fc198ce70fb27dcce0903673b79b`.
+
+The workflow `.github/workflows/phase8a-exp053-operator-plan.yml` at blob `ae9fac8c80758a81773f865077ad6c3e15640645` triggers only when that workflow file itself is introduced or changed on `main`. It has read-only contents/Actions permissions and contains no manual dispatch trigger, schedule, pull-request trigger, `advance`, `advance --execute`, or direct model-workflow dispatch path.
+
+The runner preserves DEC-180's clean-worktree gate by setting `PYTHONPATH` to the checked-out source tree, installing only `requirements/exp053-model-run.txt` without editable installation, asserting the worktree remains clean, and writing `operator-plan.json` only under `RUNNER_TEMP`.
+
+The runner executes exactly `python scripts/phase8a_exp053_operator.py next`. A successful plan must prove `operator_decision = DEC-180`, `read_only = true`, no run present, `run_state = MISSING`, and stage `FIT_TEMPORAL_FEATURE_SUPPORT_UTILITY_MODEL_RUN_DISPATCH_REQUIRED`, with the exact frozen dispatch command present only as plan evidence. The four DEC-179 outer historical-run flags must remain true while replacement/promotion/shadow/demo/broker/live/real-money/trading locks remain false.
+
+Focused tests are `tests/test_phase8a_exp053_operator_plan_runner.py` at blob `e71e6214184904c1e332ffc442a55f40756e26b6`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-operator-plan-runner.md` at blob `13117a2885fe424db9d2c9b53cc3326342213e2c`.
+
+DEC-181 changes no model-run authorization and consumes no run slot. After merge, the automatic read-only plan must succeed before any separate one-shot executor may invoke the existing DEC-180 `advance --execute` path.
