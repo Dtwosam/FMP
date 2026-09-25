@@ -2929,3 +2929,24 @@ The training-core source is `src/fmp/market_learning/model_successor_fit_tempora
 
 DEC-175 authorizes no accepted historical artifact loading, authoritative result execution, model fit, workflow dispatch, replacement run, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading. The next gate is a separate artifact/evidence contract that must independently validate 18 cells, 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, the four-part cutoff, and the unchanged forward-status chain while remaining non-executable.
 
+## DEC-176 — Phase 8A EXP-053 artifact-backed result-evidence contract
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-176 freezes the artifact-backed runner and aggregate evidence contract for EXP-053. It binds DEC-174 merge `9687eb8ea3920e87d6681adf7366a3ce0bba7154`, DEC-174 protocol blob `11ae3fc8e68687cc04957ed9243d8c5969227fb8`, DEC-175 merge `60abce7c2674f9c25e4132037c9eb24cab1baf22`, DEC-175 training-core blob `4fd0e48302f97e188a8124e1543bde0ffdb43b6f`, predecessor EXP-052 training-core blob `fe5664438752a161134bbed6f55d9985f1c1470a`, predecessor EXP-052 artifact-validator blob `ae06184b9a84405119b6ed434a8973139d8ae006`, and accepted historical artifact-loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`.
+
+For unchanged EXP-052 evidence, DEC-176 delegates to the exact frozen DEC-165 validators after normalizing only the explicit DEC-174 suffix on forbidden/excluded status labels. The predecessor validators continue to enforce the exact jackknife topology, six regressors, six pooled references, 24 utility-support references, unchanged budgets, financial gates, temporal-stability gates, scenario inventory, and forward chronology.
+
+DEC-176 independently validates the EXP-053 feature layer: exactly four excluded-regime half-year feature references per view, 12 per cell, and 216 across the 18-cell aggregate. Every reference must prove exact window identity, positive row/dimension counts, positive active dimensions bounded by total transformed dimensions, reused preprocessor fingerprint, center/scale/active-mask/sorted-distance digests, and finite non-negative ordered distance summaries.
+
+Selection and unlocked forward evidence must carry finite feature-support bounds within `[0,1]`, the exact feature-support reference count, and the frozen feature-support / utility-support / pooled / raw cutoff quadruple. A selected result must match exactly one stable persisted variant by budget plus all four cutoffs. Cell and aggregate fingerprints are recomputed canonically.
+
+A complete aggregate must independently validate exactly 18 cells, 108 regressors, 108 pooled references, 432 fit-temporal utility-support references, and 216 fit-temporal feature-support references.
+
+The artifact source is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_artifacts.py` at blob `431c879bf26d88e33bdf0f0965ec62566b1a3e22`. Focused tests are `tests/test_phase8a_exp053_fit_temporal_feature_support_utility_artifacts.py` at blob `6e442423d8d85467ff4f07b23584b0f04767b61f`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-fit-temporal-feature-support-utility-artifact-contract.md`.
+
+The authoritative bundle checks its DEC-176 execution flag before source validation, readiness validation, historical artifact loading, fitting, or result compilation. That flag remains false. Model fit, workflow dispatch, replacement run, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization remain false.
+
+The next gate is a separate manual-main, input-free workflow/CLI/pinned-runtime/exact-source source freeze. That later workflow must still keep dispatch/result/fit authorization false until terminal review and one-run authorization are separately frozen.
+
