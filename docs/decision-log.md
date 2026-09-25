@@ -3484,3 +3484,19 @@ Ranking becomes lower-tail mean descending, residual breadth descending, residua
 Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_protocol.py` at blob `14d8fe5d0530f44acaa7084c6d78d1c19bd21d8d`. Focused tests are `tests/test_phase8a_exp056_fit_temporal_residual_lower_tail_utility_protocol.py` at blob `683bc8f424f01d6e8cbb1f9478ea0140cfcdeb81`.
 
 DEC-209 keeps model protocol result production, model fitting, historical result execution, residual-bound/breadth rule changes, stability relaxation, selection-window calibration, selection-window quotas, realized selection-outcome ranking, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next safe gate is a separate deterministic in-memory EXP-056 training/evaluation core against this exact protocol.
+
+
+## DEC-210 — Phase 8A EXP-056 deterministic residual lower-tail training core
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-210 binds DEC-209 merge `d2e1aabba6c0f283da6802fe315a5a29b22b503c`, protocol blob `14d8fe5d0530f44acaa7084c6d78d1c19bd21d8d`, and frozen DEC-199 EXP-055 training-core blob `c9517b7516940c78621448088c3933aa1c57e281`.
+
+The implementation reuses unchanged predecessor fitting, calibration, utility-support, feature-support, residual-reference, residual-bound, residual-breadth, financial-gate, temporal-stability, and forward chronology mechanics. It adds only the DEC-209 worst-three lower-tail mean, lower-tail-aware consensus digest, lower-tail-first seven-part cutoff, lower-tail-aware stability application, and matching forward evaluation.
+
+For each already eligible row, the core reuses the exact twelve EXP-055 downside-adjusted lower bounds, sorts them ascending, and computes the arithmetic mean of the three smallest values. No new reference vectors are created. Candidate ranking is lower-tail mean, breadth, residual-bound utility, feature support, utility support, pooled calibrated utility, raw utility, then row identity. Budgets and all stability/financial gates remain unchanged.
+
+The completed source exposes `run_fit_temporal_residual_lower_tail_utility_model_cell_core`, so DEC-210 is a full deterministic in-memory cell core rather than a partial helper gate. Source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_training.py` at blob `484fb25375138ecd16e5d6954dbdbebebf8568f2`. Focused tests are `tests/test_phase8a_exp056_fit_temporal_residual_lower_tail_utility_training.py` at blob `abe1866e0b014591cbfe9dc19afb97d48318b31c`.
+
+DEC-210 contains no artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading path. All such authorizations remain false. The next safe gate after merge is a separate non-executable EXP-056 artifact/evidence contract bound to this exact core.
