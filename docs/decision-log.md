@@ -2688,3 +2688,20 @@ The diagnostic source is `src/fmp/market_learning/model_successor_temporal_calib
 
 DEC-162 authorizes only source design for a later successor protocol. It does not authorize rerun/replacement of EXP-051, gate relaxation, selection-window recalibration, use of realized selection outcomes in ranking, successor result execution, successor model fitting, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading.
 
+## DEC-163 — Phase 8A EXP-052 fit-temporal-support utility protocol
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY PROTOCOL / NO EXP-052 FIT
+
+DEC-163 opens EXP-052 as a narrow source-only successor to DEC-162. It binds DEC-162 merge `3d8453c544fc4b06c691d1068828ec6da9fc7110`, DEC-162 diagnostic blob `00b9cbb5b0c95bd161d429d1f973d1e807f02a48`, DEC-161 result-decision blob `14bc6f2e9172aa325aeb556b7abeacf2c756c475`, predecessor EXP-051 protocol blob `c39309c4115cae1ea058e56f30cae4af6407e36e`, and predecessor result-evidence fingerprint `7dd836ed1c76c8eefd09b2b75e1eef9e875f5c6261c6fbb2cac8e3209781aaea`.
+
+EXP-052 preserves EXP-051 through raw direction eligibility: three leave-one-regime-out jackknife views, six HGB utility regressors, positive-utility unanimous direction consensus, robust raw utility, all six pooled excluded-regime calibration references, the 250/500/1000 budget anchors, aggregate financial gate, four half-year selection stability windows, 10% candidate-share floor, validation/holdout chronology, and no-refit forward semantics.
+
+The sole research change is fit-only temporal-support calibration. Each view's excluded two-year fit regime is split into four frozen half-years. Each already-fitted view regressor scores its four excluded-regime half-years separately for LONG and SHORT, yielding 24 out-of-fit support-reference vectors per cell. No realized outcomes or selection/validation/holdout rows enter these references.
+
+For an EXP-051-eligible row, the agreed-direction raw utility is mapped to 12 view-by-half-year empirical percentiles. Robust fit-temporal support is the minimum of those 12 percentiles. Selection ranks by robust fit-temporal support descending, EXP-051 pooled calibrated utility descending, robust raw utility descending, then row identity ascending. The budget-th row freezes a support/pooled/raw cutoff triple; forward stages reuse the exact six models, six pooled references, 24 support references, and frozen triple.
+
+The protocol source is `src/fmp/market_learning/model_successor_fit_temporal_support_utility_protocol.py` at Git blob `01d5080560ec5d41653694b4df086ff2f10e770d`. Focused tests are `tests/test_phase8a_exp052_fit_temporal_support_utility_protocol.py` at blob `fac0c626fc72ce9e4f88beb15e59c01e39a3af4c`. The detailed protocol spec is `docs/superpowers/specs/2026-09-25-phase8a-exp052-fit-temporal-support-utility-protocol.md` at blob `479143fa61e9e8b8b88d1e5378a5618c5e0676c4`.
+
+DEC-163 keeps authoritative protocol-result production, model fitting, historical result execution, selection-window calibration, validation/holdout calibration, realized selection-outcome ranking, gate relaxation, per-window tuning, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. The next gate is a deterministic in-memory EXP-052 training/evaluation core against this exact protocol source.
+
