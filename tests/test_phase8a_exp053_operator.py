@@ -51,7 +51,7 @@ def _run(
 def _checkout() -> dict[str, object]:
     return {
         "repository": REPOSITORY,
-        "dec168_merged_commit": DEC179_MERGED_COMMIT,
+        "dec179_merged_commit": DEC179_MERGED_COMMIT,
         "branch": "main",
         "head_sha": SHA,
         "clean_worktree": True,
@@ -76,7 +76,7 @@ class Exp053FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
         )
         self.assertEqual(report["head_sha"], SHA)
         self.assertEqual(
-            report["dec168_merged_commit"],
+            report["dec179_merged_commit"],
             DEC179_MERGED_COMMIT,
         )
 
