@@ -3648,3 +3648,19 @@ DEC-219 classifies the failure as `EXP056_IMPLEMENTATION_FAILED_BEFORE_EVIDENCE_
 Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_failure_diagnostics.py` at blob `d94fb02c5037aec4c2cd2a1b020aa1317193d862`. Focused tests are `tests/test_phase8a_exp056_implementation_failure_diagnostics.py` at blob `71d3fb31e21f2873423375358ecc05097c36370d`.
 
 DEC-219 keeps EXP-056 rerun/replacement, successor model fit, successor historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. It opens successor protocol source design only, under a new experiment identity.
+
+
+## DEC-220 — Phase 8A EXP-057 implementation-repair protocol
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-220 binds DEC-219 merge `acc0fab2219b76af061d602863c257b335a32d05`, DEC-219 diagnostic blob `d94fb02c5037aec4c2cd2a1b020aa1317193d862`, DEC-218 result-decision blob `75fc25ae97c03730ab75a3036059f761d8234630`, EXP-056 protocol blob `14d8fe5d0530f44acaa7084c6d78d1c19bd21d8d`, and failed EXP-056 training-core blob `c472ed48e7b79d22056d43deb0fe09166ccf34c9`.
+
+EXP-057 uses a new experiment identity because the EXP-056 historical slot is consumed, but it preserves EXP-056 model semantics exactly. The same features, targets, chronology, HGB configuration, jackknife views, eligibility, calibration/support references, residual-bound utility, residual breadth, fixed worst-three lower-tail mean, budgets, lower-tail-first seven-part ranking/cutoff, aggregate financial gates, four-window temporal stability, validation/holdout chronology, and no-refit semantics are retained.
+
+The only newly authorized implementation change is the DEC-219 seven-name dependency-boundary repair: replace the invalid EXP-056 `_predecessor.<name>` accesses with `_base.<name>` for `FIT_TEMPORAL_FEATURE_SUPPORT_PERCENTILE_RULE`, `FIT_TEMPORAL_FEATURE_SUPPORT_REFERENCE_COUNT_PER_CELL`, `FIT_TEMPORAL_RESIDUAL_REFERENCE_COUNT_PER_CELL`, `FIT_TEMPORAL_SUPPORT_REFERENCE_COUNT_PER_CELL`, `MIN_STABILITY_WINDOW_CANDIDATE_SHARE`, `ROBUST_FIT_TEMPORAL_FEATURE_SUPPORT_SCORE_RULE`, and `ROBUST_FIT_TEMPORAL_SUPPORT_SCORE_RULE`. Legitimate EXP-055 breadth-specific accesses remain on `_predecessor`.
+
+Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_protocol.py` at blob `2f355526476a4d41967bb46e1bfad6aa525cbfa9`. Focused tests are `tests/test_phase8a_exp057_implementation_repair_protocol.py` at blob `272b3683b1f21e76a0a3b0d2c5904d1604ae2efa`.
+
+DEC-220 keeps protocol semantic changes, model-protocol result production, model fitting, historical result execution, all model/data/chronology/ranking/gate changes, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next safe gate is a source-only deterministic EXP-057 training/evaluation core implementing exactly the seven authorized dependency-root changes.
