@@ -126,7 +126,7 @@ Training core:
 
 Git blob:
 
-`e7343f2dcff747fbedc128074258226f23a405fa`
+`77f2010574b3d8ecc958930d5bfadf7ddb4f2231`
 
 Focused tests:
 
@@ -134,7 +134,7 @@ Focused tests:
 
 Git blob:
 
-`87c55efb7ab02a7538a916fc87aa932b5484381b`
+`8eebe590bd9125b8d778136e654c83442de62436`
 
 Training-core version:
 
