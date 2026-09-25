@@ -59,7 +59,7 @@ def _checkout() -> dict[str, object]:
     }
 
 
-class Exp055FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
+class Exp055ResidualBreadthOperatorTests(unittest.TestCase):
     def test_authorization_merge_identity_is_frozen(self) -> None:
         self.assertEqual(
             DEC203_MERGED_COMMIT,
@@ -257,7 +257,7 @@ class Exp055FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
             )
         )
 
-    def test_gate_metadata_matches_dec191_source_shape(self) -> None:
+    def test_gate_metadata_matches_dec203_source_shape(self) -> None:
         gate = {
             "fit_temporal_residual_breadth_utility_model_execution_gate_decision": (
                 "DEC-201"
@@ -315,7 +315,7 @@ class Exp055FitTemporalSupportUtilityOperatorTests(unittest.TestCase):
         self.assertEqual(selected["artifact_id"], 55)
         self.assertEqual(selected["artifact_name"], expected)
 
-    def test_public_cli_binds_dec189_and_dec190(self) -> None:
+    def test_public_cli_binds_dec201_and_dec202(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn(
             '"EXP-055 aggregate evidence code commit mismatch"',
