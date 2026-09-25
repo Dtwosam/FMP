@@ -2950,3 +2950,22 @@ The authoritative bundle checks its DEC-176 execution flag before source validat
 
 The next gate is a separate manual-main, input-free workflow/CLI/pinned-runtime/exact-source source freeze. That later workflow must still keep dispatch/result/fit authorization false until terminal review and one-run authorization are separately frozen.
 
+## DEC-177 — Phase 8A EXP-053 manual-main workflow source freeze
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-177 freezes the manual-main, input-free EXP-053 workflow source, public CLI, pinned numerical runtime, and exact-source execution gate. It binds DEC-174 merge `9687eb8ea3920e87d6681adf7366a3ce0bba7154` / protocol blob `11ae3fc8e68687cc04957ed9243d8c5969227fb8`, DEC-175 merge `60abce7c2674f9c25e4132037c9eb24cab1baf22` / training-core blob `4fd0e48302f97e188a8124e1543bde0ffdb43b6f`, DEC-176 merge `a37462015ada9499fccf7ebb0a9f515e74bff1b6` / artifact-contract blob `431c879bf26d88e33bdf0f0965ec62566b1a3e22`, and the accepted historical artifact-loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`.
+
+The workflow is `.github/workflows/phase8a-exp053-fit-temporal-feature-support-utility-model-training.yml` at blob `0a6704f75e83b06b7555dbb9dc912cda31443bbc`. It has only an input-free `workflow_dispatch` trigger, read-only contents/Actions permissions, exact merged-main checks, the frozen nine-dataset matrix, 60/240-minute horizons, max-parallel 3, exact accepted feature/outcome/readiness artifact identities, durable partial cell evidence, and deterministic aggregate evidence naming.
+
+DEC-177 intentionally adds **no first-run guard**. Terminal review must be frozen first; only then may a separate decision verify zero prior manual-main EXP-053 runs, add a first-run rejection guard, and consider one outer result-producing authorization.
+
+The public CLI is `scripts/phase8a_exp053_model_run.py` at blob `dbd146100d81be6ffc492de448d8dc4e0a2f4e73`. It exposes only `status`, `require-execution`, `run-cell`, and `aggregate`, checks the execution gate before readiness/artifact/model/aggregate work, binds `--code-commit` to checkout HEAD, and contains no direct GitHub workflow dispatch.
+
+The numerical runtime is `requirements/exp053-model-run.txt` at blob `d25ab16056b9f5df283147d67b8f401f60ae7520`, with Python 3.12.14 and the same pinned numerical package set as EXP-052.
+
+The execution gate is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_execution_gate.py` at blob `600ea84946fe908d143f3fbe2082b3505733cdf5`. The focused tests are `tests/test_phase8a_exp053_model_workflow.py` at blob `8a9e93f1a8dede52ec4689550327f5b0e8292928`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-fit-temporal-feature-support-utility-workflow-source.md` at blob `b317e1553015915e4cb593dbc3285f076060f154`.
+
+DEC-177 keeps workflow dispatch, authoritative result execution, protocol-result production, model fit, replacement run, promotion, shadow/demo execution, broker mutation, live order, real-money action, and trading false. The next gate is a separately frozen attempt-1 terminal-review contract.
+
