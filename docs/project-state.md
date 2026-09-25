@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047/EXP-048/EXP-049/EXP-050/EXP-051/EXP-052/EXP-053 CLOSED/REVIEWED; EXP-054 DEC-185 SOURCE-ONLY PROTOCOL FROZEN; NO EXP-054 RESULT AUTHORIZED
-**Next milestone:** After DEC-185 merges and green checks, implement a deterministic in-memory EXP-054 training/evaluation core against the exact residual-bound protocol. Artifact loading, authoritative fit, workflow dispatch, historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked.
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047/EXP-048/EXP-049/EXP-050/EXP-051/EXP-052/EXP-053 CLOSED/REVIEWED; EXP-054 DEC-185/186 SOURCE-ONLY PROTOCOL + IN-MEMORY CORE FROZEN; NO EXP-054 RESULT AUTHORIZED
+**Next milestone:** After DEC-186 merges and green checks, freeze a non-executable EXP-054 artifact/evidence contract that independently validates the six-regressor, pooled/support/feature/residual reference stack and five-part cutoff. Readiness, accepted historical artifact loading, authoritative fit, workflow dispatch, historical result execution, promotion, and trading remain locked.
 
 ## Current baseline
 
@@ -487,6 +487,7 @@ Current milestone:
 109. DEC-183 closes EXP-053 after successful attempt-1 run `36127730584` at `1a6e3670215665f2aed04d28c66c674408080953`: 18 cells, 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, 10 aggregate passes, zero stable passes, and zero selected cells.
 110. DEC-184 freezes the EXP-050/051/052/053 post-result diagnostic. Feature support expands aggregate passes from 1 to 10 across six cells, but all 10 still miss the 2021 share floor somewhere and 9 of 10 fail 2022 H1 financially. Only successor source design may open; rerun/execution/promotion/trading remain locked.
 111. DEC-185 opens source-only EXP-054 with 24 target-specific out-of-fit fit-half-year residual references per cell. A fixed lower-quartile residual creates a conservative residual-bound utility score that ranks already EXP-053-eligible rows first, while feature support, utility support, pooled calibration, raw utility, budgets, chronology, financial gates, and temporal-stability gates remain unchanged. No fit or result execution is authorized.
+112. DEC-186 implements the deterministic in-memory EXP-054 core: the same six regressors, six pooled references, 24 utility-support references, 12 feature-support references, plus 24 target-specific residual references per cell; ranking is residual-bound first and selection freezes a residual/feature/support/pooled/raw cutoff quintuple. The core contains no readiness/artifact-loading or dispatch path and keeps result execution/fit/promotion/trading false.
 109. DEC-182 executor run `36127676468` submits the single EXP-053 model attempt through DEC-180; its later receipt-verification step fails on empty/non-JSON receipt output after dispatch and opens no second attempt. Run `36127730584` completes successfully on attempt 1 at `1a6e3670215665f2aed04d28c66c674408080953`. DEC-183 reviews complete 18-cell / 108-regressor / 108-pooled-reference / 432-utility-support-reference / 216-feature-support-reference evidence, records 10 aggregate financial passes with zero temporal-stability passes, accepts no model candidate, and closes the consumed EXP-053 slot.
 
 ### EXP-011 disposition — STOPPED BEFORE CAMPAIGN REGISTRATION
