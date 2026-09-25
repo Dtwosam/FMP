@@ -559,3 +559,6 @@ DEC-199 implements the full deterministic in-memory EXP-055 residual-breadth cel
 
 
 DEC-200 freezes the non-executable EXP-055 artifact/evidence contract against merged DEC-199. It validates complete 18-cell evidence, deterministic cell fingerprints, 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, 432 exact residual references, the twelve-bound breadth inventory, and breadth-first six-part cutoffs. The authoritative bundle remains fail-closed before execution. No workflow dispatch, historical result execution, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading is authorized. The next gate is a manual-main workflow/CLI/runtime source freeze with execution still closed.
+
+
+DEC-201 freezes the manual-main/input-free EXP-055 workflow, public CLI, Python 3.12.14 pinned runtime, and exact-source execution gate against merged DEC-198/199/200. All four outer historical-run controls remain false, so the source can exist on main but any execution attempt fails closed before readiness/artifact loading. No first-run guard or historical slot is opened yet. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked. The next safe gate is a separate predeclared attempt-1 terminal review.
