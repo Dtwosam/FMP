@@ -23,6 +23,11 @@ class Exp056OperatorPlanRunnerTests(unittest.TestCase):
             "- .github/workflows/phase8a-exp056-operator-plan.yml",
             text,
         )
+        self.assertIn(
+            "- src/fmp/market_learning/"
+            "model_successor_fit_temporal_residual_lower_tail_utility_operator.py",
+            text,
+        )
         self.assertNotIn("workflow_dispatch:", text)
         self.assertNotIn("schedule:", text)
         self.assertNotIn("pull_request:", text)
@@ -56,6 +61,18 @@ class Exp056OperatorPlanRunnerTests(unittest.TestCase):
         self.assertIn('"RUN_DISPATCH_REQUIRED"', text)
         self.assertIn('assert plan["read_only"] is True', text)
         self.assertIn('assert plan["run_state"] == "MISSING"', text)
+        self.assertIn(
+            "fit_temporal_residual_lower_tail_utility_model_run_dispatch_authorized",
+            text,
+        )
+        self.assertIn(
+            "authoritative_fit_temporal_residual_lower_tail_utility_model_result_execution_authorized",
+            text,
+        )
+        self.assertNotIn(
+            "fit_temporal_residual_breadth_utility_model_run_dispatch_authorized",
+            text,
+        )
 
     def test_runner_preserves_clean_worktree(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
