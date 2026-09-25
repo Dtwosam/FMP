@@ -3516,3 +3516,19 @@ Complete aggregate evidence requires all 18 exact cells and verifies 108 regress
 Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_artifacts.py` at blob `f554011c092f5c4ec5d3f9b8e2330bfc974376f8`. Focused tests are `tests/test_phase8a_exp056_fit_temporal_residual_lower_tail_utility_artifacts.py` at blob `6ece494a68757f67b664bfcf0967ab2dbda41fb8`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp056-artifact-evidence-contract.md`.
 
 DEC-211 remains non-executable: authoritative result execution, model fit, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate manual-main workflow/CLI/runtime source freeze with execution still closed.
+
+
+## DEC-212 — Phase 8A EXP-056 model workflow source freeze
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / EXECUTION CLOSED
+
+DEC-212 binds DEC-209 merge `d2e1aabba6c0f283da6802fe315a5a29b22b503c`, DEC-210 merge `029159999fae7eaa67811f8b3d8bf2bf8834e491`, DEC-211 merge `193312de6d03dc8286956f7594602f67688b1d23`, protocol blob `14d8fe5d0530f44acaa7084c6d78d1c19bd21d8d`, training-core blob `c472ed48e7b79d22056d43deb0fe09166ccf34c9`, and artifact-contract blob `f554011c092f5c4ec5d3f9b8e2330bfc974376f8`.
+
+It freezes a manual-main, input-free EXP-056 workflow, public CLI, Python 3.12.14 pinned runtime, and exact-source gate. The workflow preserves the same accepted feature/outcome/readiness artifact identities as the predecessor path, covers all nine pair/timeframe datasets and both horizons, preserves partial cell evidence, and defines deterministic 18-cell aggregate compilation through DEC-211.
+
+Workflow blob is `83e5434c065167294b854b58308fec6d39d800db`; CLI blob is `30e79ef7ef20d12d75fc97103b9411b7b467ecef`; runtime requirements blob is `d25ab16056b9f5df283147d67b8f401f60ae7520`; execution-gate blob is `a81f746c8b19abc63f1bb83da0c32f1023644b94`; focused workflow-test blob is `938f2abd2f1488affcb3ce0e7a3d64c2ec0f0165`.
+
+DEC-212 deliberately contains no first-run guard and opens no outer historical-run slot. Model-run dispatch, authoritative result execution, model-protocol result production, and model fitting all remain false, so `require-execution` fails closed before readiness or artifact loading. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+The next safe gate is a separate predeclared attempt-1 terminal-review contract. Only after that review is frozen may a later decision prove zero prior EXP-056 runs, add a first-run rejection guard, and consider one explicitly bounded historical-result slot.
