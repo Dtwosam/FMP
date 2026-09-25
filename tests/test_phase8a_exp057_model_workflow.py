@@ -50,7 +50,7 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             source[
-                "fit_temporal_residual_lower_tail_utility_model_execution_gate_decision"
+                "fit_temporal_residual_lower_tail_utility_repair_model_execution_gate_decision"
             ],
             "DEC-223",
         )
@@ -63,11 +63,11 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
             "6ea34dd3c62f72c55376e891eeb44d96ad5de54b",
         )
         self.assertEqual(
-            source["dec211_merged_commit"],
+            source["dec222_merged_commit"],
             "51e9ccde9feaada7932384fc4547b721c1341588",
         )
         self.assertEqual(
-            source["fit_temporal_residual_lower_tail_utility_runner_blob_sha"],
+            source["fit_temporal_residual_lower_tail_utility_repair_runner_blob_sha"],
             DEC222_RUNNER_BLOB_SHA,
         )
         self.assertEqual(
@@ -75,7 +75,7 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
             "d69eb668ade480b66faf992190b3a4929f414960",
         )
         self.assertEqual(
-            source["fit_temporal_residual_lower_tail_utility_core_blob_sha"],
+            source["fit_temporal_residual_lower_tail_utility_repair_core_blob_sha"],
             DEC221_CORE_BLOB_SHA,
         )
         self.assertEqual(
@@ -83,7 +83,7 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
             "ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd",
         )
         self.assertEqual(
-            source["fit_temporal_residual_lower_tail_utility_protocol_blob_sha"],
+            source["fit_temporal_residual_lower_tail_utility_repair_protocol_blob_sha"],
             DEC220_PROTOCOL_BLOB_SHA,
         )
         self.assertEqual(
@@ -91,7 +91,7 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
             "2f355526476a4d41967bb46e1bfad6aa525cbfa9",
         )
         self.assertEqual(
-            source["fit_temporal_residual_lower_tail_utility_workflow_blob_sha"],
+            source["fit_temporal_residual_lower_tail_utility_repair_workflow_blob_sha"],
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_WORKFLOW_BLOB_SHA,
         )
         self.assertEqual(
@@ -99,7 +99,7 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
             "db9d8ccaa7da674124963acc6ab4e65e6c2ad83f",
         )
         self.assertEqual(
-            source["fit_temporal_residual_lower_tail_utility_cli_blob_sha"],
+            source["fit_temporal_residual_lower_tail_utility_repair_cli_blob_sha"],
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_CLI_BLOB_SHA,
         )
         self.assertEqual(
@@ -121,17 +121,17 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
         )
         self.assertTrue(
             gate[
-                "fit_temporal_residual_lower_tail_utility_model_workflow_source_frozen"
+                "fit_temporal_residual_lower_tail_utility_repair_model_workflow_source_frozen"
             ]
         )
         self.assertFalse(
             gate[
-                "fit_temporal_residual_lower_tail_utility_model_run_dispatch_authorized"
+                "fit_temporal_residual_lower_tail_utility_repair_model_run_dispatch_authorized"
             ]
         )
         self.assertFalse(
             gate[
-                "authoritative_fit_temporal_residual_lower_tail_utility_model_result_execution_authorized"
+                "authoritative_fit_temporal_residual_lower_tail_utility_repair_model_result_execution_authorized"
             ]
         )
         self.assertFalse(gate["model_protocol_result_authorized"])
@@ -248,7 +248,7 @@ class Exp057ResidualLowerTailWorkflowTests(unittest.TestCase):
             "run_fit_temporal_residual_lower_tail_utility_model_cell_core("
         )
         aggregate = text.index(
-            "compile_fit_temporal_residual_lower_tail_utility_model_result_evidence("
+            "compile_fit_temporal_residual_lower_tail_utility_repair_model_result_evidence("
         )
         self.assertLess(require_call, readiness_load)
         self.assertLess(require_call, model_run)
