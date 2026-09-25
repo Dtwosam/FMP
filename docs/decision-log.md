@@ -2985,4 +2985,23 @@ A non-success attempt may preserve valid partial cell artifacts but cannot claim
 The review source is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_result_review.py` at blob `c1586f8ddf48ad1125adaed7d8d8f0a476862beb`. Focused tests are `tests/test_phase8a_exp053_model_result_review.py` at blob `8a13c038afe0c73ba353f7fc645aa4279bd42b6a`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-fit-temporal-feature-support-utility-result-review.md` at blob `30fad8b0f30e7bf9fbbb70fe095478c0295994f2`.
 
 DEC-178 authorizes no dispatch, model fit, historical result execution, replacement run, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading. The next gate is a separate zero-run verification plus first-run guard and at-most-one outer run authorization.
+## DEC-179 — Phase 8A EXP-053 single guarded historical model-run authorization
 
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE; NO EXP-053 RUN DISPATCHED BY THIS DECISION
+
+DEC-179 independently verifies that zero prior manual-main EXP-053 workflow runs exist, hardens the DEC-177 workflow with a first-run rejection guard, binds the pre-authorization DEC-177 workflow/CLI/gate identities plus DEC-178 terminal-review identity, and opens at most one outer historical result-producing authorization.
+
+The zero-run verification inspected the latest 100 repository Actions runs, covering `2026-09-25T00:16:23Z` through the DEC-178 merge. The EXP-053 workflow entered `main` at `2026-09-25T10:06:50Z`; across its complete possible lifetime, zero runs matched the exact workflow path, `workflow_dispatch`, and branch `main`.
+
+The hardened workflow is `.github/workflows/phase8a-exp053-fit-temporal-feature-support-utility-model-training.yml` at blob `4cebdc134bd4fd0edc72c4baeccee4c8185e3e1b`. Its authorization preflight now fetches the current run, verifies the exact workflow identity, lists manual-main runs for that workflow, excludes only the current run id, and fails if any prior manual-main EXP-053 run exists. The guard runs before pinned-runtime installation and before execution authorization.
+
+The authorization gate is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_execution_gate.py` at blob `e26693a573237bae93e5cacbba2624904362be75`. It records authorization decision `DEC-179`, binds DEC-177 merge `7faa5e765f08a47062444ebce3756bf9435ef1d4`, pre-authorization workflow blob `0a6704f75e83b06b7555dbb9dc912cda31443bbc`, CLI blob `dbd146100d81be6ffc492de448d8dc4e0a2f4e73`, pre-authorization gate blob `600ea84946fe908d143f3fbe2082b3505733cdf5`, DEC-178 merge `132fa1621771f9fd072ba6b3a396a70e55c6883b`, and review blob `c1586f8ddf48ad1125adaed7d8d8f0a476862beb`.
+
+Only the outer historical-run flags are opened: workflow dispatch, authoritative result execution, protocol-result production, and model fit. The underlying DEC-174 protocol, DEC-175 training core, and DEC-176 artifact-runner execution/fit locks remain false and are validated as frozen dependencies.
+
+The first manual-main EXP-053 attempt consumes the slot on any terminal outcome. No retry, GitHub rerun, replacement run, promotion, shadow/demo execution, broker mutation, live order, real-money action, or trading is authorized. Every terminal outcome must route through DEC-178; success must revalidate the complete DEC-176 aggregate evidence including 18 cells, 108 regressors, 108 pooled references, 432 fit-temporal utility-support references, 216 fit-temporal feature-support references, and the four-part cutoff evidence.
+
+Focused tests are `tests/test_phase8a_exp053_model_workflow.py` at blob `f7737e966592a1ae1c356d3e44b89df815fc7348`. The detailed authorization spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-single-model-run-authorization.md` at blob `0b4c1ecac60631a70e231efa8eeb25472389b9d2`.
+
+DEC-179 itself dispatches nothing. The next gate is a clean-main, double-plan, one-way EXP-053 operator that may expose exactly one dispatch while no run exists and must route terminal evidence through DEC-178.
