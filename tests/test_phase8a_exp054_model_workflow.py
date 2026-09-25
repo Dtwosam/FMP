@@ -11,7 +11,14 @@ from fmp.market_learning.model_successor_fit_temporal_residual_bound_utility_exe
     DEC188_CORE_BLOB_SHA,
     DEC188_MERGED_COMMIT,
     DEC188_RUNNER_BLOB_SHA,
+    DEC189_CLI_BLOB_SHA,
+    DEC189_GATE_BLOB_SHA,
+    DEC189_MERGED_COMMIT,
+    DEC189_WORKFLOW_BLOB_SHA,
+    DEC190_MERGED_COMMIT,
+    DEC190_REVIEW_BLOB_SHA,
     FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_CLI_BLOB_SHA,
+    FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
     FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_GATE_DECISION,
     FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_FIT_AUTHORIZED,
     FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -38,7 +45,7 @@ REQUIREMENTS = ROOT / "requirements/exp054-model-run.txt"
 
 
 class Exp054ResidualBoundWorkflowTests(unittest.TestCase):
-    def test_exact_sources_are_frozen_but_execution_closed(self) -> None:
+    def test_exact_sources_open_one_guarded_result_authorization(self) -> None:
         source = (
             validate_fit_temporal_residual_bound_utility_model_workflow_sources(
                 repository_root=ROOT,
@@ -55,12 +62,70 @@ class Exp054ResidualBoundWorkflowTests(unittest.TestCase):
             "DEC-189",
         )
         self.assertEqual(
+            source[
+                "fit_temporal_residual_bound_utility_model_execution_authorization_decision"
+            ],
+            FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+        )
+        self.assertEqual(
+            FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+            "DEC-191",
+        )
+        self.assertEqual(
             DEC185_MERGED_COMMIT,
             "3578491ab24b3fa6209ea674e02e1bce5dd99895",
         )
         self.assertEqual(
             DEC188_MERGED_COMMIT,
             "9ed9adcb4c01c2281323418b1f8468ddc6ce2993",
+        )
+        self.assertEqual(
+            source["dec189_merged_commit"],
+            DEC189_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            DEC189_MERGED_COMMIT,
+            "53896a567bfce34a274398756ef96051ed7a12d9",
+        )
+        self.assertEqual(
+            source["dec190_merged_commit"],
+            DEC190_MERGED_COMMIT,
+        )
+        self.assertEqual(
+            DEC190_MERGED_COMMIT,
+            "3aa05c66a90d4300917f277fe47637bfc483f44e",
+        )
+        self.assertEqual(
+            source["dec189_workflow_blob_sha"],
+            DEC189_WORKFLOW_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC189_WORKFLOW_BLOB_SHA,
+            "402b742b10bf790a95f2a925e6d8f36e48d51cd0",
+        )
+        self.assertEqual(
+            source["dec189_cli_blob_sha"],
+            DEC189_CLI_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC189_CLI_BLOB_SHA,
+            "3224836570952741a83cda057da4fff7ebc78d97",
+        )
+        self.assertEqual(
+            source["dec189_gate_blob_sha"],
+            DEC189_GATE_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC189_GATE_BLOB_SHA,
+            "41572a295466f7d92b03732d8899fa4c3f6a172f",
+        )
+        self.assertEqual(
+            source["dec190_review_blob_sha"],
+            DEC190_REVIEW_BLOB_SHA,
+        )
+        self.assertEqual(
+            DEC190_REVIEW_BLOB_SHA,
+            "8902699599b3e2343c8095107bc41959d2f707cf",
         )
         self.assertEqual(
             source["fit_temporal_residual_bound_utility_runner_blob_sha"],
@@ -113,25 +178,25 @@ class Exp054ResidualBoundWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             gate["stage"],
-            "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+            "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_DISPATCH_REQUIRED",
         )
         self.assertTrue(
             gate[
                 "fit_temporal_residual_bound_utility_model_workflow_source_frozen"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "fit_temporal_residual_bound_utility_model_run_dispatch_authorized"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "authoritative_fit_temporal_residual_bound_utility_model_result_execution_authorized"
             ]
         )
-        self.assertFalse(gate["model_protocol_result_authorized"])
-        self.assertFalse(gate["model_fit_authorized"])
+        self.assertTrue(gate["model_protocol_result_authorized"])
+        self.assertTrue(gate["model_fit_authorized"])
         self.assertFalse(gate["promotion_authorized"])
         self.assertFalse(gate["shadow_authorized"])
         self.assertFalse(gate["trading_authorized"])
@@ -139,28 +204,42 @@ class Exp054ResidualBoundWorkflowTests(unittest.TestCase):
         self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED
         )
-        self.assertFalse(FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_FIT_AUTHORIZED)
+        self.assertTrue(FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_FIT_AUTHORIZED)
         self.assertFalse(PROMOTION_AUTHORIZED)
         self.assertFalse(TRADING_AUTHORIZED)
 
-    def test_execution_requirement_fails_closed(self) -> None:
-        with self.assertRaisesRegex(
-            PermissionError,
-            "DEC-189 freezes EXP-054 workflow source",
-        ):
+    def test_execution_requirement_accepts_exact_authorized_sources(self) -> None:
+        result = (
             require_authoritative_fit_temporal_residual_bound_utility_model_execution(
                 repository_root=ROOT,
                 code_commit="a" * 40,
             )
+        )
+        self.assertEqual(result["code_commit"], "a" * 40)
+        self.assertTrue(
+            result[
+                "fit_temporal_residual_bound_utility_model_run_dispatch_authorized"
+            ]
+        )
+        self.assertTrue(
+            result[
+                "authoritative_fit_temporal_residual_bound_utility_model_result_execution_authorized"
+            ]
+        )
+        self.assertTrue(result["model_protocol_result_authorized"])
+        self.assertTrue(result["model_fit_authorized"])
+        self.assertFalse(result["promotion_authorized"])
+        self.assertFalse(result["shadow_authorized"])
+        self.assertFalse(result["trading_authorized"])
 
     def test_workflow_is_manual_main_only_and_input_free(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -183,18 +262,42 @@ class Exp054ResidualBoundWorkflowTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
 
-    def test_workflow_has_no_first_run_guard_before_authorization(self) -> None:
+    def test_workflow_enforces_first_manual_main_run_only(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn(
-            "Reject any prior manual main EXP-054 model run",
-            text,
+        guard = text.index(
+            "Reject any prior manual main EXP-054 model run"
         )
-        self.assertNotIn(
-            "prior manual-main EXP-054 model run exists",
+        authorization = text.index(
+            "Require separately authorized EXP-054 result execution"
+        )
+        self.assertLess(guard, authorization)
+        self.assertIn(
+            "actions/workflows/"
+            "phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
             text,
         )
         self.assertIn(
-            "Require separately authorized EXP-054 result execution",
+            'current["id"] == int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            'current["name"] == '
+            '"phase8a-exp054-fit-temporal-residual-bound-utility-model-training"',
+            text,
+        )
+        self.assertIn(
+            'current["path"] == '
+            '".github/workflows/'
+            'phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml"',
+            text,
+        )
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            "prior manual-main EXP-054 model run exists",
             text,
         )
 
