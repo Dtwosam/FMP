@@ -3005,3 +3005,19 @@ The first manual-main EXP-053 attempt consumes the slot on any terminal outcome.
 Focused tests are `tests/test_phase8a_exp053_model_workflow.py` at blob `f7737e966592a1ae1c356d3e44b89df815fc7348`. The detailed authorization spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-single-model-run-authorization.md` at blob `0b4c1ecac60631a70e231efa8eeb25472389b9d2`.
 
 DEC-179 itself dispatches nothing. The next gate is a clean-main, double-plan, one-way EXP-053 operator that may expose exactly one dispatch while no run exists and must route terminal evidence through DEC-178.
+## DEC-180 — Phase 8A EXP-053 clean-main one-way operator
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY OPERATOR; NO EXP-053 RUN DISPATCHED BY THIS DECISION
+
+DEC-180 freezes a fail-closed clean-main operator around the single historical EXP-053 attempt authorized by DEC-179. It binds DEC-179 merge `7711a726cde6fc3e827259bf9f8a0878e28eb5b4`, execution-gate decision `DEC-177`, execution-authorization decision `DEC-179`, the DEC-174 through DEC-178 source metadata returned by the gate, the hardened EXP-053 workflow/CLI identities, and the DEC-178 terminal-review contract.
+
+The operator permits exactly three live run states: `MISSING`, `IN_PROGRESS`, and `TERMINAL`. Only `MISSING` may expose the frozen command `gh workflow run phase8a-exp053-fit-temporal-feature-support-utility-model-training.yml --ref main -R Dtwosam/FMP`. Once any manual-main EXP-053 run exists, active or terminal, the operator exposes no second dispatch. More than one matching run is a fail-closed error.
+
+Before reporting or dispatching, the public operator requires local branch `main`, a clean worktree, local HEAD exactly equal to freshly fetched `origin/main`, and an origin URL identifying exactly `Dtwosam/FMP`. `advance` is dry by default. `advance --execute` obtains a read-only `next` plan twice and stops if the parsed reports or frozen dispatch commands differ.
+
+Terminal runs are routed through DEC-178. For a successful run, the operator fetches the exact run/jobs/artifact payloads, requires the exact non-expired aggregate artifact name, safely extracts exactly one `model-result-evidence.json`, loads it through the DEC-176 evidence loader against the run head SHA, and supplies the aggregate evidence to DEC-178. Non-success terminal runs are reviewed without aggregate evidence. No retry, rerun, or replacement command exists.
+
+The operator core is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_operator.py` at Git blob `47455c4be8cae5e65c2157000c05f514d551ad32`. The public CLI is `scripts/phase8a_exp053_operator.py` at blob `04bad97e1c9b215b7ac8b699ddc2cb6c329331b3`. Focused tests are `tests/test_phase8a_exp053_operator.py` at blob `685feea42865fc198ce70fb27dcce0903673b79b`. The detailed operator spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-single-step-operator.md` at blob `021e21cd81e887938622a8a4f7e6fa6573e073ba`.
+
+DEC-180 itself dispatches nothing. Replacement-run authorization, promotion, shadow/demo execution, broker mutation, live order, real-money action, and trading authorization remain false. After merge and green repository checks, a read-only clean-main operator plan must be inspected before any separately authorized first dispatch.
