@@ -2722,3 +2722,20 @@ The training core is `src/fmp/market_learning/model_successor_fit_temporal_suppo
 
 DEC-164 keeps accepted historical artifact loading, authoritative EXP-052 model-result execution, authoritative model fit, workflow dispatch, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. The next gate is a separately frozen artifact-backed EXP-052 runner/evidence contract against the exact DEC-163/164 blobs.
 
+## DEC-165 — Phase 8A EXP-052 fit-temporal-support artifact/evidence contract
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-165 freezes the artifact-backed runner and aggregate evidence contract for EXP-052 against DEC-163/164. It binds DEC-163 merge `9108cd170b2eccf73bddb6cbf8d6d7118dbd9cd1`, DEC-163 protocol blob `01d5080560ec5d41653694b4df086ff2f10e770d`, DEC-164 merge `d9f893504b2d790eb73bc49edf4c0919ef2ff914`, DEC-164 training-core blob `fe5664438752a161134bbed6f55d9985f1c1470a`, predecessor DEC-151 training-core blob `959fbfd52f41c08de3c1a26769e0e7fd2545b92a`, accepted historical artifact-loader blob `27c0848d16722a22b4762f5842396c2aebc92bec`, and generic financial/stability artifact-helper blob `6b3ec2fc8c6a8e6089d71e21d3243cea50a6fa13`.
+
+The contract independently validates the complete 18-cell result shape. Every cell must prove exactly six HGB regressors, six pooled EXP-051 excluded-regime references, and 24 fit-half-year support references. Support references are checked by exact view, target, parent regime, half-year name, date bounds, positive row count, finite prediction summary, row-bound prediction digest, and sorted-reference digest. A complete aggregate must therefore contain exactly 108 regressors, 108 pooled references, and 432 fit-temporal-support references.
+
+Selection evidence must preserve the unchanged 250/500/1000 budget inventory. Available variants require a finite support/pooled/raw cutoff triple, exact 0.5-pip selection financial evidence, unchanged aggregate gate, and unchanged temporal-stability validation. Unavailable variants require null cutoffs and no stability windows. The no-challenger state is `NO_FIT_TEMPORAL_SUPPORT_UTILITY_STABLE_MODEL_CHALLENGER`; any selected variant must uniquely match one stable persisted variant by family, budget, and exact cutoff triple.
+
+Validation and retrospective holdout preserve the frozen status chain and, if unlocked, must reuse complete support consensus evidence, the exact cutoff triple, and the frozen diagnostic/gate scenario inventory. Cell and aggregate fingerprints are independently recomputed from canonical JSON.
+
+The artifact/evidence source is `src/fmp/market_learning/model_successor_fit_temporal_support_utility_artifacts.py` at Git blob `ae06184b9a84405119b6ed434a8973139d8ae006`. Focused tests are `tests/test_phase8a_exp052_fit_temporal_support_utility_artifacts.py` at blob `90de05fd9f74930d9c04c0432d4f6ca0fd4241ef`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp052-fit-temporal-support-utility-artifact-contract.md` at blob `e9a8c5a5745d4f2258429684f8e300813add5c29`.
+
+DEC-165 keeps authoritative EXP-052 result execution and model fit false. The authoritative bundle rejects before source/readiness validation or historical artifact loading while the outer execution flag remains false. Workflow dispatch, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization remain false. The next gate is a separately frozen manual-main workflow/CLI/pinned-runtime source and exact-source execution gate, still non-executable.
+
