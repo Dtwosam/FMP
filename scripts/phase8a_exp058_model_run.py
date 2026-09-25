@@ -87,7 +87,7 @@ def _load_result_files(root: Path) -> list[Mapping[str, object]]:
 def parser() -> argparse.ArgumentParser:
     out = argparse.ArgumentParser(
         description=(
-            "EXP-058 fit-temporal residual-lower-tail utility workflow source. "
+            "EXP-058 fit-temporal residual-regime-floor utility workflow source. "
             "Historical result execution remains fail-closed until a later "
             "decision."
         )
