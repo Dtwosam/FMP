@@ -9,9 +9,6 @@ import zipfile
 from pathlib import Path
 from typing import Mapping, Sequence
 
-from fmp.market_learning.model_successor_fit_temporal_residual_bound_utility_artifacts import (
-    load_fit_temporal_residual_bound_utility_model_result_evidence,
-)
 from fmp.market_learning.model_successor_fit_temporal_residual_bound_utility_execution_gate import (
     build_fit_temporal_residual_bound_utility_model_workflow_source_gate,
 )
@@ -132,10 +129,21 @@ def _download_aggregate_evidence(
                 "EXP-054 aggregate artifact must contain exactly "
                 "one model-result-evidence.json"
             )
-        return load_fit_temporal_residual_bound_utility_model_result_evidence(
-            matches[0],
-            expected_code_commit=head_sha,
-        )
+        try:
+            raw = json.loads(matches[0].read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise SystemExit(
+                "EXP-054 aggregate evidence is not valid JSON"
+            ) from exc
+        if not isinstance(raw, dict):
+            raise SystemExit(
+                "EXP-054 aggregate evidence must be a JSON object"
+            )
+        if raw.get("code_commit") != head_sha:
+            raise SystemExit(
+                "EXP-054 aggregate evidence code commit mismatch"
+            )
+        return raw
 
 
 def _validated_source_gate() -> dict[str, object]:
