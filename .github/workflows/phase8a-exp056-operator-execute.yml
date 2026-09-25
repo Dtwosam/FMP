@@ -1,0 +1,223 @@
+name: phase8a-exp056-operator-execute
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-exp056-operator-execute.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  execute-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONPATH: ${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require push on merged main
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned EXP-056 runtime without mutating checkout
+        run: python -m pip install -r requirements/exp056-model-run.txt
+
+      - name: Require clean worktree after runtime install
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+
+      - name: Verify frozen DEC-216 read-only plan evidence
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/dec216-plan"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36175134738" > "$RUNNER_TEMP/plan-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36175134738/artifacts?per_page=100" > "$RUNNER_TEMP/plan-artifacts.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads(
+              (temp / "plan-run.json").read_text(encoding="utf-8")
+          )
+          artifacts = json.loads(
+              (temp / "plan-artifacts.json").read_text(encoding="utf-8")
+          )
+
+          assert run["id"] == 36175134738
+          assert run["name"] == "phase8a-exp056-operator-plan"
+          assert run["path"] == ".github/workflows/phase8a-exp056-operator-plan.yml"
+          assert run["event"] == "push"
+          assert run["head_branch"] == "main"
+          assert run["head_sha"] == "8345129a80822f91f42681846f5f3a0eb63c8218"
+          assert run["status"] == "completed"
+          assert run["conclusion"] == "success"
+          assert run["run_attempt"] == 1
+
+          matches = [
+              item
+              for item in artifacts.get("artifacts", [])
+              if item.get("id") == 10882710327
+              and item.get("name")
+              == (
+                  "exp056-dec215-read-only-operator-plan-"
+                  "8345129a80822f91f42681846f5f3a0eb63c8218"
+              )
+              and item.get("digest")
+              == "sha256:dfbf6ffc5c2201e2f4a6f7e6118048d416ca6cc9f56e78cde36fae7361ccc9d3"
+              and item.get("expired") is False
+          ]
+          assert len(matches) == 1
+          PY
+
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/10882710327/zip"             > "$RUNNER_TEMP/dec216-plan.zip"
+          test "$(sha256sum "$RUNNER_TEMP/dec216-plan.zip" | awk '{print $1}')" =             "dfbf6ffc5c2201e2f4a6f7e6118048d416ca6cc9f56e78cde36fae7361ccc9d3"
+          unzip -q "$RUNNER_TEMP/dec216-plan.zip" -d "$RUNNER_TEMP/dec216-plan"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "dec216-plan"
+          paths = list(root.rglob("operator-plan.json"))
+          assert len(paths) == 1
+          plan = json.loads(paths[0].read_text(encoding="utf-8"))
+
+          assert plan["operator_decision"] == "DEC-215"
+          assert plan["head_sha"] == "8345129a80822f91f42681846f5f3a0eb63c8218"
+          assert plan["read_only"] is True
+          assert plan["run_present"] is False
+          assert plan["run_state"] == "MISSING"
+          assert plan["run_id"] is None
+          assert plan["stage"] == (
+              "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_MODEL_"
+              "RUN_DISPATCH_REQUIRED"
+          )
+          assert plan["dispatch_command"] == (
+              "gh workflow run "
+              "phase8a-exp056-fit-temporal-residual-lower-tail-utility-model-training.yml "
+              "--ref main -R Dtwosam/FMP"
+          )
+
+          for field in (
+              "fit_temporal_residual_lower_tail_utility_model_run_dispatch_authorized",
+              "authoritative_fit_temporal_residual_lower_tail_utility_model_result_execution_authorized",
+              "model_protocol_result_authorized",
+              "model_fit_authorized",
+          ):
+              assert plan[field] is True, field
+
+          for field in (
+              "replacement_model_run_authorized",
+              "promotion_authorized",
+              "shadow_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert plan[field] is False, field
+          PY
+
+      - name: Execute exact DEC-215 one-way operator
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/exp056-executor-evidence"
+          python scripts/phase8a_exp056_operator.py advance --execute             > "$RUNNER_TEMP/exp056-executor-evidence/operator-execution.json"
+
+      - name: Verify exactly one EXP-056 model run was submitted
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp056-fit-temporal-residual-lower-tail-utility-model-training.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
+          found=0
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            gh api "$endpoint" > "$RUNNER_TEMP/exp056-executor-evidence/model-runs.json"
+            if python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "exp056-executor-evidence/model-runs.json"
+              ).read_text(encoding="utf-8")
+          )
+          runs = [
+              item
+              for item in payload.get("workflow_runs", [])
+              if item.get("event") == "workflow_dispatch"
+              and item.get("head_branch") == "main"
+          ]
+          raise SystemExit(0 if len(runs) == 1 else 1)
+          PY
+            then
+              found=1
+              break
+            fi
+            sleep 2
+          done
+          test "$found" = "1"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "exp056-executor-evidence/model-runs.json"
+              ).read_text(encoding="utf-8")
+          )
+          runs = [
+              item
+              for item in payload.get("workflow_runs", [])
+              if item.get("event") == "workflow_dispatch"
+              and item.get("head_branch") == "main"
+          ]
+          assert len(runs) == 1
+          run = runs[0]
+          assert run["name"] == (
+              "phase8a-exp056-fit-temporal-residual-lower-tail-utility-model-training"
+          )
+          assert run["path"] == (
+              ".github/workflows/"
+              "phase8a-exp056-fit-temporal-residual-lower-tail-utility-model-training.yml"
+          )
+          assert run["head_sha"] == os.environ["GITHUB_SHA"]
+          assert run["run_attempt"] == 1
+          assert isinstance(run["id"], int) and run["id"] > 0
+          PY
+
+      - name: Upload immutable executor evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp056-dec215-operator-execution-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/exp056-executor-evidence
+          if-no-files-found: warn
