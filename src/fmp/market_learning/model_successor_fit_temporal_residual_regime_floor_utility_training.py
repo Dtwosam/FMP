@@ -1189,8 +1189,8 @@ def run_fit_temporal_residual_regime_floor_utility_model_cell_core(
         "training_core_decision": (
             FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_TRAINING_CORE_DECISION
         ),
-        "dec220_merged_commit": DEC231_MERGED_COMMIT,
-        "dec220_protocol_blob_sha": DEC231_PROTOCOL_BLOB_SHA,
+        "dec231_merged_commit": DEC231_MERGED_COMMIT,
+        "dec231_protocol_blob_sha": DEC231_PROTOCOL_BLOB_SHA,
         "predecessor_training_core_blob_sha": (
             PREDECESSOR_TRAINING_CORE_BLOB_SHA
         ),
