@@ -3214,3 +3214,17 @@ The runner checks out exact merged `main`, requires local HEAD to equal fetched 
 A successful DEC-193 plan artifact must prove `operator_decision = DEC-192`, `run_present = false`, `run_state = MISSING`, the exact `FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_DISPATCH_REQUIRED` stage, the frozen one-shot dispatch command as plan evidence, the four historical-run authorization fields true, and replacement/promotion/shadow/demo/broker/live/real-money/trading fields false.
 
 DEC-193 changes no model-run authorization and consumes no run slot. Only after the merged-main read-only plan succeeds may a separate one-shot executor gate be considered. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+
+## DEC-194 — Phase 8A EXP-054 read-only plan runner correction
+
+**Date:** 2026-09-25
+**Status:** APPROVED CORRECTIVE SOURCE / READ-ONLY / NOT DISPATCHED
+
+DEC-194 records the failed first DEC-193 merged-main proof run `36147095990`. The run remained read-only and failed while importing the DEC-192 operator CLI, before any workflow-dispatch-capable action. The copied EXP-053 operator expected a dedicated artifact loader, but the frozen EXP-054 DEC-188 artifact contract exposes deterministic compile/write validation and intentionally has no `load_fit_temporal_residual_bound_utility_model_result_evidence` export.
+
+DEC-194 removes that nonexistent import. The operator now parses the downloaded aggregate JSON locally, requires an object and exact reviewed `code_commit`, then passes the evidence to the unchanged DEC-190 terminal-review contract, which deterministically recompiles and compares the complete evidence before accepting a successful terminal result. The DEC-188 artifact-contract source and its bound blob remain unchanged.
+
+The DEC-193 workflow trigger is also widened to its own workflow file, the EXP-054 operator CLI, and the EXP-054 operator module so future operator-source corrections automatically rerun the read-only proof on merged `main`. The workflow still has read-only permissions and invokes only DEC-192 `next`; it contains no advance, execute, direct model-workflow dispatch, retry, rerun, or replacement path.
+
+DEC-194 consumes no DEC-191 historical-run slot and does not authorize model-workflow dispatch, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. A successful corrected merged-main DEC-193 read-only proof remains required before any one-shot executor source may open.
