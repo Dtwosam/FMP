@@ -20,7 +20,7 @@ from .model_successor_fit_temporal_residual_regime_floor_utility_protocol import
 from .model_successor_fit_temporal_residual_regime_floor_utility_training import (
     FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_TRAINING_CORE_DECISION,
     FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_TRAINING_CORE_VERSION,
-    FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_RESULT_EXECUTION_AUTHORIZED,
+    FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_RESULT_EXECUTION_AUTHORIZED,
     MODEL_FIT_AUTHORIZED as CORE_MODEL_FIT_AUTHORIZED,
 )
 
@@ -29,10 +29,10 @@ FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_EXECUTION_GATE_DECISION = (
     "DEC-234"
 )
 FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_WORKFLOW_FILE = (
-    "phase8a-exp058-fit-temporal-residual-lower-tail-utility-model-training.yml"
+    "phase8a-exp058-fit-temporal-residual-regime-floor-utility-model-training.yml"
 )
 FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_WORKFLOW_NAME = (
-    "phase8a-exp058-fit-temporal-residual-lower-tail-utility-model-training"
+    "phase8a-exp058-fit-temporal-residual-regime-floor-utility-model-training"
 )
 
 DEC231_MERGED_COMMIT = "a6926703d787a7fe0e2ba34261d14c4c4d362df2"
@@ -139,7 +139,7 @@ def validate_fit_temporal_residual_regime_floor_utility_model_workflow_sources(
         ("protocol fit authorization", PROTOCOL_MODEL_FIT_AUTHORIZED),
         (
             "training execution authorization",
-            FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_RESULT_EXECUTION_AUTHORIZED,
+            FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_RESULT_EXECUTION_AUTHORIZED,
         ),
         ("training-core fit authorization", CORE_MODEL_FIT_AUTHORIZED),
         ("artifact-contract execution authorization", RUNNER_EXECUTION_AUTHORIZED),
@@ -149,19 +149,19 @@ def validate_fit_temporal_residual_regime_floor_utility_model_workflow_sources(
             raise ValueError(f"EXP-058 {field} drift")
 
     expected = {
-        "residual_lower_tail_repair_runner": (
+        "residual_regime_floor_runner": (
             root
             / "src/fmp/market_learning/"
             "model_successor_fit_temporal_residual_regime_floor_utility_artifacts.py",
             DEC233_RUNNER_BLOB_SHA,
         ),
-        "residual_lower_tail_repair_core": (
+        "residual_regime_floor_core": (
             root
             / "src/fmp/market_learning/"
             "model_successor_fit_temporal_residual_regime_floor_utility_training.py",
             DEC232_CORE_BLOB_SHA,
         ),
-        "residual_lower_tail_repair_protocol": (
+        "residual_regime_floor_protocol": (
             root
             / "src/fmp/market_learning/"
             "model_successor_fit_temporal_residual_regime_floor_utility_protocol.py",
@@ -174,7 +174,7 @@ def validate_fit_temporal_residual_regime_floor_utility_model_workflow_sources(
         "workflow": (
             root
             / ".github/workflows/"
-            "phase8a-exp058-fit-temporal-residual-lower-tail-utility-model-training.yml",
+            "phase8a-exp058-fit-temporal-residual-regime-floor-utility-model-training.yml",
             FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_WORKFLOW_BLOB_SHA,
         ),
         "cli": (
@@ -223,13 +223,13 @@ def validate_fit_temporal_residual_regime_floor_utility_model_workflow_sources(
         "dec232_merged_commit": DEC232_MERGED_COMMIT,
         "dec233_merged_commit": DEC233_MERGED_COMMIT,
         "fit_temporal_residual_regime_floor_utility_runner_blob_sha": actual[
-            "residual_lower_tail_repair_runner"
+            "residual_regime_floor_runner"
         ],
         "fit_temporal_residual_regime_floor_utility_core_blob_sha": actual[
-            "residual_lower_tail_repair_core"
+            "residual_regime_floor_core"
         ],
         "fit_temporal_residual_regime_floor_utility_protocol_blob_sha": actual[
-            "residual_lower_tail_repair_protocol"
+            "residual_regime_floor_protocol"
         ],
         "legacy_data_loader_blob_sha": actual["legacy_data_loader"],
         "fit_temporal_residual_regime_floor_utility_workflow_blob_sha": actual[
