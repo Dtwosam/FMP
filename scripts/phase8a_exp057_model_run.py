@@ -19,7 +19,7 @@ from fmp.market_learning.model_successor_fit_temporal_residual_lower_tail_utilit
     require_authoritative_fit_temporal_residual_lower_tail_utility_repair_model_execution,
 )
 from fmp.market_learning.model_successor_fit_temporal_residual_lower_tail_utility_repair_training import (
-    run_fit_temporal_residual_lower_tail_utility_repair_model_cell_core,
+    run_fit_temporal_residual_lower_tail_utility_model_cell_core,
 )
 from fmp.market_learning.readiness import load_training_readiness
 
@@ -189,7 +189,7 @@ def main(argv: list[str] | None = None) -> int:
             symbol=args.symbol,
             timeframe=args.timeframe,
         )
-        result = run_fit_temporal_residual_lower_tail_utility_repair_model_cell_core(
+        result = run_fit_temporal_residual_lower_tail_utility_model_cell_core(
             features=loaded.feature_frame,
             outcomes=loaded.outcome_frame,
             cell=ModelCell(
