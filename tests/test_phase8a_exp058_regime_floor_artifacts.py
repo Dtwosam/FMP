@@ -406,7 +406,7 @@ class Exp058RegimeFloorArtifactContractTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(
             PermissionError,
-            "DEC-222 source is non-executable",
+            "DEC-233 source is non-executable",
         ):
             run_authoritative_fit_temporal_residual_regime_floor_utility_model_bundle()
 
