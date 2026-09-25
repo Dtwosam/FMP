@@ -2705,3 +2705,20 @@ The protocol source is `src/fmp/market_learning/model_successor_fit_temporal_sup
 
 DEC-163 keeps authoritative protocol-result production, model fitting, historical result execution, selection-window calibration, validation/holdout calibration, realized selection-outcome ranking, gate relaxation, per-window tuning, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. The next gate is a deterministic in-memory EXP-052 training/evaluation core against this exact protocol source.
 
+## DEC-164 — Phase 8A EXP-052 fit-temporal-support training core
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NO AUTHORITATIVE EXP-052 FIT
+
+DEC-164 implements the deterministic in-memory EXP-052 training/evaluation core against the exact DEC-163 protocol. It binds DEC-163 merge `9108cd170b2eccf73bddb6cbf8d6d7118dbd9cd1`, DEC-163 protocol blob `01d5080560ec5d41653694b4df086ff2f10e770d`, and predecessor DEC-151 training-core blob `959fbfd52f41c08de3c1a26769e0e7fd2545b92a`.
+
+The core preserves the exact EXP-051 six-regressor jackknife fit topology and six pooled out-of-fit calibration references per cell. It then builds exactly 24 additional support references per cell by scoring each view's four excluded-regime half-years separately for LONG and SHORT. Every support reference is out-of-fit for the model that produces it and contains no realized outcome, selection, validation, or holdout row.
+
+For each EXP-051-eligible row, DEC-164 computes robust fit-temporal support as the minimum agreed-direction empirical percentile across 12 view-by-half-year comparisons. Selection ranks by support descending, pooled EXP-051 calibrated utility descending, raw robust utility descending, then row identity. Each budget freezes a support/pooled/raw cutoff triple; exact triple ties may exceed the nominal anchor.
+
+The existing aggregate financial gate, four half-year stability windows, 10% share floor, per-window financial requirements, post-gate variant tie-break, validation chronology, holdout chronology, and no-refit forward semantics are reused unchanged. Validation and holdout, if unlocked, reuse the exact six models, six pooled references, 24 support references, and selection-derived cutoff triple.
+
+The training core is `src/fmp/market_learning/model_successor_fit_temporal_support_utility_training.py` at Git blob `fe5664438752a161134bbed6f55d9985f1c1470a`. Focused tests are `tests/test_phase8a_exp052_fit_temporal_support_utility_training.py` at blob `fbf19a91e8225421e30f0d8ec2e5280d21ef35fd`. The detailed training-core spec is `docs/superpowers/specs/2026-09-25-phase8a-exp052-fit-temporal-support-utility-training-core.md` at blob `011945add9d080c7c454a50aacdd86b6f9582fa9`.
+
+DEC-164 keeps accepted historical artifact loading, authoritative EXP-052 model-result execution, authoritative model fit, workflow dispatch, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading authorization false. The next gate is a separately frozen artifact-backed EXP-052 runner/evidence contract against the exact DEC-163/164 blobs.
+
