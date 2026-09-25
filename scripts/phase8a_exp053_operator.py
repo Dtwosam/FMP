@@ -285,7 +285,7 @@ def parser() -> argparse.ArgumentParser:
     advance = sub.add_parser(
         "advance",
         help=(
-            "prepare or execute exactly one DEC-168-authorized dispatch"
+            "prepare or execute exactly one DEC-179-authorized dispatch"
         ),
     )
     advance.add_argument("--execute", action="store_true")
