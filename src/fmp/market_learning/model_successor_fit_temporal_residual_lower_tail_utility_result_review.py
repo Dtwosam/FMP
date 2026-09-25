@@ -214,6 +214,11 @@ def _revalidate_aggregate_evidence(
         "verified_fit_temporal_residual_reference_count": int(
             recompiled["verified_fit_temporal_residual_reference_count"]
         ),
+        "verified_fit_temporal_residual_breadth_bound_count_per_row": int(
+            recompiled[
+                "verified_fit_temporal_residual_breadth_bound_count_per_row"
+            ]
+        ),
         "verified_fit_temporal_residual_lower_tail_bound_count_per_row": int(
             recompiled[
                 "verified_fit_temporal_residual_lower_tail_bound_count_per_row"
