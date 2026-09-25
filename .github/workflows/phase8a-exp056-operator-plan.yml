@@ -7,7 +7,7 @@ on:
     paths:
       - .github/workflows/phase8a-exp056-operator-plan.yml
       - scripts/phase8a_exp056_operator.py
-      - src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_operator.py
+      - src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_operator.py
 
 permissions:
   contents: read
@@ -82,8 +82,8 @@ jobs:
           )
 
           for field in (
-              "fit_temporal_residual_breadth_utility_model_run_dispatch_authorized",
-              "authoritative_fit_temporal_residual_breadth_utility_model_result_execution_authorized",
+              "fit_temporal_residual_lower_tail_utility_model_run_dispatch_authorized",
+              "authoritative_fit_temporal_residual_lower_tail_utility_model_result_execution_authorized",
               "model_protocol_result_authorized",
               "model_fit_authorized",
           ):
