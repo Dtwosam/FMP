@@ -157,7 +157,7 @@ class Exp054ResidualBoundWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_WORKFLOW_BLOB_SHA,
-            "f8b8f863e6993e8da6f0a0fdabe443dd3b9a6dd8",
+            "402b742b10bf790a95f2a925e6d8f36e48d51cd0",
         )
         self.assertEqual(
             source["fit_temporal_residual_bound_utility_cli_blob_sha"],
