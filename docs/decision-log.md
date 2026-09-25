@@ -3446,3 +3446,23 @@ Across 54 budget variants, 28 are available and 26 unavailable. The unchanged el
 Reviewed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_result_decision.py` at blob `e2226117ebf10b762557d43549390c46c243bbae`. Focused tests are `tests/test_phase8a_exp055_model_result_decision.py` at blob `f9910692694e651810e6feede8945488232d2933`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp055-reviewed-model-result.md`.
 
 DEC-207 closes model-run dispatch, replacement, authoritative result execution, model-protocol result production, and model fit. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. No second EXP-055 run is authorized. The next safe gate is a separate post-result diagnostic over immutable EXP-054 and EXP-055 reviewed evidence.
+
+
+## DEC-208 — Phase 8A EXP-055 post-result diagnostic
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY DIAGNOSTIC
+
+DEC-208 binds DEC-207 merge `78b1081aec39f8b79fe751ba2935ef49a1cb5ad1`, DEC-207 result-decision blob `e2226117ebf10b762557d43549390c46c243bbae`, DEC-197 diagnostic blob `3f53e79b52d3a2e4de1e7f61e142ecc55197aa87`, EXP-054 evidence fingerprint `307b576f06c6aa2fb01a267232a0de553bfa79c1bdbe6bf5d55b2bfc3b40787c`, and EXP-055 evidence fingerprint `f3a386dad7f23ac9d6867d030ac90e0884f3ab658c9ffecce8647048037d2510`.
+
+EXP-054 and EXP-055 preserve the same 54 total variants, 28 available variants, 26 unavailable variants, and 26,392 eligible rows. They also preserve the same two aggregate-pass identities: USDJPY 5m / 60m at budgets 250 and 1000. Stable-pass count remains zero in both experiments.
+
+For budget 250, EXP-054 produces 644.3 aggregate net pips with window counts 0/0/0/250, while EXP-055 produces 576.6 with counts 0/0/0/251 despite a residual-breadth cutoff of 10/12. High fit-period breadth therefore does not translate into selection-period chronological breadth.
+
+For budget 1000, EXP-054 produces 302.3 aggregate net pips with counts 0/3/72/925 and window net pips 0.0/21.2/510.5/-229.4. EXP-055 produces 40.5 aggregate net pips with counts 0/1/83/916 and window net pips 0.0/-2.8/464.3/-421.0. The 2022 H1 share increases only from 7.2% to 8.3%, still below the unchanged 10% stability floor, while 2021 H2 and 2022 H2 financial quality worsen.
+
+Across the same 28 available variants, aggregate 0.5-pip total net pips improve in 7, worsen in 16, and are unchanged in 5. This is a diagnostic comparison of overlapping variants, not an independent portfolio statistic.
+
+DEC-208 classifies the result as `FIT_RESIDUAL_BREADTH_DID_NOT_TRANSFER_TO_SELECTION_TEMPORAL_BREADTH_AND_WEAKENED_PASS_VARIANT_FINANCIALS`. It opens successor protocol source design only. EXP-055 rerun/replacement, stability relaxation, removal of early windows, realized selection-outcome ranking, selection-window recalibration/quotas, breadth retuning on selection outcomes, successor result execution, successor model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_post_result_diagnostics.py` at blob `5ff61be317b225d9d7ec656b4789c4561d52b522`. Focused tests are `tests/test_phase8a_exp055_post_result_diagnostics.py` at blob `ed25527485617b0e4e3e4e0119f2692907234f1f`.
