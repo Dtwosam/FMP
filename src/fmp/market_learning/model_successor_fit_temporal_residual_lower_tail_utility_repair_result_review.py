@@ -278,10 +278,10 @@ def validate_fit_temporal_residual_lower_tail_utility_repair_model_terminal_revi
         "fit_temporal_residual_lower_tail_utility_repair_model_result_review_decision": (
             FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RESULT_REVIEW_DECISION
         ),
-        "dec212_merged_commit": DEC223_MERGED_COMMIT,
-        "dec212_workflow_blob_sha": DEC223_WORKFLOW_BLOB_SHA,
-        "dec212_cli_blob_sha": DEC223_CLI_BLOB_SHA,
-        "dec212_execution_gate_blob_sha": DEC223_EXECUTION_GATE_BLOB_SHA,
+        "dec223_merged_commit": DEC223_MERGED_COMMIT,
+        "dec223_workflow_blob_sha": DEC223_WORKFLOW_BLOB_SHA,
+        "dec223_cli_blob_sha": DEC223_CLI_BLOB_SHA,
+        "dec223_execution_gate_blob_sha": DEC223_EXECUTION_GATE_BLOB_SHA,
         "reviewed_model_run_id": run_id,
         "reviewed_model_head_sha": head_sha,
         "reviewed_model_run_attempt": 1,
