@@ -7,14 +7,14 @@ from typing import Mapping, Sequence
 REPOSITORY = "Dtwosam/FMP"
 DEC191_MERGED_COMMIT = "70925fdc418c76ab378a56235a766435fe6aedb6"
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_WORKFLOW_FILE = (
-    "phase8a-exp054-fit-temporal-feature-support-utility-model-training.yml"
+    "phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml"
 )
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_WORKFLOW_PATH = (
     ".github/workflows/"
-    "phase8a-exp054-fit-temporal-feature-support-utility-model-training.yml"
+    "phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml"
 )
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_WORKFLOW_NAME = (
-    "phase8a-exp054-fit-temporal-feature-support-utility-model-training"
+    "phase8a-exp054-fit-temporal-residual-bound-utility-model-training"
 )
 
 _SHA40 = re.compile(r"^[0-9a-fA-F]{40}$")
@@ -59,7 +59,7 @@ def validate_fit_temporal_residual_bound_utility_operator_checkout(
         raise ValueError("origin remote does not match Dtwosam/FMP")
     return {
         "repository": REPOSITORY,
-        "dec179_merged_commit": DEC191_MERGED_COMMIT,
+        "dec191_merged_commit": DEC191_MERGED_COMMIT,
         "branch": "main",
         "head_sha": head,
         "clean_worktree": True,
@@ -265,7 +265,7 @@ def build_fit_temporal_residual_bound_utility_operator_report(
             "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_TERMINAL_REVIEW_REQUIRED"
         ),
         "next_action": (
-            "Validate the terminal run through the frozen DEC-178 "
+            "Validate the terminal run through the frozen DEC-190 "
             "review contract; do not dispatch another run."
         ),
         "fit_temporal_residual_bound_utility_model_run_dispatch_authorized": False,
@@ -376,7 +376,7 @@ def select_fit_temporal_residual_bound_utility_aggregate_artifact(
     if not isinstance(artifacts, list):
         raise ValueError("EXP-054 artifact listing is malformed")
     expected = (
-        f"exp054-fit-temporal-feature-support-utility-model-result-evidence-{sha}-"
+        f"exp054-fit-temporal-residual-bound-utility-model-result-evidence-{sha}-"
         "from-feature-35867307338-outcome-35876715434"
     )
     matches: list[Mapping[str, object]] = []
