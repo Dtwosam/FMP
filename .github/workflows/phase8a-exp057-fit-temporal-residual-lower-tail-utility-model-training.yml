@@ -1,0 +1,266 @@
+name: phase8a-exp057-fit-temporal-residual-lower-tail-utility-model-training
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  authorization-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require exact merged main manual dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned EXP-057 runtime
+        run: python -m pip install -r requirements/exp057-model-run.txt -e .
+
+      - name: Inspect frozen EXP-057 workflow source
+        run: python scripts/phase8a_exp057_model_run.py status
+
+      - name: Require separately authorized EXP-057 result execution
+        run: |
+          python scripts/phase8a_exp057_model_run.py require-execution \
+            --code-commit "$GITHUB_SHA"
+
+  model-cells:
+    needs: authorization-preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        dataset:
+          - symbol: EURUSD
+            timeframe: 5m
+            feature_artifact_id: "10752009633"
+            feature_zip_sha256: a466f0a128ea8cdc5818c6756bb71a57767f0c703eec68ad40a680f1bf9b06e2
+            outcome_artifact_id: "10759485253"
+            outcome_zip_sha256: 243824ecfb365a94dbe49442352440ffc3730240b4ca9758b0b94d8e6224534b
+          - symbol: EURUSD
+            timeframe: 15m
+            feature_artifact_id: "10753305695"
+            feature_zip_sha256: a942b0bf97995cd67e94335435ab3c06ee0da7688f5ac494b79470c1c637b4ee
+            outcome_artifact_id: "10759375276"
+            outcome_zip_sha256: dca7f656c08e7b35c51e3549cdcaf92849b2905d70cbeecc5ff1ed3773eeedd0
+          - symbol: EURUSD
+            timeframe: 1h
+            feature_artifact_id: "10753555531"
+            feature_zip_sha256: 831a1957519714933cc34c12fe126a88aeaf7fa9a359be6399b8569a236ee59e
+            outcome_artifact_id: "10759490258"
+            outcome_zip_sha256: 4594975177b8f7b0ff2979ddba85b774d55b65afe3da61491226dc0bb6f1eaf4
+          - symbol: GBPUSD
+            timeframe: 5m
+            feature_artifact_id: "10753690116"
+            feature_zip_sha256: 62bb96d9492fa092cd5aa157223be34dab6c78fb20e381a4d7804adbcec22498
+            outcome_artifact_id: "10759375400"
+            outcome_zip_sha256: 69b5a774707fe1bf26e271ad6a89084f22169a9155dc5debcbf5d00c00a2fdf4
+          - symbol: GBPUSD
+            timeframe: 15m
+            feature_artifact_id: "10753680126"
+            feature_zip_sha256: c5d894f595e85f84670ac66348b0fb40366a80286408c8c1b777549a5dffdc84
+            outcome_artifact_id: "10759695313"
+            outcome_zip_sha256: a04e9a5ffa5faaf8200385fe7a71bf1d9a56aba3021d60bae25c247b537c365f
+          - symbol: GBPUSD
+            timeframe: 1h
+            feature_artifact_id: "10753440747"
+            feature_zip_sha256: f7c66064a0255585ecf5e4eca6da86bbea3eee58d38bbf9aaeecd04748a8f6f8
+            outcome_artifact_id: "10759645383"
+            outcome_zip_sha256: b2a192ceca9031dc2460194db698318a04b99df9f346b4c32c8e9ba7803d4f49
+          - symbol: USDJPY
+            timeframe: 5m
+            feature_artifact_id: "10752846673"
+            feature_zip_sha256: d719b40919b1edf1f868352c19579f30528232387df3862c7f85782d8a2a7360
+            outcome_artifact_id: "10757827671"
+            outcome_zip_sha256: 42794311c61189b95a130efafab50cc2c9586d00761e053727f7a05ecd66e36f
+          - symbol: USDJPY
+            timeframe: 15m
+            feature_artifact_id: "10753781465"
+            feature_zip_sha256: 5fdec186a2e086e725623682fd8143294d941635a780038070904e15ed2a4a92
+            outcome_artifact_id: "10757812657"
+            outcome_zip_sha256: edc30a8f49b072e6504a82ae0d90d30a1a362b4dd825bf48d0ed1d2b567af2be
+          - symbol: USDJPY
+            timeframe: 1h
+            feature_artifact_id: "10752752044"
+            feature_zip_sha256: bc8936d2a02bfc6cde9d11eae23330bfc047374f03fe265ed15eaa6d4d0bd3b4
+            outcome_artifact_id: "10757692733"
+            outcome_zip_sha256: aa7fda1ca6e43c3b41a2ee1fb3729de61bb7dc6ea55e98fda70e8434770a8ee4
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require exact merged main manual dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned EXP-057 runtime
+        run: python -m pip install -r requirements/exp057-model-run.txt -e .
+
+      - name: Recheck authoritative EXP-057 execution gate
+        run: |
+          python scripts/phase8a_exp057_model_run.py require-execution \
+            --code-commit "$GITHUB_SHA"
+
+      - name: Download exact frozen feature, outcome, and readiness artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FEATURE_ARTIFACT_ID: ${{ matrix.dataset.feature_artifact_id }}
+          FEATURE_ZIP_SHA256: ${{ matrix.dataset.feature_zip_sha256 }}
+          OUTCOME_ARTIFACT_ID: ${{ matrix.dataset.outcome_artifact_id }}
+          OUTCOME_ZIP_SHA256: ${{ matrix.dataset.outcome_zip_sha256 }}
+          READINESS_ARTIFACT_ID: "10757578276"
+          READINESS_ZIP_SHA256: d35248b0690531561818ce13ec6bf371bf31eeaf120182d75eb788417a97ffa8
+        run: |
+          set -euo pipefail
+          mkdir -p .downloads .feature .outcome .readiness
+
+          download_exact() {
+            artifact_id="$1"
+            expected_sha="$2"
+            destination="$3"
+            gh api \
+              -H 'Accept: application/vnd.github+json' \
+              "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+              > "$destination"
+            actual_sha="$(sha256sum "$destination" | awk '{print $1}')"
+            test "$actual_sha" = "$expected_sha"
+          }
+
+          download_exact \
+            "$FEATURE_ARTIFACT_ID" \
+            "$FEATURE_ZIP_SHA256" \
+            .downloads/feature.zip
+          download_exact \
+            "$OUTCOME_ARTIFACT_ID" \
+            "$OUTCOME_ZIP_SHA256" \
+            .downloads/outcome.zip
+          download_exact \
+            "$READINESS_ARTIFACT_ID" \
+            "$READINESS_ZIP_SHA256" \
+            .downloads/readiness.zip
+
+          unzip -q .downloads/feature.zip -d .feature
+          unzip -q .downloads/outcome.zip -d .outcome
+          unzip -q .downloads/readiness.zip -d .readiness
+
+      - name: Resolve exact extracted roots
+        id: roots
+        run: |
+          set -euo pipefail
+          feature_manifest="$(find .feature -type f -name manifest.json -print)"
+          outcome_manifest="$(find .outcome -type f -name manifest.json -print)"
+          readiness_json="$(find .readiness -type f -name readiness.json -print)"
+
+          test "$(printf '%s\n' "$feature_manifest" | sed '/^$/d' | wc -l)" = "1"
+          test "$(printf '%s\n' "$outcome_manifest" | sed '/^$/d' | wc -l)" = "1"
+          test "$(printf '%s\n' "$readiness_json" | sed '/^$/d' | wc -l)" = "1"
+
+          echo "feature_root=$(dirname "$feature_manifest")" >> "$GITHUB_OUTPUT"
+          echo "outcome_root=$(dirname "$outcome_manifest")" >> "$GITHUB_OUTPUT"
+          echo "readiness=$readiness_json" >> "$GITHUB_OUTPUT"
+
+      - name: Run exact 60m and 240m EXP-057 model cells
+        env:
+          SYMBOL: ${{ matrix.dataset.symbol }}
+          TIMEFRAME: ${{ matrix.dataset.timeframe }}
+          FEATURE_ROOT: ${{ steps.roots.outputs.feature_root }}
+          OUTCOME_ROOT: ${{ steps.roots.outputs.outcome_root }}
+          READINESS: ${{ steps.roots.outputs.readiness }}
+        run: |
+          set -euo pipefail
+          mkdir -p .results
+          for horizon in 60 240; do
+            python scripts/phase8a_exp057_model_run.py run-cell \
+              --readiness "$READINESS" \
+              --feature-root "$FEATURE_ROOT" \
+              --outcome-root "$OUTCOME_ROOT" \
+              --symbol "$SYMBOL" \
+              --timeframe "$TIMEFRAME" \
+              --horizon-minutes "$horizon" \
+              --code-commit "$GITHUB_SHA" \
+              --out ".results/result-${SYMBOL}-${TIMEFRAME}-${horizon}.json"
+          done
+
+      - name: Upload pair/timeframe EXP-057 model-cell evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp057-fit-temporal-residual-lower-tail-utility-model-cell-results-${{ matrix.dataset.symbol }}-${{ matrix.dataset.timeframe }}-${{ github.sha }}
+          path: .results
+          if-no-files-found: warn
+          include-hidden-files: true
+
+  aggregate-model-evidence:
+    needs: model-cells
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require exact merged main manual dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned EXP-057 runtime
+        run: python -m pip install -r requirements/exp057-model-run.txt -e .
+
+      - name: Recheck authoritative EXP-057 execution gate
+        run: |
+          python scripts/phase8a_exp057_model_run.py require-execution \
+            --code-commit "$GITHUB_SHA"
+
+      - name: Download all 18 EXP-057 model-cell results
+        uses: actions/download-artifact@v6
+        with:
+          pattern: exp057-fit-temporal-residual-lower-tail-utility-model-cell-results-*-*-${{ github.sha }}
+          path: .model-results
+          merge-multiple: true
+
+      - name: Compile deterministic EXP-057 aggregate evidence
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_exp057_model_run.py aggregate \
+            --result-root .model-results \
+            --code-commit "$GITHUB_SHA" \
+            --out .model-evidence/model-result-evidence.json
+
+      - name: Upload aggregate EXP-057 model-result evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp057-fit-temporal-residual-lower-tail-utility-model-result-evidence-${{ github.sha }}-from-feature-35867307338-outcome-35876715434
+          path: .model-evidence/model-result-evidence.json
+          if-no-files-found: error
+          include-hidden-files: true
