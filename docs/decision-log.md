@@ -3264,3 +3264,21 @@ Across 54 budget variants, 28 are available and 26 unavailable. The unchanged el
 Reviewed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_bound_utility_result_decision.py` at blob `17235435604bc5c0bd8950037bd8c49a0c6fb81a`. Focused tests are `tests/test_phase8a_exp054_model_result_decision.py` at blob `4f773a996455f12652b653a29cf554dbb9a3401e`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp054-reviewed-model-result.md`.
 
 DEC-196 closes model-run dispatch, replacement, authoritative result execution, model-protocol result production, and model fit. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. No second EXP-054 run is authorized. The next safe gate is a separate post-result diagnostic over immutable EXP-053 and EXP-054 reviewed evidence.
+
+
+## DEC-197 — Phase 8A EXP-054 post-result diagnostics
+
+**Date:** 2026-09-25
+**Status:** APPROVED POST-RESULT DIAGNOSTIC / SUCCESSOR SOURCE DESIGN MAY OPEN
+
+DEC-197 binds reviewed DEC-196 merge `fe84544b7acd3ce3a2e322b68b1ca723c216ce45`, DEC-196 result-decision blob `17235435604bc5c0bd8950037bd8c49a0c6fb81a`, and DEC-184 diagnostic blob `a2fce33c15422abeb8323a6e3014ebf5a3a52794`. It compares immutable EXP-050 through EXP-054 outcomes under unchanged 54-variant / 28-available / 26-unavailable / 26,392-eligible-row accounting.
+
+Aggregate-pass counts progress `3 -> 1 -> 1 -> 10 -> 2` from EXP-050 through EXP-054 while stable-pass counts remain `0 -> 0 -> 0 -> 0 -> 0`. EXP-054's two aggregate passes are both USDJPY 5m / 60m, budgets 250 and 1000, reducing the EXP-053 aggregate-pass breadth from six cells to one.
+
+In the common USDJPY 5m / 60m cell, EXP-054 changes aggregate total net pips from EXP-053 `[-352.0, -108.6, +485.2]` at budgets 250/500/1000 to approximately `[+644.3, -7.7, +302.3]`. The restored budget-250 pass is temporally concentrated entirely in 2022 H2 with candidate counts `[0,0,0,250]`. At budget 1000, EXP-053 candidate counts/net pips `[0,3,130,867]` / `[0.0,+21.2,-67.2,+531.2]` become EXP-054 `[0,3,72,925]` / `[0.0,+21.2,+510.5,-229.4]`: 2022 H1 financial sign improves, but candidate share falls from 13% to 7.2% and 2022 H2 financial quality turns negative.
+
+The frozen diagnostic classification is `RESIDUAL_BOUND_NARROWED_AGGREGATE_PASSES_AND_IMPROVED_SOME_DOWNSIDE_WINDOWS_BUT_DID_NOT_CREATE_TEMPORAL_BREADTH`. Residual-bound ranking changes candidate identity and improves selected downside behavior in some windows, but it does not create broad chronological support or a stable challenger.
+
+Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_bound_utility_post_result_diagnostics.py` at blob `3f53e79b52d3a2e4de1e7f61e142ecc55197aa87`. Focused tests are `tests/test_phase8a_exp054_post_result_diagnostics.py` at blob `a3509469a83d2a32adf8717a6a646671f2019f29`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp054-post-result-diagnostics.md`.
+
+DEC-197 keeps false EXP-054 rerun/replacement, stability-share/financial relaxation, removal of early stability windows, selection-window recalibration, selection-outcome ranking, selection-window quotas, successor result execution, successor model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading. Only a later successor protocol source design may open.
