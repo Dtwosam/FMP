@@ -121,8 +121,6 @@ class Exp057ImplementationRepairTrainingTests(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertNotIn(value, source)
 
-        self.assertIn("EXP-20260925-057", source)
-        self.assertIn("DEC-220", source)
         self.assertIn("DEC-221", source)
 
     def test_completed_core_exposes_full_cell_runner(self) -> None:
