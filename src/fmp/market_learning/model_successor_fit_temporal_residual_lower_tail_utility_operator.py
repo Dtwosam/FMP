@@ -59,7 +59,7 @@ def validate_fit_temporal_residual_lower_tail_utility_operator_checkout(
         raise ValueError("origin remote does not match Dtwosam/FMP")
     return {
         "repository": REPOSITORY,
-        "dec203_merged_commit": DEC214_MERGED_COMMIT,
+        "dec214_merged_commit": DEC214_MERGED_COMMIT,
         "branch": "main",
         "head_sha": head,
         "clean_worktree": True,
@@ -265,7 +265,7 @@ def build_fit_temporal_residual_lower_tail_utility_operator_report(
             "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_MODEL_TERMINAL_REVIEW_REQUIRED"
         ),
         "next_action": (
-            "Validate the terminal run through the frozen DEC-202 "
+            "Validate the terminal run through the frozen DEC-213 "
             "review contract; do not dispatch another run."
         ),
         "fit_temporal_residual_lower_tail_utility_model_run_dispatch_authorized": False,
