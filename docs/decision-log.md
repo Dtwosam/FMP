@@ -3746,3 +3746,19 @@ The exact manual-main workflow now contains a first-run rejection guard before e
 Only the outer historical-result slot is opened. The DEC-225 execution gate may expose workflow dispatch, authoritative historical-result execution, model-protocol result production, and model fitting for at most one guarded attempt. The underlying DEC-220/221/222 protocol/core/artifact authorization constants remain false. Execution-gate blob is `2eaedc5fdde2e622f0e3394ea78ae5435b8d5347`; focused workflow-test blob is `0ff23cf161b3681f87023105cfa6f20ef3871127`.
 
 DEC-225 itself does not dispatch the workflow. The first manual-main EXP-057 attempt consumes the slot on any terminal outcome and must route through DEC-224. No rerun, retry, or replacement attempt is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate clean-main double-plan one-way operator.
+
+
+## DEC-226 — Phase 8A EXP-057 clean-main one-way operator
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NOT DISPATCHED
+
+DEC-226 binds DEC-225 merge `6ab3bff41b072b2a322ed1d89a3df852c8bef812` and freezes a clean-main, one-way EXP-057 operator. Before planning, the operator requires local `main`, clean worktree, exact equality between local HEAD and fetched `origin/main`, and an origin remote resolving exactly to `Dtwosam/FMP`.
+
+The operator accepts at most one exact manual-main EXP-057 workflow run and classifies live state as `MISSING`, `IN_PROGRESS`, or `TERMINAL`. Only `MISSING` may expose the exact frozen dispatch command `gh workflow run phase8a-exp057-fit-temporal-residual-lower-tail-utility-model-training.yml --ref main -R Dtwosam/FMP`. In-progress and terminal states never expose a dispatch or replacement action; terminal evidence routes through DEC-224.
+
+The operator metadata binds the repaired DEC-223 gate, DEC-225 authorization, DEC-220/221/222/223/224 provenance blobs, and the guarded EXP-057 workflow/CLI identities. The public CLI supports read-only `next`, non-executing `advance`, and a double-plan `advance --execute` path. Any state drift between the first and second plans fails closed. No rerun or replacement command exists.
+
+Operator source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_repair_operator.py` at blob `58d0002e4d74a75fec77d3074249e505857b8603`. Public CLI is `scripts/phase8a_exp057_operator.py` at blob `2ba08d3f4411a84ff3708cc338d26f3d90bbaad4`. Focused tests are `tests/test_phase8a_exp057_operator.py` at blob `3bad42c0a55df7fe32028636a5681837e185a253`.
+
+DEC-226 does not itself dispatch the model workflow or consume the DEC-225 slot. Replacement model runs, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a repository-hosted read-only plan runner invoking only `next`.
