@@ -3037,3 +3037,21 @@ The runner executes exactly `python scripts/phase8a_exp053_operator.py next`. A 
 Focused tests are `tests/test_phase8a_exp053_operator_plan_runner.py` at blob `433744641b5767242404e85b09000bee15665aab`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-operator-plan-runner.md` at blob `13117a2885fe424db9d2c9b53cc3326342213e2c`.
 
 DEC-181 changes no model-run authorization and consumes no run slot. After merge, the automatic read-only plan must succeed before any separate one-shot executor may invoke the existing DEC-180 `advance --execute` path.
+
+## DEC-182 — Phase 8A EXP-053 one-shot operator executor
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE; AUTOMATIC EXECUTION ONLY AFTER MERGE
+
+DEC-182 binds the successful DEC-181 read-only plan proof before permitting any execution source. Plan run `36126977702` completed successfully on attempt 1 at `7e5d042ab7cc46c18de0f72bd4302ec9dd676e84` and persisted non-expired artifact `10860591486`, named `exp053-dec180-read-only-operator-plan-7e5d042ab7cc46c18de0f72bd4302ec9dd676e84`, with digest `sha256:9ca87fe6ec7c0ff8193ee4eef943e82053721c3fd762e5e69d7fa711471f6066`. The persisted JSON proves DEC-180, clean current main, no manual-main run, `MISSING`, `RUN_DISPATCH_REQUIRED`, the exact frozen dispatch command as plan evidence, the four DEC-179 historical-run flags true, and all replacement/promotion/trading locks false.
+
+The executor workflow is `.github/workflows/phase8a-exp053-operator-execute.yml` at blob `d02a17528436427a8906247480615c880f9724d9`. It is path-scoped to its own introduction/change on `main`, has no manual/scheduled/PR trigger, and has only read-only contents plus Actions write permission. It independently revalidates exact DEC-181 run/artifact identity before execution.
+
+Its sole execution-capable line is `python scripts/phase8a_exp053_operator.py advance --execute`. It contains no direct `gh workflow run` command for the EXP-053 model workflow, no dispatch REST endpoint, no retry, no GitHub rerun, and no replacement path. All live zero-run checks, clean-main checks, double planning, frozen command derivation, and actual dispatch remain inside DEC-180.
+
+The executor accepts only a dispatch receipt proving `operator_decision = DEC-180`, explicit execute requested, dispatchable true, dispatch submitted true, result claimed false, original state `MISSING`, original stage `FIT_TEMPORAL_FEATURE_SUPPORT_UTILITY_MODEL_RUN_DISPATCH_REQUIRED`, and all downstream locks false. The receipt is stored outside the checkout and uploaded immutably.
+
+Focused tests are `tests/test_phase8a_exp053_operator_executor.py` at blob `7cb0ffefcffb50eade46e86780cc7a98c1db636b`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-operator-executor.md`.
+
+DEC-182 does not authorize any second executor attempt or replacement run. If its initial merged-main executor causes DEC-180 to submit the EXP-053 model workflow, that first manual-main run consumes the DEC-179 slot on any terminal outcome and must route through DEC-178. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
