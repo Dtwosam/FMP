@@ -26,6 +26,7 @@ from .model_successor_fit_temporal_residual_bound_utility_training import (
 
 
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_GATE_DECISION = "DEC-189"
+FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = "DEC-191"
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp054-fit-temporal-residual-bound-utility-model-training.yml"
 )
@@ -35,6 +36,13 @@ FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_WORKFLOW_NAME = (
 
 DEC185_MERGED_COMMIT = "3578491ab24b3fa6209ea674e02e1bce5dd99895"
 DEC188_MERGED_COMMIT = "9ed9adcb4c01c2281323418b1f8468ddc6ce2993"
+DEC189_MERGED_COMMIT = "53896a567bfce34a274398756ef96051ed7a12d9"
+DEC190_MERGED_COMMIT = "3aa05c66a90d4300917f277fe47637bfc483f44e"
+
+DEC189_WORKFLOW_BLOB_SHA = "f8b8f863e6993e8da6f0a0fdabe443dd3b9a6dd8"
+DEC189_CLI_BLOB_SHA = "3224836570952741a83cda057da4fff7ebc78d97"
+DEC189_GATE_BLOB_SHA = "41572a295466f7d92b03732d8899fa4c3f6a172f"
+DEC190_REVIEW_BLOB_SHA = "8902699599b3e2343c8095107bc41959d2f707cf"
 
 DEC188_RUNNER_BLOB_SHA = "37a5cd982e0a5b6634d5dc036c44cef706d487f3"
 DEC188_CORE_BLOB_SHA = "4f3f189c104d41352433397421f021896c03a5e9"
@@ -42,7 +50,7 @@ DEC185_PROTOCOL_BLOB_SHA = "3ffac844f9ed5308512dc3313e850cc84fb6d144"
 LEGACY_DATA_LOADER_BLOB_SHA = "27c0848d16722a22b4762f5842396c2aebc92bec"
 
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_WORKFLOW_BLOB_SHA = (
-    "f8b8f863e6993e8da6f0a0fdabe443dd3b9a6dd8"
+    "402b742b10bf790a95f2a925e6d8f36e48d51cd0"
 )
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_CLI_BLOB_SHA = (
     "3224836570952741a83cda057da4fff7ebc78d97"
@@ -59,10 +67,10 @@ MARKET_OUTCOMES_BLOB_SHA = "c83fefd4252b2fe426af97686f86e43021760c77"
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN = True
-FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_FIT_AUTHORIZED = False
+FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -163,6 +171,12 @@ def validate_fit_temporal_residual_bound_utility_model_workflow_sources(
             root / "src/fmp/market_learning/model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_fit_temporal_residual_bound_utility_result_review.py",
+            DEC190_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -213,6 +227,15 @@ def validate_fit_temporal_residual_bound_utility_model_workflow_sources(
         ),
         "dec185_merged_commit": DEC185_MERGED_COMMIT,
         "dec188_merged_commit": DEC188_MERGED_COMMIT,
+        "dec189_merged_commit": DEC189_MERGED_COMMIT,
+        "dec190_merged_commit": DEC190_MERGED_COMMIT,
+        "dec189_workflow_blob_sha": DEC189_WORKFLOW_BLOB_SHA,
+        "dec189_cli_blob_sha": DEC189_CLI_BLOB_SHA,
+        "dec189_gate_blob_sha": DEC189_GATE_BLOB_SHA,
+        "dec190_review_blob_sha": actual["terminal_review"],
+        "fit_temporal_residual_bound_utility_model_execution_authorization_decision": (
+            FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "fit_temporal_residual_bound_utility_runner_blob_sha": actual[
             "residual_bound_runner"
         ],
@@ -235,10 +258,10 @@ def validate_fit_temporal_residual_bound_utility_model_workflow_sources(
         "market_outcomes_blob_sha": actual["market_outcomes"],
         "authorized_python_version": AUTHORIZED_PYTHON_VERSION,
         "fit_temporal_residual_bound_utility_model_workflow_source_frozen": True,
-        "fit_temporal_residual_bound_utility_model_run_dispatch_authorized": False,
-        "authoritative_fit_temporal_residual_bound_utility_model_result_execution_authorized": False,
-        "model_protocol_result_authorized": False,
-        "model_fit_authorized": False,
+        "fit_temporal_residual_bound_utility_model_run_dispatch_authorized": True,
+        "authoritative_fit_temporal_residual_bound_utility_model_result_execution_authorized": True,
+        "model_protocol_result_authorized": True,
+        "model_fit_authorized": True,
         "promotion_authorized": False,
         "shadow_authorized": False,
         "demo_order_authorized": False,
@@ -260,12 +283,15 @@ def build_fit_temporal_residual_bound_utility_model_workflow_source_gate(
         **source,
         "stage": (
             "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_"
-            "RUN_WORKFLOW_SOURCE_FROZEN"
+            "RUN_DISPATCH_REQUIRED"
         ),
         "next_action": (
-            "A later separate decision must predeclare terminal review "
-            "before any guarded EXP-054 historical model-result run may "
-            "be considered. DEC-189 does not authorize or dispatch execution."
+            "DEC-191 authorizes at most one guarded historical EXP-054 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
+        ),
+        "fit_temporal_residual_bound_utility_model_execution_authorization_decision": (
+            FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
         ),
     }
 
@@ -280,22 +306,35 @@ def require_authoritative_fit_temporal_residual_bound_utility_model_execution(
     )
     commit = _validate_commit(code_commit, field="EXP-054 code commit")
 
-    required_true = (
-        FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED,
-        AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED,
-        FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED,
-        FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_FIT_AUTHORIZED,
-    )
-    if not all(required_true):
+    if FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED is not True:
+        raise PermissionError("EXP-054 model-run dispatch is not authorized")
+    if (
+        AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED
+        is not True
+    ):
         raise PermissionError(
-            "DEC-189 freezes EXP-054 workflow source but does not "
-            "authorize historical model-result execution"
+            "EXP-054 authoritative model-result execution is not authorized"
         )
+    if FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED is not True:
+        raise PermissionError("EXP-054 model-protocol result is not authorized")
+    if FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_FIT_AUTHORIZED is not True:
+        raise PermissionError("EXP-054 model fitting is not authorized")
 
     return {
         **source,
         "code_commit": commit,
         "stage": "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_AUTHORIZED",
+        "fit_temporal_residual_bound_utility_model_run_dispatch_authorized": True,
+        "authoritative_fit_temporal_residual_bound_utility_model_result_execution_authorized": True,
+        "model_protocol_result_authorized": True,
+        "model_fit_authorized": True,
+        "promotion_authorized": False,
+        "shadow_authorized": False,
+        "demo_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "live_order_authorized": False,
+        "real_money_authorized": False,
+        "trading_authorized": False,
     }
 
 
@@ -307,10 +346,17 @@ __all__ = [
     "DEC185_PROTOCOL_BLOB_SHA",
     "DEC188_CORE_BLOB_SHA",
     "DEC188_MERGED_COMMIT",
+    "DEC189_CLI_BLOB_SHA",
+    "DEC189_GATE_BLOB_SHA",
+    "DEC189_MERGED_COMMIT",
+    "DEC189_WORKFLOW_BLOB_SHA",
+    "DEC190_MERGED_COMMIT",
+    "DEC190_REVIEW_BLOB_SHA",
     "DEC188_RUNNER_BLOB_SHA",
     "DEMO_ORDER_AUTHORIZED",
     "FEATURE_SCHEMA_BLOB_SHA",
     "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_CLI_BLOB_SHA",
+    "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_EXECUTION_GATE_DECISION",
     "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_FIT_AUTHORIZED",
     "FIT_TEMPORAL_RESIDUAL_BOUND_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED",
