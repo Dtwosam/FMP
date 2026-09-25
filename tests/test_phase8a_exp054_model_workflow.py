@@ -101,7 +101,7 @@ class Exp054ResidualBoundWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             DEC189_WORKFLOW_BLOB_SHA,
-            "402b742b10bf790a95f2a925e6d8f36e48d51cd0",
+            "f8b8f863e6993e8da6f0a0fdabe443dd3b9a6dd8",
         )
         self.assertEqual(
             source["dec189_cli_blob_sha"],
