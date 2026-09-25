@@ -151,7 +151,7 @@ def _validated_source_gate() -> dict[str, object]:
         repository_root=ROOT,
     )
     if gate.get("stage") != (
-        "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_MODEL_RUN_DISPATCH_REQUIRED"
+        "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_RUN_DISPATCH_REQUIRED"
     ):
         raise SystemExit(
             "EXP-057 DEC-225 source gate returned an invalid stage"
@@ -194,7 +194,7 @@ def _next_report() -> dict[str, object]:
     )
 
     if report["stage"] != (
-        "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_MODEL_TERMINAL_REVIEW_REQUIRED"
+        "FIT_TEMPORAL_RESIDUAL_LOWER_TAIL_UTILITY_REPAIR_MODEL_TERMINAL_REVIEW_REQUIRED"
     ):
         return report
 
