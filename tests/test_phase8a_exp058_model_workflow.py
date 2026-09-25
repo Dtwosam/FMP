@@ -31,13 +31,13 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = (
     ROOT
     / ".github/workflows/"
-    "phase8a-exp058-fit-temporal-residual-lower-tail-utility-model-training.yml"
+    "phase8a-exp058-fit-temporal-residual-regime-floor-utility-model-training.yml"
 )
 CLI = ROOT / "scripts/phase8a_exp058_model_run.py"
 REQUIREMENTS = ROOT / "requirements/exp058-model-run.txt"
 
 
-class Exp058ResidualLowerTailWorkflowTests(unittest.TestCase):
+class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
     def test_exact_sources_are_frozen_but_execution_closed(self) -> None:
         source = (
             validate_fit_temporal_residual_regime_floor_utility_model_workflow_sources(
@@ -169,7 +169,7 @@ class Exp058ResidualLowerTailWorkflowTests(unittest.TestCase):
     def test_workflow_is_manual_main_only_and_input_free(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "name: phase8a-exp058-fit-temporal-residual-lower-tail-utility-model-training",
+            "name: phase8a-exp058-fit-temporal-residual-regime-floor-utility-model-training",
             text,
         )
         self.assertIn("workflow_dispatch:", text)
@@ -226,11 +226,11 @@ class Exp058ResidualLowerTailWorkflowTests(unittest.TestCase):
         self.assertIn("include-hidden-files: true", text)
         self.assertIn("if-no-files-found: warn", text)
         self.assertIn(
-            "exp058-fit-temporal-residual-lower-tail-utility-model-cell-results-",
+            "exp058-fit-temporal-residual-regime-floor-utility-model-cell-results-",
             text,
         )
         self.assertIn(
-            "exp058-fit-temporal-residual-lower-tail-utility-model-result-evidence-",
+            "exp058-fit-temporal-residual-regime-floor-utility-model-result-evidence-",
             text,
         )
         self.assertIn(
