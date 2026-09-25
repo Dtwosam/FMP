@@ -3076,3 +3076,22 @@ Reviewed-result source is `src/fmp/market_learning/model_successor_fit_temporal_
 
 DEC-183 closes model-run dispatch, replacement, authoritative result execution, protocol-result production, model fit, promotion, shadow/demo execution, broker mutation, live order, real-money action, and trading. No second EXP-053 run is authorized. The next safe gate is a separate post-result diagnostic over immutable EXP-050 through EXP-053 evidence.
 
+## DEC-184 — Phase 8A EXP-053 post-result diagnostics
+
+**Date:** 2026-09-25
+**Status:** APPROVED POST-RESULT DIAGNOSTIC / SUCCESSOR SOURCE DESIGN MAY OPEN
+
+DEC-184 compares immutable reviewed EXP-050 through EXP-053 evidence after DEC-183 closes the single consumed EXP-053 run slot. It binds DEC-183 merge `6635c874973576b5acac7ec46ee2bf4fd2bbe1ba`, DEC-183 result-decision blob `7001c2b7944bd7b75a0c70e6fb1a775ff50ba6b5`, and DEC-173 diagnostic blob `af57f0eb6c00e18bb587203dc81530702e657e87`.
+
+All four experiments preserve 54 total variants, 28 available variants, 26 unavailable variants, and 26,392 utility-eligible selection rows. Aggregate-pass counts progress from 3 (EXP-050) to 1 (EXP-051) to 1 (EXP-052) to 10 (EXP-053), while stable-pass counts remain zero in every experiment.
+
+EXP-053 spreads its 10 aggregate passes across six cells: four GBPUSD and six USDJPY variants, with two 60-minute-horizon and eight 240-minute-horizon passes. The exact EXP-052 pass variant USDJPY 5m / 60m / budget 250 is not retained; EXP-053 instead passes budget 1000 in that cell.
+
+The broader aggregate success does not clear the unchanged temporal gate. All 10 EXP-053 aggregate-pass variants fail the 10% candidate-share floor in at least one 2021 half-year, five have zero 2021 H1 candidates, and nine of 10 fail the 2022 H1 financial-sign criteria. Only USDJPY 15m / 60m / budget 250 is financially positive in 2022 H1, but it still fails both 2021 windows on share.
+
+The frozen diagnostic classification is `FEATURE_SUPPORT_BROADENED_AGGREGATE_PASSES_BUT_DID_NOT_CLEAR_TEMPORAL_STABILITY`. Feature support changed candidate identity and created some earlier-period candidates, but did not demonstrate stable transfer across the full selection chronology.
+
+Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_feature_support_utility_post_result_diagnostics.py` at blob `a2fce33c15422abeb8323a6e3014ebf5a3a52794`. Focused tests are `tests/test_phase8a_exp053_post_result_diagnostics.py` at blob `2029970d4f48f7667c73f123a65e9c3a5945fb81`. The detailed spec is `docs/superpowers/specs/2026-09-25-phase8a-exp053-post-result-diagnostics.md`.
+
+DEC-184 keeps false EXP-053 rerun/replacement, stability-share/financial relaxation, removal of early windows, selection-window recalibration, selection-outcome ranking, selection-window quotas, successor result execution, successor model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading. Only a later successor protocol source design may open.
+
