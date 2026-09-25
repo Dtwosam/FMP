@@ -604,3 +604,6 @@ DEC-214 proves zero exact prior EXP-056 manual-main model runs in the latest 100
 
 
 DEC-215 freezes the clean-main double-plan one-way EXP-056 operator against merged DEC-214. Only a live `MISSING` state can expose the exact guarded dispatch command; `IN_PROGRESS` and `TERMINAL` states never expose a replacement action, and terminal evidence routes through DEC-213. The operator itself does not dispatch or consume the historical slot. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked. The next safe gate is a repository-hosted read-only `next` proof runner with no dispatch path.
+
+
+DEC-216 adds the repository-hosted read-only proof for the exact DEC-215 `next` plan. It is main-push/path scoped, uses only read permissions, preserves a clean checkout, writes plan output under `RUNNER_TEMP`, invokes only the operator's read-only `next` action, and cannot dispatch or rerun the EXP-056 model workflow. The DEC-214 one-slot authorization remains unconsumed until a later separately frozen executor actually submits the guarded workflow. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked.
