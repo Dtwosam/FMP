@@ -3466,3 +3466,21 @@ Across the same 28 available variants, aggregate 0.5-pip total net pips improve 
 DEC-208 classifies the result as `FIT_RESIDUAL_BREADTH_DID_NOT_TRANSFER_TO_SELECTION_TEMPORAL_BREADTH_AND_WEAKENED_PASS_VARIANT_FINANCIALS`. It opens successor protocol source design only. EXP-055 rerun/replacement, stability relaxation, removal of early windows, realized selection-outcome ranking, selection-window recalibration/quotas, breadth retuning on selection outcomes, successor result execution, successor model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
 
 Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_breadth_utility_post_result_diagnostics.py` at blob `5ff61be317b225d9d7ec656b4789c4561d52b522`. Focused tests are `tests/test_phase8a_exp055_post_result_diagnostics.py` at blob `ed25527485617b0e4e3e4e0119f2692907234f1f`.
+
+
+## DEC-209 — Phase 8A EXP-056 fit-temporal residual lower-tail utility protocol
+
+**Date:** 2026-09-25
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-209 binds merged DEC-208 commit `9efc720149fea77ab60e50ac0222f6ed1c458195`, DEC-208 diagnostic blob `5ff61be317b225d9d7ec656b4789c4561d52b522`, DEC-207 reviewed-result blob `e2226117ebf10b762557d43549390c46c243bbae`, EXP-055 protocol blob `0ef3f932cade1a62e1faf946e9a9b87cf9c98744`, and EXP-055 evidence fingerprint `f3a386dad7f23ac9d6867d030ac90e0884f3ab658c9ffecce8647048037d2510`.
+
+DEC-208 classifies EXP-055 as `FIT_RESIDUAL_BREADTH_DID_NOT_TRANSFER_TO_SELECTION_TEMPORAL_BREADTH_AND_WEAKENED_PASS_VARIANT_FINANCIALS`. EXP-056 addresses only the lost continuous lower-tail margin. It preserves EXP-055 eligibility, twelve lower-bound construction, residual breadth, residual-bound utility, all support/calibration scores, budgets, chronology, aggregate financial gates, four selection-period temporal-stability windows, 10% per-window share floor, per-window financial requirements, and no-refit forward semantics.
+
+For each already eligible row and agreed direction, EXP-056 reuses the exact twelve EXP-055 downside-adjusted lower bounds, sorts them ascending, and defines `fit_temporal_residual_lower_tail_mean` as the arithmetic mean of the three smallest values. Three is fixed because 0.25 × 12 = 3. There is no interpolation, trimming, winsorization, new reference vector, or selection/validation/holdout outcome input.
+
+Ranking becomes lower-tail mean descending, residual breadth descending, residual-bound utility descending, feature support descending, utility support descending, pooled calibrated utility descending, raw utility descending, then row identity ascending. Each budget freezes the corresponding seven-part cutoff, and validation/holdout may only reuse the exact frozen models, references, twelve lower bounds, tail rule, breadth rule, and selection-derived cutoff without refit, recalibration, quota, or window-specific tuning.
+
+Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_lower_tail_utility_protocol.py` at blob `14d8fe5d0530f44acaa7084c6d78d1c19bd21d8d`. Focused tests are `tests/test_phase8a_exp056_fit_temporal_residual_lower_tail_utility_protocol.py` at blob `683bc8f424f01d6e8cbb1f9478ea0140cfcdeb81`.
+
+DEC-209 keeps model protocol result production, model fitting, historical result execution, residual-bound/breadth rule changes, stability relaxation, selection-window calibration, selection-window quotas, realized selection-outcome ranking, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. The next safe gate is a separate deterministic in-memory EXP-056 training/evaluation core against this exact protocol.
