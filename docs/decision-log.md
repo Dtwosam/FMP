@@ -4344,3 +4344,20 @@ The executor contains no independent direct model-workflow dispatch endpoint, re
 Focused tests are `tests/test_phase8a_exp060_operator_executor.py` at blob `0e601be70e0cf2c7ac15355e969f2f50226c3c9f`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-one-shot-executor.md` at blob `11e57b4f078c6f08cb84ca855198d0e668e6b30c`.
 
 If merged-main execution submits the guarded workflow, that first manual-main EXP-060 attempt consumes the DEC-258 slot regardless of terminal outcome. No second executor attempt, model rerun, retry, or replacement is authorized. Any terminal result must route through DEC-257. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain unauthorized.
+
+## DEC-262 — Phase 8A EXP-060 reviewed historical model result
+
+**Date:** 2026-09-26
+**Status:** REVIEWED RESULT / NO STABLE CHALLENGER
+
+The sole DEC-258-authorized EXP-060 attempt is run `36260155597`, event `workflow_dispatch`, branch `main`, head `0062546fda38bfc768122cf03b9a4d69d1b8e0b7`, attempt `1`, conclusion `success`. DEC-261 executor run `36260093042` succeeded and independently verified exactly one submitted run. The first-run slot is consumed and no rerun, retry, or replacement is authorized.
+
+DEC-257 terminal review is satisfied: authorization preflight, all nine matrix jobs, and aggregate evidence all completed successfully; all nine cell artifacts and the aggregate artifact are present and non-expired. Aggregate artifact `10912798284` is named `exp060-fit-temporal-residual-regime-balance-utility-model-result-evidence-0062546fda38bfc768122cf03b9a4d69d1b8e0b7-from-feature-35867307338-outcome-35876715434` with digest `sha256:9090a1a1c7849c703eaa38e5571a36a65f5a47f250c6c0e3a7e21777367b8bc9`; independent ZIP hashing matches. Aggregate evidence fingerprint is `52a840d0919992e1fe9ef3342ddefe46cfb1ad8ccd23c8dfe55963d4c1669b37`.
+
+The evidence verifies 18 cells, 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, 432 residual references, 12 breadth bounds, 12 lower-tail bounds, lower-tail count 3, three residual regimes, four residual windows per regime, 12 regime-floor bounds, three regime-balance source regimes, 12 regime-balance source bounds, and penalty multiplier 1.0.
+
+Across 54 budget variants, 28 are available and 26 budget-unavailable over 26,392 utility-eligible selection rows. Exactly two variants pass the aggregate selection gate: USDJPY/5m/60m at budgets 500 and 1000. Their four directional-candidate counts are `0/0/27/473` and `0/3/105/892`; both fail temporal stability. All 18 cells therefore report `NO_FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_STABLE_MODEL_CHALLENGER`, with zero selected cells, zero validation passes, zero holdout passes, and zero accepted model candidates.
+
+Reviewed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_result_decision.py` at blob `2684419f983a04d1771443126104a8e7059cc03b`. Focused tests are `tests/test_phase8a_exp060_model_result_decision.py` at blob `dd6eb6424a97d9f743df0ff0bf8790d4505372b6`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-reviewed-model-result.md` at blob `c7f41722dec57224444156cf95711664ac16c9fd`.
+
+DEC-262 closes EXP-060 execution/model-fit authority and retains promotion, shadow/demo, broker mutation, live orders, real-money action, and trading as false. The next safe gate after green merge is a source-only Phase 8A post-result assessment; it may not reopen EXP-060 or begin Phase 8B.

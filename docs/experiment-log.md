@@ -1160,3 +1160,19 @@ Copy this section for each serious experiment:
 - DEC-087 operator advance source: a dry-run-by-default `advance` command now reuses DEC-086 `next`, binds only the three dispatch-required states to their exact commands, replans immediately before explicit execution, and submits at most one workflow dispatch. Review/in-progress/readiness states remain non-mutating and failed runs are never automatically retried. No EXP-044 preservation/feature/outcome result is created by this source change.
 
 - DEC-087 merge: PR #193 merged to `main` at `83594bb3b3870a17233b7839d0d331bf58d841d3`. Exact corrected PR head `0b9f3394ecf020be5f923cf55d39e7fa58b1433a` passed 1195 tests plus workflow-YAML validation and compile in run `35863676652`; unchanged Phase 3 acceptance run `35863676644` passed. Post-merge `main` tests run `35863827077` and Phase 3 acceptance run `35863826964` also passed. No EXP-044 preservation/feature/outcome workflow or preservation release existed after merge.
+
+## EXP-20260926-060 — fit-temporal residual regime-balance utility implementation repair
+
+- **Date:** 2026-09-26
+- **Phase:** 8A direct market-learning track
+- **Hypothesis:** preserving the frozen EXP-059 regime-balance protocol while correcting only the four breadth-metadata predecessor-depth accesses may allow the intended regime-balance ranking to complete and produce a temporally stable model challenger.
+- **Universe:** EURUSD, GBPUSD, USDJPY; 5m, 15m, 1h; 60m and 240m horizons.
+- **Protocol:** DEC-253 implementation-only repair; DEC-254 deterministic core; DEC-255 artifact contract; DEC-256 workflow/runtime freeze; DEC-257 terminal review.
+- **Historical run:** `36260155597`, head `0062546fda38bfc768122cf03b9a4d69d1b8e0b7`, attempt 1, success.
+- **Aggregate artifact:** `10912798284`, digest `sha256:9090a1a1c7849c703eaa38e5571a36a65f5a47f250c6c0e3a7e21777367b8bc9`.
+- **Evidence fingerprint:** `52a840d0919992e1fe9ef3342ddefe46cfb1ad8ccd23c8dfe55963d4c1669b37`.
+- **Search accounting:** 18 cells; 54 budget variants; 28 available; 26 budget-unavailable; 26,392 utility-eligible selection rows.
+- **Result:** exactly two aggregate-gate passes, both USDJPY/5m/60m (budgets 500 and 1000). Their directional-candidate counts across the four frozen selection windows are `0/0/27/473` and `0/3/105/892`. Neither passes temporal stability.
+- **Conclusion:** technically successful negative result. Zero stable selection passes, zero selected cells, zero validation passes, zero retrospective-holdout passes, and zero accepted model candidates. The repaired implementation completed the intended experiment, but the tested regime-balance formulation did not produce a robust challenger.
+- **Rerun/replacement:** forbidden for EXP-060.
+- **Deployment effect:** none. Promotion, shadow/demo, broker, live-order, real-money, and trading remain unauthorized.
