@@ -128,7 +128,7 @@ class Exp058OperatorPlanRunnerTests(unittest.TestCase):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('python-version: "3.12.14"', text)
         self.assertIn(
-            "exp057-dec237-read-only-operator-plan-",
+            "exp058-dec237-read-only-operator-plan-",
             text,
         )
         self.assertIn(
