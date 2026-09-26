@@ -4032,3 +4032,19 @@ Eligible rows rank by regime-balance utility, regime-floor utility, residual low
 Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_protocol.py` at blob `cd4e790098a5c8d99ea2aa5264465b5d4b6b6acc`. Focused tests are `tests/test_phase8a_exp059_regime_balance_protocol.py` at blob `42277506ffb39c0a9969b0253127a0cf10b79fd9`.
 
 DEC-242 changes no eligibility, budget, financial gate, temporal-stability window/share floor, chronology, feature, target, HGB, or jackknife rule. Model result production, model fit, historical execution, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a deterministic in-memory EXP-059 training/evaluation core only.
+
+
+## DEC-243 — Phase 8A EXP-059 deterministic regime-balance training core
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-243 binds DEC-242 merge `a14afb226722d168c3d899d7079776388161a52d`, DEC-242 protocol blob `cd4e790098a5c8d99ea2aa5264465b5d4b6b6acc`, and predecessor DEC-232 regime-floor training-core blob `77f2010574b3d8ecc958930d5bfadf7ddb4f2231`.
+
+The implementation reuses the frozen EXP-058 fit/reference/financial/stability/forward machinery and adds only the DEC-242 regime-balance score and its nine-part cutoff. For each already eligible row, the core recomputes the same three fit-regime means from the same twelve frozen downside-adjusted residual bounds, requires the retained regime-floor minimum to match the predecessor score exactly, and computes regime-balance utility as the arithmetic mean of the three regime means minus exactly 1.0 times their max-minus-min spread. No new reference vector is created and no selection, validation, or holdout outcome enters the score.
+
+Eligible rows rank by regime-balance utility, regime-floor utility, residual lower-tail mean, residual breadth, robust residual-bound utility, feature support, utility support, pooled calibrated utility, raw utility, then row identity. Each 250/500/1000 budget freezes the corresponding nine-part numeric cutoff. Aggregate financial gates, the four temporal-stability windows, the 10% candidate-share floor, validation/holdout chronology, and no-refit semantics remain unchanged.
+
+The completed source exposes `run_fit_temporal_residual_regime_balance_utility_model_cell_core`, plus regime-balance-aware forward and temporal-stability evaluators. Training-core source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_training.py` at blob `4f99c1d0cb18551b67cc89357ad4a3940c190cd2`. Focused tests are `tests/test_phase8a_exp059_regime_balance_training.py` at blob `4f5a2222da5aab5e60558b3594f64e02f511838b`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp059-regime-balance-training-core.md`.
+
+DEC-243 contains no artifact loading, readiness execution, workflow dispatch, model-result execution, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading path. All such authorizations remain false. The next safe gate after merge is a separate non-executable EXP-059 artifact/evidence contract bound to this exact core.
