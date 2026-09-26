@@ -104,7 +104,7 @@ class Exp060ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_CLI_BLOB_SHA,
-            "d82c1742d4572af907143498bc14f1badcaaeda2",
+            "90c6bc9e893c813d394e3a9c4adc5a155e938af0",
         )
         self.assertEqual(
             source["runtime_requirements_blob_sha"],
@@ -249,7 +249,7 @@ class Exp060ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
         )
         readiness_load = text.index("load_training_readiness(args.readiness)")
         model_run = text.index(
-            "run_fit_temporal_residual_regime_balance_utility_repair_model_cell_core("
+            "run_fit_temporal_residual_regime_balance_utility_model_cell_core("
         )
         aggregate = text.index(
             "compile_fit_temporal_residual_regime_balance_utility_repair_model_result_evidence("
