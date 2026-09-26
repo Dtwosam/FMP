@@ -299,11 +299,11 @@ class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
         self.assertIn("include-hidden-files: true", text)
         self.assertIn("if-no-files-found: warn", text)
         self.assertIn(
-            "exp058-fit-temporal-residual-lower-tail-utility-model-cell-results-",
+            "exp058-fit-temporal-residual-regime-floor-utility-model-cell-results-",
             text,
         )
         self.assertIn(
-            "exp058-fit-temporal-residual-lower-tail-utility-model-result-evidence-",
+            "exp058-fit-temporal-residual-regime-floor-utility-model-result-evidence-",
             text,
         )
         self.assertIn(
