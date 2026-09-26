@@ -258,7 +258,7 @@ class Exp060ResidualRegimeBalanceRepairOperatorTests(unittest.TestCase):
         )
         self.assertIn("DEC-257", terminal["next_action"])
 
-    def test_gate_metadata_matches_dec247_source_shape(self) -> None:
+    def test_gate_metadata_matches_dec258_source_shape(self) -> None:
         gate = {
             "fit_temporal_residual_regime_balance_utility_repair_model_execution_gate_decision": (
                 "DEC-256"
