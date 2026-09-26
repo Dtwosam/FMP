@@ -4408,3 +4408,18 @@ Live state is classified only as `MISSING`, `IN_PROGRESS`, or `TERMINAL`. For `M
 Public CLI is `scripts/phase8a_exp015_stage_a_operator.py` at blob `11010d32842b0f0ab829e0cc20d4654a7d5dcf2e`. It exposes only `next`; there is no `advance`, `--execute`, workflow-dispatch endpoint, rerun, or replacement path. Focused tests are `tests/test_phase8a_exp015_stage_a_operator.py` at blob `126449be29e0c61a726bd358501cc05ea16d2663`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp015-stage-a-one-way-operator.md` at blob `32aa46252aeacf2992c481458897e2d87bd17d9e`.
 
 DEC-265 dispatches nothing and consumes no historical slot. Stage A dispatch/executor/retry/replacement, Stage B/C execution, DEC-042 selection, DEC-045 acceptance, Phase 8B, demo, broker mutation, live orders, real-money action, and trading all remain unauthorized. The next safe gate is a repository-hosted read-only proof of the exact DEC-265 `next` plan on merged `main`; only after that proof succeeds may a separately reviewed one-shot executor source be considered.
+
+## DEC-266 — EXP-015 Stage A repository-hosted read-only plan proof
+
+**Date:** 2026-09-26
+**Status:** SOURCE-ONLY / READ-ONLY / NOT DISPATCHED
+
+DEC-266 binds merged DEC-265 commit `ed4373a7a0da36850a5f08971e9e12bd63cf1554`, operator blob `3f2bca609ab6c1cd324f95c47be99584b11d9d90`, CLI blob `11010d32842b0f0ab829e0cc20d4654a7d5dcf2e`, DEC-264 guarded Stage A workflow blob `ae8bdfbdb1bcfd62204a1bd0ec32dddfd9938930`, and DEC-264 terminal-review blob `751c886f2d00e46d3c0a20fabbe0db4231db0d5d`.
+
+The repository-hosted proof workflow is `.github/workflows/phase8a-exp015-stage-a-operator-plan.yml` at blob `eaeb463cbbd64815928057e8128701a5e0c78bf4`. It is push-to-main only, grants only `contents: read` and `actions: read`, verifies the frozen DEC-264/265 Git blobs, checks exact merged-main identity, installs only `requirements/exp015-stage-a-operator.txt` at blob `1ff32214dee10d877a067e750cd69ffad96d5fe5`, proves the worktree remains clean, invokes only `python scripts/phase8a_exp015_stage_a_operator.py next`, and persists the resulting plan outside the checkout as an immutable artifact.
+
+A successful DEC-266 proof must report DEC-265, read-only mode, zero authoritative manual-main Stage A runs, `MISSING` state, no run id, stage `EXP015_STAGE_A_READ_ONLY_PROOF_REQUIRED`, the sole authoritative slot still available, and the exact future Stage A command only as plan evidence. Stage A dispatch/executor/retry/replacement, Stage B/C, DEC-042 selection, DEC-045 acceptance, Phase 8B, demo, broker mutation, live orders, real-money action, and trading must all remain false.
+
+Focused tests are `tests/test_phase8a_exp015_stage_a_operator_plan_runner.py` at blob `f34ab7c353a62c0bc4372ee63c385e76f387a60b`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp015-stage-a-read-only-plan.md` at blob `b373bc99ae5f194133835b14680f1433af614db8`.
+
+DEC-266 itself dispatches nothing and consumes no historical slot. The next safe gate is to merge DEC-266, require the merged-main proof workflow to succeed, bind that exact successful run plus its non-expired plan artifact and digest, and only then consider a separately reviewed one-shot Stage A executor source.
