@@ -4048,3 +4048,21 @@ Eligible rows rank by regime-balance utility, regime-floor utility, residual low
 The completed source exposes `run_fit_temporal_residual_regime_balance_utility_model_cell_core`, plus regime-balance-aware forward and temporal-stability evaluators. Training-core source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_training.py` at blob `4f99c1d0cb18551b67cc89357ad4a3940c190cd2`. Focused tests are `tests/test_phase8a_exp059_regime_balance_training.py` at blob `4f5a2222da5aab5e60558b3594f64e02f511838b`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp059-regime-balance-training-core.md`.
 
 DEC-243 contains no artifact loading, readiness execution, workflow dispatch, model-result execution, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading path. All such authorizations remain false. The next safe gate after merge is a separate non-executable EXP-059 artifact/evidence contract bound to this exact core.
+
+
+## DEC-244 — Phase 8A EXP-059 artifact/evidence contract
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-244 binds DEC-243 merge `9f427f06f315288bd9b132de19901beb5a5ddfc8`, DEC-243 training-core blob `4f99c1d0cb18551b67cc89357ad4a3940c190cd2`, and predecessor DEC-233 artifact-contract blob `5a34f354b68e14bb7116c79f15f9cfebe149a811`.
+
+The contract validates complete EXP-059 cell evidence before aggregate compilation. Each cell must bind the exact experiment/protocol/training decisions, deterministic cell fingerprint, six regressors, six pooled references, 24 utility-support references, 12 feature-support references, 24 exact residual references, the twelve-bound residual-breadth inventory, twelve-bound residual lower-tail source inventory, lower-tail count 3, three fit regimes, four residual windows per regime, twelve regime-floor source bounds, three regime-balance source regimes, twelve regime-balance source bounds, penalty multiplier 1.0, regime-balance-aware consensus diagnostics/digest, and the three frozen budget variants.
+
+Available variants require a finite nine-part cutoff: regime-balance utility, regime-floor utility, lower-tail mean, residual breadth, residual-bound utility, feature support, fit-temporal utility support, pooled calibration, and raw utility. Unavailable budgets expose all nine cutoff fields as null and cannot pass selection.
+
+Complete aggregate evidence requires all 18 exact cells and verifies 108 regressors, 108 pooled references, 432 utility-support references, 216 feature-support references, 432 residual references, 12 residual-breadth bounds per eligible row, 12 lower-tail source bounds per eligible row, lower-tail count 3, three residual regimes, four residual windows per regime, 12 regime-floor source bounds, three regime-balance source regimes, 12 regime-balance source bounds, and penalty multiplier 1.0. Aggregate evidence receives a deterministic fingerprint under the frozen canonical serializer.
+
+Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_artifacts.py` at blob `a993d8a0a98b181c7810e4f0931be330352437b4`. Focused tests are `tests/test_phase8a_exp059_regime_balance_artifacts.py` at blob `12ee1e63d2bfc0cae1ee272290f866e1de021520`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp059-regime-balance-artifact-contract.md`.
+
+DEC-244 remains non-executable: authoritative result execution, model fit, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate manual-main EXP-059 workflow/CLI/runtime source freeze with execution still closed.
