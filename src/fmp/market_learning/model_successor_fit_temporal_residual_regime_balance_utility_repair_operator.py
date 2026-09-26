@@ -150,6 +150,8 @@ def select_fit_temporal_residual_regime_balance_utility_repair_manual_main_run(
         raise ValueError("EXP-060 manual main run name mismatch")
     if run.get("path") != FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_WORKFLOW_PATH:
         raise ValueError("EXP-060 manual main run path mismatch")
+    if run.get("run_attempt") != 1:
+        raise ValueError("EXP-060 manual main run must be attempt 1")
     status = run.get("status")
     conclusion = run.get("conclusion")
     if not isinstance(status, str) or not status:
