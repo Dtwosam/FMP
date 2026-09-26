@@ -11,7 +11,14 @@ from fmp.market_learning.model_successor_fit_temporal_residual_regime_balance_ut
     DEC254_CORE_BLOB_SHA,
     DEC254_MERGED_COMMIT,
     DEC255_RUNNER_BLOB_SHA,
+    DEC256_CLI_BLOB_SHA,
+    DEC256_GATE_BLOB_SHA,
+    DEC256_MERGED_COMMIT,
+    DEC256_WORKFLOW_BLOB_SHA,
+    DEC257_MERGED_COMMIT,
+    DEC257_REVIEW_BLOB_SHA,
     FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_CLI_BLOB_SHA,
+    FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
     FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_EXECUTION_GATE_DECISION,
     FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_FIT_AUTHORIZED,
     FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -38,7 +45,7 @@ REQUIREMENTS = ROOT / "requirements/exp060-model-run.txt"
 
 
 class Exp060ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
-    def test_exact_sources_are_frozen_but_execution_closed(self) -> None:
+    def test_exact_sources_open_one_guarded_result_authorization(self) -> None:
         source = (
             validate_fit_temporal_residual_regime_balance_utility_repair_model_workflow_sources(
                 repository_root=ROOT,
@@ -66,6 +73,34 @@ class Exp060ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
             source["dec255_merged_commit"],
             "d3a52722c178c96eb865791be096661007d16dd5",
         )
+        self.assertEqual(source["dec256_merged_commit"], DEC256_MERGED_COMMIT)
+        self.assertEqual(
+            DEC256_MERGED_COMMIT,
+            "cef9f6d201bf2b025f08c924a11c84e9684b9ba0",
+        )
+        self.assertEqual(source["dec257_merged_commit"], DEC257_MERGED_COMMIT)
+        self.assertEqual(
+            DEC257_MERGED_COMMIT,
+            "5998292b80c0986bdcc0b9f2a91cb024ef92158a",
+        )
+        self.assertEqual(
+            source[
+                "fit_temporal_residual_regime_balance_utility_repair_model_execution_authorization_decision"
+            ],
+            FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+        )
+        self.assertEqual(
+            FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+            "DEC-258",
+        )
+        self.assertEqual(source["dec256_workflow_blob_sha"], DEC256_WORKFLOW_BLOB_SHA)
+        self.assertEqual(DEC256_WORKFLOW_BLOB_SHA, "20af1bf2f9057274a8c50d5b48becbf5f683ef86")
+        self.assertEqual(source["dec256_cli_blob_sha"], DEC256_CLI_BLOB_SHA)
+        self.assertEqual(DEC256_CLI_BLOB_SHA, "90c6bc9e893c813d394e3a9c4adc5a155e938af0")
+        self.assertEqual(source["dec256_gate_blob_sha"], DEC256_GATE_BLOB_SHA)
+        self.assertEqual(DEC256_GATE_BLOB_SHA, "82f51bf85ccb1793b3a980b2884f3e122a03c8db")
+        self.assertEqual(source["dec257_review_blob_sha"], DEC257_REVIEW_BLOB_SHA)
+        self.assertEqual(DEC257_REVIEW_BLOB_SHA, "989ebc7b0cc33e5076f83ea94337fe6581c321e3")
         self.assertEqual(
             source["fit_temporal_residual_regime_balance_utility_repair_runner_blob_sha"],
             DEC255_RUNNER_BLOB_SHA,
@@ -96,7 +131,7 @@ class Exp060ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_WORKFLOW_BLOB_SHA,
-            "20af1bf2f9057274a8c50d5b48becbf5f683ef86",
+            "91a5bb720ca10b261533409e36f6143994afcca3",
         )
         self.assertEqual(
             source["fit_temporal_residual_regime_balance_utility_cli_blob_sha"],
@@ -117,25 +152,25 @@ class Exp060ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             gate["stage"],
-            "FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+            "FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_RUN_DISPATCH_REQUIRED",
         )
         self.assertTrue(
             gate[
                 "fit_temporal_residual_regime_balance_utility_repair_model_workflow_source_frozen"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "fit_temporal_residual_regime_balance_utility_repair_model_run_dispatch_authorized"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "authoritative_fit_temporal_residual_regime_balance_utility_repair_model_result_execution_authorized"
             ]
         )
-        self.assertFalse(gate["model_protocol_result_authorized"])
-        self.assertFalse(gate["model_fit_authorized"])
+        self.assertTrue(gate["model_protocol_result_authorized"])
+        self.assertTrue(gate["model_fit_authorized"])
         self.assertFalse(gate["promotion_authorized"])
         self.assertFalse(gate["shadow_authorized"])
         self.assertFalse(gate["demo_order_authorized"])
@@ -147,28 +182,44 @@ class Exp060ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
         self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_WORKFLOW_SOURCE_FROZEN
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_RUN_DISPATCH_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_RESULT_EXECUTION_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_PROTOCOL_RESULT_AUTHORIZED
         )
-        self.assertFalse(FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_FIT_AUTHORIZED)
+        self.assertTrue(FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_FIT_AUTHORIZED)
         self.assertFalse(PROMOTION_AUTHORIZED)
         self.assertFalse(TRADING_AUTHORIZED)
 
-    def test_execution_requirement_fails_closed(self) -> None:
-        with self.assertRaisesRegex(
-            PermissionError,
-            "DEC-256 freezes EXP-060 workflow source",
-        ):
-            require_authoritative_fit_temporal_residual_regime_balance_utility_repair_model_execution(
-                repository_root=ROOT,
-                code_commit="a" * 40,
-            )
+    def test_execution_requirement_accepts_exact_authorized_sources(self) -> None:
+        result = require_authoritative_fit_temporal_residual_regime_balance_utility_repair_model_execution(
+            repository_root=ROOT,
+            code_commit="a" * 40,
+        )
+        self.assertEqual(result["code_commit"], "a" * 40)
+        self.assertTrue(
+            result[
+                "fit_temporal_residual_regime_balance_utility_repair_model_run_dispatch_authorized"
+            ]
+        )
+        self.assertTrue(
+            result[
+                "authoritative_fit_temporal_residual_regime_balance_utility_repair_model_result_execution_authorized"
+            ]
+        )
+        self.assertTrue(result["model_protocol_result_authorized"])
+        self.assertTrue(result["model_fit_authorized"])
+        self.assertFalse(result["promotion_authorized"])
+        self.assertFalse(result["shadow_authorized"])
+        self.assertFalse(result["demo_order_authorized"])
+        self.assertFalse(result["broker_mutation_authorized"])
+        self.assertFalse(result["live_order_authorized"])
+        self.assertFalse(result["real_money_authorized"])
+        self.assertFalse(result["trading_authorized"])
 
     def test_workflow_is_manual_main_only_and_input_free(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -191,20 +242,40 @@ class Exp060ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
 
-    def test_workflow_has_no_first_run_guard_before_authorization(self) -> None:
+    def test_workflow_enforces_first_manual_main_attempt_only(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn(
-            "Reject any prior manual main EXP-060 model run",
-            text,
+        guard = text.index("Reject any prior manual main EXP-060 model run")
+        authorization = text.index(
+            "Require separately authorized EXP-060 result execution"
         )
-        self.assertNotIn(
-            "prior manual-main EXP-060 model run exists",
+        self.assertLess(guard, authorization)
+        self.assertIn(
+            "actions/workflows/"
+            "phase8a-exp060-fit-temporal-residual-regime-balance-utility-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
             text,
         )
         self.assertIn(
-            "Require separately authorized EXP-060 result execution",
+            'current["id"] == int(os.environ["GITHUB_RUN_ID"])',
             text,
         )
+        self.assertIn(
+            'current["name"] == '
+            '"phase8a-exp060-fit-temporal-residual-regime-balance-utility-model-training"',
+            text,
+        )
+        self.assertIn(
+            'current["path"] == '
+            '".github/workflows/'
+            'phase8a-exp060-fit-temporal-residual-regime-balance-utility-model-training.yml"',
+            text,
+        )
+        self.assertIn('current["run_attempt"] == 1', text)
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn("prior manual-main EXP-060 model run exists", text)
 
     def test_workflow_uses_exact_matrix_and_pinned_runtime(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
