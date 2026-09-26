@@ -3,6 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 import unittest
 
+from fmp.market_learning.model_successor_fit_temporal_residual_regime_balance_utility_repair_execution_gate import (
+    build_fit_temporal_residual_regime_balance_utility_repair_model_workflow_source_gate,
+)
 from fmp.market_learning.model_successor_fit_temporal_residual_regime_balance_utility_repair_operator import (
     DEC258_MERGED_COMMIT,
     FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_WORKFLOW_FILE,
@@ -295,6 +298,23 @@ class Exp060ResidualRegimeBalanceRepairOperatorTests(unittest.TestCase):
             fit_temporal_residual_regime_balance_utility_repair_operator_gate_metadata(
                 drifted
             )
+
+    def test_real_dec258_gate_metadata_is_accepted(self) -> None:
+        gate = build_fit_temporal_residual_regime_balance_utility_repair_model_workflow_source_gate(
+            repository_root=ROOT,
+        )
+        metadata = fit_temporal_residual_regime_balance_utility_repair_operator_gate_metadata(
+            gate
+        )
+        self.assertEqual(metadata["dec257_merged_commit"], "5998292b80c0986bdcc0b9f2a91cb024ef92158a")
+        self.assertEqual(
+            metadata["fit_temporal_residual_regime_balance_utility_workflow_blob_sha"],
+            "91a5bb720ca10b261533409e36f6143994afcca3",
+        )
+        self.assertEqual(
+            metadata["fit_temporal_residual_regime_balance_utility_cli_blob_sha"],
+            "90c6bc9e893c813d394e3a9c4adc5a155e938af0",
+        )
 
     def test_aggregate_artifact_selection_is_exact(self) -> None:
         expected = (
