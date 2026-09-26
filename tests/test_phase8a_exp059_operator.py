@@ -51,7 +51,7 @@ def _run(
 def _checkout() -> dict[str, object]:
     return {
         "repository": REPOSITORY,
-        "dec236_merged_commit": DEC247_MERGED_COMMIT,
+        "dec247_merged_commit": DEC247_MERGED_COMMIT,
         "branch": "main",
         "head_sha": SHA,
         "clean_worktree": True,
@@ -76,7 +76,7 @@ class Exp058ResidualRegimeBalanceOperatorTests(unittest.TestCase):
         )
         self.assertEqual(report["head_sha"], SHA)
         self.assertEqual(
-            report["dec236_merged_commit"],
+            report["dec247_merged_commit"],
             DEC247_MERGED_COMMIT,
         )
 
@@ -258,7 +258,7 @@ class Exp058ResidualRegimeBalanceOperatorTests(unittest.TestCase):
         )
         self.assertIn("DEC-246", terminal["next_action"])
 
-    def test_gate_metadata_matches_dec236_source_shape(self) -> None:
+    def test_gate_metadata_matches_dec247_source_shape(self) -> None:
         gate = {
             "fit_temporal_residual_regime_balance_utility_model_execution_gate_decision": (
                 "DEC-245"
@@ -266,31 +266,31 @@ class Exp058ResidualRegimeBalanceOperatorTests(unittest.TestCase):
             "fit_temporal_residual_regime_balance_utility_model_execution_authorization_decision": (
                 "DEC-247"
             ),
-            "dec231_merged_commit": "1" * 40,
-            "dec232_merged_commit": "2" * 40,
-            "dec233_merged_commit": "3" * 40,
-            "dec234_merged_commit": "4" * 40,
-            "dec235_merged_commit": "5" * 40,
-            "dec234_workflow_blob_sha": "6" * 40,
-            "dec234_cli_blob_sha": "7" * 40,
-            "dec234_gate_blob_sha": "8" * 40,
-            "dec235_review_blob_sha": "9" * 40,
+            "dec242_merged_commit": "1" * 40,
+            "dec243_merged_commit": "2" * 40,
+            "dec244_merged_commit": "3" * 40,
+            "dec245_merged_commit": "4" * 40,
+            "dec246_merged_commit": "5" * 40,
+            "dec245_workflow_blob_sha": "6" * 40,
+            "dec245_cli_blob_sha": "7" * 40,
+            "dec245_gate_blob_sha": "8" * 40,
+            "dec246_review_blob_sha": "9" * 40,
             "fit_temporal_residual_regime_balance_utility_workflow_blob_sha": "a" * 40,
             "fit_temporal_residual_regime_balance_utility_cli_blob_sha": "b" * 40,
         }
         metadata = fit_temporal_residual_regime_balance_utility_operator_gate_metadata(
             gate
         )
-        self.assertEqual(metadata["dec235_merged_commit"], "5" * 40)
+        self.assertEqual(metadata["dec246_merged_commit"], "5" * 40)
         self.assertEqual(
             metadata["fit_temporal_residual_regime_balance_utility_workflow_blob_sha"],
             "a" * 40,
         )
         drifted = dict(gate)
-        drifted.pop("dec235_merged_commit")
+        drifted.pop("dec246_merged_commit")
         with self.assertRaisesRegex(
             ValueError,
-            "dec235_merged_commit",
+            "dec246_merged_commit",
         ):
             fit_temporal_residual_regime_balance_utility_operator_gate_metadata(
                 drifted
@@ -316,7 +316,7 @@ class Exp058ResidualRegimeBalanceOperatorTests(unittest.TestCase):
         self.assertEqual(selected["artifact_id"], 55)
         self.assertEqual(selected["artifact_name"], expected)
 
-    def test_public_cli_binds_dec236_and_dec235(self) -> None:
+    def test_public_cli_binds_dec247_and_dec235(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn(
             '"EXP-059 aggregate evidence code commit mismatch"',
