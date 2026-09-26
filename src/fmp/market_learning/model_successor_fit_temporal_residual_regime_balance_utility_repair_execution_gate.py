@@ -114,19 +114,19 @@ def validate_fit_temporal_residual_regime_balance_utility_repair_model_workflow_
     if FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_PROTOCOL_DECISION != "DEC-253":
         raise ValueError("EXP-060 protocol decision drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_PROTOCOL_VERSION != (
-        "fmp-exp060-fit-temporal-residual-regime-balance-utility-protocol-v1"
+        "fmp-exp060-fit-temporal-residual-regime-balance-utility-implementation-repair-protocol-v1"
     ):
         raise ValueError("EXP-060 protocol version drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_TRAINING_CORE_DECISION != "DEC-254":
         raise ValueError("EXP-060 training-core decision drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_TRAINING_CORE_VERSION != (
-        "fmp-exp060-fit-temporal-residual-regime-balance-utility-training-core-v1"
+        "fmp-exp060-fit-temporal-residual-regime-balance-utility-implementation-repair-training-core-v1"
     ):
         raise ValueError("EXP-060 training-core version drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_ARTIFACT_RUNNER_DECISION != "DEC-255":
         raise ValueError("EXP-060 artifact-contract decision drift")
     if FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_ARTIFACT_RUNNER_VERSION != (
-        "fmp-exp060-fit-temporal-residual-regime-balance-utility-artifact-contract-v1"
+        "fmp-exp060-fit-temporal-residual-regime-balance-utility-implementation-repair-artifact-contract-v1"
     ):
         raise ValueError("EXP-060 artifact-contract version constant drift")
 
@@ -216,16 +216,16 @@ def validate_fit_temporal_residual_regime_balance_utility_repair_model_workflow_
         "fit_temporal_residual_regime_balance_utility_repair_model_execution_gate_decision": (
             FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_EXECUTION_GATE_DECISION
         ),
-        "dec242_merged_commit": DEC253_MERGED_COMMIT,
-        "dec243_merged_commit": DEC254_MERGED_COMMIT,
-        "dec244_merged_commit": DEC255_MERGED_COMMIT,
-        "fit_temporal_residual_regime_balance_utility_runner_blob_sha": actual[
+        "dec253_merged_commit": DEC253_MERGED_COMMIT,
+        "dec254_merged_commit": DEC254_MERGED_COMMIT,
+        "dec255_merged_commit": DEC255_MERGED_COMMIT,
+        "fit_temporal_residual_regime_balance_utility_repair_runner_blob_sha": actual[
             "residual_regime_balance_repair_runner"
         ],
-        "fit_temporal_residual_regime_balance_utility_core_blob_sha": actual[
+        "fit_temporal_residual_regime_balance_utility_repair_core_blob_sha": actual[
             "residual_regime_balance_repair_core"
         ],
-        "fit_temporal_residual_regime_balance_utility_protocol_blob_sha": actual[
+        "fit_temporal_residual_regime_balance_utility_repair_protocol_blob_sha": actual[
             "residual_regime_balance_repair_protocol"
         ],
         "legacy_data_loader_blob_sha": actual["legacy_data_loader"],
