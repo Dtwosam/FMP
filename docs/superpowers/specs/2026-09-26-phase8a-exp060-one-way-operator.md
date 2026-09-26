@@ -101,7 +101,7 @@ Operator source:
 
 Git blob:
 
-`cab95c785127dae07edd7501df51e61f289982a5`
+`504bf66e6774c2fcc46dd6f21c68762ec251ccd0`
 
 Focused tests:
 
@@ -109,7 +109,7 @@ Focused tests:
 
 Git blob:
 
-`72eb2f99ac234985da552468201d669ca684678d`
+`091bd1f2e0498c57885f869dc34cf9d8d10d626a`
 
 The tests pin clean-main checkout rules, exact workflow/run endpoints, one-run-only selection, one-way state classification, dispatch-only-on-`MISSING`, exact DEC-256/258 gate metadata, DEC-257 terminal review routing, aggregate artifact selection, tamper rejection, and the double-plan execution check.
 
