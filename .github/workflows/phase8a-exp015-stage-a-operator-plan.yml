@@ -37,7 +37,9 @@ jobs:
           test "$GITHUB_EVENT_NAME" = "push"
           test "$GITHUB_REF" = "refs/heads/main"
           test "$(git branch --show-current)" = "main"
-          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "ed4373a7a0da36850a5f08971e9e12bd63cf1554" "$GITHUB_SHA"
 
       - name: Verify frozen DEC-264 and DEC-265 source identities
         run: |
@@ -79,6 +81,7 @@ jobs:
 
           assert plan["operator_decision"] == "DEC-265"
           assert plan["operator_read_only"] is True
+          assert plan["head_sha"] == os.environ["GITHUB_SHA"]
           assert plan["dec264_merged_commit"] == "92ef2668b1a0cb416e7f772a8a061d2f280005a1"
           assert plan["dec264_guarded_workflow_blob_sha"] == (
               "ae8bdfbdb1bcfd62204a1bd0ec32dddfd9938930"
