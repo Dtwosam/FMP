@@ -4,7 +4,7 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — direct market-learning track closed by DEC-262 with a credible no-stable-challenger result; rule-based EXP-015 historical Stage A/B/C remains unexecuted authoritatively; DEC-042 portfolio selection and DEC-045 Phase 8A acceptance remain blocked
+**Phase status:** ACTIVE — EXP-044 V1 CLOSED; direct market-learning track closed by DEC-262 with a credible no-stable-challenger result; rule-based EXP-015 historical Stage A/B/C remains unexecuted authoritatively; DEC-042 portfolio selection and DEC-045 Phase 8A acceptance remain blocked
 **Next milestone:** Modernize EXP-015 Stage A execution governance without changing DEC-043/044 research semantics: predeclare attempt-1 terminal review, prove zero prior authoritative manual-main Stage A attempts, add first-run/run-attempt guards, and open at most one bounded Stage A historical-result slot. Phase 8B and all demo/live/broker/real-money paths remain locked.
 
 ## Current baseline
