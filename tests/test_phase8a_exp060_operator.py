@@ -46,6 +46,7 @@ def _run(
         "event": "workflow_dispatch",
         "head_branch": "main",
         "head_sha": SHA,
+        "run_attempt": 1,
         "status": status,
         "conclusion": conclusion,
     }
@@ -167,6 +168,11 @@ class Exp060ResidualRegimeBalanceRepairOperatorTests(unittest.TestCase):
         )
         assert selected is not None
         self.assertEqual(selected["id"], 123)
+
+        with self.assertRaisesRegex(ValueError, "must be attempt 1"):
+            select_fit_temporal_residual_regime_balance_utility_repair_manual_main_run(
+                {"workflow_runs": [{**_run(), "run_attempt": 2}]}
+            )
 
         with self.assertRaisesRegex(
             ValueError,
