@@ -81,7 +81,7 @@ CLI:
 
 Git blob:
 
-`3d0647254e548d719d47981b11e1cd90028bd657`
+`16c553d2dc959fe1e24796a95019163d1967e836`
 
 The CLI exposes:
 
@@ -89,7 +89,7 @@ The CLI exposes:
 - `advance` — non-executing preparation;
 - `advance --execute` — at most one dispatch after two identical fresh `next` plans.
 
-The execution path calls the public `next` planner twice immediately before submission and fails closed if the plans differ.
+The CLI re-checks every DEC-258 downstream lock before planning. The execution path calls the public `next` planner twice immediately before submission and fails closed if the plans differ.
 
 No rerun, retry, or replacement command exists.
 
@@ -109,7 +109,7 @@ Focused tests:
 
 Git blob:
 
-`bd2ca54ae02d3bfe230c400f19f3815e5c45b407`
+`a260433870c1fcf3b855d5b5cec6b432093dd5fe`
 
 The tests pin clean-main checkout rules, exact workflow/run endpoints, one-run-only selection, one-way state classification, dispatch-only-on-`MISSING`, exact DEC-256/258 gate metadata, DEC-257 terminal review routing, aggregate artifact selection, tamper rejection, and the double-plan execution check.
 
