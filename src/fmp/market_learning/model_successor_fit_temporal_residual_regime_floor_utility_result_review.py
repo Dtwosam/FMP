@@ -289,10 +289,10 @@ def validate_fit_temporal_residual_regime_floor_utility_model_terminal_review(
         "fit_temporal_residual_regime_floor_utility_model_result_review_decision": (
             FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_RESULT_REVIEW_DECISION
         ),
-        "dec223_merged_commit": DEC234_MERGED_COMMIT,
-        "dec223_workflow_blob_sha": DEC234_WORKFLOW_BLOB_SHA,
-        "dec223_cli_blob_sha": DEC234_CLI_BLOB_SHA,
-        "dec223_execution_gate_blob_sha": DEC234_EXECUTION_GATE_BLOB_SHA,
+        "dec234_merged_commit": DEC234_MERGED_COMMIT,
+        "dec234_workflow_blob_sha": DEC234_WORKFLOW_BLOB_SHA,
+        "dec234_cli_blob_sha": DEC234_CLI_BLOB_SHA,
+        "dec234_execution_gate_blob_sha": DEC234_EXECUTION_GATE_BLOB_SHA,
         "reviewed_model_run_id": run_id,
         "reviewed_model_head_sha": head_sha,
         "reviewed_model_run_attempt": 1,
