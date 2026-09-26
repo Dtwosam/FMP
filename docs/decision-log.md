@@ -4116,3 +4116,21 @@ The manual-main workflow now contains a first-run rejection guard before executi
 Only the outer historical-result slot is opened. The DEC-247 execution gate may expose workflow dispatch, authoritative historical-result execution, model-protocol result production, and model fitting for at most one guarded attempt. The underlying DEC-242/243/244 protocol/core/artifact authorization constants remain false. Execution-gate blob is `7e6d07c1d7f24bb69912227906990e59abc7be0d`; focused workflow-test blob is `d1fa6a2c1cd2169b1dc40f1904010a9293cfb9fb`.
 
 DEC-247 itself does not dispatch the workflow. The first manual-main EXP-059 attempt consumes the slot on any terminal outcome and must route through DEC-246. No rerun, retry, or replacement attempt is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate clean-main double-plan one-way operator only.
+
+
+## DEC-248 — Phase 8A EXP-059 clean-main one-way operator
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NOT DISPATCHED
+
+DEC-248 binds merged DEC-247 commit `41975d1ddbabcc31f490b8b36def2a491010c277` and freezes a clean-main, one-way operator for the already bounded EXP-059 historical-result slot.
+
+The operator requires local branch `main`, local HEAD equal to freshly fetched `origin/main`, a clean working tree, and exact Dtwosam/FMP origin identity. It permits at most one exact manual-main EXP-059 workflow run and classifies the live state as `MISSING`, `IN_PROGRESS`, or `TERMINAL`. More than one manual-main run fails closed.
+
+Only `MISSING` may expose the exact frozen dispatch command. `IN_PROGRESS` and `TERMINAL` never expose dispatch/replacement actions; terminal state routes through DEC-246.
+
+Public CLI `scripts/phase8a_exp059_operator.py` is blob `720bab7054ecd55fd90a1ef6dbae8b00ceb5dabd`. It exposes read-only `next`, non-executing `advance`, and double-plan `advance --execute`; the execution path recomputes the live `next` plan immediately before submission and fails closed on any state drift.
+
+Operator source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_operator.py` at blob `12a4fcce685e2136aea6a9d0e3e27ba39b320f1e`. Focused tests are `tests/test_phase8a_exp059_operator.py` at blob `b80a3233dda65573fe2d51f31fc14b3e97f13ba3`.
+
+DEC-248 itself does not dispatch or consume the DEC-247 slot. Replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a repository-hosted read-only `next` plan runner only.
