@@ -146,19 +146,19 @@ def validate_fit_temporal_residual_regime_balance_utility_model_workflow_sources
             raise ValueError(f"EXP-059 {field} drift")
 
     expected = {
-        "residual_regime_floor_runner": (
+        "residual_regime_balance_runner": (
             root
             / "src/fmp/market_learning/"
             "model_successor_fit_temporal_residual_regime_balance_utility_artifacts.py",
             DEC244_RUNNER_BLOB_SHA,
         ),
-        "residual_regime_floor_core": (
+        "residual_regime_balance_core": (
             root
             / "src/fmp/market_learning/"
             "model_successor_fit_temporal_residual_regime_balance_utility_training.py",
             DEC243_CORE_BLOB_SHA,
         ),
-        "residual_regime_floor_protocol": (
+        "residual_regime_balance_protocol": (
             root
             / "src/fmp/market_learning/"
             "model_successor_fit_temporal_residual_regime_balance_utility_protocol.py",
@@ -216,17 +216,17 @@ def validate_fit_temporal_residual_regime_balance_utility_model_workflow_sources
         "fit_temporal_residual_regime_balance_utility_model_execution_gate_decision": (
             FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_EXECUTION_GATE_DECISION
         ),
-        "dec231_merged_commit": DEC242_MERGED_COMMIT,
-        "dec232_merged_commit": DEC243_MERGED_COMMIT,
-        "dec233_merged_commit": DEC244_MERGED_COMMIT,
+        "dec242_merged_commit": DEC242_MERGED_COMMIT,
+        "dec243_merged_commit": DEC243_MERGED_COMMIT,
+        "dec244_merged_commit": DEC244_MERGED_COMMIT,
         "fit_temporal_residual_regime_balance_utility_runner_blob_sha": actual[
-            "residual_regime_floor_runner"
+            "residual_regime_balance_runner"
         ],
         "fit_temporal_residual_regime_balance_utility_core_blob_sha": actual[
-            "residual_regime_floor_core"
+            "residual_regime_balance_core"
         ],
         "fit_temporal_residual_regime_balance_utility_protocol_blob_sha": actual[
-            "residual_regime_floor_protocol"
+            "residual_regime_balance_protocol"
         ],
         "legacy_data_loader_blob_sha": actual["legacy_data_loader"],
         "fit_temporal_residual_regime_balance_utility_workflow_blob_sha": actual[
