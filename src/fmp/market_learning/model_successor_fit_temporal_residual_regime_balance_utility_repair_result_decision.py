@@ -29,8 +29,8 @@ REVIEWED_AGGREGATE_ARTIFACT_DIGEST = (
     "9090a1a1c7849c703eaa38e5571a36a65f5a47f250c6c0e3a7e21777367b8bc9"
 )
 REVIEWED_EVIDENCE_FINGERPRINT = (
-    "7e5019f0e00ada90a8f9c111d2b6fdb"
-    "4ba41908f86a47203258b333439c8c8ee"
+    "52a840d0919992e1fe9ef3342ddefe46"
+    "cfb1ad8ccd23c8dfe55963d4c1669b37"
 )
 
 REVIEWED_VERIFIED_CELL_COUNT = 18
@@ -410,7 +410,7 @@ def _summary(
         if selection.get("selected_variant") is not None:
             selected_cells += 1
         if selection.get("status") == (
-            "NO_FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_"
+            "NO_FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_"
             "STABLE_MODEL_CHALLENGER"
         ):
             no_stable_cells += 1
