@@ -3982,3 +3982,21 @@ After operator submission, the executor independently queries the exact EXP-058 
 Executor workflow `.github/workflows/phase8a-exp058-operator-execute.yml` is blob `5241ea0b4d8b23dff3ef0f190240bb08d248218c`. Focused tests `tests/test_phase8a_exp058_operator_executor.py` are blob `5fc16bec72a7dd04d2bf3380c85213cbe3ffd7c6`.
 
 DEC-239 authorizes no second executor attempt and no replacement model run. If the initial merged-main executor submits the EXP-058 historical workflow, that first attempt consumes the DEC-236 slot on any terminal outcome and must route through DEC-235. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+
+## DEC-240 — Phase 8A EXP-058 reviewed historical model result
+
+**Date:** 2026-09-26
+**Status:** REVIEWED RESULT / NO STABLE CHALLENGER
+
+DEC-240 freezes the sole DEC-236-authorized EXP-058 historical workflow run `36207673978` at merged-main commit `2339762cda013322c8704cee12218ec4f4fb8c36`. The run completed successfully on attempt 1; authorization-preflight, all nine matrix jobs, and aggregate-model-evidence all succeeded. All nine expected cell artifacts plus aggregate artifact `10895236824` are present and non-expired.
+
+The aggregate artifact digest is `sha256:0e4efa5602410a58fa754dfcd44745d69f4e2905d6ce0dd2062030e791808c3a`. Aggregate evidence fingerprint `7e5019f0e00ada90a8f9c111d2b6fdb4ba41908f86a47203258b333439c8c8ee` independently recomputes under the frozen canonical serializer.
+
+Verified evidence contains 18 cells, 108 regressors, 108 pooled calibration references, 432 fit-temporal utility-support references, 216 feature-support references, 432 residual references, 12 residual-breadth bounds per eligible row, 12 lower-tail source bounds per eligible row, lower-tail count 3, three residual fit regimes, four residual windows per regime, and 12 regime-floor source bounds per eligible row.
+
+Of 54 budget variants, 28 are available and 26 unavailable. Utility-eligible selection rows total 26,392. Exactly three USDJPY 5m / 60m variants at budgets 250, 500, and 1000 pass the aggregate selection gate, with four-window directional candidate counts `0/0/0/250`, `0/0/7/493`, and `0/3/72/925`. All three fail the unchanged temporal-stability gate. Stable-pass count is zero; all 18 cells report `NO_FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_STABLE_MODEL_CHALLENGER`; validation and holdout remain locked; accepted model candidate count is zero.
+
+Reviewed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_result_decision.py` at blob `f5a5f7e49b7088f4af9b35a9143e486c3fba3d1a`. Focused tests are `tests/test_phase8a_exp058_model_result_decision.py` at blob `b07289e842649910eb2c098e23d3ce120365f511`.
+
+DEC-240 closes the consumed EXP-058 slot. Rerun, retry, replacement model run, further model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is source-only post-result diagnostic analysis.
