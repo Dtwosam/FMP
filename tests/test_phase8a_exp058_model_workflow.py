@@ -11,7 +11,14 @@ from fmp.market_learning.model_successor_fit_temporal_residual_regime_floor_util
     DEC232_CORE_BLOB_SHA,
     DEC232_MERGED_COMMIT,
     DEC233_RUNNER_BLOB_SHA,
+    DEC234_CLI_BLOB_SHA,
+    DEC234_GATE_BLOB_SHA,
+    DEC234_MERGED_COMMIT,
+    DEC234_WORKFLOW_BLOB_SHA,
+    DEC235_MERGED_COMMIT,
+    DEC235_REVIEW_BLOB_SHA,
     FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_CLI_BLOB_SHA,
+    FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
     FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_EXECUTION_GATE_DECISION,
     FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_FIT_AUTHORIZED,
     FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED,
@@ -38,7 +45,7 @@ REQUIREMENTS = ROOT / "requirements/exp058-model-run.txt"
 
 
 class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
-    def test_exact_sources_are_frozen_but_execution_closed(self) -> None:
+    def test_exact_sources_open_one_guarded_result_authorization(self) -> None:
         source = (
             validate_fit_temporal_residual_regime_floor_utility_model_workflow_sources(
                 repository_root=ROOT,
@@ -66,6 +73,34 @@ class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
             source["dec233_merged_commit"],
             "5425184a53b2bd5241291f9d561f47b69ca4d134",
         )
+        self.assertEqual(source["dec234_merged_commit"], DEC234_MERGED_COMMIT)
+        self.assertEqual(
+            DEC234_MERGED_COMMIT,
+            "365093ea81fdaf871680b42b02d67ebce3768d34",
+        )
+        self.assertEqual(source["dec235_merged_commit"], DEC235_MERGED_COMMIT)
+        self.assertEqual(
+            DEC235_MERGED_COMMIT,
+            "a2e8614a87358763a838d8b02728f7c8216bc9d5",
+        )
+        self.assertEqual(
+            source[
+                "fit_temporal_residual_regime_floor_utility_model_execution_authorization_decision"
+            ],
+            FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+        )
+        self.assertEqual(
+            FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION,
+            "DEC-236",
+        )
+        self.assertEqual(source["dec234_workflow_blob_sha"], DEC234_WORKFLOW_BLOB_SHA)
+        self.assertEqual(DEC234_WORKFLOW_BLOB_SHA, "78e9bf66ade5f6fb42ebe27e28b7ba24f36741b8")
+        self.assertEqual(source["dec234_cli_blob_sha"], DEC234_CLI_BLOB_SHA)
+        self.assertEqual(DEC234_CLI_BLOB_SHA, "e35a6ee0ff11bd3928b3bf05bf19f3572f64952c")
+        self.assertEqual(source["dec234_gate_blob_sha"], DEC234_GATE_BLOB_SHA)
+        self.assertEqual(DEC234_GATE_BLOB_SHA, "74881c0fee21392872ffd3df1378639bb04fea4a")
+        self.assertEqual(source["dec235_review_blob_sha"], DEC235_REVIEW_BLOB_SHA)
+        self.assertEqual(DEC235_REVIEW_BLOB_SHA, "76ba5de3ef92c02a8139213040dc3cf4d8efd75c")
         self.assertEqual(
             source["fit_temporal_residual_regime_floor_utility_runner_blob_sha"],
             DEC233_RUNNER_BLOB_SHA,
@@ -96,7 +131,7 @@ class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_WORKFLOW_BLOB_SHA,
-            "78e9bf66ade5f6fb42ebe27e28b7ba24f36741b8",
+            "9de995c0471e40539be679077db4ebc8fe33590c",
         )
         self.assertEqual(
             source["fit_temporal_residual_regime_floor_utility_cli_blob_sha"],
@@ -117,25 +152,25 @@ class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
         )
         self.assertEqual(
             gate["stage"],
-            "FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_RUN_WORKFLOW_SOURCE_FROZEN",
+            "FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_RUN_DISPATCH_REQUIRED",
         )
         self.assertTrue(
             gate[
                 "fit_temporal_residual_regime_floor_utility_model_workflow_source_frozen"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "fit_temporal_residual_regime_floor_utility_model_run_dispatch_authorized"
             ]
         )
-        self.assertFalse(
+        self.assertTrue(
             gate[
                 "authoritative_fit_temporal_residual_regime_floor_utility_model_result_execution_authorized"
             ]
         )
-        self.assertFalse(gate["model_protocol_result_authorized"])
-        self.assertFalse(gate["model_fit_authorized"])
+        self.assertTrue(gate["model_protocol_result_authorized"])
+        self.assertTrue(gate["model_fit_authorized"])
         self.assertFalse(gate["promotion_authorized"])
         self.assertFalse(gate["shadow_authorized"])
         self.assertFalse(gate["trading_authorized"])
@@ -143,28 +178,42 @@ class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
         self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED
         )
-        self.assertFalse(
+        self.assertTrue(
             FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED
         )
-        self.assertFalse(FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_FIT_AUTHORIZED)
+        self.assertTrue(FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_FIT_AUTHORIZED)
         self.assertFalse(PROMOTION_AUTHORIZED)
         self.assertFalse(TRADING_AUTHORIZED)
 
-    def test_execution_requirement_fails_closed(self) -> None:
-        with self.assertRaisesRegex(
-            PermissionError,
-            "DEC-234 freezes EXP-058 workflow source",
-        ):
+    def test_execution_requirement_accepts_exact_authorized_sources(self) -> None:
+        result = (
             require_authoritative_fit_temporal_residual_regime_floor_utility_model_execution(
                 repository_root=ROOT,
                 code_commit="a" * 40,
             )
+        )
+        self.assertEqual(result["code_commit"], "a" * 40)
+        self.assertTrue(
+            result[
+                "fit_temporal_residual_regime_floor_utility_model_run_dispatch_authorized"
+            ]
+        )
+        self.assertTrue(
+            result[
+                "authoritative_fit_temporal_residual_regime_floor_utility_model_result_execution_authorized"
+            ]
+        )
+        self.assertTrue(result["model_protocol_result_authorized"])
+        self.assertTrue(result["model_fit_authorized"])
+        self.assertFalse(result["promotion_authorized"])
+        self.assertFalse(result["shadow_authorized"])
+        self.assertFalse(result["trading_authorized"])
 
     def test_workflow_is_manual_main_only_and_input_free(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -187,18 +236,42 @@ class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
 
-    def test_workflow_has_no_first_run_guard_before_authorization(self) -> None:
+    def test_workflow_enforces_first_manual_main_run_only(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertNotIn(
-            "Reject any prior manual main EXP-058 model run",
-            text,
+        guard = text.index(
+            "Reject any prior manual main EXP-058 model run"
         )
-        self.assertNotIn(
-            "prior manual-main EXP-058 model run exists",
+        authorization = text.index(
+            "Require separately authorized EXP-058 result execution"
+        )
+        self.assertLess(guard, authorization)
+        self.assertIn(
+            "actions/workflows/"
+            "phase8a-exp058-fit-temporal-residual-regime-floor-utility-model-training.yml/runs"
+            "?branch=main&event=workflow_dispatch&per_page=100",
             text,
         )
         self.assertIn(
-            "Require separately authorized EXP-058 result execution",
+            'current["id"] == int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            'current["name"] == '
+            '"phase8a-exp058-fit-temporal-residual-regime-floor-utility-model-training"',
+            text,
+        )
+        self.assertIn(
+            'current["path"] == '
+            '".github/workflows/'
+            'phase8a-exp058-fit-temporal-residual-regime-floor-utility-model-training.yml"',
+            text,
+        )
+        self.assertIn(
+            'item.get("id") != int(os.environ["GITHUB_RUN_ID"])',
+            text,
+        )
+        self.assertIn(
+            "prior manual-main EXP-058 model run exists",
             text,
         )
 
@@ -226,11 +299,11 @@ class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
         self.assertIn("include-hidden-files: true", text)
         self.assertIn("if-no-files-found: warn", text)
         self.assertIn(
-            "exp058-fit-temporal-residual-regime-floor-utility-model-cell-results-",
+            "exp058-fit-temporal-residual-lower-tail-utility-model-cell-results-",
             text,
         )
         self.assertIn(
-            "exp058-fit-temporal-residual-regime-floor-utility-model-result-evidence-",
+            "exp058-fit-temporal-residual-lower-tail-utility-model-result-evidence-",
             text,
         )
         self.assertIn(
@@ -245,7 +318,7 @@ class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
         )
         readiness_load = text.index("load_training_readiness(args.readiness)")
         model_run = text.index(
-            "run_fit_temporal_residual_regime_floor_utility_model_cell_core("
+            "run_fit_temporal_residual_lower_tail_utility_model_cell_core("
         )
         aggregate = text.index(
             "compile_fit_temporal_residual_regime_floor_utility_model_result_evidence("
