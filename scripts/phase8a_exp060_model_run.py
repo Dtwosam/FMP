@@ -15,8 +15,8 @@ from fmp.market_learning.model_successor_fit_temporal_residual_regime_balance_ut
     write_fit_temporal_residual_regime_balance_utility_repair_model_result_evidence,
 )
 from fmp.market_learning.model_successor_fit_temporal_residual_regime_balance_utility_repair_execution_gate import (
-    build_fit_temporal_residual_regime_balance_utility_model_workflow_source_gate,
-    require_authoritative_fit_temporal_residual_regime_balance_utility_model_execution,
+    build_fit_temporal_residual_regime_balance_utility_repair_model_workflow_source_gate,
+    require_authoritative_fit_temporal_residual_regime_balance_utility_repair_model_execution,
 )
 from fmp.market_learning.model_successor_fit_temporal_residual_regime_balance_utility_repair_training import (
     run_fit_temporal_residual_regime_balance_utility_model_cell_core,
@@ -147,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "status":
         print(
             json.dumps(
-                build_fit_temporal_residual_regime_balance_utility_model_workflow_source_gate(
+                build_fit_temporal_residual_regime_balance_utility_repair_model_workflow_source_gate(
                     repository_root=ROOT,
                 ),
                 sort_keys=True,
@@ -159,7 +159,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         execution = (
-            require_authoritative_fit_temporal_residual_regime_balance_utility_model_execution(
+            require_authoritative_fit_temporal_residual_regime_balance_utility_repair_model_execution(
                 repository_root=ROOT,
                 code_commit=args.code_commit,
             )
