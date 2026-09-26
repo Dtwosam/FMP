@@ -32,7 +32,7 @@ class Exp058OperatorExecutorTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: write", text)
 
-    def test_executor_uses_only_existing_dec226_execute_path(self) -> None:
+    def test_executor_uses_only_existing_dec237_execute_path(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
             "python scripts/phase8a_exp058_operator.py advance --execute",
@@ -53,7 +53,7 @@ class Exp058OperatorExecutorTests(unittest.TestCase):
         self.assertNotIn("gh run rerun", text)
         self.assertNotIn("replacement dispatch", text.lower())
 
-    def test_executor_binds_successful_dec227_plan(self) -> None:
+    def test_executor_binds_successful_dec238_plan(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("36206173161", text)
         self.assertIn("10894115135", text)
@@ -66,7 +66,7 @@ class Exp058OperatorExecutorTests(unittest.TestCase):
             text,
         )
         self.assertIn(
-            "exp058-dec226-read-only-operator-plan-",
+            "exp058-dec237-read-only-operator-plan-",
             text,
         )
         self.assertIn(
@@ -89,7 +89,7 @@ class Exp058OperatorExecutorTests(unittest.TestCase):
     def test_executor_verifies_plan_zip_digest_and_content(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("sha256sum", text)
-        self.assertIn("dec227-plan.zip", text)
+        self.assertIn("dec238-plan.zip", text)
         self.assertIn('rglob("operator-plan.json")', text)
         self.assertIn(
             "fit_temporal_residual_regime_floor_utility_model_run_dispatch_authorized",
