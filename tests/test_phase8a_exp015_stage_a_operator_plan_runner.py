@@ -70,6 +70,10 @@ class Exp015StageAOperatorPlanRunnerTests(unittest.TestCase):
         )
         self.assertIn('assert plan["run_state"] == "MISSING"', text)
         self.assertIn('assert plan["operator_read_only"] is True', text)
+        self.assertIn(
+            'assert plan["head_sha"] == os.environ["GITHUB_SHA"]',
+            text,
+        )
 
     def test_runner_preserves_clean_worktree_with_minimal_runtime(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -106,7 +110,15 @@ class Exp015StageAOperatorPlanRunnerTests(unittest.TestCase):
             text,
         )
         self.assertIn(
-            'test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"',
+            'test "$(git rev-parse HEAD)" = "$GITHUB_SHA"',
+            text,
+        )
+        self.assertIn(
+            'test "$(git rev-parse origin/main)" = "$GITHUB_SHA"',
+            text,
+        )
+        self.assertIn(
+            'git merge-base --is-ancestor "ed4373a7a0da36850a5f08971e9e12bd63cf1554" "$GITHUB_SHA"',
             text,
         )
 
