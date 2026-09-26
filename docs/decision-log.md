@@ -3950,3 +3950,17 @@ The operator metadata binds DEC-234 execution-gate identity, DEC-236 authorizati
 Operator source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_operator.py` at blob `ffda686bf6c632f3c13bfaed8eafb23e8e565795`. Public CLI is `scripts/phase8a_exp058_operator.py` at blob `aca3a47d79a0c32ae6590db3019557bea6bb6e89`. Focused tests are `tests/test_phase8a_exp058_operator.py` at blob `d1fbe9a7f5db6318be53870a149584c5bb02ecf6`.
 
 DEC-237 does not itself dispatch the model workflow or consume the DEC-236 slot. Replacement model runs, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a repository-hosted read-only `next` plan runner only.
+
+
+## DEC-238 — Phase 8A EXP-058 repository-hosted read-only operator plan
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / READ-ONLY / NOT DISPATCHED
+
+DEC-238 binds DEC-237 merge `516d000897ee870b6b8d32ccc790494635e2533c` and adds a repository-hosted read-only proof for the exact DEC-237 EXP-058 `next` plan. The workflow is main-push/path scoped, grants only `contents: read` and `actions: read`, has no manual/scheduled/PR trigger, preserves a clean checkout, installs the pinned EXP-058 runtime without editable installation, writes plan output only under `RUNNER_TEMP`, and invokes only `python scripts/phase8a_exp058_operator.py next`.
+
+A successful proof must establish `operator_decision = DEC-237`, `read_only = true`, no existing manual-main EXP-058 run, `run_state = MISSING`, the exact `FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_MODEL_RUN_DISPATCH_REQUIRED` stage, and the frozen dispatch command as plan evidence only. The four bounded DEC-236 historical-run authorization fields remain true in the plan while replacement/promotion/shadow/demo/broker/live/real-money/trading remain false.
+
+Workflow `.github/workflows/phase8a-exp058-operator-plan.yml` is blob `436364fbc003be335a9801ab2569f7a7ed7cbe50`. Focused tests `tests/test_phase8a_exp058_operator_plan_runner.py` are blob `ab97b2c61170e9947f4942b6dccdfaa35263c0a1`. The bound operator source is blob `ffda686bf6c632f3c13bfaed8eafb23e8e565795`; the public operator CLI is blob `aca3a47d79a0c32ae6590db3019557bea6bb6e89`.
+
+DEC-238 cannot invoke `advance`, `advance --execute`, a direct workflow dispatch, rerun, retry, replacement, or model-result claim. It consumes no historical slot. Only after a successful merged-main proof and exact artifact binding may a separate one-shot executor be considered.
