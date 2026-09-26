@@ -107,7 +107,7 @@ Operator source:
 
 Git blob:
 
-`f385b764581e8dd45b683e275233245082945e7a`
+`3f2bca609ab6c1cd324f95c47be99584b11d9d90`
 
 Public CLI:
 
@@ -131,7 +131,7 @@ Focused tests:
 
 Git blob:
 
-`b297aed894f2b29ccb4070f7c0105b7cd3a7bafe`
+`126449be29e0c61a726bd358501cc05ea16d2663`
 
 They pin:
 
