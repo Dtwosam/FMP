@@ -4393,3 +4393,18 @@ DEC-264 also predeclares terminal review in `src/fmp/portfolio/exp015_stage_a_te
 Focused tests are `tests/test_phase8a_exp015_stage_a_first_run_governance.py` at blob `1ea17ac6329fa798c33c51b59c44ce437e0b739e`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp015-stage-a-first-run-governance.md` at blob `ff0e20a0aed84621392561218f4bd3db1117017d`.
 
 DEC-264 itself dispatches nothing. Stage A retry/replacement, Stage B/C execution, DEC-042 selection, DEC-045 acceptance, Phase 8B, demo, broker mutation, live orders, real-money action, and trading remain unauthorized. The next safe gate is a clean-main one-way Stage A operator that can classify missing/in-progress/terminal state but does not dispatch in its initial source-only decision.
+
+## DEC-265 — EXP-015 Stage A clean-main one-way operator
+
+**Date:** 2026-09-26
+**Status:** SOURCE-ONLY / READ-ONLY / NOT DISPATCHED
+
+DEC-265 binds merged DEC-264 commit `92ef2668b1a0cb416e7f772a8a061d2f280005a1`, guarded Stage A workflow blob `ae8bdfbdb1bcfd62204a1bd0ec32dddfd9938930`, and terminal-review blob `751c886f2d00e46d3c0a20fabbe0db4231db0d5d`. It adds a clean-main one-way operator for the sole bounded EXP-015 Stage A historical slot without changing any DEC-043/044 research semantics.
+
+The operator source is `src/fmp/portfolio/exp015_stage_a_operator.py` at blob `f385b764581e8dd45b683e275233245082945e7a`. It requires local `main`, exact fetched `origin/main`, a clean worktree, and the exact `Dtwosam/FMP` origin. It queries only `phase8a-exp015-stage-a.yml` runs filtered to `branch=main&event=workflow_dispatch`, ignores the 12 preserved source-development push failures, rejects more than one authoritative run, and rejects any selected run with `run_attempt != 1`.
+
+Live state is classified only as `MISSING`, `IN_PROGRESS`, or `TERMINAL`. For `MISSING`, the operator exposes `gh workflow run phase8a-exp015-stage-a.yml --ref main -R Dtwosam/FMP` only as plan evidence and requires a later repository-hosted read-only proof; `stage_a_dispatch_authorized` and `stage_a_executor_authorized` remain false. `IN_PROGRESS` exposes no dispatch plan. `TERMINAL` exposes no dispatch plan and routes back to the frozen DEC-264 terminal-review contract with no retry, rerun, or replacement authority.
+
+Public CLI is `scripts/phase8a_exp015_stage_a_operator.py` at blob `11010d32842b0f0ab829e0cc20d4654a7d5dcf2e`. It exposes only `next`; there is no `advance`, `--execute`, workflow-dispatch endpoint, rerun, or replacement path. Focused tests are `tests/test_phase8a_exp015_stage_a_operator.py` at blob `b297aed894f2b29ccb4070f7c0105b7cd3a7bafe`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp015-stage-a-one-way-operator.md` at blob `f69354a5c448edec720a212cbf54ae2bd5667c14`.
+
+DEC-265 dispatches nothing and consumes no historical slot. Stage A dispatch/executor/retry/replacement, Stage B/C execution, DEC-042 selection, DEC-045 acceptance, Phase 8B, demo, broker mutation, live orders, real-money action, and trading all remain unauthorized. The next safe gate is a repository-hosted read-only proof of the exact DEC-265 `next` plan on merged `main`; only after that proof succeeds may a separately reviewed one-shot executor source be considered.
