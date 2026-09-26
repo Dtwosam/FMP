@@ -51,7 +51,7 @@ def _run(
 def _checkout() -> dict[str, object]:
     return {
         "repository": REPOSITORY,
-        "dec247_merged_commit": DEC258_MERGED_COMMIT,
+        "dec258_merged_commit": DEC258_MERGED_COMMIT,
         "branch": "main",
         "head_sha": SHA,
         "clean_worktree": True,
@@ -76,7 +76,7 @@ class Exp060ResidualRegimeBalanceRepairOperatorTests(unittest.TestCase):
         )
         self.assertEqual(report["head_sha"], SHA)
         self.assertEqual(
-            report["dec247_merged_commit"],
+            report["dec258_merged_commit"],
             DEC258_MERGED_COMMIT,
         )
 
@@ -275,15 +275,15 @@ class Exp060ResidualRegimeBalanceRepairOperatorTests(unittest.TestCase):
             "dec256_cli_blob_sha": "7" * 40,
             "dec256_gate_blob_sha": "8" * 40,
             "dec257_review_blob_sha": "9" * 40,
-            "fit_temporal_residual_regime_balance_utility_repair_workflow_blob_sha": "a" * 40,
-            "fit_temporal_residual_regime_balance_utility_repair_cli_blob_sha": "b" * 40,
+            "fit_temporal_residual_regime_balance_utility_workflow_blob_sha": "a" * 40,
+            "fit_temporal_residual_regime_balance_utility_cli_blob_sha": "b" * 40,
         }
         metadata = fit_temporal_residual_regime_balance_utility_repair_operator_gate_metadata(
             gate
         )
         self.assertEqual(metadata["dec257_merged_commit"], "5" * 40)
         self.assertEqual(
-            metadata["fit_temporal_residual_regime_balance_utility_repair_workflow_blob_sha"],
+            metadata["fit_temporal_residual_regime_balance_utility_workflow_blob_sha"],
             "a" * 40,
         )
         drifted = dict(gate)
@@ -316,7 +316,7 @@ class Exp060ResidualRegimeBalanceRepairOperatorTests(unittest.TestCase):
         self.assertEqual(selected["artifact_id"], 55)
         self.assertEqual(selected["artifact_name"], expected)
 
-    def test_public_cli_binds_dec247_and_dec235(self) -> None:
+    def test_public_cli_binds_dec258_and_dec257(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn(
             '"EXP-060 aggregate evidence code commit mismatch"',
