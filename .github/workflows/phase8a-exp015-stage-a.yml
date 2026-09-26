@@ -13,13 +13,62 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - name: Require main workflow dispatch
+      - name: Require exact merged main manual dispatch
         run: |
           set -euo pipefail
-          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
-            echo "Phase 8A historical workflows must be dispatched from refs/heads/main" >&2
-            exit 1
-          fi
+          test "${GITHUB_EVENT_NAME}" = "workflow_dispatch"
+          test "${GITHUB_REF}" = "refs/heads/main"
+
+      - name: Reject any prior authoritative manual-main EXP-015 Stage A attempt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" > current-stage-a-run.json
+          gh api "repos/${GITHUB_REPOSITORY}/branches/main" > current-main.json
+          gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/phase8a-exp015-stage-a.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
+            > stage-a-runs.json
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          current = json.loads(
+              Path("current-stage-a-run.json").read_text(encoding="utf-8")
+          )
+          main = json.loads(
+              Path("current-main.json").read_text(encoding="utf-8")
+          )
+          run_id = int(os.environ["GITHUB_RUN_ID"])
+          run_sha = os.environ["GITHUB_SHA"]
+
+          assert current["id"] == run_id, current
+          assert current["name"] == "phase8a-exp015-stage-a", current
+          assert current["path"] == ".github/workflows/phase8a-exp015-stage-a.yml", current
+          assert current["event"] == "workflow_dispatch", current
+          assert current["head_branch"] == "main", current
+          assert current["head_sha"] == run_sha, current
+          assert current["run_attempt"] == 1, current
+          assert main["name"] == "main", main
+          assert main["commit"]["sha"] == run_sha, (main, current)
+
+          listing = json.loads(
+              Path("stage-a-runs.json").read_text(encoding="utf-8")
+          )
+          prior = [
+              item
+              for item in listing.get("workflow_runs", [])
+              if item.get("event") == "workflow_dispatch"
+              and item.get("head_branch") == "main"
+              and item.get("id") != run_id
+          ]
+          if prior:
+              ids = [item.get("id") for item in prior]
+              raise SystemExit(
+                  f"prior authoritative manual-main EXP-015 Stage A attempt exists: {ids}"
+              )
+          PY
 
       - name: Checkout exact result-producing commit
         uses: actions/checkout@v6
