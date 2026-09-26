@@ -166,7 +166,15 @@ def _validated_source_gate() -> dict[str, object]:
             raise SystemExit(
                 f"EXP-060 DEC-258 source gate {field} must be true"
             )
-    for field in ("promotion_authorized", "trading_authorized"):
+    for field in (
+        "promotion_authorized",
+        "shadow_authorized",
+        "demo_order_authorized",
+        "broker_mutation_authorized",
+        "live_order_authorized",
+        "real_money_authorized",
+        "trading_authorized",
+    ):
         if gate.get(field) is not False:
             raise SystemExit(
                 f"EXP-060 DEC-258 source gate {field} must be false"
