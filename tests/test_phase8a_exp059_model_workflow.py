@@ -70,7 +70,7 @@ class Exp059ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
             "9f427f06f315288bd9b132de19901beb5a5ddfc8",
         )
         self.assertEqual(
-            source["dec233_merged_commit"],
+            source["dec244_merged_commit"],
             "b539c48cd62fb8e510ecaa15ce507c114f9401bb",
         )
         self.assertEqual(source["dec245_merged_commit"], DEC245_MERGED_COMMIT)
@@ -173,6 +173,10 @@ class Exp059ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
         self.assertTrue(gate["model_fit_authorized"])
         self.assertFalse(gate["promotion_authorized"])
         self.assertFalse(gate["shadow_authorized"])
+        self.assertFalse(gate["demo_order_authorized"])
+        self.assertFalse(gate["broker_mutation_authorized"])
+        self.assertFalse(gate["live_order_authorized"])
+        self.assertFalse(gate["real_money_authorized"])
         self.assertFalse(gate["trading_authorized"])
 
         self.assertTrue(
@@ -213,6 +217,10 @@ class Exp059ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
         self.assertTrue(result["model_fit_authorized"])
         self.assertFalse(result["promotion_authorized"])
         self.assertFalse(result["shadow_authorized"])
+        self.assertFalse(result["demo_order_authorized"])
+        self.assertFalse(result["broker_mutation_authorized"])
+        self.assertFalse(result["live_order_authorized"])
+        self.assertFalse(result["real_money_authorized"])
         self.assertFalse(result["trading_authorized"])
 
     def test_workflow_is_manual_main_only_and_input_free(self) -> None:
