@@ -4297,3 +4297,20 @@ The manual-main workflow is hardened by a first-run rejection guard before execu
 DEC-258 opens only the outer bounded historical-result slot: run dispatch, authoritative historical result execution, model-protocol result production, and model fitting may be true for the first guarded attempt. The underlying DEC-253/254/255 repair protocol, repaired core, and repaired artifact-contract execution/fit constants remain false. Execution-gate blob is `3a6bb23d237ab8d74896e06821d0189ed689e169`; focused workflow test blob is `ad305ccf0d2dde2e2074ae069735743d5033cbdf`.
 
 DEC-258 does not dispatch the workflow. A second dispatch is blocked by prior-run detection; a rerun of the same GitHub run is blocked by `run_attempt == 1`. Retry, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain unauthorized. The next safe gate is a clean-main, double-plan, one-way operator that can derive at most one dispatch action while the exact EXP-060 workflow state is still `MISSING`.
+
+## DEC-259 — Phase 8A EXP-060 clean-main one-way operator
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NOT DISPATCHED
+
+DEC-259 binds merged DEC-258 commit `c6aefd21b2deadd834248e69cf7117081ea58497` and freezes a clean-main, fail-closed operator for the single guarded EXP-060 historical-result slot.
+
+The operator requires local branch `main`, local HEAD exactly equal to freshly fetched `origin/main`, a clean working tree, and an origin remote matching `Dtwosam/FMP`. It consumes the exact DEC-256 execution-gate decision, DEC-258 execution-authorization decision, DEC-253/254/255 repair identities, DEC-256 workflow/CLI/gate identities, and DEC-257 terminal-review identity.
+
+Live workflow state is one-way: `MISSING`, `IN_PROGRESS`, or `TERMINAL`. More than one manual-main EXP-060 workflow run fails closed, and any `run_attempt != 1` is rejected as an unauthorized rerun. Only `MISSING` may expose the exact dispatch command; `IN_PROGRESS` and `TERMINAL` expose no dispatch or replacement action. Terminal state routes through DEC-257.
+
+Operator source `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_operator.py` is blob `54f1c5c7d856eb4bf0eb5366cf43ae38a3f25d2c`. Public CLI `scripts/phase8a_exp060_operator.py` is blob `16c553d2dc959fe1e24796a95019163d1967e836`. Focused tests `tests/test_phase8a_exp060_operator.py` are blob `a260433870c1fcf3b855d5b5cec6b432093dd5fe` and include an integration check against the real DEC-258 source gate.
+
+The CLI exposes read-only `next`, non-executing `advance`, and a guarded `advance --execute` path that requires two identical fresh plans immediately before submission. DEC-259 itself does not dispatch and does not consume the slot. Rerun, retry, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain unauthorized.
+
+The next safe gate is a repository-hosted read-only `next` plan runner. Only a successful merged-main proof of that planner may be bound by a later separate one-shot executor source.
