@@ -265,6 +265,18 @@ class Exp015StageAOperatorTests(unittest.TestCase):
         ):
             validate_exp015_stage_a_operator_report(wrong_command)
 
+        active = build_exp015_stage_a_operator_report(
+            checkout=_checkout(),
+            run=_run(status="in_progress", conclusion=None),
+        )
+        wrong_stage = dict(active)
+        wrong_stage["stage"] = "EXP015_STAGE_A_TERMINAL_REVIEW_REQUIRED"
+        with self.assertRaisesRegex(
+            ValueError,
+            "in-progress report stage mismatch",
+        ):
+            validate_exp015_stage_a_operator_report(wrong_stage)
+
     def test_public_cli_is_next_only_and_non_executing(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn('OPERATOR_DECISION = "DEC-265"', text)
