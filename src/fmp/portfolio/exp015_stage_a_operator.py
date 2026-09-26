@@ -265,20 +265,25 @@ def validate_exp015_stage_a_operator_report(
         if report.get(field) is not False:
             raise ValueError(f"EXP-015 Stage A operator report {field} must remain false")
 
+    state = report.get("run_state")
     stage = report.get("stage")
-    if stage == "EXP015_STAGE_A_READ_ONLY_PROOF_REQUIRED":
+    if state == "MISSING":
         expected = shell_join(exp015_stage_a_planned_dispatch_command())
-        if report.get("run_state") != "MISSING":
-            raise ValueError("EXP-015 Stage A proof-required report must be MISSING")
+        if stage != "EXP015_STAGE_A_READ_ONLY_PROOF_REQUIRED":
+            raise ValueError("EXP-015 Stage A missing report stage mismatch")
+        if report.get("run_present") is not False or report.get("run_id") is not None:
+            raise ValueError("EXP-015 Stage A missing report run identity mismatch")
         if report.get("authoritative_slot_available") is not True:
             raise ValueError("EXP-015 Stage A missing report must preserve the open slot")
         if report.get("read_only_proof_required") is not True:
             raise ValueError("EXP-015 Stage A missing report requires read-only proof")
         if report.get("planned_dispatch_command") != expected:
             raise ValueError("EXP-015 Stage A planned dispatch command mismatch")
-    else:
-        if report.get("run_state") not in {"IN_PROGRESS", "TERMINAL"}:
-            raise ValueError("EXP-015 Stage A non-missing report state mismatch")
+    elif state == "IN_PROGRESS":
+        if stage != "EXP015_STAGE_A_RUN_IN_PROGRESS":
+            raise ValueError("EXP-015 Stage A in-progress report stage mismatch")
+        if report.get("run_present") is not True:
+            raise ValueError("EXP-015 Stage A in-progress report must bind a run")
         if report.get("authoritative_slot_available") is not False:
             raise ValueError("EXP-015 Stage A used slot cannot remain available")
         if report.get("read_only_proof_required") is not False:
@@ -287,6 +292,21 @@ def validate_exp015_stage_a_operator_report(
             raise ValueError(
                 "EXP-015 Stage A non-missing report cannot expose a dispatch plan"
             )
+    elif state == "TERMINAL":
+        if stage != "EXP015_STAGE_A_TERMINAL_REVIEW_REQUIRED":
+            raise ValueError("EXP-015 Stage A terminal report stage mismatch")
+        if report.get("run_present") is not True:
+            raise ValueError("EXP-015 Stage A terminal report must bind a run")
+        if report.get("authoritative_slot_available") is not False:
+            raise ValueError("EXP-015 Stage A used slot cannot remain available")
+        if report.get("read_only_proof_required") is not False:
+            raise ValueError("EXP-015 Stage A used slot cannot require missing-state proof")
+        if "planned_dispatch_command" in report:
+            raise ValueError(
+                "EXP-015 Stage A non-missing report cannot expose a dispatch plan"
+            )
+    else:
+        raise ValueError("EXP-015 Stage A operator report state mismatch")
 
     return dict(report)
 
