@@ -4184,3 +4184,21 @@ Because no cell result artifact exists, EXP-059 has no model-selection result, a
 Reviewed failed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_result_decision.py` at blob `c8ca7143e687494b81205556af7e317ec69937fd`. Focused tests are `tests/test_phase8a_exp059_failed_result_decision.py` at blob `4b10d137160c7fcbc6b570940db7b2cccfd6b6e7`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp059-reviewed-failed-result.md`.
 
 DEC-251 closes model-run dispatch, replacement, authoritative result execution, model-protocol result production, and model fit. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. No second EXP-059 attempt is authorized. The next safe gate is a separate source-only implementation-defect diagnostic only.
+
+
+## DEC-252 — Phase 8A EXP-059 implementation-failure diagnostic
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY DIAGNOSTIC
+
+DEC-252 binds DEC-251 merge `639fa26f841d0d3bb4c8577372a8539a0c0fd38f`, DEC-251 result-decision blob `c8ca7143e687494b81205556af7e317ec69937fd`, EXP-059 regime-balance training-core blob `4f99c1d0cb18551b67cc89357ad4a3940c190cd2`, EXP-058 regime-floor training-core blob `77f2010574b3d8ecc958930d5bfadf7ddb4f2231`, EXP-057 lower-tail-repair training-core blob `ef0ffc46b130d5cfe5b1a19f86bea6a2d41d0cbd`, and EXP-055 breadth training-core blob `c9517b7516940c78621448088c3933aa1c57e281`.
+
+The diagnostic performs a deterministic AST audit of the frozen predecessor chain. EXP-059 currently uses four breadth metadata accesses at `_predecessor._predecessor.<name>`, which resolves to the EXP-057 lower-tail-repair training module. That module does not export those names. The EXP-055 breadth training module one level deeper does export all four: `FIT_TEMPORAL_RESIDUAL_BREADTH_BOUND_COUNT_PER_ROW`, `FIT_TEMPORAL_RESIDUAL_BREADTH_RULE`, `RESIDUAL_BREADTH_ELIGIBILITY_RULE`, and `RESIDUAL_BREADTH_POSITIVITY_RULE`.
+
+The failed historical attempt directly observed missing `FIT_TEMPORAL_RESIDUAL_BREADTH_RULE` in all nine matrix jobs. DEC-252 classifies the failure as `EXP059_IMPLEMENTATION_FAILED_BEFORE_EVIDENCE_DUE_PREDECESSOR_DEPTH_DRIFT`.
+
+The exact future repair boundary is implementation-only: under a new successor experiment identity, replace those four `_predecessor._predecessor.<name>` accesses with `_predecessor._predecessor._predecessor.<name>`. No regime-balance protocol semantics, math, data identity, model family, chronology, ranking, cutoff, candidate budget, financial gate, temporal-stability gate, validation, or holdout rule may change.
+
+Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_failure_diagnostics.py` at blob `d73008c7faf236f915685110d6cf59988d6fc27f`. Focused tests are `tests/test_phase8a_exp059_implementation_failure_diagnostics.py` at blob `3432d5ffb6799eb3adf4d25780cfc00141ba038e`.
+
+DEC-252 keeps EXP-059 rerun/replacement, successor model fit, successor historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. It opens successor protocol source design only, under a new experiment identity.
