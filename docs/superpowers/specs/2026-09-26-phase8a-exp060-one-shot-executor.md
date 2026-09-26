@@ -24,7 +24,7 @@ DEC-261 binds successful DEC-260 merged-main read-only proof:
 - attempt: `1`
 - conclusion: `success`
 - artifact id: `10911029039`
-- artifact name: `exp060-dec248-read-only-operator-plan-0339c58f59206b6e70fb5019be403ee9ffdd1a34`
+- artifact name: `exp060-dec259-read-only-operator-plan-0339c58f59206b6e70fb5019be403ee9ffdd1a34`
 - artifact digest: `sha256:b51e691984368757138913d646c4561150b02e6afd437773a3758e5559f3748f`
 - artifact expired: `false`
 
