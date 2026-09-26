@@ -318,7 +318,7 @@ class Exp058ResidualRegimeFloorWorkflowTests(unittest.TestCase):
         )
         readiness_load = text.index("load_training_readiness(args.readiness)")
         model_run = text.index(
-            "run_fit_temporal_residual_lower_tail_utility_model_cell_core("
+            "run_fit_temporal_residual_regime_floor_utility_model_cell_core("
         )
         aggregate = text.index(
             "compile_fit_temporal_residual_regime_floor_utility_model_result_evidence("
