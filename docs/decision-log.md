@@ -4423,3 +4423,18 @@ A successful DEC-266 proof must report DEC-265, read-only mode, zero authoritati
 Focused tests are `tests/test_phase8a_exp015_stage_a_operator_plan_runner.py` at blob `8745125bec5ae27694ddb1e0c69ffc4ec865451b`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp015-stage-a-read-only-plan.md` at blob `3fe15737641e718a364eee6bca5b8478b8586921`.
 
 DEC-266 itself dispatches nothing and consumes no historical slot. The next safe gate is to merge DEC-266, require the merged-main proof workflow to succeed, bind that exact successful run plus its non-expired plan artifact and digest, and only then consider a separately reviewed one-shot Stage A executor source.
+
+## DEC-267 — EXP-015 Stage A one-shot executor
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE; AUTOMATIC EXECUTION ONLY AFTER MERGE
+
+DEC-267 binds successful merged-main DEC-266 proof run `36277672941` at head `82a90af8edbf156e89df3a63f2003da71d4473d3`, event `push`, branch `main`, attempt `1`, conclusion `success`. It binds the single non-expired artifact `10917841059`, named `exp015-dec265-stage-a-read-only-plan-82a90af8edbf156e89df3a63f2003da71d4473d3`, with digest `sha256:b5cc74574518bc0db4a9229e1b55117fa99ec2b17264f7ee42a538df0adc3cf3`.
+
+Fresh-plan validator source `src/fmp/portfolio/exp015_stage_a_executor.py` is blob `840659456732b21cae1520060ab0539c9636066c`. Public executor CLI `scripts/phase8a_exp015_stage_a_executor.py` is blob `201609db2d7ed2796dd492d97a75bdee57bcc0ee`. The validator reuses DEC-265 fail-closed report validation and additionally binds DEC-265 identity, exact executor head, MISSING state, unused slot, proof-required stage, and the exact frozen Stage A dispatch tuple. The CLI requires push/main/attempt-1 environment, obtains and validates two identical fresh DEC-265 plans immediately before submission, and executes only that tuple.
+
+Executor workflow `.github/workflows/phase8a-exp015-stage-a-operator-execute.yml` is blob `bff0cf878ec9e44ce5e3c69ab50bc97521f24e23`. It is push-to-main only for the executor workflow/CLI/validator paths, grants `contents: read` and `actions: write`, requires local HEAD and `origin/main` to equal the trigger SHA, rejects reruns and any prior different main/push executor run, preserves a clean checkout, independently revalidates the exact DEC-266 run/artifact metadata plus ZIP digest/content, and requires zero Stage A manual-main runs immediately before execution. It invokes only the DEC-267 executor CLI; afterward it requires exactly one Stage A manual-main run with exact workflow name/path, executor merge head, and `run_attempt == 1`, then uploads immutable executor evidence.
+
+Focused validator/CLI tests are `tests/test_phase8a_exp015_stage_a_executor.py` at blob `0b352ce29753ed747cd6fed9f98dbac2a95172e6`. Focused workflow tests are `tests/test_phase8a_exp015_stage_a_operator_executor.py` at blob `986dfad2a6a7a635b1a4cf86c488e95078a3e78d`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp015-stage-a-one-shot-executor.md` at blob `e8031d617b3a60a1a6fbcde295782bf82244f818`.
+
+If the merged-main executor submits Stage A, that first manual-main run consumes the DEC-264 slot on any terminal outcome. No second executor attempt, Stage A rerun, retry, or replacement is authorized. Any terminal Stage A result must route through DEC-264. Stage B/C, DEC-042 selection, DEC-045 acceptance, Phase 8B, demo, broker mutation, live orders, real-money action, and trading remain unauthorized.
