@@ -151,7 +151,7 @@ def validate_fit_temporal_residual_regime_balance_utility_artifact_contract_sour
         )
     )
     if training[
-        "fit_temporal_residual_regime_floor_utility_training_core_decision"
+        "fit_temporal_residual_regime_balance_utility_training_core_decision"
     ] != FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_TRAINING_CORE_DECISION:
         raise ValueError("EXP-059 training-core decision drift")
 
