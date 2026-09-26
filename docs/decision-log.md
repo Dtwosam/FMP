@@ -4166,3 +4166,21 @@ After operator submission, the executor independently queries the exact EXP-059 
 Executor workflow `.github/workflows/phase8a-exp059-operator-execute.yml` is blob `d207314d107e30ead9b5f77582bf8a7990625067`. Focused tests `tests/test_phase8a_exp059_operator_executor.py` are blob `f9da2b1e1e5bfb1fbc2f260dc98b7d5da18104c6`.
 
 DEC-250 authorizes no second executor attempt and no replacement model run. If the initial merged-main executor submits the EXP-059 historical workflow, that first attempt consumes the DEC-247 slot on any terminal outcome and must route through DEC-246. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false.
+
+
+## DEC-251 — Phase 8A EXP-059 reviewed failed historical result
+
+**Date:** 2026-09-26
+**Status:** REVIEWED FAILED ATTEMPT / NO MODEL RESULT
+
+DEC-250 merged at `8b47a025598feea1b9a382c4f0c35ac644512acc` and its executor submitted the sole DEC-247-authorized EXP-059 historical workflow. Model run `36239443323` completed on attempt 1 with conclusion `failure`, so the EXP-059 slot is consumed.
+
+DEC-246 non-success review applies exactly: authorization-preflight succeeded, all nine matrix jobs failed, aggregate-model-evidence was skipped, zero cell artifacts persisted, no aggregate artifact exists, and no aggregate result evidence is claimed. No replacement run is authorized.
+
+All nine matrix failures share one implementation dependency/export-depth error. The EXP-059 regime-balance training core attempts to read `FIT_TEMPORAL_RESIDUAL_BREADTH_RULE` from `model_successor_fit_temporal_residual_lower_tail_utility_repair_training`, where that symbol is not exported. DEC-251 classifies the failure as `IMPLEMENTATION_DEPENDENCY_EXPORT_DEPTH_DRIFT_PREVENTED_ALL_EXP059_CELL_RESULTS`.
+
+Because no cell result artifact exists, EXP-059 has no model-selection result, aggregate financial result, evidence fingerprint, selected variant, validation result, holdout result, or accepted candidate. This failure must not be interpreted as evidence for or against the intended regime-balance ranking.
+
+Reviewed failed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_result_decision.py` at blob `c8ca7143e687494b81205556af7e317ec69937fd`. Focused tests are `tests/test_phase8a_exp059_failed_result_decision.py` at blob `4b10d137160c7fcbc6b570940db7b2cccfd6b6e7`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp059-reviewed-failed-result.md`.
+
+DEC-251 closes model-run dispatch, replacement, authoritative result execution, model-protocol result production, and model fit. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. No second EXP-059 attempt is authorized. The next safe gate is a separate source-only implementation-defect diagnostic only.
