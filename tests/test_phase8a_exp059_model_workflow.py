@@ -37,7 +37,7 @@ CLI = ROOT / "scripts/phase8a_exp059_model_run.py"
 REQUIREMENTS = ROOT / "requirements/exp059-model-run.txt"
 
 
-class Exp059ResidualRegimeFloorWorkflowTests(unittest.TestCase):
+class Exp059ResidualRegimeBalanceWorkflowTests(unittest.TestCase):
     def test_exact_sources_are_frozen_but_execution_closed(self) -> None:
         source = (
             validate_fit_temporal_residual_regime_balance_utility_model_workflow_sources(
@@ -138,6 +138,10 @@ class Exp059ResidualRegimeFloorWorkflowTests(unittest.TestCase):
         self.assertFalse(gate["model_fit_authorized"])
         self.assertFalse(gate["promotion_authorized"])
         self.assertFalse(gate["shadow_authorized"])
+        self.assertFalse(gate["demo_order_authorized"])
+        self.assertFalse(gate["broker_mutation_authorized"])
+        self.assertFalse(gate["live_order_authorized"])
+        self.assertFalse(gate["real_money_authorized"])
         self.assertFalse(gate["trading_authorized"])
 
         self.assertTrue(
