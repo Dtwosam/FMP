@@ -12,7 +12,7 @@ WORKFLOW = (
 )
 
 
-class Exp058OperatorPlanRunnerTests(unittest.TestCase):
+class Exp059OperatorPlanRunnerTests(unittest.TestCase):
     def test_runner_is_read_only_and_main_push_scoped(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("name: phase8a-exp059-operator-plan", text)
