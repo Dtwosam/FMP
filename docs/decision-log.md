@@ -4218,3 +4218,19 @@ The only authorized implementation change is the four-name predecessor-depth rep
 Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_protocol.py` at blob `82d336250e2cdd9894afa5554c6b422e0de6b1fe`. Focused tests are `tests/test_phase8a_exp060_implementation_repair_protocol.py` at blob `0aa76c5d88e6d3a894d1d19bb6241c24ade1b18f`.
 
 DEC-253 authorizes implementation-repair source design only. Protocol semantic change, model-protocol result production, model fit, historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a deterministic in-memory EXP-060 training/evaluation core only.
+
+
+## DEC-254 — Phase 8A EXP-060 deterministic regime-balance repair training core
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-254 binds DEC-253 merge `7e5b399cb7960d385d956b33e5d96cea85bb2c28`, DEC-253 repair-protocol blob `82d336250e2cdd9894afa5554c6b422e0de6b1fe`, failed EXP-059 regime-balance training-core blob `4f99c1d0cb18551b67cc89357ad4a3940c190cd2`, and unchanged EXP-058 regime-floor training-core blob `77f2010574b3d8ecc958930d5bfadf7ddb4f2231`.
+
+The implementation preserves the complete EXP-059 regime-balance model/evaluation semantics. The only source repair is the DEC-253-authorized four-name depth correction for breadth metadata: `_predecessor._predecessor.<name>` becomes `_predecessor._predecessor._predecessor.<name>` for `FIT_TEMPORAL_RESIDUAL_BREADTH_BOUND_COUNT_PER_ROW`, `FIT_TEMPORAL_RESIDUAL_BREADTH_RULE`, `RESIDUAL_BREADTH_ELIGIBILITY_RULE`, and `RESIDUAL_BREADTH_POSITIVITY_RULE`.
+
+All chronology, HGB/jackknife mechanics, calibration/support/residual references, residual-bound/breadth/lower-tail/regime-floor/regime-balance scores, 1.0 balance penalty, budgets 250/500/1000, nine-part lexicographic cutoff, four stability windows, 0.10 minimum directional share, financial gates, validation, holdout, and forward no-refit/no-recalibration rules remain unchanged. The full cell runner remains `run_fit_temporal_residual_regime_balance_utility_model_cell_core`.
+
+Training-core source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_training.py` at blob `202dcaa8ba4ad25324fbe53d00e812c60fbb37dd`. Focused tests are `tests/test_phase8a_exp060_implementation_repair_training.py` at blob `b651a35a3e54a9dd909ee6061662550b2b84dc43`.
+
+DEC-254 remains non-executable: historical result execution, model fit outside the deterministic in-memory core, artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate non-executable EXP-060 artifact/evidence contract bound to this exact repaired core.
