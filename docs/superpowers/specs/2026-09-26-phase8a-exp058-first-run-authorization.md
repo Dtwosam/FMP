@@ -113,7 +113,7 @@ Focused workflow/authorization tests:
 
 Git blob:
 
-`2706f53554145349fd6cb3fb7ba0784efc47fa20`
+`a0defef100102b23be330142a3430b4549e77495`
 
 They pin the exact DEC-234/235 provenance, guarded workflow blob, authorization decision, four outer authorization fields, guard-before-authorization ordering, exact live workflow identity checks, unchanged matrix/runtime/evidence surface, execution-before-artifact-loading CLI ordering, and downstream locks.
 
