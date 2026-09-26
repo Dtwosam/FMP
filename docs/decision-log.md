@@ -4309,7 +4309,7 @@ The operator requires local branch `main`, local HEAD exactly equal to freshly f
 
 Live workflow state is one-way: `MISSING`, `IN_PROGRESS`, or `TERMINAL`. More than one manual-main EXP-060 workflow run fails closed, and any `run_attempt != 1` is rejected as an unauthorized rerun. Only `MISSING` may expose the exact dispatch command; `IN_PROGRESS` and `TERMINAL` expose no dispatch or replacement action. Terminal state routes through DEC-257.
 
-Operator source `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_operator.py` is blob `54f1c5c7d856eb4bf0eb5366cf43ae38a3f25d2c`. Public CLI `scripts/phase8a_exp060_operator.py` is blob `3d0647254e548d719d47981b11e1cd90028bd657`. Focused tests `tests/test_phase8a_exp060_operator.py` are blob `bd2ca54ae02d3bfe230c400f19f3815e5c45b407` and include an integration check against the real DEC-258 source gate.
+Operator source `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_operator.py` is blob `54f1c5c7d856eb4bf0eb5366cf43ae38a3f25d2c`. Public CLI `scripts/phase8a_exp060_operator.py` is blob `16c553d2dc959fe1e24796a95019163d1967e836`. Focused tests `tests/test_phase8a_exp060_operator.py` are blob `a260433870c1fcf3b855d5b5cec6b432093dd5fe` and include an integration check against the real DEC-258 source gate.
 
 The CLI exposes read-only `next`, non-executing `advance`, and a guarded `advance --execute` path that requires two identical fresh plans immediately before submission. DEC-259 itself does not dispatch and does not consume the slot. Rerun, retry, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain unauthorized.
 
