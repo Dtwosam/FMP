@@ -1236,8 +1236,8 @@ def run_fit_temporal_residual_regime_balance_utility_model_cell_core(
         "training_core_decision": (
             FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_TRAINING_CORE_DECISION
         ),
-        "dec231_merged_commit": DEC242_MERGED_COMMIT,
-        "dec231_protocol_blob_sha": DEC242_PROTOCOL_BLOB_SHA,
+        "dec242_merged_commit": DEC242_MERGED_COMMIT,
+        "dec242_protocol_blob_sha": DEC242_PROTOCOL_BLOB_SHA,
         "predecessor_training_core_blob_sha": (
             PREDECESSOR_TRAINING_CORE_BLOB_SHA
         ),
@@ -1424,7 +1424,7 @@ def run_fit_temporal_residual_regime_balance_utility_model_cell_core(
             },
             "logistic_regression": {
                 "status": (
-                    "EXCLUDED_BY_DEC112_DEC150_DEC163_DEC174_DEC185_DEC198_DEC231_DEC242_DEC242"
+                    "EXCLUDED_BY_DEC112_DEC150_DEC163_DEC174_DEC185_DEC198_DEC231_DEC242"
                 ),
                 "fit_attempt_count": 0,
             },
@@ -1434,7 +1434,7 @@ def run_fit_temporal_residual_regime_balance_utility_model_cell_core(
                 "SELECTED"
                 if selected is not None
                 else (
-                    "NO_FIT_TEMPORAL_RESIDUAL_REGIME_FLOOR_UTILITY_"
+                    "NO_FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_"
                     "STABLE_MODEL_CHALLENGER"
                 )
             ),
