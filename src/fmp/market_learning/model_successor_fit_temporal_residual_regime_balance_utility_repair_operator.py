@@ -59,7 +59,7 @@ def validate_fit_temporal_residual_regime_balance_utility_repair_operator_checko
         raise ValueError("origin remote does not match Dtwosam/FMP")
     return {
         "repository": REPOSITORY,
-        "dec247_merged_commit": DEC258_MERGED_COMMIT,
+        "dec258_merged_commit": DEC258_MERGED_COMMIT,
         "branch": "main",
         "head_sha": head,
         "clean_worktree": True,
@@ -297,8 +297,8 @@ def fit_temporal_residual_regime_balance_utility_repair_operator_gate_metadata(
         "dec256_cli_blob_sha",
         "dec256_gate_blob_sha",
         "dec257_review_blob_sha",
-        "fit_temporal_residual_regime_balance_utility_repair_workflow_blob_sha",
-        "fit_temporal_residual_regime_balance_utility_repair_cli_blob_sha",
+        "fit_temporal_residual_regime_balance_utility_workflow_blob_sha",
+        "fit_temporal_residual_regime_balance_utility_cli_blob_sha",
     )
     metadata: dict[str, object] = dict(decisions)
     for field in sha_fields:
