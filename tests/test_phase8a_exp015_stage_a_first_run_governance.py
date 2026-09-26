@@ -194,6 +194,80 @@ class Exp015StageAFirstRunGovernanceTests(unittest.TestCase):
         self.assertFalse(report["real_money_authorized"])
         self.assertFalse(report["trading_authorized"])
 
+    def test_matrix_job_coverage_is_exact(self) -> None:
+        jobs = _jobs()
+        matrix_jobs = jobs["jobs"]
+        assert isinstance(matrix_jobs, list)
+        matrix_jobs[2]["name"] = matrix_jobs[1]["name"]
+        with self.assertRaisesRegex(ValueError, "matrix job coverage mismatch"):
+            validate_exp015_stage_a_terminal_review(
+                run=_run(),
+                jobs_payload=jobs,
+                artifacts_payload=_artifacts(),
+                authorization_evidence=_authorization(),
+            )
+
+    def test_cell_strategy_membership_is_revalidated(self) -> None:
+        authorization = _authorization()
+        cells = authorization["cells"]
+        assert isinstance(cells, list)
+        first = cells[0]
+        second = cells[1]
+        assert isinstance(first, dict)
+        assert isinstance(second, dict)
+        first_fingerprints = first["strategy_fingerprints"]
+        second_fingerprints = second["strategy_fingerprints"]
+        first_gates = first["strategy_gates"]
+        second_gates = second["strategy_gates"]
+        assert isinstance(first_fingerprints, list)
+        assert isinstance(second_fingerprints, list)
+        assert isinstance(first_gates, dict)
+        assert isinstance(second_gates, dict)
+
+        first_fp = first_fingerprints[0]
+        second_fp = second_fingerprints[0]
+        first_fingerprints[0], second_fingerprints[0] = second_fp, first_fp
+        first_fingerprints.sort()
+        second_fingerprints.sort()
+        first_gates[second_fp] = second_gates.pop(second_fp)
+        second_gates[first_fp] = first_gates.pop(first_fp)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "cell strategy membership mismatch",
+        ):
+            validate_exp015_stage_a_terminal_review(
+                run=_run(),
+                jobs_payload=_jobs(),
+                artifacts_payload=_artifacts(),
+                authorization_evidence=authorization,
+            )
+
+    def test_aggregate_survivors_must_match_cell_selections(self) -> None:
+        authorization = _authorization()
+        cells = authorization["cells"]
+        assert isinstance(cells, list)
+        first = cells[0]
+        assert isinstance(first, dict)
+        fingerprints = first["strategy_fingerprints"]
+        assert isinstance(fingerprints, list)
+        fingerprint = fingerprints[0]
+
+        authorization["survivor_count"] = 1
+        authorization["survivor_fingerprints"] = [fingerprint]
+        authorization["stage_b_source_open_authorized"] = True
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "aggregate survivors mismatch cell selections",
+        ):
+            validate_exp015_stage_a_terminal_review(
+                run=_run(),
+                jobs_payload=_jobs(),
+                artifacts_payload=_artifacts(),
+                authorization_evidence=authorization,
+            )
+
     def test_rerun_attempt_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "forbids rerun attempts"):
             validate_exp015_stage_a_terminal_review(
