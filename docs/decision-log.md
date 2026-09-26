@@ -4250,3 +4250,18 @@ The contract preserves the full regime-balance evidence inventory: 6 regressors,
 Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_artifacts.py` at blob `2a6c550dcafac2e7013136fcbbef95b13c2e7d18`. Focused tests are `tests/test_phase8a_exp060_regime_balance_repair_artifacts.py` at blob `d3ddef1ea784eedd04be73deb495b93df2559049`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-artifact-evidence-contract.md`.
 
 DEC-255 remains non-executable: authoritative result execution, model fit, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate manual-main EXP-060 workflow/CLI/runtime source freeze with execution still closed.
+
+## DEC-256 — Phase 8A EXP-060 workflow/CLI/runtime source freeze
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / EXECUTION CLOSED
+
+DEC-256 binds DEC-253 merge `7e5b399cb7960d385d956b33e5d96cea85bb2c28` and repair-protocol blob `82d336250e2cdd9894afa5554c6b422e0de6b1fe`, DEC-254 merge `c8cac108bc098dbceda4b8903f5a56ac7f62bf47` and repaired training-core blob `202dcaa8ba4ad25324fbe53d00e812c60fbb37dd`, and DEC-255 merge `d3a52722c178c96eb865791be096661007d16dd5` and repaired artifact-contract blob `2a6c550dcafac2e7013136fcbbef95b13c2e7d18`.
+
+The frozen manual-main/input-free workflow is `.github/workflows/phase8a-exp060-fit-temporal-residual-regime-balance-utility-model-training.yml` at blob `20af1bf2f9057274a8c50d5b48becbf5f683ef86`. It retains read-only permissions, Python 3.12.14, the exact nine pair/timeframe datasets, 60m/240m horizons, frozen feature/outcome/readiness artifacts, partial cell evidence, and deterministic aggregate evidence.
+
+Public CLI `scripts/phase8a_exp060_model_run.py` is blob `90c6bc9e893c813d394e3a9c4adc5a155e938af0`; runtime lock `requirements/exp060-model-run.txt` is blob `d25ab16056b9f5df283147d67b8f401f60ae7520`. The CLI requires execution authorization before readiness/artifact loading, repaired regime-balance model-core execution, or repaired aggregate compilation and contains no direct workflow-dispatch path.
+
+Exact-source execution gate `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_execution_gate.py` is blob `82f51bf85ccb1793b3a980b2884f3e122a03c8db`. Focused tests are `tests/test_phase8a_exp060_model_workflow.py` at blob `e530e2122ac0ac59f1c02345d890f55c94bfec97`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-workflow-source-freeze.md`.
+
+DEC-256 intentionally has no first-run guard and opens no historical slot. Model-run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate predeclared attempt-1 terminal-review contract.
