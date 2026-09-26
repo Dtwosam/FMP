@@ -4282,3 +4282,18 @@ Non-success outcomes may preserve only produced expected cell artifacts; they ca
 Terminal-review source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_result_review.py` at blob `989ebc7b0cc33e5076f83ea94337fe6581c321e3`. Focused tests are `tests/test_phase8a_exp060_model_result_review.py` at blob `a9679622fd5a7ca9328dbcb44be073ffabd21240`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-terminal-review.md`.
 
 DEC-257 does not authorize workflow dispatch, authoritative result execution, model-protocol result production, model fitting, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. The next safe gate is a separate zero-prior-run proof plus first-run guard and at most one bounded outer historical slot.
+
+## DEC-258 — Phase 8A EXP-060 first-run authorization
+
+**Date:** 2026-09-26
+**Status:** APPROVED ONE-SLOT SOURCE AUTHORIZATION / NOT DISPATCHED
+
+Immediately after DEC-257 merged, the exact GitHub Actions page for `phase8a-exp060-fit-temporal-residual-regime-balance-utility-model-training` reported `0 workflow runs` and `This workflow has no runs yet.` No EXP-060 historical attempt had consumed the slot.
+
+DEC-258 binds DEC-256 merge `cef9f6d201bf2b025f08c924a11c84e9684b9ba0`, its pre-authorization workflow blob `20af1bf2f9057274a8c50d5b48becbf5f683ef86`, CLI blob `90c6bc9e893c813d394e3a9c4adc5a155e938af0`, execution-gate blob `82f51bf85ccb1793b3a980b2884f3e122a03c8db`, DEC-257 merge `5998292b80c0986bdcc0b9f2a91cb024ef92158a`, and terminal-review blob `989ebc7b0cc33e5076f83ea94337fe6581c321e3`.
+
+The manual-main workflow is hardened by a first-run rejection guard before execution authorization. It validates exact run identity, requires `run_attempt == 1`, lists manual-main runs for the exact EXP-060 workflow, excludes only the current run id, and fails closed if any prior run exists. The guarded workflow blob is `91a5bb720ca10b261533409e36f6143994afcca3`.
+
+DEC-258 opens only the outer bounded historical-result slot: run dispatch, authoritative historical result execution, model-protocol result production, and model fitting may be true for the first guarded attempt. The underlying DEC-253/254/255 repair protocol, repaired core, and repaired artifact-contract execution/fit constants remain false. Execution-gate blob is `3a6bb23d237ab8d74896e06821d0189ed689e169`; focused workflow test blob is `ad305ccf0d2dde2e2074ae069735743d5033cbdf`.
+
+DEC-258 does not dispatch the workflow. A second dispatch is blocked by prior-run detection; a rerun of the same GitHub run is blocked by `run_attempt == 1`. Retry, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain unauthorized. The next safe gate is a clean-main, double-plan, one-way operator that can derive at most one dispatch action while the exact EXP-060 workflow state is still `MISSING`.
