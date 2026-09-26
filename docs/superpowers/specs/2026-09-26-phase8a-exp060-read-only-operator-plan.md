@@ -3,7 +3,7 @@
 **Date:** 2026-09-26
 **Status:** APPROVED SOURCE-ONLY / READ-ONLY / NOT DISPATCHED
 **Decision:** DEC-260
-**Experiment:** EXP-20260926-059
+**Experiment:** EXP-20260926-060
 
 ## Purpose
 
