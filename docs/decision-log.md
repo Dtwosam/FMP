@@ -4134,3 +4134,17 @@ Public CLI `scripts/phase8a_exp059_operator.py` is blob `720bab7054ecd55fd90a1ef
 Operator source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_operator.py` at blob `12a4fcce685e2136aea6a9d0e3e27ba39b320f1e`. Focused tests are `tests/test_phase8a_exp059_operator.py` at blob `b80a3233dda65573fe2d51f31fc14b3e97f13ba3`.
 
 DEC-248 itself does not dispatch or consume the DEC-247 slot. Replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a repository-hosted read-only `next` plan runner only.
+
+
+## DEC-249 — Phase 8A EXP-059 repository-hosted read-only operator plan
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / READ-ONLY / NOT DISPATCHED
+
+DEC-249 binds DEC-248 merge `67942688e417debf413e63b99555743eea2122ff` and adds a repository-hosted read-only proof for the exact DEC-248 EXP-059 `next` plan. The workflow is main-push/path scoped, grants only `contents: read` and `actions: read`, has no manual/scheduled/PR trigger, preserves a clean checkout, installs the pinned EXP-059 runtime without editable installation, writes plan output only under `RUNNER_TEMP`, and invokes only `python scripts/phase8a_exp059_operator.py next`.
+
+A successful proof must establish `operator_decision = DEC-248`, `read_only = true`, no existing manual-main EXP-059 run, `run_state = MISSING`, the exact `FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_RUN_DISPATCH_REQUIRED` stage, and the frozen dispatch command as plan evidence only. The four bounded DEC-247 historical-run authorization fields remain true in the plan while replacement/promotion/shadow/demo/broker/live/real-money/trading remain false.
+
+Workflow `.github/workflows/phase8a-exp059-operator-plan.yml` is blob `160b5aee27d63443862e32137e3b4fe75997d3d9`. Focused tests `tests/test_phase8a_exp059_operator_plan_runner.py` are blob `05766f40bbe9fbda01f96fa1eb5d4acef3c5f443`. The bound operator source is blob `12a4fcce685e2136aea6a9d0e3e27ba39b320f1e`; the public operator CLI is blob `720bab7054ecd55fd90a1ef6dbae8b00ceb5dabd`.
+
+DEC-249 cannot invoke `advance`, `advance --execute`, a direct workflow dispatch, rerun, retry, replacement, or model-result claim. It consumes no historical slot. Only after a successful merged-main proof and exact artifact binding may a separate one-shot executor be considered.
