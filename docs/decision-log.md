@@ -3900,3 +3900,21 @@ Public CLI `scripts/phase8a_exp058_model_run.py` is blob `e35a6ee0ff11bd3928b3bf
 Exact-source execution gate `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_execution_gate.py` is blob `74881c0fee21392872ffd3df1378639bb04fea4a`. Focused tests are `tests/test_phase8a_exp058_model_workflow.py` at blob `ba3e43ffc121fa6eae4b46148622a3f01c1e4e84`.
 
 DEC-234 intentionally has no first-run guard and opens no historical slot. Model-run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate predeclared attempt-1 terminal-review contract.
+
+
+## DEC-235 — Phase 8A EXP-058 predeclared terminal review
+
+**Date:** 2026-09-26
+**Status:** APPROVED REVIEW SOURCE / EXECUTION CLOSED
+
+DEC-235 binds merged DEC-234 commit `365093ea81fdaf871680b42b02d67ebce3768d34`, workflow blob `78e9bf66ade5f6fb42ebe27e28b7ba24f36741b8`, CLI blob `e35a6ee0ff11bd3928b3bf05bf19f3572f64952c`, and execution-gate blob `74881c0fee21392872ffd3df1378639bb04fea4a`.
+
+The review accepts only the exact manual-main EXP-058 regime-floor workflow on attempt 1. A successful terminal review requires exactly 11 completed successful jobs, all nine expected non-expired pair/timeframe cell artifacts, the exact non-expired aggregate artifact, and aggregate evidence that deterministically recompiles under DEC-233 for the reviewed head commit.
+
+Successful aggregate revalidation verifies 18 cells, 108 regressors, 108 pooled calibration references, 432 utility-support references, 216 feature-support references, 432 residual references, the inherited twelve-bound residual-breadth inventory, the twelve-bound residual lower-tail source inventory, fixed lower-tail count 3, three residual fit regimes, four residual windows per regime, twelve regime-floor source bounds per eligible row, and the exact aggregate evidence fingerprint.
+
+Non-success outcomes may preserve only produced expected cell artifacts; they cannot claim aggregate evidence or aggregate artifact and open no rerun, retry, or replacement path. Any run attempt greater than 1 is rejected.
+
+Terminal-review source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_result_review.py` at blob `76ba5de3ef92c02a8139213040dc3cf4d8efd75c`. Focused tests are `tests/test_phase8a_exp058_model_result_review.py` at blob `3a71fde170622be55f43261625b5fabf20a178eb`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp058-terminal-review.md`.
+
+DEC-235 does not authorize workflow dispatch, authoritative result execution, model-protocol result production, model fitting, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. The next safe gate is a separate zero-prior-run proof plus first-run guard and at most one bounded outer historical-result slot.
