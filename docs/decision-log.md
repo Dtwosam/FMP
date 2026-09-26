@@ -4202,3 +4202,19 @@ The exact future repair boundary is implementation-only: under a new successor e
 Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_failure_diagnostics.py` at blob `d73008c7faf236f915685110d6cf59988d6fc27f`. Focused tests are `tests/test_phase8a_exp059_implementation_failure_diagnostics.py` at blob `3432d5ffb6799eb3adf4d25780cfc00141ba038e`.
 
 DEC-252 keeps EXP-059 rerun/replacement, successor model fit, successor historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading false. It opens successor protocol source design only, under a new experiment identity.
+
+
+## DEC-253 — Phase 8A EXP-060 regime-balance implementation-repair protocol
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-253 binds DEC-252 merge `fffe7311bfb0c14bf6936657b81ffe8a38c66414`, DEC-252 diagnostic blob `d73008c7faf236f915685110d6cf59988d6fc27f`, DEC-251 result-decision blob `c8ca7143e687494b81205556af7e317ec69937fd`, EXP-059 regime-balance protocol blob `cd4e790098a5c8d99ea2aa5264465b5d4b6b6acc`, and EXP-059 training-core blob `4f99c1d0cb18551b67cc89357ad4a3940c190cd2`.
+
+EXP-060 preserves EXP-059 regime-balance semantics exactly: chronology, model family, jackknife views, unanimous positive-utility eligibility, all frozen reference families, residual-bound/breadth/lower-tail/regime-floor/regime-balance scores, penalty multiplier 1.0, budgets 250/500/1000, nine-part ranking/cutoff, four temporal-stability windows, 0.10 minimum directional candidate share, financial gates, validation, holdout, and no-refit/no-recalibration forward application.
+
+The only authorized implementation change is the four-name predecessor-depth repair from `_predecessor._predecessor.<name>` to `_predecessor._predecessor._predecessor.<name>` for `FIT_TEMPORAL_RESIDUAL_BREADTH_BOUND_COUNT_PER_ROW`, `FIT_TEMPORAL_RESIDUAL_BREADTH_RULE`, `RESIDUAL_BREADTH_ELIGIBILITY_RULE`, and `RESIDUAL_BREADTH_POSITIVITY_RULE`.
+
+Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_protocol.py` at blob `82d336250e2cdd9894afa5554c6b422e0de6b1fe`. Focused tests are `tests/test_phase8a_exp060_implementation_repair_protocol.py` at blob `0aa76c5d88e6d3a894d1d19bb6241c24ade1b18f`.
+
+DEC-253 authorizes implementation-repair source design only. Protocol semantic change, model-protocol result production, model fit, historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a deterministic in-memory EXP-060 training/evaluation core only.
