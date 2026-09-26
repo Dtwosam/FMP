@@ -4016,3 +4016,19 @@ The fit-regime-floor layer changes candidate identity in 27 of 28 available vari
 DEC-241 classifies the result as `REGIME_FLOOR_RANKING_CHANGED_CANDIDATE_MIX_AND_FINANCIALS_BUT_DID_NOT_CREATE_TEMPORAL_STABILITY`. Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_post_result_diagnostics.py` at blob `c0717252dabd625bd6a65b78f9acb5217ed44c84`. Focused tests are `tests/test_phase8a_exp058_post_result_diagnostics.py` at blob `b3a1f930d088e279dbc17c86d4b4bd3b6c60fe83`.
 
 EXP-058 rerun/replacement, stability-gate relaxation, early-window removal, selection-outcome ranking, selection-window recalibration/quotas, regime-floor retuning, successor model fit/result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. Only successor protocol source design is open.
+
+
+## DEC-242 — Phase 8A EXP-059 fit-regime balance protocol
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-242 binds DEC-241 merge `761696ac8619841efde494ff4c827c4c91e8895c`, DEC-241 diagnostic blob `c0717252dabd625bd6a65b78f9acb5217ed44c84`, DEC-240 result-decision blob `f5a5f7e49b7088f4af9b35a9143e486c3fba3d1a`, predecessor EXP-058 protocol blob `8e10cc3760a4a7dd019ea1ecc7c60189fe1770e2`, and predecessor evidence fingerprint `7e5019f0e00ada90a8f9c111d2b6fdb4ba41908f86a47203258b333439c8c8ee`.
+
+EXP-059 adds one fit-only regime-balance score from the exact three frozen EXP-058 fit-regime means. For means `m1,m2,m3`, score = arithmetic mean minus exactly 1.0 times `max-min`. No new reference vector, fit regime, jackknife view, selection-window statistic, validation outcome, or holdout outcome enters the score.
+
+Eligible rows rank by regime-balance utility, regime-floor utility, residual lower-tail mean, residual breadth, robust residual-bound utility, feature support, utility support, pooled calibrated utility, raw utility, then row identity. Each 250/500/1000 budget freezes the corresponding nine-part numeric cutoff. Validation and holdout reuse the exact fitted models/references, three regime means, regime-floor score, regime-balance score, and frozen cutoff with no refit/recalibration/tuning.
+
+Protocol source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_protocol.py` at blob `cd4e790098a5c8d99ea2aa5264465b5d4b6b6acc`. Focused tests are `tests/test_phase8a_exp059_regime_balance_protocol.py` at blob `42277506ffb39c0a9969b0253127a0cf10b79fd9`.
+
+DEC-242 changes no eligibility, budget, financial gate, temporal-stability window/share floor, chronology, feature, target, HGB, or jackknife rule. Model result production, model fit, historical execution, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a deterministic in-memory EXP-059 training/evaluation core only.
