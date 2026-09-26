@@ -37,6 +37,12 @@ jobs:
           test "$(git branch --show-current)" = "main"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "82a90af8edbf156e89df3a63f2003da71d4473d3" "$GITHUB_SHA"
+          test "$(git hash-object .github/workflows/phase8a-exp015-stage-a.yml)" = "ae8bdfbdb1bcfd62204a1bd0ec32dddfd9938930"
+          test "$(git hash-object src/fmp/portfolio/exp015_stage_a_terminal_review.py)" = "751c886f2d00e46d3c0a20fabbe0db4231db0d5d"
+          test "$(git hash-object src/fmp/portfolio/exp015_stage_a_operator.py)" = "3f2bca609ab6c1cd324f95c47be99584b11d9d90"
+          test "$(git hash-object scripts/phase8a_exp015_stage_a_operator.py)" = "11010d32842b0f0ab829e0cc20d4654a7d5dcf2e"
+          test "$(git hash-object requirements/exp015-stage-a-operator.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
 
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$RUNNER_TEMP/executor-current-run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp015-stage-a-operator-execute.yml/runs?branch=main&event=push&per_page=100" > "$RUNNER_TEMP/executor-runs.json"

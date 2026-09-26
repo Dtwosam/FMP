@@ -89,7 +89,7 @@ Workflow:
 
 Git blob:
 
-`bff0cf878ec9e44ce5e3c69ab50bc97521f24e23`
+`fd7c45bb6f47dcb5d441312bb58981589a7f1850`
 
 The workflow:
 
@@ -98,6 +98,8 @@ The workflow:
 - checks out full-history `main`;
 - requires local HEAD and `origin/main` to equal the exact triggering `GITHUB_SHA`;
 - requires executor `run_attempt == 1`;
+- requires the DEC-266 merge commit to be an ancestor of the executor head;
+- re-hashes and pins the DEC-264 guarded Stage A workflow, DEC-264 terminal reviewer, DEC-265 operator, DEC-265 public CLI, and pinned EXP-015 operator runtime before any GitHub write is possible;
 - queries its own workflow history and rejects any prior different main/push executor run;
 - installs only the pinned EXP-015 operator runtime from `requirements/exp015-stage-a-operator.txt` at blob `1ff32214dee10d877a067e750cd69ffad96d5fe5`;
 - requires the checkout to remain clean;
@@ -126,7 +128,7 @@ Workflow tests:
 
 Git blob:
 
-`986dfad2a6a7a635b1a4cf86c488e95078a3e78d`
+`c58ad493ef3914882e5d3106a5f91f83d056c0f7`
 
 They pin exact proof identities, first-executor semantics, exact-trigger SHA binding, no prior executor run, pre-dispatch empty-slot proof, double fresh planning, no direct workflow-dispatch path in the workflow, exactly-one submitted Stage A observation, no rerun/replacement path, and evidence persistence outside the checkout.
 

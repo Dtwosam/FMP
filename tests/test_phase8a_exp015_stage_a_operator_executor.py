@@ -37,6 +37,20 @@ class Exp015StageAOperatorExecutorWorkflowTests(unittest.TestCase):
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
         self.assertIn('test "$(git rev-parse HEAD)" = "$GITHUB_SHA"', text)
         self.assertIn('test "$(git rev-parse origin/main)" = "$GITHUB_SHA"', text)
+        self.assertIn(
+            'git merge-base --is-ancestor "82a90af8edbf156e89df3a63f2003da71d4473d3" "$GITHUB_SHA"',
+            text,
+        )
+        for sha in (
+            "ae8bdfbdb1bcfd62204a1bd0ec32dddfd9938930",
+            "751c886f2d00e46d3c0a20fabbe0db4231db0d5d",
+            "3f2bca609ab6c1cd324f95c47be99584b11d9d90",
+            "11010d32842b0f0ab829e0cc20d4654a7d5dcf2e",
+            "1ff32214dee10d877a067e750cd69ffad96d5fe5",
+        ):
+            with self.subTest(frozen_sha=sha):
+                self.assertIn(sha, text)
+        self.assertIn("git hash-object", text)
         self.assertIn("executor-current-run.json", text)
         self.assertIn("executor-runs.json", text)
         self.assertIn('assert current["head_sha"] == os.environ["GITHUB_SHA"]', text)
