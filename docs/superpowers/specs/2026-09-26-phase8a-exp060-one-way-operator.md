@@ -111,7 +111,7 @@ Git blob:
 
 `72eb2f99ac234985da552468201d669ca684678d`
 
-The tests pin clean-main checkout rules, exact workflow/run endpoints, one-run-only selection, one-way state classification, dispatch-only-on-`MISSING`, exact DEC-256/247 gate metadata, DEC-257 terminal review routing, aggregate artifact selection, tamper rejection, and the double-plan execution check.
+The tests pin clean-main checkout rules, exact workflow/run endpoints, one-run-only selection, one-way state classification, dispatch-only-on-`MISSING`, exact DEC-256/258 gate metadata, DEC-257 terminal review routing, aggregate artifact selection, tamper rejection, and the double-plan execution check.
 
 ## Authorization state
 
