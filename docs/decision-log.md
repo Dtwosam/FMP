@@ -4265,3 +4265,20 @@ Public CLI `scripts/phase8a_exp060_model_run.py` is blob `90c6bc9e893c813d394e3a
 Exact-source execution gate `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_execution_gate.py` is blob `82f51bf85ccb1793b3a980b2884f3e122a03c8db`. Focused tests are `tests/test_phase8a_exp060_model_workflow.py` at blob `e530e2122ac0ac59f1c02345d890f55c94bfec97`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-workflow-source-freeze.md`.
 
 DEC-256 intentionally has no first-run guard and opens no historical slot. Model-run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate predeclared attempt-1 terminal-review contract.
+
+## DEC-257 — Phase 8A EXP-060 predeclared terminal review
+
+**Date:** 2026-09-26
+**Status:** APPROVED REVIEW SOURCE / EXECUTION CLOSED
+
+DEC-257 binds merged DEC-256 commit `cef9f6d201bf2b025f08c924a11c84e9684b9ba0`, workflow blob `20af1bf2f9057274a8c50d5b48becbf5f683ef86`, CLI blob `90c6bc9e893c813d394e3a9c4adc5a155e938af0`, and execution-gate blob `82f51bf85ccb1793b3a980b2884f3e122a03c8db`.
+
+The review accepts only the exact manual-main EXP-060 repaired regime-balance workflow on attempt 1. A successful terminal review requires exactly 11 completed successful jobs, all nine expected non-expired pair/timeframe cell artifacts, the exact non-expired aggregate artifact, and aggregate evidence that deterministically recompiles under DEC-255 for the reviewed head commit.
+
+Successful aggregate revalidation verifies 18 cells, 108 regressors, 108 pooled calibration references, 432 utility-support references, 216 feature-support references, 432 residual references, the inherited twelve-bound residual-breadth inventory, the twelve-bound residual lower-tail source inventory, lower-tail count 3, three residual fit regimes, four residual windows per regime, twelve regime-floor source bounds per eligible row, three regime-balance source regimes, twelve regime-balance source bounds per eligible row, penalty multiplier 1.0, and the exact aggregate evidence fingerprint.
+
+Non-success outcomes may preserve only produced expected cell artifacts; they cannot claim aggregate evidence or aggregate artifact and open no rerun, retry, or replacement path. Any run attempt greater than 1 is rejected.
+
+Terminal-review source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_result_review.py` at blob `989ebc7b0cc33e5076f83ea94337fe6581c321e3`. Focused tests are `tests/test_phase8a_exp060_model_result_review.py` at blob `a9679622fd5a7ca9328dbcb44be073ffabd21240`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-terminal-review.md`.
+
+DEC-257 does not authorize workflow dispatch, authoritative result execution, model-protocol result production, model fitting, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. The next safe gate is a separate zero-prior-run proof plus first-run guard and at most one bounded outer historical slot.
