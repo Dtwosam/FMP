@@ -67,7 +67,7 @@ Workflow:
 
 Git blob:
 
-`eaeb463cbbd64815928057e8128701a5e0c78bf4`
+`be3a370dc538214d1758733c0b500ee3c7921609`
 
 The workflow:
 
@@ -75,8 +75,9 @@ The workflow:
 - grants only `contents: read` and `actions: read`;
 - has no `workflow_dispatch`, schedule, or pull-request trigger;
 - checks out exact merged `main` with full history;
-- requires local HEAD to equal `origin/main`;
+- requires local HEAD and `origin/main` to equal the triggering `GITHUB_SHA`;
 - independently verifies the exact DEC-264 workflow/reviewer and DEC-265 operator/CLI Git blobs;
+- requires merged DEC-265 commit `ed4373a7a0da36850a5f08971e9e12bd63cf1554` to be an ancestor of the triggering proof SHA;
 - installs only the pinned proof runtime;
 - requires a clean worktree after installation;
 - invokes only `python scripts/phase8a_exp015_stage_a_operator.py next`;
@@ -89,6 +90,7 @@ A successful DEC-266 proof must report:
 
 - `operator_decision = DEC-265`;
 - `operator_read_only = true`;
+- exact triggering `head_sha = GITHUB_SHA`;
 - exact DEC-264 predecessor identities;
 - no authoritative manual-main Stage A run;
 - `run_state = MISSING`;
@@ -126,7 +128,7 @@ Focused runner tests:
 
 Git blob:
 
-`f34ab7c353a62c0bc4372ee63c385e76f387a60b`
+`8745125bec5ae27694ddb1e0c69ffc4ec865451b`
 
 They pin main-push scope, read-only permissions, exact frozen source hashes, next-only execution, minimal pinned runtime, clean-worktree behavior, exact missing-slot plan shape, immutable plan persistence, and all downstream locks.
 
