@@ -51,7 +51,7 @@ def _run(
 def _checkout() -> dict[str, object]:
     return {
         "repository": REPOSITORY,
-        "dec225_merged_commit": DEC236_MERGED_COMMIT,
+        "dec236_merged_commit": DEC236_MERGED_COMMIT,
         "branch": "main",
         "head_sha": SHA,
         "clean_worktree": True,
@@ -76,7 +76,7 @@ class Exp058ResidualRegimeFloorOperatorTests(unittest.TestCase):
         )
         self.assertEqual(report["head_sha"], SHA)
         self.assertEqual(
-            report["dec225_merged_commit"],
+            report["dec236_merged_commit"],
             DEC236_MERGED_COMMIT,
         )
 
@@ -258,7 +258,7 @@ class Exp058ResidualRegimeFloorOperatorTests(unittest.TestCase):
         )
         self.assertIn("DEC-235", terminal["next_action"])
 
-    def test_gate_metadata_matches_dec225_source_shape(self) -> None:
+    def test_gate_metadata_matches_dec236_source_shape(self) -> None:
         gate = {
             "fit_temporal_residual_regime_floor_utility_model_execution_gate_decision": (
                 "DEC-234"
@@ -316,7 +316,7 @@ class Exp058ResidualRegimeFloorOperatorTests(unittest.TestCase):
         self.assertEqual(selected["artifact_id"], 55)
         self.assertEqual(selected["artifact_name"], expected)
 
-    def test_public_cli_binds_dec225_and_dec224(self) -> None:
+    def test_public_cli_binds_dec236_and_dec235(self) -> None:
         text = SCRIPT.read_text(encoding="utf-8")
         self.assertIn(
             '"EXP-058 aggregate evidence code commit mismatch"',
