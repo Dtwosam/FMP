@@ -107,7 +107,7 @@ Guarded workflow:
 
 Git blob:
 
-`dc68e91fc38f22ec0cde14404d7f3aa203d023df`
+`20ca8ec175a9a2405683bf239337c913625dfa33`
 
 Before catalog freeze or data access, the workflow now requires the current run to be exactly:
 
@@ -136,7 +136,7 @@ Predeclared terminal-review source:
 
 Git blob:
 
-`ffd2e0cdee06811e04b6a2081c282d4a7193feb9`
+`3cd6c7c614aadb42fa3b6fa01900a22a18961ca4`
 
 A successful authoritative Stage A attempt must have exactly 11 completed jobs:
 
