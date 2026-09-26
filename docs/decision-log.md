@@ -4066,3 +4066,19 @@ Complete aggregate evidence requires all 18 exact cells and verifies 108 regress
 Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_artifacts.py` at blob `a993d8a0a98b181c7810e4f0931be330352437b4`. Focused tests are `tests/test_phase8a_exp059_regime_balance_artifacts.py` at blob `12ee1e63d2bfc0cae1ee272290f866e1de021520`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp059-regime-balance-artifact-contract.md`.
 
 DEC-244 remains non-executable: authoritative result execution, model fit, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate manual-main EXP-059 workflow/CLI/runtime source freeze with execution still closed.
+
+
+## DEC-245 — Phase 8A EXP-059 workflow/CLI/runtime source freeze
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / EXECUTION CLOSED
+
+DEC-245 binds DEC-242 merge `a14afb226722d168c3d899d7079776388161a52d` and protocol blob `cd4e790098a5c8d99ea2aa5264465b5d4b6b6acc`, DEC-243 merge `9f427f06f315288bd9b132de19901beb5a5ddfc8` and training-core blob `4f99c1d0cb18551b67cc89357ad4a3940c190cd2`, and DEC-244 merge `b539c48cd62fb8e510ecaa15ce507c114f9401bb` and artifact-contract blob `a993d8a0a98b181c7810e4f0931be330352437b4`.
+
+The frozen manual-main/input-free workflow is `.github/workflows/phase8a-exp059-fit-temporal-residual-regime-balance-utility-model-training.yml` at blob `d416c43c9e582f49cd60314c6ee736925e8185e8`. It retains read-only permissions, Python 3.12.14, the exact nine pair/timeframe datasets, 60m/240m horizons, frozen feature/outcome/readiness artifacts, partial cell evidence, and deterministic aggregate evidence.
+
+Public CLI `scripts/phase8a_exp059_model_run.py` is blob `44c084c226c62c30ddf16741027593a4a835605f`; runtime lock `requirements/exp059-model-run.txt` is blob `d25ab16056b9f5df283147d67b8f401f60ae7520`. The CLI requires execution authorization before readiness/artifact loading, regime-balance model-core execution, or aggregate compilation and contains no direct workflow-dispatch path.
+
+Exact-source execution gate `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_execution_gate.py` is blob `d6556cf3bc3a1189c2ee6648c1870ec307a2178f`. Focused tests are `tests/test_phase8a_exp059_model_workflow.py` at blob `e75663b17d334fc73b3fc905779988f5807e7e6d`.
+
+DEC-245 intentionally has no first-run guard and opens no historical slot. Model-run dispatch, authoritative result execution, model-protocol result production, model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate predeclared attempt-1 terminal-review contract.
