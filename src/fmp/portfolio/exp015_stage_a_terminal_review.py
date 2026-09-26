@@ -116,6 +116,15 @@ def _index_jobs(
         raise ValueError("EXP-015 Stage A terminal review requires one catalog job")
     if len(matrix) != 9:
         raise ValueError("EXP-015 Stage A terminal review requires nine matrix jobs")
+    expected_matrix_names = {
+        f"stage-a-cell ({symbol}, {timeframe})"
+        for symbol, timeframe in EXPECTED_CELLS
+    }
+    matrix_names = {str(job["name"]) for job in matrix}
+    if len(matrix_names) != 9 or matrix_names != expected_matrix_names:
+        raise ValueError(
+            "EXP-015 Stage A terminal review matrix job coverage mismatch"
+        )
     if len(authorize) != 1:
         raise ValueError(
             "EXP-015 Stage A terminal review requires one authorization job"
@@ -223,13 +232,26 @@ def _validate_authorization_evidence(
         raise ValueError("EXP-015 Stage A survivor accounting mismatch")
 
     catalog = build_exp015_challengers(code_commit=head_sha)
-    catalog_fingerprints = {item.strategy.fingerprint for item in catalog}
+    catalog_by_fingerprint = {
+        item.strategy.fingerprint: item.strategy
+        for item in catalog
+    }
+    catalog_fingerprints = set(catalog_by_fingerprint)
     if len(catalog_fingerprints) != 567:
         raise ValueError("EXP-015 Stage A terminal review catalog size drift")
     if not set(survivors).issubset(catalog_fingerprints):
         raise ValueError("EXP-015 Stage A survivor is outside frozen catalog")
     if evidence.get("stage_b_source_open_authorized") is not bool(survivors):
         raise ValueError("EXP-015 Stage A source-open flag mismatches survivors")
+
+    expected_fingerprints_by_cell: dict[tuple[str, str], list[str]] = {
+        cell: sorted(
+            fingerprint
+            for fingerprint, strategy in catalog_by_fingerprint.items()
+            if (strategy.symbol, strategy.timeframe) == cell
+        )
+        for cell in EXPECTED_CELLS
+    }
 
     cells_raw = evidence.get("cells")
     if not isinstance(cells_raw, list) or len(cells_raw) != 9:
@@ -238,6 +260,7 @@ def _validate_authorization_evidence(
     expected_cells = set(EXPECTED_CELLS)
     seen_cells: set[tuple[str, str]] = set()
     covered_fingerprints: set[str] = set()
+    covered_survivors: set[str] = set()
     for raw in cells_raw:
         if not isinstance(raw, Mapping):
             raise ValueError("EXP-015 Stage A authorization cell row is malformed")
@@ -251,12 +274,21 @@ def _validate_authorization_evidence(
         seen_cells.add(cell)
 
         fingerprints = raw.get("strategy_fingerprints")
-        if not isinstance(fingerprints, list) or len(fingerprints) != 63:
+        if (
+            not isinstance(fingerprints, list)
+            or len(fingerprints) != 63
+            or any(not isinstance(item, str) for item in fingerprints)
+        ):
             raise ValueError(
                 "EXP-015 Stage A authorization cell must bind 63 strategies"
             )
-        normalized = {str(item) for item in fingerprints}
-        if len(normalized) != 63 or covered_fingerprints.intersection(normalized):
+        expected_fingerprints = expected_fingerprints_by_cell[cell]
+        if fingerprints != expected_fingerprints:
+            raise ValueError(
+                "EXP-015 Stage A authorization cell strategy membership mismatch"
+            )
+        normalized = set(fingerprints)
+        if covered_fingerprints.intersection(normalized):
             raise ValueError(
                 "EXP-015 Stage A authorization strategy coverage is duplicated"
             )
@@ -269,16 +301,88 @@ def _validate_authorization_evidence(
         if not isinstance(gates, Mapping) or set(gates) != normalized:
             raise ValueError("EXP-015 Stage A strategy-gate coverage mismatch")
 
+        mandatory_by_family: dict[str, set[str]] = {
+            family: set() for family in EXPECTED_FAMILIES
+        }
+        for fingerprint in expected_fingerprints:
+            gate = gates[fingerprint]
+            if not isinstance(gate, Mapping):
+                raise ValueError("EXP-015 Stage A strategy gate row is malformed")
+            strategy = catalog_by_fingerprint[fingerprint]
+            if gate.get("family") != strategy.family:
+                raise ValueError("EXP-015 Stage A strategy gate family mismatch")
+            if gate.get("parameters_json") != strategy.parameters_json:
+                raise ValueError("EXP-015 Stage A strategy gate parameters mismatch")
+            mandatory = gate.get("mandatory_gate_pass")
+            if not isinstance(mandatory, bool):
+                raise ValueError(
+                    "EXP-015 Stage A strategy gate mandatory flag is malformed"
+                )
+            if mandatory:
+                mandatory_by_family[strategy.family].add(fingerprint)
+
         cell_survivors = raw.get("survivor_fingerprints")
-        if not isinstance(cell_survivors, list) or len(cell_survivors) > 12:
+        if (
+            not isinstance(cell_survivors, list)
+            or len(cell_survivors) > 12
+            or any(not isinstance(item, str) for item in cell_survivors)
+            or cell_survivors != sorted(cell_survivors)
+            or len(set(cell_survivors)) != len(cell_survivors)
+        ):
             raise ValueError("EXP-015 Stage A cell survivor list is malformed")
-        if not {str(item) for item in cell_survivors}.issubset(normalized):
+        if not set(cell_survivors).issubset(normalized):
             raise ValueError("EXP-015 Stage A cell survivor outside cell catalog")
+
+        selected_by_rankings: set[str] = set()
+        for family in EXPECTED_FAMILIES:
+            ranking = rankings[family]
+            if not isinstance(ranking, Mapping):
+                raise ValueError("EXP-015 Stage A family-ranking row is malformed")
+            passing = ranking.get("passing_fingerprints")
+            selected = ranking.get("selected_fingerprints")
+            if (
+                not isinstance(passing, list)
+                or not isinstance(selected, list)
+                or any(not isinstance(item, str) for item in passing)
+                or any(not isinstance(item, str) for item in selected)
+                or len(set(passing)) != len(passing)
+                or len(set(selected)) != len(selected)
+                or len(selected) > 2
+            ):
+                raise ValueError("EXP-015 Stage A family-ranking list is malformed")
+            if set(passing) != mandatory_by_family[family]:
+                raise ValueError(
+                    "EXP-015 Stage A family-ranking passers mismatch strategy gates"
+                )
+            if selected != passing[:2]:
+                raise ValueError(
+                    "EXP-015 Stage A family-ranking selection mismatch"
+                )
+            if any(
+                catalog_by_fingerprint[fingerprint].family != family
+                for fingerprint in passing
+            ):
+                raise ValueError(
+                    "EXP-015 Stage A family-ranking contains wrong-family strategy"
+                )
+            selected_by_rankings.update(selected)
+
+        if selected_by_rankings != set(cell_survivors):
+            raise ValueError(
+                "EXP-015 Stage A cell survivors mismatch family selections"
+            )
+        if covered_survivors.intersection(cell_survivors):
+            raise ValueError("EXP-015 Stage A survivor appears in multiple cells")
+        covered_survivors.update(cell_survivors)
 
     if seen_cells != expected_cells:
         raise ValueError("EXP-015 Stage A authorization missing a required cell")
     if covered_fingerprints != catalog_fingerprints:
         raise ValueError("EXP-015 Stage A authorization does not cover 567 strategies")
+    if covered_survivors != set(survivors):
+        raise ValueError(
+            "EXP-015 Stage A aggregate survivors mismatch cell selections"
+        )
 
     return {
         "exp015_stage_a_authorization_evidence_verified": True,
