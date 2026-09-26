@@ -4376,3 +4376,20 @@ Because no EXP-015 final shortlist exists, DEC-042 portfolio selection and DEC-0
 The next safe gate is source-only modernization of EXP-015 Stage A execution governance: predeclare attempt-1 terminal review, prove zero prior authoritative manual-main Stage A attempts while preserving development-run history, add exact first-run/`run_attempt == 1` rejection guards, and open at most one bounded Stage A historical-result slot. DEC-263 itself authorizes no Stage A dispatch and no Stage B/C, portfolio-selection, shadow, demo, broker, live-order, real-money, or trading action.
 
 Detailed assessment: `docs/superpowers/specs/2026-09-26-phase8a-post-exp060-assessment.md` at blob `0e57b7ad31d83bf1c34bbcb8a8a040dfb95d9ee6`.
+
+## DEC-264 — EXP-015 Stage A first-run governance and terminal review
+
+**Date:** 2026-09-26
+**Status:** SOURCE-ONLY FIRST-RUN GOVERNANCE / ONE BOUNDED SLOT OPEN / NOT DISPATCHED
+
+DEC-264 binds merged DEC-263 commit `46512e56abb097bd8e7f1a9503f762e3d18b3715` and modernizes only the execution boundary for the already-frozen DEC-043/044 EXP-015 Stage A research protocol.
+
+Historical audit is preserved exactly: `.github/workflows/phase8a-exp015-stage-a.yml` has 12 old failed `push` runs on branch `phase8a/exp015-stage-a`, and zero authoritative `workflow_dispatch` attempts from `main`. Stage B and Stage C have zero runs. The 12 development failures remain immutable historical CI evidence and do not count as the future authoritative Stage A attempt.
+
+The guarded Stage A workflow is blob `ae8bdfbdb1bcfd62204a1bd0ec32dddfd9938930`. Before catalog/data work it requires exact workflow name/path, `workflow_dispatch`, branch `main`, exact current main head, current run identity, and `run_attempt == 1`; it lists only manual-main Stage A runs and fails closed if any prior authoritative attempt exists. DEC-043/044 research semantics remain unchanged: 567 identities, nine symbol/timeframe cells, six families, 2015-01-01 through 2018-12-31, frozen 0.2/0.5/1.0-pip scenarios, unchanged profitability/PF/DD/trade gates, at most two survivors per family cell, 54 ranking cells, and maximum 108 Stage A survivors.
+
+DEC-264 also predeclares terminal review in `src/fmp/portfolio/exp015_stage_a_terminal_review.py` at blob `751c886f2d00e46d3c0a20fabbe0db4231db0d5d`. A successful attempt requires exactly 11 successful jobs and all 11 expected non-expired artifacts, then independently verifies the final authorization against the result-producing commit: exact catalog/source identities, nine cells, 54 ranking cells, 567 strategies, complete cell/family/gate coverage, survivor accounting, and the Stage B source-open flag. A non-success may preserve only produced expected catalog/cell artifacts and may not claim final authorization evidence.
+
+Focused tests are `tests/test_phase8a_exp015_stage_a_first_run_governance.py` at blob `1ea17ac6329fa798c33c51b59c44ce437e0b739e`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp015-stage-a-first-run-governance.md` at blob `ff0e20a0aed84621392561218f4bd3db1117017d`.
+
+DEC-264 itself dispatches nothing. Stage A retry/replacement, Stage B/C execution, DEC-042 selection, DEC-045 acceptance, Phase 8B, demo, broker mutation, live orders, real-money action, and trading remain unauthorized. The next safe gate is a clean-main one-way Stage A operator that can classify missing/in-progress/terminal state but does not dispatch in its initial source-only decision.
