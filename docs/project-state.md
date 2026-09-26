@@ -1,11 +1,11 @@
 # FMP Project State
 
-**Updated:** 2026-09-25
+**Updated:** 2026-09-26
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED + EXP-045/EXP-046/EXP-047/EXP-048/EXP-049/EXP-050/EXP-051/EXP-052/EXP-053 CLOSED/REVIEWED; EXP-054 DEC-185 SOURCE-ONLY PROTOCOL FROZEN; NO EXP-054 RESULT AUTHORIZED
-**Next milestone:** After DEC-185 merges and green checks, implement a deterministic in-memory EXP-054 training/evaluation core against the exact residual-bound protocol. Artifact loading, authoritative fit, workflow dispatch, historical result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain locked.
+**Phase status:** ACTIVE — direct market-learning track closed by DEC-262 with a credible no-stable-challenger result; rule-based EXP-015 historical Stage A/B/C remains unexecuted authoritatively; DEC-042 portfolio selection and DEC-045 Phase 8A acceptance remain blocked
+**Next milestone:** Modernize EXP-015 Stage A execution governance without changing DEC-043/044 research semantics: predeclare attempt-1 terminal review, prove zero prior authoritative manual-main Stage A attempts, add first-run/run-attempt guards, and open at most one bounded Stage A historical-result slot. Phase 8B and all demo/live/broker/real-money paths remain locked.
 
 ## Current baseline
 
@@ -738,3 +738,5 @@ DEC-260 adds a repository-hosted, push-to-main, read-only proof for the exact DE
 DEC-261 binds the successful merged-main DEC-260 read-only proof and adds a one-shot repository-hosted EXP-060 executor. The executor can invoke only the already-frozen DEC-259 double-plan `advance --execute` path after independently revalidating the exact proof run, non-expired artifact, digest, and plan contents. It contains no independent dispatch/rerun/retry/replacement path. If merged and its push workflow succeeds, exactly one guarded manual-main EXP-060 historical model run may be submitted and the DEC-258 slot is consumed on any terminal outcome. All promotion, shadow/demo, broker, live-order, real-money, and trading paths remain locked; terminal outcome must route through DEC-257.
 
 DEC-262 freezes the sole successful EXP-060 historical result. Run `36260155597` completed attempt 1 successfully with all nine model-cell jobs and aggregate evidence successful. Deterministic evidence verifies the full repaired regime-balance inventory but selects no stable model challenger: only USDJPY/5m/60m budgets 500 and 1000 pass the aggregate gate, and both fail temporal stability. All 18 cells remain unselected; validation and holdout stay locked; accepted model candidate count is zero. EXP-060 is closed with no rerun/retry/replacement authority. Promotion, Phase 8B shadow, demo, broker mutation, live orders, real-money action, and trading remain locked. The next safe gate is a source-only Phase 8A post-result/acceptance assessment.
+
+DEC-263 closes the direct market-learning branch as a credible negative research answer but keeps Phase 8A active. EXP-060 is immutable and closed. The remaining unresolved Phase 8A branch is DEC-043 / EXP-20260922-015 rule-based challenger discovery: Stage A has 12 preserved source-development failure runs but no authoritative manual-main historical attempt; Stage B and Stage C have zero runs. DEC-042 portfolio selection and DEC-045 Phase 8A acceptance therefore remain blocked. The next safe gate is source-only Stage A execution governance with an exact attempt-1 review contract, zero-authoritative-run proof, first-run guard, and at most one bounded historical slot. No Stage A dispatch is authorized by DEC-263; Phase 8B, demo, broker mutation, live orders, real-money action, and trading remain locked.
