@@ -4329,3 +4329,18 @@ A successful proof must show DEC-259, `read_only=true`, no existing EXP-060 manu
 Focused tests are `tests/test_phase8a_exp060_operator_plan_runner.py` at blob `b1df3c05ba69e2e2afdde8d8fd43d4588d75bb30`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-read-only-operator-plan.md` at blob `bd4dbf64f63b2635f8fe64a2c68bfa3c65406942`.
 
 DEC-260 cannot dispatch, rerun, retry, replace, or claim a model result. Only after this workflow succeeds on merged main and its exact non-expired artifact is independently bound may a separate one-shot executor source be considered.
+
+## DEC-261 — Phase 8A EXP-060 one-shot operator executor
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE; AUTOMATIC EXECUTION ONLY AFTER MERGE
+
+DEC-261 binds successful merged-main DEC-260 proof run `36258921030` at head `0339c58f59206b6e70fb5019be403ee9ffdd1a34`, event `push`, branch `main`, attempt `1`, conclusion `success`. It binds the single non-expired artifact `10911029039`, named `exp060-dec259-read-only-operator-plan-0339c58f59206b6e70fb5019be403ee9ffdd1a34`, with digest `sha256:b51e691984368757138913d646c4561150b02e6afd437773a3758e5559f3748f`.
+
+Executor workflow `.github/workflows/phase8a-exp060-operator-execute.yml` is blob `e614736b287655c6b529799e2b5aaec052dd8c52`. It runs only on a push to `main` that changes the executor workflow, grants `contents: read` and `actions: write`, checks out exact merged main, preserves a clean worktree, independently revalidates the exact DEC-260 proof run/artifact metadata and ZIP digest/content, and invokes only `python scripts/phase8a_exp060_operator.py advance --execute`.
+
+The executor contains no independent direct model-workflow dispatch endpoint, rerun, retry, or replacement path. DEC-259 remains solely responsible for the one permitted dispatch decision and performs two fresh identical plans before submission. After submission, DEC-261 independently requires exactly one manual-main EXP-060 model run, exact executor merge head, and `run_attempt == 1`, then preserves immutable executor evidence outside the checkout.
+
+Focused tests are `tests/test_phase8a_exp060_operator_executor.py` at blob `0e601be70e0cf2c7ac15355e969f2f50226c3c9f`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-one-shot-executor.md` at blob `11e57b4f078c6f08cb84ca855198d0e668e6b30c`.
+
+If merged-main execution submits the guarded workflow, that first manual-main EXP-060 attempt consumes the DEC-258 slot regardless of terminal outcome. No second executor attempt, model rerun, retry, or replacement is authorized. Any terminal result must route through DEC-257. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain unauthorized.
