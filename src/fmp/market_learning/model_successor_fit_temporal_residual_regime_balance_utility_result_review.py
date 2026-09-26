@@ -304,10 +304,10 @@ def validate_fit_temporal_residual_regime_balance_utility_model_terminal_review(
         "fit_temporal_residual_regime_balance_utility_model_result_review_decision": (
             FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_RESULT_REVIEW_DECISION
         ),
-        "dec234_merged_commit": DEC245_MERGED_COMMIT,
-        "dec234_workflow_blob_sha": DEC245_WORKFLOW_BLOB_SHA,
-        "dec234_cli_blob_sha": DEC245_CLI_BLOB_SHA,
-        "dec234_execution_gate_blob_sha": DEC245_EXECUTION_GATE_BLOB_SHA,
+        "dec245_merged_commit": DEC245_MERGED_COMMIT,
+        "dec245_workflow_blob_sha": DEC245_WORKFLOW_BLOB_SHA,
+        "dec245_cli_blob_sha": DEC245_CLI_BLOB_SHA,
+        "dec245_execution_gate_blob_sha": DEC245_EXECUTION_GATE_BLOB_SHA,
         "reviewed_model_run_id": run_id,
         "reviewed_model_head_sha": head_sha,
         "reviewed_model_run_attempt": 1,
