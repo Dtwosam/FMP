@@ -48,7 +48,7 @@ The live state is classified as exactly one of:
 - `IN_PROGRESS`;
 - `TERMINAL`.
 
-More than one manual-main run is rejected as a DEC-258 violation.
+More than one manual-main run is rejected as a DEC-258 violation. Any listed run with `run_attempt != 1` is also rejected as an unauthorized rerun.
 
 Only `MISSING` may expose a dispatch command.
 
@@ -101,7 +101,7 @@ Operator source:
 
 Git blob:
 
-`504bf66e6774c2fcc46dd6f21c68762ec251ccd0`
+`54f1c5c7d856eb4bf0eb5366cf43ae38a3f25d2c`
 
 Focused tests:
 
@@ -109,7 +109,7 @@ Focused tests:
 
 Git blob:
 
-`091bd1f2e0498c57885f869dc34cf9d8d10d626a`
+`bd2ca54ae02d3bfe230c400f19f3815e5c45b407`
 
 The tests pin clean-main checkout rules, exact workflow/run endpoints, one-run-only selection, one-way state classification, dispatch-only-on-`MISSING`, exact DEC-256/258 gate metadata, DEC-257 terminal review routing, aggregate artifact selection, tamper rejection, and the double-plan execution check.
 
