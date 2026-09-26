@@ -4361,3 +4361,18 @@ Across 54 budget variants, 28 are available and 26 budget-unavailable over 26,39
 Reviewed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_result_decision.py` at blob `2684419f983a04d1771443126104a8e7059cc03b`. Focused tests are `tests/test_phase8a_exp060_model_result_decision.py` at blob `dd6eb6424a97d9f743df0ff0bf8790d4505372b6`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-reviewed-model-result.md` at blob `c7f41722dec57224444156cf95711664ac16c9fd`.
 
 DEC-262 closes EXP-060 execution/model-fit authority and retains promotion, shadow/demo, broker mutation, live orders, real-money action, and trading as false. The next safe gate after green merge is a source-only Phase 8A post-result assessment; it may not reopen EXP-060 or begin Phase 8B.
+
+## DEC-263 — Phase 8A post-EXP-060 assessment
+
+**Date:** 2026-09-26
+**Status:** SOURCE-ONLY ASSESSMENT / PHASE 8A REMAINS ACTIVE
+
+DEC-263 binds merged DEC-262 commit `6d6c88426960b40293aa4b3f1f42d2e02911b375` and records the Phase 8A state after the sole EXP-060 historical result is frozen. EXP-060 run `36260155597` completed successfully but selected no stable model challenger. Its exact aggregate artifact is `10912798284`, digest `sha256:9090a1a1c7849c703eaa38e5571a36a65f5a47f250c6c0e3a7e21777367b8bc9`, with evidence fingerprint `52a840d0919992e1fe9ef3342ddefe46cfb1ad8ccd23c8dfe55963d4c1669b37`. The direct market-learning question is therefore answered through the credible-rejection branch of the Phase 8A acceptance criteria; EXP-060 remains closed with no rerun, retry, replacement, or post-result rescue.
+
+Phase 8A is not complete because DEC-043 / EXP-20260922-015 rule-based challenger discovery remains historically unexecuted. The frozen Stage A/B/C workflow blobs are `e32e04c3afd8a8929dc60defd109788d4e7aa989`, `50a5a32c7beb99df1fbbb8db89e88edae958ee7c`, and `abc946fb7684dec6174b2cdf9075092856b14f86`. Stage A has 12 preserved source-development failure runs on branch `phase8a/exp015-stage-a`, but no authoritative manual-main Stage A historical attempt. Stage B and Stage C have zero workflow runs.
+
+Because no EXP-015 final shortlist exists, DEC-042 portfolio selection and DEC-045 Phase 8A acceptance remain blocked. Phase 8B therefore remains locked and no shadow candidate is frozen.
+
+The next safe gate is source-only modernization of EXP-015 Stage A execution governance: predeclare attempt-1 terminal review, prove zero prior authoritative manual-main Stage A attempts while preserving development-run history, add exact first-run/`run_attempt == 1` rejection guards, and open at most one bounded Stage A historical-result slot. DEC-263 itself authorizes no Stage A dispatch and no Stage B/C, portfolio-selection, shadow, demo, broker, live-order, real-money, or trading action.
+
+Detailed assessment: `docs/superpowers/specs/2026-09-26-phase8a-post-exp060-assessment.md` at blob `0e57b7ad31d83bf1c34bbcb8a8a040dfb95d9ee6`.
