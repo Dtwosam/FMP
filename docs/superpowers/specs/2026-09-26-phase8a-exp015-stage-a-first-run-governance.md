@@ -136,7 +136,7 @@ Predeclared terminal-review source:
 
 Git blob:
 
-`3cd6c7c614aadb42fa3b6fa01900a22a18961ca4`
+`502a7727d8f5302d2edd1d2473ea10da4cc223e0`
 
 A successful authoritative Stage A attempt must have exactly 11 completed jobs:
 
@@ -206,7 +206,7 @@ No workflow is dispatched by DEC-264.
 
 Git blob:
 
-`fe96dede4cc043221ef843ed3c6f58ab8338a219`
+`1ea17ac6329fa798c33c51b59c44ce437e0b739e`
 
 The tests cover:
 
