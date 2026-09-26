@@ -108,7 +108,7 @@ Focused runner tests:
 
 Git blob:
 
-`b75b4495c23b098ad2e6aeb14e87d7f95b1ecd05`
+`ab97b2c61170e9947f4942b6dccdfaa35263c0a1`
 
 They pin main-push scope, read-only permissions, exact EXP-058 operator source path, `next`-only execution, clean-worktree behavior, exact plan identity fields, immutable plan persistence, and downstream locks.
 
