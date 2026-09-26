@@ -80,7 +80,7 @@ def _jobs(
 def _cell_artifact_names() -> list[str]:
     return [
         (
-            "exp059-fit-temporal-residual-regime-floor-utility-model-cell-results-"
+            "exp059-fit-temporal-residual-regime-balance-utility-model-cell-results-"
             f"{symbol}-{timeframe}-{SHA}"
         )
         for symbol, timeframe in EXPECTED_DATASETS
@@ -89,7 +89,7 @@ def _cell_artifact_names() -> list[str]:
 
 def _aggregate_artifact_name() -> str:
     return (
-        "exp059-fit-temporal-residual-regime-floor-utility-model-result-evidence-"
+        "exp059-fit-temporal-residual-regime-balance-utility-model-result-evidence-"
         f"{SHA}-from-feature-35867307338-outcome-35876715434"
     )
 
