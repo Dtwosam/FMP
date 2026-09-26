@@ -4314,3 +4314,18 @@ Operator source `src/fmp/market_learning/model_successor_fit_temporal_residual_r
 The CLI exposes read-only `next`, non-executing `advance`, and a guarded `advance --execute` path that requires two identical fresh plans immediately before submission. DEC-259 itself does not dispatch and does not consume the slot. Rerun, retry, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain unauthorized.
 
 The next safe gate is a repository-hosted read-only `next` plan runner. Only a successful merged-main proof of that planner may be bound by a later separate one-shot executor source.
+
+## DEC-260 — Phase 8A EXP-060 repository-hosted read-only operator plan
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / READ-ONLY / NOT DISPATCHED
+
+DEC-260 binds merged DEC-259 commit `cf2efadd1bbf457eb20357dfa74d6c2ea7278823`, operator source blob `54f1c5c7d856eb4bf0eb5366cf43ae38a3f25d2c`, and operator CLI blob `16c553d2dc959fe1e24796a95019163d1967e836`.
+
+Repository-hosted workflow `.github/workflows/phase8a-exp060-operator-plan.yml` is blob `88ee067dfcf77dd7d6c2456d3b202c12aaa76dda`. It is push-to-main only for the proof workflow/operator source paths, grants only `contents: read` and `actions: read`, checks out exact merged main, preserves a clean worktree, and invokes only `python scripts/phase8a_exp060_operator.py next`.
+
+A successful proof must show DEC-259, `read_only=true`, no existing EXP-060 manual-main run, `run_state=MISSING`, no run id, and stage `FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_MODEL_RUN_DISPATCH_REQUIRED`. The exact dispatch command may appear only as plan evidence. Replacement, promotion, shadow/demo, broker mutation, live orders, real-money action, and trading remain false.
+
+Focused tests are `tests/test_phase8a_exp060_operator_plan_runner.py` at blob `b1df3c05ba69e2e2afdde8d8fd43d4588d75bb30`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-read-only-operator-plan.md` at blob `bd4dbf64f63b2635f8fe64a2c68bfa3c65406942`.
+
+DEC-260 cannot dispatch, rerun, retry, replace, or claim a model result. Only after this workflow succeeds on merged main and its exact non-expired artifact is independently bound may a separate one-shot executor source be considered.
