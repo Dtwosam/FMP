@@ -153,7 +153,7 @@ def validate_fit_temporal_residual_regime_balance_utility_repair_artifact_contra
         )
     )
     if training[
-        "fit_temporal_residual_regime_balance_utility_training_core_decision"
+        "fit_temporal_residual_regime_balance_utility_repair_training_core_decision"
     ] != FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_REPAIR_TRAINING_CORE_DECISION:
         raise ValueError("EXP-060 training-core decision drift")
 
