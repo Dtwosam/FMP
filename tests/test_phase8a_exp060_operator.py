@@ -360,6 +360,23 @@ class Exp060ResidualRegimeBalanceRepairOperatorTests(unittest.TestCase):
         self.assertIn("DEC-258 source gate", text)
         self.assertNotIn("EXP-051", text)
 
+    def test_public_cli_rechecks_all_dec258_downstream_locks(self) -> None:
+        text = SCRIPT.read_text(encoding="utf-8")
+        start = text.index("def _validated_source_gate()")
+        end = text.index("def _next_report()")
+        gate_text = text[start:end]
+        for field in (
+            "promotion_authorized",
+            "shadow_authorized",
+            "demo_order_authorized",
+            "broker_mutation_authorized",
+            "live_order_authorized",
+            "real_money_authorized",
+            "trading_authorized",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(f'"{field}"', gate_text)
+
     def test_dispatch_report_tamper_fails_closed(self) -> None:
         report = build_fit_temporal_residual_regime_balance_utility_repair_operator_report(
             checkout=_checkout(),
