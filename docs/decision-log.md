@@ -4000,3 +4000,19 @@ Of 54 budget variants, 28 are available and 26 unavailable. Utility-eligible sel
 Reviewed-result source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_result_decision.py` at blob `f5a5f7e49b7088f4af9b35a9143e486c3fba3d1a`. Focused tests are `tests/test_phase8a_exp058_model_result_decision.py` at blob `b07289e842649910eb2c098e23d3ce120365f511`.
 
 DEC-240 closes the consumed EXP-058 slot. Rerun, retry, replacement model run, further model fit, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is source-only post-result diagnostic analysis.
+
+
+## DEC-241 — Phase 8A EXP-058 post-result diagnostic
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY DIAGNOSTIC
+
+DEC-241 binds DEC-240 merge `d691c8e12f40cf4baf3fc93f598b24d23b8435f4`, DEC-240 result-decision blob `f5a5f7e49b7088f4af9b35a9143e486c3fba3d1a`, DEC-229 result-decision blob `185e2cdf089cb6f1a12619af58fd32860366498f`, and DEC-230 diagnostic blob `09e88b85a51b858296a3af7d146251606f1d5533`.
+
+Variant accounting is unchanged between EXP-057 and EXP-058: 54 total variants, 28 available, 26 unavailable, and 26,392 utility-eligible selection rows. Aggregate-pass identity is unchanged at USDJPY 5m / 60m budgets 250, 500, and 1000; stable-pass count remains zero in both experiments.
+
+The fit-regime-floor layer changes candidate identity in 27 of 28 available variants. Aggregate 0.5-pip total net pips improve in 14 variants, worsen in 13, and remain unchanged in one. In the common USDJPY 5m / 60m cell, budgets 250 and 500 improve financially while budget 1000 worsens. Selection-window candidate counts remain chronologically concentrated at `0/0/0/250`, `0/0/7/493`, and `0/3/72/925`, so the unchanged 10% per-window share floor still rejects all three aggregate-pass variants.
+
+DEC-241 classifies the result as `REGIME_FLOOR_RANKING_CHANGED_CANDIDATE_MIX_AND_FINANCIALS_BUT_DID_NOT_CREATE_TEMPORAL_STABILITY`. Diagnostic source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_post_result_diagnostics.py` at blob `c0717252dabd625bd6a65b78f9acb5217ed44c84`. Focused tests are `tests/test_phase8a_exp058_post_result_diagnostics.py` at blob `b3a1f930d088e279dbc17c86d4b4bd3b6c60fe83`.
+
+EXP-058 rerun/replacement, stability-gate relaxation, early-window removal, selection-outcome ranking, selection-window recalibration/quotas, regime-floor retuning, successor model fit/result execution, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. Only successor protocol source design is open.
