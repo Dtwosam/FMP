@@ -3934,3 +3934,19 @@ The exact manual-main workflow now contains a first-run rejection guard before e
 Only the outer historical-result slot is opened. The DEC-236 execution gate may expose workflow dispatch, authoritative historical-result execution, model-protocol result production, and model fitting for at most one guarded attempt. The underlying DEC-231/232/233 protocol/core/artifact authorization constants remain false. Execution-gate blob is `bd950a0091843c7630249a3ea7a6c1867f2b11ff`; focused workflow-test blob is `a0defef100102b23be330142a3430b4549e77495`.
 
 DEC-236 itself does not dispatch the workflow. The first manual-main EXP-058 attempt consumes the slot on any terminal outcome and must route through DEC-235. No rerun, retry, or replacement attempt is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate clean-main double-plan one-way operator.
+
+
+## DEC-237 — Phase 8A EXP-058 clean-main one-way operator
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NOT DISPATCHED
+
+DEC-237 binds DEC-236 merge `680359f2d4d03519952e84f257c9d16559b4e251` and freezes a clean-main, one-way EXP-058 operator. Before planning, the operator requires local `main`, clean worktree, exact equality between local HEAD and fetched `origin/main`, and an origin remote resolving exactly to `Dtwosam/FMP`.
+
+The operator accepts at most one exact manual-main EXP-058 workflow run and classifies live state as `MISSING`, `IN_PROGRESS`, or `TERMINAL`. Only `MISSING` may expose the exact frozen dispatch command `gh workflow run phase8a-exp058-fit-temporal-residual-regime-floor-utility-model-training.yml --ref main -R Dtwosam/FMP`. In-progress and terminal states never expose a dispatch or replacement action; terminal evidence routes through DEC-235.
+
+The operator metadata binds DEC-234 execution-gate identity, DEC-236 authorization, DEC-231/232/233/234/235 provenance, and the guarded EXP-058 workflow/CLI identities. The public CLI supports read-only `next`, non-executing `advance`, and a double-plan `advance --execute` path. Any live-state or plan drift between the first and second plans fails closed. No rerun, retry, or replacement command exists.
+
+Operator source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_floor_utility_operator.py` at blob `ffda686bf6c632f3c13bfaed8eafb23e8e565795`. Public CLI is `scripts/phase8a_exp058_operator.py` at blob `aca3a47d79a0c32ae6590db3019557bea6bb6e89`. Focused tests are `tests/test_phase8a_exp058_operator.py` at blob `d1fbe9a7f5db6318be53870a149584c5bb02ecf6`.
+
+DEC-237 does not itself dispatch the model workflow or consume the DEC-236 slot. Replacement model runs, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a repository-hosted read-only `next` plan runner only.
