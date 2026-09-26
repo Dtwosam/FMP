@@ -39,7 +39,7 @@ class Exp060OperatorPlanRunnerTests(unittest.TestCase):
         self.assertIn("actions: read", text)
         self.assertNotIn("actions: write", text)
 
-    def test_runner_executes_only_dec248_next_plan(self) -> None:
+    def test_runner_executes_only_dec259_next_plan(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
             "python scripts/phase8a_exp060_operator.py next",
