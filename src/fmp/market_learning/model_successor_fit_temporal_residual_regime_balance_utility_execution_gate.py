@@ -28,6 +28,9 @@ from .model_successor_fit_temporal_residual_regime_balance_utility_training impo
 FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_EXECUTION_GATE_DECISION = (
     "DEC-245"
 )
+FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION = (
+    "DEC-247"
+)
 FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_WORKFLOW_FILE = (
     "phase8a-exp059-fit-temporal-residual-regime-balance-utility-model-training.yml"
 )
@@ -38,14 +41,20 @@ FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_WORKFLOW_NAME = (
 DEC242_MERGED_COMMIT = "a14afb226722d168c3d899d7079776388161a52d"
 DEC243_MERGED_COMMIT = "9f427f06f315288bd9b132de19901beb5a5ddfc8"
 DEC244_MERGED_COMMIT = "b539c48cd62fb8e510ecaa15ce507c114f9401bb"
+DEC245_MERGED_COMMIT = "d33e2f1e6e7f39c12811dbc07c5cd960f8e2442f"
+DEC246_MERGED_COMMIT = "018c8cb223c3553ad4db4ba5b33b339a9a8fa918"
 
 DEC244_RUNNER_BLOB_SHA = "a993d8a0a98b181c7810e4f0931be330352437b4"
 DEC243_CORE_BLOB_SHA = "4f99c1d0cb18551b67cc89357ad4a3940c190cd2"
 DEC242_PROTOCOL_BLOB_SHA = "cd4e790098a5c8d99ea2aa5264465b5d4b6b6acc"
+DEC245_WORKFLOW_BLOB_SHA = "d416c43c9e582f49cd60314c6ee736925e8185e8"
+DEC245_CLI_BLOB_SHA = "44c084c226c62c30ddf16741027593a4a835605f"
+DEC245_GATE_BLOB_SHA = "d6556cf3bc3a1189c2ee6648c1870ec307a2178f"
+DEC246_REVIEW_BLOB_SHA = "5adc6ad72b2dfab1de1cca09a9bb2bc09663bfc5"
 LEGACY_DATA_LOADER_BLOB_SHA = "27c0848d16722a22b4762f5842396c2aebc92bec"
 
 FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_WORKFLOW_BLOB_SHA = (
-    "d416c43c9e582f49cd60314c6ee736925e8185e8"
+    "6c3e516be8d6eaed834fb1955efccf43f414318f"
 )
 FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_CLI_BLOB_SHA = (
     "44c084c226c62c30ddf16741027593a4a835605f"
@@ -62,10 +71,10 @@ MARKET_OUTCOMES_BLOB_SHA = "c83fefd4252b2fe426af97686f86e43021760c77"
 AUTHORIZED_PYTHON_VERSION = "3.12.14"
 
 FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_WORKFLOW_SOURCE_FROZEN = True
-FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = False
-AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = False
-FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = False
-FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_FIT_AUTHORIZED = False
+FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_RUN_DISPATCH_AUTHORIZED = True
+AUTHORITATIVE_FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_RESULT_EXECUTION_AUTHORIZED = True
+FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED = True
+FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_FIT_AUTHORIZED = True
 PROMOTION_AUTHORIZED = False
 SHADOW_AUTHORIZED = False
 DEMO_ORDER_AUTHORIZED = False
@@ -168,6 +177,12 @@ def validate_fit_temporal_residual_regime_balance_utility_model_workflow_sources
             root / "src/fmp/market_learning/model_artifacts.py",
             LEGACY_DATA_LOADER_BLOB_SHA,
         ),
+        "terminal_review": (
+            root
+            / "src/fmp/market_learning/"
+            "model_successor_fit_temporal_residual_regime_balance_utility_result_review.py",
+            DEC246_REVIEW_BLOB_SHA,
+        ),
         "workflow": (
             root
             / ".github/workflows/"
@@ -219,6 +234,15 @@ def validate_fit_temporal_residual_regime_balance_utility_model_workflow_sources
         "dec242_merged_commit": DEC242_MERGED_COMMIT,
         "dec243_merged_commit": DEC243_MERGED_COMMIT,
         "dec244_merged_commit": DEC244_MERGED_COMMIT,
+        "dec245_merged_commit": DEC245_MERGED_COMMIT,
+        "dec246_merged_commit": DEC246_MERGED_COMMIT,
+        "dec245_workflow_blob_sha": DEC245_WORKFLOW_BLOB_SHA,
+        "dec245_cli_blob_sha": DEC245_CLI_BLOB_SHA,
+        "dec245_gate_blob_sha": DEC245_GATE_BLOB_SHA,
+        "dec246_review_blob_sha": actual["terminal_review"],
+        "fit_temporal_residual_regime_balance_utility_model_execution_authorization_decision": (
+            FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION
+        ),
         "fit_temporal_residual_regime_balance_utility_runner_blob_sha": actual[
             "residual_regime_balance_runner"
         ],
@@ -241,10 +265,10 @@ def validate_fit_temporal_residual_regime_balance_utility_model_workflow_sources
         "market_outcomes_blob_sha": actual["market_outcomes"],
         "authorized_python_version": AUTHORIZED_PYTHON_VERSION,
         "fit_temporal_residual_regime_balance_utility_model_workflow_source_frozen": True,
-        "fit_temporal_residual_regime_balance_utility_model_run_dispatch_authorized": False,
-        "authoritative_fit_temporal_residual_regime_balance_utility_model_result_execution_authorized": False,
-        "model_protocol_result_authorized": False,
-        "model_fit_authorized": False,
+        "fit_temporal_residual_regime_balance_utility_model_run_dispatch_authorized": True,
+        "authoritative_fit_temporal_residual_regime_balance_utility_model_result_execution_authorized": True,
+        "model_protocol_result_authorized": True,
+        "model_fit_authorized": True,
         "promotion_authorized": False,
         "shadow_authorized": False,
         "demo_order_authorized": False,
@@ -268,12 +292,12 @@ def build_fit_temporal_residual_regime_balance_utility_model_workflow_source_gat
         **source,
         "stage": (
             "FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_"
-            "RUN_WORKFLOW_SOURCE_FROZEN"
+            "RUN_DISPATCH_REQUIRED"
         ),
         "next_action": (
-            "A later separate decision must predeclare terminal review "
-            "before any guarded EXP-059 historical model-result run may "
-            "be considered. DEC-245 does not authorize or dispatch execution."
+            "DEC-247 authorizes at most one guarded historical EXP-059 "
+            "model-result run after merge. This source change does not "
+            "dispatch the workflow."
         ),
     }
 
@@ -298,8 +322,8 @@ def require_authoritative_fit_temporal_residual_regime_balance_utility_model_exe
     )
     if not all(required_true):
         raise PermissionError(
-            "DEC-245 freezes EXP-059 workflow source but does not "
-            "authorize historical model-result execution"
+            "DEC-247 EXP-059 historical model-result execution "
+            "authorization is not open"
         )
 
     return {
@@ -322,9 +346,16 @@ __all__ = [
     "DEC243_MERGED_COMMIT",
     "DEC244_MERGED_COMMIT",
     "DEC244_RUNNER_BLOB_SHA",
+    "DEC245_CLI_BLOB_SHA",
+    "DEC245_GATE_BLOB_SHA",
+    "DEC245_MERGED_COMMIT",
+    "DEC245_WORKFLOW_BLOB_SHA",
+    "DEC246_MERGED_COMMIT",
+    "DEC246_REVIEW_BLOB_SHA",
     "DEMO_ORDER_AUTHORIZED",
     "FEATURE_SCHEMA_BLOB_SHA",
     "FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_CLI_BLOB_SHA",
+    "FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_EXECUTION_AUTHORIZATION_DECISION",
     "FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_EXECUTION_GATE_DECISION",
     "FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_FIT_AUTHORIZED",
     "FIT_TEMPORAL_RESIDUAL_REGIME_BALANCE_UTILITY_MODEL_PROTOCOL_RESULT_AUTHORIZED",
