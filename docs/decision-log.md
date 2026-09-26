@@ -4100,3 +4100,19 @@ Non-success outcomes may preserve only produced expected cell artifacts; they ca
 Terminal-review source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_result_review.py` at blob `5adc6ad72b2dfab1de1cca09a9bb2bc09663bfc5`. Focused tests are `tests/test_phase8a_exp059_model_result_review.py` at blob `e3d2abfe369a4a92510adce9c7b1d110bc363a28`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp059-terminal-review.md`.
 
 DEC-246 does not authorize workflow dispatch, authoritative result execution, model-protocol result production, model fitting, replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, or trading. The next safe gate is a separate zero-prior-run proof plus first-run guard and at most one bounded outer historical slot.
+
+
+## DEC-247 — Phase 8A EXP-059 first-run authorization gate
+
+**Date:** 2026-09-26
+**Status:** APPROVED ONE-SLOT SOURCE AUTHORIZATION / NOT DISPATCHED
+
+Immediately after DEC-246 merged, the latest 100 repository GitHub Actions runs were queried. That set contained one manual-main workflow-dispatch run and zero runs whose exact workflow name/path matched `phase8a-exp059-fit-temporal-residual-regime-balance-utility-model-training` / `.github/workflows/phase8a-exp059-fit-temporal-residual-regime-balance-utility-model-training.yml`. No EXP-059 historical model-result attempt had consumed the first-run slot.
+
+DEC-247 binds DEC-245 merge `d33e2f1e6e7f39c12811dbc07c5cd960f8e2442f`, DEC-245 workflow blob `d416c43c9e582f49cd60314c6ee736925e8185e8`, DEC-245 CLI blob `44c084c226c62c30ddf16741027593a4a835605f`, DEC-245 execution-gate blob `d6556cf3bc3a1189c2ee6648c1870ec307a2178f`, DEC-246 merge `018c8cb223c3553ad4db4ba5b33b339a9a8fa918`, and DEC-246 terminal-review blob `5adc6ad72b2dfab1de1cca09a9bb2bc09663bfc5`.
+
+The manual-main workflow now contains a first-run rejection guard before execution authorization. The guard verifies its own exact run identity and fails closed if any other manual-main EXP-059 workflow run already exists. The guarded workflow blob is `6c3e516be8d6eaed834fb1955efccf43f414318f`.
+
+Only the outer historical-result slot is opened. The DEC-247 execution gate may expose workflow dispatch, authoritative historical-result execution, model-protocol result production, and model fitting for at most one guarded attempt. The underlying DEC-242/243/244 protocol/core/artifact authorization constants remain false. Execution-gate blob is `7e6d07c1d7f24bb69912227906990e59abc7be0d`; focused workflow-test blob is `d1fa6a2c1cd2169b1dc40f1904010a9293cfb9fb`.
+
+DEC-247 itself does not dispatch the workflow. The first manual-main EXP-059 attempt consumes the slot on any terminal outcome and must route through DEC-246. No rerun, retry, or replacement attempt is authorized. Promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a separate clean-main double-plan one-way operator only.
