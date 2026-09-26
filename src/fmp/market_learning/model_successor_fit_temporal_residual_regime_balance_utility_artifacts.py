@@ -176,6 +176,10 @@ def validate_fit_temporal_residual_regime_balance_utility_artifact_contract_sour
         "model_fit_authorized": False,
         "promotion_authorized": False,
         "shadow_authorized": False,
+        "demo_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "live_order_authorized": False,
+        "real_money_authorized": False,
         "trading_authorized": False,
     }
 
@@ -448,11 +452,11 @@ def _validate_cell(
     if row.get("dec242_merged_commit") != (
         "a14afb226722d168c3d899d7079776388161a52d"
     ):
-        raise ValueError("EXP-059 cell DEC-231 merge identity mismatch")
+        raise ValueError("EXP-059 cell DEC-242 merge identity mismatch")
     if row.get("dec242_protocol_blob_sha") != (
         "cd4e790098a5c8d99ea2aa5264465b5d4b6b6acc"
     ):
-        raise ValueError("EXP-059 cell regime-floor protocol blob mismatch")
+        raise ValueError("EXP-059 cell regime-balance protocol blob mismatch")
     if row.get("predecessor_training_core_blob_sha") != (
         "77f2010574b3d8ecc958930d5bfadf7ddb4f2231"
     ):
