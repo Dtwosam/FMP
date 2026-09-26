@@ -4234,3 +4234,19 @@ All chronology, HGB/jackknife mechanics, calibration/support/residual references
 Training-core source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_training.py` at blob `202dcaa8ba4ad25324fbe53d00e812c60fbb37dd`. Focused tests are `tests/test_phase8a_exp060_implementation_repair_training.py` at blob `b651a35a3e54a9dd909ee6061662550b2b84dc43`.
 
 DEC-254 remains non-executable: historical result execution, model fit outside the deterministic in-memory core, artifact loading, readiness execution, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate non-executable EXP-060 artifact/evidence contract bound to this exact repaired core.
+
+
+## DEC-255 — Phase 8A EXP-060 artifact/evidence contract
+
+**Date:** 2026-09-26
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-255 binds DEC-254 merge `c8cac108bc098dbceda4b8903f5a56ac7f62bf47`, repaired training-core blob `202dcaa8ba4ad25324fbe53d00e812c60fbb37dd`, and predecessor EXP-059 regime-balance artifact-contract blob `a993d8a0a98b181c7810e4f0931be330352437b4`.
+
+Each EXP-060 cell must bind experiment `EXP-20260926-060`, protocol DEC-253, training core DEC-254, DEC-253 merge/protocol source identity, failed EXP-059 training-core blob `4f99c1d0cb18551b67cc89357ad4a3940c190cd2`, unchanged EXP-058 semantic-predecessor training-core blob `77f2010574b3d8ecc958930d5bfadf7ddb4f2231`, exact EXP-060 protocol version/fingerprint, and deterministic cell result fingerprint.
+
+The contract preserves the full regime-balance evidence inventory: 6 regressors, 6 pooled references, 24 utility-support references, 12 feature-support references, 24 residual references, 12 residual-breadth bounds, 12 lower-tail source bounds with lower-tail count 3, three residual regimes, four residual windows per regime, 12 regime-floor source bounds, three regime-balance source regimes, 12 regime-balance source bounds, penalty multiplier 1.0, and the unchanged nine-part cutoff. Complete aggregate evidence requires all 18 exact cells and verifies totals 108/108/432/216/432 plus the fixed per-row regime inventories before deterministic fingerprinting.
+
+Artifact-contract source is `src/fmp/market_learning/model_successor_fit_temporal_residual_regime_balance_utility_repair_artifacts.py` at blob `2a6c550dcafac2e7013136fcbbef95b13c2e7d18`. Focused tests are `tests/test_phase8a_exp060_regime_balance_repair_artifacts.py` at blob `d3ddef1ea784eedd04be73deb495b93df2559049`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp060-artifact-evidence-contract.md`.
+
+DEC-255 remains non-executable: authoritative result execution, model fit, workflow dispatch, rerun/replacement, promotion, shadow/demo execution, broker mutation, live orders, real-money action, and trading remain false. The next safe gate after merge is a separate manual-main EXP-060 workflow/CLI/runtime source freeze with execution still closed.
