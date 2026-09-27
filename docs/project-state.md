@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Merge DEC-294 after green checks. Its merged-main workflow must prove the isolated EXP-062 adapter across all nine pair/timeframe cells on the exact accepted 2015-2022 artifacts, then the proof must be frozen before any historical-result slot is considered. No EXP-062 discovery dispatch is authorized.
+**Next milestone:** Require DEC-294 and DEC-295 to be green, merge them in order, then require DEC-294's merged-main nine-cell adapter proof to succeed. Freeze and review that proof before any EXP-062 historical-result slot is considered. No EXP-062 discovery dispatch is authorized.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-295 predeclares the exact DEC-294 proof success shape before evidence exists: 10 successful jobs and 10 non-expired commit-scoped artifacts. It authorizes no discovery execution or downstream action.
 - DEC-294 adds a nine-cell read-only real-data adapter proof for EXP-062. It pins the frozen EXP-061 adapter unchanged, uses the isolated DEC-293 repair, reuses the exact accepted EXP-044 artifacts and DEC-273 2015-2022 loader, counts actual raw non-finite values, and requires exact row/partition parity. It never invokes the miner or creates a discovery result; all downstream paths remain locked.
 - DEC-293 opens EXP-062 as a source-only repair identity. It preserves DEC-270 discovery semantics and changes only the adapter representation boundary: numeric NaN/+inf/-inf continuous feature values become `None`, matching the frozen Phase-5 missing-value contract; finite values, session booleans, outcomes, chronology, search gates, and the closed 2023-2026 block remain unchanged. No historical slot or dispatch is opened.
 - DEC-292 freezes EXP-061 historical run `36335879839` as terminal FAILURE with no retry. DEC-289 executor run `36335739823` submitted the sole run #2 correctly; preflight succeeded, all 18 discovery cells failed in `market_learning_adapter.adapt_feature_frame`, aggregate was skipped, and only preflight artifact `10937316246` persisted. Representative failures reject non-finite `realized_vol_1h`/`realized_vol_8h` values even though the Phase-5 feature contract defines warm-up/non-finite required values as null. This is an implementation normalization defect, not a market result; EXP-061 produced no candidate evidence and is closed.
