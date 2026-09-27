@@ -1180,8 +1180,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-061 — Discovery-first market-state pattern mining
 
 - Date: 2026-09-27
-- Status: ACTIVE — GUARDED WORKFLOW SOURCE INSTALLED / HISTORICAL RUN NOT AUTHORIZED OR EXECUTED
-- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 run contract; DEC-275 dormant workflow/CLI source; DEC-276 guarded active workflow installation
+- Status: ACTIVE — GUARDED WORKFLOW + PRE-DISPATCH GOVERNANCE / HISTORICAL RUN NOT AUTHORIZED OR EXECUTED
+- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 run contract; DEC-275 workflow/CLI source; DEC-276 guarded install; DEC-277 pre-dispatch governance
 - Purpose: derive interpretable repeated market-state/future-outcome hypotheses from the data without requiring a predefined strategy family.
 - Pair(s): EURUSD, GBPUSD, USDJPY
 - Timeframe(s): 5m, 15m, 1h
@@ -1204,5 +1204,5 @@ Copy this section for each serious experiment:
 - Discovery run executed?: NO.
 - Promotion/shadow/demo/live authorized?: NO.
 - Conclusion: NEED_MORE_DATA.
-- Implementation status: DEC-270 through DEC-275 freeze the protocol, miner, adapter/evidence, loader, run contract, and dormant workflow/CLI. DEC-276 installs the reviewed workflow bytes at the active path without changing the closed execution gate. No historical discovery result has been authorized or executed.
-- Next gate: zero-prior-run guard + terminal reviewer + read-only operator-plan source, still with no dispatch authorization.
+- Implementation status: DEC-270 through DEC-276 freeze and install the discovery stack. DEC-277 adds the workflow-internal first-run guard, frozen terminal reviewer, and read-only operator plan after observing zero prior manual-main runs. No historical discovery result has been authorized or executed.
+- Next gate: separate one-shot historical-run authorization after a fresh zero-prior-run recheck on merged main.
