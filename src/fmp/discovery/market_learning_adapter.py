@@ -433,6 +433,8 @@ def compile_cell_evidence(
     *,
     code_commit: str,
     processed_manifest_sha256: str,
+    feature_manifest_sha256: str,
+    outcome_manifest_sha256: str,
     feature_evidence_fingerprint: str,
     outcome_evidence_fingerprint: str,
 ) -> dict[str, object]:
@@ -440,6 +442,14 @@ def compile_cell_evidence(
     _validate_sha256(
         processed_manifest_sha256,
         field="processed_manifest_sha256",
+    )
+    _validate_sha256(
+        feature_manifest_sha256,
+        field="feature_manifest_sha256",
+    )
+    _validate_sha256(
+        outcome_manifest_sha256,
+        field="outcome_manifest_sha256",
     )
     _validate_sha256(
         feature_evidence_fingerprint,
@@ -464,6 +474,8 @@ def compile_cell_evidence(
         "untouched_oos": False,
         "code_commit": code_commit,
         "processed_manifest_sha256": processed_manifest_sha256,
+        "feature_manifest_sha256": feature_manifest_sha256,
+        "outcome_manifest_sha256": outcome_manifest_sha256,
         "feature_evidence_fingerprint": feature_evidence_fingerprint,
         "outcome_evidence_fingerprint": outcome_evidence_fingerprint,
         "cell": {
@@ -542,6 +554,8 @@ def validate_cell_evidence(value: Mapping[str, object]) -> Mapping[str, object]:
     _validate_commit(str(value.get("code_commit")))
     for field in (
         "processed_manifest_sha256",
+        "feature_manifest_sha256",
+        "outcome_manifest_sha256",
         "feature_evidence_fingerprint",
         "outcome_evidence_fingerprint",
     ):
