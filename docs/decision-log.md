@@ -5053,3 +5053,19 @@ Proof-contract source: `src/fmp/discovery/exp062_proof_contract.py` blob `dcc513
 Proof dispatch, historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain false.
 
 The next safe gate is a read-only exact-main proof planner with no execute mode.
+
+
+## DEC-302 — EXP-062 read-only gate-proof operator
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY READ-ONLY PLANNER / NO EXECUTE MODE
+
+DEC-302 adds the exact-main read-only planner for the DEC-301 proof-only EXP-062 gate run. With zero matching manual-main runs it reports `EXP062_PROOF_DISPATCH_AUTHORIZATION_REQUIRED` and exposes `gh workflow run phase8a-exp062-discovery.yml --ref main` as plan evidence only. Once any matching run exists, the command is removed and review is required.
+
+The first matching run must remain workflow run #1 / attempt 1. Multiple matching runs, duplicate ids, run-number/attempt drift, or main-head drift fail closed.
+
+Operator: `src/fmp/discovery/exp062_proof_operator.py` blob `bc33c377ee9865766613a3ad64ddd9fd751d88fa`. CLI: `scripts/phase8a_exp062_proof_operator.py` blob `1b3525d8424a83bd02f46439eeab19956686b1c9`. Tests: `tests/test_phase8a_exp062_proof_operator.py` blob `f3e1f1acc4263a534e679d254ae0b23d95365737`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-readonly-proof-operator.md`.
+
+Proof dispatch, proof execute mode, historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain false.
+
+The next safe gate is a separately reviewed one-shot proof executor that can submit only a fresh DEC-302 proof command and still cannot authorize historical discovery.

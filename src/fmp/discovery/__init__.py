@@ -334,3 +334,15 @@ __all__ += [
     "exp062_proof_contract_payload",
     "validate_exp062_gate_proof_terminal",
 ]
+
+from .exp062_proof_operator import (
+    build_proof_plan as build_exp062_proof_plan,
+    proof_dispatch_command as exp062_proof_dispatch_command,
+    validate_proof_plan as validate_exp062_proof_plan,
+)
+
+__all__ += [
+    "build_exp062_proof_plan",
+    "exp062_proof_dispatch_command",
+    "validate_exp062_proof_plan",
+]
