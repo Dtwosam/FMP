@@ -243,3 +243,15 @@
 - Required proof run `36319888985` to remain workflow run #1, zero historical-result attempts, and target run #2 / attempt #1.
 - Persisted only one immutable historical execution-plan artifact.
 - Added no dispatch or execute path and kept retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-288 EXP-061 reviewed historical execution plan proof
+
+- Frozen successful merged-main DEC-287 proof run `36329787371` at head `958a0b830bb867d1c11e2a82be7fc301a6a75474`.
+- Bound the sole non-expired execution-plan artifact `10935233025` and digest `sha256:bb81bd8f0cb1adfc0054db4f5c16f13808793c520d443a0f05a89a90f92a415d`.
+- Independently verified the downloaded artifact ZIP against the same SHA-256 digest.
+- Bound raw `historical-execution-plan.json` SHA-256 `2ca76921e17096b444202573a950825244e07c27e0f476cecfb510ad5e0a95e5` and canonical SHA-256 `86b37433e183bfd9199822da0212b79fe11950461206335fc53e6f783210a74e`.
+- Verified the plan reports DEC-286/DEC-285, fail-closed proof run `36319888985` as workflow run #1, zero historical-result attempts, and an unconsumed slot.
+- Frozen the only future target as workflow run #2 / attempt #1.
+- Preserved the future workflow command as evidence only; historical-result dispatch and execute mode remain false.
+- Kept rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
