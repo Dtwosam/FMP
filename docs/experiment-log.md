@@ -1211,8 +1211,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-062 — Discovery adapter non-finite normalization repair
 
 - Date: 2026-09-27
-- Status: ACTIVE — SOURCE-ONLY REPAIR / HISTORICAL EXECUTION LOCKED
-- Protocol decisions: DEC-293 implementation-only normalization repair; DEC-270 research semantics preserved.
+- Status: ACTIVE — SOURCE-ONLY REPAIR + REAL-DATA ADAPTER PROOF SOURCE / HISTORICAL EXECUTION LOCKED
+- Protocol decisions: DEC-293 implementation-only normalization repair; DEC-294 read-only real-data adapter proof; DEC-270 research semantics preserved.
 - Predecessor: closed EXP-20260927-061 / DEC-292 failure freeze.
 - Hypothesis: EXP-061's all-cell failure was caused by representation mismatch at the adapter boundary; normalizing Phase-5 non-finite missing/warm-up continuous values to `None` should allow the unchanged discovery protocol to consume the accepted historical feature artifacts.
 - Pair(s): EURUSD, GBPUSD, USDJPY
@@ -1228,4 +1228,4 @@ Copy this section for each serious experiment:
 - Historical run executed?: NO.
 - Candidate compilation/demo/live authorized?: NO.
 - Conclusion: NEEDS_SOURCE_PROOF.
-- Next gate: prove the repaired adapter against the exact accepted EXP-044 feature/outcome artifacts over the frozen 2015-2022 range before any EXP-062 historical-result slot is considered.
+- Next gate: merge DEC-294 only after DEC-292/293 are green and merged, require its merged-main nine-cell adapter proof to succeed, then freeze the exact proof artifacts before any EXP-062 historical-result slot is considered.
