@@ -195,6 +195,8 @@ def historical_execution_evidence(
         "reviewed_proof_run_id": reviewed["proof_run_id"],
         "reviewed_proof_artifact_id": reviewed["proof_artifact_id"],
         "reviewed_proof_artifact_digest": reviewed["proof_artifact_digest"],
+        "reviewed_plan_raw_sha256": reviewed["plan_raw_sha256"],
+        "reviewed_plan_canonical_sha256": reviewed["plan_canonical_sha256"],
         "fresh_plan_rechecked_twice": True,
         "dispatch_command": shell_join(command),
         "historical_result_dispatch_authorized_by_dec289": (
