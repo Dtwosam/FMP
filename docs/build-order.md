@@ -265,6 +265,8 @@ Phase 8 is split into two ordered subphases by DEC-039. Phase 8A must complete b
 
 ### Phase 8A — Multi-pair, multi-strategy portfolio research
 
+DEC-268 is the governing amendment for new strategy discovery: future Phase 8A work is discovery-first, while the six earlier rule families remain historical benchmarks rather than the required candidate universe.
+
 #### Goal
 Build and evaluate a versioned portfolio of strategies across EURUSD, GBPUSD, and USDJPY so FMP can use whichever independently validated edges are applicable to current market conditions instead of depending on one permanently selected strategy.
 
