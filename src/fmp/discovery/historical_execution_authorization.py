@@ -10,7 +10,7 @@ from .historical_plan_result_decision import (
     EXP061_REVIEWED_HISTORICAL_PLAN_VERSION,
 )
 from .historical_run_authorization import (
-    HISTORICAL_RESULT_SLOT_SOURCE_AUTHORIZED,
+    HISTORICAL_RESULT_SLOT_SOURCE_AUTHORIZED as DEC281_SLOT_SOURCE_AUTHORIZED,
 )
 from .proof_result_decision import (
     EXP061_GATE_PROOF_HEAD_SHA,
@@ -162,6 +162,10 @@ def validate_historical_execution_authorization_sources(
     if LEGACY_EXECUTION_AUTHORIZED is not False:
         raise ValueError(
             "DEC-285 requires the frozen DEC-275 execution flag to stay false"
+        )
+    if DEC281_SLOT_SOURCE_AUTHORIZED is not True:
+        raise ValueError(
+            "DEC-285 requires the DEC-281 historical-result slot source authorization"
         )
 
     return {
