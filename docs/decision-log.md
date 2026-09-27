@@ -5069,3 +5069,35 @@ Operator: `src/fmp/discovery/exp062_proof_operator.py` blob `bc33c377ee986576661
 Proof dispatch, proof execute mode, historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain false.
 
 The next safe gate is a separately reviewed one-shot proof executor that can submit only a fresh DEC-302 proof command and still cannot authorize historical discovery.
+
+
+## DEC-303 — EXP-062 one-shot gate-proof executor
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PROOF EXECUTOR / HISTORICAL RESULT STILL LOCKED
+
+DEC-303 adds the sole one-shot executor for the proof-only EXP-062 gate run. It requires executor workflow run #1 / attempt 1, zero existing EXP-062 manual-main runs, two identical fresh DEC-302 plans at exact merged main, and may submit only `gh workflow run phase8a-exp062-discovery.yml --ref main`.
+
+The submitted proof must become workflow run #1 / attempt 1 on the executor head. Proof submission consumes no historical-result slot and claims no historical result.
+
+Executor source: `src/fmp/discovery/exp062_proof_executor.py` blob `b5963636901b5caba1730f8a969dd3f9a1bf1979`. CLI: `scripts/phase8a_exp062_proof_executor.py` blob `1ff34425b4240312324ae2513fa6d747c0579982`. Workflow: `.github/workflows/phase8a-exp062-proof-one-shot-execute.yml` blob `45cfc626f82b4a05ed619d9eeffdb6bd2fa0e04a`. Tests: `tests/test_phase8a_exp062_proof_executor.py` blob `022fe0ce6fb0f34bbeb1f2fd61ce24e9c4b503d5`.
+
+Historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain false.
+
+The next gate after the proof is submitted is DEC-301 terminal review and immutable proof-result freeze before any historical-result slot can open.
+
+
+## DEC-304 — EXP-062 gate-proof result review
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY READ-ONLY REVIEW / HISTORICAL SLOT STILL CLOSED
+
+DEC-304 adds the read-only result reviewer for the DEC-301/303 fail-closed EXP-062 gate proof. It requires the proof terminal to validate through DEC-301 and the matching dispatch evidence to validate as DEC-303 at the same exact head.
+
+A valid review records workflow run #1 / attempt 1, failure at the locked execution gate, one preflight artifact, zero cell/aggregate result artifacts, and no historical discovery execution. It also requires DEC-303 to prove that two identical zero-run DEC-302 plans preceded the one proof submission and that the submission did not consume or claim a historical-result slot.
+
+Reviewer: `src/fmp/discovery/exp062_proof_result_review.py` blob `58ad68ba68e480d9af222c378dbdc1a32e2835c5`. Focused tests: `tests/test_phase8a_exp062_proof_result_review.py` blob `7a8108a4a6c506925e6a2c3f3f68e1e730210407`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-proof-result-review.md`.
+
+DEC-304 opens no historical slot and keeps historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading false.
+
+The next safe gate after a real proof is an immutable proof-result freeze binding the exact proof run, preflight artifact, executor artifact, raw evidence hashes, and DEC-304 reviewed result before any historical-result slot is considered.
