@@ -4893,3 +4893,23 @@ The EXP-061 research protocol was not reached far enough to produce a pattern re
 Failed-result source: `src/fmp/discovery/historical_failed_result_decision.py` blob `97956e30b66e62b708cbbdab66a95007ef096e70`. Focused tests: `tests/test_phase8a_exp061_reviewed_failed_historical_result.py` blob `d01430f485b81a9be74da1bad4be86630fea324b`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-reviewed-failed-historical-result.md`.
 
 Any implementation repair requires a new experiment identity. The next safe path is EXP-062, preserving the EXP-061 research semantics while normalizing non-finite continuous source values to `None` at the adapter boundary before `FeatureObservation` construction.
+
+
+## DEC-293 — EXP-062 non-finite adapter repair foundation
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY IMPLEMENTATION REPAIR / EXECUTION LOCKED
+
+DEC-293 opens new experiment identity `EXP-20260927-062` after DEC-292 permanently closes EXP-061. It preserves the EXP-061 discovery-first research semantics and repairs only the adapter-boundary defect exposed by historical run `36335879839`.
+
+The repair normalizes non-finite continuous feature values before construction of `FeatureObservation`: finite values remain unchanged, existing nulls remain null, and `NaN`, `+Inf`, and `-Inf` become `None`. No feature is recalculated; no row is added, removed, retimed, or moved between discovery/confirmation/validation windows.
+
+EXP-062 reuses the frozen EXP-061 feature-frame identity/range checks, outcome adapter, processed-manifest binding, observation identity, 2015-2022 input range, and hard 2023+ target exclusion.
+
+Repair source: `src/fmp/discovery/exp062_adapter_repair.py` blob `acec0967c85f7d1716a72a0c700313290ec8ecdd`. Focused tests: `tests/test_phase8a_exp062_nonfinite_adapter_repair.py` blob `c5ffa9fe4a1de9d5043ba5b132c693b650547cdb`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-nonfinite-adapter-repair.md`.
+
+The tests reproduce the exact real-run failure class and prove the legacy EXP-061 adapter still fails while the EXP-062 wrapper converts only non-finite continuous values to `None`. Existing 2023 boundaries and source-identity checks remain fail-closed.
+
+DEC-293 authorizes no historical source/result execution, discovery result, reserved robustness access, candidate compilation, promotion, Phase 8B, demo, broker mutation, live order, real-money action, or trading.
+
+The next gate is backward-compatible experiment-ID propagation through pattern fingerprints, miner output, cell/aggregate evidence, and later run-contract/workflow identities. Frozen EXP-061 defaults must remain reproducible byte-for-byte where applicable.
