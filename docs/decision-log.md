@@ -4851,3 +4851,25 @@ Executor core: `src/fmp/discovery/historical_executor.py` blob `82dbec289ed69e73
 DEC-289 authorizes only the one historical-result dispatch. Target historical discovery/result execution is allowed only under the existing DEC-285 run #2 / attempt #1 runtime gate. Reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker mutation, live orders, real-money action, and trading remain false.
 
 After run #2 is submitted, no further historical dispatch is authorized. The next gate is terminal review of that exact run and its artifacts with no retry/replacement.
+
+
+## DEC-290 — EXP-061 historical terminal review contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PREDECLARED TERMINAL REVIEW / NO RESULT YET
+
+DEC-290 predeclares how the sole EXP-061 historical workflow run #2 will be judged after it becomes terminal. The criteria are frozen before the result exists.
+
+A reviewable run must be the exact `phase8a-exp061-discovery` manual-main workflow, workflow run number 2, attempt 1, at the caller-supplied DEC-289 merged-main head, terminal `completed`, and distinct from proof run `36319888985`.
+
+Success is accepted only with the exact DEC-274 20-job / 20-artifact shape: preflight + all 18 expanded cells + aggregate, every job successful, every expected commit-scoped artifact present and non-expired, and no unexpanded matrix placeholder. Such a run is classified `EXP061_HISTORICAL_RESULT_SUCCESS_COMPLETE_REVIEW_REQUIRED`; aggregate/cell contents still require separate review and candidate compilation remains locked.
+
+Any terminal non-success is classified `EXP061_HISTORICAL_RESULT_NON_SUCCESS_TERMINAL_CLOSED`. The slot is consumed permanently; only expected partial evidence may be preserved; rerun/retry/replacement remain false.
+
+DEC-290 also predeclares the exact GitHub compatibility shape learned in DEC-280: one literal unexpanded skipped matrix job template is allowed only for a non-success run, only when skipped, and only when no expanded cell jobs coexist with it. A successful run can never use that shape.
+
+Terminal-review source: `src/fmp/discovery/historical_result_review_contract.py` blob `2df4caa00aa683b8d627d061ae806178fbd5cd9c`. Focused tests: `tests/test_phase8a_exp061_historical_terminal_review_contract.py` blob `f6a166f425c2a00b17a2063e71e801f0bc64739d`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-terminal-review-contract.md`.
+
+DEC-290 opens no dispatch, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading path.
+
+The next gate is to require both DEC-289 and DEC-290 to pass CI before the one-shot historical dispatch is allowed to reach main.
