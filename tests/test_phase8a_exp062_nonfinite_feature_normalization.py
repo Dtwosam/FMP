@@ -6,7 +6,7 @@ import unittest
 
 import polars as pl
 
-from fmp.discovery.market_learning_adapter import (
+from fmp.discovery.exp062_nonfinite_feature_adapter import (
     EXP062_NONFINITE_FEATURE_NORMALIZATION_DECISION,
     EXP062_NONFINITE_FEATURE_NORMALIZATION_VERSION,
     adapt_feature_frame,
@@ -71,7 +71,7 @@ class Exp062NonfiniteFeatureNormalizationTests(unittest.TestCase):
         row = _row()
         row["realized_vol_1h"] = None
         row["return_1h"] = -0.0125
-        row["range_pips"] = 0.0
+        row["sma_distance_2h_pips"] = 0.0
 
         observations, _ = adapt_feature_frame(
             pl.DataFrame([row]),
@@ -82,7 +82,7 @@ class Exp062NonfiniteFeatureNormalizationTests(unittest.TestCase):
 
         self.assertIsNone(values["realized_vol_1h"])
         self.assertEqual(values["return_1h"], -0.0125)
-        self.assertEqual(values["range_pips"], 0.0)
+        self.assertEqual(values["sma_distance_2h_pips"], 0.0)
         self.assertTrue(math.isfinite(float(values["return_1h"])))
 
     def test_session_flags_are_not_coerced_or_normalized(self) -> None:
