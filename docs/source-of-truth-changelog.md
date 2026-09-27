@@ -394,3 +394,13 @@
 - Required exactly one preflight artifact and zero cell/aggregate result artifacts.
 - Declared proof slot consumption false.
 - Kept proof/historical dispatch, historical execution/result production, rerun/retry/replacement, reserved data, candidate, promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-302 EXP-062 read-only proof operator
+
+- Added an exact-main read-only planner for the DEC-301 proof-only run.
+- Exposed the sole future proof command only while zero matching EXP-062 manual-main runs exist.
+- Required any first matching run to remain workflow run #1 / attempt 1.
+- Removed the command once a run exists and rejected multiple runs, duplicate ids, run-number/attempt drift, and main-head drift.
+- Added no execute mode.
+- Kept proof/historical dispatch, historical execution/result production, rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
