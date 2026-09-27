@@ -89,6 +89,8 @@ Any mismatch fails closed.
 - DEC-270 protocol fingerprint;
 - code commit;
 - Phase 2 processed-manifest identity;
+- exact feature-manifest SHA-256;
+- exact outcome-manifest SHA-256;
 - feature-evidence fingerprint;
 - outcome-evidence fingerprint;
 - symbol/timeframe/horizon cell;
@@ -135,9 +137,9 @@ These are software-contract tests, not market evidence.
 ## 9. Frozen implementation identities
 
 - adapter/evidence source: `src/fmp/discovery/market_learning_adapter.py`;
-- source blob: `3655652f366bea41ef28009b87f5904b1a5894ea`;
+- source blob: `43da3bc81aa6da912658e8da4c7d9a6666c0b204`;
 - focused tests: `tests/test_phase8a_exp061_market_learning_adapter.py`;
-- test blob: `4d1784bbef3d1f527bba6dd6f97d6b7e88cc5588`.
+- test blob: `044352563bfdd9ad0fdfd857c7222ce99a3436f7`.
 
 ## 10. Next gate
 
