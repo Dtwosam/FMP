@@ -346,3 +346,13 @@ __all__ += [
     "exp062_proof_dispatch_command",
     "validate_exp062_proof_plan",
 ]
+
+from .exp062_proof_executor import (
+    proof_execution_evidence as exp062_proof_execution_evidence,
+    validate_fresh_proof_execution_plan as validate_exp062_fresh_proof_execution_plan,
+)
+
+__all__ += [
+    "exp062_proof_execution_evidence",
+    "validate_exp062_fresh_proof_execution_plan",
+]
