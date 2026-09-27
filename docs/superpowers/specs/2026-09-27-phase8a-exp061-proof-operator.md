@@ -62,11 +62,11 @@ There is no `execute`, `advance`, `dispatch`, or retry command.
 ## 6. Frozen implementation identities
 
 - operator: `src/fmp/discovery/proof_operator.py`;
-- operator blob: `67637d413e7c4315dd5be35e3baea4b74e0178f0`;
+- operator blob: `b8af93555656d4da57ead8fc4b66ae66e62a2de7`;
 - CLI: `scripts/phase8a_exp061_proof_operator.py`;
-- CLI blob: `b9e8f1794aba452d7d231829c1b276f943e94c55`;
+- CLI blob: `4f074f5abecd006d032f9897a1e527aa694a233d`;
 - focused tests: `tests/test_phase8a_exp061_proof_operator.py`;
-- focused-test blob: `3f7d2b7f06eac65d522bbdab8da99d46a47a2f71`.
+- focused-test blob: `9f4a678e4a3ed6d37216387796d00da28620cd30`.
 
 ## 7. Next gate
 
