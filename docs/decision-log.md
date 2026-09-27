@@ -4709,3 +4709,21 @@ The first later non-proof manual-main EXP-061 run consumes the slot immediately 
 Historical-run authorization source: `src/fmp/discovery/historical_run_authorization.py` blob `1eab1cee2fc81441cf1c3168cc73275cd29addf5`. Focused tests: `tests/test_phase8a_exp061_historical_run_authorization.py` blob `07886d2fde86e75eb1c92509733909c58c95c8ee`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-run-authorization.md`.
 
 The next safe gate is a clean-main read-only operator that may expose the single historical dispatch command only while the exact DEC-281 inventory remains slot-available. DEC-281 provides no execute mode and does not dispatch or execute the workflow.
+
+
+## DEC-282 — EXP-061 read-only historical-slot operator
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY READ-ONLY OPERATOR / NO EXECUTE MODE
+
+DEC-282 adds the read-only operator for the single DEC-281 source-authorized EXP-061 historical-result slot. It requires current `main` metadata, current EXP-061 workflow-run history, and an exact caller-supplied expected main head. Any main-head mismatch fails closed.
+
+The operator delegates slot classification to DEC-281. While the exact DEC-280 proof run remains the only manual-main EXP-061 run, it reports `EXP061_HISTORICAL_RESULT_SLOT_AVAILABLE` and exposes only the future command `gh workflow run phase8a-exp061-discovery.yml --ref main` as plan evidence. The report still keeps historical-result dispatch authorization false and execute mode unavailable.
+
+Once any later historical-result run exists, the operator reports `EXP061_HISTORICAL_RESULT_RUN_PRESENT_REVIEW_REQUIRED`, marks the slot consumed through DEC-281, removes the command, and cannot plan a second run.
+
+Operator source: `src/fmp/discovery/historical_operator.py` blob `1ffef37d94b04a8206f665c375dc0b2642c4caa9`. CLI: `scripts/phase8a_exp061_historical_operator.py` blob `4d667d05ef2a5bd672cb9d98a81f13dd2ba9370c`. Focused tests: `tests/test_phase8a_exp061_historical_operator.py` blob `16399b4602fbd94b875d00abe706ae6fc815e802`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-operator.md`.
+
+Historical-result dispatch/execution, discovery-result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is a repository-hosted read-only proof of the exact DEC-282 slot-available plan on merged main. That proof may capture immutable plan evidence but must not dispatch the historical workflow.
