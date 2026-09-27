@@ -244,3 +244,15 @@ from .historical_failure_result_decision import (
 __all__ += [
     "freeze_exp061_historical_failure",
 ]
+
+from .exp062_adapter_probe import (
+    compile_exp062_adapter_probe,
+    probe_exp062_adapter_cell,
+    validate_exp062_adapter_probe_cell,
+)
+
+__all__ += [
+    "compile_exp062_adapter_probe",
+    "probe_exp062_adapter_cell",
+    "validate_exp062_adapter_probe_cell",
+]
