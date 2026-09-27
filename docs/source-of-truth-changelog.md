@@ -183,3 +183,15 @@
 - Removed the command and routed to review once any later historical-result run is present.
 - Added no execute, advance, rerun, retry, or replacement mode.
 - Kept historical dispatch/execution, discovery-result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-283 EXP-061 historical plan proof
+
+- Added a repository-hosted, push-to-main, read-only proof for the exact DEC-282 historical-slot plan.
+- Pinned the DEC-280 reviewed proof, DEC-281 historical authorization, DEC-282 operator/CLI, active locked EXP-061 workflow, and pinned runtime identities.
+- Required exact merged-main checkout, current-main binding, and a clean worktree after non-editable dependency installation.
+- Read current main and EXP-061 run inventory through read-only GitHub API calls.
+- Invoked only the DEC-282 `plan` command and required the frozen proof run to be the sole prior manual-main EXP-061 run.
+- Required zero historical-result attempts, an unconsumed slot, and the exact future dispatch command as plan evidence only.
+- Uploaded only one immutable historical-plan artifact.
+- Kept historical dispatch/execution, result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.

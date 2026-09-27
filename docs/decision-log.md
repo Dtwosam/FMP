@@ -4727,3 +4727,21 @@ Operator source: `src/fmp/discovery/historical_operator.py` blob `1ffef37d94b04a
 Historical-result dispatch/execution, discovery-result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is a repository-hosted read-only proof of the exact DEC-282 slot-available plan on merged main. That proof may capture immutable plan evidence but must not dispatch the historical workflow.
+
+
+## DEC-283 — EXP-061 repository-hosted historical plan proof
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY READ-ONLY PROOF / NOT DISPATCHED
+
+DEC-283 adds a repository-hosted read-only proof for the exact DEC-282 historical-slot plan on merged `main`. The workflow is push-to-main only, grants `contents: read` and `actions: read`, has no manual dispatch or schedule, installs the pinned runtime without editable checkout, requires a clean worktree, and invokes only the DEC-282 `plan` command.
+
+Before planning it pins the exact DEC-280 reviewed-proof source, DEC-281 historical authorization source, DEC-282 operator/CLI, active locked EXP-061 workflow, and pinned runtime requirement blobs. It then reads current main metadata and exact EXP-061 manual-main workflow history through read-only GitHub API calls.
+
+A successful merged-main proof must show frozen proof run `36319888985` exactly once, zero historical-result attempts, an unconsumed slot, stage `EXP061_HISTORICAL_RESULT_SLOT_AVAILABLE`, and the exact future `gh workflow run phase8a-exp061-discovery.yml --ref main` command as plan evidence only. Historical-result dispatch and execute mode remain false.
+
+Read-only proof workflow: `.github/workflows/phase8a-exp061-historical-plan.yml` blob `7c2d7409d1a05ce287cc36f5371a85273a6a027b`. Focused tests: `tests/test_phase8a_exp061_historical_plan_proof.py` blob `e25e8cbb435a106ca22e29d2e810e9c23cc25892`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-plan-proof.md`.
+
+DEC-283 cannot call the target workflow, cannot execute/advance/retry/rerun/replace, cannot open historical cell artifacts, and cannot claim a discovery result. It consumes no historical-result slot. Reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain locked.
+
+Only after the DEC-283 merged-main proof succeeds and its exact non-expired plan artifact is independently bound may a separate one-shot historical executor source be considered.
