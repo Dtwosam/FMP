@@ -86,7 +86,14 @@ class Exp062AdapterProofWorkflowTests(unittest.TestCase):
             ".feature-evidence .outcome-evidence .probe",
             text,
         )
-        self.assertIn("path: .probe/probe.json", text)
+        self.assertIn(
+            "path: ${{ runner.temp }}/probe/probe.json",
+            text,
+        )
+        self.assertIn(
+            '--out "$RUNNER_TEMP/probe/probe.json"',
+            text,
+        )
 
     def test_aggregate_requires_real_nonfinite_case_and_all_locks(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
