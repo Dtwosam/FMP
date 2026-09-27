@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Mapping
@@ -36,11 +37,23 @@ from .pattern_miner import (
     ValidationReport,
 )
 from .pattern_protocol import (
+    CONFIRMATION_MIN_SUPPORT,
     CONTINUOUS_FEATURES,
+    DIRECTIONS,
     EXPERIMENT_ID,
     HORIZONS_MINUTES,
+    MAX_ADMISSIBLE_PATTERNS_PER_CELL_HORIZON,
+    MAX_DISCOVERY_SHORTLIST_PER_CELL_HORIZON,
+    MAX_FROZEN_PER_CELL_HORIZON,
+    MIN_DISCOVERY_AGGREGATE_MEAN_NET_PIPS,
+    MIN_DISCOVERY_TOTAL_SUPPORT,
+    MIN_DISCOVERY_YEAR_SUPPORT,
     SYMBOLS,
     TIMEFRAMES,
+    VALIDATION_MIN_POSITIVE_YEARS,
+    VALIDATION_MIN_TOTAL_SUPPORT,
+    VALIDATION_MIN_YEAR_SUPPORT,
+    pattern_fingerprint,
     protocol_fingerprint,
 )
 
@@ -513,6 +526,362 @@ def compile_cell_evidence(
     return evidence
 
 
+
+def _finite_float(value: object, *, field: str) -> float:
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or not math.isfinite(float(value))
+    ):
+        raise ValueError(f"{field} must be finite")
+    return float(value)
+
+
+def _nonnegative_int(value: object, *, field: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        raise ValueError(f"{field} must be a non-negative integer")
+    return value
+
+
+def _positive_int(value: object, *, field: str) -> int:
+    out = _nonnegative_int(value, field=field)
+    if out <= 0:
+        raise ValueError(f"{field} must be positive")
+    return out
+
+
+def _expected_pattern_count(active_continuous_count: int) -> int:
+    group_sizes = [3] * active_continuous_count + [5]
+    total = sum(group_sizes)
+    singles = total
+    pairs = total * (total - 1) // 2
+    same_dimension_pairs = sum(size * (size - 1) // 2 for size in group_sizes)
+    return singles + pairs - same_dimension_pairs
+
+
+def _validate_year_support(
+    value: object,
+    *,
+    years: tuple[int, ...],
+    field: str,
+) -> tuple[tuple[int, int], ...]:
+    if not isinstance(value, list) or len(value) != len(years):
+        raise ValueError(f"{field} must contain exact years")
+    out: list[tuple[int, int]] = []
+    for raw, year in zip(value, years):
+        if (
+            not isinstance(raw, list)
+            or len(raw) != 2
+            or raw[0] != year
+        ):
+            raise ValueError(f"{field} year identity mismatch")
+        out.append((year, _nonnegative_int(raw[1], field=f"{field} {year} support")))
+    return tuple(out)
+
+
+def _validate_year_means(
+    value: object,
+    *,
+    years: tuple[int, ...],
+    field: str,
+    allow_none: bool,
+) -> tuple[tuple[int, float | None], ...]:
+    if not isinstance(value, list) or len(value) != len(years):
+        raise ValueError(f"{field} must contain exact years")
+    out: list[tuple[int, float | None]] = []
+    for raw, year in zip(value, years):
+        if (
+            not isinstance(raw, list)
+            or len(raw) != 2
+            or raw[0] != year
+        ):
+            raise ValueError(f"{field} year identity mismatch")
+        mean = raw[1]
+        if mean is None and allow_none:
+            out.append((year, None))
+        else:
+            out.append((year, _finite_float(mean, field=f"{field} {year} mean")))
+    return tuple(out)
+
+
+def _validate_discovery_hypothesis(
+    raw: object,
+    *,
+    symbol: str,
+    timeframe: str,
+    horizon_minutes: int,
+) -> tuple[str, tuple[object, ...]]:
+    if not isinstance(raw, Mapping):
+        raise ValueError("EXP-061 discovery shortlist row must be an object")
+    if (
+        raw.get("symbol") != symbol
+        or raw.get("timeframe") != timeframe
+        or raw.get("horizon_minutes") != horizon_minutes
+    ):
+        raise ValueError("EXP-061 discovery shortlist cell identity mismatch")
+    direction = raw.get("direction")
+    if direction not in DIRECTIONS:
+        raise ValueError("EXP-061 discovery shortlist direction mismatch")
+    predicates_raw = raw.get("predicates")
+    if not isinstance(predicates_raw, list) or not 1 <= len(predicates_raw) <= 2:
+        raise ValueError("EXP-061 discovery shortlist predicate depth mismatch")
+    predicates: list[tuple[str, str]] = []
+    for item in predicates_raw:
+        if (
+            not isinstance(item, list)
+            or len(item) != 2
+            or not isinstance(item[0], str)
+            or not isinstance(item[1], str)
+        ):
+            raise ValueError("EXP-061 discovery shortlist predicate is malformed")
+        predicates.append((item[0], item[1]))
+
+    expected_fingerprint = pattern_fingerprint(
+        symbol=symbol,
+        timeframe=timeframe,
+        horizon_minutes=horizon_minutes,
+        direction=str(direction),
+        predicates=tuple(predicates),
+    )
+    if raw.get("fingerprint") != expected_fingerprint:
+        raise ValueError("EXP-061 discovery shortlist fingerprint mismatch")
+
+    stats = raw.get("discovery_statistics")
+    if not isinstance(stats, Mapping):
+        raise ValueError("EXP-061 discovery statistics must be an object")
+    total_support = _positive_int(
+        stats.get("total_support"),
+        field="EXP-061 discovery total support",
+    )
+    year_support = _validate_year_support(
+        stats.get("year_support"),
+        years=(2015, 2016, 2017),
+        field="EXP-061 discovery year support",
+    )
+    if sum(count for _, count in year_support) != total_support:
+        raise ValueError("EXP-061 discovery support does not reconcile")
+    if total_support < MIN_DISCOVERY_TOTAL_SUPPORT:
+        raise ValueError("EXP-061 discovery shortlist fails total-support gate")
+    if any(count < MIN_DISCOVERY_YEAR_SUPPORT for _, count in year_support):
+        raise ValueError("EXP-061 discovery shortlist fails yearly-support gate")
+
+    aggregate_half = _finite_float(
+        stats.get("aggregate_mean_net_pips_0p5"),
+        field="EXP-061 discovery aggregate 0.5-pip mean",
+    )
+    if aggregate_half < MIN_DISCOVERY_AGGREGATE_MEAN_NET_PIPS:
+        raise ValueError("EXP-061 discovery shortlist fails aggregate economic gate")
+    year_means = _validate_year_means(
+        stats.get("year_mean_net_pips_0p5"),
+        years=(2015, 2016, 2017),
+        field="EXP-061 discovery year means",
+        allow_none=False,
+    )
+    if any(mean is None or mean <= 0.0 for _, mean in year_means):
+        raise ValueError("EXP-061 discovery shortlist fails yearly economic gate")
+    aggregate_stress = _finite_float(
+        stats.get("aggregate_mean_net_pips_1p0"),
+        field="EXP-061 discovery aggregate 1.0-pip mean",
+    )
+    if aggregate_stress <= 0.0:
+        raise ValueError("EXP-061 discovery shortlist fails stress gate")
+
+    rank_key: tuple[object, ...] = (
+        -min(float(mean) for _, mean in year_means if mean is not None),
+        -aggregate_half,
+        -aggregate_stress,
+        -total_support,
+        len(predicates),
+        expected_fingerprint,
+    )
+    return expected_fingerprint, rank_key
+
+
+def _validate_nested_result_semantics(value: Mapping[str, object]) -> None:
+    cell = value.get("cell")
+    if not isinstance(cell, Mapping):
+        raise ValueError("EXP-061 cell evidence cell must be an object")
+    symbol = cell.get("symbol")
+    timeframe = cell.get("timeframe")
+    horizon = cell.get("horizon_minutes")
+    if symbol not in SYMBOLS or timeframe not in TIMEFRAMES or horizon not in HORIZONS_MINUTES:
+        raise ValueError("EXP-061 cell evidence cell identity mismatch")
+
+    state_model = value.get("state_model")
+    if not isinstance(state_model, Mapping):
+        raise ValueError("EXP-061 state model evidence must be an object")
+    cutpoints_raw = state_model.get("cutpoints")
+    if not isinstance(cutpoints_raw, list):
+        raise ValueError("EXP-061 state model cutpoints must be a list")
+    cutpoint_names: list[str] = []
+    for raw in cutpoints_raw:
+        if (
+            not isinstance(raw, list)
+            or len(raw) != 3
+            or raw[0] not in CONTINUOUS_FEATURES
+        ):
+            raise ValueError("EXP-061 state model cutpoint is malformed")
+        name = str(raw[0])
+        lower = _finite_float(raw[1], field=f"EXP-061 {name} lower cutpoint")
+        upper = _finite_float(raw[2], field=f"EXP-061 {name} upper cutpoint")
+        if not lower < upper:
+            raise ValueError("EXP-061 state model cutpoints must be strictly ordered")
+        cutpoint_names.append(name)
+    if len(cutpoint_names) != len(set(cutpoint_names)):
+        raise ValueError("EXP-061 state model has duplicate dimensions")
+
+    discovery = value.get("discovery")
+    if not isinstance(discovery, Mapping):
+        raise ValueError("EXP-061 discovery evidence must be an object")
+    if (
+        discovery.get("symbol") != symbol
+        or discovery.get("timeframe") != timeframe
+        or discovery.get("horizon_minutes") != horizon
+    ):
+        raise ValueError("EXP-061 discovery evidence cell identity mismatch")
+    active = discovery.get("active_continuous_features")
+    if active != cutpoint_names:
+        raise ValueError("EXP-061 discovery active-feature identity mismatch")
+
+    expected_patterns = _expected_pattern_count(len(cutpoint_names))
+    if expected_patterns > MAX_ADMISSIBLE_PATTERNS_PER_CELL_HORIZON:
+        raise ValueError("EXP-061 discovery expected pattern count exceeds protocol")
+    if discovery.get("enumerated_pattern_count") != expected_patterns:
+        raise ValueError("EXP-061 discovery enumerated pattern count mismatch")
+    if discovery.get("directional_hypothesis_count") != expected_patterns * len(DIRECTIONS):
+        raise ValueError("EXP-061 discovery directional search count mismatch")
+
+    qualifying = _nonnegative_int(
+        discovery.get("qualifying_directional_hypothesis_count"),
+        field="EXP-061 discovery qualifying count",
+    )
+    deduplicated = _nonnegative_int(
+        discovery.get("deduplicated_directional_hypothesis_count"),
+        field="EXP-061 discovery deduplicated count",
+    )
+    if deduplicated > qualifying:
+        raise ValueError("EXP-061 discovery deduplicated count exceeds qualifying count")
+
+    shortlist = discovery.get("shortlist")
+    if not isinstance(shortlist, list):
+        raise ValueError("EXP-061 discovery shortlist must be a list")
+    if len(shortlist) > MAX_DISCOVERY_SHORTLIST_PER_CELL_HORIZON:
+        raise ValueError("EXP-061 discovery shortlist exceeds frozen cap")
+    if len(shortlist) > deduplicated:
+        raise ValueError("EXP-061 discovery shortlist exceeds deduplicated count")
+
+    fingerprints: list[str] = []
+    rank_keys: list[tuple[object, ...]] = []
+    for raw in shortlist:
+        fingerprint, rank_key = _validate_discovery_hypothesis(
+            raw,
+            symbol=str(symbol),
+            timeframe=str(timeframe),
+            horizon_minutes=int(horizon),
+        )
+        fingerprints.append(fingerprint)
+        rank_keys.append(rank_key)
+    if len(fingerprints) != len(set(fingerprints)):
+        raise ValueError("EXP-061 discovery shortlist fingerprints are duplicated")
+    if rank_keys != sorted(rank_keys):
+        raise ValueError("EXP-061 discovery shortlist rank order mismatch")
+
+    confirmation = value.get("confirmation")
+    if not isinstance(confirmation, Mapping):
+        raise ValueError("EXP-061 confirmation evidence must be an object")
+    evaluations = confirmation.get("evaluations")
+    if not isinstance(evaluations, list) or len(evaluations) != len(fingerprints):
+        raise ValueError("EXP-061 confirmation evaluation inventory mismatch")
+    passed_fingerprints: list[str] = []
+    for raw, expected_fingerprint in zip(evaluations, fingerprints):
+        if not isinstance(raw, Mapping):
+            raise ValueError("EXP-061 confirmation evaluation must be an object")
+        if raw.get("pattern_fingerprint") != expected_fingerprint:
+            raise ValueError("EXP-061 confirmation evaluation order mismatch")
+        support = _nonnegative_int(
+            raw.get("support"),
+            field="EXP-061 confirmation support",
+        )
+        mean_raw = raw.get("mean_net_pips_0p5")
+        mean = None if mean_raw is None else _finite_float(
+            mean_raw,
+            field="EXP-061 confirmation mean",
+        )
+        expected_pass = (
+            support >= CONFIRMATION_MIN_SUPPORT
+            and mean is not None
+            and mean > 0.0
+        )
+        if raw.get("passed") is not expected_pass:
+            raise ValueError("EXP-061 confirmation pass flag mismatch")
+        if expected_pass:
+            passed_fingerprints.append(expected_fingerprint)
+
+    frozen = confirmation.get("frozen_pattern_fingerprints")
+    expected_frozen = passed_fingerprints[:MAX_FROZEN_PER_CELL_HORIZON]
+    if frozen != expected_frozen:
+        raise ValueError("EXP-061 confirmation frozen inventory mismatch")
+
+    validation = value.get("validation")
+    if not isinstance(validation, Mapping):
+        raise ValueError("EXP-061 validation evidence must be an object")
+    validation_evaluations = validation.get("evaluations")
+    if not isinstance(validation_evaluations, list) or len(validation_evaluations) != len(expected_frozen):
+        raise ValueError("EXP-061 validation evaluation inventory mismatch")
+
+    expected_validated: list[str] = []
+    for raw, expected_fingerprint in zip(validation_evaluations, expected_frozen):
+        if not isinstance(raw, Mapping):
+            raise ValueError("EXP-061 validation evaluation must be an object")
+        if raw.get("pattern_fingerprint") != expected_fingerprint:
+            raise ValueError("EXP-061 validation evaluation order mismatch")
+        total_support = _nonnegative_int(
+            raw.get("total_support"),
+            field="EXP-061 validation total support",
+        )
+        year_support = _validate_year_support(
+            raw.get("year_support"),
+            years=(2019, 2020, 2021, 2022),
+            field="EXP-061 validation year support",
+        )
+        if sum(count for _, count in year_support) != total_support:
+            raise ValueError("EXP-061 validation support does not reconcile")
+
+        aggregate_raw = raw.get("aggregate_mean_net_pips_0p5")
+        aggregate = None if aggregate_raw is None else _finite_float(
+            aggregate_raw,
+            field="EXP-061 validation aggregate mean",
+        )
+        year_means = _validate_year_means(
+            raw.get("year_mean_net_pips_0p5"),
+            years=(2019, 2020, 2021, 2022),
+            field="EXP-061 validation year means",
+            allow_none=True,
+        )
+        positive_year_count = sum(
+            mean is not None and mean > 0.0 for _, mean in year_means
+        )
+        if raw.get("positive_year_count") != positive_year_count:
+            raise ValueError("EXP-061 validation positive-year count mismatch")
+        expected_pass = (
+            total_support >= VALIDATION_MIN_TOTAL_SUPPORT
+            and all(
+                count >= VALIDATION_MIN_YEAR_SUPPORT
+                for _, count in year_support
+            )
+            and aggregate is not None
+            and aggregate > 0.0
+            and positive_year_count >= VALIDATION_MIN_POSITIVE_YEARS
+        )
+        if raw.get("passed") is not expected_pass:
+            raise ValueError("EXP-061 validation pass flag mismatch")
+        if expected_pass:
+            expected_validated.append(expected_fingerprint)
+
+    if validation.get("validated_pattern_fingerprints") != expected_validated:
+        raise ValueError("EXP-061 validation accepted inventory mismatch")
+
+
 def validate_cell_evidence(value: Mapping[str, object]) -> Mapping[str, object]:
     fingerprint = _validate_sha256(
         value.get("evidence_fingerprint"),
@@ -560,6 +929,7 @@ def validate_cell_evidence(value: Mapping[str, object]) -> Mapping[str, object]:
         "outcome_evidence_fingerprint",
     ):
         _validate_sha256(value.get(field), field=field)
+    _validate_nested_result_semantics(value)
     return value
 
 
