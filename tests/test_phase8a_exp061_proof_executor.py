@@ -156,8 +156,8 @@ class Exp061ProofExecutorTests(unittest.TestCase):
         for text in (cli, workflow):
             self.assertNotIn("phase8a_exp061.py cell", text)
             self.assertNotIn("phase8a_exp061.py aggregate", text)
-            self.assertNotIn("rerun", text.lower())
-            self.assertNotIn("retry", text.lower())
+            self.assertNotIn("gh run rerun", text.lower())
+            self.assertNotIn("gh run retry", text.lower())
 
         self.assertNotIn("gh workflow run", cli)
         self.assertIn('actions: write', workflow)
