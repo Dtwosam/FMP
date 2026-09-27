@@ -29,9 +29,11 @@ from fmp.market_learning.outcomes import MARKET_OUTCOME_SET_VERSION
 
 
 PROCESSED_SHA = "a" * 64
-FEATURE_EVIDENCE_SHA = "b" * 64
-OUTCOME_EVIDENCE_SHA = "c" * 64
-CODE_COMMIT = "d" * 40
+FEATURE_MANIFEST_SHA = "b" * 64
+OUTCOME_MANIFEST_SHA = "c" * 64
+FEATURE_EVIDENCE_SHA = "d" * 64
+OUTCOME_EVIDENCE_SHA = "e" * 64
+CODE_COMMIT = "f" * 40
 
 
 def _feature_row(
@@ -171,6 +173,8 @@ class Exp061MarketLearningAdapterTests(unittest.TestCase):
             _empty_result(),
             code_commit=CODE_COMMIT,
             processed_manifest_sha256=PROCESSED_SHA,
+            feature_manifest_sha256=FEATURE_MANIFEST_SHA,
+            outcome_manifest_sha256=OUTCOME_MANIFEST_SHA,
             feature_evidence_fingerprint=FEATURE_EVIDENCE_SHA,
             outcome_evidence_fingerprint=OUTCOME_EVIDENCE_SHA,
         )
@@ -180,12 +184,16 @@ class Exp061MarketLearningAdapterTests(unittest.TestCase):
                 _empty_result(),
                 code_commit=CODE_COMMIT,
                 processed_manifest_sha256=PROCESSED_SHA,
+                feature_manifest_sha256=FEATURE_MANIFEST_SHA,
+                outcome_manifest_sha256=OUTCOME_MANIFEST_SHA,
                 feature_evidence_fingerprint=FEATURE_EVIDENCE_SHA,
                 outcome_evidence_fingerprint=OUTCOME_EVIDENCE_SHA,
             ),
         )
         self.assertIs(validate_cell_evidence(evidence), evidence)
         self.assertFalse(evidence["reserved_robustness_opened"])
+        self.assertEqual(evidence["feature_manifest_sha256"], FEATURE_MANIFEST_SHA)
+        self.assertEqual(evidence["outcome_manifest_sha256"], OUTCOME_MANIFEST_SHA)
 
         for field in (
             "historical_source_access_authorized",
