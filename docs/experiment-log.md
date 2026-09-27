@@ -1211,8 +1211,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-062 — Discovery adapter non-finite normalization repair
 
 - Date: 2026-09-27
-- Status: ACTIVE — REPAIR VERIFIED + ACTIVE WORKFLOW INSTALLED LOCKED + PROOF TERMINAL CONTRACT FROZEN / HISTORICAL EXECUTION LOCKED
-- Protocol decisions: DEC-293 isolated implementation-only normalization repair; DEC-294 read-only real-data adapter proof; DEC-295 predeclared adapter-proof review; DEC-296 predeclared proof-content review; DEC-297 verified adapter-proof result freeze; DEC-298 run/evidence contract; DEC-299 dormant workflow/CLI source; DEC-300 locked active-workflow installation; DEC-301 gate-proof terminal contract; DEC-270 research semantics preserved.
+- Status: ACTIVE — REPAIR VERIFIED + ACTIVE WORKFLOW INSTALLED LOCKED + PROOF CONTRACT + READ-ONLY PROOF PLANNER FROZEN / HISTORICAL EXECUTION LOCKED
+- Protocol decisions: DEC-293 isolated implementation-only normalization repair; DEC-294 read-only real-data adapter proof; DEC-295 predeclared adapter-proof review; DEC-296 predeclared proof-content review; DEC-297 verified adapter-proof result freeze; DEC-298 run/evidence contract; DEC-299 dormant workflow/CLI source; DEC-300 locked active-workflow installation; DEC-301 gate-proof terminal contract; DEC-302 read-only proof operator; DEC-270 research semantics preserved.
 - Predecessor: closed EXP-20260927-061 / DEC-292 failure freeze.
 - Hypothesis: EXP-061's all-cell failure was caused by representation mismatch at the adapter boundary; normalizing Phase-5 non-finite missing/warm-up continuous values to `None` should allow the unchanged discovery protocol to consume the accepted historical feature artifacts.
 - Pair(s): EURUSD, GBPUSD, USDJPY
@@ -1228,4 +1228,4 @@ Copy this section for each serious experiment:
 - Historical run executed?: NO.
 - Candidate compilation/demo/live authorized?: NO.
 - Conclusion: ADAPTER_REPAIR_VERIFIED_ON_ACCEPTED_REAL_DATA.
-- Next gate: merge DEC-296/297/298/299/300/301 after green checks, then add a read-only exact-main proof planner with no execute mode. No proof or historical-result dispatch is authorized yet.
+- Next gate: merge DEC-296/297/298/299/300/301/302 after green checks, then add a separately reviewed one-shot proof executor. Proof dispatch remains distinct from and cannot authorize historical-result execution.
