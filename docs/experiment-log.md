@@ -1180,8 +1180,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-061 — Discovery-first market-state pattern mining
 
 - Date: 2026-09-27
-- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER + RUN CONTRACT + LOCKED WORKFLOW/PROOF GOVERNANCE + ACTIVE EXECUTION-LOCKED WORKFLOW + PROOF CONTRACT + READ-ONLY PROOF OPERATOR / HISTORICAL RUN NOT OPENED
-- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 run contract; DEC-275 dormant source; DEC-276 locked install; DEC-277 proof contract; DEC-278 read-only operator; DEC-279 proof-only executor; DEC-275 dormant workflow/CLI source; DEC-276 locked active-workflow installation; DEC-277 source-only gate-proof contract; DEC-278 read-only proof operator
+- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER + RUN CONTRACT + EXECUTION-LOCKED WORKFLOW + REVIEWED FAIL-CLOSED PROOF / HISTORICAL RESULT RUN NOT OPENED
+- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 run contract; DEC-275 dormant workflow/CLI source; DEC-276 locked active-workflow installation; DEC-277 gate-proof contract; DEC-278 read-only proof operator; DEC-279 one-shot proof executor; DEC-280 reviewed gate-proof freeze
 - Purpose: derive interpretable repeated market-state/future-outcome hypotheses from the data without requiring a predefined strategy family.
 - Pair(s): EURUSD, GBPUSD, USDJPY
 - Timeframe(s): 5m, 15m, 1h
@@ -1201,8 +1201,8 @@ Copy this section for each serious experiment:
 - Untouched OOS?: NO.
 - Output meaning: PATTERN_HYPOTHESIS_NOT_EXECUTABLE_STRATEGY.
 - Historical source opened?: NO.
-- Discovery run executed?: NO. Proof-only gate run not yet reviewed.
+- Discovery run executed?: NO. Proof-only gate run `36319888985` completed the expected fail-closed preflight proof; it produced no historical discovery result.
 - Promotion/shadow/demo/live authorized?: NO.
 - Conclusion: NEED_MORE_DATA.
-- Implementation status: DEC-270 freezes the protocol; DEC-271 implements the miner; DEC-272 adds hardened adapter/cell evidence; DEC-273 adds verified 2015-2022 loading; DEC-274 freezes exact run/aggregate semantics; DEC-275 freezes the pinned-source dormant workflow/CLI; DEC-276 installs it with execution locked; DEC-277 freezes proof review; DEC-278 adds a read-only no-execute proof planner. No proof dispatch or historical discovery result is authorized yet.
-- Next gate: exact merged-main-head proof authorization after two identical fresh plans; historical result execution remains locked.
+- Implementation status: DEC-270 through DEC-276 build the bounded discovery stack and install it with execution locked. DEC-277/278/279 predeclare, plan, and submit one proof-only dispatch. DEC-280 freezes proof run `36319888985`: preflight failed at the separate execution gate, the matrix dependency and aggregate were skipped, and only one preflight artifact exists. GitHub exposed the skipped matrix as an unexpanded job-template placeholder, so DEC-280 binds that exact immutable API shape without rewriting DEC-277. No historical discovery result exists.
+- Next gate: a separate source-only historical-run authorization contract for at most one bounded 2015-2022 discovery-result attempt; historical dispatch/execution remains locked until that later decision.
