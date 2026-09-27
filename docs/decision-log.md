@@ -4907,3 +4907,19 @@ Repair protocol: `src/fmp/discovery/nan_null_repair_protocol.py` blob `1d26da241
 Historical result execution, reserved 2023-2026 access, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.
 
 The next gate is the deterministic repaired adapter/evidence implementation. No EXP-062 historical slot or workflow is opened by DEC-292.
+
+
+## DEC-293 — EXP-062 repaired adapter and cell evidence
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-293 implements the exact DEC-292 repair without editing the failed EXP-061 adapter. Floating-point NaN continuous feature values become None immediately before FeatureObservation construction; finite values and session flags remain unchanged; positive/negative infinity remain invalid.
+
+EXP-062 cell evidence wraps a deterministically compiled EXP-061 predecessor evidence object under the new experiment/repair identity. Validation reconstructs the predecessor evidence, verifies its stored predecessor fingerprint, and reruns the frozen EXP-061 semantic validator. This keeps nested discovery, confirmation, validation, pattern-fingerprint, chronology, and lock semantics unchanged.
+
+Repaired adapter/evidence source: `src/fmp/discovery/nan_null_repair_adapter.py` blob `53f85d99bad42decb673e9fa2ff0f771150e17db`. Focused tests: `tests/test_phase8a_exp062_nan_null_repair_adapter.py` blob `83a5d61527b3b8cad0cba5473ec148f1e0f343bc`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-repaired-adapter-evidence.md`.
+
+Historical execution, result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.
+
+The next safe gate is a non-executing EXP-062 run/evidence contract. No workflow dispatch is authorized.
