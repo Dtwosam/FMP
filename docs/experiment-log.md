@@ -1228,4 +1228,6 @@ Copy this section for each serious experiment:
 - **Historical execution:** NOT AUTHORIZED.
 - **Run contract:** DEC-294 freezes exact 20-job / 20-artifact EXP-062 identities and deterministic aggregate reconstruction through the frozen EXP-061 semantic validator.
 - **Historical execution:** NOT AUTHORIZED.
-- **Next gate:** dormant EXP-062 workflow/CLI source with a hard execution gate before historical artifact reads.
+- **Dormant workflow source:** DEC-295 adds EXP-062 CLI/template source, exact accepted EXP-044 bindings, and a hard execution gate before historical downloads/results. The active workflow path is absent.
+- **Historical execution:** NOT AUTHORIZED.
+- **Next gate:** exact-byte active workflow installation while keeping execution locked.
