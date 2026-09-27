@@ -300,3 +300,13 @@
 - Authorized only floating-point NaN -> None normalization for continuous feature values immediately before FeatureObservation construction.
 - Kept positive/negative infinity invalid and all non-NaN values unchanged.
 - Historical execution, candidate compilation, reserved 2023-2026 access, Phase 8B, demo, broker/live, real-money, and trading remain locked.
+
+
+## 2026-09-27 — DEC-293 EXP-062 repaired adapter evidence
+
+- Added a repaired adapter wrapper without modifying the frozen failed EXP-061 adapter.
+- Converted only floating-point NaN continuous feature values to None before FeatureObservation construction.
+- Kept finite values/session flags unchanged and positive/negative infinity invalid.
+- Added EXP-062 cell-evidence identity and repair fingerprint while preserving the exact predecessor EXP-061 evidence fingerprint.
+- Reconstructed and revalidated frozen EXP-061 nested evidence semantics during EXP-062 validation.
+- Kept historical execution, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
