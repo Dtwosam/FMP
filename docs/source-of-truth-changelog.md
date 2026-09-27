@@ -280,3 +280,14 @@
 - Classified every non-success outcome as slot consumed with no rerun/retry/replacement.
 - Allowed partial non-success evidence only from the frozen commit-scoped artifact inventory and the known skipped literal matrix-placeholder API shape.
 - Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-291 EXP-061 historical result content review
+
+- Predeclared exact content validation for a structurally successful EXP-061 run before the real result is observed.
+- Required exactly 18 DEC-272 cell evidence objects at one exact historical-run head.
+- Revalidated every cell identity, code commit, fingerprint, source identity, and frozen discovery/confirmation/validation inventories.
+- Revalidated the DEC-274 aggregate evidence and independently recomputed it from the 18 validated cells.
+- Required the provided aggregate to equal independent recomputation exactly.
+- Reported discovery-shortlist, confirmation-frozen, and validation-accepted counts without accepting the result or any pattern hypothesis.
+- Kept evidence labeled retrospective/already-seen and kept reserved robustness, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
