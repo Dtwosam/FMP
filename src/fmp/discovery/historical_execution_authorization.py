@@ -261,8 +261,12 @@ def require_historical_execution_authorized(
     *,
     code_commit: str,
     environment: Mapping[str, str] | None = None,
+    repository_root: Path = Path("."),
 ) -> dict[str, object]:
     code_commit = _validate_commit(code_commit, field="code_commit")
+    source = validate_historical_execution_authorization_sources(
+        repository_root=repository_root,
+    )
     env = os.environ if environment is None else environment
 
     _require_env(env, "GITHUB_ACTIONS", "true")
@@ -289,6 +293,7 @@ def require_historical_execution_authorized(
         )
 
     return {
+        **source,
         **historical_execution_authorization_payload(
             code_commit=code_commit,
         ),
