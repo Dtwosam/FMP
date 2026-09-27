@@ -364,3 +364,14 @@
 - Bound the verified DEC-293 repair and DEC-297 real-data proof into the EXP-062 protocol fingerprint.
 - Preserved the exact future 20-job / 20-artifact success shape.
 - Kept workflow source/dispatch, historical execution/result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-299 EXP-062 dormant workflow source
+
+- Frozen a disabled EXP-062 discovery workflow template without creating an active workflow.
+- Added a dedicated EXP-062 CLI wired to the DEC-293 repaired adapter and DEC-298 evidence wrappers.
+- Reused exact accepted EXP-044 feature/outcome sources through the frozen predecessor source validator.
+- Kept the frozen EXP-061 miner and DEC-273 2015-2022 loader semantics unchanged.
+- Placed the hard DEC-299 execution gate before any historical source or cell-result read.
+- Preserved the exact future 18-cell / 20-job / 20-artifact topology.
+- Kept workflow installation/dispatch, historical execution/result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading locked.

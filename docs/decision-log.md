@@ -5003,3 +5003,21 @@ Run/evidence contract: `src/fmp/discovery/exp062_run_contract.py` blob `d304c8fa
 DEC-298 authorizes no workflow source, dispatch, historical discovery execution, result production, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, or trading.
 
 The next safe gate is dormant EXP-062 workflow/CLI source using the verified repaired adapter, frozen miner/loader semantics, and DEC-298 evidence wrappers, with a hard execution gate before any historical artifact read.
+
+
+## DEC-299 — EXP-062 dormant workflow / CLI source freeze
+
+**Date:** 2026-09-27
+**Status:** DORMANT SOURCE FROZEN / NOT INSTALLED / HISTORICAL EXECUTION LOCKED
+
+DEC-299 freezes the future EXP-062 discovery workflow/CLI source after the repaired adapter was verified on accepted real data and DEC-298 froze distinct EXP-062 evidence identities.
+
+The future cell path is DEC-273 verified loader -> DEC-293 repaired adapter -> frozen DEC-271 miner -> DEC-298 EXP-062 cell evidence. Aggregate compilation uses DEC-298 wrappers over the exact frozen EXP-061 aggregate semantics.
+
+The dormant workflow remains outside `.github/workflows` at `docs/superpowers/templates/phase8a-exp062-discovery.yml.disabled`; the reserved active path `.github/workflows/phase8a-exp062-discovery.yml` remains absent. The CLI execution gate is called before any historical feature/outcome/evidence read and always raises under DEC-299.
+
+Source contract: `src/fmp/discovery/exp062_workflow_source.py` blob `e20ded13de24f99e8ea6cfdc6cb0d1309d984f24`. CLI: `scripts/phase8a_exp062.py` blob `e6a94c1733f952a8edc01584a198ead1816f4410`. Dormant template: `docs/superpowers/templates/phase8a-exp062-discovery.yml.disabled` blob `1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50`. Focused tests: `tests/test_phase8a_exp062_dormant_workflow_source.py` blob `15c054c305b57e6da7f73c24bdaab02235fa4a26`.
+
+Workflow installation/dispatch, historical discovery/result execution, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is exact active-workflow installation with the execution gate still false, followed by a merged-main fail-closed proof before any historical-result slot is opened.
