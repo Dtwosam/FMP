@@ -256,3 +256,11 @@ __all__ += [
     "probe_exp062_adapter_cell",
     "validate_exp062_adapter_probe_cell",
 ]
+
+from .exp062_adapter_proof_review import (
+    classify_exp062_adapter_proof_terminal,
+)
+
+__all__ += [
+    "classify_exp062_adapter_proof_terminal",
+]
