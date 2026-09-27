@@ -413,8 +413,14 @@ def validate_dormant_workflow_template(text: str) -> None:
         raise ValueError("DEC-275 dormant workflow must use the frozen cell matrix")
     if "name: exp061-cell-${{ matrix.dataset.symbol }}-${{ matrix.dataset.timeframe }}-${{ matrix.dataset.horizon }}m" not in text:
         raise ValueError("DEC-275 dormant workflow explicit cell name expression missing")
+    if "python scripts/phase8a_exp061.py guard-first-run" not in text:
+        raise ValueError("EXP-061 workflow first-run guard is missing")
     if "python scripts/phase8a_exp061.py require-execution" not in text:
         raise ValueError("DEC-275 dormant workflow execution gate is missing")
+    if text.index("python scripts/phase8a_exp061.py guard-first-run") > text.index(
+        "python scripts/phase8a_exp061.py require-execution"
+    ):
+        raise ValueError("EXP-061 first-run guard must precede execution authorization")
     for job_name in ("exp061-preflight", "exp061-aggregate"):
         if f"name: {job_name}" not in text:
             raise ValueError(f"DEC-275 dormant workflow missing job name {job_name}")
