@@ -141,3 +141,12 @@
 - Exposed one planned manual-main proof command only while no matching run exists.
 - Removed the command and routed to review once any matching manual-main run exists.
 - Kept proof dispatch, historical result execution, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+## 2026-09-27 — DEC-279 EXP-061 one-shot proof-only executor
+
+- Added a one-shot merged-main executor for exactly one EXP-061 proof dispatch.
+- Required two identical fresh DEC-278 plans, exact current-main binding, and zero prior target proof runs.
+- Pinned the active locked workflow and DEC-275/277/278/279 source identities before any GitHub write.
+- Authorized only proof dispatch; historical-result dispatch/execution and the historical-result slot remain locked.
+- Refused executor reruns and proof retry/replacement; no discovery-cell/aggregate execution command exists in the executor surface.
+- Deferred all proof-result interpretation to DEC-277/DEC-280 terminal review.
