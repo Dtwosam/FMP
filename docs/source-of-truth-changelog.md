@@ -57,3 +57,13 @@
 - Recorded the already-consumed EXP-015 Stage A run as historical evidence only; no retry/replacement or automatic Stage B/C continuation is authorized.
 - Kept Phase 8B, demo orders, broker mutation, live orders, real-money trading, and Phase 11 locked behind their existing gates.
 
+## 2026-09-27 — DEC-270 EXP-061 bounded discovery-first protocol
+
+- Opened EXP-20260927-061 as the first concrete DEC-268 discovery-first market-state pattern experiment.
+- Frozen 18 EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m cells.
+- Frozen exactly 20 leakage-safe continuous state dimensions plus one deterministic session dimension.
+- Bounded patterns to one or two predicates, at most 74,700 LONG/SHORT directional hypotheses globally.
+- Frozen chronology to 2015-2017 discovery, 2018 confirmation, 2019-2022 validation, while keeping 2023-2026 closed to EXP-061.
+- Added hard 180-pattern confirmation and 54-pattern validation caps with immutable discovery ranking and near-duplicate removal.
+- Defined economic/support gates using 0.5-pip primary and 1.0-pip stress outcomes.
+- Kept source access, result execution, candidate compilation, reserved-block access, Phase 8B, demo, broker/live, real-money, and trading locked.
