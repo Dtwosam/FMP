@@ -4928,6 +4928,6 @@ The aggregate requires exactly nine unique probes and requires total raw non-fin
 
 DEC-294 does not call the pattern miner, the EXP-061 cell command, or any workflow dispatch. It cannot produce discovery/confirmation/validation evidence or a candidate.
 
-Probe source: `src/fmp/discovery/exp062_adapter_probe.py` blob `579cf4ee01646e8abb686a9b060b53029527f441`. CLI: `scripts/phase8a_exp062_adapter_probe.py` blob `40e0c90c41fd53cb8ce42416af8c7c5f2b60d138`. Workflow: `.github/workflows/phase8a-exp062-adapter-proof.yml` blob `e7e8460596e00f3eca1b1b0376823722dcdd3a09`. Focused tests: `tests/test_phase8a_exp062_adapter_probe.py` blob `a471c827040750d7b3c6b4697d1d08e54363a3d9`; workflow tests blob `43aaa104072b10255594a91bd443472c11144811`.
+Probe source: `src/fmp/discovery/exp062_adapter_probe.py` blob `579cf4ee01646e8abb686a9b060b53029527f441`. CLI: `scripts/phase8a_exp062_adapter_probe.py` blob `40e0c90c41fd53cb8ce42416af8c7c5f2b60d138`. Workflow: `.github/workflows/phase8a-exp062-adapter-proof.yml` blob `c4c0a980e2675b1cc696ca02294a15f079874ada`. Focused tests: `tests/test_phase8a_exp062_adapter_probe.py` blob `a471c827040750d7b3c6b4697d1d08e54363a3d9`; workflow tests blob `ae0a794ba83802e3dbad61f28a4cce6f540ebe09`.
 
 Historical discovery execution/result production, reserved robustness, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false. The next gate is the merged-main DEC-294 proof result and its immutable artifact review.
