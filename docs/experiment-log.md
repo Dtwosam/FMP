@@ -1212,7 +1212,7 @@ Copy this section for each serious experiment:
 
 - Date: 2026-09-27
 - Status: ACTIVE — SOURCE-ONLY REPAIR + REAL-DATA ADAPTER PROOF SOURCE / HISTORICAL EXECUTION LOCKED
-- Protocol decisions: DEC-293 isolated implementation-only normalization repair; DEC-294 read-only real-data adapter proof; DEC-295 predeclared adapter-proof review; DEC-270 research semantics preserved.
+- Protocol decisions: DEC-293 isolated implementation-only normalization repair; DEC-294 read-only real-data adapter proof; DEC-295 predeclared adapter-proof review; DEC-296 predeclared proof-content review; DEC-270 research semantics preserved.
 - Predecessor: closed EXP-20260927-061 / DEC-292 failure freeze.
 - Hypothesis: EXP-061's all-cell failure was caused by representation mismatch at the adapter boundary; normalizing Phase-5 non-finite missing/warm-up continuous values to `None` should allow the unchanged discovery protocol to consume the accepted historical feature artifacts.
 - Pair(s): EURUSD, GBPUSD, USDJPY
@@ -1228,4 +1228,4 @@ Copy this section for each serious experiment:
 - Historical run executed?: NO.
 - Candidate compilation/demo/live authorized?: NO.
 - Conclusion: NEEDS_SOURCE_PROOF.
-- Next gate: require DEC-293/294/295 to be green, merge DEC-293 then DEC-294/295 in order, require the merged-main nine-cell adapter proof to succeed, then freeze the exact proof artifacts before any EXP-062 historical-result slot is considered.
+- Next gate: require DEC-293/294/295/296 to be green, merge the repair and read-only proof stack, require the merged-main nine-cell adapter proof to succeed, freeze the exact run/artifacts, then apply DEC-296 content review before any EXP-062 historical-result slot is considered.
