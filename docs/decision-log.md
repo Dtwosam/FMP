@@ -4776,6 +4776,6 @@ The prior fail-closed proof run `36319888985` is confirmed as workflow run numbe
 
 DEC-285 sets historical execution source authorization, exact-runtime historical discovery execution, and discovery-result production true. It keeps historical-result dispatch, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker mutation, live orders, real-money action, and trading false.
 
-Authorization source: `src/fmp/discovery/historical_execution_authorization.py` blob `1f27ca28a7305d2b674077b97f3a635400947706`. Focused tests: `tests/test_phase8a_exp061_historical_execution_authorization.py` blob `2636ae1daa6e90607bc86fde454bfb5b32b53f34`. DEC-281 current-source tests are updated to record the intentional activated-CLI supersession while preserving its run-inventory semantics.
+Authorization source: `src/fmp/discovery/historical_execution_authorization.py` blob `30258e076f6a786c977fac8c588ac2b22aeed66e`. Focused tests: `tests/test_phase8a_exp061_historical_execution_authorization.py` blob `2636ae1daa6e90607bc86fde454bfb5b32b53f34`. DEC-281 current-source tests are updated to record the intentional activated-CLI supersession while preserving its run-inventory semantics.
 
 The next safe gate is a separate read-only historical execution operator. It may prove the live inventory is still proof-run-only and expose the single future dispatch command as plan evidence, but must provide no execute mode.
