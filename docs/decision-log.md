@@ -4797,3 +4797,19 @@ Operator source: `src/fmp/discovery/historical_execution_operator.py` blob `a711
 DEC-286 has no execute mode. Historical-result dispatch remains false. DEC-285 runtime execution/result authorization remains true only for the exact run #2 / attempt #1 identity. Retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is a repository-hosted read-only proof of the exact DEC-286 slot-available execution plan on merged main. That proof may persist the future command and target run identity as immutable evidence, but must not dispatch EXP-061.
+
+
+## DEC-287 — EXP-061 repository-hosted historical execution plan proof
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY READ-ONLY PROOF / NOT DISPATCHED
+
+DEC-287 adds a repository-hosted read-only proof for the exact DEC-286 historical execution plan on merged `main`. It pins DEC-284 reviewed-plan source blob `14d9c559eaa33e5cb217baaf3ed2597091735b18`, DEC-285 authorization blob `30258e076f6a786c977fac8c588ac2b22aeed66e`, activated CLI blob `477aa9e8de4452e6444d1ee4361218aca445180d`, DEC-286 operator blob `a711b14fb613f1c9952f5b2a6bf85d892bd2c4a5`, DEC-286 CLI blob `1f43e1218072918d2ebb33b2c312ba8e950881f9`, the unchanged active discovery workflow, and the pinned runtime requirements.
+
+The proof workflow is push-to-main only, read-only, and invokes only the DEC-286 `plan` command. A successful proof must show frozen proof run `36319888985` as workflow run #1, zero historical-result attempts, an unconsumed slot, target workflow run #2 / attempt #1, and the future `gh workflow run phase8a-exp061-discovery.yml --ref main` command as plan evidence only. Historical execution/result authorization remains true inside the DEC-285 target runtime, while dispatch and execute mode remain false.
+
+Proof workflow: `.github/workflows/phase8a-exp061-historical-execution-plan.yml` blob `85581e9b3e2b01725526a52748524d7e940c8be5`. Focused tests: `tests/test_phase8a_exp061_historical_execution_plan_proof.py` blob `0c92221e959819383ff00d62bca72723064d7c91`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-execution-plan-proof.md`.
+
+DEC-287 cannot dispatch, execute, retry, rerun, replace, download historical discovery inputs, create cell/aggregate discovery-result artifacts, or claim a historical result. Reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain locked.
+
+Only after the merged-main DEC-287 proof succeeds may its exact non-expired plan artifact be frozen by a later reviewed-proof decision. A one-shot historical executor may be considered only after that reviewed proof is merged.
