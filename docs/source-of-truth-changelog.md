@@ -340,3 +340,16 @@
 - Reconciled total raw non-finite counts by continuous feature and cell.
 - Defined successful meaning as adapter-repair verification only, with no mining or strategy/candidate claim.
 - Kept historical discovery/result, reserved-data, candidate, promotion, Phase 8B, demo/live, real-money, and trading authorities locked.
+
+
+## 2026-09-27 — DEC-297 EXP-062 adapter proof result freeze
+
+- Frozen successful merged-main DEC-294 proof run `36348366166` at head `5e235938dc7e8eb467f59ca85ae4b6e1d5179475`.
+- Verified exact 10-job / 10-artifact DEC-295 success shape.
+- Independently downloaded and hashed all nine cell probe artifacts plus aggregate artifact.
+- Verified all nine downloaded probe JSON objects exactly equal the aggregate proof's nine cells.
+- Applied DEC-296 deterministic aggregate recompilation with no drift.
+- Verified 3,576,519 feature rows, 7,152,783 outcome rows, and 6,763 real raw non-finite values normalized successfully.
+- Reconciled non-finite totals as `realized_vol_1h=2683`, `realized_vol_8h=4070`, `realized_vol_24h=10`, all other continuous features zero.
+- Classified the repair as verified on accepted real data without mining.
+- Kept historical discovery/result production, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading locked.
