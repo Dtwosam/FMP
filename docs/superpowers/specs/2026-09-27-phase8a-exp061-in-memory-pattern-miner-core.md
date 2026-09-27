@@ -43,13 +43,14 @@ Continuous values must be finite numbers or null. Session flags must be booleans
 Each row binds:
 
 - the same observation id/cell/time identity;
+- exact UTC exit timestamp;
 - 60m or 240m horizon;
 - LONG and SHORT net pips at 0.5-pip adverse slippage;
 - LONG and SHORT net pips at 1.0-pip adverse slippage.
 
-All economic values must be finite.
+The exit timestamp must equal `available_at_utc + horizon` exactly. All economic values must be finite.
 
-Duplicate feature or outcome identities fail closed.
+Duplicate feature or outcome identities fail closed. Window membership also requires the exit timestamp to remain strictly before the frozen window end, so cross-boundary targets are purged.
 
 ## 3. State calibration
 
@@ -164,9 +165,9 @@ The synthetic proof demonstrates mechanics only. It is not market evidence.
 ## 10. Frozen implementation identities
 
 - core source: `src/fmp/discovery/pattern_miner.py`;
-- core blob: `a4ced2f83c52b0048f2266f8143545d032837098`;
+- core blob: `495a67699eb5014e52129f0238a2737049fe38e6`;
 - focused tests: `tests/test_phase8a_exp061_pattern_miner.py`;
-- focused-test blob: `25785bf7b7d58ae9a04e4a2b394a6b94bcfd1992`.
+- focused-test blob: `9694a4185906c48dc5222722723ac28810cd2340`.
 
 ## 11. Authorization boundary
 
