@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 import copy
 import math
 import unittest
@@ -13,6 +14,7 @@ from fmp.discovery.nan_null_repair_adapter import (
     compile_cell_evidence,
     normalize_continuous_feature_value,
     validate_cell_evidence,
+    validate_exp062_adapter_sources,
 )
 from fmp.discovery.nan_null_repair_protocol import (
     EXP062_EXPERIMENT_ID,
@@ -107,6 +109,21 @@ def _empty_result() -> InMemoryDiscoveryResult:
 
 
 class Exp062NanNullRepairAdapterTests(unittest.TestCase):
+    def test_sources_bind_exact_repair_protocol_and_failed_adapter(self) -> None:
+        report = validate_exp062_adapter_sources(repository_root=Path("."))
+        self.assertEqual(report["adapter_evidence_decision"], "DEC-293")
+        self.assertEqual(
+            report["dec292_protocol_blob_sha"],
+            "1d26da24134c825e2f405224316e1dd3136a38fb",
+        )
+        self.assertEqual(
+            report["exp061_adapter_blob_sha"],
+            "978a33554fad7e9d78b002778c4896be0af3333a",
+        )
+        self.assertFalse(report["historical_result_execution_authorized"])
+        self.assertFalse(report["candidate_compilation_authorized"])
+        self.assertFalse(report["trading_authorized"])
+
     def test_normalizer_changes_only_float_nan(self) -> None:
         self.assertIsNone(normalize_continuous_feature_value(float("nan")))
         for value in (0.0, 1.5, -2.0, 7, None, True, float("inf"), float("-inf")):
