@@ -95,7 +95,7 @@ class Exp061HistoricalRunAuthorizationTests(unittest.TestCase):
 
         with self.assertRaisesRegex(
             ValueError,
-            "requires an unused slot",
+            "cli Git blob mismatch",
         ):
             build_historical_run_authorization_contract(
                 repository_root=Path("."),
