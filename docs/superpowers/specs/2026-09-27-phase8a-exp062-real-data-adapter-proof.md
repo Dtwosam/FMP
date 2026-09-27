@@ -66,11 +66,19 @@ Git blob:
 
 DEC-293 repaired adapter:
 
+`src/fmp/discovery/exp062_nonfinite_feature_adapter.py`
+
+Git blob:
+
+`491ba8c92cb6e6e4c715bfb1ecb934b6949e1596`
+
+Frozen EXP-061 adapter remains unchanged:
+
 `src/fmp/discovery/market_learning_adapter.py`
 
 Git blob:
 
-`51096a72671fe28ac14044afb0bd8aa125416891`
+`978a33554fad7e9d78b002778c4896be0af3333a`
 
 Existing range-limited loader:
 
@@ -86,7 +94,7 @@ Probe source:
 
 Git blob:
 
-`579cf4ee01646e8abb686a9b060b53029527f441`
+`96eac8ed71f6691f7aff6dad12288e3448688c83`
 
 Probe CLI:
 
@@ -102,7 +110,7 @@ Proof workflow:
 
 Git blob:
 
-`c4c0a980e2675b1cc696ca02294a15f079874ada`
+`4fbeb7836ef775b14918b49ed24da8c86928610c`
 
 Focused probe tests:
 
@@ -118,7 +126,7 @@ Workflow safety tests:
 
 Git blob:
 
-`ae0a794ba83802e3dbad61f28a4cce6f540ebe09`
+`b80390f24c2d7632fa133c8c5e740dfa28aeafc2`
 
 ## Workflow restrictions
 
