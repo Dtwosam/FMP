@@ -97,3 +97,15 @@ __all__ += [
     "validate_source_snapshots",
     "workflow_source_payload",
 ]
+
+from .workflow_install import (
+    validate_installed_workflow,
+    validate_installed_workflow_paths,
+    workflow_install_payload,
+)
+
+__all__ += [
+    "validate_installed_workflow",
+    "validate_installed_workflow_paths",
+    "workflow_install_payload",
+]
