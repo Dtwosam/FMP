@@ -72,18 +72,22 @@ If 1-minute OHLC shows both stop and target could have been touched and ordering
 
 Never pick the outcome that helps PnL.
 
-## 8. Baseline-first rule
+## 8. Discovery-first rule for new research
 
-Before ML, test transparent baseline families such as:
+The historical baseline families remain useful controls, but DEC-268 supersedes the requirement that all future strategies must begin from those predefined families.
 
-- session breakout
-- trend continuation
-- mean reversion
-- previous-day high/low rejection
-- volatility breakout
-- session high/low sweep/rejection
+For new post-DEC-268 research:
 
-The ML layer must demonstrate incremental value over these baselines after costs and on unseen data.
+1. define an allowed discovery data range;
+2. define leakage-safe market measurements and fixed future-outcome labels/horizons;
+3. examine repeated behaviour across market states such as up/down/sideways structure, volatility, momentum, session/time, and spread conditions;
+4. require adequate repeated observations rather than isolated profitable examples;
+5. freeze any selected pattern as an exact immutable rule/model;
+6. evaluate that frozen candidate on later chronological evidence not used to invent or tune it whenever such evidence exists.
+
+Before a serious discovery run is used for candidate selection, freeze the search method, bounded search budget, minimum support, duplicate handling, transaction-cost treatment, and search-volume/multiple-comparison accounting.
+
+The discovery data is allowed to reveal the pattern. Validation data is not allowed to redesign the pattern.
 
 ## 9. Parameter discipline
 
@@ -194,8 +198,9 @@ For post-Phase-7 research:
 
 - previously opened history may be reused for discovery, diagnostics, stress testing, and retrospective walk-forward analysis;
 - results from already inspected periods must be labeled retrospective, not untouched OOS;
-- every search surface must be predeclared before its results are used for promotion;
-- the number of strategy families, parameter variants, pair/timeframe cells, regime variants, and portfolio combinations inspected must be recorded where practical;
+- discovery algorithms may search broadly inside their declared discovery data, but the discovery range, measurements/features, future-outcome definitions, minimum support, search algorithm/budget, search-volume accounting, candidate-freeze rule, and later validation procedure must be frozen before the run is used for promotion;
+- a newly discovered pattern does not need to belong to a predefined strategy family;
+- the number of patterns/rules/models, parameter variants, pair/timeframe cells, regime variants, and portfolio combinations inspected must be recorded where practical;
 - broad search results require stronger robustness/concentration review than a one-shot predeclared candidate;
 - no candidate may be promoted solely because it is the best result among a large search;
 - genuinely prospective evidence begins only after the exact challenger version and evaluation protocol are frozen.
@@ -217,16 +222,20 @@ Portfolio research must report:
 
 A portfolio result is not considered robust merely because weak strategies are aggregated together.
 
-## 18. Continuous-learning separation
+## 18. Continuous-learning and demo-iteration separation
 
 New observations may be used to research challengers, but the active champion set remains immutable during a registered shadow/demo/live campaign.
 
 A challenger must:
 
 1. receive a new immutable strategy/version identity;
-2. record the data available at discovery time;
+2. record the data available at discovery or revision time;
 3. pass the applicable frozen historical/retrospective gates;
-4. enter a future prospective shadow campaign before any later demo eligibility;
+4. enter fresh prospective evidence collection before any later promotion;
 5. never replace a champion automatically.
 
-Self-modifying production behavior and post-loss emergency retuning remain forbidden.
+Demo trading is an iterative learning source, not permission to tune the running strategy after every result. At a frozen review boundary, completed demo observations may be analysed and may motivate or train a challenger. Once those observations influence the challenger, that demo window is no longer fresh validation for the new version. The changed challenger must be tested on a later prospective shadow/demo window that was not used to design it.
+
+The intended cycle is `fixed demo version -> analyse completed evidence -> new immutable challenger -> historical/retrospective checks -> fresh prospective evidence -> later fixed demo version`.
+
+Self-modifying production behavior, hot-swapping, martingale, leverage escalation, post-loss emergency retuning, and outcome-aware threshold relaxation remain forbidden.
