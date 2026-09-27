@@ -1180,8 +1180,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-061 — Discovery-first market-state pattern mining
 
 - Date: 2026-09-27
-- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER + RUN CONTRACT + DORMANT WORKFLOW/CLI / HISTORICAL RUN NOT OPENED
-- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 non-executing 18-cell run contract; DEC-275 dormant workflow/CLI source
+- Status: ACTIVE — GUARDED WORKFLOW SOURCE INSTALLED / HISTORICAL RUN NOT AUTHORIZED OR EXECUTED
+- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 run contract; DEC-275 dormant workflow/CLI source; DEC-276 guarded active workflow installation
 - Purpose: derive interpretable repeated market-state/future-outcome hypotheses from the data without requiring a predefined strategy family.
 - Pair(s): EURUSD, GBPUSD, USDJPY
 - Timeframe(s): 5m, 15m, 1h
@@ -1204,5 +1204,5 @@ Copy this section for each serious experiment:
 - Discovery run executed?: NO.
 - Promotion/shadow/demo/live authorized?: NO.
 - Conclusion: NEED_MORE_DATA.
-- Implementation status: DEC-270 freezes the protocol; DEC-271 implements the miner; DEC-272 adds hardened adapter/cell evidence; DEC-273 adds verified 2015-2022 loading; DEC-274 freezes exact run/aggregate semantics; DEC-275 freezes an exact pinned-source workflow/CLI template outside `.github/workflows` with execution gated before any historical read. No active workflow or historical result-producing path is open yet.
-- Next gate: install/prove the exact guarded workflow source on merged main while keeping execution and dispatch authorization false.
+- Implementation status: DEC-270 through DEC-275 freeze the protocol, miner, adapter/evidence, loader, run contract, and dormant workflow/CLI. DEC-276 installs the reviewed workflow bytes at the active path without changing the closed execution gate. No historical discovery result has been authorized or executed.
+- Next gate: zero-prior-run guard + terminal reviewer + read-only operator-plan source, still with no dispatch authorization.
