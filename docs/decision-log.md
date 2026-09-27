@@ -4488,7 +4488,7 @@ EXP-061 freezes exactly EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m outcomes. 
 
 Patterns may contain one or two distinct dimensions only. The maximum search universe is 65 atomic states, 2,075 admissible state patterns per cell/horizon, 4,150 directional LONG/SHORT hypotheses per cell/horizon, and 74,700 directional hypotheses globally. Search volume must be recorded. No third predicate, added feature, alternate binning, extra horizon, extra pair, or result-driven feature invention is allowed inside EXP-061.
 
-Chronology is exact: 2015-2017 discovery; 2018 pass/fail confirmation; 2019-2022 frozen validation; 2023-01-01 through 2026-08-20 inclusive remains closed to EXP-061 and reserved for a later compiled-strategy robustness experiment.
+Chronology is exact: 2015-2017 discovery; 2018 pass/fail confirmation; 2019-2022 frozen validation; 2023-01-01 through 2026-08-20 inclusive remains closed to EXP-061 and reserved for a later compiled-strategy robustness experiment. Every fixed-horizon outcome must also exit strictly before its current window end; cross-boundary outcomes are purged.
 
 The discovery gate requires at least 300 total observations, at least 75 per discovery year, aggregate 0.5-pip mean net pips >= 0.25, positive 0.5-pip mean in every discovery year, and positive aggregate 1.0-pip stress mean. Near-duplicates at discovery-event Jaccard >= 0.90 are removed by immutable discovery rank. At most 10 per cell/horizon reach 2018 confirmation, for at most 180. Confirmation does not rerank; among passers, original discovery rank freezes at most 3 per cell/horizon, for at most 54 validation hypotheses.
 
@@ -4496,7 +4496,7 @@ The discovery gate requires at least 300 total observations, at least 75 per dis
 
 A surviving EXP-061 object is a pattern hypothesis, not an executable strategy. Entry/stop/target/overlap/risk/portfolio semantics require a later candidate-compilation decision before the reserved block can be opened.
 
-Frozen source: `src/fmp/discovery/pattern_protocol.py` blob `a4a877b048a9cf4b70af7fcf484059a86a60644f`. Focused tests: `tests/test_phase8a_exp061_pattern_protocol.py` blob `e060c6e78166ececee1251ab322e8612b03e6873`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-discovery-first-pattern-protocol.md`.
+Frozen source: `src/fmp/discovery/pattern_protocol.py` blob `63b3f0121d6a50eb9e8e62ab666d70eb91791621`. Focused tests: `tests/test_phase8a_exp061_pattern_protocol.py` blob `b15a7bc19cc9523166d4b92e8c75f5784bf50fa1`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-discovery-first-pattern-protocol.md`.
 
 Historical source access, discovery execution/result production, candidate compilation, reserved-block access, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a deterministic in-memory miner core only.
 
@@ -4515,7 +4515,7 @@ The core scopes every step to DEC-270 windows. Focused tests inject catastrophic
 
 Focused synthetic evidence also proves that a data-derived `return_1h=HIGH` condition can be found without naming a strategy family, that an event-equivalent two-predicate version is removed by Jaccard deduplication, and that the frozen single-state hypothesis proceeds through confirmation and validation mechanically. This synthetic case is a software proof only, not market evidence.
 
-Core source: `src/fmp/discovery/pattern_miner.py` blob `a4ced2f83c52b0048f2266f8143545d032837098`. Focused tests: `tests/test_phase8a_exp061_pattern_miner.py` blob `25785bf7b7d58ae9a04e4a2b394a6b94bcfd1992`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-in-memory-pattern-miner-core.md`.
+Core source: `src/fmp/discovery/pattern_miner.py` blob `495a67699eb5014e52129f0238a2737049fe38e6`. Focused tests: `tests/test_phase8a_exp061_pattern_miner.py` blob `9694a4185906c48dc5222722723ac28810cd2340`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-in-memory-pattern-miner-core.md`.
 
 Historical source access, historical discovery execution, reserved-block access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false.
 
