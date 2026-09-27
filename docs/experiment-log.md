@@ -1180,8 +1180,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-061 — Discovery-first market-state pattern mining
 
 - Date: 2026-09-27
-- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER + RUN CONTRACT + ACTIVE EXECUTION-LOCKED WORKFLOW + PROOF CONTRACT + READ-ONLY PROOF OPERATOR / HISTORICAL RUN NOT OPENED
-- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 non-executing 18-cell run contract; DEC-275 dormant workflow/CLI source; DEC-276 locked active-workflow installation; DEC-277 source-only gate-proof contract; DEC-278 read-only proof operator
+- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER + RUN CONTRACT + LOCKED WORKFLOW/PROOF GOVERNANCE + ACTIVE EXECUTION-LOCKED WORKFLOW + PROOF CONTRACT + READ-ONLY PROOF OPERATOR / HISTORICAL RUN NOT OPENED
+- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 run contract; DEC-275 dormant source; DEC-276 locked install; DEC-277 proof contract; DEC-278 read-only operator; DEC-279 proof-only executor; DEC-275 dormant workflow/CLI source; DEC-276 locked active-workflow installation; DEC-277 source-only gate-proof contract; DEC-278 read-only proof operator
 - Purpose: derive interpretable repeated market-state/future-outcome hypotheses from the data without requiring a predefined strategy family.
 - Pair(s): EURUSD, GBPUSD, USDJPY
 - Timeframe(s): 5m, 15m, 1h
@@ -1201,7 +1201,7 @@ Copy this section for each serious experiment:
 - Untouched OOS?: NO.
 - Output meaning: PATTERN_HYPOTHESIS_NOT_EXECUTABLE_STRATEGY.
 - Historical source opened?: NO.
-- Discovery run executed?: NO.
+- Discovery run executed?: NO. Proof-only gate run not yet reviewed.
 - Promotion/shadow/demo/live authorized?: NO.
 - Conclusion: NEED_MORE_DATA.
 - Implementation status: DEC-270 freezes the protocol; DEC-271 implements the miner; DEC-272 adds hardened adapter/cell evidence; DEC-273 adds verified 2015-2022 loading; DEC-274 freezes exact run/aggregate semantics; DEC-275 freezes the pinned-source dormant workflow/CLI; DEC-276 installs it with execution locked; DEC-277 freezes proof review; DEC-278 adds a read-only no-execute proof planner. No proof dispatch or historical discovery result is authorized yet.
