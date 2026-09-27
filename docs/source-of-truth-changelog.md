@@ -319,3 +319,14 @@
 - Bound DEC-292 repair protocol, DEC-293 repaired adapter, frozen EXP-061 miner/loader, and predecessor run-contract identities.
 - Added EXP-062 aggregate evidence that reconstructs and revalidates the exact predecessor EXP-061 aggregate semantics.
 - Kept workflow source/dispatch/execution, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-295 EXP-062 dormant workflow source
+
+- Added a dormant EXP-062 GitHub Actions template outside the active workflow directory.
+- Added EXP-062 CLI and pinned runtime.
+- Reused exact accepted EXP-044 feature/outcome run and artifact identities through the frozen EXP-061 source validator.
+- Reused the frozen 2015-2022 range-limited loader.
+- Routed cells through DEC-293 repaired adapter/evidence and aggregate through DEC-294.
+- Placed a hard execution gate before historical source downloads and result reads.
+- Kept active workflow installation, dispatch, execution, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
