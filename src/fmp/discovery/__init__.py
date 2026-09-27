@@ -67,3 +67,19 @@ __all__ += [
     "load_verified_exp061_cell_from_indexes",
     "loader_contract_payload",
 ]
+
+from .run_contract import (
+    compile_aggregate_evidence,
+    expected_artifact_names,
+    expected_job_names,
+    run_contract_payload,
+    validate_aggregate_evidence,
+)
+
+__all__ += [
+    "compile_aggregate_evidence",
+    "expected_artifact_names",
+    "expected_job_names",
+    "run_contract_payload",
+    "validate_aggregate_evidence",
+]
