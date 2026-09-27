@@ -22,6 +22,14 @@ class Exp061HistoricalExecutionPlanProofTests(unittest.TestCase):
         self.assertIn("push:", text)
         self.assertIn("branches:", text)
         self.assertIn("- main", text)
+        self.assertIn(
+            "- .github/workflows/phase8a-exp061-discovery.yml",
+            text,
+        )
+        self.assertIn(
+            "- src/fmp/discovery/historical_plan_result_decision.py",
+            text,
+        )
         self.assertNotIn("workflow_dispatch:", text)
         self.assertNotIn("pull_request:", text)
         self.assertNotIn("schedule:", text)
