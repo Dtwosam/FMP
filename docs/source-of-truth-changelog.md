@@ -404,3 +404,14 @@
 - Removed the command once a run exists and rejected multiple runs, duplicate ids, run-number/attempt drift, and main-head drift.
 - Added no execute mode.
 - Kept proof/historical dispatch, historical execution/result production, rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-303 EXP-062 proof executor
+
+- Added the sole one-shot executor for the proof-only EXP-062 gate run.
+- Required executor workflow run #1 / attempt 1 and exact merged-main source pins.
+- Required zero existing EXP-062 manual-main runs and two identical fresh DEC-302 plans immediately before dispatch.
+- Allowed only the frozen EXP-062 proof command.
+- Required the submitted proof to become workflow run #1 / attempt 1 at the executor head.
+- Recorded proof submission without consuming a historical-result slot or claiming a historical result.
+- Kept historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
