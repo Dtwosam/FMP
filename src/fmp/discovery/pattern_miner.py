@@ -36,6 +36,7 @@ from .pattern_protocol import (
     pattern_fingerprint,
     quantile_state,
     session_state,
+    window_accepts_outcome,
 )
 
 
@@ -115,6 +116,7 @@ class OutcomeObservation:
     symbol: str
     timeframe: str
     available_at_utc: datetime
+    exit_timestamp_utc: datetime
     horizon_minutes: int
     long_net_pips_0p5: float
     short_net_pips_0p5: float
@@ -131,6 +133,13 @@ class OutcomeObservation:
         if self.horizon_minutes not in HORIZONS_MINUTES:
             raise ValueError("unsupported EXP-061 outcome horizon")
         _validate_utc(self.available_at_utc, field="available_at_utc")
+        _validate_utc(self.exit_timestamp_utc, field="exit_timestamp_utc")
+        if self.exit_timestamp_utc != self.available_at_utc + timedelta(
+            minutes=self.horizon_minutes
+        ):
+            raise ValueError(
+                "EXP-061 outcome exit timestamp must equal exact frozen horizon"
+            )
         for name in (
             "long_net_pips_0p5",
             "short_net_pips_0p5",
@@ -275,7 +284,11 @@ def _scoped_outcomes(
         if row.symbol == symbol
         and row.timeframe == timeframe
         and row.horizon_minutes == horizon_minutes
-        and _window_contains(window, row.available_at_utc)
+        and window_accepts_outcome(
+            window,
+            available_at_utc=row.available_at_utc,
+            exit_timestamp_utc=row.exit_timestamp_utc,
+        )
     )
     ids = [row.observation_id for row in scoped]
     if len(ids) != len(set(ids)):
