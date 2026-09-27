@@ -4652,7 +4652,7 @@ Once any matching manual-main EXP-061 run exists, the operator reports `EXP061_P
 
 The CLI `scripts/phase8a_exp061_proof_operator.py` has only a `plan` command. It has no execute/dispatch/advance/retry mode.
 
-Operator source: `src/fmp/discovery/proof_operator.py` blob `67637d413e7c4315dd5be35e3baea4b74e0178f0`. CLI blob: `b9e8f1794aba452d7d231829c1b276f943e94c55`. Focused tests blob: `3f7d2b7f06eac65d522bbdab8da99d46a47a2f71`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-proof-operator.md`.
+Operator source: `src/fmp/discovery/proof_operator.py` blob `b8af93555656d4da57ead8fc4b66ae66e62a2de7`. CLI blob: `4f074f5abecd006d032f9897a1e527aa694a233d`. Focused tests blob: `9f4a678e4a3ed6d37216387796d00da28620cd30`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-proof-operator.md`.
 
 Proof dispatch, historical-result dispatch/execution, discovery-result production, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain false.
 
