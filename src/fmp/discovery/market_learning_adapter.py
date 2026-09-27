@@ -450,8 +450,12 @@ def compile_cell_evidence(
     outcome_manifest_sha256: str,
     feature_evidence_fingerprint: str,
     outcome_evidence_fingerprint: str,
+    experiment_id: str = EXPERIMENT_ID,
 ) -> dict[str, object]:
     _validate_commit(code_commit)
+    expected_protocol_fingerprint = protocol_fingerprint(
+        experiment_id=experiment_id
+    )
     _validate_sha256(
         processed_manifest_sha256,
         field="processed_manifest_sha256",
@@ -481,8 +485,8 @@ def compile_cell_evidence(
     evidence: dict[str, object] = {
         "evidence_version": EXP061_CELL_EVIDENCE_VERSION,
         "evidence_protocol": EXP061_CELL_EVIDENCE_PROTOCOL,
-        "experiment_id": EXPERIMENT_ID,
-        "protocol_fingerprint": protocol_fingerprint(),
+        "experiment_id": experiment_id,
+        "protocol_fingerprint": expected_protocol_fingerprint,
         "evidence_label": "RETROSPECTIVE_ALREADY_SEEN",
         "untouched_oos": False,
         "code_commit": code_commit,
@@ -610,6 +614,7 @@ def _validate_discovery_hypothesis(
     symbol: str,
     timeframe: str,
     horizon_minutes: int,
+    experiment_id: str = EXPERIMENT_ID,
 ) -> tuple[str, tuple[object, ...]]:
     if not isinstance(raw, Mapping):
         raise ValueError("EXP-061 discovery shortlist row must be an object")
@@ -642,6 +647,7 @@ def _validate_discovery_hypothesis(
         horizon_minutes=horizon_minutes,
         direction=str(direction),
         predicates=tuple(predicates),
+        experiment_id=experiment_id,
     )
     if raw.get("fingerprint") != expected_fingerprint:
         raise ValueError("EXP-061 discovery shortlist fingerprint mismatch")
@@ -697,7 +703,11 @@ def _validate_discovery_hypothesis(
     return expected_fingerprint, rank_key
 
 
-def _validate_nested_result_semantics(value: Mapping[str, object]) -> None:
+def _validate_nested_result_semantics(
+    value: Mapping[str, object],
+    *,
+    experiment_id: str = EXPERIMENT_ID,
+) -> None:
     cell = value.get("cell")
     if not isinstance(cell, Mapping):
         raise ValueError("EXP-061 cell evidence cell must be an object")
@@ -778,6 +788,7 @@ def _validate_nested_result_semantics(value: Mapping[str, object]) -> None:
             symbol=str(symbol),
             timeframe=str(timeframe),
             horizon_minutes=int(horizon),
+            experiment_id=experiment_id,
         )
         fingerprints.append(fingerprint)
         rank_keys.append(rank_key)
@@ -882,7 +893,14 @@ def _validate_nested_result_semantics(value: Mapping[str, object]) -> None:
         raise ValueError("EXP-061 validation accepted inventory mismatch")
 
 
-def validate_cell_evidence(value: Mapping[str, object]) -> Mapping[str, object]:
+def validate_cell_evidence(
+    value: Mapping[str, object],
+    *,
+    expected_experiment_id: str = EXPERIMENT_ID,
+) -> Mapping[str, object]:
+    expected_protocol_fingerprint = protocol_fingerprint(
+        experiment_id=expected_experiment_id
+    )
     fingerprint = _validate_sha256(
         value.get("evidence_fingerprint"),
         field="EXP-061 cell evidence fingerprint",
@@ -895,9 +913,9 @@ def validate_cell_evidence(value: Mapping[str, object]) -> Mapping[str, object]:
         raise ValueError("EXP-061 cell evidence version mismatch")
     if value.get("evidence_protocol") != EXP061_CELL_EVIDENCE_PROTOCOL:
         raise ValueError("EXP-061 cell evidence protocol mismatch")
-    if value.get("experiment_id") != EXPERIMENT_ID:
+    if value.get("experiment_id") != expected_experiment_id:
         raise ValueError("EXP-061 cell evidence experiment mismatch")
-    if value.get("protocol_fingerprint") != protocol_fingerprint():
+    if value.get("protocol_fingerprint") != expected_protocol_fingerprint:
         raise ValueError("EXP-061 cell evidence protocol fingerprint mismatch")
     if value.get("evidence_label") != "RETROSPECTIVE_ALREADY_SEEN":
         raise ValueError("EXP-061 cell evidence label mismatch")
@@ -929,7 +947,10 @@ def validate_cell_evidence(value: Mapping[str, object]) -> Mapping[str, object]:
         "outcome_evidence_fingerprint",
     ):
         _validate_sha256(value.get(field), field=field)
-    _validate_nested_result_semantics(value)
+    _validate_nested_result_semantics(
+        value,
+        experiment_id=expected_experiment_id,
+    )
     return value
 
 
