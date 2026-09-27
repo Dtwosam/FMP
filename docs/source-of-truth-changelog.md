@@ -124,3 +124,12 @@
 - Added repository validation that active and dormant workflow bytes remain identical.
 - Kept ordinary dispatch, proof dispatch, historical-result dispatch, historical discovery/result execution, rerun/retry/replacement, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
 - Preserved fail-closed gate ordering before any historical cell artifact download or aggregate evidence read.
+
+## 2026-09-27 — DEC-277 EXP-061 gate-proof contract
+
+- Frozen proof-only terminal semantics without authorizing a dispatch.
+- Required manual-main attempt-1 workflow identity and fail-closed preflight conclusion.
+- Required every materialized downstream job to be skipped while allowing GitHub to elide skipped matrix children.
+- Allowed exactly one preflight artifact and forbade all cell/aggregate result artifacts.
+- Required exact DEC-275 preflight source fingerprint and workflow-source payload.
+- Kept the future historical-result slot unconsumed and all historical/result/trading permissions false.
