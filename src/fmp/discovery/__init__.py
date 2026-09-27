@@ -356,3 +356,11 @@ __all__ += [
     "exp062_proof_execution_evidence",
     "validate_exp062_fresh_proof_execution_plan",
 ]
+
+from .exp062_proof_result_review import (
+    review_gate_proof_result,
+)
+
+__all__ += [
+    "review_gate_proof_result",
+]
