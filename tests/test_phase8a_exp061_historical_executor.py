@@ -161,6 +161,15 @@ class Exp061HistoricalExecutorTests(unittest.TestCase):
         self.assertTrue(
             evidence["historical_result_slot_consumed_on_submission"]
         )
+        self.assertEqual(
+            evidence["pre_dispatch_historical_result_attempt_count"],
+            0,
+        )
+        self.assertFalse(
+            evidence["pre_dispatch_historical_result_slot_consumed"]
+        )
+        self.assertEqual(evidence["historical_result_attempt_count"], 1)
+        self.assertTrue(evidence["historical_result_slot_consumed"])
         self.assertEqual(evidence["expected_target_run_number"], 2)
         self.assertEqual(evidence["expected_target_run_attempt"], 1)
         self.assertEqual(
@@ -289,7 +298,7 @@ class Exp061HistoricalExecutorTests(unittest.TestCase):
             text,
         )
         self.assertIn(
-            'src/fmp/discovery/historical_executor.py)" = "80da4c22a1919144e83739708ebe210b8be436f4"',
+            'src/fmp/discovery/historical_executor.py)" = "82dbec289ed69e7333a90fd28ce430b024a99936"',
             text,
         )
         self.assertIn(
