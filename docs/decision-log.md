@@ -4851,3 +4851,19 @@ Executor core: `src/fmp/discovery/historical_executor.py` blob `82dbec289ed69e73
 DEC-289 authorizes only the one historical-result dispatch. Target historical discovery/result execution is allowed only under the existing DEC-285 run #2 / attempt #1 runtime gate. Reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker mutation, live orders, real-money action, and trading remain false.
 
 After run #2 is submitted, no further historical dispatch is authorized. The next gate is terminal review of that exact run and its artifacts with no retry/replacement.
+
+
+## DEC-290 — EXP-061 historical result terminal review contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PREDECLARED REVIEW / NO RESULT ACCEPTANCE
+
+DEC-290 freezes terminal interpretation for the sole future EXP-061 historical workflow run #2 before that result is observed. It accepts only the exact discovery workflow on manual `main`, workflow run number 2, attempt 1, terminal `completed`, at the caller-supplied expected head.
+
+A terminal `success` must match the exact DEC-274 success shape: 20 jobs with exact preflight + 18 cell + aggregate names, every job successful, 20 exact commit-scoped artifacts, every artifact non-expired with SHA-256 digest, and successful aggregate job/artifact. Even then the classification is only `SUCCESS_SHAPE_PENDING_CONTENT_REVIEW`; historical result acceptance and pattern-hypothesis acceptance remain false until all cell and aggregate contents are independently validated.
+
+Any non-success conclusion is classified `NON_SUCCESS_SLOT_CONSUMED_NO_RETRY`. The slot is permanently consumed. Materialized jobs must be a subset of the frozen inventory, with only the known skipped literal matrix placeholder API shape additionally allowed. Preserved artifacts must be a subset of the exact frozen commit-scoped names. Partial evidence may be reviewed but cannot authorize a rerun, retry, or replacement.
+
+Reviewer source: `src/fmp/discovery/historical_result_review.py` blob `08f2f79d8b820eaa0101207f54d9c7e9d8d54c17`. Read-only CLI: `scripts/phase8a_exp061_historical_result_review.py` blob `c6d3bb06adf00ae801d579d95d5eb24a61990a85`. Focused tests: `tests/test_phase8a_exp061_historical_result_review.py` blob `86d164f6133c4d20074f6ecaa6a0a0701a3c39ca`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-result-review-contract.md`.
+
+DEC-290 authorizes no result acceptance, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading action. The next gate after run #2 is exact metadata review under DEC-290, followed by content review only if the success shape passes.
