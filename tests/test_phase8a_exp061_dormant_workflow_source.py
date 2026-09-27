@@ -161,11 +161,12 @@ class Exp061DormantWorkflowSourceTests(unittest.TestCase):
         for value in payload["authorizations"].values():
             self.assertFalse(value)
 
-    def test_dormant_template_is_not_an_active_github_workflow(self) -> None:
+    def test_dormant_template_remains_frozen_after_dec276_install(self) -> None:
         template = Path(DORMANT_WORKFLOW_TEMPLATE_PATH)
         active = Path(RESERVED_ACTIVE_WORKFLOW_PATH)
         self.assertTrue(template.is_file())
-        self.assertFalse(active.exists())
+        self.assertTrue(active.is_file())
+        self.assertEqual(template.read_bytes(), active.read_bytes())
 
         text = template.read_text(encoding="utf-8")
         validate_dormant_workflow_template(text)
