@@ -14,6 +14,7 @@ from .pattern_protocol import (
     DISCOVERY_RANK_FIELDS,
     DISCOVERY_SLIPPAGE_PIPS,
     DISCOVERY_WINDOW,
+    EXPERIMENT_ID,
     HORIZONS_MINUTES,
     MAX_ADMISSIBLE_PATTERNS_PER_CELL_HORIZON,
     MAX_DISCOVERY_SHORTLIST_PER_CELL_HORIZON,
@@ -498,6 +499,7 @@ def mine_discovery_shortlist(
     *,
     model: StateModel,
     horizon_minutes: int,
+    experiment_id: str = EXPERIMENT_ID,
 ) -> DiscoveryReport:
     if horizon_minutes not in HORIZONS_MINUTES:
         raise ValueError("unsupported EXP-061 mining horizon")
@@ -557,6 +559,7 @@ def mine_discovery_shortlist(
                 horizon_minutes=horizon_minutes,
                 direction=direction,
                 predicates=predicates,
+                experiment_id=experiment_id,
             )
             candidate = PatternHypothesis(
                 symbol=model.symbol,
@@ -791,6 +794,7 @@ def run_in_memory_discovery(
     symbol: str,
     timeframe: str,
     horizon_minutes: int,
+    experiment_id: str = EXPERIMENT_ID,
 ) -> InMemoryDiscoveryResult:
     model = calibrate_state_model(
         observations,
@@ -802,6 +806,7 @@ def run_in_memory_discovery(
         outcomes,
         model=model,
         horizon_minutes=horizon_minutes,
+        experiment_id=experiment_id,
     )
     confirmation = confirm_shortlist(
         observations,
