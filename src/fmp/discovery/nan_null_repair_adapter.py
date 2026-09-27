@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import math
+from pathlib import Path
 from typing import Mapping
 
 import polars as pl
@@ -37,6 +39,62 @@ BROKER_MUTATION_AUTHORIZED = False
 LIVE_ORDER_AUTHORIZED = False
 REAL_MONEY_AUTHORIZED = False
 TRADING_AUTHORIZED = False
+
+
+def _git_blob_sha(path: Path) -> str:
+    payload = path.read_bytes()
+    header = f"blob {len(payload)}\0".encode("ascii")
+    return hashlib.sha1(header + payload).hexdigest()
+
+
+def validate_exp062_adapter_sources(
+    *,
+    repository_root: Path,
+) -> dict[str, object]:
+    root = Path(repository_root)
+    expected = {
+        "dec292_protocol": (
+            root / "src/fmp/discovery/nan_null_repair_protocol.py",
+            DEC292_PROTOCOL_BLOB_SHA,
+        ),
+        "exp061_adapter": (
+            root / "src/fmp/discovery/market_learning_adapter.py",
+            EXP061_ADAPTER_BLOB_SHA,
+        ),
+    }
+    actual: dict[str, str] = {}
+    for label, (path, expected_sha) in expected.items():
+        if not path.is_file():
+            raise ValueError(f"missing EXP-062 adapter dependency: {path}")
+        sha = _git_blob_sha(path)
+        if sha != expected_sha:
+            raise ValueError(
+                f"EXP-062 {label} Git blob mismatch: {sha} != {expected_sha}"
+            )
+        actual[label] = sha
+
+    if EXP062_REPAIR_PROTOCOL_DECISION != "DEC-292":
+        raise ValueError("EXP-062 repair protocol decision drift")
+    if EXP062_EXPERIMENT_ID != "EXP-20260927-062":
+        raise ValueError("EXP-062 experiment identity drift")
+
+    return {
+        "adapter_evidence_decision": EXP062_ADAPTER_EVIDENCE_DECISION,
+        "dec292_protocol_blob_sha": actual["dec292_protocol"],
+        "exp061_adapter_blob_sha": actual["exp061_adapter"],
+        "repair_protocol_fingerprint": exp062_repair_protocol_fingerprint(),
+        "historical_result_execution_authorized": False,
+        "discovery_result_authorized": False,
+        "reserved_robustness_access_authorized": False,
+        "candidate_compilation_authorized": False,
+        "promotion_authorized": False,
+        "phase8b_authorized": False,
+        "demo_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "live_order_authorized": False,
+        "real_money_authorized": False,
+        "trading_authorized": False,
+    }
 
 
 def normalize_continuous_feature_value(value: object) -> object:
@@ -282,4 +340,5 @@ __all__ = [
     "compile_cell_evidence",
     "normalize_continuous_feature_value",
     "validate_cell_evidence",
+    "validate_exp062_adapter_sources",
 ]
