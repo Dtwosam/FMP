@@ -4438,3 +4438,23 @@ Executor workflow `.github/workflows/phase8a-exp015-stage-a-operator-execute.yml
 Focused validator/CLI tests are `tests/test_phase8a_exp015_stage_a_executor.py` at blob `0b352ce29753ed747cd6fed9f98dbac2a95172e6`. Focused workflow tests are `tests/test_phase8a_exp015_stage_a_operator_executor.py` at blob `c58ad493ef3914882e5d3106a5f91f83d056c0f7`. Detailed spec is `docs/superpowers/specs/2026-09-26-phase8a-exp015-stage-a-one-shot-executor.md` at blob `f6624bd62b9fc6880bf55166232f7a1ae867e9f7`.
 
 If the merged-main executor submits Stage A, that first manual-main run consumes the DEC-264 slot on any terminal outcome. No second executor attempt, Stage A rerun, retry, or replacement is authorized. Any terminal Stage A result must route through DEC-264. Stage B/C, DEC-042 selection, DEC-045 acceptance, Phase 8B, demo, broker mutation, live orders, real-money action, and trading remain unauthorized.
+
+## DEC-268 — Phase 8A discovery-first strategy research and iterative demo learning
+
+**Date:** 2026-09-27
+**Status:** APPROVED SOURCE-OF-TRUTH AMENDMENT / NO TRADING AUTHORIZATION
+
+DEC-268 changes the default future Phase 8A strategy-research direction from baseline-family-first candidate generation to discovery-first market-pattern research.
+
+The six historical rule families and all prior experiments remain immutable evidence and useful controls. They are not deleted or relabeled, but they are no longer the required or complete strategy universe for new research. Future discovery may derive repeated behaviours directly from leakage-safe historical measurements across direction/trend, sideways/range, volatility, momentum/structure, session/time, spread, and fixed future outcomes before translating selected patterns into exact strategy/model versions.
+
+Because broad discovery increases overfitting and multiple-comparison risk, every serious discovery run must freeze its discovery range, measurements/features, future-outcome definitions/horizons, minimum support, bounded search method/budget, transaction-cost treatment, duplicate handling, search-volume accounting, candidate-freeze rule, and later chronological validation procedure before its results are used for promotion. Validation data may test a frozen discovered candidate; it may not redesign the candidate.
+
+DEC-268 also formalizes demo trading as an iterative learning source. A registered demo campaign runs an immutable version. Completed demo observations may later motivate or train a new challenger, but once those observations influence that challenger they become research/training evidence for it and cannot also count as fresh validation. Every materially changed challenger receives a new immutable identity and must prove itself on a later fresh prospective shadow/demo window. No self-modification, hot-swapping, martingale, leverage escalation, emergency post-loss tuning, or outcome-aware threshold relaxation is permitted.
+
+The already-dispatched EXP-015 Stage A run `36279397331` at head `500f12ca5cb6e611f93b5d3a9eb52fb678e7774f`, attempt 1, has consumed the sole DEC-264 Stage A slot. It may finish once and must be reviewed as historical evidence. DEC-268 authorizes no retry, rerun, replacement, and no automatic continuation into EXP-015 Stage B/C even if Stage A contains survivors.
+
+Detailed amendment: `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md`.
+
+Phase 8B, demo-order submission, broker mutation, live orders, real-money action, and trading remain locked. The next new Phase 8A implementation should be a bounded discovery-first protocol across the three V1 pairs; DEC-268 itself executes no research run and opens no broker path.
+
