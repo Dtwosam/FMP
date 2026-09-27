@@ -37,6 +37,7 @@ RANGE_LIMITED_LOADER_BLOB_SHA = "df1d029a6f8b8d3862ebbf990ed1170a5982e1ea"
 RUN_CONTRACT_BLOB_SHA = "260eb6930673427266463517546969635188b143"
 WORKFLOW_SOURCE_BLOB_SHA = "68566fc86ff3470cc8b6ebef606becaff9f3450b"
 RUNTIME_REQUIREMENTS_BLOB_SHA = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
+ACTIVATED_CLI_BLOB_SHA = "477aa9e8de4452e6444d1ee4361218aca445180d"
 
 EXPECTED_WORKFLOW_NAME = "phase8a-exp061-discovery"
 EXPECTED_WORKFLOW_EVENT = "workflow_dispatch"
@@ -134,6 +135,10 @@ def validate_historical_execution_authorization_sources(
             root / "requirements/exp061-discovery-run.txt",
             RUNTIME_REQUIREMENTS_BLOB_SHA,
         ),
+        "activated_cli": (
+            root / "scripts/phase8a_exp061.py",
+            ACTIVATED_CLI_BLOB_SHA,
+        ),
     }
 
     actual: dict[str, str] = {}
@@ -175,6 +180,7 @@ def validate_historical_execution_authorization_sources(
         "run_contract_blob_sha": actual["run_contract"],
         "legacy_workflow_source_blob_sha": actual["legacy_workflow_source"],
         "runtime_requirements_blob_sha": actual["runtime_requirements"],
+        "activated_cli_blob_sha": actual["activated_cli"],
         "legacy_workflow_source_execution_authorized": False,
         "historical_execution_source_authorized": (
             HISTORICAL_EXECUTION_SOURCE_AUTHORIZED
