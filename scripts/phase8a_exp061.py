@@ -19,8 +19,11 @@ from fmp.discovery.run_contract import (
     compile_aggregate_evidence,
     validate_aggregate_evidence,
 )
-from fmp.discovery.workflow_source import (
+from fmp.discovery.historical_execution_authorization import (
+    historical_execution_authorization_payload,
     require_historical_execution_authorized,
+)
+from fmp.discovery.workflow_source import (
     validate_source_snapshots,
     workflow_source_payload,
 )
@@ -73,6 +76,11 @@ def _cmd_preflight(args: argparse.Namespace) -> int:
     value["code_commit"] = args.code_commit
     value["workflow_source"] = workflow_source_payload(
         code_commit=args.code_commit
+    )
+    value["execution_authorization"] = (
+        historical_execution_authorization_payload(
+            code_commit=args.code_commit
+        )
     )
     _write_json(args.out, value)
     return 0
