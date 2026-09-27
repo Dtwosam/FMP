@@ -258,3 +258,19 @@ __all__ += [
     "exp062_repair_protocol_payload",
     "validate_exp062_predecessor_identity",
 ]
+
+from .nan_null_repair_adapter import (
+    adapt_feature_frame as adapt_exp062_feature_frame,
+    adapt_market_learning_cell as adapt_exp062_market_learning_cell,
+    compile_cell_evidence as compile_exp062_cell_evidence,
+    validate_cell_evidence as validate_exp062_cell_evidence,
+    validate_exp062_adapter_sources,
+)
+
+__all__ += [
+    "adapt_exp062_feature_frame",
+    "adapt_exp062_market_learning_cell",
+    "compile_exp062_cell_evidence",
+    "validate_exp062_cell_evidence",
+    "validate_exp062_adapter_sources",
+]
