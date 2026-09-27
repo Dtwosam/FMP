@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Implement a verified range-limited EXP-061 artifact loader that validates the existing EXP-044 feature/outcome evidence and reads only 2015-2022 partitions into DEC-272. Historical discovery execution remains separately locked.
+**Next milestone:** Freeze the non-executing EXP-061 18-cell run/evidence contract that composes DEC-273 loader -> DEC-272 adapter -> DEC-271 miner -> DEC-272 cell evidence, while keeping workflow dispatch and historical discovery execution locked.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-273 adds the source-only verified EXP-061 loader: exact aggregate-evidence and cell-manifest binding, current checksum/schema/row verification, and exact 96-month 2015-2022 partition selection. No 2023+ monthly partition is opened; late-2022 targets reaching 2023 are filtered before adaptation. Discovery/result execution remains locked.
 - DEC-272 adds the source-only EXP-061 adapter/evidence layer: exact EXP-044 feature/outcome schema reuse, deterministic observation identity, strict 2015-2022 input range, hard rejection of any target reaching 2023+, exact processed-manifest matching, and tamper-detectable per-cell evidence. It performs no artifact loading or historical result execution.
 - DEC-271 implements the deterministic EXP-061 in-memory miner core: discovery-only cutpoint calibration, bounded one/two-state enumeration, support/economic gates, immutable ranking, Jaccard deduplication, 2018 pass/fail confirmation without reranking, and frozen 2019-2022 validation. Synthetic tests prove 2023+ rows cannot alter an EXP-061 result. No historical source/result execution is opened.
 - DEC-270 / EXP-20260927-061 freezes the first bounded discovery-first pattern protocol: 20 leakage-safe continuous state dimensions plus one deterministic session dimension, 18 pair/timeframe/horizon cells, at most 74,700 directional hypotheses, a 180-pattern confirmation shortlist, at most 54 frozen validation hypotheses, and a closed 2023-2026 robustness block. Result execution and all trading paths remain locked.
