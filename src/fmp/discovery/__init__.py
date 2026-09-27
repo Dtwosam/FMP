@@ -39,3 +39,17 @@ __all__ += [
     "StateModel",
     "run_in_memory_discovery",
 ]
+
+from .market_learning_adapter import (
+    AdaptedCellInputs,
+    adapt_market_learning_cell,
+    compile_cell_evidence,
+    validate_cell_evidence,
+)
+
+__all__ += [
+    "AdaptedCellInputs",
+    "adapt_market_learning_cell",
+    "compile_cell_evidence",
+    "validate_cell_evidence",
+]
