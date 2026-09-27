@@ -62,11 +62,6 @@ EXP061_ADAPTER_EVIDENCE_DECISION = "DEC-272"
 EXP061_CELL_EVIDENCE_VERSION = 1
 EXP061_CELL_EVIDENCE_PROTOCOL = "fmp-exp061-cell-evidence-v1"
 
-EXP062_NONFINITE_FEATURE_NORMALIZATION_DECISION = "DEC-293"
-EXP062_NONFINITE_FEATURE_NORMALIZATION_VERSION = (
-    "fmp-exp062-nonfinite-feature-normalization-v1"
-)
-
 EXP061_INPUT_START_UTC = datetime(2015, 1, 1, tzinfo=timezone.utc)
 EXP061_INPUT_END_EXCLUSIVE_UTC = datetime(2023, 1, 1, tzinfo=timezone.utc)
 
@@ -149,18 +144,6 @@ def _require_utc(value: object, *, field: str) -> datetime:
         raise ValueError(f"{field} must be a datetime")
     if value.tzinfo is None or value.utcoffset() != timedelta(0):
         raise ValueError(f"{field} must use UTC")
-    return value
-
-
-def _normalize_continuous_feature_value(value: object) -> object:
-    if value is None:
-        return None
-    if (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and not math.isfinite(float(value))
-    ):
-        return None
     return value
 
 
@@ -254,15 +237,9 @@ def adapt_feature_frame(
             raise ValueError("duplicate EXP-061 adapted feature observation id")
         seen.add(observation_id)
         values = {
-            name: _normalize_continuous_feature_value(row[name])
-            for name in CONTINUOUS_FEATURES
+            name: row[name]
+            for name in (*CONTINUOUS_FEATURES, *_SESSION_FLAG_COLUMNS)
         }
-        values.update(
-            {
-                name: row[name]
-                for name in _SESSION_FLAG_COLUMNS
-            }
-        )
         observations.append(
             FeatureObservation(
                 observation_id=observation_id,
