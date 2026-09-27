@@ -4902,7 +4902,7 @@ The next research identity must be new. EXP-062 may preserve DEC-270 discovery s
 **Date:** 2026-09-27
 **Status:** SOURCE-ONLY IMPLEMENTATION REPAIR / HISTORICAL EXECUTION LOCKED
 
-DEC-293 opens EXP-20260927-062 as a new experiment identity solely to repair the implementation defect frozen by DEC-292. EXP-061 is closed and is not retried.
+DEC-293 opens EXP-20260927-062 as a new experiment identity solely to repair the implementation defect frozen by DEC-292. EXP-061 is closed and is not retried. The frozen EXP-061 adapter remains unchanged at blob `978a33554fad7e9d78b002778c4896be0af3333a`; EXP-062 uses a separate repair module.
 
 The research semantics remain the DEC-270 discovery-first protocol: same three pairs, three timeframes, 60m/240m horizons, 2015-2017 discovery, 2018 confirmation, 2019-2022 validation, same state vocabulary/search bounds/economic gates, and the same closed 2023-2026 robustness block.
 
@@ -4910,6 +4910,6 @@ The repair is limited to the feature-adapter representation boundary. For contin
 
 This matches the frozen Phase-5 feature dictionary, which defines warm-up, missing cadence, incomplete required bars, non-finite required values, and invalid denominators as null feature values.
 
-Repaired adapter: `src/fmp/discovery/market_learning_adapter.py` blob `51096a72671fe28ac14044afb0bd8aa125416891`. Focused EXP-062 tests: `tests/test_phase8a_exp062_nonfinite_feature_normalization.py` blob `fcdbf382b8f23be4eee55b501c0f7f4cfda653e1`. DEC-292 failure freeze remains bound at blob `676116f34693f9a5a8f8403aaa93f28ac1c5bb46`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-nonfinite-feature-normalization-repair.md`.
+Repaired adapter: `src/fmp/discovery/exp062_nonfinite_feature_adapter.py` blob `491ba8c92cb6e6e4c715bfb1ecb934b6949e1596`. Focused EXP-062 tests: `tests/test_phase8a_exp062_nonfinite_feature_normalization.py` blob `b9acdf3cda666ae9dae84e80cf3381471cccf358`. DEC-292 failure freeze remains bound at blob `676116f34693f9a5a8f8403aaa93f28ac1c5bb46`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-nonfinite-feature-normalization-repair.md`.
 
 DEC-293 authorizes no historical slot or dispatch. Before EXP-062 can execute, a later gate must prove the repaired adapter against the exact accepted EXP-044 historical source artifacts. Reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain locked.
