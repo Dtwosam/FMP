@@ -4458,3 +4458,21 @@ Detailed amendment: `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-a
 
 Phase 8B, demo-order submission, broker mutation, live orders, real-money action, and trading remain locked. The next new Phase 8A implementation should be a bounded discovery-first protocol across the three V1 pairs; DEC-268 itself executes no research run and opens no broker path.
 
+## DEC-269 — EXP-015 Stage A reviewed failure freeze
+
+**Date:** 2026-09-27
+**Status:** REVIEWED / CLOSED / FAILED / NO RETRY
+
+DEC-269 closes the sole authoritative EXP-015 Stage A attempt, run `36279397331`, workflow `phase8a-exp015-stage-a`, main head `500f12ca5cb6e611f93b5d3a9eb52fb678e7774f`, attempt 1, terminal conclusion `failure`.
+
+The catalog job succeeded. Eight of nine matrix cells completed successfully and persisted non-expired artifacts. USDJPY 1h job `108508311714` failed inside the frozen Stage A computation with the exact terminal signature `ValueError: daily start equity must be finite and positive`. The reporting guard therefore failed closed instead of emitting ordinary metrics from an invalid account-equity state. The final `stage-a-authorize` job `108538985395` was skipped, no authorization artifact exists, and no authoritative aggregate Stage A survivor set was produced.
+
+DEC-269 binds the exact catalog artifact plus the eight successful cell artifact ids/digests. The USDJPY 1h cell artifact is absent by construction.
+
+The predeclared DEC-264 terminal reviewer also contains a result-review compatibility defect: it requires short matrix job names such as `stage-a-cell (USDJPY, 1h)`, while GitHub persisted expanded/truncated matrix-value names for the real run. DEC-269 does not alter the guarded Stage A workflow or reinterpret the result. Instead it binds this exact already-completed run through immutable run id, head, attempt, exact job ids/conclusions, exact artifact ids/digests, the absent failed-cell/authorization artifacts, and the exact failure signature.
+
+Result-decision source is `src/fmp/portfolio/exp015_stage_a_failure_result_decision.py` at blob `dbf9a34fc8a22c92b06e0b40ac5e97a5cf041029`. Focused tests are `tests/test_phase8a_exp015_stage_a_failure_result_decision.py` at blob `35d4adaaf66b7e8f4e85e51e2baaa3afbf977aec`. Detailed evidence contract is `docs/superpowers/specs/2026-09-27-phase8a-exp015-stage-a-failure-freeze.md`.
+
+The one Stage A slot remains consumed permanently. Stage A retry/replacement, Stage B source-open, Stage B/C execution, portfolio selection, Phase 8A acceptance, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading are all false.
+
+EXP-015 is closed as pre-DEC-268 historical evidence. The next research work proceeds under DEC-268 discovery-first market-pattern research rather than rescuing or retuning EXP-015.

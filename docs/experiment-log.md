@@ -506,7 +506,7 @@ Copy this section for each serious experiment:
 ### EXP-20260922-015 — Phase 8A rule-based challenger discovery
 
 - Date: 2026-09-22
-- Status: ACTIVE — IMPLEMENTATION / NO HISTORICAL STAGE RUN YET
+- Status: CLOSED — AUTHORITATIVE STAGE A FAILED / NO RETRY / PRE-DEC-268 HISTORICAL EVIDENCE
 - Protocol decisions: DEC-043 APPROVED; DEC-044 APPROVED BEFORE ANY HISTORICAL STAGE
 - Hypothesis: new predeclared parameter regions of the existing deterministic rule families can produce additional robust immutable challengers across EURUSD, GBPUSD, and USDJPY without reviving rejected Phase 4 points or tuning after later-period observation.
 - Pair(s): EURUSD, GBPUSD, USDJPY
@@ -522,18 +522,18 @@ Copy this section for each serious experiment:
 - Evidence label: RETROSPECTIVE_ALREADY_SEEN
 - Untouched OOS?: NO
 - Broker/shadow promotion authorized?: NO
-- Stage A opened?: NO
+- Stage A opened?: YES — sole authoritative run `36279397331`, attempt 1, head `500f12ca5cb6e611f93b5d3a9eb52fb678e7774f`, terminal conclusion FAILURE
 - Stage B opened?: NO
 - Stage C opened?: NO
-- Trade count: not run.
-- Net return after costs: not run.
-- Expectancy/trade: not run.
-- Profit factor: not run.
-- Max drawdown: not run.
-- Conclusion: NEED_MORE_DATA
-- Implementation status: PR #130 merged the validator-region + exact 567-identity catalog at `7e3eac44a14815ab65b1f85af9e2469517ed3efb` after 880 tests PASS and unchanged Phase 3 acceptance PASS. DEC-044 corrected the pre-run Stage A survivor arithmetic from 54 to 108 while retaining at most 2 survivors in each of 54 exact ranking cells. PR #131 merged the Stage A preflight catalog freeze, exact 63-strategy/189-scenario pair-timeframe cells, deterministic family rankings, richer gate/ranking authorization evidence, and manual Stage A workflow at `bde29280d08cf347265ea06f186972a61f2561f4` after 891 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS. No EXP-015 historical stage has been dispatched.
+- Trade count: no authoritative aggregate Stage A result; 8/9 cells persisted diagnostics only.
+- Net return after costs: no authoritative aggregate result.
+- Expectancy/trade: no authoritative aggregate result.
+- Profit factor: no authoritative aggregate result.
+- Max drawdown: no authoritative aggregate result.
+- Conclusion: FAIL — USDJPY 1h failed on `ValueError: daily start equity must be finite and positive`; Stage A authorization was skipped and no authoritative survivor set exists.
+- Implementation status: PR #130 merged the validator-region + exact 567-identity catalog at `7e3eac44a14815ab65b1f85af9e2469517ed3efb` after 880 tests PASS and unchanged Phase 3 acceptance PASS. DEC-044 corrected the pre-run Stage A survivor arithmetic from 54 to 108 while retaining at most 2 survivors in each of 54 exact ranking cells. PR #131 merged the Stage A preflight catalog freeze, exact 63-strategy/189-scenario pair-timeframe cells, deterministic family rankings, richer gate/ranking authorization evidence, and manual Stage A workflow at `bde29280d08cf347265ea06f186972a61f2561f4` after 891 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS. DEC-267 later consumed the one authoritative Stage A slot. DEC-269 freezes the terminal failed result: catalog + 8 cell artifacts persisted, USDJPY 1h failed, and no authorization artifact/survivor set exists.
 - Implementation status continued: PR #132 merged guarded Stage B/C execution and final deterministic shortlist/lifecycle accounting to `main` at `3d36368811e155d41d45b73313827bca83a66518` after 898 tests PASS, compile PASS, and unchanged Phase 3 acceptance PASS. Stage B/C validate upstream artifact hashes, runner commits, catalog/source digests, processed manifests, yearly gates, and candidate-sequence identity before downstream source access. Finalization applies the frozen Stage B/C ranking and 11-total / 4-per-pair / 3-per-family / 2-per-cell caps, then records one explicit lifecycle disposition for all 567 candidates.
-- Follow-up: keep Stage A/B/C undispatched until an authorized workflow-dispatch path is available; all downstream stages remain cryptographically gated by exact upstream artifacts and the authoritative workflows must run only from merged `main`.
+- Follow-up: none inside EXP-015. Do not retry, replace, rescue, or continue to Stage B/C. Preserve the eight successful cell artifacts as diagnostics only and continue new research under DEC-268 discovery-first rules.
 - Identity correction: initially drafted as EXP-014 / DEC-042 during reconciliation; renumbered before any historical stage or benchmark result.
 
 

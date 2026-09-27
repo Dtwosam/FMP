@@ -48,7 +48,7 @@ The project still uses exactly EUR/USD, GBP/USD, and USD/JPY with the accepted D
 
 Shadow/demo campaigns remain immutable while they run. Completed demo evidence may inform a new challenger version, but data used to change that version cannot also count as fresh validation for it; the revised challenger must prove itself on a later fresh prospective window.
 
-The already-dispatched EXP-015 Stage A run is preserved as pre-amendment historical evidence only; there is no retry/replacement and no automatic Stage B/C continuation. Phase 8B live shadow, Phase 9 demo orders, broker mutation, live orders, and all real-money execution remain locked behind their existing gates.
+The sole EXP-015 Stage A attempt is now closed as failed historical evidence under DEC-269: 8 of 9 cells completed, USDJPY 1h failed on a fail-closed account-equity validity guard, the aggregate authorization step was skipped, and no authoritative survivor set exists. There is no retry/replacement and no Stage B/C continuation. Phase 8B live shadow, Phase 9 demo orders, broker mutation, live orders, and all real-money execution remain locked behind their existing gates.
 
 See `docs/project-state.md` for the current implementation milestone and `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md` for the governing DEC-268 amendment.
 
