@@ -147,3 +147,15 @@ from .proof_result_decision import (
 __all__ += [
     "freeze_reviewed_gate_proof",
 ]
+
+from .historical_run_authorization import (
+    build_historical_run_authorization_contract,
+    classify_historical_run_inventory,
+    validate_historical_run_authorization_sources,
+)
+
+__all__ += [
+    "build_historical_run_authorization_contract",
+    "classify_historical_run_inventory",
+    "validate_historical_run_authorization_sources",
+]
