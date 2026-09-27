@@ -100,7 +100,7 @@ Any mismatch fails closed.
 - validation evaluations and validated fingerprints;
 - explicit reserved-block and all downstream authorization locks.
 
-The evidence is canonical-JSON hashed. `validate_cell_evidence` recomputes the fingerprint and rejects tampering or any authorization drift.
+The evidence is canonical-JSON hashed. `validate_cell_evidence` recomputes the fingerprint, validates exact cell/state/search counts, recomputes every shortlisted pattern fingerprint, rechecks discovery support/economic gates and discovery rank order, recomputes confirmation pass/freeze semantics, recomputes validation pass/accepted semantics, and rejects authorization drift. A caller cannot make an inconsistent nested result valid merely by recomputing the outer SHA-256.
 
 ## 7. Security/safety meaning
 
@@ -137,9 +137,9 @@ These are software-contract tests, not market evidence.
 ## 9. Frozen implementation identities
 
 - adapter/evidence source: `src/fmp/discovery/market_learning_adapter.py`;
-- source blob: `43da3bc81aa6da912658e8da4c7d9a6666c0b204`;
+- source blob: `978a33554fad7e9d78b002778c4896be0af3333a`;
 - focused tests: `tests/test_phase8a_exp061_market_learning_adapter.py`;
-- test blob: `044352563bfdd9ad0fdfd857c7222ce99a3436f7`.
+- test blob: `0fffb06e772c8bee82208c598f75d29b3804b781`.
 
 ## 10. Next gate
 
