@@ -190,7 +190,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: exp062-dec294-adapter-probe-${{ matrix.dataset.symbol }}-${{ matrix.dataset.timeframe }}-${{ github.sha }}
-          path: .probe/probe.json
+          path: ${{ runner.temp }}/probe/probe.json
           if-no-files-found: error
 
   aggregate:
