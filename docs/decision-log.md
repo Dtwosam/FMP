@@ -4621,3 +4621,24 @@ Focused tests require the active workflow bytes to equal the reviewed dormant te
 Frozen identities: active/dormant workflow blob `d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9`; install contract `src/fmp/discovery/workflow_install.py` blob `391cab86565e927a8d74eb3262591b22f2172472`; focused tests `tests/test_phase8a_exp061_guarded_workflow_install.py` blob `6cc19fd55dfeb19972292f1532530ed245c51a0d`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-guarded-workflow-install.md`.
 
 DEC-276 consumes no EXP-061 historical run slot. Before any later authorization can exist, governance must verify zero prior manual-main EXP-061 runs, install a workflow-internal first-run rejection guard, freeze terminal review semantics, and expose only a read-only operator plan.
+
+## DEC-277 — EXP-061 pre-dispatch governance
+
+**Date:** 2026-09-27
+**Status:** GOVERNANCE SOURCE FROZEN / ZERO PRIOR RUNS OBSERVED / HISTORICAL EXECUTION LOCKED
+
+DEC-277 freezes the governance required before any EXP-061 historical result run can be authorized. A live GitHub check on 2026-09-27 observed zero matching manual-main `phase8a-exp061-discovery` runs; that observation is evidence only and creates no authority.
+
+The guarded active and reviewed workflow source now share successor blob `ca7dfccc1a11aeb49a91e5fb1d84519f08623538`. Preflight fetches the workflow-specific manual-main run listing and runs a first-run guard before source validation and before the historical execution gate. The guard requires the current run to be the only manual-main run, with exact current run id/head and attempt 1. Any prior run, second run, rerun, or identity drift fails closed.
+
+DEC-277 also freezes a read-only operator plan. With zero runs it reports `EXP061_READ_ONLY_AUTHORIZATION_GATE_REQUIRED` and exposes no dispatch command. With one in-progress run it reports `EXP061_RUN_IN_PROGRESS`; with one terminal run it reports `EXP061_TERMINAL_REVIEW_REQUIRED`. Multiple runs fail closed.
+
+The frozen terminal reviewer requires exact workflow identity, attempt 1, and terminal conclusion. Success requires exact 20-job success, exact 20 non-expired artifacts, 18 valid cell evidence objects, independently valid aggregate evidence, and exact reproduction of aggregate evidence from the cells using the run head. Non-success may preserve only known partial diagnostics, forbids aggregate evidence/artifact claims, and opens no retry, rerun, or replacement.
+
+CLI commands `guard-first-run`, `operator-plan`, and `terminal-review` are frozen. Historical `cell` and `aggregate` remain behind the separate closed DEC-275 execution gate.
+
+Frozen identities: workflow blob `ca7dfccc1a11aeb49a91e5fb1d84519f08623538`; governance source `src/fmp/discovery/predispatch_governance.py` blob `1f8c0f6422041d621a9026f0983eabb967a8fa1c`; workflow-source validator blob `6084fb6e482b65d6fd071f9a3ed58882ee991352`; workflow-install contract blob `a052164daf13d19d7ac24c6d63a74f867744b6bd`; CLI blob `7aebca5d2e64cc328b8400282cc522d9eaea5381`; focused tests blob `0f90e05655927e1540e3ce2e9f085f0f08ce1ef4`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-predispatch-governance.md`.
+
+Workflow dispatch, historical result-run authorization, historical discovery execution/result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is a separate one-shot historical-run authorization after a fresh zero-prior-run check against the exact merged DEC-277 source.
