@@ -255,3 +255,27 @@
 - Frozen the only future target as workflow run #2 / attempt #1.
 - Preserved the future workflow command as evidence only; historical-result dispatch and execute mode remain false.
 - Kept rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-289 EXP-061 historical one-shot executor
+
+- Added a one-shot merged-main executor for the sole EXP-061 historical-result attempt.
+- Re-downloads DEC-287 artifact `10935233025` at runtime, verifies ZIP/raw/canonical plan hashes, and re-runs the DEC-288 reviewed-proof freeze before any write.
+- Requires two identical fresh DEC-286 live plans immediately before dispatch.
+- Requires the live discovery inventory to contain only proof run `36319888985` as workflow run #1 / attempt 1.
+- Authorizes exactly one `phase8a-exp061-discovery.yml` manual-main dispatch, expected to become workflow run #2 / attempt 1.
+- Requires the DEC-289 executor itself to be the first and only main-push executor run and rejects executor reruns.
+- After dispatch, verifies exactly one non-proof run exists and that it is run #2 / attempt 1 at the executor merged-main head.
+- Treats the new historical run as consuming the sole slot immediately, regardless of later terminal outcome.
+- Adds no historical rerun/retry/replacement path.
+- Keeps reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-290 EXP-061 historical terminal review contract
+
+- Predeclared terminal review for the sole EXP-061 historical run #2 before the result exists.
+- Required exact manual-main workflow identity, run number 2, attempt 1, terminal completion, and exact executor head binding.
+- Required exact 20-job / 20-artifact DEC-274 inventory for any successful run.
+- Classified any terminal non-success as slot-consuming and permanently closed to rerun/retry/replacement.
+- Allowed the exact skipped unexpanded GitHub matrix-template placeholder only in a non-success fail-closed shape and never alongside expanded cell jobs.
+- Kept candidate compilation, promotion, reserved 2023-2026 access, Phase 8B, demo, broker/live, real-money, and trading locked.

@@ -4831,3 +4831,45 @@ Reviewed execution-plan source: `src/fmp/discovery/historical_execution_plan_res
 DEC-288 keeps historical-result dispatch, execute mode, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading false. No historical-result slot is consumed.
 
 The next safe gate is a separate one-shot historical executor source that binds DEC-288, rechecks the live inventory immediately before write, and can submit at most the sole run-#2 manual-main dispatch. The resulting historical run must be reviewed separately before any downstream gate opens.
+
+
+## DEC-289 — EXP-061 one-shot historical executor
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY ONE-SHOT EXECUTOR / MERGE TRIGGERS SOLE HISTORICAL DISPATCH
+
+DEC-289 adds the one-shot executor for the single historical-result attempt reviewed through DEC-288. Merging this decision to `main` activates a push-only workflow that may submit exactly one `phase8a-exp061-discovery.yml` manual-main dispatch if every predecessor, artifact, source, and live-inventory check still passes.
+
+At runtime the executor re-downloads DEC-287 proof artifact `10935233025`, independently verifies its ZIP and plan SHA-256 identities, re-runs the DEC-288 reviewed-proof freeze against the current checkout, then builds two identical fresh DEC-286 live plans immediately before any write. Both plans must show exactly the frozen proof run `36319888985` as workflow run #1, zero historical-result attempts, an unconsumed slot, and target workflow run #2 / attempt #1.
+
+The executor workflow requires itself to be workflow run #1 and the first and only DEC-289 main-push executor run, requires `GITHUB_RUN_ATTEMPT=1`, pins the exact DEC-288/285/286/active-workflow/CLI/runtime/executor source identities, and rechecks the discovery workflow inventory immediately before invoking the CLI. Any existing historical run blocks dispatch.
+
+After submission, the workflow waits until exactly two matching EXP-061 manual-main runs exist and requires the sole non-proof run to be workflow run #2, attempt 1, at the DEC-289 merged-main head. The first later historical run consumes the slot immediately, regardless of terminal outcome. No executor rerun, historical rerun, retry, or replacement is authorized.
+
+Executor core: `src/fmp/discovery/historical_executor.py` blob `82dbec289ed69e7333a90fd28ce430b024a99936`. CLI: `scripts/phase8a_exp061_historical_executor.py` blob `a899b71c1054e4ccd5639f4487dad038b2e1f55f`. Workflow: `.github/workflows/phase8a-exp061-historical-one-shot-execute.yml` blob `4efb80cf9eee3f7073de28531babc269d3c7a8cc`. Focused tests: `tests/test_phase8a_exp061_historical_executor.py` blob `62b40b4577462d32deb0b341a778cb87ba7d2cba`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-one-shot-executor.md`.
+
+DEC-289 authorizes only the one historical-result dispatch. Target historical discovery/result execution is allowed only under the existing DEC-285 run #2 / attempt #1 runtime gate. Reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker mutation, live orders, real-money action, and trading remain false.
+
+After run #2 is submitted, no further historical dispatch is authorized. The next gate is terminal review of that exact run and its artifacts with no retry/replacement.
+
+
+## DEC-290 — EXP-061 historical terminal review contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PREDECLARED TERMINAL REVIEW / NO RESULT YET
+
+DEC-290 predeclares how the sole EXP-061 historical workflow run #2 will be judged after it becomes terminal. The criteria are frozen before the result exists.
+
+A reviewable run must be the exact `phase8a-exp061-discovery` manual-main workflow, workflow run number 2, attempt 1, at the caller-supplied DEC-289 merged-main head, terminal `completed`, and distinct from proof run `36319888985`.
+
+Success is accepted only with the exact DEC-274 20-job / 20-artifact shape: preflight + all 18 expanded cells + aggregate, every job successful, every expected commit-scoped artifact present and non-expired, and no unexpanded matrix placeholder. Such a run is classified `EXP061_HISTORICAL_RESULT_SUCCESS_COMPLETE_REVIEW_REQUIRED`; aggregate/cell contents still require separate review and candidate compilation remains locked.
+
+Any terminal non-success is classified `EXP061_HISTORICAL_RESULT_NON_SUCCESS_TERMINAL_CLOSED`. The slot is consumed permanently; only expected partial evidence may be preserved; rerun/retry/replacement remain false.
+
+DEC-290 also predeclares the exact GitHub compatibility shape learned in DEC-280: one literal unexpanded skipped matrix job template is allowed only for a non-success run, only when skipped, and only when no expanded cell jobs coexist with it. A successful run can never use that shape.
+
+Terminal-review source: `src/fmp/discovery/historical_result_review_contract.py` blob `2df4caa00aa683b8d627d061ae806178fbd5cd9c`. Focused tests: `tests/test_phase8a_exp061_historical_terminal_review_contract.py` blob `f6a166f425c2a00b17a2063e71e801f0bc64739d`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-terminal-review-contract.md`.
+
+DEC-290 opens no dispatch, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading path.
+
+The next gate is to require both DEC-289 and DEC-290 to pass CI before the one-shot historical dispatch is allowed to reach main.
