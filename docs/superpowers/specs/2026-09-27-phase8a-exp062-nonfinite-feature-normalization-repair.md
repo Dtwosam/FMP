@@ -70,7 +70,7 @@ Focused repair tests:
 
 Git blob:
 
-`fcdbf382b8f23be4eee55b501c0f7f4cfda653e1`
+`b9acdf3cda666ae9dae84e80cf3381471cccf358`
 
 The repair binds the DEC-292 failure-freeze source:
 
