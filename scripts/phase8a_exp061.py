@@ -14,6 +14,11 @@ from fmp.discovery.pattern_miner import run_in_memory_discovery
 from fmp.discovery.range_limited_loader import (
     load_verified_exp061_cell_from_indexes,
 )
+from fmp.discovery.predispatch_governance import (
+    build_read_only_operator_plan,
+    validate_first_run_guard,
+    validate_read_only_operator_plan,
+)
 from fmp.discovery.run_contract import (
     EXPECTED_CELL_COUNT,
     compile_aggregate_evidence,
@@ -75,6 +80,23 @@ def _cmd_preflight(args: argparse.Namespace) -> int:
         code_commit=args.code_commit
     )
     _write_json(args.out, value)
+    return 0
+
+
+def _cmd_guard_first_run(args: argparse.Namespace) -> int:
+    report = validate_first_run_guard(
+        _read_json(args.runs_json),
+        current_run_id=args.current_run_id,
+        current_head_sha=args.code_commit,
+    )
+    _write_json(args.out, report)
+    return 0
+
+
+def _cmd_operator_plan(args: argparse.Namespace) -> int:
+    report = build_read_only_operator_plan(_read_json(args.runs_json))
+    validate_read_only_operator_plan(report)
+    _write_json(args.out, report)
     return 0
 
 
@@ -167,6 +189,18 @@ def build_parser() -> argparse.ArgumentParser:
     preflight.add_argument("--code-commit", required=True)
     preflight.add_argument("--out", type=Path, required=True)
     preflight.set_defaults(func=_cmd_preflight)
+
+    guard = subparsers.add_parser("guard-first-run")
+    guard.add_argument("--runs-json", type=Path, required=True)
+    guard.add_argument("--current-run-id", type=int, required=True)
+    guard.add_argument("--code-commit", required=True)
+    guard.add_argument("--out", type=Path, required=True)
+    guard.set_defaults(func=_cmd_guard_first_run)
+
+    plan = subparsers.add_parser("operator-plan")
+    plan.add_argument("--runs-json", type=Path, required=True)
+    plan.add_argument("--out", type=Path, required=True)
+    plan.set_defaults(func=_cmd_operator_plan)
 
     require = subparsers.add_parser("require-execution")
     require.add_argument("--code-commit", required=True)
