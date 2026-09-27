@@ -274,6 +274,12 @@ MAX_FROZEN_PATTERN_HYPOTHESES = (
 )
 
 
+def _validate_experiment_id(value: object) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("experiment_id must be a non-empty string")
+    return value
+
+
 def pattern_fingerprint(
     *,
     symbol: str,
@@ -281,7 +287,9 @@ def pattern_fingerprint(
     horizon_minutes: int,
     direction: str,
     predicates: Sequence[tuple[str, str]],
+    experiment_id: str = EXPERIMENT_ID,
 ) -> str:
+    experiment_id = _validate_experiment_id(experiment_id)
     if symbol not in SYMBOLS:
         raise ValueError("unsupported discovery symbol")
     if timeframe not in TIMEFRAMES:
@@ -305,7 +313,7 @@ def pattern_fingerprint(
         else:
             raise ValueError(f"unsupported discovery pattern dimension: {name!r}")
     payload = {
-        "experiment_id": EXPERIMENT_ID,
+        "experiment_id": experiment_id,
         "protocol_version": PROTOCOL_VERSION,
         "symbol": symbol,
         "timeframe": timeframe,
@@ -332,9 +340,13 @@ def _window_payload(window: ResearchWindow) -> dict[str, str]:
     }
 
 
-def protocol_payload() -> dict[str, object]:
+def protocol_payload(
+    *,
+    experiment_id: str = EXPERIMENT_ID,
+) -> dict[str, object]:
+    experiment_id = _validate_experiment_id(experiment_id)
     return {
-        "experiment_id": EXPERIMENT_ID,
+        "experiment_id": experiment_id,
         "decision": PATTERN_DISCOVERY_DECISION,
         "protocol_version": PROTOCOL_VERSION,
         "evidence_label": EVIDENCE_LABEL,
@@ -457,10 +469,14 @@ def protocol_payload() -> dict[str, object]:
     }
 
 
-def protocol_fingerprint() -> str:
+def protocol_fingerprint(
+    *,
+    experiment_id: str = EXPERIMENT_ID,
+) -> str:
+    experiment_id = _validate_experiment_id(experiment_id)
     encoded = (
         json.dumps(
-            protocol_payload(),
+            protocol_payload(experiment_id=experiment_id),
             sort_keys=True,
             separators=(",", ":"),
             allow_nan=False,
