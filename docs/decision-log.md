@@ -4558,3 +4558,26 @@ Loader source: `src/fmp/discovery/range_limited_loader.py` blob `df1d029a6f8b8d3
 Historical discovery execution, discovery-result production, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false.
 
 The next safe gate is a non-executing 18-cell EXP-061 run/evidence contract that composes DEC-273 -> DEC-272 -> DEC-271 -> DEC-272 evidence without opening workflow dispatch.
+
+## DEC-274 — EXP-061 non-executing 18-cell run contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY RUN CONTRACT / WORKFLOW AND HISTORICAL EXECUTION LOCKED
+
+DEC-274 freezes the exact result shape required for any later authorized EXP-20260927-061 historical discovery run.
+
+The reserved future workflow identity is `phase8a-exp061-discovery` at `.github/workflows/phase8a-exp061-discovery.yml`, manual `workflow_dispatch`, branch `main`, authoritative run attempt 1. DEC-274 itself creates no workflow and authorizes no dispatch.
+
+The exact run inventory is 20 jobs: `exp061-preflight`, 18 explicit cell jobs named `exp061-cell-<symbol>-<timeframe>-<horizon>m`, and `exp061-aggregate`. Explicit names avoid GitHub implicit matrix-name ambiguity. A successful future run requires exactly 20 non-expired artifacts: one preflight, 18 commit-scoped cell artifacts, and one aggregate artifact.
+
+Every cell evidence object must pass DEC-272's hardened semantic validator and bind the exact Phase 2 source SHA, feature manifest SHA, outcome manifest SHA, feature evidence fingerprint, and outcome evidence fingerprint. The aggregate compiler requires all 18 cells, one code commit, exact accepted source identities, one global feature-evidence fingerprint, one global outcome-evidence fingerprint, cross-horizon manifest consistency per symbol/timeframe, and the frozen 180/54 global pattern caps.
+
+The aggregate validator independently rechecks cell order, source/manifests, fingerprint inventories/subset relations, count reconciliation, global caps, and downstream locks. Re-fingerprinted but semantically inconsistent aggregate evidence fails closed.
+
+A later separately authorized non-success would consume that run slot and defaults to no rerun, retry, or replacement. Partial expected cell evidence may be retained diagnostically. A success still opens no reserved 2023-2026 data, candidate compilation, Phase 8B, demo, broker/live, real-money, or trading path.
+
+Run-contract source: `src/fmp/discovery/run_contract.py` blob `260eb6930673427266463517546969635188b143`. Focused tests: `tests/test_phase8a_exp061_run_contract.py` blob `820a616fe98d08dc7a15973ccec4246a64f2b30a`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-run-contract.md`.
+
+All workflow source/dispatch, historical discovery/result execution, rerun/retry/replacement, reserved-block access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading authorizations remain false.
+
+The next safe gate is workflow/CLI source freeze only, still with execution locked and no dispatch path.

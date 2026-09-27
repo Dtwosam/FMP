@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Freeze the non-executing EXP-061 18-cell run/evidence contract that composes DEC-273 loader -> DEC-272 adapter -> DEC-271 miner -> DEC-272 cell evidence, while keeping workflow dispatch and historical discovery execution locked.
+**Next milestone:** Freeze the EXP-061 workflow/CLI source for the reserved manual-main workflow identity using the exact DEC-274 20-job/20-artifact contract, while keeping its execution gate and dispatch authority false.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-274 freezes the non-executing EXP-061 18-cell run/aggregate-evidence contract: explicit 20-job names, exact commit-scoped 20-artifact names, attempt-1 manual-main identity, deep cell-evidence validation, deterministic aggregate reconstruction, and no-rerun default semantics. No workflow or historical execution is opened.
 - DEC-273 adds the source-only verified EXP-061 loader: exact aggregate-evidence and cell-manifest binding, current checksum/schema/row verification, and exact 96-month 2015-2022 partition selection. No 2023+ monthly partition is opened; late-2022 targets reaching 2023 are filtered before adaptation. Discovery/result execution remains locked.
 - DEC-272 adds the source-only EXP-061 adapter/evidence layer: exact EXP-044 feature/outcome schema reuse, deterministic observation identity, strict 2015-2022 input range, hard rejection of any target reaching 2023+, exact processed-manifest matching, and tamper-detectable per-cell evidence. It performs no artifact loading or historical result execution.
 - DEC-271 implements the deterministic EXP-061 in-memory miner core: discovery-only cutpoint calibration, bounded one/two-state enumeration, support/economic gates, immutable ranking, Jaccard deduplication, 2018 pass/fail confirmation without reranking, and frozen 2019-2022 validation. Synthetic tests prove 2023+ rows cannot alter an EXP-061 result. No historical source/result execution is opened.
