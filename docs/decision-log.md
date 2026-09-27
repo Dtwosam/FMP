@@ -4939,3 +4939,19 @@ Run contract source: `src/fmp/discovery/nan_null_repair_run_contract.py` blob `0
 Workflow source, dispatch, historical execution, result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo/live, real-money, and trading all remain locked.
 
 The next gate is dormant EXP-062 workflow/CLI source with a hard execution gate before historical artifact reads. No workflow install or dispatch is authorized by DEC-294.
+
+
+## DEC-295 — EXP-062 dormant workflow and CLI source
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY DORMANT / EXECUTION LOCKED
+
+DEC-295 builds the dormant EXP-062 workflow/CLI source without installing an active GitHub Actions workflow. It reuses the exact accepted EXP-044 source verifier and frozen 2015-2022 loader, routes cell execution through the DEC-293 repaired adapter/evidence layer, and routes aggregate compilation through DEC-294.
+
+The CLI and dormant workflow both place the DEC-295 fail-closed execution gate before any historical source artifact download or historical result read. The gate always refuses execution.
+
+Dormant workflow template: `docs/superpowers/templates/phase8a-exp062-discovery.yml.disabled` blob `dd93a3d87801bacae05ae2f45a2d66c1aecd4590`. Workflow source gate: `src/fmp/discovery/nan_null_repair_workflow_source.py` blob `e1355915beeb06046662de813d6cc11b4d0ca6df`. CLI: `scripts/phase8a_exp062.py` blob `585394acda43a037d07db3b35a5aa6f5f22d8309`. Runtime: `requirements/exp062-discovery-run.txt` blob `1ff32214dee10d877a067e750cd69ffad96d5fe5`. Focused tests: `tests/test_phase8a_exp062_dormant_workflow_source.py` blob `43bee85c1268467df01dcb7d68fa1d3f28f201a3`.
+
+The reserved active path `.github/workflows/phase8a-exp062-discovery.yml` does not exist under DEC-295. Workflow installation, dispatch, historical execution, result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.
+
+The next safe gate is a separate exact-byte workflow installation decision that keeps execution locked. DEC-295 authorizes no dispatch.
