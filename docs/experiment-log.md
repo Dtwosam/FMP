@@ -1206,3 +1206,27 @@ Copy this section for each serious experiment:
 - Conclusion: IMPLEMENTATION_FAILURE_CLOSED_NO_PATTERN_RESULT. Eight cells failed on non-finite `realized_vol_1h`; ten failed on non-finite `realized_vol_8h`. The sole slot is consumed and EXP-061 cannot be retried.
 - Implementation status: DEC-289 executor run `36335739823` successfully submitted the sole historical run `36335879839`. DEC-290 classified its terminal shape as non-success and slot-consuming. DEC-292 freezes the exact reviewed failure: 1 successful preflight, 18 failed cells, 1 skipped aggregate, one preflight artifact, zero cell/aggregate artifacts, and one systemic adapter defect. No pattern result exists.
 - Next gate: a new experiment identity (EXP-062) preserving the EXP-061 research protocol while repairing only adapter normalization of non-finite continuous source values to `None`; EXP-061 remains permanently closed.
+
+
+### EXP-20260927-062 — Non-finite adapter repair
+
+- Date: 2026-09-27
+- Status: ACTIVE — SOURCE-ONLY ADAPTER REPAIR / HISTORICAL EXECUTION LOCKED
+- Opening decision: DEC-293
+- Predecessor: EXP-20260927-061, closed by DEC-292 after sole historical run `36335879839` failed before mining.
+- Purpose: preserve the EXP-061 discovery-first protocol while repairing only non-finite continuous source-value normalization at the adapter boundary.
+- Repair semantics: finite continuous values unchanged; existing nulls unchanged; `NaN`, `+Inf`, and `-Inf` become `None` before `FeatureObservation`.
+- Pair(s): EURUSD, GBPUSD, USDJPY.
+- Timeframe(s): 5m, 15m, 1h.
+- Outcome horizons: 60m, 240m.
+- Discovery: 2015-01-01 to 2018-01-01 exclusive.
+- Confirmation: 2018-01-01 to 2019-01-01 exclusive.
+- Validation: 2019-01-01 to 2023-01-01 exclusive.
+- Reserved robustness block: 2023-01-01 to 2026-08-21 exclusive; CLOSED.
+- Protocol semantics changed?: NO.
+- Historical source opened?: NO.
+- Historical result run executed?: NO.
+- Candidate compilation authorized?: NO.
+- Promotion/shadow/demo/live authorized?: NO.
+- Output meaning when later executed: PATTERN_HYPOTHESIS_NOT_EXECUTABLE_STRATEGY.
+- Next gate: backward-compatible experiment-ID propagation through fingerprints/miner/evidence followed by an EXP-062-specific run contract and independently governed one-shot historical slot.
