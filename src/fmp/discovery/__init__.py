@@ -107,3 +107,13 @@ __all__ += [
     "validate_installed_paths_from_repo",
     "validate_locked_workflow_installation",
 ]
+
+from .proof_contract import (
+    proof_contract_payload,
+    validate_gate_proof_terminal,
+)
+
+__all__ += [
+    "proof_contract_payload",
+    "validate_gate_proof_terminal",
+]
