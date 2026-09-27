@@ -31,9 +31,12 @@ Historical / Live Quote Source
        Feature Engine
             |
             v
+ Pattern / Regime Discovery
+            |
+            v
   Versioned Strategy Library
             |
-            +------> Optional Statistical/ML / Regime Filter
+            +------> Optional Statistical/ML Filter
             |
             v
  Champion/Challenger Registry
@@ -63,11 +66,14 @@ Owns source adapters, ingestion manifests, raw-file provenance, validation, norm
 ### `features`
 Transforms validated historical information into leakage-safe features. It never mutates raw data and never decides trades.
 
+### `discovery`
+Research-only pattern/regime discovery over leakage-safe historical measurements and fixed future outcomes. Under DEC-268 it may derive candidate behaviours without prespecifying a strategy family. Discovery search boundaries, support requirements, search volume, and later validation protocol must be reproducible, and validation/prospective outcomes cannot feed back into the already-frozen candidate.
+
 ### `strategies`
-Produces transparent candidate signals/setup metadata. Strategy code must not size positions or send broker orders.
+Produces exact versioned candidate signals/setup metadata from transparent rules or frozen discovered patterns. Strategy code must not size positions or send broker orders.
 
 ### `models`
-Optional statistical/ML filtering or probability estimation. It is downstream of leakage-safe features and must be benchmarked against simpler baselines.
+Optional statistical/ML discovery, filtering, probability estimation, or regime modeling. Models remain downstream of leakage-safe data/features, but they need not be downstream of a hand-written strategy family. Complexity must be benchmarked against simpler explanations and must survive later chronological/prospective evidence.
 
 ### `portfolio`
 Owns versioned strategy-registration metadata, champion/challenger eligibility, deterministic candidate aggregation, applicability/regime routing metadata, conflict handling, and exposure summaries. It does not size positions and cannot promote a challenger by itself.
