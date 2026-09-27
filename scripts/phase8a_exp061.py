@@ -18,6 +18,7 @@ from fmp.discovery.predispatch_governance import (
     build_read_only_operator_plan,
     validate_first_run_guard,
     validate_read_only_operator_plan,
+    validate_terminal_review,
 )
 from fmp.discovery.run_contract import (
     EXPECTED_CELL_COUNT,
@@ -96,6 +97,35 @@ def _cmd_guard_first_run(args: argparse.Namespace) -> int:
 def _cmd_operator_plan(args: argparse.Namespace) -> int:
     report = build_read_only_operator_plan(_read_json(args.runs_json))
     validate_read_only_operator_plan(report)
+    _write_json(args.out, report)
+    return 0
+
+
+def _load_optional_cell_evidence(root: Path | None) -> list[Mapping[str, object]] | None:
+    if root is None:
+        return None
+    paths = sorted(Path(root).rglob("cell-evidence.json"))
+    values: list[Mapping[str, object]] = []
+    for path in paths:
+        value = _read_json(path)
+        validate_cell_evidence(value)
+        values.append(value)
+    return values
+
+
+def _cmd_terminal_review(args: argparse.Namespace) -> int:
+    aggregate = (
+        _read_json(args.aggregate_evidence)
+        if args.aggregate_evidence is not None
+        else None
+    )
+    report = validate_terminal_review(
+        run=_read_json(args.run_json),
+        jobs_payload=_read_json(args.jobs_json),
+        artifacts_payload=_read_json(args.artifacts_json),
+        cell_evidence=_load_optional_cell_evidence(args.cell_root),
+        aggregate_evidence=aggregate,
+    )
     _write_json(args.out, report)
     return 0
 
@@ -201,6 +231,15 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--runs-json", type=Path, required=True)
     plan.add_argument("--out", type=Path, required=True)
     plan.set_defaults(func=_cmd_operator_plan)
+
+    review = subparsers.add_parser("terminal-review")
+    review.add_argument("--run-json", type=Path, required=True)
+    review.add_argument("--jobs-json", type=Path, required=True)
+    review.add_argument("--artifacts-json", type=Path, required=True)
+    review.add_argument("--cell-root", type=Path)
+    review.add_argument("--aggregate-evidence", type=Path)
+    review.add_argument("--out", type=Path, required=True)
+    review.set_defaults(func=_cmd_terminal_review)
 
     require = subparsers.add_parser("require-execution")
     require.add_argument("--code-commit", required=True)
