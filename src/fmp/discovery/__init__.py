@@ -109,3 +109,19 @@ __all__ += [
     "validate_installed_workflow_paths",
     "workflow_install_payload",
 ]
+
+from .predispatch_governance import (
+    build_read_only_operator_plan,
+    validate_first_run_guard,
+    validate_no_prior_manual_main_runs,
+    validate_read_only_operator_plan,
+    validate_terminal_review,
+)
+
+__all__ += [
+    "build_read_only_operator_plan",
+    "validate_first_run_guard",
+    "validate_no_prior_manual_main_runs",
+    "validate_read_only_operator_plan",
+    "validate_terminal_review",
+]
