@@ -280,10 +280,11 @@ Build and evaluate a versioned portfolio of strategies across EURUSD, GBPUSD, an
 - strategy/portfolio contribution and concentration reporting
 - daily return distribution and high-return-day frequency reporting
 - continuous-research path that can create challengers but cannot mutate an active champion set
-- direct market-learning track over leakage-safe feature rows across EURUSD, GBPUSD, and USDJPY, with fixed future-outcome labels independent of hand-written strategy signals
-- versioned full-history feature materialization for the learning track; historical Phase 5 artifacts remain immutable and their old final-test lock is not silently weakened
+- discovery-first market-behaviour research over leakage-safe measurements across EURUSD, GBPUSD, and USDJPY, allowing repeated patterns to be derived from trend/direction, sideways/range, volatility, momentum/structure, session/time, spread, and fixed future outcomes rather than requiring a predefined strategy family
+- a bounded discovery protocol that freezes discovery data, measurements/features, future-outcome definitions, minimum support, search method/budget, search-volume accounting, candidate-freeze rules, and later chronological validation before results are used for promotion
+- versioned full-history feature/materialization support where needed; historical Phase 5 artifacts remain immutable and their old final-test lock is not silently weakened
 - offline champion/challenger retraining from frozen historical/prospective cutoffs; active shadow/demo models never self-modify in place
-- predeclared experiment protocols for every new strategy family, material parameter-region expansion, model family, target, threshold surface, retraining rule, or promotion search
+- immutable versioning for any strategy/model materially changed from historical, shadow, or demo evidence
 
 #### Historical-data rule
 The 2024-01-01 through 2026-08-20 period was opened during Phase 7. Post-Phase-7 strategies and models may use it for retrospective research and chronological robustness, but it is no longer an untouched final test for newly invented or materially changed logic. Historical learning evidence through 2026-08-20 must be labeled retrospective/already seen. Genuine new forward evidence starts only after a challenger is frozen. The old `fmp-feature-v1` pre-2024 artifact remains immutable; later coverage requires a new versioned materialization rather than weakening the historical Phase 5 contract.
@@ -298,8 +299,9 @@ PASS only when:
 - historical runs bind exact code/data/config/cost/risk identities;
 - performance reporting includes return, expectancy, PF, drawdown, trade count, concentration, cost sensitivity, and daily return distribution;
 - repeated historical search is explicitly treated as overfitting/multiple-comparison risk;
-- the direct market-learning question is answered under a frozen chronological protocol using all three V1 pairs/timeframes, with either a qualified immutable model-derived challenger or a credible rejection retained as evidence;
-- future learning from shadow/demo data uses immutable champion/challenger retraining rather than online mutation of the active model;
+- the discovery-first market-learning question is answered under a frozen, bounded protocol using all three V1 pairs, with candidate patterns derived from market behaviour rather than restricted to predefined strategy families and with search-volume/multiple-comparison risk recorded;
+- any discovered candidate is frozen before later chronological or prospective evaluation, and validation data is never used to redesign the candidate;
+- future learning from shadow/demo data uses immutable champion/challenger retraining rather than online mutation of the active model; once observations are used to change a challenger, that same observation window cannot count as fresh validation for the changed version;
 - at least one frozen portfolio/shadow candidate materially improves the economic case over the Phase 7 single-strategy baseline, or a credible rejection is recorded;
 - repository-wide regression tests and unchanged Phase 3 execution/risk acceptance remain green.
 
@@ -334,7 +336,7 @@ PASS when live signals, routing, observed spreads, timing, portfolio exposure, a
 ## Phase 9 — Demo trading
 
 ### Goal
-Execute the same approved logic against a practice/demo account with no real capital.
+Execute an approved immutable strategy/portfolio version against a practice/demo account with no real capital, collect realistic execution/outcome evidence, and allow completed demo evidence to inform later challenger versions without mutating the running campaign.
 
 ### Candidate execution paths
 - OANDA fxTrade Practice REST/streaming API
@@ -351,10 +353,14 @@ Choice is deferred until this phase and must consider availability to the operat
 - position reconciliation
 - restart/recovery behavior
 - daily halt
+- immutable strategy/champion identity for each registered demo campaign
+- predeclared review boundaries; no per-trade self-modification or hot-swapping
+- demo observations used for tuning are marked as research/training evidence for the revised challenger
+- every materially revised challenger receives a new identity and must later prove itself on a fresh prospective window
 - no secret committed to Git
 
 ### Acceptance gate
-PASS when demo execution behaves reliably over enough trades/time to compare actual execution costs and operational behavior with research assumptions.
+PASS when demo execution behaves reliably over enough trades/time to compare actual execution costs and operational behavior with research assumptions. A campaign may also end in `RESEARCH_REVISION_REQUIRED`; completed demo evidence may then inform a new immutable challenger, but that revised version must be evaluated on later fresh prospective data before it can inherit or exceed the prior version's status.
 
 ### Checkpoint
 `fmp-v1-phase9-demo`
