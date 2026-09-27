@@ -375,3 +375,11 @@
 - Placed the hard DEC-299 execution gate before any historical source or cell-result read.
 - Preserved the exact future 18-cell / 20-job / 20-artifact topology.
 - Kept workflow installation/dispatch, historical execution/result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-300 EXP-062 locked workflow installation
+
+- Installed the exact DEC-299 disabled workflow byte-for-byte at the reserved active EXP-062 discovery path.
+- Verified dormant and active workflow blobs both equal `1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50`.
+- Preserved the hard execution gate before any historical cell source or aggregate-result read.
+- Kept workflow/proof/historical-result dispatch, historical execution/result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading locked.
