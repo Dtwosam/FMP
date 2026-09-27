@@ -296,3 +296,19 @@ __all__ += [
     "validate_exp062_aggregate_evidence",
     "validate_exp062_cell_evidence",
 ]
+
+from .exp062_workflow_source import (
+    load_and_validate_dormant_workflow_template as load_exp062_dormant_workflow_template,
+    require_historical_execution_authorized as require_exp062_historical_execution,
+    validate_exp062_workflow_source_dependencies,
+    validate_source_snapshots as validate_exp062_source_snapshots,
+    workflow_source_payload as exp062_workflow_source_payload,
+)
+
+__all__ += [
+    "exp062_workflow_source_payload",
+    "load_exp062_dormant_workflow_template",
+    "require_exp062_historical_execution",
+    "validate_exp062_source_snapshots",
+    "validate_exp062_workflow_source_dependencies",
+]
