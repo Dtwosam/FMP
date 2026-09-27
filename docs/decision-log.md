@@ -4532,9 +4532,9 @@ The adapter converts verified Polars feature/outcome frames into immutable EXP-0
 
 The accepted adapter range is 2015-01-01 through 2022-12-31. Feature rows at or after 2023-01-01 are rejected. Outcome rows whose observation is outside that range or whose fixed-horizon target reaches 2023-01-01 or later are rejected. This prevents the reserved 2023-2026 robustness target data from being presented to EXP-061.
 
-DEC-272 also defines canonical per-cell evidence containing protocol/code/source identities, state cutpoints, discovery search counts/shortlist, confirmation evaluations/frozen fingerprints, validation evaluations/validated fingerprints, and explicit false downstream authorizations. Evidence is canonical-JSON fingerprinted and tamper-checked.
+DEC-272 also defines canonical per-cell evidence containing protocol/code/source identities, the exact feature-manifest and outcome-manifest SHA-256s, state cutpoints, discovery search counts/shortlist, confirmation evaluations/frozen fingerprints, validation evaluations/validated fingerprints, and explicit false downstream authorizations. Evidence is canonical-JSON fingerprinted and tamper-checked.
 
-Source: `src/fmp/discovery/market_learning_adapter.py` blob `3655652f366bea41ef28009b87f5904b1a5894ea`. Focused tests: `tests/test_phase8a_exp061_market_learning_adapter.py` blob `4d1784bbef3d1f527bba6dd6f97d6b7e88cc5588`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-market-learning-adapter-evidence.md`.
+Source: `src/fmp/discovery/market_learning_adapter.py` blob `43da3bc81aa6da912658e8da4c7d9a6666c0b204`. Focused tests: `tests/test_phase8a_exp061_market_learning_adapter.py` blob `044352563bfdd9ad0fdfd857c7222ce99a3436f7`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-market-learning-adapter-evidence.md`.
 
 DEC-272 does not load artifacts and does not authorize historical source access, historical discovery execution, reserved-block access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, or trading.
 
