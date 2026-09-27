@@ -4638,3 +4638,22 @@ A valid proof consumes no historical-result slot and opens no historical discove
 Proof-contract source: `src/fmp/discovery/proof_contract.py` blob `1a2b6c404cba4e1f6e9b28d46a0671a6a318e48a`. Focused tests: `tests/test_phase8a_exp061_gate_proof_contract.py` blob `bd4f837c99090bcabc1ef8932b39653dc1d137e5`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-gate-proof-contract.md`.
 
 The next safe gate is a separate exact-head proof authorization after DEC-276/277 are merged green. That later decision may authorize one proof-only dispatch but must keep historical discovery/result execution false.
+
+## DEC-278 — EXP-061 read-only gate-proof operator
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY OPERATOR / NO EXECUTE MODE / NO DISPATCH AUTHORIZED
+
+DEC-278 adds a read-only planner for the future EXP-061 gate proof. It requires current main metadata, workflow-run history, and an exact caller-supplied expected head. Main must equal that head.
+
+When no matching manual-main EXP-061 run exists, the operator reports `EXP061_PROOF_DISPATCH_AUTHORIZATION_REQUIRED` and exposes only `gh workflow run phase8a-exp061-discovery.yml --ref main`. The report still records proof dispatch authorization false and execute mode unavailable.
+
+Once any matching manual-main EXP-061 run exists, the operator reports `EXP061_PROOF_RUN_PRESENT_REVIEW_REQUIRED` and removes the dispatch command. It cannot plan a second proof automatically.
+
+The CLI `scripts/phase8a_exp061_proof_operator.py` has only a `plan` command. It has no execute/dispatch/advance/retry mode.
+
+Operator source: `src/fmp/discovery/proof_operator.py` blob `67637d413e7c4315dd5be35e3baea4b74e0178f0`. CLI blob: `b9e8f1794aba452d7d231829c1b276f943e94c55`. Focused tests blob: `3f7d2b7f06eac65d522bbdab8da99d46a47a2f71`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-proof-operator.md`.
+
+Proof dispatch, historical-result dispatch/execution, discovery-result production, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is an exact merged-main-head proof authorization after two identical fresh read-only plans.
