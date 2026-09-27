@@ -1211,8 +1211,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-062 — Discovery adapter non-finite normalization repair
 
 - Date: 2026-09-27
-- Status: ACTIVE — SOURCE-ONLY REPAIR + REAL-DATA ADAPTER PROOF SOURCE + PREDECLARED PROOF/CONTENT REVIEW / HISTORICAL EXECUTION LOCKED
-- Protocol decisions: DEC-293 isolated implementation-only normalization repair; DEC-294 read-only real-data adapter proof; DEC-295 predeclared adapter-proof review; DEC-296 predeclared proof-content review; DEC-270 research semantics preserved.
+- Status: ACTIVE — REPAIR VERIFIED ON REAL DATA + PROOF RESULT FROZEN / HISTORICAL EXECUTION LOCKED
+- Protocol decisions: DEC-293 isolated implementation-only normalization repair; DEC-294 read-only real-data adapter proof; DEC-295 predeclared adapter-proof review; DEC-296 predeclared proof-content review; DEC-297 verified adapter-proof result freeze; DEC-270 research semantics preserved.
 - Predecessor: closed EXP-20260927-061 / DEC-292 failure freeze.
 - Hypothesis: EXP-061's all-cell failure was caused by representation mismatch at the adapter boundary; normalizing Phase-5 non-finite missing/warm-up continuous values to `None` should allow the unchanged discovery protocol to consume the accepted historical feature artifacts.
 - Pair(s): EURUSD, GBPUSD, USDJPY
@@ -1227,5 +1227,5 @@ Copy this section for each serious experiment:
 - Historical source opened?: NO under EXP-062.
 - Historical run executed?: NO.
 - Candidate compilation/demo/live authorized?: NO.
-- Conclusion: NEEDS_SOURCE_PROOF.
-- Next gate: require clean DEC-294/295/296 to be green, merge the read-only proof stack, require the merged-main nine-cell adapter proof to succeed, freeze the exact run/artifacts, then apply DEC-296 deterministic content review before any EXP-062 historical-result slot is considered.
+- Conclusion: ADAPTER_REPAIR_VERIFIED_ON_ACCEPTED_REAL_DATA.
+- Next gate: merge clean DEC-295/296/297 after green checks, then design a new source-only EXP-062 historical discovery slot using the repaired adapter. The new slot must preserve DEC-270 research semantics, remain 2015-2022 only, and keep 2023-2026/candidate/trading paths locked.
