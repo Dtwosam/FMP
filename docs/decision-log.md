@@ -4963,3 +4963,23 @@ A successful review is classified `EXP062_ADAPTER_REPAIR_REAL_DATA_PROOF_VERIFIE
 Review source: `src/fmp/discovery/exp062_adapter_proof_content_review.py` blob `26529be12229953070f5dbf929699e7e86a2a9bb`. Focused tests: `tests/test_phase8a_exp062_adapter_proof_content_review.py` blob `0fa4c87457c49500268f577f35ee9b27729f742b`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-adapter-proof-content-review.md`.
 
 Historical discovery/result execution, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+
+
+## DEC-297 — EXP-062 adapter proof result freeze
+
+**Date:** 2026-09-27
+**Status:** VERIFIED REAL-DATA REPAIR PROOF / HISTORICAL DISCOVERY STILL LOCKED
+
+DEC-297 freezes the successful clean DEC-294 merged-main real-data adapter proof. Proof run `36348366166` completed `success`, workflow run #1 / attempt 1, at head `5e235938dc7e8eb467f59ca85ae4b6e1d5179475`.
+
+The run has the exact DEC-295 success shape: nine pair/timeframe adapter probes plus aggregate, all 10 jobs successful, with exactly 10 non-expired commit-scoped artifacts. DEC-296 deterministic content review verifies the downloaded nine cell probes exactly equal the aggregate cells and that the aggregate recompiles from those cells without drift.
+
+Verified real-data totals are 3,576,519 feature rows, 7,152,783 outcome rows, and 6,763 raw numeric non-finite continuous-feature values normalized by the isolated EXP-062 adapter: `realized_vol_1h=2683`, `realized_vol_8h=4070`, `realized_vol_24h=10`, all other continuous features zero. All nine cells preserve exact feature/outcome adaptation row parity.
+
+Aggregate artifact `10941770676` has digest `sha256:ce22fba00e711ba91f29c797dba19814aea9b9c907df66e8bfd75aefdcc08e5b` and raw `adapter-proof.json` SHA-256 `8f11806a4d2ffc4fb00a62360b35fc132efbb7f4e1ab44ea03a2244003dec056`. DEC-297 binds all nine cell artifact ids/digests/raw JSON hashes as well.
+
+Result-freeze source: `src/fmp/discovery/exp062_adapter_proof_result_decision.py` blob `18b7dde7eadf0f051a09fda04e648650bb270eb7`. Focused tests: `tests/test_phase8a_exp062_adapter_proof_result_freeze.py` blob `90a9104dd0069c9c010b3517d2baa27336ff86bd`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-adapter-proof-result-freeze.md`.
+
+Verified meaning is `NONFINITE_MISSING_VALUES_NORMALIZED_WITHOUT_MINING`. This is not a market-pattern, candidate, or strategy result.
+
+Historical discovery execution/result production, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain locked. A later decision may design a new EXP-062 historical slot only after DEC-295/296/297 are green and merged.
