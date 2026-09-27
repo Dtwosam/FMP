@@ -306,3 +306,15 @@
 - Added focused regression tests for NaN, infinities, existing null, finite preservation, session strictness, and invalid non-numeric input.
 - Opened no historical execution slot.
 - Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-294 EXP-062 real-data adapter proof
+
+- Added a push-to-main, read-only nine-cell proof against the exact accepted EXP-044 feature/outcome artifacts.
+- Preserved the frozen EXP-061 adapter byte-for-byte and proved the isolated EXP-062 repair module instead.
+- Reused the DEC-273 loader to open only 2015-2022 and require exactly 96 feature + 96 outcome monthly partitions per pair/timeframe.
+- Counted raw numeric non-finite values across all 20 continuous features before adaptation.
+- Required full repaired EXP-062 adaptation with exact feature/outcome row parity.
+- Required the aggregate proof to contain all nine pair/timeframe cells and to observe at least one real non-finite value.
+- Kept probe output outside the checkout and required the source worktree to remain clean.
+- Added no miner call, historical result production, dispatch, reserved-data access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading authority.
