@@ -34,7 +34,7 @@ Workflow:
 
 Git blob:
 
-`9db80add1f21406e53c6d4113951bcb237f78719`
+`6f4b6a04291465f0f32f1f8e9276ff4a62417ec2`
 
 The workflow:
 
@@ -110,7 +110,7 @@ Focused proof workflow tests:
 
 Git blob:
 
-`0c92221e959819383ff00d62bca72723064d7c91`
+`95a4bb6dbcab6cef3fdec3cbac7bef09bb952311`
 
 They pin main-push-only scope, read-only permissions, exact DEC-284/285/286 source identities, clean-checkout behavior, plan-only invocation, run-#1 proof identity, run-#2 target identity, absence of direct dispatch commands, and plan-only artifact persistence.
 
