@@ -45,3 +45,15 @@
 - The six-family rule-based challenger-discovery protocol is corrected to `DEC-043` / `EXP-20260922-015`.
 - No EXP-015 Stage A/B/C historical run occurred before this correction.
 - Original `DEC-041` / `EXP-20260922-013` opening-range-momentum evidence identity remains unchanged.
+
+## 2026-09-27 — DEC-268 discovery-first research and iterative demo learning
+
+- Changed future strategy discovery from a required six-family/baseline-first path to discovery-first analysis of repeated market behaviour.
+- Preserved all six historical rule families and prior experiments as immutable benchmarks/evidence; they are no longer the required or complete strategy universe.
+- Required bounded discovery protocols with frozen data ranges, measurements/features, future-outcome labels, minimum support, search budget, multiple-comparison/search-volume accounting, candidate-freeze rules, and later chronological validation.
+- Required discovered patterns to become immutable strategy/model versions before later evaluation.
+- Formalized demo as an iterative learning source: completed demo evidence may create a new challenger, but data used for tuning cannot also validate that revised version; every material revision requires a fresh later prospective window.
+- Preserved immutable active campaigns and prohibited self-modification/hot-swapping.
+- Recorded the already-consumed EXP-015 Stage A run as historical evidence only; no retry/replacement or automatic Stage B/C continuation is authorized.
+- Kept Phase 8B, demo orders, broker mutation, live orders, real-money trading, and Phase 11 locked behind their existing gates.
+
