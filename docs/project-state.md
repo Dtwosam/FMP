@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Require DEC-293, DEC-294, and DEC-295 to be green. Merge the isolated repair, then the read-only proof and predeclared review. DEC-294's merged-main proof must succeed and be frozen before any EXP-062 historical-result slot is considered. No EXP-062 discovery dispatch is authorized.
+**Next milestone:** Require DEC-293 through DEC-296 to be green. Merge the isolated repair and read-only proof/review stack, require DEC-294's merged-main proof to succeed, freeze the exact proof run/artifacts, then verify their contents through DEC-296 before any EXP-062 historical-result slot is considered. No EXP-062 discovery dispatch is authorized.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-296 predeclares content-level review of a successful DEC-294 proof. It revalidates all nine cell probes, deterministically recompiles the aggregate, reconciles real non-finite counts, and can only conclude that the adapter repair worked without mining. It opens no execution or candidate/trading authority.
 - DEC-295 predeclares the exact DEC-294 proof success shape before evidence exists: 10 successful jobs and 10 non-expired commit-scoped artifacts. It authorizes no discovery execution or downstream action.
 - DEC-294 adds a nine-cell read-only real-data adapter proof for EXP-062. It uses the isolated DEC-293 repair while pinning the frozen EXP-061 adapter unchanged, reuses the exact accepted EXP-044 artifacts and DEC-273 2015-2022 loader, counts the actual raw non-finite values, and requires exact row/partition parity. It never invokes the miner or creates a discovery result; all downstream paths remain locked.
 - DEC-293 opens EXP-062 as a source-only repair identity. It preserves DEC-270 discovery semantics and changes only the adapter representation boundary: numeric NaN/+inf/-inf continuous feature values become `None`, matching the frozen Phase-5 missing-value contract; finite values, session booleans, outcomes, chronology, search gates, and the closed 2023-2026 block remain unchanged. No historical slot or dispatch is opened.
