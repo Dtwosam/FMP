@@ -215,3 +215,15 @@ __all__ += [
     "freeze_reviewed_historical_execution_plan_proof",
     "validate_reviewed_historical_execution_plan_sources",
 ]
+
+from .historical_executor import (
+    historical_execution_evidence,
+    validate_fresh_historical_execution_plan,
+    validate_reviewed_execution_plan,
+)
+
+__all__ += [
+    "historical_execution_evidence",
+    "validate_fresh_historical_execution_plan",
+    "validate_reviewed_execution_plan",
+]
