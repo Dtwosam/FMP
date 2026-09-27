@@ -4867,3 +4867,19 @@ Any non-success conclusion is classified `NON_SUCCESS_SLOT_CONSUMED_NO_RETRY`. T
 Reviewer source: `src/fmp/discovery/historical_result_review.py` blob `08f2f79d8b820eaa0101207f54d9c7e9d8d54c17`. Read-only CLI: `scripts/phase8a_exp061_historical_result_review.py` blob `c6d3bb06adf00ae801d579d95d5eb24a61990a85`. Focused tests: `tests/test_phase8a_exp061_historical_result_review.py` blob `86d164f6133c4d20074f6ecaa6a0a0701a3c39ca`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-result-review-contract.md`.
 
 DEC-290 authorizes no result acceptance, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading action. The next gate after run #2 is exact metadata review under DEC-290, followed by content review only if the success shape passes.
+
+
+## DEC-291 — EXP-061 historical result content review
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PREDECLARED CONTENT REVIEW / NO RESULT ACCEPTANCE
+
+DEC-291 freezes content validation for a structurally successful DEC-290 terminal result before the real run is observed. It requires exactly 18 DEC-272 cell evidence objects plus the DEC-274 aggregate evidence at one exact historical-run head.
+
+Every cell is revalidated, must carry the expected code commit, must match one exact DEC-270 cell identity, and may appear only once. The aggregate is revalidated and must carry the same commit. DEC-291 then recompiles aggregate evidence independently from the 18 validated cell objects using the frozen DEC-274 compiler; the provided aggregate must equal that recomputation exactly.
+
+A passing review reports the exact discovery-shortlist, confirmation-frozen, and validation-accepted counts and classifies the content as either `HISTORICAL_CONTENT_VALID_NO_VALIDATED_PATTERNS` or `HISTORICAL_CONTENT_VALID_WITH_VALIDATED_PATTERNS`. A positive validation count remains retrospective evidence only.
+
+Reviewer source: `src/fmp/discovery/historical_result_content_review.py` blob `cacdfc7a7d9a97b054c256879152067b2fe43c41`. Read-only CLI: `scripts/phase8a_exp061_historical_content_review.py` blob `35612d98d3cb9463a2e67ad5bc0e9c6c84015fd2`. Focused tests: `tests/test_phase8a_exp061_historical_content_review.py` blob `361d71fb7b82723f9fde0a10ed53697f301ab6b8`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-content-review.md`.
+
+DEC-291 still keeps historical result acceptance, pattern-hypothesis acceptance, reserved robustness access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading false. A later result-specific reviewed decision is required after exact content validation.
