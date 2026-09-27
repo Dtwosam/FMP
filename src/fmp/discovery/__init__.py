@@ -280,3 +280,19 @@ from .exp062_adapter_proof_result_decision import (
 __all__ += [
     "freeze_exp062_adapter_proof_result",
 ]
+
+from .exp062_run_contract import (
+    compile_aggregate_evidence as compile_exp062_aggregate_evidence,
+    compile_cell_evidence as compile_exp062_cell_evidence,
+    run_contract_payload as exp062_run_contract_payload,
+    validate_aggregate_evidence as validate_exp062_aggregate_evidence,
+    validate_cell_evidence as validate_exp062_cell_evidence,
+)
+
+__all__ += [
+    "compile_exp062_aggregate_evidence",
+    "compile_exp062_cell_evidence",
+    "exp062_run_contract_payload",
+    "validate_exp062_aggregate_evidence",
+    "validate_exp062_cell_evidence",
+]
