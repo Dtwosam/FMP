@@ -219,3 +219,15 @@
 - Authorized historical discovery/result production only inside that exact runtime identity while keeping workflow dispatch false.
 - Kept retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
 - Recorded DEC-281 current-source validation as intentionally superseded by the activated CLI while preserving DEC-281 run-inventory semantics.
+
+
+## 2026-09-27 — DEC-286 EXP-061 historical execution operator
+
+- Added a read-only exact-main operator for the DEC-285 one-shot historical runtime.
+- Required the frozen proof to remain workflow run number 1 / attempt 1.
+- Frozen the only future target identity as workflow run number 2 / attempt 1.
+- Exposed the single future `gh workflow run phase8a-exp061-discovery.yml --ref main` command only while the historical slot is empty.
+- Removed the command and routed to review once the run #2 historical attempt is present.
+- Rejected proof-run-number drift, run number 3+, reruns, second historical attempts, and main-head drift.
+- Added no execute, dispatch, retry, rerun, or replacement mode.
+- Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.

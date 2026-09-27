@@ -4779,3 +4779,21 @@ DEC-285 sets historical execution source authorization, exact-runtime historical
 Authorization source: `src/fmp/discovery/historical_execution_authorization.py` blob `30258e076f6a786c977fac8c588ac2b22aeed66e`. Focused tests: `tests/test_phase8a_exp061_historical_execution_authorization.py` blob `2636ae1daa6e90607bc86fde454bfb5b32b53f34`. DEC-281 current-source tests are updated to record the intentional activated-CLI supersession while preserving its run-inventory semantics.
 
 The next safe gate is a separate read-only historical execution operator. It may prove the live inventory is still proof-run-only and expose the single future dispatch command as plan evidence, but must provide no execute mode.
+
+
+## DEC-286 — EXP-061 read-only historical execution operator
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY READ-ONLY OPERATOR / NO EXECUTE MODE
+
+DEC-286 adds the read-only planner for the DEC-285 one-shot historical runtime. It binds DEC-285 source blob `30258e076f6a786c977fac8c588ac2b22aeed66e`, requires current `main` to equal the caller-supplied expected head, validates the exact DEC-285 source stack, and reads current EXP-061 workflow-run history without dispatching anything.
+
+The frozen proof must remain run id `36319888985`, workflow run number 1, attempt 1. While no later historical attempt exists, DEC-286 reports `EXP061_HISTORICAL_RESULT_SLOT_AVAILABLE`, freezes the future target identity as workflow run number 2 / attempt 1, and exposes `gh workflow run phase8a-exp061-discovery.yml --ref main` as plan evidence only.
+
+If a later historical attempt exists, it must be exactly workflow run number 2 / attempt 1. The operator then reports `EXP061_HISTORICAL_RESULT_RUN_PRESENT_REVIEW_REQUIRED`, marks the slot consumed through the DEC-281 classifier, and removes the command. Any run number 3+, rerun attempt, second historical attempt, proof-run-number drift, or main-head drift fails closed.
+
+Operator source: `src/fmp/discovery/historical_execution_operator.py` blob `a711b14fb613f1c9952f5b2a6bf85d892bd2c4a5`. CLI: `scripts/phase8a_exp061_historical_execution_operator.py` blob `1f43e1218072918d2ebb33b2c312ba8e950881f9`. Focused tests: `tests/test_phase8a_exp061_historical_execution_operator.py` blob `42523ca36927e85a8c14566bf597d666a7ec1d20`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-execution-operator.md`.
+
+DEC-286 has no execute mode. Historical-result dispatch remains false. DEC-285 runtime execution/result authorization remains true only for the exact run #2 / attempt #1 identity. Retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is a repository-hosted read-only proof of the exact DEC-286 slot-available execution plan on merged main. That proof may persist the future command and target run identity as immutable evidence, but must not dispatch EXP-061.

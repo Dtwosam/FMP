@@ -193,3 +193,15 @@ __all__ += [
     "require_dec285_historical_execution",
     "validate_historical_execution_authorization_sources",
 ]
+
+from .historical_execution_operator import (
+    build_historical_execution_plan,
+    historical_execution_dispatch_command,
+    validate_historical_execution_plan,
+)
+
+__all__ += [
+    "build_historical_execution_plan",
+    "historical_execution_dispatch_command",
+    "validate_historical_execution_plan",
+]
