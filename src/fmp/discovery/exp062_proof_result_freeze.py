@@ -204,6 +204,13 @@ def freeze_reviewed_gate_proof_result(
         reviewed_result,
         expected_head_sha=expected_head_sha,
     )
+    downstream_names = reviewed_result.get(
+        "materialized_downstream_job_names"
+    )
+    if not isinstance(downstream_names, list):
+        raise AssertionError(
+            "validated downstream job names unexpectedly changed type"
+        )
 
     frozen: dict[str, object] = {
         "decision": EXP062_REVIEWED_GATE_PROOF_FREEZE_DECISION,
@@ -243,9 +250,7 @@ def freeze_reviewed_gate_proof_result(
         "materialized_downstream_job_count": reviewed_result[
             "materialized_downstream_job_count"
         ],
-        "materialized_downstream_job_names": list(
-            reviewed_result["materialized_downstream_job_names"]
-        ),
+        "materialized_downstream_job_names": list(downstream_names),
         "github_unexpanded_matrix_placeholder_present": (
             reviewed_result[
                 "github_unexpanded_matrix_placeholder_present"
