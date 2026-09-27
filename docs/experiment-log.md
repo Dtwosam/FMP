@@ -1229,3 +1229,13 @@ Copy this section for each serious experiment:
 - Candidate compilation/demo/live authorized?: NO.
 - Conclusion: ADAPTER_REPAIR_VERIFIED_ON_ACCEPTED_REAL_DATA.
 - Next gate: merge DEC-300/301/302/303/304 after green checks. DEC-303 may submit exactly one proof run; DEC-304 must review the actual fail-closed proof and a later immutable freeze must bind its exact evidence before any historical-result slot is considered.
+
+### EXP-20260927-062 — DEC-305 source-only freeze preparation
+
+- DEC-305 freeze builder implemented for a future valid DEC-304 reviewed proof result.
+- Actual EXP-062 proof runtime evidence is still required; no run/artifact identity is
+  fabricated in source.
+- Historical-result slot remains closed.
+- Historical execution, candidate compilation, Phase 8B, demo/live, real-money, and
+  trading remain unauthorized.
+
