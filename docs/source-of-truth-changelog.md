@@ -162,3 +162,14 @@
 - Revalidated the DEC-275 source fingerprint, exact workflow-source payload, accepted EXP-044 source identities, and nine pair/timeframe source bindings.
 - Confirmed zero historical cell/aggregate result artifacts and no historical discovery execution.
 - Kept proof rerun/retry/replacement, historical-result dispatch/execution, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-281 EXP-061 historical-run authorization
+
+- Frozen a source-only one-slot contract for the future EXP-061 historical discovery-result attempt.
+- Verified the exact manual-main EXP-061 inventory contains only frozen proof run `36319888985`.
+- Excluded exactly that proof run from historical-result slot consumption.
+- Declared the first later non-proof manual-main attempt to consume the slot immediately, regardless of terminal outcome.
+- Rejected second historical attempts and any `run_attempt != 1` rerun.
+- Bound the unchanged DEC-270 through DEC-280 discovery/proof/workflow source stack and exact current workflow/CLI/runtime blobs.
+- Opened only the source-governance slot; historical dispatch/execution, result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain locked.

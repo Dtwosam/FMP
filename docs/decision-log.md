@@ -4691,3 +4691,21 @@ Reviewed-proof source: `src/fmp/discovery/proof_result_decision.py` blob `fbed37
 Proof rerun/retry/replacement, historical-result dispatch/execution, discovery-result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is a separate source-only historical-run authorization contract for at most one bounded 2015-2022 EXP-061 discovery-result attempt. DEC-280 itself authorizes no historical dispatch or execution.
+
+
+## DEC-281 — EXP-061 historical-run authorization contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY ONE-SLOT AUTHORIZATION / DISPATCH + EXECUTION STILL LOCKED
+
+DEC-281 freezes the source-only contract for at most one bounded EXP-061 historical discovery-result attempt. Immediately after DEC-280 merged, the exact manual-main workflow history contains one EXP-061 run only: proof run `36319888985`, attempt 1, terminal failure at proof head `041b7b2f5aac8821156fab346df8ab30f4be2a7b`. DEC-281 excludes exactly that frozen proof from the historical-result slot. No historical discovery-result attempt exists yet.
+
+The contract binds DEC-280 merge `da40f1cf3b45b111bb87099353ec79d5f2b95918`, reviewed-proof blob `fbed3788ab0c1c1e00dccfe0f84a293ff04f6ccd`, the unchanged active workflow/CLI/runtime, DEC-274 run contract, DEC-275 workflow source, DEC-276 locked install, DEC-277 proof contract, and the DEC-270 through DEC-273 discovery implementation blobs. Every pre-existing dispatch/execution/result/rerun/retry/replacement/reserved-data/downstream trading authorization in those layers must remain false.
+
+DEC-281 opens only the outer source-governance slot: `historical_result_slot_source_authorized=true`. Actual historical-result dispatch, historical discovery execution, discovery-result production, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The first later non-proof manual-main EXP-061 run consumes the slot immediately regardless of queued/running/terminal state or terminal outcome. A second historical attempt is invalid. A GitHub rerun with `run_attempt != 1` is invalid. The frozen proof itself never consumes the slot.
+
+Historical-run authorization source: `src/fmp/discovery/historical_run_authorization.py` blob `1eab1cee2fc81441cf1c3168cc73275cd29addf5`. Focused tests: `tests/test_phase8a_exp061_historical_run_authorization.py` blob `07886d2fde86e75eb1c92509733909c58c95c8ee`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-run-authorization.md`.
+
+The next safe gate is a clean-main read-only operator that may expose the single historical dispatch command only while the exact DEC-281 inventory remains slot-available. DEC-281 provides no execute mode and does not dispatch or execute the workflow.
