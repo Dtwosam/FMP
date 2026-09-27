@@ -318,3 +318,14 @@
 - Required the aggregate proof to contain all nine pair/timeframe cells and to observe at least one real non-finite value.
 - Kept probe output outside the checkout and required the source worktree to remain clean.
 - Added no miner call, historical result production, dispatch, reserved-data access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading authority.
+
+
+## 2026-09-27 — DEC-295 EXP-062 adapter proof review contract
+
+- Predeclared DEC-294 proof review before the real-data probe result exists.
+- Required exact push-main attempt-1 workflow identity.
+- Required all nine adapter-probe jobs plus aggregate to succeed for a valid success.
+- Required exactly nine cell artifacts plus one aggregate artifact, all non-expired and commit-scoped.
+- Rejected unexpected jobs/artifacts.
+- Bound the clean DEC-294 workflow blob `4fbeb7836ef775b14918b49ed24da8c86928610c`.
+- Kept all historical discovery/result, reserved-data, candidate, demo/live, real-money, and trading authorities locked.
