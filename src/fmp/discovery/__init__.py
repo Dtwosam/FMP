@@ -181,3 +181,15 @@ __all__ += [
     "freeze_reviewed_historical_plan_proof",
     "validate_reviewed_historical_plan_sources",
 ]
+
+from .historical_execution_authorization import (
+    historical_execution_authorization_payload,
+    require_historical_execution_authorized as require_dec285_historical_execution,
+    validate_historical_execution_authorization_sources,
+)
+
+__all__ += [
+    "historical_execution_authorization_payload",
+    "require_dec285_historical_execution",
+    "validate_historical_execution_authorization_sources",
+]

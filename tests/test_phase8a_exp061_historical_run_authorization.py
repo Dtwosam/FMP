@@ -48,40 +48,15 @@ def _historical_run(
 
 
 class Exp061HistoricalRunAuthorizationTests(unittest.TestCase):
-    def test_source_contract_binds_frozen_stack_and_opens_only_outer_slot(self) -> None:
-        report = validate_historical_run_authorization_sources(
-            repository_root=Path("."),
-        )
-        self.assertEqual(
-            report["decision"],
-            EXP061_HISTORICAL_RUN_AUTHORIZATION_DECISION,
-        )
+    def test_dec281_source_validator_detects_intentional_cli_supersession(self) -> None:
         self.assertTrue(HISTORICAL_RESULT_SLOT_SOURCE_AUTHORIZED)
-        self.assertTrue(report["historical_result_slot_source_authorized"])
-        self.assertTrue(report["proof_run_excluded_from_historical_result_slot"])
-        self.assertEqual(report["expected_cell_count"], 18)
-        self.assertEqual(
-            report["historical_data_end_exclusive"],
-            "2023-01-01T00:00:00Z",
-        )
-        for field in (
-            "historical_result_dispatch_authorized",
-            "historical_discovery_execution_authorized",
-            "discovery_result_authorized",
-            "rerun_authorized",
-            "retry_authorized",
-            "replacement_run_authorized",
-            "reserved_robustness_access_authorized",
-            "candidate_compilation_authorized",
-            "promotion_authorized",
-            "phase8b_authorized",
-            "demo_order_authorized",
-            "broker_mutation_authorized",
-            "live_order_authorized",
-            "real_money_authorized",
-            "trading_authorized",
+        with self.assertRaisesRegex(
+            ValueError,
+            "cli Git blob mismatch",
         ):
-            self.assertFalse(report[field], field)
+            validate_historical_run_authorization_sources(
+                repository_root=Path("."),
+            )
 
     def test_exact_frozen_proof_leaves_historical_slot_available(self) -> None:
         report = classify_historical_run_inventory(_runs())
@@ -95,17 +70,15 @@ class Exp061HistoricalRunAuthorizationTests(unittest.TestCase):
         self.assertTrue(report["historical_result_slot_source_authorized"])
         self.assertFalse(report["historical_result_dispatch_authorized"])
 
-    def test_build_contract_requires_exact_proof_and_unused_slot(self) -> None:
-        report = build_historical_run_authorization_contract(
-            repository_root=Path("."),
-            workflow_runs_payload=_runs(),
-        )
-        self.assertEqual(
-            report["stage"],
-            "EXP061_HISTORICAL_RESULT_SOURCE_AUTHORIZED_DISPATCH_LOCKED",
-        )
-        self.assertTrue(report["terminal_outcome_consumes_slot"])
-        self.assertFalse(report["historical_result_slot_consumed"])
+    def test_dec281_builder_is_superseded_after_cli_activation(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError,
+            "cli Git blob mismatch",
+        ):
+            build_historical_run_authorization_contract(
+                repository_root=Path("."),
+                workflow_runs_payload=_runs(),
+            )
 
     def test_one_later_attempt_consumes_slot_even_while_running(self) -> None:
         report = classify_historical_run_inventory(
@@ -122,7 +95,7 @@ class Exp061HistoricalRunAuthorizationTests(unittest.TestCase):
 
         with self.assertRaisesRegex(
             ValueError,
-            "requires an unused slot",
+            "cli Git blob mismatch",
         ):
             build_historical_run_authorization_contract(
                 repository_root=Path("."),

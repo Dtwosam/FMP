@@ -206,3 +206,16 @@
 - Verified the plan reports DEC-282/DEC-281, exact frozen proof run `36319888985`, zero historical-result attempts, and an unconsumed historical-result slot.
 - Preserved the future workflow command as evidence only; no dispatch or execution authority was added.
 - Kept rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-285 EXP-061 historical execution authorization
+
+- Added a new runtime authorization layer without modifying the frozen DEC-275 workflow-source module or the active workflow YAML.
+- Routed the public EXP-061 CLI execution gate through DEC-285 and recorded DEC-285 authorization in preflight evidence.
+- Bound reviewed DEC-284 source plus the unchanged protocol/miner/adapter/loader/run-contract/workflow/runtime identities.
+- Confirmed the old proof is workflow run number 1 / attempt 1 and authorized historical runtime only for workflow run number 2 / attempt 1.
+- Required exact repository, workflow, event, main ref, runtime SHA, and distinct positive run-id identity.
+- Rejected run number 1, run number 3+, any rerun attempt, proof-run id reuse, and proof-head reuse.
+- Authorized historical discovery/result production only inside that exact runtime identity while keeping workflow dispatch false.
+- Kept retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+- Recorded DEC-281 current-source validation as intentionally superseded by the activated CLI while preserving DEC-281 run-inventory semantics.
