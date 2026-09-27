@@ -77,3 +77,12 @@
 - Implemented frozen 2019-2022 validation with no retuning.
 - Added synthetic end-to-end tests, including proof that catastrophic 2023 rows cannot alter EXP-061 output.
 - Kept historical source access/result execution, 2023-2026 reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+## 2026-09-27 — DEC-272 EXP-061 market-learning adapter/evidence
+
+- Reused existing EXP-044 market-learning feature/outcome schemas as DEC-271 inputs.
+- Added deterministic feature/outcome observation identity and exact processed-manifest matching.
+- Restricted adapter input to 2015-2022 and rejected any outcome target reaching reserved 2023+ history.
+- Added canonical tamper-detectable per-cell evidence for discovery, confirmation, and validation results.
+- Added focused tests for valid adaptation, reserved-history rejection, source-identity mismatch, evidence determinism, tamper detection, and all execution/trading locks.
+- Kept artifact loading, historical result execution, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
