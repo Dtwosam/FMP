@@ -324,3 +324,13 @@ __all__ += [
     "require_exp062_proof_dispatch",
     "validate_exp062_installed_workflow",
 ]
+
+from .exp062_proof_contract import (
+    proof_contract_payload as exp062_proof_contract_payload,
+    validate_gate_proof_terminal as validate_exp062_gate_proof_terminal,
+)
+
+__all__ += [
+    "exp062_proof_contract_payload",
+    "validate_exp062_gate_proof_terminal",
+]
