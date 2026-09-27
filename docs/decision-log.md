@@ -4581,3 +4581,26 @@ Run-contract source: `src/fmp/discovery/run_contract.py` blob `260eb693067342726
 All workflow source/dispatch, historical discovery/result execution, rerun/retry/replacement, reserved-block access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading authorizations remain false.
 
 The next safe gate is workflow/CLI source freeze only, still with execution locked and no dispatch path.
+
+## DEC-275 — EXP-061 dormant workflow and CLI source freeze
+
+**Date:** 2026-09-27
+**Status:** DORMANT SOURCE FROZEN / NOT INSTALLED / HISTORICAL EXECUTION LOCKED
+
+DEC-275 freezes the future EXP-061 workflow/CLI source while deliberately keeping it outside GitHub's active workflow directory.
+
+The dormant template lives at `docs/superpowers/templates/phase8a-exp061-discovery.yml.disabled`; the reserved active path `.github/workflows/phase8a-exp061-discovery.yml` remains absent. Template installation, dispatch, historical discovery execution, and result production remain false.
+
+The source pins the exact accepted EXP-044 data-preparation lineage: feature run `35867307338` at `b71912e254d2a597c0ef55b5e1b3b87b052039ea`, outcome run `35876715434` at `edeb43bb4de88923e3349caa8ace36350839ccb8`, exact aggregate feature/outcome evidence artifact ids/digests, and all nine feature plus nine outcome cell artifact ids/digests. No runtime input may substitute another upstream run.
+
+The dormant template preserves the DEC-274 topology: one preflight job, an 18-entry matrix whose explicit name expression renders the exact `exp061-cell-<symbol>-<timeframe>-<horizon>m` names, and one aggregate job. It pins Python `3.12.14`, `polars==1.44.2`, and `polars-runtime-32==1.44.2`.
+
+The preflight may perform only read-only source-metadata validation. It then invokes the hard DEC-275 execution gate. Every cell and the aggregate path recheck the same gate. The CLI `cell` command invokes that gate before opening any feature/outcome/evidence path, and `aggregate` invokes it before opening any cell-result file. Under DEC-275 the gate always raises `PermissionError`.
+
+If a later successor explicitly authorizes execution, the frozen cell source is already composed as DEC-273 loader -> DEC-272 adapter -> DEC-271 miner -> DEC-272 cell evidence, and aggregate source is DEC-274 aggregate compilation/revalidation. DEC-275 itself activates none of those historical paths.
+
+Frozen identities: workflow-source contract `src/fmp/discovery/workflow_source.py` blob `68566fc86ff3470cc8b6ebef606becaff9f3450b`; CLI `scripts/phase8a_exp061.py` blob `bd40f17566f4c03e623215fe9e615b00b2fc9039`; dormant template blob `d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9`; focused tests blob `4c8266b07c0fe9912691da298cc4963e28a2a66a`; runtime requirements blob `1ff32214dee10d877a067e750cd69ffad96d5fe5`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-dormant-workflow-source.md`.
+
+Active workflow installation, dispatch, historical discovery/result execution, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false.
+
+The next safe gate is installation of the exact reviewed dormant template at the reserved active workflow path while retaining the execution gate false, followed by merged-main proof that it cannot progress past authorization preflight.
