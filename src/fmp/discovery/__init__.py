@@ -244,3 +244,15 @@ from .historical_failed_result_decision import (
 __all__ += [
     "freeze_failed_historical_result",
 ]
+
+from .exp062_adapter_repair import (
+    adapt_market_learning_cell_exp062,
+    exp062_adapter_repair_payload,
+    normalize_nonfinite_continuous_features,
+)
+
+__all__ += [
+    "adapt_market_learning_cell_exp062",
+    "exp062_adapter_repair_payload",
+    "normalize_nonfinite_continuous_features",
+]
