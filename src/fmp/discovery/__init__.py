@@ -288,3 +288,19 @@ __all__ += [
     "validate_exp062_aggregate_evidence",
     "validate_exp062_run_contract_sources",
 ]
+
+from .nan_null_repair_workflow_source import (
+    require_historical_execution_authorized as require_exp062_historical_execution,
+    source_artifacts_for_cell as exp062_source_artifacts_for_cell,
+    validate_source_snapshots as validate_exp062_source_snapshots,
+    validate_workflow_source_dependencies as validate_exp062_workflow_source_dependencies,
+    workflow_source_payload as exp062_workflow_source_payload,
+)
+
+__all__ += [
+    "exp062_source_artifacts_for_cell",
+    "exp062_workflow_source_payload",
+    "require_exp062_historical_execution",
+    "validate_exp062_source_snapshots",
+    "validate_exp062_workflow_source_dependencies",
+]
