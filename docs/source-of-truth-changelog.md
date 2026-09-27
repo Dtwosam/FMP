@@ -279,3 +279,15 @@
 - Classified any terminal non-success as slot-consuming and permanently closed to rerun/retry/replacement.
 - Allowed the exact skipped unexpanded GitHub matrix-template placeholder only in a non-success fail-closed shape and never alongside expanded cell jobs.
 - Kept candidate compilation, promotion, reserved 2023-2026 access, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-291 EXP-061 historical result content review
+
+- Added a read-only deterministic content reviewer for a complete successful DEC-290 historical result.
+- Required exactly 18 validated cell-evidence objects bound to the exact historical-run head.
+- Revalidated persisted aggregate evidence and deterministically recompiled it from the same 18 cell evidences.
+- Required exact equality between persisted and recompiled aggregate evidence.
+- Exposed discovery shortlist, confirmation frozen, validation accepted, and accepted-pattern-by-cell inventories.
+- Classified zero validated patterns as a valid negative result.
+- Classified nonzero accepted patterns only as validated pattern hypotheses, not executable strategies.
+- Kept reserved robustness, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
