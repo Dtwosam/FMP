@@ -81,6 +81,7 @@ jobs:
           run = relevant[0]
           assert run["id"] == current_id
           assert run["head_sha"] == os.environ["GITHUB_SHA"]
+          assert run["run_number"] == 1
           assert run["run_attempt"] == 1
           PY
 
