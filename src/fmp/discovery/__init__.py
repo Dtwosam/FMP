@@ -139,3 +139,11 @@ __all__ += [
     "proof_execution_evidence",
     "validate_fresh_proof_execution_plan",
 ]
+
+from .proof_result_decision import (
+    freeze_reviewed_gate_proof,
+)
+
+__all__ += [
+    "freeze_reviewed_gate_proof",
+]
