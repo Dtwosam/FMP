@@ -1180,8 +1180,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-061 — Discovery-first market-state pattern mining
 
 - Date: 2026-09-27
-- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER + RUN CONTRACT / HISTORICAL RUN NOT OPENED
-- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 non-executing 18-cell run contract
+- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER + RUN CONTRACT + DORMANT WORKFLOW/CLI / HISTORICAL RUN NOT OPENED
+- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 non-executing 18-cell run contract; DEC-275 dormant workflow/CLI source
 - Purpose: derive interpretable repeated market-state/future-outcome hypotheses from the data without requiring a predefined strategy family.
 - Pair(s): EURUSD, GBPUSD, USDJPY
 - Timeframe(s): 5m, 15m, 1h
@@ -1204,5 +1204,5 @@ Copy this section for each serious experiment:
 - Discovery run executed?: NO.
 - Promotion/shadow/demo/live authorized?: NO.
 - Conclusion: NEED_MORE_DATA.
-- Implementation status: DEC-270 freezes the protocol; DEC-271 implements the miner; DEC-272 adds hardened adapter/cell evidence; DEC-273 adds verified 2015-2022 loading; DEC-274 freezes exact 20-job/20-artifact attempt-1 run and aggregate-review semantics. No workflow source or historical discovery result-producing path is open yet.
-- Next gate: workflow/CLI source freeze only, with execution and dispatch still locked.
+- Implementation status: DEC-270 freezes the protocol; DEC-271 implements the miner; DEC-272 adds hardened adapter/cell evidence; DEC-273 adds verified 2015-2022 loading; DEC-274 freezes exact run/aggregate semantics; DEC-275 freezes an exact pinned-source workflow/CLI template outside `.github/workflows` with execution gated before any historical read. No active workflow or historical result-producing path is open yet.
+- Next gate: install/prove the exact guarded workflow source on merged main while keeping execution and dispatch authorization false.
