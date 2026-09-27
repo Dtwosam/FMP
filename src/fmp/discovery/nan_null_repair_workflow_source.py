@@ -80,7 +80,7 @@ def validate_workflow_source_dependencies(
             EXP061_MINER_BLOB_SHA,
         ),
         "runtime_requirements": (
-            root / "requirements/exp061-discovery-run.txt",
+            root / "requirements/exp062-discovery-run.txt",
             RUNTIME_REQUIREMENTS_BLOB_SHA,
         ),
     }
