@@ -105,3 +105,14 @@
 - Added global 180 discovery-shortlist / 54 frozen / 54 accepted caps and exact count reconciliation.
 - Frozen non-success semantics to no rerun/retry/replacement by default.
 - Kept workflow source/dispatch, historical result execution, reserved 2023-2026 data, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+## 2026-09-27 — DEC-275 EXP-061 dormant workflow/CLI source
+
+- Frozen the future EXP-061 workflow text outside the active GitHub Actions directory.
+- Pinned exact accepted EXP-044 feature/outcome run identities plus 9+9 cell artifacts and aggregate evidence artifacts.
+- Preserved explicit DEC-274 runtime cell names through an 18-entry matrix with an explicit job-name expression.
+- Added a locked CLI with source-preflight, status, cell, and aggregate interfaces.
+- Required the execution gate before any historical artifact/evidence read in cell and aggregate paths.
+- Pinned Python 3.12.14 and Polars 1.44.2 runtime.
+- Added regression tests proving the active workflow path is absent and all execution/trading authorities remain false.
+- Kept workflow installation/dispatch, historical discovery/result execution, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
