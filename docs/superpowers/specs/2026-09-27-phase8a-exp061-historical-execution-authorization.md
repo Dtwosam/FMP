@@ -147,7 +147,7 @@ DEC-281 supersession tests:
 
 Git blob:
 
-`08ffe0a1bace03ec8d934109bf5e0157ad424653`
+`0d9634a3c42fb6cd59dacd720126753a32d2f583`
 
 ## Downstream locks
 
