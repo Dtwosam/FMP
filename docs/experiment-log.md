@@ -1206,3 +1206,22 @@ Copy this section for each serious experiment:
 - Conclusion: FAILED_IMPLEMENTATION_COMPATIBILITY — EXP-061 closed with no retry/replacement.
 - Implementation status: DEC-270 through DEC-290 built, proved, authorized, and executed the sole historical slot. DEC-291 freezes run `36335879839` as terminal failure: preflight succeeded, all 18 cells failed before pattern mining on non-finite rolling-volatility adapter inputs, aggregate was skipped, and only the preflight artifact persisted. No pattern hypothesis or candidate result exists. EXP-061 is closed; candidate compilation and all trading paths remain locked.
 - Next gate: open a new experiment identity for the narrow NaN-to-null adapter repair only; do not retry EXP-061.
+
+
+## EXP-20260927-062 — NaN-to-null adapter implementation repair
+
+- **Date:** 2026-09-27
+- **Phase:** 8A discovery-first market-pattern research
+- **Status:** SOURCE-ONLY REPAIR PROTOCOL / NOT EXECUTED
+- **Decision:** DEC-292
+- **Semantic predecessor:** EXP-20260927-061 / DEC-270
+- **Failure predecessor:** DEC-291
+- **Purpose:** preserve the complete EXP-061 market-pattern protocol while repairing only continuous-feature NaN-as-missing compatibility at the adapter boundary.
+- **Exact repair:** floating-point NaN -> None before FeatureObservation; positive/negative infinity still invalid.
+- **Observed predecessor fields:** realized_vol_1h, realized_vol_8h.
+- **Discovery/confirmation/validation windows:** unchanged from EXP-061.
+- **Search/ranking/cost semantics:** unchanged from EXP-061.
+- **Reserved 2023-2026 robustness:** CLOSED.
+- **Historical execution:** NOT AUTHORIZED.
+- **Candidate compilation / demo / live / trading:** LOCKED.
+- **Next gate:** deterministic repaired adapter/evidence source and tests.
