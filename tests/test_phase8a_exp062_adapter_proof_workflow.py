@@ -21,6 +21,7 @@ class Exp062AdapterProofWorkflowTests(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("actions: read", text)
         self.assertNotIn("actions: write", text)
+        self.assertIn('PYTHONDONTWRITEBYTECODE: "1"', text)
 
     def test_workflow_pins_exact_repair_and_source_boundaries(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
