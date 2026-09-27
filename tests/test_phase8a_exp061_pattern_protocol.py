@@ -15,6 +15,8 @@ from fmp.discovery.pattern_protocol import (
     MAX_ATOMIC_STATES,
     MAX_DIRECTIONAL_HYPOTHESES_PER_CELL_HORIZON,
     MAX_DIRECTIONAL_HYPOTHESES_TOTAL,
+    MAX_DISCOVERY_SHORTLIST,
+    MAX_DISCOVERY_SHORTLIST_PER_CELL_HORIZON,
     MAX_FROZEN_PATTERN_HYPOTHESES,
     MAX_PATTERN_DEPTH,
     QUANTILE_STATES,
@@ -74,6 +76,8 @@ class Exp061PatternProtocolTests(unittest.TestCase):
         self.assertEqual(MAX_ADMISSIBLE_PATTERNS_PER_CELL_HORIZON, 2075)
         self.assertEqual(MAX_DIRECTIONAL_HYPOTHESES_PER_CELL_HORIZON, 4150)
         self.assertEqual(MAX_DIRECTIONAL_HYPOTHESES_TOTAL, 74700)
+        self.assertEqual(MAX_DISCOVERY_SHORTLIST_PER_CELL_HORIZON, 10)
+        self.assertEqual(MAX_DISCOVERY_SHORTLIST, 180)
         self.assertEqual(MAX_FROZEN_PATTERN_HYPOTHESES, 54)
 
         encoded = json.dumps(protocol_payload(), sort_keys=True)
@@ -202,6 +206,12 @@ class Exp061PatternProtocolTests(unittest.TestCase):
         self.assertFalse(SOURCE_ACCESS_AUTHORIZED)
         self.assertFalse(DISCOVERY_RESULT_AUTHORIZED)
         self.assertTrue(payload["freeze"]["reserved_2023_2026_window_remains_closed"])
+        self.assertEqual(
+            payload["ranking"]["maximum_discovery_shortlist_global"],
+            180,
+        )
+        self.assertTrue(payload["ranking"]["confirmation_does_not_rerank"])
+        self.assertEqual(payload["confirmation_gate"]["freeze_order"], "preserve_discovery_rank")
         self.assertEqual(
             payload["freeze"]["output_kind"],
             "PATTERN_HYPOTHESIS_NOT_EXECUTABLE_STRATEGY",
