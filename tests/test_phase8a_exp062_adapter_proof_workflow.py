@@ -30,13 +30,16 @@ class Exp062AdapterProofWorkflowTests(unittest.TestCase):
                 "676116f34693f9a5a8f8403aaa93f28ac1c5bb46"
             ),
             "src/fmp/discovery/market_learning_adapter.py": (
-                "51096a72671fe28ac14044afb0bd8aa125416891"
+                "978a33554fad7e9d78b002778c4896be0af3333a"
+            ),
+            "src/fmp/discovery/exp062_nonfinite_feature_adapter.py": (
+                "491ba8c92cb6e6e4c715bfb1ecb934b6949e1596"
             ),
             "src/fmp/discovery/range_limited_loader.py": (
                 "df1d029a6f8b8d3862ebbf990ed1170a5982e1ea"
             ),
             "src/fmp/discovery/exp062_adapter_probe.py": (
-                "579cf4ee01646e8abb686a9b060b53029527f441"
+                "96eac8ed71f6691f7aff6dad12288e3448688c83"
             ),
             "scripts/phase8a_exp062_adapter_probe.py": (
                 "40e0c90c41fd53cb8ce42416af8c7c5f2b60d138"
