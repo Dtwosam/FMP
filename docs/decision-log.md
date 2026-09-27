@@ -4983,3 +4983,23 @@ Result-freeze source: `src/fmp/discovery/exp062_adapter_proof_result_decision.py
 Verified meaning is `NONFINITE_MISSING_VALUES_NORMALIZED_WITHOUT_MINING`. This is not a market-pattern, candidate, or strategy result.
 
 Historical discovery execution/result production, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain locked. A later decision may design a new EXP-062 historical slot only after DEC-295/296/297 are green and merged.
+
+
+## DEC-298 — EXP-062 run and evidence contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY / NON-EXECUTING
+
+DEC-298 freezes the exact future EXP-062 result/evidence contract after DEC-297 verified the non-finite-value repair on accepted real data.
+
+The contract preserves the DEC-270 research semantics and the exact 18-cell universe while giving EXP-062 distinct job, artifact, cell-evidence, aggregate-evidence, and protocol identities. It reserves the future workflow identity `phase8a-exp062-discovery` but does not create, install, or dispatch that workflow.
+
+EXP-062 cell evidence wraps the exact frozen EXP-061 cell evidence, stores the predecessor fingerprint and repair/proof identities, and marks `nonfinite_to_null_repair_applied=true`. Validation reverses the wrapper, reconstructs the exact predecessor fingerprint, and reruns the frozen EXP-061 validator. Aggregate evidence performs the same reversible wrapping over the frozen EXP-061 aggregate and stores all 18 outer EXP-062 cell fingerprints.
+
+The exact future success inventory remains 18 cells, 20 jobs, and 20 artifacts. Rerun/retry/replacement remain false if a later slot is authorized.
+
+Run/evidence contract: `src/fmp/discovery/exp062_run_contract.py` blob `d304c8fafcff64f967f6777b1c494819f69d4a03`. Focused tests: `tests/test_phase8a_exp062_run_evidence_contract.py` blob `f951f67f438b61b78d7b1b8327d1946f1dc413a1`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-run-evidence-contract.md`.
+
+DEC-298 authorizes no workflow source, dispatch, historical discovery execution, result production, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, or trading.
+
+The next safe gate is dormant EXP-062 workflow/CLI source using the verified repaired adapter, frozen miner/loader semantics, and DEC-298 evidence wrappers, with a hard execution gate before any historical artifact read.
