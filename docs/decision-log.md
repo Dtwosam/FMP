@@ -4891,3 +4891,19 @@ Failed-result source: `src/fmp/discovery/historical_failed_result_decision.py` b
 EXP-061 is closed. Rerun, retry, and replacement under the same experiment are forbidden. Reserved 2023-2026 data, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.
 
 The next safe step is a new experiment identity containing only a narrow adapter compatibility repair: floating-point NaN in continuous feature columns may be normalized to null before FeatureObservation construction, while positive/negative infinity remain invalid. Protocol, data windows, search/ranking/confirmation/validation semantics, costs, and reserved-data locks must remain unchanged.
+
+
+## DEC-292 — EXP-062 NaN-to-null adapter repair protocol
+
+**Date:** 2026-09-27
+**Status:** APPROVED SOURCE-ONLY / NON-EXECUTABLE
+
+DEC-292 creates EXP-20260927-062 after DEC-291 closed EXP-061 as an implementation-compatibility failure. EXP-062 retains the exact EXP-061 discovery semantics and authorizes only one adapter repair: floating-point NaN in continuous feature values is converted to None immediately before FeatureObservation construction.
+
+Finite values, feature definitions, outcome definitions, observation identity, chronology, search space, ranking, confirmation, validation, cost assumptions, and pattern-fingerprint semantics remain unchanged. Positive and negative infinity remain invalid. The observed predecessor failure fields are realized_vol_1h and realized_vol_8h.
+
+Repair protocol: `src/fmp/discovery/nan_null_repair_protocol.py` blob `1d26da24134c825e2f405224316e1dd3136a38fb`. Focused tests: `tests/test_phase8a_exp062_nan_null_repair_protocol.py` blob `8acd25f0e97ff7b59bc21d76383735f620302ecb`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-nan-null-adapter-repair-protocol.md`.
+
+Historical result execution, reserved 2023-2026 access, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.
+
+The next gate is the deterministic repaired adapter/evidence implementation. No EXP-062 historical slot or workflow is opened by DEC-292.
