@@ -4539,3 +4539,22 @@ Source: `src/fmp/discovery/market_learning_adapter.py` blob `978a33554fad7e9d78b
 DEC-272 does not load artifacts and does not authorize historical source access, historical discovery execution, reserved-block access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, or trading.
 
 The next safe gate is a verified range-limited artifact loader for existing EXP-044 feature/outcome evidence, with historical result execution still separately locked.
+
+## DEC-273 — EXP-061 verified range-limited artifact loader
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY LOADER / HISTORICAL EXECUTION LOCKED
+
+DEC-273 adds the verified artifact-loader boundary for EXP-20260927-061.
+
+The loader recomputes supplied EXP-044 feature/outcome aggregate evidence fingerprints, requires exact outcome-to-feature evidence binding, exact requested cell manifests, a shared Phase 2 processed-manifest SHA-256, and exact outcome-manifest binding to the feature-manifest SHA-256.
+
+Only the frozen 96 monthly partitions from 2015-01 through 2022-12 are selected for each requested feature and outcome cell. No 2023-01 or later monthly partition is selected or opened. Every selected artifact is checked for safe path containment, current file presence, exact size, SHA-256, Parquet schema, and row count. Outcome rows whose fixed-horizon exit reaches 2023-01-01 are filtered before DEC-272 adaptation.
+
+The output is a verified feature/outcome frame pair plus exact manifest/evidence identities and selected artifact paths. It is still only source plumbing: DEC-273 does not invoke DEC-271 mining and does not produce a historical discovery result.
+
+Loader source: `src/fmp/discovery/range_limited_loader.py` blob `df1d029a6f8b8d3862ebbf990ed1170a5982e1ea`. Focused tests: `tests/test_phase8a_exp061_range_limited_loader.py` blob `f6ec2d8846491fb2cbc06d7eea064c0e72af45ee`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-range-limited-loader.md`.
+
+Historical discovery execution, discovery-result production, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false.
+
+The next safe gate is a non-executing 18-cell EXP-061 run/evidence contract that composes DEC-273 -> DEC-272 -> DEC-271 -> DEC-272 evidence without opening workflow dispatch.

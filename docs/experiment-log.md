@@ -1180,8 +1180,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-061 — Discovery-first market-state pattern mining
 
 - Date: 2026-09-27
-- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE / HISTORICAL RUN NOT OPENED
-- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence
+- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER / HISTORICAL RUN NOT OPENED
+- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader
 - Purpose: derive interpretable repeated market-state/future-outcome hypotheses from the data without requiring a predefined strategy family.
 - Pair(s): EURUSD, GBPUSD, USDJPY
 - Timeframe(s): 5m, 15m, 1h
@@ -1204,5 +1204,5 @@ Copy this section for each serious experiment:
 - Discovery run executed?: NO.
 - Promotion/shadow/demo/live authorized?: NO.
 - Conclusion: NEED_MORE_DATA.
-- Implementation status: DEC-270 freezes the protocol; DEC-271 implements the deterministic in-memory miner; DEC-272 adds the strict 2015-2022 EXP-044 frame adapter and canonical tamper-detectable cell-evidence contract. No artifact loader or historical result-producing path exists yet.
-- Next gate: verified range-limited loader for existing EXP-044 feature/outcome artifacts; historical discovery execution remains separately gated.
+- Implementation status: DEC-270 freezes the protocol; DEC-271 implements the in-memory miner; DEC-272 adds the adapter/cell evidence; DEC-273 adds verified exact-manifest/checksum loading of only the 2015-2022 EXP-044 monthly partitions, with cross-2023 targets filtered before adaptation. No historical discovery result-producing path is open yet.
+- Next gate: non-executing 18-cell run/evidence contract; workflow dispatch and historical discovery execution remain separately gated.

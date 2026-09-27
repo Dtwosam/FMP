@@ -86,3 +86,12 @@
 - Added canonical tamper-detectable per-cell evidence for discovery, confirmation, and validation results.
 - Added focused tests for valid adaptation, reserved-history rejection, source-identity mismatch, evidence determinism, tamper detection, and all execution/trading locks.
 - Kept artifact loading, historical result execution, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+## 2026-09-27 — DEC-273 EXP-061 verified range-limited loader
+
+- Added exact aggregate-evidence fingerprint and requested-cell manifest verification for EXP-061 source inputs.
+- Selected exactly 96 monthly feature and outcome partitions per pair/timeframe: 2015-01 through 2022-12.
+- Prevented selection/opening of 2023+ monthly partitions and filtered any late-2022 target whose exit reaches 2023 before adaptation.
+- Verified selected current artifact paths, sizes, SHA-256 digests, schemas, and row counts.
+- Bound feature/outcome evidence, feature/outcome manifests, and Phase 2 processed-manifest identity end to end.
+- Kept historical discovery/result execution, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
