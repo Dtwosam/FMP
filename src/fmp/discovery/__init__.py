@@ -246,3 +246,15 @@ __all__ += [
     "freeze_failed_historical_result",
     "validate_failed_result_sources",
 ]
+
+from .nan_null_repair_protocol import (
+    exp062_repair_protocol_fingerprint,
+    exp062_repair_protocol_payload,
+    validate_exp062_predecessor_identity,
+)
+
+__all__ += [
+    "exp062_repair_protocol_fingerprint",
+    "exp062_repair_protocol_payload",
+    "validate_exp062_predecessor_identity",
+]
