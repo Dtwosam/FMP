@@ -269,3 +269,14 @@
 - Treats the new historical run as consuming the sole slot immediately, regardless of later terminal outcome.
 - Adds no historical rerun/retry/replacement path.
 - Keeps reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-290 EXP-061 historical result terminal review
+
+- Predeclared terminal interpretation for the sole future EXP-061 workflow run #2 / attempt 1 before its result is observed.
+- Required exact manual-main discovery workflow identity and terminal completed state.
+- Frozen structural success to the exact DEC-274 20-job / 20-artifact inventory with all jobs successful, all artifacts non-expired/digested, and successful aggregate job/artifact.
+- Kept structural success pending full cell/aggregate content review; it does not accept the historical result or any pattern hypothesis by itself.
+- Classified every non-success outcome as slot consumed with no rerun/retry/replacement.
+- Allowed partial non-success evidence only from the frozen commit-scoped artifact inventory and the known skipped literal matrix-placeholder API shape.
+- Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
