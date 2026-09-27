@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import subprocess
+import sys
 import unittest
 
 from fmp.discovery.execution_gate import (
@@ -122,6 +123,33 @@ class Exp061WorkflowSourceTests(unittest.TestCase):
             "trading_authorized",
         ):
             self.assertFalse(status[field], field)
+
+    def test_cli_preflight_fails_before_reading_missing_historical_inputs(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "scripts/phase8a_exp061_discovery.py",
+                "preflight",
+                "--feature-evidence",
+                "/definitely/missing/feature-evidence.json",
+                "--outcome-evidence",
+                "/definitely/missing/outcome-evidence.json",
+                "--code-commit",
+                "a" * 40,
+                "--out",
+                "/tmp/should-not-exist-exp061.json",
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(
+            "DEC-275 EXP-061 historical discovery execution authorization is locked",
+            result.stderr + result.stdout,
+        )
+        self.assertNotIn("No such file", result.stderr + result.stdout)
 
     def test_workflow_yaml_parses_and_reserves_exact_job_shape(self) -> None:
         result = subprocess.run(
