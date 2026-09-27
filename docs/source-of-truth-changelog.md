@@ -291,3 +291,12 @@
 - Frozen the shared failure class before pattern mining: non-finite accepted rolling-volatility feature values, observed only in `realized_vol_1h` and `realized_vol_8h`.
 - Closed EXP-061 with no rerun/retry/replacement and no pattern/candidate result.
 - Kept reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-292 EXP-062 NaN-to-null repair protocol
+
+- Opened new experiment identity EXP-20260927-062 after EXP-061 terminal implementation failure.
+- Retained the complete EXP-061 chronology, feature/state vocabulary, search, ranking, confirmation, validation, cost, and reserved-data semantics.
+- Authorized only floating-point NaN -> None normalization for continuous feature values immediately before FeatureObservation construction.
+- Kept positive/negative infinity invalid and all non-NaN values unchanged.
+- Historical execution, candidate compilation, reserved 2023-2026 access, Phase 8B, demo, broker/live, real-money, and trading remain locked.
