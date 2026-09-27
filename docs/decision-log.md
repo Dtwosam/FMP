@@ -4657,3 +4657,20 @@ Operator source: `src/fmp/discovery/proof_operator.py` blob `b8af93555656d4da57e
 Proof dispatch, historical-result dispatch/execution, discovery-result production, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is an exact merged-main-head proof authorization after two identical fresh read-only plans.
+
+## DEC-279 — EXP-061 one-shot proof-only executor
+
+**Date:** 2026-09-27
+**Status:** APPROVED SOURCE / ONE PROOF DISPATCH AFTER MERGE ONLY
+
+DEC-279 authorizes exactly one proof-only dispatch of the installed EXP-061 workflow after the DEC-279 executor merges to main. The proof is expected to fail at the still-locked DEC-275 execution gate. It is not a historical discovery run and does not consume the future historical-result slot.
+
+Immediately before submission the executor reads live main/workflow-run metadata twice through the DEC-278 read-only operator. Both plans must be identical, bind the exact executor main head, show zero matching manual-main EXP-061 runs, expose the exact frozen proof command, and keep DEC-278 proof dispatch/execute plus every historical/result/trading authority false. DEC-279 supplies only the single proof-dispatch authority.
+
+Validator source: `src/fmp/discovery/proof_executor.py` blob `0558b5d6b5db41e252cfb0e1cc3bc46ef489b0d0`. CLI: `scripts/phase8a_exp061_proof_executor.py` blob `db3fdb6d283ce33a71a6dd57eebfef70874fd40a`. One-shot workflow: `.github/workflows/phase8a-exp061-proof-one-shot-execute.yml` blob `7e9b31d3dc521b05ed5dedaafa57afef57222ef2`. Focused tests: `tests/test_phase8a_exp061_proof_executor.py` blob `a331da912f06cd9f34ba510c1e86ba726ab6c0fd`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-proof-one-shot-executor.md`.
+
+The executor workflow pins the active EXP-061 workflow, DEC-275 workflow-source contract, DEC-277 proof contract, DEC-278 operator/CLI, DEC-279 validator/CLI, and pinned runtime before any GitHub write. It requires no prior DEC-279 executor run and no prior target proof run, then polls only until exactly one proof run is visible at the DEC-279 merged-main head.
+
+Historical-result dispatch, historical discovery execution, discovery-result production, proof retry/rerun/replacement, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is terminal review of the one proof run through DEC-277, followed by a DEC-280 reviewed-proof freeze.

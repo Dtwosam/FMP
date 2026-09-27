@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** After DEC-276/277/278 merge, bind the exact merged-main workflow head, require two identical fresh read-only proof plans, and authorize at most one proof-only dispatch under a new decision. Historical discovery/result execution and the historical result slot remain locked.
+**Next milestone:** Merge DEC-279 only after green checks. Its first merged-main executor run may submit exactly one proof-only EXP-061 dispatch. When that proof reaches terminal failure at the locked execution gate, review it through DEC-277 and freeze the result under DEC-280. Historical discovery/result execution and the historical result slot remain locked.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-279 adds the one-shot proof-only executor: it requires two identical fresh DEC-278 missing-run plans, zero prior manual-main EXP-061 runs, exact merged-main source pins, and can submit only one proof dispatch. Historical-result dispatch/execution, retries, reserved data, candidate compilation, demo/live, and trading remain false.
 - DEC-278 adds a read-only proof operator with no execute mode: it binds an expected main head, reports a dispatch-authorization-required state only when no manual-main EXP-061 run exists, exposes one planned `gh workflow run` command, and removes that command once any matching run exists. Proof dispatch remains unauthorized.
 - DEC-277 freezes the source-only gate-proof terminal contract: exact manual-main workflow identity, required preflight failure, any materialized downstream job must be skipped, exactly one preflight artifact, zero cell/aggregate result artifacts, and no historical-result slot consumption. It authorizes no dispatch.
 - DEC-276 installs the exact reviewed DEC-275 workflow byte-for-byte at `.github/workflows/phase8a-exp061-discovery.yml` while keeping proof dispatch and historical-result dispatch false. The active and dormant workflow blobs are both `d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9`; the hard execution gate still stops before any historical cell artifact download or aggregate read.

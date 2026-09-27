@@ -129,3 +129,13 @@ __all__ += [
     "proof_dispatch_command",
     "validate_proof_plan",
 ]
+
+from .proof_executor import (
+    proof_execution_evidence,
+    validate_fresh_proof_execution_plan,
+)
+
+__all__ += [
+    "proof_execution_evidence",
+    "validate_fresh_proof_execution_plan",
+]
