@@ -4,7 +4,7 @@ import hashlib
 import json
 import math
 from dataclasses import asdict, dataclass
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from typing import Mapping, Sequence
 
 from fmp.features.schema import FEATURE_VALUE_COLUMNS
@@ -144,6 +144,39 @@ DISCOVERY_CELLS = tuple(
     for timeframe in TIMEFRAMES
     for horizon in HORIZONS_MINUTES
 )
+
+
+def _validate_utc_datetime(value: datetime, *, field: str) -> None:
+    if value.tzinfo is None or value.utcoffset() != timedelta(0):
+        raise ValueError(f"{field} must use UTC")
+
+
+def window_accepts_outcome(
+    window: ResearchWindow,
+    *,
+    available_at_utc: datetime,
+    exit_timestamp_utc: datetime,
+) -> bool:
+    _validate_utc_datetime(available_at_utc, field="available_at_utc")
+    _validate_utc_datetime(exit_timestamp_utc, field="exit_timestamp_utc")
+    if exit_timestamp_utc <= available_at_utc:
+        raise ValueError("exit_timestamp_utc must follow available_at_utc")
+    start = datetime(
+        window.start.year,
+        window.start.month,
+        window.start.day,
+        tzinfo=timezone.utc,
+    )
+    end = datetime(
+        window.end_exclusive.year,
+        window.end_exclusive.month,
+        window.end_exclusive.day,
+        tzinfo=timezone.utc,
+    )
+    return (
+        start <= available_at_utc < end
+        and exit_timestamp_utc < end
+    )
 
 
 def empirical_tertile_cutpoints(
@@ -318,6 +351,10 @@ def protocol_payload() -> dict[str, object]:
             for symbol, timeframe, horizon in DISCOVERY_CELLS
         ],
         "windows": [_window_payload(window) for window in PROTOCOL_WINDOWS],
+        "chronology_boundary_rule": (
+            "available_at_utc must be inside the window and "
+            "exit_timestamp_utc must be strictly before end_exclusive"
+        ),
         "market_state": {
             "continuous_features": list(CONTINUOUS_FEATURES),
             "continuous_state_method": "discovery_window_empirical_tertiles",
@@ -514,4 +551,5 @@ __all__ = [
     "quantile_state",
     "session_state",
     "validate_protocol",
+    "window_accepts_outcome",
 ]
