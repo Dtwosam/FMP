@@ -83,3 +83,17 @@ __all__ += [
     "run_contract_payload",
     "validate_aggregate_evidence",
 ]
+
+from .workflow_source import (
+    require_historical_execution_authorized,
+    source_artifacts_for_cell,
+    validate_source_snapshots,
+    workflow_source_payload,
+)
+
+__all__ += [
+    "require_historical_execution_authorized",
+    "source_artifacts_for_cell",
+    "validate_source_snapshots",
+    "workflow_source_payload",
+]
