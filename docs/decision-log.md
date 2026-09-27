@@ -4808,7 +4808,7 @@ DEC-287 adds a repository-hosted read-only proof for the exact DEC-286 historica
 
 The proof workflow is push-to-main only, read-only, and invokes only the DEC-286 `plan` command. A successful proof must show frozen proof run `36319888985` as workflow run #1, zero historical-result attempts, an unconsumed slot, target workflow run #2 / attempt #1, and the future `gh workflow run phase8a-exp061-discovery.yml --ref main` command as plan evidence only. Historical execution/result authorization remains true inside the DEC-285 target runtime, while dispatch and execute mode remain false.
 
-Proof workflow: `.github/workflows/phase8a-exp061-historical-execution-plan.yml` blob `9db80add1f21406e53c6d4113951bcb237f78719`. Focused tests: `tests/test_phase8a_exp061_historical_execution_plan_proof.py` blob `0c92221e959819383ff00d62bca72723064d7c91`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-execution-plan-proof.md`.
+Proof workflow: `.github/workflows/phase8a-exp061-historical-execution-plan.yml` blob `6f4b6a04291465f0f32f1f8e9276ff4a62417ec2`. Focused tests: `tests/test_phase8a_exp061_historical_execution_plan_proof.py` blob `95a4bb6dbcab6cef3fdec3cbac7bef09bb952311`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-execution-plan-proof.md`.
 
 DEC-287 cannot dispatch, execute, retry, rerun, replace, download historical discovery inputs, create cell/aggregate discovery-result artifacts, or claim a historical result. Reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain locked.
 
