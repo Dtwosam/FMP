@@ -93,7 +93,7 @@ Workflow:
 
 Git blob:
 
-`668b67abd87842e188be4a507305e0573f694390`
+`4efb80cf9eee3f7073de28531babc269d3c7a8cc`
 
 Focused tests:
 
@@ -101,7 +101,7 @@ Focused tests:
 
 Git blob:
 
-`2a450caee27b6b0eccfe265064babee2e7c1420a`
+`62b40b4577462d32deb0b341a778cb87ba7d2cba`
 
 ## One-shot workflow guard
 
@@ -113,6 +113,7 @@ The executor workflow:
 - pins DEC-288, DEC-285, DEC-286, active discovery workflow, activated CLI, executor source, and runtime dependency blobs;
 - grants only `contents: read` and `actions: write`;
 - queries its own workflow history and requires the current run to be the only main-push DEC-289 executor run ever materialized;
+- requires that sole executor run to be workflow run number `1`;
 - fails closed on any later executor push/rerun.
 
 ## Immediate pre-dispatch inventory guard
