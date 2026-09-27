@@ -1211,8 +1211,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-062 — Discovery adapter non-finite normalization repair
 
 - Date: 2026-09-27
-- Status: ACTIVE — REPAIR VERIFIED + DISTINCT RUN/EVIDENCE CONTRACT + DORMANT WORKFLOW SOURCE FROZEN / HISTORICAL EXECUTION LOCKED
-- Protocol decisions: DEC-293 isolated implementation-only normalization repair; DEC-294 read-only real-data adapter proof; DEC-295 predeclared adapter-proof review; DEC-296 predeclared proof-content review; DEC-297 verified adapter-proof result freeze; DEC-298 run/evidence contract; DEC-299 dormant workflow/CLI source; DEC-270 research semantics preserved.
+- Status: ACTIVE — REPAIR VERIFIED + RUN/EVIDENCE CONTRACT + ACTIVE WORKFLOW INSTALLED LOCKED / HISTORICAL EXECUTION LOCKED
+- Protocol decisions: DEC-293 isolated implementation-only normalization repair; DEC-294 read-only real-data adapter proof; DEC-295 predeclared adapter-proof review; DEC-296 predeclared proof-content review; DEC-297 verified adapter-proof result freeze; DEC-298 run/evidence contract; DEC-299 dormant workflow/CLI source; DEC-300 locked active-workflow installation; DEC-270 research semantics preserved.
 - Predecessor: closed EXP-20260927-061 / DEC-292 failure freeze.
 - Hypothesis: EXP-061's all-cell failure was caused by representation mismatch at the adapter boundary; normalizing Phase-5 non-finite missing/warm-up continuous values to `None` should allow the unchanged discovery protocol to consume the accepted historical feature artifacts.
 - Pair(s): EURUSD, GBPUSD, USDJPY
@@ -1228,4 +1228,4 @@ Copy this section for each serious experiment:
 - Historical run executed?: NO.
 - Candidate compilation/demo/live authorized?: NO.
 - Conclusion: ADAPTER_REPAIR_VERIFIED_ON_ACCEPTED_REAL_DATA.
-- Next gate: merge clean DEC-296/297/298/299 after green checks, then install the exact reviewed EXP-062 workflow at the reserved active path while keeping historical execution and dispatch locked. A merged-main fail-closed proof must precede any historical-result slot.
+- Next gate: merge DEC-296/297/298/299/300 after green checks, then predeclare and run a proof-only fail-closed gate on merged main. No EXP-062 historical-result slot or discovery dispatch is authorized yet.

@@ -312,3 +312,15 @@ __all__ += [
     "validate_exp062_source_snapshots",
     "validate_exp062_workflow_source_dependencies",
 ]
+
+from .exp062_workflow_install import (
+    require_historical_result_dispatch_authorized as require_exp062_historical_result_dispatch,
+    require_proof_dispatch_authorized as require_exp062_proof_dispatch,
+    validate_installed_paths_from_repo as validate_exp062_installed_workflow,
+)
+
+__all__ += [
+    "require_exp062_historical_result_dispatch",
+    "require_exp062_proof_dispatch",
+    "validate_exp062_installed_workflow",
+]

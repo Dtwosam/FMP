@@ -5021,3 +5021,19 @@ Source contract: `src/fmp/discovery/exp062_workflow_source.py` blob `e20ded13de2
 Workflow installation/dispatch, historical discovery/result execution, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is exact active-workflow installation with the execution gate still false, followed by a merged-main fail-closed proof before any historical-result slot is opened.
+
+
+## DEC-300 — EXP-062 locked active workflow installation
+
+**Date:** 2026-09-27
+**Status:** ACTIVE WORKFLOW INSTALLED / PROOF + HISTORICAL DISPATCH LOCKED
+
+DEC-300 installs the exact DEC-299 dormant template at `.github/workflows/phase8a-exp062-discovery.yml` without changing a byte. Dormant and active workflow blobs are both `1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50`.
+
+The workflow remains manual-only and retains the DEC-299 execution gate before any historical cell source use or aggregate evidence read. Workflow dispatch, proof dispatch, historical-result dispatch, historical discovery execution, and discovery-result production all remain false.
+
+Installation source: `src/fmp/discovery/exp062_workflow_install.py` blob `febb2bc00342364c67a75c69439136079eba0a2c`. Focused tests: `tests/test_phase8a_exp062_locked_workflow_install.py` blob `fbf18f73d4a660dbd4d33bdfb95dc6c8f416ec0a`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-locked-workflow-installation.md`.
+
+Rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain locked.
+
+The next safe gate is a proof-only terminal contract and read-only proof operator that can demonstrate the merged workflow fails closed before any discovery cell executes. Proof dispatch must remain separate from historical-result dispatch.
