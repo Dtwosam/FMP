@@ -4476,3 +4476,26 @@ Result-decision source is `src/fmp/portfolio/exp015_stage_a_failure_result_decis
 The one Stage A slot remains consumed permanently. Stage A retry/replacement, Stage B source-open, Stage B/C execution, portfolio selection, Phase 8A acceptance, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading are all false.
 
 EXP-015 is closed as pre-DEC-268 historical evidence. The next research work proceeds under DEC-268 discovery-first market-pattern research rather than rescuing or retuning EXP-015.
+
+## DEC-270 — EXP-061 discovery-first market-state pattern protocol
+
+**Date:** 2026-09-27
+**Status:** APPROVED SOURCE-ONLY PROTOCOL / RESULT EXECUTION LOCKED
+
+DEC-270 opens EXP-20260927-061 as the first bounded implementation of DEC-268 discovery-first research. It does not start from the six historical strategy families.
+
+EXP-061 freezes exactly EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m outcomes. It derives market states from exactly 20 existing leakage-safe feature values plus one deterministic mutually exclusive session dimension. Continuous states are LOW/MID/HIGH using exact 2015-2017 empirical tertile order statistics; tied cutpoints skip that dimension rather than being repaired.
+
+Patterns may contain one or two distinct dimensions only. The maximum search universe is 65 atomic states, 2,075 admissible state patterns per cell/horizon, 4,150 directional LONG/SHORT hypotheses per cell/horizon, and 74,700 directional hypotheses globally. Search volume must be recorded. No third predicate, added feature, alternate binning, extra horizon, extra pair, or result-driven feature invention is allowed inside EXP-061.
+
+Chronology is exact: 2015-2017 discovery; 2018 pass/fail confirmation; 2019-2022 frozen validation; 2023-01-01 through 2026-08-20 inclusive remains closed to EXP-061 and reserved for a later compiled-strategy robustness experiment. Every fixed-horizon outcome must also exit strictly before its current window end; cross-boundary outcomes are purged.
+
+The discovery gate requires at least 300 total observations, at least 75 per discovery year, aggregate 0.5-pip mean net pips >= 0.25, positive 0.5-pip mean in every discovery year, and positive aggregate 1.0-pip stress mean. Near-duplicates at discovery-event Jaccard >= 0.90 are removed by immutable discovery rank. At most 10 per cell/horizon reach 2018 confirmation, for at most 180. Confirmation does not rerank; among passers, original discovery rank freezes at most 3 per cell/horizon, for at most 54 validation hypotheses.
+
+2019-2022 validation requires at least 200 total observations, at least 40 per year, positive aggregate 0.5-pip mean, and positive yearly mean in at least 3 of 4 years. Validation cannot redefine a pattern.
+
+A surviving EXP-061 object is a pattern hypothesis, not an executable strategy. Entry/stop/target/overlap/risk/portfolio semantics require a later candidate-compilation decision before the reserved block can be opened.
+
+Frozen source: `src/fmp/discovery/pattern_protocol.py` blob `63b3f0121d6a50eb9e8e62ab666d70eb91791621`. Focused tests: `tests/test_phase8a_exp061_pattern_protocol.py` blob `b15a7bc19cc9523166d4b92e8c75f5784bf50fa1`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-discovery-first-pattern-protocol.md`.
+
+Historical source access, discovery execution/result production, candidate compilation, reserved-block access, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a deterministic in-memory miner core only.

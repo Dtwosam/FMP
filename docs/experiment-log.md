@@ -1176,3 +1176,33 @@ Copy this section for each serious experiment:
 - **Conclusion:** technically successful negative result. Zero stable selection passes, zero selected cells, zero validation passes, zero retrospective-holdout passes, and zero accepted model candidates. The repaired implementation completed the intended experiment, but the tested regime-balance formulation did not produce a robust challenger.
 - **Rerun/replacement:** forbidden for EXP-060.
 - **Deployment effect:** none. Promotion, shadow/demo, broker, live-order, real-money, and trading remain unauthorized.
+
+### EXP-20260927-061 — Discovery-first market-state pattern mining
+
+- Date: 2026-09-27
+- Status: ACTIVE — SOURCE-ONLY PROTOCOL / NOT RUN
+- Protocol decision: DEC-270
+- Purpose: derive interpretable repeated market-state/future-outcome hypotheses from the data without requiring a predefined strategy family.
+- Pair(s): EURUSD, GBPUSD, USDJPY
+- Timeframe(s): 5m, 15m, 1h
+- Outcome horizons: 60m, 240m
+- Discovery: 2015-01-01 to 2018-01-01 exclusive.
+- Confirmation: 2018-01-01 to 2019-01-01 exclusive.
+- Validation: 2019-01-01 to 2023-01-01 exclusive.
+- Reserved robustness block: 2023-01-01 to 2026-08-21 exclusive; CLOSED TO EXP-061.
+- State vocabulary: exactly 20 leakage-safe continuous features in LOW/MID/HIGH empirical-tertile states plus one deterministic five-state session dimension.
+- Search depth: 1 or 2 distinct state predicates.
+- Maximum search: 65 atomic states; 2,075 admissible state patterns per cell/horizon; 4,150 LONG/SHORT directional hypotheses per cell/horizon; 74,700 maximum directional hypotheses globally.
+- Discovery shortlist cap: 10 per cell/horizon; 180 global.
+- Frozen validation cap: 3 per cell/horizon; 54 global.
+- Primary cost outcome: 0.5-pip adverse slippage per fill.
+- Stress outcome: 1.0-pip adverse slippage per fill.
+- Evidence label: RETROSPECTIVE_ALREADY_SEEN.
+- Untouched OOS?: NO.
+- Output meaning: PATTERN_HYPOTHESIS_NOT_EXECUTABLE_STRATEGY.
+- Historical source opened?: NO.
+- Discovery run executed?: NO.
+- Promotion/shadow/demo/live authorized?: NO.
+- Conclusion: NEED_MORE_DATA.
+- Implementation status: DEC-270 freezes the source-only protocol and focused tests. No data or result-producing path exists yet.
+- Next gate: deterministic in-memory pattern-miner core over supplied rows only; source loading/execution remains separately gated.

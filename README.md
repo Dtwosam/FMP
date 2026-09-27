@@ -48,9 +48,13 @@ The project still uses exactly EUR/USD, GBP/USD, and USD/JPY with the accepted D
 
 Shadow/demo campaigns remain immutable while they run. Completed demo evidence may inform a new challenger version, but data used to change that version cannot also count as fresh validation for it; the revised challenger must prove itself on a later fresh prospective window.
 
-The sole EXP-015 Stage A attempt is now closed as failed historical evidence under DEC-269: 8 of 9 cells completed, USDJPY 1h failed on a fail-closed account-equity validity guard, the aggregate authorization step was skipped, and no authoritative survivor set exists. There is no retry/replacement and no Stage B/C continuation. Phase 8B live shadow, Phase 9 demo orders, broker mutation, live orders, and all real-money execution remain locked behind their existing gates.
+The sole EXP-015 Stage A attempt is now closed as failed historical evidence under DEC-269: 8 of 9 cells completed, USDJPY 1h failed on a fail-closed account-equity validity guard, the aggregate authorization step was skipped, and no authoritative survivor set exists. There is no retry/replacement and no Stage B/C continuation.
 
-See `docs/project-state.md` for the current implementation milestone and `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md` for the governing DEC-268 amendment.
+DEC-270 / EXP-061 now defines the first concrete discovery-first search: bounded interpretable market-state patterns across all three pairs/timeframes and 60m/240m outcomes, with 2015-2017 discovery, 2018 confirmation, 2019-2022 validation, and 2023-2026 kept closed for a later compiled-strategy robustness test. EXP-061 is protocol-only at this point; no historical discovery run or trading path is authorized.
+
+Phase 8B live shadow, Phase 9 demo orders, broker mutation, live orders, and all real-money execution remain locked behind their existing gates.
+
+See `docs/project-state.md` for the current implementation milestone, `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md` for the governing DEC-268 amendment, and `docs/superpowers/specs/2026-09-27-phase8a-exp061-discovery-first-pattern-protocol.md` for the bounded EXP-061 protocol.
 
 ### Phase 1 developer quick start
 
