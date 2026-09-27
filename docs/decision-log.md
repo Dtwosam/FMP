@@ -4471,7 +4471,7 @@ DEC-269 binds the exact catalog artifact plus the eight successful cell artifact
 
 The predeclared DEC-264 terminal reviewer also contains a result-review compatibility defect: it requires short matrix job names such as `stage-a-cell (USDJPY, 1h)`, while GitHub persisted expanded/truncated matrix-value names for the real run. DEC-269 does not alter the guarded Stage A workflow or reinterpret the result. Instead it binds this exact already-completed run through immutable run id, head, attempt, exact job ids/conclusions, exact artifact ids/digests, the absent failed-cell/authorization artifacts, and the exact failure signature.
 
-Result-decision source is `src/fmp/portfolio/exp015_stage_a_failure_result_decision.py`. Detailed evidence contract is `docs/superpowers/specs/2026-09-27-phase8a-exp015-stage-a-failure-freeze.md`.
+Result-decision source is `src/fmp/portfolio/exp015_stage_a_failure_result_decision.py` at blob `dbf9a34fc8a22c92b06e0b40ac5e97a5cf041029`. Focused tests are `tests/test_phase8a_exp015_stage_a_failure_result_decision.py` at blob `35d4adaaf66b7e8f4e85e51e2baaa3afbf977aec`. Detailed evidence contract is `docs/superpowers/specs/2026-09-27-phase8a-exp015-stage-a-failure-freeze.md`.
 
 The one Stage A slot remains consumed permanently. Stage A retry/replacement, Stage B source-open, Stage B/C execution, portfolio selection, Phase 8A acceptance, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading are all false.
 
