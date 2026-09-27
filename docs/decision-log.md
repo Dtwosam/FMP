@@ -4931,3 +4931,17 @@ DEC-294 does not call the pattern miner, the EXP-061 cell command, or any workfl
 Probe source: `src/fmp/discovery/exp062_adapter_probe.py` blob `579cf4ee01646e8abb686a9b060b53029527f441`. CLI: `scripts/phase8a_exp062_adapter_probe.py` blob `40e0c90c41fd53cb8ce42416af8c7c5f2b60d138`. Workflow: `.github/workflows/phase8a-exp062-adapter-proof.yml` blob `c4c0a980e2675b1cc696ca02294a15f079874ada`. Focused tests: `tests/test_phase8a_exp062_adapter_probe.py` blob `a471c827040750d7b3c6b4697d1d08e54363a3d9`; workflow tests blob `ae0a794ba83802e3dbad61f28a4cce6f540ebe09`.
 
 Historical discovery execution/result production, reserved robustness, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false. The next gate is the merged-main DEC-294 proof result and its immutable artifact review.
+
+
+## DEC-295 — EXP-062 adapter proof review contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PREDECLARED REVIEW / NO PROOF RESULT YET
+
+DEC-295 predeclares the terminal review for DEC-294 before its merged-main proof runs. Success requires exact push-main attempt-1 identity, all nine named pair/timeframe probe jobs plus aggregate (10 jobs total) successful, and exactly nine cell probe artifacts plus one aggregate proof artifact (10 total), all non-expired and commit-scoped.
+
+Unexpected jobs/artifacts fail closed. A non-success proof cannot authorize discovery execution.
+
+Review source: `src/fmp/discovery/exp062_adapter_proof_review.py` blob `d3f1283cffae4e7aa6c6a9bd2b8403743cc3709d`; tests: `tests/test_phase8a_exp062_adapter_proof_review.py` blob `3ce8157054e04ef88b47624404c31b9a187fe6fa`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-adapter-proof-review-contract.md`.
+
+Historical discovery/result execution, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain locked.
