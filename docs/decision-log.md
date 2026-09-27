@@ -4947,3 +4947,19 @@ Unexpected jobs/artifacts fail closed. A non-success proof cannot authorize disc
 Review source: `src/fmp/discovery/exp062_adapter_proof_review.py` blob `d3f1283cffae4e7aa6c6a9bd2b8403743cc3709d`; tests: `tests/test_phase8a_exp062_adapter_proof_review.py` blob `3ce8157054e04ef88b47624404c31b9a187fe6fa`. Bound DEC-294 workflow blob: `4fbeb7836ef775b14918b49ed24da8c86928610c`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-adapter-proof-review-contract.md`.
 
 Historical discovery/result execution, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+
+
+## DEC-296 — EXP-062 adapter proof content review
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PREDECLARED CONTENT REVIEW / NO PROOF RESULT YET
+
+DEC-296 defines JSON-content review for a complete successful DEC-294 proof. It requires DEC-295's exact success-complete terminal classification, exactly nine validated cell probe objects at the proof head, and deterministic equality between the persisted aggregate proof and a fresh recompilation from those nine cells.
+
+A verified content review must still show all nine probes successful and total real raw non-finite values > 0. DEC-296 also reconciles per-feature and per-cell raw non-finite counts for diagnostics.
+
+A successful review is classified `EXP062_ADAPTER_REPAIR_REAL_DATA_PROOF_VERIFIED` with meaning `NONFINITE_MISSING_VALUES_NORMALIZED_WITHOUT_MINING`. It is proof of the adapter repair only; it is not a market-pattern or strategy result.
+
+Review source: `src/fmp/discovery/exp062_adapter_proof_content_review.py` blob `26529be12229953070f5dbf929699e7e86a2a9bb`. Focused tests: `tests/test_phase8a_exp062_adapter_proof_content_review.py` blob `0fa4c87457c49500268f577f35ee9b27729f742b`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-adapter-proof-content-review.md`.
+
+Historical discovery/result execution, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain locked.
