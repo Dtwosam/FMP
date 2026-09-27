@@ -1180,8 +1180,8 @@ Copy this section for each serious experiment:
 ### EXP-20260927-061 — Discovery-first market-state pattern mining
 
 - Date: 2026-09-27
-- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER + RUN CONTRACT + EXECUTION-LOCKED WORKFLOW + REVIEWED FAIL-CLOSED PROOF + SOURCE-ONLY HISTORICAL SLOT / HISTORICAL RESULT RUN NOT OPENED
-- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 run contract; DEC-275 dormant workflow/CLI source; DEC-276 locked active-workflow installation; DEC-277 gate-proof contract; DEC-278 read-only proof operator; DEC-279 one-shot proof executor; DEC-280 reviewed gate-proof freeze; DEC-281 source-only historical-run authorization
+- Status: ACTIVE — PROTOCOL + CORE + ADAPTER/EVIDENCE + VERIFIED LOADER + RUN CONTRACT + EXECUTION-LOCKED WORKFLOW + REVIEWED FAIL-CLOSED PROOF + SOURCE-ONLY HISTORICAL SLOT + READ-ONLY HISTORICAL OPERATOR / HISTORICAL RESULT RUN NOT OPENED
+- Protocol decisions: DEC-270 protocol; DEC-271 deterministic in-memory core; DEC-272 market-learning adapter/evidence; DEC-273 verified range-limited loader; DEC-274 run contract; DEC-275 dormant workflow/CLI source; DEC-276 locked active-workflow installation; DEC-277 gate-proof contract; DEC-278 read-only proof operator; DEC-279 one-shot proof executor; DEC-280 reviewed gate-proof freeze; DEC-281 source-only historical-run authorization; DEC-282 read-only historical-slot operator
 - Purpose: derive interpretable repeated market-state/future-outcome hypotheses from the data without requiring a predefined strategy family.
 - Pair(s): EURUSD, GBPUSD, USDJPY
 - Timeframe(s): 5m, 15m, 1h
@@ -1204,5 +1204,5 @@ Copy this section for each serious experiment:
 - Discovery run executed?: NO. Proof-only gate run `36319888985` completed the expected fail-closed preflight proof; it produced no historical discovery result.
 - Promotion/shadow/demo/live authorized?: NO.
 - Conclusion: NEED_MORE_DATA.
-- Implementation status: DEC-270 through DEC-276 build the bounded discovery stack and install it with execution locked. DEC-277/278/279 predeclare, plan, and submit one proof-only dispatch. DEC-280 freezes proof run `36319888985` as the expected fail-closed proof. DEC-281 freezes the future historical-result slot in source governance: the proof is the only allowed prior manual-main run, no historical attempt exists yet, the first later non-proof attempt consumes the slot immediately, and rerun/retry/replacement remain forbidden. Actual dispatch and execution are still locked.
-- Next gate: a clean-main read-only historical-slot operator with no execute mode; it may expose the single future dispatch command only while the DEC-281 slot remains unused.
+- Implementation status: DEC-270 through DEC-276 build the bounded discovery stack and install it with execution locked. DEC-277/278/279 predeclare, plan, and submit one proof-only dispatch. DEC-280 freezes proof run `36319888985` as the expected fail-closed proof. DEC-281 freezes the future historical-result slot in source governance: the proof is the only allowed prior manual-main run, no historical attempt exists yet, the first later non-proof attempt consumes the slot immediately, and rerun/retry/replacement remain forbidden. DEC-282 adds a read-only exact-main planner that exposes the sole future `gh workflow run` command only while that slot remains empty. It has no execute mode and actual dispatch/execution remain locked.
+- Next gate: a repository-hosted read-only proof of the exact DEC-282 slot-available plan on merged main; it may capture plan evidence only and cannot dispatch.
