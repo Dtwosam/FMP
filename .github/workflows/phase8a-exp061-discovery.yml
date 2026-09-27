@@ -31,6 +31,23 @@ jobs:
       - name: Install pinned EXP-061 runtime
         run: python -m pip install -r requirements/exp061-discovery-run.txt -e .
 
+      - name: Fetch current EXP-061 manual-main run inventory
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .preflight
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp061-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > .preflight/exp061-runs.json
+
+      - name: Reject any prior EXP-061 manual-main run
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_exp061.py guard-first-run \
+            --runs-json .preflight/exp061-runs.json \
+            --current-run-id "$GITHUB_RUN_ID" \
+            --code-commit "$GITHUB_SHA" \
+            --out .preflight/first-run-guard.json
+
       - name: Fetch exact accepted EXP-044 source snapshots
         env:
           GH_TOKEN: ${{ github.token }}
@@ -63,7 +80,9 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: phase8a-exp061-preflight-${{ github.sha }}
-          path: .preflight/preflight.json
+          path: |
+            .preflight/preflight.json
+            .preflight/first-run-guard.json
           if-no-files-found: error
 
   exp061_cell:
