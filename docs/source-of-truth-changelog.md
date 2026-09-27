@@ -425,3 +425,13 @@
 - Required DEC-303 to prove two identical fresh zero-run DEC-302 plans preceded the proof submission.
 - Preserved historical-result slot consumption as false and added no slot-open authority.
 - Kept historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+## 2026-09-28 — DEC-305 source-only EXP-062 proof freeze
+
+- Added `exp062_proof_result_freeze.py` and focused tests.
+- Freeze requires an exact DEC-304 reviewed fail-closed result and matching proof head.
+- Freeze output is deterministic and carries a canonical SHA-256 fingerprint.
+- No runtime proof identity is invented before evidence exists.
+- Historical-result slot opening, historical execution, candidate compilation,
+  Phase 8B, demo, broker/live, real-money, and trading remain false.
+
