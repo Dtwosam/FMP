@@ -117,3 +117,15 @@ __all__ += [
     "proof_contract_payload",
     "validate_gate_proof_terminal",
 ]
+
+from .proof_operator import (
+    build_proof_plan,
+    proof_dispatch_command,
+    validate_proof_plan,
+)
+
+__all__ += [
+    "build_proof_plan",
+    "proof_dispatch_command",
+    "validate_proof_plan",
+]

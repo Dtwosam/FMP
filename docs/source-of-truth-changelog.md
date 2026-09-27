@@ -133,3 +133,11 @@
 - Allowed exactly one preflight artifact and forbade all cell/aggregate result artifacts.
 - Required exact DEC-275 preflight source fingerprint and workflow-source payload.
 - Kept the future historical-result slot unconsumed and all historical/result/trading permissions false.
+
+## 2026-09-27 — DEC-278 EXP-061 read-only proof operator
+
+- Added a read-only proof planner with no execute mode.
+- Required exact caller-supplied main-head binding.
+- Exposed one planned manual-main proof command only while no matching run exists.
+- Removed the command and routed to review once any matching manual-main run exists.
+- Kept proof dispatch, historical result execution, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
