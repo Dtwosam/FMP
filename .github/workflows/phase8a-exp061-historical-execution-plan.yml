@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - .github/workflows/phase8a-exp061-historical-execution-plan.yml
+      - .github/workflows/phase8a-exp061-discovery.yml
+      - src/fmp/discovery/historical_plan_result_decision.py
       - scripts/phase8a_exp061_historical_execution_operator.py
       - src/fmp/discovery/historical_execution_operator.py
       - src/fmp/discovery/historical_execution_authorization.py
