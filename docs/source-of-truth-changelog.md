@@ -116,3 +116,13 @@
 - Pinned Python 3.12.14 and Polars 1.44.2 runtime.
 - Added regression tests proving the active workflow path is absent and all execution/trading authorities remain false.
 - Kept workflow installation/dispatch, historical discovery/result execution, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+## 2026-09-27 — DEC-276 EXP-061 guarded workflow installation
+
+- Installed the exact reviewed DEC-275 EXP-061 workflow bytes at the reserved active GitHub Actions path.
+- Required active and dormant workflow sources to be byte-for-byte identical at blob `d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9`.
+- Preserved the closed historical execution gate before all cell/result-producing work.
+- Distinguished workflow presence from dispatch/result authorization.
+- Added install-contract and regression tests proving byte identity, gate ordering, and continued execution/trading locks.
+- Consumed no EXP-061 historical run slot.
+- Kept dispatch, historical discovery/result execution, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading unauthorized.
