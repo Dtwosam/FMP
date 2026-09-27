@@ -53,3 +53,17 @@ __all__ += [
     "compile_cell_evidence",
     "validate_cell_evidence",
 ]
+
+from .range_limited_loader import (
+    VerifiedExp061CellFrames,
+    load_verified_exp061_cell,
+    load_verified_exp061_cell_from_indexes,
+    loader_contract_payload,
+)
+
+__all__ += [
+    "VerifiedExp061CellFrames",
+    "load_verified_exp061_cell",
+    "load_verified_exp061_cell_from_indexes",
+    "loader_contract_payload",
+]
