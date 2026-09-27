@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Require the clean DEC-294 proof and DEC-295 predeclared review to be green. Merge the read-only proof, require the merged-main nine-cell adapter proof to succeed, then classify and freeze its exact ten-job/ten-artifact evidence before any EXP-062 historical-result slot is considered. No EXP-062 discovery dispatch is authorized.
+**Next milestone:** Require clean DEC-294/295/296 to be green. Merge the read-only proof stack, require DEC-294's merged-main nine-cell adapter proof to succeed, freeze its exact run/artifacts, then verify those contents through DEC-296 before any EXP-062 historical-result slot is considered. No EXP-062 discovery dispatch is authorized.
 
 ## Current baseline
 

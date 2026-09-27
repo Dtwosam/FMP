@@ -264,3 +264,11 @@ from .exp062_adapter_proof_review import (
 __all__ += [
     "classify_exp062_adapter_proof_terminal",
 ]
+
+from .exp062_adapter_proof_content_review import (
+    review_exp062_adapter_proof_content,
+)
+
+__all__ += [
+    "review_exp062_adapter_proof_content",
+]
