@@ -4745,3 +4745,19 @@ Read-only proof workflow: `.github/workflows/phase8a-exp061-historical-plan.yml`
 DEC-283 cannot call the target workflow, cannot execute/advance/retry/rerun/replace, cannot open historical cell artifacts, and cannot claim a discovery result. It consumes no historical-result slot. Reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain locked.
 
 Only after the DEC-283 merged-main proof succeeds and its exact non-expired plan artifact is independently bound may a separate one-shot historical executor source be considered.
+
+
+## DEC-284 — EXP-061 reviewed historical-plan proof
+
+**Date:** 2026-09-27
+**Status:** REVIEWED / HISTORICAL SLOT VERIFIED AVAILABLE / EXECUTION STILL LOCKED
+
+DEC-284 freezes the exact successful DEC-283 merged-main read-only plan proof. DEC-283 merged at `7fd3a9e878bf2760850037548e93dc1e8173c0c1`; proof run `36323674455` completed `success`, attempt 1, on the same head. Every step passed, including exact-main/source binding, clean-worktree proof, live run-inventory fetch, DEC-282 plan execution, slot-available validation, and immutable artifact upload.
+
+Exactly one plan artifact exists: id `10932743232`, name `exp061-dec283-historical-plan-7fd3a9e878bf2760850037548e93dc1e8173c0c1`, digest `sha256:a71585da8c7e858d7ed309cf52965c5a0fbb7ef42b65e28a18933792eeb9460a`, non-expired. The downloaded ZIP independently matches that digest and contains exactly one `historical-plan.json`. Raw plan SHA-256 is `7cbe58c3ec256ff0973c9baa86e109486f0c2e37eaa973bf053fa1337cc1849e`; canonical plan SHA-256 is `605af14b35bdf132217340e7701263bfaf24d6280d6e45edbb43d2d1debc35de`.
+
+The frozen plan proves DEC-282/DEC-281 identity, exact frozen proof run `36319888985`, zero historical-result attempts, an unconsumed slot, stage `EXP061_HISTORICAL_RESULT_SLOT_AVAILABLE`, and the future `gh workflow run phase8a-exp061-discovery.yml --ref main` command as evidence only. Historical-result dispatch/execution, discovery-result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading all remain false.
+
+Reviewed-plan source: `src/fmp/discovery/historical_plan_result_decision.py` blob `14d9c559eaa33e5cb217baaf3ed2597091735b18`. Focused tests: `tests/test_phase8a_exp061_reviewed_historical_plan_proof.py` blob `7cf308e67232b441530230555fe19230d89b0304`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-reviewed-historical-plan-proof.md`.
+
+The next safe gate is a separate source-only historical execution-authorization transition that binds DEC-284 before changing the runtime gate. It must keep the one-attempt rule, 2015-2022-only history, closed 2023-2026 robustness block, and all downstream trading paths locked.
