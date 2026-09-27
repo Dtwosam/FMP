@@ -1224,4 +1224,6 @@ Copy this section for each serious experiment:
 - **Reserved 2023-2026 robustness:** CLOSED.
 - **Historical execution:** NOT AUTHORIZED.
 - **Candidate compilation / demo / live / trading:** LOCKED.
-- **Next gate:** deterministic repaired adapter/evidence source and tests.
+- **Adapter/evidence:** DEC-293 implements NaN -> None at the continuous-feature boundary, preserves infinity rejection, and wraps/revalidates frozen EXP-061 nested semantics under EXP-062 evidence identity.
+- **Historical execution:** NOT AUTHORIZED.
+- **Next gate:** non-executing 18-cell run/aggregate-evidence contract.
