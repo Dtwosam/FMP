@@ -4923,3 +4923,19 @@ Repaired adapter/evidence source: `src/fmp/discovery/nan_null_repair_adapter.py`
 Historical execution, result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.
 
 The next safe gate is a non-executing EXP-062 run/evidence contract. No workflow dispatch is authorized.
+
+
+## DEC-294 — EXP-062 run and aggregate-evidence contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY / NON-EXECUTING
+
+DEC-294 freezes the non-executing result contract for EXP-062 before any workflow source or historical slot exists. It retains the exact 18 EXP-061 cells but changes all future job/artifact identities to the EXP-062 namespace.
+
+A successful future result requires exactly 20 jobs and 20 commit-scoped artifacts: preflight, 18 cells, and aggregate. Aggregate compilation validates all 18 EXP-062 cell evidences, reconstructs the exact predecessor EXP-061 cell evidence objects, recompiles the frozen EXP-061 aggregate deterministically, then wraps that aggregate under EXP-062 identity with the predecessor aggregate fingerprint and all 18 EXP-062 outer evidence fingerprints.
+
+Run contract source: `src/fmp/discovery/nan_null_repair_run_contract.py` blob `0d1532e6a747e2dd9f0e70cd395e97433e6320ce`. Focused tests: `tests/test_phase8a_exp062_run_contract.py` blob `7e11fb4c8c739898d0e25070ee49a832fe85996f`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-run-contract.md`.
+
+Workflow source, dispatch, historical execution, result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo/live, real-money, and trading all remain locked.
+
+The next gate is dormant EXP-062 workflow/CLI source with a hard execution gate before historical artifact reads. No workflow install or dispatch is authorized by DEC-294.
