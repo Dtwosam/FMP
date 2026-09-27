@@ -4873,3 +4873,23 @@ Terminal-review source: `src/fmp/discovery/historical_result_review_contract.py`
 DEC-290 opens no dispatch, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading path.
 
 The next gate is to require both DEC-289 and DEC-290 to pass CI before the one-shot historical dispatch is allowed to reach main.
+
+
+## DEC-292 — EXP-061 reviewed failed historical result
+
+**Date:** 2026-09-27
+**Status:** REVIEWED FAILURE / EXP-061 CLOSED / NO RETRY
+
+DEC-292 freezes the exact consumed EXP-061 historical attempt. DEC-289 executor run `36335739823` succeeded on merged main `a7b3bc2d0b196da2631b64c19331efb3af12c98e` and submitted historical workflow run `36335879839`, workflow run number 2 / attempt 1.
+
+Historical run `36335879839` completed `failure`. Preflight job `108666516885` succeeded; all 18 expanded discovery-cell jobs failed; aggregate job `108667168765` was skipped. Exactly one artifact exists: preflight artifact `10937316246`, digest `sha256:e9a898df51317250944ad0a111d01d96d2081d708ea80872ed11b5cee48d356f`. The downloaded ZIP independently matches that digest and contains `preflight.json` SHA-256 `d8a85a2482f1bf72128a8f019b73c59fccad612ad02722821cca1a09c7bc582d`. No cell or aggregate result artifact exists.
+
+The executor evidence artifact is `10936194549`, digest `sha256:e7ffe1f08ce358eca210ef41397165196cb64bee31696a180c7fd02af8c68f1c`. Its downloaded ZIP independently matches that digest. DEC-292 also freezes the exact three contained file hashes and records that `executor.json` has the GitHub CLI dispatch URL on its first line before the JSON payload.
+
+All 18 cell failures share one implementation class. Eight terminate with `EXP-061 continuous feature realized_vol_1h must be finite or null`; ten terminate with `EXP-061 continuous feature realized_vol_8h must be finite or null`. The root cause is frozen as `NONFINITE_ROLLING_FEATURE_WARMUP_VALUES_NOT_NORMALIZED_AT_ADAPTER_BOUNDARY`.
+
+The EXP-061 research protocol was not reached far enough to produce a pattern result. The historical slot is permanently consumed. EXP-061 is closed with no rerun, retry, replacement, candidate compilation, reserved robustness access, promotion, Phase 8B, demo, broker mutation, live order, real-money action, or trading authorization.
+
+Failed-result source: `src/fmp/discovery/historical_failed_result_decision.py` blob `97956e30b66e62b708cbbdab66a95007ef096e70`. Focused tests: `tests/test_phase8a_exp061_reviewed_failed_historical_result.py` blob `d01430f485b81a9be74da1bad4be86630fea324b`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-reviewed-failed-historical-result.md`.
+
+Any implementation repair requires a new experiment identity. The next safe path is EXP-062, preserving the EXP-061 research semantics while normalizing non-finite continuous source values to `None` at the adapter boundary before `FeatureObservation` construction.
