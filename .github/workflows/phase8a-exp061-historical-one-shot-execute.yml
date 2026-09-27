@@ -1,0 +1,226 @@
+name: phase8a-exp061-historical-one-shot-execute
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-exp061-historical-one-shot-execute.yml
+      - scripts/phase8a_exp061_historical_executor.py
+      - src/fmp/discovery/historical_executor.py
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  execute-historical-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require exact first DEC-289 executor push
+        run: |
+          set -euo pipefail
+          test "$GITHUB_ACTIONS" = "true"
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+          test "$(git hash-object src/fmp/discovery/historical_execution_plan_result_decision.py)" = "b01ee28b7ab636cb6729423504ff8e2038ce4375"
+          test "$(git hash-object src/fmp/discovery/historical_execution_authorization.py)" = "30258e076f6a786c977fac8c588ac2b22aeed66e"
+          test "$(git hash-object src/fmp/discovery/historical_execution_operator.py)" = "a711b14fb613f1c9952f5b2a6bf85d892bd2c4a5"
+          test "$(git hash-object scripts/phase8a_exp061_historical_execution_operator.py)" = "1f43e1218072918d2ebb33b2c312ba8e950881f9"
+          test "$(git hash-object scripts/phase8a_exp061.py)" = "477aa9e8de4452e6444d1ee4361218aca445180d"
+          test "$(git hash-object .github/workflows/phase8a-exp061-discovery.yml)" = "d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9"
+          test "$(git hash-object src/fmp/discovery/historical_executor.py)" = "80da4c22a1919144e83739708ebe210b8be436f4"
+          test "$(git hash-object scripts/phase8a_exp061_historical_executor.py)" = "a899b71c1054e4ccd5639f4487dad038b2e1f55f"
+          test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
+
+      - name: Require this one-shot executor has never run before
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp061-historical-one-shot-execute.yml/runs?branch=main&event=push&per_page=100"
+          gh api "$endpoint" > "$RUNNER_TEMP/executor-runs.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "executor-runs.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          current_id = int(os.environ["GITHUB_RUN_ID"])
+          relevant = [
+              item
+              for item in payload.get("workflow_runs", [])
+              if item.get("name")
+              == "phase8a-exp061-historical-one-shot-execute"
+              and item.get("path")
+              == ".github/workflows/phase8a-exp061-historical-one-shot-execute.yml"
+              and item.get("event") == "push"
+              and item.get("head_branch") == "main"
+          ]
+          assert len(relevant) == 1
+          run = relevant[0]
+          assert run["id"] == current_id
+          assert run["head_sha"] == os.environ["GITHUB_SHA"]
+          assert run["run_attempt"] == 1
+          PY
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned EXP-061 runtime without editable checkout
+        run: python -m pip install -r requirements/exp061-discovery-run.txt
+
+      - name: Require clean worktree
+        run: test -z "$(git status --porcelain)"
+
+      - name: Require historical slot empty immediately before executor
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp061-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
+          gh api "$endpoint" > "$RUNNER_TEMP/historical-runs-before.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "historical-runs-before.json"
+              ).read_text(encoding="utf-8")
+          )
+          runs = [
+              item
+              for item in payload.get("workflow_runs", [])
+              if item.get("name") == "phase8a-exp061-discovery"
+              and item.get("path")
+              == ".github/workflows/phase8a-exp061-discovery.yml"
+              and item.get("event") == "workflow_dispatch"
+              and item.get("head_branch") == "main"
+          ]
+          assert len(runs) == 1
+          proof = runs[0]
+          assert proof["id"] == 36319888985
+          assert proof["run_number"] == 1
+          assert proof["run_attempt"] == 1
+          assert proof["status"] == "completed"
+          assert proof["conclusion"] == "failure"
+          assert proof["head_sha"] == "041b7b2f5aac8821156fab346df8ab30f4be2a7b"
+          PY
+
+      - name: Execute exact DEC-289 historical dispatcher
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/exp061-historical-executor-evidence"
+          python scripts/phase8a_exp061_historical_executor.py             > "$RUNNER_TEMP/exp061-historical-executor-evidence/executor.json"
+
+      - name: Verify exactly one run-two historical attempt was submitted
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp061-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
+          found=0
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            gh api "$endpoint"               > "$RUNNER_TEMP/exp061-historical-executor-evidence/historical-runs.json"
+            if python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "exp061-historical-executor-evidence/historical-runs.json"
+              ).read_text(encoding="utf-8")
+          )
+          runs = [
+              item
+              for item in payload.get("workflow_runs", [])
+              if item.get("name") == "phase8a-exp061-discovery"
+              and item.get("path")
+              == ".github/workflows/phase8a-exp061-discovery.yml"
+              and item.get("event") == "workflow_dispatch"
+              and item.get("head_branch") == "main"
+          ]
+          raise SystemExit(0 if len(runs) == 2 else 1)
+          PY
+            then
+              found=1
+              break
+            fi
+            sleep 2
+          done
+          test "$found" = "1"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          evidence_dir = (
+              Path(os.environ["RUNNER_TEMP"])
+              / "exp061-historical-executor-evidence"
+          )
+          payload = json.loads(
+              (evidence_dir / "historical-runs.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          runs = [
+              item
+              for item in payload.get("workflow_runs", [])
+              if item.get("name") == "phase8a-exp061-discovery"
+              and item.get("path")
+              == ".github/workflows/phase8a-exp061-discovery.yml"
+              and item.get("event") == "workflow_dispatch"
+              and item.get("head_branch") == "main"
+          ]
+          assert len(runs) == 2
+
+          proof = [item for item in runs if item["id"] == 36319888985]
+          assert len(proof) == 1
+          assert proof[0]["run_number"] == 1
+          assert proof[0]["run_attempt"] == 1
+
+          historical = [item for item in runs if item["id"] != 36319888985]
+          assert len(historical) == 1
+          run = historical[0]
+          assert run["run_number"] == 2
+          assert run["run_attempt"] == 1
+          assert run["head_sha"] == os.environ["GITHUB_SHA"]
+          assert isinstance(run["id"], int) and run["id"] > 0
+
+          (evidence_dir / "historical-run.json").write_text(
+              json.dumps(run, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload immutable DEC-289 historical-dispatch evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp061-dec289-historical-dispatch-evidence-${{ github.sha }}
+          path: ${{ runner.temp }}/exp061-historical-executor-evidence
+          if-no-files-found: warn
