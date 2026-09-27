@@ -4873,3 +4873,21 @@ Terminal-review source: `src/fmp/discovery/historical_result_review_contract.py`
 DEC-290 opens no dispatch, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading path.
 
 The next gate is to require both DEC-289 and DEC-290 to pass CI before the one-shot historical dispatch is allowed to reach main.
+
+
+## DEC-291 — EXP-061 failed historical result
+
+**Date:** 2026-09-27
+**Status:** TERMINAL FAILURE / SLOT CONSUMED / NO RETRY
+
+The sole EXP-061 historical attempt is run `36335879839`, workflow run #2 / attempt 1, at merged main `a7b3bc2d0b196da2631b64c19331efb3af12c98e`. DEC-289 executor run `36335739823` successfully submitted it. DEC-290 classifies the terminal shape as `EXP061_HISTORICAL_RESULT_NON_SUCCESS_TERMINAL_CLOSED`.
+
+Preflight succeeded. All 18 discovery cells failed at the adapter step before pattern mining. Aggregate was skipped. Only preflight artifact `10937316246` exists, digest `sha256:e9a898df51317250944ad0a111d01d96d2081d708ea80872ed11b5cee48d356f`. Executor evidence artifact `10936194549` has digest `sha256:e7ffe1f08ce358eca210ef41397165196cb64bee31696a180c7fd02af8c68f1c`. Both downloaded ZIPs independently match those digests.
+
+Every cell failure is the same adapter-boundary class: accepted continuous feature values contain non-finite rolling-volatility values where EXP-061 requires finite values or null. The only observed failing fields are `realized_vol_1h` and `realized_vol_8h`. No shortlist, confirmation set, validation result, aggregate result, pattern hypothesis, strategy candidate, or executable strategy was produced.
+
+Failed-result source: `src/fmp/discovery/historical_failed_result_decision.py` blob `deb4a1d314b7e106deee71b6f82f79d0cddd8a9b`. Focused tests: `tests/test_phase8a_exp061_failed_historical_result.py` blob `d622bf703ed2127f2721036801a116ecbfc500cd`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-failed-historical-result-review.md`.
+
+EXP-061 is closed. Rerun, retry, and replacement under the same experiment are forbidden. Reserved 2023-2026 data, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.
+
+The next safe step is a new experiment identity containing only a narrow adapter compatibility repair: floating-point NaN in continuous feature columns may be normalized to null before FeatureObservation construction, while positive/negative infinity remain invalid. Protocol, data windows, search/ranking/confirmation/validation semantics, costs, and reserved-data locks must remain unchanged.
