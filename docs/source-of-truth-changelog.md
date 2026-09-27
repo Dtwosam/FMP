@@ -353,3 +353,14 @@
 - Reconciled non-finite totals as `realized_vol_1h=2683`, `realized_vol_8h=4070`, `realized_vol_24h=10`, all other continuous features zero.
 - Classified the repair as verified on accepted real data without mining.
 - Kept historical discovery/result production, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-298 EXP-062 run and evidence contract
+
+- Frozen distinct EXP-062 cell, aggregate, job, artifact, and future workflow identities without creating an executable workflow.
+- Preserved the exact DEC-270 18-cell research universe and frozen EXP-061 miner/loader/result semantics.
+- Wrapped frozen EXP-061 cell evidence under EXP-062 identity while preserving and revalidating the exact predecessor evidence fingerprint.
+- Wrapped frozen EXP-061 aggregate evidence under EXP-062 identity while preserving and revalidating the exact predecessor aggregate fingerprint.
+- Bound the verified DEC-293 repair and DEC-297 real-data proof into the EXP-062 protocol fingerprint.
+- Preserved the exact future 20-job / 20-artifact success shape.
+- Kept workflow source/dispatch, historical execution/result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading locked.
