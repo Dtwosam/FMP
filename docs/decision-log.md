@@ -5080,7 +5080,7 @@ DEC-303 adds the sole one-shot executor for the proof-only EXP-062 gate run. It 
 
 The submitted proof must become workflow run #1 / attempt 1 on the executor head. Proof submission consumes no historical-result slot and claims no historical result.
 
-Executor source: `src/fmp/discovery/exp062_proof_executor.py` blob `b5963636901b5caba1730f8a969dd3f9a1bf1979`. CLI: `scripts/phase8a_exp062_proof_executor.py` blob `1ff34425b4240312324ae2513fa6d747c0579982`. Workflow: `.github/workflows/phase8a-exp062-proof-one-shot-execute.yml` blob `45cfc626f82b4a05ed619d9eeffdb6bd2fa0e04a`. Tests: `tests/test_phase8a_exp062_proof_executor.py` blob `68b05897c9d7f9785bbd287057eded5f23a9d12e`.
+Executor source: `src/fmp/discovery/exp062_proof_executor.py` blob `b5963636901b5caba1730f8a969dd3f9a1bf1979`. CLI: `scripts/phase8a_exp062_proof_executor.py` blob `1ff34425b4240312324ae2513fa6d747c0579982`. Workflow: `.github/workflows/phase8a-exp062-proof-one-shot-execute.yml` blob `45cfc626f82b4a05ed619d9eeffdb6bd2fa0e04a`. Tests: `tests/test_phase8a_exp062_proof_executor.py` blob `022fe0ce6fb0f34bbeb1f2fd61ce24e9c4b503d5`.
 
 Historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain false.
 
