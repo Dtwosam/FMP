@@ -292,3 +292,17 @@
 - Classified the defect as `NONFINITE_FEATURE_WARMUP_NOT_NORMALIZED`, not a negative market-pattern result.
 - Closed EXP-061 with no rerun/retry/replacement and required a new experiment identity for repair.
 - Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-293 EXP-062 non-finite feature normalization repair
+
+- Opened EXP-062 as a new identity; did not retry closed EXP-061.
+- Preserved DEC-270 discovery/confirmation/validation/search semantics and exact historical date boundaries.
+- Repaired only the market-learning adapter representation boundary.
+- Converted numeric NaN/+inf/-inf continuous feature values to `None` in accordance with the frozen Phase-5 feature dictionary.
+- Preserved existing nulls and finite values unchanged.
+- Kept session flags strict booleans and outcome values strict finite numbers.
+- Added no imputation, forward/backfill, clipping, zero-fill, or feature invention.
+- Added focused regression tests for NaN, infinities, existing null, finite preservation, session strictness, and invalid non-numeric input.
+- Opened no historical execution slot.
+- Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.

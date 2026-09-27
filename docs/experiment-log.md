@@ -1206,3 +1206,26 @@ Copy this section for each serious experiment:
 - Conclusion: IMPLEMENTATION_FAILURE — `market_learning_adapter.adapt_feature_frame` forwarded non-finite warm-up feature values instead of normalizing them to null. Representative failures were `realized_vol_1h` / `realized_vol_8h must be finite or null`. This is not a negative market-pattern result.
 - Implementation status: DEC-270 through DEC-290 built, proved, authorized, and executed the sole historical slot. DEC-289 executor run `36335739823` successfully submitted run #2 and froze executor artifact `10936194549`. Historical run `36335879839` then failed in all 18 cells at feature adaptation because Phase-5 warm-up/non-finite values were not normalized to null. DEC-292 freezes the failure as an implementation/input-normalization defect. EXP-061 has no usable cell or aggregate result and cannot be retried.
 - Next gate: open a new EXP-062 repair identity. Preserve DEC-270 research semantics and exact 2015-2022 sources, but normalize non-finite continuous feature warm-up/missing values to `None` at the adapter boundary before any new historical execution slot is considered.
+
+
+### EXP-20260927-062 — Discovery adapter non-finite normalization repair
+
+- Date: 2026-09-27
+- Status: ACTIVE — SOURCE-ONLY REPAIR / HISTORICAL EXECUTION LOCKED
+- Protocol decisions: DEC-293 implementation-only normalization repair; DEC-270 research semantics preserved.
+- Predecessor: closed EXP-20260927-061 / DEC-292 failure freeze.
+- Hypothesis: EXP-061's all-cell failure was caused by representation mismatch at the adapter boundary; normalizing Phase-5 non-finite missing/warm-up continuous values to `None` should allow the unchanged discovery protocol to consume the accepted historical feature artifacts.
+- Pair(s): EURUSD, GBPUSD, USDJPY
+- Timeframe(s): 5m, 15m, 1h
+- Outcome horizons: 60m, 240m
+- Discovery: 2015-01-01 to 2018-01-01 exclusive.
+- Confirmation: 2018-01-01 to 2019-01-01 exclusive.
+- Validation: 2019-01-01 to 2023-01-01 exclusive.
+- Reserved robustness block: 2023-01-01 to 2026-08-21 exclusive; CLOSED.
+- Research/search semantics changed?: NO.
+- Adapter repair: numeric NaN/+inf/-inf in continuous feature values -> `None`; finite values unchanged; session booleans and outcomes remain strict.
+- Historical source opened?: NO under EXP-062.
+- Historical run executed?: NO.
+- Candidate compilation/demo/live authorized?: NO.
+- Conclusion: NEEDS_SOURCE_PROOF.
+- Next gate: prove the repaired adapter against the exact accepted EXP-044 feature/outcome artifacts over the frozen 2015-2022 range before any EXP-062 historical-result slot is considered.
