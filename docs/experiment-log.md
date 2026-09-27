@@ -1226,4 +1226,6 @@ Copy this section for each serious experiment:
 - **Candidate compilation / demo / live / trading:** LOCKED.
 - **Adapter/evidence:** DEC-293 implements NaN -> None at the continuous-feature boundary, preserves infinity rejection, and wraps/revalidates frozen EXP-061 nested semantics under EXP-062 evidence identity.
 - **Historical execution:** NOT AUTHORIZED.
-- **Next gate:** non-executing 18-cell run/aggregate-evidence contract.
+- **Run contract:** DEC-294 freezes exact 20-job / 20-artifact EXP-062 identities and deterministic aggregate reconstruction through the frozen EXP-061 semantic validator.
+- **Historical execution:** NOT AUTHORIZED.
+- **Next gate:** dormant EXP-062 workflow/CLI source with a hard execution gate before historical artifact reads.
