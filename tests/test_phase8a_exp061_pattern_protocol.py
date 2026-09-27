@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import json
 import unittest
 
@@ -29,6 +30,7 @@ from fmp.discovery.pattern_protocol import (
     protocol_payload,
     quantile_state,
     session_state,
+    window_accepts_outcome,
 )
 
 
@@ -65,6 +67,30 @@ class Exp061PatternProtocolTests(unittest.TestCase):
                 "2023-01-01",
                 "2026-08-21",
             ),
+        )
+
+    def test_chronology_purges_outcomes_crossing_window_boundary(self) -> None:
+        self.assertTrue(
+            window_accepts_outcome(
+                DISCOVERY_WINDOW,
+                available_at_utc=datetime(
+                    2017, 12, 31, 18, 0, tzinfo=timezone.utc
+                ),
+                exit_timestamp_utc=datetime(
+                    2017, 12, 31, 22, 0, tzinfo=timezone.utc
+                ),
+            )
+        )
+        self.assertFalse(
+            window_accepts_outcome(
+                DISCOVERY_WINDOW,
+                available_at_utc=datetime(
+                    2017, 12, 31, 23, 0, tzinfo=timezone.utc
+                ),
+                exit_timestamp_utc=datetime(
+                    2018, 1, 1, 3, 0, tzinfo=timezone.utc
+                ),
+            )
         )
 
     def test_search_is_bounded_without_predefined_strategy_families(self) -> None:
