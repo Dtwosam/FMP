@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Merge DEC-291/292/293/294 after green checks, then build dormant EXP-062 workflow/CLI source with a hard execution gate. Historical execution and candidate compilation remain locked.
+**Next milestone:** Merge DEC-291 through DEC-295 after green checks, then install the exact EXP-062 dormant template at the active workflow path while keeping execution locked. No dispatch or candidate compilation is authorized.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-295 adds dormant EXP-062 workflow/CLI source outside `.github/workflows`, reuses exact accepted EXP-044 inputs and the frozen 2015-2022 loader, and places a hard fail-closed execution gate before historical downloads/results. The active workflow path remains absent and dispatch is unauthorized.
 - DEC-294 freezes the non-executing EXP-062 18-cell run/aggregate contract: exact 20 jobs/artifacts, EXP-062 names, source pins, and deterministic aggregate reconstruction through the frozen EXP-061 semantic validator. No workflow source, dispatch, or execution is authorized.
 - DEC-293 implements the EXP-062 repaired adapter/evidence layer. NaN becomes None only at the continuous-feature boundary; infinities remain invalid; feature/outcome identity is unchanged. EXP-062 evidence carries a new outer identity while deterministically reconstructing and revalidating the frozen EXP-061 nested semantics. Execution remains locked.
 - DEC-292 / EXP-062 opens a source-only implementation-repair protocol: retain all EXP-061 discovery semantics, normalize only floating-point NaN continuous feature values to None at the adapter boundary, and continue rejecting infinities. No historical execution or candidate compilation is authorized.
