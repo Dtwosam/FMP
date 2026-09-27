@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Define and implement the first bounded DEC-268 discovery-first protocol that derives candidate patterns from market behaviour across EURUSD, GBPUSD, and USDJPY, freezes candidates before later validation, and records search-volume/multiple-comparison risk.
+**Next milestone:** Implement the deterministic in-memory EXP-061 pattern-miner core under DEC-270. It must consume supplied feature/outcome rows only, enforce the frozen 74,700-hypothesis search bound and chronology, and keep historical source access, 2023-2026 reserved data, promotion, demo, broker, live, and trading paths locked.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-270 / EXP-20260927-061 freezes the first bounded discovery-first pattern protocol: 20 leakage-safe continuous state dimensions plus one deterministic session dimension, 18 pair/timeframe/horizon cells, at most 74,700 directional hypotheses, a 180-pattern confirmation shortlist, at most 54 frozen validation hypotheses, and a closed 2023-2026 robustness block. Result execution and all trading paths remain locked.
 - DEC-269 closes authoritative EXP-015 Stage A run `36279397331` as FAILED with no retry/replacement: catalog + 8 cell artifacts persisted, USDJPY 1h failed on the non-positive/non-finite daily-start-equity guard, `stage-a-authorize` was skipped, and no authoritative survivor set exists. DEC-264's short matrix-name assumption did not match GitHub's expanded/truncated persisted matrix names, so DEC-269 binds the exact completed run through immutable run/job/artifact identities instead of changing or rerunning Stage A.
 - DEC-268 / `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md` supersedes baseline-first strategy generation for future research. It preserves all prior experiments as evidence, allows the already-consumed EXP-015 Stage A run to finish once, blocks automatic Stage B/C continuation, and defines the immutable demo-learning loop: fixed demo version -> analyse completed evidence -> new challenger -> fresh prospective evidence.
 - PR #121 merged at `e9e7bd7dfa31b8a566cc299e8988856e21071d13`: deterministic strategy registry/lifecycle, immutable champion sets, multi-pair router, USD-direction exposure summaries, historical-inventory identity, explicit retrospective loader/evaluator, and DEC-039 documentation.
