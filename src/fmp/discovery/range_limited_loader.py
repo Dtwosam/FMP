@@ -11,7 +11,11 @@ import polars as pl
 
 from fmp.data.phase2.artifacts import sha256_file
 from fmp.features.schema import FEATURE_COLUMNS
-from fmp.market_learning.contracts import MARKET_FEATURE_SET_VERSION
+from fmp.market_learning.contracts import (
+    EVIDENCE_LABEL as MARKET_EVIDENCE_LABEL,
+    EXPERIMENT_ID as MARKET_LEARNING_EXPERIMENT_ID,
+    MARKET_FEATURE_SET_VERSION,
+)
 from fmp.market_learning.evidence import load_feature_evidence_index
 from fmp.market_learning.outcome_evidence import load_outcome_evidence_index
 from fmp.market_learning.outcomes import MARKET_OUTCOME_SET_VERSION, OUTCOME_COLUMNS
@@ -116,6 +120,40 @@ def _validate_sha256(value: object, *, field: str) -> str:
     except ValueError as exc:
         raise ValueError(f"{field} must be hexadecimal") from exc
     return value
+
+
+def _validate_evidence_mapping(
+    evidence: Mapping[str, object],
+    *,
+    label: str,
+    complete_field: str,
+) -> str:
+    fingerprint = _validate_sha256(
+        evidence.get("evidence_fingerprint"),
+        field=f"{label} evidence fingerprint",
+    )
+    unsigned = dict(evidence)
+    unsigned.pop("evidence_fingerprint", None)
+    if hashlib.sha256(_canonical_json(unsigned)).hexdigest() != fingerprint:
+        raise ValueError(f"{label} evidence fingerprint mismatch")
+    if evidence.get("experiment_id") != MARKET_LEARNING_EXPERIMENT_ID:
+        raise ValueError(f"{label} evidence experiment identity mismatch")
+    if evidence.get("feature_set_version") != MARKET_FEATURE_SET_VERSION:
+        raise ValueError(f"{label} evidence feature-set identity mismatch")
+    if evidence.get("evidence_label") != MARKET_EVIDENCE_LABEL:
+        raise ValueError(f"{label} evidence label mismatch")
+    if evidence.get(complete_field) is not True:
+        raise ValueError(f"{label} evidence is incomplete")
+    for field in (
+        "shadow_authorized",
+        "demo_order_authorized",
+        "broker_mutation_authorized",
+        "live_order_authorized",
+        "real_money_authorized",
+    ):
+        if evidence.get(field) is not False:
+            raise ValueError(f"{label} evidence {field} must remain false")
+    return fingerprint
 
 
 def _validate_cell(symbol: str, timeframe: str) -> None:
@@ -369,14 +407,18 @@ def load_verified_exp061_cell(
         timeframe=timeframe,
         label="EXP-044 outcome evidence",
     )
-    feature_fingerprint = _validate_sha256(
-        feature_evidence.get("evidence_fingerprint"),
-        field="feature evidence fingerprint",
+    feature_fingerprint = _validate_evidence_mapping(
+        feature_evidence,
+        label="EXP-044 feature",
+        complete_field="feature_evidence_complete",
     )
-    outcome_fingerprint = _validate_sha256(
-        outcome_evidence.get("evidence_fingerprint"),
-        field="outcome evidence fingerprint",
+    outcome_fingerprint = _validate_evidence_mapping(
+        outcome_evidence,
+        label="EXP-044 outcome",
+        complete_field="outcome_evidence_complete",
     )
+    if outcome_evidence.get("outcome_set_version") != MARKET_OUTCOME_SET_VERSION:
+        raise ValueError("EXP-061 outcome evidence set identity mismatch")
     if outcome_evidence.get("feature_evidence_fingerprint") != feature_fingerprint:
         raise ValueError("EXP-061 outcome evidence is not bound to supplied feature evidence")
 
@@ -397,6 +439,10 @@ def load_verified_exp061_cell(
         feature_manifest.get("symbol") != symbol
         or feature_manifest.get("timeframe") != timeframe
         or feature_manifest.get("feature_set_version") != MARKET_FEATURE_SET_VERSION
+        or feature_manifest.get("evidence_label") != MARKET_EVIDENCE_LABEL
+        or feature_manifest.get("model_training_authorized") is not False
+        or feature_manifest.get("promotion_authorized") is not False
+        or tuple(feature_manifest.get("schema_columns", ())) != FEATURE_COLUMNS
     ):
         raise ValueError("EXP-061 feature manifest cell identity mismatch")
     if (
@@ -404,6 +450,11 @@ def load_verified_exp061_cell(
         or outcome_manifest.get("timeframe") != timeframe
         or outcome_manifest.get("feature_set_version") != MARKET_FEATURE_SET_VERSION
         or outcome_manifest.get("outcome_set_version") != MARKET_OUTCOME_SET_VERSION
+        or outcome_manifest.get("evidence_label") != MARKET_EVIDENCE_LABEL
+        or outcome_manifest.get("model_fit_authorized") is not False
+        or outcome_manifest.get("promotion_authorized") is not False
+        or tuple(outcome_manifest.get("schema_columns", ())) != OUTCOME_COLUMNS
+        or outcome_manifest.get("feature_evidence_fingerprint") != feature_fingerprint
     ):
         raise ValueError("EXP-061 outcome manifest cell identity mismatch")
 
