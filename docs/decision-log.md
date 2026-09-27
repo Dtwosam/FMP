@@ -4621,3 +4621,20 @@ DEC-276 distinguishes workflow presence from authorization. Ordinary workflow di
 Installation validator source: `src/fmp/discovery/workflow_install.py` blob `e959a782fdbb6bf5b578e60e44f5e015b50086a6`. Focused tests: `tests/test_phase8a_exp061_locked_workflow_install.py` blob `7996c2c1565352984ecd1bbff3ca538beda5b616`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-locked-workflow-install.md`.
 
 The next safe gate is a separately predeclared one-shot proof-only manual-main dispatch whose expected terminal outcome is a fail-closed stop at the DEC-275 execution gate after read-only preflight. That proof may not consume the future historical result slot and may not authorize cell or aggregate execution.
+
+## DEC-277 — EXP-061 gate-proof terminal contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PROOF CONTRACT / NO DISPATCH AUTHORIZED
+
+DEC-277 freezes the terminal review semantics for a future proof-only run of the installed EXP-061 workflow. It authorizes no dispatch.
+
+A later proof authorization must bind an exact merged-main head. The proof run must be the reserved workflow on manual `main`, attempt 1, terminal `failure`. The preflight job must fail at the DEC-275 execution gate. Any downstream cell or aggregate job that GitHub materializes must be terminal `skipped`; DEC-277 intentionally does not require GitHub to materialize every skipped matrix child.
+
+Exactly one non-expired preflight artifact is allowed. No cell artifact and no aggregate artifact may exist. The preflight JSON must cross-bind the exact proof commit, the deterministic DEC-275 workflow-source payload, accepted EXP-044 source identities, intact source fingerprint, `source_ready=true`, and all historical/result/trading permissions false.
+
+A valid proof consumes no historical-result slot and opens no historical discovery/result execution, reserved 2023-2026 data, candidate compilation, Phase 8B, demo, broker/live, real-money, or trading path.
+
+Proof-contract source: `src/fmp/discovery/proof_contract.py` blob `1a2b6c404cba4e1f6e9b28d46a0671a6a318e48a`. Focused tests: `tests/test_phase8a_exp061_gate_proof_contract.py` blob `bd4f837c99090bcabc1ef8932b39653dc1d137e5`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-gate-proof-contract.md`.
+
+The next safe gate is a separate exact-head proof authorization after DEC-276/277 are merged green. That later decision may authorize one proof-only dispatch but must keep historical discovery/result execution false.
