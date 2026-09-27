@@ -173,3 +173,13 @@
 - Rejected second historical attempts and any `run_attempt != 1` rerun.
 - Bound the unchanged DEC-270 through DEC-280 discovery/proof/workflow source stack and exact current workflow/CLI/runtime blobs.
 - Opened only the source-governance slot; historical dispatch/execution, result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain locked.
+
+
+## 2026-09-27 — DEC-282 EXP-061 read-only historical operator
+
+- Added an exact-main read-only planner for the single DEC-281 historical-result slot.
+- Required the frozen DEC-280 proof run to remain intact and the caller-supplied expected main head to equal current main.
+- Exposed the sole future `gh workflow run phase8a-exp061-discovery.yml --ref main` command only while no historical-result attempt exists.
+- Removed the command and routed to review once any later historical-result run is present.
+- Added no execute, advance, rerun, retry, or replacement mode.
+- Kept historical dispatch/execution, discovery-result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
