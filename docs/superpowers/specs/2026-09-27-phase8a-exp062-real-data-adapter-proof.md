@@ -102,7 +102,7 @@ Proof workflow:
 
 Git blob:
 
-`e7e8460596e00f3eca1b1b0376823722dcdd3a09`
+`c4c0a980e2675b1cc696ca02294a15f079874ada`
 
 Focused probe tests:
 
@@ -118,7 +118,7 @@ Workflow safety tests:
 
 Git blob:
 
-`43aaa104072b10255594a91bd443472c11144811`
+`ae0a794ba83802e3dbad61f28a4cce6f540ebe09`
 
 ## Workflow restrictions
 
