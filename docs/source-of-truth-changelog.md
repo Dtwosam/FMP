@@ -150,3 +150,15 @@
 - Authorized only proof dispatch; historical-result dispatch/execution and the historical-result slot remain locked.
 - Refused executor reruns and proof retry/replacement; no discovery-cell/aggregate execution command exists in the executor surface.
 - Deferred all proof-result interpretation to DEC-277/DEC-280 terminal review.
+
+
+## 2026-09-27 — DEC-280 EXP-061 reviewed gate-proof freeze
+
+- Frozen successful DEC-279 executor run `36319870713` and sole proof run `36319888985` at merged main `041b7b2f5aac8821156fab346df8ab30f4be2a7b`.
+- Verified the proof failed only at the separately-authorized execution gate after source preflight succeeded.
+- Bound the exact three materialized jobs: failed preflight, skipped unexpanded matrix placeholder, and skipped aggregate.
+- Recorded the DEC-277 reviewer/API compatibility edge without rewriting the predeclared proof contract or rerunning the proof.
+- Bound sole preflight artifact `10932485842` and digest `sha256:0dfbf4c76874bb2b056a835ff0d7fdf2199ddda279e40a60924128a7ff29573d`.
+- Revalidated the DEC-275 source fingerprint, exact workflow-source payload, accepted EXP-044 source identities, and nine pair/timeframe source bindings.
+- Confirmed zero historical cell/aggregate result artifacts and no historical discovery execution.
+- Kept proof rerun/retry/replacement, historical-result dispatch/execution, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.

@@ -4674,3 +4674,20 @@ The executor workflow pins the active EXP-061 workflow, DEC-275 workflow-source 
 Historical-result dispatch, historical discovery execution, discovery-result production, proof retry/rerun/replacement, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is terminal review of the one proof run through DEC-277, followed by a DEC-280 reviewed-proof freeze.
+
+## DEC-280 — EXP-061 reviewed gate-proof freeze
+
+**Date:** 2026-09-27
+**Status:** REVIEWED / EXPECTED FAIL-CLOSED PROOF / HISTORICAL RUN STILL LOCKED
+
+DEC-280 freezes the exact terminal evidence from the sole DEC-279 proof-only dispatch. Executor run `36319870713` completed successfully at merged main `041b7b2f5aac8821156fab346df8ab30f4be2a7b` and submitted exactly one target proof run, `36319888985`, at the same head. The proof completed `failure` by design: `exp061-preflight` failed only at the separately-authorized-execution gate, while the materialized matrix dependency and `exp061-aggregate` were both skipped. No historical cell or aggregate result executed.
+
+GitHub materialized the skipped matrix dependency as the literal unexpanded job-name expression `exp061-cell-${{ matrix.dataset.symbol }}-${{ matrix.dataset.timeframe }}-${{ matrix.dataset.horizon }}m`. DEC-277 allowed skipped matrix children to be elided but required any materialized downstream name to be one of the concrete DEC-274 names, so its generic terminal validator does not accept this GitHub API representation. DEC-280 does not rewrite DEC-277 or rerun the proof. It binds the exact immutable three-job shape, requires the placeholder to remain skipped, and preserves the predeclared fail-closed meaning.
+
+Exactly one preflight artifact exists: id `10932485842`, digest `sha256:0dfbf4c76874bb2b056a835ff0d7fdf2199ddda279e40a60924128a7ff29573d`. DEC-280 revalidates the DEC-275 preflight source fingerprint, exact proof head, deterministic workflow-source payload, accepted EXP-044 source identities, nine verified pair/timeframe sources, and all historical/result/trading permissions false. Cell-result and aggregate-result artifact counts are zero. The future historical-result slot remains unconsumed and unopened.
+
+Reviewed-proof source: `src/fmp/discovery/proof_result_decision.py` blob `fbed3788ab0c1c1e00dccfe0f84a293ff04f6ccd`. Focused tests: `tests/test_phase8a_exp061_reviewed_gate_proof.py` blob `06b9801ac006ae9a5054327071fc4193ebfafc40`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-reviewed-gate-proof.md`.
+
+Proof rerun/retry/replacement, historical-result dispatch/execution, discovery-result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is a separate source-only historical-run authorization contract for at most one bounded 2015-2022 EXP-061 discovery-result attempt. DEC-280 itself authorizes no historical dispatch or execution.
