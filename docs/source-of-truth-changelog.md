@@ -231,3 +231,15 @@
 - Rejected proof-run-number drift, run number 3+, reruns, second historical attempts, and main-head drift.
 - Added no execute, dispatch, retry, rerun, or replacement mode.
 - Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-287 EXP-061 historical execution plan proof
+
+- Added a repository-hosted, push-to-main, read-only proof for the exact DEC-286 run-#2 execution plan.
+- Pinned DEC-284 reviewed-plan, DEC-285 runtime authorization, DEC-286 operator/CLI, activated EXP-061 CLI, active discovery workflow, and pinned runtime identities.
+- Required exact merged-main checkout and a clean worktree after non-editable dependency installation.
+- Read current main and workflow-dispatch inventory through read-only GitHub API calls.
+- Invoked only the DEC-286 `plan` command.
+- Required proof run `36319888985` to remain workflow run #1, zero historical-result attempts, and target run #2 / attempt #1.
+- Persisted only one immutable historical execution-plan artifact.
+- Added no dispatch or execute path and kept retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.

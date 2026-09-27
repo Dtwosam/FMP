@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Merge DEC-286 only after DEC-285 is green and merged. DEC-286 is a read-only exact-main execution planner that freezes target workflow run #2 / attempt #1 and exposes one future command while the slot is empty. After DEC-286, the next safe gate is a repository-hosted read-only execution-plan proof.
+**Next milestone:** Merge DEC-287 only after DEC-285/286 are green and merged. DEC-287 is a repository-hosted read-only proof of the exact run-#2 execution plan and must succeed on merged main before any executor is considered.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-287 adds a push-to-main, read-only historical execution-plan proof. It pins DEC-284/285/286 source identities, proves the frozen proof remains run #1, the historical slot is unused, and the only future target is run #2 / attempt #1, then uploads one immutable plan artifact. It has no dispatch or execute path.
 - DEC-286 adds a read-only exact-main historical execution planner with no execute mode. It requires proof run `36319888985` to remain workflow run #1 / attempt 1, freezes the future target as workflow run #2 / attempt 1, exposes the sole future dispatch command only while no historical attempt exists, and removes that command once the slot is consumed. Dispatch and all downstream trading paths remain locked.
 - DEC-285 supersedes only the EXP-061 runtime gate. The unchanged active workflow may pass historical execution only as workflow run number 2, attempt 1, on manual `main` dispatch with exact SHA binding. Historical discovery/result production is authorized only inside that identity; dispatch itself, run 3+, reruns, retries, replacements, reserved 2023-2026 access, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.
 - DEC-284 freezes the successful DEC-283 merged-main plan proof: run `36323674455`, head `7fd3a9e878bf2760850037548e93dc1e8173c0c1`, sole artifact `10932743232`, digest `sha256:a71585da8c7e858d7ed309cf52965c5a0fbb7ef42b65e28a18933792eeb9460a`. The artifact proves exactly one frozen proof run, zero historical-result attempts, and an unconsumed historical slot. Historical dispatch/execution and all downstream trading paths remain false.
