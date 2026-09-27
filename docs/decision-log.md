@@ -4913,3 +4913,23 @@ This matches the frozen Phase-5 feature dictionary, which defines warm-up, missi
 Repaired adapter: `src/fmp/discovery/exp062_nonfinite_feature_adapter.py` blob `491ba8c92cb6e6e4c715bfb1ecb934b6949e1596`. Focused EXP-062 tests: `tests/test_phase8a_exp062_nonfinite_feature_normalization.py` blob `b9acdf3cda666ae9dae84e80cf3381471cccf358`. DEC-292 failure freeze remains bound at blob `676116f34693f9a5a8f8403aaa93f28ac1c5bb46`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-nonfinite-feature-normalization-repair.md`.
 
 DEC-293 authorizes no historical slot or dispatch. Before EXP-062 can execute, a later gate must prove the repaired adapter against the exact accepted EXP-044 historical source artifacts. Reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain locked.
+
+
+## DEC-294 — EXP-062 real-data adapter proof
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY READ-ONLY REAL-DATA PROOF / NO DISCOVERY RESULT
+
+DEC-294 adds a repository-hosted proof of the isolated DEC-293 repair against the exact accepted EXP-044 historical feature/outcome artifacts before any EXP-062 historical discovery slot may open.
+
+The proof runs exactly nine pair/timeframe adapter probes (EURUSD/GBPUSD/USDJPY × 5m/15m/1h). Each probe reuses DEC-273 to verify and load exactly 96 feature months and 96 outcome months from 2015-01 through 2022-12, counts raw numeric non-finite values across the 20 continuous feature columns, and executes the EXP-062 adapter. Feature/outcome row counts must exactly match adapted observation counts.
+
+The frozen EXP-061 adapter remains unchanged at blob `978a33554fad7e9d78b002778c4896be0af3333a`. The isolated EXP-062 repair is `src/fmp/discovery/exp062_nonfinite_feature_adapter.py` blob `491ba8c92cb6e6e4c715bfb1ecb934b6949e1596`.
+
+The aggregate requires exactly nine unique probes and requires total raw non-finite count > 0 so the merged-main proof must actually exercise the repaired condition on real accepted data.
+
+DEC-294 does not call the pattern miner, the EXP-061 cell command, or any workflow dispatch. It cannot produce discovery/confirmation/validation evidence or a candidate.
+
+Probe source: `src/fmp/discovery/exp062_adapter_probe.py` blob `96eac8ed71f6691f7aff6dad12288e3448688c83`. CLI: `scripts/phase8a_exp062_adapter_probe.py` blob `40e0c90c41fd53cb8ce42416af8c7c5f2b60d138`. Workflow: `.github/workflows/phase8a-exp062-adapter-proof.yml` blob `4fbeb7836ef775b14918b49ed24da8c86928610c`. Focused tests: `tests/test_phase8a_exp062_adapter_probe.py` blob `a471c827040750d7b3c6b4697d1d08e54363a3d9`; workflow tests blob `b80390f24c2d7632fa133c8c5e740dfa28aeafc2`.
+
+Historical discovery execution/result production, reserved robustness, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false. The next gate is the merged-main DEC-294 proof result and its immutable artifact review.
