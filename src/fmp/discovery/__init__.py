@@ -236,3 +236,11 @@ from .historical_result_review_contract import (
 __all__ += [
     "classify_historical_terminal_result",
 ]
+
+from .historical_result_content_review import (
+    review_successful_historical_result_content,
+)
+
+__all__ += [
+    "review_successful_historical_result_content",
+]
