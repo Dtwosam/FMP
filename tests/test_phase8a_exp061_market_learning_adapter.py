@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 import copy
+import hashlib
+import json
 import unittest
 
 import polars as pl
@@ -214,6 +216,24 @@ class Exp061MarketLearningAdapterTests(unittest.TestCase):
         tampered["reserved_robustness_opened"] = True
         with self.assertRaisesRegex(ValueError, "fingerprint mismatch"):
             validate_cell_evidence(tampered)
+
+        forged = copy.deepcopy(evidence)
+        forged["discovery"]["enumerated_pattern_count"] = 6
+        unsigned = dict(forged)
+        unsigned.pop("evidence_fingerprint", None)
+        forged["evidence_fingerprint"] = hashlib.sha256(
+            (
+                json.dumps(
+                    unsigned,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                )
+                + "\n"
+            ).encode("utf-8")
+        ).hexdigest()
+        with self.assertRaisesRegex(ValueError, "enumerated pattern count mismatch"):
+            validate_cell_evidence(forged)
 
 
 if __name__ == "__main__":
