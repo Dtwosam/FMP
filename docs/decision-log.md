@@ -4761,3 +4761,21 @@ The frozen plan proves DEC-282/DEC-281 identity, exact frozen proof run `3631988
 Reviewed-plan source: `src/fmp/discovery/historical_plan_result_decision.py` blob `14d9c559eaa33e5cb217baaf3ed2597091735b18`. Focused tests: `tests/test_phase8a_exp061_reviewed_historical_plan_proof.py` blob `7cf308e67232b441530230555fe19230d89b0304`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-reviewed-historical-plan-proof.md`.
 
 The next safe gate is a separate source-only historical execution-authorization transition that binds DEC-284 before changing the runtime gate. It must keep the one-attempt rule, 2015-2022-only history, closed 2023-2026 robustness block, and all downstream trading paths locked.
+
+
+## DEC-285 — EXP-061 historical execution authorization
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY RUNTIME AUTHORIZATION / HISTORICAL DISPATCH STILL LOCKED
+
+DEC-285 is the first transition that permits the frozen EXP-061 historical workflow runtime to pass its execution gate for exactly one later historical-result attempt. It binds reviewed DEC-284 source blob `14d9c559eaa33e5cb217baaf3ed2597091735b18`, keeps the active workflow byte-for-byte unchanged at blob `d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9`, and preserves the frozen DEC-275 workflow-source execution flag as false.
+
+The public `scripts/phase8a_exp061.py` CLI now routes `require-execution`, cell, and aggregate gates through the new DEC-285 runtime authorization. Activated CLI blob: `477aa9e8de4452e6444d1ee4361218aca445180d`. The gate still executes before any historical loader call or historical result read, and preflight evidence now carries an explicit DEC-285 execution-authorization payload.
+
+The prior fail-closed proof run `36319888985` is confirmed as workflow run number 1, attempt 1. DEC-285 accepts runtime execution only for `phase8a-exp061-discovery` on `Dtwosam/FMP`, manual main dispatch, exact runtime SHA binding, workflow run number 2, and run attempt 1. Run number 1 is the frozen proof; run number 3+ is rejected; any rerun of run 2 is rejected through `GITHUB_RUN_ATTEMPT != 1`. The runtime run id must be positive and distinct from the proof run id, and the proof head cannot be reused.
+
+DEC-285 sets historical execution source authorization, exact-runtime historical discovery execution, and discovery-result production true. It keeps historical-result dispatch, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker mutation, live orders, real-money action, and trading false.
+
+Authorization source: `src/fmp/discovery/historical_execution_authorization.py` blob `1f27ca28a7305d2b674077b97f3a635400947706`. Focused tests: `tests/test_phase8a_exp061_historical_execution_authorization.py` blob `2636ae1daa6e90607bc86fde454bfb5b32b53f34`. DEC-281 current-source tests are updated to record the intentional activated-CLI supersession while preserving its run-inventory semantics.
+
+The next safe gate is a separate read-only historical execution operator. It may prove the live inventory is still proof-run-only and expose the single future dispatch command as plan evidence, but must provide no execute mode.
