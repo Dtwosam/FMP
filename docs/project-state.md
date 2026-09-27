@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Install the exact DEC-275 reviewed EXP-061 workflow template at the reserved active path and prove on merged `main` that its execution gate remains closed. Historical discovery/result execution and dispatch authorization remain false.
+**Next milestone:** Freeze the pre-dispatch EXP-061 governance layer: verify zero prior manual-main runs, add the workflow-internal first-run guard, freeze terminal success/non-success review, and expose only a read-only operator plan. Historical run authorization remains false.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-276 installs the exact reviewed EXP-061 workflow bytes at `.github/workflows/phase8a-exp061-discovery.yml`; the active and dormant files share blob `d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9`. The manual trigger surface may now exist, but dispatch/result authority remains false and preflight still fails at the closed execution gate before any historical artifact read.
 - DEC-275 freezes the dormant EXP-061 workflow/CLI source against the exact accepted EXP-044 feature run `35867307338` and outcome run `35876715434`, pins the exact 9+9 cell artifacts plus aggregate evidence, keeps the YAML outside `.github/workflows`, and places a hard execution gate before any historical artifact read. No workflow install/dispatch or result execution is opened.
 - DEC-274 freezes the non-executing EXP-061 18-cell run/aggregate-evidence contract: explicit 20-job names, exact commit-scoped 20-artifact names, attempt-1 manual-main identity, deep cell-evidence validation, deterministic aggregate reconstruction, and no-rerun default semantics. No workflow or historical execution is opened.
 - DEC-273 adds the source-only verified EXP-061 loader: exact aggregate-evidence and cell-manifest binding, current checksum/schema/row verification, and exact 96-month 2015-2022 partition selection. No 2023+ monthly partition is opened; late-2022 targets reaching 2023 are filtered before adaptation. Discovery/result execution remains locked.
