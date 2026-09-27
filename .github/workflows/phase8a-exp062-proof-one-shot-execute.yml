@@ -1,3 +1,4 @@
+# Bootstrap: this post-install touch lets the already-installed one-shot workflow receive its first main push.
 name: phase8a-exp062-proof-one-shot-execute
 
 on:
