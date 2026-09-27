@@ -274,3 +274,17 @@ __all__ += [
     "validate_exp062_cell_evidence",
     "validate_exp062_adapter_sources",
 ]
+
+from .nan_null_repair_run_contract import (
+    compile_aggregate_evidence as compile_exp062_aggregate_evidence,
+    run_contract_payload as exp062_run_contract_payload,
+    validate_aggregate_evidence as validate_exp062_aggregate_evidence,
+    validate_exp062_run_contract_sources,
+)
+
+__all__ += [
+    "compile_exp062_aggregate_evidence",
+    "exp062_run_contract_payload",
+    "validate_exp062_aggregate_evidence",
+    "validate_exp062_run_contract_sources",
+]
