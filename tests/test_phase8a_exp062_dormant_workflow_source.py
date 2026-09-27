@@ -92,11 +92,12 @@ class Exp062DormantWorkflowSourceTests(unittest.TestCase):
         ):
             require_historical_execution_authorized(code_commit="a" * 40)
 
-    def test_dormant_template_exists_but_active_workflow_does_not(self) -> None:
+    def test_dormant_template_persists_after_successor_install(self) -> None:
         template = ROOT / DORMANT_WORKFLOW_TEMPLATE_PATH
         active = ROOT / RESERVED_ACTIVE_WORKFLOW_PATH
         self.assertTrue(template.is_file())
-        self.assertFalse(active.exists())
+        self.assertTrue(active.is_file())
+        self.assertEqual(template.read_bytes(), active.read_bytes())
 
         text = template.read_text(encoding="utf-8")
         self.assertIn("name: phase8a-exp062-discovery", text)
