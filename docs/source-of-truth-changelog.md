@@ -279,3 +279,16 @@
 - Classified any terminal non-success as slot-consuming and permanently closed to rerun/retry/replacement.
 - Allowed the exact skipped unexpanded GitHub matrix-template placeholder only in a non-success fail-closed shape and never alongside expanded cell jobs.
 - Kept candidate compilation, promotion, reserved 2023-2026 access, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-292 EXP-061 historical failure freeze
+
+- Frozen one-shot executor run `36335739823` and sole historical run `36335879839` at merged head `a7b3bc2d0b196da2631b64c19331efb3af12c98e`.
+- Verified run #2 / attempt 1 is terminal failure and consumes the historical slot permanently.
+- Bound executor artifact `10936194549` / digest `sha256:e7ffe1f08ce358eca210ef41397165196cb64bee31696a180c7fd02af8c68f1c`.
+- Bound sole run artifact `10937316246` / digest `sha256:e9a898df51317250944ad0a111d01d96d2081d708ea80872ed11b5cee48d356f`.
+- Recorded exact terminal shape: preflight success, 18 cell failures, aggregate skipped, zero cell/aggregate result artifacts.
+- Diagnosed representative cross-pair failures as non-finite Phase-5 warm-up feature values reaching `FeatureObservation` without NaN-to-null normalization.
+- Classified the defect as `NONFINITE_FEATURE_WARMUP_NOT_NORMALIZED`, not a negative market-pattern result.
+- Closed EXP-061 with no rerun/retry/replacement and required a new experiment identity for repair.
+- Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.

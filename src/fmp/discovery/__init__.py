@@ -236,3 +236,11 @@ from .historical_result_review_contract import (
 __all__ += [
     "classify_historical_terminal_result",
 ]
+
+from .historical_failure_result_decision import (
+    freeze_exp061_historical_failure,
+)
+
+__all__ += [
+    "freeze_exp061_historical_failure",
+]
