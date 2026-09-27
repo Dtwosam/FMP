@@ -133,7 +133,7 @@ class Exp062ProofExecutorTests(unittest.TestCase):
         )
         tampered = copy.deepcopy(plan)
         tampered["proof_dispatch_authorized"] = True
-        with self.assertRaisesRegex(ValueError, "dispatch-read-only"):
+        with self.assertRaisesRegex(ValueError, "proof_dispatch_authorized must remain false"):
             validate_fresh_proof_execution_plan(
                 tampered,
                 expected_head_sha=HEAD,
