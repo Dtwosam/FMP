@@ -159,3 +159,15 @@ __all__ += [
     "classify_historical_run_inventory",
     "validate_historical_run_authorization_sources",
 ]
+
+from .historical_operator import (
+    build_historical_plan,
+    historical_dispatch_command,
+    validate_historical_plan,
+)
+
+__all__ += [
+    "build_historical_plan",
+    "historical_dispatch_command",
+    "validate_historical_plan",
+]
