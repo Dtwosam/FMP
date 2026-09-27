@@ -279,3 +279,16 @@
 - Classified any terminal non-success as slot-consuming and permanently closed to rerun/retry/replacement.
 - Allowed the exact skipped unexpanded GitHub matrix-template placeholder only in a non-success fail-closed shape and never alongside expanded cell jobs.
 - Kept candidate compilation, promotion, reserved 2023-2026 access, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-292 EXP-061 reviewed failed historical result
+
+- Frozen successful DEC-289 executor run `36335739823` and its sole dispatch-evidence artifact `10936194549`.
+- Frozen the sole historical run `36335879839`, workflow run #2 / attempt 1, at merged main `a7b3bc2d0b196da2631b64c19331efb3af12c98e`.
+- Recorded exact terminal shape: preflight success, 18 cell failures, aggregate skipped.
+- Bound the sole historical artifact `10937316246`, digest `sha256:e9a898df51317250944ad0a111d01d96d2081d708ea80872ed11b5cee48d356f`, and raw preflight JSON SHA-256.
+- Verified zero cell artifacts and zero aggregate artifacts.
+- Verified all 18 failures are the same adapter-boundary class: 8 on non-finite `realized_vol_1h`, 10 on non-finite `realized_vol_8h`.
+- Closed EXP-061 permanently with no rerun/retry/replacement and no pattern/candidate result.
+- Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+- Required a new experiment identity for any adapter normalization repair.
