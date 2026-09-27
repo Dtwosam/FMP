@@ -1,11 +1,11 @@
 # FMP Project State
 
-**Updated:** 2026-09-26
+**Updated:** 2026-09-27
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — EXP-044 V1 CLOSED; direct market-learning track closed by DEC-262; EXP-015 Stage A DEC-266 merged-main proof succeeded and DEC-267 one-shot executor source is frozen for review; the single authoritative Stage A slot remains unconsumed until executor merge; Stage B/C, DEC-042 portfolio selection, and DEC-045 Phase 8A acceptance remain blocked
-**Next milestone:** Merge DEC-267 only after green review checks. Its first merged-main executor run may consume the sole Stage A slot once; any resulting Stage A terminal state must route through DEC-264. Stage B/C, Phase 8B, and all demo/live/broker/real-money paths remain locked.
+**Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED; direct market-learning track remains closed by DEC-262. DEC-267 merged at `500f12ca5cb6e611f93b5d3a9eb52fb678e7774f` and dispatched the sole authoritative EXP-015 Stage A run `36279397331` (attempt 1), so that historical slot is consumed; the run may finish once and must be reviewed through DEC-264. EXP-015 is now historical/pre-amendment evidence rather than the mandatory future search path. Stage B/C are not automatically authorized by any Stage A survivor. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
+**Next milestone:** Define and implement the first bounded DEC-268 discovery-first protocol that derives candidate patterns from market behaviour across the three V1 pairs. Preserve the consumed EXP-015 Stage A terminal result as historical evidence, with no retry/replacement and no automatic Stage B/C continuation.
 
 ## Current baseline
 
@@ -331,16 +331,17 @@ Approved design: `docs/superpowers/specs/2026-09-22-phase8a-portfolio-research-r
 
 Umbrella experiment: `EXP-20260922-012`
 
-Active research tracks: `EXP-20260922-015` / DEC-043 (frozen rule-based challenger benchmark) and `EXP-20260923-044` / DEC-073 (direct market learning)
+Historical research tracks: `EXP-20260922-015` / DEC-043 (pre-DEC-268 frozen rule-based challenger benchmark; Stage A authoritative run already dispatched) and `EXP-20260923-044` / DEC-073 (direct market learning; closed by DEC-262). Canonical forward research direction: DEC-268 discovery-first market-pattern research; its first implementation experiment is intentionally not invented in this state document.
 
 Core scope:
 
 - research universe: exactly EURUSD, GBPUSD, and USDJPY
 - historical source: reuse the accepted Dukascopy Phase 1/2 canonical 1m BID/ASK histories and deterministic 5m/15m/1h bars for all three pairs
 - strategy architecture: many immutable versioned strategy instances rather than one permanently selected strategy
-- DEC-073 learning architecture: study future market behaviour directly from leakage-safe feature rows across all three pairs/timeframes, while retaining hand-written strategies as transparent benchmarks rather than the sole source of candidate trades
+- DEC-268 discovery architecture: derive candidate patterns from repeated market behaviour across leakage-safe trend/direction, sideways/range, volatility, momentum/structure, session/time, spread, and fixed future outcomes; the six historical hand-written families remain benchmarks, not a required strategy universe
+- discovery must freeze its data range, measurements/features, future-outcome definitions, minimum support, bounded search method/budget, multiple-comparison accounting, candidate-freeze rule, and later validation protocol before results are used for promotion
 - active model/champion identities remain immutable; new shadow/demo observations may train offline challengers later, but no running model may update itself in place or hot-swap into an active campaign
-- initial family universe: session breakout, trend continuation, mean reversion, previous-day high/low rejection, rolling volatility breakout, and session high/low sweep/rejection; any new family or material parameter-region expansion requires a new predeclared experiment
+- once historical, shadow, or demo observations are used to materially change a strategy/model, the changed challenger receives a new immutable identity and must prove itself on a later fresh prospective window
 - lifecycle: `DISCOVERY -> CHALLENGER -> HISTORICAL_QUALIFIED -> SHADOW_CANDIDATE -> SHADOW_VALIDATED -> DEMO_ELIGIBLE`, with `RETIRED` preserved as durable evidence
 - active champion sets are immutable during registered campaigns; continuous learning may create challengers but may not hot-swap production/shadow strategy code
 - portfolio routing must evaluate eligible strategies across all three pairs and then apply conflict/correlated-exposure checks before the independent risk engine
@@ -358,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-268 / `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md` supersedes baseline-first strategy generation for future research. It preserves all prior experiments as evidence, allows the already-consumed EXP-015 Stage A run to finish once, blocks automatic Stage B/C continuation, and defines the immutable demo-learning loop: fixed demo version -> analyse completed evidence -> new challenger -> fresh prospective evidence.
 - PR #121 merged at `e9e7bd7dfa31b8a566cc299e8988856e21071d13`: deterministic strategy registry/lifecycle, immutable champion sets, multi-pair router, USD-direction exposure summaries, historical-inventory identity, explicit retrospective loader/evaluator, and DEC-039 documentation.
 - PR #122 merged at `63389442ab65cdd0e610fa76f6c93a47d23cc01f`: retrospective batch orchestration, deterministic artifacts, CLI, and manual 3-pair × 3-timeframe workflow over accepted Phase 2 artifacts.
 - PR #122 verified 819 tests PASS and unchanged Phase 3 acceptance PASS before merge.

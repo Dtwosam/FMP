@@ -60,9 +60,24 @@ Development budget is $0. Prefer local computation and free/open-source tooling.
 - Ambiguous intrabar stop/target ordering must use a conservative or explicitly documented rule; never choose the profitable path.
 - Record rejected signals and `NO TRADE` decisions, not just executed winners/losers.
 
+## 7.1 Discovery-first research direction
+
+DEC-268 is the default for new post-DEC-268 strategy research.
+
+- Do not treat the six historical rule families as the required or complete strategy universe. They remain benchmarks and historical evidence.
+- Start new hypothesis generation from leakage-safe analysis of repeated market behaviour across direction/trend, sideways/range, volatility, momentum/structure, session/time, spread, and fixed future outcomes.
+- Freeze the discovery dataset, measurements/features, future-outcome definitions, minimum support, bounded search process, search-volume accounting, candidate-freeze rule, and later validation protocol before using results for promotion.
+- Once a pattern is selected, freeze an immutable strategy/model version before evaluating later data.
+- Demo observations may be used to research a later challenger, but once data is used to tune or choose that challenger it cannot also serve as fresh validation evidence for that version.
+- Every materially changed challenger must prove itself on a later fresh prospective shadow/demo window. Active shadow/demo/live champions never self-modify or hot-swap.
+
+Detailed amendment: `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md`.
+
 ## 8. Complexity rule
 
 Start simple. Machine learning is optional. A complex model is accepted only when it materially improves robust out-of-sample behavior over a simpler baseline after costs.
+
+Data-driven discovery may use statistical/ML methods when they help identify repeated market behaviour, but complexity does not earn promotion by itself.
 
 Do not add an indicator, feature family, model, dashboard, database, service, or abstraction simply because it is available.
 

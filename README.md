@@ -42,13 +42,15 @@ The goal is not to build an impressive AI bot. The goal is to build a reproducib
 
 ## Current status
 
-Phases 0–7 are complete and preserved. **Phase 8A — Multi-pair, multi-strategy portfolio research** is active under DEC-039 / EXP-20260922-012.
+Phases 0–7 are complete and preserved. **Phase 8A — Multi-pair, multi-strategy portfolio research** remains active under DEC-039 / EXP-20260922-012, with the forward research direction amended by DEC-268.
 
-The project still uses exactly EUR/USD, GBP/USD, and USD/JPY with the accepted Dukascopy historical dataset. The current build is adding a versioned strategy library, champion/challenger controls, multi-pair portfolio routing, and portfolio-level research before any new live-shadow campaign.
+The project still uses exactly EUR/USD, GBP/USD, and USD/JPY with the accepted Dukascopy historical dataset. For new strategy research, FMP is now **discovery-first**: study repeated market behaviour from leakage-safe historical measurements, derive candidate patterns from the data, freeze each selected rule/model as an immutable version, and then validate it on later chronological/prospective evidence. The six earlier hand-written strategy families remain historical benchmarks rather than the required strategy universe.
 
-The previously prepared EXP-20260922-011 USDJPY-only shadow campaign was stopped before registration. Phase 8B live shadow, Phase 9 demo orders, and all real-money execution remain locked.
+Shadow/demo campaigns remain immutable while they run. Completed demo evidence may inform a new challenger version, but data used to change that version cannot also count as fresh validation for it; the revised challenger must prove itself on a later fresh prospective window.
 
-See `docs/project-state.md` for the current implementation milestone and `docs/superpowers/specs/2026-09-22-phase8a-portfolio-research-redesign.md` for the approved redesign.
+The already-dispatched EXP-015 Stage A run is preserved as pre-amendment historical evidence only; there is no retry/replacement and no automatic Stage B/C continuation. Phase 8B live shadow, Phase 9 demo orders, broker mutation, live orders, and all real-money execution remain locked behind their existing gates.
+
+See `docs/project-state.md` for the current implementation milestone and `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md` for the governing DEC-268 amendment.
 
 ### Phase 1 developer quick start
 

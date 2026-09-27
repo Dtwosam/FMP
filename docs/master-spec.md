@@ -141,7 +141,7 @@ Spot-FX source volume is not total global FX volume and must not be described as
 
 ## 8. Strategy research layer
 
-Before ML, establish transparent baselines such as:
+The six transparent rule families already researched in Phase 4 remain historical baselines and controls:
 - session breakout;
 - trend continuation;
 - mean reversion;
@@ -149,11 +149,15 @@ Before ML, establish transparent baselines such as:
 - volatility breakout;
 - session high/low sweep/rejection.
 
+Under DEC-268, they are **not** the required or complete universe for future strategy discovery. New post-DEC-268 research is discovery-first: use leakage-safe historical measurements to identify repeated conditional market behaviour across trend/direction, sideways/range, volatility, momentum/structure, session/time, spread, and fixed future outcomes, then translate selected patterns into exact immutable strategy/model versions.
+
+The discovery process itself must be bounded and reproducible. Its data range, measurements/features, future-outcome definitions, minimum support, search method/budget, multiple-comparison accounting, candidate-freeze rule, and later chronological validation procedure are frozen before discovery results are used for promotion.
+
 A strategy may work for one pair/timeframe and fail elsewhere. Nothing is assumed universal.
 
-Under DEC-039, V1 may retain **multiple independently validated strategy versions at once** across EURUSD, GBPUSD, and USDJPY. Strategy versions are immutable research identities. A portfolio/router may select among eligible approved versions according to predeclared applicability/regime rules, while the independent risk engine remains authoritative for sizing and total exposure.
+Under DEC-039, V1 may retain **multiple independently validated strategy versions at once** across EURUSD, GBPUSD, and USDJPY. Strategy versions are immutable research identities. A portfolio/router may select among eligible approved versions according to frozen applicability/regime rules, while the independent risk engine remains authoritative for sizing and total exposure.
 
-Continuous learning is a separated research process: new observations may create challengers, but a registered shadow/demo/live champion set cannot mutate in place or be hot-swapped by the learner.
+Continuous learning is a separated research process: new historical, shadow, or demo observations may create challengers, but a registered shadow/demo/live champion set cannot mutate in place or be hot-swapped by the learner. Any materially changed version must later be evaluated on fresh evidence that was not used to make the change.
 
 ## 9. Backtesting requirements
 
@@ -187,17 +191,18 @@ Exact date boundaries are frozen only after Phase 2 data-quality inspection. Lea
 
 Detailed standard: `docs/research-testing-standard.md`.
 
-## 11. Machine learning
+## 11. Statistical and machine learning
 
-ML is optional and downstream of baselines.
+ML remains optional. Under DEC-268, statistical/ML methods may participate in **pattern and regime discovery** rather than being restricted to filtering hand-written baseline strategies.
 
 Potential roles:
+- discovery of repeated conditional future-price behaviours;
+- market-state/regime grouping;
+- conditional expected-return or path estimation;
 - probability target beats stop;
-- conditional expected-return estimation;
-- rule-signal filtering;
-- regime classification.
+- rule-signal filtering after a rule has been derived.
 
-A model is rejected if its advantage disappears after costs, unseen data, or walk-forward evaluation.
+Simple statistical descriptions or transparent rules are preferred when they explain the same edge. A model or discovered pattern is rejected if its advantage disappears after realistic costs, later chronological evidence, or prospective validation.
 
 ## 12. Decision engine
 
@@ -260,8 +265,10 @@ The exact champion strategy versions, routing rules, cost/risk assumptions, and 
 ### Shadow -> demo
 Live quote handling, spread, timing, and hypothetical outcomes must materially resemble tested assumptions; shadow structurally cannot submit orders.
 
-### Demo -> deployment review
+### Demo -> research iteration or deployment review
 Enough trades/time/regimes must exist to compare real practice execution to research assumptions and verify risk controls.
+
+Completed demo evidence may also be used to design a new challenger. Once demo observations are used to tune or choose that challenger, they become research/training evidence for it; the changed version must receive a new immutable identity and prove itself on a later fresh prospective shadow/demo window before any deployment claim.
 
 ### Deployment review -> live
 Never automatic. Requires a new explicit human approval and decision-log entry.
@@ -293,9 +300,12 @@ Canonical 1m + Derived Timeframes
 Feature Engine
         |
         v
+Pattern / Regime Discovery
+        |
+        v
 Versioned Strategy Library
         |
-        +--> Optional Statistical/ML / Regime Filter
+        +--> Optional Statistical/ML Filter
         |
         v
 Champion/Challenger Registry
