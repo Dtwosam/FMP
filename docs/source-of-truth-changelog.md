@@ -195,3 +195,14 @@
 - Required zero historical-result attempts, an unconsumed slot, and the exact future dispatch command as plan evidence only.
 - Uploaded only one immutable historical-plan artifact.
 - Kept historical dispatch/execution, result production, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-284 EXP-061 reviewed historical plan proof
+
+- Frozen successful merged-main DEC-283 proof run `36323674455` at head `7fd3a9e878bf2760850037548e93dc1e8173c0c1`.
+- Bound the sole non-expired plan artifact `10932743232` and digest `sha256:a71585da8c7e858d7ed309cf52965c5a0fbb7ef42b65e28a18933792eeb9460a`.
+- Independently verified the downloaded artifact ZIP against the same SHA-256 digest.
+- Bound the exact raw and canonical `historical-plan.json` SHA-256 identities.
+- Verified the plan reports DEC-282/DEC-281, exact frozen proof run `36319888985`, zero historical-result attempts, and an unconsumed historical-result slot.
+- Preserved the future workflow command as evidence only; no dispatch or execution authority was added.
+- Kept rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.

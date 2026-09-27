@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Merge DEC-283 only after DEC-281/282 are green and merged. DEC-283 is a repository-hosted read-only proof of the exact historical-slot plan; it must succeed on merged main and preserve an immutable plan artifact before any separate one-shot historical executor is considered.
+**Next milestone:** Merge DEC-284 after green checks. DEC-283 proof run `36323674455` succeeded on merged main and artifact `10932743232` proves the historical-result slot is still unused. After DEC-284, the next safe gate is a source-only historical execution-authorization transition; no executor is authorized yet.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-284 freezes the successful DEC-283 merged-main plan proof: run `36323674455`, head `7fd3a9e878bf2760850037548e93dc1e8173c0c1`, sole artifact `10932743232`, digest `sha256:a71585da8c7e858d7ed309cf52965c5a0fbb7ef42b65e28a18933792eeb9460a`. The artifact proves exactly one frozen proof run, zero historical-result attempts, and an unconsumed historical slot. Historical dispatch/execution and all downstream trading paths remain false.
 - DEC-283 adds a push-to-main, read-only EXP-061 historical-plan proof. It pins DEC-280/281/282 source identities, fetches current main and run inventory through read-only GitHub API calls, invokes only the DEC-282 `plan` command, verifies the frozen proof is the sole prior run and the historical slot is unused, then uploads one immutable plan artifact. It has no dispatch or execute path.
 - DEC-282 adds a read-only exact-main EXP-061 historical-slot planner with no execute mode. While the DEC-281 inventory contains only frozen proof run `36319888985`, it exposes the sole future `gh workflow run phase8a-exp061-discovery.yml --ref main` command as plan evidence while keeping dispatch/execution false. Once any historical attempt exists, it removes the command and routes to review.
 - DEC-281 freezes a source-only one-attempt EXP-061 historical-result slot without opening dispatch or execution. The exact DEC-280 proof run `36319888985` is the only allowed prior manual-main run and is excluded from slot consumption; there are zero historical-result attempts. The first later non-proof attempt consumes the slot immediately, and any second run or rerun attempt is invalid. Reserved 2023-2026 data, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.

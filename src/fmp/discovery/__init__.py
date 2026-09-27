@@ -171,3 +171,13 @@ __all__ += [
     "historical_dispatch_command",
     "validate_historical_plan",
 ]
+
+from .historical_plan_result_decision import (
+    freeze_reviewed_historical_plan_proof,
+    validate_reviewed_historical_plan_sources,
+)
+
+__all__ += [
+    "freeze_reviewed_historical_plan_proof",
+    "validate_reviewed_historical_plan_sources",
+]
