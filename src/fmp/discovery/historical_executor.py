@@ -203,7 +203,16 @@ def historical_execution_evidence(
             HISTORICAL_RESULT_DISPATCH_AUTHORIZED
         ),
         "historical_result_dispatch_submitted": True,
+        "pre_dispatch_historical_result_attempt_count": plan[
+            "historical_result_attempt_count"
+        ],
+        "pre_dispatch_historical_result_slot_consumed": plan[
+            "historical_result_slot_consumed"
+        ],
+        "historical_result_attempt_count": 1,
+        "historical_result_slot_consumed": True,
         "historical_result_slot_consumed_on_submission": True,
+        "historical_result_submission_state": "SUBMITTED_PENDING_POSTCHECK",
         "expected_target_run_number": 2,
         "expected_target_run_attempt": 1,
         "historical_discovery_execution_authorized": (
