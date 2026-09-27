@@ -294,6 +294,10 @@ class Exp061HistoricalExecutorTests(unittest.TestCase):
             text,
         )
         self.assertIn(
+            'assert run["run_number"] == 1',
+            text,
+        )
+        self.assertIn(
             'src/fmp/discovery/historical_execution_plan_result_decision.py)" = "b01ee28b7ab636cb6729423504ff8e2038ce4375"',
             text,
         )
