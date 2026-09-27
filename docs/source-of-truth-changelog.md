@@ -95,3 +95,13 @@
 - Verified selected current artifact paths, sizes, SHA-256 digests, schemas, and row counts.
 - Bound feature/outcome evidence, feature/outcome manifests, and Phase 2 processed-manifest identity end to end.
 - Kept historical discovery/result execution, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+## 2026-09-27 — DEC-274 EXP-061 non-executing run contract
+
+- Frozen exact future workflow identity, manual-main attempt-1 semantics, and explicit 18-cell inventory.
+- Frozen 20 unambiguous job names and 20 commit-scoped artifact names.
+- Added deterministic 18-cell aggregate-evidence compiler and independent aggregate validator.
+- Required exact Phase 2 sources, exact cell manifest identities, singular feature/outcome aggregate evidence identities, and cross-horizon manifest consistency.
+- Added global 180 discovery-shortlist / 54 frozen / 54 accepted caps and exact count reconciliation.
+- Frozen non-success semantics to no rerun/retry/replacement by default.
+- Kept workflow source/dispatch, historical result execution, reserved 2023-2026 data, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
