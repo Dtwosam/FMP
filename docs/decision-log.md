@@ -4873,3 +4873,21 @@ Terminal-review source: `src/fmp/discovery/historical_result_review_contract.py`
 DEC-290 opens no dispatch, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading path.
 
 The next gate is to require both DEC-289 and DEC-290 to pass CI before the one-shot historical dispatch is allowed to reach main.
+
+
+## DEC-291 — EXP-061 historical result content review
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY READ-ONLY CONTENT REVIEW / NO RESULT YET
+
+DEC-291 defines the deterministic content review for a DEC-290-complete successful EXP-061 historical run. It cannot run on a non-success terminal shape.
+
+The reviewer requires exactly 18 validated cell-evidence objects at the exact run #2 head, validates the persisted aggregate evidence, recompiles aggregate evidence deterministically from those same 18 cells, and requires exact equality with the persisted aggregate.
+
+It then reports the discovery shortlist count, confirmation frozen count, validation accepted count, and the accepted pattern fingerprints by cell. Zero accepted patterns is a valid negative result. One or more accepted patterns is classified only as validated pattern hypotheses; output meaning remains `PATTERN_HYPOTHESIS_NOT_EXECUTABLE_STRATEGY`.
+
+Content-review source: `src/fmp/discovery/historical_result_content_review.py` blob `cb5330815492ad8a9404a9ec0ef80ebbc13c87e4`. Focused tests: `tests/test_phase8a_exp061_historical_result_content_review.py` blob `624e9661f365a3b5c35cf114951d632c165edf93`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-result-content-review.md`.
+
+DEC-291 keeps reserved 2023-2026 robustness access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading false.
+
+If validated pattern hypotheses are present, a later separate candidate-compilation protocol is required before anything can become a candidate strategy.
