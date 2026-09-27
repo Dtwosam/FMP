@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED; direct market-learning track remains closed by DEC-262. DEC-267 merged at `500f12ca5cb6e611f93b5d3a9eb52fb678e7774f` and dispatched the sole authoritative EXP-015 Stage A run `36279397331` (attempt 1), so that historical slot is consumed; the run may finish once and must be reviewed through DEC-264. EXP-015 is now historical/pre-amendment evidence rather than the mandatory future search path. Stage B/C are not automatically authorized by any Stage A survivor. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Merge DEC-268 and make the next new Phase 8A implementation a bounded discovery-first protocol that derives candidate patterns from market behaviour across the three V1 pairs. Preserve the consumed EXP-015 Stage A terminal result as evidence, with no retry/replacement and no automatic Stage B/C continuation.
+**Next milestone:** Define and implement the first bounded DEC-268 discovery-first protocol that derives candidate patterns from market behaviour across the three V1 pairs. Preserve the consumed EXP-015 Stage A terminal result as historical evidence, with no retry/replacement and no automatic Stage B/C continuation.
 
 ## Current baseline
 
