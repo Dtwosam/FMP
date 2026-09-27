@@ -4604,3 +4604,20 @@ Frozen identities: workflow-source contract `src/fmp/discovery/workflow_source.p
 Active workflow installation, dispatch, historical discovery/result execution, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false.
 
 The next safe gate is installation of the exact reviewed dormant template at the reserved active workflow path while retaining the execution gate false, followed by merged-main proof that it cannot progress past authorization preflight.
+
+## DEC-276 — EXP-061 guarded workflow installation
+
+**Date:** 2026-09-27
+**Status:** ACTIVE WORKFLOW SOURCE INSTALLED / HISTORICAL EXECUTION LOCKED
+
+DEC-276 installs the exact reviewed DEC-275 EXP-061 workflow bytes at `.github/workflows/phase8a-exp061-discovery.yml` without changing their execution semantics. The installed active workflow and reviewed dormant template both have Git blob `d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9`.
+
+Installation creates a visible manual-dispatch surface but does not create dispatch authority. DEC-275's execution gate remains false and is invoked during preflight before any historical cell can begin; each cell and the aggregate path recheck the same gate. The installed source remains pinned to the accepted EXP-044 feature run `35867307338` and outcome run `35876715434` plus their exact evidence/cell artifact identities.
+
+`src/fmp/discovery/workflow_install.py` records the distinction between installed source and execution authority. `ACTIVE_WORKFLOW_INSTALLED=true` and `ACTIVE_WORKFLOW_SOURCE_REVIEWED=true`, while workflow dispatch, historical result-run authorization, historical discovery execution/result production, reserved-block access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+Focused tests require the active workflow bytes to equal the reviewed dormant template byte-for-byte, require the preflight execution gate before the cell job definition, require the closed gate still to raise after installation, and reject any active-source byte drift.
+
+Frozen identities: active/dormant workflow blob `d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9`; install contract `src/fmp/discovery/workflow_install.py` blob `391cab86565e927a8d74eb3262591b22f2172472`; focused tests `tests/test_phase8a_exp061_guarded_workflow_install.py` blob `6cc19fd55dfeb19972292f1532530ed245c51a0d`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-guarded-workflow-install.md`.
+
+DEC-276 consumes no EXP-061 historical run slot. Before any later authorization can exist, governance must verify zero prior manual-main EXP-061 runs, install a workflow-internal first-run rejection guard, freeze terminal review semantics, and expose only a read-only operator plan.
