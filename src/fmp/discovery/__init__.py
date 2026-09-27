@@ -364,3 +364,12 @@ from .exp062_proof_result_review import (
 __all__ += [
     "review_gate_proof_result",
 ]
+
+
+from .exp062_proof_result_freeze import (
+    freeze_reviewed_gate_proof_result,
+)
+
+__all__ += [
+    "freeze_reviewed_gate_proof_result",
+]

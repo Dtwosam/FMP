@@ -778,3 +778,15 @@ DEC-267 adds the one-shot EXP-015 Stage A executor source after successful DEC-2
 
 
 DEC-304 adds a read-only EXP-062 gate-proof result reviewer on top of DEC-301/303. It requires the actual proof terminal and executor dispatch evidence to agree on the same merged-main head, validates workflow run #1 / attempt 1 failed closed at the still-locked execution gate, preserves exactly one preflight artifact and zero cell/aggregate results, and confirms the historical-result slot remains unconsumed. DEC-304 cannot open or dispatch a historical slot. The next safe gate after the actual proof is an immutable proof-result freeze before any historical execution is considered.
+
+## 2026-09-28 — DEC-305 EXP-062 proof-freeze source boundary
+
+The repository now contains the deterministic DEC-305 freeze layer for EXP-062. It can
+consume only an already-valid DEC-304 reviewed fail-closed proof and emits a
+fingerprinted immutable record. It grants no historical-result, demo, broker, live,
+real-money, or trading authority.
+
+The actual post-merge EXP-062 proof run has not been frozen by this source change.
+Runtime evidence must first exist and pass DEC-304 review. The historical-result slot
+therefore remains closed.
+

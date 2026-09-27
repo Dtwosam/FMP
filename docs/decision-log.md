@@ -5101,3 +5101,22 @@ Reviewer: `src/fmp/discovery/exp062_proof_result_review.py` blob `58ad68ba68e480
 DEC-304 opens no historical slot and keeps historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading false.
 
 The next safe gate after a real proof is an immutable proof-result freeze binding the exact proof run, preflight artifact, executor artifact, raw evidence hashes, and DEC-304 reviewed result before any historical-result slot is considered.
+
+## DEC-305 — EXP-062 reviewed gate-proof freeze boundary
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY / RUNTIME PROOF EVIDENCE REQUIRED
+
+DEC-305 adds a deterministic, fingerprinted freeze record for an EXP-062 proof result
+only after DEC-304 has validated the actual terminal proof evidence. The freeze
+revalidates the DEC-301/303 identities, exact proof head, run/artifact/job accounting,
+zero historical result artifacts, and every authority-negative field.
+
+DEC-305 does not hard-code or invent proof run IDs before GitHub produces them. It does
+not open the historical-result slot. Historical-result dispatch/execution, reserved
+2023-2026 access, candidate compilation/promotion, Phase 8B, demo, broker/live,
+real-money, and trading remain false.
+
+The next gate after a real DEC-305 freeze is a separate source-only historical-run
+authorization contract.
+
