@@ -517,6 +517,16 @@ def mine_discovery_shortlist(
         )
         if len(event_ids) < MIN_DISCOVERY_TOTAL_SUPPORT:
             continue
+        discovery_year_counts = {2015: 0, 2016: 0, 2017: 0}
+        for observation_id in event_ids:
+            year = feature_by_id[observation_id].available_at_utc.year
+            if year in discovery_year_counts:
+                discovery_year_counts[year] += 1
+        if any(
+            discovery_year_counts[year] < MIN_DISCOVERY_YEAR_SUPPORT
+            for year in (2015, 2016, 2017)
+        ):
+            continue
         ordered_ids = tuple(sorted(event_ids))
         for direction in DIRECTIONS:
             stats = _statistics(
