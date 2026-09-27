@@ -18,7 +18,7 @@ A later decision must separately define how any validated pattern is compiled in
 
 All accepted history through 2026-08-20 has already been seen somewhere in the project, so all EXP-061 historical evidence is labeled `RETROSPECTIVE_ALREADY_SEEN`.
 
-The chronology is still frozen to prevent EXP-061 itself from using later observations to redesign earlier discovered patterns:
+The chronology is still frozen to prevent EXP-061 itself from using later observations to redesign earlier discovered patterns. A row belongs to a window only when its observation `available_at_utc` is inside that window **and its fixed-horizon `exit_timestamp_utc` is strictly before the window end**. Outcomes that cross a discovery/confirmation/validation boundary are purged:
 
 - discovery/search and cutpoint calibration: 2015-01-01 through 2017-12-31;
 - confirmation: 2018-01-01 through 2018-12-31;
@@ -201,12 +201,12 @@ No EXP-061 result may be modified after seeing that reserved block and then clai
 Frozen source:
 
 - `src/fmp/discovery/pattern_protocol.py`;
-- source blob: `a4a877b048a9cf4b70af7fcf484059a86a60644f`.
+- source blob: `63b3f0121d6a50eb9e8e62ab666d70eb91791621`.
 
 Focused tests:
 
 - `tests/test_phase8a_exp061_pattern_protocol.py`;
-- test blob: `e060c6e78166ececee1251ab322e8612b03e6873`.
+- test blob: `b15a7bc19cc9523166d4b92e8c75f5784bf50fa1`.
 
 ## 13. Authorization boundary
 
