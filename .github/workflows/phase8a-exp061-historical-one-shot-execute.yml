@@ -47,7 +47,7 @@ jobs:
           test "$(git hash-object scripts/phase8a_exp061_historical_execution_operator.py)" = "1f43e1218072918d2ebb33b2c312ba8e950881f9"
           test "$(git hash-object scripts/phase8a_exp061.py)" = "477aa9e8de4452e6444d1ee4361218aca445180d"
           test "$(git hash-object .github/workflows/phase8a-exp061-discovery.yml)" = "d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9"
-          test "$(git hash-object src/fmp/discovery/historical_executor.py)" = "80da4c22a1919144e83739708ebe210b8be436f4"
+          test "$(git hash-object src/fmp/discovery/historical_executor.py)" = "82dbec289ed69e7333a90fd28ce430b024a99936"
           test "$(git hash-object scripts/phase8a_exp061_historical_executor.py)" = "a899b71c1054e4ccd5639f4487dad038b2e1f55f"
           test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
 
