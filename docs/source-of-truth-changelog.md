@@ -292,3 +292,14 @@
 - Closed EXP-061 permanently with no rerun/retry/replacement and no pattern/candidate result.
 - Kept reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
 - Required a new experiment identity for any adapter normalization repair.
+
+
+## 2026-09-27 — DEC-293 EXP-062 non-finite adapter repair foundation
+
+- Opened new experiment identity `EXP-20260927-062`; EXP-061 remains permanently closed.
+- Added a narrow adapter wrapper that converts only non-finite continuous feature values to `None`.
+- Preserved finite values, existing nulls, source identities, outcome adaptation, observation identity, historical windows, feature definitions, thresholds, and cost assumptions.
+- Added real-failure-compatible tests for `NaN`, `+Inf`, and `-Inf` rolling-volatility values.
+- Verified legacy EXP-061 behavior remains unchanged and still rejects those inputs.
+- Kept historical execution/result production, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading locked.
+- Required separate experiment-ID propagation before any EXP-062 historical workflow can exist.
