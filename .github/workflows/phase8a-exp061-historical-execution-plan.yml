@@ -68,7 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs?event=workflow_dispatch&branch=main&per_page=100" > "$RUNNER_TEMP/runs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp061-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/runs.json"
 
       - name: Run exact DEC-286 read-only historical execution plan
         run: |
