@@ -126,3 +126,14 @@
 - Added install-contract and regression tests proving byte identity, gate ordering, and continued execution/trading locks.
 - Consumed no EXP-061 historical run slot.
 - Kept dispatch, historical discovery/result execution, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading unauthorized.
+
+## 2026-09-27 — DEC-277 EXP-061 pre-dispatch governance
+
+- Observed zero prior EXP-061 manual-main runs before freezing governance.
+- Added a workflow-internal current-run-only first-run guard before source validation/execution.
+- Added a read-only operator plan that never exposes a dispatch command.
+- Predeclared exact terminal success/non-success review semantics.
+- Required successful evidence to reproduce from all 18 validated cells into the aggregate result.
+- Kept non-success retry/rerun/replacement false.
+- Added read-only CLI commands for first-run guard, operator planning, and terminal review.
+- Kept historical execution/result production, reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
