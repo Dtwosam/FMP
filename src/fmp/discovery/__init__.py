@@ -228,3 +228,11 @@ __all__ += [
     "validate_reviewed_execution_plan",
 ]
 
+
+from .historical_result_review_contract import (
+    classify_historical_terminal_result,
+)
+
+__all__ += [
+    "classify_historical_terminal_result",
+]
