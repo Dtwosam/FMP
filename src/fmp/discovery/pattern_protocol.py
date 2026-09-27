@@ -66,7 +66,16 @@ VALIDATION_MIN_TOTAL_SUPPORT = 200
 VALIDATION_MIN_YEAR_SUPPORT = 40
 VALIDATION_MIN_POSITIVE_YEARS = 3
 NEAR_DUPLICATE_JACCARD = 0.90
+MAX_DISCOVERY_SHORTLIST_PER_CELL_HORIZON = 10
 MAX_FROZEN_PER_CELL_HORIZON = 3
+DISCOVERY_RANK_FIELDS = (
+    "worst_discovery_year_mean_net_pips_0p5_desc",
+    "aggregate_mean_net_pips_0p5_desc",
+    "aggregate_mean_net_pips_1p0_desc",
+    "support_desc",
+    "pattern_depth_asc",
+    "pattern_fingerprint_asc",
+)
 
 SOURCE_ACCESS_AUTHORIZED = False
 DISCOVERY_EXECUTION_AUTHORIZED = False
@@ -224,6 +233,9 @@ MAX_DIRECTIONAL_HYPOTHESES_PER_CELL_HORIZON = (
 MAX_DIRECTIONAL_HYPOTHESES_TOTAL = (
     MAX_DIRECTIONAL_HYPOTHESES_PER_CELL_HORIZON * len(DISCOVERY_CELLS)
 )
+MAX_DISCOVERY_SHORTLIST = (
+    MAX_DISCOVERY_SHORTLIST_PER_CELL_HORIZON * len(DISCOVERY_CELLS)
+)
 MAX_FROZEN_PATTERN_HYPOTHESES = (
     MAX_FROZEN_PER_CELL_HORIZON * len(DISCOVERY_CELLS)
 )
@@ -352,6 +364,14 @@ def protocol_payload() -> dict[str, object]:
                 REQUIRE_DISCOVERY_STRESS_MEAN_POSITIVE
             ),
         },
+        "ranking": {
+            "fields": list(DISCOVERY_RANK_FIELDS),
+            "maximum_discovery_shortlist_per_cell_horizon": (
+                MAX_DISCOVERY_SHORTLIST_PER_CELL_HORIZON
+            ),
+            "maximum_discovery_shortlist_global": MAX_DISCOVERY_SHORTLIST,
+            "confirmation_does_not_rerank": True,
+        },
         "deduplication": {
             "same_cell_horizon_direction_only": True,
             "discovery_event_jaccard_threshold": NEAR_DUPLICATE_JACCARD,
@@ -361,6 +381,10 @@ def protocol_payload() -> dict[str, object]:
             "minimum_support": CONFIRMATION_MIN_SUPPORT,
             "require_positive_mean_net_pips_at_0p5": True,
             "may_redefine_pattern": False,
+            "freeze_up_to_per_cell_horizon_after_pass": (
+                MAX_FROZEN_PER_CELL_HORIZON
+            ),
+            "freeze_order": "preserve_discovery_rank",
         },
         "validation_gate": {
             "minimum_total_support": VALIDATION_MIN_TOTAL_SUPPORT,
@@ -425,6 +449,8 @@ def validate_protocol() -> None:
         raise ValueError("DEC-270 admissible pattern count drift")
     if MAX_DIRECTIONAL_HYPOTHESES_TOTAL != 74700:
         raise ValueError("DEC-270 directional search-volume bound drift")
+    if MAX_DISCOVERY_SHORTLIST != 180:
+        raise ValueError("DEC-270 discovery shortlist cap drift")
     if MAX_FROZEN_PATTERN_HYPOTHESES != 54:
         raise ValueError("DEC-270 frozen pattern cap drift")
     for left, right in zip(PROTOCOL_WINDOWS, PROTOCOL_WINDOWS[1:]):
@@ -456,6 +482,8 @@ __all__ = [
     "MAX_ATOMIC_STATES",
     "MAX_DIRECTIONAL_HYPOTHESES_PER_CELL_HORIZON",
     "MAX_DIRECTIONAL_HYPOTHESES_TOTAL",
+    "MAX_DISCOVERY_SHORTLIST",
+    "MAX_DISCOVERY_SHORTLIST_PER_CELL_HORIZON",
     "MAX_FROZEN_PATTERN_HYPOTHESES",
     "MAX_FROZEN_PER_CELL_HORIZON",
     "MAX_PATTERN_DEPTH",
