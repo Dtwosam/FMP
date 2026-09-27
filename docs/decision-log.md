@@ -4499,3 +4499,24 @@ A surviving EXP-061 object is a pattern hypothesis, not an executable strategy. 
 Frozen source: `src/fmp/discovery/pattern_protocol.py` blob `63b3f0121d6a50eb9e8e62ab666d70eb91791621`. Focused tests: `tests/test_phase8a_exp061_pattern_protocol.py` blob `b15a7bc19cc9523166d4b92e8c75f5784bf50fa1`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-discovery-first-pattern-protocol.md`.
 
 Historical source access, discovery execution/result production, candidate compilation, reserved-block access, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false. The next safe gate is a deterministic in-memory miner core only.
+
+## DEC-271 — EXP-061 deterministic in-memory pattern miner core
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY CORE / HISTORICAL EXECUTION LOCKED
+
+DEC-271 implements the deterministic in-memory core for the DEC-270 / EXP-20260927-061 discovery-first pattern protocol.
+
+The core defines strict feature and directional-outcome row contracts, calibrates empirical-tertile cutpoints from 2015-2017 only, enumerates every admissible one/two-dimension pattern under the frozen bound, evaluates LONG/SHORT economics, applies exact support/economic gates, uses the immutable discovery ranking, removes same-direction Jaccard-near-duplicates, and returns at most the frozen discovery shortlist.
+
+2018 confirmation evaluates the shortlist in original discovery order, is pass/fail only, and freezes at most the first three passers per cell/horizon without reranking. 2019-2022 validation applies the frozen support/profitability/positive-year gate without altering a pattern.
+
+The core scopes every step to DEC-270 windows. Focused tests inject catastrophic 2023 rows and require the complete in-memory result to remain unchanged, proving the reserved 2023-2026 block cannot leak into EXP-061 mechanics.
+
+Focused synthetic evidence also proves that a data-derived `return_1h=HIGH` condition can be found without naming a strategy family, that an event-equivalent two-predicate version is removed by Jaccard deduplication, and that the frozen single-state hypothesis proceeds through confirmation and validation mechanically. This synthetic case is a software proof only, not market evidence.
+
+Core source: `src/fmp/discovery/pattern_miner.py` blob `495a67699eb5014e52129f0238a2737049fe38e6`. Focused tests: `tests/test_phase8a_exp061_pattern_miner.py` blob `9694a4185906c48dc5222722723ac28810cd2340`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-in-memory-pattern-miner-core.md`.
+
+Historical source access, historical discovery execution, reserved-block access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false.
+
+The next safe gate is a non-executable artifact/evidence contract plus deterministic adapter from already-approved market-learning feature/outcome artifacts into the DEC-271 row contracts. No historical result-producing run is authorized by DEC-271.

@@ -25,3 +25,17 @@ __all__ = [
     "protocol_fingerprint",
     "protocol_payload",
 ]
+
+from .pattern_miner import (
+    FeatureObservation,
+    OutcomeObservation,
+    StateModel,
+    run_in_memory_discovery,
+)
+
+__all__ += [
+    "FeatureObservation",
+    "OutcomeObservation",
+    "StateModel",
+    "run_in_memory_discovery",
+]
