@@ -145,6 +145,7 @@ def _validate_evidence_mapping(
     if evidence.get(complete_field) is not True:
         raise ValueError(f"{label} evidence is incomplete")
     for field in (
+        "model_fit_authorized",
         "shadow_authorized",
         "demo_order_authorized",
         "broker_mutation_authorized",
