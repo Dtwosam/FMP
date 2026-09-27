@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 from typing import Mapping, Sequence
 
 from . import run_contract as _predecessor
@@ -62,6 +63,65 @@ EXPECTED_CELLS = tuple(_predecessor.EXPECTED_CELLS)
 EXPECTED_CELL_COUNT = _predecessor.EXPECTED_CELL_COUNT
 EXPECTED_JOB_COUNT = _predecessor.EXPECTED_JOB_COUNT
 EXPECTED_ARTIFACT_COUNT = _predecessor.EXPECTED_ARTIFACT_COUNT
+
+
+def _git_blob_sha(path: Path) -> str:
+    payload = path.read_bytes()
+    header = f"blob {len(payload)}\0".encode("ascii")
+    return hashlib.sha1(header + payload).hexdigest()
+
+
+def validate_exp062_run_contract_sources(
+    *,
+    repository_root: Path,
+) -> dict[str, object]:
+    root = Path(repository_root)
+    expected = {
+        "dec292_repair_protocol": (
+            root / "src/fmp/discovery/nan_null_repair_protocol.py",
+            DEC292_PROTOCOL_BLOB_SHA,
+        ),
+        "dec293_repaired_adapter": (
+            root / "src/fmp/discovery/nan_null_repair_adapter.py",
+            DEC293_ADAPTER_BLOB_SHA,
+        ),
+        "exp061_miner": (
+            root / "src/fmp/discovery/pattern_miner.py",
+            EXP061_MINER_BLOB_SHA,
+        ),
+        "exp061_range_limited_loader": (
+            root / "src/fmp/discovery/range_limited_loader.py",
+            EXP061_LOADER_BLOB_SHA,
+        ),
+        "exp061_run_contract": (
+            root / "src/fmp/discovery/run_contract.py",
+            EXP061_RUN_CONTRACT_BLOB_SHA,
+        ),
+    }
+    actual: dict[str, str] = {}
+    for label, (path, expected_sha) in expected.items():
+        if not path.is_file():
+            raise ValueError(f"missing EXP-062 run-contract dependency: {path}")
+        sha = _git_blob_sha(path)
+        if sha != expected_sha:
+            raise ValueError(
+                f"EXP-062 {label} Git blob mismatch: {sha} != {expected_sha}"
+            )
+        actual[label] = sha
+    return {
+        "decision": EXP062_RUN_CONTRACT_DECISION,
+        "contract_version": EXP062_RUN_CONTRACT_VERSION,
+        "experiment_id": EXP062_EXPERIMENT_ID,
+        "repair_protocol_fingerprint": exp062_repair_protocol_fingerprint(),
+        "source_blobs": actual,
+        "workflow_source_authorized": False,
+        "workflow_dispatch_authorized": False,
+        "historical_discovery_execution_authorized": False,
+        "discovery_result_authorized": False,
+        "reserved_robustness_access_authorized": False,
+        "candidate_compilation_authorized": False,
+        "trading_authorized": False,
+    }
 
 
 def _canonical_json(value: object) -> bytes:
@@ -501,4 +561,5 @@ __all__ = [
     "expected_job_names",
     "run_contract_payload",
     "validate_aggregate_evidence",
+    "validate_exp062_run_contract_sources",
 ]
