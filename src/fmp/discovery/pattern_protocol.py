@@ -45,6 +45,7 @@ CONTINUOUS_FEATURES = (
     "spread_percentile_prior_24h",
 )
 QUANTILE_STATES = ("LOW", "MID", "HIGH")
+SESSION_DIMENSION = "session_state"
 SESSION_STATES = (
     "LONDON_NEW_YORK_OVERLAP",
     "LONDON",
@@ -249,6 +250,15 @@ def pattern_fingerprint(
         raise ValueError("pattern predicate depth is outside the frozen protocol")
     if len({name for name, _ in normalized}) != len(normalized):
         raise ValueError("pattern cannot contain two states from the same dimension")
+    for name, state in normalized:
+        if name in CONTINUOUS_FEATURES:
+            if state not in QUANTILE_STATES:
+                raise ValueError("continuous discovery dimension has invalid state")
+        elif name == SESSION_DIMENSION:
+            if state not in SESSION_STATES:
+                raise ValueError("session discovery dimension has invalid state")
+        else:
+            raise ValueError(f"unsupported discovery pattern dimension: {name!r}")
     payload = {
         "experiment_id": EXPERIMENT_ID,
         "protocol_version": PROTOCOL_VERSION,
@@ -459,6 +469,7 @@ __all__ = [
     "REAL_MONEY_AUTHORIZED",
     "RESERVED_ROBUSTNESS_ACCESS_AUTHORIZED",
     "RESERVED_ROBUSTNESS_WINDOW",
+    "SESSION_DIMENSION",
     "SESSION_STATES",
     "SOURCE_ACCESS_AUTHORIZED",
     "STRESS_SLIPPAGE_PIPS",
