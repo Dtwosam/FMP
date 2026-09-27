@@ -7,7 +7,7 @@ from typing import Mapping, Sequence
 from .historical_failure_result_decision import (
     EXP061_HISTORICAL_FAILURE_FREEZE_DECISION,
 )
-from .market_learning_adapter import (
+from .exp062_nonfinite_feature_adapter import (
     EXP062_NONFINITE_FEATURE_NORMALIZATION_DECISION,
     EXP062_NONFINITE_FEATURE_NORMALIZATION_VERSION,
     adapt_market_learning_cell,
