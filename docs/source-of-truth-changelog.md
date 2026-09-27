@@ -310,3 +310,12 @@
 - Added EXP-062 cell-evidence identity and repair fingerprint while preserving the exact predecessor EXP-061 evidence fingerprint.
 - Reconstructed and revalidated frozen EXP-061 nested evidence semantics during EXP-062 validation.
 - Kept historical execution, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-294 EXP-062 run contract
+
+- Frozen the exact non-executing EXP-062 18-cell result contract.
+- Added deterministic EXP-062 job/artifact names: 20 jobs and 20 commit-scoped artifacts.
+- Bound DEC-292 repair protocol, DEC-293 repaired adapter, frozen EXP-061 miner/loader, and predecessor run-contract identities.
+- Added EXP-062 aggregate evidence that reconstructs and revalidates the exact predecessor EXP-061 aggregate semantics.
+- Kept workflow source/dispatch/execution, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
