@@ -383,3 +383,14 @@
 - Verified dormant and active workflow blobs both equal `1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50`.
 - Preserved the hard execution gate before any historical cell source or aggregate-result read.
 - Kept workflow/proof/historical-result dispatch, historical execution/result production, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-301 EXP-062 gate proof contract
+
+- Predeclared the first proof-only EXP-062 manual-main run as workflow run #1 / attempt 1.
+- Required source-ready preflight failure at the locked execution gate.
+- Required every materialized downstream job to be skipped.
+- Accepted the exact skipped unexpanded GitHub matrix-template shape learned from EXP-061, but never mixed with expanded cells.
+- Required exactly one preflight artifact and zero cell/aggregate result artifacts.
+- Declared proof slot consumption false.
+- Kept proof/historical dispatch, historical execution/result production, rerun/retry/replacement, reserved data, candidate, promotion, Phase 8B, demo/live, real-money, and trading locked.

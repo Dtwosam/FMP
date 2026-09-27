@@ -5037,3 +5037,19 @@ Installation source: `src/fmp/discovery/exp062_workflow_install.py` blob `febb2b
 Rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain locked.
 
 The next safe gate is a proof-only terminal contract and read-only proof operator that can demonstrate the merged workflow fails closed before any discovery cell executes. Proof dispatch must remain separate from historical-result dispatch.
+
+
+## DEC-301 — EXP-062 gate-proof terminal contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PREDECLARED PROOF REVIEW / NO PROOF DISPATCH
+
+DEC-301 predeclares the first EXP-062 proof-only manual-main run before it exists. The proof must be workflow run #1 / attempt 1, fail after source-ready preflight at the still-locked DEC-299 execution gate, materialize no successful downstream work, and persist exactly one preflight artifact with zero cell/aggregate artifacts.
+
+The contract explicitly accepts GitHub's known skipped literal matrix-template representation on early failure, but only when skipped and never alongside expanded cell jobs. The proof consumes no historical-result slot.
+
+Proof-contract source: `src/fmp/discovery/exp062_proof_contract.py` blob `dcc513d1918e95e2bc0bc02a04774291c6b340c0`. Focused tests: `tests/test_phase8a_exp062_gate_proof_contract.py` blob `7022c0a821144c63daf2a74c4aca6871c384dd27`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp062-gate-proof-contract.md`.
+
+Proof dispatch, historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain false.
+
+The next safe gate is a read-only exact-main proof planner with no execute mode.
