@@ -4520,3 +4520,22 @@ Core source: `src/fmp/discovery/pattern_miner.py` blob `495a67699eb5014e52129f02
 Historical source access, historical discovery execution, reserved-block access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false.
 
 The next safe gate is a non-executable artifact/evidence contract plus deterministic adapter from already-approved market-learning feature/outcome artifacts into the DEC-271 row contracts. No historical result-producing run is authorized by DEC-271.
+
+## DEC-272 — EXP-061 market-learning adapter and cell evidence contract
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY ADAPTER / HISTORICAL EXECUTION LOCKED
+
+DEC-272 reuses the already-approved EXP-044 market-learning feature/outcome schemas as the sole input vocabulary for DEC-271 rather than creating another historical data pipeline.
+
+The adapter converts verified Polars feature/outcome frames into immutable EXP-061 feature/outcome observations using a deterministic identity over symbol, timeframe, bar start, availability time, feature-set version, and processed Phase 2 manifest SHA-256. It requires exact symbol/timeframe, exact feature/outcome set identities, singular matching processed-manifest SHA-256, supported horizons, exact retrospective evidence labeling, and unique row identities.
+
+The accepted adapter range is 2015-01-01 through 2022-12-31. Feature rows at or after 2023-01-01 are rejected. Outcome rows whose observation is outside that range or whose fixed-horizon target reaches 2023-01-01 or later are rejected. This prevents the reserved 2023-2026 robustness target data from being presented to EXP-061.
+
+DEC-272 also defines canonical per-cell evidence containing protocol/code/source identities, the exact feature-manifest and outcome-manifest SHA-256s, state cutpoints, discovery search counts/shortlist, confirmation evaluations/frozen fingerprints, validation evaluations/validated fingerprints, and explicit false downstream authorizations. Evidence is canonical-JSON fingerprinted and tamper-checked. The validator also rechecks nested cell/state/search identities, pattern fingerprints, discovery gates/rank order, confirmation freeze semantics, and validation acceptance semantics, so a semantically inconsistent result cannot pass by merely recomputing the outer evidence hash.
+
+Source: `src/fmp/discovery/market_learning_adapter.py` blob `978a33554fad7e9d78b002778c4896be0af3333a`. Focused tests: `tests/test_phase8a_exp061_market_learning_adapter.py` blob `0fffb06e772c8bee82208c598f75d29b3804b781`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-market-learning-adapter-evidence.md`.
+
+DEC-272 does not load artifacts and does not authorize historical source access, historical discovery execution, reserved-block access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, or trading.
+
+The next safe gate is a verified range-limited artifact loader for existing EXP-044 feature/outcome evidence, with historical result execution still separately locked.
