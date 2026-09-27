@@ -227,3 +227,11 @@ __all__ += [
     "validate_fresh_historical_execution_plan",
     "validate_reviewed_execution_plan",
 ]
+
+from .historical_result_review import (
+    review_historical_result_terminal_shape,
+)
+
+__all__ += [
+    "review_historical_result_terminal_shape",
+]
