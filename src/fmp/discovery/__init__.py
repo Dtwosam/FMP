@@ -235,3 +235,11 @@ from .historical_result_review import (
 __all__ += [
     "review_historical_result_terminal_shape",
 ]
+
+from .historical_result_content_review import (
+    review_historical_result_content,
+)
+
+__all__ += [
+    "review_historical_result_content",
+]
