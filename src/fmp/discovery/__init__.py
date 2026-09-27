@@ -272,3 +272,11 @@ from .exp062_adapter_proof_content_review import (
 __all__ += [
     "review_exp062_adapter_proof_content",
 ]
+
+from .exp062_adapter_proof_result_decision import (
+    freeze_exp062_adapter_proof_result,
+)
+
+__all__ += [
+    "freeze_exp062_adapter_proof_result",
+]
