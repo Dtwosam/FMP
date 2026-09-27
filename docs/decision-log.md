@@ -5069,3 +5069,19 @@ Operator: `src/fmp/discovery/exp062_proof_operator.py` blob `bc33c377ee986576661
 Proof dispatch, proof execute mode, historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain false.
 
 The next safe gate is a separately reviewed one-shot proof executor that can submit only a fresh DEC-302 proof command and still cannot authorize historical discovery.
+
+
+## DEC-303 — EXP-062 one-shot gate-proof executor
+
+**Date:** 2026-09-27
+**Status:** SOURCE-ONLY PROOF EXECUTOR / HISTORICAL RESULT STILL LOCKED
+
+DEC-303 adds the sole one-shot executor for the proof-only EXP-062 gate run. It requires executor workflow run #1 / attempt 1, zero existing EXP-062 manual-main runs, two identical fresh DEC-302 plans at exact merged main, and may submit only `gh workflow run phase8a-exp062-discovery.yml --ref main`.
+
+The submitted proof must become workflow run #1 / attempt 1 on the executor head. Proof submission consumes no historical-result slot and claims no historical result.
+
+Executor source: `src/fmp/discovery/exp062_proof_executor.py` blob `b5963636901b5caba1730f8a969dd3f9a1bf1979`. CLI: `scripts/phase8a_exp062_proof_executor.py` blob `1ff34425b4240312324ae2513fa6d747c0579982`. Workflow: `.github/workflows/phase8a-exp062-proof-one-shot-execute.yml` blob `45cfc626f82b4a05ed619d9eeffdb6bd2fa0e04a`. Tests: `tests/test_phase8a_exp062_proof_executor.py` blob `68b05897c9d7f9785bbd287057eded5f23a9d12e`.
+
+Historical-result dispatch/execution, rerun/retry/replacement, reserved data, candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading remain false.
+
+The next gate after the proof is submitted is DEC-301 terminal review and immutable proof-result freeze before any historical-result slot can open.
