@@ -279,3 +279,15 @@
 - Classified any terminal non-success as slot-consuming and permanently closed to rerun/retry/replacement.
 - Allowed the exact skipped unexpanded GitHub matrix-template placeholder only in a non-success fail-closed shape and never alongside expanded cell jobs.
 - Kept candidate compilation, promotion, reserved 2023-2026 access, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+
+## 2026-09-27 — DEC-291 EXP-061 failed historical result
+
+- Frozen historical run `36335879839`, head `a7b3bc2d0b196da2631b64c19331efb3af12c98e`, workflow run #2 / attempt 1, terminal failure.
+- Bound successful executor run `36335739823` and executor evidence artifact `10936194549`, digest `sha256:e7ffe1f08ce358eca210ef41397165196cb64bee31696a180c7fd02af8c68f1c`.
+- Bound sole historical preflight artifact `10937316246`, digest `sha256:e9a898df51317250944ad0a111d01d96d2081d708ea80872ed11b5cee48d356f`.
+- Independently verified both downloaded ZIP digests.
+- Recorded preflight success, all 18 cell failures, and skipped aggregate.
+- Frozen the shared failure class before pattern mining: non-finite accepted rolling-volatility feature values, observed only in `realized_vol_1h` and `realized_vol_8h`.
+- Closed EXP-061 with no rerun/retry/replacement and no pattern/candidate result.
+- Kept reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
