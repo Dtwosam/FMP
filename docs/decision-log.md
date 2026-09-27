@@ -4873,3 +4873,25 @@ Terminal-review source: `src/fmp/discovery/historical_result_review_contract.py`
 DEC-290 opens no dispatch, rerun, retry, replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, or trading path.
 
 The next gate is to require both DEC-289 and DEC-290 to pass CI before the one-shot historical dispatch is allowed to reach main.
+
+
+## DEC-292 — EXP-061 historical failure freeze
+
+**Date:** 2026-09-27
+**Status:** TERMINAL FAILURE FROZEN / NO RETRY
+
+The combined DEC-289/290 merge landed at `a7b3bc2d0b196da2631b64c19331efb3af12c98e`. One-shot executor run `36335739823` succeeded and submitted the sole EXP-061 historical attempt, workflow run `36335879839`, run number 2, attempt 1, at that exact head.
+
+Run #2 is terminal `failure`. Preflight succeeded. All 18 discovery cell jobs failed at the frozen cell execution step. Aggregate was skipped. Exactly one run artifact persisted: preflight artifact `10937316246`, digest `sha256:e9a898df51317250944ad0a111d01d96d2081d708ea80872ed11b5cee48d356f`. No cell evidence and no aggregate evidence exist.
+
+The DEC-289 executor evidence artifact is `10936194549`, digest `sha256:e7ffe1f08ce358eca210ef41397165196cb64bee31696a180c7fd02af8c68f1c`. Independently downloaded evidence matches that ZIP digest and binds the slot transition from zero/unconsumed to one submitted/consumed.
+
+Representative EURUSD, GBPUSD, and USDJPY logs all fail inside `market_learning_adapter.adapt_feature_frame` while constructing `FeatureObservation`. Observed signatures include `EXP-061 continuous feature realized_vol_1h must be finite or null` and `EXP-061 continuous feature realized_vol_8h must be finite or null`.
+
+The Phase-5 feature dictionary explicitly defines warm-up, missing cadence, incomplete required bars, non-finite required values, and invalid denominators as null. DEC-272's adapter instead passed raw Polars row values through unchanged, allowing IEEE NaN to reach the stricter observation validator. DEC-292 classifies the failure as `NONFINITE_FEATURE_WARMUP_NOT_NORMALIZED`.
+
+This is an implementation/input-normalization failure, not a negative market-pattern result. EXP-061 produced no valid discovery cell evidence and no candidate evidence. Its sole historical slot is consumed permanently; rerun, retry, and replacement are all false.
+
+Failure-freeze source: `src/fmp/discovery/historical_failure_result_decision.py` blob `676116f34693f9a5a8f8403aaa93f28ac1c5bb46`. Focused tests: `tests/test_phase8a_exp061_historical_failure_freeze.py` blob `f8f89536886a9ea9d80cebf755691bcba853117e`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-historical-failure-freeze.md`.
+
+The next research identity must be new. EXP-062 may preserve DEC-270 discovery semantics and the same historical source range while narrowly repairing the adapter's non-finite continuous-feature missing-value normalization. Reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo, broker/live, real-money, and trading remain locked.
