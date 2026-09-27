@@ -329,3 +329,14 @@
 - Rejected unexpected jobs/artifacts.
 - Bound the clean DEC-294 workflow blob `4fbeb7836ef775b14918b49ed24da8c86928610c`.
 - Kept all historical discovery/result, reserved-data, candidate, demo/live, real-money, and trading authorities locked.
+
+
+## 2026-09-27 — DEC-296 EXP-062 adapter proof content review
+
+- Predeclared content-level review for a successful DEC-294 proof before proof artifacts exist.
+- Required the DEC-295 success-complete terminal shape.
+- Required exactly nine validated pair/timeframe probe objects at one proof head.
+- Deterministically recompiled the aggregate and required exact equality with persisted aggregate content.
+- Reconciled total raw non-finite counts by continuous feature and cell.
+- Defined successful meaning as adapter-repair verification only, with no mining or strategy/candidate claim.
+- Kept historical discovery/result, reserved-data, candidate, promotion, Phase 8B, demo/live, real-money, and trading authorities locked.
