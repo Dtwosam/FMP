@@ -4604,3 +4604,20 @@ Frozen identities: workflow-source contract `src/fmp/discovery/workflow_source.p
 Active workflow installation, dispatch, historical discovery/result execution, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain false.
 
 The next safe gate is installation of the exact reviewed dormant template at the reserved active workflow path while retaining the execution gate false, followed by merged-main proof that it cannot progress past authorization preflight.
+
+## DEC-276 — EXP-061 locked active-workflow installation
+
+**Date:** 2026-09-27
+**Status:** ACTIVE WORKFLOW INSTALLED / EXECUTION AND PROOF DISPATCH LOCKED
+
+DEC-276 installs the exact DEC-275 dormant workflow source at `.github/workflows/phase8a-exp061-discovery.yml` without changing any execution semantics.
+
+The active workflow blob and the dormant template blob are both `d4eb02d380ae8c9a5b95e6520cbb7ca192254cb9`. Any byte-level drift invalidates the installation review.
+
+The workflow remains fail-closed. Preflight may perform only read-only metadata checks against the already-completed EXP-044 feature/outcome runs before invoking `python scripts/phase8a_exp061.py require-execution --code-commit "$GITHUB_SHA"`. Under DEC-276 that gate remains false. The 18 cell jobs depend on successful preflight and independently recheck the same gate before any historical feature/outcome artifact download. Aggregate compilation also rechecks the gate before reading cell evidence.
+
+DEC-276 distinguishes workflow presence from authorization. Ordinary workflow dispatch, proof dispatch, historical-result dispatch, historical discovery/result execution, rerun/retry/replacement, reserved 2023-2026 access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading all remain false.
+
+Installation validator source: `src/fmp/discovery/workflow_install.py` blob `e959a782fdbb6bf5b578e60e44f5e015b50086a6`. Focused tests: `tests/test_phase8a_exp061_locked_workflow_install.py` blob `7996c2c1565352984ecd1bbff3ca538beda5b616`. Detailed spec: `docs/superpowers/specs/2026-09-27-phase8a-exp061-locked-workflow-install.md`.
+
+The next safe gate is a separately predeclared one-shot proof-only manual-main dispatch whose expected terminal outcome is a fail-closed stop at the DEC-275 execution gate after read-only preflight. That proof may not consume the future historical result slot and may not authorize cell or aggregate execution.
