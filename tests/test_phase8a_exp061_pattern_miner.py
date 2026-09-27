@@ -88,6 +88,7 @@ def _year_rows(
                 symbol="EURUSD",
                 timeframe="15m",
                 available_at_utc=available,
+                exit_timestamp_utc=available + timedelta(minutes=60),
                 horizon_minutes=60,
                 long_net_pips_0p5=long_half,
                 short_net_pips_0p5=-1.0,
