@@ -183,15 +183,8 @@ jobs:
       - name: Require clean source checkout
         run: |
           set -euo pipefail
-          rm -rf .downloads .feature .outcome .feature-evidence .outcome-evidence .probe
+          rm -rf .downloads .feature .outcome .feature-evidence .outcome-evidence
           test -z "$(git status --porcelain)"
-
-      - name: Recreate probe output for artifact
-        env:
-          SYMBOL: ${{ matrix.dataset.symbol }}
-          TIMEFRAME: ${{ matrix.dataset.timeframe }}
-        run: |
-          echo "probe output already validated before cleanup" > /dev/null
 
       - name: Upload EXP-062 adapter probe
         uses: actions/upload-artifact@v6
