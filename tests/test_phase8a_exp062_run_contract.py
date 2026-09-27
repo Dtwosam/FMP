@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from pathlib import Path
 import unittest
 
 from fmp.discovery.nan_null_repair_adapter import compile_cell_evidence
@@ -14,6 +15,7 @@ from fmp.discovery.nan_null_repair_run_contract import (
     expected_job_names,
     run_contract_payload,
     validate_aggregate_evidence,
+    validate_exp062_run_contract_sources,
 )
 from fmp.discovery.pattern_miner import (
     ConfirmationReport,
@@ -83,6 +85,26 @@ def _cells() -> list[dict[str, object]]:
 
 
 class Exp062RunContractTests(unittest.TestCase):
+    def test_sources_bind_exact_repair_stack_and_keep_execution_locked(self) -> None:
+        report = validate_exp062_run_contract_sources(
+            repository_root=Path("."),
+        )
+        self.assertEqual(report["decision"], "DEC-294")
+        self.assertEqual(report["experiment_id"], "EXP-20260927-062")
+        self.assertEqual(
+            report["source_blobs"]["dec292_repair_protocol"],
+            "1d26da24134c825e2f405224316e1dd3136a38fb",
+        )
+        self.assertEqual(
+            report["source_blobs"]["dec293_repaired_adapter"],
+            "53f85d99bad42decb673e9fa2ff0f771150e17db",
+        )
+        self.assertFalse(report["workflow_source_authorized"])
+        self.assertFalse(report["workflow_dispatch_authorized"])
+        self.assertFalse(report["historical_discovery_execution_authorized"])
+        self.assertFalse(report["candidate_compilation_authorized"])
+        self.assertFalse(report["trading_authorized"])
+
     def test_contract_has_exact_twenty_jobs_and_artifacts_with_exp062_names(self) -> None:
         value = run_contract_payload(code_commit=CODE_COMMIT)
         self.assertEqual(value["decision"], "DEC-294")
