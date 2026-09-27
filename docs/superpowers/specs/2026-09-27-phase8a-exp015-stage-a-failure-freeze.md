@@ -59,6 +59,13 @@ DEC-269 does not weaken the experimental result. It replaces only the terminal e
 
 The guarded Stage A workflow is not changed.
 
+## Frozen implementation identities
+
+- result-decision source: `src/fmp/portfolio/exp015_stage_a_failure_result_decision.py`;
+- result-decision source blob: `dbf9a34fc8a22c92b06e0b40ac5e97a5cf041029`;
+- focused tests: `tests/test_phase8a_exp015_stage_a_failure_result_decision.py`;
+- focused-test blob: `35d4adaaf66b7e8f4e85e51e2baaa3afbf977aec`.
+
 ## Closure semantics
 
 DEC-269 records:
