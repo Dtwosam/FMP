@@ -67,3 +67,13 @@
 - Added hard 180-pattern confirmation and 54-pattern validation caps with immutable discovery ranking and near-duplicate removal.
 - Defined economic/support gates using 0.5-pip primary and 1.0-pip stress outcomes.
 - Kept source access, result execution, candidate compilation, reserved-block access, Phase 8B, demo, broker/live, real-money, and trading locked.
+
+## 2026-09-27 — DEC-271 EXP-061 deterministic in-memory miner core
+
+- Implemented strict in-memory feature/outcome row contracts for EXP-061.
+- Implemented discovery-window-only state calibration and bounded one/two-dimension pattern enumeration.
+- Implemented frozen discovery support/economic gates, ranking, and Jaccard near-duplicate removal.
+- Implemented 2018 pass/fail confirmation preserving discovery rank and at most three frozen hypotheses per cell/horizon.
+- Implemented frozen 2019-2022 validation with no retuning.
+- Added synthetic end-to-end tests, including proof that catastrophic 2023 rows cannot alter EXP-061 output.
+- Kept historical source access/result execution, 2023-2026 reserved-block access, candidate compilation, Phase 8B, demo, broker/live, real-money, and trading locked.
