@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Merge DEC-289 only after green checks. Its first merged-main push is execution-capable: if every reviewed-proof and live-inventory guard still passes, it may submit exactly the sole EXP-061 historical workflow run #2 / attempt #1. After submission, no further historical dispatch is authorized; the next gate is terminal result review with no retry/replacement.
+**Next milestone:** Require DEC-289 and DEC-290 to be green before the execution-capable DEC-289 merge. DEC-290 predeclares terminal review before run #2 exists: exact 20-job/20-artifact success, or terminal non-success closed with no retry/replacement. After the sole run #2 is submitted, review it under DEC-290; candidate compilation remains locked.
 
 ## Current baseline
 
@@ -359,6 +359,7 @@ Historical-data status:
 
 Implementation progress:
 
+- DEC-290 predeclares the terminal review contract before historical run #2 exists. Success requires the exact DEC-274 20-job / 20-artifact shape with all jobs successful; any terminal non-success permanently consumes the slot and permits only expected partial evidence. The exact skipped unexpanded matrix-template API shape is allowed only for non-success. Rerun/retry/replacement, candidate compilation, 2023-2026 robustness, Phase 8B, demo/live, real-money, and trading remain locked.
 - DEC-289 adds the one-shot historical executor. On its first merged-main push only, it re-downloads and revalidates the DEC-287/288 proof artifact, requires two identical fresh DEC-286 plans, requires the live inventory still contains only proof run #1, and may submit exactly one run-#2 / attempt-1 discovery dispatch. The new run consumes the sole historical slot immediately. Executor reruns, historical reruns/retries/replacements, 2023-2026 access, candidate compilation, Phase 8B, demo/live, real-money, and trading remain locked.
 - DEC-288 freezes the successful DEC-287 merged-main execution-plan proof: run `36329787371`, head `958a0b830bb867d1c11e2a82be7fc301a6a75474`, sole artifact `10935233025`, digest `sha256:bb81bd8f0cb1adfc0054db4f5c16f13808793c520d443a0f05a89a90f92a415d`. The plan proves zero historical-result attempts, an unconsumed slot, and the only future target as workflow run #2 / attempt #1. Dispatch and all downstream trading paths remain locked.
 - DEC-287 adds a push-to-main, read-only historical execution-plan proof. It pins DEC-284/285/286 source identities, proves the frozen proof remains run #1, the historical slot is unused, and the only future target is run #2 / attempt #1, then uploads one immutable plan artifact. It has no dispatch or execute path.
