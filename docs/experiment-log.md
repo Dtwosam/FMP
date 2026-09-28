@@ -1404,3 +1404,12 @@ Copy this section for each serious experiment:
 - Target remains run #2 / attempt 1 while the slot is empty.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
 - Next gate after actual success: concrete dispatch-plan proof review/freeze.
+
+### EXP-20260927-062 — DEC-321 dispatch-plan proof reviewer
+
+- Source-only reviewer prepared for future DEC-320 runtime evidence.
+- Requires first proof run/attempt success, one successful job, one artifact, and exact DEC-319 plan content.
+- Records raw and canonical plan SHA-256 hashes.
+- Actual dispatch/executor/execute mode remain NO.
+- Target remains run #2 / attempt 1 while the slot is empty.
+- Reserved data and all candidate/demo/live/trading paths remain locked.

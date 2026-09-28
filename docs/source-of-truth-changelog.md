@@ -577,3 +577,11 @@
 - Runs only the plan-only dispatch operator.
 - Uploads only immutable historical-dispatch-plan.json.
 - Adds no workflow submission path and keeps all downstream trading paths locked.
+
+## 2026-09-28 — DEC-321 EXP-062 dispatch-plan reviewer
+
+- Added a source-only reviewer for future DEC-320 runtime evidence.
+- Pinned DEC-320/319/318/317 and the active discovery workflow.
+- Requires exact first-run/attempt success, one successful job, and one non-expired artifact.
+- Revalidates zero-attempt DEC-319 plan semantics and records raw/canonical hashes.
+- Adds no dispatch or executor path and keeps downstream trading authority locked.
