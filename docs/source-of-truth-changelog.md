@@ -864,3 +864,12 @@
 - Invokes only the read-only install-preflight plan surface.
 - Verifies zero historical-result attempts and target run #2 / attempt 1.
 - Uploads only the install-preflight JSON and never installs or dispatches anything.
+
+
+## 2026-09-28 — DEC-351 EXP-062 workflow-install preflight proof reviewer
+
+- Added source-only review of future DEC-350 runtime evidence.
+- Pinned DEC-350/349/348 source identities and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates source-absent install-preflight content and records raw/canonical hashes.
+- Adds no install, dispatch, or execute mode and keeps downstream authority locked.
