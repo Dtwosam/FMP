@@ -147,9 +147,9 @@ def validate_dormant_one_shot_historical_executor_workflow_template(
         "GITHUB_RUN_ATTEMPT\" = \"2",
         "gh run rerun",
         "gh workflow enable",
-        "phase8b",
-        "live-order",
-        "real-money",
+        "scripts/phase8b",
+        "place-live-order",
+        "submit-real-money",
     )
     for token in forbidden:
         if token in text:
