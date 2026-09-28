@@ -1222,3 +1222,18 @@ DEC-339 itself cannot dispatch or execute historical discovery. Reserved 2023-20
 data and all candidate/demo/live/real-money/trading paths remain locked.
 
 The next safe step after real DEC-338 evidence is an immutable source-proof freeze.
+
+
+## 2026-09-28 — DEC-340 EXP-062 reviewed source-proof freeze source
+
+The stack now contains a deterministic source-only freeze builder for a valid DEC-339
+review of successful DEC-338 proof evidence.
+
+It preserves concrete run/job/artifact/hash identities, DEC-337/336/334 identities,
+and the exact DEC-339 source map, then emits one canonical freeze fingerprint.
+
+No historical executor or dispatch path is introduced. Reserved 2023-2026 data and
+all candidate/demo/live/real-money/trading paths remain locked.
+
+The next safe step after real DEC-338 evidence is concrete source-proof runtime
+evidence binding.

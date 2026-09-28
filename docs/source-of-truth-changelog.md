@@ -752,3 +752,13 @@
 - Requires exact run #1 / attempt 1 success, one successful proof job, and one non-expired artifact.
 - Revalidates the source-contract content and records raw/canonical SHA-256 hashes.
 - Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-340 EXP-062 reviewed source-proof freeze
+
+- Added a deterministic source-only freeze builder for a valid DEC-339 review.
+- Preserves exact DEC-338 proof run/job/artifact identities and artifact digest.
+- Preserves raw/canonical source-contract hashes and DEC-339 review source blobs.
+- Freezes DEC-336 runtime evidence, DEC-334 terminal criteria, and target run #2 / attempt 1.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.
