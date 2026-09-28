@@ -1619,3 +1619,16 @@ Copy this section for each serious experiment:
 - Historical executor availability/dispatch/execute mode authorized?: NO.
 - Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate after actual proof: concrete source-proof runtime-evidence binding.
+
+
+### EXP-20260927-062 — DEC-341 one-shot executor source-proof runtime evidence freeze
+
+- Bound real DEC-338 proof run `36442399041`, job `108995955292`, and artifact `10979242048`.
+- Artifact/ZIP SHA-256: `7dff775fc559cf9dbd754f45c24fbc814035b1602b59ca5eb9f82678af4e8b88`.
+- Raw source-contract SHA-256: `484ad49fa3b3e925ae4a3576af840a8736c9b25ef439b619e8b60e8011f94d63`.
+- Canonical source-contract SHA-256: `cb650b81c2549bfb5bfa62f6609bec9b39e4ed118f3e54c302a48a3a27a11616`.
+- Replays DEC-339 review and DEC-340 freeze; expected DEC-340 fingerprint `e340394fb987c68d9203a57c9cd363f255729b3424a9600ec03533ff421960a8`.
+- Pins DEC-334 terminal-review criteria.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Executor availability / dispatch / execute mode authorized?: NO.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
