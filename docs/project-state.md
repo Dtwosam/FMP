@@ -1447,3 +1447,15 @@ sole future result attempt. No install, executor, dispatch, execute, reserved-da
 or trading authority exists.
 
 Next safe step: repository-hosted read-only proof of the dormant source.
+
+
+## 2026-09-28 — DEC-356 dormant executor source proof source-ready
+
+A repository-hosted read-only proof now exists for the DEC-355 dormant executor
+workflow source.
+
+It validates exact source blobs and requires the active executor workflow path to
+remain absent. It has no write permission and cannot install or dispatch anything.
+
+The historical-result slot remains empty with target run #2 / attempt 1. Next safe
+step after real proof evidence: review/freeze.
