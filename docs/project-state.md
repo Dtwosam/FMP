@@ -1300,3 +1300,13 @@ future attempt. Executor availability, actual dispatch, execute mode, reserved
 2023-2026 data, and all candidate/demo/live/real-money/trading paths remain locked.
 
 The next safe step after real successful proof evidence is review/freeze.
+
+
+## 2026-09-28 — DEC-345 workflow-preflight proof reviewer source-ready
+
+A source-only reviewer now exists for future DEC-344 merged-main proof evidence. It
+can bind exact run/job/artifact/preflight identities and hashes but cannot dispatch or
+execute historical discovery.
+
+All runtime and trading authority remains locked. Next safe gate: immutable review
+freeze after valid proof evidence exists.
