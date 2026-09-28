@@ -1,0 +1,212 @@
+name: phase8a-exp062-one-shot-historical-executor-source-proof
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-exp062-one-shot-historical-executor-source-proof.yml
+      - .github/workflows/phase8a-exp062-discovery.yml
+      - .github/workflows/phase8a-exp062-historical-executor-activation-preflight.yml
+      - src/fmp/discovery/exp062_historical_executor_activation_contract.py
+      - src/fmp/discovery/exp062_historical_executor_activation_preflight.py
+      - src/fmp/discovery/exp062_historical_executor_activation_preflight_review.py
+      - src/fmp/discovery/exp062_historical_executor_activation_preflight_freeze.py
+      - src/fmp/discovery/exp062_historical_executor_activation_preflight_runtime_freeze.py
+      - src/fmp/discovery/exp062_historical_terminal_review_contract.py
+      - src/fmp/discovery/exp062_historical_one_shot_executor_source.py
+      - scripts/phase8a_exp062_historical_executor_activation_preflight.py
+      - requirements/exp061-discovery-run.txt
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  read-only-one-shot-historical-executor-source-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require exact first merged-main DEC-338 proof push
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+      - name: Require frozen DEC-331/333/334/335/336/337 identities
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/exp062_historical_executor_activation_preflight.py)" = "1d88fc3ad9dfce5ee61f1a5f9bdb304b3d7f8d1a"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_executor_activation_preflight_review.py)" = "c540fb14c7048de2e6f368b0c96b51715c83e9a5"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_terminal_review_contract.py)" = "fda2a45f74b101303467cf7b8527bec1bfc5e168"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_executor_activation_preflight_freeze.py)" = "9cb660f06fc9da8a8d4927d8ff953413a6df13fe"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_executor_activation_preflight_runtime_freeze.py)" = "9673e115eeb373c4881d36a8b5d91a2801cd8ad1"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_one_shot_executor_source.py)" = "26ee48241550d6e52501fc901ab88aaa3f42e755"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_executor_activation_contract.py)" = "35edfdfed85e52ebd723f2637060f4f102e7920b"
+          test "$(git hash-object scripts/phase8a_exp062_historical_executor_activation_preflight.py)" = "e91a2a2acb0e00d9d458ed5e15ecf746411caec7"
+          test "$(git hash-object .github/workflows/phase8a-exp062-discovery.yml)" = "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50"
+          test "$(git hash-object .github/workflows/phase8a-exp062-historical-executor-activation-preflight.yml)" = "d396cd27cabd2b8559d8d86121f9c59dc045c7ad"
+          test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned planning runtime without editable checkout
+        run: python -m pip install -r requirements/exp061-discovery-run.txt
+
+      - name: Require clean checkout
+        run: test -z "$(git status --porcelain)"
+
+      - name: Fetch frozen DEC-332 evidence and fresh EXP-062 inventory
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp062-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/runs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36431469794" > "$RUNNER_TEMP/dec332-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36431469794/jobs?filter=latest&per_page=100" > "$RUNNER_TEMP/dec332-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36431469794/artifacts?per_page=100" > "$RUNNER_TEMP/dec332-artifacts.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/10973597441/zip" > "$RUNNER_TEMP/dec332.zip"
+          test "$(sha256sum "$RUNNER_TEMP/dec332.zip" | cut -d' ' -f1)" = "ee6e7ac2e8c18e1f8d276bba14ca942e20615143316ac185f4b814333804c2d5"
+          unzip -p "$RUNNER_TEMP/dec332.zip" historical-executor-activation-preflight.json > "$RUNNER_TEMP/dec332-preflight.json"
+
+      - name: Build fresh DEC-331 activation preflight
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_exp062_historical_executor_activation_preflight.py plan \
+            --main-json "$RUNNER_TEMP/main.json" \
+            --runs-json "$RUNNER_TEMP/runs.json" \
+            --expected-head "$GITHUB_SHA" \
+            > "$RUNNER_TEMP/fresh-activation-preflight.json"
+
+      - name: Rebuild DEC-336 and prove DEC-337 source contract
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          from fmp.discovery.exp062_historical_executor_activation_preflight_runtime_freeze import (
+              freeze_historical_executor_activation_preflight_runtime_evidence,
+          )
+          from fmp.discovery.exp062_historical_one_shot_executor_source import (
+              build_one_shot_historical_executor_source_contract,
+          )
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          proof_run = json.loads((temp / "dec332-run.json").read_text())
+          proof_jobs = json.loads((temp / "dec332-jobs.json").read_text())
+          proof_artifacts = json.loads(
+              (temp / "dec332-artifacts.json").read_text()
+          )
+          preflight_bytes = (temp / "dec332-preflight.json").read_bytes()
+          artifact_zip = (temp / "dec332.zip").read_bytes()
+
+          runtime_freeze = (
+              freeze_historical_executor_activation_preflight_runtime_evidence(
+                  repository_root=Path("."),
+                  proof_run=proof_run,
+                  proof_jobs_payload=proof_jobs,
+                  proof_artifacts_payload=proof_artifacts,
+                  preflight_bytes=preflight_bytes,
+                  artifact_zip_sha256=hashlib.sha256(artifact_zip).hexdigest(),
+              )
+          )
+          fresh_preflight = json.loads(
+              (temp / "fresh-activation-preflight.json").read_text()
+          )
+          contract = build_one_shot_historical_executor_source_contract(
+              repository_root=Path("."),
+              runtime_freeze=runtime_freeze,
+              fresh_activation_preflight=fresh_preflight,
+              expected_head_sha=os.environ["GITHUB_SHA"],
+          )
+          (temp / "one-shot-historical-executor-source-contract.json").write_text(
+              json.dumps(contract, sort_keys=True, indent=2, allow_nan=False)
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Verify source-only contract and all runtime locks
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          contract = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "one-shot-historical-executor-source-contract.json"
+              ).read_text(encoding="utf-8")
+          )
+          assert contract["decision"] == "DEC-337"
+          assert contract["version"] == (
+              "fmp-exp062-one-shot-historical-executor-source-v1"
+          )
+          assert contract["stage"] == (
+              "EXP062_ONE_SHOT_HISTORICAL_EXECUTOR_SOURCE_AUTHORIZED_"
+              "RUNTIME_DISPATCH_LOCKED"
+          )
+          assert contract["runtime_freeze_decision"] == "DEC-336"
+          assert contract["runtime_freeze_fingerprint_sha256"] == (
+              "147ab77116979afa8d0d07c3c748fb80e02865a382317824320f6af534bfc374"
+          )
+          assert contract["terminal_review_decision"] == "DEC-334"
+          assert contract["expected_head_sha"] == os.environ["GITHUB_SHA"]
+          assert contract["historical_result_attempt_count"] == 0
+          assert contract["historical_result_slot_consumed"] is False
+          assert contract["historical_result_slot_verified_available"] is True
+          assert contract["expected_target_run_number"] == 2
+          assert contract["expected_target_run_attempt"] == 1
+          assert contract["planned_dispatch_command_frozen"] == (
+              "gh workflow run phase8a-exp062-discovery.yml --ref main"
+          )
+          assert contract["one_shot_historical_executor_source_authorized"] is True
+
+          for field in (
+              "historical_executor_available",
+              "historical_result_dispatch_authorized",
+              "historical_execute_mode_available",
+              "rerun_authorized",
+              "retry_authorized",
+              "replacement_run_authorized",
+              "reserved_robustness_access_authorized",
+              "candidate_compilation_authorized",
+              "promotion_authorized",
+              "phase8b_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert contract[field] is False, field
+          PY
+
+      - name: Upload immutable DEC-338 one-shot executor source proof
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp062-dec338-one-shot-historical-executor-source-${{ github.sha }}
+          path: ${{ runner.temp }}/one-shot-historical-executor-source-contract.json
+          if-no-files-found: error
