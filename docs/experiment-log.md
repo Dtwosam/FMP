@@ -1421,3 +1421,14 @@ Copy this section for each serious experiment:
 - Actual historical dispatch/executor/execute mode remain NO.
 - Target remains run #2 / attempt 1 while the slot is empty.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
+
+### EXP-20260927-062 — DEC-323 concrete dispatch-plan runtime freeze
+
+- Bound real DEC-320 proof run `36418793172`, job `108916232597`, artifact `10967344018`.
+- GitHub artifact digest and independently recomputed ZIP SHA-256 both equal `ca0f1156fab234327bbcdd9c3150cb7904ed6def230f035019b2139c4c523adf`.
+- Frozen dispatch-plan raw SHA-256: `a6fa5f3a7f3f45df5d64efe1661a5b17887f88fded31e1cbb1620df5b18a95d1`.
+- Frozen dispatch-plan canonical SHA-256: `41ca6c710d8750851350c2108b42970501a5efa14481cff61e2a66877ee90f6d`.
+- Replays DEC-321 review and DEC-322 freeze; expected DEC-322 fingerprint `b7d3e5461511c8e14dd4402028ad24daefcf431cece3b59575588ba915db510e`.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Actual dispatch/executor/execute mode authorized?: NO.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
