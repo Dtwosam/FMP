@@ -1,0 +1,150 @@
+name: phase8a-exp062-dormant-one-shot-historical-executor-workflow-source-proof
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-exp062-dormant-one-shot-historical-executor-workflow-source-proof.yml
+      - docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled
+      - src/fmp/discovery/exp062_historical_one_shot_executor_workflow_installation_source_contract.py
+      - src/fmp/discovery/exp062_historical_one_shot_executor_dormant_workflow_source.py
+      - .github/workflows/phase8a-exp062-discovery.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  read-only-dormant-one-shot-historical-executor-workflow-source-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require exact first merged-main DEC-356 proof push
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+      - name: Require frozen DEC-354/355 source identities
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/exp062_historical_one_shot_executor_workflow_installation_source_contract.py)" = "e4fc6a7d1faaca50bc6936597f0e8b66fe096985"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_one_shot_executor_dormant_workflow_source.py)" = "0672310946ab6bb3b77d2de5c4ea5d68e41f810a"
+          test "$(git hash-object docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled)" = "51ce87584369be957482460d81649adb1cb9f05d"
+          test "$(git hash-object .github/workflows/phase8a-exp062-discovery.yml)" = "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50"
+
+      - name: Require active executor workflow path still absent
+        run: |
+          set -euo pipefail
+          test ! -e .github/workflows/phase8a-exp062-one-shot-historical-executor.yml
+
+      - name: Build exact DEC-355 dormant source proof
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import json
+          from pathlib import Path
+
+          module_path = Path(
+              "src/fmp/discovery/"
+              "exp062_historical_one_shot_executor_dormant_workflow_source.py"
+          )
+          spec = importlib.util.spec_from_file_location(
+              "dec355_dormant_source",
+              module_path,
+          )
+          assert spec is not None
+          assert spec.loader is not None
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+
+          report = module.build_one_shot_historical_executor_dormant_workflow_source(
+              repository_root=Path("."),
+          )
+          out = Path(
+              "dormant-one-shot-historical-executor-workflow-source.json"
+          )
+          out.write_text(
+              json.dumps(report, sort_keys=True, indent=2, allow_nan=False)
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Verify dormant source and all runtime locks
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path(
+                  "dormant-one-shot-historical-executor-workflow-source.json"
+              ).read_text(encoding="utf-8")
+          )
+
+          assert report["decision"] == "DEC-355"
+          assert report["version"] == (
+              "fmp-exp062-one-shot-historical-executor-dormant-workflow-source-v1"
+          )
+          assert report["stage"] == (
+              "EXP062_ONE_SHOT_HISTORICAL_EXECUTOR_DORMANT_TEMPLATE_SOURCE_"
+              "FROZEN_ACTIVE_WORKFLOW_UNINSTALLED"
+          )
+          assert report["dormant_executor_workflow_template_blob_sha"] == (
+              "51ce87584369be957482460d81649adb1cb9f05d"
+          )
+          assert report["dormant_executor_workflow_template_present"] is True
+          assert report["dormant_template_dispatch_capable_if_installed"] is True
+          assert report["dormant_template_actions_write_required_if_installed"] is True
+          assert report["historical_result_attempt_count"] == 0
+          assert report["historical_result_slot_consumed"] is False
+          assert report["historical_result_slot_verified_available"] is True
+          assert report["expected_target_run_number"] == 2
+          assert report["expected_target_run_attempt"] == 1
+          assert report["planned_dispatch_command_frozen"] == (
+              "gh workflow run phase8a-exp062-discovery.yml --ref main"
+          )
+
+          for field in (
+              "historical_executor_workflow_install_authorized",
+              "historical_executor_workflow_installed",
+              "historical_executor_available",
+              "historical_result_dispatch_authorized",
+              "historical_execute_mode_available",
+              "rerun_authorized",
+              "retry_authorized",
+              "replacement_run_authorized",
+              "reserved_robustness_access_authorized",
+              "candidate_compilation_authorized",
+              "promotion_authorized",
+              "phase8b_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert report[field] is False, field
+          PY
+
+      - name: Upload immutable DEC-356 dormant-source proof
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp062-dec356-dormant-one-shot-historical-executor-source-${{ github.sha }}
+          path: dormant-one-shot-historical-executor-workflow-source.json
+          if-no-files-found: error
