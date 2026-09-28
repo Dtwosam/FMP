@@ -1517,3 +1517,13 @@ Copy this section for each serious experiment:
 - Existing run #2 immediately consumes the slot and removes the command.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
 - Next gate: repository-hosted read-only executor activation-preflight proof.
+
+### EXP-20260927-062 — DEC-332 repository-hosted executor activation-preflight proof
+
+- Push-to-main read-only proof workflow added for DEC-331.
+- Proof requires first workflow run / attempt 1 / 1 and exact DEC-330/331 source blobs.
+- Proof runs only the activation-preflight planner and uploads only `historical-executor-activation-preflight.json`.
+- Future discovery command is checked as data and is not executed.
+- Historical executor availability, actual dispatch, and execute mode remain unauthorized.
+- Reserved 2023-2026 data and all candidate/demo/live/trading paths remain locked.
+- Next gate after actual success: concrete activation-preflight runtime evidence review/freeze.
