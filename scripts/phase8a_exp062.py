@@ -15,8 +15,11 @@ from fmp.discovery.exp062_run_contract import (
     validate_aggregate_evidence,
     validate_cell_evidence,
 )
-from fmp.discovery.exp062_workflow_source import (
+from fmp.discovery.exp062_historical_execution_authorization import (
+    historical_execution_authorization_payload,
     require_historical_execution_authorized,
+)
+from fmp.discovery.exp062_workflow_source import (
     validate_exp062_workflow_source_dependencies,
     validate_source_snapshots,
     workflow_source_payload,
@@ -81,6 +84,9 @@ def _cmd_preflight(args: argparse.Namespace) -> int:
     )
     value["source_dependencies"] = validate_exp062_workflow_source_dependencies(
         repository_root=Path("."),
+    )
+    value["execution_authorization"] = historical_execution_authorization_payload(
+        code_commit=args.code_commit,
     )
     _write_json(args.out, value)
     return 0
