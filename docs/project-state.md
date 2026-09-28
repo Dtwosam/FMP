@@ -861,3 +861,19 @@ revalidate the still-empty source-authorized slot, and bind plan hashes.
 
 DEC-310 itself cannot dispatch or execute historical discovery. Reserved 2023-2026 data
 and all downstream trading paths remain locked.
+
+## 2026-09-28 — DEC-311 EXP-062 historical-plan proof frozen
+
+The actual DEC-309 read-only plan proof is now bound to immutable runtime evidence.
+Run `36403342301` succeeded as run #1 / attempt 1 on
+`95c193343a905acd40daf0eea5d27d55fd2537e1`, with sole job
+`108866149073` and sole artifact `10960559187`.
+
+DEC-311 binds the artifact digest plus independently verified ZIP SHA-256 and the exact
+raw/canonical `historical-plan.json` hashes. The frozen plan still shows zero
+historical-result attempts and one unconsumed source-authorized slot.
+
+Historical-result dispatch, execute mode, historical discovery execution/result
+production, reserved 2023-2026 access, candidate compilation/promotion, Phase 8B,
+demo, broker/live, real-money, and trading remain unauthorized. The next safe gate is
+a separate source-only execution-authorization contract; no dispatcher is authorized.
