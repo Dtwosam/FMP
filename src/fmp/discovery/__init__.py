@@ -429,3 +429,15 @@ __all__ += [
     "freeze_historical_plan_proof",
     "validate_historical_plan_freeze_sources",
 ]
+
+from .exp062_historical_execution_authorization import (
+    historical_execution_authorization_payload as exp062_historical_execution_authorization_payload,
+    require_historical_execution_authorized as require_dec312_exp062_historical_execution,
+    validate_historical_execution_authorization_sources as validate_exp062_historical_execution_authorization_sources,
+)
+
+__all__ += [
+    "exp062_historical_execution_authorization_payload",
+    "require_dec312_exp062_historical_execution",
+    "validate_exp062_historical_execution_authorization_sources",
+]
