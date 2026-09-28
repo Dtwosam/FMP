@@ -1284,3 +1284,19 @@ Reserved 2023-2026 data and all candidate/demo/live/real-money/trading paths rem
 locked.
 
 The next safe step is a repository-hosted read-only proof of this workflow preflight.
+
+
+## 2026-09-28 — DEC-344 EXP-062 workflow-preflight proof source-ready
+
+A repository-hosted read-only proof now exists for the DEC-343 one-shot historical
+executor workflow preflight.
+
+It checks exact merged main and the manual EXP-062 run inventory, invokes only the
+plan surface, and uploads only the workflow-preflight JSON. No historical workflow is
+submitted.
+
+The historical slot remains empty and target run #2 / attempt 1 remains the sole
+future attempt. Executor availability, actual dispatch, execute mode, reserved
+2023-2026 data, and all candidate/demo/live/real-money/trading paths remain locked.
+
+The next safe step after real successful proof evidence is review/freeze.
