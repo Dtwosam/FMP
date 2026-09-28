@@ -35,7 +35,7 @@ ACTIVE_INSTALLATION_PREFLIGHT_PROOF_RUN_ID = 36484309283
 ACTIVE_INSTALLATION_PREFLIGHT_PROOF_JOB_ID = 109137344254
 ACTIVE_INSTALLATION_PREFLIGHT_PROOF_ARTIFACT_ID = 10997847720
 ACTIVE_INSTALLATION_PREFLIGHT_PROOF_ARTIFACT_NAME = (
-    "exp062-dec362-active-one-shot-historical-executor-workflow-installation-preflight-"
+    "exp062-dec368-active-one-shot-historical-executor-workflow-installation-preflight-"
     "035c0ee8190a7eb1e2c8ac80771e6eeb19d1e8e1"
 )
 ACTIVE_INSTALLATION_PREFLIGHT_PROOF_ARTIFACT_DIGEST = (
@@ -209,8 +209,8 @@ def _validate_reviewed_result(value: Mapping[str, object]) -> None:
             "active_installation_preflight_version": (
                 "fmp-exp062-active-one-shot-historical-executor-workflow-installation-preflight-v1"
             ),
-            "active_install_contract_decision": "DEC-366",
-            "active_install_contract_version": (
+            "active_installation_contract_decision": "DEC-366",
+            "active_installation_contract_version": (
                 "fmp-exp062-active-one-shot-historical-executor-workflow-installation-contract-v1"
             ),
             "dormant_executor_workflow_template_blob_sha": (
@@ -224,7 +224,7 @@ def _validate_reviewed_result(value: Mapping[str, object]) -> None:
             "historical_result_slot_verified_available": True,
             "expected_target_run_number": 2,
             "expected_target_run_attempt": 1,
-            "active_one_shot_historical_executor_workflow_install_source_authorized": True,
+            "active_one_shot_historical_executor_workflow_installation_source_authorized": True,
             "historical_executor_workflow_install_authorized": False,
             "historical_executor_workflow_installed": False,
             "historical_executor_available": False,
@@ -279,8 +279,8 @@ def _validate_dec370_freeze(value: Mapping[str, object]) -> None:
             "active_installation_preflight_version": (
                 "fmp-exp062-active-one-shot-historical-executor-workflow-installation-preflight-v1"
             ),
-            "active_install_contract_decision": "DEC-366",
-            "active_install_contract_version": (
+            "active_installation_contract_decision": "DEC-366",
+            "active_installation_contract_version": (
                 "fmp-exp062-active-one-shot-historical-executor-workflow-installation-contract-v1"
             ),
             "dormant_executor_workflow_template_blob_sha": (
@@ -293,7 +293,7 @@ def _validate_dec370_freeze(value: Mapping[str, object]) -> None:
             "historical_result_slot_verified_available": True,
             "expected_target_run_number": 2,
             "expected_target_run_attempt": 1,
-            "active_one_shot_historical_executor_workflow_install_source_authorized": True,
+            "active_one_shot_historical_executor_workflow_installation_source_authorized": True,
             "historical_executor_workflow_install_authorized": False,
             "historical_executor_workflow_installed": False,
             "historical_executor_available": False,
@@ -442,7 +442,7 @@ def freeze_active_one_shot_historical_executor_workflow_installation_preflight_p
         "historical_result_slot_verified_available": True,
         "expected_target_run_number": 2,
         "expected_target_run_attempt": 1,
-        "active_one_shot_historical_executor_workflow_install_source_authorized": True,
+        "active_one_shot_historical_executor_workflow_installation_source_authorized": True,
         "historical_executor_workflow_install_authorized": False,
         "historical_executor_workflow_installed": False,
         "historical_executor_available": False,
