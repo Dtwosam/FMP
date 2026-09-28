@@ -26,3 +26,144 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Compile package
         run: python -m compileall -q src tests
+
+  exp062-proof-connector-bootstrap:
+    needs: unit-tests
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.base_ref == 'main' &&
+      github.head_ref == 'phase8a-dec307-exp062-proof-bootstrap-activation' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.number == 0
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout exact live main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require reviewed bootstrap source pins
+        run: |
+          set -euo pipefail
+          test "$GITHUB_ACTIONS" = "true"
+          test "$GITHUB_EVENT_NAME" = "pull_request"
+          test "$GITHUB_BASE_REF" = "main"
+          test "$GITHUB_HEAD_REF" = "phase8a-dec307-exp062-proof-bootstrap-activation"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$(git status --porcelain)" = ""
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
+          test "$(git hash-object .github/workflows/phase8a-exp062-discovery.yml)" = "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50"
+          test "$(git hash-object src/fmp/discovery/exp062_proof_contract.py)" = "dcc513d1918e95e2bc0bc02a04774291c6b340c0"
+          test "$(git hash-object src/fmp/discovery/exp062_proof_operator.py)" = "bc33c377ee9865766613a3ad64ddd9fd751d88fa"
+          test "$(git hash-object src/fmp/discovery/exp062_proof_executor.py)" = "b5963636901b5caba1730f8a969dd3f9a1bf1979"
+          test "$(git hash-object src/fmp/discovery/exp062_connector_proof_bootstrap.py)" = "bd7f5b4a09a89c5dd855db0eef94583e7058764e"
+          test "$(git hash-object scripts/phase8a_exp062_connector_proof_bootstrap.py)" = "92c26627136b4f4c1f476e34fd3fdc9c59a34ebf"
+          test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned proof runtime
+        run: python -m pip install -r requirements/exp061-discovery-run.txt
+
+      - name: Execute DEC-306 guarded proof bootstrap
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/exp062-dec307-bootstrap-evidence"
+          python scripts/phase8a_exp062_connector_proof_bootstrap.py \
+            > "$RUNNER_TEMP/exp062-dec307-bootstrap-evidence/executor.json"
+
+      - name: Verify exactly one proof run was submitted
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp062-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
+          found=0
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            gh api "$endpoint" > "$RUNNER_TEMP/exp062-dec307-bootstrap-evidence/proof-runs.json"
+            if python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "exp062-dec307-bootstrap-evidence/proof-runs.json"
+              ).read_text(encoding="utf-8")
+          )
+          runs = [
+              item
+              for item in payload.get("workflow_runs", [])
+              if item.get("name") == "phase8a-exp062-discovery"
+              and item.get("path") == ".github/workflows/phase8a-exp062-discovery.yml"
+              and item.get("event") == "workflow_dispatch"
+              and item.get("head_branch") == "main"
+          ]
+          raise SystemExit(0 if len(runs) == 1 else 1)
+          PY
+            then
+              found=1
+              break
+            fi
+            sleep 2
+          done
+          test "$found" = "1"
+
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          evidence_dir = (
+              Path(os.environ["RUNNER_TEMP"])
+              / "exp062-dec307-bootstrap-evidence"
+          )
+          payload = json.loads(
+              (evidence_dir / "proof-runs.json").read_text(encoding="utf-8")
+          )
+          runs = [
+              item
+              for item in payload.get("workflow_runs", [])
+              if item.get("name") == "phase8a-exp062-discovery"
+              and item.get("path") == ".github/workflows/phase8a-exp062-discovery.yml"
+              and item.get("event") == "workflow_dispatch"
+              and item.get("head_branch") == "main"
+          ]
+          assert len(runs) == 1
+          run = runs[0]
+          head = subprocess.check_output(
+              ["git", "rev-parse", "HEAD"],
+              text=True,
+          ).strip()
+          assert run["run_number"] == 1
+          assert run["run_attempt"] == 1
+          assert run["head_sha"] == head
+          assert isinstance(run["id"], int) and run["id"] > 0
+          (evidence_dir / "proof-run.json").write_text(
+              json.dumps(run, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload immutable DEC-307 bootstrap evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exp062-dec307-proof-bootstrap-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/exp062-dec307-bootstrap-evidence
+          if-no-files-found: warn
