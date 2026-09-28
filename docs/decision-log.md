@@ -6361,3 +6361,21 @@ candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
 trading remain false.
 
 Next gate after real success: immutable active-install-preflight proof review/freeze.
+
+
+## DEC-363 — EXP-062 active install preflight proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY FUTURE RUNTIME-EVIDENCE REVIEWER
+
+DEC-363 adds a strict reviewer for future successful DEC-362 merged-main evidence.
+It pins the DEC-362 proof workflow, DEC-361 preflight/CLI, DEC-360 install contract,
+the dormant executor template, and the active discovery workflow; requires run #1 /
+attempt 1 success, one successful proof job, one non-expired artifact, and exact
+DEC-361 preflight content; and records raw/canonical SHA-256 hashes.
+
+The active executor workflow path must remain absent. Install authorization,
+installed state, executor availability, dispatch, execute mode, retries, reserved
+data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next gate: deterministic immutable review freeze.

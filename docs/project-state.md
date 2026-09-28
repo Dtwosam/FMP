@@ -1540,3 +1540,13 @@ No install, executor, dispatch, or execute authority exists. The historical-resu
 slot remains empty with target run #2 / attempt 1.
 
 Next safe step after real successful proof evidence: review/freeze.
+
+
+## 2026-09-28 — DEC-363 active install-preflight proof reviewer source-ready
+
+A source-only reviewer now exists for future DEC-362 proof evidence. It can bind exact
+run/job/artifact/preflight identities and hashes but cannot install or dispatch the
+historical executor workflow.
+
+The active executor workflow path must remain absent and all runtime/trading authority
+remains locked. Next safe gate: immutable review freeze after valid proof evidence.
