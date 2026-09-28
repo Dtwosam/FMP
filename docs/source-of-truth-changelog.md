@@ -456,3 +456,12 @@
 - Pinned the DEC-306 runtime proof freeze plus unchanged research/workflow/proof source blobs.
 - Kept historical dispatch/execution/result production, reserved 2023-2026 access, candidate/promotion, Phase 8B, demo/live, real-money, and trading false.
 
+
+## 2026-09-28 — DEC-308 EXP-062 read-only historical operator
+
+- Added an exact-main read-only planner for the single DEC-307 historical slot.
+- Exposed the future EXP-062 dispatch command only as plan evidence while the slot is empty.
+- Removed the command once a run #2 is present and rejected any second-run plan.
+- Added no execute mode or dispatch authority.
+- Kept historical execution/result production, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
