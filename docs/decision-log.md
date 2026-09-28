@@ -6197,3 +6197,27 @@ rerun/retry/replacement, reserved 2023-2026 access, candidate compilation/promot
 Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is the dormant executor workflow template source itself.
+
+
+## DEC-355 — EXP-062 dormant one-shot historical executor workflow source
+
+**Date:** 2026-09-28  
+**Status:** DORMANT DISABLED TEMPLATE SOURCE / ACTIVE WORKFLOW UNINSTALLED
+
+DEC-355 adds the disabled source template for the future one-shot historical executor
+workflow outside `.github/workflows/`.
+
+The template is inert but fully encodes the future one-shot behavior: exact merged
+main, executor run #1 / attempt 1, frozen discovery source, empty historical-result
+slot, exactly one historical workflow dispatch, exact target run #2 / attempt 1, and
+an immutable executor receipt.
+
+The dormant template requires `actions: write` only as future source semantics; no
+active workflow is installed and no dispatch occurs under DEC-355.
+
+Install authorization, installed state, executor availability, historical dispatch,
+execute mode, rerun/retry/replacement, reserved 2023-2026 access, candidate
+compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading remain
+false.
+
+The next safe gate is a repository-hosted read-only proof of this dormant source.

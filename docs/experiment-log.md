@@ -1786,3 +1786,15 @@ Copy this section for each serious experiment:
 - Executor / dispatch / execute authority authorized?: NO.
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Next gate: dormant executor workflow template source.
+
+
+### EXP-20260927-062 — DEC-355 dormant one-shot executor workflow source
+
+- Disabled executor template source added outside `.github/workflows/`.
+- Dormant template blob: `51ce87584369be957482460d81649adb1cb9f05d`.
+- Encodes executor run #1 / attempt 1 and historical result run #2 / attempt 1.
+- Encodes exactly one historical discovery shell dispatch.
+- Encodes immutable executor receipt and no retry/replacement authority.
+- Active executor workflow installed?: NO.
+- Historical dispatch authorized under this decision?: NO.
+- Next gate: read-only dormant-source proof.
