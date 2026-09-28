@@ -1245,8 +1245,8 @@ Copy this section for each serious experiment:
 
 - Two connector-created main merges produced no DEC-303 push workflow run.
 - DEC-306 adds a source-only recovery contract; it does not dispatch the proof.
-- Recovery is pinned to main `0c57298198a2915e3f31fb6ba800c9a644c519bf` and a
-  dedicated later activation PR.
+- Recovery captures the exact clean live `main` head at activation time, revalidates
+  that same head twice, and is limited to one dedicated later activation PR.
 - Zero-run DEC-302 and unchanged DEC-303 validation remain mandatory.
 - Historical execution, candidate compilation, demo/live, real-money, and trading
   remain unauthorized.
