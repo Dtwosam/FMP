@@ -5510,3 +5510,27 @@ locked.
 
 The next safe gate after real DEC-320 proof is concrete runtime-evidence binding before
 any one-shot executor.
+
+## DEC-323 — EXP-062 historical dispatch-plan runtime evidence freeze
+
+**Date:** 2026-09-28  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / DISPATCH + EXECUTOR STILL LOCKED
+
+DEC-323 binds the actual successful DEC-320 proof on merged head
+`fee1a78168254e7e8fecc104859d1a231b727243`: run `36418793172`, job
+`108916232597`, artifact `10967344018`, artifact/ZIP SHA-256
+`ca0f1156fab234327bbcdd9c3150cb7904ed6def230f035019b2139c4c523adf`,
+raw plan SHA-256 `a6fa5f3a7f3f45df5d64efe1661a5b17887f88fded31e1cbb1620df5b18a95d1`,
+and canonical plan SHA-256
+`41ca6c710d8750851350c2108b42970501a5efa14481cff61e2a66877ee90f6d`.
+
+The source re-runs DEC-321 review and DEC-322 freezing and requires the exact DEC-322
+fingerprint `b7d3e5461511c8e14dd4402028ad24daefcf431cece3b59575588ba915db510e`.
+
+The historical-result slot remains empty and target run #2 / attempt 1 remains the
+only future attempt. Actual dispatch, executor availability, execute mode, reserved
+2023-2026 access, candidate compilation/promotion, Phase 8B, demo, broker/live,
+real-money, and trading remain locked.
+
+The next safe gate is a source-only one-shot historical executor contract. It must not
+submit the workflow itself.
