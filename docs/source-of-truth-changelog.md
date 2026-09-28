@@ -682,3 +682,11 @@
 - Runs only the DEC-331 activation-preflight planner and validates the run #2 / attempt 1 readiness state.
 - Uploads only immutable historical-executor-activation-preflight.json.
 - Adds no dispatch/execute path and keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-333 EXP-062 activation-preflight proof reviewer
+
+- Added a source-only reviewer for future DEC-332 runtime evidence.
+- Pinned DEC-332 workflow plus DEC-329 runtime freeze, DEC-330 activation contract, DEC-331 preflight/CLI, and active discovery workflow.
+- Requires exact run #1 / attempt 1 success, one successful proof job, and one non-expired artifact.
+- Revalidates the exact run #2 / attempt 1 DEC-331 preflight and records raw/canonical SHA-256 hashes.
+- Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.

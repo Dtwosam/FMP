@@ -1118,3 +1118,13 @@ The workflow has read-only permissions, runs only the planner, and uploads only
 activation-preflight JSON. It cannot dispatch historical discovery. A real successful
 proof must be bound to exact runtime evidence before any one-shot executor workflow is
 considered.
+
+## 2026-09-28 — DEC-333 EXP-062 activation-preflight reviewer prepared
+
+The stack now includes a source-only reviewer for future DEC-332 merged-main proof
+evidence. It can validate the exact proof run/job/artifact and re-run DEC-331 preflight
+validation against downloaded bytes, including target run #2 / attempt 1.
+
+DEC-333 itself cannot dispatch or execute historical discovery. A real successful
+DEC-332 proof must still exist and be frozen before any one-shot executor workflow is
+considered.
