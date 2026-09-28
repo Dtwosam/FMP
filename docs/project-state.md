@@ -797,7 +797,7 @@ therefore remains closed.
 The DEC-303 push executor remains intact, but connector-created main merges did not
 materialize its push workflow. DEC-306 adds a separate source-only recovery contract
 that can be used only from a dedicated attempt-1 pull-request activation after normal
-tests pass, against exact main
-`0c57298198a2915e3f31fb6ba800c9a644c519bf`.
+tests pass. The activation must capture one clean live `main` checkout and both fresh
+DEC-302 plans must independently confirm that exact same head before dispatch.
 
 DEC-306 dispatches nothing and grants no historical-result or trading authority.
