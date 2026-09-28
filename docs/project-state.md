@@ -1058,3 +1058,14 @@ validation against downloaded preflight bytes, including target run #2 / attempt
 DEC-327 itself cannot dispatch or execute historical discovery. A real successful
 DEC-326 proof must still exist and be frozen before any one-shot executor workflow is
 considered.
+
+## 2026-09-28 — DEC-328 EXP-062 reviewed executor-preflight freeze source
+
+The stack now contains a deterministic source-only freeze builder for a valid DEC-327
+review. It cannot create or infer runtime evidence; it only preserves concrete
+run/job/artifact/hash identities supplied by a successful DEC-327 review and emits a
+canonical freeze fingerprint.
+
+No historical workflow is dispatched by DEC-328. Executor availability, execute mode,
+and actual dispatch remain locked, while reserved 2023-2026 data and all
+candidate/demo/live/trading paths remain closed.
