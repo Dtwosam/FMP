@@ -1571,3 +1571,16 @@ Copy this section for each serious experiment:
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Executor availability / dispatch / execute mode authorized?: NO.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
+
+
+### EXP-20260927-062 — DEC-337 one-shot historical executor source
+
+- Source-only executor contract added and pinned to DEC-336.
+- Requires fresh DEC-331 empty-slot activation preflight.
+- Target remains run #2 / attempt 1.
+- One-shot historical executor source authorized?: YES.
+- Historical executor available?: NO.
+- Historical-result dispatch authorized?: NO.
+- Execute mode available?: NO.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
+- Next gate: repository-hosted source-contract proof.
