@@ -1632,3 +1632,16 @@ Copy this section for each serious experiment:
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Executor availability / dispatch / execute mode authorized?: NO.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
+
+
+### EXP-20260927-062 — DEC-342 one-shot executor workflow contract
+
+- Concrete DEC-341 runtime freeze is the prerequisite.
+- One-shot executor workflow source authorized?: YES.
+- Historical executor available?: NO.
+- Historical-result dispatch authorized?: NO.
+- Execute mode available?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- DEC-334 terminal-review criteria remain pinned.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
+- Next gate: read-only current-main one-shot executor workflow preflight.
