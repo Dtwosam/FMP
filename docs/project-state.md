@@ -1500,3 +1500,16 @@ uninstalled. No executor, dispatch, or execute authority is available. Reserved
 2023-2026 data and all downstream trading paths remain locked.
 
 Next safe step: source-only active one-shot historical executor workflow install contract.
+
+
+## 2026-09-28 — DEC-360 active workflow install contract source-ready
+
+The stack now contains a source-only contract for a future active one-shot historical
+executor workflow installation, bound to the concrete DEC-359 runtime freeze and the
+exact dormant template.
+
+The active `.github/workflows/...` executor path remains absent. No installation,
+executor, dispatch, or execute authority exists. The historical-result slot remains
+empty with target run #2 / attempt 1.
+
+Next safe step: read-only current-main active workflow-install preflight.
