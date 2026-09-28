@@ -1596,3 +1596,14 @@ Copy this section for each serious experiment:
 - Historical executor availability / dispatch / execute mode authorized?: NO.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
 - Next gate after actual success: immutable source-proof review/freeze.
+
+
+### EXP-20260927-062 — DEC-339 source-proof reviewer
+
+- Source-only reviewer prepared for future successful DEC-338 runtime evidence.
+- Requires run #1 / attempt 1 success, one successful proof job, one non-expired artifact, and exact DEC-337 source-contract content.
+- Binds raw and canonical source-contract SHA-256 hashes.
+- Requires DEC-336 runtime-freeze fingerprint and DEC-334 terminal-review identity.
+- Historical executor availability/dispatch/execute mode authorized?: NO.
+- Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate after actual proof: immutable source-proof freeze.

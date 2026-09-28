@@ -1207,3 +1207,18 @@ only the DEC-337 source-contract JSON. Reserved 2023-2026 data and all
 candidate/demo/live/real-money/trading paths remain locked.
 
 The next safe step after real successful proof evidence is source-proof review/freeze.
+
+
+## 2026-09-28 — DEC-339 EXP-062 source-proof reviewer prepared
+
+The stack now includes a source-only reviewer for future DEC-338 merged-main proof
+evidence.
+
+It can validate the exact proof run/job/artifact and downloaded DEC-337 source-contract
+bytes, bind raw/canonical contract hashes, and confirm that the historical-result slot
+remains empty with target run #2 / attempt 1.
+
+DEC-339 itself cannot dispatch or execute historical discovery. Reserved 2023-2026
+data and all candidate/demo/live/real-money/trading paths remain locked.
+
+The next safe step after real DEC-338 evidence is an immutable source-proof freeze.
