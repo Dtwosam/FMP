@@ -805,3 +805,12 @@
 - Verifies zero historical-result attempts and target run #2 / attempt 1.
 - Uploads only the workflow-preflight JSON and never submits the historical workflow.
 - Keeps executor availability, actual dispatch, execute mode, reserved data, and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-345 EXP-062 workflow-preflight proof reviewer
+
+- Added source-only review of future DEC-344 runtime evidence.
+- Pinned DEC-344/343/342 source identities and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates slot-available preflight content and records raw/canonical hashes.
+- Adds no dispatch or execute mode and keeps downstream authority locked.
