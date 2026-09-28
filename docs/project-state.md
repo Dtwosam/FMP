@@ -1459,3 +1459,13 @@ remain absent. It has no write permission and cannot install or dispatch anythin
 
 The historical-result slot remains empty with target run #2 / attempt 1. Next safe
 step after real proof evidence: review/freeze.
+
+
+## 2026-09-28 — DEC-357 dormant executor source-proof reviewer source-ready
+
+A source-only reviewer now exists for future DEC-356 merged-main proof evidence. It
+can bind exact proof run/job/artifact/source identities and hashes but cannot install
+or dispatch the executor workflow.
+
+The active executor workflow remains absent and all runtime/trading authority remains
+locked. Next safe gate: immutable review freeze after valid proof evidence exists.

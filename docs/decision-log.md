@@ -6241,3 +6241,21 @@ replacement, reserved 2023-2026 access, candidate compilation/promotion, Phase 8
 demo, broker/live, real-money, and trading remain false.
 
 The next safe gate after real DEC-356 success is immutable proof review/freeze.
+
+
+## DEC-357 — EXP-062 dormant one-shot historical executor source-proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY FUTURE RUNTIME-EVIDENCE REVIEWER / ACTIVE EXECUTOR ABSENT
+
+DEC-357 adds a strict reviewer for future successful DEC-356 merged-main evidence. It
+pins DEC-356/355/354, the dormant executor template, and active discovery workflow;
+requires run #1 / attempt 1 success, one successful proof job, one non-expired
+artifact, and exact DEC-355 source JSON; and records raw/canonical SHA-256 hashes.
+
+The dormant template remains source only. Install authorization, installed state,
+executor availability, historical dispatch, execute mode, rerun/retry/replacement,
+reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain false.
+
+Next gate: deterministic immutable review freeze.
