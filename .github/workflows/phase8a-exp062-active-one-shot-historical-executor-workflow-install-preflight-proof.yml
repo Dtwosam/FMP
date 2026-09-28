@@ -1,0 +1,163 @@
+name: phase8a-exp062-active-one-shot-historical-executor-workflow-install-preflight-proof
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-exp062-active-one-shot-historical-executor-workflow-install-preflight-proof.yml
+      - .github/workflows/phase8a-exp062-discovery.yml
+      - docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled
+      - src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_contract.py
+      - src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_preflight.py
+      - scripts/phase8a_exp062_active_one_shot_historical_executor_workflow_install_preflight.py
+      - requirements/exp061-discovery-run.txt
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  read-only-active-one-shot-historical-executor-workflow-install-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require exact first merged-main DEC-362 proof push
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+      - name: Require frozen DEC-360/361 source identities
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_contract.py)" = "63d645115dec87a4ec2bbec8448a26ea7cdded34"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_preflight.py)" = "e7a40563e173709e04a63f4d08ac73aa7224a15d"
+          test "$(git hash-object scripts/phase8a_exp062_active_one_shot_historical_executor_workflow_install_preflight.py)" = "f8c5f2d892fe9b3ac8492d6e142fbf698cd2bcdf"
+          test "$(git hash-object docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled)" = "51ce87584369be957482460d81649adb1cb9f05d"
+          test "$(git hash-object .github/workflows/phase8a-exp062-discovery.yml)" = "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50"
+          test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
+
+      - name: Require active executor workflow path still absent
+        run: |
+          set -euo pipefail
+          test ! -e .github/workflows/phase8a-exp062-one-shot-historical-executor.yml
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned planning runtime without editable checkout
+        run: python -m pip install -r requirements/exp061-discovery-run.txt
+
+      - name: Require clean checkout
+        run: test -z "$(git status --porcelain)"
+
+      - name: Fetch current main and exact EXP-062 run inventory
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp062-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/runs.json"
+
+      - name: Run exact DEC-361 read-only active install preflight
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_exp062_active_one_shot_historical_executor_workflow_install_preflight.py plan \
+            --main-json "$RUNNER_TEMP/main.json" \
+            --runs-json "$RUNNER_TEMP/runs.json" \
+            --expected-head "$GITHUB_SHA" \
+            > "$RUNNER_TEMP/active-one-shot-historical-executor-workflow-install-preflight.json"
+
+      - name: Verify active path absent preflight and all locks
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          plan = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "active-one-shot-historical-executor-workflow-install-preflight.json"
+              ).read_text(encoding="utf-8")
+          )
+
+          assert plan["decision"] == "DEC-361"
+          assert plan["version"] == (
+              "fmp-exp062-active-one-shot-historical-executor-workflow-install-preflight-v1"
+          )
+          assert plan["install_contract_decision"] == "DEC-360"
+          assert plan["install_contract_version"] == (
+              "fmp-exp062-active-one-shot-historical-executor-workflow-install-contract-v1"
+          )
+          assert plan["expected_head_sha"] == os.environ["GITHUB_SHA"]
+          assert plan["stage"] == (
+              "EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
+              "PREFLIGHT_ACTIVE_WORKFLOW_ABSENT_SLOT_AVAILABLE"
+          )
+          assert plan["dormant_executor_workflow_template_blob_sha"] == (
+              "51ce87584369be957482460d81649adb1cb9f05d"
+          )
+          assert plan["dormant_executor_workflow_template_present"] is True
+          assert plan["expected_executor_workflow_path"] == (
+              ".github/workflows/phase8a-exp062-one-shot-historical-executor.yml"
+          )
+          assert plan["executor_workflow_path_exists"] is False
+          assert plan["proof_run_id"] == 36358289723
+          assert plan["proof_run_count"] == 1
+          assert plan["historical_result_attempt_count"] == 0
+          assert plan["historical_result_run_id"] is None
+          assert plan["historical_result_slot_consumed"] is False
+          assert plan["historical_result_slot_verified_available"] is True
+          assert plan["expected_target_run_number"] == 2
+          assert plan["expected_target_run_attempt"] == 1
+          assert plan[
+              "active_one_shot_historical_executor_workflow_install_source_authorized"
+          ] is True
+
+          for field in (
+              "historical_executor_workflow_install_authorized",
+              "historical_executor_workflow_installed",
+              "historical_executor_available",
+              "historical_result_dispatch_authorized",
+              "historical_execute_mode_available",
+              "rerun_authorized",
+              "retry_authorized",
+              "replacement_run_authorized",
+              "reserved_robustness_access_authorized",
+              "candidate_compilation_authorized",
+              "promotion_authorized",
+              "phase8b_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert plan[field] is False, field
+          PY
+
+      - name: Upload immutable DEC-362 active-install-preflight proof
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp062-dec362-active-one-shot-historical-executor-workflow-install-preflight-${{ github.sha }}
+          path: ${{ runner.temp }}/active-one-shot-historical-executor-workflow-install-preflight.json
+          if-no-files-found: error
