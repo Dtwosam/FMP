@@ -34,7 +34,7 @@ jobs:
       github.base_ref == 'main' &&
       github.head_ref == 'phase8a-dec307-exp062-proof-bootstrap-activation' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.number == 0
+      github.event.pull_request.number == 451
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -162,7 +162,7 @@ jobs:
 
       - name: Upload immutable DEC-307 bootstrap evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: exp062-dec307-proof-bootstrap-evidence-${{ github.run_id }}
           path: ${{ runner.temp }}/exp062-dec307-bootstrap-evidence
