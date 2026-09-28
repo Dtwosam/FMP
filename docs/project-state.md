@@ -925,3 +925,14 @@ validation against downloaded plan bytes, including target run #2 / attempt 1.
 DEC-315 itself cannot dispatch or execute historical discovery. A real successful
 DEC-314 proof must still exist and be frozen before any one-shot executor is
 considered.
+
+## 2026-09-28 — DEC-316 EXP-062 reviewed execution-plan freeze source
+
+The stack now contains a deterministic source-only freeze builder for a valid DEC-315
+review. It cannot create or infer runtime evidence; it only preserves concrete
+run/job/artifact/hash identities supplied by a successful DEC-315 review and emits a
+canonical freeze fingerprint.
+
+No historical workflow is dispatched by DEC-316. The only execution capability remains
+the exact future DEC-312 run #2 / attempt 1 runtime, while reserved 2023-2026 data and
+all candidate/demo/live/trading paths remain locked.

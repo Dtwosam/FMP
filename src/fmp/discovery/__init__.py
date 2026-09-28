@@ -463,3 +463,11 @@ __all__ += [
     "review_historical_execution_plan_proof",
     "validate_historical_execution_plan_review_sources",
 ]
+
+from .exp062_historical_execution_plan_freeze import (
+    freeze_reviewed_historical_execution_plan,
+)
+
+__all__ += [
+    "freeze_reviewed_historical_execution_plan",
+]

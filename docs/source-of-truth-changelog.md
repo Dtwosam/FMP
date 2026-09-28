@@ -532,3 +532,11 @@
 - Requires exact run #1 / attempt 1 success, one successful proof job, and one non-expired artifact.
 - Revalidates the exact run #2 / attempt 1 DEC-313 plan and records raw/canonical SHA-256 hashes.
 - Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-316 EXP-062 reviewed execution-plan freeze
+
+- Added a deterministic freeze builder for valid DEC-315 reviewed evidence.
+- Requires exact proof run #1 / attempt 1 success, positive run/job/artifact ids, SHA-256 artifact/plan identities, and target run #2 / attempt 1.
+- Requires the exact DEC-311/312/313/314 source-blob map from DEC-315.
+- Emits a canonical freeze fingerprint while preserving runtime evidence unchanged.
+- Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.

@@ -5372,3 +5372,23 @@ remain locked.
 
 The next gate after real DEC-314 evidence passes review is an immutable concrete
 execution-plan proof freeze.
+
+## DEC-316 — EXP-062 reviewed historical execution-plan freeze
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY DETERMINISTIC FREEZE / NO HISTORICAL DISPATCH
+
+DEC-316 adds a deterministic freeze builder for an already-valid DEC-315 review. It
+requires the exact DEC-315 stage, proof/run/job/artifact identities, artifact digest,
+raw/canonical plan hashes, target run #2 / attempt 1, and exact DEC-311/312/313/314
+source-blob map.
+
+DEC-316 does not invent runtime evidence. Before a real DEC-314 proof exists, the
+builder has no concrete evidence to freeze.
+
+Historical-result dispatch and execute mode remain false. Rerun/retry/replacement,
+reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain false.
+
+The next safe gate after actual DEC-314 evidence is a concrete runtime-evidence binding
+before any one-shot dispatcher is considered.
