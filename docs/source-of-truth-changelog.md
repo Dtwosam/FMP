@@ -620,3 +620,12 @@
 - Removes the command once run #2 exists.
 - Adds no execute/advance mode and keeps executor availability plus actual dispatch false.
 - Keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-326 EXP-062 historical executor-preflight proof
+
+- Added a first-run/attempt-1 push-to-main read-only proof workflow for DEC-325.
+- Pinned DEC-323/324/325, active discovery workflow, preflight CLI, and runtime requirements.
+- Fetches current main and EXP-062 manual-main run inventory through read-only GitHub API calls.
+- Runs only the DEC-325 preflight planner and validates the run #2 / attempt 1 readiness state.
+- Uploads only immutable historical-executor-preflight.json.
+- Adds no dispatch/execute path and keeps reserved data plus all downstream trading paths locked.
