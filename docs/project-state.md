@@ -1469,3 +1469,16 @@ or dispatch the executor workflow.
 
 The active executor workflow remains absent and all runtime/trading authority remains
 locked. Next safe gate: immutable review freeze after valid proof evidence exists.
+
+
+## 2026-09-28 — DEC-358 dormant executor source-proof freeze source-ready
+
+A deterministic source-only freeze now exists for a valid DEC-357 review. It cannot
+invent runtime evidence, install the executor workflow, or dispatch historical
+discovery.
+
+The freeze preserves exact reviewed proof identities/hashes and emits one canonical
+fingerprint. The active executor workflow remains uninstalled and all runtime/trading
+authority remains locked.
+
+Next safe step after real DEC-356 proof evidence: concrete runtime-evidence binding.
