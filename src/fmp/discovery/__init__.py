@@ -373,3 +373,12 @@ from .exp062_proof_result_freeze import (
 __all__ += [
     "freeze_reviewed_gate_proof_result",
 ]
+
+
+from .exp062_connector_proof_bootstrap import (
+    build_connector_proof_bootstrap_evidence,
+)
+
+__all__ += [
+    "build_connector_proof_bootstrap_evidence",
+]
