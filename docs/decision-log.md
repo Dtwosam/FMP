@@ -5614,3 +5614,23 @@ trading remain locked.
 
 The next gate after real DEC-326 evidence passes review is an immutable concrete
 executor-preflight proof freeze.
+
+## DEC-328 — EXP-062 reviewed historical executor-preflight freeze
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY DETERMINISTIC FREEZE / NO EXECUTOR
+
+DEC-328 adds a deterministic freeze builder for an already-valid DEC-327 review. It
+requires the exact DEC-327 stage, proof/run/job/artifact identities, artifact digest,
+raw/canonical preflight hashes, target run #2 / attempt 1, and exact DEC-323/324/325/326
+source-blob map.
+
+DEC-328 does not invent runtime evidence. Before a real DEC-326 proof exists, the
+builder has no concrete evidence to freeze.
+
+Historical executor availability, actual dispatch, execute mode, reserved 2023-2026
+access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain false.
+
+The next safe gate after actual DEC-326 evidence is a concrete runtime-evidence binding
+before any one-shot executor workflow is considered.
