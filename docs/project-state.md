@@ -1419,3 +1419,21 @@ executor, dispatch, or execute authority exists. Reserved data and all downstrea
 trading paths remain locked.
 
 Next safe step: source-only workflow-installation source contract.
+
+
+## 2026-09-28 — DEC-353 concrete workflow-install-preflight proof evidence bound
+
+The successful DEC-350 read-only workflow-install-preflight proof is now represented
+by exact runtime evidence: merged head
+`bef60cd8656f0db48293570c13f91e2e09fe5be8`, run `36461898040`, job
+`109062250103`, artifact `10987972547`, matching GitHub/independent ZIP SHA-256,
+and frozen raw/canonical preflight hashes.
+
+DEC-353 replays DEC-351 review and DEC-352 deterministic freezing and requires the
+exact DEC-352 fingerprint. DEC-334 terminal-review criteria remain pinned.
+
+The future executor workflow file remains absent. No install, executor, dispatch, or
+execute authority is available. Reserved 2023-2026 data and all downstream trading
+paths remain locked.
+
+Next safe step: source-only one-shot historical executor workflow-installation source contract.
