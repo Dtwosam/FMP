@@ -1773,3 +1773,17 @@ Copy this section for each serious experiment:
 - Future executor workflow path remains absent.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Reserved data and all downstream trading paths remain locked.
+
+
+### EXP-20260927-062 — DEC-353 workflow-install-preflight proof runtime evidence freeze
+
+- Bound real DEC-350 proof run `36461898040`, job `109062250103`, and artifact `10987972547`.
+- Artifact/ZIP SHA-256: `60a723a55502ee9b8145258c5482ce71b82b2331c572378536b14d78f6ef2f91`.
+- Raw install-preflight SHA-256: `ee754581b87576c3c23228a2371b88b3b8a38fdcd9c20ebd2c222c18f7c65e0d`.
+- Canonical install-preflight SHA-256: `5c1893ea24a627ea421f05564d6d0cc490215201c01162fbe0b6ab519a323c8b`.
+- Replays DEC-351 review and DEC-352 freeze; expected DEC-352 fingerprint `75fad6795f4046d83f5ae29f08475c969e29d3fe3af0e3448dde46292a959f4a`.
+- Pins DEC-334 terminal-review criteria.
+- Future executor workflow path remains absent.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Reserved data and all downstream trading paths remain locked.
