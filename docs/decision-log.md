@@ -5766,3 +5766,26 @@ Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
 broker/live, real-money, and trading remain false.
 
 DEC-334 must be green before the one-shot historical executor reaches main.
+
+
+## DEC-335 — EXP-062 reviewed historical executor activation-preflight freeze
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY DETERMINISTIC FREEZE / NO EXECUTOR
+
+DEC-335 adds a deterministic freeze builder for an already-valid DEC-333 review of
+the successful DEC-332 executor activation-preflight proof. It preserves the exact
+proof run/job/artifact identities, artifact digest, raw/canonical activation-preflight
+hashes, target run #2 / attempt 1, and the exact DEC-333 review source-blob map.
+
+DEC-335 cannot invent runtime evidence and cannot dispatch the historical workflow.
+It emits a canonical `freeze_fingerprint_sha256` so the later concrete runtime
+binding can prove it replayed the same reviewed evidence.
+
+Historical executor availability, actual dispatch, execute mode, reserved 2023-2026
+access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain false. DEC-334 remains a required sibling gate before any one-shot
+executor reaches main.
+
+The next safe gate is concrete DEC-332 activation-preflight runtime-evidence binding
+before any historical executor workflow is considered.
