@@ -1740,3 +1740,13 @@ Copy this section for each serious experiment:
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Reserved data and all downstream trading paths remain locked.
 - Next gate after actual success: immutable proof review/freeze.
+
+
+### EXP-20260927-062 — DEC-351 workflow-install preflight proof reviewer
+
+- Future DEC-350 proof reviewer added.
+- Requires run #1 / attempt 1 success, one successful job, one non-expired artifact.
+- Revalidates exact DEC-349 source-absent preflight bytes.
+- Records raw/canonical preflight SHA-256 hashes.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Next gate: immutable review freeze.
