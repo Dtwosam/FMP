@@ -1482,3 +1482,21 @@ fingerprint. The active executor workflow remains uninstalled and all runtime/tr
 authority remains locked.
 
 Next safe step after real DEC-356 proof evidence: concrete runtime-evidence binding.
+
+
+## 2026-09-28 — DEC-359 concrete dormant-source proof evidence bound
+
+The successful DEC-356 read-only dormant executor source proof is now represented by
+exact runtime evidence: merged head
+`67337de4b21efab0cbafb3c9237397f0a98d524e`, run `36473192632`, job
+`109100293950`, artifact `10991479562`, matching GitHub/independent ZIP SHA-256,
+and frozen raw/canonical source hashes.
+
+DEC-359 replays DEC-357 review and DEC-358 deterministic freezing and requires the
+exact DEC-358 fingerprint. DEC-334 terminal-review criteria remain pinned.
+
+The dormant template remains source only and the active executor workflow remains
+uninstalled. No executor, dispatch, or execute authority is available. Reserved
+2023-2026 data and all downstream trading paths remain locked.
+
+Next safe step: source-only active one-shot historical executor workflow install contract.
