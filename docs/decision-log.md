@@ -6029,3 +6029,30 @@ Executor availability, dispatch, execute mode, retries, reserved data,
 candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 
 Next gate: concrete runtime-evidence binding after real DEC-344 proof success.
+
+
+## DEC-347 — EXP-062 workflow-preflight proof runtime evidence freeze
+
+**Date:** 2026-09-28  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / EXECUTOR + DISPATCH STILL LOCKED
+
+DEC-347 binds the actual successful DEC-344 merged-main proof: head
+`c43a1701cadd57c25903d3b637f2af70b28d1065`, run `36455684780`, job
+`109041310360`, artifact `10984953455`, artifact/ZIP SHA-256
+`eec64c9bb1f6688dca010825e83e191c6a423d21bf6522396d7f650ec2db675f`,
+raw preflight SHA-256
+`56981ba62638129f39693239d22b76c65cb3a8e0b236741b3a80984137c2c0d7`,
+and canonical SHA-256
+`d6bf96a73b1377ad65887c6ba001c2c2d39812d58205e59e304c1c88e3ef22dc`.
+
+DEC-347 re-runs DEC-345 review and DEC-346 deterministic freezing and requires the
+exact DEC-346 fingerprint
+`3ba4b6aba0cafab3989c1f20536ad36603786efdcef49964a31bc99b73a79988`.
+DEC-334 terminal-review criteria remain pinned.
+
+The historical-result slot remains empty and target run #2 / attempt 1 remains the
+only future attempt. Historical executor availability, dispatch, execute mode,
+reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain false.
+
+Next gate: source-only one-shot historical executor workflow-install contract.

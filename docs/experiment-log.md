@@ -1689,3 +1689,16 @@ Copy this section for each serious experiment:
 - Executor availability / dispatch / execute mode authorized?: NO.
 - Reserved data and all downstream trading paths remain locked.
 - Next gate after real proof: concrete runtime-evidence binding.
+
+
+### EXP-20260927-062 — DEC-347 workflow-preflight proof runtime evidence freeze
+
+- Bound real DEC-344 proof run `36455684780`, job `109041310360`, and artifact `10984953455`.
+- Artifact/ZIP SHA-256: `eec64c9bb1f6688dca010825e83e191c6a423d21bf6522396d7f650ec2db675f`.
+- Raw preflight SHA-256: `56981ba62638129f39693239d22b76c65cb3a8e0b236741b3a80984137c2c0d7`.
+- Canonical preflight SHA-256: `d6bf96a73b1377ad65887c6ba001c2c2d39812d58205e59e304c1c88e3ef22dc`.
+- Replays DEC-345 review and DEC-346 freeze; expected DEC-346 fingerprint `3ba4b6aba0cafab3989c1f20536ad36603786efdcef49964a31bc99b73a79988`.
+- Pins DEC-334 terminal-review criteria.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Executor availability / dispatch / execute mode authorized?: NO.
+- Reserved data and all downstream trading paths remain locked.

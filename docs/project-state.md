@@ -1322,3 +1322,19 @@ fingerprint. All executor, dispatch, reserved-data, and trading authority remain
 locked.
 
 Next safe step after real DEC-344 proof evidence: concrete runtime-evidence binding.
+
+
+## 2026-09-28 — DEC-347 concrete workflow-preflight proof evidence bound
+
+The successful DEC-344 read-only workflow-preflight proof is now represented by exact
+runtime evidence: merged head `c43a1701cadd57c25903d3b637f2af70b28d1065`, run
+`36455684780`, job `109041310360`, artifact `10984953455`, matching
+GitHub/independent ZIP SHA-256, and frozen raw/canonical preflight hashes.
+
+DEC-347 replays DEC-345 review and DEC-346 deterministic freezing and requires the
+exact DEC-346 fingerprint. DEC-334 terminal-review criteria remain pinned.
+
+No historical executor or dispatch is available. Reserved 2023-2026 data and all
+candidate/demo/live/real-money/trading paths remain locked.
+
+Next safe step: source-only one-shot historical executor workflow-install contract.
