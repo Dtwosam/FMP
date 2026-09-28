@@ -5974,3 +5974,24 @@ Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
 broker/live, real-money, and trading remain locked.
 
 The next safe gate is a repository-hosted read-only workflow-preflight proof.
+
+
+## DEC-344 — EXP-062 one-shot historical executor workflow-preflight proof
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY MERGED-MAIN WORKFLOW PREFLIGHT PROOF / NO HISTORICAL DISPATCH
+
+DEC-344 adds a push-to-main, first-run/attempt-1 proof of the DEC-343 one-shot
+historical executor workflow preflight.
+
+The workflow uses contents/actions read permissions only. It invokes only the
+DEC-343 plan surface, fetches current main plus the exact EXP-062 run inventory, and
+proves that the historical-result slot remains empty with target run #2 / attempt 1.
+
+The historical workflow command is evidence only and is never submitted. Historical
+executor availability, historical-result dispatch, execute mode,
+rerun/retry/replacement, reserved 2023-2026 access, candidate compilation/promotion,
+Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate after a real successful DEC-344 proof is immutable runtime-evidence
+review and freezing before any dispatch-capable executor workflow.

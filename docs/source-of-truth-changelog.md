@@ -794,3 +794,14 @@
 - Removes the command once run #2 exists.
 - Adds no execute/advance mode and keeps executor availability plus actual dispatch false.
 - Keeps reserved data plus all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-344 EXP-062 workflow-preflight proof
+
+- Added a first-run/attempt-1 push-to-main proof workflow for DEC-343.
+- Uses only contents/actions read permissions.
+- Pins exact DEC-342/343 source identities and active discovery workflow.
+- Invokes only the read-only preflight plan surface.
+- Verifies zero historical-result attempts and target run #2 / attempt 1.
+- Uploads only the workflow-preflight JSON and never submits the historical workflow.
+- Keeps executor availability, actual dispatch, execute mode, reserved data, and all downstream trading paths locked.

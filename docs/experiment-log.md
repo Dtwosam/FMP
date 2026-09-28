@@ -1658,3 +1658,14 @@ Copy this section for each serious experiment:
 - Existing run #2 immediately consumes the slot and removes the command.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
 - Next gate: repository-hosted read-only workflow-preflight proof.
+
+
+### EXP-20260927-062 — DEC-344 workflow-preflight proof
+
+- Push-to-main read-only proof workflow added for DEC-343.
+- Invokes only the plan surface.
+- Requires zero historical-result attempts and target run #2 / attempt 1.
+- Uploads only `one-shot-historical-executor-workflow-preflight.json`.
+- Historical executor availability / dispatch / execute mode authorized?: NO.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
+- Next gate after actual success: immutable workflow-preflight proof review/freeze.
