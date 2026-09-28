@@ -743,3 +743,12 @@
 - Verifies DEC-337 source-only authorization while executor availability, dispatch, and execute mode remain false.
 - Uploads only the source-contract JSON and never submits the historical workflow.
 - Keeps reserved data plus all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-339 EXP-062 source-proof reviewer
+
+- Added a source-only reviewer for future DEC-338 runtime evidence.
+- Pins the DEC-338 workflow, DEC-337 source, DEC-336 runtime freeze, DEC-334 terminal-review contract, and active discovery workflow.
+- Requires exact run #1 / attempt 1 success, one successful proof job, and one non-expired artifact.
+- Revalidates the source-contract content and records raw/canonical SHA-256 hashes.
+- Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.
