@@ -6093,3 +6093,23 @@ candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
 trading remain false.
 
 The next safe gate is a repository-hosted read-only workflow-install preflight proof.
+
+
+## DEC-350 — EXP-062 workflow-install preflight proof
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY MERGED-MAIN INSTALL PREFLIGHT PROOF / NO INSTALL OR DISPATCH
+
+DEC-350 adds a push-to-main, first-run/attempt-1 proof of the DEC-349 workflow-install
+preflight.
+
+The workflow pins DEC-348/349 source identities, requires the future executor workflow
+path to remain absent, checks exact merged main plus the EXP-062 run inventory, and
+invokes only the plan surface.
+
+Install authorization, workflow installed state, executor availability, historical
+dispatch, execute mode, rerun/retry/replacement, reserved 2023-2026 access,
+candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain false.
+
+Next gate after real success: immutable workflow-install-preflight proof review/freeze.
