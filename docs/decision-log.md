@@ -5120,3 +5120,23 @@ real-money, and trading remain false.
 The next gate after a real DEC-305 freeze is a separate source-only historical-run
 authorization contract.
 
+
+
+## DEC-306 — EXP-062 connector proof bootstrap recovery contract
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY RECOVERY CONTRACT / NO DISPATCH
+
+DEC-306 records the integration-specific recovery path after connector-created merges
+failed to materialize the DEC-303 push-to-main executor workflow. It preserves DEC-303
+unchanged and pins a later recovery activation to exact main
+`0c57298198a2915e3f31fb6ba800c9a644c519bf`, pull-request attempt 1, base `main`,
+and the dedicated DEC-307 activation branch.
+
+The recovery contract requires two identical fresh zero-run DEC-302 plans and delegates
+plan validation plus dispatch evidence construction to unchanged DEC-303 code. DEC-306
+itself does not alter CI and cannot dispatch.
+
+Historical-result dispatch/execution, reserved data, candidate compilation/promotion,
+Phase 8B, demo, broker/live, real-money, and trading remain false. The next gate is a
+small DEC-307 PR-CI activation that runs only after the normal unit suite succeeds.
