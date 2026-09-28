@@ -5995,3 +5995,20 @@ Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate after a real successful DEC-344 proof is immutable runtime-evidence
 review and freezing before any dispatch-capable executor workflow.
+
+
+## DEC-345 — EXP-062 workflow-preflight proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY FUTURE RUNTIME-EVIDENCE REVIEWER / NO DISPATCH
+
+DEC-345 adds a reviewer for future successful DEC-344 merged-main evidence. It pins
+the proof workflow, DEC-343 preflight/CLI, DEC-342 workflow contract, and active
+discovery workflow; requires exact run #1 / attempt 1 success, one successful proof
+job, one non-expired artifact, and exact slot-available preflight content; and records
+raw/canonical SHA-256 hashes.
+
+Historical executor availability, dispatch, execute mode, retries, reserved data,
+candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next gate: deterministic immutable review freeze.
