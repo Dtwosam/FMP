@@ -1015,3 +1015,13 @@
 - Pins the DEC-334 terminal-review contract.
 - Confirms active executor workflow path absent, zero historical-result attempts, and target run #2 / attempt 1.
 - Keeps install, installed state, executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-366 EXP-062 active workflow-installation contract
+
+- Added source-only active workflow-installation contract bound to DEC-365.
+- Pinned the exact dormant executor workflow template.
+- Keeps the active workflow path absent.
+- Keeps install authorization, installed state, executor availability, dispatch, and execute mode false.
+- Keeps zero historical-result attempts and target run #2 / attempt 1.
+- Keeps reserved data and all downstream trading paths locked.

@@ -1581,3 +1581,15 @@ execute authority is available. Reserved 2023-2026 data and all downstream tradi
 paths remain locked.
 
 Next safe step: source-only active one-shot historical executor workflow-installation contract.
+
+
+## 2026-09-28 — DEC-366 active workflow-installation contract source-ready
+
+The repository stack now contains a source-only active one-shot historical executor
+workflow-installation contract, bound to the concrete DEC-365 runtime freeze and the
+exact dormant executor template.
+
+The active workflow path remains absent and no installation, executor, dispatch, or
+execute authority exists. Historical run #2 / attempt 1 remains untouched.
+
+Next safe step: read-only current-main active workflow-installation preflight.
