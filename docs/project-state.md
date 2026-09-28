@@ -1000,3 +1000,17 @@ DEC-321 review. It can preserve concrete DEC-320 proof evidence once that proof 
 but it cannot dispatch historical discovery or create an executor.
 
 The slot must remain empty until a later separately gated one-shot execution step.
+
+## 2026-09-28 — DEC-323 EXP-062 concrete dispatch-plan evidence bound
+
+The successful DEC-320 read-only dispatch-plan proof is now represented by exact
+runtime evidence: run `36418793172`, job `108916232597`, artifact
+`10967344018`, matching GitHub/independent ZIP SHA-256, and frozen raw/canonical
+plan hashes.
+
+DEC-323 replays the DEC-321 reviewer and DEC-322 freeze and requires the exact
+deterministic predecessor fingerprint. The proof still shows zero historical-result
+attempts and target run #2 / attempt 1.
+
+No historical dispatcher or executor is available under DEC-323. Reserved 2023-2026
+data and all candidate/demo/live/real-money/trading paths remain locked.

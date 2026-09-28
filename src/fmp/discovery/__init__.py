@@ -523,3 +523,13 @@ from .exp062_historical_dispatch_plan_freeze import (
 __all__ += [
     "freeze_reviewed_historical_dispatch_plan",
 ]
+
+from .exp062_historical_dispatch_runtime_freeze import (
+    freeze_historical_dispatch_runtime_evidence,
+    validate_historical_dispatch_runtime_freeze_sources,
+)
+
+__all__ += [
+    "freeze_historical_dispatch_runtime_evidence",
+    "validate_historical_dispatch_runtime_freeze_sources",
+]
