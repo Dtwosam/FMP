@@ -5696,3 +5696,25 @@ broker/live, real-money, and trading remain locked.
 
 The next safe gate is a repository-hosted read-only executor activation-preflight
 proof.
+
+## DEC-332 — EXP-062 repository-hosted executor activation-preflight proof
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY MERGED-MAIN PROOF / NO HISTORICAL DISPATCH
+
+DEC-332 adds a push-to-main, first-run/attempt-1 proof workflow for the exact DEC-331
+executor activation preflight. It pins DEC-330/331 source identities, fetches current
+main and the EXP-062 discovery inventory, and invokes only the read-only activation
+preflight planner.
+
+A valid proof must show the frozen gate proof remains run #1, zero historical-result
+attempts, target run #2 / attempt 1, and the exact future discovery command as evidence
+only. The workflow has contents/actions read permissions and never executes that
+command.
+
+Historical executor availability, actual dispatch, execute mode, reserved 2023-2026
+access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain locked.
+
+The next safe gate after a real successful proof is immutable runtime-evidence review
+and freezing.
