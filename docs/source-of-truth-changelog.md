@@ -446,3 +446,13 @@
 - Recorded redundant executor run `36360111479` as a fail-closed run #2 that stopped before dispatch and created no second proof.
 - Kept historical slot opening/dispatch/execution, rerun/retry/replacement, reserved 2023-2026 data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
 
+
+## 2026-09-28 — DEC-307 EXP-062 source-only historical slot
+
+- Added a source-governance contract for at most one future EXP-062 historical-result attempt.
+- Excluded frozen proof run `36358289723` from slot consumption.
+- Required the first later matching manual-main run to be run #2 / attempt 1; any such run consumes the slot immediately.
+- Rejected multiple historical attempts, GitHub reruns, proof drift, and run-number drift.
+- Pinned the DEC-306 runtime proof freeze plus unchanged research/workflow/proof source blobs.
+- Kept historical dispatch/execution/result production, reserved 2023-2026 access, candidate/promotion, Phase 8B, demo/live, real-money, and trading false.
+
