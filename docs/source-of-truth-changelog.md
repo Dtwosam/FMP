@@ -690,3 +690,12 @@
 - Requires exact run #1 / attempt 1 success, one successful proof job, and one non-expired artifact.
 - Revalidates the exact run #2 / attempt 1 DEC-331 preflight and records raw/canonical SHA-256 hashes.
 - Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-334 EXP-062 historical terminal review contract
+
+- Predeclared terminal success/failure criteria before the historical run exists.
+- Requires exact run #2 / attempt 1 identity.
+- Complete success requires exact 20-job / 20-artifact DEC-298 shape.
+- Allows the GitHub unexpanded matrix placeholder only for compatible non-success runs.
+- Makes every terminal outcome consume the one historical slot permanently.
+- Keeps retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
