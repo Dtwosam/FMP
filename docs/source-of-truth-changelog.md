@@ -568,3 +568,12 @@
 - Removes the command once run #2 exists.
 - Adds no execute/advance mode and keeps actual dispatch/executor availability false.
 - Keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-320 EXP-062 read-only dispatch-plan proof
+
+- Added a first-run/attempt-1 push-to-main proof workflow for DEC-319.
+- Pinned DEC-317/318/319 plus active discovery workflow and runtime requirements.
+- Uses read-only GitHub permissions and API calls.
+- Runs only the plan-only dispatch operator.
+- Uploads only immutable historical-dispatch-plan.json.
+- Adds no workflow submission path and keeps all downstream trading paths locked.
