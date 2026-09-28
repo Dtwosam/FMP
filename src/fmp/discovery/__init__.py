@@ -505,3 +505,13 @@ __all__ += [
     "validate_historical_dispatch_operator_sources",
     "validate_historical_dispatch_plan",
 ]
+
+from .exp062_historical_dispatch_plan_review import (
+    review_historical_dispatch_plan_proof,
+    validate_historical_dispatch_plan_review_sources,
+)
+
+__all__ += [
+    "review_historical_dispatch_plan_proof",
+    "validate_historical_dispatch_plan_review_sources",
+]
