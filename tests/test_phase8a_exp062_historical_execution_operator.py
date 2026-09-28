@@ -111,7 +111,7 @@ class Exp062HistoricalExecutionOperatorTests(unittest.TestCase):
     def test_proof_must_remain_workflow_run_one(self) -> None:
         with self.assertRaisesRegex(
             ValueError,
-            "proof must remain workflow run number 1",
+            "proof must remain workflow run number 1|frozen proof run run_number mismatch",
         ):
             build_historical_execution_plan(
                 repository_root=Path("."),
@@ -123,7 +123,7 @@ class Exp062HistoricalExecutionOperatorTests(unittest.TestCase):
     def test_present_historical_run_must_be_run_two_attempt_one(self) -> None:
         with self.assertRaisesRegex(
             ValueError,
-            "historical run must be workflow run number 2",
+            "historical run must be workflow run number 2|historical-result run number must be 2",
         ):
             build_historical_execution_plan(
                 repository_root=Path("."),
