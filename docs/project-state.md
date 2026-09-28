@@ -1310,3 +1310,15 @@ execute historical discovery.
 
 All runtime and trading authority remains locked. Next safe gate: immutable review
 freeze after valid proof evidence exists.
+
+
+## 2026-09-28 — DEC-346 workflow-preflight proof freeze source-ready
+
+A deterministic source-only freeze now exists for a valid DEC-345 review. It cannot
+invent runtime evidence or dispatch the historical workflow.
+
+The freeze preserves exact reviewed proof identities/hashes and emits one canonical
+fingerprint. All executor, dispatch, reserved-data, and trading authority remains
+locked.
+
+Next safe step after real DEC-344 proof evidence: concrete runtime-evidence binding.
