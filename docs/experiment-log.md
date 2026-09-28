@@ -1809,3 +1809,13 @@ Copy this section for each serious experiment:
 - Uploads only `dormant-one-shot-historical-executor-workflow-source.json`.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Next gate after actual success: immutable proof review/freeze.
+
+
+### EXP-20260927-062 — DEC-357 dormant executor source-proof reviewer
+
+- Future DEC-356 proof reviewer added.
+- Requires run #1 / attempt 1 success, one successful job, one non-expired artifact.
+- Revalidates exact DEC-355 dormant-source JSON.
+- Records raw/canonical source SHA-256 hashes.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Next gate: immutable review freeze.
