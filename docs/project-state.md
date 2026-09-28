@@ -1069,3 +1069,17 @@ canonical freeze fingerprint.
 No historical workflow is dispatched by DEC-328. Executor availability, execute mode,
 and actual dispatch remain locked, while reserved 2023-2026 data and all
 candidate/demo/live/trading paths remain closed.
+
+## 2026-09-28 — DEC-329 EXP-062 concrete executor-preflight evidence bound
+
+The successful DEC-326 read-only executor-preflight proof is now represented by exact
+runtime evidence: run `36422936991`, job `108929843306`, artifact
+`10970303347`, matching GitHub/independent ZIP SHA-256, and frozen raw/canonical
+preflight hashes.
+
+DEC-329 replays the DEC-327 reviewer and DEC-328 freeze and requires the exact
+deterministic predecessor fingerprint. The proof still shows zero historical-result
+attempts and target run #2 / attempt 1.
+
+No historical executor or dispatch is available under DEC-329. Reserved 2023-2026
+data and all candidate/demo/live/real-money/trading paths remain locked.
