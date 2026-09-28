@@ -834,3 +834,13 @@
 - Pins the DEC-334 terminal-review contract.
 - Confirms zero historical-result attempts and target run #2 / attempt 1.
 - Keeps executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-348 EXP-062 workflow-install contract
+
+- Added source-only future one-shot historical executor workflow-install contract.
+- Pinned DEC-347 runtime-freeze source and fingerprint.
+- Fixed the expected future executor workflow path.
+- Keeps workflow installed=false, executor available=false, dispatch=false, and execute mode=false.
+- Keeps zero historical-result attempts and target run #2 / attempt 1.
+- Keeps reserved data and all downstream trading paths locked.

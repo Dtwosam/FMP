@@ -6056,3 +6056,20 @@ reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
 broker/live, real-money, and trading remain false.
 
 Next gate: source-only one-shot historical executor workflow-install contract.
+
+
+## DEC-348 — EXP-062 one-shot historical executor workflow-install contract
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY INSTALL CONTRACT / WORKFLOW NOT INSTALLED
+
+DEC-348 pins the concrete DEC-347 runtime freeze and authorizes only future
+workflow-install source review for
+`.github/workflows/phase8a-exp062-one-shot-historical-executor.yml`.
+
+The workflow remains absent under this decision. Historical executor availability,
+historical-result dispatch, execute mode, rerun/retry/replacement, reserved
+2023-2026 access, candidate compilation/promotion, Phase 8B, demo, broker/live,
+real-money, and trading remain false.
+
+The next safe gate is a read-only current-main workflow-install preflight.
