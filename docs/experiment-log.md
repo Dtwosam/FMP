@@ -1819,3 +1819,13 @@ Copy this section for each serious experiment:
 - Records raw/canonical source SHA-256 hashes.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Next gate: immutable review freeze.
+
+
+### EXP-20260927-062 — DEC-358 dormant executor source-proof freeze
+
+- Deterministic freeze added for a valid DEC-357 review.
+- Preserves proof run/job/artifact identity plus raw/canonical source hashes.
+- Preserves dormant template identity and target run #2 / attempt 1.
+- Emits canonical freeze fingerprint.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Next gate after real proof: concrete runtime-evidence binding.
