@@ -609,3 +609,13 @@ __all__ += [
     "validate_historical_executor_activation_preflight",
     "validate_historical_executor_activation_preflight_sources",
 ]
+
+from .exp062_historical_executor_activation_preflight_review import (
+    review_historical_executor_activation_preflight_proof,
+    validate_historical_executor_activation_preflight_review_sources,
+)
+
+__all__ += [
+    "review_historical_executor_activation_preflight_proof",
+    "validate_historical_executor_activation_preflight_review_sources",
+]
