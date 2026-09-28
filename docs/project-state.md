@@ -892,3 +892,16 @@ locked.
 
 The next safe step is a read-only operator that can prove the run #2 slot is still
 available on exact current main before any dispatcher is considered.
+
+## 2026-09-28 — DEC-313 EXP-062 read-only execution planner
+
+The repository stack now includes a read-only exact-main planner for the single
+DEC-312 historical runtime. While the slot is empty it can describe the future
+`phase8a-exp062-discovery.yml` manual-main dispatch expected to become run #2 /
+attempt 1, but it cannot execute that command.
+
+As soon as run #2 exists, the plan command disappears and the slot is consumed.
+Historical-result dispatch remains unauthorized, and reserved data plus all
+candidate/demo/live/trading paths remain locked.
+
+The next safe step is a repository-hosted read-only proof of this execution plan.
