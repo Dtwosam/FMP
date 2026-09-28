@@ -1669,3 +1669,13 @@ Copy this section for each serious experiment:
 - Historical executor availability / dispatch / execute mode authorized?: NO.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
 - Next gate after actual success: immutable workflow-preflight proof review/freeze.
+
+
+### EXP-20260927-062 — DEC-345 workflow-preflight proof reviewer
+
+- Future DEC-344 proof reviewer added.
+- Requires run #1 / attempt 1 success, one successful job, one non-expired artifact.
+- Revalidates exact DEC-343 slot-available preflight bytes.
+- Records raw/canonical preflight SHA-256 hashes.
+- Executor/dispatch/execute authority authorized?: NO.
+- Next gate: immutable review freeze.
