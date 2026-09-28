@@ -1253,3 +1253,14 @@ Copy this section for each serious experiment:
 - Candidate compilation/demo/live authorized?: NO.
 - Next gate: source-only one-slot historical-run authorization for 2015-2022 only; reserved 2023-2026 remains closed.
 
+
+### EXP-20260927-062 — DEC-307 source-only historical slot
+
+- Bound merged DEC-306 and the exact repaired EXP-062 discovery stack.
+- Frozen proof run `36358289723` remains excluded from the result slot.
+- Future historical result slot: at most one run, workflow run #2 / attempt 1.
+- Historical research range remains 2015-01-01 through 2022-12-31.
+- Reserved 2023-2026 robustness data remains closed.
+- Historical dispatch/execution authorized?: NO.
+- Candidate compilation/demo/live authorized?: NO.
+- Next gate: read-only exact-main historical-slot operator with no execute mode.
