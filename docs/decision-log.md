@@ -5436,3 +5436,22 @@ compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading rema
 false.
 
 The next safe gate is a read-only current-main dispatch operator with no execute mode.
+
+## DEC-319 — EXP-062 read-only current-main dispatch operator
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY PLAN / NO EXECUTE MODE
+
+DEC-319 adds a current-main planner for the DEC-318 one-shot dispatch source contract.
+It pins DEC-318, rechecks the EXP-062 discovery inventory, and exposes
+`gh workflow run phase8a-exp062-discovery.yml --ref main` only as plan evidence
+while the historical-result slot remains empty.
+
+Actual historical-result dispatch remains false, executor availability remains false,
+and the CLI has no execute/advance mode. If run #2 exists, the command is removed and
+the slot is treated as consumed.
+
+Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain locked.
+
+The next safe gate is a repository-hosted read-only dispatch-plan proof.

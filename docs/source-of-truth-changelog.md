@@ -559,3 +559,12 @@
 - Sets only the future dispatch source-contract flag true.
 - Keeps actual historical dispatch and executor availability false.
 - Keeps rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+## 2026-09-28 — DEC-319 EXP-062 read-only one-shot dispatch operator
+
+- Added a current-main planner bound to DEC-318.
+- Rechecks the frozen proof and historical-result run inventory.
+- Exposes the future discovery command only as evidence while the slot is empty.
+- Removes the command once run #2 exists.
+- Adds no execute/advance mode and keeps actual dispatch/executor availability false.
+- Keeps reserved data plus all downstream trading paths locked.

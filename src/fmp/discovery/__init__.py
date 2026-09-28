@@ -491,3 +491,17 @@ __all__ += [
     "build_historical_dispatch_authorization_contract",
     "validate_historical_dispatch_authorization_sources",
 ]
+
+from .exp062_historical_dispatch_operator import (
+    build_historical_dispatch_plan,
+    historical_dispatch_command,
+    validate_historical_dispatch_operator_sources,
+    validate_historical_dispatch_plan,
+)
+
+__all__ += [
+    "build_historical_dispatch_plan",
+    "historical_dispatch_command",
+    "validate_historical_dispatch_operator_sources",
+    "validate_historical_dispatch_plan",
+]
