@@ -814,3 +814,11 @@
 - Requires exact successful proof run/job/artifact shape.
 - Revalidates slot-available preflight content and records raw/canonical hashes.
 - Adds no dispatch or execute mode and keeps downstream authority locked.
+
+
+## 2026-09-28 — DEC-346 EXP-062 workflow-preflight proof freeze
+
+- Added deterministic source-only freeze for valid DEC-345 review evidence.
+- Preserves exact runtime identities, artifact digest, preflight hashes, and source map.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Adds no dispatch or execute surface and keeps downstream authority locked.

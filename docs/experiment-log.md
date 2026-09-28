@@ -1679,3 +1679,13 @@ Copy this section for each serious experiment:
 - Records raw/canonical preflight SHA-256 hashes.
 - Executor/dispatch/execute authority authorized?: NO.
 - Next gate: immutable review freeze.
+
+
+### EXP-20260927-062 — DEC-346 workflow-preflight proof freeze
+
+- Deterministic freeze added for a valid DEC-345 review.
+- Preserves proof run/job/artifact identity plus raw/canonical preflight hashes.
+- Emits canonical freeze fingerprint.
+- Executor availability / dispatch / execute mode authorized?: NO.
+- Reserved data and all downstream trading paths remain locked.
+- Next gate after real proof: concrete runtime-evidence binding.
