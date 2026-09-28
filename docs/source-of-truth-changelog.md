@@ -540,3 +540,13 @@
 - Requires the exact DEC-311/312/313/314 source-blob map from DEC-315.
 - Emits a canonical freeze fingerprint while preserving runtime evidence unchanged.
 - Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-317 EXP-062 concrete historical execution-plan evidence
+
+- Bound the real DEC-314 merged-main proof run/job/artifact identities.
+- Verified the artifact ZIP SHA-256 independently against GitHub's artifact digest.
+- Bound exact raw and canonical historical-execution-plan hashes.
+- Re-runs DEC-315 review and DEC-316 deterministic freezing against the raw evidence.
+- Requires the exact DEC-316 freeze fingerprint.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Keeps historical dispatch/execute mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
