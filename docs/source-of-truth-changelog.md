@@ -435,3 +435,14 @@
 - Historical-result slot opening, historical execution, candidate compilation,
   Phase 8B, demo, broker/live, real-money, and trading remain false.
 
+
+## 2026-09-28 — DEC-306 EXP-062 concrete runtime proof freeze
+
+- Bound authoritative executor run `36358278933` and proof run `36358289723` on exact head `f2c55ac36a1a9ba7596ec0d4559c877a66cda0fb`.
+- Bound executor dispatch-evidence artifact `10944404609` and proof preflight artifact `10943489995` to their exact SHA-256 artifact digests.
+- Frozen the exact three-job proof shape: failed preflight plus skipped matrix-placeholder and aggregate jobs.
+- Bound raw and canonical SHA-256 hashes for executor, proof-run, proof-inventory, and preflight evidence.
+- Bound exact DEC-305 freeze fingerprint `fadd6e512b95179fa682d05c8550c914db81e559d9c0ad8da0bedb03bb43a096`.
+- Recorded redundant executor run `36360111479` as a fail-closed run #2 that stopped before dispatch and created no second proof.
+- Kept historical slot opening/dispatch/execution, rerun/retry/replacement, reserved 2023-2026 data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+

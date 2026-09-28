@@ -5120,3 +5120,41 @@ real-money, and trading remain false.
 The next gate after a real DEC-305 freeze is a separate source-only historical-run
 authorization contract.
 
+
+## DEC-306 — EXP-062 concrete runtime gate-proof freeze
+
+**Date:** 2026-09-28  
+**Status:** REVIEWED RUNTIME EVIDENCE FROZEN / HISTORICAL SLOT STILL CLOSED
+
+DEC-306 binds the actual DEC-303 executor run `36358278933` and actual EXP-062
+gate-proof run `36358289723`, both on
+`f2c55ac36a1a9ba7596ec0d4559c877a66cda0fb`. The executor completed run #1 /
+attempt 1 successfully and persisted dispatch-evidence artifact `10944404609`
+with digest
+`sha256:f1baf1e77100cb314b1e573a404508d379a569ffadea2f702bfdaebfad2c3f64`.
+
+The proof completed run #1 / attempt 1 with the expected terminal failure at the
+still-locked historical execution gate. Preflight job `108730271344` failed,
+the matrix placeholder job `108730343578` and aggregate job `108730343797`
+were skipped, and the only proof artifact is preflight artifact `10943489995`
+with digest
+`sha256:0cc405cc6d8b5941f7051e7907e2a7040a21a05411b29774ebbcd3884da9193f`.
+No cell or aggregate result artifact exists.
+
+DEC-306 additionally freezes raw and canonical SHA-256 identities for
+`executor.json`, `proof-run.json`, `proof-runs.json`, and `preflight.json`,
+plus the exact DEC-305 freeze fingerprint
+`fadd6e512b95179fa682d05c8550c914db81e559d9c0ad8da0bedb03bb43a096`.
+This closes the runtime-evidence binding gap left intentionally by generic DEC-305.
+
+PR #448 later materialized executor run `36360111479` as run #2 / attempt 1. It
+failed closed at the executor first-run guard before proof dispatch and created no
+second EXP-062 proof. It is non-authoritative and consumes no historical slot.
+
+Historical-result slot opening/dispatch/execution, rerun/retry/replacement,
+reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain false.
+
+The next safe gate is a separate source-only one-slot historical-run authorization
+contract for the unchanged 2015-2022 research window.
+

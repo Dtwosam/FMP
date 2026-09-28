@@ -373,3 +373,12 @@ from .exp062_proof_result_freeze import (
 __all__ += [
     "freeze_reviewed_gate_proof_result",
 ]
+
+
+from .exp062_runtime_proof_freeze import (
+    freeze_runtime_gate_proof_evidence,
+)
+
+__all__ += [
+    "freeze_runtime_gate_proof_evidence",
+]
