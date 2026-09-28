@@ -515,3 +515,11 @@ __all__ += [
     "review_historical_dispatch_plan_proof",
     "validate_historical_dispatch_plan_review_sources",
 ]
+
+from .exp062_historical_dispatch_plan_freeze import (
+    freeze_reviewed_historical_dispatch_plan,
+)
+
+__all__ += [
+    "freeze_reviewed_historical_dispatch_plan",
+]
