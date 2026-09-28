@@ -882,3 +882,15 @@
 - Preserves future executor workflow path absent state.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Adds no install, dispatch, or execute surface and keeps downstream authority locked.
+
+
+## 2026-09-28 — DEC-353 EXP-062 concrete workflow-install preflight proof runtime evidence
+
+- Bound the real DEC-350 merged-main proof run/job/artifact identities.
+- Verified the artifact ZIP SHA-256 independently against GitHub's artifact digest.
+- Bound exact raw and canonical DEC-349 workflow-install-preflight hashes.
+- Re-runs DEC-351 review and DEC-352 deterministic freezing against the raw evidence.
+- Requires the exact DEC-352 freeze fingerprint.
+- Pins the DEC-334 terminal-review contract.
+- Confirms the future executor workflow path remains absent.
+- Keeps install authorization, installed state, executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
