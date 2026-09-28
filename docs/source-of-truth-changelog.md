@@ -637,3 +637,11 @@
 - Requires exact run #1 / attempt 1 success, one successful proof job, and one non-expired artifact.
 - Revalidates the exact run #2 / attempt 1 DEC-325 preflight and records raw/canonical SHA-256 hashes.
 - Adds no executor, dispatch, or execute mode and keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-328 EXP-062 reviewed executor-preflight freeze
+
+- Added a deterministic freeze builder for valid DEC-327 reviewed evidence.
+- Requires exact proof run #1 / attempt 1 success, positive run/job/artifact ids, SHA-256 artifact/preflight identities, and target run #2 / attempt 1.
+- Requires the exact DEC-323/324/325/326 source-blob map from DEC-327.
+- Emits a canonical freeze fingerprint while preserving runtime evidence unchanged.
+- Adds no executor, dispatch, or execute mode and keeps reserved data plus all downstream trading paths locked.
