@@ -5140,3 +5140,24 @@ itself does not alter CI and cannot dispatch.
 Historical-result dispatch/execution, reserved data, candidate compilation/promotion,
 Phase 8B, demo, broker/live, real-money, and trading remain false. The next gate is a
 small DEC-307 PR-CI activation that runs only after the normal unit suite succeeds.
+
+
+## DEC-307 — EXP-062 connector proof bootstrap activation
+
+**Date:** 2026-09-28  
+**Status:** STACKED ACTIVATION / DISABLED UNTIL PR BASE IS MAIN
+
+DEC-307 adds a guarded job to the existing tests workflow for PR #451. The job depends
+on the full unit-test job and is additionally restricted to same-repository
+`pull_request` attempt 1, base `main`, and the exact activation branch. While this PR
+remains stacked on DEC-306 instead of `main`, the activation condition is false and no
+dispatch can occur.
+
+When deliberately retargeted to `main` after DEC-306 merges, the job checks out exact
+live main, pins the frozen EXP-062 proof sources plus DEC-306 recovery sources, runs the
+DEC-306 two-plan zero-run guard, and may submit only the fail-closed proof command. It
+then requires exactly one workflow run #1 / attempt 1 at that same main head and uploads
+bootstrap evidence.
+
+DEC-307 grants no historical-result execution, reserved-data, candidate, demo/live,
+real-money, or trading authority.
