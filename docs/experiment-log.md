@@ -1473,3 +1473,13 @@ Copy this section for each serious experiment:
 - Historical executor/dispatch/execute mode authorized?: NO.
 - Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate after actual proof: immutable concrete executor-preflight freeze.
+
+### EXP-20260927-062 — DEC-328 reviewed executor-preflight freeze source
+
+- Deterministic freeze builder added for a valid future DEC-327 reviewed result.
+- No runtime ids or hashes are fabricated before DEC-326 evidence exists.
+- Freeze preserves actual proof run/job/artifact ids, artifact digest, preflight hashes, and reviewed source blobs.
+- Historical executor/dispatch/execute mode authorized?: NO.
+- Target historical runtime remains run #2 / attempt 1 only.
+- Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate after real proof: concrete runtime-evidence binding before an executor workflow.

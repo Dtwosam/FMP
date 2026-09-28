@@ -567,3 +567,11 @@ __all__ += [
     "review_historical_executor_preflight_proof",
     "validate_historical_executor_preflight_review_sources",
 ]
+
+from .exp062_historical_executor_preflight_freeze import (
+    freeze_reviewed_historical_executor_preflight,
+)
+
+__all__ += [
+    "freeze_reviewed_historical_executor_preflight",
+]
