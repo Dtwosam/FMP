@@ -1311,3 +1311,15 @@ Copy this section for each serious experiment:
 - Historical dispatch/execution/result production authorized?: NO.
 - Reserved 2023-2026 data, candidate compilation/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate: source-only historical execution authorization contract with no dispatch path.
+
+### EXP-20260927-062 — DEC-312 one-shot historical runtime authorization
+
+- Concrete DEC-311 reviewed plan proof is the prerequisite.
+- Historical execution source-authorized?: YES.
+- Valid runtime identity: EXP-062 discovery workflow run #2 / attempt 1 only.
+- Historical-result dispatch authorized?: NO.
+- Historical discovery/result production inside exact run #2 runtime?: YES.
+- Historical research range remains 2015-2022 only.
+- Reserved 2023-2026 robustness block remains CLOSED.
+- Rerun/retry/replacement, candidate compilation/promotion, Phase 8B, demo/live, real-money, and trading remain unauthorized.
+- Next gate: read-only exact-main historical execution operator; no execute mode.
