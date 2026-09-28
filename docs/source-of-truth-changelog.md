@@ -963,3 +963,14 @@
 - Keeps install authorization, installed state, executor availability, dispatch, and execute mode false.
 - Keeps zero historical-result attempts and target run #2 / attempt 1.
 - Keeps reserved data and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-361 EXP-062 read-only active workflow install preflight
+
+- Added current-main active workflow-install preflight bound to DEC-360.
+- Pins exact dormant executor template source.
+- Requires active executor workflow path absent.
+- Rechecks the frozen proof and historical-result run inventory.
+- Provides only a plan surface; no install, execute, advance, or dispatch command exists.
+- Keeps install authorization, installed state, executor availability, dispatch, and execute mode false.
+- Keeps reserved data and all downstream trading paths locked.
