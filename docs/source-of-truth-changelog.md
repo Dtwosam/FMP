@@ -722,3 +722,13 @@
 - Pins the DEC-334 terminal-review contract before executor progression.
 - Confirms zero historical-result attempts and target run #2 / attempt 1.
 - Keeps executor availability, actual dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-28 — DEC-337 EXP-062 one-shot historical executor source
+
+- Added a source-only contract for the eventual one-shot historical executor.
+- Pinned the concrete DEC-336 runtime-freeze source and fingerprint.
+- Requires a fresh DEC-331 empty-slot activation preflight and target run #2 / attempt 1.
+- Keeps actual executor availability, dispatch authorization, and execute mode false.
+- Keeps rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+- Requires a repository-hosted source-contract proof before any dispatch-capable workflow.
