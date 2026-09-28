@@ -1871,3 +1871,15 @@ Copy this section for each serious experiment:
 - Execute mode available?: NO.
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Next gate: repository-hosted read-only active install-preflight proof.
+
+
+### EXP-20260927-062 — DEC-362 active workflow install preflight proof
+
+- Push-to-main read-only proof workflow added for DEC-361.
+- Pins DEC-360/361, dormant template, active discovery workflow, and planning runtime.
+- Requires active executor workflow path absent.
+- Requires zero historical-result attempts and target run #2 / attempt 1.
+- Uploads only `active-one-shot-historical-executor-workflow-install-preflight.json`.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Reserved data and all downstream trading paths remain locked.
+- Next gate after actual success: immutable proof review/freeze.
