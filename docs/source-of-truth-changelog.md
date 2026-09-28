@@ -774,3 +774,13 @@
 - Pins the DEC-334 terminal-review contract before executor workflow progression.
 - Confirms zero historical-result attempts and target run #2 / attempt 1.
 - Keeps executor availability, actual dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-28 — DEC-342 EXP-062 one-shot executor workflow contract
+
+- Added a source-only future one-shot historical executor workflow contract.
+- Pinned the concrete DEC-341 runtime-freeze source and fingerprint.
+- Requires zero historical-result attempts, an unconsumed slot, and target run #2 / attempt 1.
+- Sets only the future workflow-source authorization true.
+- Keeps actual executor availability, execute mode, and historical-result dispatch false.
+- Keeps rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.

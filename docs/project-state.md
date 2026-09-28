@@ -1254,3 +1254,18 @@ No historical executor or dispatch is available under DEC-341. Reserved 2023-202
 data and all candidate/demo/live/real-money/trading paths remain locked.
 
 The next safe step is a source-only one-shot historical executor workflow contract.
+
+
+## 2026-09-28 — DEC-342 EXP-062 one-shot executor workflow contract source-ready
+
+The repository stack now contains a source-only workflow contract for the future
+one-shot historical executor, bound to the concrete DEC-341 runtime evidence.
+
+No executor is available, no execute mode exists, and no historical-result dispatch
+is authorized. The historical slot remains empty and target run #2 / attempt 1
+remains the sole future attempt.
+
+Reserved 2023-2026 data and all candidate/demo/live/real-money/trading paths remain
+locked.
+
+The next safe step is a read-only current-main one-shot executor workflow preflight.
