@@ -515,3 +515,12 @@
 - Removes the command immediately when run #2 is present.
 - Adds no execute mode or dispatch authority.
 - Keeps rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+## 2026-09-28 — DEC-314 EXP-062 historical execution-plan proof
+
+- Added a first-run/attempt-1 push-to-main read-only proof workflow for DEC-313.
+- Pinned DEC-311/312/313, active discovery workflow, activated CLI, and runtime requirements.
+- Fetches current main and EXP-062 manual-main run inventory through read-only GitHub API calls.
+- Runs only the DEC-313 planner and validates the run #2 / attempt 1 plan.
+- Uploads only immutable historical-execution-plan.json.
+- Adds no dispatch/execute path and keeps reserved data plus all downstream trading paths locked.
