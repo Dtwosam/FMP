@@ -1253,3 +1253,16 @@ Copy this section for each serious experiment:
 - Candidate compilation/demo/live authorized?: NO.
 - Next gate: source-only one-slot historical-run authorization for 2015-2022 only; reserved 2023-2026 remains closed.
 
+
+### EXP-20260927-062 — DEC-307 one-slot source authorization
+
+- Frozen proof run `36358289723` remains excluded from historical-result slot consumption.
+- Historical-result slot source-authorized?: YES, for at most one future run #2 / attempt 1.
+- Historical-result dispatch authorized?: NO.
+- Historical discovery execution authorized?: NO.
+- Discovery result production authorized?: NO.
+- Historical research window remains 2015-2022 only.
+- Reserved 2023-2026 robustness block remains CLOSED.
+- Rerun/retry/replacement, candidate compilation/promotion, Phase 8B, demo/live, real-money, and trading remain unauthorized.
+- Next gate: clean-main read-only historical-slot operator.
+

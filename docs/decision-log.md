@@ -5158,3 +5158,31 @@ broker/live, real-money, and trading remain false.
 The next safe gate is a separate source-only one-slot historical-run authorization
 contract for the unchanged 2015-2022 research window.
 
+
+## DEC-307 — EXP-062 historical-run source authorization
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY ONE-SLOT AUTHORIZATION / DISPATCH + EXECUTION STILL LOCKED
+
+DEC-307 opens only the outer source-governance slot for at most one bounded EXP-062
+historical discovery-result attempt. It binds the exact DEC-306 runtime proof freeze
+and the unchanged DEC-293/298/299/300/301/304/305 research, workflow, and proof
+sources.
+
+The frozen proof run `36358289723`, run #1 / attempt 1, is excluded from historical
+slot consumption. With that proof as the only matching manual-main EXP-062 discovery
+run, the slot is available. The first later matching run must be workflow run #2 /
+attempt 1 and consumes the slot immediately regardless of queued/running/terminal
+state or terminal outcome. Multiple later runs, reruns, or run-number drift fail closed.
+
+DEC-307 sets only `historical_result_slot_source_authorized=true`. Historical-result
+dispatch, historical discovery execution, discovery-result production, rerun/retry/
+replacement, reserved 2023-2026 access, candidate compilation/promotion, Phase 8B,
+demo, broker/live, real-money, and trading remain false.
+
+The future historical attempt remains restricted to 2015-2022 data; the 2023-01-01
+through 2026-08-21 robustness block stays closed.
+
+The next safe gate is a clean-main read-only operator for the single source-authorized
+historical slot. DEC-307 itself provides no dispatch or execute mode.
+

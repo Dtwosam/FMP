@@ -809,3 +809,18 @@ compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading rema
 unauthorized. The next safe gate is source-only one-slot historical-run authorization
 for the unchanged 2015-2022 research window.
 
+
+## 2026-09-28 — DEC-307 EXP-062 source-only historical slot
+
+DEC-307 prepares exactly one future EXP-062 historical-result slot in source governance.
+The frozen gate proof remains excluded from slot consumption; the first later
+manual-main EXP-062 discovery run must be run #2 / attempt 1 and consumes the slot
+immediately.
+
+This does not dispatch or execute discovery. Historical-result dispatch/execution and
+result production remain false, the research window remains 2015-2022 only, and the
+reserved 2023-2026 block remains closed. Candidate compilation/promotion, Phase 8B,
+demo, broker/live, real-money, and trading remain unauthorized.
+
+The next safe gate is a read-only exact-main operator for the single slot.
+
