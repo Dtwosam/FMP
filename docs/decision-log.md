@@ -5258,7 +5258,7 @@ Phase 8B, demo/live, real-money, and trading remain locked.
 
 The next safe gate after actual DEC-309 evidence passes DEC-310 is an immutable concrete
 historical-plan proof freeze before execution authorization is considered.
-\n
+
 ## DEC-311 — EXP-062 concrete historical-plan proof freeze
 
 **Date:** 2026-09-28  
