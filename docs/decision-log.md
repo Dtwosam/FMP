@@ -5816,3 +5816,22 @@ broker/live, real-money, and trading remain false.
 
 The next safe gate is a source-only one-shot historical executor workflow before any
 dispatch path is considered.
+
+
+## DEC-337 — EXP-062 one-shot historical executor source contract
+
+**Date:** 2026-09-28  
+**Status:** SOURCE AUTHORIZED / RUNTIME DISPATCH LOCKED
+
+DEC-337 adds the source-only contract for the eventual one-shot historical executor.
+It requires the concrete DEC-336 runtime freeze and a fresh DEC-331 activation
+preflight with zero historical-result attempts, an unconsumed slot, and target run
+#2 / attempt 1.
+
+Only source authorization becomes true. Historical executor availability, actual
+dispatch, execute mode, retry/replacement, reserved 2023-2026 access, candidate
+compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading remain
+false.
+
+The next safe gate is a repository-hosted proof of this source contract before any
+dispatch-capable executor workflow is introduced.

@@ -1174,3 +1174,20 @@ No historical executor or dispatch is available under DEC-336. Reserved 2023-202
 data and all candidate/demo/live/real-money/trading paths remain locked.
 
 The next safe step is a source-only one-shot historical executor workflow.
+
+
+## 2026-09-28 — DEC-337 EXP-062 one-shot executor source prepared
+
+The stack now includes the source-only contract for the eventual one-shot historical
+executor, bound to the concrete DEC-336 runtime freeze and the predeclared DEC-334
+terminal-review criteria.
+
+It accepts only a fresh DEC-331 activation preflight with an empty slot and target run
+#2 / attempt 1. The exact future command is preserved as evidence only.
+
+Historical executor availability, actual dispatch, execute mode, reserved 2023-2026
+data, candidate compilation/promotion, Phase 8B, demo/live, real-money, and trading
+remain locked.
+
+The next safe step is a repository-hosted source-contract proof before any
+dispatch-capable workflow is introduced.
