@@ -5493,3 +5493,20 @@ broker/live, real-money, and trading remain locked.
 
 The next safe gate after actual DEC-320 proof is an immutable concrete dispatch-plan
 proof freeze.
+
+## DEC-322 — EXP-062 reviewed historical dispatch-plan freeze
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY DETERMINISTIC FREEZE / NO HISTORICAL DISPATCH
+
+DEC-322 adds a deterministic freeze builder for a valid DEC-321 review. It preserves
+the real proof run/job/artifact identities, artifact digest, plan hashes, target run
+#2 / attempt 1, and exact DEC-317/318/319/320 source map.
+
+DEC-322 cannot invent runtime evidence. Actual historical-result dispatch, executor
+availability, and execute mode remain false. Reserved 2023-2026 access, candidate
+compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading remain
+locked.
+
+The next safe gate after real DEC-320 proof is concrete runtime-evidence binding before
+any one-shot executor.
