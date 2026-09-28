@@ -1527,3 +1527,12 @@ Copy this section for each serious experiment:
 - Historical executor availability, actual dispatch, and execute mode remain unauthorized.
 - Reserved 2023-2026 data and all candidate/demo/live/trading paths remain locked.
 - Next gate after actual success: concrete activation-preflight runtime evidence review/freeze.
+
+### EXP-20260927-062 — DEC-333 activation-preflight proof reviewer
+
+- Source-only reviewer prepared for future successful DEC-332 runtime evidence.
+- Requires run #1 / attempt 1 success, one successful proof job, one non-expired artifact, and exact DEC-331 preflight content.
+- Binds raw and canonical activation-preflight SHA-256 hashes.
+- Historical executor availability/dispatch/execute mode authorized?: NO.
+- Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate after actual proof: immutable concrete activation-preflight freeze.
