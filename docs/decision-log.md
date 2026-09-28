@@ -5129,9 +5129,9 @@ authorization contract.
 
 DEC-306 records the integration-specific recovery path after connector-created merges
 failed to materialize the DEC-303 push-to-main executor workflow. It preserves DEC-303
-unchanged and pins a later recovery activation to exact main
-`0c57298198a2915e3f31fb6ba800c9a644c519bf`, pull-request attempt 1, base `main`,
-and the dedicated DEC-307 activation branch.
+unchanged and requires a later recovery activation to capture one exact clean `main`
+checkout, revalidate that same live head in two fresh DEC-302 plans, run at pull-request
+attempt 1 with base `main`, and use the dedicated DEC-307 activation branch.
 
 The recovery contract requires two identical fresh zero-run DEC-302 plans and delegates
 plan validation plus dispatch evidence construction to unchanged DEC-303 code. DEC-306
