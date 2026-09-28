@@ -983,3 +983,12 @@ workflow.
 
 A real successful DEC-320 proof must be reviewed and frozen before any one-shot
 dispatcher is considered.
+
+## 2026-09-28 — DEC-321 EXP-062 dispatch-plan reviewer prepared
+
+The stack now contains a source-only reviewer for future DEC-320 read-only proof
+evidence. It can validate the exact proof run/job/artifact and DEC-319 plan bytes, but
+it cannot submit historical discovery.
+
+A real successful DEC-320 proof still has to occur and be frozen before any executor
+is considered.
