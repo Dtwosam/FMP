@@ -941,3 +941,15 @@
 - Preserves dormant template source and active executor uninstalled state.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Adds no install, dispatch, or execute surface and keeps downstream authority locked.
+
+
+## 2026-09-28 — DEC-359 EXP-062 concrete dormant-source proof runtime evidence
+
+- Bound the real DEC-356 merged-main proof run/job/artifact identities.
+- Verified the artifact ZIP SHA-256 independently against GitHub's artifact digest.
+- Bound exact raw and canonical DEC-355 dormant-source hashes.
+- Re-runs DEC-357 review and DEC-358 deterministic freezing against the raw evidence.
+- Requires the exact DEC-358 freeze fingerprint.
+- Pins the DEC-334 terminal-review contract.
+- Confirms dormant template source only, active executor workflow uninstalled, zero historical-result attempts, and target run #2 / attempt 1.
+- Keeps install, executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
