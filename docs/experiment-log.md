@@ -1505,3 +1505,15 @@ Copy this section for each serious experiment:
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
 - Next gate: read-only current-main executor activation preflight.
+
+### EXP-20260927-062 — DEC-331 read-only executor activation preflight
+
+- Current-main activation preflight implemented and bound to DEC-330.
+- Empty-slot command evidence: `gh workflow run phase8a-exp062-discovery.yml --ref main`.
+- Executor activation source authorized?: YES.
+- Historical executor available?: NO.
+- Historical-result dispatch authorized?: NO.
+- Execute mode available?: NO.
+- Existing run #2 immediately consumes the slot and removes the command.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
+- Next gate: repository-hosted read-only executor activation-preflight proof.

@@ -5676,3 +5676,23 @@ only future attempt. Reserved 2023-2026 access, candidate compilation/promotion,
 Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is a read-only current-main executor activation preflight.
+
+## DEC-331 — EXP-062 read-only executor activation preflight
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY CURRENT-MAIN ACTIVATION PREFLIGHT / NO EXECUTE MODE
+
+DEC-331 adds a current-main preflight for the DEC-330 source-authorized future
+activation of the one-shot historical executor. It pins the exact DEC-330 activation
+contract, rechecks the EXP-062 discovery inventory, and exposes the future discovery
+command only as evidence while the historical slot remains empty.
+
+Actual executor availability, historical-result dispatch, and execute mode remain
+false. If run #2 already exists, the command is removed and the slot is treated as
+consumed.
+
+Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain locked.
+
+The next safe gate is a repository-hosted read-only executor activation-preflight
+proof.

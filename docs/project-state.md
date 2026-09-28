@@ -1094,3 +1094,15 @@ authorized by DEC-330. The slot remains empty and target run #2 / attempt 1 rema
 the sole future historical attempt.
 
 The next safe step is a read-only current-main executor activation preflight.
+
+## 2026-09-28 — DEC-331 EXP-062 read-only executor activation preflight
+
+The repository stack now includes a current-main activation preflight for the
+source-authorized future one-shot historical executor. It can show the exact future
+command only while the slot remains empty, but it cannot execute that command and no
+historical executor is available.
+
+If run #2 appears, the command disappears and the slot is consumed. Reserved 2023-2026
+data and all candidate/demo/live/real-money/trading paths remain locked.
+
+The next safe step is a repository-hosted read-only proof of this activation preflight.
