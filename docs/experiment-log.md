@@ -1857,3 +1857,17 @@ Copy this section for each serious experiment:
 - Execute mode available?: NO.
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Next gate: read-only current-main active workflow-install preflight.
+
+
+### EXP-20260927-062 — DEC-361 read-only active workflow install preflight
+
+- Current-main active install preflight implemented and bound to DEC-360.
+- Dormant executor template must remain exact.
+- Active executor workflow path must remain absent.
+- Active install-source review authorized?: YES.
+- Workflow install authorized?: NO.
+- Historical executor available?: NO.
+- Historical-result dispatch authorized?: NO.
+- Execute mode available?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Next gate: repository-hosted read-only active install-preflight proof.

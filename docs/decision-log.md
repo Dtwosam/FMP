@@ -6322,3 +6322,21 @@ compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading rema
 false.
 
 The next safe gate is a read-only current-main active workflow-install preflight.
+
+
+## DEC-361 — EXP-062 active one-shot historical executor workflow install preflight
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY CURRENT-MAIN ACTIVE INSTALL PREFLIGHT / NO INSTALL OR DISPATCH
+
+DEC-361 adds a current-main preflight bound to DEC-360 and the exact dormant executor
+template. It requires the active executor workflow path to remain absent, rechecks the
+EXP-062 historical-result inventory, and confirms target run #2 / attempt 1 remains
+the only future historical attempt.
+
+The CLI exposes only `plan`. Install authorization, workflow installed state,
+executor availability, historical dispatch, execute mode, rerun/retry/replacement,
+reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain false.
+
+Next gate: repository-hosted read-only active workflow-install preflight proof.
