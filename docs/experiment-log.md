@@ -1546,3 +1546,15 @@ Copy this section for each serious experiment:
 - Candidate compilation/promotion authorized?: NO.
 - Reserved 2023-2026 data, Phase 8B, demo/live, real-money, and trading remain locked.
 - Contract is frozen before the historical result exists.
+
+
+### EXP-20260927-062 — DEC-335 reviewed activation-preflight freeze
+
+- Deterministic source-only freeze builder added for a valid DEC-333 review.
+- Preserves DEC-332 proof run/job/artifact identity, artifact digest, and raw/canonical preflight hashes.
+- Preserves exact DEC-333 review source blobs and target run #2 / attempt 1.
+- Emits one canonical `freeze_fingerprint_sha256`.
+- Historical executor availability/dispatch/execute mode authorized?: NO.
+- Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- DEC-334 terminal-review contract remains a required sibling gate.
+- Next gate: concrete DEC-332 activation-preflight runtime-evidence binding.

@@ -1140,3 +1140,19 @@ success still requires aggregate/cell content review before candidate compilatio
 
 Reserved 2023-2026 data and all candidate/demo/live/real-money/trading paths remain
 locked.
+
+
+## 2026-09-28 — DEC-335 EXP-062 reviewed activation-preflight freeze source
+
+The repository stack now contains a deterministic source-only freeze builder for a
+valid DEC-333 review of the successful DEC-332 activation-preflight proof.
+
+It preserves concrete proof run/job/artifact/hash identities and the exact DEC-333
+source map, then emits one canonical freeze fingerprint. It cannot create runtime
+evidence, dispatch historical discovery, or expose an execute mode.
+
+DEC-334's predeclared terminal-review contract remains required. Historical executor
+availability, actual dispatch, reserved 2023-2026 data, candidate compilation/promotion,
+Phase 8B, demo/live, real-money, and trading remain locked.
+
+The next safe step is concrete activation-preflight runtime-evidence binding.

@@ -699,3 +699,14 @@
 - Allows the GitHub unexpanded matrix placeholder only for compatible non-success runs.
 - Makes every terminal outcome consume the one historical slot permanently.
 - Keeps retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-28 — DEC-335 EXP-062 reviewed activation-preflight freeze
+
+- Added a deterministic source-only freeze builder for a valid DEC-333 review.
+- Preserves exact DEC-332 proof run/job/artifact identities and artifact digest.
+- Preserves raw/canonical activation-preflight SHA-256 hashes and DEC-333 source blobs.
+- Freezes target run #2 / attempt 1 and the historical command as evidence only.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.
+- Keeps DEC-334 terminal-review criteria as a required gate before any executor reaches main.
