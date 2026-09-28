@@ -5331,3 +5331,24 @@ broker/live, real-money, and trading remain false.
 
 The next safe gate is a repository-hosted read-only proof of the exact DEC-313
 execution plan on merged main.
+
+## DEC-314 — EXP-062 repository-hosted historical execution-plan proof
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY MERGED-MAIN PROOF / NO HISTORICAL DISPATCH
+
+DEC-314 adds a push-to-main, first-run/attempt-1 proof workflow for the exact DEC-313
+execution plan. It pins DEC-311/312/313 source identities, fetches current main and the
+EXP-062 manual-main discovery inventory, and invokes only the read-only planner.
+
+A valid proof must show the frozen gate proof remains run #1, zero historical-result
+attempts, target run #2 / attempt 1, and the exact future discovery command as plan
+evidence only. The workflow has contents/actions read permissions and never executes
+that command.
+
+Historical-result dispatch remains false. Reserved 2023-2026 access, candidate
+compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading remain
+locked.
+
+The next safe gate after a real successful proof is an immutable review/freeze of that
+exact runtime evidence.
