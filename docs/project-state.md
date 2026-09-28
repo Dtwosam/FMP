@@ -1388,3 +1388,16 @@ historical executor workflow.
 The expected executor workflow path must remain absent and all runtime/trading
 authority remains locked. Next safe gate: immutable review freeze after valid proof
 evidence exists.
+
+
+## 2026-09-28 — DEC-352 workflow-install preflight proof freeze source-ready
+
+A deterministic source-only freeze now exists for a valid DEC-351 review. It cannot
+invent runtime evidence, install the future executor workflow, or dispatch historical
+discovery.
+
+The freeze preserves exact reviewed proof identities/hashes and the absent future
+workflow path, then emits one canonical fingerprint. All install/executor/dispatch/
+trading authority remains locked.
+
+Next safe step after real DEC-350 proof evidence: concrete runtime-evidence binding.
