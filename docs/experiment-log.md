@@ -1352,3 +1352,13 @@ Copy this section for each serious experiment:
 - Historical-result dispatch/execute mode authorized?: NO.
 - Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate after actual proof: immutable concrete execution-plan freeze.
+
+### EXP-20260927-062 — DEC-316 reviewed execution-plan freeze source
+
+- Deterministic freeze builder added for a valid future DEC-315 reviewed result.
+- No runtime ids or hashes are fabricated before DEC-314 evidence exists.
+- Freeze preserves the actual proof run/job/artifact ids, artifact digest, plan hashes, and reviewed source blobs.
+- Historical-result dispatch/execute mode authorized?: NO.
+- Target historical runtime remains run #2 / attempt 1 only.
+- Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate after real proof: concrete runtime-evidence binding before a one-shot dispatcher.
