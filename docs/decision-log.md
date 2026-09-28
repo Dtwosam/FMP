@@ -6568,3 +6568,24 @@ candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
 trading remain false.
 
 The next safe gate is a read-only current-main install-authorization preflight.
+
+
+## DEC-373 — EXP-062 active workflow install-authorization preflight
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY CURRENT-MAIN AUTHORIZATION PREFLIGHT / NO INSTALL OR DISPATCH
+
+DEC-373 adds a current-main preflight for the DEC-372 source-authorized future
+install-authorization decision.
+
+It pins the exact DEC-372 contract and dormant executor template, requires the active
+executor workflow path to remain absent, rechecks the EXP-062 historical-result
+inventory, and confirms target run #2 / attempt 1 remains the only future historical
+attempt.
+
+Actual workflow-install authorization, workflow installed state, executor
+availability, dispatch, execute mode, rerun/retry/replacement, reserved 2023-2026
+access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money,
+and trading remain false.
+
+The next safe gate is a repository-hosted read-only install-authorization preflight proof.
