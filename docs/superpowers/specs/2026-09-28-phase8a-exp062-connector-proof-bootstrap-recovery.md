@@ -20,7 +20,7 @@ contract for this integration-specific trigger gap.
 The recovery path may be activated only by a later, dedicated pull-request workflow
 job and only after the normal repository unit suite succeeds. The contract requires:
 
-- exact pinned main head `0c57298198a2915e3f31fb6ba800c9a644c519bf`;
+- exact clean `main` checkout captured at runtime and revalidated by both fresh DEC-302 plans;
 - GitHub Actions `pull_request` context;
 - base ref `main`;
 - activation head ref `phase8a-dec307-exp062-proof-bootstrap-activation`;
