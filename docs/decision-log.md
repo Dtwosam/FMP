@@ -6485,3 +6485,21 @@ candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
 trading remain false.
 
 Next gate after real success: immutable installation-preflight proof review/freeze.
+
+
+## DEC-369 — EXP-062 active workflow-installation preflight proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY FUTURE RUNTIME-EVIDENCE REVIEWER / NO INSTALL OR DISPATCH
+
+DEC-369 adds a strict reviewer for future successful DEC-368 merged-main evidence.
+It pins the DEC-368 proof workflow, DEC-367 preflight/CLI, DEC-366 installation
+contract, dormant executor template, and active discovery workflow; requires run #1 /
+attempt 1 success, one successful proof job, one non-expired artifact, and exact
+DEC-367 preflight content; and records raw/canonical SHA-256 hashes.
+
+The active executor workflow path must remain absent. Workflow-install authorization,
+installed state, executor availability, dispatch, execute mode, retries, reserved
+data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next gate: deterministic immutable review freeze.
