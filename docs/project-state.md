@@ -1528,3 +1528,15 @@ Target run #2 / attempt 1 remains the sole future historical attempt. Reserved
 2023-2026 data and all downstream trading paths remain locked.
 
 Next safe step: repository-hosted read-only active workflow-install preflight proof.
+
+
+## 2026-09-28 — DEC-362 active workflow install preflight proof source-ready
+
+A repository-hosted read-only proof now exists for the DEC-361 active workflow
+install preflight. It requires the active executor workflow path to remain absent and
+invokes only the plan surface.
+
+No install, executor, dispatch, or execute authority exists. The historical-result
+slot remains empty with target run #2 / attempt 1.
+
+Next safe step after real successful proof evidence: review/freeze.
