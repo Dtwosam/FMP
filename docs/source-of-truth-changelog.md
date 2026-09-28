@@ -985,3 +985,12 @@
 - Invokes only the read-only active install-preflight plan surface.
 - Verifies zero historical-result attempts and target run #2 / attempt 1.
 - Uploads only the preflight JSON and never installs or dispatches anything.
+
+
+## 2026-09-28 — DEC-363 EXP-062 active install-preflight proof reviewer
+
+- Added source-only review of future DEC-362 runtime evidence.
+- Pinned DEC-362/361/360 source identities, dormant template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates active-path-absent preflight content and records raw/canonical hashes.
+- Adds no install, dispatch, or execute mode and keeps downstream authority locked.
