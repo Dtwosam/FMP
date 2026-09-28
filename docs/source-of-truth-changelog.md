@@ -446,3 +446,16 @@
 - Added no CI activation and performed no proof dispatch.
 - Kept historical-result, reserved-data, candidate, demo/live, real-money, and trading
   authority false.
+
+
+## 2026-09-28 — DEC-307 EXP-062 proof bootstrap activation preparation
+
+- Added a guarded activation job to the existing tests workflow.
+- Required successful unit tests before activation.
+- Restricted activation to same-repository PR #451, attempt 1, exact activation branch,
+  and base `main`.
+- Kept the stacked PR base non-main initially, making the activation job unreachable
+  during validation.
+- Added exact proof/recovery source-blob checks before any dispatch.
+- Limited the possible action to one fail-closed proof run; historical/demo/live,
+  real-money, and trading authority remain false.
