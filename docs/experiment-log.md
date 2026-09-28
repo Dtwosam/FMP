@@ -1715,3 +1715,17 @@ Copy this section for each serious experiment:
 - Execute mode available?: NO.
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Next gate: read-only current-main workflow-install preflight.
+
+
+### EXP-20260927-062 — DEC-349 read-only workflow-install preflight
+
+- Current-main install preflight implemented and bound to DEC-348.
+- Future executor workflow path must remain absent.
+- Install-source authorized?: YES.
+- Install authorized?: NO.
+- Workflow installed?: NO.
+- Historical executor available?: NO.
+- Historical-result dispatch authorized?: NO.
+- Execute mode available?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Next gate: repository-hosted read-only install-preflight proof.
