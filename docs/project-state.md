@@ -1128,3 +1128,15 @@ validation against downloaded bytes, including target run #2 / attempt 1.
 DEC-333 itself cannot dispatch or execute historical discovery. A real successful
 DEC-332 proof must still exist and be frozen before any one-shot executor workflow is
 considered.
+
+## 2026-09-28 — DEC-334 EXP-062 terminal result criteria predeclared
+
+The terminal review criteria for the sole future EXP-062 historical run are now frozen
+before dispatch. Run #2 / attempt 1 is the only reviewable result identity.
+
+Success requires the exact 20-job/20-artifact DEC-298 shape. Any terminal non-success
+closes the historical slot permanently with no retry or replacement. Even a complete
+success still requires aggregate/cell content review before candidate compilation.
+
+Reserved 2023-2026 data and all candidate/demo/live/real-money/trading paths remain
+locked.

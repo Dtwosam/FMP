@@ -619,3 +619,11 @@ __all__ += [
     "review_historical_executor_activation_preflight_proof",
     "validate_historical_executor_activation_preflight_review_sources",
 ]
+
+from .exp062_historical_terminal_review_contract import (
+    classify_historical_terminal_result as classify_exp062_historical_terminal_result,
+)
+
+__all__ += [
+    "classify_exp062_historical_terminal_result",
+]

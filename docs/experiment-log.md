@@ -1536,3 +1536,13 @@ Copy this section for each serious experiment:
 - Historical executor availability/dispatch/execute mode authorized?: NO.
 - Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate after actual proof: immutable concrete activation-preflight freeze.
+
+### EXP-20260927-062 — DEC-334 terminal review criteria frozen
+
+- Future historical result identity: workflow run #2 / attempt 1 only.
+- Complete success shape: exact 20 jobs and 20 expected non-expired artifacts.
+- Terminal non-success permanently consumes the historical-result slot.
+- Rerun/retry/replacement authorized?: NO.
+- Candidate compilation/promotion authorized?: NO.
+- Reserved 2023-2026 data, Phase 8B, demo/live, real-money, and trading remain locked.
+- Contract is frozen before the historical result exists.
