@@ -1084,3 +1084,13 @@
 - Keeps actual install authorization, installed state, executor availability, dispatch, and execute mode false.
 - Keeps zero historical-result attempts and target run #2 / attempt 1.
 - Keeps reserved data and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-373 EXP-062 read-only install-authorization preflight
+
+- Added current-main install-authorization preflight bound to DEC-372.
+- Requires the active executor workflow path to remain absent.
+- Rechecks the frozen proof and historical-result run inventory.
+- Provides only a plan surface; no install, execute, advance, or dispatch command exists.
+- Keeps actual install authorization, installed state, executor availability, dispatch, and execute mode false.
+- Keeps reserved data and all downstream trading paths locked.
