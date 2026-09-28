@@ -5739,3 +5739,30 @@ trading remain locked.
 
 The next gate after real DEC-332 evidence passes review is an immutable concrete
 activation-preflight proof freeze.
+
+## DEC-334 — EXP-062 historical terminal review contract
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY PREDECLARED TERMINAL REVIEW / NO RESULT YET
+
+DEC-334 freezes how the sole future EXP-062 historical workflow run #2 / attempt 1
+will be judged before the run exists.
+
+A success requires the exact DEC-298 20-job / 20-artifact shape: preflight, all 18
+expanded cell jobs, aggregate, every job successful, and every expected artifact
+present/non-expired. Such a run is classified
+`EXP062_HISTORICAL_RESULT_SUCCESS_COMPLETE_REVIEW_REQUIRED`; result contents still
+require separate review and candidate compilation remains locked.
+
+Any terminal non-success is classified
+`EXP062_HISTORICAL_RESULT_NON_SUCCESS_TERMINAL_CLOSED`. The slot is consumed
+permanently; only partial expected evidence may be preserved. Rerun, retry, and
+replacement remain false.
+
+The GitHub unexpanded matrix placeholder is permitted only for a non-success run, only
+when skipped, and only when no expanded cell jobs coexist with it.
+
+Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain false.
+
+DEC-334 must be green before the one-shot historical executor reaches main.
