@@ -5905,3 +5905,30 @@ Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate after real DEC-338 evidence is concrete source-proof runtime-evidence
 binding before any dispatch-capable executor workflow.
+
+
+## DEC-341 — EXP-062 one-shot historical executor source-proof runtime evidence freeze
+
+**Date:** 2026-09-28  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / EXECUTOR + DISPATCH STILL LOCKED
+
+DEC-341 binds the actual successful DEC-338 source proof on merged head
+`e9dfbf034614b54598d31653da3868ed66aa90ba`: run `36442399041`, job
+`108995955292`, artifact `10979242048`, artifact/ZIP SHA-256
+`7dff775fc559cf9dbd754f45c24fbc814035b1602b59ca5eb9f82678af4e8b88`,
+raw source-contract SHA-256
+`484ad49fa3b3e925ae4a3576af840a8736c9b25ef439b619e8b60e8011f94d63`,
+and canonical SHA-256
+`cb650b81c2549bfb5bfa62f6609bec9b39e4ed118f3e54c302a48a3a27a11616`.
+
+The source re-runs DEC-339 review and DEC-340 freezing and requires the exact DEC-340
+fingerprint
+`e340394fb987c68d9203a57c9cd363f255729b3424a9600ec03533ff421960a8`.
+It also pins DEC-334 terminal-review criteria.
+
+The historical-result slot remains empty and target run #2 / attempt 1 remains the
+only future attempt. Historical executor availability, actual dispatch, execute mode,
+reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain false.
+
+The next safe gate is a source-only one-shot historical executor workflow contract.
