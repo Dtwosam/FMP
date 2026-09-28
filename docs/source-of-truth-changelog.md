@@ -440,7 +440,7 @@
 ## 2026-09-28 — DEC-306 EXP-062 connector proof bootstrap recovery
 
 - Added a source-only recovery contract for the missing DEC-303 main-push workflow run.
-- Pinned the recovery to exact main `0c57298198a2915e3f31fb6ba800c9a644c519bf`.
+- Required the recovery to capture one exact clean live `main` head and revalidate it in both fresh DEC-302 plans.
 - Required pull-request attempt 1, base `main`, and one dedicated activation branch.
 - Reused unchanged DEC-303 fresh-plan validation and proof evidence construction.
 - Added no CI activation and performed no proof dispatch.
