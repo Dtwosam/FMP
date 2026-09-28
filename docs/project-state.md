@@ -877,3 +877,18 @@ Historical-result dispatch, execute mode, historical discovery execution/result
 production, reserved 2023-2026 access, candidate compilation/promotion, Phase 8B,
 demo, broker/live, real-money, and trading remain unauthorized. The next safe gate is
 a separate source-only execution-authorization contract; no dispatcher is authorized.
+
+## 2026-09-28 — DEC-312 EXP-062 exact runtime gate prepared
+
+DEC-312 activates historical execution only inside the single future EXP-062 discovery
+runtime identified as workflow run #2 / attempt 1. The public CLI now routes its
+preflight, cell, and aggregate execution checks through that gate while preserving the
+older DEC-299 workflow-source flag as false.
+
+This is not a dispatch authorization. No workflow is started by DEC-312. Historical
+research remains bounded to 2015-2022, while reserved 2023-2026 data, candidate
+compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading remain
+locked.
+
+The next safe step is a read-only operator that can prove the run #2 slot is still
+available on exact current main before any dispatcher is considered.
