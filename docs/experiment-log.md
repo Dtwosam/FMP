@@ -1239,3 +1239,14 @@ Copy this section for each serious experiment:
 - Historical execution, candidate compilation, Phase 8B, demo/live, real-money, and
   trading remain unauthorized.
 
+
+
+### EXP-20260927-062 — DEC-306 connector-trigger recovery
+
+- Two connector-created main merges produced no DEC-303 push workflow run.
+- DEC-306 adds a source-only recovery contract; it does not dispatch the proof.
+- Recovery is pinned to main `0c57298198a2915e3f31fb6ba800c9a644c519bf` and a
+  dedicated later activation PR.
+- Zero-run DEC-302 and unchanged DEC-303 validation remain mandatory.
+- Historical execution, candidate compilation, demo/live, real-money, and trading
+  remain unauthorized.
