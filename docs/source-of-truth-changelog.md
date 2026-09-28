@@ -762,3 +762,15 @@
 - Freezes DEC-336 runtime evidence, DEC-334 terminal criteria, and target run #2 / attempt 1.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-341 EXP-062 concrete one-shot executor source-proof runtime evidence
+
+- Bound the real DEC-338 merged-main proof run/job/artifact identities.
+- Verified the artifact ZIP SHA-256 independently against GitHub's artifact digest.
+- Bound exact raw and canonical DEC-337 source-contract hashes.
+- Re-runs DEC-339 review and DEC-340 deterministic freezing against the raw evidence.
+- Requires the exact DEC-340 freeze fingerprint.
+- Pins the DEC-334 terminal-review contract before executor workflow progression.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Keeps executor availability, actual dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
