@@ -592,3 +592,13 @@
 - Requires exact DEC-317/318/319/320 source identities and zero-attempt run #2 target semantics.
 - Preserves real proof/artifact/plan identities and emits a canonical freeze fingerprint.
 - Keeps actual dispatch, executor availability, execute mode, reserved data, and all downstream trading authority locked.
+
+## 2026-09-28 — DEC-323 EXP-062 concrete dispatch-plan runtime evidence
+
+- Bound the real DEC-320 merged-main proof run/job/artifact identities.
+- Verified the artifact ZIP SHA-256 independently against GitHub's artifact digest.
+- Bound exact raw and canonical historical-dispatch-plan hashes.
+- Re-runs DEC-321 review and DEC-322 deterministic freezing against the raw evidence.
+- Requires the exact DEC-322 freeze fingerprint.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Keeps actual dispatch/executor/execute mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
