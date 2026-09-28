@@ -6259,3 +6259,21 @@ reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
 broker/live, real-money, and trading remain false.
 
 Next gate: deterministic immutable review freeze.
+
+
+## DEC-358 — EXP-062 dormant one-shot historical executor source-proof freeze
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY DETERMINISTIC FREEZE / ACTIVE EXECUTOR UNINSTALLED
+
+DEC-358 freezes an already-valid DEC-357 review of future successful DEC-356 runtime
+evidence. It preserves exact proof run/job/artifact identities, artifact digest,
+raw/canonical source hashes, DEC-355 dormant-source identity, template blob, target
+run #2 / attempt 1, and the exact review source map.
+
+The freeze emits one canonical fingerprint for later concrete runtime binding.
+Active workflow installation, executor availability, historical dispatch, execute
+mode, retries, reserved data, candidate/promotion, Phase 8B, demo/live, real-money,
+and trading remain locked.
+
+Next gate: concrete runtime-evidence binding after real DEC-356 proof success.
