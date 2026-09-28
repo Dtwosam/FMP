@@ -5554,3 +5554,21 @@ Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is a read-only current-main executor preflight with no submission
 path.
+
+## DEC-325 — EXP-062 read-only current-main executor preflight
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY PREFLIGHT / NO EXECUTE MODE
+
+DEC-325 adds a current-main preflight for the DEC-324 source-authorized one-shot
+historical executor contract. It pins DEC-324, rechecks the EXP-062 discovery inventory,
+and exposes the future discovery command only as evidence while the historical slot
+remains empty.
+
+Actual executor availability, dispatch, and execute mode remain false. If run #2
+exists, the command is removed and the slot is treated as consumed.
+
+Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain locked.
+
+The next safe gate is a repository-hosted read-only executor-preflight proof.
