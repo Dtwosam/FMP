@@ -382,3 +382,15 @@ from .exp062_runtime_proof_freeze import (
 __all__ += [
     "freeze_runtime_gate_proof_evidence",
 ]
+
+from .exp062_historical_run_authorization import (
+    build_historical_run_authorization_contract as build_exp062_historical_run_authorization_contract,
+    classify_historical_run_inventory as classify_exp062_historical_run_inventory,
+    validate_historical_run_authorization_sources as validate_exp062_historical_run_authorization_sources,
+)
+
+__all__ += [
+    "build_exp062_historical_run_authorization_contract",
+    "classify_exp062_historical_run_inventory",
+    "validate_exp062_historical_run_authorization_sources",
+]
