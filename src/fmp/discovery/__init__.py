@@ -794,6 +794,17 @@ __all__ += [
     "validate_one_shot_historical_executor_workflow_install_preflight_proof_runtime_freeze_sources",
 ]
 
+
+from .exp062_historical_one_shot_executor_workflow_installation_source_contract import (
+    build_one_shot_historical_executor_workflow_installation_source_contract,
+    validate_one_shot_historical_executor_workflow_installation_source_contract_sources,
+)
+
+__all__ += [
+    "build_one_shot_historical_executor_workflow_installation_source_contract",
+    "validate_one_shot_historical_executor_workflow_installation_source_contract_sources",
+]
+
 from .exp062_historical_terminal_review_contract import (
     classify_historical_terminal_result as classify_exp062_historical_terminal_result,
 )
