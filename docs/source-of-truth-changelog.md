@@ -505,3 +505,13 @@
 - Required exact repository, workflow, event, main ref, runtime SHA, and distinct positive run id.
 - Kept historical-result dispatch false and added no executor.
 - Kept rerun/retry/replacement, reserved 2023-2026 data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+## 2026-09-28 — DEC-313 EXP-062 read-only historical execution operator
+
+- Added an exact-main planner for the DEC-312 one-shot historical runtime.
+- Requires the frozen proof to remain workflow run #1 / attempt 1.
+- Targets only future workflow run #2 / attempt 1.
+- Exposes the future discovery command as plan evidence only while the slot is empty.
+- Removes the command immediately when run #2 is present.
+- Adds no execute mode or dispatch authority.
+- Keeps rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.

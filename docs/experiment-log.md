@@ -1323,3 +1323,13 @@ Copy this section for each serious experiment:
 - Reserved 2023-2026 robustness block remains CLOSED.
 - Rerun/retry/replacement, candidate compilation/promotion, Phase 8B, demo/live, real-money, and trading remain unauthorized.
 - Next gate: read-only exact-main historical execution operator; no execute mode.
+
+### EXP-20260927-062 — DEC-313 read-only historical execution planner
+
+- Exact-main execution planner implemented for the one DEC-312 run #2 / attempt 1 runtime.
+- Empty-slot plan evidence: `gh workflow run phase8a-exp062-discovery.yml --ref main`.
+- Historical-result dispatch authorized?: NO.
+- Execute mode available?: NO.
+- Run #2 presence immediately removes the command and consumes the slot.
+- Reserved 2023-2026 data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate: repository-hosted read-only execution-plan proof.
