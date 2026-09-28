@@ -1419,3 +1419,16 @@ executor, dispatch, or execute authority exists. Reserved data and all downstrea
 trading paths remain locked.
 
 Next safe step: source-only workflow-installation source contract.
+
+
+## 2026-09-28 — DEC-354 dormant executor workflow source contract ready
+
+The repository stack now contains a source-only contract for a future dormant
+one-shot historical executor workflow template.
+
+The template path is outside `.github/workflows/`, the reserved active executor
+workflow remains absent, and no install, executor, dispatch, or execute authority
+exists.
+
+The historical slot remains empty with target run #2 / attempt 1. Next safe step:
+create and validate the dormant disabled template source only.

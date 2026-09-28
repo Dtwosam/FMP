@@ -1773,3 +1773,16 @@ Copy this section for each serious experiment:
 - Future executor workflow path remains absent.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Reserved data and all downstream trading paths remain locked.
+
+
+### EXP-20260927-062 — DEC-354 dormant executor workflow-installation source contract
+
+- Concrete DEC-353 runtime freeze is the prerequisite.
+- Dormant executor template path fixed outside `.github/workflows/`.
+- Reserved active executor workflow path fixed.
+- Installation source authorized?: YES.
+- Dormant template present?: NO.
+- Active workflow installed?: NO.
+- Executor / dispatch / execute authority authorized?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Next gate: dormant executor workflow template source.

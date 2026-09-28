@@ -6176,3 +6176,24 @@ access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money
 trading remain false.
 
 Next gate: source-only one-shot historical executor workflow-installation source contract.
+
+
+## DEC-354 — EXP-062 one-shot historical executor workflow-installation source contract
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY DORMANT INSTALLATION CONTRACT / ACTIVE WORKFLOW ABSENT
+
+DEC-354 pins the concrete DEC-353 runtime freeze and authorizes only a future dormant
+executor-workflow source outside `.github/workflows/`.
+
+The dormant template path is
+`docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled`;
+the reserved active path is
+`.github/workflows/phase8a-exp062-one-shot-historical-executor.yml`.
+
+The dormant template remains absent under this decision. Install authorization,
+installed state, executor availability, historical dispatch, execute mode,
+rerun/retry/replacement, reserved 2023-2026 access, candidate compilation/promotion,
+Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is the dormant executor workflow template source itself.
