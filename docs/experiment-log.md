@@ -1829,3 +1829,17 @@ Copy this section for each serious experiment:
 - Emits canonical freeze fingerprint.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Next gate after real proof: concrete runtime-evidence binding.
+
+
+### EXP-20260927-062 — DEC-359 dormant executor source proof runtime evidence freeze
+
+- Bound real DEC-356 proof run `36473192632`, job `109100293950`, and artifact `10991479562`.
+- Artifact/ZIP SHA-256: `092e1daebf889560d27ebe57242772c3806322627dab03e64a2ff400d9b4b1d1`.
+- Raw dormant-source SHA-256: `1dfae5078e400fc2dbf0b10ef6d4297dc4d3c0660386ebb8c46b63c6dbe69060`.
+- Canonical dormant-source SHA-256: `4d6cf8999ecb5346a10ecb31cdc1b669736d4d466e6b31c503b3fbf1a5e633a7`.
+- Replays DEC-357 review and DEC-358 freeze; expected DEC-358 fingerprint `8ba4411b8c7468a1f0eecc0352490e00577452ce96a81710fca6457e779e9897`.
+- Pins DEC-334 terminal-review criteria.
+- Dormant template remains source only; active workflow remains uninstalled.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Reserved data and all downstream trading paths remain locked.
