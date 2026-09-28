@@ -6305,3 +6305,20 @@ dispatch, execute mode, reserved 2023-2026 access, candidate compilation/promoti
 Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 Next gate: source-only active one-shot historical executor workflow install contract.
+
+
+## DEC-360 — EXP-062 active one-shot historical executor workflow install contract
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY ACTIVE INSTALL CONTRACT / ACTIVE WORKFLOW ABSENT
+
+DEC-360 pins the concrete DEC-359 runtime freeze and exact dormant executor template,
+then authorizes only source review for a future active workflow installation.
+
+The reserved active path remains absent. Workflow-install authorization, workflow
+installed state, historical executor availability, historical-result dispatch,
+execute mode, rerun/retry/replacement, reserved 2023-2026 access, candidate
+compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading remain
+false.
+
+The next safe gate is a read-only current-main active workflow-install preflight.
