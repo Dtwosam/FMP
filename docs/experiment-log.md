@@ -1843,3 +1843,17 @@ Copy this section for each serious experiment:
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Reserved data and all downstream trading paths remain locked.
+
+
+### EXP-20260927-062 — DEC-360 active executor workflow install contract
+
+- Concrete DEC-359 runtime freeze is the prerequisite.
+- Exact dormant executor template remains the only source template.
+- Active install-source review authorized?: YES.
+- Active workflow path present?: NO.
+- Workflow install authorized?: NO.
+- Historical executor available?: NO.
+- Historical-result dispatch authorized?: NO.
+- Execute mode available?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Next gate: read-only current-main active workflow-install preflight.
