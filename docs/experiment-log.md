@@ -1383,3 +1383,14 @@ Copy this section for each serious experiment:
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Reserved 2023-2026 data and all candidate/demo/live/trading paths remain locked.
 - Next gate: read-only current-main one-shot dispatch operator.
+
+### EXP-20260927-062 — DEC-319 read-only dispatch planner
+
+- Current-main one-shot dispatch planner implemented.
+- Empty-slot command evidence: `gh workflow run phase8a-exp062-discovery.yml --ref main`.
+- Actual dispatch authorized?: NO.
+- Historical executor available?: NO.
+- Execute mode available?: NO.
+- Existing run #2 immediately consumes the slot and removes the command.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
+- Next gate: repository-hosted read-only dispatch-plan proof.
