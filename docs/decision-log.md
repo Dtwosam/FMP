@@ -5288,3 +5288,25 @@ Phase 8B, demo, broker/live, real-money, and trading all remain false.
 The next safe gate is a separate source-only historical execution authorization
 contract. It may define the exact future run #2 / attempt 1 execution identity but
 must provide no dispatch path.
+
+## DEC-312 — EXP-062 historical execution authorization
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY ONE-SHOT RUNTIME AUTHORIZATION / DISPATCH STILL LOCKED
+
+DEC-312 binds the concrete DEC-311 historical-plan proof freeze and activates the
+EXP-062 CLI execution gate only for the single future historical workflow run #2 /
+attempt 1. The exact runtime must be GitHub Actions in `Dtwosam/FMP`, workflow
+`phase8a-exp062-discovery`, `workflow_dispatch` on `refs/heads/main`, with
+`GITHUB_SHA` equal to the CLI code commit and a distinct positive run id.
+
+Historical discovery execution and discovery-result production are authorized only
+inside that exact runtime identity. Historical-result dispatch remains false, so
+DEC-312 cannot start the run itself.
+
+The historical range remains 2015-2022. Rerun/retry/replacement, reserved 2023-2026
+access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain false.
+
+The next safe gate is a separate read-only exact-main historical execution operator
+with no execute mode.
