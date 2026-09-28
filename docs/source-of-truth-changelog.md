@@ -1062,3 +1062,15 @@
 - Preserves active executor workflow path absent state.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Adds no install, dispatch, or execute surface and keeps downstream authority locked.
+
+
+## 2026-09-28 — DEC-371 EXP-062 concrete active workflow-installation proof runtime evidence
+
+- Bound the real DEC-368 merged-main proof run/job/artifact identities.
+- Verified the artifact ZIP SHA-256 independently against GitHub's artifact digest.
+- Bound exact raw and canonical DEC-367 workflow-installation-preflight hashes.
+- Re-runs DEC-369 review and DEC-370 deterministic freezing against the raw evidence.
+- Requires the exact DEC-370 freeze fingerprint.
+- Pins the DEC-334 terminal-review contract.
+- Confirms active executor workflow path absent, zero historical-result attempts, and target run #2 / attempt 1.
+- Keeps install, installed state, executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
