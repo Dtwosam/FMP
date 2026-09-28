@@ -5240,3 +5240,21 @@ real-money, and trading remain false.
 The next gate after a real successful merged-main DEC-309 run is an immutable
 review/freeze of that exact proof run, artifact digest, and raw/canonical plan hashes.
 
+
+
+## DEC-310 — EXP-062 historical-plan proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY REVIEWER / RUNTIME PLAN PROOF REQUIRED
+
+DEC-310 adds a generic reviewer for a future successful DEC-309 read-only historical
+plan proof. It requires the exact DEC-309 workflow, run #1 / attempt 1 on merged main,
+one successful plan job, one non-expired plan artifact, and the downloaded plan bytes.
+
+The reviewer revalidates the DEC-308 slot-available plan, binds raw and canonical
+SHA-256 plan hashes, and pins DEC-306/307/308/309 source identities. It cannot dispatch
+or execute the historical workflow. Reserved 2023-2026 data, candidate compilation,
+Phase 8B, demo/live, real-money, and trading remain locked.
+
+The next safe gate after actual DEC-309 evidence passes DEC-310 is an immutable concrete
+historical-plan proof freeze before execution authorization is considered.
