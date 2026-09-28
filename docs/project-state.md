@@ -1048,3 +1048,13 @@ unchanged.
 The workflow has read-only permissions, runs only the planner, and uploads only
 preflight JSON. It cannot dispatch historical discovery. A real successful proof must
 be bound to exact runtime evidence before any one-shot executor workflow is considered.
+
+## 2026-09-28 — DEC-327 EXP-062 executor-preflight reviewer prepared
+
+The stack now includes a source-only reviewer for future DEC-326 merged-main proof
+evidence. It can validate the exact proof run/job/artifact and re-run DEC-325 preflight
+validation against downloaded preflight bytes, including target run #2 / attempt 1.
+
+DEC-327 itself cannot dispatch or execute historical discovery. A real successful
+DEC-326 proof must still exist and be frozen before any one-shot executor workflow is
+considered.
