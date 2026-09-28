@@ -1237,3 +1237,20 @@ all candidate/demo/live/real-money/trading paths remain locked.
 
 The next safe step after real DEC-338 evidence is concrete source-proof runtime
 evidence binding.
+
+
+## 2026-09-28 — DEC-341 EXP-062 concrete one-shot executor source-proof evidence bound
+
+The successful DEC-338 read-only source proof is now represented by exact runtime
+evidence: merged head `e9dfbf034614b54598d31653da3868ed66aa90ba`, run
+`36442399041`, job `108995955292`, artifact `10979242048`, matching
+GitHub/independent ZIP SHA-256, and frozen raw/canonical source-contract hashes.
+
+DEC-341 replays DEC-339 review and DEC-340 deterministic freezing and requires the
+exact DEC-340 fingerprint. DEC-334 terminal-review criteria remain pinned before any
+executor workflow progresses.
+
+No historical executor or dispatch is available under DEC-341. Reserved 2023-2026
+data and all candidate/demo/live/real-money/trading paths remain locked.
+
+The next safe step is a source-only one-shot historical executor workflow contract.
