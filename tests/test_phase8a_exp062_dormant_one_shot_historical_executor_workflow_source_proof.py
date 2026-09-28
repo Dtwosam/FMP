@@ -37,7 +37,7 @@ class Exp062DormantOneShotHistoricalExecutorWorkflowSourceProofTests(
                 "e4fc6a7d1faaca50bc6936597f0e8b66fe096985"
             ),
             "src/fmp/discovery/exp062_historical_one_shot_executor_dormant_workflow_source.py": (
-                "0672310946ab6bb3b77d2de5c4ea5d68e41f810a"
+                "003e44126d9d6a807efd51b5a589128f6d4b5aac"
             ),
             "docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled": (
                 "51ce87584369be957482460d81649adb1cb9f05d"
