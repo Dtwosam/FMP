@@ -5213,3 +5213,30 @@ trading remain false.
 The next safe gate is a repository-hosted read-only merged-main proof of the exact
 DEC-308 slot-available plan. That proof must not dispatch the historical workflow.
 
+
+## DEC-309 — EXP-062 repository-hosted historical plan proof
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY READ-ONLY PROOF WORKFLOW / NO HISTORICAL DISPATCH
+
+DEC-309 adds a push-to-main proof workflow for DEC-308. The workflow is first-run /
+attempt-1 only, requires exact merged-main identity and frozen DEC-306/307/308 source
+blobs, fetches current main plus the EXP-062 manual-main discovery inventory, and runs
+only the DEC-308 read-only planner.
+
+A successful proof must show the frozen gate proof as the sole matching run, zero
+historical-result attempts, an available/unconsumed slot, and the exact future command
+`gh workflow run phase8a-exp062-discovery.yml --ref main` as JSON plan evidence.
+The workflow never executes that command.
+
+DEC-309 uploads only `historical-plan.json` as
+`exp062-dec309-historical-plan-<merged-main-sha>`. It has read-only contents/actions
+permissions and creates no discovery cell or aggregate result artifact.
+
+Historical dispatch/execution/result production, rerun/retry/replacement, reserved
+2023-2026 access, candidate compilation/promotion, Phase 8B, demo, broker/live,
+real-money, and trading remain false.
+
+The next gate after a real successful merged-main DEC-309 run is an immutable
+review/freeze of that exact proof run, artifact digest, and raw/canonical plan hashes.
+
