@@ -784,3 +784,13 @@
 - Sets only the future workflow-source authorization true.
 - Keeps actual executor availability, execute mode, and historical-result dispatch false.
 - Keeps rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+
+## 2026-09-28 — DEC-343 EXP-062 read-only executor workflow preflight
+
+- Added a current-main workflow preflight bound to DEC-342.
+- Rechecks the frozen proof and historical-result run inventory.
+- Exposes the future discovery command only as evidence while the slot is empty.
+- Removes the command once run #2 exists.
+- Adds no execute/advance mode and keeps executor availability plus actual dispatch false.
+- Keeps reserved data plus all downstream trading paths locked.

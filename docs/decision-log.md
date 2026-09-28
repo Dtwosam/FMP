@@ -5952,3 +5952,25 @@ rerun/retry/replacement, reserved 2023-2026 access, candidate compilation/promot
 Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate is a read-only current-main one-shot executor workflow preflight.
+
+
+## DEC-343 — EXP-062 one-shot historical executor workflow preflight
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY CURRENT-MAIN WORKFLOW PREFLIGHT / NO EXECUTE MODE
+
+DEC-343 adds a current-main preflight for the DEC-342 source-authorized future
+one-shot historical executor workflow.
+
+It pins the exact DEC-342 workflow contract, rechecks the EXP-062 discovery inventory,
+and exposes the future discovery command only as evidence while the historical slot
+remains empty.
+
+Actual executor availability, historical-result dispatch, and execute mode remain
+false. If run #2 already exists, the command is removed and the slot is treated as
+consumed.
+
+Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain locked.
+
+The next safe gate is a repository-hosted read-only workflow-preflight proof.
