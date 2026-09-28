@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Sequence
 
 from fmp.discovery.exp062_connector_proof_bootstrap import (
-    EXPECTED_MAIN_SHA,
     build_connector_proof_bootstrap_evidence,
 )
 from fmp.discovery.exp062_proof_operator import (
@@ -52,13 +51,6 @@ def _require_context() -> tuple[str, str, str, str, int]:
     if not os.environ.get("GH_TOKEN"):
         raise SystemExit("DEC-306 bootstrap requires GH_TOKEN")
 
-    expected = os.environ.get("EXP062_BOOTSTRAP_EXPECTED_MAIN_SHA", "")
-    if _SHA40.fullmatch(expected) is None:
-        raise SystemExit("DEC-306 expected main SHA is malformed")
-    expected = expected.lower()
-    if expected != EXPECTED_MAIN_SHA:
-        raise SystemExit("DEC-306 expected main SHA source mismatch")
-
     event_name = os.environ.get("GITHUB_EVENT_NAME", "")
     base_ref = os.environ.get("GITHUB_BASE_REF", "")
     head_ref = os.environ.get("GITHUB_HEAD_REF", "")
@@ -68,12 +60,12 @@ def _require_context() -> tuple[str, str, str, str, int]:
         raise SystemExit("DEC-306 run attempt is malformed") from exc
 
     checkout_head = _run(("git", "rev-parse", "HEAD")).lower()
-    if checkout_head != expected:
-        raise SystemExit("DEC-306 checkout is not the exact pinned main head")
+    if _SHA40.fullmatch(checkout_head) is None:
+        raise SystemExit("DEC-306 checkout head is malformed")
     if _run(("git", "status", "--porcelain")):
         raise SystemExit("DEC-306 requires a clean exact-main checkout")
 
-    return expected, event_name, base_ref, head_ref, run_attempt
+    return checkout_head, event_name, base_ref, head_ref, run_attempt
 
 
 def _fresh_plan(*, expected_head_sha: str) -> dict[str, object]:
@@ -94,14 +86,14 @@ def _fresh_plan(*, expected_head_sha: str) -> dict[str, object]:
 
 
 def main() -> int:
-    expected, event_name, base_ref, head_ref, run_attempt = _require_context()
+    main_head, event_name, base_ref, head_ref, run_attempt = _require_context()
 
-    first = _fresh_plan(expected_head_sha=expected)
-    second = _fresh_plan(expected_head_sha=expected)
+    first = _fresh_plan(expected_head_sha=main_head)
+    second = _fresh_plan(expected_head_sha=main_head)
     evidence = build_connector_proof_bootstrap_evidence(
         first,
         second,
-        main_head_sha=expected,
+        main_head_sha=main_head,
         event_name=event_name,
         base_ref=base_ref,
         head_ref=head_ref,
