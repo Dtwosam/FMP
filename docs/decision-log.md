@@ -6589,3 +6589,24 @@ access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money
 and trading remain false.
 
 The next safe gate is a repository-hosted read-only install-authorization preflight proof.
+
+
+## DEC-374 — EXP-062 install-authorization preflight proof
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY MERGED-MAIN AUTHORIZATION PREFLIGHT PROOF / NO INSTALL OR DISPATCH
+
+DEC-374 adds a push-to-main, first-run/attempt-1 proof of the DEC-373
+install-authorization preflight.
+
+The workflow pins DEC-372/373 source identities, the dormant executor template, the
+active discovery workflow, and the pinned planning runtime. It requires the active
+executor workflow path to remain absent, checks exact merged main plus the EXP-062
+run inventory, and invokes only the plan surface.
+
+Actual workflow-install authorization, workflow installed state, executor
+availability, historical dispatch, execute mode, rerun/retry/replacement, reserved
+2023-2026 access, candidate compilation/promotion, Phase 8B, demo, broker/live,
+real-money, and trading remain false.
+
+Next gate after real success: immutable install-authorization-preflight proof review/freeze.
