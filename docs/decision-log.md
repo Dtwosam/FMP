@@ -5474,3 +5474,22 @@ The workflow has only `contents: read` and `actions: read` permissions and uploa
 only `historical-dispatch-plan.json`.
 
 The next safe gate is a concrete review/freeze of the real DEC-320 runtime evidence.
+
+## DEC-321 — EXP-062 historical dispatch-plan proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY REVIEWER / RUNTIME PROOF REQUIRED
+
+DEC-321 adds a source-only reviewer for future DEC-320 evidence. It requires exact
+run #1 / attempt 1 success, one successful read-only plan job, one non-expired artifact,
+and exact DEC-319 plan semantics.
+
+The reviewer records raw/canonical plan hashes while preserving zero historical-result
+attempts and target run #2 / attempt 1. Actual dispatch, executor availability, and
+execute mode remain false.
+
+Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain locked.
+
+The next safe gate after actual DEC-320 proof is an immutable concrete dispatch-plan
+proof freeze.
