@@ -838,6 +838,17 @@ __all__ += [
     "freeze_reviewed_dormant_one_shot_historical_executor_source_proof",
 ]
 
+
+from .exp062_historical_dormant_one_shot_executor_source_proof_runtime_freeze import (
+    freeze_dormant_one_shot_historical_executor_source_proof_runtime_evidence,
+    validate_dormant_one_shot_historical_executor_source_proof_runtime_freeze_sources,
+)
+
+__all__ += [
+    "freeze_dormant_one_shot_historical_executor_source_proof_runtime_evidence",
+    "validate_dormant_one_shot_historical_executor_source_proof_runtime_freeze_sources",
+]
+
 from .exp062_historical_terminal_review_contract import (
     classify_historical_terminal_result as classify_exp062_historical_terminal_result,
 )
