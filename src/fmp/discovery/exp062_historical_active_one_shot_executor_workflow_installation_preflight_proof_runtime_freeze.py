@@ -464,7 +464,7 @@ def freeze_active_one_shot_historical_executor_workflow_installation_preflight_p
         "trading_authorized": False,
         "next_gate": (
             "SOURCE_ONLY_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_"
-            "WORKFLOW_INSTALLATION_CONTRACT"
+            "WORKFLOW_INSTALL_AUTHORIZATION_CONTRACT"
         ),
     }
     frozen["runtime_freeze_fingerprint_sha256"] = hashlib.sha256(
