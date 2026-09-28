@@ -1338,3 +1338,16 @@ No historical executor or dispatch is available. Reserved 2023-2026 data and all
 candidate/demo/live/real-money/trading paths remain locked.
 
 Next safe step: source-only one-shot historical executor workflow-install contract.
+
+
+## 2026-09-28 — DEC-348 workflow-install contract source-ready
+
+The repository stack now contains a source-only install contract for the future
+one-shot historical executor workflow, bound to concrete DEC-347 evidence.
+
+The expected path is
+`.github/workflows/phase8a-exp062-one-shot-historical-executor.yml`, but the
+workflow is not installed and no executor, dispatch, or execute authority exists.
+
+The historical slot remains empty and target run #2 / attempt 1 remains the sole
+future historical attempt. Next safe step: read-only workflow-install preflight.
