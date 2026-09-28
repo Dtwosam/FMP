@@ -903,3 +903,13 @@
 - Fixed dormant disabled-template path and reserved active workflow path.
 - Keeps dormant template absent and active workflow uninstalled.
 - Keeps executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-355 EXP-062 dormant one-shot executor workflow source
+
+- Added disabled one-shot historical executor template under `docs/superpowers/templates/`.
+- Pinned DEC-354, dormant template, and active discovery workflow source identities.
+- Template encodes one manual executor run and exactly one discovery workflow dispatch.
+- Template resolves target run #2 / attempt 1 and writes an immutable receipt.
+- No active executor workflow is installed.
+- Install, executor, dispatch, execute, reserved-data, and trading authority remain locked.
