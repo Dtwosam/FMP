@@ -181,11 +181,11 @@ class Exp062DormantOneShotHistoricalExecutorSourceProofReviewTests(
         )
         self.assertEqual(
             report["dec356_workflow"],
-            "1cf665417e32c6810bf8ff62e5bc4a3b7a1ac598",
+            "0522e443eda017759c78ccbc718f453cdb0bf8f9",
         )
         self.assertEqual(
             report["dec355_source"],
-            "0672310946ab6bb3b77d2de5c4ea5d68e41f810a",
+            "003e44126d9d6a807efd51b5a589128f6d4b5aac",
         )
         self.assertEqual(
             report["dormant_executor_workflow_template"],
