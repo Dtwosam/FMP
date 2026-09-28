@@ -465,3 +465,12 @@
 - Added no execute mode or dispatch authority.
 - Kept historical execution/result production, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
 
+
+## 2026-09-28 — DEC-309 EXP-062 repository-hosted plan proof
+
+- Added a first-run/attempt-1 push-to-main read-only proof workflow for DEC-308.
+- Pinned DEC-306/307/308 source identities and exact active discovery workflow/runtime requirements.
+- Verified the historical slot plan on current main without executing its dispatch command.
+- Restricted workflow permissions to contents/actions read and artifact output to historical-plan.json only.
+- Kept historical dispatch/execution/result production, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
