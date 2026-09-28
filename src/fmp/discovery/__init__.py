@@ -595,3 +595,17 @@ __all__ += [
     "build_historical_executor_activation_contract",
     "validate_historical_executor_activation_contract_sources",
 ]
+
+from .exp062_historical_executor_activation_preflight import (
+    build_historical_executor_activation_preflight,
+    historical_executor_activation_dispatch_command,
+    validate_historical_executor_activation_preflight,
+    validate_historical_executor_activation_preflight_sources,
+)
+
+__all__ += [
+    "build_historical_executor_activation_preflight",
+    "historical_executor_activation_dispatch_command",
+    "validate_historical_executor_activation_preflight",
+    "validate_historical_executor_activation_preflight_sources",
+]
