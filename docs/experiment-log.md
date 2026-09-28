@@ -1333,3 +1333,13 @@ Copy this section for each serious experiment:
 - Run #2 presence immediately removes the command and consumes the slot.
 - Reserved 2023-2026 data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate: repository-hosted read-only execution-plan proof.
+
+### EXP-20260927-062 — DEC-314 repository-hosted execution-plan proof
+
+- Push-to-main read-only proof workflow added for DEC-313.
+- Proof requires first workflow run / attempt 1 / 1 and exact DEC-311/312/313 source blobs.
+- Proof runs only the execution planner and uploads only `historical-execution-plan.json`.
+- Future discovery command is checked as data and is not executed.
+- Historical-result dispatch remains unauthorized.
+- Reserved 2023-2026 data and all candidate/demo/live/trading paths remain locked.
+- Next gate after actual success: concrete execution-plan proof review/freeze.
