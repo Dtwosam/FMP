@@ -844,3 +844,13 @@
 - Keeps workflow installed=false, executor available=false, dispatch=false, and execute mode=false.
 - Keeps zero historical-result attempts and target run #2 / attempt 1.
 - Keeps reserved data and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-349 EXP-062 read-only workflow-install preflight
+
+- Added current-main workflow-install preflight bound to DEC-348.
+- Requires the future executor workflow path to remain absent.
+- Rechecks the frozen proof and historical-result run inventory.
+- Provides only a plan surface; no install, execute, or advance command exists.
+- Keeps install authorization, installed state, executor availability, dispatch, and execute mode false.
+- Keeps reserved data and all downstream trading paths locked.
