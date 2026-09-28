@@ -533,3 +533,13 @@ __all__ += [
     "freeze_historical_dispatch_runtime_evidence",
     "validate_historical_dispatch_runtime_freeze_sources",
 ]
+
+from .exp062_historical_executor_contract import (
+    build_historical_executor_contract,
+    validate_historical_executor_contract_sources,
+)
+
+__all__ += [
+    "build_historical_executor_contract",
+    "validate_historical_executor_contract_sources",
+]

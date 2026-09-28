@@ -5534,3 +5534,23 @@ real-money, and trading remain locked.
 
 The next safe gate is a source-only one-shot historical executor contract. It must not
 submit the workflow itself.
+
+## DEC-324 — EXP-062 one-shot historical executor source contract
+
+**Date:** 2026-09-28  
+**Status:** SOURCE CONTRACT AUTHORIZED / EXECUTOR + DISPATCH STILL LOCKED
+
+DEC-324 pins the concrete DEC-323 runtime-evidence freeze and authorizes only a source
+contract for a future one-shot executor.
+
+`one_shot_executor_source_authorized=true`, while
+`historical_executor_available=false`,
+`historical_result_dispatch_authorized=false`, and
+`historical_execute_mode_available=false`.
+
+The historical-result slot remains empty and target run #2 / attempt 1 remains the
+only future attempt. Reserved 2023-2026 access, candidate compilation/promotion,
+Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is a read-only current-main executor preflight with no submission
+path.

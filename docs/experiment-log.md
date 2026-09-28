@@ -1432,3 +1432,14 @@ Copy this section for each serious experiment:
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Actual dispatch/executor/execute mode authorized?: NO.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
+
+### EXP-20260927-062 — DEC-324 executor source contract
+
+- Concrete DEC-323 runtime freeze is the prerequisite.
+- One-shot executor source contract authorized?: YES.
+- Historical executor available?: NO.
+- Historical-result dispatch authorized?: NO.
+- Execute mode available?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
+- Next gate: read-only current-main executor preflight.
