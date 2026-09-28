@@ -5352,3 +5352,23 @@ locked.
 
 The next safe gate after a real successful proof is an immutable review/freeze of that
 exact runtime evidence.
+
+## DEC-315 — EXP-062 historical execution-plan proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY REVIEWER / RUNTIME PROOF REQUIRED
+
+DEC-315 adds a source-only reviewer for future DEC-314 runtime evidence. It requires
+the exact read-only proof workflow on merged main, run #1 / attempt 1 success, one
+successful plan job, one non-expired plan artifact, and downloaded plan bytes.
+
+The reviewer revalidates the DEC-313 execution plan, requires zero historical-result
+attempts and target run #2 / attempt 1, and records raw/canonical plan SHA-256 hashes.
+It pins DEC-311/312/313/314 source identities.
+
+Historical-result dispatch and execute mode remain false. Reserved 2023-2026 access,
+candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading
+remain locked.
+
+The next gate after real DEC-314 evidence passes review is an immutable concrete
+execution-plan proof freeze.
