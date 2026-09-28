@@ -913,3 +913,13 @@
 - Template resolves target run #2 / attempt 1 and writes an immutable receipt.
 - No active executor workflow is installed.
 - Install, executor, dispatch, execute, reserved-data, and trading authority remain locked.
+
+
+## 2026-09-28 — DEC-356 EXP-062 dormant executor source proof
+
+- Added first-run/attempt-1 push-to-main proof workflow for DEC-355.
+- Uses only contents/actions read permissions.
+- Pins DEC-354/355 source identities and dormant template blob.
+- Requires active executor workflow path absent.
+- Validates dormant source directly and uploads only a source JSON artifact.
+- Adds no install, dispatch, or execute surface and keeps downstream authority locked.
