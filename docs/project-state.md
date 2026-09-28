@@ -1563,3 +1563,21 @@ identity, and active workflow-absent state, then emits one canonical fingerprint
 
 All install/executor/dispatch/trading authority remains locked. Next safe step:
 concrete runtime-evidence binding against the real DEC-362 proof.
+
+
+## 2026-09-28 — DEC-365 concrete active install-preflight proof evidence bound
+
+The successful DEC-362 read-only active workflow-install-preflight proof is now
+represented by exact runtime evidence: merged head
+`8e74ca94237963253b4fd6e42c42965cabec3ab1`, run `36478916362`, job
+`109119455390`, artifact `10996155764`, matching GitHub/independent ZIP SHA-256,
+and frozen raw/canonical preflight hashes.
+
+DEC-365 replays DEC-363 review and DEC-364 deterministic freezing and requires the
+exact DEC-364 fingerprint. DEC-334 terminal-review criteria remain pinned.
+
+The active executor workflow file remains absent. No install, executor, dispatch, or
+execute authority is available. Reserved 2023-2026 data and all downstream trading
+paths remain locked.
+
+Next safe step: source-only active one-shot historical executor workflow-installation contract.

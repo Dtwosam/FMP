@@ -6398,3 +6398,31 @@ execute mode, retries, reserved data, candidate/promotion, Phase 8B, demo/live,
 real-money, and trading remain locked.
 
 Next gate: concrete runtime-evidence binding against the real DEC-362 proof.
+
+
+## DEC-365 — EXP-062 active workflow-install preflight proof runtime evidence freeze
+
+**Date:** 2026-09-28  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / INSTALL + EXECUTOR STILL LOCKED
+
+DEC-365 binds the actual successful DEC-362 merged-main proof: head
+`8e74ca94237963253b4fd6e42c42965cabec3ab1`, run `36478916362`, job
+`109119455390`, artifact `10996155764`, artifact/ZIP SHA-256
+`5554cabdf72e87c6c860746f1d76d0816a3dd3ebdf2b443b911b5027e81f070a`,
+raw preflight SHA-256
+`c70cbdb3f593de110a21d6501d867ed23f6be70b7815993ef1b62fea1d2477fc`,
+and canonical SHA-256
+`010f1bcdd595de78ebe55ad3729e641345f3c486e3a46e38a60a7072555ad30b`.
+
+DEC-365 re-runs DEC-363 review and DEC-364 deterministic freezing and requires the
+exact DEC-364 fingerprint
+`2e8c36e891b20dc1811301a4b461d51c9fa46e34b098cbe5af1e3a27bc129932`.
+DEC-334 terminal-review criteria remain pinned.
+
+The active executor workflow path remains absent. Historical-result attempts remain
+zero and target run #2 / attempt 1 remains the only future attempt. Workflow-install
+authorization, workflow installed state, historical executor availability, dispatch,
+execute mode, reserved 2023-2026 access, candidate compilation/promotion, Phase 8B,
+demo, broker/live, real-money, and trading remain false.
+
+Next gate: source-only active one-shot historical executor workflow-installation contract.
