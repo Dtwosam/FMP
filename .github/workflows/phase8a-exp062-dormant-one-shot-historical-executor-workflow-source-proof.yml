@@ -43,7 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git hash-object src/fmp/discovery/exp062_historical_one_shot_executor_workflow_installation_source_contract.py)" = "e4fc6a7d1faaca50bc6936597f0e8b66fe096985"
-          test "$(git hash-object src/fmp/discovery/exp062_historical_one_shot_executor_dormant_workflow_source.py)" = "0672310946ab6bb3b77d2de5c4ea5d68e41f810a"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_one_shot_executor_dormant_workflow_source.py)" = "003e44126d9d6a807efd51b5a589128f6d4b5aac"
           test "$(git hash-object docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled)" = "51ce87584369be957482460d81649adb1cb9f05d"
           test "$(git hash-object .github/workflows/phase8a-exp062-discovery.yml)" = "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50"
 
