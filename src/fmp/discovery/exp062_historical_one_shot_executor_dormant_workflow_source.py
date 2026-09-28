@@ -171,7 +171,7 @@ def validate_dormant_one_shot_historical_executor_workflow_template(
             "shell dispatch"
         )
 
-    if "test "$found" = "1"" not in text:
+    if 'test "$found" = "1"' not in text:
         raise ValueError(
             "DEC-355 dormant executor template must require target resolution"
         )
