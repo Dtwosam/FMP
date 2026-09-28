@@ -6073,3 +6073,23 @@ historical-result dispatch, execute mode, rerun/retry/replacement, reserved
 real-money, and trading remain false.
 
 The next safe gate is a read-only current-main workflow-install preflight.
+
+
+## DEC-349 — EXP-062 one-shot historical executor workflow-install preflight
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY CURRENT-MAIN INSTALL PREFLIGHT / NO INSTALL OR DISPATCH
+
+DEC-349 adds a current-main preflight for the DEC-348 source-authorized future
+one-shot historical executor workflow installation.
+
+It pins the exact DEC-348 install contract, requires the expected future executor
+workflow path to remain absent, rechecks the EXP-062 historical-result inventory,
+and confirms target run #2 / attempt 1 remains the only future historical attempt.
+
+Install authorization, workflow installed state, executor availability, historical
+dispatch, execute mode, rerun/retry/replacement, reserved 2023-2026 access,
+candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain false.
+
+The next safe gate is a repository-hosted read-only workflow-install preflight proof.
