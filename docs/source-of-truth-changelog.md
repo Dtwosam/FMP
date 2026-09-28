@@ -585,3 +585,10 @@
 - Requires exact first-run/attempt success, one successful job, and one non-expired artifact.
 - Revalidates zero-attempt DEC-319 plan semantics and records raw/canonical hashes.
 - Adds no dispatch or executor path and keeps downstream trading authority locked.
+
+## 2026-09-28 — DEC-322 EXP-062 reviewed dispatch-plan freeze
+
+- Added a deterministic source-only freeze builder for future DEC-321 reviewed evidence.
+- Requires exact DEC-317/318/319/320 source identities and zero-attempt run #2 target semantics.
+- Preserves real proof/artifact/plan identities and emits a canonical freeze fingerprint.
+- Keeps actual dispatch, executor availability, execute mode, reserved data, and all downstream trading authority locked.

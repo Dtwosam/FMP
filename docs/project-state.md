@@ -992,3 +992,11 @@ it cannot submit historical discovery.
 
 A real successful DEC-320 proof still has to occur and be frozen before any executor
 is considered.
+
+## 2026-09-28 — DEC-322 EXP-062 reviewed dispatch-plan freeze source
+
+The stack now contains a deterministic source-only freeze builder for a future valid
+DEC-321 review. It can preserve concrete DEC-320 proof evidence once that proof exists,
+but it cannot dispatch historical discovery or create an executor.
+
+The slot must remain empty until a later separately gated one-shot execution step.

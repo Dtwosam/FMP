@@ -1413,3 +1413,11 @@ Copy this section for each serious experiment:
 - Actual dispatch/executor/execute mode remain NO.
 - Target remains run #2 / attempt 1 while the slot is empty.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
+
+### EXP-20260927-062 — DEC-322 reviewed dispatch-plan freeze source
+
+- Deterministic freeze builder prepared for valid future DEC-321 review evidence.
+- Preserves real run/job/artifact ids and plan hashes without inventing them.
+- Actual historical dispatch/executor/execute mode remain NO.
+- Target remains run #2 / attempt 1 while the slot is empty.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
