@@ -395,3 +395,16 @@ __all__ += [
     "classify_exp062_historical_run_inventory",
     "validate_exp062_historical_run_authorization_sources",
 ]
+
+
+from .exp062_historical_operator import (
+    build_historical_plan as build_exp062_historical_plan,
+    historical_dispatch_command as exp062_historical_dispatch_command,
+    validate_historical_plan as validate_exp062_historical_plan,
+)
+
+__all__ += [
+    "build_exp062_historical_plan",
+    "exp062_historical_dispatch_command",
+    "validate_exp062_historical_plan",
+]
