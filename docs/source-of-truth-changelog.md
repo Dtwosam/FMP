@@ -495,3 +495,13 @@
 - Re-runs DEC-310 review before freezing and pins the DEC-310 reviewer source blob.
 - Confirms zero historical-result attempts and an unconsumed source-authorized slot.
 - Keeps dispatch/execution/result production, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+## 2026-09-28 — DEC-312 EXP-062 historical execution authorization
+
+- Added a new execution-authorization layer bound to the concrete DEC-311 plan freeze.
+- Routed the public EXP-062 CLI execution gate through DEC-312.
+- Pinned the activated CLI and unchanged workflow/runtime/research source stack.
+- Authorized historical execution/result production only for workflow run #2 / attempt 1.
+- Required exact repository, workflow, event, main ref, runtime SHA, and distinct positive run id.
+- Kept historical-result dispatch false and added no executor.
+- Kept rerun/retry/replacement, reserved 2023-2026 data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.

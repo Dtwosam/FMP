@@ -54,31 +54,15 @@ def _historical_run(
 
 
 class Exp062HistoricalRunAuthorizationTests(unittest.TestCase):
-    def test_sources_bind_runtime_freeze_and_keep_execution_locked(self) -> None:
-        source = validate_historical_run_authorization_sources(
-            repository_root=Path("."),
-        )
-        self.assertEqual(
-            source["decision"],
-            EXP062_HISTORICAL_RUN_AUTHORIZATION_DECISION,
-        )
-        self.assertTrue(source["historical_result_slot_source_authorized"])
-        self.assertFalse(source["historical_result_dispatch_authorized"])
-        self.assertFalse(source["historical_discovery_execution_authorized"])
-        self.assertFalse(source["discovery_result_authorized"])
-        self.assertFalse(source["reserved_robustness_access_authorized"])
-        self.assertFalse(source["demo_order_authorized"])
-        self.assertFalse(source["live_order_authorized"])
-        self.assertFalse(source["trading_authorized"])
-        self.assertEqual(source["expected_cell_count"], 18)
-        self.assertEqual(
-            source["historical_data_end_exclusive"],
-            "2023-01-01T00:00:00Z",
-        )
-        self.assertEqual(
-            source["reserved_robustness_start"],
-            "2023-01-01T00:00:00Z",
-        )
+    def test_dec307_source_validator_detects_intentional_cli_supersession(self) -> None:
+        self.assertTrue(HISTORICAL_RESULT_SLOT_SOURCE_AUTHORIZED)
+        with self.assertRaisesRegex(
+            ValueError,
+            "cli Git blob mismatch",
+        ):
+            validate_historical_run_authorization_sources(
+                repository_root=Path("."),
+            )
 
     def test_only_frozen_proof_leaves_slot_available(self) -> None:
         report = classify_historical_run_inventory(
@@ -167,30 +151,15 @@ class Exp062HistoricalRunAuthorizationTests(unittest.TestCase):
         ):
             classify_historical_run_inventory({"workflow_runs": [proof]})
 
-    def test_source_contract_opens_only_governance_slot(self) -> None:
-        contract = build_historical_run_authorization_contract(
-            repository_root=Path("."),
-            workflow_runs_payload={"workflow_runs": [_proof_run()]},
-        )
-        self.assertEqual(
-            contract["stage"],
-            "EXP062_HISTORICAL_RESULT_SOURCE_AUTHORIZED_DISPATCH_LOCKED",
-        )
-        self.assertIs(
-            contract["historical_result_slot_source_authorized"],
-            HISTORICAL_RESULT_SLOT_SOURCE_AUTHORIZED,
-        )
-        self.assertTrue(contract["terminal_outcome_consumes_slot"])
-        self.assertFalse(contract["proof_retry_or_replacement_authorized"])
-        self.assertFalse(contract["historical_result_dispatch_authorized"])
-        self.assertFalse(contract["historical_discovery_execution_authorized"])
-        self.assertFalse(contract["discovery_result_authorized"])
-        self.assertFalse(contract["reserved_robustness_access_authorized"])
-        self.assertFalse(contract["candidate_compilation_authorized"])
-        self.assertFalse(contract["phase8b_authorized"])
-        self.assertFalse(contract["demo_order_authorized"])
-        self.assertFalse(contract["live_order_authorized"])
-        self.assertFalse(contract["trading_authorized"])
+    def test_dec307_builder_is_superseded_after_cli_activation(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError,
+            "cli Git blob mismatch",
+        ):
+            build_historical_run_authorization_contract(
+                repository_root=Path("."),
+                workflow_runs_payload={"workflow_runs": [_proof_run()]},
+            )
 
 
 if __name__ == "__main__":
