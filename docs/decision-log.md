@@ -6550,3 +6550,21 @@ mode, reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo
 broker/live, real-money, and trading remain false.
 
 Next gate: source-only active one-shot historical executor workflow install-authorization contract.
+
+
+## DEC-372 — EXP-062 active one-shot historical executor install-authorization contract
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY AUTHORIZATION CONTRACT / INSTALL STILL LOCKED
+
+DEC-372 pins the concrete DEC-371 runtime freeze and authorizes only future
+install-authorization source review for the active one-shot historical executor
+workflow.
+
+The active workflow path remains absent. Actual workflow-install authorization,
+workflow installed state, historical executor availability, historical-result
+dispatch, execute mode, rerun/retry/replacement, reserved 2023-2026 access,
+candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain false.
+
+The next safe gate is a read-only current-main install-authorization preflight.
