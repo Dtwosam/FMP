@@ -1269,3 +1269,18 @@ Reserved 2023-2026 data and all candidate/demo/live/real-money/trading paths rem
 locked.
 
 The next safe step is a read-only current-main one-shot executor workflow preflight.
+
+
+## 2026-09-28 — DEC-343 EXP-062 read-only executor workflow preflight
+
+The repository stack now includes a current-main preflight for the source-authorized
+future one-shot historical executor workflow.
+
+It can show the exact historical command only while the slot remains empty, but it
+cannot execute that command and no historical executor is available. If run #2
+appears, the command disappears and the slot is consumed.
+
+Reserved 2023-2026 data and all candidate/demo/live/real-money/trading paths remain
+locked.
+
+The next safe step is a repository-hosted read-only proof of this workflow preflight.
