@@ -974,3 +974,14 @@
 - Provides only a plan surface; no install, execute, advance, or dispatch command exists.
 - Keeps install authorization, installed state, executor availability, dispatch, and execute mode false.
 - Keeps reserved data and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-362 EXP-062 active workflow install preflight proof
+
+- Added first-run/attempt-1 push-to-main proof workflow for DEC-361.
+- Uses only contents/actions read permissions.
+- Pins DEC-360/361 source identities, dormant template, discovery workflow, and planning runtime.
+- Requires active executor workflow path absent.
+- Invokes only the read-only active install-preflight plan surface.
+- Verifies zero historical-result attempts and target run #2 / attempt 1.
+- Uploads only the preflight JSON and never installs or dispatches anything.
