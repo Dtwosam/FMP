@@ -645,3 +645,13 @@
 - Requires the exact DEC-323/324/325/326 source-blob map from DEC-327.
 - Emits a canonical freeze fingerprint while preserving runtime evidence unchanged.
 - Adds no executor, dispatch, or execute mode and keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-329 EXP-062 concrete executor-preflight runtime evidence
+
+- Bound the real DEC-326 merged-main proof run/job/artifact identities.
+- Verified the artifact ZIP SHA-256 independently against GitHub's artifact digest.
+- Bound exact raw and canonical executor-preflight hashes.
+- Re-runs DEC-327 review and DEC-328 deterministic freezing against the raw evidence.
+- Requires the exact DEC-328 freeze fingerprint.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Keeps executor availability, actual dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.

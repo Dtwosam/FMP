@@ -5634,3 +5634,26 @@ trading remain false.
 
 The next safe gate after actual DEC-326 evidence is a concrete runtime-evidence binding
 before any one-shot executor workflow is considered.
+
+## DEC-329 — EXP-062 executor-preflight runtime evidence freeze
+
+**Date:** 2026-09-28  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / EXECUTOR + DISPATCH STILL LOCKED
+
+DEC-329 binds the actual successful DEC-326 proof on merged head
+`a811aacaae82e15b18267b6e4ba659054abb0341`: run `36422936991`, job
+`108929843306`, artifact `10970303347`, artifact/ZIP SHA-256
+`fe116a7fff7ffdec27e787d3cd7981ac67772276efb12a5b434b04ee3855c74c`,
+raw preflight SHA-256 `5dfa7800a8dcbe4537910690a0ba70b3c93467c685d7c5c99898d0b6d111f9d8`,
+and canonical preflight SHA-256
+`9970dcbf44241a3b9ffc6aab01d8a3bab6749813f88d0771dee101ea640aec3d`.
+
+The source re-runs DEC-327 review and DEC-328 freezing and requires the exact DEC-328
+fingerprint `2e295d03066fcfa4dcea300c3f263bcf6a67cb96d6b356410821af493b2d5675`.
+
+The historical-result slot remains empty and target run #2 / attempt 1 remains the
+only future attempt. Historical executor availability, actual dispatch, execute mode,
+reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain locked.
+
+The next safe gate is a source-only one-shot historical executor activation contract.
