@@ -629,3 +629,11 @@
 - Runs only the DEC-325 preflight planner and validates the run #2 / attempt 1 readiness state.
 - Uploads only immutable historical-executor-preflight.json.
 - Adds no dispatch/execute path and keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-327 EXP-062 executor-preflight proof reviewer
+
+- Added a source-only reviewer for future DEC-326 runtime evidence.
+- Pinned DEC-326 workflow plus DEC-323 runtime freeze, DEC-324 executor contract, DEC-325 preflight/CLI, and active discovery workflow.
+- Requires exact run #1 / attempt 1 success, one successful proof job, and one non-expired artifact.
+- Revalidates the exact run #2 / attempt 1 DEC-325 preflight and records raw/canonical SHA-256 hashes.
+- Adds no executor, dispatch, or execute mode and keeps reserved data plus all downstream trading paths locked.
