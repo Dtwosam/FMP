@@ -936,3 +936,16 @@ canonical freeze fingerprint.
 No historical workflow is dispatched by DEC-316. The only execution capability remains
 the exact future DEC-312 run #2 / attempt 1 runtime, while reserved 2023-2026 data and
 all candidate/demo/live/trading paths remain locked.
+
+## 2026-09-28 — DEC-317 EXP-062 concrete execution-plan evidence bound
+
+The successful DEC-314 read-only plan proof is now represented by exact runtime
+evidence: run `36414282818`, job `108901556593`, artifact `10966632240`,
+matching GitHub/independent ZIP SHA-256, and frozen raw/canonical plan hashes.
+
+DEC-317 replays the DEC-315 reviewer and DEC-316 freeze and requires the exact
+deterministic predecessor fingerprint. The proof still shows zero historical-result
+attempts and target run #2 / attempt 1.
+
+No dispatcher exists under DEC-317. Reserved 2023-2026 data and all
+candidate/demo/live/real-money/trading paths remain locked.
