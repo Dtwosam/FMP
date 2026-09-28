@@ -1239,3 +1239,17 @@ Copy this section for each serious experiment:
 - Historical execution, candidate compilation, Phase 8B, demo/live, real-money, and
   trading remain unauthorized.
 
+
+### EXP-20260927-062 — DEC-306 runtime gate-proof freeze
+
+- Authoritative DEC-303 executor run: `36358278933`, run #1 / attempt 1, SUCCESS.
+- Authoritative EXP-062 gate proof: `36358289723`, run #1 / attempt 1, expected FAILURE at the locked execution gate.
+- Proof output: one preflight artifact only; zero cell-result artifacts; zero aggregate-result artifacts.
+- DEC-305 reviewed-freeze fingerprint:
+  `fadd6e512b95179fa682d05c8550c914db81e559d9c0ad8da0bedb03bb43a096`.
+- Downloaded executor/proof evidence is bound by raw and canonical SHA-256 hashes in DEC-306.
+- Redundant bootstrap executor run `36360111479` was run #2 / attempt 1 and failed closed before dispatch; it created no second proof and consumed no historical slot.
+- Historical source opened under EXP-062?: NO.
+- Candidate compilation/demo/live authorized?: NO.
+- Next gate: source-only one-slot historical-run authorization for 2015-2022 only; reserved 2023-2026 remains closed.
+
