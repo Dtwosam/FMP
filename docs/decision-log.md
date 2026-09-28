@@ -5392,3 +5392,27 @@ broker/live, real-money, and trading remain false.
 
 The next safe gate after actual DEC-314 evidence is a concrete runtime-evidence binding
 before any one-shot dispatcher is considered.
+
+## DEC-317 — EXP-062 historical execution-plan runtime evidence freeze
+
+**Date:** 2026-09-28  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / HISTORICAL DISPATCH STILL LOCKED
+
+DEC-317 binds the actual successful DEC-314 proof on merged head
+`ea69e82c9f653facba8ed6589fe4243848187ad3`: run `36414282818`, job
+`108901556593`, artifact `10966632240`, artifact/ZIP SHA-256
+`9299ebfd344c0bd2a66ccd6e29339e035840c8b4204cbfc16bb6d3e938a53254`,
+raw plan SHA-256 `594b5bd129a93ad7b07f69e00826251dd693f1bb388e6b4dff64eda0b34a7c72`,
+and canonical plan SHA-256
+`152bbb90efe3941f1338c73cf24f91f10a877cda3ee5c46f08c4f556d653a12f`.
+
+The source re-runs DEC-315 review and DEC-316 freezing and requires the exact DEC-316
+fingerprint `7c7d99f4c89aac4e11d27536b9f8d2d39322672a9a0332f141d1d86f93b19be3`.
+
+The slot remains empty and target run #2 / attempt 1 remains the only future
+historical runtime. Historical-result dispatch, execute mode, reserved 2023-2026
+access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain locked.
+
+The next safe gate is a source-only one-shot historical dispatch authorization
+contract. It must still provide no dispatch path itself.
