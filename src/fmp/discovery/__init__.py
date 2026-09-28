@@ -585,3 +585,13 @@ __all__ += [
     "freeze_historical_executor_preflight_runtime_evidence",
     "validate_historical_executor_preflight_runtime_freeze_sources",
 ]
+
+from .exp062_historical_executor_activation_contract import (
+    build_historical_executor_activation_contract,
+    validate_historical_executor_activation_contract_sources,
+)
+
+__all__ += [
+    "build_historical_executor_activation_contract",
+    "validate_historical_executor_activation_contract_sources",
+]

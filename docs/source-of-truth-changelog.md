@@ -655,3 +655,12 @@
 - Requires the exact DEC-328 freeze fingerprint.
 - Confirms zero historical-result attempts and target run #2 / attempt 1.
 - Keeps executor availability, actual dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+## 2026-09-28 — DEC-330 EXP-062 executor activation source contract
+
+- Added a source-only one-shot historical executor activation contract.
+- Pinned the concrete DEC-329 runtime-freeze source and fingerprint.
+- Requires zero historical-result attempts, an unconsumed slot, and target run #2 / attempt 1.
+- Sets only the future activation source-contract flag true.
+- Keeps actual executor availability, execute mode, and historical dispatch false.
+- Keeps rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
