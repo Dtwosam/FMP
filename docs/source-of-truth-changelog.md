@@ -435,3 +435,14 @@
 - Historical-result slot opening, historical execution, candidate compilation,
   Phase 8B, demo, broker/live, real-money, and trading remain false.
 
+
+
+## 2026-09-28 — DEC-306 EXP-062 connector proof bootstrap recovery
+
+- Added a source-only recovery contract for the missing DEC-303 main-push workflow run.
+- Pinned the recovery to exact main `0c57298198a2915e3f31fb6ba800c9a644c519bf`.
+- Required pull-request attempt 1, base `main`, and one dedicated activation branch.
+- Reused unchanged DEC-303 fresh-plan validation and proof evidence construction.
+- Added no CI activation and performed no proof dispatch.
+- Kept historical-result, reserved-data, candidate, demo/live, real-money, and trading
+  authority false.
