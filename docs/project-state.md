@@ -962,3 +962,14 @@ trading paths remain locked.
 
 The next safe step is a read-only current-main dispatch operator that rechecks the
 inventory before merely exposing the command.
+
+## 2026-09-28 — DEC-319 EXP-062 read-only dispatch planner
+
+The stack now includes a current-main planner for the source-authorized one-shot
+historical dispatch. It can show the exact future command only while the slot remains
+empty, but it cannot execute that command and no historical executor is available.
+
+If run #2 appears, the command disappears and the slot is consumed. Reserved 2023-2026
+data and all candidate/demo/live/real-money/trading paths remain locked.
+
+The next safe step is a repository-hosted read-only proof of this dispatch plan.
