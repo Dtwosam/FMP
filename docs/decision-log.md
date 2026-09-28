@@ -5718,3 +5718,24 @@ trading remain locked.
 
 The next safe gate after a real successful proof is immutable runtime-evidence review
 and freezing.
+
+## DEC-333 — EXP-062 executor activation-preflight proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY REVIEWER / RUNTIME PROOF REQUIRED
+
+DEC-333 adds a source-only reviewer for future DEC-332 runtime evidence. It requires
+the exact read-only proof workflow on merged main, run #1 / attempt 1 success, one
+successful proof job, one non-expired artifact, and downloaded activation-preflight
+bytes.
+
+The reviewer revalidates the DEC-331 activation preflight, requires zero
+historical-result attempts and target run #2 / attempt 1, and records raw/canonical
+preflight SHA-256 hashes. It pins DEC-329/330/331/332 source identities.
+
+Historical executor availability, actual dispatch, execute mode, reserved 2023-2026
+access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain locked.
+
+The next gate after real DEC-332 evidence passes review is an immutable concrete
+activation-preflight proof freeze.
