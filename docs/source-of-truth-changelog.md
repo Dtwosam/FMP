@@ -953,3 +953,13 @@
 - Pins the DEC-334 terminal-review contract.
 - Confirms dormant template source only, active executor workflow uninstalled, zero historical-result attempts, and target run #2 / attempt 1.
 - Keeps install, executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-360 EXP-062 active executor workflow install contract
+
+- Added source-only active workflow install contract bound to DEC-359.
+- Pinned the exact dormant executor template blob.
+- Reserved the active executor workflow path while requiring it to remain absent.
+- Keeps install authorization, installed state, executor availability, dispatch, and execute mode false.
+- Keeps zero historical-result attempts and target run #2 / attempt 1.
+- Keeps reserved data and all downstream trading paths locked.
