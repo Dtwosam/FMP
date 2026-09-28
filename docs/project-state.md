@@ -801,3 +801,13 @@ tests pass. The activation must capture one clean live `main` checkout and both 
 DEC-302 plans must independently confirm that exact same head before dispatch.
 
 DEC-306 dispatches nothing and grants no historical-result or trading authority.
+
+
+## 2026-09-28 — DEC-307 proof-bootstrap activation prepared
+
+PR #451 contains the guarded DEC-307 activation job. It is currently intentionally
+stacked on DEC-306, so its base-ref guard prevents any proof dispatch. The job can run
+only after retargeting to `main` and only after unit tests pass; it then pins reviewed
+proof/recovery sources and may submit only the single fail-closed EXP-062 proof.
+
+Historical-result execution and every downstream trading path remain locked.
