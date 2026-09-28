@@ -1373,3 +1373,13 @@ Copy this section for each serious experiment:
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Historical dispatch/execute mode authorized?: NO.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
+
+### EXP-20260927-062 — DEC-318 dispatch source contract
+
+- Concrete DEC-317 runtime freeze is the prerequisite.
+- One-shot dispatch source contract authorized?: YES.
+- Historical-result dispatch authorized?: NO.
+- Historical executor available?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Reserved 2023-2026 data and all candidate/demo/live/trading paths remain locked.
+- Next gate: read-only current-main one-shot dispatch operator.
