@@ -905,3 +905,13 @@ Historical-result dispatch remains unauthorized, and reserved data plus all
 candidate/demo/live/trading paths remain locked.
 
 The next safe step is a repository-hosted read-only proof of this execution plan.
+
+## 2026-09-28 — DEC-314 EXP-062 execution-plan proof source
+
+A repository-hosted read-only proof workflow now exists for the DEC-313 execution
+plan. On its first exact merged-main push it can prove the historical slot is still
+empty, the target is run #2 / attempt 1, and the future discovery command is exact.
+
+The workflow has read-only permissions, runs only the planner, and uploads only plan
+JSON. It cannot dispatch historical discovery. A real successful proof must be bound
+to exact runtime evidence before any one-shot executor is considered.
