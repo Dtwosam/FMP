@@ -1351,3 +1351,17 @@ workflow is not installed and no executor, dispatch, or execute authority exists
 
 The historical slot remains empty and target run #2 / attempt 1 remains the sole
 future historical attempt. Next safe step: read-only workflow-install preflight.
+
+
+## 2026-09-28 — DEC-349 read-only workflow-install preflight source-ready
+
+The repository stack now includes a current-main preflight for the future one-shot
+historical executor workflow installation.
+
+It proves the future workflow file is still absent and the historical-result slot
+remains unused. The CLI has plan only; no install, execute, or dispatch path exists.
+
+Target run #2 / attempt 1 remains the sole future historical attempt. Reserved
+2023-2026 data and all downstream trading paths remain locked.
+
+Next safe step: repository-hosted read-only workflow-install preflight proof.
