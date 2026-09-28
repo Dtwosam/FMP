@@ -949,3 +949,16 @@ attempts and target run #2 / attempt 1.
 
 No dispatcher exists under DEC-317. Reserved 2023-2026 data and all
 candidate/demo/live/real-money/trading paths remain locked.
+
+## 2026-09-28 — DEC-318 EXP-062 dispatch contract source-ready
+
+The repository stack now has a source-only authorization contract for a future
+one-shot historical dispatch. It is bound to the concrete DEC-317 runtime evidence,
+but it still provides no dispatch path and no executor.
+
+The slot must remain empty and target run #2 / attempt 1 remains the sole permissible
+historical attempt. Reserved 2023-2026 data and all candidate/demo/live/real-money/
+trading paths remain locked.
+
+The next safe step is a read-only current-main dispatch operator that rechecks the
+inventory before merely exposing the command.

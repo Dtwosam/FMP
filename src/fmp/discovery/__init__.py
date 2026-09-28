@@ -481,3 +481,13 @@ __all__ += [
     "freeze_historical_execution_runtime_evidence",
     "validate_historical_execution_runtime_freeze_sources",
 ]
+
+from .exp062_historical_dispatch_authorization import (
+    build_historical_dispatch_authorization_contract,
+    validate_historical_dispatch_authorization_sources,
+)
+
+__all__ += [
+    "build_historical_dispatch_authorization_contract",
+    "validate_historical_dispatch_authorization_sources",
+]
