@@ -419,3 +419,13 @@ __all__ += [
     "review_historical_plan_proof",
     "validate_historical_plan_review_sources",
 ]
+\n
+from .exp062_historical_plan_result_freeze import (
+    freeze_historical_plan_proof,
+    validate_historical_plan_freeze_sources,
+)
+
+__all__ += [
+    "freeze_historical_plan_proof",
+    "validate_historical_plan_freeze_sources",
+]
