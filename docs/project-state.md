@@ -790,3 +790,22 @@ The actual post-merge EXP-062 proof run has not been frozen by this source chang
 Runtime evidence must first exist and pass DEC-304 review. The historical-result slot
 therefore remains closed.
 
+
+## 2026-09-28 — DEC-306 EXP-062 runtime proof evidence frozen
+
+The actual DEC-303 executor and DEC-301 gate proof have now been identified and bound.
+Executor run `36358278933` succeeded as run #1 / attempt 1 on
+`f2c55ac36a1a9ba7596ec0d4559c877a66cda0fb`; proof run `36358289723` then
+failed exactly at the still-locked historical execution gate. Its preflight artifact
+is the only proof artifact; matrix and aggregate work were skipped.
+
+DEC-306 binds the exact executor/proof run identities, artifact ids/digests, raw and
+canonical downloaded-evidence hashes, and DEC-305 reviewed-freeze fingerprint.
+The later redundant executor run `36360111479` failed closed as run #2 before
+dispatch and produced no second proof.
+
+The EXP-062 historical-result slot remains closed. Reserved 2023-2026 data, candidate
+compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading remain
+unauthorized. The next safe gate is source-only one-slot historical-run authorization
+for the unchanged 2015-2022 research window.
+
