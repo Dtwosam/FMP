@@ -1277,3 +1277,14 @@ Copy this section for each serious experiment:
 - Reserved 2023-2026 data, candidate compilation/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate: repository-hosted read-only proof of the merged-main slot plan.
 
+
+### EXP-20260927-062 — DEC-309 repository-hosted plan proof
+
+- Read-only push-to-main proof workflow added for DEC-308.
+- First proof run / attempt must be 1 / 1 on exact merged main.
+- Proof executes only the planner and uploads only historical-plan.json.
+- The future discovery dispatch command is verified as data and is not executed.
+- Historical dispatch/execution/result production remains unauthorized.
+- Reserved 2023-2026, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate after real successful proof: immutable plan-proof review/freeze.
+

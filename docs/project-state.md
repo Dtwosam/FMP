@@ -837,3 +837,17 @@ compilation/promotion, Phase 8B, demo/live, real-money, and trading remain locke
 
 The next safe gate is a repository-hosted read-only proof of this plan on merged main.
 
+
+## 2026-09-28 — DEC-309 EXP-062 historical-plan proof source
+
+A repository-hosted read-only proof workflow now exists for the DEC-308 plan. On its
+first exact merged-main push it can prove the historical slot is still empty and the
+future dispatch command is exactly the frozen command, while keeping dispatch and
+execute mode false.
+
+The workflow uploads only its plan JSON and cannot run historical discovery. Reserved
+2023-2026 data and all candidate/demo/live/trading paths remain locked.
+
+A real successful merged-main proof must be reviewed and frozen before any one-shot
+historical executor is considered.
+
