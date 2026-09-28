@@ -1014,3 +1014,14 @@ attempts and target run #2 / attempt 1.
 
 No historical dispatcher or executor is available under DEC-323. Reserved 2023-2026
 data and all candidate/demo/live/real-money/trading paths remain locked.
+
+## 2026-09-28 — DEC-324 EXP-062 executor contract source-ready
+
+The repository stack now contains a source-only contract for a future one-shot
+historical executor, bound to the concrete DEC-323 runtime evidence.
+
+No executor is available, no execute mode exists, and no historical dispatch is
+authorized by DEC-324. The slot must remain empty and target run #2 / attempt 1 remains
+the sole future historical attempt.
+
+The next safe step is a read-only current-main executor preflight.
