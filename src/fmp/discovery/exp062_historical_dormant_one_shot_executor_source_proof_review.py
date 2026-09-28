@@ -25,8 +25,8 @@ PROOF_JOB_NAME = (
 )
 
 _EXPECTED_SOURCE_BLOBS = {
-    "dec356_workflow": "1cf665417e32c6810bf8ff62e5bc4a3b7a1ac598",
-    "dec355_source": "0672310946ab6bb3b77d2de5c4ea5d68e41f810a",
+    "dec356_workflow": "0522e443eda017759c78ccbc718f453cdb0bf8f9",
+    "dec355_source": "003e44126d9d6a807efd51b5a589128f6d4b5aac",
     "dec354_installation_source_contract": (
         "e4fc6a7d1faaca50bc6936597f0e8b66fe096985"
     ),
