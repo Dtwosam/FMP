@@ -484,3 +484,14 @@
 - Required one non-expired plan artifact and revalidated its downloaded JSON.
 - Added raw and canonical plan SHA-256 identities.
 - Added no historical dispatch/execution or downstream trading authority.
+
+## 2026-09-28 — DEC-311 EXP-062 concrete historical-plan proof freeze
+
+- Frozen DEC-309 plan-proof run `36403342301` / job `108866149073` on merged head `95c193343a905acd40daf0eea5d27d55fd2537e1`.
+- Bound sole artifact `10960559187` and digest `sha256:07679d85ea3ee0a9373bbd78363ab98eb973377ace6d68828528f91188ff3cf8`.
+- Independently verified the artifact ZIP SHA-256 against the GitHub digest.
+- Bound plan raw SHA-256 `ac34769d589dbcc18a056d1ebaf960b6881f943f221d771e80216df32d313672`.
+- Bound plan canonical SHA-256 `d6cd04c0c29a2e82da12e687ce56ae80387f7ad3c9727b23018ee548684e62a6`.
+- Re-runs DEC-310 review before freezing and pins the DEC-310 reviewer source blob.
+- Confirms zero historical-result attempts and an unconsumed source-authorized slot.
+- Keeps dispatch/execution/result production, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
