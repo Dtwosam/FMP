@@ -408,3 +408,14 @@ __all__ += [
     "exp062_historical_dispatch_command",
     "validate_exp062_historical_plan",
 ]
+
+
+from .exp062_historical_plan_review import (
+    review_historical_plan_proof,
+    validate_historical_plan_review_sources,
+)
+
+__all__ += [
+    "review_historical_plan_proof",
+    "validate_historical_plan_review_sources",
+]

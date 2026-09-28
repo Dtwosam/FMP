@@ -851,3 +851,13 @@ The workflow uploads only its plan JSON and cannot run historical discovery. Res
 A real successful merged-main proof must be reviewed and frozen before any one-shot
 historical executor is considered.
 
+
+
+## 2026-09-28 — DEC-310 historical-plan proof reviewer prepared
+
+The repository stack now includes a source-only DEC-310 reviewer behind DEC-309. It can
+consume only actual successful DEC-309 plan-proof metadata and downloaded plan bytes,
+revalidate the still-empty source-authorized slot, and bind plan hashes.
+
+DEC-310 itself cannot dispatch or execute historical discovery. Reserved 2023-2026 data
+and all downstream trading paths remain locked.

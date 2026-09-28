@@ -1288,3 +1288,13 @@ Copy this section for each serious experiment:
 - Reserved 2023-2026, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate after real successful proof: immutable plan-proof review/freeze.
 
+
+
+### EXP-20260927-062 — DEC-310 historical-plan review preparation
+
+- Added a source-only reviewer for future DEC-309 runtime plan-proof evidence.
+- Requires run #1 / attempt 1 success, one successful plan job, one non-expired plan
+  artifact, and exact slot-available DEC-308 plan content.
+- Records raw and canonical plan SHA-256 hashes.
+- Performs no dispatch or historical execution.
+- Reserved data, candidates, demo/live, real-money, and trading remain unauthorized.

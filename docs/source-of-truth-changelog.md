@@ -474,3 +474,13 @@
 - Restricted workflow permissions to contents/actions read and artifact output to historical-plan.json only.
 - Kept historical dispatch/execution/result production, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
 
+
+
+## 2026-09-28 — DEC-310 EXP-062 historical-plan proof reviewer
+
+- Added a source-only reviewer for the future DEC-309 plan proof.
+- Pinned DEC-309 workflow plus DEC-308/307/306 source blobs.
+- Required exact run #1 / attempt 1 success and one successful read-only plan job.
+- Required one non-expired plan artifact and revalidated its downloaded JSON.
+- Added raw and canonical plan SHA-256 identities.
+- Added no historical dispatch/execution or downstream trading authority.
