@@ -640,6 +640,17 @@ __all__ += [
     "validate_historical_executor_activation_preflight_runtime_freeze_sources",
 ]
 
+
+from .exp062_historical_one_shot_executor_source import (
+    build_one_shot_historical_executor_source_contract,
+    validate_one_shot_historical_executor_source_dependencies,
+)
+
+__all__ += [
+    "build_one_shot_historical_executor_source_contract",
+    "validate_one_shot_historical_executor_source_dependencies",
+]
+
 from .exp062_historical_terminal_review_contract import (
     classify_historical_terminal_result as classify_exp062_historical_terminal_result,
 )
