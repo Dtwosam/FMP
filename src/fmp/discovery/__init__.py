@@ -453,3 +453,13 @@ __all__ += [
     "exp062_historical_execution_dispatch_command",
     "validate_exp062_historical_execution_plan",
 ]
+
+from .exp062_historical_execution_plan_review import (
+    review_historical_execution_plan_proof,
+    validate_historical_execution_plan_review_sources,
+)
+
+__all__ += [
+    "review_historical_execution_plan_proof",
+    "validate_historical_execution_plan_review_sources",
+]

@@ -1343,3 +1343,12 @@ Copy this section for each serious experiment:
 - Historical-result dispatch remains unauthorized.
 - Reserved 2023-2026 data and all candidate/demo/live/trading paths remain locked.
 - Next gate after actual success: concrete execution-plan proof review/freeze.
+
+### EXP-20260927-062 — DEC-315 execution-plan proof reviewer
+
+- Source-only reviewer prepared for future successful DEC-314 runtime evidence.
+- Requires run #1 / attempt 1 success, one successful proof job, one non-expired artifact, and exact DEC-313 plan content.
+- Binds raw and canonical execution-plan SHA-256 hashes.
+- Historical-result dispatch/execute mode authorized?: NO.
+- Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate after actual proof: immutable concrete execution-plan freeze.

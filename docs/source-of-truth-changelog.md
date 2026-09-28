@@ -524,3 +524,11 @@
 - Runs only the DEC-313 planner and validates the run #2 / attempt 1 plan.
 - Uploads only immutable historical-execution-plan.json.
 - Adds no dispatch/execute path and keeps reserved data plus all downstream trading paths locked.
+
+## 2026-09-28 — DEC-315 EXP-062 execution-plan proof reviewer
+
+- Added a source-only reviewer for future DEC-314 runtime evidence.
+- Pinned DEC-314 workflow plus DEC-313 operator/CLI, DEC-312 authorization, activated CLI, active discovery workflow, and DEC-311 freeze.
+- Requires exact run #1 / attempt 1 success, one successful proof job, and one non-expired artifact.
+- Revalidates the exact run #2 / attempt 1 DEC-313 plan and records raw/canonical SHA-256 hashes.
+- Adds no dispatch or execute mode and keeps reserved data plus all downstream trading paths locked.

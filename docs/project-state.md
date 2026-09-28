@@ -915,3 +915,13 @@ empty, the target is run #2 / attempt 1, and the future discovery command is exa
 The workflow has read-only permissions, runs only the planner, and uploads only plan
 JSON. It cannot dispatch historical discovery. A real successful proof must be bound
 to exact runtime evidence before any one-shot executor is considered.
+
+## 2026-09-28 — DEC-315 EXP-062 execution-plan reviewer prepared
+
+The stack now includes a source-only reviewer for future DEC-314 merged-main proof
+evidence. It can validate the exact proof run/job/artifact and re-run DEC-313 plan
+validation against downloaded plan bytes, including target run #2 / attempt 1.
+
+DEC-315 itself cannot dispatch or execute historical discovery. A real successful
+DEC-314 proof must still exist and be frozen before any one-shot executor is
+considered.
