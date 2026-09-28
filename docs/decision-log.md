@@ -5593,3 +5593,24 @@ trading remain locked.
 
 The next safe gate after a real successful proof is immutable runtime-evidence review
 and freezing.
+
+## DEC-327 — EXP-062 historical executor-preflight proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY REVIEWER / RUNTIME PROOF REQUIRED
+
+DEC-327 adds a source-only reviewer for future DEC-326 runtime evidence. It requires
+the exact read-only proof workflow on merged main, run #1 / attempt 1 success, one
+successful preflight job, one non-expired preflight artifact, and downloaded preflight
+bytes.
+
+The reviewer revalidates DEC-325, requires zero historical-result attempts and target
+run #2 / attempt 1, and records raw/canonical preflight SHA-256 hashes. It pins
+DEC-323/324/325/326 source identities.
+
+Historical executor availability, actual dispatch, execute mode, reserved 2023-2026
+access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain locked.
+
+The next gate after real DEC-326 evidence passes review is an immutable concrete
+executor-preflight proof freeze.
