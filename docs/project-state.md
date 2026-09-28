@@ -1156,3 +1156,21 @@ availability, actual dispatch, reserved 2023-2026 data, candidate compilation/pr
 Phase 8B, demo/live, real-money, and trading remain locked.
 
 The next safe step is concrete activation-preflight runtime-evidence binding.
+
+
+## 2026-09-28 — DEC-336 EXP-062 concrete activation-preflight evidence bound
+
+The successful DEC-332 read-only activation-preflight proof is now represented by
+exact runtime evidence: merged head `12d11320ae302902df0a0deb7343408922deee83`,
+run `36431469794`, job `108958446980`, artifact `10973597441`, matching
+GitHub/independent ZIP SHA-256, and frozen raw/canonical activation-preflight hashes.
+
+DEC-336 replays DEC-333 review and DEC-335 deterministic freezing and requires the
+exact DEC-335 fingerprint. It also pins DEC-334's terminal-review contract. The
+historical-result slot remains empty and target run #2 / attempt 1 remains the sole
+future attempt.
+
+No historical executor or dispatch is available under DEC-336. Reserved 2023-2026
+data and all candidate/demo/live/real-money/trading paths remain locked.
+
+The next safe step is a source-only one-shot historical executor workflow.

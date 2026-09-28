@@ -5789,3 +5789,30 @@ executor reaches main.
 
 The next safe gate is concrete DEC-332 activation-preflight runtime-evidence binding
 before any historical executor workflow is considered.
+
+
+## DEC-336 — EXP-062 executor activation-preflight runtime evidence freeze
+
+**Date:** 2026-09-28  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / EXECUTOR + DISPATCH STILL LOCKED
+
+DEC-336 binds the actual successful DEC-332 activation-preflight proof on merged head
+`12d11320ae302902df0a0deb7343408922deee83`: run `36431469794`, job
+`108958446980`, artifact `10973597441`, artifact/ZIP SHA-256
+`ee6e7ac2e8c18e1f8d276bba14ca942e20615143316ac185f4b814333804c2d5`,
+raw activation-preflight SHA-256
+`775010a0c3d4afe11191adb53d8ad54e7cf0d5de85b1a0b5adcb28c470e9a4a5`,
+and canonical SHA-256
+`98b9180ae3b438b3c372ba34cbab9473d7f38ba5c1eb1add2dee988df4e09ad8`.
+
+The source replays DEC-333 review and DEC-335 freezing and requires DEC-335
+fingerprint `567320a598f245a8e7521281ddde3a1acaa0e3f294aebe12554688d2258f020b`.
+It also pins DEC-334 terminal-review criteria before any executor source can advance.
+
+The historical-result slot remains empty and target run #2 / attempt 1 remains the
+only future attempt. Historical executor availability, actual dispatch, execute mode,
+reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain false.
+
+The next safe gate is a source-only one-shot historical executor workflow before any
+dispatch path is considered.

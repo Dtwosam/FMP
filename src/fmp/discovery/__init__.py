@@ -629,6 +629,17 @@ __all__ += [
     "freeze_reviewed_historical_executor_activation_preflight",
 ]
 
+
+from .exp062_historical_executor_activation_preflight_runtime_freeze import (
+    freeze_historical_executor_activation_preflight_runtime_evidence,
+    validate_historical_executor_activation_preflight_runtime_freeze_sources,
+)
+
+__all__ += [
+    "freeze_historical_executor_activation_preflight_runtime_evidence",
+    "validate_historical_executor_activation_preflight_runtime_freeze_sources",
+]
+
 from .exp062_historical_terminal_review_contract import (
     classify_historical_terminal_result as classify_exp062_historical_terminal_result,
 )

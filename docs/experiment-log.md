@@ -1558,3 +1558,16 @@ Copy this section for each serious experiment:
 - Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - DEC-334 terminal-review contract remains a required sibling gate.
 - Next gate: concrete DEC-332 activation-preflight runtime-evidence binding.
+
+
+### EXP-20260927-062 — DEC-336 activation-preflight runtime evidence freeze
+
+- Bound real DEC-332 proof run `36431469794`, job `108958446980`, and artifact `10973597441`.
+- Artifact/ZIP SHA-256: `ee6e7ac2e8c18e1f8d276bba14ca942e20615143316ac185f4b814333804c2d5`.
+- Raw activation-preflight SHA-256: `775010a0c3d4afe11191adb53d8ad54e7cf0d5de85b1a0b5adcb28c470e9a4a5`.
+- Canonical activation-preflight SHA-256: `98b9180ae3b438b3c372ba34cbab9473d7f38ba5c1eb1add2dee988df4e09ad8`.
+- Replays DEC-333 review and DEC-335 freeze; expected DEC-335 fingerprint `567320a598f245a8e7521281ddde3a1acaa0e3f294aebe12554688d2258f020b`.
+- Pins DEC-334 terminal-review contract before executor progression.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Executor availability / dispatch / execute mode authorized?: NO.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
