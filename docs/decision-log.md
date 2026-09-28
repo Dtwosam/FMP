@@ -5258,3 +5258,33 @@ Phase 8B, demo/live, real-money, and trading remain locked.
 
 The next safe gate after actual DEC-309 evidence passes DEC-310 is an immutable concrete
 historical-plan proof freeze before execution authorization is considered.
+
+## DEC-311 — EXP-062 concrete historical-plan proof freeze
+
+**Date:** 2026-09-28  
+**Status:** REVIEWED PLAN EVIDENCE FROZEN / HISTORICAL EXECUTION STILL LOCKED
+
+DEC-311 binds the actual successful DEC-309 read-only historical-plan proof to exact
+runtime evidence. The proof is run `36403342301`, run #1 / attempt 1, on merged head
+`95c193343a905acd40daf0eea5d27d55fd2537e1`; its sole successful job is
+`108866149073`, and its sole artifact is `10960559187` with digest
+`sha256:07679d85ea3ee0a9373bbd78363ab98eb973377ace6d68828528f91188ff3cf8`.
+
+The independently downloaded artifact ZIP matches that SHA-256 exactly. Its sole
+`historical-plan.json` has raw SHA-256
+`ac34769d589dbcc18a056d1ebaf960b6881f943f221d771e80216df32d313672`
+and canonical SHA-256
+`d6cd04c0c29a2e82da12e687ce56ae80387f7ad3c9727b23018ee548684e62a6`.
+
+DEC-311 re-runs DEC-310 against the raw evidence, pins the DEC-310 reviewer blob
+`5c8870c10e86122342bb181cb5a15ebc709924ce`, and emits a deterministic freeze
+fingerprint. The plan proves zero historical-result attempts and an unconsumed
+source-authorized slot.
+
+Historical-result dispatch, execute mode, historical execution/result production,
+rerun/retry/replacement, reserved 2023-2026 access, candidate compilation/promotion,
+Phase 8B, demo, broker/live, real-money, and trading all remain false.
+
+The next safe gate is a separate source-only historical execution authorization
+contract. It may define the exact future run #2 / attempt 1 execution identity but
+must provide no dispatch path.

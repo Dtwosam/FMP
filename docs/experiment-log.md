@@ -1298,3 +1298,16 @@ Copy this section for each serious experiment:
 - Records raw and canonical plan SHA-256 hashes.
 - Performs no dispatch or historical execution.
 - Reserved data, candidates, demo/live, real-money, and trading remain unauthorized.
+
+### EXP-20260927-062 — DEC-311 concrete historical-plan proof freeze
+
+- DEC-309 read-only plan proof run `36403342301`, run #1 / attempt 1, completed successfully on merged head `95c193343a905acd40daf0eea5d27d55fd2537e1`.
+- Sole plan job: `108866149073`, success.
+- Sole plan artifact: `10960559187`, digest `sha256:07679d85ea3ee0a9373bbd78363ab98eb973377ace6d68828528f91188ff3cf8`.
+- Independent artifact ZIP SHA-256 matches the GitHub digest exactly.
+- Frozen plan raw SHA-256: `ac34769d589dbcc18a056d1ebaf960b6881f943f221d771e80216df32d313672`.
+- Frozen plan canonical SHA-256: `d6cd04c0c29a2e82da12e687ce56ae80387f7ad3c9727b23018ee548684e62a6`.
+- Historical-result attempt count remains zero; source-authorized slot remains unconsumed.
+- Historical dispatch/execution/result production authorized?: NO.
+- Reserved 2023-2026 data, candidate compilation/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate: source-only historical execution authorization contract with no dispatch path.
