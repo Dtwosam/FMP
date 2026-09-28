@@ -33,7 +33,7 @@ DEC-356 pins:
 - DEC-354 installation-source contract:
   `e4fc6a7d1faaca50bc6936597f0e8b66fe096985`;
 - DEC-355 dormant source validator:
-  `0672310946ab6bb3b77d2de5c4ea5d68e41f810a`;
+  `003e44126d9d6a807efd51b5a589128f6d4b5aac`;
 - dormant executor template:
   `51ce87584369be957482460d81649adb1cb9f05d`;
 - active discovery workflow:
