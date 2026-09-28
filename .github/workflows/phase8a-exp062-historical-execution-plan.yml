@@ -1,0 +1,149 @@
+name: phase8a-exp062-historical-execution-plan
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-exp062-historical-execution-plan.yml
+      - .github/workflows/phase8a-exp062-discovery.yml
+      - src/fmp/discovery/exp062_historical_plan_result_freeze.py
+      - src/fmp/discovery/exp062_historical_execution_authorization.py
+      - scripts/phase8a_exp062.py
+      - src/fmp/discovery/exp062_historical_execution_operator.py
+      - scripts/phase8a_exp062_historical_execution_operator.py
+      - requirements/exp061-discovery-run.txt
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  read-only-historical-execution-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require exact first merged-main DEC-314 proof push
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+      - name: Require frozen DEC-311/312/313 source identities
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/exp062_historical_plan_result_freeze.py)" = "e3274118b37066efe2869d554e78e6b68e64b32a"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_execution_authorization.py)" = "aa8cfb25e3d78c0c72da4b22898c1263a42548ba"
+          test "$(git hash-object scripts/phase8a_exp062.py)" = "773784d0770d54b1d3e41fba2057b9314a090034"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_execution_operator.py)" = "7f21ccf59de9605c7fab45b4506f947ffae69cab"
+          test "$(git hash-object scripts/phase8a_exp062_historical_execution_operator.py)" = "9ecb3f47d7e68461e4a7d893ad5862d7e78a1fc8"
+          test "$(git hash-object .github/workflows/phase8a-exp062-discovery.yml)" = "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50"
+          test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned EXP-062 planning runtime without editable checkout
+        run: python -m pip install -r requirements/exp061-discovery-run.txt
+
+      - name: Require clean checkout
+        run: test -z "$(git status --porcelain)"
+
+      - name: Fetch current main and exact EXP-062 run inventory
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp062-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/runs.json"
+
+      - name: Run exact DEC-313 read-only historical execution plan
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_exp062_historical_execution_operator.py plan \
+            --main-json "$RUNNER_TEMP/main.json" \
+            --runs-json "$RUNNER_TEMP/runs.json" \
+            --expected-head "$GITHUB_SHA" \
+            > "$RUNNER_TEMP/historical-execution-plan.json"
+
+      - name: Verify slot-available run-two plan and all locks
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          plan = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "historical-execution-plan.json"
+              ).read_text(encoding="utf-8")
+          )
+
+          assert plan["decision"] == "DEC-313"
+          assert plan["operator_version"] == (
+              "fmp-exp062-historical-execution-operator-v1"
+          )
+          assert plan["authorization_decision"] == "DEC-312"
+          assert plan["authorization_version"] == (
+              "fmp-exp062-historical-execution-authorization-v1"
+          )
+          assert plan["expected_head_sha"] == os.environ["GITHUB_SHA"]
+          assert plan["stage"] == "EXP062_HISTORICAL_RESULT_SLOT_AVAILABLE"
+          assert plan["proof_run_id"] == 36358289723
+          assert plan["proof_run_count"] == 1
+          assert plan["proof_run_number"] == 1
+          assert plan["historical_result_attempt_count"] == 0
+          assert plan["historical_result_run_id"] is None
+          assert plan["historical_result_slot_consumed"] is False
+          assert plan["expected_target_run_number"] == 2
+          assert plan["expected_target_run_attempt"] == 1
+          assert plan["planned_dispatch_command"] == (
+              "gh workflow run phase8a-exp062-discovery.yml --ref main"
+          )
+          assert plan["historical_execution_source_authorized"] is True
+          assert plan["historical_discovery_execution_authorized"] is True
+          assert plan["discovery_result_authorized"] is True
+
+          for field in (
+              "historical_result_dispatch_authorized",
+              "historical_execute_mode_available",
+              "rerun_authorized",
+              "retry_authorized",
+              "replacement_run_authorized",
+              "reserved_robustness_access_authorized",
+              "candidate_compilation_authorized",
+              "promotion_authorized",
+              "phase8b_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert plan[field] is False, field
+          PY
+
+      - name: Upload immutable DEC-314 historical execution plan proof
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp062-dec314-historical-execution-plan-${{ github.sha }}
+          path: ${{ runner.temp }}/historical-execution-plan.json
+          if-no-files-found: error
