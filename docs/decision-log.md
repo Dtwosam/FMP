@@ -6465,3 +6465,23 @@ availability, dispatch, execute mode, rerun/retry/replacement, reserved data,
 candidate/promotion, Phase 8B, demo/live, real-money, and trading remain false.
 
 Next gate: repository-hosted read-only active workflow-installation preflight proof.
+
+
+## DEC-368 — EXP-062 active workflow-installation preflight proof
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY MERGED-MAIN PREFLIGHT PROOF / NO INSTALL OR DISPATCH
+
+DEC-368 adds a push-to-main, first-run/attempt-1 proof of the DEC-367 active
+workflow-installation preflight.
+
+The workflow pins DEC-366/367 source identities, requires the active executor workflow
+path to remain absent, checks exact merged main plus the EXP-062 run inventory, and
+invokes only the plan surface.
+
+Workflow-install authorization, installed state, executor availability, historical
+dispatch, execute mode, rerun/retry/replacement, reserved 2023-2026 access,
+candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain false.
+
+Next gate after real success: immutable installation-preflight proof review/freeze.

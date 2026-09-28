@@ -1034,3 +1034,13 @@
 - Rechecks the frozen proof and historical-result run inventory.
 - Provides only a plan surface; no install, execute, advance, or workflow-dispatch command exists.
 - Keeps install, installed state, executor availability, dispatch, execute mode, reserved data, and downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-368 EXP-062 workflow-installation preflight proof
+
+- Added first-run/attempt-1 push-to-main proof workflow for DEC-367.
+- Uses only contents/actions read permissions.
+- Pins DEC-366/367 source identities plus exact dormant-template identity.
+- Invokes only the read-only installation-preflight plan surface.
+- Verifies zero historical-result attempts and target run #2 / attempt 1.
+- Uploads only the installation-preflight JSON and never installs or dispatches anything.

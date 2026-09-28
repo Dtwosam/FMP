@@ -1606,3 +1606,15 @@ executor, dispatch, or execute path exists.
 
 Next safe step: repository-hosted read-only active workflow-installation preflight
 proof.
+
+
+## 2026-09-28 — DEC-368 workflow-installation preflight proof source-ready
+
+A repository-hosted read-only proof now exists for the DEC-367 active workflow-
+installation preflight. It requires the active executor workflow path to remain absent
+and invokes only the plan surface.
+
+No install, executor, dispatch, or execute authority exists. The historical slot
+remains empty with target run #2 / attempt 1.
+
+Next safe step after real successful proof evidence: review/freeze.
