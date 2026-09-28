@@ -6446,3 +6446,22 @@ Historical-result attempts remain zero and target run #2 / attempt 1 remains the
 future attempt.
 
 Next gate: read-only current-main active workflow-installation preflight.
+
+
+## DEC-367 — EXP-062 active workflow-installation preflight
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY CURRENT-MAIN PREFLIGHT / NO INSTALL OR DISPATCH
+
+DEC-367 adds a current-main preflight for the DEC-366 source-authorized active
+workflow-installation contract.
+
+It pins the DEC-366 contract and exact dormant template, requires exact main,
+requires the active executor workflow path to remain absent, and rechecks that the
+historical-result slot remains unused with target run #2 / attempt 1.
+
+The CLI exposes plan only. Workflow-install authorization, installed state, executor
+availability, dispatch, execute mode, rerun/retry/replacement, reserved data,
+candidate/promotion, Phase 8B, demo/live, real-money, and trading remain false.
+
+Next gate: repository-hosted read-only active workflow-installation preflight proof.

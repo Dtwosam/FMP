@@ -1932,3 +1932,13 @@ Copy this section for each serious experiment:
 - Execute mode available?: NO.
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Next gate: read-only current-main active workflow-installation preflight.
+
+
+### EXP-20260927-062 — DEC-367 active workflow-installation preflight
+
+- Current-main installation preflight implemented and bound to DEC-366.
+- Dormant executor template must match the exact frozen blob.
+- Active executor workflow path must remain absent.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Workflow-install authorization / installed state / executor / dispatch / execute?: NO.
+- Next gate: repository-hosted read-only installation-preflight proof.

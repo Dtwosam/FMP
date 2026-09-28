@@ -1593,3 +1593,16 @@ The active workflow path remains absent and no installation, executor, dispatch,
 execute authority exists. Historical run #2 / attempt 1 remains untouched.
 
 Next safe step: read-only current-main active workflow-installation preflight.
+
+
+## 2026-09-28 — DEC-367 active workflow-installation preflight source-ready
+
+The repository stack now includes a read-only current-main preflight for the
+source-authorized active workflow-installation contract.
+
+It proves the exact dormant executor template is present, the active executor
+workflow path is absent, and the historical-result slot remains unused. No install,
+executor, dispatch, or execute path exists.
+
+Next safe step: repository-hosted read-only active workflow-installation preflight
+proof.
