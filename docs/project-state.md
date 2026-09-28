@@ -1106,3 +1106,15 @@ If run #2 appears, the command disappears and the slot is consumed. Reserved 202
 data and all candidate/demo/live/real-money/trading paths remain locked.
 
 The next safe step is a repository-hosted read-only proof of this activation preflight.
+
+## 2026-09-28 — DEC-332 EXP-062 executor activation-preflight proof source
+
+A repository-hosted read-only proof workflow now exists for the DEC-331 executor
+activation preflight. On its first exact merged-main push it can prove the historical
+slot is still empty, target run #2 / attempt 1 remains exact, and the future discovery
+command is unchanged.
+
+The workflow has read-only permissions, runs only the planner, and uploads only
+activation-preflight JSON. It cannot dispatch historical discovery. A real successful
+proof must be bound to exact runtime evidence before any one-shot executor workflow is
+considered.
