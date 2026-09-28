@@ -1988,3 +1988,17 @@ Copy this section for each serious experiment:
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Reserved data and all downstream trading paths remain locked.
+
+
+### EXP-20260927-062 — DEC-372 active install-authorization contract
+
+- Concrete DEC-371 runtime freeze is the prerequisite.
+- DEC-371 runtime-freeze fingerprint: `a498bf1cae3c6e92803fc750331c3090c35bb3af13bf01a62866831d29bb95f8`.
+- Install-authorization source authorized?: YES.
+- Actual workflow install authorized?: NO.
+- Workflow installed?: NO.
+- Historical executor available?: NO.
+- Historical-result dispatch authorized?: NO.
+- Execute mode available?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Next gate: read-only current-main install-authorization preflight.
