@@ -1432,3 +1432,18 @@ exists.
 
 The historical slot remains empty with target run #2 / attempt 1. Next safe step:
 create and validate the dormant disabled template source only.
+
+
+## 2026-09-28 — DEC-355 dormant one-shot executor workflow source ready
+
+A disabled one-shot historical executor workflow source now exists under
+`docs/superpowers/templates/`.
+
+It encodes the exact future one-shot dispatch behavior but remains inert because no
+executor workflow exists under `.github/workflows/`.
+
+The historical-result slot remains empty and target run #2 / attempt 1 remains the
+sole future result attempt. No install, executor, dispatch, execute, reserved-data,
+or trading authority exists.
+
+Next safe step: repository-hosted read-only proof of the dormant source.
