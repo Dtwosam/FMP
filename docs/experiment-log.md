@@ -1394,3 +1394,13 @@ Copy this section for each serious experiment:
 - Existing run #2 immediately consumes the slot and removes the command.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
 - Next gate: repository-hosted read-only dispatch-plan proof.
+
+### EXP-20260927-062 — DEC-320 read-only dispatch-plan proof
+
+- Repository-hosted first-run/attempt-1 proof prepared for DEC-319.
+- Exact DEC-317/318/319 sources are pinned.
+- Proof runs only the planner and uploads only `historical-dispatch-plan.json`.
+- Actual workflow dispatch/executor authority remains NO.
+- Target remains run #2 / attempt 1 while the slot is empty.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
+- Next gate after actual success: concrete dispatch-plan proof review/freeze.

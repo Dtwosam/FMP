@@ -5455,3 +5455,22 @@ Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
 broker/live, real-money, and trading remain locked.
 
 The next safe gate is a repository-hosted read-only dispatch-plan proof.
+
+## DEC-320 — EXP-062 repository-hosted dispatch-plan proof
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY MERGED-MAIN PROOF / NO HISTORICAL DISPATCH
+
+DEC-320 adds a first-run/attempt-1 push-to-main proof of DEC-319. The workflow pins
+DEC-317/318/319 source identities, fetches current main and the EXP-062 discovery
+inventory through read-only API calls, and invokes only the plan-only dispatch
+operator.
+
+A valid proof requires an empty historical slot, target run #2 / attempt 1, the exact
+future discovery command as JSON evidence, and all actual dispatch/executor/downstream
+authority fields false.
+
+The workflow has only `contents: read` and `actions: read` permissions and uploads
+only `historical-dispatch-plan.json`.
+
+The next safe gate is a concrete review/freeze of the real DEC-320 runtime evidence.

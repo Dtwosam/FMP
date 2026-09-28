@@ -973,3 +973,13 @@ If run #2 appears, the command disappears and the slot is consumed. Reserved 202
 data and all candidate/demo/live/real-money/trading paths remain locked.
 
 The next safe step is a repository-hosted read-only proof of this dispatch plan.
+
+## 2026-09-28 — DEC-320 EXP-062 dispatch-plan proof source
+
+A read-only repository-hosted proof now exists for the DEC-319 current-main dispatch
+plan. It can prove the historical slot remains empty and the exact future run #2 /
+attempt 1 command is unchanged, but it has no write permission and cannot submit the
+workflow.
+
+A real successful DEC-320 proof must be reviewed and frozen before any one-shot
+dispatcher is considered.
