@@ -1798,3 +1798,14 @@ Copy this section for each serious experiment:
 - Active executor workflow installed?: NO.
 - Historical dispatch authorized under this decision?: NO.
 - Next gate: read-only dormant-source proof.
+
+
+### EXP-20260927-062 — DEC-356 dormant executor source proof
+
+- Push-to-main read-only proof workflow added for DEC-355.
+- Pins DEC-354/355, dormant template, and active discovery workflow blobs.
+- Requires active executor workflow path absent.
+- Requires zero historical-result attempts and target run #2 / attempt 1.
+- Uploads only `dormant-one-shot-historical-executor-workflow-source.json`.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Next gate after actual success: immutable proof review/freeze.
