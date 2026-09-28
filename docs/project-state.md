@@ -1513,3 +1513,18 @@ executor, dispatch, or execute authority exists. The historical-result slot rema
 empty with target run #2 / attempt 1.
 
 Next safe step: read-only current-main active workflow-install preflight.
+
+
+## 2026-09-28 — DEC-361 read-only active workflow install preflight source-ready
+
+The stack now includes a current-main preflight for the source-authorized active
+one-shot historical executor workflow installation.
+
+It proves the active workflow path remains absent, the dormant template is exact,
+and the historical-result slot remains unused. The CLI has plan only; no install,
+execute, or dispatch surface exists.
+
+Target run #2 / attempt 1 remains the sole future historical attempt. Reserved
+2023-2026 data and all downstream trading paths remain locked.
+
+Next safe step: repository-hosted read-only active workflow-install preflight proof.
