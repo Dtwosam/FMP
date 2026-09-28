@@ -809,3 +809,18 @@ compilation/promotion, Phase 8B, demo, broker/live, real-money, and trading rema
 unauthorized. The next safe gate is source-only one-slot historical-run authorization
 for the unchanged 2015-2022 research window.
 
+
+## 2026-09-28 — DEC-307 EXP-062 one-slot historical source authorization
+
+The repository now contains the source-only authorization boundary for one future
+EXP-062 historical discovery-result attempt. The frozen fail-closed proof remains
+workflow run #1 / attempt 1 and does not consume the slot; only a later workflow run
+#2 / attempt 1 may consume it.
+
+This change does not unlock the existing execution gate and does not dispatch the
+workflow. The historical run remains limited to the frozen 2015-2022 research window.
+Reserved 2023-2026 data, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain unauthorized.
+
+The next safe step is a read-only merged-main operator that proves the slot is still
+available before any separate execution-authorization work is considered.
