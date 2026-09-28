@@ -1250,3 +1250,15 @@ Copy this section for each serious experiment:
 - Zero-run DEC-302 and unchanged DEC-303 validation remain mandatory.
 - Historical execution, candidate compilation, demo/live, real-money, and trading
   remain unauthorized.
+
+
+### EXP-20260927-062 — DEC-307 guarded proof activation preparation
+
+- Activation PR: #451.
+- While stacked on the DEC-306 branch, the proof job is hard-skipped because base is
+  not `main`.
+- Before any activation, the normal repository unit suite must pass.
+- Later activation is same-repo, PR #451, attempt 1, exact branch/base guarded, with
+  reviewed source-blob pins and two fresh zero-run plans.
+- Only the fail-closed proof may be submitted; historical/demo/live authority remains
+  false.
