@@ -923,3 +923,12 @@
 - Requires active executor workflow path absent.
 - Validates dormant source directly and uploads only a source JSON artifact.
 - Adds no install, dispatch, or execute surface and keeps downstream authority locked.
+
+
+## 2026-09-28 — DEC-357 EXP-062 dormant executor source-proof reviewer
+
+- Added source-only review of future DEC-356 runtime evidence.
+- Pinned DEC-356/355/354 source identities, dormant template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates dormant-source JSON and records raw/canonical hashes.
+- Adds no install, dispatch, or execute mode and keeps downstream authority locked.
