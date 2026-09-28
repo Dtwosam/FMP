@@ -1266,3 +1266,14 @@ Copy this section for each serious experiment:
 - Rerun/retry/replacement, candidate compilation/promotion, Phase 8B, demo/live, real-money, and trading remain unauthorized.
 - Next gate: clean-main read-only historical-slot operator.
 
+
+### EXP-20260927-062 — DEC-308 read-only historical-slot operator
+
+- Exact-main read-only historical planner implemented.
+- Empty-slot plan evidence: `gh workflow run phase8a-exp062-discovery.yml --ref main`.
+- Execute mode available?: NO.
+- Historical-result dispatch/execution authorized?: NO.
+- Any later run #2 removes the plan command and routes to review.
+- Reserved 2023-2026 data, candidate compilation/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate: repository-hosted read-only proof of the merged-main slot plan.
+

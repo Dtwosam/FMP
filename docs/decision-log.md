@@ -5186,3 +5186,30 @@ through 2026-08-21 robustness block stays closed.
 The next safe gate is a clean-main read-only operator for the single source-authorized
 historical slot. DEC-307 itself provides no dispatch or execute mode.
 
+
+## DEC-308 — EXP-062 read-only historical-slot operator
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY READ-ONLY OPERATOR / NO EXECUTE MODE
+
+DEC-308 adds the read-only exact-main operator for the single DEC-307
+source-authorized EXP-062 historical-result slot. It requires current `main` metadata,
+the current EXP-062 discovery workflow-run inventory, and an exact caller-supplied
+expected main head.
+
+While the DEC-306 frozen proof is the only matching manual-main run, the operator
+reports `EXP062_HISTORICAL_RESULT_SLOT_AVAILABLE` and exposes
+`gh workflow run phase8a-exp062-discovery.yml --ref main` as plan evidence only.
+Historical-result dispatch remains false and execute mode does not exist.
+
+Once run #2 exists, the operator reports
+`EXP062_HISTORICAL_RESULT_RUN_PRESENT_REVIEW_REQUIRED`, marks the slot consumed,
+removes the command, and cannot plan a second run.
+
+Historical execution/result production, rerun/retry/replacement, reserved 2023-2026
+access, candidate compilation/promotion, Phase 8B, demo, broker/live, real-money, and
+trading remain false.
+
+The next safe gate is a repository-hosted read-only merged-main proof of the exact
+DEC-308 slot-available plan. That proof must not dispatch the historical workflow.
+
