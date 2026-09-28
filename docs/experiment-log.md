@@ -1362,3 +1362,14 @@ Copy this section for each serious experiment:
 - Target historical runtime remains run #2 / attempt 1 only.
 - Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate after real proof: concrete runtime-evidence binding before a one-shot dispatcher.
+
+### EXP-20260927-062 — DEC-317 concrete execution-plan runtime freeze
+
+- Bound real DEC-314 proof run `36414282818`, job `108901556593`, artifact `10966632240`.
+- GitHub artifact digest and independently recomputed ZIP SHA-256 both equal `9299ebfd344c0bd2a66ccd6e29339e035840c8b4204cbfc16bb6d3e938a53254`.
+- Frozen plan raw SHA-256: `594b5bd129a93ad7b07f69e00826251dd693f1bb388e6b4dff64eda0b34a7c72`.
+- Frozen plan canonical SHA-256: `152bbb90efe3941f1338c73cf24f91f10a877cda3ee5c46f08c4f556d653a12f`.
+- Replays DEC-315 review and DEC-316 freeze; expected DEC-316 fingerprint `7c7d99f4c89aac4e11d27536b9f8d2d39322672a9a0332f141d1d86f93b19be3`.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Historical dispatch/execute mode authorized?: NO.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
