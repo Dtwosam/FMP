@@ -5883,3 +5883,25 @@ Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate after real DEC-338 evidence passes review is an immutable
 source-proof freeze before any dispatch-capable executor workflow.
+
+
+## DEC-340 — EXP-062 reviewed one-shot executor source-proof freeze
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY DETERMINISTIC FREEZE / NO EXECUTOR WORKFLOW
+
+DEC-340 adds a deterministic freeze builder for an already-valid DEC-339 review of a
+successful DEC-338 one-shot historical executor source proof.
+
+It preserves the exact proof run/job/artifact identities, artifact digest,
+raw/canonical DEC-337 contract hashes, target run #2 / attempt 1, DEC-336
+runtime-freeze fingerprint, DEC-334 terminal-review decision, and exact DEC-339 source
+map. It emits one canonical `freeze_fingerprint_sha256`.
+
+DEC-340 cannot invent runtime evidence and cannot dispatch the historical workflow.
+Historical executor availability, actual dispatch, execute mode,
+rerun/retry/replacement, reserved 2023-2026 access, candidate compilation/promotion,
+Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate after real DEC-338 evidence is concrete source-proof runtime-evidence
+binding before any dispatch-capable executor workflow.
