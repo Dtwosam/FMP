@@ -994,3 +994,12 @@
 - Requires exact successful proof run/job/artifact shape.
 - Revalidates active-path-absent preflight content and records raw/canonical hashes.
 - Adds no install, dispatch, or execute mode and keeps downstream authority locked.
+
+
+## 2026-09-28 — DEC-364 EXP-062 active install-preflight proof freeze
+
+- Added deterministic source-only freeze for valid DEC-363 review evidence.
+- Preserves exact runtime identities, artifact digest, preflight hashes, source map, and dormant-template identity.
+- Preserves active executor workflow path absent state.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Adds no install, dispatch, or execute surface and keeps downstream authority locked.
