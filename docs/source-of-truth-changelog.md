@@ -894,3 +894,12 @@
 - Pins the DEC-334 terminal-review contract.
 - Confirms the future executor workflow path remains absent.
 - Keeps install authorization, installed state, executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
+
+
+## 2026-09-28 — DEC-354 EXP-062 workflow-installation source contract
+
+- Added source-only dormant executor workflow-installation contract.
+- Pinned DEC-353 runtime-freeze source and fingerprint.
+- Fixed dormant disabled-template path and reserved active workflow path.
+- Keeps dormant template absent and active workflow uninstalled.
+- Keeps executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
