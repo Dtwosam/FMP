@@ -441,3 +441,15 @@ __all__ += [
     "require_dec312_exp062_historical_execution",
     "validate_exp062_historical_execution_authorization_sources",
 ]
+
+from .exp062_historical_execution_operator import (
+    build_historical_execution_plan as build_exp062_historical_execution_plan,
+    historical_execution_dispatch_command as exp062_historical_execution_dispatch_command,
+    validate_historical_execution_plan as validate_exp062_historical_execution_plan,
+)
+
+__all__ += [
+    "build_exp062_historical_execution_plan",
+    "exp062_historical_execution_dispatch_command",
+    "validate_exp062_historical_execution_plan",
+]
