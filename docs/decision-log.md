@@ -5932,3 +5932,23 @@ reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
 broker/live, real-money, and trading remain false.
 
 The next safe gate is a source-only one-shot historical executor workflow contract.
+
+
+## DEC-342 — EXP-062 one-shot historical executor workflow contract
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY WORKFLOW CONTRACT / RUNTIME + DISPATCH LOCKED
+
+DEC-342 pins the concrete DEC-341 runtime freeze and authorizes only a future
+one-shot historical executor **workflow source contract**.
+
+The sole historical-result slot remains empty and target run #2 / attempt 1 remains
+exact. DEC-334 terminal-review criteria and the frozen historical command remain
+preserved.
+
+`one_shot_historical_executor_workflow_source_authorized=true`, while historical
+executor availability, historical-result dispatch authorization, execute mode,
+rerun/retry/replacement, reserved 2023-2026 access, candidate compilation/promotion,
+Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate is a read-only current-main one-shot executor workflow preflight.
