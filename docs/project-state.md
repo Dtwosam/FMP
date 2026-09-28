@@ -1025,3 +1025,15 @@ authorized by DEC-324. The slot must remain empty and target run #2 / attempt 1 
 the sole future historical attempt.
 
 The next safe step is a read-only current-main executor preflight.
+
+## 2026-09-28 — DEC-325 EXP-062 read-only executor preflight
+
+The stack now includes a current-main preflight for the source-authorized future
+one-shot historical executor. It can show the exact future command only while the slot
+remains empty, but it cannot execute that command and no historical executor is
+available.
+
+If run #2 appears, the command disappears and the slot is consumed. Reserved 2023-2026
+data and all candidate/demo/live/real-money/trading paths remain locked.
+
+The next safe step is a repository-hosted read-only proof of this preflight.
