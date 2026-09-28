@@ -575,3 +575,13 @@ from .exp062_historical_executor_preflight_freeze import (
 __all__ += [
     "freeze_reviewed_historical_executor_preflight",
 ]
+
+from .exp062_historical_executor_preflight_runtime_freeze import (
+    freeze_historical_executor_preflight_runtime_evidence,
+    validate_historical_executor_preflight_runtime_freeze_sources,
+)
+
+__all__ += [
+    "freeze_historical_executor_preflight_runtime_evidence",
+    "validate_historical_executor_preflight_runtime_freeze_sources",
+]
