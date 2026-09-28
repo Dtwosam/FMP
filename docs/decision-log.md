@@ -5310,3 +5310,24 @@ trading remain false.
 
 The next safe gate is a separate read-only exact-main historical execution operator
 with no execute mode.
+
+## DEC-313 — EXP-062 read-only historical execution operator
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY EXECUTION PLAN / NO EXECUTE MODE
+
+DEC-313 adds an exact-main planner for the one DEC-312 historical runtime slot. While
+the frozen proof remains the only matching EXP-062 manual-main discovery run, the
+operator exposes `gh workflow run phase8a-exp062-discovery.yml --ref main` as plan
+evidence for target workflow run #2 / attempt 1.
+
+The operator cannot execute the command and historical-result dispatch remains false.
+Once run #2 exists, the command is removed and the slot is treated as consumed.
+Multiple attempts, reruns, proof/run-number drift, duplicate run ids, or main-head
+drift fail closed.
+
+Reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
+broker/live, real-money, and trading remain false.
+
+The next safe gate is a repository-hosted read-only proof of the exact DEC-313
+execution plan on merged main.
