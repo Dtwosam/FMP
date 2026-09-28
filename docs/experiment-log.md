@@ -1607,3 +1607,15 @@ Copy this section for each serious experiment:
 - Historical executor availability/dispatch/execute mode authorized?: NO.
 - Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 - Next gate after actual proof: immutable source-proof freeze.
+
+
+### EXP-20260927-062 — DEC-340 reviewed source-proof freeze
+
+- Deterministic source-only freeze builder added for a valid DEC-339 review.
+- Preserves DEC-338 proof run/job/artifact identity and artifact digest.
+- Preserves raw/canonical DEC-337 source-contract hashes.
+- Preserves DEC-336 runtime-freeze fingerprint, DEC-334 terminal-review decision, and target run #2 / attempt 1.
+- Emits one canonical `freeze_fingerprint_sha256`.
+- Historical executor availability/dispatch/execute mode authorized?: NO.
+- Reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+- Next gate after actual proof: concrete source-proof runtime-evidence binding.
