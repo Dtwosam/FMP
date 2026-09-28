@@ -5860,3 +5860,26 @@ Phase 8B, demo, broker/live, real-money, and trading remain false.
 
 The next safe gate after a real successful DEC-338 proof is immutable runtime-evidence
 review and freezing before any dispatch-capable executor workflow.
+
+
+## DEC-339 — EXP-062 one-shot historical executor source-proof reviewer
+
+**Date:** 2026-09-28  
+**Status:** SOURCE-ONLY REVIEWER / RUNTIME PROOF REQUIRED
+
+DEC-339 adds a source-only reviewer for future successful DEC-338 runtime evidence.
+
+It requires the exact DEC-338 proof workflow on merged main, run #1 / attempt 1
+success, one successful read-only proof job, one non-expired source-contract artifact,
+and downloaded DEC-337 contract bytes.
+
+The reviewer requires the DEC-336 runtime-freeze fingerprint, DEC-334 terminal-review
+decision, zero historical-result attempts, an unconsumed verified-available slot, and
+target run #2 / attempt 1. It records raw/canonical SHA-256 hashes of the contract.
+
+Historical executor availability, actual dispatch, execute mode,
+rerun/retry/replacement, reserved 2023-2026 access, candidate compilation/promotion,
+Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate after real DEC-338 evidence passes review is an immutable
+source-proof freeze before any dispatch-capable executor workflow.
