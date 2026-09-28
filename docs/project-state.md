@@ -1401,3 +1401,21 @@ workflow path, then emits one canonical fingerprint. All install/executor/dispat
 trading authority remains locked.
 
 Next safe step after real DEC-350 proof evidence: concrete runtime-evidence binding.
+
+
+## 2026-09-28 — DEC-353 concrete workflow-install preflight proof evidence bound
+
+The successful DEC-350 read-only workflow-install-preflight proof is now represented
+by exact runtime evidence: merged head
+`bef60cd8656f0db48293570c13f91e2e09fe5be8`, run `36461898040`, job
+`109062250103`, artifact `10987972547`, matching GitHub/independent ZIP SHA-256,
+and frozen raw/canonical install-preflight hashes.
+
+DEC-353 replays DEC-351 review and DEC-352 deterministic freezing and requires the
+exact DEC-352 fingerprint. DEC-334 terminal-review criteria remain pinned.
+
+The future executor workflow path is still absent. No workflow install, historical
+executor, dispatch, or execute authority exists. Reserved data and all downstream
+trading paths remain locked.
+
+Next safe step: source-only workflow-installation source contract.
