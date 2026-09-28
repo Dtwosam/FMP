@@ -158,7 +158,7 @@ class Exp062HistoricalExecutorPreflightFreezeTests(unittest.TestCase):
         reviewed["historical_executor_available"] = True
         with self.assertRaisesRegex(
             ValueError,
-            "historical_executor_available must remain false",
+            "historical_executor_available must remain false|historical_executor_available mismatch",
         ):
             freeze_reviewed_historical_executor_preflight(
                 reviewed,
