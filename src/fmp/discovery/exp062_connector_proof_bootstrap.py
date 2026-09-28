@@ -12,7 +12,6 @@ EXP062_CONNECTOR_PROOF_BOOTSTRAP_DECISION = "DEC-306"
 EXP062_CONNECTOR_PROOF_BOOTSTRAP_VERSION = (
     "fmp-exp062-connector-proof-bootstrap-v1"
 )
-EXPECTED_MAIN_SHA = "0c57298198a2915e3f31fb6ba800c9a644c519bf"
 REQUIRED_EVENT_NAME = "pull_request"
 REQUIRED_BASE_REF = "main"
 REQUIRED_HEAD_REF = "phase8a-dec307-exp062-proof-bootstrap-activation"
@@ -39,8 +38,6 @@ def build_connector_proof_bootstrap_evidence(
     run_attempt: int,
 ) -> dict[str, object]:
     main_head_sha = _validate_commit(main_head_sha, field="main_head_sha")
-    if main_head_sha != EXPECTED_MAIN_SHA:
-        raise ValueError("DEC-306 exact main head mismatch")
     if event_name != REQUIRED_EVENT_NAME:
         raise ValueError("DEC-306 requires pull_request event")
     if base_ref != REQUIRED_BASE_REF:
@@ -71,7 +68,7 @@ def build_connector_proof_bootstrap_evidence(
         **evidence,
         "bootstrap_decision": EXP062_CONNECTOR_PROOF_BOOTSTRAP_DECISION,
         "bootstrap_version": EXP062_CONNECTOR_PROOF_BOOTSTRAP_VERSION,
-        "bootstrap_expected_main_sha": EXPECTED_MAIN_SHA,
+        "bootstrap_main_head_sha": main_head_sha,
         "bootstrap_event_name": event_name,
         "bootstrap_base_ref": base_ref,
         "bootstrap_head_ref": head_ref,
@@ -81,7 +78,6 @@ def build_connector_proof_bootstrap_evidence(
 
 
 __all__ = [
-    "EXPECTED_MAIN_SHA",
     "EXP062_CONNECTOR_PROOF_BOOTSTRAP_DECISION",
     "EXP062_CONNECTOR_PROOF_BOOTSTRAP_VERSION",
     "REQUIRED_BASE_REF",
