@@ -3,7 +3,6 @@ from __future__ import annotations
 import unittest
 
 from fmp.discovery.exp062_connector_proof_bootstrap import (
-    EXPECTED_MAIN_SHA,
     EXP062_CONNECTOR_PROOF_BOOTSTRAP_DECISION,
     REQUIRED_BASE_REF,
     REQUIRED_EVENT_NAME,
@@ -12,13 +11,16 @@ from fmp.discovery.exp062_connector_proof_bootstrap import (
 )
 
 
+HEAD = "a" * 40
+
+
 def _plan() -> dict[str, object]:
     command = "gh workflow run phase8a-exp062-discovery.yml --ref main"
     return {
         "decision": "DEC-302",
         "operator_version": "fmp-exp062-proof-operator-v1",
         "proof_contract_version": "fmp-exp062-gate-proof-contract-v1",
-        "expected_head_sha": EXPECTED_MAIN_SHA,
+        "expected_head_sha": HEAD,
         "stage": "EXP062_PROOF_DISPATCH_AUTHORIZATION_REQUIRED",
         "run_present": False,
         "run_id": None,
@@ -55,7 +57,7 @@ class Exp062ConnectorProofBootstrapTests(unittest.TestCase):
         **overrides: object,
     ) -> dict[str, object]:
         kwargs: dict[str, object] = {
-            "main_head_sha": EXPECTED_MAIN_SHA,
+            "main_head_sha": HEAD,
             "event_name": REQUIRED_EVENT_NAME,
             "base_ref": REQUIRED_BASE_REF,
             "head_ref": REQUIRED_HEAD_REF,
@@ -75,10 +77,8 @@ class Exp062ConnectorProofBootstrapTests(unittest.TestCase):
             EXP062_CONNECTOR_PROOF_BOOTSTRAP_DECISION,
         )
         self.assertEqual(evidence["executor_decision"], "DEC-303")
-        self.assertEqual(
-            evidence["executor_head_sha"],
-            EXPECTED_MAIN_SHA,
-        )
+        self.assertEqual(evidence["executor_head_sha"], HEAD)
+        self.assertEqual(evidence["bootstrap_main_head_sha"], HEAD)
         self.assertTrue(evidence["proof_dispatch_authorized_by_dec303"])
         self.assertTrue(evidence["proof_dispatch_submitted"])
         self.assertTrue(evidence["connector_recovery_path"])
@@ -90,9 +90,9 @@ class Exp062ConnectorProofBootstrapTests(unittest.TestCase):
         self.assertFalse(evidence["real_money_authorized"])
         self.assertFalse(evidence["trading_authorized"])
 
-    def test_main_head_drift_is_rejected(self) -> None:
-        with self.assertRaisesRegex(ValueError, "exact main head mismatch"):
-            self._build(main_head_sha="a" * 40)
+    def test_malformed_main_head_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "40-character Git commit"):
+            self._build(main_head_sha="bad")
 
     def test_non_pull_request_event_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "requires pull_request event"):
@@ -115,6 +115,14 @@ class Exp062ConnectorProofBootstrapTests(unittest.TestCase):
         ):
             self._build(second=second)
 
+    def test_plan_head_drift_is_rejected_by_dec303_guard(self) -> None:
+        first = _plan()
+        second = _plan()
+        first["expected_head_sha"] = "b" * 40
+        second["expected_head_sha"] = "b" * 40
+        with self.assertRaisesRegex(ValueError, "plan head mismatch"):
+            self._build(first=first, second=second)
+
     def test_existing_proof_run_is_rejected_by_dec303_guard(self) -> None:
         first = _plan()
         second = _plan()
@@ -122,7 +130,7 @@ class Exp062ConnectorProofBootstrapTests(unittest.TestCase):
             value["stage"] = "EXP062_PROOF_RUN_PRESENT_REVIEW_REQUIRED"
             value["run_present"] = True
             value["run_id"] = 123
-            value["run_head_sha"] = EXPECTED_MAIN_SHA
+            value["run_head_sha"] = HEAD
             value["run_status"] = "completed"
             value["run_conclusion"] = "failure"
             value["matching_manual_main_run_count"] = 1
