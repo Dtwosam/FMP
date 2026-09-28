@@ -5835,3 +5835,28 @@ false.
 
 The next safe gate is a repository-hosted proof of this source contract before any
 dispatch-capable executor workflow is introduced.
+
+
+## DEC-338 — EXP-062 one-shot historical executor source proof
+
+**Date:** 2026-09-28  
+**Status:** READ-ONLY MERGED-MAIN SOURCE PROOF / NO HISTORICAL DISPATCH
+
+DEC-338 adds a push-to-main, first-run/attempt-1 proof of the DEC-337 one-shot
+historical executor source contract.
+
+The workflow uses contents/actions read permissions only. It downloads the immutable
+DEC-332 activation-preflight artifact, independently verifies its ZIP SHA-256, replays
+DEC-333 / DEC-335 / DEC-336, rebuilds a fresh DEC-331 activation preflight from current
+main, and evaluates DEC-337.
+
+A valid result proves only that the one-shot executor source contract remains valid
+while the historical-result slot is still empty and target run #2 / attempt 1 remains
+exact. The historical workflow command is data only and is never submitted.
+
+Historical executor availability, historical-result dispatch, execute mode,
+rerun/retry/replacement, reserved 2023-2026 access, candidate compilation/promotion,
+Phase 8B, demo, broker/live, real-money, and trading remain false.
+
+The next safe gate after a real successful DEC-338 proof is immutable runtime-evidence
+review and freezing before any dispatch-capable executor workflow.

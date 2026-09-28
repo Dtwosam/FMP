@@ -732,3 +732,14 @@
 - Keeps actual executor availability, dispatch authorization, and execute mode false.
 - Keeps rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
 - Requires a repository-hosted source-contract proof before any dispatch-capable workflow.
+
+
+## 2026-09-28 — DEC-338 EXP-062 one-shot executor source proof
+
+- Added a first-run/attempt-1 push-to-main proof workflow for DEC-337.
+- Uses only contents/actions read permissions.
+- Replays immutable DEC-332 artifact evidence through DEC-333 / DEC-335 / DEC-336.
+- Rebuilds the fresh DEC-331 slot preflight from current main.
+- Verifies DEC-337 source-only authorization while executor availability, dispatch, and execute mode remain false.
+- Uploads only the source-contract JSON and never submits the historical workflow.
+- Keeps reserved data plus all downstream trading paths locked.

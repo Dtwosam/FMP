@@ -1584,3 +1584,15 @@ Copy this section for each serious experiment:
 - Execute mode available?: NO.
 - Reserved data and all candidate/demo/live/trading paths remain locked.
 - Next gate: repository-hosted source-contract proof.
+
+
+### EXP-20260927-062 — DEC-338 one-shot executor source proof
+
+- Push-to-main read-only proof workflow added for DEC-337.
+- Replays real DEC-332 artifact evidence through DEC-333 / DEC-335 / DEC-336.
+- Rebuilds fresh DEC-331 activation preflight from current main and run inventory.
+- Requires zero historical-result attempts and target run #2 / attempt 1.
+- Uploads only `one-shot-historical-executor-source-contract.json`.
+- Historical executor availability / dispatch / execute mode authorized?: NO.
+- Reserved data and all candidate/demo/live/trading paths remain locked.
+- Next gate after actual success: immutable source-proof review/freeze.

@@ -1191,3 +1191,19 @@ remain locked.
 
 The next safe step is a repository-hosted source-contract proof before any
 dispatch-capable workflow is introduced.
+
+
+## 2026-09-28 — DEC-338 EXP-062 one-shot executor source proof
+
+A repository-hosted read-only proof now exists for the DEC-337 one-shot executor
+source contract.
+
+It replays the concrete DEC-332/333/335/336 evidence chain, rebuilds a fresh DEC-331
+activation preflight against current main, and verifies that the slot remains empty
+with target run #2 / attempt 1.
+
+The proof has no actions-write permission and no dispatch/execute surface. It uploads
+only the DEC-337 source-contract JSON. Reserved 2023-2026 data and all
+candidate/demo/live/real-money/trading paths remain locked.
+
+The next safe step after real successful proof evidence is source-proof review/freeze.
