@@ -824,3 +824,16 @@ demo, broker/live, real-money, and trading remain unauthorized.
 
 The next safe gate is a read-only exact-main operator for the single slot.
 
+
+## 2026-09-28 — DEC-308 EXP-062 read-only slot planner
+
+DEC-308 can now describe the exact future EXP-062 historical dispatch command only
+when the DEC-307 slot is still unused and current `main` matches the caller-supplied
+head. It cannot execute the command.
+
+Once a run #2 exists, the command disappears and the slot is treated as consumed.
+Historical execution/result production, reserved 2023-2026 access, candidate
+compilation/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+
+The next safe gate is a repository-hosted read-only proof of this plan on merged main.
+
