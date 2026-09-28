@@ -550,3 +550,12 @@
 - Requires the exact DEC-316 freeze fingerprint.
 - Confirms zero historical-result attempts and target run #2 / attempt 1.
 - Keeps historical dispatch/execute mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
+
+## 2026-09-28 — DEC-318 EXP-062 one-shot dispatch source authorization
+
+- Added a source-only one-shot historical dispatch authorization contract.
+- Pinned the concrete DEC-317 runtime-freeze source and fingerprint.
+- Requires zero historical-result attempts, an unconsumed slot, and target run #2 / attempt 1.
+- Sets only the future dispatch source-contract flag true.
+- Keeps actual historical dispatch and executor availability false.
+- Keeps rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and trading locked.
