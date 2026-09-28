@@ -290,6 +290,12 @@ def _validate_dec305_freeze(value: Mapping[str, object]) -> None:
             "decision": EXP062_REVIEWED_GATE_PROOF_FREEZE_DECISION,
             "version": EXP062_REVIEWED_GATE_PROOF_FREEZE_VERSION,
             "stage": "EXP062_GATE_PROOF_REVIEWED_FAIL_CLOSED_AND_FROZEN",
+            "source_review_decision": "DEC-304",
+            "source_review_version": "fmp-exp062-proof-result-review-v1",
+            "proof_contract_decision": "DEC-301",
+            "proof_contract_version": "fmp-exp062-gate-proof-contract-v1",
+            "proof_executor_decision": "DEC-303",
+            "proof_executor_version": "fmp-exp062-proof-one-shot-executor-v1",
             "proof_outcome": "EXPECTED_FAIL_CLOSED_EXECUTION_GATE",
             "proof_run_id": PROOF_RUN_ID,
             "proof_head_sha": PROOF_HEAD_SHA,
@@ -306,6 +312,8 @@ def _validate_dec305_freeze(value: Mapping[str, object]) -> None:
             ],
             "github_unexpanded_matrix_placeholder_present": True,
             "fail_closed_semantics_verified": True,
+            "cell_result_artifact_count": 0,
+            "aggregate_result_artifact_count": 0,
             "freeze_fingerprint_sha256": DEC305_FREEZE_FINGERPRINT_SHA256,
             "next_gate": "SOURCE_ONLY_HISTORICAL_RUN_AUTHORIZATION_CONTRACT",
         },
@@ -314,6 +322,15 @@ def _validate_dec305_freeze(value: Mapping[str, object]) -> None:
     for field in _FALSE_FREEZE_FIELDS:
         if value.get(field) is not False:
             raise ValueError(f"DEC-306 DEC-305 freeze {field} must remain false")
+
+    unsigned = dict(value)
+    fingerprint = unsigned.pop("freeze_fingerprint_sha256", None)
+    if (
+        hashlib.sha256(_canonical_json(unsigned)).hexdigest()
+        != DEC305_FREEZE_FINGERPRINT_SHA256
+        or fingerprint != DEC305_FREEZE_FINGERPRINT_SHA256
+    ):
+        raise ValueError("DEC-306 DEC-305 freeze fingerprint content mismatch")
 
 
 def freeze_runtime_gate_proof_evidence(
