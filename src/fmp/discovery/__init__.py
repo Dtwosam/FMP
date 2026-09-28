@@ -543,3 +543,17 @@ __all__ += [
     "build_historical_executor_contract",
     "validate_historical_executor_contract_sources",
 ]
+
+from .exp062_historical_executor_preflight import (
+    build_historical_executor_preflight,
+    historical_executor_dispatch_command,
+    validate_historical_executor_preflight,
+    validate_historical_executor_preflight_sources,
+)
+
+__all__ += [
+    "build_historical_executor_preflight",
+    "historical_executor_dispatch_command",
+    "validate_historical_executor_preflight",
+    "validate_historical_executor_preflight_sources",
+]
