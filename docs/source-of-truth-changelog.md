@@ -1153,3 +1153,13 @@
 - Requires active executor workflow path absent and historical slot unused.
 - Exposes only a plan surface; no install, execute, advance, or dispatch command exists.
 - Keeps all downstream trading authority locked.
+
+
+## 2026-09-29 — DEC-380 EXP-062 install-decision preflight proof
+
+- Added first-run/attempt-1 push-to-main proof for DEC-379.
+- Uses only contents/actions read permissions.
+- Pins DEC-378/379 source identities, dormant template, discovery workflow, and planning runtime.
+- Invokes only the read-only install-decision preflight plan surface.
+- Verifies zero historical-result attempts and target run #2 / attempt 1.
+- Uploads only the decision-preflight JSON and never installs or dispatches anything.
