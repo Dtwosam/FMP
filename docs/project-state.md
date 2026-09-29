@@ -1963,4 +1963,4 @@ The active executor workflow remains absent. Actual workflow-install authorizati
 executor availability, historical dispatch, execute mode, reserved data, and all
 downstream trading paths remain locked.
 
-Next safe gate: source-only active executor workflow install contract.
+Next safe gate: source-only active executor workflow install-activation contract.
