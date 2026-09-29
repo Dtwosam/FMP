@@ -2435,3 +2435,14 @@ Copy this section for each serious experiment:
 - Preserves all seven source-only gates.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Actual install / executor / dispatch / execute authority authorized?: NO.
+
+
+### EXP-20260927-062 — DEC-416 final authorization proof runtime binding
+
+- Bound successful DEC-413 run `36622849087` / job `109592333745` / artifact `11058592607`.
+- Verified artifact ZIP SHA-256 `8303140ebc7a5e37922080051ab634bc7a6c9f13940d52f3802b1017fd658c7a`.
+- Verified DEC-412 raw/canonical preflight hashes.
+- Reproduced DEC-415 freeze fingerprint `4a71a6b29ccea4d5415ce64ca84fc0c43988a2daf98cbe912f4654868b907ffa`.
+- All seven source-only gates remain true.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: source-only workflow-install action contract before install.
