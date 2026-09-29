@@ -174,12 +174,12 @@ def _validate_runtime_freeze(value: Mapping[str, object]) -> None:
         "dec399_review_decision": "DEC-399",
         "dec399_review_version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-"
-            "install-execution-preflight-proof-review-v1"
+            "install-activation-preflight-proof-review-v1"
         ),
         "dec400_freeze_decision": "DEC-400",
         "dec400_freeze_version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-"
-            "install-execution-preflight-proof-freeze-v1"
+            "install-activation-preflight-proof-freeze-v1"
         ),
         "dec400_freeze_fingerprint_sha256": (
             "441c508902f816faee66c58768552a7d3ab05f0b145193a3e6349f18c9062808"
