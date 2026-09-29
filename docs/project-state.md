@@ -1963,17 +1963,4 @@ The active executor workflow remains absent. Actual workflow-install authorizati
 executor availability, historical dispatch, execute mode, reserved data, and all
 downstream trading paths remain locked.
 
-Next safe gate: source-only active executor workflow install contract.
-
-
-## 2026-09-29 — DEC-396 final workflow-install contract source-ready
-
-The concrete DEC-395 runtime evidence now feeds a distinct final workflow-install
-contract. This does not modify the older DEC-360 contract or any historical source
-pin.
-
-Actual workflow installation remains locked; the active executor workflow is still
-absent, the historical-result slot remains unused, and downstream trading authority
-remains false.
-
-Next safe gate: read-only current-main final workflow-install preflight.
+Next safe gate: source-only active executor workflow install-activation contract.

@@ -7031,22 +7031,3 @@ absent and actual install, executor, dispatch, execute, reserved-data, and tradi
 authority remain locked.
 
 Next gate: source-only active executor workflow install-activation contract.
-
-
-## DEC-396 — EXP-062 final active executor workflow-install contract
-
-**Date:** 2026-09-29  
-**Status:** SOURCE-ONLY FINAL INSTALL CONTRACT / ACTIVE WORKFLOW ABSENT
-
-DEC-396 consumes the concrete DEC-395 runtime-evidence freeze at fingerprint
-`9c44d78327d4467d4eb0717ae28d410f2543476b518eeecfea9bb2db9ba2682c`
-and authorizes only a new final workflow-install source contract. It uses a distinct
-module from DEC-360 so the historical DEC-360 blob remains immutable.
-
-The four predecessor source-only gates remain true and DEC-396 adds the final-install
-contract source gate. The active executor workflow path remains absent. Actual
-workflow-install authorization, installed state, executor availability, historical
-dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live,
-real-money, and trading remain locked.
-
-Next gate: read-only current-main final workflow-install preflight.
