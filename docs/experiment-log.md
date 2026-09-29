@@ -2478,3 +2478,14 @@ Copy this section for each serious experiment:
 - Uploads only the action-preflight JSON.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate after real proof evidence: immutable proof review/freeze.
+
+
+### EXP-20260927-062 — DEC-420 workflow-install action proof reviewer
+
+- Added source-only review of future DEC-419 runtime evidence.
+- Pinned DEC-419/418/417 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates DEC-418 preflight content and records raw/canonical hashes.
+- Preserves all eight source-only gates.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
+- Next gate after real evidence: immutable review freeze.
