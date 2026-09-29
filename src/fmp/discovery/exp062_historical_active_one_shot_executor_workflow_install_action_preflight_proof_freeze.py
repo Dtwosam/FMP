@@ -111,7 +111,7 @@ def _validate_review(
         "decision": "DEC-420",
         "version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-"
-            "final-authorization-preflight-proof-review-v1"
+            "action-preflight-proof-review-v1"
         ),
         "stage": (
             "EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
@@ -119,26 +119,26 @@ def _validate_review(
         ),
         "proof_workflow_name": (
             "phase8a-exp062-active-one-shot-historical-executor-"
-            "workflow-install-final-authorization-preflight-proof"
+            "workflow-install-action-preflight-proof"
         ),
         "proof_workflow_path": (
             ".github/workflows/"
             "phase8a-exp062-active-one-shot-historical-executor-"
-            "workflow-install-final-authorization-preflight-proof.yml"
+            "workflow-install-action-preflight-proof.yml"
         ),
         "proof_head_sha": expected_head_sha,
         "proof_run_number": 1,
         "proof_run_attempt": 1,
         "proof_run_conclusion": "success",
         "action_preflight_decision": "DEC-418",
-        "final_authorization_preflight_version": (
+        "action_preflight_version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-"
-            "final-authorization-preflight-v1"
+            "action-preflight-v1"
         ),
         "install_action_contract_decision": "DEC-417",
-        "final_authorization_contract_version": (
+        "install_action_contract_version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-"
-            "final-authorization-contract-v1"
+            "install-action-contract-v1"
         ),
         "dormant_executor_workflow_template_blob_sha": (
             "51ce87584369be957482460d81649adb1cb9f05d"
@@ -165,7 +165,7 @@ def _validate_review(
         "discovery_result_authorized": True,
         "next_gate": (
             "IMMUTABLE_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-            "FINAL_AUTHORIZATION_PREFLIGHT_PROOF_FREEZE_BEFORE_INSTALL"
+            "ACTION_PREFLIGHT_PROOF_FREEZE_BEFORE_INSTALL"
         ),
     }
     for field, expected in exact.items():
@@ -184,8 +184,8 @@ def _validate_review(
         field="DEC-421 proof_artifact_id",
     )
     if value.get("proof_artifact_name") != (
-        "exp062-dec413-active-one-shot-historical-executor-workflow-"
-        "install-final-authorization-preflight-"
+        "exp062-dec419-active-one-shot-historical-executor-workflow-"
+        "install-action-preflight-"
         f"{expected_head_sha}"
     ):
         raise ValueError("DEC-421 proof_artifact_name mismatch")
@@ -301,7 +301,7 @@ def freeze_reviewed_active_one_shot_historical_executor_workflow_install_action_
         "trading_authorized": False,
         "next_gate": (
             "CONCRETE_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-            "FINAL_AUTHORIZATION_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BINDING_BEFORE_INSTALL"
+            "ACTION_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BINDING_BEFORE_INSTALL"
         ),
     }
     frozen["freeze_fingerprint_sha256"] = hashlib.sha256(
