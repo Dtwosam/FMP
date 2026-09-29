@@ -34,5 +34,5 @@ availability, historical-result dispatch, execute mode, rerun/retry/replacement,
 reserved 2023-2026 access, candidate compilation/promotion, Phase 8B, demo,
 broker/live, real-money, and trading remain false.
 
-The next safe gate is a source-only active executor workflow install-activation contract. DEC-395
+The next safe gate is a source-only active executor workflow install contract. DEC-395
 does not install the workflow and does not add an install or dispatch command.
