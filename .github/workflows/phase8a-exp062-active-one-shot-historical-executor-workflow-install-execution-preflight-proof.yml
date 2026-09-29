@@ -48,7 +48,7 @@ jobs:
       - name: Require frozen DEC-390/391 source identities
         run: |
           set -euo pipefail
-          test "$(git hash-object src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_execution_contract.py)" = "a3507bf9d44426b88f877e0dfa3ce77d299acb20"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_execution_contract.py)" = "a48fc70ae1c40e32dbba7fc24922c92b6051fd1e"
           test "$(git hash-object src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_execution_preflight.py)" = "9305eb1f92acb18c37f04b23ebd3f635a428b662"
           test "$(git hash-object scripts/phase8a_exp062_active_one_shot_historical_executor_workflow_install_execution_preflight.py)" = "4871c17989845989bb29f03015a81e0187ffa994"
           test "$(git hash-object docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled)" = "51ce87584369be957482460d81649adb1cb9f05d"
@@ -111,7 +111,7 @@ jobs:
               "workflow-install-execution-contract-v1"
           )
           assert plan["dec390_install_execution_contract_blob_sha"] == (
-              "a3507bf9d44426b88f877e0dfa3ce77d299acb20"
+              "a48fc70ae1c40e32dbba7fc24922c92b6051fd1e"
           )
           assert plan["expected_head_sha"] == os.environ["GITHUB_SHA"]
           assert plan["stage"] == (
