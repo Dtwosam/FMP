@@ -63,7 +63,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallExecutionPreflightTest
         )
         self.assertEqual(
             source["dec390_install_execution_contract_blob_sha"],
-            "a3507bf9d44426b88f877e0dfa3ce77d299acb20",
+            "a48fc70ae1c40e32dbba7fc24922c92b6051fd1e",
         )
 
     def test_empty_slot_and_absent_workflow_are_read_only_ready(self) -> None:
