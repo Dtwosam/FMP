@@ -34,8 +34,8 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallSourcePreflightProofTe
     def test_workflow_pins_dec402_403_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         expected = {
-            "src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_activation_contract.py": "3ef8cde3d98904bf813b0f9fbc63c3d5f65dc7d6",
-            "src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_source_preflight.py": "418e223c60942a0e4fb945b6fe0758a126cada86",
+            "src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_source_contract.py": "54aa308e0f51acd8613ad117a7ccd57c7ae1eaef",
+            "src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_source_preflight.py": "53108d08f8a952b990115bddeff1a325d80b8569",
             "scripts/phase8a_exp062_active_one_shot_historical_executor_workflow_install_source_preflight.py": "1c9615b7ee55ff1387cd95464abf2202f8dd9d3f",
             "docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled": "51ce87584369be957482460d81649adb1cb9f05d",
             ".github/workflows/phase8a-exp062-discovery.yml": "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50",
