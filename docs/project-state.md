@@ -2211,3 +2211,15 @@ No actual install, executor, dispatch, execute, reserved-data, or trading author
 exists.
 
 Next safe gate: read-only current-main workflow-install action preflight.
+
+
+## 2026-09-29 — DEC-418 workflow-install action preflight source-ready
+
+A read-only current-main preflight now exists for DEC-417. It verifies the
+install-action contract source, active-workflow absence, the still-unused
+historical-result slot, and all eight source-only gates.
+
+No actual install, executor, dispatch, execute, reserved-data, or trading authority
+exists.
+
+Next safe gate: repository-hosted read-only workflow-install action-preflight proof.
