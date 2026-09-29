@@ -2245,4 +2245,4 @@ Copy this section for each serious experiment:
 - Requires DEC-394 fingerprint `9357b1c6591a801237acacf7cb7eab1f5302608770ad7b3033566bda39cb3548`.
 - Preserves all four source-only gates.
 - Actual install / executor / dispatch / execute authority authorized?: NO.
-- Next gate: source-only workflow install contract.
+- Next gate: source-only workflow install-activation contract.
