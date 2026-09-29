@@ -6726,3 +6726,24 @@ A successful run uploads only the install-decision-preflight JSON. No installati
 historical dispatch, execute mode, or downstream trading authority is added.
 
 Next gate after real successful runtime evidence: immutable proof review/freeze.
+
+
+## DEC-381 — EXP-062 active workflow install-decision preflight proof reviewer
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY RUNTIME-EVIDENCE REVIEWER / NO INSTALL OR DISPATCH
+
+DEC-381 adds a strict reviewer for successful DEC-380 merged-main proof evidence.
+It pins the DEC-380 proof workflow, DEC-379 preflight/CLI, DEC-378 install-decision
+contract, dormant executor template, and active discovery workflow. It requires run
+#1 / attempt 1 success, one successful proof job, one non-expired artifact, and exact
+DEC-379 preflight bytes.
+
+The active executor workflow path remains absent. Install-authorization and
+install-decision source contracts may be true, but actual install authorization,
+installed state, executor availability, dispatch, execute mode, retries, reserved
+data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain
+locked.
+
+Next gate after real successful DEC-380 evidence: deterministic immutable review
+freeze.
