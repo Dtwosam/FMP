@@ -7357,3 +7357,19 @@ A successful run uploads only the final-authorization-preflight JSON. No install
 historical dispatch, execute mode, or downstream trading authority is added.
 
 Next gate after real successful runtime evidence: immutable proof review/freeze.
+
+
+## DEC-414 — Final authorization preflight proof reviewer
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY RUNTIME-EVIDENCE REVIEWER / NO INSTALL OR DISPATCH
+
+DEC-414 adds a strict reviewer for future successful DEC-413 merged-main proof
+evidence. It pins the DEC-413 workflow, DEC-412 preflight/CLI, DEC-411 contract,
+dormant executor template, and active discovery workflow.
+
+A valid review requires run #1 / attempt 1 success, one successful proof job, one
+non-expired artifact, exact DEC-412 preflight bytes, all seven source-only gates
+true, and all actual install/dispatch/trading authority fields false.
+
+Next gate after real DEC-413 evidence: deterministic immutable proof-review freeze.
