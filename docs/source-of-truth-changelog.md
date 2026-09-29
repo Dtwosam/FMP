@@ -1380,3 +1380,13 @@
 - Preserves all six source-only gates.
 - Exposes only a plan surface; no install, execute, advance, or dispatch command exists.
 - Keeps downstream trading authority locked.
+
+
+## 2026-09-29 — DEC-404 EXP-062 workflow-install source-preflight proof
+
+- Added first-run/attempt-1 push-to-main proof for DEC-403.
+- Uses only contents/actions read permissions.
+- Pins DEC-402/403 source identities, dormant template, discovery workflow, and planning runtime.
+- Invokes only the read-only source-preflight plan surface.
+- Verifies all six source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
+- Uploads only the source-preflight JSON and never installs or dispatches anything.
