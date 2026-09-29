@@ -1305,3 +1305,4 @@
   `9357b1c6591a801237acacf7cb7eab1f5302608770ad7b3033566bda39cb3548`.
 - Preserves all four source-only gates and active executor workflow path absent state.
 - Adds no install, dispatch, or execute surface; downstream authority remains locked.
+- Next gate: source-only active executor workflow install-activation contract.
