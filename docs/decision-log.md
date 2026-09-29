@@ -6868,3 +6868,22 @@ demo/live, real-money, and trading remain locked.
 
 Next gate after real successful DEC-386 evidence: deterministic immutable review
 freeze.
+
+
+## DEC-388 — EXP-062 install-execution authorization preflight proof freeze
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY DETERMINISTIC REVIEW FREEZE / NO INSTALL OR DISPATCH
+
+DEC-388 deterministically freezes an already-valid DEC-387 review of a successful
+DEC-386 install-execution-authorization-preflight proof. It preserves exact
+proof run/job/artifact identities, artifact digest, DEC-385 preflight hashes,
+DEC-385/384 identities, source map, dormant-template identity, active-workflow-
+absent state, and target historical run #2 / attempt 1.
+
+The freeze emits one canonical fingerprint for later concrete runtime binding.
+Actual workflow-install authorization, installed state, executor availability,
+historical dispatch, execute mode, reserved data, candidate/promotion, Phase 8B,
+demo/live, real-money, and trading remain locked.
+
+Next gate after real DEC-386 evidence: concrete proof runtime-evidence binding.
