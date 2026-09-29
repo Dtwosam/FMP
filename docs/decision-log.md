@@ -7472,3 +7472,23 @@ A successful run uploads only the action-preflight JSON. No workflow installatio
 historical dispatch, execute mode, or downstream trading authority is added.
 
 Next gate after real successful runtime evidence: immutable proof review/freeze.
+
+
+## DEC-420 — EXP-062 workflow-install action preflight proof reviewer
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY RUNTIME-EVIDENCE REVIEWER / NO INSTALL OR DISPATCH
+
+DEC-420 adds a strict reviewer for successful DEC-419 merged-main proof evidence.
+It pins the DEC-419 proof workflow, DEC-418 preflight/CLI, DEC-417 action contract,
+the dormant executor template, and the active discovery workflow. It requires run
+#1 / attempt 1 success, one successful proof job, one non-expired artifact, and exact
+DEC-418 preflight bytes.
+
+All eight source-only gates may be true. The active executor workflow path remains
+absent, while actual install authorization, installed state, executor availability,
+dispatch, execute mode, retries, reserved data, candidate/promotion, Phase 8B,
+demo/live, real-money, and trading remain locked.
+
+Next gate after real successful DEC-419 evidence: deterministic immutable review
+freeze.

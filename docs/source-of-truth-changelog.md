@@ -1510,3 +1510,12 @@
 - Invokes only the read-only workflow-install action-preflight plan surface.
 - Preserves all eight source-only gates and requires the historical slot unused.
 - Uploads only the action-preflight JSON and never installs or dispatches anything.
+
+
+## 2026-09-29 — DEC-420 EXP-062 workflow-install action proof reviewer
+
+- Added source-only review of future DEC-419 runtime evidence.
+- Pinned DEC-419/418/417 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates DEC-418 preflight content and records raw/canonical hashes.
+- Preserves all eight source-only gates and adds no install, dispatch, or execute mode.
