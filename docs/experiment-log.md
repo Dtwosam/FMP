@@ -2152,3 +2152,13 @@ Copy this section for each serious experiment:
 - Uploads only the execution-authorization-preflight JSON.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate after success: immutable proof review/freeze.
+
+
+### EXP-20260927-062 — DEC-387 execution-authorization proof reviewer
+
+- Added source-only review of future DEC-386 runtime evidence.
+- Pinned DEC-386/385/384 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates execution-authorization preflight content and records raw/canonical hashes.
+- Preserves all three source-only gates while actual install / executor / dispatch / execute authority remains NO.
+- Next gate after real evidence: immutable review freeze.
