@@ -2108,3 +2108,20 @@ frozen lineage.
 
 The active executor workflow remains absent and every runtime/trading authority
 remains locked.
+
+
+## 2026-09-29 — DEC-410 recovery evidence concretely bound
+
+The workflow-install source-preflight recovery lineage is now concretely bound.
+
+DEC-404 run #1 remains a genuine failed proof-wrapper run. DEC-407 run #2 is the
+successful recovery proof and is pinned by exact head/run/job/artifact identities,
+artifact ZIP digest, DEC-403 raw/canonical preflight hashes, and DEC-409 freeze
+fingerprint.
+
+The active executor workflow remains absent. Actual workflow-install authorization,
+executor availability, historical dispatch, execute mode, reserved data, and all
+downstream trading authority remain locked.
+
+Next safe gate: source-only final workflow-install authorization contract before any
+installation mutation.

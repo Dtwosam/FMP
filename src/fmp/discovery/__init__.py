@@ -1285,3 +1285,14 @@ from .exp062_historical_active_one_shot_executor_workflow_install_source_preflig
 __all__ += [
     "freeze_reviewed_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery",
 ]
+
+
+from .exp062_historical_active_one_shot_executor_workflow_install_source_preflight_proof_recovery_runtime_freeze import (
+    freeze_active_one_shot_historical_executor_workflow_install_source_preflight_recovery_proof_runtime_evidence,
+    validate_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery_runtime_freeze_sources,
+)
+
+__all__ += [
+    "freeze_active_one_shot_historical_executor_workflow_install_source_preflight_recovery_proof_runtime_evidence",
+    "validate_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery_runtime_freeze_sources",
+]

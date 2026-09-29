@@ -2371,3 +2371,15 @@ Copy this section for each serious experiment:
 - Preserves exact run/job/artifact identities, artifact digest, preflight hashes, and source map.
 - Emits one canonical freeze fingerprint.
 - Actual install / executor / dispatch / execute / trading authority?: NO.
+
+
+### EXP-20260927-062 — DEC-410 concrete recovery runtime binding
+
+- Preserved failed DEC-404 proof run #1 / attempt 1 as immutable provenance.
+- Bound successful DEC-407 recovery run #2 / attempt 1.
+- Bound run/job/artifact identities plus ZIP/raw/canonical SHA-256 values.
+- Re-runs DEC-408 review and DEC-409 deterministic freeze.
+- Requires DEC-409 fingerprint `c0c04735c57638fde0a57122c240ea6c9aacd86fc7e43cdc532aaf8ba54cd9d3`.
+- All six source-only gates remain true.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: source-only final workflow-install authorization contract before install.
