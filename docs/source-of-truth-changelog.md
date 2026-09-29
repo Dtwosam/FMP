@@ -1351,3 +1351,13 @@
 - Preserves all five source-only gates and active executor workflow path absent state.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Adds no install, dispatch, or execute surface and keeps downstream authority locked.
+
+
+## 2026-09-29 — DEC-401 EXP-062 install-activation proof runtime binding
+
+- Bound the real successful DEC-398 merged-main proof.
+- Pinned exact run/job/artifact identities plus GitHub/ZIP digest.
+- Pinned raw and canonical DEC-397 preflight hashes.
+- Replays merged DEC-399 review and DEC-400 deterministic freeze.
+- Requires exact DEC-400 fingerprint 441c508902f816faee66c58768552a7d3ab05f0b145193a3e6349f18c9062808.
+- Preserves all five source-only gates while actual install, dispatch, execute mode, and downstream trading authority remain locked.
