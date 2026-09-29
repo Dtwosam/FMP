@@ -1851,3 +1851,14 @@ executor availability, historical dispatch, execute mode, reserved data, and all
 downstream trading authority remain locked.
 
 Next safe gate after a real successful proof run: immutable review/freeze.
+
+
+## 2026-09-29 — DEC-387 execution-authorization proof reviewer source-ready
+
+A source-only reviewer now exists for a successful DEC-386 proof. It can bind exact
+run/job/artifact/preflight identities and hashes but cannot install the future
+executor workflow or dispatch historical discovery.
+
+The active workflow path remains absent and all install/executor/dispatch/trading
+authority remains locked. Next safe gate after real DEC-386 evidence: immutable
+review freeze.
