@@ -1887,3 +1887,17 @@ state, executor availability, historical dispatch, execute mode, reserved data, 
 all downstream trading authority remain locked.
 
 Next safe gate: source-only workflow install-execution contract.
+
+
+## 2026-09-29 — DEC-390 install-execution contract source-ready
+
+The concrete DEC-389 runtime evidence is now consumed by a source-only workflow
+install-execution contract. The contract is pinned to DEC-389 fingerprint
+`3517e83d30097041e7a8a74219d6da8b6fe77cf6ae3f048bffec923913826bc1`
+and the real DEC-386 proof head `cdbef40d1c9908650155933ae5073909ad9be24d`.
+
+The active executor workflow remains absent. Actual install authorization, executor
+availability, historical dispatch, execute mode, reserved data, and all downstream
+trading authority remain locked.
+
+Next safe gate: read-only current-main workflow install-execution preflight.
