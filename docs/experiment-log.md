@@ -2214,3 +2214,14 @@ Copy this section for each serious experiment:
 - Uploads only the install-execution-preflight JSON.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate after success: immutable proof review/freeze.
+
+
+### EXP-20260927-062 — DEC-393 install-execution proof reviewer
+
+- Added source-only review of future DEC-392 runtime evidence.
+- Pinned DEC-392/391/390 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates DEC-391 preflight content and records raw/canonical hashes.
+- Preserves all four source-only gates.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
+- Next gate after real evidence: immutable review freeze.

@@ -6969,3 +6969,23 @@ A successful run uploads only the install-execution-preflight JSON. No installat
 historical dispatch, execute mode, or downstream trading authority is added.
 
 Next gate after real successful runtime evidence: immutable proof review/freeze.
+
+
+## DEC-393 — EXP-062 workflow install-execution preflight proof reviewer
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY RUNTIME-EVIDENCE REVIEWER / NO INSTALL OR DISPATCH
+
+DEC-393 adds a strict reviewer for successful DEC-392 merged-main proof evidence.
+It pins the DEC-392 proof workflow, DEC-391 preflight/CLI, DEC-390 install-execution
+contract, dormant executor template, and active discovery workflow. It requires run
+#1 / attempt 1 success, one successful proof job, one non-expired artifact, and exact
+DEC-391 preflight bytes.
+
+All four source-only gates may be true. The active executor workflow path remains
+absent, while actual install authorization, installed state, executor availability,
+dispatch, execute mode, retries, reserved data, candidate/promotion, Phase 8B,
+demo/live, real-money, and trading remain locked.
+
+Next gate after real successful DEC-392 evidence: deterministic immutable review
+freeze.
