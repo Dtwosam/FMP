@@ -53,7 +53,7 @@ _PREFLIGHT_JSON = r"""{
   "historical_result_slot_verified_available": true,
   "install_activation_contract_decision": "DEC-396",
   "install_activation_contract_version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-activation-contract-v1",
-  "install_execution_slot_verified_available": true,
+  "install_activation_slot_verified_available": true,
   "live_order_authorized": false,
   "next_gate": "REPOSITORY_HOSTED_READ_ONLY_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_ACTIVATION_PREFLIGHT_PROOF",
   "phase8b_authorized": false,
