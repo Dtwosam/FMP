@@ -2383,3 +2383,14 @@ Copy this section for each serious experiment:
 - All six source-only gates remain true.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: source-only final workflow-install authorization contract before install.
+
+
+### EXP-20260927-062 — DEC-411 final workflow-install authorization contract
+
+- Pinned DEC-410 runtime-freeze blob and fingerprint.
+- Preserves failed DEC-404 and successful DEC-407 recovery lineage transitively.
+- Preserves six predecessor source-only gates.
+- Adds only the final authorization-contract source gate.
+- Actual workflow install authorized?: NO.
+- Executor / dispatch / execute / trading authority?: NO.
+- Next gate: read-only current-main final authorization preflight.
