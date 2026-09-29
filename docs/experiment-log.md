@@ -2352,3 +2352,13 @@ Copy this section for each serious experiment:
 - Failed run/job/head are pinned as provenance.
 - Recovery workflow remains push-to-main, read-only, plan-only, and artifact-only.
 - Actual install / executor / dispatch / execute / trading authority?: NO.
+
+
+### EXP-20260927-062 — DEC-408 recovery proof reviewer
+
+- Added source-only review of successful DEC-407 run #2 / attempt 1 evidence.
+- Pins corrected recovery workflow blob `2adfc7bd1ccacd158a78532d31ff38f4f175229f`.
+- Parses the actual DEC-403 JSON shape; no synthetic slot field is assumed.
+- Carries failed DEC-404 run `36613664506`, job `109561121322`, and head provenance.
+- Records raw/canonical preflight hashes.
+- Actual install / executor / dispatch / execute / trading authority?: NO.
