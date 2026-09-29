@@ -6887,3 +6887,48 @@ historical dispatch, execute mode, reserved data, candidate/promotion, Phase 8B,
 demo/live, real-money, and trading remain locked.
 
 Next gate after real DEC-386 evidence: concrete proof runtime-evidence binding.
+
+
+## DEC-389 — EXP-062 install-execution authorization preflight proof runtime evidence freeze
+
+**Date:** 2026-09-29  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / INSTALL + EXECUTOR STILL LOCKED
+
+DEC-389 binds the successful DEC-386 merged-main proof at head
+`cdbef40d1c9908650155933ae5073909ad9be24d`, run `36558750341`, job
+`109374198795`, artifact `11029316948`, and artifact/ZIP SHA-256
+`5908aff795243b98d8dc0f2b15b603df77ec1b1313c03d76b63452c181bf8d02`.
+
+The exact DEC-385 preflight hashes are raw
+`ff645bc0c6742cf05f1edbbb8438b2659ccbf00cd6d40edef284acf1e03c8dd2`
+and canonical
+`6fe2e118136351ffd4d72d6aad7093e83758905378c654a6df0eb927d7ab43e6`.
+DEC-389 replays DEC-387 review plus DEC-388 deterministic freezing and requires
+DEC-388 fingerprint
+`594b2db3aa50b5c09d7f53a4635cea40b4e566fddd0d16a6574e1322ef8a48af`.
+
+The active executor workflow remains absent. Actual workflow-install authorization,
+installed state, executor availability, historical dispatch, execute mode, reserved
+data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain
+locked.
+
+Next gate: source-only workflow install-execution contract.
+
+
+## DEC-390 — EXP-062 active workflow install-execution contract
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY INSTALL-EXECUTION CONTRACT / NO INSTALL OR DISPATCH
+
+DEC-390 binds the concrete DEC-389 runtime-evidence freeze at fingerprint
+`3517e83d30097041e7a8a74219d6da8b6fe77cf6ae3f048bffec923913826bc1`
+and the exact dormant executor template. The real predecessor proof head is
+`cdbef40d1c9908650155933ae5073909ad9be24d`.
+
+The prior source-only gates remain true and DEC-390 authorizes only the
+install-execution contract source. The active executor workflow path remains absent.
+Actual install authorization, installed state, executor availability, historical
+dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next gate: read-only current-main workflow install-execution preflight.
