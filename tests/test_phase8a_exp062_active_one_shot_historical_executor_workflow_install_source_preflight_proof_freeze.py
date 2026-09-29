@@ -110,7 +110,7 @@ def _reviewed() -> dict[str, object]:
         "trading_authorized": False,
         "review_source_blobs": {
             "dec404_workflow": (
-                "84cc9a70d0f29c07025781bd7d434c7c157199ef"
+                "1d08f85ac11402ce373b1f17a0867606fa6b86cf"
             ),
             "dec403_preflight": (
                 "53108d08f8a952b990115bddeff1a325d80b8569"
