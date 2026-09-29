@@ -119,7 +119,7 @@ def _validate_review(
         ),
         "stage": (
             "EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-            "PREFLIGHT_PROOF_REVIEWED_ACTIVE_WORKFLOW_ABSENT"
+            "AUTHORIZATION_PREFLIGHT_PROOF_REVIEWED_ACTIVE_WORKFLOW_ABSENT"
         ),
         "proof_workflow_name": (
             "phase8a-exp062-active-one-shot-historical-executor-"
@@ -165,7 +165,7 @@ def _validate_review(
         "discovery_result_authorized": True,
         "next_gate": (
             "IMMUTABLE_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-            "PREFLIGHT_PROOF_FREEZE_BEFORE_INSTALL"
+            "AUTHORIZATION_PREFLIGHT_PROOF_FREEZE_BEFORE_INSTALL"
         ),
     }
     for field, expected in exact.items():
@@ -184,8 +184,8 @@ def _validate_review(
         field="DEC-376 proof_artifact_id",
     )
     if value.get("proof_artifact_name") != (
-        "exp062-dec362-active-one-shot-historical-executor-"
-        "workflow-install-preflight-"
+        "exp062-dec374-active-one-shot-historical-executor-workflow-"
+        "install-authorization-preflight-"
         f"{expected_head_sha}"
     ):
         raise ValueError("DEC-376 proof_artifact_name mismatch")
@@ -225,7 +225,7 @@ def freeze_reviewed_active_one_shot_historical_executor_workflow_install_authori
         ),
         "stage": (
             "EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-            "PREFLIGHT_PROOF_REVIEWED_AND_FROZEN"
+            "AUTHORIZATION_PREFLIGHT_PROOF_REVIEWED_AND_FROZEN"
         ),
         "source_review_decision": reviewed_result["decision"],
         "source_review_version": reviewed_result["version"],
@@ -245,17 +245,17 @@ def freeze_reviewed_active_one_shot_historical_executor_workflow_install_authori
             "preflight_canonical_sha256"
         ],
         "review_source_blobs": source_blobs,
-        "active_install_preflight_decision": reviewed_result[
-            "active_install_preflight_decision"
+        "install_authorization_preflight_decision": reviewed_result[
+            "install_authorization_preflight_decision"
         ],
-        "active_install_preflight_version": reviewed_result[
-            "active_install_preflight_version"
+        "install_authorization_preflight_version": reviewed_result[
+            "install_authorization_preflight_version"
         ],
-        "active_install_contract_decision": reviewed_result[
-            "active_install_contract_decision"
+        "install_authorization_contract_decision": reviewed_result[
+            "install_authorization_contract_decision"
         ],
-        "active_install_contract_version": reviewed_result[
-            "active_install_contract_version"
+        "install_authorization_contract_version": reviewed_result[
+            "install_authorization_contract_version"
         ],
         "dormant_executor_workflow_template_blob_sha": reviewed_result[
             "dormant_executor_workflow_template_blob_sha"
@@ -294,7 +294,7 @@ def freeze_reviewed_active_one_shot_historical_executor_workflow_install_authori
         "trading_authorized": False,
         "next_gate": (
             "CONCRETE_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-            "PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BINDING_BEFORE_INSTALL"
+            "AUTHORIZATION_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BINDING_BEFORE_INSTALL"
         ),
     }
     frozen["freeze_fingerprint_sha256"] = hashlib.sha256(
