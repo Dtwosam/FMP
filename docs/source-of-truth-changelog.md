@@ -1294,3 +1294,14 @@
 - Preserves all four source-only gates and active executor workflow path absent state.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Adds no install, dispatch, or execute surface and keeps downstream authority locked.
+
+
+## 2026-09-29 — DEC-395 EXP-062 install-execution proof runtime freeze
+
+- Bound the real successful DEC-392 merged-main proof evidence.
+- Pinned exact proof head/run/job/artifact identities and GitHub artifact digest.
+- Pinned raw/canonical DEC-391 preflight hashes.
+- Revalidated DEC-393 review and DEC-394 freeze with fingerprint
+  `9357b1c6591a801237acacf7cb7eab1f5302608770ad7b3033566bda39cb3548`.
+- Preserves all four source-only gates and active executor workflow path absent state.
+- Adds no install, dispatch, or execute surface; downstream authority remains locked.
