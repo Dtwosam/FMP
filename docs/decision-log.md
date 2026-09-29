@@ -6827,3 +6827,24 @@ historical dispatch, execute mode, reserved data, and all downstream trading pat
 remain locked.
 
 Next gate: repository-hosted read-only install-execution-authorization-preflight proof.
+
+
+## DEC-386 — EXP-062 install-execution authorization preflight proof
+
+**Date:** 2026-09-29  
+**Status:** REPOSITORY-HOSTED READ-ONLY PROOF / NO INSTALL OR DISPATCH
+
+DEC-386 adds a first-run/attempt-1 push-to-main proof for DEC-385. It pins exact
+DEC-384/385 source identities, the dormant executor template, active discovery
+workflow, and pinned planning runtime.
+
+The workflow uses only contents/actions read permissions, invokes only the DEC-385
+`plan` surface, requires the active executor workflow path absent, verifies zero
+historical-result attempts with target run #2 / attempt 1, and requires the complete
+three-gate source-only authorization chain.
+
+A successful run uploads only the install-execution-authorization-preflight JSON. No
+installation, historical dispatch, execute mode, or downstream trading authority is
+added.
+
+Next gate after real successful runtime evidence: immutable proof review/freeze.
