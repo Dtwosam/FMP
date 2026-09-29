@@ -1181,3 +1181,12 @@
 - Preserves active executor workflow path absent state.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Adds no install, dispatch, or execute surface and keeps downstream authority locked.
+
+
+## 2026-09-29 — DEC-383 EXP-062 concrete install-decision proof runtime binding
+
+- Bound successful DEC-380 run/job/artifact identities and artifact digest.
+- Bound exact DEC-379 raw/canonical preflight hashes.
+- Replays DEC-381 review and DEC-382 freeze and requires exact DEC-382 fingerprint.
+- Independently requires artifact ZIP SHA-256 to match the GitHub artifact digest.
+- Keeps active executor workflow absent and all install/executor/dispatch/trading authority locked.

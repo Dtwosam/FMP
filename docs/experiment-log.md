@@ -2110,3 +2110,13 @@ Copy this section for each serious experiment:
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Next gate after real DEC-380 evidence: concrete runtime-evidence binding.
+
+
+### EXP-20260927-062 — DEC-383 concrete install-decision proof runtime binding
+
+- Bound DEC-380 merged-main head `fa96bc731ed8d21cec883451f7ec5e984b74df40`.
+- Bound proof run/job/artifact: `36553935570` / `109358450875` / `11025737149`.
+- Verified artifact ZIP digest `f863ea57b45e2c0e12892732747094f8f4f63793cf212be018d7d6cbade6555b`.
+- Bound DEC-379 raw/canonical hashes and DEC-382 freeze fingerprint `be15d3ffe0a66befeec91694e5c412e0d7678818835774361258edf06b06b6f8`.
+- Active executor workflow path remains absent; install/executor/dispatch/execute authority remains NO.
+- Next gate: source-only install-execution authorization contract.

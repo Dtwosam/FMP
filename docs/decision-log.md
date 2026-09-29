@@ -6764,3 +6764,29 @@ adds no install, dispatch, or execute surface and keeps reserved data plus all
 downstream trading paths locked.
 
 Next gate after real DEC-380 evidence: concrete proof runtime-evidence binding.
+
+
+## DEC-383 — EXP-062 active workflow install-decision preflight proof runtime evidence freeze
+
+**Date:** 2026-09-29  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / INSTALL + EXECUTOR STILL LOCKED
+
+DEC-383 binds the successful DEC-380 merged-main proof at head
+`fa96bc731ed8d21cec883451f7ec5e984b74df40`, run `36553935570`, job
+`109358450875`, artifact `11025737149`, and artifact/ZIP SHA-256
+`f863ea57b45e2c0e12892732747094f8f4f63793cf212be018d7d6cbade6555b`.
+
+The exact DEC-379 preflight hashes are raw
+`05bb0e78cd14d22ba84a2bd46bc2fde894e088ad4e96fdd463a040ea91718ed0`
+and canonical
+`27e6ef7221062844b1f4b12f6fae55c9de2d933c4f606411cd676e982201487f`.
+DEC-383 replays DEC-381 review plus DEC-382 deterministic freezing and requires
+DEC-382 fingerprint
+`be15d3ffe0a66befeec91694e5c412e0d7678818835774361258edf06b06b6f8`.
+
+The active executor workflow path remains absent. Actual workflow-install
+authorization, installed state, executor availability, historical dispatch, execute
+mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and
+trading remain locked.
+
+Next gate: source-only workflow install-execution authorization contract.
