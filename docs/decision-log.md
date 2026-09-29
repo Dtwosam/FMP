@@ -6808,3 +6808,22 @@ mode, rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B,
 demo/live, real-money, and trading remain locked.
 
 Next gate: read-only current-main install-execution authorization preflight.
+
+
+## DEC-385 — EXP-062 workflow install-execution authorization preflight
+
+**Date:** 2026-09-29  
+**Status:** READ-ONLY CURRENT-MAIN PREFLIGHT / NO INSTALL OR DISPATCH
+
+DEC-385 pins the exact DEC-384 install-execution authorization contract and dormant
+executor template, requires exact current main, requires the active executor workflow
+path to remain absent, and verifies the historical-result slot is unused with target
+run #2 / attempt 1.
+
+The CLI exposes only `plan`. Install-authorization source, install-decision source,
+and install-execution authorization source are all preserved as source-only gates.
+Actual workflow-install authorization, installed state, executor availability,
+historical dispatch, execute mode, reserved data, and all downstream trading paths
+remain locked.
+
+Next gate: repository-hosted read-only install-execution-authorization-preflight proof.
