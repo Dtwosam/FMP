@@ -1751,3 +1751,15 @@ availability, historical dispatch, execute mode, reserved data, and all downstre
 trading authority remain locked.
 
 Next safe gate: read-only current-main install-decision preflight.
+
+
+## 2026-09-29 — DEC-379 install-decision preflight source-ready
+
+A read-only current-main preflight now exists for the DEC-378 workflow
+install-decision contract. It verifies source identity, active-workflow absence, and
+the still-unused historical-result slot.
+
+No actual install, executor, dispatch, or execute authority exists. Target historical
+run remains #2 / attempt 1.
+
+Next safe gate: repository-hosted read-only install-decision-preflight proof.

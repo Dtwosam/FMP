@@ -6690,3 +6690,20 @@ installed state, executor availability, historical dispatch, execute mode, reser
 data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 
 Next gate: read-only current-main active executor workflow install-decision preflight.
+
+
+## DEC-379 — EXP-062 active executor workflow install-decision preflight
+
+**Date:** 2026-09-29  
+**Status:** READ-ONLY CURRENT-MAIN PREFLIGHT / NO INSTALL OR DISPATCH
+
+DEC-379 pins the exact DEC-378 install-decision contract and dormant executor
+template, requires exact current main, requires the active executor workflow path to
+remain absent, and verifies the historical-result slot is unused with target run #2 /
+attempt 1.
+
+The CLI exposes only `plan`. Actual workflow-install authorization, installed
+state, executor availability, historical dispatch, execute mode, reserved data, and
+all downstream trading paths remain locked.
+
+Next gate: repository-hosted read-only install-decision-preflight proof.
