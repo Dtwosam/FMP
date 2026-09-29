@@ -1021,3 +1021,14 @@ from .exp062_historical_terminal_review_contract import (
 __all__ += [
     "classify_exp062_historical_terminal_result",
 ]
+
+
+from .exp062_historical_active_one_shot_executor_workflow_install_decision_contract import (
+    build_active_one_shot_historical_executor_workflow_install_decision_contract,
+    validate_active_one_shot_historical_executor_workflow_install_decision_contract_sources,
+)
+
+__all__ += [
+    "build_active_one_shot_historical_executor_workflow_install_decision_contract",
+    "validate_active_one_shot_historical_executor_workflow_install_decision_contract_sources",
+]
