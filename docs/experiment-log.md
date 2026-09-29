@@ -2298,3 +2298,14 @@ Copy this section for each serious experiment:
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Actual install / executor / dispatch / execute authority authorized?: NO.
 - Next gate after real DEC-398 evidence: concrete runtime-evidence binding.
+
+
+### EXP-20260927-062 — DEC-401 install-activation proof runtime binding
+
+- Bound real DEC-398 merged-main run #1 / attempt 1.
+- Run/job/artifact: 36579901387 / 109445012411 / 11039017180.
+- Artifact ZIP/GitHub digest: c19012d3e4fc794e40a930e0eac82d799773f6a9050bf56adc75a0b0f2245b85.
+- Raw/canonical DEC-397 preflight hashes: 8db03c11f255bcc724c4d7c18df7e5a8f539039032dbb5787291ca8810427116 / 229fec80d76273f5320966acb63d0661ff7aa03c04ded8d953bb3e9e3f363ceb.
+- Required DEC-400 freeze fingerprint: 441c508902f816faee66c58768552a7d3ab05f0b145193a3e6349f18c9062808.
+- All five source-only gates remain true; actual install/executor/dispatch/execute authority remains false.
+- Next gate: source-only workflow-install contract.

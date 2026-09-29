@@ -7124,3 +7124,30 @@ five source-only gates may remain true, but it adds no install, dispatch, or exe
 surface and keeps reserved data plus all downstream trading paths locked.
 
 Next gate after real DEC-398 evidence: concrete proof runtime-evidence binding.
+
+
+## DEC-401 — EXP-062 workflow install-activation preflight proof runtime evidence freeze
+
+**Date:** 2026-09-29  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / INSTALL + EXECUTOR STILL LOCKED
+
+DEC-401 binds the actual successful DEC-398 merged-main proof: head
+`9dd433b406bef6dc8660d897ccab5bcb1b0da99b`, run `36579901387`, job
+`109445012411`, artifact `11039017180`, artifact/ZIP SHA-256
+`c19012d3e4fc794e40a930e0eac82d799773f6a9050bf56adc75a0b0f2245b85`,
+raw preflight SHA-256
+`8db03c11f255bcc724c4d7c18df7e5a8f539039032dbb5787291ca8810427116`,
+and canonical SHA-256
+`229fec80d76273f5320966acb63d0661ff7aa03c04ded8d953bb3e9e3f363ceb`.
+
+DEC-401 re-runs DEC-399 review and DEC-400 deterministic freezing and requires
+the exact DEC-400 fingerprint
+`441c508902f816faee66c58768552a7d3ab05f0b145193a3e6349f18c9062808`.
+DEC-334 terminal-review criteria remain pinned.
+
+All five source-only gates remain true. The active executor workflow path remains
+absent. Actual install authorization, installed state, executor availability,
+historical dispatch, execute mode, reserved data, candidate/promotion, Phase 8B,
+demo/live, real-money, and trading remain locked.
+
+Next gate: source-only active executor workflow-install contract.

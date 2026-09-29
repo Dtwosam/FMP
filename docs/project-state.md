@@ -2024,3 +2024,17 @@ availability, historical dispatch, execute mode, reserved data, and downstream
 trading paths remain locked.
 
 Next safe gate after real DEC-398 evidence: concrete proof runtime binding.
+
+
+## 2026-09-29 — DEC-401 install-activation proof runtime evidence bound
+
+The real successful DEC-398 proof is now bound to immutable runtime evidence via
+DEC-401, including exact run/job/artifact identities, ZIP digest, raw/canonical
+preflight hashes, merged DEC-399/400 source identities, and DEC-400 fingerprint
+`441c508902f816faee66c58768552a7d3ab05f0b145193a3e6349f18c9062808`.
+
+The active executor workflow remains absent. Actual install authorization, executor
+availability, historical dispatch, execute mode, reserved data, and downstream
+trading authority remain locked.
+
+Next safe gate: source-only active executor workflow-install contract.
