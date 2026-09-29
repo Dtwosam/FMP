@@ -11,7 +11,7 @@ on the exact current `main` commit before any repository-hosted proof or actual
 workflow mutation can advance.
 
 It pins the DEC-417 contract blob
-`7931d86d7b567894767f17efa990fbdac63e613e`, requires the dormant template
+`7d65e3b4359726d6cd920f31ceab84fdba88e922`, requires the dormant template
 unchanged, requires the active executor workflow path to remain absent, and verifies
 that the historical-result slot is still unused.
 
