@@ -2223,3 +2223,18 @@ No actual install, executor, dispatch, execute, reserved-data, or trading author
 exists.
 
 Next safe gate: repository-hosted read-only workflow-install action-preflight proof.
+
+
+## 2026-09-29 — DEC-419 workflow-install action preflight proof source-ready
+
+A repository-hosted first-run/attempt-1 proof now exists for DEC-418. It is
+push-to-main only, read-only, source-pinned, and can emit only the workflow-install
+action-preflight JSON artifact.
+
+All eight source-only gates may be true. The active executor workflow path remains
+absent, while actual install authorization, executor availability, historical
+dispatch, execute mode, reserved data, and all downstream trading authority remain
+locked.
+
+Next safe gate after a real successful DEC-419 proof run: immutable proof
+review/freeze.
