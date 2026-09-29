@@ -1135,3 +1135,12 @@
 - Pins the DEC-334 terminal-review contract.
 - Confirms active executor workflow path absent, zero historical-result attempts, and target run #2 / attempt 1.
 - Keeps install, installed state, executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
+
+
+## 2026-09-29 — DEC-378 EXP-062 active workflow install-decision contract
+
+- Added source-only install-decision contract bound to DEC-377.
+- Pinned DEC-377 runtime-freeze blob and fingerprint plus dormant-template identity.
+- Requires the active executor workflow path to remain absent.
+- Authorizes only install-decision source; actual install remains false.
+- Keeps executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
