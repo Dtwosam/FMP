@@ -2496,3 +2496,13 @@ Copy this section for each serious experiment:
 - Preserves all eight source-only gates and active-workflow-absent state.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Actual install / executor / dispatch / execute authority authorized?: NO.
+
+### EXP-20260927-062 — DEC-422 workflow-install action proof runtime binding
+
+- Bound successful DEC-419 run `36634716243` / job `109632428957` / artifact `11063264562`.
+- Verified artifact ZIP SHA-256 `1f06c7b589f46ca7a473bae5a0666b79b1b627dc6a8eaf85804211424e09f0be`.
+- Verified DEC-418 raw/canonical preflight hashes.
+- Reproduces DEC-421 freeze fingerprint `78bcceaf580672b97858ec972c590300316f8b7b369137ca96e957c39d1d9a5d`.
+- All eight source-only gates remain true.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: separate explicit repository-mutation authorization.
