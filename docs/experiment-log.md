@@ -2070,3 +2070,13 @@ Copy this section for each serious experiment:
 - Actual install / installed / executor / dispatch / execute authority?: NO.
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Next gate: read-only current-main install-decision preflight.
+
+
+### EXP-20260927-062 — DEC-379 install-decision preflight
+
+- Pinned DEC-378 install-decision contract source.
+- Requires exact current main and active executor workflow path absent.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- CLI surface: plan only.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: repository-hosted read-only preflight proof.
