@@ -2098,3 +2098,13 @@ evidence. It accepts only run #2 / attempt 1, preserves failed DEC-404 provenanc
 and validates the real DEC-403 preflight shape.
 
 No workflow installation or historical-result dispatch authority is introduced.
+
+
+## 2026-09-29 — DEC-409 recovery-proof freeze source-ready
+
+A deterministic freeze now exists for successful DEC-407 recovery evidence reviewed
+under DEC-408. The failed DEC-404 proof remains permanently represented in the
+frozen lineage.
+
+The active executor workflow remains absent and every runtime/trading authority
+remains locked.

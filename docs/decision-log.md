@@ -7247,3 +7247,19 @@ availability, historical-result dispatch, execute mode, reserved data, and all
 downstream trading authority remain false.
 
 Next gate: deterministic immutable recovery-proof freeze.
+
+
+## DEC-409 — Freeze reviewed DEC-407 recovery proof evidence
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY DETERMINISTIC RECOVERY FREEZE / NO INSTALL OR DISPATCH
+
+DEC-409 deterministically freezes a valid DEC-408 review. The frozen object keeps
+failed DEC-404 run #1 and successful DEC-407 recovery run #2 in the same immutable
+lineage and emits one canonical SHA-256 fingerprint.
+
+No actual workflow-install authorization, installed state, executor availability,
+historical dispatch, execute mode, reserved-data access, or trading authority is
+introduced.
+
+Next gate after real recovery evidence: concrete runtime-evidence binding.

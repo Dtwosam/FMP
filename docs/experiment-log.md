@@ -2362,3 +2362,12 @@ Copy this section for each serious experiment:
 - Carries failed DEC-404 run `36613664506`, job `109561121322`, and head provenance.
 - Records raw/canonical preflight hashes.
 - Actual install / executor / dispatch / execute / trading authority?: NO.
+
+
+### EXP-20260927-062 — DEC-409 recovery proof freeze
+
+- Added deterministic freeze for valid DEC-408 recovery reviews.
+- Preserves failed run #1 and successful recovery run #2 provenance together.
+- Preserves exact run/job/artifact identities, artifact digest, preflight hashes, and source map.
+- Emits one canonical freeze fingerprint.
+- Actual install / executor / dispatch / execute / trading authority?: NO.
