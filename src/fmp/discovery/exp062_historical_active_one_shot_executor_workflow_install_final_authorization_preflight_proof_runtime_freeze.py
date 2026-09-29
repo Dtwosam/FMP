@@ -421,10 +421,10 @@ def freeze_active_one_shot_historical_executor_workflow_install_final_authorizat
         "active_install_final_authorization_preflight_proof_artifact_zip_sha256": (
             ACTIVE_INSTALL_FINAL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_ZIP_SHA256
         ),
-        "active_install_execution_preflight_raw_sha256": (
+        "active_install_final_authorization_preflight_raw_sha256": (
             ACTIVE_INSTALL_FINAL_AUTHORIZATION_PREFLIGHT_RAW_SHA256
         ),
-        "active_install_execution_preflight_canonical_sha256": (
+        "active_install_final_authorization_preflight_canonical_sha256": (
             ACTIVE_INSTALL_FINAL_AUTHORIZATION_PREFLIGHT_CANONICAL_SHA256
         ),
         "dec414_review_decision": reviewed["decision"],
