@@ -113,13 +113,13 @@ def _reviewed() -> dict[str, object]:
                 "1d08f85ac11402ce373b1f17a0867606fa6b86cf"
             ),
             "dec403_preflight": (
-                "53108d08f8a952b990115bddeff1a325d80b8569"
+                "c3081cbe6b62738638321124463e4ac70dab0a5d"
             ),
             "dec403_preflight_cli": (
                 "1c9615b7ee55ff1387cd95464abf2202f8dd9d3f"
             ),
             "dec402_install_source_contract": (
-                "54aa308e0f51acd8613ad117a7ccd57c7ae1eaef"
+                "736d77cf08169d5d111a411d1a2d9ae6a5e4cbf5"
             ),
             "dormant_executor_workflow_template": (
                 "51ce87584369be957482460d81649adb1cb9f05d"
