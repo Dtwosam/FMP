@@ -1166,3 +1166,12 @@ __all__ += [
     "review_active_one_shot_historical_executor_workflow_install_execution_preflight_proof",
     "validate_active_one_shot_historical_executor_workflow_install_execution_preflight_proof_review_sources",
 ]
+
+
+from .exp062_historical_active_one_shot_executor_workflow_install_execution_preflight_proof_freeze import (
+    freeze_reviewed_active_one_shot_historical_executor_workflow_install_execution_preflight_proof,
+)
+
+__all__ += [
+    "freeze_reviewed_active_one_shot_historical_executor_workflow_install_execution_preflight_proof",
+]
