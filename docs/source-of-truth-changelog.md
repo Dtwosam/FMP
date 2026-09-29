@@ -1228,3 +1228,12 @@
 - Requires exact successful proof run/job/artifact shape.
 - Revalidates execution-authorization preflight content and records raw/canonical hashes.
 - Adds no install, dispatch, or execute mode and keeps downstream authority locked.
+
+
+## 2026-09-29 — DEC-388 EXP-062 install-execution authorization proof freeze
+
+- Added deterministic source-only freeze for valid DEC-387 review evidence.
+- Preserves exact DEC-386 runtime identities, artifact digest, DEC-385 preflight hashes, and source map.
+- Preserves active executor workflow path absent state.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Adds no install, dispatch, or execute surface and keeps downstream authority locked.
