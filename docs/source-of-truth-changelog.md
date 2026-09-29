@@ -1323,3 +1323,13 @@
 - Requires active executor workflow path absent and historical slot unused.
 - Preserves all five source-only gates.
 - Exposes only a plan surface and keeps actual install/dispatch/execute authority locked.
+
+
+## 2026-09-29 — DEC-398 EXP-062 workflow install-activation preflight proof
+
+- Added first-run/attempt-1 push-to-main proof for DEC-397.
+- Uses only contents/actions read permissions.
+- Pins DEC-396/397 source identities, dormant template, discovery workflow, and planning runtime.
+- Invokes only the read-only install-activation preflight plan surface.
+- Verifies all five source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
+- Uploads only the activation-preflight JSON and never installs or dispatches anything.
