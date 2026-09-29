@@ -108,7 +108,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallActionContractTests(
         )
         self.assertEqual(
             source["dec416_runtime_freeze"],
-            "23120b4a763fb1702d2f953c8cfb10db3ce6de27",
+            "1a4accb526aa5e0657ea9ad953fe2cefd564d8be",
         )
 
         report = build_active_one_shot_historical_executor_workflow_install_action_contract(
