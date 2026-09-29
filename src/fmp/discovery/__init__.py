@@ -1276,3 +1276,12 @@ __all__ += [
     "review_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery",
     "validate_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery_review_sources",
 ]
+
+
+from .exp062_historical_active_one_shot_executor_workflow_install_source_preflight_proof_recovery_freeze import (
+    freeze_reviewed_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery,
+)
+
+__all__ += [
+    "freeze_reviewed_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery",
+]
