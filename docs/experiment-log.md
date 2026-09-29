@@ -2394,3 +2394,14 @@ Copy this section for each serious experiment:
 - Actual workflow install authorized?: NO.
 - Executor / dispatch / execute / trading authority?: NO.
 - Next gate: read-only current-main final authorization preflight.
+
+
+### EXP-20260927-062 — DEC-412 final authorization preflight
+
+- Pinned DEC-411 final authorization contract source.
+- Requires exact current main and active executor workflow path absent.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Preserves all seven source-only gates.
+- CLI surface: plan only.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: repository-hosted read-only final-authorization preflight proof.

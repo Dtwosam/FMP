@@ -1435,3 +1435,12 @@
 - Preserves the failed-run/recovery-run lineage transitively.
 - Adds only the seventh source-only gate.
 - Keeps actual install, executor, dispatch, execute, reserved-data, and trading authority locked.
+
+
+## 2026-09-29 — DEC-412 EXP-062 final authorization preflight
+
+- Added current-main read-only preflight bound to DEC-411.
+- Requires active executor workflow path absent and historical slot unused.
+- Preserves all seven source-only gates.
+- Exposes only a plan surface; no install, execute, advance, or dispatch command exists.
+- Keeps downstream trading authority locked.

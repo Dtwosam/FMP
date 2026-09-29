@@ -2137,3 +2137,15 @@ authorization remains false and the active executor workflow path remains absent
 
 Next safe gate: read-only current-main final workflow-install authorization
 preflight.
+
+
+## 2026-09-29 — DEC-412 final authorization preflight source-ready
+
+A read-only current-main preflight now exists for the DEC-411 final workflow-install
+authorization contract. It verifies source identity, active-workflow absence, the
+still-unused historical-result slot, and all seven source-only gates.
+
+No actual install, executor, dispatch, or execute authority exists. Target historical
+run remains #2 / attempt 1.
+
+Next safe gate: repository-hosted read-only final-authorization preflight proof.
