@@ -231,7 +231,7 @@ def _validate_runtime_freeze(value: Mapping[str, object]) -> None:
         "trading_authorized": False,
         "next_gate": (
             "SOURCE_ONLY_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_"
-            "WORKFLOW_INSTALL_ACTIVATION_CONTRACT"
+            "WORKFLOW_INSTALL_CONTRACT"
         ),
     }
     for field, expected_value in exact.items():
