@@ -12,7 +12,7 @@ adds only a source-level contract for a future workflow-install action.
 It pins:
 
 - DEC-416 runtime-freeze blob
-  `23120b4a763fb1702d2f953c8cfb10db3ce6de27`;
+  `1a4accb526aa5e0657ea9ad953fe2cefd564d8be`;
 - DEC-416 runtime-freeze fingerprint
   `3f90062e42cc36c61286b31fcd625a7e511140819c19f268e283be1807e2f0c7`;
 - the dormant executor workflow template.
