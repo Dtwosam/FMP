@@ -7186,3 +7186,24 @@ dispatch, execute mode, reserved data, and all downstream trading paths remain
 locked.
 
 Next gate: repository-hosted read-only workflow-install source-preflight proof.
+
+
+## DEC-404 — EXP-062 workflow-install source preflight proof
+
+**Date:** 2026-09-29  
+**Status:** REPOSITORY-HOSTED READ-ONLY PROOF / NO INSTALL OR DISPATCH
+
+DEC-404 adds a first-run/attempt-1 push-to-main proof for DEC-403. It pins exact
+DEC-402/403 source identities, the dormant executor template, active discovery
+workflow, and pinned planning runtime.
+
+The workflow uses only contents/actions read permissions, invokes only the DEC-403
+`plan` surface, requires the active executor workflow path absent, and verifies all
+six source-only gates with zero historical-result attempts and target run #2 /
+attempt 1.
+
+A successful run uploads only the workflow-install source-preflight JSON. No actual
+installation, historical dispatch, execute mode, or downstream trading authority is
+added.
+
+Next gate after real successful runtime evidence: immutable proof review/freeze.

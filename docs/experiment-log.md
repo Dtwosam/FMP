@@ -2331,3 +2331,13 @@ Copy this section for each serious experiment:
 - CLI surface: plan only.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: repository-hosted read-only source-preflight proof.
+
+
+### EXP-20260927-062 — DEC-404 workflow-install source-preflight proof
+
+- Added push-to-main first-run/attempt-1 read-only proof for DEC-403.
+- Pinned DEC-402/403, dormant template, active discovery workflow, and runtime source identities.
+- Invokes only the source-preflight plan surface.
+- Confirms all six source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
+- Uploads only the source-preflight JSON.
+- Actual install / executor / dispatch / execute authority?: NO.
