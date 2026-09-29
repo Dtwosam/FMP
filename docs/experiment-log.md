@@ -2478,3 +2478,31 @@ Copy this section for each serious experiment:
 - Uploads only the action-preflight JSON.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate after real proof evidence: immutable proof review/freeze.
+
+### EXP-20260927-062 — DEC-420 workflow-install action proof reviewer
+
+- Added source-only review of successful DEC-419 merged-main runtime evidence.
+- Pins DEC-419/418/417 source identities, dormant template, and discovery workflow.
+- Requires exact successful run #1 / attempt 1, one successful job, and one non-expired artifact.
+- Revalidates DEC-418 preflight content and records raw/canonical hashes.
+- Preserves all eight source-only gates.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
+
+
+### EXP-20260927-062 — DEC-421 workflow-install action proof freeze
+
+- Added deterministic source-only freeze for valid DEC-420 review evidence.
+- Preserves DEC-419 proof identities, artifact digest, DEC-418 hashes, and source map.
+- Preserves all eight source-only gates and active-workflow-absent state.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
+
+### EXP-20260927-062 — DEC-422 workflow-install action proof runtime binding
+
+- Bound successful DEC-419 run `36634716243` / job `109632428957` / artifact `11063264562`.
+- Verified artifact ZIP SHA-256 `1f06c7b589f46ca7a473bae5a0666b79b1b627dc6a8eaf85804211424e09f0be`.
+- Verified DEC-418 raw/canonical preflight hashes.
+- Reproduces DEC-421 freeze fingerprint `78bcceaf580672b97858ec972c590300316f8b7b369137ca96e957c39d1d9a5d`.
+- All eight source-only gates remain true.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: separate explicit repository-mutation authorization.

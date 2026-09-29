@@ -2238,3 +2238,43 @@ locked.
 
 Next safe gate after a real successful DEC-419 proof run: immutable proof
 review/freeze.
+
+## 2026-09-29 — DEC-420 workflow-install action proof reviewer source-ready
+
+The merged-main DEC-419 action-preflight proof succeeded at run `36634716243`.
+A source-only reviewer now exists to validate the exact run/job/artifact shape,
+DEC-418 preflight bytes, pinned DEC-419/418/417 sources, all eight source-only
+gates, and all runtime locks.
+
+The active executor workflow remains absent. No installation, historical dispatch,
+execute mode, reserved-data, Phase 8B, demo/live, real-money, or trading authority
+is introduced.
+
+Next safe gate: deterministic immutable proof-review freeze.
+
+
+## 2026-09-29 — DEC-421 workflow-install action proof freeze source-ready
+
+A deterministic freeze now exists for valid DEC-420 review evidence. It preserves
+the reviewed DEC-419 proof identities, artifact/preflight hashes, source map, all
+eight source-only gates, active-workflow-absent state, and target run #2 / attempt 1.
+
+The freeze creates no runtime authority and cannot install or dispatch anything.
+
+Next safe gate: concrete DEC-419 proof runtime-evidence binding before any workflow
+installation mutation.
+
+## 2026-09-29 — DEC-422 action-preflight proof evidence bound
+
+The successful DEC-419 action-preflight proof is now concretely bound: head
+`51a49397e1eddc5b9e342d50b588f774e783a5e7`, run `36634716243`, job
+`109632428957`, artifact `11063264562`, exact ZIP/raw/canonical hashes, and
+DEC-421 fingerprint
+`78bcceaf580672b97858ec972c590300316f8b7b369137ca96e957c39d1d9a5d`.
+
+All eight source-only gates remain true and the active executor workflow remains
+absent. No installation, historical dispatch, execute mode, reserved-data,
+Phase 8B, demo/live, real-money, or trading authority is introduced.
+
+Next safe gate: separate explicit repository-mutation authorization before any
+active workflow installation.

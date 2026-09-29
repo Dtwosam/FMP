@@ -7472,3 +7472,72 @@ A successful run uploads only the action-preflight JSON. No workflow installatio
 historical dispatch, execute mode, or downstream trading authority is added.
 
 Next gate after real successful runtime evidence: immutable proof review/freeze.
+
+## DEC-420 — EXP-062 workflow-install action-preflight proof reviewer
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY RUNTIME-EVIDENCE REVIEWER / NO INSTALL OR DISPATCH
+
+DEC-420 adds a strict reviewer for successful DEC-419 merged-main proof evidence.
+It pins the DEC-419 proof workflow, DEC-418 action preflight and CLI, DEC-417
+install-action contract, dormant executor template, and active discovery workflow.
+
+A valid review requires run #1 / attempt 1 success, exactly one successful proof
+job, one non-expired artifact, exact DEC-418 preflight bytes, all eight source-only
+gates true, and every actual install/dispatch/trading authority field false.
+
+The successful DEC-419 proof exists at run `36634716243`, but the reviewer remains
+fail-closed and derives trust from the evidence shape and pinned sources rather than
+from that run ID alone.
+
+No workflow installation, historical dispatch, execute mode, reserved-data access,
+Phase 8B, demo/live, real-money, or trading authority is added.
+
+Next gate: deterministic immutable proof-review freeze.
+
+
+## DEC-421 — Freeze reviewed DEC-419 workflow-install action-preflight proof
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY DETERMINISTIC REVIEW FREEZE / NO INSTALL OR DISPATCH
+
+DEC-421 deterministically freezes a valid DEC-420 review. The frozen object keeps
+exact DEC-419 proof run/job/artifact identities, artifact digest, raw/canonical
+DEC-418 preflight hashes, DEC-418/417 identities, source map, active-workflow-absent
+state, all eight source-only gates, and target historical run #2 / attempt 1.
+
+The freeze emits one canonical fingerprint for later concrete runtime binding. It
+does not create runtime evidence and cannot install the executor workflow or submit
+historical discovery.
+
+Actual workflow-install authorization, installed state, executor availability,
+historical dispatch, execute mode, reserved-data access, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next gate: concrete DEC-419 proof runtime-evidence binding before installation.
+
+## DEC-422 — EXP-062 workflow-install action-preflight proof runtime evidence freeze
+
+**Date:** 2026-09-29  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / INSTALL + EXECUTOR STILL LOCKED
+
+DEC-422 binds the successful DEC-419 merged-main proof: head
+`51a49397e1eddc5b9e342d50b588f774e783a5e7`, run `36634716243`, job
+`109632428957`, artifact `11063264562`, artifact/ZIP SHA-256
+`1f06c7b589f46ca7a473bae5a0666b79b1b627dc6a8eaf85804211424e09f0be`,
+raw DEC-418 preflight SHA-256
+`567af303b2e37131b83c7f316424174632dd34854a38660f910c3072fbd893da`,
+and canonical SHA-256
+`66ebc48ff1e6ee8d24e19b0641c012244f93ddfb1e02baf343bec3df6a4f9c26`.
+
+DEC-422 re-runs DEC-420 review and DEC-421 deterministic freezing and requires
+DEC-421 fingerprint
+`78bcceaf580672b97858ec972c590300316f8b7b369137ca96e957c39d1d9a5d`.
+All eight source-only gates remain true.
+
+Actual workflow-install authorization, installed state, executor availability,
+historical dispatch, execute mode, reserved data, Phase 8B, demo/live, real-money,
+and trading remain locked.
+
+Next gate: a separate explicit repository-mutation authorization before the active
+executor workflow can be installed.
