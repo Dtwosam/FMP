@@ -7263,3 +7263,38 @@ historical dispatch, execute mode, reserved-data access, or trading authority is
 introduced.
 
 Next gate after real recovery evidence: concrete runtime-evidence binding.
+
+
+## DEC-410 — Bind workflow-install source-preflight recovery runtime evidence
+
+**Date:** 2026-09-29  
+**Status:** CONCRETE RECOVERY-EVIDENCE BINDING / NO INSTALL OR DISPATCH
+
+DEC-410 binds the real successful DEC-407 run #2 / attempt 1 evidence while
+preserving the failed DEC-404 run #1 / attempt 1 provenance in the same immutable
+lineage.
+
+Bound recovery evidence:
+
+- recovery head: `3ea7d3f7bfe8f1dfb3bbac612f74255da4fee432`;
+- recovery run: `36616131587`;
+- recovery job: `109569478100`;
+- recovery artifact: `11054938805`;
+- artifact/ZIP SHA-256:
+  `e71ad4c19602bec2c3fa71ad6f76e41eadea53edd5ef310ea2110d251002da25`;
+- raw DEC-403 preflight SHA-256:
+  `aea9a6f510ee7f5147adb7aea4cba2e9662093dfc2a8465adc9b7aec61556639`;
+- canonical DEC-403 preflight SHA-256:
+  `4f96d9df7e7e4fba224a376b500539e4581bc34d852178f00796ee7be66f6c6b`;
+- DEC-409 freeze fingerprint:
+  `c0c04735c57638fde0a57122c240ea6c9aacd86fc7e43cdc532aaf8ba54cd9d3`.
+
+The failed DEC-404 run remains recorded as run `36613664506`, head
+`0db04ae49b3533778b08afa31e9ef9a26576b80c`, job `109561121322`, conclusion
+`failure`.
+
+All six source-only gates remain true. Actual workflow-install authorization,
+installed state, executor availability, historical dispatch, execute mode,
+reserved-data access, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next gate: source-only final workflow-install authorization contract before install.
