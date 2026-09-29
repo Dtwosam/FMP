@@ -1482,3 +1482,12 @@
 - Pins DEC-415 fingerprint `4a71a6b29ccea4d5415ce64ca84fc0c43988a2daf98cbe912f4654868b907ffa`.
 - Preserves all seven source-only gates.
 - Adds no workflow installation, dispatch, execute mode, or trading authority.
+
+
+## 2026-09-29 — DEC-417 EXP-062 workflow-install action contract
+
+- Added source-only install-action contract bound to DEC-416.
+- Pins DEC-416 runtime-freeze blob and fingerprint plus dormant-template identity.
+- Preserves seven predecessor source-only gates and adds the action-contract source gate.
+- Requires the active executor workflow path to remain absent.
+- Adds no workflow installation, dispatch, execute mode, reserved-data, or trading authority.

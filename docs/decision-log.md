@@ -7416,3 +7416,23 @@ historical dispatch, execute mode, reserved data, Phase 8B, demo/live, real-mone
 and trading remain locked.
 
 Next gate: source-only workflow-install action contract before repository mutation.
+
+
+## DEC-417 — EXP-062 workflow-install action contract
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY INSTALL-ACTION CONTRACT / NO INSTALL OR DISPATCH
+
+DEC-417 consumes the concrete DEC-416 final-authorization proof runtime freeze at
+fingerprint
+`3f90062e42cc36c61286b31fcd625a7e511140819c19f268e283be1807e2f0c7`
+and adds only a source-level workflow-install action contract.
+
+All seven predecessor source-only gates remain true. DEC-417 adds only
+`active_one_shot_historical_executor_workflow_install_action_contract_source_authorized=true`.
+
+The active executor workflow path remains absent. Actual workflow-install
+authorization, installed state, executor availability, historical dispatch, execute
+mode, reserved data, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next gate: read-only current-main workflow-install action preflight.

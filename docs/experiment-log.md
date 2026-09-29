@@ -2446,3 +2446,13 @@ Copy this section for each serious experiment:
 - All seven source-only gates remain true.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: source-only workflow-install action contract before install.
+
+
+### EXP-20260927-062 — DEC-417 workflow-install action contract
+
+- Pinned DEC-416 runtime-freeze blob and fingerprint.
+- Preserves all seven predecessor source-only gates.
+- Adds only the install-action-contract source gate.
+- Active executor workflow path remains absent.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: read-only current-main workflow-install action preflight.
