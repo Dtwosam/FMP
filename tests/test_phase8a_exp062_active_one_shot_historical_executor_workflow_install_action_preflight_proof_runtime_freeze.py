@@ -193,7 +193,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallActionPreflightProofRu
         )
         self.assertEqual(
             report["dec421_freeze_builder"],
-            "022ff28845f935bc9886d56c4a742be1c45b0170",
+            "7e0c9d361eecce2917147db2c62884de9722bc7a",
         )
         self.assertEqual(
             report["dec334_terminal_review_contract"],
