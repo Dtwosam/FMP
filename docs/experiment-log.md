@@ -2246,3 +2246,13 @@ Copy this section for each serious experiment:
 - Preserves all four source-only gates.
 - Actual install / executor / dispatch / execute authority authorized?: NO.
 - Next gate: source-only workflow install-activation contract.
+
+
+### EXP-20260927-062 — DEC-396 workflow install-activation contract
+
+- Pinned corrected DEC-395 runtime-freeze blob and fingerprint.
+- Preserves all four predecessor source-only gates.
+- Adds only the workflow install-activation source gate.
+- Keeps the active workflow path absent and the historical-result slot unused.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: read-only current-main workflow install-activation preflight.
