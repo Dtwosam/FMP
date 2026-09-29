@@ -1536,3 +1536,10 @@
 - Pins DEC-421 fingerprint `78bcceaf580672b97858ec972c590300316f8b7b369137ca96e957c39d1d9a5d`.
 - Preserves all eight source-only gates.
 - Adds no workflow installation, dispatch, execute mode, reserved-data, or trading authority.
+
+## 2026-09-30 — DEC-423 EXP-062 active workflow mutation authorization
+
+- Added explicit repository-mutation authorization bound to DEC-422.
+- Pins the DEC-422 runtime-freeze blob/fingerprint and dormant executor template.
+- Opens only workflow-install authorization.
+- Does not install the workflow, dispatch historical discovery, or expose trading authority.
