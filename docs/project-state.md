@@ -1699,3 +1699,13 @@ No actual install, executor, dispatch, or execute authority exists. The historic
 slot remains empty with target run #2 / attempt 1.
 
 Next safe step after real successful proof evidence: review/freeze.
+
+
+## 2026-09-29 — DEC-375 install-authorization proof reviewer source-ready
+
+A source-only reviewer now exists for the successful DEC-374 proof evidence. It can
+bind exact run/job/artifact/preflight identities and hashes but cannot install the
+future executor workflow or dispatch historical discovery.
+
+The active workflow path remains absent and all install/executor/dispatch/trading
+authority remains locked. Next safe gate: immutable review freeze.
