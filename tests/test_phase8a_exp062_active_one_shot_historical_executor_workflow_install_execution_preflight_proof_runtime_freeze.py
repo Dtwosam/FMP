@@ -234,7 +234,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallExecutionPreflightProo
         self.assertFalse(first["trading_authorized"])
         self.assertEqual(
             first["next_gate"],
-            "SOURCE_ONLY_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_CONTRACT",
+            "SOURCE_ONLY_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_ACTIVATION_CONTRACT",
         )
 
         unsigned = dict(first)

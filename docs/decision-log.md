@@ -7030,4 +7030,4 @@ All four source-only gates remain true. The active executor workflow path remain
 absent and actual install, executor, dispatch, execute, reserved-data, and trading
 authority remain locked.
 
-Next gate: source-only active executor workflow install contract.
+Next gate: source-only active executor workflow install-activation contract.
