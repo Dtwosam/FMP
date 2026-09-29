@@ -2051,3 +2051,15 @@ dispatch, execute mode, reserved data, and all downstream trading authority rema
 locked.
 
 Next safe gate: read-only current-main workflow-install source preflight.
+
+
+## 2026-09-29 — DEC-403 workflow-install source preflight ready
+
+A read-only current-main preflight now exists for the DEC-402 source-only
+workflow-install contract. It verifies source identity, active-workflow absence,
+the still-unused historical-result slot, and all six source-only gates.
+
+No actual install, executor, dispatch, or execute authority exists. Target historical
+run remains #2 / attempt 1.
+
+Next safe gate: repository-hosted read-only workflow-install source-preflight proof.

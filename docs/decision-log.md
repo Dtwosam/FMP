@@ -7169,3 +7169,20 @@ dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live,
 real-money, and trading remain locked.
 
 Next gate: read-only current-main workflow-install source preflight.
+
+
+## DEC-403 — EXP-062 workflow-install source preflight
+
+**Date:** 2026-09-29  
+**Status:** READ-ONLY CURRENT-MAIN SOURCE PREFLIGHT / NO INSTALL OR DISPATCH
+
+DEC-403 pins the exact DEC-402 workflow-install source contract, requires exact
+current main, requires the active executor workflow path to remain absent, and
+verifies the historical-result slot remains unused with target run #2 / attempt 1.
+
+All six source-only gates remain true. The CLI exposes only `plan`. Actual
+workflow-install authorization, installed state, executor availability, historical
+dispatch, execute mode, reserved data, and all downstream trading paths remain
+locked.
+
+Next gate: repository-hosted read-only workflow-install source-preflight proof.

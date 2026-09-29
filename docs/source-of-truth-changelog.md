@@ -1371,3 +1371,12 @@
 - Adds only the final workflow-install source gate.
 - Requires the active executor workflow path to remain absent.
 - Keeps actual install, executor availability, dispatch, execute mode, reserved data, and downstream trading authority locked.
+
+
+## 2026-09-29 — DEC-403 EXP-062 workflow-install source preflight
+
+- Added current-main read-only preflight bound to DEC-402.
+- Requires active executor workflow path absent and historical slot unused.
+- Preserves all six source-only gates.
+- Exposes only a plan surface; no install, execute, advance, or dispatch command exists.
+- Keeps downstream trading authority locked.
