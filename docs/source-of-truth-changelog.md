@@ -1219,3 +1219,12 @@
 - Invokes only the read-only execution-authorization preflight plan surface.
 - Verifies all three source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
 - Uploads only the preflight JSON and never installs or dispatches anything.
+
+
+## 2026-09-29 — DEC-387 EXP-062 execution-authorization proof reviewer
+
+- Added source-only review of future DEC-386 runtime evidence.
+- Pinned DEC-386/385/384 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates execution-authorization preflight content and records raw/canonical hashes.
+- Adds no install, dispatch, or execute mode and keeps downstream authority locked.
