@@ -238,7 +238,7 @@ def _parse_preflight(
     )
 
 
-def review_active_one_shot_historical_executor_workflow_install_final_authorization_preflight_proof(
+def review_active_one_shot_historical_executor_workflow_install_action_preflight_proof(
     *,
     run: Mapping[str, object],
     jobs_payload: Mapping[str, object],
@@ -399,6 +399,6 @@ def review_active_one_shot_historical_executor_workflow_install_final_authorizat
 __all__ = [
     "EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_ACTION_PREFLIGHT_PROOF_REVIEW_DECISION",
     "EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_ACTION_PREFLIGHT_PROOF_REVIEW_VERSION",
-    "review_active_one_shot_historical_executor_workflow_install_final_authorization_preflight_proof",
+    "review_active_one_shot_historical_executor_workflow_install_action_preflight_proof",
     "validate_active_one_shot_historical_executor_workflow_install_action_preflight_proof_review_sources",
 ]
