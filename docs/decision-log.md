@@ -7436,3 +7436,20 @@ authorization, installed state, executor availability, historical dispatch, exec
 mode, reserved data, Phase 8B, demo/live, real-money, and trading remain locked.
 
 Next gate: read-only current-main workflow-install action preflight.
+
+
+## DEC-418 — EXP-062 workflow-install action preflight
+
+**Date:** 2026-09-29  
+**Status:** READ-ONLY CURRENT-MAIN PREFLIGHT / NO INSTALL OR DISPATCH
+
+DEC-418 pins the exact DEC-417 install-action contract, requires exact current main,
+requires the active executor workflow path to remain absent, and verifies the
+historical-result slot remains unused with target run #2 / attempt 1.
+
+All eight source-only gates remain true. The CLI exposes only `plan`. Actual
+workflow-install authorization, installed state, executor availability, historical
+dispatch, execute mode, reserved data, Phase 8B, demo/live, real-money, and trading
+remain locked.
+
+Next gate: repository-hosted read-only workflow-install action-preflight proof.

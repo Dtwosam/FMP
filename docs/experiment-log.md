@@ -2456,3 +2456,14 @@ Copy this section for each serious experiment:
 - Active executor workflow path remains absent.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: read-only current-main workflow-install action preflight.
+
+
+### EXP-20260927-062 — DEC-418 workflow-install action preflight
+
+- Pinned DEC-417 action-contract source.
+- Requires exact current main and active executor workflow path absent.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Preserves all eight source-only gates.
+- CLI surface: plan only.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: repository-hosted read-only action-preflight proof.
