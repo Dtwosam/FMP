@@ -2263,3 +2263,18 @@ The freeze creates no runtime authority and cannot install or dispatch anything.
 
 Next safe gate: concrete DEC-419 proof runtime-evidence binding before any workflow
 installation mutation.
+
+## 2026-09-29 — DEC-422 action-preflight proof evidence bound
+
+The successful DEC-419 action-preflight proof is now concretely bound: head
+`51a49397e1eddc5b9e342d50b588f774e783a5e7`, run `36634716243`, job
+`109632428957`, artifact `11063264562`, exact ZIP/raw/canonical hashes, and
+DEC-421 fingerprint
+`78bcceaf580672b97858ec972c590300316f8b7b369137ca96e957c39d1d9a5d`.
+
+All eight source-only gates remain true and the active executor workflow remains
+absent. No installation, historical dispatch, execute mode, reserved-data,
+Phase 8B, demo/live, real-money, or trading authority is introduced.
+
+Next safe gate: separate explicit repository-mutation authorization before any
+active workflow installation.
