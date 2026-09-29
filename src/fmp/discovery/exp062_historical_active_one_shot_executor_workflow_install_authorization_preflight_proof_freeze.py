@@ -135,11 +135,11 @@ def _validate_review(
         "proof_run_attempt": 1,
         "proof_run_conclusion": "success",
         "install_authorization_preflight_decision": "DEC-373",
-        "active_install_preflight_version": (
+        "install_authorization_preflight_version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-authorization-preflight-v1"
         ),
         "install_authorization_contract_decision": "DEC-372",
-        "active_install_contract_version": (
+        "install_authorization_contract_version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-authorization-contract-v1"
         ),
         "dormant_executor_workflow_template_blob_sha": (
