@@ -1333,3 +1333,12 @@
 - Invokes only the read-only install-activation preflight plan surface.
 - Verifies all five source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
 - Uploads only the activation-preflight JSON and never installs or dispatches anything.
+
+
+## 2026-09-29 — DEC-399 EXP-062 install-activation proof reviewer
+
+- Added source-only review of future DEC-398 runtime evidence.
+- Pinned DEC-398/397/396 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates DEC-397 preflight content and records raw/canonical hashes.
+- Preserves all five source-only gates and adds no install, dispatch, or execute mode.

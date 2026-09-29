@@ -7087,3 +7087,23 @@ workflow installation, historical dispatch, execute mode, and downstream trading
 authority remain locked.
 
 Next gate after real successful runtime evidence: immutable proof review/freeze.
+
+
+## DEC-399 — EXP-062 workflow install-activation preflight proof reviewer
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY RUNTIME-EVIDENCE REVIEWER / NO INSTALL OR DISPATCH
+
+DEC-399 adds a strict reviewer for successful DEC-398 merged-main proof evidence.
+It pins the DEC-398 proof workflow, DEC-397 preflight/CLI, DEC-396 install-activation
+contract, dormant executor template, and active discovery workflow. It requires run
+#1 / attempt 1 success, one successful proof job, one non-expired artifact, and exact
+DEC-397 preflight bytes.
+
+All five source-only gates may be true. The active executor workflow path remains
+absent, while actual install authorization, installed state, executor availability,
+dispatch, execute mode, retries, reserved data, candidate/promotion, Phase 8B,
+demo/live, real-money, and trading remain locked.
+
+Next gate after real successful DEC-398 evidence: deterministic immutable review
+freeze.
