@@ -2288,3 +2288,13 @@ Copy this section for each serious experiment:
 - Preserves all five source-only gates.
 - Actual install / executor / dispatch / execute authority authorized?: NO.
 - Next gate after real evidence: immutable review freeze.
+
+
+### EXP-20260927-062 — DEC-400 install-activation proof freeze
+
+- Added deterministic source-only freeze for valid DEC-399 review evidence.
+- Preserves DEC-398 proof identities, artifact digest, DEC-397 preflight hashes, source map, and active-workflow-absent state.
+- Preserves all five source-only gates.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
+- Next gate after real DEC-398 evidence: concrete runtime-evidence binding.
