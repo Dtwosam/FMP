@@ -2080,3 +2080,14 @@ Copy this section for each serious experiment:
 - CLI surface: plan only.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: repository-hosted read-only preflight proof.
+
+
+### EXP-20260927-062 — DEC-380 install-decision preflight proof
+
+- Added push-to-main first-run/attempt-1 read-only proof for DEC-379.
+- Pinned DEC-378/379, dormant template, active discovery workflow, and runtime source identities.
+- Invokes only the install-decision preflight plan surface.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Uploads only the install-decision-preflight JSON.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate after success: immutable proof review/freeze.
