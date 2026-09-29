@@ -1454,3 +1454,21 @@
 - Invokes only the read-only final-authorization preflight plan surface.
 - Verifies all seven source-only gates and keeps actual install/dispatch/execute authority false.
 - Uploads only the final-authorization-preflight JSON.
+
+
+## 2026-09-29 — DEC-414 EXP-062 final authorization proof reviewer
+
+- Added source-only review of future DEC-413 runtime evidence.
+- Pins DEC-413/412/411 source identities.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates DEC-412 preflight content and records raw/canonical hashes.
+- Preserves all seven source-only gates and adds no install/dispatch/execute mode.
+
+
+## 2026-09-29 — DEC-415 EXP-062 final authorization proof freeze
+
+- Added deterministic source-only freeze for valid DEC-414 review evidence.
+- Preserves exact DEC-413 runtime identities, artifact digest, DEC-412 preflight hashes, and source map.
+- Preserves all seven source-only gates and active-workflow-absent state.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Adds no install, dispatch, or execute surface.
