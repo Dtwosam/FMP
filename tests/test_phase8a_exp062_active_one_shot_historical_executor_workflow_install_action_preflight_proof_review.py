@@ -18,7 +18,7 @@ def _preflight() -> dict[str, object]:
         "decision": "DEC-418",
         "version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-preflight-v1",
         "install_action_contract_decision": "DEC-417",
-        "final_authorization_contract_version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-contract-v1",
+        "install_action_contract_version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-contract-v1",
         "dec417_install_action_contract_blob_sha": "7d65e3b4359726d6cd920f31ceab84fdba88e922",
         "dormant_executor_workflow_template_path": "docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled",
         "dormant_executor_workflow_template_blob_sha": "51ce87584369be957482460d81649adb1cb9f05d",
