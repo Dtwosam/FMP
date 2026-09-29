@@ -155,8 +155,8 @@ def _validate_runtime_freeze(value: Mapping[str, object]) -> None:
         "active_install_activation_preflight_proof_job_id": 109445012411,
         "active_install_activation_preflight_proof_artifact_id": 11039017180,
         "active_install_activation_preflight_proof_artifact_name": (
-            "exp062-dec392-active-one-shot-historical-executor-workflow-"
-            "install-execution-preflight-"
+            "exp062-dec398-active-one-shot-historical-executor-workflow-"
+            "install-activation-preflight-"
             "9dd433b406bef6dc8660d897ccab5bcb1b0da99b"
         ),
         "active_install_activation_preflight_proof_artifact_digest": (
