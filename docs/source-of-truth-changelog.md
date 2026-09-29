@@ -1163,3 +1163,12 @@
 - Invokes only the read-only install-decision preflight plan surface.
 - Verifies zero historical-result attempts and target run #2 / attempt 1.
 - Uploads only the decision-preflight JSON and never installs or dispatches anything.
+
+
+## 2026-09-29 — DEC-381 EXP-062 install-decision proof reviewer
+
+- Added source-only review of future DEC-380 runtime evidence.
+- Pinned DEC-380/379/378 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates install-decision preflight content and records raw/canonical hashes.
+- Adds no install, dispatch, or execute mode and keeps downstream authority locked.
