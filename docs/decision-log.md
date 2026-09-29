@@ -7227,3 +7227,20 @@ demo/live, real-money, and trading remain locked.
 
 Next gate after real successful DEC-404 evidence: deterministic immutable review
 freeze.
+
+
+## DEC-406 — EXP-062 workflow-install source-preflight proof freeze
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY DETERMINISTIC REVIEW FREEZE / NO INSTALL OR DISPATCH
+
+DEC-406 adds a deterministic source-only freeze for a valid DEC-405 review. It
+preserves exact DEC-404 proof identities, artifact digest, DEC-403 preflight hashes,
+source map, dormant-template identity, active workflow-absent state, and target
+historical run #2 / attempt 1.
+
+All six source-only gates may remain true. The freeze emits one canonical
+fingerprint for later concrete runtime binding, but adds no workflow-install,
+dispatch, or execute authority.
+
+Next gate after real DEC-404 evidence: concrete proof runtime-evidence binding.
