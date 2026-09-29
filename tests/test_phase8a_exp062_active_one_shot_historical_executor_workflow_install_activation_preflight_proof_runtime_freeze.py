@@ -224,7 +224,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallActivationPreflightPro
             "active_one_shot_historical_executor_workflow_install_decision_source_authorized",
             "active_one_shot_historical_executor_workflow_install_execution_authorization_source_authorized",
             "active_one_shot_historical_executor_workflow_install_execution_contract_source_authorized",
-            "active_one_shot_historical_executor_workflow_install_activation_source_authorized": True,
+            "active_one_shot_historical_executor_workflow_install_activation_source_authorized",
         ):
             self.assertTrue(first[field], field)
         self.assertFalse(first["executor_workflow_path_exists"])
