@@ -2203,3 +2203,14 @@ Copy this section for each serious experiment:
 - CLI surface: plan only.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: repository-hosted read-only install-execution preflight proof.
+
+
+### EXP-20260927-062 — DEC-392 workflow install-execution preflight proof
+
+- Added push-to-main first-run/attempt-1 read-only proof for DEC-391.
+- Pinned DEC-390/391, dormant template, active discovery workflow, and runtime source identities.
+- Invokes only the install-execution preflight plan surface.
+- Confirms all four source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
+- Uploads only the install-execution-preflight JSON.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate after success: immutable proof review/freeze.
