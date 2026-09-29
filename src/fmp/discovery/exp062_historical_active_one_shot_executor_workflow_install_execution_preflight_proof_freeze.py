@@ -18,7 +18,7 @@ EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_EXECUTION_PREFLIGHT_
 )
 
 _EXPECTED_REVIEW_SOURCE_BLOBS = {
-    "dec392_workflow": "7d79ba9e86d64b0f9f156b284550c246a5e53131",
+    "dec392_workflow": "cf6003478eb0a4a7a5dbe11d03a7c5dae1d3b9ac",
     "dec391_preflight": "d3f38e26b71ff09590cc4c76632c9fbfa30e45a3",
     "dec391_preflight_cli": "4871c17989845989bb29f03015a81e0187ffa994",
     "dec390_install_execution_contract": "a48fc70ae1c40e32dbba7fc24922c92b6051fd1e",
