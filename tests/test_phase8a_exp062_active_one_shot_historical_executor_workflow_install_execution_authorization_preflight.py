@@ -92,6 +92,18 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallExecutionAuthorization
         self.assertTrue(
             plan[
                 "active_one_shot_historical_executor_workflow_"
+                "install_authorization_source_authorized"
+            ]
+        )
+        self.assertTrue(
+            plan[
+                "active_one_shot_historical_executor_workflow_"
+                "install_decision_source_authorized"
+            ]
+        )
+        self.assertTrue(
+            plan[
+                "active_one_shot_historical_executor_workflow_"
                 "install_execution_authorization_source_authorized"
             ]
         )
