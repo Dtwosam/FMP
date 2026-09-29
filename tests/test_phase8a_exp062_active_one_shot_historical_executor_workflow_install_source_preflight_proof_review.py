@@ -26,7 +26,7 @@ def _preflight() -> dict[str, object]:
             "source-contract-v1"
         ),
         "dec402_install_source_contract": (
-            "86ca3303a468c0f22dbb40a521a14ca072841847"
+            "a09eca21a8b5e7b88182040ada5d9298eb922282"
         ),
         "dormant_executor_workflow_template_path": (
             "docs/superpowers/templates/"
@@ -182,15 +182,15 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallAuthorizationPreflight
         )
         self.assertEqual(
             report["dec404_workflow"],
-            "0171d279fbcf3e2dfc1000cbbc1aafa18f89c55e",
+            "819725442ea3b559c8b852e60b2e1929990afa47",
         )
         self.assertEqual(
             report["dec403_preflight"],
-            "43885d54f09665e2452d39b03f19420dc47e16cf",
+            "cb8ca1ca5b65e9703844d3df9b0a622e2e3ed1bc",
         )
         self.assertEqual(
             report["dec402_install_source_contract"],
-            "86ca3303a468c0f22dbb40a521a14ca072841847",
+            "a09eca21a8b5e7b88182040ada5d9298eb922282",
         )
 
     def test_valid_review_keeps_install_and_runtime_locked(self) -> None:
