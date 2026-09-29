@@ -1519,3 +1519,12 @@
 - Requires exact successful proof run/job/artifact shape.
 - Revalidates DEC-418 preflight content and records raw/canonical hashes.
 - Preserves all eight source-only gates and adds no install, dispatch, or execute mode.
+
+
+## 2026-09-29 — DEC-421 EXP-062 workflow-install action proof freeze
+
+- Added deterministic source-only freeze for valid DEC-420 review evidence.
+- Preserves exact DEC-419 runtime identities, artifact digest, DEC-418 preflight hashes, and source map.
+- Preserves all eight source-only gates and active executor workflow path absent state.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Adds no install, dispatch, or execute surface and keeps downstream authority locked.
