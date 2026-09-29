@@ -6610,3 +6610,21 @@ availability, historical dispatch, execute mode, rerun/retry/replacement, reserv
 real-money, and trading remain false.
 
 Next gate after real success: immutable install-authorization-preflight proof review/freeze.
+
+
+## DEC-375 — EXP-062 active workflow install-authorization preflight proof reviewer
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY RUNTIME-EVIDENCE REVIEWER / NO INSTALL OR DISPATCH
+
+DEC-375 adds a strict reviewer for the successful DEC-374 merged-main proof. It pins
+the DEC-374 proof workflow, DEC-373 preflight/CLI, DEC-372 install-authorization
+contract, dormant executor template, and active discovery workflow; requires exact
+run #1 / attempt 1 success, one successful proof job, one non-expired artifact, and
+exact DEC-373 preflight content; and records raw/canonical SHA-256 hashes.
+
+The active executor workflow path remains absent. Actual install authorization,
+installed state, executor availability, dispatch, execute mode, retries, reserved
+data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next gate: deterministic immutable review freeze.

@@ -1105,3 +1105,12 @@
 - Invokes only the read-only install-authorization preflight plan surface.
 - Verifies zero historical-result attempts and target run #2 / attempt 1.
 - Uploads only the authorization-preflight JSON and never installs or dispatches anything.
+
+
+## 2026-09-29 — DEC-375 EXP-062 install-authorization proof reviewer
+
+- Added source-only review of DEC-374 runtime evidence.
+- Pinned DEC-374/373/372 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates install-authorization preflight content and records raw/canonical hashes.
+- Adds no install, dispatch, or execute mode and keeps downstream authority locked.
