@@ -1500,3 +1500,13 @@
 - Requires active executor workflow path absent and historical slot unused.
 - Preserves all eight source-only gates.
 - Exposes only a plan surface; no install, execute, advance, or dispatch command exists.
+
+
+## 2026-09-29 — DEC-419 EXP-062 workflow-install action preflight proof
+
+- Added first-run/attempt-1 push-to-main proof for DEC-418.
+- Uses only contents/actions read permissions.
+- Pins DEC-417/418 source identities, dormant template, discovery workflow, and planning runtime.
+- Invokes only the read-only workflow-install action-preflight plan surface.
+- Preserves all eight source-only gates and requires the historical slot unused.
+- Uploads only the action-preflight JSON and never installs or dispatches anything.
