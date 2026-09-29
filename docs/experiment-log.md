@@ -2060,3 +2060,13 @@ Copy this section for each serious experiment:
 - Active executor workflow path remains absent.
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Install / executor / dispatch / execute authority authorized?: NO.
+
+
+### EXP-20260927-062 — DEC-378 active workflow install-decision contract
+
+- Pinned DEC-377 runtime-freeze source and fingerprint.
+- Pinned the dormant executor workflow template.
+- Install-decision source authorized?: YES.
+- Actual install / installed / executor / dispatch / execute authority?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Next gate: read-only current-main install-decision preflight.
