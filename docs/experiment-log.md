@@ -2101,3 +2101,12 @@ Copy this section for each serious experiment:
 - Revalidates install-decision preflight content and records raw/canonical hashes.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Next gate after real evidence: immutable review freeze.
+
+
+### EXP-20260927-062 — DEC-382 install-decision proof freeze
+
+- Added deterministic source-only freeze for valid DEC-381 review evidence.
+- Preserves proof identities, artifact digest, preflight hashes, source map, and active-workflow-absent state.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Next gate after real DEC-380 evidence: concrete runtime-evidence binding.
