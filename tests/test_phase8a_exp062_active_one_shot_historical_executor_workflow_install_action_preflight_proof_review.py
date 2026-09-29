@@ -136,6 +136,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallActionPreflightProofRe
         self.assertEqual(reviewed["decision"], "DEC-420")
         self.assertEqual(reviewed["proof_run_number"], 1)
         self.assertEqual(reviewed["action_preflight_decision"], "DEC-418")
+        self.assertEqual(reviewed["install_action_contract_version"], "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-contract-v1")
         self.assertFalse(reviewed["executor_workflow_path_exists"])
         for field in (
             "active_one_shot_historical_executor_workflow_install_authorization_source_authorized",
