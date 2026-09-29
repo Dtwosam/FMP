@@ -7515,3 +7515,29 @@ historical dispatch, execute mode, reserved-data access, Phase 8B, demo/live,
 real-money, and trading remain locked.
 
 Next gate: concrete DEC-419 proof runtime-evidence binding before installation.
+
+## DEC-422 — EXP-062 workflow-install action-preflight proof runtime evidence freeze
+
+**Date:** 2026-09-29  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / INSTALL + EXECUTOR STILL LOCKED
+
+DEC-422 binds the successful DEC-419 merged-main proof: head
+`51a49397e1eddc5b9e342d50b588f774e783a5e7`, run `36634716243`, job
+`109632428957`, artifact `11063264562`, artifact/ZIP SHA-256
+`1f06c7b589f46ca7a473bae5a0666b79b1b627dc6a8eaf85804211424e09f0be`,
+raw DEC-418 preflight SHA-256
+`567af303b2e37131b83c7f316424174632dd34854a38660f910c3072fbd893da`,
+and canonical SHA-256
+`66ebc48ff1e6ee8d24e19b0641c012244f93ddfb1e02baf343bec3df6a4f9c26`.
+
+DEC-422 re-runs DEC-420 review and DEC-421 deterministic freezing and requires
+DEC-421 fingerprint
+`78bcceaf580672b97858ec972c590300316f8b7b369137ca96e957c39d1d9a5d`.
+All eight source-only gates remain true.
+
+Actual workflow-install authorization, installed state, executor availability,
+historical dispatch, execute mode, reserved data, Phase 8B, demo/live, real-money,
+and trading remain locked.
+
+Next gate: a separate explicit repository-mutation authorization before the active
+executor workflow can be installed.
