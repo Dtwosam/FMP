@@ -1314,3 +1314,12 @@
 - Pins DEC-395 blob/fingerprint and the dormant executor template.
 - Preserves four predecessor source-only gates and adds only the install-activation source gate.
 - Keeps actual install, dispatch, execute mode, reserved data, and downstream trading authority locked.
+
+
+## 2026-09-29 — DEC-397 EXP-062 workflow install-activation preflight
+
+- Added current-main read-only preflight bound to DEC-396.
+- Pins DEC-396 source identity and dormant executor template.
+- Requires active executor workflow path absent and historical slot unused.
+- Preserves all five source-only gates.
+- Exposes only a plan surface and keeps actual install/dispatch/execute authority locked.
