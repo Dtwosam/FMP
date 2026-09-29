@@ -2506,3 +2506,13 @@ Copy this section for each serious experiment:
 - All eight source-only gates remain true.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: separate explicit repository-mutation authorization.
+
+### EXP-20260927-062 — DEC-423 active workflow mutation authorization
+
+- Bound explicit operator authorization to the concrete DEC-422 runtime freeze.
+- Pins DEC-422 blob/fingerprint and the dormant executor template blob.
+- Sets only workflow-install authorization true.
+- Active workflow remains absent.
+- Installed state / executor availability / dispatch / execute authority?: NO.
+- Trading authority?: NO.
+- Next gate: repository mutation installing the active workflow.
