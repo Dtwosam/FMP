@@ -7207,3 +7207,23 @@ installation, historical dispatch, execute mode, or downstream trading authority
 added.
 
 Next gate after real successful runtime evidence: immutable proof review/freeze.
+
+
+## DEC-407 — Recover failed DEC-404 workflow-install source-preflight proof
+
+**Date:** 2026-09-29  
+**Status:** EXPLICIT READ-ONLY RECOVERY / NO INSTALL OR DISPATCH
+
+DEC-404 merged-main run #1 / attempt 1 (`36613664506`) is preserved as a real
+failure. Its DEC-403 preflight step succeeded, but the wrapper verification failed
+because it asserted the non-existent field
+`install_source_slot_verified_available`. No immutable proof artifact was uploaded.
+
+DEC-407 authorizes exactly workflow run #2 / attempt 1 of the same read-only proof
+workflow. It pins failed run #1, head
+`0db04ae49b3533778b08afa31e9ef9a26576b80c`, and job `109561121322` as
+recovery provenance, removes only the invalid wrapper assertion, and keeps every
+install, dispatch, reserved-data, and trading authority false.
+
+Next gate after a successful recovery run: source-only review/freeze of the concrete
+DEC-407 proof evidence.

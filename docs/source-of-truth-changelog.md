@@ -1390,3 +1390,13 @@
 - Invokes only the read-only source-preflight plan surface.
 - Verifies all six source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
 - Uploads only the source-preflight JSON and never installs or dispatches anything.
+
+
+## 2026-09-29 — DEC-407 explicit DEC-404 proof recovery
+
+- Recorded DEC-404 run #1 / attempt 1 as a genuine failed proof-wrapper run.
+- Recorded that DEC-403 plan execution succeeded and only the wrapper verification failed.
+- Identified the invalid wrapper field: `install_source_slot_verified_available`.
+- Added exact run #2 / attempt 1 recovery semantics on the same read-only workflow.
+- Pinned failed run `36613664506`, failed job `109561121322`, and failed head `0db04ae49b3533778b08afa31e9ef9a26576b80c`.
+- Removed no runtime lock and added no installation or historical-dispatch authority.

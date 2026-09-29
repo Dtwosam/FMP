@@ -2341,3 +2341,14 @@ Copy this section for each serious experiment:
 - Confirms all six source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
 - Uploads only the source-preflight JSON.
 - Actual install / executor / dispatch / execute authority?: NO.
+
+
+### EXP-20260927-062 — DEC-407 workflow-install source-preflight proof recovery
+
+- Preserved DEC-404 run #1 / attempt 1 as failed evidence.
+- Confirmed DEC-403 preflight execution succeeded before the wrapper-only verifier failure.
+- Failure cause: assertion of absent `install_source_slot_verified_available` field.
+- Recovery is restricted to workflow run #2 / attempt 1.
+- Failed run/job/head are pinned as provenance.
+- Recovery workflow remains push-to-main, read-only, plan-only, and artifact-only.
+- Actual install / executor / dispatch / execute / trading authority?: NO.

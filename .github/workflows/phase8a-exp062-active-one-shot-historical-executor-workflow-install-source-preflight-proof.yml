@@ -33,17 +33,73 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Require exact first merged-main DEC-404 proof push
+      - name: Require exact DEC-407 recovery proof push
         run: |
           set -euo pipefail
           test "$GITHUB_EVENT_NAME" = "push"
           test "$GITHUB_REF" = "refs/heads/main"
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git branch --show-current)" = "main"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+      - name: Pin failed DEC-404 proof provenance
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp062-active-one-shot-historical-executor-workflow-install-source-preflight-proof.yml/runs?branch=main&event=push&per_page=20" > "$RUNNER_TEMP/proof-runs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36613664506/jobs?per_page=100" > "$RUNNER_TEMP/failed-proof-jobs.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          runs = json.loads((temp / "proof-runs.json").read_text(encoding="utf-8"))
+          prior = [
+              run
+              for run in runs["workflow_runs"]
+              if run.get("run_number") == 1
+          ]
+          assert len(prior) == 1
+          run = prior[0]
+          assert run["id"] == 36613664506
+          assert run["run_attempt"] == 1
+          assert run["head_sha"] == "0db04ae49b3533778b08afa31e9ef9a26576b80c"
+          assert run["status"] == "completed"
+          assert run["conclusion"] == "failure"
+          assert run["path"] == (
+              ".github/workflows/"
+              "phase8a-exp062-active-one-shot-historical-executor-"
+              "workflow-install-source-preflight-proof.yml"
+          )
+
+          jobs = json.loads(
+              (temp / "failed-proof-jobs.json").read_text(encoding="utf-8")
+          )["jobs"]
+          assert len(jobs) == 1
+          job = jobs[0]
+          assert job["id"] == 109561121322
+          assert job["name"] == (
+              "read-only-active-one-shot-historical-executor-"
+              "workflow-install-source-preflight"
+          )
+          assert job["conclusion"] == "failure"
+          steps = {
+              step["name"]: step["conclusion"]
+              for step in job["steps"]
+          }
+          assert steps[
+              "Run exact DEC-403 read-only install-source preflight"
+          ] == "success"
+          assert steps[
+              "Verify install-source-ready active path absent preflight and all locks"
+          ] == "failure"
+          assert steps[
+              "Upload immutable DEC-404 install-source-preflight proof"
+          ] == "skipped"
+          PY
 
       - name: Require frozen DEC-402/403 source identities
         run: |
@@ -86,7 +142,7 @@ jobs:
             --expected-head "$GITHUB_SHA" \
             > "$RUNNER_TEMP/active-one-shot-historical-executor-workflow-install-source-preflight.json"
 
-      - name: Verify install-source-ready active path absent preflight and all locks
+      - name: Verify recovered install-source preflight and all locks
         run: |
           python - <<'PY'
           import json
@@ -119,10 +175,10 @@ jobs:
               "SOURCE_PREFLIGHT_ACTIVE_WORKFLOW_ABSENT_SLOT_AVAILABLE"
           )
           assert plan["executor_workflow_path_exists"] is False
-          assert plan["install_source_slot_verified_available"] is True
           assert plan["proof_run_id"] == 36358289723
           assert plan["proof_run_count"] == 1
           assert plan["historical_result_attempt_count"] == 0
+          assert plan["historical_result_run_id"] is None
           assert plan["historical_result_slot_consumed"] is False
           assert plan["historical_result_slot_verified_available"] is True
           assert plan["expected_target_run_number"] == 2
@@ -134,7 +190,6 @@ jobs:
               "active_one_shot_historical_executor_workflow_install_execution_authorization_source_authorized",
               "active_one_shot_historical_executor_workflow_install_execution_contract_source_authorized",
               "active_one_shot_historical_executor_workflow_install_activation_source_authorized",
-              "active_one_shot_historical_executor_workflow_install_source_authorized",
               "active_one_shot_historical_executor_workflow_install_source_authorized",
           ):
               assert plan[field] is True, field
@@ -161,9 +216,9 @@ jobs:
               assert plan[field] is False, field
           PY
 
-      - name: Upload immutable DEC-404 install-source-preflight proof
+      - name: Upload immutable DEC-407 recovery proof
         uses: actions/upload-artifact@v6
         with:
-          name: exp062-dec404-active-one-shot-historical-executor-workflow-install-source-preflight-${{ github.sha }}
+          name: exp062-dec407-active-one-shot-historical-executor-workflow-install-source-preflight-recovery-${{ github.sha }}
           path: ${{ runner.temp }}/active-one-shot-historical-executor-workflow-install-source-preflight.json
           if-no-files-found: error
