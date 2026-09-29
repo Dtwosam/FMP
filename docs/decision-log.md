@@ -6790,3 +6790,21 @@ mode, reserved data, candidate/promotion, Phase 8B, demo/live, real-money, and
 trading remain locked.
 
 Next gate: source-only workflow install-execution authorization contract.
+
+
+## DEC-384 — EXP-062 workflow install-execution authorization contract
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY EXECUTION-AUTHORIZATION CONTRACT / INSTALL STILL LOCKED
+
+DEC-384 consumes the concrete DEC-383 runtime freeze at source blob
+`b946d5b3d390d008634d49a2a0b560211d18aa2b` and fingerprint
+`e4369f71272b8fd8a3ef4104f12aaf748bd7c938e4feb648a87c6aadd14e2e19`.
+
+It authorizes only the source contract for a later workflow-install execution
+decision. The active executor workflow path remains absent. Actual workflow-install
+authorization, installed state, executor availability, historical dispatch, execute
+mode, rerun/retry/replacement, reserved data, candidate/promotion, Phase 8B,
+demo/live, real-money, and trading remain locked.
+
+Next gate: read-only current-main install-execution authorization preflight.

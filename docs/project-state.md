@@ -1812,3 +1812,16 @@ state, executor availability, historical dispatch, execute mode, reserved data, 
 all downstream trading authority remain locked.
 
 Next safe gate: source-only workflow install-execution authorization contract.
+
+
+## 2026-09-29 — DEC-384 install-execution authorization source contract ready
+
+The concrete DEC-383 runtime binding is now consumed by a source-only
+install-execution authorization contract. The contract is pinned to DEC-383
+fingerprint `e4369f71272b8fd8a3ef4104f12aaf748bd7c938e4feb648a87c6aadd14e2e19`.
+
+The active executor workflow remains absent. Actual install authorization, executor
+availability, historical dispatch, execute mode, reserved data, and all downstream
+trading authority remain locked.
+
+Next safe gate: read-only current-main install-execution authorization preflight.

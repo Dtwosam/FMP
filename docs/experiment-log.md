@@ -2120,3 +2120,13 @@ Copy this section for each serious experiment:
 - Bound DEC-379 raw/canonical hashes and DEC-382 freeze fingerprint `be15d3ffe0a66befeec91694e5c412e0d7678818835774361258edf06b06b6f8`.
 - Active executor workflow path remains absent; install/executor/dispatch/execute authority remains NO.
 - Next gate: source-only install-execution authorization contract.
+
+
+### EXP-20260927-062 — DEC-384 install-execution authorization contract
+
+- Pinned DEC-383 runtime-freeze source and fingerprint.
+- Pinned the dormant executor workflow template.
+- Install-execution authorization source authorized?: YES.
+- Actual install / installed / executor / dispatch / execute authority?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Next gate: read-only current-main install-execution authorization preflight.
