@@ -1426,3 +1426,12 @@
 - Pins recovery run/job/artifact identities, ZIP digest, raw/canonical DEC-403 hashes, DEC-408 reviewer, DEC-409 freeze builder, and terminal-review contract.
 - Requires exact DEC-409 deterministic freeze fingerprint.
 - Keeps all six source-only gates true while actual install/dispatch/execute/trading authority remains false.
+
+
+## 2026-09-29 — DEC-411 EXP-062 final workflow-install authorization contract
+
+- Added source-only final authorization contract bound to DEC-410.
+- Pins DEC-410 source blob and runtime-freeze fingerprint.
+- Preserves the failed-run/recovery-run lineage transitively.
+- Adds only the seventh source-only gate.
+- Keeps actual install, executor, dispatch, execute, reserved-data, and trading authority locked.

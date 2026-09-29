@@ -2125,3 +2125,15 @@ downstream trading authority remain locked.
 
 Next safe gate: source-only final workflow-install authorization contract before any
 installation mutation.
+
+
+## 2026-09-29 — DEC-411 final authorization contract source-ready
+
+The concretely bound DEC-410 recovery lineage now feeds a source-only final
+workflow-install authorization contract.
+
+Seven source-only gates are now represented, but actual workflow-install
+authorization remains false and the active executor workflow path remains absent.
+
+Next safe gate: read-only current-main final workflow-install authorization
+preflight.
