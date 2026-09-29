@@ -2047,3 +2047,16 @@ Copy this section for each serious experiment:
 - Emits canonical freeze fingerprint.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Next gate: concrete runtime-evidence binding.
+
+
+### EXP-20260927-062 — DEC-377 install-authorization proof runtime evidence freeze
+
+- Bound real DEC-374 proof run `36542684978`, job `109321600936`, and artifact `11020419084`.
+- Artifact/ZIP SHA-256: `f7829f71c481143517b918c7d54b1cb43136edcd50ea9076e3795935bd994384`.
+- Raw install-authorization-preflight SHA-256: `e5de1145a6f39ca42413fb5ce1eed297d8bdcf572923e296d2b6d773e945e45f`.
+- Canonical install-authorization-preflight SHA-256: `994b96d76cf50cfae019d21b4b478d6e0b6ffc0c99fda9efa7c7aa4bf50263dc`.
+- Replays DEC-375 review and DEC-376 freeze; expected DEC-376 fingerprint `fb4c445610884db868a516f9a2086c8d0a6f22d397cb7e8d39806548101c1595`.
+- Pins DEC-334 terminal-review criteria.
+- Active executor workflow path remains absent.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Install / executor / dispatch / execute authority authorized?: NO.

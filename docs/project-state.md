@@ -1721,3 +1721,20 @@ No install, executor, dispatch, execute, reserved-data, or trading authority is
 available.
 
 Next safe step: concrete runtime-evidence binding.
+
+
+## 2026-09-29 — DEC-377 concrete install-authorization proof evidence bound
+
+The successful DEC-374 read-only install-authorization-preflight proof is now
+represented by exact runtime evidence: merged head
+`c23ba694fcf60e2a73280f59fe0bf13d90ffa229`, run `36542684978`, job
+`109321600936`, artifact `11020419084`, matching GitHub/independent ZIP
+SHA-256, and frozen raw/canonical preflight hashes.
+
+DEC-377 replays DEC-375 review and DEC-376 deterministic freezing and requires the
+exact DEC-376 fingerprint. The active executor workflow path remains absent.
+
+No install, executor, dispatch, or execute authority is available. Reserved data and
+all downstream trading paths remain locked.
+
+Next safe step: source-only active workflow install-decision contract.
