@@ -1076,3 +1076,14 @@ __all__ += [
     "freeze_active_one_shot_historical_executor_workflow_install_decision_preflight_proof_runtime_evidence",
     "validate_active_one_shot_historical_executor_workflow_install_decision_preflight_proof_runtime_freeze_sources",
 ]
+
+
+from .exp062_historical_active_one_shot_executor_workflow_install_execution_authorization_contract import (
+    build_active_one_shot_historical_executor_workflow_install_execution_authorization_contract,
+    validate_active_one_shot_historical_executor_workflow_install_execution_authorization_contract_sources,
+)
+
+__all__ += [
+    "build_active_one_shot_historical_executor_workflow_install_execution_authorization_contract",
+    "validate_active_one_shot_historical_executor_workflow_install_execution_authorization_contract_sources",
+]
