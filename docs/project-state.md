@@ -2089,3 +2089,12 @@ The failed run #1 is pinned as provenance and cannot be rewritten as success.
 The active executor workflow remains absent. Actual workflow-install authorization,
 executor availability, historical dispatch, execute mode, reserved data, and all
 downstream trading authority remain locked.
+
+
+## 2026-09-29 — DEC-408 recovery-proof reviewer source-ready
+
+A corrected source-only reviewer now exists for successful DEC-407 recovery
+evidence. It accepts only run #2 / attempt 1, preserves failed DEC-404 provenance,
+and validates the real DEC-403 preflight shape.
+
+No workflow installation or historical-result dispatch authority is introduced.
