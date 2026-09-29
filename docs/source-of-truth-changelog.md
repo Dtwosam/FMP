@@ -1417,3 +1417,12 @@
 - Preserves failed DEC-404 and successful DEC-407 run provenance in one frozen object.
 - Preserves exact recovery proof identities, artifact digest, DEC-403 hashes, and source map.
 - Adds no installation, dispatch, execute-mode, reserved-data, or trading authority.
+
+
+## 2026-09-29 — DEC-410 EXP-062 recovery runtime binding
+
+- Added concrete runtime-evidence binding for successful DEC-407 recovery proof.
+- Preserves failed DEC-404 run #1 and successful DEC-407 run #2 in one immutable lineage.
+- Pins recovery run/job/artifact identities, ZIP digest, raw/canonical DEC-403 hashes, DEC-408 reviewer, DEC-409 freeze builder, and terminal-review contract.
+- Requires exact DEC-409 deterministic freeze fingerprint.
+- Keeps all six source-only gates true while actual install/dispatch/execute/trading authority remains false.
