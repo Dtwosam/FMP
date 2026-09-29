@@ -1340,3 +1340,14 @@ from .exp062_historical_active_one_shot_executor_workflow_install_final_authoriz
 __all__ += [
     "freeze_reviewed_active_one_shot_historical_executor_workflow_install_final_authorization_preflight_proof",
 ]
+
+
+from .exp062_historical_active_one_shot_executor_workflow_install_final_authorization_preflight_proof_runtime_freeze import (
+    freeze_active_one_shot_historical_executor_workflow_install_final_authorization_preflight_proof_runtime_evidence,
+    validate_active_one_shot_historical_executor_workflow_install_final_authorization_preflight_proof_runtime_freeze_sources,
+)
+
+__all__ += [
+    "freeze_active_one_shot_historical_executor_workflow_install_final_authorization_preflight_proof_runtime_evidence",
+    "validate_active_one_shot_historical_executor_workflow_install_final_authorization_preflight_proof_runtime_freeze_sources",
+]

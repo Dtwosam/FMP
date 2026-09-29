@@ -7390,3 +7390,29 @@ adds no install, dispatch, or execute surface and keeps reserved data plus all
 downstream trading paths locked.
 
 Next gate after real DEC-413 evidence: concrete proof runtime-evidence binding.
+
+
+## DEC-416 — EXP-062 final workflow-install authorization proof runtime evidence freeze
+
+**Date:** 2026-09-29  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / INSTALL + EXECUTOR STILL LOCKED
+
+DEC-416 binds the actual successful DEC-413 merged-main proof: head
+`8c7598348ade4ed8ea23458eef958add378c3e6d`, run `36622849087`, job
+`109592333745`, artifact `11058592607`, artifact/ZIP SHA-256
+`8303140ebc7a5e37922080051ab634bc7a6c9f13940d52f3802b1017fd658c7a`,
+raw DEC-412 preflight SHA-256
+`c265d3b6f1d9cc60946438d8fd7bd6d96ad4c976133293558ce0df548a09f730`,
+and canonical SHA-256
+`cca954fa188bf34ed308668563de0fa58226e50e242e65b0b33fac581dc5290c`.
+
+DEC-416 re-runs DEC-414 review and DEC-415 deterministic freezing and requires
+DEC-415 fingerprint
+`4a71a6b29ccea4d5415ce64ca84fc0c43988a2daf98cbe912f4654868b907ffa`.
+All seven source-only gates remain true.
+
+Actual workflow-install authorization, installed state, executor availability,
+historical dispatch, execute mode, reserved data, Phase 8B, demo/live, real-money,
+and trading remain locked.
+
+Next gate: source-only workflow-install action contract before repository mutation.

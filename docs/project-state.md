@@ -2184,3 +2184,18 @@ availability, historical dispatch, execute mode, reserved data, and downstream
 trading paths remain locked.
 
 Next safe gate after real DEC-413 evidence: concrete proof runtime binding.
+
+
+## 2026-09-29 — DEC-416 final authorization proof evidence bound
+
+The successful DEC-413 final-authorization preflight proof is now concretely bound:
+head `8c7598348ade4ed8ea23458eef958add378c3e6d`, run `36622849087`,
+job `109592333745`, artifact `11058592607`, with exact ZIP/raw/canonical hashes
+and DEC-415 fingerprint
+`4a71a6b29ccea4d5415ce64ca84fc0c43988a2daf98cbe912f4654868b907ffa`.
+
+The active executor workflow remains absent. Actual workflow installation,
+historical dispatch, execute mode, reserved data, and all downstream trading
+authority remain locked.
+
+Next safe gate: source-only workflow-install action contract before mutation.
