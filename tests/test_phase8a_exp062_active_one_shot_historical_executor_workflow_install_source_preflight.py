@@ -66,7 +66,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallSourcePreflightTests(
         )
         self.assertEqual(
             source["dec402_install_source_contract"],
-            "736d77cf08169d5d111a411d1a2d9ae6a5e4cbf5",
+            "a09eca21a8b5e7b88182040ada5d9298eb922282",
         )
         self.assertEqual(
             source["dormant_executor_workflow_template"],
