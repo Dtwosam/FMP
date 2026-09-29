@@ -1659,3 +1659,16 @@ execute authority is available. Reserved 2023-2026 data and all downstream tradi
 paths remain locked.
 
 Next safe step: source-only active workflow install-authorization contract.
+
+
+## 2026-09-28 — DEC-372 active install-authorization contract source-ready
+
+The repository stack now contains a source-only install-authorization contract bound
+to the concrete DEC-371 runtime freeze.
+
+The contract permits only review of a future install-authorization source. The active
+executor workflow remains absent and actual install authorization, executor
+availability, dispatch, and execute mode remain false.
+
+The historical slot remains empty and target run #2 / attempt 1 remains the sole
+future historical attempt. Next safe step: read-only install-authorization preflight.
