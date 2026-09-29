@@ -2256,3 +2256,14 @@ Copy this section for each serious experiment:
 - Keeps the active workflow path absent and the historical-result slot unused.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: read-only current-main workflow install-activation preflight.
+
+
+### EXP-20260927-062 — DEC-397 workflow install-activation preflight
+
+- Pinned DEC-396 install-activation contract source.
+- Requires exact current main and active executor workflow path absent.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Preserves all five source-only gates.
+- CLI surface: plan only.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: repository-hosted read-only install-activation preflight proof.

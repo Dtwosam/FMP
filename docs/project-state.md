@@ -1976,3 +1976,15 @@ absent, the historical-result slot remains unused, and downstream trading author
 remains false.
 
 Next safe gate: read-only current-main workflow install-activation preflight.
+
+
+## 2026-09-29 — DEC-397 workflow install-activation preflight source-ready
+
+A read-only current-main preflight now exists for DEC-396. It verifies the
+install-activation contract source, active-workflow absence, and the still-unused
+historical-result slot.
+
+No actual install, executor, dispatch, or execute authority exists. Target historical
+run remains #2 / attempt 1.
+
+Next safe gate: repository-hosted read-only workflow install-activation preflight proof.

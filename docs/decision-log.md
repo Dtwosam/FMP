@@ -7050,3 +7050,20 @@ data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain
 locked.
 
 Next gate: read-only current-main workflow install-activation preflight.
+
+
+## DEC-397 — EXP-062 workflow install-activation preflight
+
+**Date:** 2026-09-29  
+**Status:** READ-ONLY CURRENT-MAIN INSTALL-ACTIVATION PREFLIGHT / NO INSTALL
+
+DEC-397 pins the exact DEC-396 workflow install-activation contract, requires exact
+current main, requires the active executor workflow path to remain absent, and
+rechecks the unused historical-result slot with target run #2 / attempt 1.
+
+All five source-only gates remain true. The CLI exposes only `plan`. Actual
+workflow-install authorization, installed state, executor availability, historical
+dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next gate: repository-hosted read-only workflow install-activation preflight proof.
