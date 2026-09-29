@@ -1949,3 +1949,18 @@ availability, historical dispatch, execute mode, reserved data, and downstream
 trading paths remain locked.
 
 Next safe gate after real DEC-392 evidence: concrete proof runtime binding.
+
+
+## 2026-09-29 — DEC-395 concrete install-execution proof evidence bound
+
+The successful DEC-392 merged-main proof is now concretely bound by DEC-395:
+head `dc1a2cfd5a11595f2ad943277f79e043625bd3e9`, run `36568114050`,
+job `109405007879`, artifact `11032917944`, with exact ZIP/raw/canonical hashes
+and DEC-394 freeze fingerprint
+`9357b1c6591a801237acacf7cb7eab1f5302608770ad7b3033566bda39cb3548`.
+
+The active executor workflow remains absent. Actual workflow-install authorization,
+executor availability, historical dispatch, execute mode, reserved data, and all
+downstream trading paths remain locked.
+
+Next safe gate: source-only active executor workflow install-activation contract.

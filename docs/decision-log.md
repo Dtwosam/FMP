@@ -7006,3 +7006,28 @@ four source-only gates may remain true, but it adds no install, dispatch, or exe
 surface and keeps reserved data plus all downstream trading paths locked.
 
 Next gate after real DEC-392 evidence: concrete proof runtime-evidence binding.
+
+
+## DEC-395 — EXP-062 workflow install-execution preflight proof runtime freeze
+
+**Date:** 2026-09-29  
+**Status:** CONCRETE RUNTIME-EVIDENCE BINDING / NO INSTALL OR DISPATCH
+
+DEC-395 binds the real successful DEC-392 merged-main proof at head
+`dc1a2cfd5a11595f2ad943277f79e043625bd3e9`, run `36568114050`,
+job `109405007879`, and artifact `11032917944`.
+
+It pins artifact/ZIP digest
+`f8119b5845f9ba824caebaa48012d19f41668767b71773d94d305f4f78f5c103`,
+raw DEC-391 preflight hash
+`a9fd545df8c2dc2f05813df5e827f5e9685d5c7c6ea521ca07b6a709ca188601`,
+canonical preflight hash
+`bd91ae808a6ed1fdc24c4fb5b64b8744a13a53fbe3a6d58d0f5062ba26eea78b`,
+and DEC-394 freeze fingerprint
+`9357b1c6591a801237acacf7cb7eab1f5302608770ad7b3033566bda39cb3548`.
+
+All four source-only gates remain true. The active executor workflow path remains
+absent and actual install, executor, dispatch, execute, reserved-data, and trading
+authority remain locked.
+
+Next gate: source-only active executor workflow install-activation contract.
