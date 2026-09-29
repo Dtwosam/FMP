@@ -7227,3 +7227,23 @@ install, dispatch, reserved-data, and trading authority false.
 
 Next gate after a successful recovery run: source-only review/freeze of the concrete
 DEC-407 proof evidence.
+
+
+## DEC-408 — Review successful DEC-407 recovery proof evidence
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY RECOVERY REVIEW / NO INSTALL OR DISPATCH
+
+DEC-408 reviews only a successful workflow run #2 / attempt 1 from the DEC-407
+recovery workflow. It pins the corrected recovery workflow source, exact DEC-403
+preflight/CLI, DEC-402 source contract, dormant executor template, and active
+discovery workflow.
+
+The failed DEC-404 run/job/head remain explicit provenance in the reviewed result.
+No recovery review may reclassify run #1 as successful.
+
+Actual workflow-install authorization, installed state, historical executor
+availability, historical-result dispatch, execute mode, reserved data, and all
+downstream trading authority remain false.
+
+Next gate: deterministic immutable recovery-proof freeze.
