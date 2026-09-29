@@ -2130,3 +2130,14 @@ Copy this section for each serious experiment:
 - Actual install / installed / executor / dispatch / execute authority?: NO.
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Next gate: read-only current-main install-execution authorization preflight.
+
+
+### EXP-20260927-062 — DEC-385 install-execution authorization preflight
+
+- Pinned DEC-384 install-execution authorization contract source.
+- Requires exact current main and active executor workflow path absent.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Preserves all three source-only authorization gates.
+- CLI surface: plan only.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: repository-hosted read-only execution-authorization preflight proof.
