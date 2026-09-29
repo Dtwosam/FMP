@@ -6707,3 +6707,22 @@ state, executor availability, historical dispatch, execute mode, reserved data, 
 all downstream trading paths remain locked.
 
 Next gate: repository-hosted read-only install-decision-preflight proof.
+
+
+## DEC-380 — EXP-062 active executor workflow install-decision preflight proof
+
+**Date:** 2026-09-29  
+**Status:** REPOSITORY-HOSTED READ-ONLY PROOF / NO INSTALL OR DISPATCH
+
+DEC-380 adds a first-run/attempt-1 push-to-main proof for DEC-379. It pins exact
+DEC-378/379 source identities, the dormant executor template, active discovery
+workflow, and pinned planning runtime.
+
+The workflow uses only contents/actions read permissions, invokes only the DEC-379
+`plan` surface, requires the active executor workflow path absent, and verifies zero
+historical-result attempts with target run #2 / attempt 1.
+
+A successful run uploads only the install-decision-preflight JSON. No installation,
+historical dispatch, execute mode, or downstream trading authority is added.
+
+Next gate after real successful runtime evidence: immutable proof review/freeze.
