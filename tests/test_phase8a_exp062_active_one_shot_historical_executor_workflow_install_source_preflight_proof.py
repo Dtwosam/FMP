@@ -81,7 +81,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallSourcePreflightProofTe
     def test_workflow_persists_only_source_preflight_artifact(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "exp062-dec398-active-one-shot-historical-executor-"
+            "exp062-dec404-active-one-shot-historical-executor-"
             "workflow-install-source-preflight-${{ github.sha }}",
             text,
         )
