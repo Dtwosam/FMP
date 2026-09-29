@@ -1862,3 +1862,15 @@ executor workflow or dispatch historical discovery.
 The active workflow path remains absent and all install/executor/dispatch/trading
 authority remains locked. Next safe gate after real DEC-386 evidence: immutable
 review freeze.
+
+
+## 2026-09-29 — DEC-388 install-execution authorization proof freeze source-ready
+
+A deterministic freeze now exists for valid DEC-387 review evidence. It preserves
+the reviewed DEC-386 proof without creating runtime evidence or changing authority.
+
+The active executor workflow remains absent. Actual install authorization, executor
+availability, historical dispatch, execute mode, reserved data, and downstream
+trading paths remain locked.
+
+Next safe gate after real DEC-386 evidence: concrete proof runtime binding.

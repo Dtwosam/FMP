@@ -2162,3 +2162,12 @@ Copy this section for each serious experiment:
 - Revalidates execution-authorization preflight content and records raw/canonical hashes.
 - Preserves all three source-only gates while actual install / executor / dispatch / execute authority remains NO.
 - Next gate after real evidence: immutable review freeze.
+
+
+### EXP-20260927-062 — DEC-388 install-execution authorization proof freeze
+
+- Added deterministic source-only freeze for valid DEC-387 review evidence.
+- Preserves DEC-386 proof identities, artifact digest, DEC-385 preflight hashes, source map, and active-workflow-absent state.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
+- Next gate after real DEC-386 evidence: concrete runtime-evidence binding.
