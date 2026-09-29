@@ -1342,3 +1342,12 @@
 - Requires exact successful proof run/job/artifact shape.
 - Revalidates DEC-397 preflight content and records raw/canonical hashes.
 - Preserves all five source-only gates and adds no install, dispatch, or execute mode.
+
+
+## 2026-09-29 — DEC-400 EXP-062 install-activation proof freeze
+
+- Added deterministic source-only freeze for valid DEC-399 review evidence.
+- Preserves exact DEC-398 runtime identities, artifact digest, DEC-397 preflight hashes, and source map.
+- Preserves all five source-only gates and active executor workflow path absent state.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Adds no install, dispatch, or execute surface and keeps downstream authority locked.
