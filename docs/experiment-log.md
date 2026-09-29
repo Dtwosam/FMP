@@ -2351,3 +2351,13 @@ Copy this section for each serious experiment:
 - Revalidates DEC-403 preflight content and records raw/canonical hashes.
 - Preserves all six source-only gates.
 - Actual install / executor / dispatch / execute authority authorized?: NO.
+
+
+### EXP-20260927-062 — DEC-406 workflow-install source proof freeze
+
+- Added deterministic source-only freeze for valid DEC-405 review evidence.
+- Preserves DEC-404 proof identities, artifact digest, DEC-403 preflight hashes, source map, and active-workflow-absent state.
+- Preserves all six source-only gates.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
+- Next gate after real DEC-404 evidence: concrete runtime-evidence binding.
