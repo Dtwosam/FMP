@@ -2320,3 +2320,14 @@ Copy this section for each serious experiment:
 - Actual install / executor / dispatch / execute authority?: NO.
 - Historical-result attempts remain zero; target remains run #2 / attempt 1.
 - Next gate: read-only current-main workflow-install source preflight.
+
+
+### EXP-20260927-062 — DEC-403 workflow-install source preflight
+
+- Pinned DEC-402 workflow-install source contract.
+- Requires exact current main and active executor workflow path absent.
+- Confirms zero historical-result attempts and target run #2 / attempt 1.
+- Preserves all six source-only gates.
+- CLI surface: plan only.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate: repository-hosted read-only source-preflight proof.
