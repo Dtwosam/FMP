@@ -6673,3 +6673,20 @@ installed state, executor availability, dispatch, execute mode, reserved data, a
 all downstream trading paths remain locked.
 
 Next gate: source-only active workflow install-decision contract.
+
+
+## DEC-378 — EXP-062 active executor workflow install-decision contract
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY INSTALL-DECISION CONTRACT / NO INSTALL OR DISPATCH
+
+DEC-378 pins the concrete DEC-377 runtime-evidence freeze at fingerprint
+`24619aed5578085ee3e2d3555e1b109817d9816042f646446dbc406b20f13593`
+and the exact dormant executor template. It authorizes only the source contract for
+the future workflow-install decision.
+
+The active executor workflow path remains absent. Actual install authorization,
+installed state, executor availability, historical dispatch, execute mode, reserved
+data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next gate: read-only current-main active executor workflow install-decision preflight.
