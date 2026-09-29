@@ -1472,3 +1472,13 @@
 - Preserves all seven source-only gates and active-workflow-absent state.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Adds no install, dispatch, or execute surface.
+
+
+## 2026-09-29 — DEC-416 EXP-062 final authorization proof runtime binding
+
+- Bound exact successful DEC-413 run/job/artifact identities.
+- Verified artifact ZIP digest and raw/canonical DEC-412 preflight hashes.
+- Re-runs DEC-414 review and DEC-415 deterministic freezing.
+- Pins DEC-415 fingerprint `4a71a6b29ccea4d5415ce64ca84fc0c43988a2daf98cbe912f4654868b907ffa`.
+- Preserves all seven source-only gates.
+- Adds no workflow installation, dispatch, execute mode, or trading authority.
