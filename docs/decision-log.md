@@ -6747,3 +6747,20 @@ locked.
 
 Next gate after real successful DEC-380 evidence: deterministic immutable review
 freeze.
+
+
+## DEC-382 — EXP-062 active workflow install-decision preflight proof freeze
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY DETERMINISTIC REVIEW FREEZE / NO INSTALL OR DISPATCH
+
+DEC-382 adds a deterministic source-only freeze for a valid DEC-381 review. It
+preserves exact runtime identities, artifact digest, DEC-379 preflight hashes,
+source map, dormant-template identity, active workflow-absent state, and target
+historical run #2 / attempt 1.
+
+The freeze emits one canonical fingerprint for later concrete runtime binding. It
+adds no install, dispatch, or execute surface and keeps reserved data plus all
+downstream trading paths locked.
+
+Next gate after real DEC-380 evidence: concrete proof runtime-evidence binding.
