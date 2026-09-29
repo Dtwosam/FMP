@@ -1305,3 +1305,12 @@
   `9357b1c6591a801237acacf7cb7eab1f5302608770ad7b3033566bda39cb3548`.
 - Preserves all four source-only gates and active executor workflow path absent state.
 - Adds no install, dispatch, or execute surface; downstream authority remains locked.
+
+
+## 2026-09-29 — DEC-396 EXP-062 final workflow-install contract
+
+- Added a distinct source-only final workflow-install contract bound to DEC-395.
+- Pins DEC-395 blob/fingerprint and the dormant executor template.
+- Preserves the DEC-360 module and all historical source pins unchanged.
+- Preserves four predecessor source-only gates and adds only the final-install contract source gate.
+- Keeps actual install, dispatch, execute mode, reserved data, and downstream trading authority locked.
