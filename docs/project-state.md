@@ -1964,3 +1964,15 @@ executor availability, historical dispatch, execute mode, reserved data, and all
 downstream trading paths remain locked.
 
 Next safe gate: source-only active executor workflow install-activation contract.
+
+
+## 2026-09-29 — DEC-396 workflow install-activation contract source-ready
+
+The corrected DEC-395 runtime evidence now feeds a source-only workflow
+install-activation contract. No historical contract module was modified or reused.
+
+Actual workflow installation remains locked; the active executor workflow is still
+absent, the historical-result slot remains unused, and downstream trading authority
+remains false.
+
+Next safe gate: read-only current-main workflow install-activation preflight.
