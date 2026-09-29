@@ -6913,3 +6913,22 @@ data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain
 locked.
 
 Next gate: source-only workflow install-execution contract.
+
+
+## DEC-390 — EXP-062 active workflow install-execution contract
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY INSTALL-EXECUTION CONTRACT / NO INSTALL OR DISPATCH
+
+DEC-390 binds the concrete DEC-389 runtime-evidence freeze at fingerprint
+`3517e83d30097041e7a8a74219d6da8b6fe77cf6ae3f048bffec923913826bc1`
+and the exact dormant executor template. The real predecessor proof head is
+`cdbef40d1c9908650155933ae5073909ad9be24d`.
+
+The prior source-only gates remain true and DEC-390 authorizes only the
+install-execution contract source. The active executor workflow path remains absent.
+Actual install authorization, installed state, executor availability, historical
+dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next gate: read-only current-main workflow install-execution preflight.
