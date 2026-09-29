@@ -2235,3 +2235,14 @@ Copy this section for each serious experiment:
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Actual install / executor / dispatch / execute authority authorized?: NO.
 - Next gate after real DEC-392 evidence: concrete runtime-evidence binding.
+
+
+### EXP-20260927-062 — DEC-395 install-execution proof runtime freeze
+
+- Bound real DEC-392 merged-main proof head/run/job/artifact identities.
+- Bound GitHub artifact digest plus raw/canonical DEC-391 preflight hashes.
+- Replays DEC-393 review and DEC-394 deterministic freeze.
+- Requires DEC-394 fingerprint `9357b1c6591a801237acacf7cb7eab1f5302608770ad7b3033566bda39cb3548`.
+- Preserves all four source-only gates.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
+- Next gate: source-only workflow install contract.
