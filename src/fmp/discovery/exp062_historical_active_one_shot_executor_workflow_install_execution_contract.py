@@ -139,7 +139,7 @@ def _validate_runtime_freeze(value: Mapping[str, object]) -> None:
             "EXECUTION_AUTHORIZATION_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BOUND_AND_FROZEN"
         ),
         "active_install_execution_authorization_preflight_proof_head_sha": (
-            "fa96bc731ed8d21cec883451f7ec5e984b74df40"
+            "cdbef40d1c9908650155933ae5073909ad9be24d"
         ),
         "active_install_execution_authorization_preflight_proof_run_id": 36558750341,
         "active_install_execution_authorization_preflight_proof_job_id": 109374198795,
