@@ -2341,3 +2341,13 @@ Copy this section for each serious experiment:
 - Confirms all six source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
 - Uploads only the source-preflight JSON.
 - Actual install / executor / dispatch / execute authority?: NO.
+
+
+### EXP-20260927-062 — DEC-405 workflow-install source-preflight reviewer
+
+- Added source-only review of future DEC-404 runtime evidence.
+- Pinned DEC-404/403/402 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates DEC-403 preflight content and records raw/canonical hashes.
+- Preserves all six source-only gates.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
