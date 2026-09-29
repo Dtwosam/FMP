@@ -1491,3 +1491,12 @@
 - Preserves seven predecessor source-only gates and adds the action-contract source gate.
 - Requires the active executor workflow path to remain absent.
 - Adds no workflow installation, dispatch, execute mode, reserved-data, or trading authority.
+
+
+## 2026-09-29 — DEC-418 EXP-062 workflow-install action preflight
+
+- Added current-main read-only preflight bound to DEC-417.
+- Pins DEC-417 source identity and dormant executor template.
+- Requires active executor workflow path absent and historical slot unused.
+- Preserves all eight source-only gates.
+- Exposes only a plan surface; no install, execute, advance, or dispatch command exists.
