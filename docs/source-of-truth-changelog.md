@@ -1390,3 +1390,12 @@
 - Invokes only the read-only source-preflight plan surface.
 - Verifies all six source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
 - Uploads only the source-preflight JSON and never installs or dispatches anything.
+
+
+## 2026-09-29 — DEC-406 EXP-062 workflow-install source proof freeze
+
+- Added deterministic source-only freeze for valid DEC-405 review evidence.
+- Preserves exact DEC-404 runtime identities, artifact digest, DEC-403 preflight hashes, and source map.
+- Preserves all six source-only gates and active executor workflow path absent state.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Adds no install, dispatch, or execute surface and keeps downstream authority locked.
