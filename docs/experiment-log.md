@@ -2405,3 +2405,14 @@ Copy this section for each serious experiment:
 - CLI surface: plan only.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: repository-hosted read-only final-authorization preflight proof.
+
+
+### EXP-20260927-062 — DEC-413 final authorization preflight proof
+
+- Added push-to-main first-run/attempt-1 read-only proof for DEC-412.
+- Pinned DEC-411/412 source identities, dormant template, discovery workflow, and planning runtime.
+- Invokes only the final-authorization preflight plan surface.
+- Confirms seven source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
+- Uploads only the final-authorization-preflight JSON.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate after success: immutable proof review/freeze.

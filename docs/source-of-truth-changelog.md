@@ -1444,3 +1444,13 @@
 - Preserves all seven source-only gates.
 - Exposes only a plan surface; no install, execute, advance, or dispatch command exists.
 - Keeps downstream trading authority locked.
+
+
+## 2026-09-29 — DEC-413 EXP-062 final authorization preflight proof
+
+- Added first-run/attempt-1 push-to-main proof for DEC-412.
+- Uses only contents/actions read permissions.
+- Pins DEC-411/412 source identities and planning dependencies.
+- Invokes only the read-only final-authorization preflight plan surface.
+- Verifies all seven source-only gates and keeps actual install/dispatch/execute authority false.
+- Uploads only the final-authorization-preflight JSON.
