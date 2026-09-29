@@ -127,7 +127,7 @@ def _jobs() -> dict[str, object]:
                 "id": ACTIVE_INSTALL_FINAL_AUTHORIZATION_PREFLIGHT_PROOF_JOB_ID,
                 "name": (
                     "read-only-active-one-shot-historical-executor-"
-                    "workflow-install-execution-preflight"
+                    "workflow-install-final-authorization-preflight"
                 ),
                 "status": "completed",
                 "conclusion": "success",
@@ -143,7 +143,7 @@ def _artifacts() -> dict[str, object]:
                 "id": ACTIVE_INSTALL_FINAL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_ID,
                 "name": (
                     "exp062-dec413-active-one-shot-historical-executor-workflow-"
-                    "install-execution-preflight-"
+                    "install-final-authorization-preflight-"
                     + ACTIVE_INSTALL_FINAL_AUTHORIZATION_PREFLIGHT_PROOF_HEAD_SHA
                 ),
                 "digest": ACTIVE_INSTALL_FINAL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_DIGEST,
