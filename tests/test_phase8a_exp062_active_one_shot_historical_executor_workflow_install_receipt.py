@@ -16,7 +16,11 @@ from fmp.discovery.exp062_historical_active_one_shot_executor_workflow_install_r
 )
 
 
-@unittest.skipIf(\n    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",\n    "DEC-424 current-state tests require the installed workflow",\n)\nclass Exp062ActiveOneShotHistoricalExecutorWorkflowInstallReceiptTests(
+@unittest.skipIf(
+    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
+    "DEC-424 current-state tests require the installed workflow",
+)
+class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallReceiptTests(
     unittest.TestCase
 ):
     def test_active_workflow_is_exact_pinned_template(self) -> None:
