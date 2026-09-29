@@ -2181,3 +2181,14 @@ Copy this section for each serious experiment:
 - Bound exact DEC-385 raw/canonical hashes and DEC-388 freeze fingerprint `594b2db3aa50b5c09d7f53a4635cea40b4e566fddd0d16a6574e1322ef8a48af`.
 - Active executor workflow remains absent; install/executor/dispatch/execute authority remains NO.
 - Next gate: source-only workflow install-execution contract.
+
+
+### EXP-20260927-062 — DEC-390 install-execution contract
+
+- Pinned DEC-389 runtime-freeze source and fingerprint.
+- Correctly binds real DEC-386 merged head `cdbef40d1c9908650155933ae5073909ad9be24d`.
+- Preserves install-authorization, install-decision, and install-execution-authorization source-only gates.
+- Install-execution contract source authorized?: YES.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Next gate: read-only current-main workflow install-execution preflight.
