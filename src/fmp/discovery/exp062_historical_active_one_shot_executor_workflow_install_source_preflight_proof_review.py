@@ -28,11 +28,11 @@ PROOF_JOB_NAME = (
 )
 
 _EXPECTED_SOURCE_BLOBS = {
-    "dec404_workflow": "0171d279fbcf3e2dfc1000cbbc1aafa18f89c55e",
-    "dec403_preflight": "43885d54f09665e2452d39b03f19420dc47e16cf",
+    "dec404_workflow": "819725442ea3b559c8b852e60b2e1929990afa47",
+    "dec403_preflight": "cb8ca1ca5b65e9703844d3df9b0a622e2e3ed1bc",
     "dec403_preflight_cli": "1c9615b7ee55ff1387cd95464abf2202f8dd9d3f",
     "dec402_install_source_contract": (
-        "86ca3303a468c0f22dbb40a521a14ca072841847"
+        "a09eca21a8b5e7b88182040ada5d9298eb922282"
     ),
     "dormant_executor_workflow_template": (
         "51ce87584369be957482460d81649adb1cb9f05d"
@@ -179,7 +179,7 @@ def _parse_preflight(
             "source-contract-v1"
         ),
         "dec402_install_source_contract": (
-            "86ca3303a468c0f22dbb40a521a14ca072841847"
+            "a09eca21a8b5e7b88182040ada5d9298eb922282"
         ),
         "dormant_executor_workflow_template_path": (
             "docs/superpowers/templates/"
