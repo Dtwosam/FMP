@@ -1409,3 +1409,11 @@
 - Removed the invalid historical assumption that DEC-403 emits an install-source slot field.
 - Preserved failed DEC-404 run/job/head as immutable lineage.
 - Added no install, dispatch, execute, reserved-data, or trading authority.
+
+
+## 2026-09-29 — DEC-409 recovery-proof freeze
+
+- Added deterministic source-only freeze for DEC-408 recovery reviews.
+- Preserves failed DEC-404 and successful DEC-407 run provenance in one frozen object.
+- Preserves exact recovery proof identities, artifact digest, DEC-403 hashes, and source map.
+- Adds no installation, dispatch, execute-mode, reserved-data, or trading authority.
