@@ -1400,3 +1400,12 @@
 - Added exact run #2 / attempt 1 recovery semantics on the same read-only workflow.
 - Pinned failed run `36613664506`, failed job `109561121322`, and failed head `0db04ae49b3533778b08afa31e9ef9a26576b80c`.
 - Removed no runtime lock and added no installation or historical-dispatch authority.
+
+
+## 2026-09-29 — DEC-408 recovery-proof reviewer
+
+- Added strict source-only review for DEC-407 recovery run #2 / attempt 1.
+- Pinned corrected recovery workflow, DEC-403 preflight/CLI, and DEC-402 contract.
+- Removed the invalid historical assumption that DEC-403 emits an install-source slot field.
+- Preserved failed DEC-404 run/job/head as immutable lineage.
+- Added no install, dispatch, execute, reserved-data, or trading authority.
