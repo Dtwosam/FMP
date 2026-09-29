@@ -1190,3 +1190,12 @@
 - Replays DEC-381 review and DEC-382 freeze and requires exact DEC-382 fingerprint.
 - Independently requires artifact ZIP SHA-256 to match the GitHub artifact digest.
 - Keeps active executor workflow absent and all install/executor/dispatch/trading authority locked.
+
+
+## 2026-09-29 — DEC-384 EXP-062 install-execution authorization contract
+
+- Added source-only install-execution authorization contract bound to DEC-383.
+- Pinned DEC-383 runtime-freeze blob and fingerprint plus dormant-template identity.
+- Requires the active executor workflow path to remain absent.
+- Authorizes only install-execution authorization source; actual install remains false.
+- Keeps executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
