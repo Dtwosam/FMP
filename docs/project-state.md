@@ -1988,3 +1988,16 @@ No actual install, executor, dispatch, or execute authority exists. Target histo
 run remains #2 / attempt 1.
 
 Next safe gate: repository-hosted read-only workflow install-activation preflight proof.
+
+
+## 2026-09-29 — DEC-398 workflow install-activation preflight proof source-ready
+
+A repository-hosted first-run/attempt-1 proof now exists for DEC-397. It is
+push-to-main only, read-only, source-pinned, and can emit only the
+install-activation-preflight JSON artifact.
+
+The active executor workflow path remains absent. Actual install authorization,
+executor availability, historical dispatch, execute mode, reserved data, and all
+downstream trading authority remain locked.
+
+Next safe gate after a real successful proof run: immutable review/freeze.

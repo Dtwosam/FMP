@@ -7067,3 +7067,23 @@ dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live,
 real-money, and trading remain locked.
 
 Next gate: repository-hosted read-only workflow install-activation preflight proof.
+
+
+## DEC-398 — EXP-062 workflow install-activation preflight proof
+
+**Date:** 2026-09-29  
+**Status:** REPOSITORY-HOSTED READ-ONLY PROOF / NO INSTALL OR DISPATCH
+
+DEC-398 adds a first-run/attempt-1 push-to-main proof for DEC-397. It pins exact
+DEC-396/397 source identities, the dormant executor template, active discovery
+workflow, and pinned planning runtime.
+
+The workflow uses only contents/actions read permissions, invokes only the DEC-397
+`plan` surface, requires the active executor workflow path absent, and verifies zero
+historical-result attempts with target run #2 / attempt 1.
+
+A successful run uploads only the install-activation-preflight JSON. Actual
+workflow installation, historical dispatch, execute mode, and downstream trading
+authority remain locked.
+
+Next gate after real successful runtime evidence: immutable proof review/freeze.

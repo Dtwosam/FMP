@@ -2267,3 +2267,13 @@ Copy this section for each serious experiment:
 - CLI surface: plan only.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: repository-hosted read-only install-activation preflight proof.
+
+
+### EXP-20260927-062 — DEC-398 workflow install-activation preflight proof
+
+- Added push-to-main first-run/attempt-1 read-only proof for DEC-397.
+- Pinned DEC-396/397 source identities, dormant template, active discovery workflow, and runtime requirements.
+- Invokes only the install-activation preflight plan surface.
+- Confirms all five source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
+- Uploads only the activation-preflight JSON.
+- Actual install / executor / dispatch / execute authority?: NO.
