@@ -45,7 +45,7 @@ def _reviewed() -> dict[str, object]:
         "action_preflight_decision": "DEC-418",
         "action_preflight_version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-preflight-v1",
         "install_action_contract_decision": "DEC-417",
-        "final_authorization_contract_version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-contract-v1",
+        "install_action_contract_version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-contract-v1",
         "dormant_executor_workflow_template_blob_sha": "51ce87584369be957482460d81649adb1cb9f05d",
         "expected_executor_workflow_path": ".github/workflows/phase8a-exp062-one-shot-historical-executor.yml",
         "executor_workflow_path_exists": False,
