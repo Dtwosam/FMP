@@ -2091,3 +2091,13 @@ Copy this section for each serious experiment:
 - Uploads only the install-decision-preflight JSON.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate after success: immutable proof review/freeze.
+
+
+### EXP-20260927-062 — DEC-381 install-decision proof reviewer
+
+- Added source-only review of future DEC-380 runtime evidence.
+- Pinned DEC-380/379/378 source identities, dormant executor template, and active discovery workflow.
+- Requires exact successful proof run/job/artifact shape.
+- Revalidates install-decision preflight content and records raw/canonical hashes.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Next gate after real evidence: immutable review freeze.
