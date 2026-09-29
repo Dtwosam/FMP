@@ -1974,3 +1974,17 @@ Copy this section for each serious experiment:
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Reserved data and all downstream trading paths remain locked.
 - Next gate after real proof: concrete runtime-evidence binding.
+
+
+### EXP-20260927-062 — DEC-371 active workflow-installation proof runtime evidence freeze
+
+- Bound real DEC-368 proof run `36484309283`, job `109137344254`, and artifact `10997847720`.
+- Artifact/ZIP SHA-256: `d122e474752f1ec8127eb610b55321dbf94cc7dcb339eca43eafb7e429ef4a07`.
+- Raw installation-preflight SHA-256: `5bf7760c7ad36e642eeeaf9e29b5fb0e5108a4059207ff2d7d75bd4c9f6bcf3b`.
+- Canonical installation-preflight SHA-256: `30de670f8483139b23fbd51bd05444677278fd7d1ba1f1eb8f0cc33409cf3a74`.
+- Replays DEC-369 review and DEC-370 freeze; expected DEC-370 fingerprint `51e47a3d6d2876b52e2090714e6f89b4c2ce0ae2d869d79e5b2cd4586c774af6`.
+- Pins DEC-334 terminal-review criteria.
+- Active executor workflow path remains absent.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Reserved data and all downstream trading paths remain locked.
