@@ -35,7 +35,8 @@ ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_RUN_ID = 36542684978
 ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_JOB_ID = 109321600936
 ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_ID = 11020419084
 ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_NAME = (
-    "exp062-dec362-active-one-shot-historical-executor-workflow-install-authorization-preflight-"
+    "exp062-dec374-active-one-shot-historical-executor-workflow-"
+    "install-authorization-preflight-"
     "c23ba694fcf60e2a73280f59fe0bf13d90ffa229"
 )
 ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_DIGEST = (
@@ -66,10 +67,12 @@ EXPECTED_EXECUTOR_WORKFLOW_PATH = (
 )
 
 _REVIEW_SOURCE_BLOBS = {
-    "dec362_workflow": "57b9ea6a4025ee3883a104608f61dd840990801b",
-    "dec361_preflight": "e7a40563e173709e04a63f4d08ac73aa7224a15d",
-    "dec361_preflight_cli": "f8c5f2d892fe9b3ac8492d6e142fbf698cd2bcdf",
-    "dec360_install_contract": "63d645115dec87a4ec2bbec8448a26ea7cdded34",
+    "dec374_workflow": "e68a4c60d4411431b0c7fdfad0fa564fc4e5ccf6",
+    "dec373_preflight": "8f6a1523bddf419a915bc797e310a5c520baf62a",
+    "dec373_preflight_cli": "64e205c12882e9d14a84fd719ef94907a2bb2ad0",
+    "dec372_install_authorization_contract": (
+        "ac4876d6b544567c238d9241ee050b763c2ed630"
+    ),
     "dormant_executor_workflow_template": (
         DORMANT_EXECUTOR_WORKFLOW_TEMPLATE_BLOB_SHA
     ),
@@ -235,7 +238,7 @@ def _validate_reviewed_result(value: Mapping[str, object]) -> None:
             "review_source_blobs": _REVIEW_SOURCE_BLOBS,
             "next_gate": (
                 "IMMUTABLE_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-                "PREFLIGHT_PROOF_FREEZE_BEFORE_INSTALL"
+                "AUTHORIZATION_PREFLIGHT_PROOF_FREEZE_BEFORE_INSTALL"
             ),
         },
         prefix="DEC-377 reviewed result",
@@ -247,7 +250,7 @@ def _validate_reviewed_result(value: Mapping[str, object]) -> None:
             )
 
 
-def _validate_dec364_freeze(value: Mapping[str, object]) -> None:
+def _validate_dec376_freeze(value: Mapping[str, object]) -> None:
     _require_exact(
         value,
         {
@@ -304,7 +307,7 @@ def _validate_dec364_freeze(value: Mapping[str, object]) -> None:
             "freeze_fingerprint_sha256": DEC376_FREEZE_FINGERPRINT_SHA256,
             "next_gate": (
                 "CONCRETE_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-                "PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BINDING_BEFORE_INSTALL"
+                "AUTHORIZATION_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BINDING_BEFORE_INSTALL"
             ),
         },
         prefix="DEC-377 DEC-376 freeze",
@@ -356,7 +359,7 @@ def freeze_active_one_shot_historical_executor_workflow_install_authorization_pr
             expected_head_sha=ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_HEAD_SHA,
         )
     )
-    _validate_dec364_freeze(frozen_review)
+    _validate_dec376_freeze(frozen_review)
 
     artifact_zip_sha256 = _validate_sha256(
         artifact_zip_sha256,
@@ -382,36 +385,38 @@ def freeze_active_one_shot_historical_executor_workflow_install_authorization_pr
             "EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
             "AUTHORIZATION_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BOUND_AND_FROZEN"
         ),
-        "active_install_preflight_proof_head_sha": (
+        "active_install_authorization_preflight_proof_head_sha": (
             ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_HEAD_SHA
         ),
-        "active_install_preflight_proof_run_id": (
+        "active_install_authorization_preflight_proof_run_id": (
             ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_RUN_ID
         ),
-        "active_install_preflight_proof_run_number": 1,
-        "active_install_preflight_proof_run_attempt": 1,
-        "active_install_preflight_proof_run_conclusion": "success",
-        "active_install_preflight_proof_job_id": (
+        "active_install_authorization_preflight_proof_run_number": 1,
+        "active_install_authorization_preflight_proof_run_attempt": 1,
+        "active_install_authorization_preflight_proof_run_conclusion": "success",
+        "active_install_authorization_preflight_proof_job_id": (
             ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_JOB_ID
         ),
-        "active_install_preflight_proof_artifact_id": (
+        "active_install_authorization_preflight_proof_artifact_id": (
             ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_ID
         ),
-        "active_install_preflight_proof_artifact_name": (
+        "active_install_authorization_preflight_proof_artifact_name": (
             ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_NAME
         ),
-        "active_install_preflight_proof_artifact_digest": (
+        "active_install_authorization_preflight_proof_artifact_digest": (
             ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_DIGEST
         ),
-        "active_install_preflight_proof_artifact_zip_sha256": (
+        "active_install_authorization_preflight_proof_artifact_zip_sha256": (
             ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_PROOF_ARTIFACT_ZIP_SHA256
         ),
-        "active_install_preflight_raw_sha256": ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_RAW_SHA256,
-        "active_install_preflight_canonical_sha256": (
+        "active_install_authorization_preflight_raw_sha256": (
+            ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_RAW_SHA256
+        ),
+        "active_install_authorization_preflight_canonical_sha256": (
             ACTIVE_INSTALL_AUTHORIZATION_PREFLIGHT_CANONICAL_SHA256
         ),
-        "dec363_review_decision": reviewed["decision"],
-        "dec363_review_version": reviewed["version"],
+        "dec375_review_decision": reviewed["decision"],
+        "dec375_review_version": reviewed["version"],
         "dec376_freeze_decision": frozen_review["decision"],
         "dec376_freeze_version": frozen_review["version"],
         "dec376_freeze_fingerprint_sha256": DEC376_FREEZE_FINGERPRINT_SHA256,
@@ -464,7 +469,7 @@ def freeze_active_one_shot_historical_executor_workflow_install_authorization_pr
         "trading_authorized": False,
         "next_gate": (
             "SOURCE_ONLY_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_"
-            "WORKFLOW_INSTALLATION_CONTRACT"
+            "WORKFLOW_INSTALL_DECISION_CONTRACT"
         ),
     }
     frozen["runtime_freeze_fingerprint_sha256"] = hashlib.sha256(
