@@ -1032,3 +1032,16 @@ __all__ += [
     "build_active_one_shot_historical_executor_workflow_install_decision_contract",
     "validate_active_one_shot_historical_executor_workflow_install_decision_contract_sources",
 ]
+
+
+from .exp062_historical_active_one_shot_executor_workflow_install_decision_preflight import (
+    build_active_one_shot_historical_executor_workflow_install_decision_preflight,
+    validate_active_one_shot_historical_executor_workflow_install_decision_preflight,
+    validate_active_one_shot_historical_executor_workflow_install_decision_preflight_sources,
+)
+
+__all__ += [
+    "build_active_one_shot_historical_executor_workflow_install_decision_preflight",
+    "validate_active_one_shot_historical_executor_workflow_install_decision_preflight",
+    "validate_active_one_shot_historical_executor_workflow_install_decision_preflight_sources",
+]
