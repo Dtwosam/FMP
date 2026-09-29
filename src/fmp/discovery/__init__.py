@@ -1142,3 +1142,16 @@ __all__ += [
     "build_active_one_shot_historical_executor_workflow_install_execution_contract",
     "validate_active_one_shot_historical_executor_workflow_install_execution_contract_sources",
 ]
+
+
+from .exp062_historical_active_one_shot_executor_workflow_install_execution_preflight import (
+    build_active_one_shot_historical_executor_workflow_install_execution_preflight,
+    validate_active_one_shot_historical_executor_workflow_install_execution_preflight,
+    validate_active_one_shot_historical_executor_workflow_install_execution_preflight_sources,
+)
+
+__all__ += [
+    "build_active_one_shot_historical_executor_workflow_install_execution_preflight",
+    "validate_active_one_shot_historical_executor_workflow_install_execution_preflight",
+    "validate_active_one_shot_historical_executor_workflow_install_execution_preflight_sources",
+]

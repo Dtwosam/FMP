@@ -1901,3 +1901,15 @@ availability, historical dispatch, execute mode, reserved data, and all downstre
 trading authority remain locked.
 
 Next safe gate: read-only current-main workflow install-execution preflight.
+
+
+## 2026-09-29 — DEC-391 install-execution preflight source-ready
+
+A read-only current-main preflight now exists for the DEC-390 workflow
+install-execution contract. It verifies source identity, active-workflow absence,
+the still-unused historical-result slot, and all four source-only gates.
+
+No actual install, executor, dispatch, or execute authority exists. Target historical
+run remains #2 / attempt 1.
+
+Next safe gate: repository-hosted read-only workflow install-execution preflight proof.

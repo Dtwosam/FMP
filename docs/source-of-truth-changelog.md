@@ -1256,3 +1256,13 @@
 - Requires the active executor workflow path to remain absent.
 - Authorizes only the install-execution contract source; actual install remains false.
 - Keeps executor availability, dispatch, execute mode, reserved data, and all downstream trading paths locked.
+
+
+## 2026-09-29 — DEC-391 EXP-062 workflow install-execution preflight
+
+- Added current-main read-only preflight bound to DEC-390.
+- Pins DEC-390 source identity and dormant executor template.
+- Requires active executor workflow path absent and historical slot unused.
+- Preserves all four source-only gates.
+- Exposes only a plan surface; no install, execute, advance, or dispatch command exists.
+- Keeps all downstream trading authority locked.
