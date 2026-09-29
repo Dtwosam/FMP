@@ -1306,3 +1306,11 @@
 - Preserves all four source-only gates and active executor workflow path absent state.
 - Adds no install, dispatch, or execute surface; downstream authority remains locked.
 - Next gate: source-only active executor workflow install-activation contract.
+
+
+## 2026-09-29 — DEC-396 EXP-062 workflow install-activation contract
+
+- Added a source-only workflow install-activation contract bound to corrected DEC-395.
+- Pins DEC-395 blob/fingerprint and the dormant executor template.
+- Preserves four predecessor source-only gates and adds only the install-activation source gate.
+- Keeps actual install, dispatch, execute mode, reserved data, and downstream trading authority locked.
