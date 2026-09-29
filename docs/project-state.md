@@ -1799,3 +1799,16 @@ availability, historical dispatch, execute mode, reserved data, and downstream
 trading paths remain locked.
 
 Next safe gate after real DEC-380 evidence: concrete proof runtime binding.
+
+
+## 2026-09-29 — DEC-383 concrete install-decision proof evidence bound
+
+The successful DEC-380 merged-main proof has now been bound to concrete immutable
+runtime identities and hashes. DEC-381 review and DEC-382 deterministic freezing are
+replayed against that exact evidence.
+
+The active executor workflow remains absent. Actual install authorization, installed
+state, executor availability, historical dispatch, execute mode, reserved data, and
+all downstream trading authority remain locked.
+
+Next safe gate: source-only workflow install-execution authorization contract.
