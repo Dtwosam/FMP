@@ -1209,3 +1209,13 @@
 - Preserves install-authorization, install-decision, and install-execution authorization as source-only gates.
 - Exposes only a plan surface; no install, execute, advance, or dispatch command exists.
 - Keeps all downstream trading authority locked.
+
+
+## 2026-09-29 — DEC-386 EXP-062 install-execution authorization preflight proof
+
+- Added first-run/attempt-1 push-to-main proof for DEC-385.
+- Uses only contents/actions read permissions.
+- Pins DEC-384/385 source identities, dormant template, discovery workflow, and planning runtime.
+- Invokes only the read-only execution-authorization preflight plan surface.
+- Verifies all three source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
+- Uploads only the preflight JSON and never installs or dispatches anything.
