@@ -43,7 +43,7 @@ def _reviewed() -> dict[str, object]:
         "preflight_raw_sha256": "2" * 64,
         "preflight_canonical_sha256": "3" * 64,
         "action_preflight_decision": "DEC-418",
-        "final_authorization_preflight_version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-preflight-v1",
+        "action_preflight_version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-preflight-v1",
         "install_action_contract_decision": "DEC-417",
         "final_authorization_contract_version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-action-contract-v1",
         "dormant_executor_workflow_template_blob_sha": "51ce87584369be957482460d81649adb1cb9f05d",
@@ -117,7 +117,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallActionPreflightProofFr
             first["next_gate"],
             (
                 "CONCRETE_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-                "FINAL_AUTHORIZATION_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BINDING_BEFORE_INSTALL"
+                "ACTION_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BINDING_BEFORE_INSTALL"
             ),
         )
         unsigned = dict(first)
