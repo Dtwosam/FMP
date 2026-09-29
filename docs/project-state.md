@@ -1672,3 +1672,18 @@ availability, dispatch, and execute mode remain false.
 
 The historical slot remains empty and target run #2 / attempt 1 remains the sole
 future historical attempt. Next safe step: read-only install-authorization preflight.
+
+
+## 2026-09-28 — DEC-373 read-only install-authorization preflight source-ready
+
+The repository stack now includes a current-main preflight for the future active
+workflow install-authorization decision.
+
+It proves the active workflow file is still absent and the historical-result slot
+remains unused. The CLI has plan only; no install, execute, advance, or dispatch path
+exists.
+
+Target run #2 / attempt 1 remains the sole future historical attempt. Reserved
+2023-2026 data and all downstream trading paths remain locked.
+
+Next safe step: repository-hosted read-only install-authorization preflight proof.
