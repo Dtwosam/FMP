@@ -25,7 +25,7 @@ def _preflight() -> dict[str, object]:
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-"
             "source-contract-v1"
         ),
-        "dec402_install_source_contract_blob_sha": (
+        "dec402_install_source_contract": (
             "54aa308e0f51acd8613ad117a7ccd57c7ae1eaef"
         ),
         "dormant_executor_workflow_template_path": (
@@ -182,7 +182,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallAuthorizationPreflight
         )
         self.assertEqual(
             report["dec404_workflow"],
-            "84cc9a70d0f29c07025781bd7d434c7c157199ef",
+            "1d08f85ac11402ce373b1f17a0867606fa6b86cf",
         )
         self.assertEqual(
             report["dec403_preflight"],
