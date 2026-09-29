@@ -1361,3 +1361,13 @@
 - Replays merged DEC-399 review and DEC-400 deterministic freeze.
 - Requires exact DEC-400 fingerprint 441c508902f816faee66c58768552a7d3ab05f0b145193a3e6349f18c9062808.
 - Preserves all five source-only gates while actual install, dispatch, execute mode, and downstream trading authority remain locked.
+
+
+## 2026-09-29 — DEC-402 EXP-062 workflow-install source contract
+
+- Added a new source-only workflow-install contract bound to DEC-401.
+- Preserved the historical DEC-360 contract module unchanged.
+- Pinned DEC-401 runtime-freeze blob and fingerprint plus dormant-template identity.
+- Adds only the final workflow-install source gate.
+- Requires the active executor workflow path to remain absent.
+- Keeps actual install, executor availability, dispatch, execute mode, reserved data, and downstream trading authority locked.
