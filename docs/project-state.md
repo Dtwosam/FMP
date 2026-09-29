@@ -1709,3 +1709,15 @@ future executor workflow or dispatch historical discovery.
 
 The active workflow path remains absent and all install/executor/dispatch/trading
 authority remains locked. Next safe gate: immutable review freeze.
+
+
+## 2026-09-29 — DEC-376 install-authorization proof freeze source-ready
+
+A deterministic source-only freeze now exists for a valid DEC-375 review of the
+successful DEC-374 proof. It preserves exact reviewed proof identities/hashes and the
+active workflow-absent state, then emits one canonical fingerprint.
+
+No install, executor, dispatch, execute, reserved-data, or trading authority is
+available.
+
+Next safe step: concrete runtime-evidence binding.
