@@ -2038,3 +2038,16 @@ availability, historical dispatch, execute mode, reserved data, and downstream
 trading authority remain locked.
 
 Next safe gate: source-only active executor workflow-install contract.
+
+
+## 2026-09-29 — DEC-402 workflow-install source contract ready
+
+The concrete DEC-401 runtime evidence is now consumed by a new source-only
+workflow-install contract. The historical DEC-360 contract remains immutable.
+
+All six source-only gates may now be true. The active executor workflow remains
+absent, and actual install authorization, executor availability, historical
+dispatch, execute mode, reserved data, and all downstream trading authority remain
+locked.
+
+Next safe gate: read-only current-main workflow-install source preflight.

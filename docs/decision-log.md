@@ -7151,3 +7151,21 @@ historical dispatch, execute mode, reserved data, candidate/promotion, Phase 8B,
 demo/live, real-money, and trading remain locked.
 
 Next gate: source-only active executor workflow-install contract.
+
+
+## DEC-402 — EXP-062 active workflow-install source contract
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY WORKFLOW-INSTALL CONTRACT / NO INSTALL OR DISPATCH
+
+DEC-402 binds the concrete DEC-401 runtime-evidence freeze at fingerprint
+`e2ee9e46bfe0a0fc132c5ce3f06bbad343ddb739ccaf0d22893886d1f41fbd2c`
+without modifying the historical DEC-360 contract module.
+
+The five predecessor source-only gates remain true. DEC-402 adds only the final
+workflow-install source gate. The active executor workflow path remains absent.
+Actual install authorization, installed state, executor availability, historical
+dispatch, execute mode, reserved data, candidate/promotion, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next gate: read-only current-main workflow-install source preflight.
