@@ -6628,3 +6628,22 @@ installed state, executor availability, dispatch, execute mode, retries, reserve
 data, candidate/promotion, Phase 8B, demo/live, real-money, and trading remain locked.
 
 Next gate: deterministic immutable review freeze.
+
+
+## DEC-376 — EXP-062 active install-authorization preflight proof freeze
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY DETERMINISTIC FREEZE / NO INSTALL OR EXECUTOR
+
+DEC-376 freezes an already-valid DEC-375 review of successful DEC-374 evidence. It
+preserves exact proof run/job/artifact identities, artifact digest, raw/canonical
+preflight hashes, DEC-373/372 identities, dormant executor-template identity, the
+active workflow-absent state, target run #2 / attempt 1, and the exact review source
+map.
+
+The freeze emits one canonical fingerprint for later concrete runtime binding.
+Actual install authorization, installed state, executor availability, dispatch,
+execute mode, retries, reserved data, candidate/promotion, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next gate: concrete runtime-evidence binding.
