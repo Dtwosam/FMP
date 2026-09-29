@@ -48,8 +48,8 @@ jobs:
       - name: Require frozen DEC-417/418 source identities
         run: |
           set -euo pipefail
-          test "$(git hash-object src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_action_contract.py)" = "7931d86d7b567894767f17efa990fbdac63e613e"
-          test "$(git hash-object src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_action_preflight.py)" = "1ad045d64cc1fa3fb3e01185e3fa86e93bf2451f"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_action_contract.py)" = "7d65e3b4359726d6cd920f31ceab84fdba88e922"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_action_preflight.py)" = "2d499f52b423bce5771c932e75a8196e0428304d"
           test "$(git hash-object scripts/phase8a_exp062_active_one_shot_historical_executor_workflow_install_action_preflight.py)" = "9bd7815b58b9f057cf560f2c1d8874ee46bbd44a"
           test "$(git hash-object docs/superpowers/templates/phase8a-exp062-one-shot-historical-executor.yml.disabled)" = "51ce87584369be957482460d81649adb1cb9f05d"
           test "$(git hash-object .github/workflows/phase8a-exp062-discovery.yml)" = "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50"
@@ -111,7 +111,7 @@ jobs:
               "install-action-contract-v1"
           )
           assert plan["dec417_install_action_contract_blob_sha"] == (
-              "7931d86d7b567894767f17efa990fbdac63e613e"
+              "7d65e3b4359726d6cd920f31ceab84fdba88e922"
           )
           assert plan["expected_head_sha"] == os.environ["GITHUB_SHA"]
           assert plan["stage"] == (
