@@ -15,16 +15,16 @@ EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_ACTION_PREFLIGHT_PRO
 
 PROOF_WORKFLOW_NAME = (
     "phase8a-exp062-active-one-shot-historical-executor-"
-    "workflow-install-final-authorization-preflight-proof"
+    "workflow-install-action-preflight-proof"
 )
 PROOF_WORKFLOW_PATH = (
     ".github/workflows/"
     "phase8a-exp062-active-one-shot-historical-executor-"
-    "workflow-install-final-authorization-preflight-proof.yml"
+    "workflow-install-action-preflight-proof.yml"
 )
 PROOF_JOB_NAME = (
     "read-only-active-one-shot-historical-executor-"
-    "workflow-install-final-authorization-preflight"
+    "workflow-install-action-preflight"
 )
 
 _EXPECTED_SOURCE_BLOBS = {
@@ -174,7 +174,7 @@ def _parse_preflight(
             "install-action-preflight-v1"
         ),
         "install_action_contract_decision": "DEC-417",
-        "final_authorization_contract_version": (
+        "install_action_contract_version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-"
             "install-action-contract-v1"
         ),
@@ -298,8 +298,8 @@ def review_active_one_shot_historical_executor_workflow_install_final_authorizat
         field="DEC-420 proof artifact id",
     )
     artifact_name = (
-        "exp062-dec413-active-one-shot-historical-executor-workflow-"
-        "install-final-authorization-preflight-"
+        "exp062-dec419-active-one-shot-historical-executor-workflow-"
+        "install-action-preflight-"
         f"{expected_head_sha}"
     )
     if artifact.get("name") != artifact_name:
@@ -391,7 +391,7 @@ def review_active_one_shot_historical_executor_workflow_install_final_authorizat
         "review_source_blobs": source_blobs,
         "next_gate": (
             "IMMUTABLE_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_"
-            "FINAL_AUTHORIZATION_PREFLIGHT_PROOF_FREEZE_BEFORE_INSTALL"
+            "ACTION_PREFLIGHT_PROOF_FREEZE_BEFORE_INSTALL"
         ),
     }
 
