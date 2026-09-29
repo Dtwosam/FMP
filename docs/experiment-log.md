@@ -2309,3 +2309,14 @@ Copy this section for each serious experiment:
 - Required DEC-400 freeze fingerprint: 441c508902f816faee66c58768552a7d3ab05f0b145193a3e6349f18c9062808.
 - All five source-only gates remain true; actual install/executor/dispatch/execute authority remains false.
 - Next gate: source-only workflow-install contract.
+
+
+### EXP-20260927-062 — DEC-402 workflow-install source contract
+
+- Pinned DEC-401 runtime-freeze source and fingerprint.
+- Preserved the historical DEC-360 install-contract blob unchanged.
+- Preserves all five predecessor source-only gates.
+- Final workflow-install source gate authorized?: YES.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Historical-result attempts remain zero; target remains run #2 / attempt 1.
+- Next gate: read-only current-main workflow-install source preflight.
