@@ -7541,3 +7541,25 @@ and trading remain locked.
 
 Next gate: a separate explicit repository-mutation authorization before the active
 executor workflow can be installed.
+
+## DEC-423 — EXP-062 active workflow repository-mutation authorization
+
+**Date:** 2026-09-30  
+**Status:** EXPLICIT INSTALL MUTATION AUTHORIZED / WORKFLOW STILL ABSENT
+
+DEC-423 records explicit operator authorization to perform the repository mutation
+that installs the active one-shot historical executor workflow.
+
+The decision pins DEC-422 runtime-freeze blob
+`65108857f15b6ab084bbb5f8a0358b7bbd4aaa59` and fingerprint
+`cce3b8900f630ddf0e651af10ceba39311f1e00485f6bca99af28252195aae0f`,
+plus the exact dormant executor template blob.
+
+DEC-423 changes only
+`historical_executor_workflow_install_authorized=true`. The active workflow path
+remains absent under this decision. Installed state, executor availability,
+historical dispatch, execute mode, reserved data, Phase 8B, demo/live, real-money,
+and trading remain locked.
+
+Next gate: active workflow installation as a repository mutation. No historical
+dispatch is authorized by DEC-423.
