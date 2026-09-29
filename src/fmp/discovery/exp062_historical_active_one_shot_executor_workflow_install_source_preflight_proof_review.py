@@ -28,7 +28,7 @@ PROOF_JOB_NAME = (
 )
 
 _EXPECTED_SOURCE_BLOBS = {
-    "dec404_workflow": "84cc9a70d0f29c07025781bd7d434c7c157199ef",
+    "dec404_workflow": "1d08f85ac11402ce373b1f17a0867606fa6b86cf",
     "dec403_preflight": "53108d08f8a952b990115bddeff1a325d80b8569",
     "dec403_preflight_cli": "1c9615b7ee55ff1387cd95464abf2202f8dd9d3f",
     "dec402_install_source_contract": (
@@ -178,7 +178,7 @@ def _parse_preflight(
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-"
             "source-contract-v1"
         ),
-        "dec402_install_source_contract_blob_sha": (
+        "dec402_install_source_contract": (
             "54aa308e0f51acd8613ad117a7ccd57c7ae1eaef"
         ),
         "dormant_executor_workflow_template_path": (
