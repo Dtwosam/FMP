@@ -2037,3 +2037,13 @@ Copy this section for each serious experiment:
 - Records raw/canonical preflight SHA-256 hashes.
 - Install / executor / dispatch / execute authority authorized?: NO.
 - Next gate: immutable review freeze.
+
+
+### EXP-20260927-062 — DEC-376 install-authorization proof freeze
+
+- Deterministic freeze added for a valid DEC-375 review.
+- Preserves proof run/job/artifact identity plus raw/canonical preflight hashes.
+- Preserves active workflow-absent state and target run #2 / attempt 1.
+- Emits canonical freeze fingerprint.
+- Install / executor / dispatch / execute authority authorized?: NO.
+- Next gate: concrete runtime-evidence binding.
