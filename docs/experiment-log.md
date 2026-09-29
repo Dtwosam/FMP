@@ -2141,3 +2141,14 @@ Copy this section for each serious experiment:
 - CLI surface: plan only.
 - Actual install / executor / dispatch / execute authority?: NO.
 - Next gate: repository-hosted read-only execution-authorization preflight proof.
+
+
+### EXP-20260927-062 — DEC-386 install-execution authorization preflight proof
+
+- Added push-to-main first-run/attempt-1 read-only proof for DEC-385.
+- Pinned DEC-384/385, dormant template, active discovery workflow, and runtime source identities.
+- Invokes only the execution-authorization preflight plan surface.
+- Confirms all three source-only gates, zero historical-result attempts, and target run #2 / attempt 1.
+- Uploads only the execution-authorization-preflight JSON.
+- Actual install / executor / dispatch / execute authority?: NO.
+- Next gate after success: immutable proof review/freeze.
