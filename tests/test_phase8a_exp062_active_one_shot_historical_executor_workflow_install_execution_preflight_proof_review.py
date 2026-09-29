@@ -180,7 +180,7 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallAuthorizationPreflight
         )
         self.assertEqual(
             report["dec392_workflow"],
-            "7d79ba9e86d64b0f9f156b284550c246a5e53131",
+            "cf6003478eb0a4a7a5dbe11d03a7c5dae1d3b9ac",
         )
         self.assertEqual(
             report["dec391_preflight"],

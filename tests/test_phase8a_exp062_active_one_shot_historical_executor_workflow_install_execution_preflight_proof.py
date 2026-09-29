@@ -35,10 +35,10 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallExecutionPreflightProo
         text = WORKFLOW.read_text(encoding="utf-8")
         expected = {
             "src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_execution_contract.py": (
-                "a3507bf9d44426b88f877e0dfa3ce77d299acb20"
+                "a48fc70ae1c40e32dbba7fc24922c92b6051fd1e"
             ),
             "src/fmp/discovery/exp062_historical_active_one_shot_executor_workflow_install_execution_preflight.py": (
-                "9305eb1f92acb18c37f04b23ebd3f635a428b662"
+                "d3f38e26b71ff09590cc4c76632c9fbfa30e45a3"
             ),
             "scripts/phase8a_exp062_active_one_shot_historical_executor_workflow_install_execution_preflight.py": (
                 "4871c17989845989bb29f03015a81e0187ffa994"
