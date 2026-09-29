@@ -2426,3 +2426,12 @@ Copy this section for each serious experiment:
 - Revalidates DEC-412 preflight content and records raw/canonical hashes.
 - Preserves all seven source-only gates.
 - Actual install / executor / dispatch / execute authority authorized?: NO.
+
+
+### EXP-20260927-062 — DEC-415 final authorization proof freeze
+
+- Added deterministic source-only freeze for valid DEC-414 review evidence.
+- Preserves DEC-413 proof identities, artifact digest, DEC-412 hashes, and source map.
+- Preserves all seven source-only gates.
+- Emits a canonical freeze fingerprint for later concrete runtime binding.
+- Actual install / executor / dispatch / execute authority authorized?: NO.
