@@ -138,7 +138,7 @@ def _validate_review(
         "install_action_contract_decision": "DEC-417",
         "install_action_contract_version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-"
-            "install-action-contract-v1"
+            "action-contract-v1"
         ),
         "dormant_executor_workflow_template_blob_sha": (
             "51ce87584369be957482460d81649adb1cb9f05d"
