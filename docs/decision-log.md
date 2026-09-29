@@ -7298,3 +7298,26 @@ installed state, executor availability, historical dispatch, execute mode,
 reserved-data access, Phase 8B, demo/live, real-money, and trading remain locked.
 
 Next gate: source-only final workflow-install authorization contract before install.
+
+
+## DEC-411 — Final workflow-install authorization contract
+
+**Date:** 2026-09-29  
+**Status:** SOURCE-ONLY FINAL AUTHORIZATION CONTRACT / NO INSTALL OR DISPATCH
+
+DEC-411 consumes the concrete DEC-410 recovery runtime freeze and adds only a final
+source-only workflow-install authorization contract.
+
+It pins DEC-410 blob
+`705c08d50a8dfcae5391a0b240d78fea5716a8de` and runtime fingerprint
+`77fa5c98293226176d71a759af44f23e434987a57c66d343c13f7f727202e853`.
+
+The six predecessor source-only gates remain true. DEC-411 adds the seventh
+source-only gate:
+`active_one_shot_historical_executor_workflow_install_final_authorization_contract_source_authorized=true`.
+
+Actual workflow-install authorization remains false. The active workflow path
+remains absent, and executor availability, historical dispatch, execute mode,
+reserved-data access, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next gate: read-only current-main final workflow-install authorization preflight.
