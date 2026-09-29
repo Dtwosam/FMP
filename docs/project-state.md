@@ -2278,3 +2278,19 @@ Phase 8B, demo/live, real-money, or trading authority is introduced.
 
 Next safe gate: separate explicit repository-mutation authorization before any
 active workflow installation.
+
+## 2026-09-30 — DEC-423 active workflow mutation authorized
+
+Explicit operator authorization has been recorded for the repository mutation that
+will install the active one-shot historical executor workflow.
+
+The authorization is bound to DEC-422 fingerprint
+`cce3b8900f630ddf0e651af10ceba39311f1e00485f6bca99af28252195aae0f`
+and dormant-template blob `51ce87584369be957482460d81649adb1cb9f05d`.
+
+Install authorization is now true at the DEC-423 boundary, but the active workflow
+is still absent. Installed state, executor availability, historical dispatch,
+execute mode, reserved-data access, and every downstream trading authority remain
+false.
+
+Next safe gate: install the active workflow from the exact pinned dormant template.
