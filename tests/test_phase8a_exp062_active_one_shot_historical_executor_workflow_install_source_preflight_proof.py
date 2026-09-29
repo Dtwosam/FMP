@@ -46,43 +46,72 @@ class Exp062ActiveOneShotHistoricalExecutorWorkflowInstallSourcePreflightProofTe
                 self.assertIn(f"git hash-object {path}", text)
                 self.assertIn(blob, text)
 
+    def test_workflow_is_exact_run_two_recovery(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
+        self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
+        self.assertIn('test "$(git rev-parse origin/main)" = "$GITHUB_SHA"', text)
+        self.assertIn("36613664506", text)
+        self.assertIn("109561121322", text)
+        self.assertIn("0db04ae49b3533778b08afa31e9ef9a26576b80c", text)
+        self.assertIn('assert run["conclusion"] == "failure"', text)
+        self.assertIn(
+            '"Run exact DEC-403 read-only install-source preflight"',
+            text,
+        )
+        self.assertIn(
+            '"Verify install-source-ready active path absent preflight and all locks"',
+            text,
+        )
+
+    def test_recovery_verifier_uses_real_dec403_fields(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("install_source_slot_verified_available", text)
+        self.assertIn(
+            'assert plan["historical_result_slot_verified_available"] is True',
+            text,
+        )
+        self.assertIn('assert plan["proof_run_count"] == 1', text)
+        self.assertIn('assert plan["historical_result_attempt_count"] == 0', text)
+        self.assertIn('assert plan["expected_target_run_number"] == 2', text)
+        self.assertIn('assert plan["expected_target_run_attempt"] == 1', text)
+
     def test_workflow_invokes_plan_only_and_never_installs_or_dispatches(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
             "python scripts/phase8a_exp062_active_one_shot_historical_executor_workflow_install_source_preflight.py plan",
             text,
         )
-        self.assertNotIn(" install", text.split("preflight.py plan")[0][-30:])
         self.assertNotIn("gh workflow run ", text)
+        self.assertNotIn("actions: write", text)
 
-    def test_workflow_requires_first_exact_main_and_absent_active_path(self) -> None:
-        text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
-        self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
-        self.assertIn('test "$(git rev-parse origin/main)" = "$GITHUB_SHA"', text)
-        self.assertIn(
-            "test ! -e .github/workflows/phase8a-exp062-one-shot-historical-executor.yml",
-            text,
-        )
-
-    def test_workflow_proves_source_gate_and_runtime_locks(self) -> None:
+    def test_workflow_proves_source_gates_and_runtime_locks(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('assert plan["decision"] == "DEC-403"', text)
         self.assertIn(
             'assert plan["install_source_contract_decision"] == "DEC-402"',
             text,
         )
-        self.assertIn("install_source_authorized", text)
-        self.assertIn("historical_executor_workflow_install_authorized", text)
-        self.assertIn("historical_result_dispatch_authorized", text)
-        self.assertIn("historical_execute_mode_available", text)
-        self.assertIn("trading_authorized", text)
+        for field in (
+            "install_authorization_source_authorized",
+            "install_decision_source_authorized",
+            "install_execution_authorization_source_authorized",
+            "install_execution_contract_source_authorized",
+            "install_activation_source_authorized",
+            "install_source_authorized",
+            "historical_executor_workflow_install_authorized",
+            "historical_result_dispatch_authorized",
+            "historical_execute_mode_available",
+            "trading_authorized",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(field, text)
 
-    def test_workflow_persists_only_source_preflight_artifact(self) -> None:
+    def test_workflow_persists_only_recovery_preflight_artifact(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "exp062-dec404-active-one-shot-historical-executor-"
-            "workflow-install-source-preflight-${{ github.sha }}",
+            "exp062-dec407-active-one-shot-historical-executor-"
+            "workflow-install-source-preflight-recovery-${{ github.sha }}",
             text,
         )
         self.assertIn(
