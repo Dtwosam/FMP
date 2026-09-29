@@ -1265,3 +1265,14 @@ __all__ += [
     "validate_active_one_shot_historical_executor_workflow_install_source_preflight",
     "validate_active_one_shot_historical_executor_workflow_install_source_preflight_sources",
 ]
+
+
+from .exp062_historical_active_one_shot_executor_workflow_install_source_preflight_proof_recovery_review import (
+    review_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery,
+    validate_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery_review_sources,
+)
+
+__all__ += [
+    "review_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery",
+    "validate_active_one_shot_historical_executor_workflow_install_source_preflight_proof_recovery_review_sources",
+]
