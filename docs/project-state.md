@@ -2076,3 +2076,16 @@ executor availability, historical dispatch, execute mode, reserved data, and all
 downstream trading authority remain locked.
 
 Next safe gate after a real successful proof run: immutable review/freeze.
+
+
+## 2026-09-29 — DEC-407 explicit proof recovery source-ready
+
+DEC-404 run #1 failed after the DEC-403 preflight itself succeeded. The failure was
+isolated to the proof wrapper verifying a field DEC-403 does not emit.
+
+DEC-407 now provides an explicit, fail-closed recovery path for run #2 / attempt 1.
+The failed run #1 is pinned as provenance and cannot be rewritten as success.
+
+The active executor workflow remains absent. Actual workflow-install authorization,
+executor availability, historical dispatch, execute mode, reserved data, and all
+downstream trading authority remain locked.
