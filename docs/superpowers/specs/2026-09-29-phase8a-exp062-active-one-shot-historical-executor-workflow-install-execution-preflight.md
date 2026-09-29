@@ -25,7 +25,7 @@ A valid preflight requires:
 
 - exact current-main head identity;
 - DEC-390 contract blob
-  `a3507bf9d44426b88f877e0dfa3ce77d299acb20`;
+  `a48fc70ae1c40e32dbba7fc24922c92b6051fd1e`;
 - dormant executor template unchanged;
 - active executor workflow path absent;
 - zero historical-result attempts;
