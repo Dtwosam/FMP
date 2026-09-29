@@ -20,7 +20,7 @@ from fmp.discovery.exp062_historical_active_one_shot_executor_workflow_install_s
 _RUNTIME_FREEZE_JSON = r"""{
   "decision": "DEC-401",
   "version": "fmp-exp062-active-one-shot-historical-executor-workflow-install-activation-preflight-proof-runtime-freeze-v1",
-  "stage": "EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_SOURCE_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BOUND_AND_FROZEN",
+  "stage": "EXP062_ACTIVE_ONE_SHOT_HISTORICAL_EXECUTOR_WORKFLOW_INSTALL_ACTIVATION_PREFLIGHT_PROOF_RUNTIME_EVIDENCE_BOUND_AND_FROZEN",
   "active_install_activation_preflight_proof_head_sha": "9dd433b406bef6dc8660d897ccab5bcb1b0da99b",
   "active_install_activation_preflight_proof_run_id": 36579901387,
   "active_install_activation_preflight_proof_run_number": 1,
