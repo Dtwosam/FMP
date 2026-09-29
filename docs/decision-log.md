@@ -7338,3 +7338,22 @@ dispatch, execute mode, reserved-data access, Phase 8B, demo/live, real-money, a
 trading remain locked.
 
 Next gate: repository-hosted read-only final-authorization preflight proof.
+
+
+## DEC-413 — Final workflow-install authorization preflight proof
+
+**Date:** 2026-09-29  
+**Status:** REPOSITORY-HOSTED READ-ONLY PROOF / NO INSTALL OR DISPATCH
+
+DEC-413 adds a first-run/attempt-1 push-to-main proof for DEC-412. It pins exact
+DEC-411/412 source identities, the dormant executor template, active discovery
+workflow, and pinned planning runtime.
+
+The workflow uses only contents/actions read permissions, invokes only the DEC-412
+`plan` surface, requires the active executor workflow path absent, and verifies all
+seven source-only gates plus zero historical-result attempts.
+
+A successful run uploads only the final-authorization-preflight JSON. No install,
+historical dispatch, execute mode, or downstream trading authority is added.
+
+Next gate after real successful runtime evidence: immutable proof review/freeze.
