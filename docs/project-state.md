@@ -1825,3 +1825,16 @@ availability, historical dispatch, execute mode, reserved data, and all downstre
 trading authority remain locked.
 
 Next safe gate: read-only current-main install-execution authorization preflight.
+
+
+## 2026-09-29 — DEC-385 install-execution authorization preflight source-ready
+
+A read-only current-main preflight now exists for the DEC-384 install-execution
+authorization contract. It verifies source identity, active-workflow absence, the
+still-unused historical-result slot, and the complete source-only authorization
+chain.
+
+No actual install, executor, dispatch, or execute authority exists. Target historical
+run remains #2 / attempt 1.
+
+Next safe gate: repository-hosted read-only install-execution authorization preflight proof.
