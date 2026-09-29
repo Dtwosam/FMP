@@ -1738,3 +1738,16 @@ No install, executor, dispatch, or execute authority is available. Reserved data
 all downstream trading paths remain locked.
 
 Next safe step: source-only active workflow install-decision contract.
+
+
+## 2026-09-29 — DEC-378 install-decision source contract ready
+
+The concrete DEC-377 install-authorization proof evidence is now consumed by a
+source-only workflow install-decision contract. The contract is pinned to DEC-377
+fingerprint `24619aed5578085ee3e2d3555e1b109817d9816042f646446dbc406b20f13593`.
+
+The active executor workflow remains absent. Actual install authorization, executor
+availability, historical dispatch, execute mode, reserved data, and all downstream
+trading authority remain locked.
+
+Next safe gate: read-only current-main install-decision preflight.
