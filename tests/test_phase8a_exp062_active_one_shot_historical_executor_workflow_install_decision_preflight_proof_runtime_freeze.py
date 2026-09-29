@@ -73,7 +73,7 @@ def _preflight() -> dict[str, object]:
         "install_decision_contract_decision": "DEC-378",
         "install_decision_contract_version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-"
-            "authorization-contract-v1"
+            "decision-contract-v1"
         ),
         "install_decision_slot_verified_available": True,
         "live_order_authorized": False,
@@ -98,7 +98,7 @@ def _preflight() -> dict[str, object]:
         "trading_authorized": False,
         "version": (
             "fmp-exp062-active-one-shot-historical-executor-workflow-install-"
-            "authorization-preflight-v1"
+            "decision-preflight-v1"
         ),
     }
 
