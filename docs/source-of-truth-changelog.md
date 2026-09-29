@@ -1527,3 +1527,12 @@
 - Preserves all eight source-only gates and active-workflow-absent state.
 - Emits a canonical freeze fingerprint for later concrete runtime binding.
 - Adds no install, dispatch, or execute surface.
+
+## 2026-09-29 — DEC-422 EXP-062 workflow-install action proof runtime binding
+
+- Bound exact successful DEC-419 run/job/artifact identities.
+- Verified artifact ZIP digest and raw/canonical DEC-418 preflight hashes.
+- Re-runs DEC-420 review and DEC-421 deterministic freezing.
+- Pins DEC-421 fingerprint `78bcceaf580672b97858ec972c590300316f8b7b369137ca96e957c39d1d9a5d`.
+- Preserves all eight source-only gates.
+- Adds no workflow installation, dispatch, execute mode, reserved-data, or trading authority.
