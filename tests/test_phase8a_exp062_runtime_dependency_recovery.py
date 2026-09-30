@@ -126,20 +126,24 @@ class Exp062RuntimeDependencyRecoveryTests(unittest.TestCase):
         )
         self.assertGreaterEqual(text.count("assert artifacts == []"), 2)
 
-    def test_pinned_runtime_is_installed_before_authorization_import(self) -> None:
+    def test_authorization_bypasses_package_initialization(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        install = (
-            "python -m pip install -r requirements/exp061-discovery-run.txt"
-        )
-        imported = (
-            "from fmp.discovery."
-            "exp062_historical_one_shot_executor_recovery_runtime_dependency_authorization "
-            "import ("
-        )
         self.assertIn('python-version: "3.12.14"', text)
-        self.assertIn(install, text)
-        self.assertIn(imported, text)
-        self.assertLess(text.index(install), text.index(imported))
+        self.assertIn("import runpy", text)
+        self.assertIn(
+            'source = runpy.run_path(',
+            text,
+        )
+        self.assertIn(
+            '"exp062_historical_one_shot_executor_recovery_runtime_dependency_authorization.py"',
+            text,
+        )
+        self.assertNotIn(
+            "from fmp.discovery.exp062_historical_one_shot_executor_"
+            "recovery_runtime_dependency_authorization import",
+            text,
+        )
+        self.assertNotIn("python -m pip install", text)
         self.assertIn(
             'test "$(git hash-object requirements/exp061-discovery-run.txt)" = '
             '"1ff32214dee10d877a067e750cd69ffad96d5fe5"',
