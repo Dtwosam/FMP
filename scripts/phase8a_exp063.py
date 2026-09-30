@@ -25,7 +25,6 @@ from fmp.discovery.exp063_persistence_miner import (
 )
 from fmp.discovery.exp063_runtime_source import (
     runtime_source_payload,
-    validate_installed_runtime_paths,
     validate_runtime_dependencies,
     validate_source_snapshots,
 )
@@ -69,9 +68,6 @@ def _cmd_status(args: argparse.Namespace) -> int:
     value["runtime_dependencies"] = validate_runtime_dependencies(
         repository_root=Path("."),
     )
-    value["installed_runtime"] = validate_installed_runtime_paths(
-        repository_root=Path("."),
-    )
     value["execution_authorization"] = (
         historical_execution_authorization_payload(
             code_commit=args.code_commit,
@@ -106,9 +102,6 @@ def _cmd_preflight(args: argparse.Namespace) -> int:
         code_commit=args.code_commit,
     )
     value["runtime_dependencies"] = validate_runtime_dependencies(
-        repository_root=Path("."),
-    )
-    value["installed_runtime"] = validate_installed_runtime_paths(
         repository_root=Path("."),
     )
     value["execution_authorization"] = (
