@@ -1611,3 +1611,13 @@
 - Preserves explicit authorization only for executor run #1 / attempt 1.
 - Executor run count and historical-result attempt count remain zero.
 - General execute mode, rerun/retry/replacement, reserved data, and trading remain locked.
+
+
+## 2026-09-30 — DEC-436 one-shot executor fail-closed recovery
+
+- Preserved failed original executor run `36702494195` / job `109844958600`.
+- Confirmed failure occurred before historical dispatch and produced no artifact.
+- Preserved the original executor workflow blob unchanged.
+- Added a separate manual-only recovery workflow with exact run #1 / attempt 1.
+- Historical result target remains run #2 / attempt 1 with zero attempts consumed.
+- Generic rerun/retry/replacement and all trading authority remain locked.
