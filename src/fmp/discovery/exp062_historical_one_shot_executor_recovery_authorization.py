@@ -15,9 +15,6 @@ EXP062_ONE_SHOT_EXECUTOR_RECOVERY_AUTHORIZATION_VERSION = (
 )
 
 DEC435_RUNTIME_FREEZE_BLOB_SHA = "d70fb2ef8f55462be278dd22e42a733b5e03fc67"
-DEC435_RUNTIME_FREEZE_FINGERPRINT_SHA256 = (
-    "16d186a5ca8bef2d1940532855f821de6324c80334850ea42e0adb4f0dfba362"
-)
 ORIGINAL_EXECUTOR_WORKFLOW_PATH = (
     ".github/workflows/phase8a-exp062-one-shot-historical-executor.yml"
 )
@@ -114,9 +111,6 @@ def build_one_shot_executor_recovery_authorization(
         "authorization_basis": (
             "explicit_recovery_after_fail_closed_executor_run_number_drift"
         ),
-        "dec435_runtime_freeze_fingerprint_sha256": (
-            DEC435_RUNTIME_FREEZE_FINGERPRINT_SHA256
-        ),
         "failed_executor_run_id": FAILED_EXECUTOR_RUN_ID,
         "failed_executor_job_id": FAILED_EXECUTOR_JOB_ID,
         "failed_executor_head_sha": FAILED_EXECUTOR_HEAD_SHA,
@@ -159,7 +153,6 @@ def build_one_shot_executor_recovery_authorization(
 
 __all__ = [
     "DEC435_RUNTIME_FREEZE_BLOB_SHA",
-    "DEC435_RUNTIME_FREEZE_FINGERPRINT_SHA256",
     "DISCOVERY_WORKFLOW_BLOB_SHA",
     "DISCOVERY_WORKFLOW_PATH",
     "EXPECTED_RECOVERY_RUN_ATTEMPT",
