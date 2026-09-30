@@ -7950,3 +7950,39 @@ Next gate: a separate explicit post-EXP-062 research-direction decision. Zero
 validation-accepted candidates do not themselves authorize threshold changes,
 additional mining, Phase 8B, or promotion.
 
+## DEC-442 — Diagnose EXP-062 post-result validation failure
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY POST-RESULT DIAGNOSTIC / NO SUCCESSOR AUTHORIZATION
+
+DEC-442 binds the merged DEC-441 freeze at
+`d5e8ad7cd98ec1511742d1b266e6779852155c96`, source blob
+`ae0353fce77e9ff03536f2323820804dbda7241c`, historical run
+`36714210992`, historical head
+`013395092804de6b0ef51537081ab8443b8b91be`, and aggregate evidence
+fingerprint
+`b8019226fb7fce14c6711834fe16cdbb52795d9ca8996b1ed98ede7ecfba9506`.
+
+All 11 confirmation-frozen patterns are 240-minute-horizon patterns across EURUSD
+and GBPUSD. There are no USDJPY confirmation survivors and no 60-minute-horizon
+confirmation survivors.
+
+All 11 still satisfy the frozen confirmation gate. In the 2019-2022 validation
+window, all 11 have non-positive aggregate mean net pips at the 0.5-pip cost
+assumption and all 11 have fewer than the required three positive validation years.
+Only one candidate, GBPUSD 1h / 240m, additionally falls below the minimum
+per-year support requirement, with minimum yearly support 29 versus the frozen
+minimum 40.
+
+DEC-442 therefore classifies the evidence as
+`CONFIRMATION_EDGE_DID_NOT_PERSIST_THROUGH_2019_2022_VALIDATION`.
+The dominant rejection is temporal/economic non-persistence rather than a broad
+sample-size shortage or a runtime/adapter failure.
+
+Rerun/retry/replacement, threshold relaxation, pattern redefinition, reserved-data
+access, successor protocol source opening, successor execution, candidate
+compilation, promotion, Phase 8B, demo/live, real-money, and trading remain false.
+
+Next gate: a separate explicit post-EXP-062 research-direction decision after this
+diagnostic is merged.
+
