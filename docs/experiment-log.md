@@ -2596,3 +2596,17 @@ Copy this section for each serious experiment:
 - Confirms one-shot dispatch authorization is true.
 - Executor triggered?: NO.
 - Trading authority?: NO.
+
+### EXP-20260927-062 — DEC-433 action-preflight proof review
+
+- Added strict reviewer for future successful DEC-432 evidence.
+- Requires exact authorization, zero executor runs, and zero historical attempts.
+- Trading authority?: NO.
+
+
+### EXP-20260927-062 — DEC-434 action-preflight proof freeze
+
+- Added deterministic freeze for valid DEC-433 evidence.
+- Preserves authorized-but-unstarted one-shot state.
+- Emits canonical freeze fingerprint.
+- Executor triggered?: NO.
