@@ -2578,3 +2578,12 @@ Copy this section for each serious experiment:
 - Workflow triggered?: NO.
 - Rerun / retry / replacement?: NO.
 - Trading authority?: NO.
+
+### EXP-20260927-062 — DEC-431 one-shot dispatch action preflight
+
+- Pins DEC-430 authorization and active executor workflow.
+- Requires zero executor runs and zero historical-result attempts.
+- Requires executor run #1 / attempt 1 and historical run #2 / attempt 1.
+- Exposes the future executor command as evidence only.
+- Workflow triggered?: NO.
+- Trading authority?: NO.
