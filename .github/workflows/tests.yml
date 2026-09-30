@@ -76,6 +76,14 @@ jobs:
           -s tests
           -p 'test_phase8a_exp062_one_shot_executor_dispatch_action_preflight_proof_review.py'
           -v
+      - name: Run installed DEC-435 runtime-binding tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_exp062_one_shot_executor_dispatch_action_preflight_proof_runtime_freeze.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
