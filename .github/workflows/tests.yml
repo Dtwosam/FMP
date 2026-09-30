@@ -36,6 +36,14 @@ jobs:
           -s tests
           -p 'test_phase8a_exp062_active_one_shot_historical_executor_dispatch_preflight.py'
           -v
+      - name: Run installed dispatch-preflight proof-review tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_exp062_active_one_shot_historical_executor_dispatch_preflight_proof_review.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src

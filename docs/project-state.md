@@ -2333,3 +2333,18 @@ remain false.
 
 Next safe gate after a successful merged-main DEC-426 run: immutable proof review
 and freezing.
+
+## 2026-09-30 — DEC-427/428 dispatch-preflight proof reviewed and frozen
+
+The successful merged-main DEC-426 proof has been strictly reviewed and is now
+covered by a deterministic freeze.
+
+Bound evidence: run `36688457000`, job `109799712311`, artifact
+`11085100742`, exact artifact/raw/canonical hashes, installed executor state,
+zero executor runs, and unused historical-result slot.
+
+The executor remains installed and available but unrun. Historical dispatch and
+execute mode remain false.
+
+Next safe gate: concrete DEC-426 runtime-evidence binding before any one-shot
+dispatch authorization.

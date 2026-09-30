@@ -2543,3 +2543,19 @@ Copy this section for each serious experiment:
 - Requires zero executor runs and zero historical-result attempts.
 - Requires unused historical slot and target run #2 / attempt 1.
 - Dispatch / execute / trading authority: NO.
+
+### EXP-20260927-062 — DEC-427 dispatch-preflight proof review
+
+- Reviewed successful merged-main DEC-426 proof.
+- Bound run `36688457000` / job `109799712311` / artifact `11085100742`.
+- Verified artifact ZIP and raw/canonical DEC-425 hashes.
+- Installed executor state remains true; executor run count remains zero.
+- Dispatch / execute / trading authority: NO.
+
+
+### EXP-20260927-062 — DEC-428 dispatch-preflight proof freeze
+
+- Added deterministic freeze for valid DEC-427 review evidence.
+- Preserves exact proof identities, source map, installed state, and unused slot.
+- Emits a canonical freeze fingerprint for later runtime binding.
+- Dispatch / execute / trading authority: NO.
