@@ -92,9 +92,10 @@ class Exp062ActiveOneShotHistoricalExecutorDispatchPreflightProofTests(
         self.assertIn('assert plan["historical_executor_available"] is True', text)
         self.assertIn('assert plan["executor_workflow_run_count"] == 0', text)
         self.assertIn('assert plan["historical_result_attempt_count"] == 0', text)
-        self.assertIn('assert plan["historical_result_dispatch_authorized"]', text)
-        self.assertIn('assert plan["historical_execute_mode_available"]', text)
-        self.assertIn('assert plan["trading_authorized"]', text)
+        self.assertIn('"historical_result_dispatch_authorized",', text)
+        self.assertIn('"historical_execute_mode_available",', text)
+        self.assertIn('"trading_authorized",', text)
+        self.assertIn("assert plan[field] is False, field", text)
 
     def test_workflow_persists_only_preflight_artifact(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
