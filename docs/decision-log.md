@@ -8024,3 +8024,48 @@ Next gate: a source-only EXP-063 persistence-first protocol freezing the exact
 retrospective chronology, persistence metric, ranking/gating semantics, search
 budget, duplicate handling, and reserved-block boundary.
 
+## DEC-444 — Freeze EXP-063 persistence-first pattern protocol
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY PROTOCOL / HISTORICAL EXECUTION LOCKED
+
+DEC-444 binds merged DEC-443 commit
+`2ff960cf51d614c8c446d5f7f4c85569312bfec8`, DEC-443 direction source blob
+`e32fe0da11e01e463a8c5110201b0b1ed223f85e`, and the frozen EXP-061/062 base
+pattern-protocol blob `63b3f0121d6a50eb9e8e62ab666d70eb91791621`.
+
+EXP-063 preserves the exact EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m universe,
+the same 20 leakage-safe continuous features, five session states, one/two-dimension
+patterns, LONG/SHORT directions, and the exact 74,700 maximum directional-hypothesis
+search volume. No new feature, pair, timeframe, horizon, or third predicate is
+authorized.
+
+State cutpoints remain calibrated from 2015-2017 only and are then applied unchanged
+through 2022. All eight years 2015-2022 are already-seen design evidence and are
+evaluated as equal-status annual persistence slices. The fixed two-year blocks are
+2015-2016, 2017-2018, 2019-2020, and 2021-2022. The 2023-01-01 through 2026-08-20
+robustness block remains closed.
+
+The persistence gate requires total support >=600, support >=75 in every year,
+aggregate 0.5-pip mean >=0.25, positive aggregate 1.0-pip stress mean, at least
+6 of 8 positive annual 0.5-pip means, positive arithmetic mean across the four
+weakest annual means, and a positive equal-year mean in every fixed two-year block.
+
+Passing patterns rank persistence-first by lower-half annual mean, minimum two-year
+block mean, positive-year count, worst annual mean, aggregate 0.5-pip mean,
+aggregate 1.0-pip mean, total support, pattern depth, and fingerprint. Existing
+same-cell/horizon/direction Jaccard >=0.90 deduplication is retained. The shortlist
+remains capped at 10 per cell/horizon / 180 global, and the frozen set remains
+capped at 3 per cell/horizon / 54 global.
+
+A frozen EXP-063 result is
+`RETROSPECTIVE_PERSISTENCE_PATTERN_HYPOTHESIS_NOT_VALIDATED`; it is not an
+executable strategy or validated candidate.
+
+Source access, historical execution/result production, reserved-data access,
+candidate compilation, promotion, Phase 8B, demo/live, real-money, and trading
+remain false.
+
+Next gate: a deterministic source-only EXP-063 in-memory miner core implementing
+this exact protocol and proving 2023-2026 rows cannot influence results.
+
