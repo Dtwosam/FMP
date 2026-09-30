@@ -1638,6 +1638,7 @@
 - Preserved failed DEC-436 recovery run `36707978889`.
 - Root cause pinned as missing `polars` before `fmp.discovery` import.
 - Added separate manual-only recovery workflow with independent run #1 / attempt 1.
-- Added pinned planning-runtime install before authorization import.
+- Added dependency-independent `runpy` loading for the DEC-439 authorization,
+  while preserving the pinned planning-runtime file as failure provenance.
 - Discovery run #2 remains unused.
 - Generic rerun/retry/replacement and all trading authority remain locked.
