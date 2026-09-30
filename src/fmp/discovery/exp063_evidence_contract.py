@@ -674,15 +674,13 @@ def compile_aggregate_evidence(
                 "processed_manifest_sha256": processed,
                 "feature_manifest_sha256": feature_manifest,
                 "outcome_manifest_sha256": outcome_manifest,
-                "feature_evidence_fingerprint": next(
-                    item
-                    for item in feature_fingerprints
-                    if item == validated.get("feature_evidence_fingerprint")
+                "feature_evidence_fingerprint": _validate_sha256(
+                    validated.get("feature_evidence_fingerprint"),
+                    field="feature_evidence_fingerprint",
                 ),
-                "outcome_evidence_fingerprint": next(
-                    item
-                    for item in outcome_fingerprints
-                    if item == validated.get("outcome_evidence_fingerprint")
+                "outcome_evidence_fingerprint": _validate_sha256(
+                    validated.get("outcome_evidence_fingerprint"),
+                    field="outcome_evidence_fingerprint",
                 ),
                 "persistence_shortlist_count": len(shortlist),
                 "persistence_shortlist_fingerprints": [
