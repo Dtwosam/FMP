@@ -2348,3 +2348,16 @@ execute mode remain false.
 
 Next safe gate: concrete DEC-426 runtime-evidence binding before any one-shot
 dispatch authorization.
+
+## 2026-09-30 — DEC-429 dispatch-preflight proof evidence bound
+
+The successful DEC-426 proof is now concretely bound through DEC-427 review and
+DEC-428 deterministic freezing.
+
+The binding preserves exact run/job/artifact identities, ZIP/raw/canonical hashes,
+installed executor state, zero executor runs, unused historical-result slot, and
+target run #2 / attempt 1.
+
+The executor remains unrun. Historical dispatch and execute mode remain false.
+
+Next safe gate: explicit one-shot executor dispatch authorization.
