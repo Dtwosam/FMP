@@ -2310,3 +2310,15 @@ No historical run has been authorized by this decision, and reserved-data plus a
 downstream trading authority remain locked.
 
 Next safe gate: explicit one-shot executor dispatch authorization.
+
+## 2026-09-30 — DEC-425 installed executor dispatch preflight source-ready
+
+A read-only post-install preflight now verifies the active executor workflow,
+current-main identity, zero executor runs, and the still-unused historical-result
+slot.
+
+The active executor remains installed and available, but no executor run has been
+created. Historical dispatch and execute mode remain false.
+
+Next safe gate: explicit one-shot executor dispatch authorization before the first
+and only executor run.
