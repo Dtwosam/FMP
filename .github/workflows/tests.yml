@@ -68,6 +68,14 @@ jobs:
           -s tests
           -p 'test_phase8a_exp062_active_one_shot_historical_executor_dispatch_action_preflight.py'
           -v
+      - name: Run installed DEC-433 proof-review tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_exp062_one_shot_executor_dispatch_action_preflight_proof_review.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
