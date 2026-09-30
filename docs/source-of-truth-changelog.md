@@ -1596,3 +1596,9 @@
 - Added repository-hosted read-only proof for DEC-431.
 - Proof uses actions read only and has no workflow-dispatch trigger.
 - Confirms authorization and both unused one-shot slots without executing anything.
+
+## 2026-09-30 — DEC-433/434 EXP-062 action-preflight proof review and freeze
+
+- Added strict proof reviewer and deterministic freeze for DEC-432.
+- Preserves one-shot authorization and both unused run slots.
+- Adds no execution path or downstream trading authority.

@@ -7748,3 +7748,30 @@ workflow.
 
 Next gate after a successful merged-main proof: strict evidence review and
 deterministic freeze before run.
+
+## DEC-433 — EXP-062 one-shot executor dispatch action-preflight proof review
+
+**Date:** 2026-09-30  
+**Status:** STRICT PROOF REVIEW / AUTHORIZED RUN NOT STARTED
+
+DEC-433 strictly reviews future successful merged-main DEC-432 evidence. It requires
+exact run/job/artifact identity, exact DEC-431 preflight bytes, zero executor runs,
+zero historical-result attempts, and exact one-shot authorization.
+
+All rerun/retry/replacement and downstream trading authorities remain false.
+
+Next gate: deterministic proof freeze.
+
+
+## DEC-434 — Freeze reviewed DEC-432 action-preflight proof
+
+**Date:** 2026-09-30  
+**Status:** DETERMINISTIC PROOF FREEZE / AUTHORIZED RUN NOT STARTED
+
+DEC-434 deterministically freezes a valid DEC-433 review and emits a canonical
+fingerprint.
+
+The one-shot authorization remains true, but executor run count and
+historical-result attempt count remain zero. No execution occurs.
+
+Next gate: concrete DEC-432 runtime-evidence binding before run.
