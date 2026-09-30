@@ -7801,3 +7801,29 @@ result attempt count remain zero. General execute mode, rerun/retry/replacement,
 reserved data, Phase 8B, demo/live, real-money, and trading remain locked.
 
 Next safe gate: submit only the already-authorized executor run #1 / attempt 1.
+
+
+## DEC-436 — Recover failed one-shot historical executor dispatch
+
+**Date:** 2026-09-30  
+**Status:** EXPLICIT FAIL-CLOSED RECOVERY AUTHORIZATION / HISTORICAL RESULT NOT STARTED
+
+Original executor run `36702494195` failed at the exact-run guard because GitHub
+assigned run #2 / attempt 1 while DEC-430/435 authorized run #1 / attempt 1.
+
+The failed run is preserved at head
+`59b55d519449e20cf396d70ed9a5722b989d933a`, job `109844958600`,
+conclusion `failure`. The historical dispatch, receipt, and artifact steps were
+all skipped, so discovery run #2 remains unused.
+
+DEC-436 leaves the original executor workflow byte-for-byte frozen and introduces a
+separate manual-only recovery workflow with its own run counter. Only recovery run
+#1 / attempt 1 may proceed, and only after re-verifying the failed provenance,
+DEC-435 source identity, unchanged executor/discovery workflow blobs, and the empty
+historical-result slot.
+
+Generic rerun, retry, and replacement authorization remain false. General execute
+mode, reserved data, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next gate after green merge: manually submit exactly the DEC-436 recovery workflow
+run #1 / attempt 1. Do not rerun the failed original executor.
