@@ -2375,3 +2375,13 @@ Rerun/retry/replacement, reserved-data access, and all trading authority remain
 locked.
 
 Next safe gate: read-only current-main dispatch-action preflight.
+
+## 2026-09-30 — DEC-431 authorized dispatch action preflight source-ready
+
+A read-only current-main action preflight now exists for the authorized one-shot
+executor dispatch.
+
+It requires zero executor runs and zero historical-result attempts before exposing
+the exact executor command as evidence. The planner has no execution surface.
+
+Next safe gate: merged-main read-only proof of DEC-431.
