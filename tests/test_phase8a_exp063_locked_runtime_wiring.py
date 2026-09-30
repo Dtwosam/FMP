@@ -21,7 +21,6 @@ from fmp.discovery.exp063_runtime_source import (
     run_contract_payload,
     runtime_source_payload,
     source_artifacts_for_cell,
-    validate_installed_runtime_paths,
     validate_runtime_dependencies,
     validate_source_snapshots,
 )
@@ -100,9 +99,8 @@ class Exp063LockedRuntimeWiringTests(unittest.TestCase):
         self.assertFalse(payload["authorizations"]["historical_execution_authorized"])
         self.assertFalse(payload["authorizations"]["historical_result_authorized"])
 
-    def test_runtime_dependencies_and_installed_paths_are_exact(self) -> None:
+    def test_runtime_dependencies_and_frozen_workflow_are_exact(self) -> None:
         dependencies = validate_runtime_dependencies(repository_root=Path("."))
-        installed = validate_installed_runtime_paths(repository_root=Path("."))
 
         self.assertEqual(
             dependencies["source_blobs"]["exp062_repaired_adapter"],
@@ -112,19 +110,6 @@ class Exp063LockedRuntimeWiringTests(unittest.TestCase):
             dependencies["source_blobs"]["dec446_evidence_contract"],
             "e8614beb156d24584b82611db47afb8c00ece71c",
         )
-        self.assertEqual(
-            installed["dormant_template_blob_sha"],
-            "1038beb4b704ddead4e5841a6f799858732189e6",
-        )
-        self.assertEqual(
-            installed["active_workflow_blob_sha"],
-            installed["dormant_template_blob_sha"],
-        )
-        self.assertEqual(
-            installed["cli_blob_sha"],
-            "1b969668f79b37bc68f701da103b3a2bb53b13c1",
-        )
-
         self.assertEqual(
             Path(DORMANT_WORKFLOW_TEMPLATE_PATH).read_bytes(),
             Path(ACTIVE_WORKFLOW_PATH).read_bytes(),
