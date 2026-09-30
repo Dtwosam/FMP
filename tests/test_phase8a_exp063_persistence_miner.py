@@ -163,7 +163,7 @@ class Exp063PersistenceMinerCoreTests(unittest.TestCase):
         self.assertEqual(candidate.minimum_year_support, 100)
         self.assertEqual(candidate.positive_year_count, 8)
         self.assertEqual(candidate.aggregate_mean_net_pips_0p5, 1.0)
-        self.assertEqual(candidate.aggregate_mean_net_pips_1p0, 0.4)
+        self.assertAlmostEqual(candidate.aggregate_mean_net_pips_1p0, 0.4)
         self.assertEqual(
             candidate.lower_half_annual_mean_net_pips_0p5,
             1.0,
