@@ -2568,3 +2568,13 @@ Copy this section for each serious experiment:
 - Executor installed/available: YES.
 - Executor run count: 0.
 - Dispatch / execute / trading authority: NO.
+
+### EXP-20260927-062 — DEC-430 one-shot executor dispatch authorization
+
+- Bound explicit one-shot dispatch authorization to DEC-429.
+- Pins exact DEC-429 runtime-freeze fingerprint and active workflow blob.
+- Authorized executor run #1 / attempt 1 only.
+- Authorized historical result run #2 / attempt 1 only.
+- Workflow triggered?: NO.
+- Rerun / retry / replacement?: NO.
+- Trading authority?: NO.

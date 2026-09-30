@@ -1577,3 +1577,10 @@
 - Verified artifact ZIP and raw/canonical DEC-425 hashes.
 - Pins DEC-428 deterministic freeze fingerprint.
 - Keeps executor run count zero and all dispatch/execute/trading authority locked.
+
+## 2026-09-30 — DEC-430 EXP-062 one-shot executor dispatch authorization
+
+- Added explicit one-shot executor dispatch authorization bound to DEC-429.
+- Scope is exact first executor run and exact historical result run #2 / attempt 1.
+- Does not trigger the workflow.
+- Keeps general execute mode, reruns, reserved data, and trading authority locked.
