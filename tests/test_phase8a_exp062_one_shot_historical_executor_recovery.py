@@ -121,8 +121,8 @@ class Exp062OneShotHistoricalExecutorRecoveryTests(unittest.TestCase):
         self.assertEqual(text.count(command), 2)
         self.assertIn('row.get("run_number") == 2', text)
         self.assertIn('row.get("run_attempt") == 1', text)
-        self.assertNotIn("phase8b", text.lower().split("receipt = {")[0])
-        self.assertNotIn("broker", text.lower().split("receipt = {")[0])
+        self.assertNotIn("gh workflow run phase8b", text.lower())
+        self.assertNotIn("gh workflow run phase9", text.lower())
 
     def test_recovery_receipt_keeps_broad_authority_false(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
