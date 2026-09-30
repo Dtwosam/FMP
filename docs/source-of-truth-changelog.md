@@ -1570,3 +1570,10 @@
 - Added deterministic freeze of reviewed proof evidence.
 - Preserves installed executor state and zero executor runs.
 - Keeps dispatch, execute mode, reserved-data access, and trading authority locked.
+
+## 2026-09-30 — DEC-429 EXP-062 dispatch-preflight proof runtime binding
+
+- Bound exact successful DEC-426 runtime evidence.
+- Verified artifact ZIP and raw/canonical DEC-425 hashes.
+- Pins DEC-428 deterministic freeze fingerprint.
+- Keeps executor run count zero and all dispatch/execute/trading authority locked.

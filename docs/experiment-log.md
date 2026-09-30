@@ -2559,3 +2559,12 @@ Copy this section for each serious experiment:
 - Preserves exact proof identities, source map, installed state, and unused slot.
 - Emits a canonical freeze fingerprint for later runtime binding.
 - Dispatch / execute / trading authority: NO.
+
+### EXP-20260927-062 — DEC-429 dispatch-preflight proof runtime binding
+
+- Bound real DEC-426 run `36688457000` / job `109799712311` / artifact `11085100742`.
+- Verified ZIP/raw/canonical hashes and DEC-428 freeze fingerprint.
+- Re-runs DEC-427 review and DEC-428 deterministic freeze.
+- Executor installed/available: YES.
+- Executor run count: 0.
+- Dispatch / execute / trading authority: NO.
