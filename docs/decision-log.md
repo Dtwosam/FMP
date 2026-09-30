@@ -7627,3 +7627,44 @@ false.
 
 Next gate after real successful merged-main evidence: strict proof review and
 deterministic freeze.
+
+## DEC-427 — EXP-062 installed executor dispatch-preflight proof review
+
+**Date:** 2026-09-30  
+**Status:** STRICT RUNTIME-EVIDENCE REVIEW / DISPATCH STILL LOCKED
+
+DEC-427 reviews the successful merged-main DEC-426 proof at head
+`f2b2a5629013749b74306201aac29d14b7124cd3`, run `36688457000`, job
+`109799712311`, artifact `11085100742`.
+
+The artifact/ZIP SHA-256 is
+`a335347c3e428f8eff653bfe4a8e022b0ed939c188634a5236f2354edaff9ac9`.
+The raw DEC-425 preflight SHA-256 is
+`017f45bcec6633006b3d78c76f09890da0417fbd79f904743de659e614d73974`,
+and canonical SHA-256 is
+`26958a21f832609d2dfc57347f6637c35aaa2923c36ec14a40f9573e6a77cb02`.
+
+The review requires exact source identities, installed executor state true, zero
+executor runs, zero historical-result attempts, and all dispatch/execute/reserved-
+data/trading authorities false.
+
+Next gate: deterministic immutable proof freeze.
+
+
+## DEC-428 — Freeze reviewed DEC-426 dispatch-preflight proof
+
+**Date:** 2026-09-30  
+**Status:** DETERMINISTIC PROOF FREEZE / DISPATCH STILL LOCKED
+
+DEC-428 deterministically freezes a valid DEC-427 review, preserving exact
+run/job/artifact identities, artifact/preflight hashes, source map, installed
+executor state, zero executor runs, unused historical slot, and target run #2 /
+attempt 1.
+
+It emits a canonical freeze fingerprint for later concrete runtime binding.
+
+Historical-result dispatch, execute mode, rerun/retry/replacement, reserved-data
+access, Phase 8B, demo/live, real-money, and trading remain false.
+
+Next gate: concrete DEC-426 runtime-evidence binding before any dispatch
+authorization.
