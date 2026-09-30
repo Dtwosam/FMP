@@ -40,6 +40,8 @@ its pinned planning runtime.
 
 DEC-439 introduces a new manual-only recovery workflow with its own independent run
 counter. The failed original executor and failed DEC-436 recovery are not rerun.
+The authorization check is intentionally dependency-independent so another package
+import cannot consume this one-shot slot.
 
 A valid DEC-439 recovery requires exactly workflow run #1 / attempt 1 on current
 `main`. It must:
@@ -47,9 +49,10 @@ A valid DEC-439 recovery requires exactly workflow run #1 / attempt 1 on current
 - preserve both failed-run provenances;
 - pin the DEC-436 authorization/workflow, original executor workflow, discovery
   workflow, and planning-runtime requirement file;
-- install exactly `requirements/exp061-discovery-run.txt`, currently pinning
-  `polars==1.44.2` and `polars-runtime-32==1.44.2`;
-- evaluate the DEC-439 authorization only after that install;
+- pin `requirements/exp061-discovery-run.txt` as immutable provenance for the
+  missing runtime that caused DEC-436 to fail;
+- load the pure-stdlib DEC-439 authorization file directly with `runpy`, avoiding
+  `fmp.discovery` package initialization entirely;
 - prove discovery run #2 is still absent;
 - dispatch only `phase8a-exp062-discovery.yml --ref main`;
 - resolve exactly discovery run #2 / attempt 1 on the same head SHA;
