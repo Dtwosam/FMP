@@ -7986,3 +7986,41 @@ compilation, promotion, Phase 8B, demo/live, real-money, and trading remain fals
 Next gate: a separate explicit post-EXP-062 research-direction decision after this
 diagnostic is merged.
 
+## DEC-443 — Open EXP-063 persistence-first research direction
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY RESEARCH-DIRECTION DECISION / SUCCESSOR EXECUTION LOCKED
+
+DEC-443 binds merged DEC-442 commit
+`4e9bc6ea384f4bcf40444567a9585be24787d71b` and DEC-442 diagnostic source blob
+`2eac2cd32edf151a3eeca806a65a34af914cbea4`.
+
+DEC-442 showed that all 11 EXP-062 confirmation-frozen patterns later failed the
+2019-2022 validation gate: all 11 had non-positive aggregate validation mean at
+0.5-pip cost and fewer than three positive validation years. Only one additionally
+failed minimum yearly support. The evidence therefore supports temporal/economic
+non-persistence rather than broad sample-size shortage or a runtime/adapter defect.
+
+DEC-443 opens new successor identity `EXP-20260930-063` for source design only.
+The successor direction is persistence-first: temporal persistence and retrospective
+year balance must become first-class selection properties, and one strong period
+must not dominate selection. The exact persistence statistic and exact internal
+chronology are deferred to a separate protocol decision.
+
+The V1 universe remains bounded to EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m.
+DEC-443 authorizes no new feature, symbol, timeframe, horizon, threshold relaxation,
+or EXP-062 pattern rescue.
+
+Because 2019-2022 outcomes were inspected and directly informed DEC-442/443,
+2015-2022 is now `ALREADY_SEEN_DESIGN_EVIDENCE` for EXP-063 and 2019-2022 may not
+be described as fresh validation. The reserved 2023-01-01 through 2026-08-20 block
+remains closed.
+
+EXP-062 rerun/retry/replacement, reserved-data access, successor execution,
+historical result production, candidate compilation, promotion, Phase 8B,
+demo/live, real-money, and trading remain false.
+
+Next gate: a source-only EXP-063 persistence-first protocol freezing the exact
+retrospective chronology, persistence metric, ranking/gating semantics, search
+budget, duplicate handling, and reserved-block boundary.
+
