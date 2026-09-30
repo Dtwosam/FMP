@@ -2654,8 +2654,8 @@ Copy this section for each serious experiment:
 - DEC-436 recovery run `36707978889` failed on missing `polars`.
 - Failure occurred before historical slot verification and before dispatch.
 - Historical-result attempts remain 0; target remains discovery run #2 / attempt 1.
-- New recovery path has an independent run counter and installs pinned planning
-  runtime before authorization import.
+- New recovery path has an independent run counter and loads the DEC-439
+  authorization file directly with `runpy`, bypassing package initialization.
 - Original executor and DEC-436 recovery are not rerun.
 - Rerun / retry / replacement: NO.
 - Reserved-data and trading authority: NO.
