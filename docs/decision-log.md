@@ -8121,7 +8121,7 @@ DEC-446 binds merged DEC-445 commit
 
 The new contract source
 `src/fmp/discovery/exp063_evidence_contract.py` at blob
-`07eef9dd2f702fe51e26df46e5028ad21b3c0273` defines deterministic canonical
+`e8614beb156d24584b82611db47afb8c00ece71c` defines deterministic canonical
 cell and aggregate evidence for EXP-063. Compilation is self-validating: both cell
 and aggregate objects are passed through the same fail-closed semantic validators
 before being returned.
@@ -8151,6 +8151,6 @@ Source-data access, historical execution/result authorization, reserved robustne
 access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and
 trading remain false.
 
-Next gate: a separate source-only EXP-063 workflow/CLI/runtime source freeze;
+Focused tests are `tests/test_phase8a_exp063_evidence_contract.py` at blob `18785c0710d61d21afba6c7d266862966e8f937d`.\n\nNext gate: a separate source-only EXP-063 workflow/CLI/runtime source freeze;
 dispatch and any historical execution slot remain closed.
 
