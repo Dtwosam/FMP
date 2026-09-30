@@ -1563,3 +1563,10 @@
 - Proof has actions read only and no workflow-dispatch trigger.
 - Requires executor run count zero and historical-result slot unused.
 - Adds no dispatch, execute mode, reserved-data, or trading authority.
+
+## 2026-09-30 — DEC-427/428 EXP-062 dispatch-preflight proof review and freeze
+
+- Added strict review of successful merged-main DEC-426 evidence.
+- Added deterministic freeze of reviewed proof evidence.
+- Preserves installed executor state and zero executor runs.
+- Keeps dispatch, execute mode, reserved-data access, and trading authority locked.
