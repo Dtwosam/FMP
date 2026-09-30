@@ -11,6 +11,8 @@ from .exp063_persistence_protocol import (
     MAX_ADMISSIBLE_PATTERNS_PER_CELL_HORIZON,
     MAX_FROZEN_PER_CELL_HORIZON,
     MAX_PERSISTENCE_SHORTLIST_PER_CELL_HORIZON,
+    MIN_TOTAL_SUPPORT,
+    MIN_YEAR_SUPPORT,
     NEAR_DUPLICATE_JACCARD,
     PERSISTENCE_RANK_FIELDS,
     AnnualPersistenceStat,
@@ -354,7 +356,7 @@ def mine_persistence_shortlist(
             if observation_id in evaluable_ids and required.issubset(states)
         )
 
-        if len(event_ids) < 600:
+        if len(event_ids) < MIN_TOTAL_SUPPORT:
             continue
 
         support_by_year = {year: 0 for year in DESIGN_YEARS}
@@ -362,7 +364,10 @@ def mine_persistence_shortlist(
             year = feature_by_id[observation_id].available_at_utc.year
             if year in support_by_year:
                 support_by_year[year] += 1
-        if any(support_by_year[year] < 75 for year in DESIGN_YEARS):
+        if any(
+            support_by_year[year] < MIN_YEAR_SUPPORT
+            for year in DESIGN_YEARS
+        ):
             continue
 
         ordered_ids = tuple(sorted(event_ids))
