@@ -8297,3 +8297,57 @@ regardless of success, failure, or cancellation.
 Next gate: one explicit manual dispatch of the authorized EXP-063 workflow, followed
 by immutable run/result review. No rerun/retry/replacement is authorized.
 
+## DEC-450 — Freeze EXP-063 historical result: no persistence hypotheses
+
+**Date:** 2026-09-30  
+**Status:** HISTORICAL RESULT REVIEWED AND FROZEN / NO PERSISTENCE HYPOTHESES
+
+DEC-450 freezes the only EXP-063 historical run, GitHub Actions run
+`36773288493`, workflow `phase8a-exp063-persistence`, head
+`6b106e4514f6ca3f06c677aab66fb04eb37ad881`, run number 1, attempt 1,
+completed successfully.
+
+Exactly 20 jobs completed successfully and exactly 20 artifacts are present and
+non-expired. Aggregate artifact id `11127203563` is
+`phase8a-exp063-aggregate-6b106e4514f6ca3f06c677aab66fb04eb37ad881`
+with artifact digest
+`sha256:4d730f2dfdb6e6ef7201eb2d9ce48678f29882df8075a396254f5051425611d3`.
+
+The downloaded aggregate JSON SHA-256 is
+`c012740e856b351320cb95c06583d8db2c3120cce8d14e26e091594a505f24ad`.
+Its canonical evidence fingerprint is
+`d0562d29da38c8ee4c0d3b28c35b3de7c9c42a5157910eef319a91b67ca4be42`,
+and independent recomputation matched exactly.
+
+All 18 cell evidence artifacts were inspected. Every cell enumerated 2,075
+patterns / 4,150 directional hypotheses and reported zero qualifying directional
+hypotheses, zero deduplicated hypotheses, an empty persistence shortlist, and an
+empty frozen inventory. Across the frozen 18-cell universe this is 37,350
+enumerated patterns and 74,700 directional hypotheses with zero passing the
+DEC-444 persistence gate.
+
+Classification:
+`NO_DIRECTIONAL_HYPOTHESIS_PASSED_FROZEN_PERSISTENCE_GATE`.
+
+This is a negative result for the exact frozen EXP-063 universe and protocol. It is
+not a claim that no market edge exists outside that universe, and it is not a
+ranking/dedup failure: qualification itself is zero.
+
+Evidence remains `RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos=false`, with zero
+shortlist and zero frozen hypotheses. The reserved 2023-01-01 through 2026-08-20
+robustness block remains unopened and unauthorized.
+
+The one-shot slot is consumed permanently. Rerun, retry, replacement, reserved
+robustness access, candidate compilation, promotion, Phase 8B, demo/live orders,
+real-money action, and trading remain false.
+
+Review source
+`src/fmp/discovery/exp063_historical_result_review.py` is blob
+`b572dbf4801c211b72285049654ebf4d96744cf1`; focused tests
+`tests/test_phase8a_exp063_historical_result_review.py` are blob
+`f9afb8d81658a55af1b044525ac1ee5654c3bcfe`.
+
+Next gate: `EXPLICIT_POST_EXP063_RESEARCH_DIRECTION_DECISION`. Any successor
+research must treat 2015-2022 EXP-063 outcomes as already-seen evidence and may not
+retroactively redefine or rerun EXP-063.
+
