@@ -7880,9 +7880,9 @@ succeeded. Historical dispatch and receipt upload were skipped, so discovery run
 remains unused.
 
 DEC-439 introduces a separate manual-only recovery workflow with its own run #1 /
-attempt 1. It pins both failed workflows and installs the exact pinned planning
-runtime from `requirements/exp061-discovery-run.txt` before importing any
-`fmp.discovery` module.
+attempt 1. It pins both failed workflows and the planning-runtime requirement file, then
+loads the pure-stdlib DEC-439 authorization source directly with `runpy`. No
+`fmp.discovery` package initialization occurs in the recovery authorization check.
 
 Neither failed workflow may be rerun. Generic rerun, retry, and replacement remain
 false. General execute mode, reserved data, Phase 8B, demo/live, real-money, and
