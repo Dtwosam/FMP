@@ -7889,3 +7889,33 @@ Generic rerun/retry/replacement, reserved data, Phase 8B, demo/live, real-money,
 and trading authority remain false.
 
 Next gate after green merge: one manual DEC-439 recovery-v2 run #1 / attempt 1.
+
+## DEC-440 — Review successful EXP-062 historical result content
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY ACTUAL RESULT REVIEW / NO DOWNSTREAM AUTHORIZATION
+
+DEC-440 binds the sole successful EXP-062 historical workflow result at run
+`36714210992`, run #2 / attempt 1, head
+`013395092804de6b0ef51537081ab8443b8b91be`.
+
+The run must first satisfy the frozen DEC-334 terminal contract as an exact
+20-job / 20-artifact success. DEC-440 then pins aggregate artifact
+`11096592737`, artifact digest
+`sha256:077535bc6e9d9a1d6e8693f873b7552cf8028d793ef79eab175dbbd9970430bc`,
+exact aggregate JSON SHA-256
+`bfdf9787e9ee32c30ff29aa70594d7404bc7fc2cb573a60068802d2aacbaa6f3`,
+and aggregate evidence fingerprint
+`b8019226fb7fce14c6711834fe16cdbb52795d9ca8996b1ed98ede7ecfba9506`.
+
+The reviewed aggregate contains 18/18 verified cells, 67 discovery-shortlist
+entries, 11 confirmation-frozen candidates, and 0 validation-accepted candidates.
+Its evidence label remains `RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos=false`,
+and reserved robustness data remains unopened.
+
+The historical-result slot is permanently consumed. Rerun/retry/replacement,
+reserved-data access, candidate compilation, promotion, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next gate: deterministic immutable DEC-441 historical-result review freeze.
+
