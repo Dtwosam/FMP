@@ -1556,3 +1556,10 @@
 - Added read-only current-main preflight for the installed executor.
 - Requires exact active workflow blob, zero executor runs, and unused historical slot.
 - Keeps dispatch, execute mode, reserved-data access, and trading authority locked.
+
+## 2026-09-30 — DEC-426 EXP-062 installed executor dispatch-preflight proof
+
+- Added repository-hosted read-only proof for DEC-425.
+- Proof has actions read only and no workflow-dispatch trigger.
+- Requires executor run count zero and historical-result slot unused.
+- Adds no dispatch, execute mode, reserved-data, or trading authority.

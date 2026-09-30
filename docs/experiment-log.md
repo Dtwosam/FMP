@@ -2535,3 +2535,11 @@ Copy this section for each serious experiment:
 - CLI surface: plan only.
 - Historical dispatch / execute authority: NO.
 - Trading authority: NO.
+
+### EXP-20260927-062 — DEC-426 installed executor dispatch-preflight proof
+
+- Added push-to-main read-only proof of DEC-425.
+- Pins DEC-424/425 source identities and active executor workflow blob.
+- Requires zero executor runs and zero historical-result attempts.
+- Requires unused historical slot and target run #2 / attempt 1.
+- Dispatch / execute / trading authority: NO.

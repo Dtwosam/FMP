@@ -2322,3 +2322,14 @@ created. Historical dispatch and execute mode remain false.
 
 Next safe gate: explicit one-shot executor dispatch authorization before the first
 and only executor run.
+
+## 2026-09-30 — DEC-426 installed executor dispatch-preflight proof source-ready
+
+A repository-hosted read-only proof now exists for DEC-425. It is push-to-main only,
+first-run/attempt-1, read-only, and persists only the dispatch-preflight JSON.
+
+The executor remains installed but unrun. Historical dispatch and execute mode
+remain false.
+
+Next safe gate after a successful merged-main DEC-426 run: immutable proof review
+and freezing.
