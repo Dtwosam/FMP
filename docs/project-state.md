@@ -2443,3 +2443,16 @@ real-money, and trading remain locked.
 
 Next safe gate after CI and merge: manually invoke the DEC-436 recovery workflow
 once on `main`.
+
+
+## 2026-09-30 — DEC-437/438 recovery receipt review layer prepared
+
+A strict source-only reviewer and deterministic freeze now exist for the future
+DEC-436 recovery receipt. They require exact recovery run #1 / attempt 1, exact
+failed-run provenance, discovery run #2 / attempt 1 on the same head, and all broad
+authority locks false.
+
+No recovery execution is triggered by DEC-437/438.
+
+Next safe gate remains the DEC-436 manual recovery invocation after #583 is green
+and merged.
