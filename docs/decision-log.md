@@ -7692,3 +7692,26 @@ dispatch, execute mode, reserved data, Phase 8B, demo/live, real-money, and trad
 remain locked.
 
 Next gate: separate explicit one-shot executor dispatch authorization before run.
+
+## DEC-430 — EXP-062 one-shot executor dispatch authorization
+
+**Date:** 2026-09-30  
+**Status:** ONE-SHOT DISPATCH AUTHORIZED / RUN NOT STARTED
+
+DEC-430 records explicit operator authorization for exactly one invocation of the
+installed historical executor.
+
+It pins DEC-429 runtime-freeze blob
+`98fbb04a78efeef0a9a1fc919b5e5d61093c09de`, DEC-429 fingerprint
+`a561a4a66111c5c2edc3183e68a978b01ead42f9b8f8c8c061244b50fc751dac`,
+and active executor workflow blob
+`51ce87584369be957482460d81649adb1cb9f05d`.
+
+The authorized scope is executor run #1 / attempt 1 producing historical result run
+#2 / attempt 1. Rerun, retry, and replacement remain forbidden.
+
+This decision authorizes the one-shot dispatch but does not trigger it. General
+execute mode, reserved data, Phase 8B, demo/live, real-money, and trading remain
+locked.
+
+Next gate: read-only current-main dispatch-action preflight before run.
