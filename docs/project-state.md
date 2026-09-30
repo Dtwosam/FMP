@@ -2385,3 +2385,14 @@ It requires zero executor runs and zero historical-result attempts before exposi
 the exact executor command as evidence. The planner has no execution surface.
 
 Next safe gate: merged-main read-only proof of DEC-431.
+
+## 2026-09-30 — DEC-432 authorized dispatch action-preflight proof source-ready
+
+A repository-hosted read-only proof now exists for the authorized DEC-431 action
+preflight.
+
+The proof cannot trigger the executor. It verifies exact current main, zero executor
+runs, zero historical-result attempts, and the exact one-shot target identities.
+
+Next safe gate after a successful merged-main proof: review and freeze DEC-432
+runtime evidence.
