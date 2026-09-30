@@ -8204,3 +8204,42 @@ Next gate: one explicit EXP-063 one-shot historical execution authorization boun
 the exact merged DEC-447 runtime. DEC-447 itself provides no execute mode and does
 not dispatch EXP-063.
 
+## DEC-448 — Open EXP-063 one-shot historical-result slot
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY ONE-SHOT SLOT AUTHORIZATION / DISPATCH LOCKED
+
+DEC-448 binds merged DEC-447 commit
+`cbd7f5adce4cae062ba427bf61c3239e77dc5b72`, runtime source blob
+`6e7804a037fd386016fd45145be73b8dc00563f2`, active workflow blob
+`1038beb4b704ddead4e5841a6f799858732189e6`, CLI blob
+`1b969668f79b37bc68f701da103b3a2bb53b13c1`, DEC-446 evidence-contract blob
+`e8614beb156d24584b82611db47afb8c00ece71c`, DEC-445 miner blob
+`40c49a372b35dbc113dbfb71374b1ae5fc7acc45`, and DEC-444 protocol blob
+`2c781dd2811b66d2d88f008007bf5c8bcf99f14f`.
+
+The authorization source
+`src/fmp/discovery/exp063_historical_run_authorization.py` at blob
+`f6070b1ecc8951338767b24dac1f0ff9ec7a24ae` opens only the outer
+`historical_result_slot_source_authorized=true` state. Focused tests are
+`tests/test_phase8a_exp063_historical_run_authorization.py` at blob
+`5642d7f91092e7f23f271444df5a40b25d8a1db7`.
+
+At DEC-448 creation, the installed `phase8a-exp063-persistence` workflow has zero
+manual-main runs. Therefore the first future matching `workflow_dispatch` run is
+the one and only historical-result attempt. The slot is consumed immediately when
+that run exists, including while queued or running and regardless of terminal
+success/failure/cancellation.
+
+The expected first run remains run number 1, attempt 1. A second matching run or any
+GitHub rerun with `run_attempt != 1` is invalid. Failure does not authorize rerun,
+retry, or replacement.
+
+Historical-result dispatch, historical execution/result production, reserved
+2023-2026 robustness access, candidate compilation, promotion, Phase 8B, demo/live,
+real-money, and trading remain false.
+
+Next gate: a separate bounded runtime activation / one-shot dispatch decision that
+must reverify the exact merged runtime and the still-unused slot immediately before
+any dispatch. DEC-448 itself provides no dispatch or execution path.
+
