@@ -7864,3 +7864,32 @@ It adds no dispatch or execute surface. All broad authority locks remain false.
 
 Next gate after a real successful DEC-436 recovery: concrete runtime-evidence
 binding while historical discovery run #2 completes.
+
+
+## DEC-439 — Recover DEC-436 missing runtime dependency
+
+**Date:** 2026-09-30  
+**Status:** EXPLICIT FAIL-CLOSED RECOVERY / HISTORICAL RESULT NOT STARTED
+
+DEC-436 recovery run `36707978889` / job `109862691026` failed before any
+historical-slot check or dispatch because importing `fmp.discovery` raised
+`ModuleNotFoundError: No module named 'polars'`.
+
+Its exact-run guard, failed-original provenance check, and frozen-source checks all
+succeeded. Historical dispatch and receipt upload were skipped, so discovery run #2
+remains unused.
+
+DEC-439 introduces a separate manual-only recovery workflow with its own run #1 /
+attempt 1. It pins both failed workflows and the planning-runtime requirement file, then
+loads the pure-stdlib DEC-439 authorization source directly with `runpy`. No
+`fmp.discovery` package initialization occurs in the recovery authorization check.
+
+Neither failed workflow may be rerun. Generic rerun, retry, and replacement remain
+false. General execute mode, reserved data, Phase 8B, demo/live, real-money, and
+trading remain locked.
+
+DEC-437/438 remain source-only definitions attached to the unsuccessful DEC-436
+path and are not runtime-success evidence.
+
+Next gate after green merge: one manual DEC-439 runtime-dependency recovery run #1 /
+attempt 1.

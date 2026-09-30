@@ -2456,3 +2456,20 @@ No recovery execution is triggered by DEC-437/438.
 
 Next safe gate remains the DEC-436 manual recovery invocation after #583 is green
 and merged.
+
+
+## 2026-09-30 — DEC-439 runtime-dependency recovery prepared
+
+DEC-436 recovery run `36707978889` failed safely because the workflow imported
+`fmp.discovery` without first installing the pinned planning runtime. The exact
+failure is `ModuleNotFoundError: No module named 'polars'`.
+
+No historical discovery dispatch occurred and discovery run #2 remains unused.
+
+DEC-439 now defines a separate manual-only runtime-dependency recovery workflow. It
+pins both prior failures and the historical requirement file, then loads the
+pure-stdlib authorization file directly with `runpy` before rechecking the
+historical slot. No package initialization occurs before dispatch.
+
+Next safe gate after CI and merge: one manual DEC-439 recovery invocation on
+`main`.

@@ -100,6 +100,14 @@ jobs:
           -s tests
           -p 'test_phase8a_exp062_one_shot_executor_recovery_receipt_review_freeze.py'
           -v
+      - name: Run installed DEC-439 runtime-dependency recovery tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_exp062_runtime_dependency_recovery.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
@@ -110,9 +118,12 @@ jobs:
           hidden="$RUNNER_TEMP/phase8a-exp062-one-shot-historical-executor.yml"
           recovery=".github/workflows/phase8a-exp062-one-shot-historical-executor-recovery.yml"
           recovery_hidden="$RUNNER_TEMP/phase8a-exp062-one-shot-historical-executor-recovery.yml"
+          dependency_recovery=".github/workflows/phase8a-exp062-one-shot-historical-executor-recovery-runtime-dependency.yml"
+          dependency_recovery_hidden="$RUNNER_TEMP/phase8a-exp062-one-shot-historical-executor-recovery-runtime-dependency.yml"
           mv "$active" "$hidden"
           mv "$recovery" "$recovery_hidden"
-          trap 'mv "$hidden" "$active"; mv "$recovery_hidden" "$recovery"' EXIT
+          mv "$dependency_recovery" "$dependency_recovery_hidden"
+          trap 'mv "$hidden" "$active"; mv "$recovery_hidden" "$recovery"; mv "$dependency_recovery_hidden" "$dependency_recovery"' EXIT
           python -m unittest discover -s tests -v
       - name: Compile package
         run: python -m compileall -q src tests

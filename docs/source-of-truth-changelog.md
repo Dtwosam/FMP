@@ -1630,3 +1630,15 @@
 - Pins recovery workflow/auth source plus original executor/discovery workflows.
 - Requires discovery target head to match the recovery head.
 - Adds no execution or trading authority.
+
+
+## 2026-09-30 — DEC-439 recovery runtime dependency fix
+
+- Preserved failed original executor run `36702494195`.
+- Preserved failed DEC-436 recovery run `36707978889`.
+- Root cause pinned as missing `polars` before `fmp.discovery` import.
+- Added separate manual-only recovery workflow with independent run #1 / attempt 1.
+- Added dependency-independent `runpy` loading for the DEC-439 authorization,
+  while preserving the pinned planning-runtime file as failure provenance.
+- Discovery run #2 remains unused.
+- Generic rerun/retry/replacement and all trading authority remain locked.
