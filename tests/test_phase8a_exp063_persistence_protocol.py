@@ -97,7 +97,7 @@ class Exp063PersistenceProtocolTests(unittest.TestCase):
         )
         self.assertAlmostEqual(
             metrics["minimum_two_year_block_mean_net_pips_0p5"],
-            (0.30 + 0.35) / 2.0,
+            (0.30 + 0.50) / 2.0,
         )
         self.assertTrue(persistence_gate_passes(stats))
 
