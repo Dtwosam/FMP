@@ -2587,3 +2587,12 @@ Copy this section for each serious experiment:
 - Exposes the future executor command as evidence only.
 - Workflow triggered?: NO.
 - Trading authority?: NO.
+
+### EXP-20260927-062 — DEC-432 one-shot dispatch action-preflight proof
+
+- Added push-to-main read-only proof of DEC-431.
+- Requires zero executor runs and zero historical-result attempts.
+- Verifies executor run #1 / attempt 1 and historical run #2 / attempt 1.
+- Confirms one-shot dispatch authorization is true.
+- Executor triggered?: NO.
+- Trading authority?: NO.

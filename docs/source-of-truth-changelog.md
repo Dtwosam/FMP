@@ -1590,3 +1590,9 @@
 - Added plan-only current-main preflight for the authorized one-shot executor run.
 - Requires both one-shot inventories to remain unused.
 - Adds no execution surface and triggers no workflow.
+
+## 2026-09-30 — DEC-432 EXP-062 one-shot dispatch action-preflight proof
+
+- Added repository-hosted read-only proof for DEC-431.
+- Proof uses actions read only and has no workflow-dispatch trigger.
+- Confirms authorization and both unused one-shot slots without executing anything.
