@@ -8109,3 +8109,48 @@ trading remain false.
 Next gate: a separate source-only EXP-063 artifact/evidence contract bound to this
 exact deterministic core, with historical execution still closed.
 
+## DEC-446 — Freeze EXP-063 artifact/evidence contract
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY EVIDENCE CONTRACT / HISTORICAL EXECUTION LOCKED
+
+DEC-446 binds merged DEC-445 commit
+`f13988c78470ae00e3c3b9944a774bf2fed42f59`, DEC-445 miner source blob
+`40c49a372b35dbc113dbfb71374b1ae5fc7acc45`, and DEC-444 protocol source blob
+`2c781dd2811b66d2d88f008007bf5c8bcf99f14f`.
+
+The new contract source
+`src/fmp/discovery/exp063_evidence_contract.py` at blob
+`e8614beb156d24584b82611db47afb8c00ece71c` defines deterministic canonical
+cell and aggregate evidence for EXP-063. Compilation is self-validating: both cell
+and aggregate objects are passed through the same fail-closed semantic validators
+before being returned.
+
+Each cell evidence object binds the exact code commit, processed/feature/outcome
+manifest SHA-256 identities, feature/outcome evidence fingerprints, state-model
+cutpoints, bounded search counts, complete persistence shortlist, exact first-up-to-
+three frozen fingerprint inventory, and all DEC-444 persistence statistics. The
+validator reconstructs all eight annual 2015-2022 stats, re-runs the DEC-444
+persistence gate, recomputes metrics, EXP-063 pattern fingerprints, ranking keys,
+rank order, and frozen inventory.
+
+Aggregate evidence requires exactly the 18
+EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m cells. It validates every cell first,
+requires one code commit, exact Phase 2 symbol source manifests, equal
+feature/outcome manifest pairs across horizons for each symbol/timeframe, singular
+feature/outcome evidence fingerprints, sorted unique cells, global shortlist <=180,
+and global frozen count <=54.
+
+EXP-063 aggregate evidence intentionally contains no validation-accepted count.
+Every frozen object remains
+`RETROSPECTIVE_PERSISTENCE_PATTERN_HYPOTHESIS_NOT_VALIDATED`. Evidence remains
+`RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos=false`, and reserved robustness
+remains unopened.
+
+Source-data access, historical execution/result authorization, reserved robustness
+access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and
+trading remain false.
+
+Focused tests are `tests/test_phase8a_exp063_evidence_contract.py` at blob `18785c0710d61d21afba6c7d266862966e8f937d`.\n\nNext gate: a separate source-only EXP-063 workflow/CLI/runtime source freeze;
+dispatch and any historical execution slot remain closed.
+
