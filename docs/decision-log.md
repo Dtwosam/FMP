@@ -7731,3 +7731,20 @@ The future executor command is evidence only. No workflow is triggered by DEC-43
 Rerun/retry/replacement, reserved data, and all trading authority remain locked.
 
 Next gate: repository-hosted read-only action-preflight proof.
+
+## DEC-432 — EXP-062 one-shot executor dispatch action-preflight proof
+
+**Date:** 2026-09-30  
+**Status:** REPOSITORY-HOSTED READ-ONLY PROOF / AUTHORIZED RUN NOT STARTED
+
+DEC-432 adds a push-to-main, first-run/attempt-1 read-only proof of DEC-431.
+
+It pins DEC-430/431 and the exact executor/discovery workflow sources, requires zero
+executor runs and zero historical-result attempts, and verifies the one-shot
+authorization remains exact.
+
+The proof has contents/actions read permissions only and never submits the executor
+workflow.
+
+Next gate after a successful merged-main proof: strict evidence review and
+deterministic freeze before run.
