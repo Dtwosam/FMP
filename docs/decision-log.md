@@ -8243,3 +8243,57 @@ Next gate: a separate bounded runtime activation / one-shot dispatch decision th
 must reverify the exact merged runtime and the still-unused slot immediately before
 any dispatch. DEC-448 itself provides no dispatch or execution path.
 
+## DEC-449 — Activate EXP-063 one-shot historical runtime
+
+**Date:** 2026-09-30  
+**Status:** ONE-SHOT HISTORICAL RUNTIME AUTHORIZED / NOT DISPATCHED
+
+DEC-449 is the final pre-run activation for EXP-063. It binds merged DEC-448 commit
+`ee38ea4224345e2ed0a2c4a4baa9913b0589c8a0`, the DEC-448 one-shot slot source
+blob `f6070b1ecc8951338767b24dac1f0ff9ec7a24ae`, unchanged active workflow blob
+`1038beb4b704ddead4e5841a6f799858732189e6`, DEC-446 evidence-contract blob
+`e8614beb156d24584b82611db47afb8c00ece71c`, DEC-445 miner blob
+`40c49a372b35dbc113dbfb71374b1ae5fc7acc45`, DEC-444 protocol blob
+`2c781dd2811b66d2d88f008007bf5c8bcf99f14f`, repaired-adapter blob
+`491ba8c92cb6e6e4c715bfb1ecb934b6949e1596`, loader blob
+`df1d029a6f8b8d3862ebbf990ed1170a5982e1ea`, and runtime requirements blob
+`1ff32214dee10d877a067e750cd69ffad96d5fe5`.
+
+The live EXP-063 CLI is activated at blob
+`1ed4616af6de156fc1f832bf63b1a97c4caac8e9`. Runtime authorization source is
+`src/fmp/discovery/exp063_historical_execution_authorization.py` at blob
+`fd87ab32eafa43e2cffb305680a1747314f4f3e5`. The read-only dispatch operator is
+`src/fmp/discovery/exp063_historical_dispatch_operator.py` at blob
+`e05b502a495451efb1678034a0405855f4d199e8`. Focused activation tests are
+`tests/test_phase8a_exp063_historical_runtime_activation.py` at blob
+`ba2b3ebb81bd83accb047b29798ef757eb257800`.
+
+DEC-447 and DEC-448 remain immutable pre-activation records. Their frozen modules
+continue to report their historical locked state; DEC-449 becomes the live-current
+CLI/runtime authority. The active workflow itself remains byte-identical to the
+DEC-447 frozen workflow.
+
+Runtime authorization now requires GitHub Actions, repository `Dtwosam/FMP`,
+workflow `phase8a-exp063-persistence`, event `workflow_dispatch`, ref
+`refs/heads/main`, run number 1, run attempt 1, a positive run id, and exact
+`GITHUB_SHA == code_commit`, plus all pinned source blobs. Run number 2, attempt 2,
+local execution, repository/workflow/ref drift, or SHA drift fail closed.
+
+Historical-result dispatch, historical execution, and historical result production
+are now authorized for this single slot. Rerun, retry, replacement, reserved
+2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live orders,
+real-money action, and trading remain false.
+
+The DEC-449 dispatch operator is read-only and has no execute mode. It emits
+`gh workflow run phase8a-exp063-persistence.yml --ref main` only when current main
+matches the expected head and the DEC-448 run inventory is still empty. Once any
+matching run exists, no second command is emitted and the slot is permanently
+consumed.
+
+DEC-449 itself does not dispatch EXP-063. After merge, dispatch requires an immediate
+read-only main-head and run-inventory check. The first created run consumes the slot
+regardless of success, failure, or cancellation.
+
+Next gate: one explicit manual dispatch of the authorized EXP-063 workflow, followed
+by immutable run/result review. No rerun/retry/replacement is authorized.
+
