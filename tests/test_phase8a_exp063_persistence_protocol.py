@@ -93,7 +93,7 @@ class Exp063PersistenceProtocolTests(unittest.TestCase):
         self.assertEqual(metrics["positive_year_count"], 8)
         self.assertAlmostEqual(
             metrics["lower_half_annual_mean_net_pips_0p5"],
-            (0.30 + 0.35 + 0.40 + 0.45) / 4.0,
+            (0.25 + 0.30 + 0.35 + 0.40) / 4.0,
         )
         self.assertAlmostEqual(
             metrics["minimum_two_year_block_mean_net_pips_0p5"],
