@@ -8069,3 +8069,43 @@ remain false.
 Next gate: a deterministic source-only EXP-063 in-memory miner core implementing
 this exact protocol and proving 2023-2026 rows cannot influence results.
 
+## DEC-445 — Implement EXP-063 deterministic persistence miner core
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY CORE / HISTORICAL EXECUTION LOCKED
+
+DEC-445 binds merged DEC-444 commit
+`86d16d06444e56a1c6615f18e2906e8ecdaadbdf`, DEC-444 protocol source blob
+`2c781dd2811b66d2d88f008007bf5c8bcf99f14f`, and predecessor deterministic
+miner blob `495a67699eb5014e52129f0238a2737049fe38e6`.
+
+The new source
+`src/fmp/discovery/exp063_persistence_miner.py` at blob
+`40c49a372b35dbc113dbfb71374b1ae5fc7acc45` reuses the frozen feature/outcome
+contracts, 2015-2017 state calibration, state encoder, and one/two-dimension bounded
+enumerator while applying the DEC-444 persistence gate across the already-seen
+2015-2022 design years.
+
+For each pattern, the core forms one 2015-2022 event set and evaluates LONG/SHORT
+independently. Passing hypotheses retain exact annual support/net-pip statistics,
+lower-half annual mean, fixed two-year-block means, and all other DEC-444
+persistence metrics. Ranking follows the exact DEC-444 nine-field order, then
+same-direction event-Jaccard >=0.90 deduplication. The shortlist remains capped at
+10 per cell/horizon and frozen output at 3 per cell/horizon.
+
+Rows whose fixed horizon crosses an annual boundary are purged. Rows dated
+2023-2026 never enter event sets, scoring, ranking, deduplication, shortlist, or
+frozen output. Focused tests inject catastrophic reserved-period rows and require
+the entire in-memory result to remain exactly unchanged.
+
+Every frozen output remains
+`RETROSPECTIVE_PERSISTENCE_PATTERN_HYPOTHESIS_NOT_VALIDATED`. It is not an
+executable or independently validated strategy.
+
+Source-data access, historical execution/result production, reserved robustness
+access, candidate compilation, promotion, Phase 8B, demo/live, real-money, and
+trading remain false.
+
+Next gate: a separate source-only EXP-063 artifact/evidence contract bound to this
+exact deterministic core, with historical execution still closed.
+
