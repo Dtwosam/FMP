@@ -7864,3 +7864,28 @@ It adds no dispatch or execute surface. All broad authority locks remain false.
 
 Next gate after a real successful DEC-436 recovery: concrete runtime-evidence
 binding while historical discovery run #2 completes.
+
+
+## DEC-439 — Recover failed DEC-436 executor recovery with pinned runtime
+
+**Date:** 2026-09-30  
+**Status:** EXPLICIT SECOND FAIL-CLOSED RECOVERY AUTHORIZATION / HISTORICAL RESULT NOT STARTED
+
+DEC-436 recovery run `36707978889` / job `109862691026` is preserved as a real
+failure. It was exact run #1 / attempt 1, passed its run/provenance/source guards,
+then failed before historical-slot inspection because importing
+`fmp.discovery` raised `ModuleNotFoundError: No module named 'polars'`.
+
+No historical dispatch occurred and no receipt artifact was created. Discovery
+run #2 remains unused.
+
+DEC-439 introduces a separate manual-only recovery-v2 workflow with a fresh
+run #1 / attempt 1. It installs the exact pinned runtime from
+`requirements/exp061-discovery-run.txt` before importing FMP, pins both prior
+failures plus all relevant workflow/source identities, rechecks the empty discovery
+slot, and only then may dispatch discovery run #2 / attempt 1 on the same head.
+
+Generic rerun/retry/replacement, reserved data, Phase 8B, demo/live, real-money,
+and trading authority remain false.
+
+Next gate after green merge: one manual DEC-439 recovery-v2 run #1 / attempt 1.

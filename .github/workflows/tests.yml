@@ -100,6 +100,14 @@ jobs:
           -s tests
           -p 'test_phase8a_exp062_one_shot_executor_recovery_receipt_review_freeze.py'
           -v
+      - name: Run installed DEC-439 recovery-v2 tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_exp062_one_shot_historical_executor_recovery_v2.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
