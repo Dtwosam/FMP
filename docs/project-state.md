@@ -2294,3 +2294,19 @@ execute mode, reserved-data access, and every downstream trading authority remai
 false.
 
 Next safe gate: install the active workflow from the exact pinned dormant template.
+
+## 2026-09-30 — DEC-424 active historical executor workflow installed
+
+The explicitly authorized repository mutation has installed the active EXP-062
+one-shot historical executor workflow at
+`.github/workflows/phase8a-exp062-one-shot-historical-executor.yml`.
+
+Its content is identical to the pinned dormant template with blob
+`51ce87584369be957482460d81649adb1cb9f05d`.
+
+The workflow is now installed and available as a manual `workflow_dispatch`
+surface, but dispatch authorization and historical execute mode remain false.
+No historical run has been authorized by this decision, and reserved-data plus all
+downstream trading authority remain locked.
+
+Next safe gate: explicit one-shot executor dispatch authorization.

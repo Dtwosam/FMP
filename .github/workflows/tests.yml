@@ -20,9 +20,24 @@ jobs:
         run: python -m pip install -e .
       - name: Validate workflow YAML syntax
         run: ruby scripts/validate_workflow_yaml.rb .github/workflows
-      - name: Run unit tests
+      - name: Run installed-state unit tests
         env:
           PYTHONPATH: src
-        run: python -m unittest discover -s tests -v
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_exp062_active_one_shot_historical_executor_workflow_install_receipt.py'
+          -v
+      - name: Run historical snapshot and general unit tests
+        env:
+          PYTHONPATH: src
+          FMP_PREINSTALL_SNAPSHOT: '1'
+        run: |
+          set -euo pipefail
+          active=".github/workflows/phase8a-exp062-one-shot-historical-executor.yml"
+          hidden="$RUNNER_TEMP/phase8a-exp062-one-shot-historical-executor.yml"
+          mv "$active" "$hidden"
+          trap 'mv "$hidden" "$active"' EXIT
+          python -m unittest discover -s tests -v
       - name: Compile package
         run: python -m compileall -q src tests

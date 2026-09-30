@@ -1,0 +1,187 @@
+name: phase8a-exp062-one-shot-historical-executor
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  one_shot_historical_executor:
+    name: one-shot-historical-executor
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require exact one-shot executor run
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+      - name: Require frozen historical discovery workflow source
+        run: |
+          set -euo pipefail
+          test "$(git hash-object .github/workflows/phase8a-exp062-discovery.yml)" = "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50"
+
+      - name: Require historical result slot still empty
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp062-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/before.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "before.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          runs = payload.get("workflow_runs")
+          assert isinstance(runs, list)
+
+          proof = [
+              row
+              for row in runs
+              if row.get("id") == 36358289723
+              and row.get("run_number") == 1
+              and row.get("run_attempt") == 1
+              and row.get("event") == "workflow_dispatch"
+              and row.get("head_branch") == "main"
+          ]
+          assert len(proof) == 1
+
+          historical = [
+              row
+              for row in runs
+              if row.get("run_number") == 2
+          ]
+          assert historical == []
+          PY
+
+      - name: Dispatch the sole historical result run
+        run: |
+          set -euo pipefail
+          gh workflow run phase8a-exp062-discovery.yml --ref main
+
+      - name: Resolve exact target run 2 attempt 1
+        run: |
+          set -euo pipefail
+          found=0
+          for _ in $(seq 1 30); do
+            gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp062-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/after.json"
+            if python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "after.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          runs = payload.get("workflow_runs")
+          assert isinstance(runs, list)
+          targets = [
+              row
+              for row in runs
+              if row.get("run_number") == 2
+              and row.get("run_attempt") == 1
+              and row.get("event") == "workflow_dispatch"
+              and row.get("head_branch") == "main"
+          ]
+          raise SystemExit(0 if len(targets) == 1 else 1)
+          PY
+            then
+              found=1
+              break
+            fi
+            sleep 2
+          done
+          test "$found" = "1"
+
+      - name: Write immutable executor receipt
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "after.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          targets = [
+              row
+              for row in payload["workflow_runs"]
+              if row.get("run_number") == 2
+              and row.get("run_attempt") == 1
+              and row.get("event") == "workflow_dispatch"
+              and row.get("head_branch") == "main"
+          ]
+          assert len(targets) == 1
+          target = targets[0]
+          receipt = {
+              "decision": "DEC-355",
+              "executor_workflow": (
+                  "phase8a-exp062-one-shot-historical-executor"
+              ),
+              "executor_run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "executor_run_number": int(os.environ["GITHUB_RUN_NUMBER"]),
+              "executor_run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "executor_head_sha": os.environ["GITHUB_SHA"],
+              "historical_result_run_id": target["id"],
+              "historical_result_run_number": target["run_number"],
+              "historical_result_run_attempt": target["run_attempt"],
+              "historical_result_head_sha": target["head_sha"],
+              "dispatch_command": (
+                  "gh workflow run phase8a-exp062-discovery.yml --ref main"
+              ),
+              "rerun_authorized": False,
+              "retry_authorized": False,
+              "replacement_run_authorized": False,
+              "reserved_robustness_access_authorized": False,
+              "candidate_compilation_authorized": False,
+              "promotion_authorized": False,
+              "phase8b_authorized": False,
+              "demo_order_authorized": False,
+              "broker_mutation_authorized": False,
+              "live_order_authorized": False,
+              "real_money_authorized": False,
+              "trading_authorized": False,
+          }
+          out = (
+              Path(os.environ["RUNNER_TEMP"])
+              / "one-shot-historical-executor-receipt.json"
+          )
+          out.write_text(
+              json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False)
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload immutable executor receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp062-one-shot-historical-executor-receipt-${{ github.sha }}
+          path: ${{ runner.temp }}/one-shot-historical-executor-receipt.json
+          if-no-files-found: error

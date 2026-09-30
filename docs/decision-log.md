@@ -7563,3 +7563,26 @@ and trading remain locked.
 
 Next gate: active workflow installation as a repository mutation. No historical
 dispatch is authorized by DEC-423.
+
+## DEC-424 — EXP-062 active one-shot historical executor workflow installation
+
+**Date:** 2026-09-30  
+**Status:** ACTIVE WORKFLOW INSTALLED / DISPATCH STILL LOCKED
+
+DEC-424 performs the repository mutation explicitly authorized by DEC-423 and
+installs `.github/workflows/phase8a-exp062-one-shot-historical-executor.yml`.
+
+The installed workflow is byte-for-byte identical to dormant template blob
+`51ce87584369be957482460d81649adb1cb9f05d`, and DEC-424 pins DEC-423 source
+blob `df6a80d1f6ee6315f3e3095433ed6704666ccd33`.
+
+Workflow-install authorization, installed state, and executor availability are now
+true. Historical-result dispatch authorization and execute mode remain false.
+Rerun/retry/replacement, reserved data, Phase 8B, demo/live, real-money, and trading
+remain locked.
+
+The installed workflow is manual-only via `workflow_dispatch`; DEC-424 does not
+run it.
+
+Next gate: separate explicit one-shot executor dispatch authorization before the
+installed workflow may be triggered.

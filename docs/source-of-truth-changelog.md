@@ -1543,3 +1543,10 @@
 - Pins the DEC-422 runtime-freeze blob/fingerprint and dormant executor template.
 - Opens only workflow-install authorization.
 - Does not install the workflow, dispatch historical discovery, or expose trading authority.
+
+## 2026-09-30 — DEC-424 EXP-062 active workflow installation
+
+- Installed the active one-shot historical executor workflow from the exact pinned dormant template.
+- Marks workflow installed and executor available.
+- Keeps historical dispatch, execute mode, reserved-data access, and trading authority locked.
+- Adds no automatic trigger; the workflow remains `workflow_dispatch` only.

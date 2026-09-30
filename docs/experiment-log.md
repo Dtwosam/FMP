@@ -2516,3 +2516,13 @@ Copy this section for each serious experiment:
 - Installed state / executor availability / dispatch / execute authority?: NO.
 - Trading authority?: NO.
 - Next gate: repository mutation installing the active workflow.
+
+### EXP-20260927-062 — DEC-424 active workflow installation
+
+- Installed the active one-shot historical executor workflow.
+- Active workflow bytes exactly match dormant template blob `51ce87584369be957482460d81649adb1cb9f05d`.
+- Pins DEC-423 mutation-authorization source.
+- Workflow-install authorization / installed state / executor availability: YES.
+- Historical dispatch / execute authority: NO.
+- Trading authority: NO.
+- Next gate: explicit one-shot executor dispatch authorization.
