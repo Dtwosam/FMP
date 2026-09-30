@@ -121,6 +121,10 @@ class Exp062OneShotHistoricalExecutorRecoveryTests(unittest.TestCase):
         self.assertEqual(text.count(command), 2)
         self.assertIn('row.get("run_number") == 2', text)
         self.assertIn('row.get("run_attempt") == 1', text)
+        self.assertEqual(
+            text.count('row.get("head_sha") == os.environ["GITHUB_SHA"]'),
+            2,
+        )
         self.assertNotIn("gh workflow run phase8b", text.lower())
         self.assertNotIn("gh workflow run phase9", text.lower())
 
