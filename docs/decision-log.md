@@ -7668,3 +7668,27 @@ access, Phase 8B, demo/live, real-money, and trading remain false.
 
 Next gate: concrete DEC-426 runtime-evidence binding before any dispatch
 authorization.
+
+## DEC-429 — EXP-062 dispatch-preflight proof runtime evidence binding
+
+**Date:** 2026-09-30  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / DISPATCH STILL LOCKED
+
+DEC-429 binds the successful DEC-426 merged-main proof at head
+`f2b2a5629013749b74306201aac29d14b7124cd3`, run `36688457000`, job
+`109799712311`, and artifact `11085100742`.
+
+It verifies artifact/ZIP SHA-256
+`a335347c3e428f8eff653bfe4a8e022b0ed939c188634a5236f2354edaff9ac9`,
+raw DEC-425 SHA-256
+`017f45bcec6633006b3d78c76f09890da0417fbd79f904743de659e614d73974`,
+canonical DEC-425 SHA-256
+`26958a21f832609d2dfc57347f6637c35aaa2923c36ec14a40f9573e6a77cb02`,
+and DEC-428 fingerprint
+`4a9a7b3e931fd12585638430afbc38f823b5016ecc11f9f4fe7dd3533aa82454`.
+
+The executor remains installed and available with zero executor runs. Historical
+dispatch, execute mode, reserved data, Phase 8B, demo/live, real-money, and trading
+remain locked.
+
+Next gate: separate explicit one-shot executor dispatch authorization before run.
