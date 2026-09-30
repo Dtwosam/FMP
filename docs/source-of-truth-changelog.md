@@ -1602,3 +1602,12 @@
 - Added strict proof reviewer and deterministic freeze for DEC-432.
 - Preserves one-shot authorization and both unused run slots.
 - Adds no execution path or downstream trading authority.
+
+
+## 2026-09-30 — DEC-435 EXP-062 one-shot dispatch action-preflight proof runtime binding
+
+- Bound real DEC-432 run/job/artifact and exact ZIP/raw/canonical hashes.
+- Bound the deterministic DEC-434 freeze fingerprint.
+- Preserves explicit authorization only for executor run #1 / attempt 1.
+- Executor run count and historical-result attempt count remain zero.
+- General execute mode, rerun/retry/replacement, reserved data, and trading remain locked.

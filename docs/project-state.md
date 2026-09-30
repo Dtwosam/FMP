@@ -2406,3 +2406,19 @@ They preserve the exact one-shot authorization while requiring zero executor run
 and zero historical-result attempts.
 
 Next safe gate after real DEC-432 evidence: concrete runtime binding before run.
+
+
+## 2026-09-30 — DEC-435 dispatch action-preflight proof evidence bound
+
+The successful DEC-432 merged-main proof is now bound to exact runtime evidence:
+head `7b4f9fe713e546efdb445a8f4e9982e1b8f219aa`, run `36695220474`, job
+`109821445046`, artifact `11087821283`, exact ZIP/raw/canonical hashes, and
+DEC-434 freeze fingerprint
+`9a59f7329cb5abe0786511b91d7b6d8e33d4df8f027271a7387830f8fbf11c8a`.
+
+The executor remains installed and authorized for exactly run #1 / attempt 1, but
+has not been run. Historical-result attempts remain zero and the target remains
+run #2 / attempt 1. General execute mode, reruns, reserved data, and all downstream
+trading authority remain locked.
+
+Next safe gate: submit the exact already-authorized one-shot executor run.

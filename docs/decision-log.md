@@ -7775,3 +7775,29 @@ The one-shot authorization remains true, but executor run count and
 historical-result attempt count remain zero. No execution occurs.
 
 Next gate: concrete DEC-432 runtime-evidence binding before run.
+
+
+## DEC-435 — EXP-062 one-shot executor dispatch action-preflight proof runtime evidence binding
+
+**Date:** 2026-09-30  
+**Status:** CONCRETE RUNTIME EVIDENCE BOUND / AUTHORIZED RUN NOT STARTED
+
+The successful merged-main DEC-432 proof is now concretely bound through the
+DEC-433 strict review and DEC-434 deterministic freeze.
+
+Bound evidence: head `7b4f9fe713e546efdb445a8f4e9982e1b8f219aa`, run
+`36695220474`, job `109821445046`, artifact `11087821283`, artifact/ZIP
+SHA-256 `16984f3cac059bb725c29953466131ffb710bbfc621ec8f35428bf2036e8cd63`,
+raw preflight SHA-256
+`fd512c6dc5c03248e0cd75b328ed32a81dc76564b94ab85436d6f5d8764746d9`,
+canonical preflight SHA-256
+`33daef766b6a2e91b20adef386d2fc44f3b2aff03eeb3a08792f1e49da2d667d`,
+and DEC-434 freeze fingerprint
+`9a59f7329cb5abe0786511b91d7b6d8e33d4df8f027271a7387830f8fbf11c8a`.
+
+The explicit DEC-430 authorization still covers only executor run #1 / attempt 1,
+targeting historical result run #2 / attempt 1. Executor run count and historical
+result attempt count remain zero. General execute mode, rerun/retry/replacement,
+reserved data, Phase 8B, demo/live, real-money, and trading remain locked.
+
+Next safe gate: submit only the already-authorized executor run #1 / attempt 1.

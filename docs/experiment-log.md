@@ -2610,3 +2610,17 @@ Copy this section for each serious experiment:
 - Preserves authorized-but-unstarted one-shot state.
 - Emits canonical freeze fingerprint.
 - Executor triggered?: NO.
+
+
+### EXP-20260927-062 — DEC-435 action-preflight proof runtime evidence binding
+
+- Bound successful DEC-432 run `36695220474`, job `109821445046`, artifact
+  `11087821283` to exact raw/canonical proof hashes.
+- Re-runs DEC-433 review and DEC-434 freeze; freeze fingerprint is
+  `9a59f7329cb5abe0786511b91d7b6d8e33d4df8f027271a7387830f8fbf11c8a`.
+- Executor runs at binding: 0.
+- Historical-result attempts at binding: 0.
+- Authorized executor target remains run #1 / attempt 1.
+- Historical result target remains run #2 / attempt 1.
+- General execute mode / rerun / retry / replacement: NO.
+- Trading authority: NO.
