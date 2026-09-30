@@ -7608,3 +7608,22 @@ execute mode, rerun/retry/replacement, reserved data, Phase 8B, demo/live,
 real-money, and trading remain locked.
 
 Next gate: separate explicit one-shot executor dispatch authorization before run.
+
+## DEC-426 — EXP-062 installed executor dispatch-preflight proof
+
+**Date:** 2026-09-30  
+**Status:** REPOSITORY-HOSTED READ-ONLY PREFLIGHT PROOF / NO RUN
+
+DEC-426 adds a push-to-main, first-run/attempt-1 proof of DEC-425.
+
+It pins DEC-424 receipt blob, DEC-425 preflight/CLI blobs, the active executor
+workflow blob, the discovery workflow, and the pinned planning runtime. The proof
+has contents/actions read permissions only and no manual dispatch trigger.
+
+A valid run requires the active executor to remain installed, zero executor runs,
+zero historical-result attempts, an unused historical slot, and target run #2 /
+attempt 1. All dispatch, execute, reserved-data, and trading authorities remain
+false.
+
+Next gate after real successful merged-main evidence: strict proof review and
+deterministic freeze.
