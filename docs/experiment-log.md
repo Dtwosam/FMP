@@ -2624,3 +2624,16 @@ Copy this section for each serious experiment:
 - Historical result target remains run #2 / attempt 1.
 - General execute mode / rerun / retry / replacement: NO.
 - Trading authority: NO.
+
+
+### EXP-20260927-062 — DEC-436 one-shot executor recovery
+
+- Original executor run `36702494195` failed before historical dispatch.
+- GitHub assigned original executor run #2 / attempt 1; the run #1 guard rejected it.
+- Failed job: `109844958600`.
+- Historical-result attempts after failure: 0.
+- Historical result target remains discovery run #2 / attempt 1.
+- Recovery uses a separate manual-only workflow with expected run #1 / attempt 1.
+- Original executor workflow is unchanged.
+- Generic rerun / retry / replacement: NO.
+- Reserved-data and trading authority: NO.

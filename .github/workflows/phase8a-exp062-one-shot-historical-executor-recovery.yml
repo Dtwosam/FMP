@@ -1,0 +1,285 @@
+name: phase8a-exp062-one-shot-historical-executor-recovery
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  one_shot_historical_executor_recovery:
+    name: one-shot-historical-executor-recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout exact merged main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require exact DEC-436 recovery run
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git branch --show-current)" = "main"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+      - name: Pin failed original executor provenance
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36702494195" > "$RUNNER_TEMP/failed-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36702494195/jobs?per_page=100" > "$RUNNER_TEMP/failed-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/36702494195/artifacts?per_page=100" > "$RUNNER_TEMP/failed-artifacts.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads((temp / "failed-run.json").read_text(encoding="utf-8"))
+          assert run["id"] == 36702494195
+          assert run["name"] == "phase8a-exp062-one-shot-historical-executor"
+          assert run["path"] == (
+              ".github/workflows/"
+              "phase8a-exp062-one-shot-historical-executor.yml"
+          )
+          assert run["event"] == "workflow_dispatch"
+          assert run["head_branch"] == "main"
+          assert run["head_sha"] == "59b55d519449e20cf396d70ed9a5722b989d933a"
+          assert run["run_number"] == 2
+          assert run["run_attempt"] == 1
+          assert run["status"] == "completed"
+          assert run["conclusion"] == "failure"
+
+          jobs = json.loads(
+              (temp / "failed-jobs.json").read_text(encoding="utf-8")
+          )["jobs"]
+          assert len(jobs) == 1
+          job = jobs[0]
+          assert job["id"] == 109844958600
+          assert job["name"] == "one-shot-historical-executor"
+          assert job["conclusion"] == "failure"
+          steps = {step["name"]: step["conclusion"] for step in job["steps"]}
+          assert steps["Checkout exact merged main"] == "success"
+          assert steps["Require exact one-shot executor run"] == "failure"
+          assert steps["Dispatch the sole historical result run"] == "skipped"
+          assert steps["Write immutable executor receipt"] == "skipped"
+          assert steps["Upload immutable executor receipt"] == "skipped"
+
+          artifacts = json.loads(
+              (temp / "failed-artifacts.json").read_text(encoding="utf-8")
+          )["artifacts"]
+          assert artifacts == []
+          PY
+
+      - name: Require frozen recovery source identities
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/exp062_historical_one_shot_executor_recovery_authorization.py)" = "481fbfbb43557b1b42c0d9bc84ded0775816714e"
+          test "$(git hash-object src/fmp/discovery/exp062_historical_one_shot_executor_dispatch_action_preflight_proof_runtime_freeze.py)" = "d70fb2ef8f55462be278dd22e42a733b5e03fc67"
+          test "$(git hash-object .github/workflows/phase8a-exp062-one-shot-historical-executor.yml)" = "51ce87584369be957482460d81649adb1cb9f05d"
+          test "$(git hash-object .github/workflows/phase8a-exp062-discovery.yml)" = "1a7d42fd8d03d6ca3eae722209b1ad2a5dd2bc50"
+
+      - name: Require exact DEC-436 recovery authorization
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          from fmp.discovery.exp062_historical_one_shot_executor_recovery_authorization import (
+              build_one_shot_executor_recovery_authorization,
+          )
+
+          value = build_one_shot_executor_recovery_authorization(
+              repository_root=Path("."),
+          )
+          assert value["decision"] == "DEC-436"
+          assert value["failed_executor_run_id"] == 36702494195
+          assert value["failed_executor_run_number"] == 2
+          assert value["failed_executor_run_attempt"] == 1
+          assert value["failed_executor_run_conclusion"] == "failure"
+          assert value["failed_executor_dispatched_historical_result"] is False
+          assert value["historical_result_attempt_count"] == 0
+          assert value["historical_result_slot_consumed"] is False
+          assert value["historical_result_slot_verified_available"] is True
+          assert value["expected_recovery_run_number"] == 1
+          assert value["expected_recovery_run_attempt"] == 1
+          assert value["expected_target_run_number"] == 2
+          assert value["expected_target_run_attempt"] == 1
+          assert value["explicit_one_shot_executor_recovery_dispatch_authorized"] is True
+          assert value["historical_execute_mode_available"] is False
+          for field in (
+              "rerun_authorized",
+              "retry_authorized",
+              "replacement_run_authorized",
+              "reserved_robustness_access_authorized",
+              "candidate_compilation_authorized",
+              "promotion_authorized",
+              "phase8b_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert value[field] is False, field
+          PY
+
+      - name: Require historical result slot still empty
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp062-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/before.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "before.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          runs = payload.get("workflow_runs")
+          assert isinstance(runs, list)
+          proof = [
+              row
+              for row in runs
+              if row.get("id") == 36358289723
+              and row.get("run_number") == 1
+              and row.get("run_attempt") == 1
+              and row.get("event") == "workflow_dispatch"
+              and row.get("head_branch") == "main"
+          ]
+          assert len(proof) == 1
+          historical = [row for row in runs if row.get("run_number") == 2]
+          assert historical == []
+          PY
+
+      - name: Dispatch the sole historical result run
+        run: |
+          set -euo pipefail
+          gh workflow run phase8a-exp062-discovery.yml --ref main
+
+      - name: Resolve exact target run 2 attempt 1
+        run: |
+          set -euo pipefail
+          found=0
+          for _ in $(seq 1 30); do
+            gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-exp062-discovery.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/after.json"
+            if python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "after.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          runs = payload.get("workflow_runs")
+          assert isinstance(runs, list)
+          targets = [
+              row
+              for row in runs
+              if row.get("run_number") == 2
+              and row.get("run_attempt") == 1
+              and row.get("event") == "workflow_dispatch"
+              and row.get("head_branch") == "main"
+              and row.get("head_sha") == os.environ["GITHUB_SHA"]
+          ]
+          raise SystemExit(0 if len(targets) == 1 else 1)
+          PY
+            then
+              found=1
+              break
+            fi
+            sleep 2
+          done
+          test "$found" = "1"
+
+      - name: Write immutable DEC-436 recovery receipt
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "after.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          targets = [
+              row
+              for row in payload["workflow_runs"]
+              if row.get("run_number") == 2
+              and row.get("run_attempt") == 1
+              and row.get("event") == "workflow_dispatch"
+              and row.get("head_branch") == "main"
+              and row.get("head_sha") == os.environ["GITHUB_SHA"]
+          ]
+          assert len(targets) == 1
+          target = targets[0]
+          receipt = {
+              "decision": "DEC-436",
+              "recovery_workflow": (
+                  "phase8a-exp062-one-shot-historical-executor-recovery"
+              ),
+              "recovery_run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "recovery_run_number": int(os.environ["GITHUB_RUN_NUMBER"]),
+              "recovery_run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "recovery_head_sha": os.environ["GITHUB_SHA"],
+              "failed_original_executor_run_id": 36702494195,
+              "failed_original_executor_job_id": 109844958600,
+              "failed_original_executor_run_number": 2,
+              "failed_original_executor_run_attempt": 1,
+              "failed_original_executor_conclusion": "failure",
+              "failed_original_executor_dispatched_historical_result": False,
+              "historical_result_run_id": target["id"],
+              "historical_result_run_number": target["run_number"],
+              "historical_result_run_attempt": target["run_attempt"],
+              "historical_result_head_sha": target["head_sha"],
+              "dispatch_command": (
+                  "gh workflow run phase8a-exp062-discovery.yml --ref main"
+              ),
+              "rerun_authorized": False,
+              "retry_authorized": False,
+              "replacement_run_authorized": False,
+              "reserved_robustness_access_authorized": False,
+              "candidate_compilation_authorized": False,
+              "promotion_authorized": False,
+              "phase8b_authorized": False,
+              "demo_order_authorized": False,
+              "broker_mutation_authorized": False,
+              "live_order_authorized": False,
+              "real_money_authorized": False,
+              "trading_authorized": False,
+          }
+          out = (
+              Path(os.environ["RUNNER_TEMP"])
+              / "one-shot-historical-executor-recovery-receipt.json"
+          )
+          out.write_text(
+              json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False)
+              + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload immutable DEC-436 recovery receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: exp062-dec436-one-shot-historical-executor-recovery-receipt-${{ github.sha }}
+          path: ${{ runner.temp }}/one-shot-historical-executor-recovery-receipt.json
+          if-no-files-found: error
