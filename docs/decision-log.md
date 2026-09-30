@@ -7919,3 +7919,34 @@ real-money, and trading remain locked.
 
 Next gate: deterministic immutable DEC-441 historical-result review freeze.
 
+## DEC-441 — Freeze reviewed EXP-062 historical result
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY DETERMINISTIC RESULT FREEZE / NO DOWNSTREAM AUTHORIZATION
+
+DEC-441 deterministically freezes the DEC-440 reviewed EXP-062 historical result.
+It pins DEC-440 source blob
+`17facb0f77f6419de5f8a74f80019bb7289fe984` and preserves the exact
+historical run `36714210992`, run #2 / attempt 1, head
+`013395092804de6b0ef51537081ab8443b8b91be`.
+
+The freeze also preserves aggregate artifact `11096592737`, artifact digest
+`sha256:077535bc6e9d9a1d6e8693f873b7552cf8028d793ef79eab175dbbd9970430bc`,
+aggregate JSON SHA-256
+`bfdf9787e9ee32c30ff29aa70594d7404bc7fc2cb573a60068802d2aacbaa6f3`,
+aggregate evidence fingerprint
+`b8019226fb7fce14c6711834fe16cdbb52795d9ca8996b1ed98ede7ecfba9506`,
+and the reviewed 18 verified cells / 67 shortlist / 11 confirmation-frozen /
+0 validation-accepted counts.
+
+The canonical frozen object receives one `freeze_fingerprint_sha256` for any
+later post-EXP-062 research-direction decision.
+
+The historical-result slot remains consumed. Rerun/retry/replacement,
+reserved-data access, candidate compilation, promotion, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next gate: a separate explicit post-EXP-062 research-direction decision. Zero
+validation-accepted candidates do not themselves authorize threshold changes,
+additional mining, Phase 8B, or promotion.
+
