@@ -7827,3 +7827,40 @@ mode, reserved data, Phase 8B, demo/live, real-money, and trading remain locked.
 
 Next gate after green merge: manually submit exactly the DEC-436 recovery workflow
 run #1 / attempt 1. Do not rerun the failed original executor.
+
+
+## DEC-437 — Review successful DEC-436 recovery receipt
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY RECOVERY RECEIPT REVIEW
+
+DEC-437 adds a strict reviewer for a future successful DEC-436 recovery workflow
+run #1 / attempt 1.
+
+The reviewer pins the DEC-436 recovery workflow and authorization, the unchanged
+original executor workflow, and the active discovery workflow. It requires one
+successful recovery job and one non-expired recovery receipt artifact.
+
+The receipt must preserve failed original executor run `36702494195` / job
+`109844958600`, bind discovery run #2 / attempt 1 to the exact recovery head, and
+keep rerun/retry/replacement, reserved-data, Phase 8B, demo/live, real-money, and
+trading authority false.
+
+Next gate: deterministic recovery receipt freeze.
+
+## DEC-438 — Freeze reviewed DEC-436 recovery receipt
+
+**Date:** 2026-09-30  
+**Status:** SOURCE-ONLY DETERMINISTIC RECOVERY RECEIPT FREEZE
+
+DEC-438 deterministically freezes a valid DEC-437 review and emits one canonical
+SHA-256 fingerprint.
+
+The freeze preserves exact recovery run/job/artifact identities, raw/canonical
+receipt hashes, failed original executor provenance, discovery run #2 / attempt 1,
+and exact recovery/discovery head equality.
+
+It adds no dispatch or execute surface. All broad authority locks remain false.
+
+Next gate after a real successful DEC-436 recovery: concrete runtime-evidence
+binding while historical discovery run #2 completes.

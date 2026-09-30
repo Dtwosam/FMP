@@ -2637,3 +2637,13 @@ Copy this section for each serious experiment:
 - Original executor workflow is unchanged.
 - Generic rerun / retry / replacement: NO.
 - Reserved-data and trading authority: NO.
+
+
+### EXP-20260927-062 — DEC-437/438 recovery receipt review/freeze
+
+- Adds strict source-only review of a future DEC-436 recovery receipt.
+- Requires recovery run #1 / attempt 1 success.
+- Preserves failed original executor run `36702494195`.
+- Requires historical target run #2 / attempt 1 on the same head.
+- Adds deterministic freeze fingerprint.
+- Adds no dispatch or trading authority.
