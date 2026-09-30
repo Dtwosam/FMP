@@ -7586,3 +7586,25 @@ run it.
 
 Next gate: separate explicit one-shot executor dispatch authorization before the
 installed workflow may be triggered.
+
+## DEC-425 — EXP-062 installed executor dispatch preflight
+
+**Date:** 2026-09-30  
+**Status:** READ-ONLY CURRENT-MAIN DISPATCH PREFLIGHT / NO RUN
+
+DEC-425 adds a read-only current-main preflight for the installed one-shot
+historical executor.
+
+It pins DEC-424 receipt blob
+`27e714620018413a09ceaf287fb7943bf884ee49` and the active executor workflow
+blob `51ce87584369be957482460d81649adb1cb9f05d`.
+
+A valid preflight requires the installed workflow to remain exact, zero executor
+workflow runs, zero historical-result attempts, an unused historical slot, and
+target run #2 / attempt 1.
+
+Workflow installation and executor availability remain true. Historical dispatch,
+execute mode, rerun/retry/replacement, reserved data, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next gate: separate explicit one-shot executor dispatch authorization before run.
