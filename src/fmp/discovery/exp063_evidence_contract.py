@@ -275,6 +275,7 @@ def compile_cell_evidence(
     evidence["evidence_fingerprint"] = _sha256_bytes(
         _canonical_json(evidence)
     )
+    validate_cell_evidence(evidence)
     return evidence
 
 
@@ -748,6 +749,7 @@ def compile_aggregate_evidence(
     evidence["evidence_fingerprint"] = _sha256_bytes(
         _canonical_json(evidence)
     )
+    validate_aggregate_evidence(evidence)
     return evidence
 
 
