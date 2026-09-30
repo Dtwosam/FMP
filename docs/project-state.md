@@ -2422,3 +2422,24 @@ run #2 / attempt 1. General execute mode, reruns, reserved data, and all downstr
 trading authority remain locked.
 
 Next safe gate: submit the exact already-authorized one-shot executor run.
+
+
+## 2026-09-30 — DEC-436 executor recovery prepared
+
+The submitted one-shot executor run `36702494195` failed safely at its exact-run
+guard. GitHub assigned run #2 / attempt 1, while the frozen authorization expected
+run #1 / attempt 1.
+
+No historical result was dispatched, no receipt was created, and no artifact was
+uploaded. Discovery run #2 remains unused.
+
+DEC-436 now defines a separate recovery workflow so the original frozen executor
+does not need to be rewritten. The recovery workflow is manual-only and may accept
+only its own run #1 / attempt 1 after checking the failed run provenance and empty
+historical-result slot.
+
+General rerun/retry/replacement, execute mode, reserved data, Phase 8B, demo/live,
+real-money, and trading remain locked.
+
+Next safe gate after CI and merge: manually invoke the DEC-436 recovery workflow
+once on `main`.
