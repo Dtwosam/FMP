@@ -7715,3 +7715,19 @@ execute mode, reserved data, Phase 8B, demo/live, real-money, and trading remain
 locked.
 
 Next gate: read-only current-main dispatch-action preflight before run.
+
+## DEC-431 — EXP-062 one-shot executor dispatch action preflight
+
+**Date:** 2026-09-30  
+**Status:** READ-ONLY ACTION PREFLIGHT / AUTHORIZED RUN NOT STARTED
+
+DEC-431 adds a current-main, plan-only action preflight for DEC-430.
+
+It pins DEC-430 and the exact active executor workflow, requires zero executor runs,
+zero historical-result attempts, an unused historical slot, executor run #1 /
+attempt 1, and historical result run #2 / attempt 1.
+
+The future executor command is evidence only. No workflow is triggered by DEC-431.
+Rerun/retry/replacement, reserved data, and all trading authority remain locked.
+
+Next gate: repository-hosted read-only action-preflight proof.
