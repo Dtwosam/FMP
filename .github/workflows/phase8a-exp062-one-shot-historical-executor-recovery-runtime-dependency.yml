@@ -151,21 +151,20 @@ jobs:
         with:
           python-version: "3.12.14"
 
-      - name: Install pinned planning runtime
-        run: python -m pip install -r requirements/exp061-discovery-run.txt
-
-      - name: Require exact DEC-439 authorization
+      - name: Require exact DEC-439 authorization without package initialization
         run: |
           python - <<'PY'
           from pathlib import Path
+          import runpy
 
-          from fmp.discovery.exp062_historical_one_shot_executor_recovery_runtime_dependency_authorization import (
-              build_recovery_runtime_dependency_recovery_authorization,
+          source = runpy.run_path(
+              "src/fmp/discovery/"
+              "exp062_historical_one_shot_executor_recovery_runtime_dependency_authorization.py"
           )
-
-          value = build_recovery_runtime_dependency_recovery_authorization(
-              repository_root=Path("."),
-          )
+          build = source[
+              "build_recovery_runtime_dependency_recovery_authorization"
+          ]
+          value = build(repository_root=Path("."))
           assert value["decision"] == "DEC-439"
           assert value["failed_original_executor_run_id"] == 36702494195
           assert value["failed_original_executor_run_number"] == 2
