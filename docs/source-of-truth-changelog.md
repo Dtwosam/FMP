@@ -1584,3 +1584,9 @@
 - Scope is exact first executor run and exact historical result run #2 / attempt 1.
 - Does not trigger the workflow.
 - Keeps general execute mode, reruns, reserved data, and trading authority locked.
+
+## 2026-09-30 — DEC-431 EXP-062 one-shot dispatch action preflight
+
+- Added plan-only current-main preflight for the authorized one-shot executor run.
+- Requires both one-shot inventories to remain unused.
+- Adds no execution surface and triggers no workflow.
