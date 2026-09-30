@@ -2467,8 +2467,9 @@ failure is `ModuleNotFoundError: No module named 'polars'`.
 No historical discovery dispatch occurred and discovery run #2 remains unused.
 
 DEC-439 now defines a separate manual-only runtime-dependency recovery workflow. It
-pins both prior failures, installs `requirements/exp061-discovery-run.txt`, then
-rechecks authorization and the historical slot before any dispatch.
+pins both prior failures and the historical requirement file, then loads the
+pure-stdlib authorization file directly with `runpy` before rechecking the
+historical slot. No package initialization occurs before dispatch.
 
 Next safe gate after CI and merge: one manual DEC-439 recovery invocation on
 `main`.
