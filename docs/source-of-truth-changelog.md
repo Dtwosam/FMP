@@ -1621,3 +1621,12 @@
 - Added a separate manual-only recovery workflow with exact run #1 / attempt 1.
 - Historical result target remains run #2 / attempt 1 with zero attempts consumed.
 - Generic rerun/retry/replacement and all trading authority remain locked.
+
+
+## 2026-09-30 — DEC-437/438 recovery receipt review and freeze
+
+- Added strict reviewer for future DEC-436 recovery runtime evidence.
+- Added deterministic freeze with canonical SHA-256 fingerprint.
+- Pins recovery workflow/auth source plus original executor/discovery workflows.
+- Requires discovery target head to match the recovery head.
+- Adds no execution or trading authority.
