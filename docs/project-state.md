@@ -2396,3 +2396,13 @@ runs, zero historical-result attempts, and the exact one-shot target identities.
 
 Next safe gate after a successful merged-main proof: review and freeze DEC-432
 runtime evidence.
+
+## 2026-09-30 — DEC-433/434 action-preflight proof review/freeze source-ready
+
+Strict review and deterministic freeze gates now exist for future successful
+DEC-432 evidence.
+
+They preserve the exact one-shot authorization while requiring zero executor runs
+and zero historical-result attempts.
+
+Next safe gate after real DEC-432 evidence: concrete runtime binding before run.
