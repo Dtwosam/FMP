@@ -558,6 +558,11 @@ def validate_cell_evidence(
             raise ValueError(f"DEC-446 cell evidence {field} must remain false")
 
     _validate_nested_cell_semantics(value)
+    identity = _cell_identity(value)
+    if value.get("processed_manifest_sha256") != EXPECTED_SOURCE_MANIFEST_SHA256[
+        identity[0]
+    ]:
+        raise ValueError("DEC-446 cell Phase 2 source identity mismatch")
     return value
 
 
@@ -669,6 +674,16 @@ def compile_aggregate_evidence(
                 "processed_manifest_sha256": processed,
                 "feature_manifest_sha256": feature_manifest,
                 "outcome_manifest_sha256": outcome_manifest,
+                "feature_evidence_fingerprint": next(
+                    item
+                    for item in feature_fingerprints
+                    if item == validated.get("feature_evidence_fingerprint")
+                ),
+                "outcome_evidence_fingerprint": next(
+                    item
+                    for item in outcome_fingerprints
+                    if item == validated.get("outcome_evidence_fingerprint")
+                ),
                 "persistence_shortlist_count": len(shortlist),
                 "persistence_shortlist_fingerprints": [
                     str(item["fingerprint"])
@@ -822,6 +837,9 @@ def validate_aggregate_evidence(
     cell_fingerprints: list[str] = []
     shortlist_count = 0
     frozen_count = 0
+    feature_fingerprints: set[str] = set()
+    outcome_fingerprints: set[str] = set()
+    manifest_pairs: dict[tuple[str, str], tuple[str, str]] = {}
     for row in cells:
         if not isinstance(row, Mapping):
             raise ValueError("DEC-446 aggregate cell summary malformed")
@@ -839,6 +857,39 @@ def validate_aggregate_evidence(
             _validate_sha256(
                 row.get("cell_evidence_fingerprint"),
                 field="DEC-446 cell evidence fingerprint",
+            )
+        )
+        symbol = str(identity[0])
+        timeframe = str(identity[1])
+        if row.get("processed_manifest_sha256") != EXPECTED_SOURCE_MANIFEST_SHA256[
+            symbol
+        ]:
+            raise ValueError("DEC-446 aggregate Phase 2 source identity mismatch")
+        feature_manifest = _validate_sha256(
+            row.get("feature_manifest_sha256"),
+            field="DEC-446 aggregate feature manifest",
+        )
+        outcome_manifest = _validate_sha256(
+            row.get("outcome_manifest_sha256"),
+            field="DEC-446 aggregate outcome manifest",
+        )
+        key = (symbol, timeframe)
+        pair = (feature_manifest, outcome_manifest)
+        prior_pair = manifest_pairs.setdefault(key, pair)
+        if prior_pair != pair:
+            raise ValueError(
+                "DEC-446 aggregate manifest identity differs across horizons"
+            )
+        feature_fingerprints.add(
+            _validate_sha256(
+                row.get("feature_evidence_fingerprint"),
+                field="DEC-446 aggregate feature evidence fingerprint",
+            )
+        )
+        outcome_fingerprints.add(
+            _validate_sha256(
+                row.get("outcome_evidence_fingerprint"),
+                field="DEC-446 aggregate outcome evidence fingerprint",
             )
         )
         if row.get("output_kind") != OUTPUT_KIND:
@@ -881,6 +932,10 @@ def validate_aggregate_evidence(
         raise ValueError(
             "DEC-446 aggregate cell evidence fingerprints duplicated"
         )
+    if feature_fingerprints != {value.get("feature_evidence_fingerprint")}:
+        raise ValueError("DEC-446 aggregate feature evidence identity mismatch")
+    if outcome_fingerprints != {value.get("outcome_evidence_fingerprint")}:
+        raise ValueError("DEC-446 aggregate outcome evidence identity mismatch")
     if value.get("persistence_shortlist_count") != shortlist_count:
         raise ValueError("DEC-446 aggregate total shortlist count mismatch")
     if value.get("persistence_frozen_count") != frozen_count:
