@@ -2361,3 +2361,17 @@ target run #2 / attempt 1.
 The executor remains unrun. Historical dispatch and execute mode remain false.
 
 Next safe gate: explicit one-shot executor dispatch authorization.
+
+## 2026-09-30 — DEC-430 one-shot executor dispatch authorized
+
+The installed historical executor now has explicit authorization for exactly one
+first invocation: executor run #1 / attempt 1, targeting historical result run #2 /
+attempt 1.
+
+The workflow has not been triggered. Executor run count and historical-result
+attempt count remain zero at the authorization boundary.
+
+Rerun/retry/replacement, reserved-data access, and all trading authority remain
+locked.
+
+Next safe gate: read-only current-main dispatch-action preflight.
