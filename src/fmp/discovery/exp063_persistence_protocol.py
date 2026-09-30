@@ -138,8 +138,14 @@ class AnnualPersistenceStat:
     def __post_init__(self) -> None:
         if self.year not in DESIGN_YEARS:
             raise ValueError("annual persistence year is outside 2015-2022")
-        if isinstance(self.support, bool) or self.support < 0:
-            raise ValueError("annual persistence support must be non-negative")
+        if (
+            isinstance(self.support, bool)
+            or not isinstance(self.support, int)
+            or self.support < 0
+        ):
+            raise ValueError(
+                "annual persistence support must be a non-negative integer"
+            )
         for field in ("total_net_pips_0p5", "total_net_pips_1p0"):
             value = float(getattr(self, field))
             if not math.isfinite(value):
