@@ -84,6 +84,14 @@ jobs:
           -s tests
           -p 'test_phase8a_exp062_one_shot_executor_dispatch_action_preflight_proof_runtime_freeze.py'
           -v
+      - name: Run installed DEC-436 executor-recovery tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_exp062_one_shot_historical_executor_recovery.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
@@ -92,8 +100,11 @@ jobs:
           set -euo pipefail
           active=".github/workflows/phase8a-exp062-one-shot-historical-executor.yml"
           hidden="$RUNNER_TEMP/phase8a-exp062-one-shot-historical-executor.yml"
+          recovery=".github/workflows/phase8a-exp062-one-shot-historical-executor-recovery.yml"
+          recovery_hidden="$RUNNER_TEMP/phase8a-exp062-one-shot-historical-executor-recovery.yml"
           mv "$active" "$hidden"
-          trap 'mv "$hidden" "$active"' EXIT
+          mv "$recovery" "$recovery_hidden"
+          trap 'mv "$hidden" "$active"; mv "$recovery_hidden" "$recovery"' EXIT
           python -m unittest discover -s tests -v
       - name: Compile package
         run: python -m compileall -q src tests
