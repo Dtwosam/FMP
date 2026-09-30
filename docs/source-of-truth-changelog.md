@@ -1550,3 +1550,9 @@
 - Marks workflow installed and executor available.
 - Keeps historical dispatch, execute mode, reserved-data access, and trading authority locked.
 - Adds no automatic trigger; the workflow remains `workflow_dispatch` only.
+
+## 2026-09-30 — DEC-425 EXP-062 installed executor dispatch preflight
+
+- Added read-only current-main preflight for the installed executor.
+- Requires exact active workflow blob, zero executor runs, and unused historical slot.
+- Keeps dispatch, execute mode, reserved-data access, and trading authority locked.

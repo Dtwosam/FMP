@@ -2526,3 +2526,12 @@ Copy this section for each serious experiment:
 - Historical dispatch / execute authority: NO.
 - Trading authority: NO.
 - Next gate: explicit one-shot executor dispatch authorization.
+
+### EXP-20260927-062 — DEC-425 installed executor dispatch preflight
+
+- Pins DEC-424 receipt and exact active executor workflow blob.
+- Rechecks current main, zero executor runs, and zero historical-result attempts.
+- Requires target run #2 / attempt 1 and unused historical slot.
+- CLI surface: plan only.
+- Historical dispatch / execute authority: NO.
+- Trading authority: NO.
