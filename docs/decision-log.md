@@ -8154,3 +8154,53 @@ trading remain false.
 Focused tests are `tests/test_phase8a_exp063_evidence_contract.py` at blob `18785c0710d61d21afba6c7d266862966e8f937d`.\n\nNext gate: a separate source-only EXP-063 workflow/CLI/runtime source freeze;
 dispatch and any historical execution slot remain closed.
 
+## DEC-447 — Install locked EXP-063 runtime wiring
+
+**Date:** 2026-09-30  
+**Status:** ACTIVE WORKFLOW INSTALLED / HISTORICAL EXECUTION LOCKED
+
+DEC-447 consolidates the EXP-063 run contract, runtime CLI, dormant workflow source,
+and locked active-workflow installation into one source-only milestone.
+
+It binds DEC-446 evidence contract blob
+`e8614beb156d24584b82611db47afb8c00ece71c`, DEC-445 persistence miner blob
+`40c49a372b35dbc113dbfb71374b1ae5fc7acc45`, DEC-444 protocol blob
+`2c781dd2811b66d2d88f008007bf5c8bcf99f14f`, EXP-062 repaired adapter blob
+`491ba8c92cb6e6e4c715bfb1ecb934b6949e1596`, EXP-062 source-contract blob
+`e20ded13de24f99e8ea6cfdc6cb0d1309d984f24`, EXP-061 range-limited loader blob
+`df1d029a6f8b8d3862ebbf990ed1170a5982e1ea`, and runtime requirements blob
+`1ff32214dee10d877a067e750cd69ffad96d5fe5`.
+
+Runtime source is
+`src/fmp/discovery/exp063_runtime_source.py` blob
+`6e7804a037fd386016fd45145be73b8dc00563f2`. CLI is
+`scripts/phase8a_exp063.py` blob
+`1b969668f79b37bc68f701da103b3a2bb53b13c1`. The dormant template and active
+workflow are byte-identical at blob
+`1038beb4b704ddead4e5841a6f799858732189e6`. Focused tests are blob
+`e75e30c648f166862e555422ac76c6d9033485ec`.
+
+The installed workflow `phase8a-exp063-persistence` has exactly 20 jobs and a
+20-artifact success shape: one preflight, 18 explicit
+EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m cells, and one aggregate.
+
+EXP-063 reuses only the exact frozen EXP-044 source lineage already reviewed for
+EXP-061/062 and explicitly inherits the EXP-062 non-finite→null feature repair. If
+a later decision authorizes execution, each cell is wired as frozen loader ->
+repaired adapter -> DEC-445 persistence miner -> DEC-446 evidence contract.
+
+Historical execution remains hard-locked. Preflight may read and validate only the
+exact source-run metadata, after which
+`python scripts/phase8a_exp063.py require-execution` raises before any cell job can
+download historical feature/outcome artifacts. The CLI independently gates cell
+artifact reads and aggregate result reads.
+
+Workflow source and installation state are true. Workflow-dispatch authorization,
+historical execution/result authorization, rerun/retry/replacement, reserved
+2023-2026 access, candidate compilation, promotion, Phase 8B, demo/live,
+real-money, and trading remain false.
+
+Next gate: one explicit EXP-063 one-shot historical execution authorization bound to
+the exact merged DEC-447 runtime. DEC-447 itself provides no execute mode and does
+not dispatch EXP-063.
+
