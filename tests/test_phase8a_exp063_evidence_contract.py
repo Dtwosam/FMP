@@ -272,6 +272,51 @@ class Exp063EvidenceContractTests(unittest.TestCase):
                 code_commit=_CODE_COMMIT,
             )
 
+
+    def test_refingerprinted_aggregate_manifest_tamper_fails_closed(self) -> None:
+        cells = [
+            _cell_evidence(symbol, timeframe, horizon)
+            for symbol, timeframe, horizon in EXPECTED_CELLS
+        ]
+        aggregate = compile_aggregate_evidence(
+            cells,
+            code_commit=_CODE_COMMIT,
+        )
+        tampered = dict(aggregate)
+        rows = [dict(row) for row in aggregate["cells"]]
+        rows[0]["feature_manifest_sha256"] = "e" * 64
+        tampered["cells"] = rows
+        tampered = _refingerprint(tampered)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "manifest identity differs across horizons",
+        ):
+            validate_aggregate_evidence(tampered)
+
+    def test_refingerprinted_aggregate_upstream_identity_tamper_fails_closed(
+        self,
+    ) -> None:
+        cells = [
+            _cell_evidence(symbol, timeframe, horizon)
+            for symbol, timeframe, horizon in EXPECTED_CELLS
+        ]
+        aggregate = compile_aggregate_evidence(
+            cells,
+            code_commit=_CODE_COMMIT,
+        )
+        tampered = dict(aggregate)
+        rows = [dict(row) for row in aggregate["cells"]]
+        rows[0]["feature_evidence_fingerprint"] = "f" * 64
+        tampered["cells"] = rows
+        tampered = _refingerprint(tampered)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "feature evidence identity mismatch",
+        ):
+            validate_aggregate_evidence(tampered)
+
     def test_refingerprinted_authority_tamper_fails_closed(self) -> None:
         value = _cell_evidence("EURUSD", "15m", 60)
         tampered = dict(value)
