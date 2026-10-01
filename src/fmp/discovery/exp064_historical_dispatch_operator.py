@@ -21,7 +21,7 @@ EXP064_HISTORICAL_DISPATCH_OPERATOR_VERSION = (
 )
 
 DEC457_EXECUTION_AUTHORIZATION_BLOB_SHA = (
-    "3098c5145f792792b3b33c5fc44e5a4c76a5fbbd"
+    "5d5c0e8ceeeef4b0b2d45167c47a682937ef8121"
 )
 DEC456_RUN_AUTHORIZATION_BLOB_SHA = (
     "0668910a69a87fad06be73af98e5f403436fe7fb"
@@ -80,12 +80,12 @@ def validate_historical_dispatch_operator_sources(
 ) -> dict[str, str]:
     root = Path(repository_root)
     expected = {
-        "dec449_execution_authorization": (
+        "dec457_execution_authorization": (
             root
             / "src/fmp/discovery/exp064_historical_execution_authorization.py",
             DEC457_EXECUTION_AUTHORIZATION_BLOB_SHA,
         ),
-        "dec448_run_authorization": (
+        "dec456_run_authorization": (
             root / "src/fmp/discovery/exp064_historical_run_authorization.py",
             DEC456_RUN_AUTHORIZATION_BLOB_SHA,
         ),
