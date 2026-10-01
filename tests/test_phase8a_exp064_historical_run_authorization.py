@@ -57,6 +57,31 @@ class Exp064HistoricalRunAuthorizationTests(unittest.TestCase):
             report["cli_blob_sha"],
             "a44aed6d890e25a781b7b92d7efb3dabe06f9047",
         )
+        self.assertEqual(
+            report["evidence_contract_blob_sha"],
+            "9aee3f9e273e20329c9de5a7079ed924ffee0a9a",
+        )
+        self.assertEqual(
+            report["continuous_stability_miner_blob_sha"],
+            "b0d799ec1afaf43b0441290c97a9f39c37ecd2fd",
+        )
+        self.assertEqual(
+            report["continuous_stability_protocol_blob_sha"],
+            "c108ea047c7bfb3e588bfbac33993180066c28ad",
+        )
+        self.assertEqual(report["historical_data_start"], "2015-01-01T00:00:00Z")
+        self.assertEqual(
+            report["historical_data_end_exclusive"],
+            "2023-01-01T00:00:00Z",
+        )
+        self.assertEqual(
+            report["reserved_robustness_start"],
+            "2023-01-01T00:00:00Z",
+        )
+        self.assertEqual(
+            report["reserved_robustness_end_exclusive"],
+            "2026-08-21T00:00:00Z",
+        )
         self.assertEqual(report["expected_first_run_number"], 1)
         self.assertEqual(report["expected_run_attempt"], 1)
         self.assertTrue(report["historical_result_slot_source_authorized"])
