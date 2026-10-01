@@ -18,10 +18,13 @@ from fmp.discovery.exp065_evidence_contract import (
 from fmp.discovery.exp065_pairwise_interaction_miner import (
     run_in_memory_pairwise_interaction_miner,
 )
-from fmp.discovery.exp065_runtime_source import (
+from fmp.discovery.exp065_historical_execution_authorization import (
+    historical_execution_authorization_payload,
     require_historical_execution_authorized,
+    validate_historical_execution_authorization_sources,
+)
+from fmp.discovery.exp065_runtime_source import (
     runtime_source_payload,
-    validate_installed_runtime_paths,
     validate_runtime_dependencies,
     validate_source_snapshots,
 )
@@ -65,8 +68,15 @@ def _cmd_status(args: argparse.Namespace) -> int:
     value["runtime_dependencies"] = validate_runtime_dependencies(
         repository_root=Path("."),
     )
-    value["installed_runtime"] = validate_installed_runtime_paths(
-        repository_root=Path("."),
+    value["execution_authorization"] = (
+        historical_execution_authorization_payload(
+            code_commit=args.code_commit,
+        )
+    )
+    value["execution_authorization_sources"] = (
+        validate_historical_execution_authorization_sources(
+            repository_root=Path("."),
+        )
     )
     print(
         json.dumps(
@@ -94,8 +104,15 @@ def _cmd_preflight(args: argparse.Namespace) -> int:
     value["runtime_dependencies"] = validate_runtime_dependencies(
         repository_root=Path("."),
     )
-    value["installed_runtime"] = validate_installed_runtime_paths(
-        repository_root=Path("."),
+    value["execution_authorization"] = (
+        historical_execution_authorization_payload(
+            code_commit=args.code_commit,
+        )
+    )
+    value["execution_authorization_sources"] = (
+        validate_historical_execution_authorization_sources(
+            repository_root=Path("."),
+        )
     )
     _write_json(args.out, value)
     return 0
@@ -175,7 +192,7 @@ def _cmd_aggregate(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="EXP-065 locked pairwise-interaction runtime CLI"
+        description="EXP-065 one-shot authorized pairwise-interaction runtime CLI"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
