@@ -1,11 +1,30 @@
 # FMP Project State
 
-**Updated:** 2026-09-27
+**Updated:** 2026-10-02
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
-**Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Merge DEC-296/297/298/299/300/301/302/303 after green checks. DEC-303 may submit exactly one proof-only EXP-062 run and consumes no historical-result slot. Review and freeze that proof before any historical-result authorization.
+**Current phase:** Phase 8A — Discovery-first multi-pair market-pattern research
+**Phase status:** ACTIVE — DEC-268 remains the governing forward research method: discover repeated leakage-safe market behaviour first, freeze selected patterns, then test them chronologically before compiling strategy semantics. EXP-065 is only a bounded pairwise continuous-feature interaction sub-experiment inside that framework; it does not redefine the project method. The sole authorized EXP-065 historical run is GitHub Actions run `36905224184`, head `5faa733572576aa5a1c56176ac27c415eaaf6416`, run number 1 / attempt 1. Its one-shot slot is permanently consumed; rerun, retry, replacement, and cancellation remain forbidden. DEC-467 predeclares the terminal review contract. The reserved 2023-01-01 through 2026-08-20 block remains closed. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
+**Next milestone:** When run `36905224184` becomes terminal, freeze its exact result under the already-reserved DEC-468 result-review gate. After that freeze, any successor research direction must explicitly map back to the discovery-first workflow in `docs/research-method-operating-guardrail.md`; there is no automatic authorization for another narrow transform/search.
+
+## Governing research method — mandatory session invariant
+
+The source-of-truth research method is **discovery-first market-pattern research**, not whichever bounded experiment happens to be running most recently.
+
+Every new research session must separately identify:
+
+1. the governing DEC-268 discovery-first framework;
+2. the current bounded sub-experiment;
+3. the current evidence window and any closed reserve;
+4. the next authorized gate.
+
+The required loop is:
+
+`market measurements -> bounded pattern discovery -> pattern freeze -> later chronological confirmation/validation -> exact strategy/model compilation -> robustness/backtest -> prospective shadow -> fixed-version demo -> completed-evidence learning -> new immutable challenger`
+
+A narrow experiment such as atomic-state search, continuous single-feature stability, pairwise interactions, clustering, a statistical estimator, or a model family is evidence-generation inside this loop. It must not be described as the complete FMP method. A negative result rejects only that frozen representation/protocol.
+
+Mandatory operating detail: `docs/research-method-operating-guardrail.md`.
 
 ## Current baseline
 
