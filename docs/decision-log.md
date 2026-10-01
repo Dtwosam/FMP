@@ -8688,3 +8688,58 @@ the slot remains empty, and the planner reports
 `EXP064_ONE_SHOT_DISPATCH_READY` may the single manual dispatch be performed.
 The first created run consumes the slot regardless of outcome.
 
+## DEC-458 — Freeze EXP-064 historical result: no continuous-stability hypotheses
+
+**Date:** 2026-10-01  
+**Status:** HISTORICAL RESULT REVIEWED AND FROZEN / NO CONTINUOUS-STABILITY HYPOTHESES
+
+DEC-458 freezes the only EXP-064 historical run, GitHub Actions run
+`36853290904`, workflow `phase8a-exp064-continuous-stability`, head
+`b13f89f4d6bef8b1ab4a2fa12c6b01d0e5067506`, run number 1, attempt 1,
+completed successfully.
+
+Exactly 20 jobs completed successfully and exactly 20 artifacts are present and
+non-expired. Aggregate artifact id `11158816828` is
+`phase8a-exp064-aggregate-b13f89f4d6bef8b1ab4a2fa12c6b01d0e5067506`
+with artifact digest
+`sha256:a404c053a5dd6989cf0efb2adba2cb276fec9a66a448a8617e7dac7da50c577f`.
+
+The downloaded aggregate JSON SHA-256 is
+`b971340204ec2a6136559dc467f84f1e6b69f1c58fe3c5cca01e437ba6c80284`.
+Its canonical evidence fingerprint is
+`832e8c814ac578b614764d37cba15e64569e2f841dfa6f72f2c9cd9a8fdbcbb1`,
+and independent recomputation matched exactly.
+
+All 18 cell evidence artifacts were inspected. Every cell contains exactly 80
+frozen hypotheses / 80 evaluable hypotheses and reports zero qualifying
+hypotheses, zero deduplicated hypotheses, an empty continuous-stability shortlist,
+and an empty frozen inventory. Across the frozen 18-cell universe this is 1,440
+hypotheses and 1,440 evaluable hypotheses with zero passing the DEC-452
+continuous-stability gate. Every cell evidence fingerprint recomputed and matched
+the aggregate inventory.
+
+Classification:
+`NO_CONTINUOUS_STABILITY_HYPOTHESIS_PASSED_FROZEN_GATE`.
+
+This is a negative result for the exact frozen EXP-064 universe and protocol. It is
+not a claim that no market edge exists outside that universe, and it is not a
+ranking/dedup failure: qualification itself is zero.
+
+Evidence remains `RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos=false`, with
+zero shortlist and zero frozen hypotheses. The reserved 2023-01-01 through
+2026-08-20 robustness block remains unopened and unauthorized.
+
+The one-shot slot is consumed permanently. Rerun, retry, replacement, reserved
+robustness access, candidate compilation, promotion, Phase 8B, demo/live orders,
+real-money action, and trading remain false.
+
+Review source
+`src/fmp/discovery/exp064_historical_result_review.py` is blob
+`c5878685950e14a632b4eb8d2616d9540afb12d2`; focused tests
+`tests/test_phase8a_exp064_historical_result_review.py` are blob
+`258aa9fbe71fae63b805d08a0112aef229cb205f`.
+
+Next gate: `EXPLICIT_POST_EXP064_RESEARCH_DIRECTION_DECISION`. Any successor
+research must treat 2015-2022 EXP-064 outcomes as already-seen evidence and may not
+retroactively redefine or rerun EXP-064.
+
