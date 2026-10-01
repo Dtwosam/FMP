@@ -113,6 +113,14 @@ class Exp064LockedRuntimeWiringTests(unittest.TestCase):
             "9aee3f9e273e20329c9de5a7079ed924ffee0a9a",
         )
         self.assertEqual(
+            dependencies["source_blobs"]["dec453_continuous_stability_miner"],
+            "b0d799ec1afaf43b0441290c97a9f39c37ecd2fd",
+        )
+        self.assertEqual(
+            dependencies["source_blobs"]["dec452_continuous_stability_protocol"],
+            "c108ea047c7bfb3e588bfbac33993180066c28ad",
+        )
+        self.assertEqual(
             installed["dormant_template_blob_sha"],
             "caca62672ad9796764c18be6b8da9785b98c9733",
         )
