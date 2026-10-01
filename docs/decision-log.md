@@ -8795,3 +8795,73 @@ Research-direction source
 
 Next gate: `SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_PROTOCOL`.
 
+## DEC-460 — Freeze EXP-065 pairwise-interaction protocol
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY PROTOCOL FROZEN / EXECUTION LOCKED
+
+DEC-460 binds merged DEC-459 commit
+`c0d8ba052cc0cd662149aa787722874c7207ce4a`, DEC-459 pairwise-direction source
+blob `7d9350f714bfec7cc39ebf76b2e6e313261e9a68`, and the DEC-452
+continuous-rank protocol blob
+`c108ea047c7bfb3e588bfbac33993180066c28ad`.
+
+The frozen successor identity is `EXP-20261001-065`. It keeps the exact
+EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m market universe and the same 20
+leakage-safe continuous features. No new raw features, symbols, timeframes,
+horizons, alternative data, or repair paths are authorized.
+
+EXP-065 enumerates the exact 190 unordered pairs from the 20-feature list. Each
+hypothesis is one pair × one direction (LONG/SHORT) × one interaction polarity
+(INCREASING/DECREASING), for exactly 760 hypotheses per cell/horizon and 13,680
+globally. Same-feature pairs and all 3+ feature interactions are forbidden.
+
+Each constituent feature retains the DEC-452 full-design 2015-2022 empirical
+midrank CDF. Pair interaction raw score is exactly
+`2 * (p_a - 0.5) * (p_b - 0.5)`; each symbol/timeframe/pair raw-score series is
+then itself calibrated by a full-design empirical-midrank CDF. Pair calibration
+requires at least 600 finite rows and 20 distinct values.
+
+The primary annual interaction effect is the polarity-signed OLS coefficient on
+centered interaction rank in
+`net_pips_0p5 ~ 1 + centered_rank(feature_a) + centered_rank(feature_b) + centered_rank(interaction)`.
+This makes the interaction statistic incremental to the two constituent linear
+rank main effects. Singular designs fail closed at the frozen `1e-12` tolerance.
+
+An additional main-effects-only annual model
+`net_pips_0p5 ~ 1 + centered_rank(feature_a) + centered_rank(feature_b)`
+produces residuals. The selected interaction tail must retain positive raw
+economics and positive mean main-effect residual, preventing qualification based
+solely on a constituent main effect.
+
+The stability gate keeps all eight 2015-2022 years and requires >=600 total
+selected-tail support, >=75 each year, at least 6/8 positive years for partial
+interaction slope/raw selected-tail mean/incremental residual mean, equal-year
+partial slope >=0.25, equal-year raw selected-tail mean >=0.25, positive
+equal-year incremental residual mean, positive lower-half metrics for all three,
+positive metrics in every fixed two-year block for all three, and positive
+equal-year raw selected-tail mean at the 1.0-pip stress cost.
+
+Ranking prioritizes incremental residual stability before raw economics and partial
+slope stability. Selected-tail event sets at Jaccard >=0.95 are near-duplicates.
+Because the search volume is larger than EXP-064, the retrospective carry-forward
+caps are tightened to 3 shortlist / 1 frozen per cell-horizon, or 54 shortlist /
+18 frozen globally.
+
+All evidence remains `RETROSPECTIVE_ALREADY_SEEN` with
+`untouched_oos=false` and output kind
+`RETROSPECTIVE_PAIRWISE_INTERACTION_HYPOTHESIS_NOT_VALIDATED`. The reserved
+2023-01-01 through 2026-08-20 block remains closed.
+
+Protocol source
+`src/fmp/discovery/exp065_pairwise_interaction_protocol.py` is blob
+`5ed8b86207076264096d5e6ac5aaf25472172407`; focused tests
+`tests/test_phase8a_exp065_pairwise_interaction_protocol.py` are blob
+`b50d3f62d5ee25e260403bc323317cf84a4b4d01`.
+
+Historical execution/result production, reserved robustness access, candidate
+compilation, promotion, Phase 8B, demo/live orders, broker mutation, real-money
+action, and trading remain false.
+
+Next gate: `SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_MINER`.
+
