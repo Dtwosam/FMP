@@ -8910,3 +8910,58 @@ or artifact path is added.
 Next gate: `SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_MINER`. Any miner must bind
 the repaired DEC-461 protocol blob rather than the superseded DEC-460 source blob.
 
+## DEC-462 — Freeze source-only EXP-065 pairwise-interaction miner
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY MINER FROZEN / EXECUTION LOCKED
+
+DEC-462 binds merged DEC-461 commit
+`2a8127b505c9b0d9e1adb562bd18a5cafc171df6`, repaired EXP-065 protocol blob
+`b54267d790667659749a96123ad23a491ff50dfa`, and base feature/outcome
+observation-model blob `495a67699eb5014e52129f0238a2737049fe38e6`.
+
+The miner is deterministic and in-memory only. It introduces no historical source
+adapter, file/database/network reader, workflow, CLI, artifact writer, dispatch
+path, or result-production authority.
+
+For each cell/horizon it preserves the nominal frozen universe of exactly 760
+hypotheses: 190 canonical unordered feature pairs × 2 directions × 2 interaction
+polarities. The report separately counts evaluable hypotheses; unavailable,
+insufficient-calibration, or singular pairs fail closed and do not redefine the
+nominal search count.
+
+Constituent features retain the DEC-452 full-design 2015-2022 empirical-midrank
+calibration. Each usable pair is calibrated under the repaired DEC-461 interaction
+helper using exactly
+`2 * (p_a - 0.5) * (p_b - 0.5)` followed by full-design empirical midranking.
+
+For every evaluable pair/direction/polarity, the miner constructs exact annual
+2015-2022 statistics using the frozen main-effect-controlled interaction OLS,
+main-effects-only residuals, raw selected-tail economics at 0.5/1.0 pip, and
+selected-tail residual incrementality. Singular annual designs or missing selected
+tails make the hypothesis non-evaluable; no regularization or rescue path exists.
+
+Qualification delegates to the repaired frozen
+`pairwise_interaction_gate_passes(...)` protocol function. Ranking follows the
+frozen DEC-460 order exactly. Near-duplicate selected-tail observation-id sets use
+Jaccard >=0.95 and retain the higher-ranked hypothesis. Per-cell carry-forward caps
+remain 3 shortlist / 1 frozen, with the existing global 54 / 18 caps preserved for
+later aggregation.
+
+Rows from 2023 onward are filtered before calibration or evaluation; the
+2023-01-01 through 2026-08-20 reserved block remains closed and cannot affect any
+miner output.
+
+Miner source
+`src/fmp/discovery/exp065_pairwise_interaction_miner.py` is blob
+`7dac382838d2b8fcc4df5d02c4949ad65c17635b`; focused tests
+`tests/test_phase8a_exp065_pairwise_interaction_miner.py` are blob
+`f97bf2ec31c92e9866eb771ce5f526045e2ed482`.
+
+Historical source access/execution/result production, reserved robustness access,
+candidate compilation, promotion, Phase 8B, demo/live orders, broker mutation,
+real-money action, and trading remain false.
+
+Next gate:
+`SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_EVIDENCE_CONTRACT`.
+
