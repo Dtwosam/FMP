@@ -9028,3 +9028,58 @@ real-money action, and trading remain false.
 Next gate:
 `SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_RUNTIME_WIRING`.
 
+## DEC-464 — Install locked EXP-065 pairwise runtime wiring
+
+**Date:** 2026-10-01  
+**Status:** ACTIVE WORKFLOW INSTALLED / HISTORICAL EXECUTION LOCKED
+
+DEC-464 binds merged DEC-463 commit
+`c8c2c8d2dd5be5ff73655b09730d9eb18f9c3737`, DEC-463 evidence-contract
+blob `ca68622ddfc9866f00569d558b2ab927be23686d`, DEC-462 pairwise miner
+blob `7dac382838d2b8fcc4df5d02c4949ad65c17635b`, and repaired DEC-461
+protocol blob `b54267d790667659749a96123ad23a491ff50dfa`.
+
+The runtime reuses the exact accepted EXP-044 feature/outcome artifacts and the
+frozen EXP-062 source/non-finite-to-null path plus EXP-061 range-limited loader.
+No new historical input, symbol, timeframe, horizon, feature, repair path, or
+reserved-data path is introduced.
+
+Runtime source is
+`src/fmp/discovery/exp065_runtime_source.py` at blob
+`717b43e3bfd656b51e22819cf948f8cd6485f334`.
+Locked CLI is `scripts/phase8a_exp065.py` at blob
+`38e3eb9a5c2733655c845291d6bc3160e5fa0291`.
+
+Dormant template
+`docs/superpowers/templates/phase8a-exp065-pairwise-interaction.yml.disabled`
+and installed active workflow
+`.github/workflows/phase8a-exp065-pairwise-interaction.yml`
+are byte-identical at Git blob
+`75d0e4df56d5c4ced5aff614e236cf0e1bb078e1`.
+
+The frozen manual-main topology is exactly 20 jobs and 20 artifacts: one
+preflight, the 18 EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m cells, and one
+aggregate. Each cell is composed only from the exact frozen source loader/adapter,
+DEC-462 pairwise miner, and DEC-463 evidence contract.
+
+A hard `require-execution` gate precedes every historical artifact download in
+the workflow and every historical artifact/result read in the CLI. The workflow
+validator also rejects predecessor cell/aggregate CLIs through EXP-064.
+
+Under DEC-464, workflow source authorization and workflow installation are true.
+Workflow dispatch authorization, historical execution, historical result
+production, rerun, retry, replacement, reserved 2023-2026 robustness access,
+candidate compilation, promotion, Phase 8B, demo/live orders, broker mutation,
+real-money action, and trading remain false.
+
+Focused tests are
+`tests/test_phase8a_exp065_locked_runtime_wiring.py` at blob
+`aecd7003d93d6de43565a5b22a663121cf2ccb68`.
+They pin the exact DEC-463/462/461 lineage, source snapshots, 18-cell/20-job
+topology, byte-identical workflow installation, exact CLI, gate ordering before
+historical reads, predecessor-CLI rejection, and the closed execution boundary.
+
+Next gate: a separate source-only one-shot EXP-065 historical-result slot
+authorization bound to the exact merged DEC-464 runtime. DEC-464 itself provides
+no execute mode and does not dispatch EXP-065.
+
