@@ -7,6 +7,7 @@ from fmp.discovery.exp064_historical_dispatch_operator import (
     HISTORICAL_EXECUTE_MODE_AVAILABLE,
     build_historical_dispatch_plan,
     historical_dispatch_command,
+    validate_historical_dispatch_operator_sources,
     validate_historical_dispatch_plan,
 )
 from fmp.discovery.exp064_historical_execution_authorization import (
@@ -80,6 +81,34 @@ class Exp064HistoricalRuntimeActivationTests(unittest.TestCase):
             report["activated_cli_blob_sha"],
             "29fce0ac43adf6743448d5936b00f7e6755df2b4",
         )
+        self.assertEqual(
+            report["dec456_merge_sha"],
+            "ef6c40d3e8148e52256917576423a8e6f53e8cfb",
+        )
+        self.assertEqual(
+            report["evidence_contract_blob_sha"],
+            "9aee3f9e273e20329c9de5a7079ed924ffee0a9a",
+        )
+        self.assertEqual(
+            report["continuous_stability_miner_blob_sha"],
+            "b0d799ec1afaf43b0441290c97a9f39c37ecd2fd",
+        )
+        self.assertEqual(
+            report["continuous_stability_protocol_blob_sha"],
+            "c108ea047c7bfb3e588bfbac33993180066c28ad",
+        )
+        self.assertEqual(
+            report["repaired_adapter_blob_sha"],
+            "491ba8c92cb6e6e4c715bfb1ecb934b6949e1596",
+        )
+        self.assertEqual(
+            report["range_limited_loader_blob_sha"],
+            "df1d029a6f8b8d3862ebbf990ed1170a5982e1ea",
+        )
+        self.assertEqual(
+            report["runtime_requirements_blob_sha"],
+            "1ff32214dee10d877a067e750cd69ffad96d5fe5",
+        )
         self.assertTrue(report["historical_result_dispatch_authorized"])
         self.assertTrue(report["historical_execution_authorized"])
         self.assertTrue(report["historical_result_authorized"])
@@ -90,6 +119,20 @@ class Exp064HistoricalRuntimeActivationTests(unittest.TestCase):
         self.assertFalse(report["candidate_compilation_authorized"])
         self.assertFalse(report["phase8b_authorized"])
         self.assertFalse(report["trading_authorized"])
+
+    def test_dispatch_operator_binds_exact_activation_sources(self) -> None:
+        report = validate_historical_dispatch_operator_sources(
+            repository_root=Path("."),
+        )
+
+        self.assertEqual(
+            report["dec457_execution_authorization"],
+            "3098c5145f792792b3b33c5fc44e5a4c76a5fbbd",
+        )
+        self.assertEqual(
+            report["dec456_run_authorization"],
+            "0668910a69a87fad06be73af98e5f403436fe7fb",
+        )
 
     def test_exact_run_one_attempt_one_runtime_identity_is_authorized(self) -> None:
         report = require_historical_execution_authorized(
