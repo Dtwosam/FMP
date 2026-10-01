@@ -1013,6 +1013,12 @@ def validate_aggregate_evidence(
             raise ValueError("DEC-454 aggregate active feature inventory malformed")
         if any(item not in CONTINUOUS_FEATURES for item in active):
             raise ValueError("DEC-454 aggregate active feature mismatch")
+        if len(active) != len(set(active)):
+            raise ValueError("DEC-454 aggregate active feature inventory duplicated")
+        if active != [
+            feature for feature in CONTINUOUS_FEATURES if feature in active
+        ]:
+            raise ValueError("DEC-454 aggregate active feature order mismatch")
         if row.get("hypothesis_count") != 80:
             raise ValueError("DEC-454 aggregate hypothesis count mismatch")
 
@@ -1028,6 +1034,8 @@ def validate_aggregate_evidence(
             row.get("deduplicated_hypothesis_count"),
             field="DEC-454 aggregate deduplicated count",
         )
+        if evaluable > len(active) * len(DIRECTIONS) * len(POLARITIES):
+            raise ValueError("DEC-454 aggregate evaluable count exceeds active search")
         if qualifying > evaluable or deduplicated > qualifying:
             raise ValueError("DEC-454 aggregate hypothesis counts inconsistent")
 
@@ -1048,6 +1056,10 @@ def validate_aggregate_evidence(
             _validate_sha256(item, field="DEC-454 hypothesis fingerprint")
         if len(shortlist_fingerprints) > MAX_SHORTLIST_PER_CELL_HORIZON:
             raise ValueError("DEC-454 aggregate cell shortlist exceeds cap")
+        if len(shortlist_fingerprints) > deduplicated:
+            raise ValueError(
+                "DEC-454 aggregate cell shortlist exceeds deduplicated count"
+            )
         if len(frozen_fingerprints) > MAX_FROZEN_PER_CELL_HORIZON:
             raise ValueError("DEC-454 aggregate cell frozen exceeds cap")
         if frozen_fingerprints != shortlist_fingerprints[
