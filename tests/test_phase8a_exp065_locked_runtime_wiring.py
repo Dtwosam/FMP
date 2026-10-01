@@ -6,6 +6,7 @@ import unittest
 from fmp.discovery.exp065_runtime_source import (
     ACTIVE_WORKFLOW_PATH,
     DORMANT_WORKFLOW_TEMPLATE_PATH,
+    DEC463_MERGE_SHA,
     EXPECTED_ARTIFACT_COUNT,
     EXPECTED_CELL_COUNT,
     EXPECTED_JOB_COUNT,
