@@ -9083,3 +9083,43 @@ Next gate: a separate source-only one-shot EXP-065 historical-result slot
 authorization bound to the exact merged DEC-464 runtime. DEC-464 itself provides
 no execute mode and does not dispatch EXP-065.
 
+## DEC-465 — Open source-only EXP-065 one-shot historical-result slot
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY SLOT AUTHORIZATION / DISPATCH LOCKED
+
+DEC-465 binds merged DEC-464 commit
+`698e3e21d7dd0cbe83c3ed7d15f5544cf9c096e9` and opens exactly one
+source-level historical-result slot for EXP-065 while keeping dispatch, historical
+execution, historical result production, rerun, retry, replacement, reserve
+access, candidate compilation, promotion, Phase 8B, broker/order activity,
+real-money action, and trading false.
+
+The slot contract pins the exact DEC-464 runtime source
+`717b43e3bfd656b51e22819cf948f8cd6485f334`, active workflow and dormant
+template `75d0e4df56d5c4ced5aff614e236cf0e1bb078e1`, locked CLI
+`38e3eb9a5c2733655c845291d6bc3160e5fa0291`, DEC-463 evidence contract
+`ca68622ddfc9866f00569d558b2ab927be23686d`, DEC-462 miner
+`7dac382838d2b8fcc4df5d02c4949ad65c17635b`, and repaired DEC-461 protocol
+`b54267d790667659749a96123ad23a491ff50dfa`.
+
+Only a manual `workflow_dispatch` run of
+`phase8a-exp065-pairwise-interaction` from `main` can consume the slot. The
+target must remain run number 1 and run attempt 1. The first matching queued,
+running, successful, failed, or cancelled run consumes the slot permanently.
+Multiple matching runs, run number >1, run attempt >1, or malformed run state fail
+closed. No rerun, retry, or replacement path is exposed.
+
+The historical window remains 2015-01-01 through 2022-12-31 inclusive. The
+2023-01-01 through 2026-08-20 reserved robustness block remains closed.
+
+Authorization source
+`src/fmp/discovery/exp065_historical_run_authorization.py` is blob
+`96aac63a75d7873e6b6508d34b983d0742858a02`; focused tests
+`tests/test_phase8a_exp065_historical_run_authorization.py` are blob
+`6de234057d06dc5485e2159dcf017fe3c01a25d2`.
+
+Next gate: a separate source-only one-shot EXP-065 historical execution/runtime
+authorization bound to merged DEC-465. DEC-465 itself provides no dispatch command
+and performs no historical execution.
+
