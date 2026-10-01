@@ -31,7 +31,7 @@ Evidence contract source:
 
 blob:
 
-`56ebd5820c4a57a56eaaac5942a338811aeedc61`.
+`9aee3f9e273e20329c9de5a7079ed924ffee0a9a`.
 
 Focused tests:
 
@@ -39,7 +39,7 @@ Focused tests:
 
 blob:
 
-`c5c2298ad6d263855c9a1d183dd27e8990f6c642`.
+`9cda7c7018d962511ab1819c3cc9fd4b67dac5f6`.
 
 ## Canonical evidence format
 
