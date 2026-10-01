@@ -39,7 +39,7 @@ def _feature_values(
     paired = float((index * 73) % 300)
     values["return_24h"] = paired
     if duplicate_pair_feature:
-        values["return_7d"] = paired
+        values["realized_vol_1h"] = paired
     values.update({name: False for name in _SESSION_FLAGS})
     return values
 
@@ -244,14 +244,14 @@ class Exp065PairwiseInteractionMinerTests(unittest.TestCase):
 
         self.assertEqual(
             report.active_continuous_features,
-            ("return_1h", "return_24h", "return_7d"),
+            ("return_1h", "return_24h", "realized_vol_1h"),
         )
         self.assertIn(
             ("return_1h", "return_24h"),
             report.active_feature_pairs,
         )
         self.assertIn(
-            ("return_1h", "return_7d"),
+            ("return_1h", "realized_vol_1h"),
             report.active_feature_pairs,
         )
         self.assertGreaterEqual(report.qualifying_hypothesis_count, 4)
