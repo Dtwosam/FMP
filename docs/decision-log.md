@@ -8467,7 +8467,7 @@ The deterministic in-memory miner is
 `src/fmp/discovery/exp064_continuous_stability_miner.py` at blob
 `b0d799ec1afaf43b0441290c97a9f39c37ecd2fd`. Focused tests are
 `tests/test_phase8a_exp064_continuous_stability_miner.py` at blob
-`da2c7b6dac890aec9f2eca0b19a4b8c946223912`.
+`64c70118c00b594ba638ae38176f85ffc5a44406`.
 
 The miner scopes all calibration/effect work to 2015-2022 before any ranking. Each
 feature uses the DEC-452 empirical-midrank calibration contract; inactive/tied
