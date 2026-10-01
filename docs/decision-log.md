@@ -8865,3 +8865,48 @@ action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_MINER`.
 
+## DEC-461 — Repair EXP-065 pairwise protocol helper composition
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY PROTOCOL REPAIR / EXECUTION LOCKED
+
+DEC-461 binds merged DEC-460 commit
+`fd04cea05179bed6b33941635a60dfb8fb76ad60` and repairs two implementation
+defects in the EXP-065 pairwise-interaction protocol before any miner/runtime may
+depend on it.
+
+The originally merged DEC-460 protocol blob
+`5ed8b86207076264096d5e6ac5aaf25472172407` wrapped the frozen DEC-452
+`empirical_midrank_percentile(calibration, value)` helper with reversed
+arguments in `interaction_percentile(...)`. DEC-461 corrects only that adapter
+ordering; the empirical-midrank formula, tie policy, calibration scope, and
+interaction thresholds do not change.
+
+DEC-452 `rank_calibration_values(...)` also returns `None` when the frozen
+calibration minimum is not met. The DEC-460 pair-calibration adapter attempted
+`len(None)` in that state. DEC-461 makes the boundary explicit and fail-closed
+with a protocol `ValueError`. The existing minimums remain exactly 600 finite
+rows and 20 distinct values; no deficient calibration is repaired or relaxed.
+
+All DEC-460 mathematical/governance semantics remain unchanged: 20 features,
+190 unordered distinct pairs, 760 hypotheses per cell/horizon, 13,680 globally,
+the same pair interaction transform, main-effect-controlled annual interaction
+OLS, incremental selected-tail residual requirement, eight-year support/stability
+and cost-stress gate, Jaccard >=0.95 deduplication, 3/54 shortlist caps, 1/18
+frozen caps, `RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos=false`, and the
+closed 2023-01-01 through 2026-08-20 reserve.
+
+Repaired protocol source
+`src/fmp/discovery/exp065_pairwise_interaction_protocol.py` is blob
+`b54267d790667659749a96123ad23a491ff50dfa`; focused tests
+`tests/test_phase8a_exp065_pairwise_interaction_protocol.py` are blob
+`08ea27be5b859073b9387187e6e0c55b8cdd0ffb`.
+
+Historical source access/execution/result production, reserved robustness access,
+candidate compilation, promotion, Phase 8B, demo/live orders, broker mutation,
+real-money action, and trading remain false. No workflow, CLI, runtime, dispatch,
+or artifact path is added.
+
+Next gate: `SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_MINER`. Any miner must bind
+the repaired DEC-461 protocol blob rather than the superseded DEC-460 source blob.
+
