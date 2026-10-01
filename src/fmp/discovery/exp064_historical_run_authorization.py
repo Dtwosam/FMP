@@ -85,7 +85,7 @@ def validate_historical_run_authorization_sources(
         raise ValueError("DEC-456 requires DEC-455 execution to remain false")
 
     expected = {
-        "dec447_runtime_source": (
+        "dec455_runtime_source": (
             root / "src/fmp/discovery/exp064_runtime_source.py",
             DEC455_RUNTIME_SOURCE_BLOB_SHA,
         ),
@@ -126,8 +126,8 @@ def validate_historical_run_authorization_sources(
     return {
         "decision": EXP064_HISTORICAL_RUN_AUTHORIZATION_DECISION,
         "authorization_version": EXP064_HISTORICAL_RUN_AUTHORIZATION_VERSION,
-        "dec447_merge_sha": DEC455_MERGE_SHA,
-        "runtime_source_blob_sha": actual["dec447_runtime_source"],
+        "dec455_merge_sha": DEC455_MERGE_SHA,
+        "runtime_source_blob_sha": actual["dec455_runtime_source"],
         "active_workflow_blob_sha": actual["active_workflow"],
         "cli_blob_sha": actual["cli"],
         "evidence_contract_blob_sha": actual["dec454_evidence_contract"],
