@@ -8453,3 +8453,46 @@ and trading remain false.
 Next gate: deterministic source-only EXP-064 in-memory miner core implementing this
 exact protocol.
 
+## DEC-453 — Add EXP-064 continuous-stability miner core
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY MINER CORE / EXECUTION LOCKED
+
+DEC-453 binds merged DEC-452 commit
+`b44af18b7cc5f3fa67d2f938529151f74d9deceb`, DEC-452 protocol blob
+`c108ea047c7bfb3e588bfbac33993180066c28ad`, and predecessor observation-model
+blob `495a67699eb5014e52129f0238a2737049fe38e6`.
+
+The deterministic in-memory miner is
+`src/fmp/discovery/exp064_continuous_stability_miner.py` at blob
+`b0d799ec1afaf43b0441290c97a9f39c37ecd2fd`. Focused tests are
+`tests/test_phase8a_exp064_continuous_stability_miner.py` at blob
+`da2c7b6dac890aec9f2eca0b19a4b8c946223912`.
+
+The miner scopes all calibration/effect work to 2015-2022 before any ranking. Each
+feature uses the DEC-452 empirical-midrank calibration contract; inactive/tied
+features are skipped rather than repaired. The report retains the frozen 80
+hypotheses-per-cell bound, while only evaluable active-feature direction/polarity
+combinations can qualify.
+
+Annual statistics use exact same-year fixed-horizon outcomes and compute the frozen
+polarity-signed rank slope plus deterministic selected-tail means at 0.5-pip and
+1.0-pip cost. The miner delegates qualification directly to DEC-452, materializes
+exact EXP-064 fingerprints/metrics, applies the frozen 12-field rank order, and
+deduplicates same-direction selected-tail event sets at Jaccard >=0.95.
+
+Shortlist remains capped at 5 per cell/horizon and frozen retrospective hypotheses
+at 2 per cell/horizon. Frozen does not mean validated or executable.
+
+Focused tests prove the exact 80-hypothesis cell bound, stable monotone effect
+selection, Jaccard deduplication, weak-block rejection, duplicate-identity failure,
+and exact equality of the complete result after catastrophic 2023-2026 rows are
+appended. Reserved data therefore cannot affect the in-memory result.
+
+Source access, historical execution/result production, reserved robustness access,
+candidate compilation, promotion, Phase 8B, demo/live orders, real-money action,
+and trading remain false.
+
+Next gate: separate source-only EXP-064 artifact/evidence contract bound to the
+exact DEC-453 miner.
+
