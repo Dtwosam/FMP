@@ -184,6 +184,11 @@ def interaction_calibration_values(
         for left, right in zip(feature_a_percentiles, feature_b_percentiles)
     ]
     finite = rank_calibration_values(raw)
+    if finite is None:
+        raise ValueError(
+            "DEC-460 interaction calibration does not satisfy frozen "
+            "row/distinct requirements"
+        )
     if len(finite) < MIN_INTERACTION_CALIBRATION_ROWS:
         raise ValueError("DEC-460 interaction calibration row count below protocol")
     if len(set(finite)) < MIN_INTERACTION_CALIBRATION_DISTINCT_VALUES:
@@ -197,7 +202,13 @@ def interaction_percentile(
     raw_interaction: float | int,
     calibration_values: Sequence[float | int],
 ) -> float:
-    return empirical_midrank_percentile(raw_interaction, calibration_values)
+    percentile = empirical_midrank_percentile(
+        calibration_values,
+        raw_interaction,
+    )
+    if percentile is None:
+        raise ValueError("DEC-460 interaction percentile input is not evaluable")
+    return percentile
 
 
 def selected_tail_accepts(

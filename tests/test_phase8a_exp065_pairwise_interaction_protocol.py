@@ -15,6 +15,8 @@ from fmp.discovery.exp065_pairwise_interaction_protocol import (
     PAIR_COUNT,
     canonical_feature_pair,
     feature_pairs,
+    interaction_calibration_values,
+    interaction_percentile,
     pair_hypothesis_fingerprint,
     pairwise_interaction_gate_passes,
     pairwise_interaction_raw,
@@ -80,6 +82,23 @@ class Exp065PairwiseInteractionProtocolTests(unittest.TestCase):
             pairwise_interaction_raw(0.2, 0.8),
             pairwise_interaction_raw(0.8, 0.2),
         )
+
+    def test_interaction_percentile_composes_dec452_midrank_helper_correctly(self) -> None:
+        calibration = (-0.5, 0.0, 0.5)
+
+        self.assertEqual(interaction_percentile(-0.5, calibration), 1.0 / 6.0)
+        self.assertEqual(interaction_percentile(0.0, calibration), 0.5)
+        self.assertEqual(interaction_percentile(0.5, calibration), 5.0 / 6.0)
+
+    def test_interaction_calibration_fails_closed_below_frozen_minimum(self) -> None:
+        feature_a = [0.10, 0.20, 0.30, 0.40]
+        feature_b = [0.15, 0.25, 0.35, 0.45]
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "does not satisfy frozen row/distinct requirements",
+        ):
+            interaction_calibration_values(feature_a, feature_b)
 
     def test_selected_tail_semantics_are_exact(self) -> None:
         self.assertTrue(
