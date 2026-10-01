@@ -352,6 +352,52 @@ class Exp064EvidenceContractTests(unittest.TestCase):
                 code_commit=_CODE_COMMIT,
             )
 
+    def test_refingerprinted_aggregate_evaluable_count_tamper_fails_closed(
+        self,
+    ) -> None:
+        cells = [
+            _cell_evidence(symbol, timeframe, horizon)
+            for symbol, timeframe, horizon in EXPECTED_CELLS
+        ]
+        aggregate = compile_aggregate_evidence(
+            cells,
+            code_commit=_CODE_COMMIT,
+        )
+        rows = [dict(row) for row in aggregate["cells"]]
+        rows[0]["evaluable_hypothesis_count"] = 5
+        tampered = dict(aggregate)
+        tampered["cells"] = rows
+        tampered = _refingerprint(tampered)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "evaluable count exceeds active search",
+        ):
+            validate_aggregate_evidence(tampered)
+
+    def test_refingerprinted_aggregate_shortlist_relation_tamper_fails_closed(
+        self,
+    ) -> None:
+        cells = [
+            _cell_evidence(symbol, timeframe, horizon)
+            for symbol, timeframe, horizon in EXPECTED_CELLS
+        ]
+        aggregate = compile_aggregate_evidence(
+            cells,
+            code_commit=_CODE_COMMIT,
+        )
+        rows = [dict(row) for row in aggregate["cells"]]
+        rows[0]["deduplicated_hypothesis_count"] = 0
+        tampered = dict(aggregate)
+        tampered["cells"] = rows
+        tampered = _refingerprint(tampered)
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "shortlist exceeds deduplicated count",
+        ):
+            validate_aggregate_evidence(tampered)
+
     def test_refingerprinted_authority_tamper_fails_closed(self) -> None:
         value = _cell_evidence("EURUSD", "15m", 60)
         tampered = dict(value)
