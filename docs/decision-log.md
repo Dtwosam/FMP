@@ -9176,3 +9176,54 @@ requires a separate explicit governance decision plus an immediate read-only pro
 that main is still the selected DEC-466 merge head and the slot remains unused.
 
 Next gate: `EXPLICIT_EXP065_ONE_SHOT_HISTORICAL_DISPATCH_DECISION`.
+
+
+## DEC-467 — Predeclare EXP-065 historical result review contract
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY REVIEW CONTRACT PREDECLARED / RUN IN PROGRESS
+
+DEC-467 binds the only authorized EXP-065 historical run, GitHub Actions run
+`36905224184`, workflow `phase8a-exp065-pairwise-interaction`, head
+`5faa733572576aa5a1c56176ac27c415eaaf6416`, run number 1, attempt 1.
+
+The contract is intentionally result-agnostic while the run is active. It does
+not predeclare aggregate artifact id/digest, raw aggregate JSON hash, evidence
+fingerprints, evaluable/qualifying/deduplicated counts, shortlist contents, or
+frozen hypotheses.
+
+A successful terminal run must have exactly 20 successful jobs and exactly 20
+non-expired artifacts with the frozen preflight + 18 cells + aggregate
+inventories. Artifact ids must be positive and artifact digests must be valid
+SHA-256 values. A non-success terminal conclusion still consumes the slot and
+does not reopen rerun, retry, or replacement authority.
+
+Successful result evidence must first pass the existing DEC-463 cell and
+aggregate validators. DEC-467 additionally cross-checks aggregate summaries
+against all 18 supplied cell evidence objects, keeps the exact 760 nominal
+hypotheses per cell / 13,680 globally, and preserves the 54 global shortlist /
+18 global frozen caps.
+
+Evidence remains `RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos=false`, with
+`reserved_robustness_opened=false`. Result-state labels are descriptive only:
+zero qualifiers, qualifiers without frozen carry-forward, or frozen retrospective
+carry-forward present. None constitutes validation, promotion, or trading
+authority.
+
+DEC-467 binds merged DEC-466
+`5faa733572576aa5a1c56176ac27c415eaaf6416`, runtime-authorization blob
+`ccc99179a51145534e1b48b8520b2f743580c217`, read-only dispatch-operator blob
+`6a386c556e121d959ec1ea8bbb56dbb49b42dde2`, and DEC-463 evidence-contract
+blob `ca68622ddfc9866f00569d558b2ab927be23686d`.
+
+Review-contract source
+`src/fmp/discovery/exp065_historical_result_review_contract.py` is blob
+`d10bade3857beaec6e977525b651e66156dce87e`; focused tests
+`tests/test_phase8a_exp065_historical_result_review_contract.py` are blob
+`eb4a43906a24b7b6301df732f108110895c6755d`.
+
+Rerun, retry, replacement, reserved 2023-2026 robustness access, candidate
+compilation, promotion, Phase 8B, demo/live orders, broker mutation, real-money
+action, and trading remain false.
+
+Next gate: `FREEZE_EXP065_HISTORICAL_RESULT_AFTER_TERMINAL_RUN`.
