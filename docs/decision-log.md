@@ -8496,3 +8496,52 @@ and trading remain false.
 Next gate: separate source-only EXP-064 artifact/evidence contract bound to the
 exact DEC-453 miner.
 
+## DEC-454 — Freeze EXP-064 evidence contract
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY EVIDENCE CONTRACT / EXECUTION LOCKED
+
+DEC-454 binds merged DEC-453 commit
+`bda820585a568cefca52487d4aefad77be109387`, DEC-453 miner blob
+`b0d799ec1afaf43b0441290c97a9f39c37ecd2fd`, and DEC-452 protocol blob
+`c108ea047c7bfb3e588bfbac33993180066c28ad`.
+
+The evidence contract is
+`src/fmp/discovery/exp064_evidence_contract.py` at blob
+`56ebd5820c4a57a56eaaac5942a338811aeedc61`. Focused tests are
+`tests/test_phase8a_exp064_evidence_contract.py` at blob
+`c5c2298ad6d263855c9a1d183dd27e8990f6c642`.
+
+Cell and aggregate evidence use deterministic canonical JSON with sorted keys,
+compact separators, `allow_nan=false`, a trailing newline, and SHA-256
+fingerprints. Both compilers self-validate.
+
+Each cell binds exact source manifests/evidence identities, cell identity, compact
+rank-calibration identities, frozen 80-hypothesis search counts, complete shortlist
+annual statistics/metrics, and the first up to two shortlist fingerprints as the
+frozen retrospective inventory. Calibration identity records feature, count,
+distinct count, range, and SHA-256 of the complete sorted calibration-value array
+without embedding that potentially large array.
+
+The validator reconstructs all eight annual continuous-effect statistics for every
+shortlisted hypothesis, re-runs the DEC-452 gate, recomputes every persisted
+persistence metric, recomputes the hypothesis fingerprint and exact 12-field rank
+key, verifies shortlist order, and verifies the frozen shortlist prefix.
+
+Aggregate evidence requires the exact sorted 18-cell inventory, exact Phase 2
+processed source manifests, identical feature/outcome manifest pairs across
+horizons per symbol/timeframe, singular upstream feature/outcome evidence
+fingerprints, unique cell fingerprints, shortlist <=90 globally, and frozen <=36
+globally.
+
+All evidence remains `RETROSPECTIVE_ALREADY_SEEN` with `untouched_oos=false`,
+`reserved_robustness_opened=false`, and output kind
+`RETROSPECTIVE_CONTINUOUS_STABILITY_HYPOTHESIS_NOT_VALIDATED`.
+
+Source access, historical execution/result production, reserved robustness access,
+candidate compilation, promotion, Phase 8B, demo/live orders, real-money action,
+and trading remain false.
+
+Next gate: locked EXP-064 runtime wiring with a hard execution gate before any
+historical artifact download.
+
