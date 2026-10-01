@@ -35,7 +35,7 @@ DEC-455 pins:
 
 Runtime source:
 `src/fmp/discovery/exp064_runtime_source.py` blob
-`75434bf240f3f666a5562f53e970c10ffff05049`.
+`07e5ccebb6416c04621aa54e170cd4eb1e0a2a04`.
 
 CLI:
 `scripts/phase8a_exp064.py` blob
@@ -49,7 +49,7 @@ Dormant workflow template and installed active workflow are byte-identical:
 
 Focused tests:
 `tests/test_phase8a_exp064_locked_runtime_wiring.py` blob
-`77b8941ffcf4cb00d98b282fa7c4140ce5721a8b`.
+`12cfb8b833c46465e0f8646c0cd0d7ab59ddb1fd`.
 
 ## Production data lineage
 
