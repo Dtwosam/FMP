@@ -49,7 +49,7 @@ Dormant workflow template and installed active workflow are byte-identical:
 
 Focused tests:
 `tests/test_phase8a_exp064_locked_runtime_wiring.py` blob
-`1c66b68e18ea40fc2ba02e4fb1d3c8920f7a33c8`.
+`77b8941ffcf4cb00d98b282fa7c4140ce5721a8b`.
 
 ## Production data lineage
 
