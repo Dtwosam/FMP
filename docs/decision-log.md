@@ -8561,7 +8561,7 @@ frozen EXP-062 source/loader/non-finite→null path. No new historical input,
 symbol, timeframe, horizon, feature, or repair path is introduced.
 
 Runtime source is `src/fmp/discovery/exp064_runtime_source.py` at blob
-`75434bf240f3f666a5562f53e970c10ffff05049`. Public locked CLI is
+`07e5ccebb6416c04621aa54e170cd4eb1e0a2a04`. Public locked CLI is
 `scripts/phase8a_exp064.py` at blob
 `a44aed6d890e25a781b7b92d7efb3dabe06f9047`.
 
@@ -8585,7 +8585,7 @@ broker mutation, real-money action, and trading all remain false.
 
 Focused tests are
 `tests/test_phase8a_exp064_locked_runtime_wiring.py` at blob
-`77b8941ffcf4cb00d98b282fa7c4140ce5721a8b`. They pin DEC-452/453/454
+`12cfb8b833c46465e0f8646c0cd0d7ab59ddb1fd`. They pin DEC-452/453/454
 runtime lineage, exact source snapshots, the 18-cell/20-job topology,
 byte-identical dormant/active workflow installation, gate ordering before reads,
 and the closed execution boundary.
