@@ -234,15 +234,15 @@ def validate_source_snapshots(
 def validate_runtime_dependencies(*, repository_root: Path) -> dict[str, object]:
     root = Path(repository_root)
     expected = {
-        "dec446_evidence_contract": (
+        "dec454_evidence_contract": (
             root / "src/fmp/discovery/exp064_evidence_contract.py",
             DEC454_EVIDENCE_CONTRACT_BLOB_SHA,
         ),
-        "dec445_persistence_miner": (
+        "dec453_continuous_stability_miner": (
             root / "src/fmp/discovery/exp064_continuous_stability_miner.py",
             DEC453_MINER_BLOB_SHA,
         ),
-        "dec444_persistence_protocol": (
+        "dec452_continuous_stability_protocol": (
             root / "src/fmp/discovery/exp064_continuous_stability_protocol.py",
             DEC452_PROTOCOL_BLOB_SHA,
         ),
