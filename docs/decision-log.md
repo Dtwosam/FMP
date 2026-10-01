@@ -8508,9 +8508,9 @@ DEC-454 binds merged DEC-453 commit
 
 The evidence contract is
 `src/fmp/discovery/exp064_evidence_contract.py` at blob
-`56ebd5820c4a57a56eaaac5942a338811aeedc61`. Focused tests are
+`9aee3f9e273e20329c9de5a7079ed924ffee0a9a`. Focused tests are
 `tests/test_phase8a_exp064_evidence_contract.py` at blob
-`c5c2298ad6d263855c9a1d183dd27e8990f6c642`.
+`9cda7c7018d962511ab1819c3cc9fd4b67dac5f6`.
 
 Cell and aggregate evidence use deterministic canonical JSON with sorted keys,
 compact separators, `allow_nan=false`, a trailing newline, and SHA-256
@@ -8525,7 +8525,7 @@ without embedding that potentially large array.
 
 The validator reconstructs all eight annual continuous-effect statistics for every
 shortlisted hypothesis, re-runs the DEC-452 gate, recomputes every persisted
-persistence metric, recomputes the hypothesis fingerprint and exact 12-field rank
+continuous-stability metric, recomputes the hypothesis fingerprint and exact 12-field rank
 key, verifies shortlist order, and verifies the frozen shortlist prefix.
 
 Aggregate evidence requires the exact sorted 18-cell inventory, exact Phase 2
@@ -8544,4 +8544,53 @@ and trading remain false.
 
 Next gate: locked EXP-064 runtime wiring with a hard execution gate before any
 historical artifact download.
+
+## DEC-455 — Install locked EXP-064 runtime wiring
+
+**Date:** 2026-10-01  
+**Status:** ACTIVE WORKFLOW INSTALLED / HISTORICAL EXECUTION LOCKED
+
+DEC-455 binds merged DEC-454 commit
+`e13cad5fe00cc50af80147e0fbe2de500ad38436`, final DEC-454 evidence-contract
+blob `9aee3f9e273e20329c9de5a7079ed924ffee0a9a`, DEC-453 continuous-stability
+miner blob `b0d799ec1afaf43b0441290c97a9f39c37ecd2fd`, and DEC-452 protocol blob
+`c108ea047c7bfb3e588bfbac33993180066c28ad`.
+
+The runtime reuses the exact accepted EXP-044 feature/outcome artifacts and the
+frozen EXP-062 source/loader/non-finite→null path. No new historical input,
+symbol, timeframe, horizon, feature, or repair path is introduced.
+
+Runtime source is `src/fmp/discovery/exp064_runtime_source.py` at blob
+`07e5ccebb6416c04621aa54e170cd4eb1e0a2a04`. Public locked CLI is
+`scripts/phase8a_exp064.py` at blob
+`a44aed6d890e25a781b7b92d7efb3dabe06f9047`.
+
+The dormant template
+`docs/superpowers/templates/phase8a-exp064-continuous-stability.yml.disabled`
+and installed active workflow
+`.github/workflows/phase8a-exp064-continuous-stability.yml` are byte-identical
+at Git blob `caca62672ad9796764c18be6b8da9785b98c9733`.
+
+The frozen manual-main run topology is exactly 20 jobs and 20 artifacts:
+one preflight, the 18 EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m cells,
+and one aggregate. Each cell is composed only from the exact EXP-044 loader,
+EXP-062 non-finite→null adapter, DEC-453 miner, and DEC-454 evidence contract.
+
+A hard `require-execution` gate precedes every historical artifact download in
+the workflow and precedes every historical artifact/result read in the CLI.
+Under DEC-455, workflow dispatch authorization, historical execution, historical
+result production, rerun, retry, replacement, reserved 2023-2026 robustness
+access, candidate compilation, promotion, Phase 8B, demo/live orders,
+broker mutation, real-money action, and trading all remain false.
+
+Focused tests are
+`tests/test_phase8a_exp064_locked_runtime_wiring.py` at blob
+`12cfb8b833c46465e0f8646c0cd0d7ab59ddb1fd`. They pin DEC-452/453/454
+runtime lineage, exact source snapshots, the 18-cell/20-job topology,
+byte-identical dormant/active workflow installation, gate ordering before reads,
+and the closed execution boundary.
+
+Next gate: a separate explicit one-shot EXP-064 historical execution
+authorization bound to the exact merged DEC-455 runtime. DEC-455 itself provides
+no execute mode and does not dispatch EXP-064.
 
