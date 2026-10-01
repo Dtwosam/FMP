@@ -8655,11 +8655,11 @@ The live EXP-064 CLI is activated at
 `scripts/phase8a_exp064.py` blob
 `29fce0ac43adf6743448d5936b00f7e6755df2b4`. Runtime authorization source is
 `src/fmp/discovery/exp064_historical_execution_authorization.py` at blob
-`3098c5145f792792b3b33c5fc44e5a4c76a5fbbd`. The read-only dispatch planner is
+`5d5c0e8ceeeef4b0b2d45167c47a682937ef8121`. The read-only dispatch planner is
 `src/fmp/discovery/exp064_historical_dispatch_operator.py` at blob
-`2830b46bb883de1b7ceec14da2edfa99375612dc`. Focused activation tests are
+`469551d56332644e53741b5aeeb8314ba934b662`. Focused activation tests are
 `tests/test_phase8a_exp064_historical_runtime_activation.py` at blob
-`cec3027dc0742c3e0130cfd2fa54d3b8574b0aaa`.
+`af3c8b4aabd9503ab6f50ffaa99eea976bb75bb6`.
 
 The runtime gate authorizes only GitHub Actions execution in repository
 `Dtwosam/FMP`, workflow `phase8a-exp064-continuous-stability`, event
