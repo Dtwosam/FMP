@@ -9123,3 +9123,56 @@ Next gate: a separate source-only one-shot EXP-065 historical execution/runtime
 authorization bound to merged DEC-465. DEC-465 itself provides no dispatch command
 and performs no historical execution.
 
+
+
+## DEC-466 — Activate one-shot EXP-065 historical runtime without dispatch
+
+**Date:** 2026-10-01  
+**Status:** ONE-SHOT HISTORICAL RUNTIME AUTHORIZED / NOT DISPATCHED
+
+DEC-466 binds merged DEC-465 commit
+`c44d787eff659838f904955ccf95dc69a43a852d` and activates the already
+installed EXP-065 pairwise-interaction runtime for exactly one historical
+2015-2022 manual-main run. The decision does not itself dispatch the workflow.
+
+The activation pins DEC-465 one-shot authorization
+`96aac63a75d7873e6b6508d34b983d0742858a02`, DEC-464 runtime source
+`717b43e3bfd656b51e22819cf948f8cd6485f334`, unchanged workflow/template
+`75d0e4df56d5c4ced5aff614e236cf0e1bb078e1`, DEC-463 evidence contract
+`ca68622ddfc9866f00569d558b2ab927be23686d`, DEC-462 miner
+`7dac382838d2b8fcc4df5d02c4949ad65c17635b`, repaired DEC-461 protocol
+`b54267d790667659749a96123ad23a491ff50dfa`, the frozen non-finite adapter
+`491ba8c92cb6e6e4c715bfb1ecb934b6949e1596`, range-limited loader
+`df1d029a6f8b8d3862ebbf990ed1170a5982e1ea`, and runtime requirements
+`1ff32214dee10d877a067e750cd69ffad96d5fe5`.
+
+The live CLI is activated at blob
+`4448d1bf43ce1ddb9dba9c4d38bb18829b95ae38`. Runtime authorization source
+`src/fmp/discovery/exp065_historical_execution_authorization.py` is blob
+`ccc99179a51145534e1b48b8520b2f743580c217`; read-only dispatch operator
+`src/fmp/discovery/exp065_historical_dispatch_operator.py` is blob
+`6a386c556e121d959ec1ea8bbb56dbb49b42dde2`; focused activation tests are
+blob `332bd77b57f0fa5f6b5fb5f3bb9810fbde0c2eb2`.
+
+Runtime authorization requires GitHub Actions, repository `Dtwosam/FMP`, workflow
+`phase8a-exp065-pairwise-interaction`, event `workflow_dispatch`, ref
+`refs/heads/main`, run number 1, run attempt 1, exact workflow SHA identity, a
+positive run id, and all pinned source blobs. Run number >1, attempt >1, local
+execution, repository/workflow/ref drift, or SHA drift fails closed.
+
+The read-only operator has no execute mode. It can emit only
+`gh workflow run phase8a-exp065-pairwise-interaction.yml --ref main` when main
+matches the expected head and DEC-465 reports zero matching manual-main runs. Any
+matching run consumes the slot immediately and permanently removes the planned
+command.
+
+Historical-result dispatch, execution, and result-production authority are opened
+only for this one-shot run surface. Rerun, retry, replacement, reserved 2023-2026
+robustness access, candidate compilation, promotion, Phase 8B, demo/live orders,
+broker mutation, real-money action, and trading remain false.
+
+A generic source-only continuation does not dispatch EXP-065. Any actual dispatch
+requires a separate explicit governance decision plus an immediate read-only proof
+that main is still the selected DEC-466 merge head and the slot remains unused.
+
+Next gate: `EXPLICIT_EXP065_ONE_SHOT_HISTORICAL_DISPATCH_DECISION`.
