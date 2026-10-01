@@ -8743,3 +8743,55 @@ Next gate: `EXPLICIT_POST_EXP064_RESEARCH_DIRECTION_DECISION`. Any successor
 research must treat 2015-2022 EXP-064 outcomes as already-seen evidence and may not
 retroactively redefine or rerun EXP-064.
 
+## DEC-459 — Open EXP-065 bounded pairwise-interaction research direction
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY SUCCESSOR DIRECTION OPEN
+
+DEC-459 binds merged DEC-458 commit
+`e3c2a7a1dbb6592a8438f3949ffa83177e31f4e6`, DEC-458 result-review source blob
+`c5878685950e14a632b4eb8d2616d9540afb12d2`, EXP-064 historical run
+`36853290904`, and aggregate evidence fingerprint
+`832e8c814ac578b614764d37cba15e64569e2f841dfa6f72f2c9cd9a8fdbcbb1`.
+
+The frozen EXP-064 result is 1,440 hypotheses / 1,440 evaluable hypotheses with
+zero qualifying hypotheses, zero deduplicated hypotheses, zero continuous-stability
+shortlist, and zero frozen hypotheses under the DEC-452 single-feature
+continuous/rank protocol.
+
+Combined with EXP-063's zero persistence qualifiers for the frozen discrete
+one/two-predicate atomic-state family, DEC-459 changes representation again rather
+than relaxing any predecessor threshold. The new source-only successor identity is
+`EXP-20261001-065`.
+
+EXP-065 keeps the exact EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m market
+universe and the same 20 leakage-safe continuous features. No new raw features,
+symbols, timeframes, horizons, alternative data, or repair paths are authorized.
+
+The successor direction permits source-only design of exactly-two-feature
+interactions. Three-or-more-feature combinations remain forbidden. Exact
+feature-pair construction, interaction transform, estimator, main-effect control,
+interaction incrementality test, search-volume bound, annual-stability gate,
+cost-stress gate, ranking/deduplication, and shortlist/freeze caps are deferred to
+the next protocol decision and must be frozen before execution.
+
+A future pairwise protocol must include a deterministic interaction-incrementality
+requirement so a pair cannot qualify merely because one constituent feature carries
+the effect.
+
+2015-2022 remains `ALREADY_SEEN_DESIGN_EVIDENCE` and may not be called fresh
+validation. The reserved 2023-01-01 through 2026-08-20 block remains closed.
+
+EXP-064 rerun/retry/replacement, threshold relaxation, protocol redefinition,
+hypothesis rescue, successor execution/result production, reserved robustness
+access, candidate compilation, promotion, Phase 8B, demo/live orders, real-money
+action, and trading remain false.
+
+Research-direction source
+`src/fmp/discovery/exp065_pairwise_interaction_research_direction.py` is blob
+`7d9350f714bfec7cc39ebf76b2e6e313261e9a68`; focused tests
+`tests/test_phase8a_exp065_pairwise_interaction_research_direction.py` are blob
+`b177a0aa1244e3f7b7c186dbcf5169b78e76b82a`.
+
+Next gate: `SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_PROTOCOL`.
+
