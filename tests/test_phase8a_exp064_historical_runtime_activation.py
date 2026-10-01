@@ -127,7 +127,7 @@ class Exp064HistoricalRuntimeActivationTests(unittest.TestCase):
 
         self.assertEqual(
             report["dec457_execution_authorization"],
-            "3098c5145f792792b3b33c5fc44e5a4c76a5fbbd",
+            "5d5c0e8ceeeef4b0b2d45167c47a682937ef8121",
         )
         self.assertEqual(
             report["dec456_run_authorization"],
