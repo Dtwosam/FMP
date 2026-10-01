@@ -8396,3 +8396,60 @@ Research-direction source
 
 Next gate: `SOURCE_ONLY_EXP064_CONTINUOUS_STABILITY_PROTOCOL`.
 
+## DEC-452 — Freeze EXP-064 continuous-stability protocol
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY PROTOCOL FROZEN / EXECUTION LOCKED
+
+DEC-452 binds merged DEC-451 commit
+`e55df61f766ae49c72f04ac6259928252ae113dc` and DEC-451 research-direction
+source blob `6a7de1e93515fd3771e3763641ee6a07e425ee8a`.
+
+The new protocol source
+`src/fmp/discovery/exp064_continuous_stability_protocol.py` at blob
+`c108ea047c7bfb3e588bfbac33993180066c28ad` freezes EXP-064 before any
+historical execution. Focused tests are
+`tests/test_phase8a_exp064_continuous_stability_protocol.py` at blob
+`ff09cc2f4a489e08cd682627c4422ceb8772edb2`.
+
+EXP-064 keeps the exact EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m market
+universe and the same 20 leakage-safe continuous features. It introduces no new raw
+features, symbols, timeframes, horizons, or alternative data.
+
+The frozen transform is a full-design 2015-2022 empirical midrank CDF per
+symbol/timeframe/feature, requiring at least 600 finite rows and 20 distinct values.
+No reserved 2023-2026 row may affect calibration.
+
+Each hypothesis is exactly one feature × one market direction × one effect polarity
+(INCREASING or DECREASING). Interactions are forbidden. The exact search volume is
+80 hypotheses per cell and 1,440 globally.
+
+The primary annual effect is the polarity-signed OLS slope of 0.5-pip net outcome on
+centered rank. The economic subset is predeclared as the upper quartile for
+INCREASING effects and lower quartile for DECREASING effects. That selected tail is
+also measured at 0.5-pip design cost and 1.0-pip stress.
+
+Qualification requires total selected-tail support >=600; >=75 per year; at least
+6/8 positive slope years; at least 6/8 positive selected-tail years; equal-year
+signed slope >=0.25; equal-year selected-tail 0.5-pip mean >=0.25; positive
+lower-half slope; positive lower-half selected-tail mean; positive slope and
+selected-tail mean in every fixed two-year block; and positive equal-year
+selected-tail mean at 1.0-pip stress.
+
+Ranking is frozen by lower-half and worst-block economic performance first, then
+lower-half/worst-block signed slope, positive-year counts, stress performance,
+support, feature/direction/polarity identity, and fingerprint. Shortlist cap is 5 per
+cell/horizon / 90 global; frozen cap is 2 per cell/horizon / 36 global.
+Near-duplicate selected-tail event sets use same-direction Jaccard >=0.95.
+
+All 2015-2022 evidence remains `RETROSPECTIVE_ALREADY_SEEN` with
+`untouched_oos=false`. Output kind is
+`RETROSPECTIVE_CONTINUOUS_STABILITY_HYPOTHESIS_NOT_VALIDATED`.
+
+Source access, historical execution/result production, reserved robustness access,
+candidate compilation, promotion, Phase 8B, demo/live orders, real-money action,
+and trading remain false.
+
+Next gate: deterministic source-only EXP-064 in-memory miner core implementing this
+exact protocol.
+
