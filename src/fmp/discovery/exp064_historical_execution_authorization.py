@@ -100,7 +100,7 @@ def validate_historical_execution_authorization_sources(
         )
 
     expected = {
-        "dec448_run_authorization": (
+        "dec456_run_authorization": (
             root / "src/fmp/discovery/exp064_historical_run_authorization.py",
             DEC456_RUN_AUTHORIZATION_BLOB_SHA,
         ),
@@ -158,9 +158,9 @@ def validate_historical_execution_authorization_sources(
     return {
         "decision": EXP064_HISTORICAL_EXECUTION_AUTHORIZATION_DECISION,
         "version": EXP064_HISTORICAL_EXECUTION_AUTHORIZATION_VERSION,
-        "dec448_merge_sha": DEC456_MERGE_SHA,
-        "dec448_run_authorization_blob_sha": actual[
-            "dec448_run_authorization"
+        "dec456_merge_sha": DEC456_MERGE_SHA,
+        "dec456_run_authorization_blob_sha": actual[
+            "dec456_run_authorization"
         ],
         "runtime_source_blob_sha": actual["dec455_runtime_source"],
         "active_workflow_blob_sha": actual["active_workflow"],
