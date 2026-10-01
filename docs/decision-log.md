@@ -8594,3 +8594,46 @@ Next gate: a separate explicit one-shot EXP-064 historical execution
 authorization bound to the exact merged DEC-455 runtime. DEC-455 itself provides
 no execute mode and does not dispatch EXP-064.
 
+## DEC-456 — Open EXP-064 one-shot historical slot
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY ONE-SHOT SLOT AUTHORIZATION / DISPATCH LOCKED
+
+DEC-456 binds merged DEC-455 commit
+`c388def44d251c96832572f07de43d9dc6a909ee`, DEC-455 runtime source blob
+`07e5ccebb6416c04621aa54e170cd4eb1e0a2a04`, active EXP-064 workflow blob
+`caca62672ad9796764c18be6b8da9785b98c9733`, locked CLI blob
+`a44aed6d890e25a781b7b92d7efb3dabe06f9047`, DEC-454 evidence-contract blob
+`9aee3f9e273e20329c9de5a7079ed924ffee0a9a`, DEC-453 continuous-stability
+miner blob `b0d799ec1afaf43b0441290c97a9f39c37ecd2fd`, and DEC-452 protocol blob
+`c108ea047c7bfb3e588bfbac33993180066c28ad`.
+
+At DEC-456 creation, the newly installed
+`phase8a-exp064-continuous-stability` workflow has zero matching manual-main
+`workflow_dispatch` runs. DEC-456 therefore opens exactly one source-authorized
+historical-result slot: the first exact manual-main run, run number 1 / attempt 1.
+The slot is consumed immediately when that run exists, including queued or running
+state, and remains consumed on every terminal outcome including failure or
+cancellation.
+
+Authorization source is
+`src/fmp/discovery/exp064_historical_run_authorization.py` at blob
+`0668910a69a87fad06be73af98e5f403436fe7fb`. Focused tests are
+`tests/test_phase8a_exp064_historical_run_authorization.py` at blob
+`08f9181bc0fd8d70959c7f1e595dda43ce96ccf7`.
+
+Only `historical_result_slot_source_authorized=true` is opened. Workflow
+dispatch authorization, historical execution, historical result production,
+rerun, retry, replacement, reserved 2023-2026 robustness access, candidate
+compilation, promotion, Phase 8B, demo/live orders, broker mutation, real-money
+action, and trading remain false.
+
+The data boundary remains 2015-01-01 through 2022-12-31 already-seen design
+evidence only. Reserved robustness remains closed from 2023-01-01 through
+2026-08-20.
+
+Next gate: a separate bounded runtime activation / one-shot dispatch decision that
+revalidates the exact merged DEC-455 runtime and still-unused DEC-456 slot
+immediately before any dispatch. DEC-456 itself provides no dispatch or execution
+path.
+
