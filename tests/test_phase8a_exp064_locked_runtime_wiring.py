@@ -24,6 +24,7 @@ from fmp.discovery.exp064_runtime_source import (
     validate_installed_runtime_paths,
     validate_runtime_dependencies,
     validate_source_snapshots,
+    validate_workflow_text,
 )
 
 
@@ -192,6 +193,16 @@ class Exp064LockedRuntimeWiringTests(unittest.TestCase):
         self.assertEqual(text.count("          - symbol:"), 18)
         self.assertEqual(text.count("            horizon: 60"), 9)
         self.assertEqual(text.count("            horizon: 240"), 9)
+
+    def test_workflow_validator_rejects_exp063_predecessor_cli(self) -> None:
+        text = Path(ACTIVE_WORKFLOW_PATH).read_text(encoding="utf-8")
+        tampered = text + "\n# python scripts/phase8a_exp063.py cell\n"
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "cannot invoke predecessor cell CLI",
+        ):
+            validate_workflow_text(tampered)
 
     def test_runtime_payload_exposes_wiring_but_no_execution_authority(self) -> None:
         payload = runtime_source_payload(code_commit=CODE_COMMIT)
