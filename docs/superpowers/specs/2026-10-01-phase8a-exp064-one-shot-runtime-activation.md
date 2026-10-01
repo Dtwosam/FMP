@@ -56,7 +56,7 @@ Runtime authorization source:
 
 blob:
 
-`3098c5145f792792b3b33c5fc44e5a4c76a5fbbd`.
+`5d5c0e8ceeeef4b0b2d45167c47a682937ef8121`.
 
 Read-only dispatch operator:
 
@@ -64,7 +64,7 @@ Read-only dispatch operator:
 
 blob:
 
-`2830b46bb883de1b7ceec14da2edfa99375612dc`.
+`469551d56332644e53741b5aeeb8314ba934b662`.
 
 Focused activation tests:
 
@@ -72,7 +72,7 @@ Focused activation tests:
 
 blob:
 
-`cec3027dc0742c3e0130cfd2fa54d3b8574b0aaa`.
+`af3c8b4aabd9503ab6f50ffaa99eea976bb75bb6`.
 
 ## Successor transition
 
