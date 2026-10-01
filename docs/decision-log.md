@@ -8637,3 +8637,54 @@ revalidates the exact merged DEC-455 runtime and still-unused DEC-456 slot
 immediately before any dispatch. DEC-456 itself provides no dispatch or execution
 path.
 
+## DEC-457 — Activate one-shot EXP-064 runtime
+
+**Date:** 2026-10-01  
+**Status:** ONE-SHOT HISTORICAL RUNTIME AUTHORIZED / NOT DISPATCHED
+
+DEC-457 binds merged DEC-456 commit
+`ef6c40d3e8148e52256917576423a8e6f53e8cfb`, DEC-456 one-shot authorization
+blob `0668910a69a87fad06be73af98e5f403436fe7fb`, DEC-455 runtime source blob
+`07e5ccebb6416c04621aa54e170cd4eb1e0a2a04`, unchanged active workflow blob
+`caca62672ad9796764c18be6b8da9785b98c9733`, DEC-454 evidence-contract blob
+`9aee3f9e273e20329c9de5a7079ed924ffee0a9a`, DEC-453 continuous-stability
+miner blob `b0d799ec1afaf43b0441290c97a9f39c37ecd2fd`, and DEC-452 protocol blob
+`c108ea047c7bfb3e588bfbac33993180066c28ad`.
+
+The live EXP-064 CLI is activated at
+`scripts/phase8a_exp064.py` blob
+`29fce0ac43adf6743448d5936b00f7e6755df2b4`. Runtime authorization source is
+`src/fmp/discovery/exp064_historical_execution_authorization.py` at blob
+`3098c5145f792792b3b33c5fc44e5a4c76a5fbbd`. The read-only dispatch planner is
+`src/fmp/discovery/exp064_historical_dispatch_operator.py` at blob
+`2830b46bb883de1b7ceec14da2edfa99375612dc`. Focused activation tests are
+`tests/test_phase8a_exp064_historical_runtime_activation.py` at blob
+`cec3027dc0742c3e0130cfd2fa54d3b8574b0aaa`.
+
+The runtime gate authorizes only GitHub Actions execution in repository
+`Dtwosam/FMP`, workflow `phase8a-exp064-continuous-stability`, event
+`workflow_dispatch`, ref `refs/heads/main`, run number 1, run attempt 1,
+positive run id, exact supplied commit SHA, and exact pinned source blobs. Run
+number 2, attempt 2, local execution, repository/workflow/ref drift, SHA drift,
+or source drift fail closed.
+
+The read-only planner has no execute mode and invokes no subprocess. It emits only
+the plan command
+`gh workflow run phase8a-exp064-continuous-stability.yml --ref main`
+when current main exactly matches the expected head and DEC-456 reports an unused
+slot. If any matching run already exists, no command is emitted and the slot is
+reported consumed.
+
+DEC-457 opens historical execution source authorization, historical-result
+dispatch authorization, historical execution authorization, and historical
+result production authorization only for this single 2015-2022 already-seen
+research run. Rerun, retry, replacement, reserved 2023-2026 robustness access,
+candidate compilation, promotion, Phase 8B, demo/live orders, broker mutation,
+real-money action, and trading remain false.
+
+DEC-457 itself does not dispatch EXP-064. After green merge, the next action is an
+immediate read-only main-head plus run-inventory check. Only if main is unchanged,
+the slot remains empty, and the planner reports
+`EXP064_ONE_SHOT_DISPATCH_READY` may the single manual dispatch be performed.
+The first created run consumes the slot regardless of outcome.
+
