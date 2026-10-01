@@ -311,9 +311,19 @@ def validate_workflow_text(text: str) -> None:
         raise ValueError("DEC-455 workflow must contain nine 60m cells")
     if text.count("            horizon: 240") != 9:
         raise ValueError("DEC-455 workflow must contain nine 240m cells")
-    if "phase8a_exp061.py cell" in text or "phase8a_exp062.py cell" in text:
+    predecessor_cell_clis = (
+        "phase8a_exp061.py cell",
+        "phase8a_exp062.py cell",
+        "phase8a_exp063.py cell",
+    )
+    if any(needle in text for needle in predecessor_cell_clis):
         raise ValueError("DEC-455 workflow cannot invoke predecessor cell CLI")
-    if "phase8a_exp061.py aggregate" in text or "phase8a_exp062.py aggregate" in text:
+    predecessor_aggregate_clis = (
+        "phase8a_exp061.py aggregate",
+        "phase8a_exp062.py aggregate",
+        "phase8a_exp063.py aggregate",
+    )
+    if any(needle in text for needle in predecessor_aggregate_clis):
         raise ValueError("DEC-455 workflow cannot invoke predecessor aggregate CLI")
 
 
