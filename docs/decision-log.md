@@ -8965,3 +8965,66 @@ real-money action, and trading remain false.
 Next gate:
 `SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_EVIDENCE_CONTRACT`.
 
+## DEC-463 — Freeze EXP-065 pairwise-interaction evidence contract
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY EVIDENCE CONTRACT FROZEN / EXECUTION LOCKED
+
+DEC-463 binds merged DEC-462 commit
+`735418cd455055a5102de6fb0d621355c4e85592`, DEC-462 pairwise miner blob
+`7dac382838d2b8fcc4df5d02c4949ad65c17635b`, and repaired DEC-461 protocol
+blob `b54267d790667659749a96123ad23a491ff50dfa`.
+
+The evidence contract freezes deterministic cell and aggregate payloads before any
+historical runtime is considered. It adds no loader, database/file/network source,
+workflow, CLI, artifact writer, dispatch path, historical result authority, or
+reserved-data access.
+
+Each of the exact 18 expected cells freezes its code commit, processed source
+manifest, feature/outcome manifests, feature/outcome evidence fingerprints,
+constituent rank-calibration summaries/fingerprints, pair interaction-calibration
+summaries/fingerprints, nominal/evaluable/qualifying/deduplicated hypothesis
+counts, deterministic shortlist, frozen fingerprint inventory, and output kind.
+
+Every cell must retain the nominal `hypothesis_count = 760`; concrete data
+availability may reduce only the separate evaluable count. Evaluable hypotheses
+cannot exceed active canonical pair count × 2 directions × 2 polarities.
+Qualifying cannot exceed evaluable and deduplicated cannot exceed qualifying.
+
+Shortlist rows are not trusted merely because the outer evidence fingerprint is
+valid. DEC-463 reconstructs all eight annual
+`AnnualPairwiseInteractionStat` rows, reruns the frozen pairwise interaction gate,
+recomputes all support/sign/equal-year/lower-half/two-year-block metrics,
+recomputes exact pair hypothesis fingerprints, and enforces the frozen rank order.
+
+Constituent calibration evidence requires at least 600 rows and 20 distinct values.
+Pair calibration evidence independently requires at least 600 rows and 20 distinct
+interaction values. Canonical feature and pair ordering is mandatory.
+
+Cell caps remain 3 shortlist / 1 frozen. Aggregate caps remain 54 shortlist / 18
+frozen. Frozen fingerprints must equal the leading ranked shortlist inventory under
+the per-cell cap.
+
+Aggregate evidence requires exactly one cell for every
+EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m identity, deterministic cell order,
+symbol-specific frozen Phase 2 source manifests, cross-horizon feature/outcome
+manifest identity per symbol/timeframe, and one common feature-evidence and
+outcome-evidence fingerprint across all cells.
+
+All evidence remains `RETROSPECTIVE_ALREADY_SEEN`,
+`untouched_oos=false`, `reserved_robustness_opened=false`, with output kind
+`RETROSPECTIVE_PAIRWISE_INTERACTION_HYPOTHESIS_NOT_VALIDATED`. The
+2023-01-01 through 2026-08-20 reserve remains closed.
+
+Evidence-contract source `src/fmp/discovery/exp065_evidence_contract.py` is blob
+`ca68622ddfc9866f00569d558b2ab927be23686d`; focused tests
+`tests/test_phase8a_exp065_evidence_contract.py` are blob
+`41930e892cf38e37160a9c7edbfc369d9fec679f`.
+
+Historical source access/execution/result production, reserved robustness access,
+candidate compilation, promotion, Phase 8B, demo/live orders, broker mutation,
+real-money action, and trading remain false.
+
+Next gate:
+`SOURCE_ONLY_EXP065_PAIRWISE_INTERACTION_RUNTIME_WIRING`.
+
