@@ -8351,3 +8351,48 @@ Next gate: `EXPLICIT_POST_EXP063_RESEARCH_DIRECTION_DECISION`. Any successor
 research must treat 2015-2022 EXP-063 outcomes as already-seen evidence and may not
 retroactively redefine or rerun EXP-063.
 
+## DEC-451 — Open EXP-064 continuous-stability research direction
+
+**Date:** 2026-10-01  
+**Status:** SOURCE-ONLY SUCCESSOR DIRECTION OPEN
+
+DEC-451 binds merged DEC-450 commit
+`839af1e85b526c3c2a11b228e4aa8d3865589f06`, DEC-450 result-review source blob
+`b572dbf4801c211b72285049654ebf4d96744cf1`, EXP-063 historical run
+`36773288493`, and aggregate evidence fingerprint
+`d0562d29da38c8ee4c0d3b28c35b3de7c9c42a5157910eef319a91b67ca4be42`.
+
+The frozen EXP-063 result was 37,350 enumerated patterns / 74,700 directional
+hypotheses with zero qualifying directional hypotheses, zero shortlist, and zero
+frozen hypotheses. Combined with EXP-062's confirmation survivors failing to persist
+through its already-seen validation years, DEC-451 closes the LOW/MID/HIGH
+one/two-predicate atomic-state family rather than relaxing persistence requirements.
+
+The new source-only successor identity is `EXP-20261001-064`.
+
+EXP-064 keeps the exact EURUSD/GBPUSD/USDJPY × 5m/15m/1h × 60m/240m market
+universe and the same 20 leakage-safe continuous feature columns. No new raw
+features, symbols, timeframes, horizons, or alternative data are authorized.
+
+The successor direction permits source-only design of deterministic transforms of
+the existing continuous features and simple continuous/rank-based effect forms.
+Exact normalization/rank method, estimator, annual-stability gate, interaction
+policy, search-volume bound, cost treatment, ranking/deduplication, and freeze caps
+remain deferred to the next protocol decision and must be frozen before execution.
+
+2015-2022 remains `ALREADY_SEEN_DESIGN_EVIDENCE` and may not be called fresh
+validation. The reserved 2023-01-01 through 2026-08-20 block remains closed.
+
+EXP-063 rerun/retry/replacement, threshold relaxation, pattern redefinition/rescue,
+successor execution/result production, reserved robustness access, candidate
+compilation, promotion, Phase 8B, demo/live orders, real-money action, and trading
+remain false.
+
+Research-direction source
+`src/fmp/discovery/exp064_research_direction.py` is blob
+`6a7de1e93515fd3771e3763641ee6a07e425ee8a`; focused tests
+`tests/test_phase8a_exp064_research_direction.py` are blob
+`0f7924c553f49813007e845e7d7b3d26b8832172`.
+
+Next gate: `SOURCE_ONLY_EXP064_CONTINUOUS_STABILITY_PROTOCOL`.
+
