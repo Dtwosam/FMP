@@ -40,7 +40,7 @@ def _feature_values(
     }
     values["return_1h"] = value
     if duplicate_feature:
-        values["return_4h"] = value
+        values["return_24h"] = value
     values.update({name: False for name in _SESSION_FLAGS})
     return values
 
@@ -213,7 +213,7 @@ class Exp064ContinuousStabilityMinerTests(unittest.TestCase):
 
         self.assertEqual(
             report.active_continuous_features,
-            ("return_1h", "return_4h"),
+            ("return_1h", "return_24h"),
         )
         self.assertEqual(report.evaluable_hypothesis_count, 8)
         self.assertEqual(report.qualifying_hypothesis_count, 4)
