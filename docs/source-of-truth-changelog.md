@@ -1630,3 +1630,14 @@
 - Pins recovery workflow/auth source plus original executor/discovery workflows.
 - Requires discovery target head to match the recovery head.
 - Adds no execution or trading authority.
+
+
+## 2026-10-02 — Discovery-first research operating guardrail
+
+- Refreshed `docs/project-state.md` to the current Phase 8A / DEC-467 / EXP-065 one-shot state.
+- Added `docs/research-method-operating-guardrail.md` as the mandatory operating interpretation of DEC-268/DEC-270.
+- Updated `AGENTS.md` so every research session must read the guardrail and distinguish the governing discovery-first framework from the current bounded sub-experiment.
+- Clarified that EXP-065 pairwise interactions are one evidence-generating sub-experiment, not the FMP research method.
+- Clarified that a negative narrow experiment rejects only its frozen representation/protocol and cannot be generalized into failure of discovery-first market learning.
+- Added a mandatory successor-experiment mapping back to the broader discovery-first workflow.
+- Changed no research thresholds, historical execution authority, reserved-data access, promotion, Phase 8B, demo/live, broker, real-money, or trading authority.
