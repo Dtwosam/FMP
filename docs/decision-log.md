@@ -9512,9 +9512,9 @@ underlying cell catalogue bytes.
 
 Evidence source
 `src/fmp/discovery/annual_pattern_catalogue_evidence.py` is blob
-`5207945601111b99eb13e66a63fb6e50fb21456d`; focused tests
+`c2565dc35e5bf43e1f1730a84c922a9aed5a9b3b`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_evidence.py` are blob
-`b16132b1d71cb60ab654e0d15eaf3cbe4ce5336c`; spec
+`8711b5f310422abfcb53ab7a4f2f3897803d0ded`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-evidence.md`
 is blob `59c257fafe49b729d9157a4094c7600c89f0b1be`.
 
