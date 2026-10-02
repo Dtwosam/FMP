@@ -89,6 +89,10 @@ class AnnualPatternCatalogueSegmentEvidenceTests(unittest.TestCase):
         self.assertEqual(EXPECTED_CELLS_PER_SEGMENT, 18)
         self.assertEqual(EXPECTED_DIRECTIONAL_RECORDS_PER_SEGMENT, 89460)
         self.assertEqual(evidence["decision"], "DEC-477")
+        self.assertEqual(
+            evidence["source_workflow_plan_merge_sha"],
+            "23ca37a74296a8ad0ac5e4cd1775c3b76714f698",
+        )
         self.assertEqual(evidence["annual_segment_label"], "2015")
         self.assertEqual(evidence["annual_cell_count"], 18)
         self.assertEqual(evidence["directional_record_count"], 89460)
@@ -196,6 +200,10 @@ class AnnualPatternCatalogueSegmentEvidenceTests(unittest.TestCase):
 
         self.assertEqual(payload["decision"], "DEC-477")
         self.assertEqual(payload["source_workflow_plan_decision"], "DEC-476")
+        self.assertEqual(
+            payload["source_workflow_plan_merge_sha"],
+            "23ca37a74296a8ad0ac5e4cd1775c3b76714f698",
+        )
         self.assertEqual(payload["cells_per_segment"], 18)
         self.assertEqual(payload["directional_records_per_segment"], 89460)
         self.assertTrue(payload["requires_validated_dec472_cell_summaries"])
