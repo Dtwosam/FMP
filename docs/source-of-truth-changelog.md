@@ -1686,3 +1686,13 @@
 - Preserves base/stress means and medians, base win rate, canonical identities, annual identities, and event-set fingerprints.
 - Contains no annual winner selection, reranking, cross-year result, Strategy V1 synthesis, promotion, or trading path.
 - Next gate is the source-only annual catalogue evidence contract.
+
+## 2026-10-02 — DEC-472 annual catalogue evidence contract
+
+- Froze canonical serialization and semantic validation for each 4,970-record annual Catalogue V1 cell.
+- Added nested semantic replay so rehashed tampering of pattern identities or statistics still fails closed.
+- Bound each cell to code, processed-source, feature/outcome manifest, feature/outcome evidence, protocol, miner, and payload identities.
+- Froze the full 12 annual segments × 18 cells = 216-cell aggregate inventory.
+- Froze the total nominal catalogue size at 1,073,520 directional annual records.
+- Required full aggregate replay to use summaries from semantically validated cell payloads.
+- Kept historical reads/execution/results, cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation, real-money, and trading authority false.
