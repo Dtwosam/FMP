@@ -4526,6 +4526,9 @@ The next safe gate is a non-executable artifact/evidence contract plus determini
 **Date:** 2026-09-27
 **Status:** SOURCE-ONLY ADAPTER / HISTORICAL EXECUTION LOCKED
 
+DEC-474 binds merged DEC-473 commit
+`f3fd12018ff9602dbc233b0b5c99bf6764489ea8`.
+
 DEC-272 reuses the already-approved EXP-044 market-learning feature/outcome schemas as the sole input vocabulary for DEC-271 rather than creating another historical data pipeline.
 
 The adapter converts verified Polars feature/outcome frames into immutable EXP-061 feature/outcome observations using a deterministic identity over symbol, timeframe, bar start, availability time, feature-set version, and processed Phase 2 manifest SHA-256. It requires exact symbol/timeframe, exact feature/outcome set identities, singular matching processed-manifest SHA-256, supported horizons, exact retrospective evidence labeling, and unique row identities.
@@ -9597,11 +9600,11 @@ DEC-471 unavailable-state semantics.
 
 Adapter source
 `src/fmp/discovery/annual_pattern_catalogue_adapter.py` is blob
-`35563304d7b9304549ca4fe3d2b99a6a48db1865`; focused tests
+`6fa40df869df179852145bd8b06ace26bfbd6aa7`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_adapter.py` are blob
-`21dd088f594fd36953e9dd7944aefb5effb431a7`; spec
+`666b2fc8a3df4e4cd5d0eeb90ce613dcb4336388`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-segment-adapter.md`
-is blob `c627af884b303a217bff2f66333d3fa387602242`.
+is blob `431668a7cfac9c26ba4fd942744d0ea0c922ee85`.
 
 Historical artifact reads, annual catalogue execution/result production, cross-year
 results, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
