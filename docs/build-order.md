@@ -282,8 +282,11 @@ Build and evaluate a versioned portfolio of strategies across EURUSD, GBPUSD, an
 - strategy/portfolio contribution and concentration reporting
 - daily return distribution and high-return-day frequency reporting
 - continuous-research path that can create challengers but cannot mutate an active champion set
-- discovery-first market-behaviour research over leakage-safe measurements across EURUSD, GBPUSD, and USDJPY, allowing repeated patterns to be derived from trend/direction, sideways/range, volatility, momentum/structure, session/time, spread, and fixed future outcomes rather than requiring a predefined strategy family
-- a bounded discovery protocol that freezes discovery data, measurements/features, future-outcome definitions, minimum support, search method/budget, search-volume accounting, candidate-freeze rules, and later chronological validation before results are used for promotion
+- year-by-year discovery-first market-behaviour catalogues over leakage-safe measurements across EURUSD, GBPUSD, and USDJPY, preserving all surfaced qualifying/non-qualifying/negative patterns within the frozen bounded grammar for each authorized annual segment
+- immutable annual catalogue identities and a canonical cross-year pattern identity so recurrence, support, effect direction/magnitude, after-cost economics, failure years, sign reversals, applicability, and concentration can be compared across years before Strategy V1 exists
+- state transitions, bounded interactions, statistical/ML representations, and named strategy families treated as pattern types/tools inside the annual catalogue rather than as the governing method
+- a bounded annual-catalogue protocol that freezes annual source ranges, measurements/features, future-outcome definitions, minimum support, pattern grammar/search budget, search-volume accounting, duplicate handling, transaction costs, annual evidence schema, and cross-year comparison rules before historical catalogue execution
+- explicit Strategy V1 synthesis from frozen cross-year evidence only, followed by immutable Strategy V1 freeze before prospective shadow/demo evidence
 - versioned full-history feature/materialization support where needed; historical Phase 5 artifacts remain immutable and their old final-test lock is not silently weakened
 - offline champion/challenger retraining from frozen historical/prospective cutoffs; active shadow/demo models never self-modify in place
 - immutable versioning for any strategy/model materially changed from historical, shadow, or demo evidence
@@ -301,8 +304,10 @@ PASS only when:
 - historical runs bind exact code/data/config/cost/risk identities;
 - performance reporting includes return, expectancy, PF, drawdown, trade count, concentration, cost sensitivity, and daily return distribution;
 - repeated historical search is explicitly treated as overfitting/multiple-comparison risk;
-- the discovery-first market-learning question is answered under a frozen, bounded protocol using all three V1 pairs, with candidate patterns derived from market behaviour rather than restricted to predefined strategy families and with search-volume/multiple-comparison risk recorded;
-- any discovered candidate is frozen before later chronological or prospective evaluation, and validation data is never used to redesign the candidate;
+- the discovery-first market-learning question is answered through frozen year-by-year pattern catalogues using all three V1 pairs, with all surfaced pattern evidence preserved under a bounded grammar and search-volume/multiple-comparison risk recorded;
+- the required annual catalogues are frozen before cross-year synthesis, and cross-year comparison reports recurrence plus failure/sign-reversal/concentration evidence rather than selecting a winner from one strong year;
+- Strategy V1 is derived only after cross-year comparison and is frozen as an immutable exact version before prospective evaluation;
+- historical years used to design Strategy V1 are not relabeled as untouched OOS;
 - future learning from shadow/demo data uses immutable champion/challenger retraining rather than online mutation of the active model; once observations are used to change a challenger, that same observation window cannot count as fresh validation for the changed version;
 - at least one frozen portfolio/shadow candidate materially improves the economic case over the Phase 7 single-strategy baseline, or a credible rejection is recorded;
 - repository-wide regression tests and unchanged Phase 3 execution/risk acceptance remain green.
