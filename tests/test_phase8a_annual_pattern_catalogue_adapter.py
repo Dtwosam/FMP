@@ -223,6 +223,10 @@ class AnnualPatternCatalogueSegmentAdapterTests(unittest.TestCase):
 
         self.assertEqual(payload["decision"], "DEC-474")
         self.assertEqual(payload["source_loader_decision"], "DEC-473")
+        self.assertEqual(
+            payload["source_loader_merge_sha"],
+            "f3fd12018ff9602dbc233b0b5c99bf6764489ea8",
+        )
         self.assertTrue(payload["accepts_verified_loader_bundle_only"])
         self.assertTrue(payload["preserves_manifest_and_evidence_identities"])
         self.assertTrue(payload["normalizes_nonfinite_continuous_features_to_null"])
