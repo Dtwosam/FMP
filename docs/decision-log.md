@@ -9617,8 +9617,8 @@ Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_RUNTIME_WIRING`.
 **Date:** 2026-10-02  
 **Status:** SOURCE-ONLY LOCKED RUNTIME / HISTORICAL EXECUTION LOCKED
 
-DEC-475 is provisionally bound to DEC-474 head
-`f75745ce89641336512c0afbf74ced3d93ac7508` until DEC-474 receives its merge SHA.
+DEC-475 binds merged DEC-474 commit
+`d88d5bb2f5d1f76278c4d588136bbcc5e65731a7`.
 
 DEC-475 composes the frozen annual-catalogue source path in the exact order
 authorization gate -> DEC-473 loader -> DEC-474 adapter -> DEC-471 miner -> DEC-472
@@ -9636,11 +9636,11 @@ Strategy V1 synthesis is installed by this decision.
 
 Runtime source
 `src/fmp/discovery/annual_pattern_catalogue_runtime.py` is blob
-`21f854a20591d915c3dc6f11655a06c19902cff9`; focused tests
+`0044c19575ec005a31ab98beefccfc57fe9e72da`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_runtime.py` are blob
-`a682207b19e67a24a707a5be7f6accf2fdcf99a7`; spec
+`b495272bc0302cb6bec3f142778332b96e2abac7`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-runtime-wiring.md`
-is blob `b119ed58ab3b183e663c848082bbb700b5ce098f`.
+is blob `a0f9e58063e4ec1c0c98071fe766c23811ebb684`.
 
 Historical artifact reads, annual catalogue execution/result production, cross-year
 results, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
