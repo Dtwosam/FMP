@@ -9559,7 +9559,7 @@ Loader source
 `src/fmp/discovery/annual_pattern_catalogue_loader.py` is blob
 `6be734930dd7758932c664439b6149a7a84902d6`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_loader.py` are blob
-`e0ba47f33580d5641a2a80d65693435fff6be3f7`; spec
+`63c5b3b4a819a4b5e0fbb29fe721576fd640651b`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-full-history-loader.md`
 is blob `6e079fca5115bf1753c4491474578b9b79669b40`.
 
