@@ -9843,3 +9843,39 @@ real-money action, and trading remain false.
 Next gate:
 `REPOSITORY_HOSTED_READ_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF`.
 
+## DEC-481 — Freeze repository-hosted install-preflight proof contract
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY PROOF CONTRACT / REPOSITORY MUTATION LOCKED
+
+DEC-481 defines the exact evidence contract for a future repository-hosted,
+read-only proof of DEC-480.
+
+The proof accepts only a fully validated DEC-480 preflight and binds its preflight
+fingerprint plus embedded install-action fingerprint. The supplied main branch and
+proof run must resolve to one identical commit.
+
+The future proof run must be an exact successful manual run of the frozen proof
+workflow on `main`, run attempt 1, with the exact caller-supplied positive run ID.
+Different workflow identity, branch, head SHA, failed conclusion, or rerun fails
+closed.
+
+The proof receives a canonical fingerprint, and authority fields remain
+semantically checked after fingerprint validation.
+
+The frozen proof itself retains the exact run event, branch, head SHA, attempt, completed status, and successful conclusion. These fields are semantically revalidated after fingerprint verification, so rehashing altered run provenance fails closed.
+
+Proof-contract source
+`src/fmp/discovery/annual_pattern_catalogue_workflow_install_preflight_proof.py`
+is blob `6498481d3841faa6ad414bdd8ee97de8c0c8aea8`; focused tests are blob
+`9da2080ccbd82c6c4ffc93358d200cd26b8ecd59`; spec is blob
+`a1a651a0609f65fc84692cee45eaec41804096d3`.
+
+Repository mutation, annual workflow installation/dispatch, historical artifact
+reads, annual catalogue execution/result production, next-segment execution,
+cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker
+mutation, real-money action, and trading remain false.
+
+Next gate:
+`SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_SOURCE`.
+

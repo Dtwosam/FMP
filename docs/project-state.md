@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 freezes one complete 18-cell / 89,460-record annual catalogue; DEC-478 freezes the disabled workflow source; DEC-479 freezes the exact future active-workflow mutation; DEC-480 now freezes a read-only install preflight bound to exact source blobs, main-head identity, target absence, and false mutation authority. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** DEC-473 through DEC-479 are merged. Validate and merge DEC-480 against the exact DEC-479 merge, then produce a repository-hosted read-only preflight proof against one exact merged-main head. That proof must not install or dispatch the workflow or open historical execution.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 freezes one complete 18-cell / 89,460-record annual catalogue; DEC-478 freezes the disabled workflow source; DEC-479 freezes the exact future active-workflow mutation; DEC-480 freezes a hardened read-only install preflight; DEC-481 now freezes the repository-hosted read-only proof contract and retains exact successful proof-run provenance inside the frozen evidence. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** DEC-473 through DEC-479 are merged. After DEC-480 validation/merge, rebind and validate DEC-481 on that exact merge, then freeze the source-only read-only proof-workflow source. It must not install or dispatch the annual catalogue workflow or open historical execution.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2604,3 +2604,18 @@ remain locked.
 
 Next safe gate:
 `REPOSITORY_HOSTED_READ_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF`.
+
+## 2026-10-02 — DEC-481 repository-hosted preflight proof contract source-ready
+
+DEC-481 defines the exact future proof evidence over a validated DEC-480 preflight.
+The proof binds one exact main head, exact successful manual proof-run identity,
+preflight fingerprint, and embedded install-action fingerprint. The frozen proof now
+retains event, branch, run head, attempt, completed status, and successful conclusion
+so standalone semantic validation can reject rehashed run-provenance tampering.
+
+The proof contract itself installs nothing. Repository mutation, annual workflow
+installation/dispatch, historical execution/results, next-segment authority,
+cross-year results, Strategy V1, promotion, and trading remain false.
+
+Next safe gate:
+`SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_SOURCE`.
