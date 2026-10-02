@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 
 from fmp.discovery.annual_pattern_catalogue_method import (
     ANNUAL_PATTERN_CATALOGUE_METHOD_DECISION,
@@ -109,6 +110,55 @@ class AnnualPatternCatalogueMethodTests(unittest.TestCase):
 
         for field, value in authorizations.items():
             self.assertFalse(value, field)
+
+
+    def test_mandatory_new_session_docs_pin_annual_first_method(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        agents = (root / "AGENTS.md").read_text(encoding="utf-8")
+        guardrail = (
+            root / "docs" / "research-method-operating-guardrail.md"
+        ).read_text(encoding="utf-8")
+        project_state = (root / "docs" / "project-state.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("year-by-year annual pattern catalogue", agents)
+        self.assertIn(
+            "historical collection -> year-by-year pattern catalogues",
+            guardrail,
+        )
+        self.assertIn(
+            "State transitions",
+            guardrail,
+        )
+        self.assertIn(
+            "pattern types/tools inside the annual catalogue",
+            project_state,
+        )
+
+    def test_core_source_of_truth_docs_agree_on_catalogue_then_strategy_v1(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        master = (root / "docs" / "master-spec.md").read_text(encoding="utf-8")
+        build = (root / "docs" / "build-order.md").read_text(encoding="utf-8")
+        standard = (root / "docs" / "research-testing-standard.md").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn(
+            "build a frozen pattern catalogue for each authorized historical year/segment",
+            master,
+        )
+        self.assertIn(
+            "year-by-year discovery-first market-behaviour catalogues",
+            build,
+        )
+        self.assertIn(
+            "year-by-year pattern catalogues before cross-year strategy synthesis",
+            standard,
+        )
+        for text in (master, build, standard):
+            self.assertIn("Strategy V1", text)
+
 
     def test_next_gate_is_catalogue_protocol_and_protected_history_decision(self) -> None:
         value = build_annual_pattern_catalogue_method()
