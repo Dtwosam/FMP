@@ -14,6 +14,7 @@ from .annual_pattern_catalogue_miner import (
 from .annual_pattern_catalogue_protocol import (
     ANNUAL_CATALOGUE_PROTOCOL_VERSION,
     EVIDENCE_LABEL,
+    EXPERIMENT_ID,
     MIN_ANNUAL_EVALUABLE_SUPPORT,
     PATTERN_CONDITION_COUNT,
     annual_record_identity,
@@ -230,10 +231,12 @@ def compile_cell_evidence(
     evidence: dict[str, object] = {
         "evidence_version": ANNUAL_CATALOGUE_CELL_EVIDENCE_VERSION,
         "evidence_protocol": ANNUAL_CATALOGUE_CELL_EVIDENCE_PROTOCOL,
+        "experiment_id": EXPERIMENT_ID,
         "evidence_label": EVIDENCE_LABEL,
         "untouched_oos": False,
         "protocol_fingerprint": protocol_fingerprint(),
         "miner_decision": SOURCE_MINER_DECISION,
+        "miner_merge_sha": SOURCE_MINER_MERGE_SHA,
         "miner_source_blob_sha": SOURCE_MINER_BLOB_SHA,
         "code_commit": code_commit,
         "annual_segment_label": result.annual_segment_label,
@@ -493,10 +496,12 @@ def validate_cell_evidence(
     expected = {
         "evidence_version": ANNUAL_CATALOGUE_CELL_EVIDENCE_VERSION,
         "evidence_protocol": ANNUAL_CATALOGUE_CELL_EVIDENCE_PROTOCOL,
+        "experiment_id": EXPERIMENT_ID,
         "evidence_label": EVIDENCE_LABEL,
         "untouched_oos": False,
         "protocol_fingerprint": protocol_fingerprint(),
         "miner_decision": SOURCE_MINER_DECISION,
+        "miner_merge_sha": SOURCE_MINER_MERGE_SHA,
         "miner_source_blob_sha": SOURCE_MINER_BLOB_SHA,
     }
     for field, expected_value in expected.items():
@@ -701,6 +706,7 @@ def compile_aggregate_evidence(
     evidence: dict[str, object] = {
         "evidence_version": ANNUAL_CATALOGUE_AGGREGATE_EVIDENCE_VERSION,
         "evidence_protocol": ANNUAL_CATALOGUE_AGGREGATE_EVIDENCE_PROTOCOL,
+        "experiment_id": EXPERIMENT_ID,
         "evidence_label": EVIDENCE_LABEL,
         "untouched_oos": False,
         "protocol_fingerprint": protocol_fingerprint(),
@@ -889,6 +895,7 @@ def validate_aggregate_evidence(
 def evidence_contract_payload() -> dict[str, object]:
     return {
         "decision": ANNUAL_CATALOGUE_EVIDENCE_DECISION,
+        "experiment_id": EXPERIMENT_ID,
         "source_miner_decision": SOURCE_MINER_DECISION,
         "source_miner_merge_sha": SOURCE_MINER_MERGE_SHA,
         "source_miner_blob_sha": SOURCE_MINER_BLOB_SHA,
@@ -918,6 +925,8 @@ def evidence_contract_payload() -> dict[str, object]:
     }
 
 
+if ANNUAL_CATALOGUE_MINER_DECISION != SOURCE_MINER_DECISION:
+    raise ValueError("DEC-472 source miner decision drift")
 if EXPECTED_ANNUAL_CELL_COUNT != 216:
     raise ValueError("DEC-472 annual cell matrix drift")
 if DIRECTIONAL_RECORDS_PER_ANNUAL_CELL != 4970:
