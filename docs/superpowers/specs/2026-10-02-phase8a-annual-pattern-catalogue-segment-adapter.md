@@ -3,7 +3,7 @@
 **Decision:** DEC-474  
 **Experiment:** EXP-20261002-067  
 **Status:** SOURCE-ONLY ADAPTER / HISTORICAL EXECUTION LOCKED  
-**Source loader:** DEC-473 head `9ee09b48db7890e8f652d23d2a6e7fcfc9af1369`
+**Source loader:** DEC-473 merge `f3fd12018ff9602dbc233b0b5c99bf6764489ea8`
 
 ## Purpose
 
