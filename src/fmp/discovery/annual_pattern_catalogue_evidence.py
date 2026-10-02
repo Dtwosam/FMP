@@ -711,6 +711,7 @@ def compile_aggregate_evidence(
         "untouched_oos": False,
         "protocol_fingerprint": protocol_fingerprint(),
         "miner_decision": SOURCE_MINER_DECISION,
+        "miner_merge_sha": SOURCE_MINER_MERGE_SHA,
         "miner_source_blob_sha": SOURCE_MINER_BLOB_SHA,
         "code_commit": code_commit,
         "annual_segment_count": len(collection_segments()),
@@ -790,10 +791,12 @@ def validate_aggregate_evidence(
     expected = {
         "evidence_version": ANNUAL_CATALOGUE_AGGREGATE_EVIDENCE_VERSION,
         "evidence_protocol": ANNUAL_CATALOGUE_AGGREGATE_EVIDENCE_PROTOCOL,
+        "experiment_id": EXPERIMENT_ID,
         "evidence_label": EVIDENCE_LABEL,
         "untouched_oos": False,
         "protocol_fingerprint": protocol_fingerprint(),
         "miner_decision": SOURCE_MINER_DECISION,
+        "miner_merge_sha": SOURCE_MINER_MERGE_SHA,
         "miner_source_blob_sha": SOURCE_MINER_BLOB_SHA,
     }
     for field, expected_value in expected.items():
