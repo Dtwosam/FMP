@@ -9763,3 +9763,40 @@ promotion, Phase 8B, demo/live, broker mutation, real-money action, and trading
 remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_CONTRACT`.
+
+## DEC-479 — Freeze annual catalogue workflow installation contract
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY INSTALL CONTRACT / REPOSITORY MUTATION LOCKED
+
+DEC-479 binds the merged DEC-478 authority
+`aaf4ea66b2b5b908228102dfa387aae7d03ea4d9`.
+
+DEC-479 freezes the exact future repository mutation required to install the
+disabled DEC-478 annual-catalogue workflow source, but does not perform it.
+
+The contract binds exact Git blobs for the DEC-478 workflow source module, dormant
+CLI, and disabled workflow template. The reserved active workflow path must remain
+absent. Source drift or a pre-existing target path fails closed.
+
+The only allowed future mutation is creation of
+`.github/workflows/phase8a-annual-pattern-catalogue.yml` from the exact bytes of
+`docs/superpowers/templates/phase8a-annual-pattern-catalogue.yml.disabled`.
+The dormant template, CLI, and workflow-source contract are forbidden from changing
+during that install action, and post-install active bytes must equal the frozen
+source bytes exactly.
+
+DEC-479 now also semantically validates the complete install-action payload, including the nested source-blob map, exact source/target paths, allowed/forbidden file sets, and every false authority field. A nested mutation cannot be legitimized by wrapping it in a new outer fingerprint later.
+
+Install-contract source
+`src/fmp/discovery/annual_pattern_catalogue_workflow_install_contract.py` is blob
+`f9ac5dc517ec3efbb50057ade66c5b5aab2f52b3`; focused tests are blob
+`19068defbf5edb0149677ee8f941c9176e14a6dd`; spec is blob
+`430f567e6c293615b919313c3ec4366899f91853`.
+
+Repository mutation authorization remains false. Workflow install/dispatch,
+historical reads, catalogue execution/results, next-segment execution, cross-year
+results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation,
+real-money action, and trading remain false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT`.
