@@ -9614,8 +9614,8 @@ Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_RUNTIME_WIRING`.
 **Date:** 2026-10-02  
 **Status:** SOURCE-ONLY LOCKED RUNTIME / HISTORICAL EXECUTION LOCKED
 
-DEC-475 is provisionally bound to DEC-474 head
-`a520cb3a5d777b31e7a5fc0384c8d9a5950abbaa` until DEC-474 receives its merge SHA.
+DEC-475 binds merged DEC-474 commit
+`d88d5bb2f5d1f76278c4d588136bbcc5e65731a7`.
 
 DEC-475 composes the frozen annual-catalogue source path in the exact order
 authorization gate -> DEC-473 loader -> DEC-474 adapter -> DEC-471 miner -> DEC-472
@@ -9633,11 +9633,11 @@ Strategy V1 synthesis is installed by this decision.
 
 Runtime source
 `src/fmp/discovery/annual_pattern_catalogue_runtime.py` is blob
-`717238524c99874d0d201268bc2229790f1f6250`; focused tests
+`0044c19575ec005a31ab98beefccfc57fe9e72da`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_runtime.py` are blob
-`a682207b19e67a24a707a5be7f6accf2fdcf99a7`; spec
+`b495272bc0302cb6bec3f142778332b96e2abac7`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-runtime-wiring.md`
-is blob `93a9de42ea451982510fcd3074f28291e174a7a1`.
+is blob `a0f9e58063e4ec1c0c98071fe766c23811ebb684`.
 
 Historical artifact reads, annual catalogue execution/result production, cross-year
 results, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
@@ -9650,6 +9650,9 @@ Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_PLAN`.
 
 **Date:** 2026-10-02  
 **Status:** SOURCE-ONLY WORKFLOW PLAN / NO WORKFLOW INSTALLED
+
+DEC-476 binds merged DEC-475 commit
+`db8285dab5a0311abbbb77c60c958771b17074a5`.
 
 DEC-476 freezes the future annual-catalogue execution shape without installing a
 workflow. The run unit is one annual segment, not the full 216-cell collection.
@@ -9668,11 +9671,11 @@ adds no ranking, deduplication, Strategy V1 synthesis, or result authority.
 
 Workflow-plan source
 `src/fmp/discovery/annual_pattern_catalogue_workflow_plan.py` is blob
-`8aca4f1cd25686bc732b1dff3ada8bce84e0a0c2`; focused tests
+`2c3755d5cc344971a64d61937314b0f3bef0674d`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_workflow_plan.py` are blob
-`d058dd1ec74e3ff0368d2b5b105f378be570543a`; spec
+`56281cafd839f035f04bd57c2726ba7764786eea`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-workflow-plan.md`
-is blob `e61ff22b78403b6d3072ab1c507c1cb5e31de4bb`.
+is blob `0ee1328d78d8818abce2c02820b2ece7b51df108`.
 
 Workflow source authorization, installation, dispatch, historical artifact reads,
 catalogue execution/results, cross-year results, Strategy V1 synthesis, promotion,
