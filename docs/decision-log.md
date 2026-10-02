@@ -9608,3 +9608,37 @@ results, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
 demo/live orders, broker mutation, real-money action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_RUNTIME_WIRING`.
+
+## DEC-475 — Freeze source-only locked annual catalogue runtime wiring
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY LOCKED RUNTIME / HISTORICAL EXECUTION LOCKED
+
+DEC-475 composes the frozen annual-catalogue source path in the exact order
+authorization gate -> DEC-473 loader -> DEC-474 adapter -> DEC-471 miner -> DEC-472
+cell evidence compiler.
+
+The unit of work remains one annual segment × symbol × timeframe × horizon.
+`run_locked_annual_catalogue_cell` calls the authorization gate before the
+filesystem-backed loader. The gate requires historical artifact-read, catalogue
+execution, and historical result-production authority. All three remain false, so
+the runtime cannot currently reach any historical evidence index, manifest, or
+Parquet partition.
+
+No workflow, workflow dispatch, CLI execution surface, cross-year aggregation, or
+Strategy V1 synthesis is installed by this decision.
+
+Runtime source
+`src/fmp/discovery/annual_pattern_catalogue_runtime.py` is blob
+`6ca0490567eb21fd75f57a79363ad88defad3325`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_runtime.py` are blob
+`a682207b19e67a24a707a5be7f6accf2fdcf99a7`; spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-runtime-wiring.md`
+is blob `db26938fd0f5f9b3161121eb825f24f3aa8f2a15`.
+
+Historical artifact reads, annual catalogue execution/result production, cross-year
+results, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
+demo/live orders, broker mutation, real-money action, and trading remain false.
+Workflow installed and workflow dispatch authority are also false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_PLAN`.
