@@ -2741,3 +2741,17 @@ Copy this section for each serious experiment:
 - Next-segment execution authorization: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_SOURCE`.
+
+### EXP-20261002-067 — DEC-478 dormant annual catalogue workflow source
+
+- Source state: disabled template only; active workflow path absent.
+- Input: exactly one of the 12 frozen annual segment labels.
+- Run shape: preflight + 18 annual cells + annual freeze = 20 jobs / 20 artifacts.
+- Historical sources: exact accepted EXP-044 feature/outcome runs and artifacts only.
+- Cell product: DEC-472 cell evidence + complete catalogue payload.
+- Annual product: one DEC-477 same-segment freeze.
+- Sequential dependency: 2016+ requires the immediately prior successful annual run and validated DEC-477 freeze; 2015 requires none.
+- Full-collection aggregate / cross-year comparison inside workflow: NONE.
+- Workflow install / dispatch / historical reads / execution / results: NO.
+- Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_CONTRACT`.

@@ -1746,3 +1746,15 @@
 - Kept next-segment execution and cross-year comparison explicitly unauthorized after a valid freeze.
 - Added no historical read/execution, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, or trading authority.
 - Next gate is source-only annual catalogue workflow source.
+
+## 2026-10-02 — DEC-478 dormant annual catalogue workflow source
+
+- Added a disabled one-segment annual-catalogue workflow template and gated CLI source.
+- Kept the reserved active `.github/workflows/phase8a-annual-pattern-catalogue.yml` path absent.
+- Reused exact accepted EXP-044 source snapshots only; added no new market data.
+- Froze exactly 18 cell jobs plus preflight and annual freeze per chosen annual segment.
+- Enforced the sequential annual dependency: every segment after 2015 must validate the immediately prior successful annual run and DEC-477 freeze before any cell can start.
+- Fixed the freeze download pattern to require the same annual-segment cell products.
+- Required the execution gate before cell source downloads and before annual-freeze result reads.
+- Added no workflow installation/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, or trading authority.
+- Next gate is the source-only workflow installation contract.

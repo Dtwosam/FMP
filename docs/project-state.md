@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 now freezes the source-only annual evidence contract over exactly 18 validated cells / 89,460 directional records per year. No workflow is installed. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** DEC-473 through DEC-476 are merged. Finish DEC-477 validation/merge, then bind the corrected DEC-478 disabled workflow source to that exact merge. DEC-478 must preserve the one-segment run shape and require the immediately prior annual freeze for every segment after 2015.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 freezes one complete 18-cell / 89,460-record annual catalogue; DEC-478 now freezes the disabled one-segment workflow source while keeping the active workflow path absent. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** DEC-473 through DEC-477 are merged. Validate and merge DEC-478 on the exact DEC-477 merge, then freeze the source-only workflow installation contract that can copy the exact disabled template to its reserved active path while still leaving workflow dispatch and historical execution unauthorized.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -84,6 +84,22 @@ No workflow is installed and no historical read/execution, Strategy V1, promotio
 or trading authority is opened.
 
 Next safe gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_SOURCE`.
+
+## 2026-10-02 — DEC-478 dormant annual workflow source-ready
+
+DEC-478 freezes the disabled one-segment annual catalogue workflow source and CLI.
+The workflow accepts exactly one frozen annual segment, runs 18 cells only after a
+separately locked execution gate, and compiles one DEC-477 annual freeze. Every
+segment after 2015 must first validate the immediately prior successful annual run
+and its DEC-477 freeze; 2015 is the only segment with no predecessor dependency.
+
+The exact accepted EXP-044 source snapshots are reused. The reserved active workflow
+path is still absent, so there is no install or dispatch surface.
+
+No historical read/execution, next-segment authority, cross-year result, Strategy
+V1, promotion, or trading authority is opened.
+
+Next safe gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_CONTRACT`.
 
 ## Governing research method — mandatory session invariant
 
