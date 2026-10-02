@@ -2730,3 +2730,14 @@ Copy this section for each serious experiment:
 - Workflow installed / dispatch / historical execution / result production: NO.
 - Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_FREEZE_CONTRACT`.
+
+### EXP-20261002-067 — DEC-477 annual segment freeze contract
+
+- Input: exactly 18 validated DEC-472 cell summaries from one annual segment.
+- Annual frozen inventory: 18 cells × 4,970 directional records = 89,460 records.
+- Missing / duplicate / cross-year / mixed-code cells: fail closed.
+- Input ordering: canonicalized before annual fingerprinting.
+- Annual totals: recomputed from bound cell summaries.
+- Next-segment execution authorization: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_SOURCE`.
