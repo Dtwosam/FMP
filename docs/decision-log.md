@@ -9800,3 +9800,46 @@ results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation,
 real-money action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT`.
+## DEC-480 — Freeze read-only annual workflow installation preflight
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY READ-ONLY PREFLIGHT / REPOSITORY MUTATION LOCKED
+
+DEC-480 binds the merged DEC-479 authority
+`95750234d3bce325563f15c605c2312756562ee6`.
+
+DEC-480 freezes the read-only preflight for the future DEC-479 annual-catalogue
+workflow installation action.
+
+The preflight verifies the exact DEC-479 install-contract Git blob, all transitive
+DEC-478 dormant source bindings, exact `main` branch metadata, and continued
+absence of the reserved active workflow path. Any source drift or main-head drift
+fails closed.
+
+DEC-480 embeds the complete DEC-479 install-action payload and fingerprints it.
+The validator recomputes both the outer preflight fingerprint and the embedded
+install-action fingerprint, then semantically rechecks every authority field so a
+rehashed authority escalation still fails.
+
+The embedded DEC-479 action is also passed through DEC-479's semantic validator, so rehashing a changed nested target path, source blob, or file-mutation set still fails.
+
+The separately reported `install_sources` evidence must also exactly match that validated DEC-479 source-validation payload, so rehashing substituted source evidence fails closed.
+
+The preflight CLI exposes only a `plan` command. There is no install, execute,
+dispatch, or advance surface.
+
+Preflight source
+`src/fmp/discovery/annual_pattern_catalogue_workflow_install_preflight.py` is blob
+`654a51a7bd647afe4664d9ecab81926044c2b824`; focused tests are blob
+`9d3ba4f7f0d2824b334a9cddfaa54e7e5211a2a7`; read-only CLI is blob
+`f7bb6cdc62511d3dcc907d856f55f06f6302e640`; spec is blob
+`0d592089ac3ccd1f92e173fbd6bfe9ba7a63b8ff`.
+
+Repository mutation, workflow installation/dispatch, historical artifact reads,
+annual catalogue execution/result production, next-segment execution, cross-year
+results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation,
+real-money action, and trading remain false.
+
+Next gate:
+`REPOSITORY_HOSTED_READ_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF`.
+

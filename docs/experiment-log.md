@@ -2766,3 +2766,16 @@ Copy this section for each serious experiment:
 - Workflow install / dispatch / historical execution / results: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT`.
+### EXP-20261002-067 — DEC-480 read-only annual workflow installation preflight
+
+- Verifies exact DEC-479 install-contract blob and transitive DEC-478 source bindings.
+- Requires exact `main` branch metadata and caller-supplied expected head SHA.
+- Requires reserved active workflow path to remain absent.
+- Fingerprints both the preflight and embedded install-action payload.
+- Rehashed authority escalation: fails semantic validation.
+- Rehashed top-level `install_sources` substitution: fails semantic validation.
+- CLI surface: `plan` only; no install/execute/dispatch/advance command.
+- Repository mutation / workflow install / dispatch / historical execution: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: repository-hosted read-only preflight proof.
+
