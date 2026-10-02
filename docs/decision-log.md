@@ -9679,3 +9679,37 @@ catalogue execution/results, cross-year results, Strategy V1 synthesis, promotio
 Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_FREEZE_CONTRACT`.
+
+## DEC-477 — Freeze annual segment evidence contract
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY ANNUAL FREEZE CONTRACT / HISTORICAL EXECUTION LOCKED
+
+DEC-477 defines the independently verifiable freeze for one complete annual
+catalogue segment before any later segment can become authoritative.
+
+The freeze accepts exactly 18 validated DEC-472 cell summaries for one year:
+3 symbols × 3 timeframes × 2 horizons. Since every validated cell binds 4,970
+directional records, one annual freeze binds exactly 89,460 directional records.
+
+Missing, duplicate, cross-year, or mixed-code-commit cells fail closed. Input order
+is canonicalized into the frozen cell order before fingerprinting. Aggregate annual
+counts are recomputed from the bound cell summaries, so rehashed outer-total
+tampering still fails validation.
+
+A valid DEC-477 freeze does not authorize the next year. It also does not authorize
+cross-year comparison or Strategy V1 synthesis. Those remain separate later gates.
+
+Freeze source
+`src/fmp/discovery/annual_pattern_catalogue_segment_evidence.py` is blob
+`c8cf2853a1609901792cbb70b6d278355b04b343`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_segment_evidence.py` are blob
+`9372cc9755df85917ea1fd87ca62388c3205059e`; spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-segment-freeze.md`
+is blob `00fd9065914e882f5661113d20cd26f2a75cf191`.
+
+Historical artifact reads, annual catalogue execution/result production,
+next-segment execution, cross-year results, Strategy V1 synthesis, promotion,
+Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_SOURCE`.
