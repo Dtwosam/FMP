@@ -132,6 +132,11 @@ class AnnualPatternCatalogueEvidenceTests(unittest.TestCase):
     def test_cell_evidence_serializes_all_records_and_self_validates(self) -> None:
         evidence, payload = _cell()
 
+        self.assertEqual(evidence["experiment_id"], "EXP-20261002-067")
+        self.assertEqual(
+            evidence["miner_merge_sha"],
+            "3926daa8b64ca18c69d5a95a7b31b960dddde27b",
+        )
         self.assertEqual(evidence["directional_record_count"], 4970)
         self.assertEqual(len(payload), evidence["catalogue_payload_size_bytes"])
         self.assertEqual(
@@ -196,6 +201,11 @@ class AnnualPatternCatalogueEvidenceTests(unittest.TestCase):
 
         self.assertEqual(EXPECTED_ANNUAL_CELL_COUNT, 216)
         self.assertEqual(EXPECTED_TOTAL_DIRECTIONAL_RECORDS, 1073520)
+        self.assertEqual(aggregate["experiment_id"], "EXP-20261002-067")
+        self.assertEqual(
+            aggregate["miner_merge_sha"],
+            "3926daa8b64ca18c69d5a95a7b31b960dddde27b",
+        )
         self.assertEqual(aggregate["annual_segment_count"], 12)
         self.assertEqual(aggregate["annual_cell_count"], 216)
         self.assertEqual(aggregate["directional_record_count"], 1073520)
