@@ -3,7 +3,7 @@
 **Decision:** DEC-473  
 **Experiment:** EXP-20261002-067  
 **Status:** SOURCE-ONLY LOADER / HISTORICAL EXECUTION LOCKED  
-**Source evidence contract:** DEC-472 head `43e5acb986bd963572defa7fd422fb828231dd75`
+**Source evidence contract:** DEC-472 merge `310d31183802a2c29aad3f20ad6a6aa4990d579d`
 
 ## Purpose
 
