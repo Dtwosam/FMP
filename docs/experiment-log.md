@@ -2683,3 +2683,15 @@ Copy this section for each serious experiment:
 - Historical artifact read / execution / result production: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER`.
+
+### EXP-20261002-067 — DEC-473 source-only annual catalogue full-history loader
+
+- Reuses only accepted EXP-044 feature/outcome artifacts; no new data acquisition or materialization.
+- Exact partition universe: 140 months, 2015-01 through 2026-08.
+- Exact segment universe: 2015-2025 plus `2026_YTD_TO_2026_08_20`.
+- Unit of loading: one annual segment × symbol × timeframe.
+- Verifies selected artifact path/size/SHA/schema/row count plus aggregate evidence and manifest bindings.
+- Filters any outcome whose fixed-horizon exit crosses the annual segment boundary.
+- Historical artifact read / catalogue execution / result production: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER`.

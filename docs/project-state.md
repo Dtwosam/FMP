@@ -4,8 +4,25 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and full-collection research scope; DEC-471 implements the complete source-only annual miner; DEC-472 now freezes the source-only evidence contract for every 4,970-record annual cell and the exact 12×18 = 216-cell full-collection aggregate. Nested record identities/statistics are semantically revalidated after hashing, and the aggregate binds exactly 1,073,520 nominal directional records. Historical artifact reads, catalogue execution/result production, cross-year result production, Strategy V1 synthesis, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain locked.\n**Next milestone:** Build the source-only full-history annual catalogue loader that reuses accepted feature/outcome materialization while exposing exactly the DEC-470 annual segments through 2026-08-20. It must bind all source manifests/evidence fingerprints and still provide no historical execution path.\n
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 now implements the source-only verified full-history loader over the accepted EXP-044 materialization. The loader exposes one annual segment at a time, verifies artifact/evidence identity, and filters outcomes crossing annual boundaries. Historical artifact-read authorization, catalogue execution/result production, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Freeze and merge DEC-473, then build the source-only annual segment adapter that converts verified segment frames into the exact DEC-471 observation inputs while preserving annual boundaries and source/evidence identity. Historical artifact reads and catalogue execution remain separately unauthorized.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
+
+## 2026-10-02 — DEC-473 annual full-history loader source-ready
+
+The accepted EXP-044 materialization already spans 2015-01 through 2026-08. DEC-473
+adds a verified source-only loader over those existing artifacts without acquiring
+or rematerializing data.
+
+The loader selects one frozen annual segment at a time, verifies every selected
+partition against its accepted manifest and evidence chain, and rejects outcomes
+whose fixed-horizon exits cross that segment's end.
+
+No workflow/runtime invokes this loader yet. Historical artifact-read authorization,
+catalogue execution/results, cross-year results, Strategy V1 synthesis, promotion,
+Phase 8B, demo/live, broker mutation, real-money, and trading remain false.
+
+Next safe gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER`.
 
 ## Governing research method — mandatory session invariant
 

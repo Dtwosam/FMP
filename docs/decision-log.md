@@ -4545,6 +4545,9 @@ The next safe gate is a verified range-limited artifact loader for existing EXP-
 **Date:** 2026-09-27
 **Status:** SOURCE-ONLY LOADER / HISTORICAL EXECUTION LOCKED
 
+DEC-473 binds merged DEC-472 commit
+`310d31183802a2c29aad3f20ad6a6aa4990d579d`.
+
 DEC-273 adds the verified artifact-loader boundary for EXP-20260927-061.
 
 The loader recomputes supplied EXP-044 feature/outcome aggregate evidence fingerprints, requires exact outcome-to-feature evidence binding, exact requested cell manifests, a shared Phase 2 processed-manifest SHA-256, and exact outcome-manifest binding to the feature-manifest SHA-256.
@@ -9524,3 +9527,45 @@ Phase 8B, demo/live orders, broker mutation, real-money action, and trading rema
 false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER`.
+
+## DEC-473 — Freeze source-only annual catalogue full-history loader
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY LOADER / HISTORICAL EXECUTION LOCKED
+
+DEC-473 binds merged DEC-472 commit
+`310d31183802a2c29aad3f20ad6a6aa4990d579d`.
+
+DEC-473 opens no historical run. It defines the verified loader boundary from the
+already accepted EXP-044 full-history feature/outcome materialization into the
+DEC-470/471 year-by-year catalogue.
+
+The loader covers exactly 140 monthly partitions from 2015-01 through 2026-08 and
+exposes only the 12 DEC-469 annual segments. Each call is scoped to one annual
+segment × symbol × timeframe. Selected feature/outcome files are verified against
+their accepted manifests for path containment, byte size, SHA-256, exact schema,
+and row count.
+
+EXP-044 aggregate feature/outcome evidence fingerprints are recomputed and checked;
+the requested cell manifests must match those evidence indexes, preserve the same
+processed-source identity, and retain the outcome-to-feature bindings.
+
+Annual isolation is fail-closed at the loader boundary: feature availability must
+remain inside the requested segment, and outcome availability plus fixed-horizon
+exit must remain inside the same segment. The 2026 partial segment ends at
+2026-08-20 inclusive.
+
+Loader source
+`src/fmp/discovery/annual_pattern_catalogue_loader.py` is blob
+`6be734930dd7758932c664439b6149a7a84902d6`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_loader.py` are blob
+`63c5b3b4a819a4b5e0fbb29fe721576fd640651b`; spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-full-history-loader.md`
+is blob `6e079fca5115bf1753c4491474578b9b79669b40`.
+
+New data acquisition, feature/outcome materialization, historical artifact-read
+authorization, catalogue execution/result production, cross-year results, Strategy
+V1 synthesis, candidate compilation, promotion, Phase 8B, demo/live, broker
+mutation, real-money action, and trading remain false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER`.
