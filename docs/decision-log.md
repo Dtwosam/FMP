@@ -9227,3 +9227,61 @@ compilation, promotion, Phase 8B, demo/live orders, broker mutation, real-money
 action, and trading remain false.
 
 Next gate: `FREEZE_EXP065_HISTORICAL_RESULT_AFTER_TERMINAL_RUN`.
+## DEC-468 — Freeze EXP-065 historical result
+
+**Date:** 2026-10-02  
+**Status:** HISTORICAL RESULT REVIEWED AND FROZEN / NO PAIRWISE-INTERACTION QUALIFIERS
+
+DEC-468 freezes the sole authorized EXP-065 historical run, GitHub Actions run
+`36905224184`, workflow `phase8a-exp065-pairwise-interaction`, head
+`5faa733572576aa5a1c56176ac27c415eaaf6416`, run number 1, attempt 1, as the
+terminal one-shot result.
+
+Exactly 20 jobs completed successfully and exactly 20 artifacts are present and
+non-expired. Aggregate artifact id `11202316160` is
+`phase8a-exp065-aggregate-5faa733572576aa5a1c56176ac27c415eaaf6416`
+with artifact digest
+`sha256:55e3a725127a1195a23159a6f8f8e187d90443f6e4df1be213a143c8e8868214`.
+
+The downloaded aggregate JSON SHA-256 is
+`080d9e36c572d570f7890b51d543cb00821ba25f76164a6c6d289d9b6ccb8a62`.
+Its canonical evidence fingerprint is
+`be0822560c0c4ec5a7dfc90e85c65d963621e04a4bd238ea078a4ac4d7a99682`,
+and independent recomputation matched exactly.
+
+All 18 cell evidence artifacts were independently inspected and recomputed. Every
+cell contains 760 nominal hypotheses / 760 evaluable hypotheses and reports zero
+qualifying hypotheses, zero deduplicated hypotheses, an empty pairwise-interaction
+shortlist, and an empty frozen inventory. Across the frozen 18-cell universe this
+is 13,680 hypotheses / 13,680 evaluable, with zero qualifying, zero deduplicated,
+zero shortlisted, and zero frozen. Every cell evidence fingerprint recomputed and
+matched the aggregate inventory.
+
+Classification:
+`NO_PAIRWISE_INTERACTION_HYPOTHESIS_PASSED_FROZEN_GATE`.
+
+This negative result applies only to the exact frozen EXP-065 pairwise-interaction
+representation and protocol. EXP-065 is one bounded sub-experiment inside the
+governing DEC-268 discovery-first market-pattern research framework; this result
+does not reject that framework, establish that no market edge exists, or exhaust
+other market-behaviour representations.
+
+Evidence remains `RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos=false`, with
+`reserved_robustness_opened=false`. The reserved 2023-01-01 through 2026-08-20
+block remains unopened and unauthorized.
+
+The one-shot slot is consumed permanently. Rerun, retry, replacement, reserved
+robustness access, candidate compilation, promotion, Phase 8B, demo/live orders,
+broker mutation, real-money action, and trading remain false.
+
+Review source
+`src/fmp/discovery/exp065_historical_result_review.py` is blob
+`12580fe033a29d4d25b61140a4cf53a7126547ea`; focused tests
+`tests/test_phase8a_exp065_historical_result_review.py` are blob
+`c895d49ef6e25dfabf8a03e53c7fc10143f7eea7`.
+
+Next gate: `EXPLICIT_POST_EXP065_DISCOVERY_FIRST_RESEARCH_DIRECTION_DECISION`.
+Any successor direction must satisfy `docs/research-method-operating-guardrail.md`
+and map back to the broader discovery-first workflow; there is no automatic
+authorization for another transform, model family, historical run, or reserved-data
+access.
