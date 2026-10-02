@@ -149,9 +149,13 @@ The six transparent rule families already researched in Phase 4 remain historica
 - volatility breakout;
 - session high/low sweep/rejection.
 
-Under DEC-268, they are **not** the required or complete universe for future strategy discovery. New post-DEC-268 research is discovery-first: use leakage-safe historical measurements to identify repeated conditional market behaviour across trend/direction, sideways/range, volatility, momentum/structure, session/time, spread, and fixed future outcomes, then translate selected patterns into exact immutable strategy/model versions.
+Under DEC-268, they are **not** the required or complete universe for future strategy discovery. DEC-469 makes the operating method annual-first: use leakage-safe historical measurements to build a frozen pattern catalogue for each authorized historical year/segment before synthesizing a strategy.
 
-The discovery process itself must be bounded and reproducible. Its data range, measurements/features, future-outcome definitions, minimum support, search method/budget, multiple-comparison accounting, candidate-freeze rule, and later chronological validation procedure are frozen before discovery results are used for promotion.
+For each annual segment, the bounded discovery process preserves every pattern surfaced by the frozen search grammar, including non-qualifiers and failures. After the required annual catalogues are frozen, canonical patterns are compared across years for recurrence, support, effect direction/magnitude, after-cost economics, failure years, sign reversals, applicability, and concentration. State transitions, pairwise interactions, clustering/model families, and named rule families are pattern types or tools inside this workflow, not the research method itself.
+
+Strategy V1 is synthesized only from the frozen cross-year evidence and receives an immutable identity before prospective evidence. The discovery process remains bounded and reproducible: source range, annual segmentation, measurements/features, future-outcome definitions, minimum support, pattern grammar/search budget, multiple-comparison accounting, annual evidence schema, canonical pattern identity, and Strategy V1 synthesis rules are frozen before results are used.
+
+Historical years used to build Strategy V1 are research/training evidence and may not later be called fresh validation for that version. Genuine new forward evidence begins after Strategy V1 is frozen. The intended progression remains frozen Strategy V1 -> prospective shadow -> fixed-version demo -> completed evidence review -> new immutable challenger -> later fresh prospective evidence.
 
 A strategy may work for one pair/timeframe and fail elsewhere. Nothing is assumed universal.
 

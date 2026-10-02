@@ -1,179 +1,259 @@
-# FMP Discovery-First Research Operating Guardrail
+# FMP Discovery-First Annual Pattern Catalogue Operating Guardrail
 
-**Status:** MANDATORY OPERATING INTERPRETATION OF EXISTING SOURCE OF TRUTH  
-**Authority:** DEC-268, DEC-270, `docs/master-spec.md`, and `docs/research-testing-standard.md`  
-**Effect:** Clarification only. This document does not authorize historical execution, reserved-data access, candidate promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, or trading.
+**Status:** MANDATORY OPERATING INTERPRETATION OF SOURCE OF TRUTH  
+**Authority:** DEC-268, DEC-469, `docs/master-spec.md`, and `docs/research-testing-standard.md`  
+**Effect:** Governing research workflow. This document does not by itself authorize historical execution, protected-history access, Strategy V1 synthesis, candidate promotion, Phase 8B, demo orders, broker mutation, live orders, real-money action, or trading.
 
 ## 1. Governing method
 
-FMP's default post-DEC-268 research method is **discovery-first market-pattern research**.
+FMP's governing post-EXP-065 research method is **discovery-first annual pattern catalogue research**.
 
-The project starts from accepted leakage-safe market measurements and asks which repeated, measurable behaviours occur under different market states. It does not treat a named strategy family, one indicator, one model class, one feature transform, or one current experiment as the research method itself.
+The project must not choose one narrow mathematical representation and treat it as the research method.
 
 The governing loop is:
 
-`market measurements -> bounded pattern discovery -> pattern freeze -> later chronological confirmation/validation -> exact strategy/model compilation -> robustness/backtest -> prospective shadow -> fixed-version demo -> completed-evidence learning -> new immutable challenger`
+`historical collection -> year-by-year pattern catalogues -> freeze each annual catalogue -> cross-year pattern comparison -> Strategy V1 synthesis -> freeze Strategy V1 -> robustness/backtest -> prospective shadow -> fixed-version demo -> completed demo evidence review -> new immutable challenger -> fresh prospective evidence`
 
-The goal is to discover repeatable conditional market behaviour and then test whether it survives later evidence and realistic costs.
+The purpose is to discover what the market repeatedly did in each year, compare those behaviours across years, and construct the first strategy only from recurring evidence that survives costs, instability checks, and concentration review.
 
-## 2. Mandatory distinction: framework vs sub-experiment
+## 2. Mandatory distinction: method vs pattern type
 
-Every session must keep two concepts separate:
+Every research session must keep these separate:
 
-- **Research framework:** discovery-first market-pattern research under DEC-268.
-- **Current sub-experiment:** the specific bounded representation/search currently being tested.
+- **Governing method:** annual pattern catalogue discovery under DEC-469 / DEC-268.
+- **Pattern type or tool:** a bounded representation used inside an annual catalogue.
 
-Examples of sub-experiments include atomic market states, continuous single-feature stability, pairwise interactions, a particular statistical estimator, a particular clustering method, or a particular model family.
+Pattern types/tools may include:
 
-A sub-experiment may supply useful positive or negative evidence. It must never be described as the complete FMP research method.
+- atomic market states;
+- trend/range conditions;
+- volatility level/change;
+- momentum/return structure;
+- candle/range structure;
+- session/time context;
+- location;
+- spread/quote quality;
+- state transitions and short sequences;
+- pairwise or other bounded interactions;
+- clustering;
+- statistical estimators;
+- model families;
+- historical named strategy families.
 
-A negative result from one representation means only that the exact frozen representation/protocol failed its gate. It does not prove that discovery-first market learning is exhausted.
+None of these is the governing method by itself.
 
-## 3. Mandatory session bootstrap
+A negative result for one pattern type rejects only its frozen representation/protocol. It does not establish that annual discovery or market learning is exhausted.
 
-Before proposing or continuing research, a new session must:
+## 3. Mandatory new-session bootstrap
+
+Before proposing or continuing research, every new session must:
 
 1. read `docs/project-state.md`;
 2. read the latest relevant entries in `docs/decision-log.md`;
 3. read the strategy-research section of `docs/master-spec.md`;
-4. read `docs/research-testing-standard.md`;
-5. read this guardrail;
-6. identify separately:
-   - the governing discovery-first method;
-   - the currently active bounded experiment;
-   - the current evidence window and any closed reserve;
-   - the next authorized gate.
+4. read the current Phase 8A section of `docs/build-order.md`;
+5. read `docs/research-testing-standard.md`;
+6. read this guardrail;
+7. state separately:
+   - governing method: annual pattern catalogue discovery;
+   - which annual segments are currently authorized;
+   - current task stage: annual discovery, cross-year comparison, Strategy V1 synthesis, robustness, prospective shadow/demo, or challenger learning;
+   - current protected/closed-data boundary;
+   - next authorized gate.
 
-If `docs/project-state.md` is materially stale relative to later decision-log entries, refresh project state before opening a new research direction. Do not silently reason from the stale state.
+If `docs/project-state.md` is stale relative to later decision-log entries, refresh it before continuing.
 
-## 4. Concrete discovery-first workflow
+## 4. What “derive every pattern” means
 
-### Stage A — Define the measurement vocabulary
+“Every pattern” means every pattern surfaced by the **predeclared bounded discovery grammar** for that annual segment.
 
-Use accepted leakage-safe measurements that describe the market rather than presuppose a final strategy. Relevant dimensions may include:
+It does not mean an unlimited search over arbitrary formulas until something profitable appears.
 
-- direction/trend state;
-- sideways/range state;
-- volatility and volatility change;
-- momentum and return structure;
-- candle/range structure;
-- session/time context;
-- location relative to recent, session, or previous-period structure;
-- spread/quote-quality context;
-- bounded interactions among allowed measurements;
-- fixed future return or price-path outcomes.
+Before an annual catalogue run can be used, freeze:
 
-The vocabulary is not itself a strategy list.
-
-### Stage B — Freeze the discovery protocol before judging results
-
-Predeclare and freeze:
-
-- exact discovery data range and source identities;
-- exact leakage-safe measurements/features;
-- exact future-outcome definitions and horizons;
-- market-state/regime construction when used;
+- source/data identities;
+- exact annual segment;
+- leakage-safe measurement vocabulary;
+- pattern grammar/representation families allowed in that catalogue;
+- future-outcome definitions and horizons;
 - minimum support;
-- bounded search algorithm and search budget;
-- transaction-cost treatment;
+- cost treatment;
+- bounded search budget;
+- search-volume accounting;
 - duplicate/near-duplicate handling;
-- search-volume and multiple-comparison accounting;
-- candidate-freeze rule;
-- later chronological confirmation/validation procedure.
+- annual pattern identity/evidence schema.
 
-Results may not be used to retroactively change these rules inside the same experiment.
+The catalogue must preserve winners, losers, non-qualifiers, and failed/negative patterns. Do not save only the profitable discoveries.
 
-### Stage C — Discover repeated behaviour
+## 5. Stage A — Build each annual catalogue independently
 
-Search the frozen discovery window for conditional behaviours that repeat with adequate support.
+Process each historical year or year-segment independently before cross-year synthesis.
 
-The output at this stage is a **pattern hypothesis**, not automatically a tradable strategy.
+The accepted collection spans:
 
-The process must preserve failed searches and record the effective search volume.
+- full calendar years 2015 through 2025;
+- partial 2026 from 2026-01-01 through 2026-08-20.
 
-### Stage D — Freeze selected patterns
+For comparability, annual runs should use the same frozen measurement vocabulary and pattern grammar unless a later explicit decision creates a new catalogue version.
 
-Any selected pattern receives an immutable identity. Freeze the exact condition, direction, applicability, outcome interpretation, and any model/transform needed to reproduce it.
+Each annual catalogue should record at minimum:
 
-Validation data may test this frozen object. Validation data may not redesign it.
+- canonical pattern identity;
+- pair;
+- timeframe;
+- future-outcome horizon;
+- support;
+- effect direction and magnitude;
+- economics after declared costs;
+- session/regime/location/spread context where relevant;
+- search volume;
+- qualification state;
+- negative/failure evidence.
 
-### Stage E — Chronological confirmation and validation
+Each annual catalogue gets an immutable identity before cross-year comparison.
 
-Evaluate the frozen pattern on later chronological evidence that was not used to invent or tune it whenever such evidence exists.
+## 6. Stage B — Cross-year pattern comparison
 
-Require stability across appropriate years/subperiods, adequate support, realistic costs, and resistance to concentration in a tiny number of observations.
+Do not synthesize Strategy V1 from one year's results.
 
-Previously inspected history remains retrospective evidence and must not be relabeled as untouched OOS.
+Cross-year comparison begins only after the required annual catalogues are frozen.
 
-### Stage F — Compile a strategy only after pattern survival
+For each canonical pattern, compare:
 
-A surviving pattern may then be translated into exact executable research semantics, including:
+- number of years in which it appears;
+- support by year;
+- effect direction by year;
+- effect magnitude by year;
+- after-cost economics by year;
+- pair/timeframe/horizon applicability;
+- session/regime/location/spread context;
+- failure years;
+- sign reversals;
+- concentration in one year;
+- concentration in a small number of observations.
 
-- entry timing;
-- LONG/SHORT/NO TRADE behavior;
-- stop/target or exit semantics;
-- overlap rules;
+A spectacular single year is evidence about that year, not sufficient evidence for Strategy V1.
+
+Cross-year comparison should make both recurrence and failure visible.
+
+## 7. Stage C — Synthesize Strategy V1
+
+Only after the annual catalogues and cross-year comparison are complete may a separate gate synthesize Strategy V1.
+
+Strategy V1 should be derived from the strongest recurring behaviours across years. It may combine multiple patterns when the combination is justified by the frozen cross-year evidence.
+
+Before prospective evidence, freeze:
+
+- exact LONG / SHORT / NO TRADE semantics;
 - applicability/regime conditions;
-- cost assumptions;
-- risk interface.
+- conflict rules;
+- entry timing;
+- exit/stop/target semantics;
+- overlap rules;
+- costs/slippage assumptions;
+- risk interface;
+- exact code/config/data identities.
 
-This compilation requires its own immutable version identity and must not rescue a weak pattern by outcome-aware tuning.
+Strategy V1 receives a new immutable version identity.
 
-### Stage G — Robustness and realistic backtest
+A weak pattern may not be rescued during strategy compilation through outcome-aware retuning.
 
-Test the compiled version with the existing FMP execution/risk machinery, including bid/ask semantics, spread/slippage stress, neighboring-condition checks where meaningful, yearly/regime breakdowns, concentration tests, and drawdown/tail behavior.
+## 8. Stage D — Robustness and realistic historical backtest
 
-Complexity must earn its place.
+Test the frozen Strategy V1 with the existing FMP execution/risk machinery.
 
-### Stage H — Prospective evidence
+At minimum inspect:
 
-Only after the exact challenger is frozen should genuinely new market evidence be collected.
+- bid/ask semantics;
+- spread/slippage stress;
+- yearly breakdown;
+- pair/timeframe/session/regime breakdown;
+- drawdown and tail behaviour;
+- contribution concentration;
+- neighboring-condition sensitivity where meaningful;
+- rejected signals and NO TRADE decisions.
 
-The preferred progression is:
+Historical evidence already used to derive Strategy V1 remains research/training evidence. It must not be relabeled as untouched OOS.
 
-`prospective shadow -> fixed-version demo -> deployment review`
+## 9. Stage E — Prospective shadow then fixed-version demo
 
-Running shadow/demo champions do not self-modify.
+The first strategy intended for demo is Strategy V1, but the existing safety order remains:
 
-### Stage I — Learning loop
+`frozen Strategy V1 -> prospective live shadow -> fixed Strategy V1 demo`
 
-Completed prospective/demo evidence may motivate or train a new challenger.
+Running shadow/demo champions never self-modify.
 
-Once evidence has influenced that new challenger, it becomes research/training evidence for that challenger and cannot also count as fresh validation. The materially changed challenger gets a new immutable identity and must prove itself on a later fresh prospective window.
+Do not edit Strategy V1 after a winning or losing trade, after a short streak, or because a current market condition looks unusual.
 
-## 5. Narrow-experiment rule
+## 10. Stage F — Learn from completed demo evidence
 
-Before opening any successor experiment, its source/spec must answer:
+At a frozen review boundary, completed shadow/demo evidence may be analysed to determine what worked, what failed, and under which conditions.
 
-1. What market behaviour is this representation intended to discover?
-2. Which part of the DEC-268 measurement vocabulary does it cover?
-3. What does it deliberately not cover?
-4. Why is this bounded search useful after prior evidence?
-5. What conclusion is justified by a negative result?
-6. What conclusion is explicitly not justified by a negative result?
-7. How does a survivor rejoin the main discovery-first workflow?
+That evidence may motivate or train Strategy V2.
 
-If those answers are absent, the experiment is not ready to become the next research direction.
+Once demo observations influence Strategy V2:
 
-## 6. EXP-065 interpretation
+- they become research/training evidence for Strategy V2;
+- Strategy V2 receives a new immutable identity;
+- Strategy V1 remains unchanged in history;
+- Strategy V2 must pass applicable retrospective checks;
+- Strategy V2 must then prove itself on a later fresh prospective window.
 
-EXP-065 is a bounded **pairwise continuous-feature interaction sub-experiment** inside the discovery-first framework.
+The intended improvement loop is:
 
-It tests whether exactly two existing continuous features have incremental interaction information after controlling their main effects under a frozen retrospective protocol.
+`fixed Strategy V1 -> observe completed forward evidence -> diagnose strengths/failures -> build Strategy V2 -> freeze -> fresh forward evidence -> later fixed demo version`
 
-It does **not** redefine FMP as a pairwise-interaction system, and a zero-qualifier EXP-065 result would not mean that discovery-first market-pattern research has failed.
+This is iterative learning, not online self-modification.
 
-After EXP-065 reaches its terminal result and that result is frozen, any successor direction must be justified explicitly against the broader discovery-first workflow rather than chosen merely as another mathematical transform.
+## 11. Historical collection and protected years
 
-## 7. Safety boundaries
+The governing method is designed to catalogue the historical collection year by year.
 
-This guardrail changes no existing execution authority.
+At the DEC-469 source-only amendment gate:
 
-Current and future sessions must honor the latest source-of-truth state for:
+- 2015-2022 remains the already-open retrospective research block;
+- 2023-2026 is not silently opened by this document;
+- using 2023-2026 in the annual catalogue requires a separate explicit source-of-truth access decision;
+- Strategy V1 synthesis remains locked until the required authorized annual catalogue evidence exists.
 
+If protected history is later opened and used to design Strategy V1, it becomes retrospective research evidence. Genuine new forward evidence for Strategy V1 then begins only after Strategy V1 is frozen.
+
+## 12. EXP-065 interpretation
+
+EXP-065 remains immutable negative evidence for one bounded pairwise continuous-feature interaction representation.
+
+Its exact result was zero qualifying hypotheses from 13,680 evaluable frozen hypotheses.
+
+That result does not reject the annual pattern catalogue method and does not establish that no market edge exists.
+
+Pairwise interactions may still appear as one bounded pattern type inside a future annual catalogue version if explicitly included by the annual catalogue protocol; EXP-065 itself is not rerun or rescued.
+
+## 13. Narrow-tool rule
+
+Before adding a new transform, model, or representation to an annual catalogue, its source/spec must state:
+
+1. what market behaviour it measures;
+2. which accepted measurement vocabulary it uses;
+3. what it deliberately omits;
+4. why it adds information to the annual catalogue;
+5. its bounded search volume;
+6. what a negative result would mean;
+7. what a negative result would not mean;
+8. how its output maps to the canonical annual pattern identity.
+
+No narrow tool may silently become “the next strategy” or replace the annual-first workflow.
+
+## 14. Safety boundaries
+
+This method does not weaken execution or deployment gates.
+
+Future sessions must honor the latest source-of-truth state for:
+
+- historical execution authority;
+- protected-history access;
 - consumed one-shot runs;
-- no-rerun/no-retry rules;
-- closed reserved data;
+- rerun/no-retry rules;
+- Strategy V1 synthesis;
 - candidate compilation;
 - promotion;
 - Phase 8B;
@@ -182,4 +262,4 @@ Current and future sessions must honor the latest source-of-truth state for:
 - live orders;
 - real-money action.
 
-No research-method clarification can weaken those gates.
+Phase 11 remains impossible without separate explicit human approval.

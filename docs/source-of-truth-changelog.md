@@ -1650,3 +1650,16 @@
 - Classified only the exact frozen EXP-065 pairwise-interaction protocol as negative; DEC-268 discovery-first market-pattern research remains the governing method.
 - Kept the 2023-01-01 through 2026-08-20 reserve closed and all rerun/retry/replacement, candidate, promotion, Phase 8B, demo/live, broker, real-money, and trading authority false.
 - Next gate is an explicit discovery-first successor-direction decision under `docs/research-method-operating-guardrail.md`, not another automatic transform/search.
+
+## 2026-10-02 — DEC-469 annual pattern catalogue governing method
+
+- Made year-by-year pattern cataloguing the mandatory operating form of DEC-268 discovery-first research.
+- Requires each authorized historical year/segment to be independently catalogued and frozen before cross-year strategy synthesis.
+- Requires all patterns surfaced by the frozen bounded grammar to be preserved, including non-qualifiers and negative/failure evidence.
+- Requires canonical cross-year comparison of recurrence, support, effect direction/magnitude, after-cost economics, failure years, sign reversals, applicability, and concentration.
+- Makes state transitions, pairwise interactions, clustering/models, and named rule families pattern types/tools inside the catalogue rather than the governing method.
+- Requires Strategy V1 to be synthesized only from frozen cross-year evidence and frozen before prospective shadow/demo.
+- Preserves fixed-version demo learning: completed demo evidence may build Strategy V2, but running Strategy V1 cannot self-modify; Strategy V2 requires later fresh prospective evidence.
+- Records PR #617 as closed unmerged and therefore non-authoritative.
+- Keeps 2023-2026 protected at this gate; a separate explicit access decision is required before those years join the catalogue.
+- Adds no historical execution, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation, real-money, or trading authority.

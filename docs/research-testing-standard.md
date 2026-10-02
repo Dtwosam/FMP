@@ -72,22 +72,29 @@ If 1-minute OHLC shows both stop and target could have been touched and ordering
 
 Never pick the outcome that helps PnL.
 
-## 8. Discovery-first rule for new research
+## 8. Annual-first discovery rule for new research
 
-The historical baseline families remain useful controls, but DEC-268 supersedes the requirement that all future strategies must begin from those predefined families.
+DEC-268 remains the parent discovery-first principle and supersedes the requirement that all future strategies must begin from those predefined families. DEC-469 requires that strategy discovery operate through **year-by-year pattern catalogues before cross-year strategy synthesis**.
 
-For new post-DEC-268 research:
+For new research:
 
-1. define an allowed discovery data range;
-2. define leakage-safe market measurements and fixed future-outcome labels/horizons;
-3. examine repeated behaviour across market states such as up/down/sideways structure, volatility, momentum, session/time, and spread conditions;
-4. require adequate repeated observations rather than isolated profitable examples;
-5. freeze any selected pattern as an exact immutable rule/model;
-6. evaluate that frozen candidate on later chronological evidence not used to invent or tune it whenever such evidence exists.
+1. define the accepted historical collection and the annual segments currently authorized for research;
+2. freeze the leakage-safe market measurements, bounded pattern grammar/search budget, fixed future-outcome labels/horizons, minimum support, cost treatment, duplicate handling, and search-volume accounting;
+3. process each authorized year/segment independently and preserve every pattern surfaced by the frozen grammar, including non-qualifiers, failures, support, and after-cost outcome evidence;
+4. freeze each annual catalogue with an immutable identity;
+5. only after the required annual catalogues are frozen, compare canonical patterns across years for recurrence, support, effect direction/magnitude, after-cost economics, applicability, failure years, sign reversals, and concentration;
+6. synthesize Strategy V1 only from that frozen cross-year evidence under a separate explicit gate;
+7. freeze the exact Strategy V1 implementation before prospective evidence.
 
-Before a serious discovery run is used for candidate selection, freeze the search method, bounded search budget, minimum support, duplicate handling, transaction-cost treatment, and search-volume/multiple-comparison accounting.
+“Every pattern” means every pattern produced by the predeclared bounded search, not an unlimited search for profitable formulas.
 
-The discovery data is allowed to reveal the pattern. Validation data is not allowed to redesign the pattern.
+A single strong year cannot by itself justify Strategy V1. Failed years and sign reversals are first-class evidence and must remain visible.
+
+State transitions, pairwise interactions, clustering, statistical estimators, ML model families, and named rule families are pattern types/tools inside the annual catalogue. None may silently replace the annual-first method.
+
+Historical years used to discover or synthesize Strategy V1 become research/training evidence for that version. They may support retrospective robustness but cannot later be described as untouched OOS.
+
+The discovery data is allowed to reveal patterns. Validation data is not allowed to redesign the pattern. Cross-year synthesis is allowed to use frozen annual evidence. Prospective evidence begins only after the exact Strategy V1 version is frozen.
 
 ## 9. Parameter discipline
 

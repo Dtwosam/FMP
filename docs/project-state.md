@@ -4,25 +4,28 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. DEC-268 remains the governing discovery-first market-pattern research method. DEC-468 freezes the sole EXP-065 pairwise-interaction historical run `36905224184` / head `5faa733572576aa5a1c56176ac27c415eaaf6416` as immutable negative evidence for that exact bounded sub-experiment: 20/20 jobs successful, 20/20 artifacts non-expired, 13,680/13,680 hypotheses evaluable, 0 qualifying, 0 deduplicated, 0 shortlisted, and 0 frozen. Classification: `NO_PAIRWISE_INTERACTION_HYPOTHESIS_PASSED_FROZEN_GATE`. This result does not reject DEC-268, establish that no market edge exists, or exhaust other market-behaviour representations. The EXP-065 one-shot slot is permanently consumed; rerun, retry, replacement, and cancellation remain forbidden. Evidence remains `RETROSPECTIVE_ALREADY_SEEN`; the reserved 2023-01-01 through 2026-08-20 block remains closed. Phase 8B, demo, broker mutation, live orders, real-money action, and trading remain locked.
-**Next milestone:** Make an explicit post-EXP-065 discovery-first research-direction decision under `docs/research-method-operating-guardrail.md`. A successor must state the market behaviour being searched, the DEC-268 measurement vocabulary covered and omitted, what a negative result can and cannot mean, and how any survivor rejoins the chronological discovery-first workflow. No new transform, model family, historical execution, reserved-data access, candidate compilation, promotion, or trading action is automatically authorized.
+**Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. DEC-268 remains the parent discovery-first principle. DEC-469 now makes year-by-year annual pattern cataloguing the governing research workflow: independently catalogue every pattern surfaced by a frozen bounded search for each authorized historical year/segment, freeze each annual catalogue, compare canonical patterns across years, and only then synthesize immutable Strategy V1 from recurring cross-year behaviour. EXP-065 remains frozen negative evidence for its exact pairwise-interaction sub-experiment and does not define the method. State transitions, interactions, clustering/models, and named strategy families are pattern types/tools inside the annual catalogue. PR #617, which would have made temporal transitions the next main direction, was closed unmerged and has no source-of-truth effect. At this gate, 2015-2022 is the already-open retrospective research block; 2023-2026 remains protected and is not silently opened. Strategy V1 synthesis, historical catalogue execution, Phase 8B, demo orders, broker mutation, live orders, real-money action, and trading remain locked.
+**Next milestone:** Freeze the source-only annual pattern catalogue protocol and make an explicit protected-history access decision. The protocol must define the annual pattern grammar, annual evidence schema, canonical cross-year pattern identity, search-volume accounting, cost/support rules, and cross-year comparison mechanics. Strategy V1 cannot be synthesized until the required authorized annual catalogues are frozen and compared.
 
 ## Governing research method — mandatory session invariant
 
-The source-of-truth research method is **discovery-first market-pattern research**, not whichever bounded experiment happens to be running most recently.
+The source-of-truth research method is **discovery-first annual pattern catalogue research under DEC-469 / DEC-268**.
 
 Every new research session must separately identify:
 
-1. the governing DEC-268 discovery-first framework;
-2. the current bounded sub-experiment;
-3. the current evidence window and any closed reserve;
-4. the next authorized gate.
+1. the governing annual-first method;
+2. which historical annual segments are currently authorized;
+3. the current stage: annual catalogue discovery, cross-year comparison, Strategy V1 synthesis, robustness, prospective shadow/demo, or challenger learning;
+4. the current protected/closed-data boundary;
+5. the next authorized gate.
 
 The required loop is:
 
-`market measurements -> bounded pattern discovery -> pattern freeze -> later chronological confirmation/validation -> exact strategy/model compilation -> robustness/backtest -> prospective shadow -> fixed-version demo -> completed-evidence learning -> new immutable challenger`
+`historical collection -> year-by-year pattern catalogues -> freeze each annual catalogue -> cross-year pattern comparison -> Strategy V1 synthesis -> freeze Strategy V1 -> robustness/backtest -> prospective shadow -> fixed-version demo -> completed demo evidence review -> new immutable challenger -> fresh prospective evidence`
 
-A narrow experiment such as atomic-state search, continuous single-feature stability, pairwise interactions, clustering, a statistical estimator, or a model family is evidence-generation inside this loop. It must not be described as the complete FMP method. A negative result rejects only that frozen representation/protocol.
+A narrow representation such as atomic states, state transitions, continuous stability, pairwise interactions, clustering, a statistical estimator, a model family, or a named rule family is a **pattern type/tool inside the annual catalogue**. It must not be described as the complete FMP research method.
+
+A negative pattern-type result rejects only that frozen representation/protocol. Strategy V1 cannot be synthesized until the required annual catalogues are frozen and cross-year evidence has been explicitly compared.
 
 Mandatory operating detail: `docs/research-method-operating-guardrail.md`.
 
