@@ -3,7 +3,7 @@
 **Decision:** DEC-476  
 **Experiment:** EXP-20261002-067  
 **Status:** SOURCE-ONLY WORKFLOW PLAN / NO WORKFLOW INSTALLED  
-**Source runtime:** DEC-475 head `0cf867d3e5f794e647e763d8f9e64bf150eab2c4`
+**Source runtime:** DEC-475 merge `db8285dab5a0311abbbb77c60c958771b17074a5`
 
 ## Purpose
 
