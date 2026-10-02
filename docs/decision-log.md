@@ -9569,3 +9569,42 @@ V1 synthesis, candidate compilation, promotion, Phase 8B, demo/live, broker
 mutation, real-money action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER`.
+
+## DEC-474 — Freeze source-only annual catalogue segment adapter
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY ADAPTER / HISTORICAL EXECUTION LOCKED
+
+DEC-474 converts only a verified DEC-473 annual-segment bundle into the exact
+`FeatureObservation` and `OutcomeObservation` types consumed by DEC-471. The
+public adapter does not accept arbitrary raw frames, so the processed-source,
+feature/outcome manifest, aggregate evidence, and selected-artifact identities
+remain attached to the adapted input bundle.
+
+The adapter removes the obsolete EXP-061 2015-2022 range restriction without
+weakening annual isolation. Feature/outcome availability must remain inside the
+requested DEC-469 segment, outcome exits must remain strictly before that segment's
+end, and every outcome observation identity must match an adapted feature identity.
+
+Observation IDs preserve the accepted canonical EXP-044/EXP-061 identity projection.
+Feature availability must equal bar start plus the exact timeframe. Outcome
+`OutcomeObservation` construction additionally enforces the exact 60m/240m horizon
+exit identity.
+
+Non-finite continuous feature values are normalized to null before
+`FeatureObservation` construction, preserving the accepted DEC-293 behavior and
+DEC-471 unavailable-state semantics.
+
+Adapter source
+`src/fmp/discovery/annual_pattern_catalogue_adapter.py` is blob
+`35563304d7b9304549ca4fe3d2b99a6a48db1865`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_adapter.py` are blob
+`21dd088f594fd36953e9dd7944aefb5effb431a7`; spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-segment-adapter.md`
+is blob `c627af884b303a217bff2f66333d3fa387602242`.
+
+Historical artifact reads, annual catalogue execution/result production, cross-year
+results, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
+demo/live orders, broker mutation, real-money action, and trading remain false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_RUNTIME_WIRING`.
