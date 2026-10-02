@@ -121,8 +121,10 @@ remain false.
 
 ## Next gate
 
-`ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER_EXECUTION_AUTHORIZATION`
+`SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER`
 
-That later gate may authorize a bounded read/execution path only after DEC-473 is
-merged and its exact source/tests are frozen. It must not silently authorize
-cross-year results, Strategy V1 synthesis, or trading.
+That gate must convert the verified annual-segment frames into the exact DEC-471
+`FeatureObservation` / `OutcomeObservation` inputs while preserving manifest,
+evidence, processed-source, and annual-boundary identity. It remains source-only:
+historical artifact reads, catalogue execution, result production, cross-year
+comparison, and Strategy V1 synthesis stay unauthorized.
