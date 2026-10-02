@@ -3,8 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from dataclasses import asdict, dataclass
-from typing import Iterable, Sequence
+from dataclasses import dataclass
+from typing import Sequence
 
 from .annual_pattern_catalogue_method import (
     ANNUAL_PATTERN_CATALOGUE_METHOD_DECISION,
@@ -345,7 +345,15 @@ def protocol_payload() -> dict[str, object]:
             "new_horizon_authorized": NEW_HORIZON_AUTHORIZED,
             "alternative_data_authorized": ALTERNATIVE_DATA_AUTHORIZED,
         },
-        "annual_segments": [asdict(segment) for segment in segments],
+        "annual_segments": [
+            {
+                "label": segment.label,
+                "start": segment.start.isoformat(),
+                "end_inclusive": segment.end_inclusive.isoformat(),
+                "complete_calendar_year": segment.complete_calendar_year,
+            }
+            for segment in segments
+        ],
         "annual_boundary_rule": (
             "available_at_utc and fixed-horizon exit_timestamp_utc must both "
             "remain inside the same annual segment; late-year outcomes crossing "
