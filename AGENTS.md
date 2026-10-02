@@ -61,33 +61,37 @@ Development budget is $0. Prefer local computation and free/open-source tooling.
 - Ambiguous intrabar stop/target ordering must use a conservative or explicitly documented rule; never choose the profitable path.
 - Record rejected signals and `NO TRADE` decisions, not just executed winners/losers.
 
-## 7.1 Discovery-first research direction
+## 7.1 Discovery-first annual pattern catalogue direction
 
-DEC-268 is the default for new post-DEC-268 strategy research.
+DEC-268 remains the parent discovery-first amendment. DEC-469 makes the **year-by-year annual pattern catalogue** its mandatory operating workflow.
 
-- Do not treat the six historical rule families as the required or complete strategy universe. They remain benchmarks and historical evidence.
-- Start new hypothesis generation from leakage-safe analysis of repeated market behaviour across direction/trend, sideways/range, volatility, momentum/structure, session/time, spread, and fixed future outcomes.
-- Freeze the discovery dataset, measurements/features, future-outcome definitions, minimum support, bounded search process, search-volume accounting, candidate-freeze rule, and later validation protocol before using results for promotion.
-- Once a pattern is selected, freeze an immutable strategy/model version before evaluating later data.
-- Demo observations may be used to research a later challenger, but once data is used to tune or choose that challenger it cannot also serve as fresh validation evidence for that version.
-- Every materially changed challenger must prove itself on a later fresh prospective shadow/demo window. Active shadow/demo/live champions never self-modify or hot-swap.
+- Process the historical collection year by year before trying to synthesize a strategy.
+- For each authorized year/segment, use a frozen bounded discovery vocabulary/search and preserve every surfaced pattern, including non-qualifiers and failures.
+- Freeze each annual catalogue before comparing it with other years.
+- Compare canonical patterns across years for recurrence, support, effect direction/magnitude, after-cost economics, failure years, sign flips, and concentration.
+- Do not let one strong year define Strategy V1.
+- Only after the required annual catalogues and cross-year comparison are complete may a separate gate synthesize Strategy V1.
+- Freeze Strategy V1 before prospective evidence.
+- Strategy V1 first goes through prospective shadow, then fixed-version demo.
+- Completed demo evidence may be used to design Strategy V2, but the running Strategy V1 never self-modifies or hot-swaps.
+- Any revised challenger receives a new immutable identity and must prove itself on later fresh prospective evidence.
 
-Detailed amendment: `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md`.
-
+Detailed method amendment: `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-method.md`.
 
 ## 7.2 Research-method invariant
 
-For every research continuation, explicitly distinguish the **governing method** from the **current sub-experiment**.
+For every research continuation, explicitly distinguish the **governing method** from a **pattern type/tool**.
 
-- Governing method: DEC-268 discovery-first market-pattern research.
-- Current sub-experiment: the exact bounded representation/search presently being tested.
-- Atomic states, continuous single-feature stability, pairwise interactions, clustering, statistical estimators, or model families are sub-experiments unless a later explicit source-of-truth amendment says otherwise.
-- Never describe the current sub-experiment as "the method" for FMP.
-- A negative sub-experiment result rejects only its exact frozen search universe/protocol. It does not establish that discovery-first market learning is exhausted.
-- Before opening a successor experiment, require an explicit mapping back to the broader discovery-first workflow and state what the experiment covers, omits, and can legitimately conclude.
-- If `docs/project-state.md` is stale relative to later decision-log entries, refresh it before opening a new research direction.
+- Governing method: annual pattern catalogue discovery under DEC-469 / DEC-268.
+- Pattern type/tool: the exact bounded representation/search used inside an annual catalogue.
+- Atomic states, state transitions, continuous stability, pairwise interactions, clustering, statistical estimators, model families, and named strategy families are pattern types/tools unless a later explicit source-of-truth amendment says otherwise.
+- Never describe the current pattern type/tool as "the method" for FMP.
+- A negative pattern-type result rejects only its exact frozen search universe/protocol.
+- Before opening a narrow pattern tool, map it to the annual catalogue: behaviour measured, vocabulary covered, omissions, search volume, negative-result meaning, and canonical annual pattern identity.
+- Before Strategy V1 synthesis, require frozen annual catalogues and explicit cross-year comparison.
+- If `docs/project-state.md` is stale relative to later decision-log entries, refresh it before continuing research.
 
-The mandatory operating workflow and interpretation rules are in `docs/research-method-operating-guardrail.md`.
+The mandatory workflow and interpretation rules are in `docs/research-method-operating-guardrail.md`.
 
 ## 8. Complexity rule
 
