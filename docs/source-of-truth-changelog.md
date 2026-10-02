@@ -1663,4 +1663,3 @@
 - Records PR #617 as closed unmerged and therefore non-authoritative.
 - Keeps 2023-2026 protected at this gate; a separate explicit access decision is required before those years join the catalogue.
 - Adds no historical execution, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation, real-money, or trading authority.
-\n
