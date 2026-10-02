@@ -9356,4 +9356,3 @@ mutation, real-money action, and trading remain false.
 
 Next gate:
 `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_PROTOCOL_AND_PROTECTED_HISTORY_ACCESS_DECISION`.
-\n
