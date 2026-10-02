@@ -128,7 +128,7 @@ class AnnualPatternCatalogueMethodTests(unittest.TestCase):
             guardrail,
         )
         self.assertIn(
-            "State transitions",
+            "state transitions",
             guardrail,
         )
         self.assertIn(
