@@ -9409,9 +9409,9 @@ still pattern evidence, not Strategy V1.
 
 Protocol source
 `src/fmp/discovery/annual_pattern_catalogue_protocol.py` is blob
-`2be89bfdd8d2e60053a896744600ac76bf988d92`; focused tests
+`5ddd987cc480e6e31c0cd45328eba16cf690dee9`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_protocol.py` are blob
-`c50f4923afc02539a2620e8250292730434acb37`; protocol spec
+`5b7dfe896fd2f84135a0bf927189c129a928dafd`; protocol spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-protocol.md`
 is blob `d90ab2522b37bd340e9a3d5a536a7dd7d55d7d1f`.
 
