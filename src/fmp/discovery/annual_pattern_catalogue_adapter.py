@@ -27,7 +27,7 @@ ANNUAL_CATALOGUE_SEGMENT_ADAPTER_VERSION = (
     "fmp-annual-pattern-catalogue-segment-adapter-v1"
 )
 SOURCE_LOADER_DECISION = "DEC-473"
-SOURCE_LOADER_HEAD_SHA = "9ee09b48db7890e8f652d23d2a6e7fcfc9af1369"
+SOURCE_LOADER_MERGE_SHA = "f3fd12018ff9602dbc233b0b5c99bf6764489ea8"
 
 HISTORICAL_ARTIFACT_READ_AUTHORIZED = False
 HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED = False
@@ -391,7 +391,7 @@ def adapter_contract_payload() -> dict[str, object]:
         "decision": ANNUAL_CATALOGUE_SEGMENT_ADAPTER_DECISION,
         "version": ANNUAL_CATALOGUE_SEGMENT_ADAPTER_VERSION,
         "source_loader_decision": SOURCE_LOADER_DECISION,
-        "source_loader_head_sha": SOURCE_LOADER_HEAD_SHA,
+        "source_loader_merge_sha": SOURCE_LOADER_MERGE_SHA,
         "accepts_verified_loader_bundle_only": True,
         "preserves_manifest_and_evidence_identities": True,
         "preserves_processed_source_identity": True,
