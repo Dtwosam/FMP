@@ -2755,3 +2755,14 @@ Copy this section for each serious experiment:
 - Workflow install / dispatch / historical reads / execution / results: NO.
 - Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_CONTRACT`.
+
+### EXP-20261002-067 — DEC-479 annual workflow installation contract
+
+- Binds exact DEC-478 workflow-source, CLI, and disabled-template Git blobs.
+- Reserved active workflow path must remain absent.
+- Only future allowed mutation: create active workflow from exact dormant-template bytes.
+- Dormant template / CLI / workflow-source edits during install: FORBIDDEN.
+- Repository mutation authorization: NO.
+- Workflow install / dispatch / historical execution / results: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT`.

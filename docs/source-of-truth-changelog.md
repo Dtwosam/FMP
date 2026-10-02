@@ -1758,3 +1758,12 @@
 - Required the execution gate before cell source downloads and before annual-freeze result reads.
 - Added no workflow installation/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, or trading authority.
 - Next gate is the source-only workflow installation contract.
+
+## 2026-10-02 — DEC-479 annual catalogue workflow installation contract
+
+- Froze the exact future file-creation mutation from the disabled DEC-478 template to the reserved active workflow path.
+- Bound exact source-module, CLI, and dormant-template Git blobs.
+- Required the active path to remain absent before installation.
+- Forbade source/template/CLI changes during the future install action and required byte-for-byte equality afterward.
+- Kept repository mutation, workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
+- Next gate is a source-only read-only installation preflight.

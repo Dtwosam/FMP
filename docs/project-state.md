@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 freezes one complete 18-cell / 89,460-record annual catalogue; DEC-478 now freezes the disabled one-segment workflow source while keeping the active workflow path absent. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** DEC-473 through DEC-477 are merged. Validate and merge DEC-478 on the exact DEC-477 merge, then freeze the source-only workflow installation contract that can copy the exact disabled template to its reserved active path while still leaving workflow dispatch and historical execution unauthorized.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 freezes one complete 18-cell / 89,460-record annual catalogue; DEC-478 freezes the disabled workflow source; DEC-479 now freezes the exact future active-workflow file-creation mutation while repository mutation remains locked. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** DEC-473 through DEC-478 are merged. Validate and merge DEC-479 on the exact DEC-478 merge, then build the read-only source-only workflow-install preflight that proves exact current-main source blobs, target absence, and the one allowed installation action without mutating the repository.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -100,6 +100,20 @@ No historical read/execution, next-segment authority, cross-year result, Strateg
 V1, promotion, or trading authority is opened.
 
 Next safe gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_CONTRACT`.
+
+## 2026-10-02 — DEC-479 workflow install contract source-ready
+
+DEC-479 binds the exact dormant workflow-source, CLI, and template Git blobs and
+defines only one possible future repository mutation: create the reserved active
+workflow path from the exact disabled-template bytes.
+
+The active path is still absent and repository mutation authorization remains false.
+No source file may be changed as part of that future install action.
+
+Workflow dispatch, historical read/execution/results, next-segment authority,
+cross-year results, Strategy V1, promotion, and trading remain locked.
+
+Next safe gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT`.
 
 ## Governing research method — mandatory session invariant
 
