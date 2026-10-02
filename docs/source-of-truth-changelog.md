@@ -1663,3 +1663,16 @@
 - Records PR #617 as closed unmerged and therefore non-authoritative.
 - Keeps 2023-2026 protected at this gate; a separate explicit access decision is required before those years join the catalogue.
 - Adds no historical execution, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation, real-money, or trading authority.
+
+## 2026-10-02 — DEC-470 annual catalogue protocol and full-collection scope
+
+- Froze Catalogue V1 before historical execution.
+- Explicitly authorized all collected 2015-2026 year-segments for the DEC-469 annual-catalogue / Strategy V1 research scope.
+- Repurposed the former EXP-061 through EXP-065 2023-2026 reserve for this research path only; those years cannot later be claimed as untouched OOS for Strategy V1.
+- Reused the accepted V1 market universe and existing full-history feature/outcome materialization; no new data or feature family was added.
+- Froze strict prior-only annual tertile state encoding with a 300-row minimum.
+- Froze 65 snapshot singles + 2,010 snapshot pairs + 410 exact-lag transitions = 2,485 conditions.
+- Froze 89,460 directional hypotheses per annual segment and 1,073,520 nominal annual records across 12 segments.
+- Required every annual record, including insufficient-support and negative evidence, to remain in the catalogue.
+- Predeclared the cross-year recurrence/economics gate, rank order, Jaccard deduplication, and 270 global shortlist cap before results exist.
+- Added no artifact read, historical execution/result, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, or trading authority.
