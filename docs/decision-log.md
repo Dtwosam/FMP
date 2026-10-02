@@ -9533,6 +9533,9 @@ Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER`.
 **Date:** 2026-10-02  
 **Status:** SOURCE-ONLY LOADER / HISTORICAL EXECUTION LOCKED
 
+DEC-473 binds merged DEC-472 commit
+`310d31183802a2c29aad3f20ad6a6aa4990d579d`.
+
 DEC-473 opens no historical run. It defines the verified loader boundary from the
 already accepted EXP-044 full-history feature/outcome materialization into the
 DEC-470/471 year-by-year catalogue.
@@ -9554,11 +9557,11 @@ exit must remain inside the same segment. The 2026 partial segment ends at
 
 Loader source
 `src/fmp/discovery/annual_pattern_catalogue_loader.py` is blob
-`ce89c29e0c5f18f1254933c4582c8708717e5178`; focused tests
+`6be734930dd7758932c664439b6149a7a84902d6`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_loader.py` are blob
-`5d18cd51c0ea54dd1a19178baa95b80195f43d46`; spec
+`e0ba47f33580d5641a2a80d65693435fff6be3f7`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-full-history-loader.md`
-is blob `1facc3e468ab9c08747899a4dc42bffffd9a693e`.
+is blob `6e079fca5115bf1753c4491474578b9b79669b40`.
 
 New data acquisition, feature/outcome materialization, historical artifact-read
 authorization, catalogue execution/result production, cross-year results, Strategy
