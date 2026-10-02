@@ -650,7 +650,7 @@ def loader_contract_payload() -> dict[str, object]:
         "live_order_authorized": LIVE_ORDER_AUTHORIZED,
         "real_money_authorized": REAL_MONEY_AUTHORIZED,
         "trading_authorized": TRADING_AUTHORIZED,
-        "next_gate": "ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER_EXECUTION_AUTHORIZATION",
+        "next_gate": "SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER",
     }
 
 
