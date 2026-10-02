@@ -74,6 +74,10 @@ class AnnualPatternCatalogueRuntimeWiringTests(unittest.TestCase):
         self.assertEqual(payload["decision"], "DEC-475")
         self.assertEqual(payload["source_adapter_decision"], "DEC-474")
         self.assertEqual(
+            payload["source_adapter_merge_sha"],
+            "d88d5bb2f5d1f76278c4d588136bbcc5e65731a7",
+        )
+        self.assertEqual(
             payload["call_order"],
             [
                 "require_historical_catalogue_execution_authorized",
