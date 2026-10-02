@@ -35,7 +35,7 @@ ANNUAL_CATALOGUE_FULL_HISTORY_LOADER_VERSION = (
     "fmp-annual-pattern-catalogue-full-history-loader-v1"
 )
 SOURCE_EVIDENCE_DECISION = "DEC-472"
-SOURCE_EVIDENCE_HEAD_SHA = "43e5acb986bd963572defa7fd422fb828231dd75"
+SOURCE_EVIDENCE_MERGE_SHA = "310d31183802a2c29aad3f20ad6a6aa4990d579d"
 
 HISTORICAL_ARTIFACT_READ_AUTHORIZED = False
 HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED = False
@@ -618,7 +618,7 @@ def loader_contract_payload() -> dict[str, object]:
         "decision": ANNUAL_CATALOGUE_FULL_HISTORY_LOADER_DECISION,
         "version": ANNUAL_CATALOGUE_FULL_HISTORY_LOADER_VERSION,
         "source_evidence_decision": SOURCE_EVIDENCE_DECISION,
-        "source_evidence_head_sha": SOURCE_EVIDENCE_HEAD_SHA,
+        "source_evidence_merge_sha": SOURCE_EVIDENCE_MERGE_SHA,
         "source_experiment_id": MARKET_LEARNING_EXPERIMENT_ID,
         "source_feature_set_version": MARKET_FEATURE_SET_VERSION,
         "source_outcome_set_version": MARKET_OUTCOME_SET_VERSION,
