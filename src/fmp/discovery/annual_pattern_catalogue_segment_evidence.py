@@ -23,7 +23,7 @@ ANNUAL_SEGMENT_FREEZE_DECISION = "DEC-477"
 ANNUAL_SEGMENT_FREEZE_VERSION = 1
 ANNUAL_SEGMENT_FREEZE_PROTOCOL = "fmp-annual-pattern-catalogue-segment-freeze-v1"
 SOURCE_WORKFLOW_PLAN_DECISION = "DEC-476"
-SOURCE_WORKFLOW_PLAN_HEAD_SHA = "75dd2fb0a701a5c5debf45b486cc7e8c23707313"
+SOURCE_WORKFLOW_PLAN_MERGE_SHA = "23ca37a74296a8ad0ac5e4cd1775c3b76714f698"
 SOURCE_CELL_EVIDENCE_DECISION = ANNUAL_CATALOGUE_EVIDENCE_DECISION
 
 EXPECTED_CELLS_PER_SEGMENT = len(SYMBOLS) * len(TIMEFRAMES) * len(HORIZONS_MINUTES)
@@ -187,7 +187,7 @@ def compile_annual_segment_freeze(
         "evidence_label": EVIDENCE_LABEL,
         "untouched_oos": False,
         "source_workflow_plan_decision": SOURCE_WORKFLOW_PLAN_DECISION,
-        "source_workflow_plan_head_sha": SOURCE_WORKFLOW_PLAN_HEAD_SHA,
+        "source_workflow_plan_merge_sha": SOURCE_WORKFLOW_PLAN_MERGE_SHA,
         "source_cell_evidence_decision": SOURCE_CELL_EVIDENCE_DECISION,
         "source_cell_evidence_protocol": ANNUAL_CATALOGUE_CELL_EVIDENCE_PROTOCOL,
         "protocol_fingerprint": protocol_fingerprint(),
@@ -253,8 +253,8 @@ def validate_annual_segment_freeze(
         raise ValueError("DEC-477 cannot claim untouched OOS")
     if value.get("source_workflow_plan_decision") != SOURCE_WORKFLOW_PLAN_DECISION:
         raise ValueError("DEC-477 source workflow plan mismatch")
-    if value.get("source_workflow_plan_head_sha") != SOURCE_WORKFLOW_PLAN_HEAD_SHA:
-        raise ValueError("DEC-477 source workflow plan head mismatch")
+    if value.get("source_workflow_plan_merge_sha") != SOURCE_WORKFLOW_PLAN_MERGE_SHA:
+        raise ValueError("DEC-477 source workflow plan merge mismatch")
     if value.get("source_cell_evidence_decision") != SOURCE_CELL_EVIDENCE_DECISION:
         raise ValueError("DEC-477 source cell evidence decision mismatch")
     if value.get("source_cell_evidence_protocol") != ANNUAL_CATALOGUE_CELL_EVIDENCE_PROTOCOL:
@@ -340,7 +340,7 @@ def segment_freeze_contract_payload() -> dict[str, object]:
         "version": ANNUAL_SEGMENT_FREEZE_VERSION,
         "protocol": ANNUAL_SEGMENT_FREEZE_PROTOCOL,
         "source_workflow_plan_decision": SOURCE_WORKFLOW_PLAN_DECISION,
-        "source_workflow_plan_head_sha": SOURCE_WORKFLOW_PLAN_HEAD_SHA,
+        "source_workflow_plan_merge_sha": SOURCE_WORKFLOW_PLAN_MERGE_SHA,
         "source_cell_evidence_decision": SOURCE_CELL_EVIDENCE_DECISION,
         "annual_segment_count": len(collection_segments()),
         "cells_per_segment": EXPECTED_CELLS_PER_SEGMENT,
