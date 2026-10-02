@@ -9285,3 +9285,75 @@ Any successor direction must satisfy `docs/research-method-operating-guardrail.m
 and map back to the broader discovery-first workflow; there is no automatic
 authorization for another transform, model family, historical run, or reserved-data
 access.
+
+## DEC-469 — Make annual pattern catalogues the governing discovery workflow
+
+**Date:** 2026-10-02  
+**Status:** GOVERNING RESEARCH-METHOD AMENDMENT / EXECUTION LOCKED
+
+DEC-469 binds the operator's clarified research method after frozen EXP-065
+DEC-468 evidence and supersedes the idea that the next narrow mathematical
+representation should become the main research direction.
+
+The governing workflow is now:
+
+`historical collection -> year-by-year pattern catalogues -> freeze each annual
+catalogue -> cross-year pattern comparison -> Strategy V1 synthesis -> freeze
+Strategy V1 -> robustness/backtest -> prospective shadow -> fixed-version demo ->
+completed demo evidence review -> new immutable challenger -> fresh prospective
+evidence`.
+
+“Every pattern” means every pattern surfaced by a predeclared bounded discovery
+grammar for the annual segment. Annual catalogues must preserve qualifiers,
+non-qualifiers, negative/failed patterns, support, after-cost outcomes, context,
+and effective search volume. The project may not retain only profitable winners.
+
+Each annual catalogue must be frozen before cross-year synthesis. Cross-year
+comparison must use canonical pattern identities and inspect recurrence, support,
+effect direction/magnitude, after-cost economics, pair/timeframe/horizon context,
+failure years, sign reversals, and concentration. One spectacular year cannot
+define Strategy V1.
+
+State transitions, pairwise interactions, clustering/statistical estimators, model
+families, and named rule families are now explicitly pattern types/tools inside the
+annual catalogue. None is the governing method by itself.
+
+Strategy V1 may be synthesized only under a later explicit gate from frozen
+cross-year catalogue evidence. It must receive an immutable version identity and
+freeze exact LONG/SHORT/NO TRADE, applicability, conflict, entry/exit, cost, and
+risk semantics before prospective evidence.
+
+The improvement loop preserves fixed-version evidence. Strategy V1 first goes
+through prospective shadow and then fixed-version demo. Completed shadow/demo
+evidence may be analysed to build Strategy V2, but Strategy V1 cannot self-modify
+or hot-swap while running. Once demo evidence influences Strategy V2, that evidence
+is research/training evidence for V2 and V2 must later prove itself on fresh
+prospective evidence.
+
+The historical collection spans full years 2015-2025 plus partial 2026 through
+2026-08-20. DEC-469 does not silently open protected 2023-2026 history. At this
+gate 2015-2022 remains the already-open retrospective block; a separate explicit
+decision is required before 2023-2026 joins the annual catalogue. Any historical
+year used to build Strategy V1 becomes retrospective research/training evidence
+and cannot later be called fresh validation for Strategy V1.
+
+PR #617 (`phase8a-exp066-temporal-transition-direction`) was closed unmerged
+before DEC-469 landed. Its proposed temporal-transition direction has no
+source-of-truth authority; temporal transitions remain only a possible pattern type
+inside the annual catalogue.
+
+Method source
+`src/fmp/discovery/annual_pattern_catalogue_method.py` is blob
+`d7486296c2e953d6b4e7602c753c5529ccf5eef2`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_method.py` are blob
+`654f198cce06877b5a4050eb59b6a904276c7c24`; governing amendment spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-method.md`
+is blob `f1436b4c155b99c31477a392acbf89ba9e6e2998`.
+
+Historical annual-catalogue execution, protected 2023-2026 access, Strategy V1
+synthesis, candidate compilation, promotion, Phase 8B, demo/live orders, broker
+mutation, real-money action, and trading remain false.
+
+Next gate:
+`SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_PROTOCOL_AND_PROTECTED_HISTORY_ACCESS_DECISION`.
+\n
