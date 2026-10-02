@@ -1661,4 +1661,3 @@
 - Forbids EXP-065 rescue, cross-dimension transitions, longer sequences, new features/data/symbols/timeframes/horizons, and model-family search at this gate.
 - Keeps all 2015-2022 evidence retrospective/already seen and the 2023-01-01 through 2026-08-20 reserve closed.
 - Opens only the next source-only protocol gate; no historical execution, candidate compilation, promotion, Phase 8B, demo/live, broker mutation, real-money action, or trading authority is added.
-\n
