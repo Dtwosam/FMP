@@ -63,7 +63,9 @@ Development budget is $0. Prefer local computation and free/open-source tooling.
 
 ## 7.1 Discovery-first annual pattern catalogue direction
 
-DEC-268 remains the parent discovery-first amendment. DEC-469 makes the **year-by-year annual pattern catalogue** its mandatory operating workflow.
+DEC-268 is the default for new post-DEC-268 strategy research. DEC-268 remains the parent discovery-first amendment, and DEC-469 makes the **year-by-year annual pattern catalogue** its mandatory operating workflow.
+
+Do not treat the six historical rule families as the required or complete strategy universe. They remain benchmarks and historical evidence.
 
 - Process the historical collection year by year before trying to synthesize a strategy.
 - For each authorized year/segment, use a frozen bounded discovery vocabulary/search and preserve every surfaced pattern, including non-qualifiers and failures.
