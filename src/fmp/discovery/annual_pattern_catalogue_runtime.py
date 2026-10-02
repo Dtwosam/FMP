@@ -24,7 +24,7 @@ ANNUAL_CATALOGUE_RUNTIME_WIRING_VERSION = (
     "fmp-annual-pattern-catalogue-runtime-wiring-v1"
 )
 SOURCE_ADAPTER_DECISION = "DEC-474"
-SOURCE_ADAPTER_HEAD_SHA = "f75745ce89641336512c0afbf74ced3d93ac7508"
+SOURCE_ADAPTER_MERGE_SHA = "d88d5bb2f5d1f76278c4d588136bbcc5e65731a7"
 
 HISTORICAL_ARTIFACT_READ_AUTHORIZED = False
 HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED = False
@@ -151,7 +151,7 @@ def runtime_wiring_contract_payload() -> dict[str, object]:
         "decision": ANNUAL_CATALOGUE_RUNTIME_WIRING_DECISION,
         "version": ANNUAL_CATALOGUE_RUNTIME_WIRING_VERSION,
         "source_adapter_decision": SOURCE_ADAPTER_DECISION,
-        "source_adapter_head_sha": SOURCE_ADAPTER_HEAD_SHA,
+        "source_adapter_merge_sha": SOURCE_ADAPTER_MERGE_SHA,
         "call_order": [
             "require_historical_catalogue_execution_authorized",
             "load_verified_annual_catalogue_segment_from_indexes",
