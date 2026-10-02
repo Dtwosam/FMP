@@ -205,18 +205,20 @@ The intended improvement loop is:
 
 This is iterative learning, not online self-modification.
 
-## 11. Historical collection and protected years
+## 11. Historical collection and full-collection research scope
 
-The governing method is designed to catalogue the historical collection year by year.
+The governing method catalogues the accepted historical collection year by year.
 
-At the DEC-469 source-only amendment gate:
+DEC-470 explicitly authorizes all collected annual segments for the DEC-469 annual-catalogue / Strategy V1 research path:
 
-- 2015-2022 remains the already-open retrospective research block;
-- 2023-2026 is not silently opened by this document;
-- using 2023-2026 in the annual catalogue requires a separate explicit source-of-truth access decision;
-- Strategy V1 synthesis remains locked until the required authorized annual catalogue evidence exists.
+- full calendar years 2015 through 2025;
+- partial 2026 from 2026-01-01 through 2026-08-20.
 
-If protected history is later opened and used to design Strategy V1, it becomes retrospective research evidence. Genuine new forward evidence for Strategy V1 then begins only after Strategy V1 is frozen.
+The 2023-2026 block that EXP-061 through EXP-065 kept closed is no longer reserved for Strategy V1 under this path. It is authorized as retrospective catalogue research evidence only. This does not reopen or rerun those predecessor experiments.
+
+Historical artifact reads and annual catalogue execution still require later explicit runtime/execution gates. DEC-470 changes the allowed research scope, not execution authority.
+
+Once any historical segment contributes to Strategy V1 discovery or synthesis, it is research/training evidence for Strategy V1 and cannot be called untouched OOS. Genuine new forward evidence for Strategy V1 begins only after the exact Strategy V1 version is frozen.
 
 ## 12. EXP-065 interpretation
 
