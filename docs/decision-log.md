@@ -9227,3 +9227,40 @@ compilation, promotion, Phase 8B, demo/live orders, broker mutation, real-money
 action, and trading remain false.
 
 Next gate: `FREEZE_EXP065_HISTORICAL_RESULT_AFTER_TERMINAL_RUN`.
+
+
+## DEC-468 — Freeze EXP-065 historical result: zero pairwise-interaction qualifiers
+
+**Date:** 2026-10-02
+**Status:** HISTORICAL RESULT REVIEWED AND FROZEN / ZERO PAIRWISE-INTERACTION QUALIFIERS
+
+The sole EXP-065 historical run `36905224184`, head
+`5faa733572576aa5a1c56176ac27c415eaaf6416`, run number 1 / attempt 1,
+completed successfully with exactly 20 successful jobs and 20 non-expired artifacts.
+
+DEC-467 PR #614 was merged first and main contained review-contract blob
+`d10bade3857beaec6e977525b651e66156dce87e` and test blob
+`eb4a43906a24b7b6301df732f108110895c6755d`.
+
+Aggregate artifact `11202316160` digest is
+`sha256:55e3a725127a1195a23159a6f8f8e187d90443f6e4df1be213a143c8e8868214`.
+Raw aggregate JSON SHA-256 is
+`080d9e36c572d570f7890b51d543cb00821ba25f76164a6c6d289d9b6ccb8a62`;
+canonical evidence fingerprint is
+`be0822560c0c4ec5a7dfc90e85c65d963621e04a4bd238ea078a4ac4d7a99682`.
+All 18 cell fingerprints independently recomputed and matched the aggregate inventory.
+
+Frozen result: 13,680 nominal / 13,680 evaluable / 0 qualifying / 0 deduplicated /
+0 shortlist / 0 frozen. Classification:
+`ZERO_PAIRWISE_INTERACTION_QUALIFIERS`.
+
+Evidence remains `RETROSPECTIVE_ALREADY_SEEN`, `untouched_oos=false`, and the
+2023-01-01 through 2026-08-20 reserve remains unopened.
+
+This result closes only the exact EXP-065 pairwise-interaction universe. DEC-268
+discovery-first market-pattern research remains the governing research method.
+
+Rerun, retry, replacement, reserve access, candidate compilation, promotion,
+Phase 8B, demo/broker/live/real-money/trading authority remain false.
+
+Next gate: `EXPLICIT_POST_EXP065_DISCOVERY_FIRST_RESEARCH_DIRECTION_DECISION`.
