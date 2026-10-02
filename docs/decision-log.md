@@ -9636,11 +9636,11 @@ Strategy V1 synthesis is installed by this decision.
 
 Runtime source
 `src/fmp/discovery/annual_pattern_catalogue_runtime.py` is blob
-`717238524c99874d0d201268bc2229790f1f6250`; focused tests
+`21f854a20591d915c3dc6f11655a06c19902cff9`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_runtime.py` are blob
 `a682207b19e67a24a707a5be7f6accf2fdcf99a7`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-runtime-wiring.md`
-is blob `93a9de42ea451982510fcd3074f28291e174a7a1`.
+is blob `b119ed58ab3b183e663c848082bbb700b5ce098f`.
 
 Historical artifact reads, annual catalogue execution/result production, cross-year
 results, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
