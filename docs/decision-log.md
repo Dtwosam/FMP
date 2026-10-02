@@ -9421,4 +9421,3 @@ Phase 8B, demo/live orders, broker mutation, real-money action, and trading rema
 false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_MINER`.
-\n
