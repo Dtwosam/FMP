@@ -2694,4 +2694,4 @@ Copy this section for each serious experiment:
 - Filters any outcome whose fixed-horizon exit crosses the annual segment boundary.
 - Historical artifact read / catalogue execution / result production: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
-- Next gate: `ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER_EXECUTION_AUTHORIZATION`.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER`.
