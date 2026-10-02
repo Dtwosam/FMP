@@ -1706,3 +1706,14 @@
 - Filters outcomes that cross the requested annual boundary before any future miner execution.
 - Keeps historical artifact-read authorization, catalogue execution/results, cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, and trading authority false.
 - Next gate is the source-only annual segment adapter; no runtime/workflow or historical execution was installed by DEC-473.
+
+## 2026-10-02 — DEC-474 source-only annual catalogue segment adapter
+
+- Added a verified-bundle-only adapter from DEC-473 segment frames to DEC-471 observation inputs.
+- Removed the old EXP-061 2022 range ceiling only for this new annual-catalogue path; no historical read/execution authority was opened.
+- Preserved processed-source, feature/outcome manifest, evidence fingerprint, and selected-artifact identities in the adapted bundle.
+- Preserved the accepted canonical observation identity and exact timeframe/horizon timestamp checks.
+- Preserved DEC-293 non-finite continuous-feature normalization to null.
+- Enforced annual segment availability and outcome-exit boundaries again at the adapter layer.
+- Kept historical artifact reads/execution/results, cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, and trading authority false.
+- Next gate is source-only annual catalogue runtime wiring.
