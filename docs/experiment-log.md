@@ -2695,3 +2695,15 @@ Copy this section for each serious experiment:
 - Historical artifact read / catalogue execution / result production: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER`.
+
+### EXP-20261002-067 — DEC-474 source-only annual segment adapter
+
+- Input: verified DEC-473 annual segment bundle only; arbitrary raw frames are not a public input.
+- Output: exact DEC-471 `FeatureObservation` / `OutcomeObservation` inputs with source/evidence identities retained.
+- Observation identity: accepted EXP-044/EXP-061 canonical projection.
+- Range: all DEC-469 segments, including 2023-2025 and `2026_YTD_TO_2026_08_20`.
+- Annual isolation: feature/outcome availability and fixed-horizon exits cannot escape the requested segment.
+- Non-finite continuous features: normalized to null under the accepted DEC-293 behavior.
+- Historical artifact read / catalogue execution / result production: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_RUNTIME_WIRING`.
