@@ -9722,3 +9722,44 @@ next-segment execution, cross-year results, Strategy V1 synthesis, promotion,
 Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_SOURCE`.
+
+## DEC-478 — Freeze dormant annual catalogue workflow source
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY DORMANT WORKFLOW / NOT INSTALLED
+
+DEC-478 freezes a disabled annual-catalogue workflow source without creating the
+reserved active workflow path.
+
+The future run input is exactly one of the 12 DEC-469 annual segments. The CLI
+validates the same segment set independently.
+
+Each future segment run contains one preflight job, 18 cell jobs, and one annual
+freeze job. Every cell emits both DEC-472 cell evidence and the complete catalogue
+payload; the freeze job downloads the same-segment artifact pattern and compiles
+one DEC-477 annual freeze. There is no full-collection aggregate or cross-year job.
+
+The source now also enforces the DEC-476 sequential-year boundary: 2015 requires no predecessor, while every later segment must supply the immediately prior successful annual-catalogue run and a semantically valid DEC-477 freeze whose code commit equals that run head. The execution gate remains before any prior-freeze artifact download.
+
+The dormant source reuses only the accepted EXP-044 feature/outcome runs, evidence
+artifacts, and nine pair/timeframe source artifacts. Each cell rechecks the locked
+execution gate before any accepted historical artifact ZIP is downloaded, and the
+freeze job rechecks the gate before any historical cell-result artifact is opened.
+
+Source contract
+`src/fmp/discovery/annual_pattern_catalogue_workflow_source.py` is blob
+`6276e8a86cd1af4b2e4f0d9795ed8ec531800fde`; dormant CLI
+`scripts/phase8a_annual_pattern_catalogue.py` is blob
+`ec5ea311b6c46d71cbdac9bf2bfb76d66fcce0f3`; disabled template
+`docs/superpowers/templates/phase8a-annual-pattern-catalogue.yml.disabled` is blob
+`31633e87b79551f5b7dfa6b0deb76a82eb070129`; focused tests are blob
+`68d96c90899d8b98ba887f808d112d21455f52bd`; spec is blob
+`74d49027bf175c60682268b9349d91cac77a84e3`.
+
+The active workflow path remains absent. Template installation, workflow
+installation/dispatch, historical artifact reads, catalogue execution/result
+production, next-segment execution, cross-year results, Strategy V1 synthesis,
+promotion, Phase 8B, demo/live, broker mutation, real-money action, and trading
+remain false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_CONTRACT`.
