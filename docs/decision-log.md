@@ -9651,6 +9651,9 @@ Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_PLAN`.
 **Date:** 2026-10-02  
 **Status:** SOURCE-ONLY WORKFLOW PLAN / NO WORKFLOW INSTALLED
 
+DEC-476 binds merged DEC-475 commit
+`db8285dab5a0311abbbb77c60c958771b17074a5`.
+
 DEC-476 freezes the future annual-catalogue execution shape without installing a
 workflow. The run unit is one annual segment, not the full 216-cell collection.
 
@@ -9668,11 +9671,11 @@ adds no ranking, deduplication, Strategy V1 synthesis, or result authority.
 
 Workflow-plan source
 `src/fmp/discovery/annual_pattern_catalogue_workflow_plan.py` is blob
-`8aca4f1cd25686bc732b1dff3ada8bce84e0a0c2`; focused tests
+`2c3755d5cc344971a64d61937314b0f3bef0674d`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_workflow_plan.py` are blob
-`d058dd1ec74e3ff0368d2b5b105f378be570543a`; spec
+`56281cafd839f035f04bd57c2726ba7764786eea`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-workflow-plan.md`
-is blob `e61ff22b78403b6d3072ab1c507c1cb5e31de4bb`.
+is blob `0ee1328d78d8818abce2c02820b2ece7b51df108`.
 
 Workflow source authorization, installation, dispatch, historical artifact reads,
 catalogue execution/results, cross-year results, Strategy V1 synthesis, promotion,
@@ -9684,6 +9687,9 @@ Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_FREEZE_CONTRACT`.
 
 **Date:** 2026-10-02  
 **Status:** SOURCE-ONLY ANNUAL FREEZE CONTRACT / HISTORICAL EXECUTION LOCKED
+
+DEC-477 binds merged DEC-476 commit
+`23ca37a74296a8ad0ac5e4cd1775c3b76714f698`.
 
 DEC-477 defines the independently verifiable freeze for one complete annual
 catalogue segment before any later segment can become authoritative.
@@ -9702,11 +9708,11 @@ cross-year comparison or Strategy V1 synthesis. Those remain separate later gate
 
 Freeze source
 `src/fmp/discovery/annual_pattern_catalogue_segment_evidence.py` is blob
-`c8cf2853a1609901792cbb70b6d278355b04b343`; focused tests
+`1b14279864f01a1284c5be31552eee9bb3a2220c`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_segment_evidence.py` are blob
-`9372cc9755df85917ea1fd87ca62388c3205059e`; spec
+`51dbf4e1a5be898f0a44d25f7bb1bd0c7696d112`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-segment-freeze.md`
-is blob `00fd9065914e882f5661113d20cd26f2a75cf191`.
+is blob `6aa367c29705fbba3ab8774548add6c05ef7b557`.
 
 Historical artifact reads, annual catalogue execution/result production,
 next-segment execution, cross-year results, Strategy V1 synthesis, promotion,
