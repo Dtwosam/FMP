@@ -1,11 +1,30 @@
 # FMP Project State
 
-**Updated:** 2026-09-27
+**Updated:** 2026-10-02
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. EXP-015 Stage A run `36279397331`, attempt 1, is terminal FAILURE and closed by DEC-269: 8/9 cells succeeded, USDJPY 1h failed on the fail-closed `daily start equity must be finite and positive` guard, authorization was skipped, and no authoritative Stage A survivor set exists. The single Stage A slot is consumed permanently; retry/replacement remain unauthorized, and Stage B/C are not automatically authorized. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
-**Next milestone:** Merge DEC-296/297/298/299/300/301/302/303 after green checks. DEC-303 may submit exactly one proof-only EXP-062 run and consumes no historical-result slot. Review and freeze that proof before any historical-result authorization.
+**Phase status:** ACTIVE — DEC-268 changes the forward research direction to discovery-first market-pattern research. EXP-044 V1 CLOSED by DEC-262. DEC-268 remains the governing forward research method: discover repeated leakage-safe market behaviour first, freeze selected patterns, then test them chronologically before compiling strategy semantics. EXP-065 is only a bounded pairwise continuous-feature interaction sub-experiment inside that framework; it does not redefine the project method. The sole authorized EXP-065 historical run is GitHub Actions run `36905224184`, head `5faa733572576aa5a1c56176ac27c415eaaf6416`, run number 1 / attempt 1. It completed SUCCESS with exactly 20 completed-success jobs and 20 non-expired artifacts; its exact result evidence has not yet been frozen under DEC-468. Its one-shot slot is permanently consumed; rerun, retry, replacement, and cancellation remain forbidden. DEC-467 predeclares the terminal review contract. The reserved 2023-01-01 through 2026-08-20 block remains closed. Phase 8B, demo, broker mutation, live orders, and real-money trading remain locked.
+**Next milestone:** Freeze the exact terminal result of run `36905224184` under the already-reserved DEC-468 result-review gate. After that freeze, any successor research direction must explicitly map back to the discovery-first workflow in `docs/research-method-operating-guardrail.md`; there is no automatic authorization for another narrow transform/search.
+
+## Governing research method — mandatory session invariant
+
+The source-of-truth research method is **discovery-first market-pattern research**, not whichever bounded experiment happens to be running most recently.
+
+Every new research session must separately identify:
+
+1. the governing DEC-268 discovery-first framework;
+2. the current bounded sub-experiment;
+3. the current evidence window and any closed reserve;
+4. the next authorized gate.
+
+The required loop is:
+
+`market measurements -> bounded pattern discovery -> pattern freeze -> later chronological confirmation/validation -> exact strategy/model compilation -> robustness/backtest -> prospective shadow -> fixed-version demo -> completed-evidence learning -> new immutable challenger`
+
+A narrow experiment such as atomic-state search, continuous single-feature stability, pairwise interactions, clustering, a statistical estimator, or a model family is evidence-generation inside this loop. It must not be described as the complete FMP method. A negative result rejects only that frozen representation/protocol.
+
+Mandatory operating detail: `docs/research-method-operating-guardrail.md`.
 
 ## Current baseline
 
@@ -384,7 +403,7 @@ Implementation progress:
 - DEC-271 implements the deterministic EXP-061 in-memory miner core: discovery-only cutpoint calibration, bounded one/two-state enumeration, support/economic gates, immutable ranking, Jaccard deduplication, 2018 pass/fail confirmation without reranking, and frozen 2019-2022 validation. Synthetic tests prove 2023+ rows cannot alter an EXP-061 result. No historical source/result execution is opened.
 - DEC-270 / EXP-20260927-061 freezes the first bounded discovery-first pattern protocol: 20 leakage-safe continuous state dimensions plus one deterministic session dimension, 18 pair/timeframe/horizon cells, at most 74,700 directional hypotheses, a 180-pattern confirmation shortlist, at most 54 frozen validation hypotheses, and a closed 2023-2026 robustness block. Result execution and all trading paths remain locked.
 - DEC-269 closes authoritative EXP-015 Stage A run `36279397331` as FAILED with no retry/replacement: catalog + 8 cell artifacts persisted, USDJPY 1h failed on the non-positive/non-finite daily-start-equity guard, `stage-a-authorize` was skipped, and no authoritative survivor set exists. DEC-264's short matrix-name assumption did not match GitHub's expanded/truncated persisted matrix names, so DEC-269 binds the exact completed run through immutable run/job/artifact identities instead of changing or rerunning Stage A.
-- DEC-268 / `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md` supersedes baseline-first strategy generation for future research. It preserves all prior experiments as evidence, allows the already-consumed EXP-015 Stage A run to finish once, blocks automatic Stage B/C continuation, and defines the immutable demo-learning loop: fixed demo version -> analyse completed evidence -> new challenger -> fresh prospective evidence.
+- DEC-268 / `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md` supersedes baseline-first strategy generation for future research. It preserves all prior experiments as evidence, allows the already-consumed EXP-015 Stage A run to finish once, and defines the immutable demo-learning loop: fixed demo version -> analyse completed evidence -> new challenger -> fresh prospective evidence. Stage B/C are not automatically authorized.
 - PR #121 merged at `e9e7bd7dfa31b8a566cc299e8988856e21071d13`: deterministic strategy registry/lifecycle, immutable champion sets, multi-pair router, USD-direction exposure summaries, historical-inventory identity, explicit retrospective loader/evaluator, and DEC-039 documentation.
 - PR #122 merged at `63389442ab65cdd0e610fa76f6c93a47d23cc01f`: retrospective batch orchestration, deterministic artifacts, CLI, and manual 3-pair × 3-timeframe workflow over accepted Phase 2 artifacts.
 - PR #122 verified 819 tests PASS and unchanged Phase 3 acceptance PASS before merge.

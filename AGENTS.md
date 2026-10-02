@@ -14,8 +14,9 @@ Before changing code or project decisions, read in this order:
 2. `docs/decision-log.md`
 3. `docs/master-spec.md`
 4. the current phase section in `docs/build-order.md`
-5. any component spec relevant to the current task
-6. recent commits touching the current phase
+5. `docs/research-method-operating-guardrail.md` for any research/discovery task
+6. any component spec relevant to the current task
+7. recent commits touching the current phase
 
 If a ChatGPT Project Source copy of `FMP_PROJECT_SOURCE.md` exists, treat it as a portable baseline, but the repository's current `project-state.md` and later decision-log entries win for current state.
 
@@ -72,6 +73,21 @@ DEC-268 is the default for new post-DEC-268 strategy research.
 - Every materially changed challenger must prove itself on a later fresh prospective shadow/demo window. Active shadow/demo/live champions never self-modify or hot-swap.
 
 Detailed amendment: `docs/superpowers/specs/2026-09-27-phase8a-discovery-first-amendment.md`.
+
+
+## 7.2 Research-method invariant
+
+For every research continuation, explicitly distinguish the **governing method** from the **current sub-experiment**.
+
+- Governing method: DEC-268 discovery-first market-pattern research.
+- Current sub-experiment: the exact bounded representation/search presently being tested.
+- Atomic states, continuous single-feature stability, pairwise interactions, clustering, statistical estimators, or model families are sub-experiments unless a later explicit source-of-truth amendment says otherwise.
+- Never describe the current sub-experiment as "the method" for FMP.
+- A negative sub-experiment result rejects only its exact frozen search universe/protocol. It does not establish that discovery-first market learning is exhausted.
+- Before opening a successor experiment, require an explicit mapping back to the broader discovery-first workflow and state what the experiment covers, omits, and can legitimately conclude.
+- If `docs/project-state.md` is stale relative to later decision-log entries, refresh it before opening a new research direction.
+
+The mandatory operating workflow and interpretation rules are in `docs/research-method-operating-guardrail.md`.
 
 ## 8. Complexity rule
 
