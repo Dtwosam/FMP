@@ -1641,3 +1641,12 @@
 - Clarified that a negative narrow experiment rejects only its frozen representation/protocol and cannot be generalized into failure of discovery-first market learning.
 - Added a mandatory successor-experiment mapping back to the broader discovery-first workflow.
 - Changed no research thresholds, historical execution authority, reserved-data access, promotion, Phase 8B, demo/live, broker, real-money, or trading authority.
+## 2026-10-02 — DEC-468 EXP-065 historical result frozen
+
+- Froze the sole EXP-065 one-shot run `36905224184` at exact head `5faa733572576aa5a1c56176ac27c415eaaf6416`.
+- Bound 20/20 successful jobs, 20/20 non-expired artifacts, aggregate artifact `11202316160`, exact artifact digest, raw JSON SHA-256, and canonical evidence fingerprint.
+- Independently recomputed all 18 cell fingerprints and the aggregate fingerprint.
+- Froze exact totals: 13,680 hypotheses / 13,680 evaluable / 0 qualifying / 0 deduplicated / 0 shortlisted / 0 frozen.
+- Classified only the exact frozen EXP-065 pairwise-interaction protocol as negative; DEC-268 discovery-first market-pattern research remains the governing method.
+- Kept the 2023-01-01 through 2026-08-20 reserve closed and all rerun/retry/replacement, candidate, promotion, Phase 8B, demo/live, broker, real-money, and trading authority false.
+- Next gate is an explicit discovery-first successor-direction decision under `docs/research-method-operating-guardrail.md`, not another automatic transform/search.
