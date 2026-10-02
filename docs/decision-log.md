@@ -9346,7 +9346,7 @@ Method source
 `src/fmp/discovery/annual_pattern_catalogue_method.py` is blob
 `d7486296c2e953d6b4e7602c753c5529ccf5eef2`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_method.py` are blob
-`654f198cce06877b5a4050eb59b6a904276c7c24`; governing amendment spec
+`c4e51c89132679abca0613e31a85edf42f96b0c1`; governing amendment spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-method.md`
 is blob `f1436b4c155b99c31477a392acbf89ba9e6e2998`.
 
