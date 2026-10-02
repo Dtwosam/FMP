@@ -1705,4 +1705,4 @@
 - Verifies selected artifact path containment, size, SHA-256, schema, row count, manifests, processed-source identity, and aggregate evidence bindings.
 - Filters outcomes that cross the requested annual boundary before any future miner execution.
 - Keeps historical artifact-read authorization, catalogue execution/results, cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, and trading authority false.
-- Next gate is explicit full-history loader execution authorization; no runtime/workflow was installed by DEC-473.
+- Next gate is the source-only annual segment adapter; no runtime/workflow or historical execution was installed by DEC-473.
