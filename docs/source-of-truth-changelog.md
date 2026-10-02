@@ -1650,3 +1650,15 @@
 - Classified only the exact frozen EXP-065 pairwise-interaction protocol as negative; DEC-268 discovery-first market-pattern research remains the governing method.
 - Kept the 2023-01-01 through 2026-08-20 reserve closed and all rerun/retry/replacement, candidate, promotion, Phase 8B, demo/live, broker, real-money, and trading authority false.
 - Next gate is an explicit discovery-first successor-direction decision under `docs/research-method-operating-guardrail.md`, not another automatic transform/search.
+
+## 2026-10-02 — DEC-469 EXP-066 temporal state-transition research direction
+
+- Keeps DEC-268 discovery-first market-pattern research as the governing method.
+- Opens EXP-20261002-066 only as a bounded source-design sub-experiment.
+- Changes the representation question from static pairwise interaction to same-dimension prior-state -> current-state behaviour.
+- Explicitly answers all seven successor-experiment questions required by the discovery-first operating guardrail.
+- Reuses the existing EURUSD/GBPUSD/USDJPY, 5m/15m/1h, 60m/240m, 20 continuous features, session-state vocabulary, and fixed future outcomes.
+- Forbids EXP-065 rescue, cross-dimension transitions, longer sequences, new features/data/symbols/timeframes/horizons, and model-family search at this gate.
+- Keeps all 2015-2022 evidence retrospective/already seen and the 2023-01-01 through 2026-08-20 reserve closed.
+- Opens only the next source-only protocol gate; no historical execution, candidate compilation, promotion, Phase 8B, demo/live, broker mutation, real-money action, or trading authority is added.
+\n
