@@ -2672,4 +2672,3 @@ Copy this section for each serious experiment:
 - Historical artifact access / execution / result production: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_EVIDENCE_CONTRACT`.
-\n
