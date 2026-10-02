@@ -1767,3 +1767,14 @@
 - Forbade source/template/CLI changes during the future install action and required byte-for-byte equality afterward.
 - Kept repository mutation, workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
 - Next gate is a source-only read-only installation preflight.
+## 2026-10-02 — DEC-480 read-only annual workflow installation preflight
+
+- Added a read-only preflight over the exact DEC-479 install contract and DEC-478 dormant workflow source.
+- Bound the proof plan to exact `main` head metadata and target-path absence.
+- Added canonical fingerprints for both the full preflight and embedded install action.
+- Added semantic rejection of rehashed authority escalation.
+- Required top-level `install_sources` evidence to exactly match the semantically validated DEC-479 source-validation payload, rejecting rehashed source-evidence substitution.
+- Added a `plan`-only CLI with no install, execution, dispatch, or advance surface.
+- Kept repository mutation, workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
+- Next gate is repository-hosted read-only preflight proof.
+
