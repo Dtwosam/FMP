@@ -2647,3 +2647,17 @@ Copy this section for each serious experiment:
 - Requires historical target run #2 / attempt 1 on the same head.
 - Adds deterministic freeze fingerprint.
 - Adds no dispatch or trading authority.
+
+### EXP-20261002-066 — DEC-469 temporal state-transition direction
+
+- Governing method: DEC-268 discovery-first market-pattern research.
+- Hypothesis: the prior-state -> current-state path within an accepted leakage-safe market dimension may carry repeatable information about fixed 60m/240m future outcomes that a static state snapshot misses.
+- Universe: EURUSD, GBPUSD, USDJPY × 5m/15m/1h; existing 20 continuous discovery features plus deterministic session state.
+- Historical design evidence available at this gate: 2015-01-01 through 2022-12-31, labeled retrospective/already seen.
+- Reserved 2023-01-01 through 2026-08-20 evidence: CLOSED.
+- Representation bound: same-dimension temporal transitions only; exact lag/state/search/gate protocol deferred to DEC-470.
+- Cross-dimension transitions, longer state sequences, new raw features/data, new symbols/timeframes/horizons, alternative data, and model-family search: NOT AUTHORIZED.
+- Result: not run; this entry records the research direction only.
+- Historical execution / result production / candidate compilation / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_EXP066_TEMPORAL_STATE_TRANSITION_PROTOCOL`.
+\n
