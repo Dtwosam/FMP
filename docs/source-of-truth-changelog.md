@@ -1696,3 +1696,13 @@
 - Froze the total nominal catalogue size at 1,073,520 directional annual records.
 - Required full aggregate replay to use summaries from semantically validated cell payloads.
 - Kept historical reads/execution/results, cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation, real-money, and trading authority false.
+
+## 2026-10-02 — DEC-473 source-only annual catalogue full-history loader
+
+- Added the verified loader source for the exact 2015-01 through 2026-08 EXP-044 materialized history.
+- Reuses accepted feature/outcome artifacts and evidence only; adds no new data or feature/outcome materialization.
+- Exposes one DEC-469 annual segment at a time across all 12 frozen segments.
+- Verifies selected artifact path containment, size, SHA-256, schema, row count, manifests, processed-source identity, and aggregate evidence bindings.
+- Filters outcomes that cross the requested annual boundary before any future miner execution.
+- Keeps historical artifact-read authorization, catalogue execution/results, cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, and trading authority false.
+- Next gate is explicit full-history loader execution authorization; no runtime/workflow was installed by DEC-473.
