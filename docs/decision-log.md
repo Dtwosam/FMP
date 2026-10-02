@@ -9350,4 +9350,3 @@ demo/live orders, broker mutation, real-money action, and trading all remain
 false.
 
 Next gate: `SOURCE_ONLY_EXP066_TEMPORAL_STATE_TRANSITION_PROTOCOL`.
-\n
