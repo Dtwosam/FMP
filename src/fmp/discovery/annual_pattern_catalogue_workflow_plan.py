@@ -9,7 +9,7 @@ ANNUAL_CATALOGUE_WORKFLOW_PLAN_VERSION = (
     "fmp-annual-pattern-catalogue-workflow-plan-v1"
 )
 SOURCE_RUNTIME_DECISION = "DEC-475"
-SOURCE_RUNTIME_HEAD_SHA = "0cf867d3e5f794e647e763d8f9e64bf150eab2c4"
+SOURCE_RUNTIME_MERGE_SHA = "db8285dab5a0311abbbb77c60c958771b17074a5"
 
 WORKFLOW_SOURCE_AUTHORIZED = False
 WORKFLOW_INSTALLED = False
@@ -132,7 +132,7 @@ def workflow_plan_payload() -> dict[str, object]:
         "decision": ANNUAL_CATALOGUE_WORKFLOW_PLAN_DECISION,
         "version": ANNUAL_CATALOGUE_WORKFLOW_PLAN_VERSION,
         "source_runtime_decision": SOURCE_RUNTIME_DECISION,
-        "source_runtime_head_sha": SOURCE_RUNTIME_HEAD_SHA,
+        "source_runtime_merge_sha": SOURCE_RUNTIME_MERGE_SHA,
         "run_unit": "one_annual_segment",
         "annual_segments_in_required_order": list(labels),
         "annual_segment_count": SEGMENT_COUNT,
