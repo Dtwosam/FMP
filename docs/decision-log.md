@@ -4526,6 +4526,9 @@ The next safe gate is a non-executable artifact/evidence contract plus determini
 **Date:** 2026-09-27
 **Status:** SOURCE-ONLY ADAPTER / HISTORICAL EXECUTION LOCKED
 
+DEC-474 binds merged DEC-473 commit
+`f3fd12018ff9602dbc233b0b5c99bf6764489ea8`.
+
 DEC-272 reuses the already-approved EXP-044 market-learning feature/outcome schemas as the sole input vocabulary for DEC-271 rather than creating another historical data pipeline.
 
 The adapter converts verified Polars feature/outcome frames into immutable EXP-061 feature/outcome observations using a deterministic identity over symbol, timeframe, bar start, availability time, feature-set version, and processed Phase 2 manifest SHA-256. It requires exact symbol/timeframe, exact feature/outcome set identities, singular matching processed-manifest SHA-256, supported horizons, exact retrospective evidence labeling, and unique row identities.
@@ -9569,3 +9572,42 @@ V1 synthesis, candidate compilation, promotion, Phase 8B, demo/live, broker
 mutation, real-money action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER`.
+
+## DEC-474 — Freeze source-only annual catalogue segment adapter
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY ADAPTER / HISTORICAL EXECUTION LOCKED
+
+DEC-474 converts only a verified DEC-473 annual-segment bundle into the exact
+`FeatureObservation` and `OutcomeObservation` types consumed by DEC-471. The
+public adapter does not accept arbitrary raw frames, so the processed-source,
+feature/outcome manifest, aggregate evidence, and selected-artifact identities
+remain attached to the adapted input bundle.
+
+The adapter removes the obsolete EXP-061 2015-2022 range restriction without
+weakening annual isolation. Feature/outcome availability must remain inside the
+requested DEC-469 segment, outcome exits must remain strictly before that segment's
+end, and every outcome observation identity must match an adapted feature identity.
+
+Observation IDs preserve the accepted canonical EXP-044/EXP-061 identity projection.
+Feature availability must equal bar start plus the exact timeframe. Outcome
+`OutcomeObservation` construction additionally enforces the exact 60m/240m horizon
+exit identity.
+
+Non-finite continuous feature values are normalized to null before
+`FeatureObservation` construction, preserving the accepted DEC-293 behavior and
+DEC-471 unavailable-state semantics.
+
+Adapter source
+`src/fmp/discovery/annual_pattern_catalogue_adapter.py` is blob
+`6fa40df869df179852145bd8b06ace26bfbd6aa7`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_adapter.py` are blob
+`666b2fc8a3df4e4cd5d0eeb90ce613dcb4336388`; spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-segment-adapter.md`
+is blob `431668a7cfac9c26ba4fd942744d0ea0c922ee85`.
+
+Historical artifact reads, annual catalogue execution/result production, cross-year
+results, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
+demo/live orders, broker mutation, real-money action, and trading remain false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_RUNTIME_WIRING`.
