@@ -2672,3 +2672,14 @@ Copy this section for each serious experiment:
 - Historical artifact access / execution / result production: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_EVIDENCE_CONTRACT`.
+
+### EXP-20261002-067 — DEC-472 Annual Catalogue V1 evidence contract
+
+- Cell evidence: complete 4,970-record annual cell payload + canonical SHA/size + source/code identities.
+- Semantic validation: reconstructs every frozen pattern/direction identity and validates support/economic statistics.
+- Aggregate universe: 12 annual segments × 18 cells = 216 annual cells.
+- Nominal aggregate records: 1,073,520.
+- Aggregate input: validated-cell summaries only for full replay.
+- Historical artifact read / execution / result production: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER`.

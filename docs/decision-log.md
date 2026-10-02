@@ -9472,3 +9472,55 @@ production, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
 demo/live orders, broker mutation, real-money action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_EVIDENCE_CONTRACT`.
+
+## DEC-472 — Freeze annual pattern catalogue evidence contract
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY EVIDENCE CONTRACT / HISTORICAL EXECUTION LOCKED
+
+DEC-472 binds merged DEC-471 commit
+`3926daa8b64ca18c69d5a95a7b31b960dddde27b` and exact miner blob
+`2f4c9327a2b9600aceaa1e272dc613dfd4e7d0b7`.
+
+Each annual cell payload serializes the complete DEC-471 result: one annual segment ×
+symbol × timeframe × horizon with all 4,970 directional records. Canonical JSON
+bytes receive an exact SHA-256 and byte-length binding.
+
+The validator does not trust the outer hash alone. After hash verification it
+reconstructs the full DEC-470 pattern/direction universe in frozen order and checks
+every annual record identity, canonical cross-year fingerprint, family, dimensions,
+states, lag, event fingerprint, support/evaluable relation, and all base/stress
+statistics. LONG/SHORT rows for the same pattern must bind the same event set.
+Therefore a nested-record tamper remains invalid even if the payload and outer
+evidence hashes are recomputed.
+
+Cell evidence also binds the exact code commit, processed source manifest, feature
+and outcome manifests, aggregate feature/outcome evidence fingerprints, protocol
+fingerprint, DEC-471 miner blob, row counts, and summary counts. All runtime and
+strategy/trading authority flags remain false.
+
+The full-collection aggregate is exactly 12 annual segments × 18
+symbol/timeframe/horizon cells = 216 annual cells. Every cell has exactly 4,970
+directional records, so the aggregate nominal inventory is exactly 1,073,520
+directional records. Missing/duplicate cells, ordering drift, code-commit mismatch,
+segment-summary mismatch, record-count drift, and downstream authority drift all
+fail closed.
+
+Full aggregate replay must use summaries created only after full cell-payload
+semantic validation; aggregate hashing never substitutes for validating the
+underlying cell catalogue bytes.
+
+Evidence source
+`src/fmp/discovery/annual_pattern_catalogue_evidence.py` is blob
+`c2565dc35e5bf43e1f1730a84c922a9aed5a9b3b`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_evidence.py` are blob
+`8711b5f310422abfcb53ab7a4f2f3897803d0ded`; spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-evidence.md`
+is blob `59c257fafe49b729d9157a4094c7600c89f0b1be`.
+
+Historical artifact reads, annual catalogue execution/result production, cross-year
+result production, Strategy V1 synthesis, candidate compilation, promotion,
+Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain
+false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER`.
