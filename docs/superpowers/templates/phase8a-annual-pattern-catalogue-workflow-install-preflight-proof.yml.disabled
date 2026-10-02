@@ -1,0 +1,55 @@
+name: phase8a-annual-catalogue-workflow-install-preflight-proof
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  preflight_proof:
+    name: annual-catalogue-install-preflight-proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require exact merged main manual dispatch
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned read-only proof runtime
+        run: python -m pip install -r requirements/exp061-discovery-run.txt -e .
+
+      - name: Fetch exact main branch metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .proof
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" > .proof/main-branch.json
+
+      - name: Build exact read-only DEC-480 preflight
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_workflow_install_preflight.py plan \
+            --main-branch-json .proof/main-branch.json \
+            --expected-head-sha "$GITHUB_SHA" \
+            --out .proof/preflight.json
+
+      - name: Upload read-only preflight evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: phase8a-annual-catalogue-workflow-install-preflight-${{ github.sha }}
+          path: .proof/preflight.json
+          if-no-files-found: error

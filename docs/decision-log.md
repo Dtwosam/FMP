@@ -9879,3 +9879,39 @@ mutation, real-money action, and trading remain false.
 Next gate:
 `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_SOURCE`.
 
+## DEC-482 — Freeze dormant install-preflight proof workflow source
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY DORMANT PROOF WORKFLOW / NOT INSTALLED
+
+DEC-482 freezes the disabled read-only workflow source needed to generate the
+DEC-480 preflight artifact used by the future DEC-481 repository-hosted proof.
+
+The workflow source only checks exact merged-main manual dispatch, fetches read-only
+main-branch metadata, runs the DEC-480 plan-only CLI with `GITHUB_SHA` as the
+expected head, and uploads `preflight.json`.
+
+It deliberately does not compile DEC-481 proof evidence inside the same run,
+because DEC-481 requires completed-success run metadata. A later read-only post-run
+gate must bind the completed run identity to the uploaded preflight.
+
+The dormant template contains no annual-cell/freeze execution, `gh workflow run`,
+direct locked-runtime call, or repository mutation authorization. The template itself
+is pinned to exact Git blob `0d6c93e2af04501f9ac2589fd24d6672b2b41910`,
+so any byte drift fails closed before structural validation is accepted.
+
+Workflow-source module
+`src/fmp/discovery/annual_pattern_catalogue_workflow_install_preflight_proof_workflow_source.py`
+is blob `625c311a8f19633b3ee05459175d640d30762ecc`; focused tests are blob
+`2adb9dd755a8fd0665551771b2a912a4b8052239`; disabled template is blob
+`0d6c93e2af04501f9ac2589fd24d6672b2b41910`; spec is blob
+`b1de031402012bca461d93f7397c5c3f31a4b138`.
+
+Proof-workflow installation/dispatch, annual-workflow installation/dispatch,
+historical reads, catalogue execution/results, next-segment execution, cross-year
+results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation,
+real-money action, and trading remain false.
+
+Next gate:
+`SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_INSTALL_CONTRACT`.
+

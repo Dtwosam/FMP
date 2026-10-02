@@ -2793,3 +2793,15 @@ Copy this section for each serious experiment:
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: source-only proof-workflow source.
 
+### EXP-20261002-067 — DEC-482 dormant install-preflight proof workflow source
+
+- Disabled proof template only; reserved proof workflow path remains absent.
+- Dormant template is pinned to exact Git blob `0d6c93e2af04501f9ac2589fd24d6672b2b41910`; byte drift fails closed.
+- Exact run surface: manual main check -> read-only main metadata -> DEC-480 plan -> preflight artifact upload.
+- DEC-481 proof compilation inside same run: NO; completed run metadata is required later.
+- Annual cell/freeze execution surface: NONE.
+- `gh workflow run` / repository mutation surface: NONE.
+- Proof workflow install/dispatch / annual workflow install/dispatch / historical execution: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: source-only proof-workflow install contract.
+
