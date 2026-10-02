@@ -1788,3 +1788,14 @@
 - Added no proof workflow yet and no annual workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, or trading authority.
 - Next gate is source-only proof-workflow source.
 
+## 2026-10-02 — DEC-482 dormant install-preflight proof workflow source
+
+- Added a disabled read-only workflow template for producing DEC-480 preflight evidence.
+- Bound exact DEC-481 proof-contract and DEC-480 preflight-CLI blobs.
+- Pinned the dormant proof-workflow template itself to exact Git blob `0d6c93e2af04501f9ac2589fd24d6672b2b41910`, so any template byte drift fails closed.
+- Kept the proof workflow reserved active path absent.
+- Limited the dormant workflow to main metadata fetch, plan-only preflight execution, and artifact upload.
+- Explicitly excluded annual cell/freeze execution, workflow dispatch commands, and repository mutation.
+- Kept proof/annual workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
+- Next gate is the source-only proof-workflow installation contract.
+
