@@ -1736,3 +1736,13 @@
 - Forbade cross-year comparison inside an annual run and forbade a single 216-cell execution.
 - Installed no workflow and opened no artifact-read, execution, result, Strategy V1, promotion, or trading authority.
 - Next gate is the source-only annual-segment freeze evidence contract.
+
+## 2026-10-02 — DEC-477 annual segment freeze contract
+
+- Added an independently verifiable same-year freeze over exactly 18 validated DEC-472 cell summaries.
+- Bound exactly 89,460 directional records per annual segment.
+- Canonicalized annual cell order and rejected missing, duplicate, cross-year, or mixed-code inputs.
+- Recomputed annual evaluable, zero-support, and total-support counts from the bound cells.
+- Kept next-segment execution and cross-year comparison explicitly unauthorized after a valid freeze.
+- Added no historical read/execution, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, or trading authority.
+- Next gate is source-only annual catalogue workflow source.
