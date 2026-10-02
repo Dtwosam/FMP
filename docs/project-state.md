@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 now freezes the future workflow plan as 12 sequential annual-segment runs of 18 cells each, with each year frozen before the next. No workflow is installed. Historical artifact-read authorization, catalogue execution/result production, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Complete predecessor merges/bindings for DEC-473/474/475/476, then freeze the source-only annual-segment evidence contract that bundles all 18 validated DEC-472 cell evidences for one year. That contract must make the year freeze independently verifiable before any next-year authority or later cross-year comparison.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 now freezes the source-only annual evidence contract over exactly 18 validated cells / 89,460 directional records per year. No workflow is installed. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** DEC-473 through DEC-476 are merged. Finish DEC-477 validation/merge, then bind the corrected DEC-478 disabled workflow source to that exact merge. DEC-478 must preserve the one-segment run shape and require the immediately prior annual freeze for every segment after 2015.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -69,6 +69,21 @@ No workflow source is authorized or installed, and no dispatch, historical read,
 catalogue result, Strategy V1, promotion, or trading authority is opened.
 
 Next safe gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_FREEZE_CONTRACT`.
+
+## 2026-10-02 — DEC-477 annual segment freeze contract source-ready
+
+DEC-477 binds one complete annual catalogue as exactly 18 semantically validated
+DEC-472 cell summaries = 89,460 directional records.
+
+The annual freeze rejects missing, duplicate, cross-year, or mixed-code cells,
+canonicalizes the cell order, and recomputes annual totals from the bound evidence.
+A valid freeze still does not authorize the next annual segment or cross-year
+comparison.
+
+No workflow is installed and no historical read/execution, Strategy V1, promotion,
+or trading authority is opened.
+
+Next safe gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_SOURCE`.
 
 ## Governing research method — mandatory session invariant
 

@@ -9685,3 +9685,40 @@ catalogue execution/results, cross-year results, Strategy V1 synthesis, promotio
 Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_FREEZE_CONTRACT`.
+
+## DEC-477 — Freeze annual segment evidence contract
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY ANNUAL FREEZE CONTRACT / HISTORICAL EXECUTION LOCKED
+
+DEC-477 binds merged DEC-476 commit
+`23ca37a74296a8ad0ac5e4cd1775c3b76714f698`.
+
+DEC-477 defines the independently verifiable freeze for one complete annual
+catalogue segment before any later segment can become authoritative.
+
+The freeze accepts exactly 18 validated DEC-472 cell summaries for one year:
+3 symbols × 3 timeframes × 2 horizons. Since every validated cell binds 4,970
+directional records, one annual freeze binds exactly 89,460 directional records.
+
+Missing, duplicate, cross-year, or mixed-code-commit cells fail closed. Input order
+is canonicalized into the frozen cell order before fingerprinting. Aggregate annual
+counts are recomputed from the bound cell summaries, so rehashed outer-total
+tampering still fails validation.
+
+A valid DEC-477 freeze does not authorize the next year. It also does not authorize
+cross-year comparison or Strategy V1 synthesis. Those remain separate later gates.
+
+Freeze source
+`src/fmp/discovery/annual_pattern_catalogue_segment_evidence.py` is blob
+`1b14279864f01a1284c5be31552eee9bb3a2220c`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_segment_evidence.py` are blob
+`51dbf4e1a5be898f0a44d25f7bb1bd0c7696d112`; spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-segment-freeze.md`
+is blob `6aa367c29705fbba3ab8774548add6c05ef7b557`.
+
+Historical artifact reads, annual catalogue execution/result production,
+next-segment execution, cross-year results, Strategy V1 synthesis, promotion,
+Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_SOURCE`.
