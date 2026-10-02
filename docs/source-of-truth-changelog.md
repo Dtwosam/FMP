@@ -1799,3 +1799,12 @@
 - Kept proof/annual workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
 - Next gate is the source-only proof-workflow installation contract.
 
+## 2026-10-02 — DEC-483 proof-workflow installation contract
+
+- Froze the exact future file-creation mutation from the pinned DEC-482 dormant proof template to its reserved active workflow path.
+- Bound exact DEC-482 proof-workflow source and dormant-template Git blobs.
+- Revalidated DEC-482 transitive DEC-481 proof-contract and DEC-480 preflight-CLI dependencies.
+- Required the active proof-workflow path to remain absent before installation.
+- Added exact action-key-set and nested source/mutation semantic validation.
+- Kept repository mutation, proof/annual workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
+- Next gate is a source-only read-only proof-workflow installation preflight.
