@@ -2779,3 +2779,17 @@ Copy this section for each serious experiment:
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: repository-hosted read-only preflight proof.
 
+### EXP-20261002-067 — DEC-481 repository-hosted install-preflight proof contract
+
+- Input: fully validated DEC-480 preflight.
+- Binds exact DEC-480 preflight-source Git blob.
+- Requires proof main SHA = preflight expected main SHA.
+- Future proof run identity: frozen workflow, manual dispatch, main, attempt 1, completed success, exact positive run ID.
+- Binds preflight fingerprint + install-action fingerprint.
+- Frozen proof retains exact run event / branch / head / attempt / completed status / successful conclusion.
+- Rehashed run-provenance tampering: fails semantic validation.
+- Rehashed authority escalation: fails semantic validation.
+- Repository mutation / annual workflow install/dispatch / historical execution: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: source-only proof-workflow source.
+

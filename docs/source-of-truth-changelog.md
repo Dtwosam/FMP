@@ -1778,3 +1778,13 @@
 - Kept repository mutation, workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
 - Next gate is repository-hosted read-only preflight proof.
 
+## 2026-10-02 — DEC-481 repository-hosted install-preflight proof contract
+
+- Added the evidence contract for a future repository-hosted read-only DEC-480 proof.
+- Bound exact preflight source, main head, proof run identity, preflight fingerprint, and install-action fingerprint.
+- Required exact successful manual proof run on main with run attempt 1.
+- Retained run event, branch, head SHA, attempt, completed status, and successful conclusion in the frozen proof and semantically revalidated them after fingerprint verification.
+- Added canonical proof fingerprint plus semantic authority validation.
+- Added no proof workflow yet and no annual workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, or trading authority.
+- Next gate is source-only proof-workflow source.
+
