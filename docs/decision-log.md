@@ -9565,4 +9565,4 @@ authorization, catalogue execution/result production, cross-year results, Strate
 V1 synthesis, candidate compilation, promotion, Phase 8B, demo/live, broker
 mutation, real-money action, and trading remain false.
 
-Next gate: `ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER_EXECUTION_AUTHORIZATION`.
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER`.
