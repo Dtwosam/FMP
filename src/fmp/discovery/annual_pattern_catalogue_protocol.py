@@ -39,6 +39,10 @@ PATTERN_FAMILIES = (
     "SNAPSHOT_PAIR",
     "SAME_DIMENSION_TRANSITION",
 )
+DIMENSION_STATES = {
+    **{name: QUANTILE_STATES for name in CONTINUOUS_FEATURES},
+    SESSION_DIMENSION: SESSION_STATES,
+}
 TRANSITION_LAGS_MINUTES = (60, 240)
 MIN_PRIOR_CALIBRATION_ROWS = 300
 MIN_ANNUAL_EVALUABLE_SUPPORT = 75
@@ -112,6 +116,18 @@ class PatternDefinition:
                 raise ValueError("DEC-470 transition shape drift")
             if self.lag_minutes not in TRANSITION_LAGS_MINUTES:
                 raise ValueError("DEC-470 transition lag drift")
+
+        for dimension in self.dimensions:
+            if dimension not in DIMENSION_STATES:
+                raise ValueError("DEC-470 pattern dimension drift")
+        if self.family == "SAME_DIMENSION_TRANSITION":
+            allowed = DIMENSION_STATES[self.dimensions[0]]
+            if any(state not in allowed for state in self.states):
+                raise ValueError("DEC-470 transition state drift")
+        else:
+            for dimension, state in zip(self.dimensions, self.states):
+                if state not in DIMENSION_STATES[dimension]:
+                    raise ValueError("DEC-470 snapshot state drift")
 
 
 def _dimension_states() -> tuple[tuple[str, tuple[str, ...]], ...]:
@@ -294,6 +310,10 @@ def cross_year_gate_passes(
     pooled_mean_net_pips_1p0: float,
     sign_flips: int,
 ) -> bool:
+    if evaluable_segments < 0 or evaluable_segments > ANNUAL_SEGMENT_COUNT:
+        raise ValueError("DEC-470 evaluable segment count drift")
+    if base_positive_segments < 0 or stress_positive_segments < 0:
+        raise ValueError("DEC-470 positive segment counts cannot be negative")
     if evaluable_segments < MIN_CROSS_YEAR_EVALUABLE_SEGMENTS:
         return False
     if base_positive_segments > evaluable_segments:
