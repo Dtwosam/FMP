@@ -4545,6 +4545,9 @@ The next safe gate is a verified range-limited artifact loader for existing EXP-
 **Date:** 2026-09-27
 **Status:** SOURCE-ONLY LOADER / HISTORICAL EXECUTION LOCKED
 
+DEC-473 binds merged DEC-472 commit
+`310d31183802a2c29aad3f20ad6a6aa4990d579d`.
+
 DEC-273 adds the verified artifact-loader boundary for EXP-20260927-061.
 
 The loader recomputes supplied EXP-044 feature/outcome aggregate evidence fingerprints, requires exact outcome-to-feature evidence binding, exact requested cell manifests, a shared Phase 2 processed-manifest SHA-256, and exact outcome-manifest binding to the feature-manifest SHA-256.
@@ -9551,11 +9554,11 @@ exit must remain inside the same segment. The 2026 partial segment ends at
 
 Loader source
 `src/fmp/discovery/annual_pattern_catalogue_loader.py` is blob
-`31c7cd1ba3fa23ceb5431a92f5ff8fefa30fef21`; focused tests
+`ce89c29e0c5f18f1254933c4582c8708717e5178`; focused tests
 `tests/test_phase8a_annual_pattern_catalogue_loader.py` are blob
-`8e2a26e462241daebb2f69a449563ad1d67dd982`; spec
+`5d18cd51c0ea54dd1a19178baa95b80195f43d46`; spec
 `docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-full-history-loader.md`
-is blob `9525960caa929fd9712a8a1d978d0e9d60fbced2`.
+is blob `1facc3e468ab9c08747899a4dc42bffffd9a693e`.
 
 New data acquisition, feature/outcome materialization, historical artifact-read
 authorization, catalogue execution/result production, cross-year results, Strategy
