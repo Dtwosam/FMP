@@ -83,6 +83,10 @@ class AnnualPatternCatalogueWorkflowPlanTests(unittest.TestCase):
         self.assertEqual(payload["decision"], "DEC-476")
         self.assertEqual(payload["source_runtime_decision"], "DEC-475")
         self.assertEqual(
+            payload["source_runtime_merge_sha"],
+            "db8285dab5a0311abbbb77c60c958771b17074a5",
+        )
+        self.assertEqual(
             payload["next_gate"],
             "SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_FREEZE_CONTRACT",
         )
