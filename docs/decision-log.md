@@ -9356,3 +9356,69 @@ mutation, real-money action, and trading remain false.
 
 Next gate:
 `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_PROTOCOL_AND_PROTECTED_HISTORY_ACCESS_DECISION`.
+
+## DEC-470 — Freeze annual pattern catalogue protocol and full-collection research scope
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY PROTOCOL FROZEN / HISTORICAL EXECUTION LOCKED
+
+DEC-470 binds merged DEC-469 commit
+`248ee27036d54c2ce3ad3ad051dcc8b0cbbbcfd1` and turns the annual-first
+method into a fixed Catalogue V1 protocol before any annual catalogue is run.
+
+The full accepted historical collection is now authorized for this research path:
+full years 2015-2025 plus partial 2026 through 2026-08-20. The 2023-2026 block
+that EXP-061 through EXP-065 kept closed is repurposed only for DEC-469 annual
+catalogue / Strategy V1 research. This does not reopen or rerun those experiments.
+It also removes any future claim that 2023-2026 is untouched OOS for Strategy V1
+once catalogue evidence from those years is used. Fresh Strategy V1 evidence starts
+only after the exact Strategy V1 version is frozen.
+
+Catalogue V1 reuses the accepted three pairs, three timeframes, two fixed horizons,
+20 continuous measurements, deterministic session state, and existing full-history
+market-feature/outcome materialization. No new raw data, feature, symbol,
+timeframe, horizon, or alternative data source is authorized.
+
+Continuous state encoding is strict prior-only expanding empirical tertiles within
+the same annual segment. At T, only rows with `available_at_utc < T` may
+calibrate the state, with at least 300 finite prior values. Future rows in the year
+cannot affect an earlier state.
+
+The bounded grammar is exactly:
+
+- 65 snapshot single-state conditions;
+- 2,010 two-dimension snapshot conditions;
+- 410 same-dimension prior-state -> current-state transitions at exact 60m/240m lags.
+
+Total = 2,485 conditions, 4,970 LONG/SHORT hypotheses per cell/horizon,
+89,460 directional hypotheses per annual segment, and 1,073,520 nominal annual
+directional records across 12 annual segments. The canonical cross-year universe is
+89,460 hypotheses because year is excluded from the canonical pattern identity.
+
+Every annual pattern record is preserved. Support below 75 is labeled insufficient
+but is not deleted. Evaluable records retain support, base/stress means, medians,
+and base-cost win rate. Annual catalogues do not select or rerank winners.
+
+Before results exist, DEC-470 also freezes the cross-year carry-forward gate:
+minimum 9 evaluable segments; at least 80% base-positive years; at least 2/3
+stress-positive years; median annual base mean >= 0.10 pips; pooled base mean
+>= 0.25 pips; pooled stress mean > 0; and at most 3 chronological sign flips.
+Ranking, Jaccard 0.90 within-cell/family/direction deduplication, and a cap of
+5 per cell/family / 270 globally are fixed in the protocol. A carry-forward row is
+still pattern evidence, not Strategy V1.
+
+Protocol source
+`src/fmp/discovery/annual_pattern_catalogue_protocol.py` is blob
+`2be89bfdd8d2e60053a896744600ac76bf988d92`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_protocol.py` are blob
+`c50f4923afc02539a2620e8250292730434acb37`; protocol spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-protocol.md`
+is blob `d90ab2522b37bd340e9a3d5a536a7dd7d55d7d1f`.
+
+Historical artifact reads, annual catalogue execution/result production, cross-year
+result production, Strategy V1 synthesis, candidate compilation, promotion,
+Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain
+false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_MINER`.
+\n
