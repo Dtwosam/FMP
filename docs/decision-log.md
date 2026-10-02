@@ -9285,3 +9285,69 @@ Any successor direction must satisfy `docs/research-method-operating-guardrail.m
 and map back to the broader discovery-first workflow; there is no automatic
 authorization for another transform, model family, historical run, or reserved-data
 access.
+
+## DEC-469 — Open EXP-066 temporal state-transition research direction
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY RESEARCH DIRECTION / EXECUTION LOCKED
+
+DEC-469 binds merged DEC-468 commit
+`632afde7655bc650f04cec2d7bffb8da6893627e`, frozen EXP-065 review source
+`12580fe033a29d4d25b61140a4cf53a7126547ea`, historical run
+`36905224184`, and canonical aggregate evidence fingerprint
+`be0822560c0c4ec5a7dfc90e85c65d963621e04a4bd238ea078a4ac4d7a99682`.
+
+The governing method remains DEC-268 discovery-first market-pattern research.
+EXP-066 / `EXP-20261002-066` is only the next bounded sub-experiment.
+
+The successor question is temporal rather than another static transform: whether
+the path into an existing leakage-safe market state — a prior-state -> current-state
+transition within one accepted measurement dimension — carries repeatable
+information about the same fixed future outcomes. This can represent behaviour such
+as volatility compression -> expansion, momentum-state change, trend/range-state
+change, location-state change, spread-state change, and session-state transition.
+
+DEC-469 explicitly satisfies the discovery-method operating guardrail:
+
+1. it searches temporal path dependence into current market state;
+2. it covers the existing direction/trend, sideways/range, volatility,
+   momentum/return structure, candle/range structure, session/time, location,
+   spread/quote-quality, and fixed-future-outcome vocabulary;
+3. it omits cross-dimension transition interactions, sequences longer than two
+   states, three-plus-feature combinations, new raw features/data, symbols,
+   timeframes, horizons, model-family search, and the 2023-2026 reserve;
+4. it is useful after EXP-065 because EXP-065 tested static pairwise interaction,
+   while EXP-066 tests whether how the market arrived at a state matters;
+5. a negative result may reject only the exact frozen EXP-066 transition
+   representation/protocol;
+6. a negative result may not reject DEC-268, prove no edge exists, or exhaust
+   other market-behaviour representations; and
+7. any survivor remains only a pattern hypothesis and must re-enter the main
+   discovery -> freeze -> later chronological confirmation/validation -> separate
+   strategy/model compilation -> robustness -> prospective evidence workflow.
+
+Only same-dimension prior-state -> current-state source design is opened. Exact
+transition lags, state calibration, search volume, support/economic gates,
+deduplication/ranking, and chronological split are deferred to the next protocol
+decision so they are frozen before execution.
+
+The historical design boundary remains 2015-01-01 through 2022-12-31 and must
+remain `RETROSPECTIVE_ALREADY_SEEN`. The next protocol must freeze chronological
+discovery, confirmation, pattern freeze, and later validation before any runtime
+authority is considered. The reserved 2023-01-01 through 2026-08-20 block remains
+closed.
+
+Research-direction source
+`src/fmp/discovery/exp066_temporal_state_transition_research_direction.py` is
+blob `7b73000a06f9946f85e5c8093134a09207c92c26`; focused tests
+`tests/test_phase8a_exp066_temporal_state_transition_research_direction.py`
+are blob `fce4d62dcdb9b2e12be87b85529ab1962d6ae9dd`.
+
+EXP-065 rerun/retry/replacement, threshold relaxation, protocol redefinition, and
+hypothesis rescue remain false. EXP-066 historical execution/result production,
+reserved robustness access, candidate compilation, promotion, Phase 8B,
+demo/live orders, broker mutation, real-money action, and trading all remain
+false.
+
+Next gate: `SOURCE_ONLY_EXP066_TEMPORAL_STATE_TRANSITION_PROTOCOL`.
+\n
