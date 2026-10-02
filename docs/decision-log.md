@@ -9524,3 +9524,42 @@ Phase 8B, demo/live orders, broker mutation, real-money action, and trading rema
 false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER`.
+
+## DEC-473 — Freeze source-only annual catalogue full-history loader
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY LOADER / HISTORICAL EXECUTION LOCKED
+
+DEC-473 opens no historical run. It defines the verified loader boundary from the
+already accepted EXP-044 full-history feature/outcome materialization into the
+DEC-470/471 year-by-year catalogue.
+
+The loader covers exactly 140 monthly partitions from 2015-01 through 2026-08 and
+exposes only the 12 DEC-469 annual segments. Each call is scoped to one annual
+segment × symbol × timeframe. Selected feature/outcome files are verified against
+their accepted manifests for path containment, byte size, SHA-256, exact schema,
+and row count.
+
+EXP-044 aggregate feature/outcome evidence fingerprints are recomputed and checked;
+the requested cell manifests must match those evidence indexes, preserve the same
+processed-source identity, and retain the outcome-to-feature bindings.
+
+Annual isolation is fail-closed at the loader boundary: feature availability must
+remain inside the requested segment, and outcome availability plus fixed-horizon
+exit must remain inside the same segment. The 2026 partial segment ends at
+2026-08-20 inclusive.
+
+Loader source
+`src/fmp/discovery/annual_pattern_catalogue_loader.py` is blob
+`31c7cd1ba3fa23ceb5431a92f5ff8fefa30fef21`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_loader.py` are blob
+`8e2a26e462241daebb2f69a449563ad1d67dd982`; spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-full-history-loader.md`
+is blob `9525960caa929fd9712a8a1d978d0e9d60fbced2`.
+
+New data acquisition, feature/outcome materialization, historical artifact-read
+authorization, catalogue execution/result production, cross-year results, Strategy
+V1 synthesis, candidate compilation, promotion, Phase 8B, demo/live, broker
+mutation, real-money action, and trading remain false.
+
+Next gate: `ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER_EXECUTION_AUTHORIZATION`.
