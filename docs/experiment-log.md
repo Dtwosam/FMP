@@ -2660,3 +2660,16 @@ Copy this section for each serious experiment:
 - Historical artifact read / execution / result production: NO.
 - Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_MINER`.
+
+### EXP-20261002-067 — DEC-471 annual catalogue in-memory miner
+
+- Protocol: exact DEC-470 Catalogue V1.
+- Unit of work: one annual segment × symbol × timeframe × horizon.
+- Output: exactly 4,970 LONG/SHORT records per unit; no winner filtering.
+- State encoding: strict prior-only same-year expanding tertiles; 300 finite prior rows required.
+- Transitions: exact T-60m / T-240m only.
+- Annual boundary: signal and fixed-horizon exit must remain inside the same segment.
+- Historical artifact access / execution / result production: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_EVIDENCE_CONTRACT`.
+\n
