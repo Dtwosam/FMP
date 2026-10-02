@@ -2717,3 +2717,16 @@ Copy this section for each serious experiment:
 - Workflow installed / workflow dispatch: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_PLAN`.
+
+### EXP-20261002-067 — DEC-476 annual catalogue workflow plan
+
+- Future run unit: one annual segment only.
+- Exact per-segment shape: 18 cells + preflight + annual freeze = 20 jobs / 20 planned artifacts.
+- Full collection: 12 separately frozen annual segments × 18 cells = 216 cells.
+- Required order: 2015 through 2025, then `2026_YTD_TO_2026_08_20`.
+- Next segment authority requires prior segment freeze.
+- Single 216-cell workflow execution: FORBIDDEN.
+- Cross-year comparison inside annual run: NO.
+- Workflow installed / dispatch / historical execution / result production: NO.
+- Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_FREEZE_CONTRACT`.

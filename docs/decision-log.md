@@ -9648,3 +9648,40 @@ demo/live orders, broker mutation, real-money action, and trading remain false.
 Workflow installed and workflow dispatch authority are also false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_PLAN`.
+
+## DEC-476 — Freeze annual catalogue workflow plan
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY WORKFLOW PLAN / NO WORKFLOW INSTALLED
+
+DEC-476 binds merged DEC-475 commit
+`db8285dab5a0311abbbb77c60c958771b17074a5`.
+
+DEC-476 freezes the future annual-catalogue execution shape without installing a
+workflow. The run unit is one annual segment, not the full 216-cell collection.
+
+Each future annual-segment run is exactly one preflight job + 18 cell jobs
+(3 symbols × 3 timeframes × 2 horizons) + one annual freeze job = 20 jobs. The
+freeze job depends on all 18 same-year cells.
+
+The full collection remains exactly 12 segments × 18 cells = 216 cells, but the
+required operating sequence is 2015, 2016, ..., 2025, then
+`2026_YTD_TO_2026_08_20`, with each annual segment frozen before the next becomes
+authoritative. A single 216-cell execution is explicitly forbidden.
+
+Cross-year comparison cannot begin until all required annual freezes exist. DEC-476
+adds no ranking, deduplication, Strategy V1 synthesis, or result authority.
+
+Workflow-plan source
+`src/fmp/discovery/annual_pattern_catalogue_workflow_plan.py` is blob
+`2c3755d5cc344971a64d61937314b0f3bef0674d`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_workflow_plan.py` are blob
+`56281cafd839f035f04bd57c2726ba7764786eea`; spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-workflow-plan.md`
+is blob `0ee1328d78d8818abce2c02820b2ece7b51df108`.
+
+Workflow source authorization, installation, dispatch, historical artifact reads,
+catalogue execution/results, cross-year results, Strategy V1 synthesis, promotion,
+Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_FREEZE_CONTRACT`.
