@@ -1725,3 +1725,14 @@
 - Kept historical artifact-read, catalogue execution, and result-production authority false, so the composed path is unreachable against historical artifacts.
 - Added no workflow, workflow dispatch, aggregate cross-year comparison, Strategy V1 synthesis, or trading path.
 - Next gate is a source-only annual catalogue workflow plan.
+
+## 2026-10-02 — DEC-476 annual catalogue workflow plan
+
+- Froze one annual segment as the future workflow/run unit.
+- Froze exactly 18 cell jobs plus preflight and annual freeze per segment.
+- Preserved the full 216-cell collection as 12 separately frozen annual runs rather than one bulk execution.
+- Required segment order from 2015 through the 2026 partial segment.
+- Required prior annual freeze before the next segment becomes authoritative.
+- Forbade cross-year comparison inside an annual run and forbade a single 216-cell execution.
+- Installed no workflow and opened no artifact-read, execution, result, Strategy V1, promotion, or trading authority.
+- Next gate is the source-only annual-segment freeze evidence contract.
