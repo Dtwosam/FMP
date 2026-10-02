@@ -3,7 +3,7 @@
 **Decision:** DEC-475  
 **Experiment:** EXP-20261002-067  
 **Status:** SOURCE-ONLY LOCKED RUNTIME / HISTORICAL EXECUTION LOCKED  
-**Source adapter:** DEC-474 head `f75745ce89641336512c0afbf74ced3d93ac7508`
+**Source adapter:** DEC-474 merge `d88d5bb2f5d1f76278c4d588136bbcc5e65731a7`
 
 ## Purpose
 
