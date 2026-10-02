@@ -172,7 +172,7 @@ class AnnualPatternCatalogueFullHistoryLoaderTests(unittest.TestCase):
         self.assertTrue(payload["reuses_exp044_materialized_outcomes"])
         self.assertEqual(
             payload["next_gate"],
-            "ANNUAL_PATTERN_CATALOGUE_FULL_HISTORY_LOADER_EXECUTION_AUTHORIZATION",
+            "SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_SEGMENT_ADAPTER",
         )
         for field in (
             "new_data_acquisition_authorized",
