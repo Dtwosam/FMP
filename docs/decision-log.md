@@ -9472,4 +9472,3 @@ production, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
 demo/live orders, broker mutation, real-money action, and trading remain false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_EVIDENCE_CONTRACT`.
-\n
