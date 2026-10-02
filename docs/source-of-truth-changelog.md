@@ -1686,4 +1686,3 @@
 - Preserves base/stress means and medians, base win rate, canonical identities, annual identities, and event-set fingerprints.
 - Contains no annual winner selection, reranking, cross-year result, Strategy V1 synthesis, promotion, or trading path.
 - Next gate is the source-only annual catalogue evidence contract.
-\n
