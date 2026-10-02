@@ -2660,4 +2660,3 @@ Copy this section for each serious experiment:
 - Historical artifact read / execution / result production: NO.
 - Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_MINER`.
-\n
