@@ -1676,4 +1676,3 @@
 - Required every annual record, including insufficient-support and negative evidence, to remain in the catalogue.
 - Predeclared the cross-year recurrence/economics gate, rank order, Jaccard deduplication, and 270 global shortlist cap before results exist.
 - Added no artifact read, historical execution/result, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, or trading authority.
-\n
