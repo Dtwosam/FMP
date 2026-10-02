@@ -2647,3 +2647,17 @@ Copy this section for each serious experiment:
 - Requires historical target run #2 / attempt 1 on the same head.
 - Adds deterministic freeze fingerprint.
 - Adds no dispatch or trading authority.
+
+### EXP-20261002-067 — DEC-470 Annual Pattern Catalogue V1 protocol
+
+- Governing method: DEC-469 annual-first discovery.
+- Collection scope: 2015-2025 full calendar years plus 2026 through 2026-08-20.
+- Former 2023-2026 reserve: authorized for this catalogue/Strategy V1 research path; not untouched OOS for Strategy V1 after use.
+- Pattern grammar: 65 snapshot singles + 2,010 cross-dimension snapshot pairs + 410 same-dimension exact-lag transitions.
+- Nominal annual search: 89,460 directional hypotheses per segment; 1,073,520 annual records across 12 segments.
+- Annual winner selection: NONE; all nominal records are preserved.
+- Cross-year gate/ranking/dedup/caps: frozen before results.
+- Historical artifact read / execution / result production: NO.
+- Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_MINER`.
+\n
