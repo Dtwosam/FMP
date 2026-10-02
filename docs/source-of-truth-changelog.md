@@ -1717,3 +1717,11 @@
 - Enforced annual segment availability and outcome-exit boundaries again at the adapter layer.
 - Kept historical artifact reads/execution/results, cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, and trading authority false.
 - Next gate is source-only annual catalogue runtime wiring.
+
+## 2026-10-02 — DEC-475 locked annual catalogue runtime wiring
+
+- Composed the source-only annual catalogue path from authorization gate through DEC-473 loader, DEC-474 adapter, DEC-471 miner, and DEC-472 cell evidence compiler.
+- Required the hard gate before the first filesystem-backed historical read.
+- Kept historical artifact-read, catalogue execution, and result-production authority false, so the composed path is unreachable against historical artifacts.
+- Added no workflow, workflow dispatch, aggregate cross-year comparison, Strategy V1 synthesis, or trading path.
+- Next gate is a source-only annual catalogue workflow plan.

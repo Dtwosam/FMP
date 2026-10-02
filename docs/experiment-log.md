@@ -2707,3 +2707,13 @@ Copy this section for each serious experiment:
 - Historical artifact read / catalogue execution / result production: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_RUNTIME_WIRING`.
+
+### EXP-20261002-067 — DEC-475 source-only locked annual catalogue runtime wiring
+
+- Exact call graph: authorization gate -> DEC-473 loader -> DEC-474 adapter -> DEC-471 miner -> DEC-472 cell evidence compiler.
+- Unit of work: one annual segment × symbol × timeframe × horizon.
+- Gate occurs before every filesystem-backed historical read.
+- Historical artifact read / catalogue execution / result production: NO.
+- Workflow installed / workflow dispatch: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_PLAN`.
