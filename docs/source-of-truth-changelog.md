@@ -1676,3 +1676,13 @@
 - Required every annual record, including insufficient-support and negative evidence, to remain in the catalogue.
 - Predeclared the cross-year recurrence/economics gate, rank order, Jaccard deduplication, and 270 global shortlist cap before results exist.
 - Added no artifact read, historical execution/result, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker, real-money, or trading authority.
+
+## 2026-10-02 — DEC-471 source-only annual catalogue miner
+
+- Implemented Catalogue V1 in-memory annual mining without adding historical artifact access or execution.
+- Enforced strict same-year prior-only continuous-state encoding with a 300-prior-row minimum.
+- Enforced exact 60m/240m transition timestamps and same-segment outcome exits.
+- Emits all 4,970 directional records per annual cell/horizon, including zero-support and negative evidence.
+- Preserves base/stress means and medians, base win rate, canonical identities, annual identities, and event-set fingerprints.
+- Contains no annual winner selection, reranking, cross-year result, Strategy V1 synthesis, promotion, or trading path.
+- Next gate is the source-only annual catalogue evidence contract.
