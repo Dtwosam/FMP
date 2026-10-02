@@ -158,7 +158,7 @@ class AnnualPatternCatalogueFullHistoryLoaderTests(unittest.TestCase):
     def test_loader_contract_binds_full_collection_but_keeps_authority_locked(self) -> None:
         payload = loader_contract_payload()
         self.assertEqual(payload["decision"], "DEC-473")
-        self.assertEqual(payload["source_evidence_decision"], "DEC-472")
+        self.assertEqual(payload["source_evidence_decision"], "DEC-472")\n        self.assertEqual(\n            payload["source_evidence_merge_sha"],\n            "310d31183802a2c29aad3f20ad6a6aa4990d579d",\n        )
         self.assertEqual(payload["selected_month_count"], 140)
         self.assertEqual(payload["annual_segment_count"], 12)
         self.assertEqual(payload["annual_segments"][0], "2015")
