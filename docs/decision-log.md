@@ -9421,3 +9421,55 @@ Phase 8B, demo/live orders, broker mutation, real-money action, and trading rema
 false.
 
 Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_MINER`.
+
+## DEC-471 — Implement source-only annual pattern catalogue miner
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY MINER / HISTORICAL EXECUTION LOCKED
+
+DEC-471 binds merged DEC-470 commit
+`e5b20a2d8b45e5eda54673060060fbb9f480f545` and exact protocol blob
+`5ddd987cc480e6e31c0cd45328eba16cf690dee9`.
+
+It implements the frozen Catalogue V1 grammar in memory for one annual segment ×
+symbol × timeframe × horizon at a time. No artifact loader, workflow, historical
+execution surface, or result authority is added.
+
+Continuous states are computed with a deterministic order-statistic structure using
+only finite same-year observations strictly earlier than the current timestamp.
+A state remains unavailable until 300 prior finite observations exist. The current
+row is inserted only after its state is encoded, so later annual rows cannot alter
+earlier states.
+
+Session state retains the accepted deterministic precedence. Snapshot singles and
+pairs use exact state-event sets. Same-dimension transitions require an observation
+at the exact frozen T-60m or T-240m timestamp; nearby rows cannot substitute.
+
+Both the current observation and its fixed-horizon exit must remain inside the same
+annual segment. Outcomes crossing into the next annual segment are excluded from
+that year's catalogue.
+
+For every one of the 2,485 frozen conditions, DEC-471 emits both LONG and SHORT,
+so each annual cell/horizon result contains exactly 4,970 directional records.
+Weak, negative, insufficient-support, and zero-support records remain present.
+Support below 75 is non-evaluable but not deleted. Supported rows retain base/stress
+means and medians, base-cost win rate, canonical cross-year identity, annual record
+identity, and deterministic event-set fingerprint.
+
+The miner deliberately contains no winner selection, reranking, cross-year gate,
+Strategy V1 synthesis, candidate compilation, or promotion logic.
+
+Miner source
+`src/fmp/discovery/annual_pattern_catalogue_miner.py` is blob
+`2f4c9327a2b9600aceaa1e272dc613dfd4e7d0b7`; focused tests
+`tests/test_phase8a_annual_pattern_catalogue_miner.py` are blob
+`9942d5d1a87825541cd0dc0a96d44c204c8e11d0`; source spec
+`docs/superpowers/specs/2026-10-02-phase8a-annual-pattern-catalogue-miner.md`
+is blob `654eac134dea4648f2ba0a0e19ce39c416c4cbcc`.
+
+Historical artifact reads, catalogue execution/result production, cross-year result
+production, Strategy V1 synthesis, candidate compilation, promotion, Phase 8B,
+demo/live orders, broker mutation, real-money action, and trading remain false.
+
+Next gate: `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_EVIDENCE_CONTRACT`.
+\n
