@@ -13,6 +13,7 @@ from fmp.discovery.annual_pattern_catalogue_protocol import (
     MIN_ANNUAL_EVALUABLE_SUPPORT,
     PATTERN_CONDITION_COUNT,
     PATTERN_FAMILY_COUNTS,
+    PatternDefinition,
     TOTAL_ANNUAL_DIRECTIONAL_RECORDS,
     TRANSITION_LAGS_MINUTES,
     annual_prior_tertile_cutpoints,
@@ -120,6 +121,21 @@ class AnnualPatternCatalogueProtocolTests(unittest.TestCase):
                 direction="LONG",
             ),
         )
+
+    def test_invalid_pattern_dimensions_and_states_fail_closed(self) -> None:
+        with self.assertRaises(ValueError):
+            PatternDefinition(
+                family="SNAPSHOT_SINGLE",
+                dimensions=("invented_feature",),
+                states=("HIGH",),
+            )
+        with self.assertRaises(ValueError):
+            PatternDefinition(
+                family="SAME_DIMENSION_TRANSITION",
+                dimensions=("return_1h",),
+                states=("LOW", "INVENTED"),
+                lag_minutes=60,
+            )
 
     def test_cross_year_gate_is_predeclared_before_results(self) -> None:
         self.assertTrue(
