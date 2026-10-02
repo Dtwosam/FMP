@@ -2660,4 +2660,3 @@ Copy this section for each serious experiment:
 - Result: not run; this entry records the research direction only.
 - Historical execution / result production / candidate compilation / promotion / trading authority: NO.
 - Next gate: `SOURCE_ONLY_EXP066_TEMPORAL_STATE_TRANSITION_PROTOCOL`.
-\n
