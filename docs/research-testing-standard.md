@@ -74,7 +74,7 @@ Never pick the outcome that helps PnL.
 
 ## 8. Annual-first discovery rule for new research
 
-DEC-268 remains the parent discovery-first principle. DEC-469 requires that strategy discovery operate through **year-by-year pattern catalogues before cross-year strategy synthesis**.
+DEC-268 remains the parent discovery-first principle and supersedes the requirement that all future strategies must begin from those predefined families. DEC-469 requires that strategy discovery operate through **year-by-year pattern catalogues before cross-year strategy synthesis**.
 
 For new research:
 
@@ -94,7 +94,7 @@ State transitions, pairwise interactions, clustering, statistical estimators, ML
 
 Historical years used to discover or synthesize Strategy V1 become research/training evidence for that version. They may support retrospective robustness but cannot later be described as untouched OOS.
 
-The discovery data is allowed to reveal patterns. Cross-year synthesis is allowed to use frozen annual evidence. Prospective evidence begins only after the exact Strategy V1 version is frozen.
+The discovery data is allowed to reveal patterns. Validation data is not allowed to redesign the pattern. Cross-year synthesis is allowed to use frozen annual evidence. Prospective evidence begins only after the exact Strategy V1 version is frozen.
 
 ## 9. Parameter discipline
 
