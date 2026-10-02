@@ -3,7 +3,7 @@
 **Decision:** DEC-477  
 **Experiment:** EXP-20261002-067  
 **Status:** SOURCE-ONLY ANNUAL FREEZE CONTRACT / HISTORICAL EXECUTION LOCKED  
-**Source workflow plan:** DEC-476 head `75dd2fb0a701a5c5debf45b486cc7e8c23707313`
+**Source workflow plan:** DEC-476 merge `23ca37a74296a8ad0ac5e4cd1775c3b76714f698`
 
 ## Purpose
 
