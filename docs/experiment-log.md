@@ -2864,3 +2864,14 @@ Copy this section for each serious experiment:
 - Workflow triggered by this decision: NO.
 - Annual workflow install / dispatch / historical execution: NO.
 - Strategy V1 / promotion / trading authority: NO.
+### EXP-20261003-071 — DEC-488 future proof-workflow run reviewer
+
+- Pins DEC-487 dispatch authorization, DEC-481 proof contract, and the active proof workflow.
+- Requires proof run #1 / attempt 1 on exact current main.
+- Requires successful run + successful proof job.
+- Requires one unexpired artifact named for the exact main head.
+- Semantically validates the downloaded DEC-480 preflight through DEC-481.
+- Records raw and canonical preflight SHA-256 identities.
+- Reviewer dispatch authority: NO.
+- Annual workflow install / dispatch / historical execution: NO.
+- Strategy V1 / promotion / trading authority: NO.

@@ -10079,3 +10079,28 @@ Phase 8B, demo/live, broker mutation, real-money action, and trading remain fals
 
 Next gate:
 `EXACT_FIRST_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+## DEC-488 — Annual catalogue proof-workflow run reviewer
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY FUTURE RUN REVIEWER / NO DISPATCH
+
+DEC-488 defines the strict read-only reviewer for the future first successful
+annual-catalogue proof-workflow run.
+
+It pins DEC-487 dispatch-authorization source blob
+`5efc30607cf30426f099fd8b69bd8d4b8a2a0c9d`, DEC-481 proof-contract blob
+`fb9ea8d4a17734ee91225d48012a0a5b0088d415`, and active proof-workflow blob
+`0d6c93e2af04501f9ac2589fd24d6672b2b41910`.
+
+A valid review requires proof run #1 / attempt 1, exact current-main identity,
+successful proof run and job, an unexpired correctly named artifact, and a
+preflight JSON payload that passes the existing DEC-480/481 semantic proof
+contract. Raw and canonical payload SHA-256 identities are recorded.
+
+DEC-488 does not trigger anything and cannot claim runtime evidence before it
+exists. Repository mutation, further proof dispatch, annual-workflow
+installation/dispatch, historical execution/results, Strategy V1 synthesis,
+Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate after a real proof run:
+`CONCRETE_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_RUNTIME_EVIDENCE_FREEZE`.

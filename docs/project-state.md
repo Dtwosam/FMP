@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-486 freeze the annual catalogue method, annual runtime/workflow source and install path, proof-workflow installation state, and read-only dispatch preflight. DEC-487 now records explicit authorization for exactly the first proof-workflow dispatch (run #1 / attempt 1) while the run remains unstarted. Repository mutation, annual workflow installation/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-487, then recheck exact current main and zero prior proof-workflow runs immediately before the single authorized manual dispatch. After that run, freeze/review its read-only preflight artifact before any annual-workflow installation decision.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-486 freeze the annual catalogue method, annual runtime/workflow source and install path, proof-workflow installation state, and read-only dispatch preflight. DEC-487 records explicit authorization for exactly the first proof-workflow dispatch (run #1 / attempt 1) while the run remains unstarted. DEC-488 now defines the source-only strict reviewer for that future run and its read-only preflight artifact. Repository mutation, annual workflow installation/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-487 and DEC-488 in order. Immediately before the single authorized proof dispatch, recheck exact current main and zero prior proof-workflow runs. After the real run completes, feed its exact run/job/artifact/preflight evidence through DEC-488 and freeze the concrete runtime identities before any annual-workflow installation decision.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2709,3 +2709,17 @@ and all trading authority remain locked.
 
 Next safe gate:
 `EXACT_FIRST_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+
+
+## 2026-10-03 — DEC-488 proof-workflow run reviewer source-ready
+
+A strict read-only reviewer is now source-ready for the future first successful
+annual-catalogue proof-workflow run. It requires exact current-main identity,
+run #1 / attempt 1, successful run/job state, an unexpired exact-name artifact,
+and a semantically valid DEC-480 preflight payload under the DEC-481 proof
+contract.
+
+No runtime evidence is claimed yet and DEC-488 provides no dispatch surface.
+
+Next safe runtime gate remains the single DEC-487-authorized first proof dispatch.
+After that run, DEC-488 can review the concrete evidence before a runtime freeze.
