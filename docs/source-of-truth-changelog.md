@@ -2034,3 +2034,11 @@
 - Rebound DEC-513 concrete-evidence review to the successful recovery executor identity.
 - Updated DEC-514 to pin the recovered DEC-513 reviewer blob.
 - No retry/rerun, later-year execution, broker mutation, or trading authority was opened.
+
+## 2026-10-03 — DEC-518 recovered exact 2016 runtime installer
+
+- Installed the bounded two-file runtime installer on the same merge as the DEC-517 recovery chain.
+- The installer consumes only the recovered DEC-514 plan and carries the concrete DEC-502 binding forward.
+- It verifies exact current main and both frozen result blobs before a normal fast-forward push.
+- It builds the concrete DEC-508 receipt after the two-file install.
+- It adds no workflow-dispatch, rerun, broker, order, real-money, or trading authority.
