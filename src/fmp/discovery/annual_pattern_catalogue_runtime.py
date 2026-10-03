@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import json
+import os
 from pathlib import Path
 from typing import Mapping
 
+from .annual_pattern_catalogue_2015_execution_authorization import (
+    require_2015_execution_authorized,
+)
 from .annual_pattern_catalogue_adapter import (
     AdaptedAnnualCatalogueSegmentInputs,
     adapt_verified_annual_catalogue_segment,
@@ -72,11 +77,61 @@ def _validate_cell(symbol: str, timeframe: str, horizon_minutes: int) -> None:
         raise ValueError("DEC-475 unsupported horizon")
 
 
+def _workflow_dispatch_segment_from_event() -> str | None:
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if not event_path:
+        return None
+    try:
+        value = json.loads(Path(event_path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise PermissionError("DEC-493 workflow dispatch event metadata is invalid") from exc
+    if not isinstance(value, Mapping):
+        raise PermissionError("DEC-493 workflow dispatch event metadata is malformed")
+    inputs = value.get("inputs")
+    if not isinstance(inputs, Mapping):
+        return None
+    segment = inputs.get("annual_segment_label")
+    return segment if isinstance(segment, str) else None
+
+
+def _workflow_run_identity() -> tuple[int | None, int | None]:
+    raw_number = os.environ.get("GITHUB_RUN_NUMBER")
+    raw_attempt = os.environ.get("GITHUB_RUN_ATTEMPT")
+    try:
+        run_number = int(raw_number) if raw_number is not None else None
+        run_attempt = int(raw_attempt) if raw_attempt is not None else None
+    except ValueError as exc:
+        raise PermissionError("DEC-493 workflow run identity is invalid") from exc
+    return run_number, run_attempt
+
+
 def require_historical_catalogue_execution_authorized(
     *,
     code_commit: str,
+    annual_segment_label: str | None = None,
+    run_number: int | None = None,
+    run_attempt: int | None = None,
 ) -> None:
-    _validate_commit(code_commit)
+    code_commit = _validate_commit(code_commit)
+
+    segment = annual_segment_label or _workflow_dispatch_segment_from_event()
+    env_run_number, env_run_attempt = _workflow_run_identity()
+    effective_run_number = run_number if run_number is not None else env_run_number
+    effective_run_attempt = run_attempt if run_attempt is not None else env_run_attempt
+
+    if (
+        segment is not None
+        and effective_run_number is not None
+        and effective_run_attempt is not None
+    ):
+        require_2015_execution_authorized(
+            annual_segment_label=segment,
+            code_commit=code_commit,
+            run_number=effective_run_number,
+            run_attempt=effective_run_attempt,
+        )
+        return
+
     if not HISTORICAL_ARTIFACT_READ_AUTHORIZED:
         raise PermissionError(
             "DEC-475 annual catalogue historical artifact reads remain locked"
@@ -104,7 +159,10 @@ def run_locked_annual_catalogue_cell(
     code_commit: str,
 ) -> LockedAnnualCatalogueCellProduct:
     # This gate must remain before every filesystem-backed historical read.
-    require_historical_catalogue_execution_authorized(code_commit=code_commit)
+    require_historical_catalogue_execution_authorized(
+        code_commit=code_commit,
+        annual_segment_label=annual_segment_label,
+    )
     _validate_cell(symbol, timeframe, horizon_minutes)
 
     bundle = load_verified_annual_catalogue_segment_from_indexes(
