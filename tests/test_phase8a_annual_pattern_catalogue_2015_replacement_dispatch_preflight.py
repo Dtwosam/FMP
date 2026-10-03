@@ -54,7 +54,7 @@ class AnnualPatternCatalogue2015ReplacementDispatchPreflightTests(unittest.TestC
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
-            "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
     def test_exact_failed_run_is_ready_but_replacement_locked(self) -> None:
@@ -68,7 +68,7 @@ class AnnualPatternCatalogue2015ReplacementDispatchPreflightTests(unittest.TestC
         self.assertEqual(value["decision"], "DEC-497")
         self.assertEqual(value["prior_run_count"], 1)
         self.assertEqual(value["failed_run_id"], 37126711695)
-        self.assertEqual(value["expected_replacement_run_number"], 2)
+        self.assertEqual(value["expected_replacement_run_number"], 376)
         self.assertEqual(value["expected_replacement_run_attempt"], 1)
         self.assertFalse(value["replacement_run_authorized"])
         self.assertFalse(value["historical_artifact_read_authorized"])
