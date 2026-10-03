@@ -10594,3 +10594,44 @@ remain locked.
 
 Next gate:
 \`EXACT_2016_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN\`.
+
+## DEC-512 — Repository-hosted one-shot 2015 replacement executor
+
+**Date:** 2026-10-03  
+**Status:** EXECUTION-CAPABLE ONE-SHOT / 2015 REPLACEMENT ONLY
+
+DEC-512 closes the live operational gap after the failed first 2015 annual-catalogue
+run. A main-push/path-scoped executor re-runs DEC-499 against the exact merged head and
+live annual workflow inventory before it can submit anything.
+
+The executor requires exactly failed run \`37126711695\` / run 1 / attempt 1, pins the
+repaired workflow/runtime and DEC-498/499 sources, and submits exactly one
+\`annual_segment_label=2015\` dispatch. It then resolves exactly run 2 / attempt 1 at
+the same main SHA and rejects any observed run 3+.
+
+The receipt claims only that the replacement dispatch was submitted. It grants no retry,
+rerun, 2016+, Strategy V1, promotion, broker mutation, demo/live order, real-money, or
+trading authority.
+
+Next gate:
+\`REVIEW_2015_REPLACEMENT_RUN_WITH_DEC_500\`.
+
+## DEC-513 — Automated concrete 2015 replacement runtime evidence
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY WORKFLOW-RUN REVIEW / CONCRETE BINDING
+
+DEC-513 installs a read-only \`workflow_run\` reviewer for annual workflow run 2.
+It requires attempt 1, successful completion on main, the exact DEC-512 executor at the
+same head, and byte-exact DEC-500/501/502 sources.
+
+The reviewer downloads the exact annual-freeze artifact, verifies its ZIP SHA-256 against
+GitHub's artifact digest, runs DEC-500 review, DEC-501 freeze, and DEC-502 binding in
+order, and uploads the canonical concrete 2015 runtime binding.
+
+The workflow has no Actions write permission and cannot dispatch, retry, rerun, mutate the
+repository, authorize 2016 execution, promote strategies, access a broker, place orders,
+use real money, or trade.
+
+Next gate:
+\`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_EXECUTION_PREFLIGHT\`.
