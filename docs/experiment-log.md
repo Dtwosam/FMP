@@ -3038,3 +3038,16 @@ Copy this section for each serious experiment:
 - Directional records: 89,460.
 - Binding fingerprint: canonical SHA-256.
 - 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-086 — DEC-503 2016 execution preflight
+
+- Requires concrete DEC-502 2015 runtime binding.
+- Prior annual workflow run count: exactly 2.
+- Required history: failed run #1 + successful replacement run #2.
+- Target segment: 2016.
+- Required predecessor: 2015.
+- Previous freeze run id: successful 2015 replacement run id.
+- Expected next workflow identity: #3 / attempt 1.
+- CLI surface: plan only.
+- 2016 execution authorization: NO.
+- Strategy V1 / promotion / trading authority: NO.
