@@ -32,7 +32,7 @@ INSTALL_PREFLIGHT_SOURCE_PATH = (
     "annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py"
 )
 EXPECTED_INSTALL_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "f39ff9cd4d9a53f5908036641be1031cee8e43c2"
+    "6d8b4342118eca13872d89478efe052cd78b9c0a"
 )
 
 REPOSITORY_MUTATION_AUTHORIZED = True
