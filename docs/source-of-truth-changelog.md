@@ -2050,3 +2050,11 @@
 - It consumes the same-run DEC-518 install artifact and validates concrete DEC-508/502 evidence.
 - It rebuilds DEC-509 → DEC-510 → DEC-511 and emits only the exact run-3 plan.
 - It performs no dispatch, repository mutation, rerun, broker, order, real-money, or trading action.
+
+## 2026-10-03 — DEC-520 repairs annual workflow validity and run identities
+
+- Corrected the DEC-496 duplicate-key YAML defect so each artifact upload owns one hidden-file flag.
+- Preserved the malformed `f7e65e…` workflow as historical fixture evidence.
+- Confirmed invalid push records advanced the global annual workflow counter through 375 without adding a manual dispatch.
+- Rebound the recovered 2015 replacement to exact run 376 / attempt 1 and future 2016 to exact run 377 / attempt 1.
+- Preserved fail-closed inventory checks and all later-year/trading locks.
