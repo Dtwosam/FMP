@@ -75,7 +75,7 @@ def _run() -> dict[str, object]:
         "event": "workflow_dispatch",
         "head_branch": "main",
         "head_sha": HEAD,
-        "run_number": 2,
+        "run_number": 376,
         "run_attempt": 1,
         "status": "completed",
         "conclusion": "success",
@@ -144,7 +144,7 @@ class AnnualPatternCatalogue2015ReplacementRunReviewTests(unittest.TestCase):
         )
         self.assertEqual(
             source["dispatch_preflight_source_blob_sha"],
-            "6701d3607d1576a81848810ec699ffd5b7a858a1",
+            "69a2f600e63e27185c744b87a70b86f1c424a2ab",
         )
         self.assertEqual(
             source["segment_freeze_source_blob_sha"],
@@ -152,7 +152,7 @@ class AnnualPatternCatalogue2015ReplacementRunReviewTests(unittest.TestCase):
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
-            "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
     def test_successful_runtime_evidence_is_reviewed(self) -> None:
@@ -168,7 +168,7 @@ class AnnualPatternCatalogue2015ReplacementRunReviewTests(unittest.TestCase):
         self.assertIs(validate_2015_replacement_run_review(value), value)
         self.assertEqual(value["decision"], "DEC-500")
         self.assertEqual(value["run_id"], RUN_ID)
-        self.assertEqual(value["run_number"], 2)
+        self.assertEqual(value["run_number"], 376)
         self.assertEqual(value["run_attempt"], 1)
         self.assertEqual(value["run_conclusion"], "success")
         self.assertEqual(value["annual_cell_count"], 18)
