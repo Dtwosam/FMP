@@ -1954,3 +1954,10 @@
 - Binds 2016 to predecessor 2015 and the successful 2015 freeze run id.
 - Expects annual workflow run #3 / attempt 1 next.
 - Adds no execution, Strategy V1, promotion, or trading authority.
+
+## 2026-10-03 — DEC-504 source-only 2016 execution authorization
+
+- Added a canonical authorization receipt over a valid DEC-503 preflight.
+- Scopes authorization to 2016 run #3 / attempt 1 with predecessor 2015.
+- Keeps live runtime installation and runtime gate activation false.
+- Adds no 2017+, Strategy V1, promotion, or trading authority.
