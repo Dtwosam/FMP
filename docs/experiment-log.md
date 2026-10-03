@@ -3239,3 +3239,15 @@ Copy this section for each serious experiment:
 - Result claimed at dispatch time: NO.
 - Rerun / retry / run 378+: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-100 — DEC-522 2016 run-377 evidence binding
+
+- Target: exact successful annual run 377 / attempt 1.
+- DEC-521 receipt/run ID/head binding: REQUIRED.
+- Successful job count: exactly 20.
+- Artifact count: exactly 20, unexpired, SHA-256 addressed.
+- 2016 freeze ZIP digest verified against GitHub: REQUIRED.
+- DEC-477 freeze validation: REQUIRED.
+- Concrete 2016 runtime evidence binding output: YES.
+- Repository mutation / workflow dispatch / rerun / retry: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
