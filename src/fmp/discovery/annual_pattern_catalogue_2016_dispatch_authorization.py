@@ -21,7 +21,7 @@ DISPATCH_PREFLIGHT_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_dispatch_preflight.py"
 )
 EXPECTED_DISPATCH_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "52a74607deacc56e036c7c1070dfab884bbd7bfa"
+    "e4afa2047cba8fbb066c755033e35e9b185c07a9"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
