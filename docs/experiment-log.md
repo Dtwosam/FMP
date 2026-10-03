@@ -3226,3 +3226,16 @@ Copy this section for each serious experiment:
 - Recovered 2015 replacement identity: run 376 / attempt 1.
 - Future 2016 identity: run 377 / attempt 1.
 - New dispatch/retry/trading authority created by repair: NO.
+
+### EXP-20261003-099 — DEC-521 exact 2016 run-377 dispatch
+
+- Trigger: successful DEC-518 install + successful DEC-519 plan in the same workflow.
+- Installed main equals concrete DEC-508 install commit: REQUIRED.
+- Latest annual workflow global run before dispatch: 376, successful.
+- Manual dispatch inventory before dispatch: failed run 1 + successful run 376 only.
+- Authorized target: annual segment 2016, run 377, attempt 1.
+- Previous annual freeze input: exact concrete DEC-502 run ID.
+- Dispatch count: exactly 1.
+- Result claimed at dispatch time: NO.
+- Rerun / retry / run 378+: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
