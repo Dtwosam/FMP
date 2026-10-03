@@ -10249,3 +10249,40 @@ action, and trading remain false.
 
 Next gate:
 `EXACT_FIRST_2015_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+
+## DEC-495 — First 2015 annual catalogue run failure receipt
+
+**Date:** 2026-10-03  
+**Status:** FIRST RUN CONSUMED / FAILED BEFORE CELL EXECUTION
+
+The first authorized 2015 workflow invocation is bound as run
+`37126711695`, run #1 / attempt 1, on
+`fd85a886d07234ad584dcca08692b37e6af54b2e`.
+
+The preflight job `111213380390` passed source validation, 2015 execution
+authorization, and the no-predecessor check, then failed only at
+`Upload annual catalogue preflight evidence`.
+
+Root cause: `actions/upload-artifact@v6` defaults
+`include-hidden-files: false` while the workflow used `.preflight`.
+
+No annual cells ran and no catalogue/freeze results were produced. The first-run
+authorization is consumed. Rerun, retry, and replacement-run authority remain false.
+
+## DEC-496 — Annual catalogue hidden-artifact upload repair
+
+**Date:** 2026-10-03  
+**Status:** UPLOAD PACKAGING REPAIRED / REPLACEMENT EXECUTION LOCKED
+
+The annual workflow now sets `include-hidden-files: true` on exactly its three
+artifact upload steps for `.preflight`, `.result`, and
+`.annual-freeze/annual-freeze.json`.
+
+The pre-repair workflow remains frozen at blob
+`31633e87b79551f5b7dfa6b0deb76a82eb070129`; the repaired workflow is
+`f7e65ee95f472918e390bceedd7cf2f38bbf7e92`.
+
+No replacement execution is authorized by the repair.
+
+Next gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_REPLACEMENT_RUN_AUTHORIZATION_BEFORE_DISPATCH`.
