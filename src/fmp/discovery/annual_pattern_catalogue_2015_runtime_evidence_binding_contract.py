@@ -43,6 +43,22 @@ def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def _validate_sha256(value: object, *, field: str) -> str:
+    if not isinstance(value, str) or len(value) != 64:
+        raise ValueError(f"{field} must be a 64-character sha256")
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError(f"{field} must be hexadecimal") from exc
+    return value.lower()
+
+
+def _positive_int(value: object, *, field: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+        raise ValueError(f"{field} must be a positive integer")
+    return value
+
+
 def _validate_commit(value: object, *, field: str) -> str:
     if not isinstance(value, str) or len(value) != 40:
         raise ValueError(f"{field} must be a 40-character Git commit")
@@ -90,6 +106,55 @@ def bind_2015_runtime_evidence(
     )
     if freeze.get("expected_head_sha") != expected_head_sha:
         raise ValueError("DEC-502 freeze head mismatch")
+
+    _positive_int(freeze.get("run_id"), field="run_id")
+    _positive_int(freeze.get("preflight_job_id"), field="preflight_job_id")
+    _positive_int(freeze.get("freeze_job_id"), field="freeze_job_id")
+
+    cell_job_ids = freeze.get("cell_job_ids")
+    if not isinstance(cell_job_ids, Mapping) or len(cell_job_ids) != 18:
+        raise ValueError("DEC-502 cell job inventory mismatch")
+    for name, raw in cell_job_ids.items():
+        if not isinstance(name, str):
+            raise ValueError("DEC-502 cell job name malformed")
+        _positive_int(raw, field=f"cell job id {name}")
+
+    for field in ("preflight_artifact", "freeze_artifact"):
+        artifact = freeze.get(field)
+        if not isinstance(artifact, Mapping):
+            raise ValueError(f"DEC-502 {field} malformed")
+        _positive_int(artifact.get("id"), field=f"{field} id")
+        digest = artifact.get("digest")
+        if not isinstance(digest, str) or not digest.startswith("sha256:"):
+            raise ValueError(f"DEC-502 {field} digest malformed")
+        _validate_sha256(
+            digest.removeprefix("sha256:"),
+            field=f"{field} digest",
+        )
+
+    cell_artifacts = freeze.get("cell_artifacts")
+    if not isinstance(cell_artifacts, Mapping) or len(cell_artifacts) != 18:
+        raise ValueError("DEC-502 cell artifact inventory mismatch")
+    for name, raw in cell_artifacts.items():
+        if not isinstance(name, str) or not isinstance(raw, Mapping):
+            raise ValueError("DEC-502 cell artifact row malformed")
+        _positive_int(raw.get("id"), field=f"cell artifact id {name}")
+        digest = raw.get("digest")
+        if not isinstance(digest, str) or not digest.startswith("sha256:"):
+            raise ValueError(f"DEC-502 cell artifact digest malformed: {name}")
+        _validate_sha256(
+            digest.removeprefix("sha256:"),
+            field=f"cell artifact digest {name}",
+        )
+
+    for field in (
+        "freeze_artifact_zip_sha256",
+        "freeze_evidence_canonical_sha256",
+        "freeze_evidence_fingerprint",
+        "review_fingerprint_sha256",
+        "freeze_fingerprint_sha256",
+    ):
+        _validate_sha256(freeze.get(field), field=field)
 
     value: dict[str, object] = {
         "decision": ANNUAL_CATALOGUE_2015_RUNTIME_EVIDENCE_BINDING_CONTRACT_DECISION,
