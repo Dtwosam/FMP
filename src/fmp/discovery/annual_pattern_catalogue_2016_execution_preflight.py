@@ -27,15 +27,15 @@ RUNTIME_BINDING_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py"
 )
 EXPECTED_RUNTIME_BINDING_SOURCE_BLOB_SHA = (
-    "505e9dcbfc518e7fc00b603cafef44077d105cfa"
+    "d77b26436d4255838908c909001928738f7e40b6"
 )
 RUNTIME_SOURCE_PATH = "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 EXPECTED_RUNTIME_SOURCE_BLOB_SHA = (
-    "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b"
+    "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
-    "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+    "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 )
 
 FAILED_FIRST_RUN_ID = 37126711695
@@ -150,7 +150,7 @@ def _validate_run_inventory(
             raise ValueError("DEC-503 duplicate workflow run number")
         by_number[number] = raw
 
-    if set(by_number) != {1, 2}:
+    if set(by_number) != {1, 376}:
         raise ValueError("DEC-503 workflow run number inventory mismatch")
 
     first = by_number[1]
@@ -168,10 +168,10 @@ def _validate_run_inventory(
         if first.get(field) != expected:
             raise ValueError(f"DEC-503 failed first run {field} mismatch")
 
-    second = by_number[2]
+    second = by_number[376]
     second_exact = {
         "id": binding.get("run_id"),
-        "run_number": 2,
+        "run_number": 376,
         "run_attempt": 1,
         "event": "workflow_dispatch",
         "head_branch": "main",
@@ -190,7 +190,7 @@ def _validate_run_inventory(
             binding.get("run_id"),
             field="successful 2015 run id",
         ),
-        "successful_2015_run_number": 2,
+        "successful_2015_run_number": 376,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": _validate_commit(
             binding.get("run_head_sha"),
@@ -264,7 +264,7 @@ def build_2016_execution_preflight(
             runtime_binding.get("freeze_evidence_fingerprint"),
             field="previous annual freeze evidence fingerprint",
         ),
-        "expected_next_run_number": 3,
+        "expected_next_run_number": 377,
         "expected_next_run_attempt": 1,
         "annual_workflow_dispatch_authorized": (
             ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED
@@ -316,7 +316,7 @@ def validate_2016_execution_preflight(
         raise ValueError("DEC-503 predecessor label mismatch")
     if value.get("annual_workflow_run_count") != 2:
         raise ValueError("DEC-503 workflow run count mismatch")
-    if value.get("expected_next_run_number") != 3:
+    if value.get("expected_next_run_number") != 377:
         raise ValueError("DEC-503 next run number mismatch")
     if value.get("expected_next_run_attempt") != 1:
         raise ValueError("DEC-503 next run attempt mismatch")
