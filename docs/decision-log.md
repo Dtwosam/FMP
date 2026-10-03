@@ -10654,3 +10654,23 @@ orders, use real money, or trade.
 
 Next gate:
 \`APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_ACTION\`.
+
+## DEC-515 — Exact 2016 runtime install executor
+
+**Date:** 2026-10-03  
+**Status:** BOUNDED REPOSITORY MUTATION / NO WORKFLOW DISPATCH
+
+DEC-515 consumes only a successful DEC-514 activation-plan artifact whose reviewed head
+still equals current main. It verifies the exact DEC-507 two-file action, rechecks main
+immediately before mutation and push, copies only the frozen gate/runtime templates,
+verifies their exact Git blob identities, and creates one non-force commit on main.
+
+After the push, DEC-515 builds the concrete DEC-508 install receipt and requires the
+runtime gate to be installed/active while annual workflow dispatch and trading remain
+false.
+
+No workflow dispatch, rerun, retry, broker mutation, order placement, real-money action,
+or trading command is present.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_PREFLIGHT_ON_INSTALLED_MAIN`.
