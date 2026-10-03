@@ -70,13 +70,13 @@ jobs:
       - name: Require frozen DEC-502 to DEC-507 source chain
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "7688eba927872903e377134fef93923d49b22dc4"
-          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "505e9dcbfc518e7fc00b603cafef44077d105cfa"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py)" = "00b0df00f15e1d983c799e8991a88e03e010d2e3"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_authorization.py)" = "19d95a11e3ae1684d28ab17020f78bea39003bc8"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py)" = "c439292bd98fb009f773d6988f3138ac533007c9"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "9a5ad0b8f5e441bb67f7daee11aa8f8cc2aee535"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "7850c6bac9657af104baac9729c60f50d3ed2a99"
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "d77b26436d4255838908c909001928738f7e40b6"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py)" = "d804bdefb58f803738ba47dcdf244b0646bbdade"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_authorization.py)" = "9c1462d27c6e8ba01842d767a61163817926dcff"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py)" = "f39ff9cd4d9a53f5908036641be1031cee8e43c2"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "6046f07bb39518cfcce3ef11ebcb266ad8d8cab5"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_execution_preflight.py)" = "2170a62c5d5ad91507796d10cfd7cf8d0c1e52f7"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_execution_authorization.py)" = "b4fd008939440791e52de0ae7c0015c4ee9576b8"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py)" = "5af3c5787c8904e3371f7840d2a71aa588f16eb9"
@@ -226,18 +226,18 @@ jobs:
           )
 
           assert binding["decision"] == "DEC-502"
-          assert binding["run_number"] == 2
+          assert binding["run_number"] == 376
           assert binding["run_attempt"] == 1
           assert binding["run_conclusion"] == "success"
 
           assert preflight["decision"] == "DEC-503"
           assert preflight["annual_workflow_run_count"] == 2
-          assert preflight["expected_next_run_number"] == 3
+          assert preflight["expected_next_run_number"] == 377
           assert preflight["expected_next_run_attempt"] == 1
           assert preflight["annual_workflow_dispatch_authorized"] is False
 
           assert authorization["decision"] == "DEC-504"
-          assert authorization["authorization_scope"] == "2016_run_3_attempt_1_only"
+          assert authorization["authorization_scope"] == "2016_run_377_attempt_1_only"
           assert authorization["runtime_authorization_installed"] is False
 
           assert install_preflight["decision"] == "DEC-506"
@@ -253,14 +253,14 @@ jobs:
               "annual_pattern_catalogue_2016_runtime_authorization.py"
           )
           assert create["expected_result_blob_sha"] == (
-              "87c00381c5c12a0593378f565e6be4bad003514f"
+              "e6ef74733669ceb8cab13a1e0d25a236526266e3"
           )
           assert update["operation"] == "update"
           assert update["target_path"] == (
               "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
           )
           assert update["expected_result_blob_sha"] == (
-              "d7d3713cb3259e793c448153fd75ca043f511389"
+              "995bb46ddd95563f904243c78ae4fc3cf3308968"
           )
           assert action["repository_mutation_authorized"] is True
           assert action["runtime_authorization_installed"] is False
