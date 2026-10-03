@@ -3063,3 +3063,15 @@ Copy this section for each serious experiment:
 - Runtime authorization installed: NO.
 - Runtime gate active: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-088 — DEC-505 2016 runtime install preflight
+
+- Input: valid DEC-504 authorization receipt.
+- Current runtime blob: `ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b`.
+- Existing 2016 authorization import/gate required: absent.
+- Planned mutations: exactly 1.
+- Planned target: annual catalogue runtime source.
+- Planned scope: 2016 / run #3 / attempt 1.
+- Repository mutation authorization: NO.
+- Live execution authority: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
