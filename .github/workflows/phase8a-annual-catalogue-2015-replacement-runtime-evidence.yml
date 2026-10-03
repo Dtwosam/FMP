@@ -1,0 +1,258 @@
+name: phase8a-annual-catalogue-2015-replacement-runtime-evidence
+
+on:
+  workflow_run:
+    workflows:
+      - phase8a-annual-pattern-catalogue
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  review-freeze-bind:
+    if: ${{ github.event.workflow_run.run_number == 2 }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      TARGET_RUN_ID: ${{ github.event.workflow_run.id }}
+      TARGET_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - name: Checkout exact replacement run source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Require exact replacement run 2 attempt 1
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_run"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$(git rev-parse HEAD)" = "$TARGET_HEAD_SHA"
+
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$TARGET_RUN_ID" \
+            > "$RUNNER_TEMP/replacement-run.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "replacement-run.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          exact = {
+              "id": int(os.environ["TARGET_RUN_ID"]),
+              "name": "phase8a-annual-pattern-catalogue",
+              "path": ".github/workflows/phase8a-annual-pattern-catalogue.yml",
+              "event": "workflow_dispatch",
+              "head_branch": "main",
+              "head_sha": os.environ["TARGET_HEAD_SHA"],
+              "run_number": 2,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          PY
+
+      - name: Require frozen review and binding sources
+        run: |
+          set -euo pipefail
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml)" = "74e9499d9485c8e2a402fb675c995cc1961ff16a"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_review.py)" = "883f82c85d2738c46284d3675278dc061f4ca07c"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_freeze.py)" = "8e2a6ab27b4941e3ee12b5463247999200d33e69"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "505e9dcbfc518e7fc00b603cafef44077d105cfa"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_run_review.py)" = "0e472b79d12c8a5f14963fac3ed718f5e2c28d02"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_run_freeze.py)" = "f8a9a872195f01ca85627a6a6cac4a0c0672f82d"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "584871d8f55f1da0e5bd885f91542141dc523972"
+
+      - name: Bind target run to the DEC-512 executor
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml/runs?branch=main&event=push&per_page=100"
+          gh api "$endpoint" > "$RUNNER_TEMP/executor-runs.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "executor-runs.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          matches = [
+              row
+              for row in payload.get("workflow_runs", [])
+              if row.get("name")
+              == "phase8a-annual-catalogue-2015-replacement-one-shot-executor"
+              and row.get("path")
+              == ".github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml"
+              and row.get("event") == "push"
+              and row.get("head_branch") == "main"
+              and row.get("head_sha") == os.environ["TARGET_HEAD_SHA"]
+              and row.get("run_number") == 1
+              and row.get("run_attempt") == 1
+              and row.get("status") == "completed"
+              and row.get("conclusion") == "success"
+          ]
+          assert len(matches) == 1
+          PY
+
+      - name: Fetch jobs and artifacts
+        run: |
+          set -euo pipefail
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$TARGET_RUN_ID/jobs?per_page=100" \
+            > "$RUNNER_TEMP/replacement-jobs.json"
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$TARGET_RUN_ID/artifacts?per_page=100" \
+            > "$RUNNER_TEMP/replacement-artifacts.json"
+
+      - name: Download and verify annual freeze artifact
+        run: |
+          set -euo pipefail
+          expected_name="phase8a-annual-catalogue-freeze-2015-$TARGET_HEAD_SHA"
+          artifact_id="$(
+            jq -r --arg name "$expected_name" \
+              '.artifacts[] | select(.name == $name and .expired == false) | .id' \
+              "$RUNNER_TEMP/replacement-artifacts.json"
+          )"
+          expected_digest="$(
+            jq -r --arg name "$expected_name" \
+              '.artifacts[] | select(.name == $name and .expired == false) | .digest' \
+              "$RUNNER_TEMP/replacement-artifacts.json"
+          )"
+          test -n "$artifact_id"
+          test "$artifact_id" != "null"
+          case "$expected_digest" in sha256:*) ;; *) exit 1 ;; esac
+          expected_sha="$(printf '%s' "$expected_digest" | sed 's/^sha256://')"
+
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+            > "$RUNNER_TEMP/replacement-freeze.zip"
+
+          actual_sha="$(
+            sha256sum "$RUNNER_TEMP/replacement-freeze.zip" | awk '{print $1}'
+          )"
+          test "$actual_sha" = "$expected_sha"
+          printf '%s\n' "$actual_sha" \
+            > "$RUNNER_TEMP/replacement-freeze-zip-sha256.txt"
+
+          mkdir -p "$RUNNER_TEMP/replacement-freeze"
+          unzip -q "$RUNNER_TEMP/replacement-freeze.zip" \
+            -d "$RUNNER_TEMP/replacement-freeze"
+          freeze_evidence="$(
+            find "$RUNNER_TEMP/replacement-freeze" \
+              -type f -name annual-freeze.json -print
+          )"
+          test "$(printf '%s\n' "$freeze_evidence" | sed '/^$/d' | wc -l)" = "1"
+          cp "$freeze_evidence" "$RUNNER_TEMP/annual-freeze.json"
+
+      - name: Review exact successful replacement evidence
+        run: |
+          set -euo pipefail
+          freeze_sha="$(
+            cat "$RUNNER_TEMP/replacement-freeze-zip-sha256.txt"
+          )"
+          python scripts/phase8a_annual_pattern_catalogue_2015_replacement_run_review.py \
+            review \
+            --run-json "$RUNNER_TEMP/replacement-run.json" \
+            --jobs-json "$RUNNER_TEMP/replacement-jobs.json" \
+            --artifacts-json "$RUNNER_TEMP/replacement-artifacts.json" \
+            --freeze-evidence "$RUNNER_TEMP/annual-freeze.json" \
+            --freeze-artifact-zip-sha256 "$freeze_sha" \
+            --expected-head-sha "$TARGET_HEAD_SHA" \
+            --out "$RUNNER_TEMP/replacement-review.json"
+
+      - name: Freeze reviewed runtime evidence
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2015_replacement_run_freeze.py \
+            freeze \
+            --review-json "$RUNNER_TEMP/replacement-review.json" \
+            --expected-head-sha "$TARGET_HEAD_SHA" \
+            --out "$RUNNER_TEMP/replacement-runtime-freeze.json"
+
+      - name: Bind concrete 2015 runtime evidence
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2015_runtime_evidence_binding.py \
+            bind \
+            --freeze-json "$RUNNER_TEMP/replacement-runtime-freeze.json" \
+            --out "$RUNNER_TEMP/runtime-binding.json"
+
+      - name: Verify concrete binding stays non-authorizing
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          binding = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "runtime-binding.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          assert binding["decision"] == "DEC-502"
+          assert binding["stage"] == (
+              "ANNUAL_CATALOGUE_2015_CONCRETE_RUNTIME_EVIDENCE_BOUND"
+          )
+          assert binding["annual_segment_label"] == "2015"
+          assert binding["run_id"] == int(os.environ["TARGET_RUN_ID"])
+          assert binding["run_number"] == 2
+          assert binding["run_attempt"] == 1
+          assert binding["run_status"] == "completed"
+          assert binding["run_conclusion"] == "success"
+          assert binding["run_head_sha"] == os.environ["TARGET_HEAD_SHA"]
+          assert binding["annual_cell_count"] == 18
+          assert binding["directional_record_count"] == 89460
+          assert binding["runtime_review_validated"] is True
+          assert binding["runtime_evidence_frozen"] is True
+          assert binding["runtime_evidence_bound"] is True
+          for field in (
+              "next_segment_execution_authorized",
+              "cross_year_result_production_authorized",
+              "strategy_v1_synthesis_authorized",
+              "promotion_authorized",
+              "phase8b_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert binding[field] is False, field
+          assert binding["next_gate"] == (
+              "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_EXECUTION_PREFLIGHT"
+          )
+          PY
+
+      - name: Upload immutable DEC-513 concrete runtime evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2015-dec513-runtime-binding-${{ github.event.workflow_run.id }}
+          path: |
+            ${{ runner.temp }}/replacement-run.json
+            ${{ runner.temp }}/replacement-jobs.json
+            ${{ runner.temp }}/replacement-artifacts.json
+            ${{ runner.temp }}/replacement-freeze-zip-sha256.txt
+            ${{ runner.temp }}/annual-freeze.json
+            ${{ runner.temp }}/replacement-review.json
+            ${{ runner.temp }}/replacement-runtime-freeze.json
+            ${{ runner.temp }}/runtime-binding.json
+          if-no-files-found: error
