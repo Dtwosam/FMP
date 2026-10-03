@@ -16,9 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      GH_TOKEN: \${{ github.token }}
-      GH_REPO: \${{ github.repository }}
-      PYTHONPATH: \${{ github.workspace }}/src
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
 
     steps:
       - name: Checkout exact merged main
@@ -281,10 +281,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2015-replacement-dec512-dispatch-\${{ github.sha }}
+          name: annual-catalogue-2015-replacement-dec512-dispatch-${{ github.sha }}
           path: |
-            \${{ runner.temp }}/replacement-dispatch-preflight.json
-            \${{ runner.temp }}/replacement-dispatch-receipt.json
-            \${{ runner.temp }}/annual-runs-before.json
-            \${{ runner.temp }}/annual-runs-after.json
+            ${{ runner.temp }}/replacement-dispatch-preflight.json
+            ${{ runner.temp }}/replacement-dispatch-receipt.json
+            ${{ runner.temp }}/annual-runs-before.json
+            ${{ runner.temp }}/annual-runs-after.json
           if-no-files-found: warn
