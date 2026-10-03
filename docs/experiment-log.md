@@ -3117,3 +3117,15 @@ Copy this section for each serious experiment:
 - Dispatch command present: NO.
 - Annual workflow dispatch authority: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-093 — DEC-510 source-only 2016 dispatch authorization
+
+- Source DEC-509 preflight: REQUIRED and validated.
+- Authorized annual segment: 2016 only.
+- Authorized run: number 3, attempt 1 only.
+- Runtime authorization installed/active: YES.
+- Annual workflow dispatch authority: YES, contract-only.
+- Historical read/execution/result authority: YES, exact run only.
+- Dispatch command present/executed: NO.
+- Rerun / retry / run 4+: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
