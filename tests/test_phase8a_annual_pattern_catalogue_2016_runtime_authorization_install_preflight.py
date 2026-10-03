@@ -102,7 +102,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallPreflightTests(
         )
         self.assertEqual(
             source["runtime_authorization_plan_source_blob_sha"],
-            "bc122efd630dc446621fefa53e37d8e100e025d2",
+            "f2e84069ed6b761fa5001ca6dd722cee05e63224",
         )
 
     def test_valid_concrete_authorization_yields_read_only_install_preflight(self) -> None:
