@@ -23,6 +23,7 @@ from fmp.discovery.pattern_protocol import (
 )
 
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 HEAD = "a" * 40
 RUN_ID = 777777
 PREVIOUS_RUN_ID = 666666
@@ -167,7 +168,7 @@ def _receipt() -> dict[str, object]:
 class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
     def test_sources_pin_segment_workflow_and_dispatch_executor(self) -> None:
         source = validate_2016_run377_evidence_review_sources(
-            repository_root=Path("."),
+            repository_root=REPOSITORY_ROOT,
         )
         self.assertEqual(
             source["segment_evidence_source_blob_sha"],
@@ -184,7 +185,7 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
 
     def test_successful_run377_is_bound_read_only(self) -> None:
         value = review_2016_run377_evidence(
-            repository_root=Path("."),
+            repository_root=REPOSITORY_ROOT,
             run=_run(),
             jobs_payload=_jobs(),
             artifacts_payload=_artifacts(),
@@ -214,7 +215,7 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
         run["conclusion"] = "failure"
         with self.assertRaisesRegex(ValueError, "run conclusion mismatch"):
             review_2016_run377_evidence(
-                repository_root=Path("."),
+                repository_root=REPOSITORY_ROOT,
                 run=run,
                 jobs_payload=_jobs(),
                 artifacts_payload=_artifacts(),
@@ -229,7 +230,7 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
         receipt["run_id"] = RUN_ID + 1
         with self.assertRaisesRegex(ValueError, "dispatch receipt run_id mismatch"):
             review_2016_run377_evidence(
-                repository_root=Path("."),
+                repository_root=REPOSITORY_ROOT,
                 run=_run(),
                 jobs_payload=_jobs(),
                 artifacts_payload=_artifacts(),
@@ -246,7 +247,7 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
         rows.pop()
         with self.assertRaisesRegex(ValueError, "artifact inventory count"):
             review_2016_run377_evidence(
-                repository_root=Path("."),
+                repository_root=REPOSITORY_ROOT,
                 run=_run(),
                 jobs_payload=_jobs(),
                 artifacts_payload=artifacts,
@@ -261,7 +262,7 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
         freeze["annual_cell_count"] = 17
         with self.assertRaisesRegex(ValueError, "evidence fingerprint mismatch"):
             review_2016_run377_evidence(
-                repository_root=Path("."),
+                repository_root=REPOSITORY_ROOT,
                 run=_run(),
                 jobs_payload=_jobs(),
                 artifacts_payload=_artifacts(),
@@ -272,8 +273,9 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
             )
 
     def test_cli_is_review_only(self) -> None:
-        script = Path(
-            "scripts/phase8a_annual_pattern_catalogue_2016_run377_evidence_review.py"
+        script = (
+            REPOSITORY_ROOT
+            / "scripts/phase8a_annual_pattern_catalogue_2016_run377_evidence_review.py"
         ).read_text(encoding="utf-8")
         self.assertIn('subparsers.add_parser("review")', script)
         self.assertNotIn('subparsers.add_parser("dispatch")', script)
