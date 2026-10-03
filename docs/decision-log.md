@@ -10129,3 +10129,31 @@ mutation, real-money action, and trading remain false.
 
 Next gate after real reviewed evidence:
 `CONCRETE_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_RUNTIME_EVIDENCE_BINDING`.
+## DEC-490 — Annual catalogue proof-workflow concrete runtime evidence binding
+
+**Date:** 2026-10-03  
+**Status:** CONCRETE FIRST-RUN RUNTIME EVIDENCE BOUND
+
+DEC-490 binds the exact successful first proof-workflow run:
+run `37120635769` / #1 / attempt 1 on main
+`6ee059cb451e7c6d2235b7744542dc194acc014e`, proof job
+`111195887975`, and artifact `11273008137`.
+
+The artifact ZIP digest is
+`3b242f14e89950eb828c614bf1b021dd51d9fc43b9045c2efccc6a1f7bcd8e32`.
+The raw/canonical preflight hashes are
+`70f6aaaca16fbb5de9e481e135cd8ec85d6dc7c6df524fcf328e23fd0d8de3d3`
+and
+`f151fcbd487b40be35b54356f7b3002ba416812ec4ece2ea4bd7868cf5c0a163`.
+
+DEC-480/481/489 fingerprints recompute and are pinned; the DEC-490 canonical
+binding fingerprint is
+`e45d7f3d88ea93e989da32d6f98c22837dfbe5937e7c1fa37260aadd88b256e3`.
+
+The one-shot proof-dispatch authorization is consumed. Further proof dispatch,
+repository mutation, annual-workflow installation/dispatch, historical execution,
+Strategy V1 synthesis, Phase 8B, demo/live, broker mutation, real-money action,
+and trading remain false.
+
+Next gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_AUTHORIZATION_BEFORE_MUTATION`.
