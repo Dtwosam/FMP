@@ -10537,3 +10537,22 @@ remain false.
 
 Next gate:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_PREFLIGHT`.
+
+## DEC-509 — Read-only 2016 dispatch preflight
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY READ-ONLY PREFLIGHT / DISPATCH AUTHORIZATION LOCKED
+
+DEC-509 binds the future exact DEC-508 runtime-install receipt to the concrete DEC-502
+2015 runtime evidence, the exact two-run annual workflow inventory, the repaired active
+workflow, and current main.
+
+The current main head must equal the DEC-508 install commit, and the same successful
+2015 replacement run must be named by both the install receipt and runtime binding.
+
+The preflight records installed/active 2016 runtime authorization but remains read-only:
+workflow dispatch, historical read/execution/result production, 2017+, Strategy V1,
+promotion, broker mutation, demo/live orders, real-money action, and trading remain false.
+
+Next gate:
+`ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
