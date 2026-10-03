@@ -28,7 +28,7 @@ INSTALL_ACTION_SOURCE_PATH = (
     "annual_pattern_catalogue_2016_runtime_authorization_install_action.py"
 )
 EXPECTED_INSTALL_ACTION_SOURCE_BLOB_SHA = (
-    "9a5ad0b8f5e441bb67f7daee11aa8f8cc2aee535"
+    "6046f07bb39518cfcce3ef11ebcb266ad8d8cab5"
 )
 
 ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED = False
@@ -158,7 +158,7 @@ def review_2016_runtime_authorization_install(
         "repository_full_name": "Dtwosam/FMP",
         "install_commit_sha": install_commit_sha,
         "annual_segment_label": "2016",
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "previous_annual_freeze_run_id": _positive_int(
             install_action.get("previous_annual_freeze_run_id"),
@@ -230,7 +230,7 @@ def validate_2016_runtime_authorization_install_receipt(
     )
     if value.get("annual_segment_label") != "2016":
         raise ValueError("DEC-508 annual segment mismatch")
-    if value.get("expected_run_number") != 3:
+    if value.get("expected_run_number") != 377:
         raise ValueError("DEC-508 expected run number mismatch")
     if value.get("expected_run_attempt") != 1:
         raise ValueError("DEC-508 expected run attempt mismatch")
