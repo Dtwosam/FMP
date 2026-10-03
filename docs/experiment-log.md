@@ -3002,3 +3002,15 @@ Copy this section for each serious experiment:
 - DEC-498 replacement execution authority: YES.
 - CLI dispatch surface: NO.
 - Run #3+ / 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-083 — DEC-500 2015 replacement-run reviewer
+
+- Expected runtime identity: #2 / attempt 1.
+- Expected successful jobs: 20.
+- Expected unexpired artifacts: 20.
+- Annual cell jobs/artifacts: 18.
+- Freeze payload validator: DEC-477.
+- Expected directional records: 89,460.
+- Freeze ZIP digest must match GitHub artifact digest.
+- Review fingerprint: canonical SHA-256.
+- 2016+ / Strategy V1 / promotion / trading authority: NO.

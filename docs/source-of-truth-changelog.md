@@ -1924,3 +1924,10 @@
 - Pins DEC-498 authorization, the live replacement runtime, and repaired workflow.
 - Expects run #2 / attempt 1 and adds no embedded dispatch command.
 - Keeps run #3+, 2016+, Strategy V1, promotion, and all trading authority false.
+
+## 2026-10-03 — DEC-500 2015 replacement-run reviewer
+
+- Added a semantic reviewer for the successful repaired 2015 replacement run.
+- Requires exact run #2 / attempt 1, 20 successful jobs, and 20 unexpired artifacts.
+- Validates the final DEC-477 annual-freeze evidence and freeze ZIP digest.
+- Emits a canonical review fingerprint while keeping all later-year and trading authority false.
