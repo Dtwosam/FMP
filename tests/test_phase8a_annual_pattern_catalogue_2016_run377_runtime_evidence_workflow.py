@@ -67,7 +67,8 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
             text,
         )
         self.assertIn(
-            'test "$(jq -r '.run_id' "$RUNNER_TEMP/dec521-receipt.json")" = "$TARGET_RUN_ID"',
+            "test \"$(jq -r '.run_id' "
+            "\"$RUNNER_TEMP/dec521-receipt.json\")\" = \"$TARGET_RUN_ID\"",
             text,
         )
 
