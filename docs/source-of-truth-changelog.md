@@ -1938,3 +1938,11 @@
 - Preserves exact run/job/artifact and DEC-477 annual-freeze identities.
 - Emits one canonical freeze fingerprint.
 - Keeps 2016+, Strategy V1, promotion, and all trading authority false.
+
+## 2026-10-03 — DEC-502 corrected artifact-upload repair distribution
+
+- Preserved the flawed DEC-496 workflow as a historical fixture.
+- Corrected the live annual workflow so preflight, cell, and annual-freeze uploads
+  each carry exactly one hidden-file inclusion flag.
+- Added association-aware tests so concentrated or misplaced flags fail closed.
+- Kept replacement run #2 unstarted and later-year/trading authority locked.
