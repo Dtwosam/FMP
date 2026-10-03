@@ -1872,3 +1872,10 @@
 - Preserved manual-only trigger, read-only permissions, and all three execution gates.
 - Marked the annual workflow installed/available.
 - Kept workflow dispatch, annual catalogue execution/results, Strategy V1, promotion, and trading authority false.
+## 2026-10-03 — DEC-492 2015 annual execution preflight
+
+- Added a read-only preflight for the first 2015 annual-catalogue run.
+- Pins the installed annual workflow, DEC-491 receipt, and DEC-475 locked runtime.
+- Requires exact current main and zero prior annual-workflow runs.
+- Encodes the 2015 no-predecessor invariant and expected run #1 / attempt 1.
+- Adds no dispatch, historical execution/result, Strategy V1, promotion, or trading authority.
