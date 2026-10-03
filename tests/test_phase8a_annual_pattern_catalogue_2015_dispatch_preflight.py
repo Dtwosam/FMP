@@ -7,6 +7,7 @@ import unittest
 from fmp.discovery.annual_pattern_catalogue_2015_dispatch_preflight import (
     EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA,
     EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA,
+    EXPECTED_EXECUTION_CLI_BLOB_SHA,
     EXPECTED_RUNTIME_SOURCE_BLOB_SHA,
     build_2015_dispatch_preflight,
     validate_2015_dispatch_preflight,
@@ -41,6 +42,10 @@ class AnnualPatternCatalogue2015DispatchPreflightTests(unittest.TestCase):
         self.assertEqual(
             source["runtime_source_blob_sha"],
             EXPECTED_RUNTIME_SOURCE_BLOB_SHA,
+        )
+        self.assertEqual(
+            source["execution_cli_blob_sha"],
+            EXPECTED_EXECUTION_CLI_BLOB_SHA,
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
