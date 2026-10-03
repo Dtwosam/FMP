@@ -1916,3 +1916,11 @@
 - Threaded that exact identity through the live annual-catalogue runtime.
 - Preserved the DEC-493 first-run runtime as an exact historical snapshot.
 - Kept run #1 retry, run #3+, 2016+, Strategy V1, promotion, and all trading authority false.
+
+## 2026-10-03 — DEC-499 final 2015 replacement dispatch preflight
+
+- Added the final read-only launch preflight for the authorized repaired 2015 replacement run.
+- Requires the single consumed failed run as the exact prior workflow inventory.
+- Pins DEC-498 authorization, the live replacement runtime, and repaired workflow.
+- Expects run #2 / attempt 1 and adds no embedded dispatch command.
+- Keeps run #3+, 2016+, Strategy V1, promotion, and all trading authority false.
