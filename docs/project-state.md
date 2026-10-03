@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-497 freeze the annual catalogue method, installed workflow, proof chain, failed first 2015 run, hidden-artifact upload repair, and read-only replacement preflight. DEC-498 now records standing operator authorization for exactly the repaired 2015 replacement run #2 / attempt 1 and threads that identity through the live runtime. Failed-run retry, run #3+, 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-498, then build the final current-main/prior-run replacement dispatch preflight and execute the single authorized 2015 run #2 through the user’s terminal path. After completion, freeze exact run/job/artifact evidence before advancing to 2016.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-497 freeze the annual catalogue method, installed/repaired workflow, proof chain, consumed failed first 2015 run, upload repair, and read-only replacement preflight. DEC-498 authorizes exactly repaired 2015 run #2 / attempt 1. DEC-499 now defines the final read-only dispatch preflight over exact current main and the single failed prior-run inventory. Run #3+, 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-499, then execute exactly one 2015 replacement workflow dispatch (#2 / attempt 1) from the terminal path. After completion, bind and freeze the run/job/artifact evidence before advancing to 2016.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2843,6 +2843,17 @@ replacement run #2 / attempt 1.
 The live runtime recognizes only that replacement identity in addition to the
 historical consumed run-#1 contract. Retry of run #1, run #3+, and 2016+ remain
 locked.
+
+Next runtime gate:
+`EXACT_2015_REPLACEMENT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+
+## 2026-10-03 — DEC-499 final replacement dispatch preflight source-ready
+
+The repaired 2015 replacement run now has a final read-only launch preflight over
+exact current main, exactly one prior annual run (failed run
+`37126711695`), and expected replacement identity #2 / attempt 1.
+
+DEC-499 contains no dispatch command.
 
 Next runtime gate:
 `EXACT_2015_REPLACEMENT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
