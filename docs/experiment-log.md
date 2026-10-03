@@ -2968,3 +2968,13 @@ Copy this section for each serious experiment:
 - Annual-freeze upload repaired: YES.
 - Rerun / retry / replacement authorization: NO.
 - 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-080 — DEC-497 2015 replacement-run preflight
+
+- Prior annual run count required: 1.
+- Required prior run: `37126711695`.
+- Required prior run identity: #1 / attempt 1 / completed failure.
+- Repaired workflow blob: `f7e65ee95f472918e390bceedd7cf2f38bbf7e92`.
+- Expected replacement identity: #2 / attempt 1.
+- Replacement execution authorization: NO.
+- 2016+ / Strategy V1 / promotion / trading authority: NO.
