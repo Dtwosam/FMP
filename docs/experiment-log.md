@@ -2875,3 +2875,13 @@ Copy this section for each serious experiment:
 - Reviewer dispatch authority: NO.
 - Annual workflow install / dispatch / historical execution: NO.
 - Strategy V1 / promotion / trading authority: NO.
+### EXP-20261003-072 — DEC-489 deterministic proof-run freeze
+
+- Pins DEC-488 reviewer blob `ec92323d910785d342028c5896528fa1dcf1cc96`.
+- Accepts only a semantically valid DEC-488 review on the exact expected main head.
+- Preserves run/job/artifact and preflight/proof fingerprints.
+- Emits one canonical freeze SHA-256.
+- Concrete runtime evidence claimed before real run?: NO.
+- Further proof dispatch: NO.
+- Annual workflow install / dispatch / historical execution: NO.
+- Strategy V1 / promotion / trading authority: NO.
