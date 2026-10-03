@@ -1837,3 +1837,10 @@
 - Requires zero prior proof-workflow runs.
 - Exposes only a plan CLI and no dispatch/run/execute surface.
 - Keeps proof dispatch, annual workflow install/dispatch, historical execution/results, Strategy V1, promotion, and trading authority false.
+## 2026-10-03 — DEC-487 first proof-workflow dispatch authorization
+
+- Added explicit authorization for exactly one first manual proof-workflow dispatch.
+- Pins DEC-486 preflight and the exact active proof-workflow blob.
+- Scope is run #1 / attempt 1 only; rerun/retry/replacement remain false.
+- Does not trigger the workflow.
+- Keeps repository mutation, annual workflow install/dispatch, historical execution/results, Strategy V1, promotion, and trading authority false.

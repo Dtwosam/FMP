@@ -2854,3 +2854,13 @@ Copy this section for each serious experiment:
 - Annual workflow install / dispatch / historical execution: NO.
 - Strategy V1 / promotion / trading authority: NO.
 - Next gate: explicit proof-workflow dispatch authorization before run.
+### EXP-20261003-070 — DEC-487 first proof-workflow dispatch authorization
+
+- Pins DEC-486 preflight blob `9f5d4b2abbfdb02280b0011a5d61e189be1d6fed`.
+- Pins active proof-workflow blob `0d6c93e2af04501f9ac2589fd24d6672b2b41910`.
+- Explicit first dispatch authorization: YES.
+- Expected proof run: #1 / attempt 1.
+- Rerun / retry / replacement: NO.
+- Workflow triggered by this decision: NO.
+- Annual workflow install / dispatch / historical execution: NO.
+- Strategy V1 / promotion / trading authority: NO.
