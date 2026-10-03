@@ -13,6 +13,8 @@ It pins:
   `b5f394f7921d78f73636e28892575cbf4b64a95c`;
 - DEC-493 runtime source blob
   `4f23996b90b4253af06774d0330003179264c8ee`;
+- installed-state execution CLI blob
+  `db2d20d95729f464deca6f46b17f66a5cd97e5e6`;
 - active annual workflow blob
   `31633e87b79551f5b7dfa6b0deb76a82eb070129`.
 
