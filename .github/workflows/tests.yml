@@ -148,6 +148,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_run_freeze.py'
           -v
+      - name: Run annual-catalogue proof-workflow runtime-evidence binding tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_runtime_evidence_binding.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
