@@ -10800,3 +10800,21 @@ granted.
 
 Next gate:
 `ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+
+## DEC-524 — Source-only 2017 execution authorization
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY AUTHORIZATION / RUNTIME NOT INSTALLED
+
+DEC-524 consumes a valid DEC-523 preflight and authorizes exactly annual segment 2017,
+workflow run 378, attempt 1 at contract level.
+
+The concrete successful 2016 predecessor run ID remains bound. Historical read,
+catalogue execution, and result production are authorized only for that exact future run,
+while runtime authorization remains uninstalled/inactive and no dispatch command exists.
+
+Reruns, retries, replacement runs, 2018+, Strategy V1, promotion, broker mutation,
+demo/live orders, real-money action, and trading remain false.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_PLAN`.
