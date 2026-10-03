@@ -3124,3 +3124,14 @@ authorization is not installed and no dispatch command exists.
 
 Next gate:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_PLAN`.
+
+## 2026-10-03 — DEC-525 dormant 2017 runtime plan source-ready
+
+The source-only 2017 runtime gate and combined runtime target are now byte-pinned. The
+target preserves the 2015/2016 routes and adds only 2017 run 378 / attempt 1.
+
+No repository mutation, runtime activation, dispatch, or later-year/trading authority is
+granted.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC524`.
