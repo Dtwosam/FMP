@@ -9915,3 +9915,43 @@ real-money action, and trading remain false.
 Next gate:
 `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_INSTALL_CONTRACT`.
 
+## DEC-483 — Freeze proof-workflow installation contract
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY INSTALL CONTRACT / REPOSITORY MUTATION LOCKED
+
+DEC-483 freezes the exact future repository mutation required to install the
+disabled read-only DEC-482 proof workflow, but does not perform it.
+
+It binds merged DEC-482 authority
+`532ab82a6c028c4f4cdf47d9515f18ef83457c45`, proof-workflow source blob
+`625c311a8f19633b3ee05459175d640d30762ecc`, and dormant-template blob
+`0d6c93e2af04501f9ac2589fd24d6672b2b41910`.
+
+The DEC-482 source validator must still prove the exact DEC-481 proof-contract and
+DEC-480 plan-only CLI dependencies, and the reserved active proof-workflow path
+must remain absent.
+
+The only allowed future mutation is creation of
+`.github/workflows/phase8a-annual-catalogue-workflow-install-preflight-proof.yml`
+from the exact bytes of
+`docs/superpowers/templates/phase8a-annual-pattern-catalogue-workflow-install-preflight-proof.yml.disabled`.
+
+The install-action contract uses an exact top-level key set and semantically
+validates nested source and mutation evidence. The source template, DEC-482 source
+module, DEC-481 proof contract, and DEC-480 preflight CLI are all forbidden from
+changing during that future action.
+
+Install-contract source
+`src/fmp/discovery/annual_pattern_catalogue_workflow_install_preflight_proof_workflow_install_contract.py`
+is blob `91c25b0d80ac05f28f20234a01717bf0af49f4f8`; focused tests are blob
+`211c3114b6d9e4168f792202a0419c38e473b8c5`; spec is blob
+`652112e80b9ae80c2e4c798d3ccaa7a9830e6b4a`.
+
+Repository mutation, proof-workflow installation/dispatch, annual-workflow
+installation/dispatch, historical reads, catalogue execution/results, next-segment
+execution, cross-year results, Strategy V1 synthesis, promotion, Phase 8B,
+demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate:
+`SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_INSTALL_PREFLIGHT`.

@@ -2805,3 +2805,14 @@ Copy this section for each serious experiment:
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: source-only proof-workflow install contract.
 
+### EXP-20261002-067 — DEC-483 proof-workflow installation contract
+
+- Binds exact DEC-482 proof-workflow source and dormant-template blobs.
+- Revalidates DEC-482 transitive DEC-481 proof-contract / DEC-480 CLI dependencies.
+- Reserved active proof-workflow path must remain absent.
+- Only future allowed mutation: create the active proof workflow from exact dormant-template bytes.
+- Exact top-level key set plus nested source/mutation semantic validation.
+- Repository mutation / proof-workflow install / dispatch: NO.
+- Annual workflow install / dispatch / historical execution: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: source-only proof-workflow install preflight.
