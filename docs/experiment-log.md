@@ -2990,3 +2990,15 @@ Copy this section for each serious experiment:
 - Result production for replacement: YES.
 - Failed-run rerun / retry: NO.
 - Run #3+ / 2016+ / Strategy V1 / promotion / trading: NO.
+
+### EXP-20261003-082 — DEC-499 final 2015 replacement dispatch preflight
+
+- Exact current main required: YES.
+- Required prior annual run count: 1.
+- Required failed run: `37126711695`, #1 / attempt 1.
+- Repaired workflow blob: `f7e65ee95f472918e390bceedd7cf2f38bbf7e92`.
+- Live replacement runtime blob: `ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b`.
+- Expected replacement run: #2 / attempt 1.
+- DEC-498 replacement execution authority: YES.
+- CLI dispatch surface: NO.
+- Run #3+ / 2016+ / Strategy V1 / promotion / trading authority: NO.
