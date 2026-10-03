@@ -10356,3 +10356,25 @@ broker mutation, real-money action, and trading remain false.
 
 Next gate:
 `EXACT_2015_REPLACEMENT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+
+## DEC-500 — 2015 replacement-run runtime reviewer
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-READY SEMANTIC RUNTIME REVIEW
+
+DEC-500 defines the semantic reviewer for the successful repaired 2015
+replacement annual-catalogue run.
+
+It requires run #2 / attempt 1 on exact expected main, exactly 20 successful jobs,
+exactly 20 unexpired artifacts, a matching freeze ZIP digest, and a semantically
+valid DEC-477 annual-freeze payload for segment 2015 with exactly 18 cells and
+89,460 directional records.
+
+The reviewer binds run/job/artifact identities, the annual-freeze evidence
+fingerprint, and a canonical review fingerprint.
+
+2016+, cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live,
+broker mutation, real-money action, and trading remain false.
+
+Next gate:
+`DETERMINISTIC_2015_REPLACEMENT_RUNTIME_EVIDENCE_FREEZE`.
