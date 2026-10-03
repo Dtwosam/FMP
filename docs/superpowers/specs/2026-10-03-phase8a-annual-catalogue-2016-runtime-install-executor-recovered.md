@@ -8,7 +8,7 @@
 DEC-518 is installed on the same recovery merge as DEC-517 so it is already present before the successful DEC-513 → DEC-514 workflow-run chain can complete.
 
 It runs only after a successful DEC-514 activation-plan workflow and requires:
-- the recovered DEC-514 workflow blob `3d18bd39390b3dd2ec31860c30b8c4326ba23005`;
+- the recovered DEC-514 workflow blob `6069421af6ffc72a40bca9250627c9f81135fd16`;
 - one unique unexpired DEC-514 activation-plan artifact with a verified GitHub SHA-256 digest;
 - the exact DEC-507 two-file action plus the concrete DEC-502 runtime binding carried by that artifact;
 - current `main` still equal to the reviewed DEC-514 head immediately before mutation and immediately before push;
@@ -17,7 +17,7 @@ It runs only after a successful DEC-514 activation-plan workflow and requires:
 
 DEC-518 copies only the two frozen templates into the 2016 gate and annual-runtime target paths, verifies the resulting Git blob SHAs, creates one normal non-force commit, pushes that exact commit to `main`, and then builds the concrete DEC-508 install receipt.
 
-DEC-518 has no Actions-write permission and contains no workflow dispatch, rerun, retry, broker, order, real-money, or trading command.
+The DEC-518 install job has contents-write and actions-read only. A second DEC-519 job in the same workflow drops to contents/actions read and builds the post-install dispatch plan. Neither job contains a workflow dispatch, rerun, retry, broker, order, real-money, or trading command.
 
 ## Next gate
 
