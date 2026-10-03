@@ -3190,3 +3190,16 @@ Copy this section for each serious experiment:
 - Recovery target: 2015 run #2 / attempt 1 only.
 - Retry / rerun / run 3+: NO.
 - 2016+ / promotion / broker / trading authority: NO.
+
+### EXP-20261003-101 — DEC-518 recovered exact 2016 runtime install
+
+- Trigger: successful recovered DEC-514 activation plan only.
+- DEC-514 workflow blob: `3d18bd39390b3dd2ec31860c30b8c4326ba23005`.
+- DEC-514 artifact: unique, unexpired, digest-verified.
+- Concrete DEC-502 runtime binding carried forward: YES.
+- Mutation count: exactly 2 files.
+- Result gate blob: `87c00381c5c12a0593378f565e6be4bad003514f`.
+- Result runtime blob: `d7d3713cb3259e793c448153fd75ca043f511389`.
+- Push mode: normal fast-forward only.
+- Concrete DEC-508 receipt: REQUIRED.
+- Workflow dispatch / rerun / retry / broker / trading: NO.
