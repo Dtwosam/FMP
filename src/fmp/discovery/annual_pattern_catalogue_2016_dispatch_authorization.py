@@ -193,6 +193,10 @@ def build_2016_dispatch_authorization(
             preflight.get("successful_2015_run_id"),
             field="successful 2015 run id",
         ),
+        "successful_2015_run_head_sha": _validate_commit(
+            preflight.get("successful_2015_run_head_sha"),
+            field="successful 2015 run head",
+        ),
         "expected_run_number": 3,
         "expected_run_attempt": 1,
         "runtime_authorization_installed": True,
@@ -318,6 +322,10 @@ def validate_2016_dispatch_authorization(
     _positive_int(
         value.get("successful_2015_run_id"),
         field="successful 2015 run id",
+    )
+    _validate_commit(
+        value.get("successful_2015_run_head_sha"),
+        field="successful 2015 run head",
     )
     _sha256_hex(
         value.get("source_preflight_fingerprint_sha256"),
