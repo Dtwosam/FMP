@@ -2025,3 +2025,12 @@
 - The workflow runs the frozen DEC-503 → DEC-504 → DEC-506 → DEC-507 chain on exact current main.
 - It outputs the exact two-file 2016 runtime-install action as immutable evidence only.
 - It has no repository-write or Actions-write permission and performs no mutation or dispatch.
+
+## 2026-10-03 — DEC-517 recovers the unconsumed 2015 replacement slot
+
+- Recorded DEC-512 executor run `37149151549` as a pre-dispatch bootstrap failure.
+- Confirmed the annual workflow still has no run #2.
+- Added a separate one-shot recovery that installs the pinned annual-catalogue runtime before DEC-499.
+- Rebound DEC-513 concrete-evidence review to the successful recovery executor identity.
+- Updated DEC-514 to pin the recovered DEC-513 reviewer blob.
+- No retry/rerun, later-year execution, broker mutation, or trading authority was opened.
