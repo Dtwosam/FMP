@@ -3095,3 +3095,13 @@ Copy this section for each serious experiment:
 - Extra mutation: rejected.
 - Live runtime mutation by compiler: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-091 — DEC-508 future 2016 runtime install receipt
+
+- Required changed file count: 2.
+- Installed 2016 gate blob: exact DEC-505 target.
+- Installed runtime blob: exact DEC-505 target.
+- Install action consumed: YES.
+- Runtime gate installed/active: YES.
+- Annual workflow dispatch: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
