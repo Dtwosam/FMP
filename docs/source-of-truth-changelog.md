@@ -1961,3 +1961,10 @@
 - Scopes authorization to 2016 run #3 / attempt 1 with predecessor 2015.
 - Keeps live runtime installation and runtime gate activation false.
 - Adds no 2017+, Strategy V1, promotion, or trading authority.
+
+## 2026-10-03 — DEC-505 read-only 2016 runtime install preflight
+
+- Added a one-file mutation plan for installing the scoped 2016 runtime gate.
+- Requires a valid DEC-504 receipt and exact current main.
+- Fails if a 2016 authorization import or gate already exists.
+- Keeps repository mutation, live execution, later-year, Strategy V1, promotion, and trading authority false.
