@@ -177,6 +177,9 @@ jobs:
           name: phase8a-annual-catalogue-preflight-${{ inputs.annual_segment_label }}-${{ github.sha }}
           path: .preflight
           if-no-files-found: error
+          include-hidden-files: true
+          include-hidden-files: true
+          include-hidden-files: true
 
   annual_cell:
     needs: annual_preflight
