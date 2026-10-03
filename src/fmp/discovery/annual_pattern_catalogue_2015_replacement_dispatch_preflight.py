@@ -182,7 +182,7 @@ def build_2015_replacement_dispatch_preflight(
         "annual_segment_label": "2015",
         "previous_annual_freeze_run_id": "",
         "active_workflow_path": ACTIVE_WORKFLOW_PATH,
-        "expected_replacement_run_number": 2,
+        "expected_replacement_run_number": 376,
         "expected_replacement_run_attempt": 1,
         "replacement_run_authorized": REPLACEMENT_RUN_AUTHORIZED,
         "historical_artifact_read_authorized": HISTORICAL_ARTIFACT_READ_AUTHORIZED,
