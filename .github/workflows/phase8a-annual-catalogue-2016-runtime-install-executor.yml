@@ -479,8 +479,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      GH_TOKEN: \${{ github.token }}
-      GH_REPO: \${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
 
     steps:
       - name: Checkout exact installed main
@@ -492,8 +492,8 @@ jobs:
       - name: Download exact DEC-519 dispatch plan from this workflow
         uses: actions/download-artifact@v6
         with:
-          name: annual-catalogue-2016-dec519-dispatch-plan-\${{ github.event.workflow_run.id }}
-          path: \${{ runner.temp }}/dec519-plan
+          name: annual-catalogue-2016-dec519-dispatch-plan-${{ github.event.workflow_run.id }}
+          path: ${{ runner.temp }}/dec519-plan
 
       - name: Require exact installed main and DEC-519 plan
         run: |
@@ -811,15 +811,15 @@ jobs:
       - name: Upload immutable DEC-521 dispatch evidence
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2016-dec521-run377-dispatch-\${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2016-dec521-run377-dispatch-${{ github.event.workflow_run.id }}
           path: |
-            \${{ runner.temp }}/dec519-plan/dec511-dispatch-action-preflight.json
-            \${{ runner.temp }}/dec519-plan/runtime-binding.json
-            \${{ runner.temp }}/dec519-plan/install-commit-sha.txt
-            \${{ runner.temp }}/annual-all-runs-before-377.json
-            \${{ runner.temp }}/annual-dispatch-runs-before-377.json
-            \${{ runner.temp }}/main-before-377.json
-            \${{ runner.temp }}/annual-runs-after-377.json
-            \${{ runner.temp }}/dec521-run377-dispatch-receipt.json
+            ${{ runner.temp }}/dec519-plan/dec511-dispatch-action-preflight.json
+            ${{ runner.temp }}/dec519-plan/runtime-binding.json
+            ${{ runner.temp }}/dec519-plan/install-commit-sha.txt
+            ${{ runner.temp }}/annual-all-runs-before-377.json
+            ${{ runner.temp }}/annual-dispatch-runs-before-377.json
+            ${{ runner.temp }}/main-before-377.json
+            ${{ runner.temp }}/annual-runs-after-377.json
+            ${{ runner.temp }}/dec521-run377-dispatch-receipt.json
           if-no-files-found: error
 
