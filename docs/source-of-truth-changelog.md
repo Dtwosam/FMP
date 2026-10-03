@@ -2066,3 +2066,10 @@
 - It requires successful run 376 to remain the latest global annual run and no run 377+ to exist.
 - It submits exactly one 2016 dispatch with the concrete 2015 predecessor freeze run ID.
 - It claims no result and adds no retry, later-year, broker, order, real-money, or trading authority.
+
+## 2026-10-03 — DEC-522 read-only 2016 run-377 evidence binding
+
+- Added a read-only reviewer for exact successful annual-catalogue run 377 / attempt 1.
+- It binds the run to the DEC-521 dispatch receipt and exact concrete 2015 predecessor ID.
+- It requires the exact 20-job/20-artifact inventory and digest-verifies the 2016 freeze.
+- It emits concrete 2016 runtime evidence without authorizing 2017 or any trading action.
