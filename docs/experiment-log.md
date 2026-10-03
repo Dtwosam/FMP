@@ -2944,3 +2944,27 @@ Copy this section for each serious experiment:
 - CLI surface: plan only.
 - Rerun / retry / replacement: NO.
 - 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-078 — First 2015 run failure
+
+- Run: `37126711695`, #1 / attempt 1.
+- Head: `fd85a886d07234ad584dcca08692b37e6af54b2e`.
+- Preflight job: `111213380390`.
+- Source validation: PASS.
+- Scoped 2015 execution authorization: PASS.
+- 2015 no-predecessor validation: PASS.
+- Artifact upload: FAIL.
+- Root cause: hidden `.preflight` directory filtered by upload-artifact default.
+- Annual cell execution: NONE.
+- Annual freeze: NONE.
+- First-run authorization: CONSUMED.
+
+### EXP-20261003-079 — Hidden-artifact upload repair
+
+- Upload action count: 3.
+- `include-hidden-files: true`: 3.
+- Preflight upload repaired: YES.
+- Cell-product upload repaired: YES.
+- Annual-freeze upload repaired: YES.
+- Rerun / retry / replacement authorization: NO.
+- 2016+ / Strategy V1 / promotion / trading authority: NO.
