@@ -11,8 +11,17 @@ WORKFLOW = Path(
 
 
 class AnnualCatalogue2016RuntimeInstallExecutorTests(unittest.TestCase):
+    def _install_job(self) -> str:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        marker = "  install-runtime-authorization:\n"
+        next_marker = "  compile-post-install-dispatch-plan:\n"
+        self.assertIn(marker, text)
+        self.assertIn(next_marker, text)
+        return text.split(marker, 1)[1].split(next_marker, 1)[0]
+
     def test_workflow_is_success_only_dec514_installer(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
+        install_job = self._install_job()
         self.assertIn(
             "name: phase8a-annual-catalogue-2016-runtime-install-executor",
             text,
@@ -26,9 +35,9 @@ class AnnualCatalogue2016RuntimeInstallExecutorTests(unittest.TestCase):
             "github.event.workflow_run.conclusion == 'success'",
             text,
         )
-        self.assertIn("  contents: write", text)
-        self.assertIn("  actions: read", text)
-        self.assertNotIn("  actions: write", text)
+        self.assertIn("      contents: write", install_job)
+        self.assertIn("      actions: read", install_job)
+        self.assertNotIn("      actions: write", install_job)
         self.assertNotIn("workflow_dispatch:", text)
         self.assertNotIn("  push:", text)
 
@@ -113,7 +122,7 @@ class AnnualCatalogue2016RuntimeInstallExecutorTests(unittest.TestCase):
         self.assertIn('assert receipt["trading_authorized"] is False', text)
 
     def test_installer_has_no_dispatch_or_trading_command(self) -> None:
-        text = WORKFLOW.read_text(encoding="utf-8")
+        text = self._install_job()
         for forbidden in (
             "gh workflow run ",
             "gh run rerun",
