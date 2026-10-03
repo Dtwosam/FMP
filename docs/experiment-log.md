@@ -3165,3 +3165,16 @@ Copy this section for each serious experiment:
 - Artifact ZIP SHA-256 verified against GitHub digest: YES.
 - Actions write / dispatch / retry / rerun: NO.
 - 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-097 — DEC-514 read-only 2016 activation plan
+
+- Trigger: successful DEC-513 reviewer only.
+- DEC-513 runtime-binding artifact: unique, unexpired, digest-verified.
+- Current main equals reviewed evidence head: REQUIRED.
+- DEC-503 preflight: COMPILED.
+- DEC-504 run-3 authorization: COMPILED.
+- DEC-506 install preflight: COMPILED.
+- DEC-507 two-file install action: COMPILED.
+- Repository mutation performed: NO.
+- Workflow dispatch performed: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.

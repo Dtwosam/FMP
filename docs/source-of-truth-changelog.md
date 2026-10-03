@@ -2018,3 +2018,10 @@
 - Added a read-only post-run reviewer that validates DEC-500, freezes DEC-501, and binds DEC-502 concrete 2015 runtime evidence.
 - The evidence workflow verifies the annual-freeze ZIP against GitHub's artifact digest and has no Actions write permission.
 - No retry, rerun, 2016+ execution, promotion, broker mutation, real-money action, or trading authority is added.
+
+## 2026-10-03 — DEC-514 automated read-only 2016 activation plan
+
+- Added a read-only successor to successful DEC-513 concrete 2015 evidence binding.
+- The workflow runs the frozen DEC-503 → DEC-504 → DEC-506 → DEC-507 chain on exact current main.
+- It outputs the exact two-file 2016 runtime-install action as immutable evidence only.
+- It has no repository-write or Actions-write permission and performs no mutation or dispatch.

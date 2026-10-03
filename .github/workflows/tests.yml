@@ -319,6 +319,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_runtime_evidence_workflow.py'
           -v
+      - name: Run read-only 2016 activation-plan workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2016_activation_plan_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
