@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, future concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 through DEC-511 freeze the dormant 2016 install/dispatch chain without executing it. DEC-512 now adds the exact one-shot repository-hosted 2015 replacement executor, and DEC-513 adds read-only DEC-500/501/502 post-run binding automation. The live annual workflow still has only failed run #1 until DEC-512 merges and executes. 2016 live activation, 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Merge DEC-517 recovery. The original DEC-512 executor failed before dispatch, so the annual run-2 slot remains empty. DEC-517 should create exactly 2015 replacement run #2 / attempt 1 after installing the pinned runtime; DEC-513 should bind concrete DEC-502 evidence only on success; DEC-514 may then compile the frozen 2016 activation plan.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-511 freeze the annual catalogue and dormant 2016 install/dispatch chain. DEC-512's first repository-hosted replacement executor failed before dispatch because its runtime dependencies were absent; the annual run-2 slot remains unconsumed. DEC-517 defines the one-shot recovery, DEC-513/514 are rebound and dependency-complete, DEC-518 installs the exact two-file 2016 runtime authorization only after recovered evidence, and DEC-519 builds the post-install run-3 plan as a read-only second job. 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Merge the complete recovered DEC-517→519 chain. DEC-517 should create exactly 2015 replacement run #2 / attempt 1; DEC-513 should bind concrete DEC-502 evidence on success; DEC-514 should compile the exact activation plan; DEC-518 should install only the two frozen runtime files; DEC-519 should emit the read-only exact run-3 plan. Actual run #3 dispatch remains separate.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -3046,3 +3046,12 @@ DEC-518 performs no annual workflow dispatch.
 
 Next gate:
 `READ_ONLY_POST_INSTALL_2016_DISPATCH_PLAN_ON_DEC_518_RECEIPT`.
+
+## 2026-10-03 — DEC-519 folded post-install plan source-ready
+
+The recovered source chain now includes every workflow needed before the recovery merge:
+DEC-517 recovery, dependency-complete DEC-513/514, exact DEC-518 install, and the
+read-only DEC-519 post-install planning job.
+
+DEC-519 is folded into DEC-518 to avoid exceeding GitHub's workflow-run successor depth.
+The actual 2016 run #3 dispatch remains a separate gate.
