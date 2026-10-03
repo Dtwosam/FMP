@@ -10181,3 +10181,26 @@ demo/live, broker mutation, real-money action, and trading remain false.
 
 Next gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+## DEC-492 — 2015 annual catalogue execution preflight
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY FIRST-RUN PREFLIGHT / EXECUTION LOCKED
+
+DEC-492 defines the read-only preflight for the first 2015 annual-pattern-catalogue
+run after DEC-491 installed the exact workflow.
+
+It pins DEC-491 install-receipt source blob
+`970ab466dfa5f87c6955ad65da4653a993e9d6fd`, DEC-475 runtime source blob
+`0044c19575ec005a31ab98beefccfc57fe9e72da`, and active workflow blob
+`31633e87b79551f5b7dfa6b0deb76a82eb070129`.
+
+The preflight requires exact current main, zero annual-workflow runs, expected
+first run #1 / attempt 1, annual segment 2015, and no predecessor evidence.
+
+It exposes only a plan command and keeps workflow dispatch, historical artifact
+reads, annual catalogue execution/results, next-segment execution, Strategy V1,
+promotion, Phase 8B, demo/live, broker mutation, real-money action, and trading
+false.
+
+Next gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
