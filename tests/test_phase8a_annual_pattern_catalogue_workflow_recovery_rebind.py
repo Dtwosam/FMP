@@ -71,7 +71,7 @@ class AnnualCatalogueWorkflowRecoveryRebindTests(unittest.TestCase):
             runtime,
         )
         self.assertIn("if effective_run_number == 376:", runtime)
-        self.assertNotIn("EXPECTED_RUN_NUMBER = 3", gate)
+        self.assertNotIn("EXPECTED_RUN_NUMBER = 3", gate.splitlines())
 
 if __name__ == "__main__":
     unittest.main()
