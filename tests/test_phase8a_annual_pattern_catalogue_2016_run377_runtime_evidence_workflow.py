@@ -4,8 +4,10 @@ from pathlib import Path
 import unittest
 
 
-WORKFLOW = Path(
-    ".github/workflows/"
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+WORKFLOW = (
+    REPOSITORY_ROOT
+    / ".github/workflows/"
     "phase8a-annual-catalogue-2016-run377-runtime-evidence.yml"
 )
 
