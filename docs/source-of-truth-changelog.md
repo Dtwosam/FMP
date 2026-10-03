@@ -1900,3 +1900,11 @@
 - Repaired exactly three hidden artifact upload sites with `include-hidden-files: true`.
 - Preserved the pre-repair workflow as a historical snapshot.
 - Kept rerun, retry, replacement, 2016+, Strategy V1, promotion, and trading authority false.
+
+## 2026-10-03 — DEC-497 2015 replacement-run preflight
+
+- Added a read-only preflight for a possible replacement 2015 run.
+- Requires the exact consumed failed run as the sole prior annual workflow run.
+- Pins the DEC-495 failure receipt, DEC-496 upload repair, and repaired workflow.
+- Expects replacement run #2 / attempt 1.
+- Adds no replacement execution, 2016+, Strategy V1, promotion, or trading authority.
