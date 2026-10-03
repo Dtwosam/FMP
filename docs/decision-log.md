@@ -10483,3 +10483,22 @@ positive previous annual-freeze run id. Nothing is installed by DEC-505.
 
 Next gate:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC504`.
+
+## DEC-506 — Read-only 2016 runtime authorization install preflight
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY INSTALL PREFLIGHT / LIVE RUNTIME UNCHANGED
+
+DEC-506 validates a canonical DEC-504 authorization receipt against exact current
+main and the DEC-505 dormant two-file activation plan.
+
+It requires segment `2016`, expected workflow run #3 / attempt 1, a positive
+previous annual-freeze run id, inactive DEC-504 runtime state, an absent active
+2016 gate source, and the exact pre-2016 runtime blob.
+
+The future activation is exactly two files: create the frozen 2016 gate source and
+replace the runtime with the frozen 2016-wired target. DEC-506 itself is plan-only
+and authorizes no repository mutation.
+
+Next gate:
+`EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_MUTATION`.
