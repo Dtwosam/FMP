@@ -10332,3 +10332,27 @@ Phase 8B, demo/live, broker mutation, real-money action, and trading remain fals
 
 Next gate:
 `EXACT_2015_REPLACEMENT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+
+## DEC-499 — Final 2015 replacement dispatch action preflight
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY REPLACEMENT DISPATCH READY
+
+DEC-499 is the final read-only preflight before the single authorized repaired 2015
+replacement dispatch.
+
+It pins DEC-498 authorization source blob
+`c63fc9f72ad34fa6fd903f2dde8e85570521c9b9`, live replacement runtime blob
+`ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b`, and repaired workflow blob
+`f7e65ee95f472918e390bceedd7cf2f38bbf7e92`.
+
+The live inventory must contain exactly one prior annual run: failed run
+`37126711695`, #1 / attempt 1. Expected replacement identity is #2 / attempt 1.
+
+The CLI remains plan-only and contains no dispatch action.
+
+Failed-run retry, run #3+, 2016+, Strategy V1, promotion, Phase 8B, demo/live,
+broker mutation, real-money action, and trading remain false.
+
+Next gate:
+`EXACT_2015_REPLACEMENT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
