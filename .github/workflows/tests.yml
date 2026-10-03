@@ -399,6 +399,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2017_execution_authorization.py'
           -v
+      - name: Run dormant 2017 runtime authorization-plan tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2017_runtime_authorization_plan.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
