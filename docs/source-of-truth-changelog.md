@@ -1891,3 +1891,12 @@
 - Pins DEC-493 authorization/runtime and the exact installed annual workflow.
 - Requires exact current main, zero prior annual-workflow runs, 2015, and run #1 / attempt 1.
 - Adds no dispatch command and no later-year, Strategy V1, promotion, or trading authority.
+
+## 2026-10-03 — DEC-495/496 first-2015 failure and upload repair
+
+- Bound failed run `37126711695` as the consumed first 2015 attempt.
+- Confirmed failure occurred after successful preflight validation and before any annual cell execution.
+- Identified upload-artifact hidden-directory filtering as the failure mechanism.
+- Repaired exactly three hidden artifact upload sites with `include-hidden-files: true`.
+- Preserved the pre-repair workflow as a historical snapshot.
+- Kept rerun, retry, replacement, 2016+, Strategy V1, promotion, and trading authority false.
