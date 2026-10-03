@@ -2978,3 +2978,15 @@ Copy this section for each serious experiment:
 - Expected replacement identity: #2 / attempt 1.
 - Replacement execution authorization: NO.
 - 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-081 — DEC-498 2015 replacement execution authorization
+
+- Authorization basis: standing operator autonomous-build authorization.
+- Annual segment: 2015 only.
+- Replacement run identity: #2 / attempt 1.
+- Failed first run id: `37126711695`.
+- Historical artifact reads for replacement: YES.
+- Catalogue execution for replacement: YES.
+- Result production for replacement: YES.
+- Failed-run rerun / retry: NO.
+- Run #3+ / 2016+ / Strategy V1 / promotion / trading: NO.
