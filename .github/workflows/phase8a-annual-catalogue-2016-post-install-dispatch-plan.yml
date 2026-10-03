@@ -1,0 +1,267 @@
+name: phase8a-annual-catalogue-2016-post-install-dispatch-plan
+
+on:
+  workflow_run:
+    workflows:
+      - phase8a-annual-catalogue-2016-runtime-install-executor
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  compile-dispatch-plan:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      SOURCE_INSTALL_RUN_ID: ${{ github.event.workflow_run.id }}
+      SOURCE_PREINSTALL_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Require exact successful DEC-518 installer run
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_run"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_INSTALL_RUN_ID"             > "$RUNNER_TEMP/dec518-run.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "dec518-run.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          exact = {
+              "id": int(os.environ["SOURCE_INSTALL_RUN_ID"]),
+              "name": "phase8a-annual-catalogue-2016-runtime-install-executor",
+              "path": (
+                  ".github/workflows/"
+                  "phase8a-annual-catalogue-2016-runtime-install-executor.yml"
+              ),
+              "event": "workflow_run",
+              "head_branch": "main",
+              "head_sha": os.environ["SOURCE_PREINSTALL_HEAD_SHA"],
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          PY
+
+      - name: Require frozen post-install planning sources
+        run: |
+          set -euo pipefail
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-runtime-install-executor.yml)" = "d84c76ea042f3d33e9289f7a3fe346feed6ed630"
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_dispatch_preflight.py)" = "ab15723683f0fa37f5cc4511168cf264f47063c0"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_dispatch_preflight.py)" = "730c05c2572fe3397bbcb5c9a5b3874a08032f8c"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_dispatch_authorization.py)" = "8de76c1d3a576d365a3d99f15336868165123dd0"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_dispatch_authorization.py)" = "925c981e4f6df95f1cbba565bfcfacf40353ba54"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_dispatch_action_preflight.py)" = "301214231775b83df99d1ff9f878f916ec76a07e"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_dispatch_action_preflight.py)" = "6c25446bb7816a4993c2790ae494474e571567c9"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" = "87c00381c5c12a0593378f565e6be4bad003514f"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "d7d3713cb3259e793c448153fd75ca043f511389"
+
+      - name: Download exact DEC-518 install evidence
+        run: |
+          set -euo pipefail
+          gh api             "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_INSTALL_RUN_ID/artifacts?per_page=100"             > "$RUNNER_TEMP/dec518-artifacts.json"
+
+          artifact_id="$(
+            jq -r '
+              [
+                .artifacts[]
+                | select(
+                    (.expired == false)
+                    and (.name | startswith("annual-catalogue-2016-dec518-runtime-install-"))
+                  )
+              ]
+              | if length == 1 then .[0].id else empty end
+            ' "$RUNNER_TEMP/dec518-artifacts.json"
+          )"
+          artifact_digest="$(
+            jq -r '
+              [
+                .artifacts[]
+                | select(
+                    (.expired == false)
+                    and (.name | startswith("annual-catalogue-2016-dec518-runtime-install-"))
+                  )
+              ]
+              | if length == 1 then .[0].digest else empty end
+            ' "$RUNNER_TEMP/dec518-artifacts.json"
+          )"
+          test -n "$artifact_id"
+          case "$artifact_digest" in sha256:*) ;; *) exit 1 ;; esac
+          expected_sha="$(printf '%s' "$artifact_digest" | sed 's/^sha256://')"
+
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > "$RUNNER_TEMP/dec518-evidence.zip"
+
+          actual_sha="$(
+            sha256sum "$RUNNER_TEMP/dec518-evidence.zip" | awk '{print $1}'
+          )"
+          test "$actual_sha" = "$expected_sha"
+
+          mkdir -p "$RUNNER_TEMP/dec518-evidence"
+          unzip -q "$RUNNER_TEMP/dec518-evidence.zip"             -d "$RUNNER_TEMP/dec518-evidence"
+
+          for name in dec508-install-receipt.json runtime-binding.json install-commit-sha.txt; do
+            path="$(
+              find "$RUNNER_TEMP/dec518-evidence" -type f -name "$name" -print
+            )"
+            test "$(printf '%s\n' "$path" | sed '/^$/d' | wc -l)" = "1"
+            cp "$path" "$RUNNER_TEMP/$name"
+          done
+
+      - name: Require installed main equals DEC-518 receipt
+        run: |
+          set -euo pipefail
+          INSTALL_COMMIT_SHA="$(cat "$RUNNER_TEMP/install-commit-sha.txt")"
+          test "$(git rev-parse HEAD)" = "$INSTALL_COMMIT_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/branches/main"             > "$RUNNER_TEMP/main-branch.json"
+          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-branch.json")" = "$INSTALL_COMMIT_SHA"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          receipt = json.loads(
+              (temp / "dec508-install-receipt.json").read_text(encoding="utf-8")
+          )
+          binding = json.loads(
+              (temp / "runtime-binding.json").read_text(encoding="utf-8")
+          )
+          install_sha = (temp / "install-commit-sha.txt").read_text(
+              encoding="utf-8"
+          ).strip()
+
+          assert receipt["decision"] == "DEC-508"
+          assert receipt["install_commit_sha"] == install_sha
+          assert receipt["runtime_authorization_installed"] is True
+          assert receipt["runtime_gate_active"] is True
+          assert receipt["annual_workflow_dispatch_authorized"] is False
+          assert receipt["trading_authorized"] is False
+
+          assert binding["decision"] == "DEC-502"
+          assert binding["annual_segment_label"] == "2015"
+          assert binding["run_number"] == 2
+          assert binding["run_attempt"] == 1
+          assert binding["run_conclusion"] == "success"
+          assert binding["runtime_evidence_bound"] is True
+          assert (
+              receipt["previous_annual_freeze_run_id"]
+              == binding["run_id"]
+          )
+          PY
+
+      - name: Fetch exact annual workflow inventory
+        run: |
+          set -euo pipefail
+          gh api             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"             > "$RUNNER_TEMP/annual-runs.json"
+
+      - name: Build DEC-509 installed-state dispatch preflight
+        run: |
+          set -euo pipefail
+          INSTALL_COMMIT_SHA="$(cat "$RUNNER_TEMP/install-commit-sha.txt")"
+          python scripts/phase8a_annual_pattern_catalogue_2016_dispatch_preflight.py             plan             --install-receipt-json "$RUNNER_TEMP/dec508-install-receipt.json"             --runtime-binding-json "$RUNNER_TEMP/runtime-binding.json"             --main-branch-json "$RUNNER_TEMP/main-branch.json"             --annual-workflow-runs-json "$RUNNER_TEMP/annual-runs.json"             --expected-head-sha "$INSTALL_COMMIT_SHA"             --out "$RUNNER_TEMP/dec509-dispatch-preflight.json"
+
+      - name: Build DEC-510 exact run-3 authorization
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2016_dispatch_authorization.py             authorize             --preflight-json "$RUNNER_TEMP/dec509-dispatch-preflight.json"             --out "$RUNNER_TEMP/dec510-dispatch-authorization.json"
+
+      - name: Build DEC-511 final read-only dispatch-action preflight
+        run: |
+          set -euo pipefail
+          INSTALL_COMMIT_SHA="$(cat "$RUNNER_TEMP/install-commit-sha.txt")"
+          python scripts/phase8a_annual_pattern_catalogue_2016_dispatch_action_preflight.py             plan             --authorization-json "$RUNNER_TEMP/dec510-dispatch-authorization.json"             --main-branch-json "$RUNNER_TEMP/main-branch.json"             --annual-workflow-runs-json "$RUNNER_TEMP/annual-runs.json"             --expected-head-sha "$INSTALL_COMMIT_SHA"             --out "$RUNNER_TEMP/dec511-dispatch-action-preflight.json"
+
+      - name: Verify exact future dispatch plan remains unexecuted
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          binding = json.loads(
+              (temp / "runtime-binding.json").read_text(encoding="utf-8")
+          )
+          p509 = json.loads(
+              (temp / "dec509-dispatch-preflight.json").read_text(encoding="utf-8")
+          )
+          a510 = json.loads(
+              (temp / "dec510-dispatch-authorization.json").read_text(encoding="utf-8")
+          )
+          p511 = json.loads(
+              (temp / "dec511-dispatch-action-preflight.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+
+          assert p509["decision"] == "DEC-509"
+          assert p509["annual_workflow_run_count"] == 2
+          assert p509["expected_run_number"] == 3
+          assert p509["expected_run_attempt"] == 1
+          assert p509["annual_workflow_dispatch_authorized"] is False
+
+          assert a510["decision"] == "DEC-510"
+          assert a510["authorization_scope"] == "2016_run_3_attempt_1_only"
+          assert a510["annual_workflow_dispatch_authorized"] is True
+          assert a510["dispatch_command_present"] is False
+          assert a510["dispatch_action_executed"] is False
+          assert a510["trading_authorized"] is False
+
+          assert p511["decision"] == "DEC-511"
+          assert p511["dispatch_ref"] == "main"
+          assert p511["dispatch_input_annual_segment_label"] == "2016"
+          assert p511["dispatch_input_previous_annual_freeze_run_id"] == str(
+              binding["run_id"]
+          )
+          assert p511["expected_run_number"] == 3
+          assert p511["expected_run_attempt"] == 1
+          assert p511["dispatch_parameters_frozen"] is True
+          assert p511["annual_workflow_dispatch_authorized"] is True
+          assert p511["dispatch_command_present"] is False
+          assert p511["dispatch_action_executed"] is False
+          assert p511["preflight_read_only"] is True
+          assert p511["fourth_or_later_run_authorized"] is False
+          assert p511["next_segment_execution_authorized"] is False
+          assert p511["trading_authorized"] is False
+          PY
+
+      - name: Upload immutable DEC-519 post-install dispatch plan
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2016-dec519-dispatch-plan-${{ github.event.workflow_run.id }}
+          path: |
+            ${{ runner.temp }}/dec518-run.json
+            ${{ runner.temp }}/dec518-artifacts.json
+            ${{ runner.temp }}/dec508-install-receipt.json
+            ${{ runner.temp }}/runtime-binding.json
+            ${{ runner.temp }}/install-commit-sha.txt
+            ${{ runner.temp }}/main-branch.json
+            ${{ runner.temp }}/annual-runs.json
+            ${{ runner.temp }}/dec509-dispatch-preflight.json
+            ${{ runner.temp }}/dec510-dispatch-authorization.json
+            ${{ runner.temp }}/dec511-dispatch-action-preflight.json
+          if-no-files-found: error
