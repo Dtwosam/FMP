@@ -53,6 +53,37 @@ def _sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
+def _positive_int(value: object, *, field: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+        raise ValueError(f"DEC-502 {field} must be a positive integer")
+    return value
+
+
+def _sha256_hex(value: object, *, field: str) -> str:
+    if not isinstance(value, str) or len(value) != 64:
+        raise ValueError(f"DEC-502 {field} must be a SHA-256 hex string")
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError(f"DEC-502 {field} must be hexadecimal") from exc
+    return value.lower()
+
+
+def _validate_artifact(value: object, *, field: str) -> Mapping[str, object]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"DEC-502 {field} must be an artifact object")
+    _positive_int(value.get("id"), field=f"{field} id")
+    name = value.get("name")
+    if not isinstance(name, str) or not name:
+        raise ValueError(f"DEC-502 {field} name is malformed")
+    digest = value.get("digest")
+    if not isinstance(digest, str) or not digest.startswith("sha256:"):
+        raise ValueError(f"DEC-502 {field} digest is malformed")
+    _sha256_hex(digest.removeprefix("sha256:"), field=f"{field} digest")
+    _positive_int(value.get("size_in_bytes"), field=f"{field} size")
+    return value
+
+
 def validate_2015_runtime_evidence_binding_sources(
     *,
     repository_root: Path,
@@ -206,6 +237,62 @@ def validate_2015_runtime_evidence_binding(
         raise ValueError("DEC-502 annual cell count mismatch")
     if value.get("directional_record_count") != 89460:
         raise ValueError("DEC-502 directional record count mismatch")
+
+    _positive_int(value.get("run_id"), field="run id")
+    _positive_int(value.get("preflight_job_id"), field="preflight job id")
+    _positive_int(value.get("freeze_job_id"), field="freeze job id")
+
+    cell_job_ids = value.get("cell_job_ids")
+    if not isinstance(cell_job_ids, Mapping) or len(cell_job_ids) != 18:
+        raise ValueError("DEC-502 cell job inventory mismatch")
+    seen_job_ids: set[int] = set()
+    for name, raw_id in cell_job_ids.items():
+        if not isinstance(name, str) or not name:
+            raise ValueError("DEC-502 cell job name malformed")
+        job_id = _positive_int(raw_id, field=f"cell job id {name}")
+        if job_id in seen_job_ids:
+            raise ValueError("DEC-502 duplicate cell job id")
+        seen_job_ids.add(job_id)
+
+    preflight_artifact = _validate_artifact(
+        value.get("preflight_artifact"),
+        field="preflight artifact",
+    )
+    freeze_artifact = _validate_artifact(
+        value.get("freeze_artifact"),
+        field="freeze artifact",
+    )
+    cell_artifacts = value.get("cell_artifacts")
+    if not isinstance(cell_artifacts, Mapping) or len(cell_artifacts) != 18:
+        raise ValueError("DEC-502 cell artifact inventory mismatch")
+    seen_artifact_ids: set[int] = set()
+    for name, artifact in cell_artifacts.items():
+        if not isinstance(name, str) or not name:
+            raise ValueError("DEC-502 cell artifact name malformed")
+        row = _validate_artifact(artifact, field=f"cell artifact {name}")
+        artifact_id = int(row["id"])
+        if artifact_id in seen_artifact_ids:
+            raise ValueError("DEC-502 duplicate cell artifact id")
+        seen_artifact_ids.add(artifact_id)
+
+    freeze_zip_sha256 = _sha256_hex(
+        value.get("freeze_artifact_zip_sha256"),
+        field="freeze artifact ZIP SHA-256",
+    )
+    if freeze_artifact.get("digest") != f"sha256:{freeze_zip_sha256}":
+        raise ValueError("DEC-502 freeze artifact digest mismatch")
+
+    for field in (
+        "freeze_evidence_canonical_sha256",
+        "freeze_evidence_fingerprint",
+        "review_fingerprint_sha256",
+        "runtime_freeze_fingerprint_sha256",
+    ):
+        _sha256_hex(value.get(field), field=field)
+
+    if preflight_artifact.get("id") == freeze_artifact.get("id"):
+        raise ValueError("DEC-502 preflight/freeze artifact ids must differ")
+
     if value.get("replacement_authorization_consumed") is not True:
         raise ValueError("DEC-502 replacement authorization must be consumed")
     if value.get("runtime_review_validated") is not True:
