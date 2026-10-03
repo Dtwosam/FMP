@@ -3051,3 +3051,15 @@ Copy this section for each serious experiment:
 - CLI surface: plan only.
 - 2016 execution authorization: NO.
 - Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-087 — DEC-504 2016 authorization contract
+
+- Input: valid DEC-503 preflight.
+- Authorization basis: standing autonomous-build instruction.
+- Annual segment: 2016.
+- Required predecessor: 2015.
+- Expected run identity: #3 / attempt 1.
+- Dispatch / historical read / execution / result scope: YES in receipt.
+- Runtime authorization installed: NO.
+- Runtime gate active: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
