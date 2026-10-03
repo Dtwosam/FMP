@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import unittest
 
@@ -10,7 +11,7 @@ from fmp.discovery.annual_pattern_catalogue_artifact_upload_repair import (
 )
 
 
-class AnnualPatternCatalogueArtifactUploadRepairTests(unittest.TestCase):
+@unittest.skipIf(\n    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",\n    "DEC-495/496 require the post-run repair state",\n)\nclass AnnualPatternCatalogueArtifactUploadRepairTests(unittest.TestCase):
     def test_sources_pin_failure_receipt_and_workflow_transition(self) -> None:
         source = validate_artifact_upload_repair_sources(
             repository_root=Path("."),
