@@ -41,7 +41,7 @@ class AnnualCatalogue2015ReplacementExecutorRecoveryTests(unittest.TestCase):
             "python -m pip install -r requirements/exp061-discovery-run.txt -e ."
         )
         preflight = text.index(
-            "phase8a_annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py"
+            "python scripts/phase8a_annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py"
         )
         self.assertLess(install, preflight)
         self.assertIn(
