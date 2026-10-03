@@ -2010,3 +2010,10 @@
 - Rechecks current main, the exact DEC-510 source, repaired workflow, and two-run inventory.
 - Binds the successful 2015 predecessor by both run ID and head SHA.
 - Freezes exact dispatch inputs while keeping the dispatch action unexecuted and all later authority locked.
+
+## 2026-10-03 — DEC-512 future 2016 runtime reviewer
+
+- Added a source-only reviewer for a future successful 2016 run 3 attempt 1.
+- Requires exact DEC-511 binding, complete job/artifact inventories, and valid 2016 freeze evidence.
+- Preserves the concrete 2015 predecessor identity.
+- Performs no dispatch and grants no later-year or trading authority.
