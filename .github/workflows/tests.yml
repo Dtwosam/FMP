@@ -132,29 +132,25 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_dispatch_authorization.py'
           -v
-      - name: Run annual-catalogue proof-workflow run-review tests
+      - name: Run pre-annual-install proof evidence tests
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          annual=".github/workflows/phase8a-annual-pattern-catalogue.yml"
+          annual_hidden="$RUNNER_TEMP/phase8a-annual-pattern-catalogue.yml"
+          mv "$annual" "$annual_hidden"
+          trap 'mv "$annual_hidden" "$annual"' EXIT
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_run_review.py' -v
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_run_freeze.py' -v
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_runtime_evidence_binding.py' -v
+      - name: Run installed annual-catalogue workflow receipt tests
         env:
           PYTHONPATH: src
         run: >-
           python -m unittest discover
           -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_run_review.py'
-          -v
-      - name: Run annual-catalogue proof-workflow run-freeze tests
-        env:
-          PYTHONPATH: src
-        run: >-
-          python -m unittest discover
-          -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_run_freeze.py'
-          -v
-      - name: Run annual-catalogue proof-workflow runtime-evidence binding tests
-        env:
-          PYTHONPATH: src
-        run: >-
-          python -m unittest discover
-          -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_runtime_evidence_binding.py'
+          -p 'test_phase8a_annual_pattern_catalogue_workflow_install_receipt.py'
           -v
       - name: Run historical snapshot and general unit tests
         env:
@@ -168,10 +164,13 @@ jobs:
           recovery_hidden="$RUNNER_TEMP/phase8a-exp062-one-shot-historical-executor-recovery.yml"
           proof=".github/workflows/phase8a-annual-catalogue-workflow-install-preflight-proof.yml"
           proof_hidden="$RUNNER_TEMP/phase8a-annual-catalogue-workflow-install-preflight-proof.yml"
+          annual=".github/workflows/phase8a-annual-pattern-catalogue.yml"
+          annual_hidden="$RUNNER_TEMP/phase8a-annual-pattern-catalogue.yml"
           mv "$active" "$hidden"
           mv "$recovery" "$recovery_hidden"
           mv "$proof" "$proof_hidden"
-          trap 'mv "$hidden" "$active"; mv "$recovery_hidden" "$recovery"; mv "$proof_hidden" "$proof"' EXIT
+          mv "$annual" "$annual_hidden"
+          trap 'mv "$hidden" "$active"; mv "$recovery_hidden" "$recovery"; mv "$proof_hidden" "$proof"; mv "$annual_hidden" "$annual"' EXIT
           python -m unittest discover -s tests -v
       - name: Compile package
         run: python -m compileall -q src tests
