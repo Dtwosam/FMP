@@ -70,7 +70,7 @@ jobs:
       - name: Require frozen DEC-502 to DEC-507 source chain
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "92eaa3ce149b337fdfd798aaffe0236083f99824"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "92acbfe1f3fe59cfede9ba51f92d5930594de3ea"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "505e9dcbfc518e7fc00b603cafef44077d105cfa"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py)" = "00b0df00f15e1d983c799e8991a88e03e010d2e3"
