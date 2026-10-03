@@ -2073,3 +2073,10 @@
 - It binds the run to the DEC-521 dispatch receipt and exact concrete 2015 predecessor ID.
 - It requires the exact 20-job/20-artifact inventory and digest-verifies the 2016 freeze.
 - It emits concrete 2016 runtime evidence without authorizing 2017 or any trading action.
+
+## 2026-10-03 — DEC-523 read-only 2017 execution preflight
+
+- Added a read-only 2017 preflight above concrete DEC-522 evidence.
+- Requires the exact failed-1 / successful-376 / successful-377 workflow-dispatch inventory.
+- Binds the 2017 predecessor to the successful 2016 run and freezes run 378 / attempt 1.
+- Adds no dispatch, execution, promotion, broker, order, real-money, or trading authority.
