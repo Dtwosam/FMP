@@ -10556,3 +10556,22 @@ promotion, broker mutation, demo/live orders, real-money action, and trading rem
 
 Next gate:
 `ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
+
+## DEC-510 — Source-only 2016 dispatch authorization
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY AUTHORIZATION / DISPATCH NOT EXECUTED
+
+DEC-510 consumes a valid DEC-509 preflight and authorizes exactly the future 2016
+annual-catalogue workflow run 3, attempt 1.
+
+The contract preserves the exact current-main/install-commit binding, installed runtime
+gate state, repaired workflow identity, and concrete 2015 predecessor freeze. It marks
+workflow dispatch plus historical read/execution/result production authorized for that
+one run, but contains and executes no dispatch command.
+
+Reruns, retries, run 4+, 2017+, Strategy V1, promotion, broker mutation, demo/live
+orders, real-money action, and trading remain false.
+
+Next gate:
+\`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_ACTION_PREFLIGHT\`.
