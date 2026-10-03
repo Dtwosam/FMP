@@ -27,7 +27,7 @@ RUNTIME_BINDING_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py"
 )
 EXPECTED_RUNTIME_BINDING_SOURCE_BLOB_SHA = (
-    "d77b26436d4255838908c909001928738f7e40b6"
+    "bbb3bba32c3677d3bd971a2744eb93498868433b"
 )
 RUNTIME_SOURCE_PATH = "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 EXPECTED_RUNTIME_SOURCE_BLOB_SHA = (
