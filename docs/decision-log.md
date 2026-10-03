@@ -10004,3 +10004,30 @@ demo/live, broker mutation, real-money action, and trading remain false.
 
 Next gate:
 `EXPLICIT_OPERATOR_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_INSTALL_AUTHORIZATION`.
+## DEC-485 — Annual catalogue preflight proof workflow installed
+
+**Date:** 2026-10-03  
+**Status:** PROOF WORKFLOW INSTALLED / DISPATCH LOCKED
+
+DEC-485 records completion of the single exact repository mutation authorized
+after DEC-484.
+
+The active proof workflow is installed at
+`.github/workflows/phase8a-annual-catalogue-workflow-install-preflight-proof.yml`
+and is byte-for-byte identical to dormant template blob
+`0d6c93e2af04501f9ac2589fd24d6672b2b41910`.
+
+The receipt pins DEC-484 preflight source blob
+`ab434212007f3777fa4436a51268438ea44be6dd` and records the authorization
+basis as explicit operator authorization. That one-file installation authorization
+is consumed; future repository mutation is locked again.
+
+The installed proof workflow remains manual-only via `workflow_dispatch` with
+`contents: read` and `actions: read` permissions. Proof-workflow dispatch,
+annual-workflow installation/dispatch, historical artifact reads/execution/results,
+next-segment execution, cross-year result production, Strategy V1 synthesis,
+promotion, Phase 8B, demo/live, broker mutation, real-money action, and trading
+remain false.
+
+Next gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
