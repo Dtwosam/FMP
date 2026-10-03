@@ -10674,3 +10674,22 @@ or trading command is present.
 
 Next gate:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_PREFLIGHT_ON_INSTALLED_MAIN`.
+
+## DEC-516 — Read-only post-install 2016 dispatch plan
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY POST-INSTALL DISPATCH PLAN / DISPATCH NOT EXECUTED
+
+DEC-516 consumes a successful DEC-515 evidence bundle only after verifying the concrete
+DEC-508 receipt, concrete DEC-502 predecessor binding, installed gate/runtime blobs,
+current-main install commit, and exact two-run annual inventory.
+
+It then rebuilds DEC-509, DEC-510, and DEC-511 in order and uploads the exact future
+2016 run-3 dispatch parameters as immutable evidence.
+
+The workflow has no write permission and no dispatch command. Repository mutation,
+rerun/retry, later years, broker access, order placement, real-money action, and trading
+remain outside DEC-516.
+
+Next gate:
+`EXACT_2016_ANNUAL_PATTERN_CATALOGUE_RUN3_ONE_SHOT_DISPATCH`.
