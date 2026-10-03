@@ -1989,3 +1989,10 @@
 - Requires exact changed-file inventory and target Git blobs.
 - Marks runtime installation/gate active only after exact evidence is supplied.
 - Keeps workflow dispatch, later-year execution, Strategy V1, promotion, and trading authority false.
+
+## 2026-10-03 — DEC-509 read-only 2016 dispatch preflight
+
+- Added a source-only preflight for the future 2016 annual-catalogue dispatch.
+- Binds the DEC-508 install receipt to concrete DEC-502 predecessor evidence and the exact two-run inventory.
+- Requires current main to equal the recorded install commit and pins the repaired active workflow.
+- Keeps dispatch, execution/result production, later-year work, promotion, broker mutation, and trading authority false.
