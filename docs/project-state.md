@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-484 freeze the catalogue method, annual runtime, annual workflow source/install path, proof contract, exact proof-workflow source, exact install mutation, and finite install preflight. DEC-485 records the exact read-only proof workflow installed and available; DEC-486 now provides the read-only current-main dispatch preflight and requires zero prior proof runs. Proof dispatch remains locked. Annual workflow installation/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Merge the exact one-file proof-workflow installation, then DEC-485 installed-state receipt and DEC-486 dispatch preflight in order. After DEC-486 is merged and green, the next boundary is separate explicit proof-workflow dispatch authorization before the first run. Annual-workflow installation/dispatch, historical catalogue execution, Strategy V1 synthesis, demo/live, and trading remain separately locked.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-486 freeze the annual catalogue method, annual runtime/workflow source and install path, proof-workflow installation state, and read-only dispatch preflight. DEC-487 now records explicit authorization for exactly the first proof-workflow dispatch (run #1 / attempt 1) while the run remains unstarted. Repository mutation, annual workflow installation/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-487, then recheck exact current main and zero prior proof-workflow runs immediately before the single authorized manual dispatch. After that run, freeze/review its read-only preflight artifact before any annual-workflow installation decision.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2696,3 +2696,16 @@ dispatched and DEC-486 provides no dispatch command.
 
 Next safe gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
+
+
+## 2026-10-03 — DEC-487 first proof-workflow dispatch authorized
+
+Explicit operator authorization now covers exactly one first manual invocation of
+the installed annual-catalogue proof workflow: run #1 / attempt 1.
+
+The workflow has not yet been triggered. Rerun, retry, replacement, repository
+mutation, annual-workflow installation/dispatch, historical execution, Strategy V1,
+and all trading authority remain locked.
+
+Next safe gate:
+`EXACT_FIRST_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
