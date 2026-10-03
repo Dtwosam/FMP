@@ -1946,3 +1946,11 @@
 - Preserves DEC-500 review, DEC-501 freeze, and DEC-477 annual-freeze identities.
 - Emits one canonical binding fingerprint.
 - Keeps 2016+, Strategy V1, promotion, and all trading authority false.
+
+## 2026-10-03 — DEC-503 read-only 2016 execution preflight
+
+- Added the first year-transition preflight over a concrete DEC-502 binding.
+- Requires the exact failed-run + successful-replacement 2015 workflow history.
+- Binds 2016 to predecessor 2015 and the successful 2015 freeze run id.
+- Expects annual workflow run #3 / attempt 1 next.
+- Adds no execution, Strategy V1, promotion, or trading authority.
