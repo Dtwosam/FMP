@@ -10399,3 +10399,27 @@ broker mutation, real-money action, and trading remain false.
 
 Next gate:
 `CONCRETE_2015_ANNUAL_PATTERN_CATALOGUE_RUNTIME_EVIDENCE_BINDING`.
+
+## DEC-502 — 2015 concrete runtime evidence binding
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-READY CONCRETE RUNTIME BINDING
+
+DEC-502 binds a semantically valid DEC-501 freeze into one canonical 2015 runtime-evidence receipt.
+
+It pins DEC-501 freeze source blob
+`8e2a6ab27b4941e3ee12b5463247999200d33e69`, DEC-500 reviewer source blob
+`883f82c85d2738c46284d3675278dc061f4ca07c`, and repaired workflow blob
+`f7e65ee95f472918e390bceedd7cf2f38bbf7e92`.
+
+The binding requires concrete run #2 / attempt 1 success, one preflight job, one
+freeze job, exactly 18 cell jobs, exactly 20 artifacts total, matching freeze ZIP
+digest, DEC-500/501 fingerprints, 18 annual cells, and 89,460 directional records.
+
+It emits one canonical `binding_fingerprint_sha256`.
+
+2016+, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation,
+real-money action, and trading remain false.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_EXECUTION_PREFLIGHT`.
