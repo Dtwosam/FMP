@@ -10,7 +10,11 @@ from fmp.discovery.annual_pattern_catalogue_2015_run1_failure_receipt import (
 )
 
 
-@unittest.skipIf(\n    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",\n    "DEC-495/496 require the post-run repair state",\n)\nclass AnnualPatternCatalogue2015Run1FailureReceiptTests(unittest.TestCase):
+@unittest.skipIf(
+    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
+    "DEC-495/496 require the post-run repair state",
+)
+class AnnualPatternCatalogue2015Run1FailureReceiptTests(unittest.TestCase):
     def test_sources_pin_dispatch_preflight_and_pre_repair_workflow(self) -> None:
         source = validate_2015_run1_failure_receipt_sources(
             repository_root=Path("."),
