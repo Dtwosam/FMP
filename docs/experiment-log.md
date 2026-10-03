@@ -2832,3 +2832,15 @@ Copy this section for each serious experiment:
 - Unopened provisional DEC-485/486 recursive branches: superseded / non-authoritative.
 - Next gate: explicit operator proof-workflow install authorization.
 
+### EXP-20261003-068 — DEC-485 proof-workflow installation receipt
+
+- Installed the active annual-catalogue install-preflight proof workflow.
+- Active workflow bytes exactly match frozen dormant template blob `0d6c93e2af04501f9ac2589fd24d6672b2b41910`.
+- Pins DEC-484 authorization-preflight source blob `ab434212007f3777fa4436a51268438ea44be6dd`.
+- Single-file installation authorization: consumed.
+- Future repository mutation: NO.
+- Proof workflow installed / available: YES.
+- Proof workflow dispatch: NO.
+- Annual workflow install / dispatch / historical execution: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Next gate: explicit proof-workflow dispatch authorization before any run.
