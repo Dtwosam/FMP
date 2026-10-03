@@ -2033,3 +2033,10 @@
 - Both resulting Git blobs are verified before a normal fast-forward push.
 - It creates and validates the concrete DEC-508 install receipt after the push.
 - It adds no workflow dispatch, rerun, broker, order, real-money, or trading authority.
+
+## 2026-10-03 — DEC-516 read-only post-install dispatch plan
+
+- Added a read-only successor to the exact DEC-515 runtime install.
+- It verifies the concrete DEC-508 receipt and DEC-502 predecessor binding on exact installed main.
+- It rebuilds DEC-509 → DEC-510 → DEC-511 and freezes only the exact run-3 dispatch inputs.
+- It has no repository-write or Actions-write permission and performs no dispatch.
