@@ -21,11 +21,11 @@ AUTHORIZATION_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_dispatch_authorization.py"
 )
 EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "8de76c1d3a576d365a3d99f15336868165123dd0"
+    "ffedb7b0f14f375e6b732678d95a2a48d21eb002"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
-    "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+    "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 )
 
 FAILED_FIRST_RUN_ID = 37126711695
@@ -132,7 +132,7 @@ def _validate_run_inventory(
             raise ValueError("DEC-511 duplicate workflow run number")
         by_number[number] = raw
 
-    if set(by_number) != {1, 2}:
+    if set(by_number) != {1, 376}:
         raise ValueError("DEC-511 workflow run number inventory mismatch")
 
     first = by_number[1]
@@ -150,10 +150,10 @@ def _validate_run_inventory(
         if first.get(field) != expected:
             raise ValueError(f"DEC-511 failed first run {field} mismatch")
 
-    second = by_number[2]
+    second = by_number[376]
     second_exact = {
         "id": authorization.get("successful_2015_run_id"),
-        "run_number": 2,
+        "run_number": 376,
         "run_attempt": 1,
         "event": "workflow_dispatch",
         "head_branch": "main",
@@ -219,7 +219,7 @@ def build_2016_dispatch_action_preflight(
 
     if authorization.get("annual_segment_label") != "2016":
         raise ValueError("DEC-511 annual segment mismatch")
-    if authorization.get("expected_run_number") != 3:
+    if authorization.get("expected_run_number") != 377:
         raise ValueError("DEC-511 expected run number mismatch")
     if authorization.get("expected_run_attempt") != 1:
         raise ValueError("DEC-511 expected run attempt mismatch")
@@ -278,7 +278,7 @@ def build_2016_dispatch_action_preflight(
         "active_workflow_path": ACTIVE_WORKFLOW_PATH,
         "annual_segment_label": "2016",
         "previous_annual_freeze_run_id": previous_run_id,
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "dispatch_ref": "main",
         "dispatch_input_annual_segment_label": "2016",
@@ -344,7 +344,7 @@ def validate_2016_dispatch_action_preflight(
         "annual_segment_label": "2016",
         "annual_workflow_run_count": 2,
         "failed_first_run_id": FAILED_FIRST_RUN_ID,
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "dispatch_ref": "main",
         "dispatch_input_annual_segment_label": "2016",
