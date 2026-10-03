@@ -1851,3 +1851,10 @@
 - Requires first-run/attempt-1 success, successful job, unexpired exact-name artifact, and semantically valid preflight JSON.
 - Records raw/canonical payload identities and embeds the validated repository-hosted proof.
 - Adds no dispatch, annual-workflow, historical-execution, Strategy V1, or trading authority.
+## 2026-10-03 — DEC-489 deterministic proof-run evidence freeze
+
+- Added a deterministic freeze over a valid DEC-488 proof-run review.
+- Pins the exact DEC-488 reviewer source.
+- Preserves concrete evidence identities and emits one canonical freeze fingerprint when real evidence is supplied.
+- Does not claim a runtime run before one exists.
+- Adds no further proof dispatch, annual workflow, historical execution, Strategy V1, or trading authority.
