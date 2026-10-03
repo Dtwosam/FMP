@@ -56,6 +56,7 @@ class AnnualCatalogue2016RuntimeInstallExecutorTests(unittest.TestCase):
         self.assertIn('case "$artifact_digest" in sha256:*)', text)
         self.assertIn('test "$actual_zip_sha" = "$expected_zip_sha"', text)
         self.assertIn("dec507-install-action.json", text)
+        self.assertIn("runtime-binding.json", text)
 
     def test_installer_mutates_exactly_two_frozen_paths(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
