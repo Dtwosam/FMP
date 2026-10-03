@@ -10520,3 +10520,20 @@ DEC-507 itself does not apply them and leaves runtime activation, dispatch/execu
 
 Next gate:
 `APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_ACTION`.
+
+## DEC-508 — Future 2016 runtime authorization install receipt
+
+**Date:** 2026-10-03  
+**Status:** FUTURE POST-INSTALL RECEIPT / DISPATCH LOCKED
+
+DEC-508 reviews the exact two-file result of the DEC-507 activation action.
+It requires exactly the planned changed files, gate blob
+`87c00381c5c12a0593378f565e6be4bad003514f`, runtime blob
+`d7d3713cb3259e793c448153fd75ca043f511389`, and a concrete install commit.
+
+A valid receipt marks the install action consumed and the 2016 runtime gate
+installed/active, while workflow dispatch and all later research/trading authority
+remain false.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_PREFLIGHT`.
