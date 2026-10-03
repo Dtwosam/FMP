@@ -29,14 +29,14 @@ def _authorization() -> dict[str, object]:
     value: dict[str, object] = {
         "decision": "DEC-510",
         "version": "fmp-annual-catalogue-2016-dispatch-authorization-v1",
-        "dispatch_preflight_source_blob_sha": "ab15723683f0fa37f5cc4511168cf264f47063c0",
-        "active_workflow_blob_sha": "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+        "dispatch_preflight_source_blob_sha": "e4afa2047cba8fbb066c755033e35e9b185c07a9",
+        "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "source_preflight_decision": "DEC-509",
         "source_preflight_version": "fmp-annual-catalogue-2016-dispatch-preflight-v1",
         "source_preflight_fingerprint_sha256": "1" * 64,
         "stage": "ANNUAL_CATALOGUE_2016_DISPATCH_AUTHORIZED_NOT_DISPATCHED",
         "authorization_basis": "standing_operator_autonomous_build_authorization",
-        "authorization_scope": "2016_run_3_attempt_1_only",
+        "authorization_scope": "2016_run_377_attempt_1_only",
         "repository_full_name": "Dtwosam/FMP",
         "expected_head_sha": HEAD,
         "install_commit_sha": HEAD,
@@ -45,7 +45,7 @@ def _authorization() -> dict[str, object]:
         "previous_annual_freeze_run_id": 424242,
         "successful_2015_run_id": 424242,
         "successful_2015_run_head_sha": RUN2_HEAD,
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "runtime_authorization_installed": True,
         "runtime_gate_active": True,
@@ -99,7 +99,7 @@ def _runs() -> dict[str, object]:
             },
             {
                 "id": 424242,
-                "run_number": 2,
+                "run_number": 376,
                 "run_attempt": 1,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
@@ -122,11 +122,11 @@ class AnnualPatternCatalogue2016DispatchActionPreflightTests(unittest.TestCase):
         )
         self.assertEqual(
             source["authorization_source_blob_sha"],
-            "8de76c1d3a576d365a3d99f15336868165123dd0",
+            "c6dc4dcaf0a7c5c410d86c921fc35828179be248",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
-            "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
     def test_exact_state_yields_read_only_frozen_dispatch_parameters(self) -> None:
@@ -140,7 +140,7 @@ class AnnualPatternCatalogue2016DispatchActionPreflightTests(unittest.TestCase):
         self.assertIs(validate_2016_dispatch_action_preflight(value), value)
         self.assertEqual(value["decision"], "DEC-511")
         self.assertEqual(value["annual_segment_label"], "2016")
-        self.assertEqual(value["expected_run_number"], 3)
+        self.assertEqual(value["expected_run_number"], 377)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertEqual(value["dispatch_ref"], "main")
         self.assertEqual(value["dispatch_input_annual_segment_label"], "2016")
@@ -166,7 +166,7 @@ class AnnualPatternCatalogue2016DispatchActionPreflightTests(unittest.TestCase):
         rows.append(
             {
                 "id": 525252,
-                "run_number": 3,
+                "run_number": 377,
                 "run_attempt": 1,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
