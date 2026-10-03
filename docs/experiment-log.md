@@ -3063,3 +3063,13 @@ Copy this section for each serious experiment:
 - Runtime authorization installed: NO.
 - Runtime gate active: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-088 — DEC-505 dormant 2016 runtime authorization plan
+
+- Live runtime mutation: NO.
+- Dormant 2016 gate template: frozen.
+- Dormant 2016-wired runtime target: frozen.
+- Segment: 2016 only.
+- Expected run: #3 / attempt 1.
+- Previous annual-freeze run id required: YES.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
