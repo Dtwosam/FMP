@@ -2933,3 +2933,14 @@ Copy this section for each serious experiment:
 - Rerun / retry / replacement: NO.
 - 2016+ / next-segment execution: NO.
 - Strategy V1 / promotion / trading authority: NO.
+### EXP-20261003-077 — DEC-494 first 2015 dispatch preflight
+
+- Exact current main required: YES.
+- Annual workflow run count required: 0.
+- Annual segment: 2015.
+- Previous annual freeze run id: empty.
+- Expected run: #1 / attempt 1.
+- DEC-493 2015 execution authority required: YES.
+- CLI surface: plan only.
+- Rerun / retry / replacement: NO.
+- 2016+ / Strategy V1 / promotion / trading authority: NO.
