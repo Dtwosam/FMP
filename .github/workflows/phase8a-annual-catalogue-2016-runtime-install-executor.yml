@@ -1,0 +1,282 @@
+name: phase8a-annual-catalogue-2016-runtime-install-executor
+
+on:
+  workflow_run:
+    workflows:
+      - phase8a-annual-catalogue-2016-activation-plan
+    types:
+      - completed
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  install-runtime-authorization:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      SOURCE_PLAN_RUN_ID: ${{ github.event.workflow_run.id }}
+      SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - name: Checkout exact activation-plan head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Require exact successful DEC-514 plan run
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_run"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$(git rev-parse HEAD)" = "$SOURCE_HEAD_SHA"
+
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_PLAN_RUN_ID"             > "$RUNNER_TEMP/dec514-run.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "dec514-run.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          exact = {
+              "id": int(os.environ["SOURCE_PLAN_RUN_ID"]),
+              "name": "phase8a-annual-catalogue-2016-activation-plan",
+              "path": ".github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml",
+              "event": "workflow_run",
+              "head_branch": "main",
+              "head_sha": os.environ["SOURCE_HEAD_SHA"],
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          PY
+
+      - name: Require exact frozen installer sources
+        run: |
+          set -euo pipefail
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "b4acf3fe84f532cfaf5e20beff949f0b638cab09"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "9a5ad0b8f5e441bb67f7daee11aa8f8cc2aee535"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "5b00b32bdcfa876e218de8af8274e8c64ec24c25"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "d5f6c2bfb20d0a3a637763340e33d360fd48b0ba"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2016_runtime_authorization.py.disabled)" = "87c00381c5c12a0593378f565e6be4bad003514f"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled)" = "d7d3713cb3259e793c448153fd75ca043f511389"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b"
+          test ! -e src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py
+
+      - name: Download exact DEC-514 activation plan
+        run: |
+          set -euo pipefail
+          gh api             "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_PLAN_RUN_ID/artifacts?per_page=100"             > "$RUNNER_TEMP/dec514-artifacts.json"
+
+          artifact_id="$(
+            jq -r '
+              [
+                .artifacts[]
+                | select(
+                    (.expired == false)
+                    and (.name | startswith("annual-catalogue-2016-dec514-activation-plan-"))
+                  )
+              ]
+              | if length == 1 then .[0].id else empty end
+            ' "$RUNNER_TEMP/dec514-artifacts.json"
+          )"
+          artifact_digest="$(
+            jq -r '
+              [
+                .artifacts[]
+                | select(
+                    (.expired == false)
+                    and (.name | startswith("annual-catalogue-2016-dec514-activation-plan-"))
+                  )
+              ]
+              | if length == 1 then .[0].digest else empty end
+            ' "$RUNNER_TEMP/dec514-artifacts.json"
+          )"
+          test -n "$artifact_id"
+          case "$artifact_digest" in sha256:*) ;; *) exit 1 ;; esac
+          expected_zip_sha="$(printf '%s' "$artifact_digest" | sed 's/^sha256://')"
+
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > "$RUNNER_TEMP/dec514-plan.zip"
+
+          actual_zip_sha="$(
+            sha256sum "$RUNNER_TEMP/dec514-plan.zip" | awk '{print $1}'
+          )"
+          test "$actual_zip_sha" = "$expected_zip_sha"
+
+          mkdir -p "$RUNNER_TEMP/dec514-plan"
+          unzip -q "$RUNNER_TEMP/dec514-plan.zip" -d "$RUNNER_TEMP/dec514-plan"
+
+          action_path="$(
+            find "$RUNNER_TEMP/dec514-plan"               -type f -name dec507-install-action.json -print
+          )"
+          test "$(printf '%s\n' "$action_path" | sed '/^$/d' | wc -l)" = "1"
+          cp "$action_path" "$RUNNER_TEMP/dec507-install-action.json"
+
+      - name: Verify exact DEC-507 install action
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          action = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "dec507-install-action.json"
+              ).read_text(encoding="utf-8")
+          )
+          assert action["decision"] == "DEC-507"
+          assert action["repository_full_name"] == "Dtwosam/FMP"
+          assert action["expected_head_sha"] == os.environ["SOURCE_HEAD_SHA"]
+          assert action["annual_segment_label"] == "2016"
+          assert action["expected_run_number"] == 3
+          assert action["expected_run_attempt"] == 1
+          assert action["action_count"] == 2
+          assert action["repository_mutation_authorized"] is True
+          assert action["runtime_authorization_installed"] is False
+          assert action["runtime_gate_active"] is False
+          assert action["annual_workflow_dispatch_authorized"] is False
+          assert action["trading_authorized"] is False
+
+          create, update = action["actions"]
+          assert create == {
+              "order": 1,
+              "operation": "create",
+              "target_path": (
+                  "src/fmp/discovery/"
+                  "annual_pattern_catalogue_2016_runtime_authorization.py"
+              ),
+              "expected_target_absent": True,
+              "content_source_path": (
+                  "docs/superpowers/templates/"
+                  "annual_pattern_catalogue_2016_runtime_authorization.py.disabled"
+              ),
+              "content_source_blob_sha": (
+                  "87c00381c5c12a0593378f565e6be4bad003514f"
+              ),
+              "expected_result_blob_sha": (
+                  "87c00381c5c12a0593378f565e6be4bad003514f"
+              ),
+          }
+          assert update == {
+              "order": 2,
+              "operation": "update",
+              "target_path": "src/fmp/discovery/annual_pattern_catalogue_runtime.py",
+              "expected_current_blob_sha": (
+                  "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b"
+              ),
+              "content_source_path": (
+                  "docs/superpowers/templates/"
+                  "annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled"
+              ),
+              "content_source_blob_sha": (
+                  "d7d3713cb3259e793c448153fd75ca043f511389"
+              ),
+              "expected_result_blob_sha": (
+                  "d7d3713cb3259e793c448153fd75ca043f511389"
+              ),
+          }
+          PY
+
+      - name: Require current main unchanged immediately before mutation
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$SOURCE_HEAD_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_HEAD_SHA"
+          test -z "$(git status --porcelain)"
+
+      - name: Apply exact two-file runtime authorization install
+        run: |
+          set -euo pipefail
+          cp             docs/superpowers/templates/annual_pattern_catalogue_2016_runtime_authorization.py.disabled             src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py
+          cp             docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled             src/fmp/discovery/annual_pattern_catalogue_runtime.py
+
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" = "87c00381c5c12a0593378f565e6be4bad003514f"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "d7d3713cb3259e793c448153fd75ca043f511389"
+
+          git diff --name-only > "$RUNNER_TEMP/changed-files.txt"
+          printf '%s\n'             "src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py"             "src/fmp/discovery/annual_pattern_catalogue_runtime.py"             > "$RUNNER_TEMP/expected-changed-files.txt"
+          diff -u "$RUNNER_TEMP/expected-changed-files.txt" "$RUNNER_TEMP/changed-files.txt"
+
+      - name: Commit exact DEC-515 install
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add             src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py             src/fmp/discovery/annual_pattern_catalogue_runtime.py
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "2"
+          git commit -m "phase8a: install exact 2016 runtime authorization (DEC-515)"
+          INSTALL_COMMIT_SHA="$(git rev-parse HEAD)"
+          printf '%s\n' "$INSTALL_COMMIT_SHA" > "$RUNNER_TEMP/install-commit-sha.txt"
+
+      - name: Push only the exact install commit to main
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$SOURCE_HEAD_SHA"
+          git push origin HEAD:main
+
+      - name: Build concrete DEC-508 install receipt
+        run: |
+          set -euo pipefail
+          INSTALL_COMMIT_SHA="$(cat "$RUNNER_TEMP/install-commit-sha.txt")"
+          python scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py             review             --install-action-json "$RUNNER_TEMP/dec507-install-action.json"             --install-commit-sha "$INSTALL_COMMIT_SHA"             --changed-file src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py             --changed-file src/fmp/discovery/annual_pattern_catalogue_runtime.py             --installed-gate-blob-sha 87c00381c5c12a0593378f565e6be4bad003514f             --installed-runtime-blob-sha d7d3713cb3259e793c448153fd75ca043f511389             --out "$RUNNER_TEMP/dec508-install-receipt.json"
+
+      - name: Verify post-install main and receipt
+        run: |
+          set -euo pipefail
+          INSTALL_COMMIT_SHA="$(cat "$RUNNER_TEMP/install-commit-sha.txt")"
+          gh api "repos/$GITHUB_REPOSITORY/branches/main"             > "$RUNNER_TEMP/main-after.json"
+          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-after.json")" = "$INSTALL_COMMIT_SHA"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          receipt = json.loads(
+              (temp / "dec508-install-receipt.json").read_text(encoding="utf-8")
+          )
+          install_sha = (temp / "install-commit-sha.txt").read_text(
+              encoding="utf-8"
+          ).strip()
+
+          assert receipt["decision"] == "DEC-508"
+          assert receipt["install_commit_sha"] == install_sha
+          assert receipt["annual_segment_label"] == "2016"
+          assert receipt["expected_run_number"] == 3
+          assert receipt["expected_run_attempt"] == 1
+          assert receipt["changed_file_count"] == 2
+          assert receipt["runtime_authorization_installed"] is True
+          assert receipt["runtime_gate_active"] is True
+          assert receipt["annual_workflow_dispatch_authorized"] is False
+          assert receipt["trading_authorized"] is False
+          PY
+
+      - name: Upload immutable DEC-515 install evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2016-dec515-runtime-install-${{ github.event.workflow_run.id }}
+          path: |
+            ${{ runner.temp }}/dec514-run.json
+            ${{ runner.temp }}/dec514-artifacts.json
+            ${{ runner.temp }}/dec507-install-action.json
+            ${{ runner.temp }}/install-commit-sha.txt
+            ${{ runner.temp }}/changed-files.txt
+            ${{ runner.temp }}/dec508-install-receipt.json
+            ${{ runner.temp }}/main-after.json
+          if-no-files-found: error
