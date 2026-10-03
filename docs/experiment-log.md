@@ -2844,3 +2844,13 @@ Copy this section for each serious experiment:
 - Annual workflow install / dispatch / historical execution: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: explicit proof-workflow dispatch authorization before any run.
+### EXP-20261003-069 — DEC-486 proof-workflow dispatch preflight
+
+- Pins DEC-485 receipt blob `638c988524ccf8ada27067c2b0bdb3403823a6f5`.
+- Pins active proof-workflow blob `0d6c93e2af04501f9ac2589fd24d6672b2b41910`.
+- Requires exact current main and zero proof-workflow runs.
+- CLI surface: plan only.
+- Proof-workflow dispatch: NO.
+- Annual workflow install / dispatch / historical execution: NO.
+- Strategy V1 / promotion / trading authority: NO.
+- Next gate: explicit proof-workflow dispatch authorization before run.
