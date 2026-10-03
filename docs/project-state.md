@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-499 freeze the annual catalogue method, repaired workflow, failed first 2015 run, replacement authorization, and final replacement dispatch preflight. DEC-500 defines the semantic successful-run reviewer; DEC-501 now defines the deterministic runtime evidence freeze over that review. 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-501. Then execute exactly one 2015 replacement workflow dispatch (#2 / attempt 1), run DEC-500 review and DEC-501 freeze over the concrete evidence, and bind those exact runtime identities before any 2016 execution.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-499 freeze the annual catalogue method, repaired workflow, failed first 2015 run, replacement authorization, and final replacement dispatch preflight. DEC-500 defines the semantic successful-run reviewer; DEC-501 defines the deterministic runtime freeze; DEC-502 now defines the concrete runtime-evidence binding over a valid DEC-501 freeze. 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-502. Then execute exactly one 2015 replacement workflow dispatch (#2 / attempt 1), review it with DEC-500, freeze it with DEC-501, bind it with DEC-502, and only then advance to a read-only 2016 execution preflight.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2872,3 +2872,16 @@ A successful DEC-500 review can now be frozen deterministically while preserving
 the exact run, job, artifact, and DEC-477 annual-freeze identities.
 
 The next post-run layer is the concrete runtime evidence binding.
+
+## 2026-10-03 — DEC-502 concrete runtime binding source-ready
+
+A valid DEC-501 freeze can now be bound into one canonical 2015 runtime receipt
+that requires the exact run/job/artifact inventory and preserves the DEC-500,
+DEC-501, and DEC-477 fingerprints.
+
+No runtime evidence is claimed yet. The replacement workflow run still has to
+exist and pass DEC-500/501 before DEC-502 can produce a concrete receipt.
+
+Next safe layer:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_EXECUTION_PREFLIGHT`, only after concrete
+2015 runtime evidence is bound.
