@@ -20,6 +20,16 @@ jobs:
         run: python -m pip install -e .
       - name: Validate workflow YAML syntax
         run: ruby scripts/validate_workflow_yaml.rb .github/workflows
+
+      - name: Validate optional installed annual preflight proof workflow
+        run: |
+          set -euo pipefail
+          source_path="docs/superpowers/templates/phase8a-annual-pattern-catalogue-workflow-install-preflight-proof.yml.disabled"
+          active_path=".github/workflows/phase8a-annual-catalogue-workflow-install-preflight-proof.yml"
+          if [ -e "$active_path" ]; then
+            test -f "$active_path"
+            cmp -s "$source_path" "$active_path"
+          fi
       - name: Run installed-state unit tests
         env:
           PYTHONPATH: src
@@ -118,9 +128,14 @@ jobs:
           hidden="$RUNNER_TEMP/phase8a-exp062-one-shot-historical-executor.yml"
           recovery=".github/workflows/phase8a-exp062-one-shot-historical-executor-recovery.yml"
           recovery_hidden="$RUNNER_TEMP/phase8a-exp062-one-shot-historical-executor-recovery.yml"
+          proof=".github/workflows/phase8a-annual-catalogue-workflow-install-preflight-proof.yml"
+          proof_hidden="$RUNNER_TEMP/phase8a-annual-catalogue-workflow-install-preflight-proof.yml"
           mv "$active" "$hidden"
           mv "$recovery" "$recovery_hidden"
-          trap 'mv "$hidden" "$active"; mv "$recovery_hidden" "$recovery"' EXIT
+          if [ -f "$proof" ]; then
+            mv "$proof" "$proof_hidden"
+          fi
+          trap 'mv "$hidden" "$active"; mv "$recovery_hidden" "$recovery"; if [ -f "$proof_hidden" ]; then mv "$proof_hidden" "$proof"; fi' EXIT
           python -m unittest discover -s tests -v
       - name: Compile package
         run: python -m compileall -q src tests
