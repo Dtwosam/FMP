@@ -24,24 +24,29 @@ class AnnualPatternCatalogueRuntimeWiringTests(unittest.TestCase):
 
         with patch.object(
             runtime,
-            "load_verified_annual_catalogue_segment_from_indexes",
-        ) as loader:
-            with self.assertRaisesRegex(
-                PermissionError,
-                "historical artifact reads remain locked",
-            ):
-                run_locked_annual_catalogue_cell(
-                    feature_root=Path("feature-root"),
-                    outcome_root=Path("outcome-root"),
-                    feature_evidence_path=Path("feature-evidence.json"),
-                    outcome_evidence_path=Path("outcome-evidence.json"),
-                    annual_segment_label="2015",
-                    symbol="EURUSD",
-                    timeframe="5m",
-                    horizon_minutes=60,
-                    code_commit=CODE_COMMIT,
-                )
-            loader.assert_not_called()
+            "_workflow_run_identity",
+            return_value=(None, None),
+        ):
+            with patch.object(
+                runtime,
+                "load_verified_annual_catalogue_segment_from_indexes",
+            ) as loader:
+                with self.assertRaisesRegex(
+                    PermissionError,
+                    "historical artifact reads remain locked",
+                ):
+                    run_locked_annual_catalogue_cell(
+                        feature_root=Path("feature-root"),
+                        outcome_root=Path("outcome-root"),
+                        feature_evidence_path=Path("feature-evidence.json"),
+                        outcome_evidence_path=Path("outcome-evidence.json"),
+                        annual_segment_label="2015",
+                        symbol="EURUSD",
+                        timeframe="5m",
+                        horizon_minutes=60,
+                        code_commit=CODE_COMMIT,
+                    )
+                loader.assert_not_called()
 
     def test_gate_validates_code_commit_without_opening_authority(self) -> None:
         with self.assertRaisesRegex(ValueError, "40-character Git commit"):
