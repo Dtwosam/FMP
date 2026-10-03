@@ -31,13 +31,13 @@ def _source_preflight() -> dict[str, object]:
     return {
         "decision": "DEC-503",
         "version": "fmp-annual-catalogue-2016-execution-preflight-v1",
-        "runtime_binding_source_blob_sha": "505e9dcbfc518e7fc00b603cafef44077d105cfa",
+        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
         "runtime_source_blob_sha": "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b",
-        "active_workflow_blob_sha": "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+        "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "annual_workflow_run_count": 2,
         "failed_first_run_id": 37126711695,
         "successful_2015_run_id": 424242,
-        "successful_2015_run_number": 2,
+        "successful_2015_run_number": 376,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": "b" * 40,
         "stage": (
@@ -53,7 +53,7 @@ def _source_preflight() -> dict[str, object]:
         "previous_runtime_binding_fingerprint": "1" * 64,
         "previous_runtime_freeze_fingerprint": "2" * 64,
         "previous_annual_freeze_evidence_fingerprint": "3" * 64,
-        "expected_next_run_number": 3,
+        "expected_next_run_number": 377,
         "expected_next_run_attempt": 1,
         "annual_workflow_dispatch_authorized": False,
         "historical_artifact_read_authorized": False,
@@ -98,7 +98,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallPreflightTests(
         )
         self.assertEqual(
             source["execution_authorization_source_blob_sha"],
-            "19d95a11e3ae1684d28ab17020f78bea39003bc8",
+            "f3d93ba4701a5d9d80005664445104d1105ff25f",
         )
         self.assertEqual(
             source["runtime_authorization_plan_source_blob_sha"],
@@ -120,7 +120,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallPreflightTests(
         self.assertEqual(value["decision"], "DEC-506")
         self.assertEqual(value["source_authorization_decision"], "DEC-504")
         self.assertEqual(value["annual_segment_label"], "2016")
-        self.assertEqual(value["expected_run_number"], 3)
+        self.assertEqual(value["expected_run_number"], 377)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertEqual(value["previous_annual_freeze_run_id"], 424242)
         self.assertEqual(value["activation_mutation_file_count"], 2)
