@@ -14,8 +14,10 @@ class AnnualCatalogue2016PostInstallDispatchPlanTests(unittest.TestCase):
     def _post_install_job(self) -> str:
         text = WORKFLOW.read_text(encoding="utf-8")
         marker = "  compile-post-install-dispatch-plan:\n"
+        next_marker = "  dispatch-exact-2016-run-377:\n"
         self.assertIn(marker, text)
-        return text.split(marker, 1)[1]
+        self.assertIn(next_marker, text)
+        return text.split(marker, 1)[1].split(next_marker, 1)[0]
 
     def test_dec519_is_read_only_second_job_after_dec518(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
