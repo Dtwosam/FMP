@@ -10676,3 +10676,23 @@ action, and trading remain locked.
 
 Next gate:
 `SUCCESSFUL_2015_REPLACEMENT_RUN_2_THEN_DEC_513_CONCRETE_BINDING`.
+
+## DEC-518 — Recovered exact 2016 runtime install executor
+
+**Date:** 2026-10-03  
+**Status:** BOUNDED REPOSITORY MUTATION / NO WORKFLOW DISPATCH
+
+DEC-518 is installed together with DEC-517 so the workflow-run successor already exists
+before the recovered 2015 evidence chain can reach DEC-514.
+
+It accepts only a successful recovered DEC-514 plan artifact, verifies the exact DEC-507
+two-file action and concrete DEC-502 binding, requires current main to remain unchanged,
+copies only the frozen 2016 gate/runtime templates, verifies their result blobs, and
+creates one normal fast-forward commit.
+
+The executor then builds the concrete DEC-508 post-install receipt. Annual workflow
+dispatch, rerun/retry, broker mutation, order placement, real-money action, and trading
+remain outside DEC-518.
+
+Next gate:
+`READ_ONLY_POST_INSTALL_2016_DISPATCH_PLAN_ON_DEC_518_RECEIPT`.
