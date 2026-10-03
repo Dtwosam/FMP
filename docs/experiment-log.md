@@ -3129,3 +3129,16 @@ Copy this section for each serious experiment:
 - Dispatch command present/executed: NO.
 - Rerun / retry / run 4+: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-094 — DEC-511 final read-only 2016 dispatch preflight
+
+- Source DEC-510 authorization: REQUIRED and validated.
+- Current main = authorization head = install commit: REQUIRED.
+- Prior annual workflow runs: exactly 2.
+- Successful 2015 predecessor run ID + head SHA: exact.
+- Frozen dispatch ref: main.
+- Frozen annual segment: 2016.
+- Frozen predecessor input: exact successful 2015 run ID.
+- Dispatch authority: YES, inherited exact-run contract.
+- Dispatch command present/executed: NO.
+- Rerun / retry / run 4+ / 2017+ / Strategy V1 / promotion / trading: NO.
