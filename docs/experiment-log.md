@@ -2911,3 +2911,14 @@ Copy this section for each serious experiment:
 - Separate execution gates retained: 3.
 - Annual workflow dispatch / 2015 execution: NO.
 - Strategy V1 / promotion / trading authority: NO.
+### EXP-20261003-075 — DEC-492 2015 execution preflight
+
+- Installed annual workflow: YES.
+- Active workflow blob: `31633e87b79551f5b7dfa6b0deb76a82eb070129`.
+- Annual workflow run count required: 0.
+- Expected first run: #1 / attempt 1.
+- Annual segment: 2015.
+- Prior segment / prior freeze required: NO.
+- DEC-475 historical read / execution / result authority: NO.
+- CLI surface: plan only.
+- Workflow dispatch / Strategy V1 / promotion / trading authority: NO.
