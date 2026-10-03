@@ -3215,3 +3215,14 @@ Copy this section for each serious experiment:
 - DEC-509 → DEC-510 → DEC-511: REBUILT IN ORDER.
 - Expected next annual run: #3 / attempt 1.
 - Dispatch / mutation / rerun / retry / trading: NO.
+
+### EXP-20261003-103 — DEC-520 workflow validity and run-number recovery
+
+- Malformed live workflow before repair: duplicate YAML keys on preflight upload.
+- Last invalid annual workflow global run number observed: 375.
+- Additional annual `workflow_dispatch` runs observed: 0.
+- Corrected live workflow blob: `09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`.
+- Hidden-file flags after repair: exactly one per preflight/cell/freeze upload.
+- Recovered 2015 replacement identity: run 376 / attempt 1.
+- Future 2016 identity: run 377 / attempt 1.
+- New dispatch/retry/trading authority created by repair: NO.
