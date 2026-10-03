@@ -28,13 +28,13 @@ def _preflight() -> dict[str, object]:
     value: dict[str, object] = {
         "decision": "DEC-509",
         "version": "fmp-annual-catalogue-2016-dispatch-preflight-v1",
-        "install_receipt_source_blob_sha": "5b00b32bdcfa876e218de8af8274e8c64ec24c25",
-        "runtime_binding_source_blob_sha": "505e9dcbfc518e7fc00b603cafef44077d105cfa",
-        "active_workflow_blob_sha": "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+        "install_receipt_source_blob_sha": "7da956910e24e788a2f2a60834c04048a660bc75",
+        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
+        "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "annual_workflow_run_count": 2,
         "failed_first_run_id": 37126711695,
         "successful_2015_run_id": 424242,
-        "successful_2015_run_number": 2,
+        "successful_2015_run_number": 376,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": "b" * 40,
         "source_install_receipt_decision": "DEC-508",
@@ -55,7 +55,7 @@ def _preflight() -> dict[str, object]:
         "annual_segment_label": "2016",
         "prior_segment_label": "2015",
         "previous_annual_freeze_run_id": 424242,
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "install_action_consumed": True,
         "runtime_authorization_installed": True,
@@ -106,11 +106,11 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
         )
         self.assertEqual(
             source["dispatch_preflight_source_blob_sha"],
-            "ab15723683f0fa37f5cc4511168cf264f47063c0",
+            "e4afa2047cba8fbb066c755033e35e9b185c07a9",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
-            "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
     def test_exact_preflight_yields_source_only_run3_authorization(self) -> None:
@@ -121,7 +121,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
         self.assertIs(validate_2016_dispatch_authorization(value), value)
         self.assertEqual(value["decision"], "DEC-510")
         self.assertEqual(value["annual_segment_label"], "2016")
-        self.assertEqual(value["expected_run_number"], 3)
+        self.assertEqual(value["expected_run_number"], 377)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertEqual(value["successful_2015_run_head_sha"], "b" * 40)
         self.assertTrue(value["runtime_authorization_installed"])
@@ -156,7 +156,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
 
     def test_source_preflight_run_number_drift_is_rejected(self) -> None:
         preflight = _preflight()
-        preflight["expected_run_number"] = 4
+        preflight["expected_run_number"] = 378
         _refingerprint(preflight)
         with self.assertRaisesRegex(
             ValueError,
