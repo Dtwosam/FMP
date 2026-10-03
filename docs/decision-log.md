@@ -10654,3 +10654,25 @@ orders, use real money, or trade.
 
 Next gate:
 \`APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_ACTION\`.
+
+## DEC-517 — 2015 replacement executor recovery
+
+**Date:** 2026-10-03  
+**Status:** ONE-SHOT RECOVERY / TARGET RUN-2 SLOT UNCONSUMED
+
+The initial DEC-512 executor run `37149151549` failed before its dispatch step because
+the workflow omitted the pinned annual-catalogue Python dependency install. GitHub still
+reports exactly one annual `workflow_dispatch` run: failed 2015 run #1.
+
+DEC-517 adds a separate one-shot recovery workflow rather than weakening or rerunning the
+failed executor. It verifies that exact failure, installs the pinned runtime, rebuilds
+DEC-499 on exact current main, and may submit exactly 2015 run #2 / attempt 1.
+
+DEC-513 is rebound to accept evidence only when that run is tied to the successful
+DEC-517 recovery executor at the same head.
+
+Retry/rerun, run 3+, 2016+ execution, promotion, broker mutation, orders, real-money
+action, and trading remain locked.
+
+Next gate:
+`SUCCESSFUL_2015_REPLACEMENT_RUN_2_THEN_DEC_513_CONCRETE_BINDING`.
