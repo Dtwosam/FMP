@@ -20,6 +20,10 @@ from fmp.discovery.annual_pattern_catalogue_2015_execution_authorization import 
 CODE_COMMIT = "a" * 40
 
 
+@unittest.skipIf(
+    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
+    "DEC-493 requires the installed annual catalogue workflow",
+)
 class AnnualPatternCatalogue2015ExecutionAuthorizationTests(unittest.TestCase):
     def test_sources_pin_preflight_receipt_and_active_workflow(self) -> None:
         source = validate_2015_execution_authorization_sources(
