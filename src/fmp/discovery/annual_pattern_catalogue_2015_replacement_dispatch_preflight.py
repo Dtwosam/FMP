@@ -29,7 +29,7 @@ EXPECTED_UPLOAD_REPAIR_SOURCE_BLOB_SHA = (
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_REPAIRED_WORKFLOW_BLOB_SHA = (
-    "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+    "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 )
 
 FAILED_RUN_ID = 37126711695
@@ -224,7 +224,7 @@ def validate_2015_replacement_dispatch_preflight(
         raise ValueError("DEC-497 prior run count mismatch")
     if value.get("failed_run_id") != FAILED_RUN_ID:
         raise ValueError("DEC-497 failed run id mismatch")
-    if value.get("expected_replacement_run_number") != 2:
+    if value.get("expected_replacement_run_number") != 376:
         raise ValueError("DEC-497 replacement run number mismatch")
     if value.get("expected_replacement_run_attempt") != 1:
         raise ValueError("DEC-497 replacement run attempt mismatch")
