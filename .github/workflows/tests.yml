@@ -124,6 +124,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_dispatch_preflight.py'
           -v
+      - name: Run installed annual-catalogue proof-workflow dispatch-authorization tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_dispatch_authorization.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
