@@ -123,6 +123,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
         self.assertEqual(value["annual_segment_label"], "2016")
         self.assertEqual(value["expected_run_number"], 3)
         self.assertEqual(value["expected_run_attempt"], 1)
+        self.assertEqual(value["successful_2015_run_head_sha"], "b" * 40)
         self.assertTrue(value["runtime_authorization_installed"])
         self.assertTrue(value["runtime_gate_active"])
         self.assertTrue(value["authorization_contract_validated"])
