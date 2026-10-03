@@ -3090,3 +3090,14 @@ trading authority is added.
 
 Next live gate:
 `REVIEW_2016_RUN_377_BEFORE_ANY_2017_EXECUTION`.
+
+## 2026-10-03 — DEC-522 read-only 2016 run-377 reviewer source-ready
+
+A later successful run 377 can now be bound to its exact DEC-521 dispatch receipt,
+20-job/20-artifact inventory, and digest-verified 2016 annual freeze.
+
+DEC-522 is source-ready only and must not be treated as evidence that run 377 has
+completed. It grants no 2017, promotion, broker, order, real-money, or trading authority.
+
+Next gate after concrete DEC-522 evidence:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT`.
