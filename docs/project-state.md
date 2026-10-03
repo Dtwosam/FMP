@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, future concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 through DEC-511 freeze the dormant 2016 install/dispatch chain without executing it. DEC-512 now adds the exact one-shot repository-hosted 2015 replacement executor, and DEC-513 adds read-only DEC-500/501/502 post-run binding automation. The live annual workflow still has only failed run #1 until DEC-512 merges and executes. 2016 live activation, 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-512/513/514. DEC-512 should create exactly 2015 replacement run #2 / attempt 1; DEC-513 should bind concrete DEC-502 evidence only on success; DEC-514 should then compile the frozen DEC-503→507 2016 activation plan without applying it. The next live mutation remains the exact two-file DEC-507 action.
+**Next milestone:** Merge DEC-517 recovery. The original DEC-512 executor failed before dispatch, so the annual run-2 slot remains empty. DEC-517 should create exactly 2015 replacement run #2 / attempt 1 after installing the pinned runtime; DEC-513 should bind concrete DEC-502 evidence only on success; DEC-514 may then compile the frozen 2016 activation plan.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -3020,3 +3020,18 @@ DEC-514 has no write authority and does not apply the action or dispatch run #3.
 
 Next live gate:
 \`APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_ACTION\`.
+
+## 2026-10-03 — DEC-517 replacement executor recovery source-ready
+
+The first repository-hosted replacement executor failed before dispatch because its
+environment lacked the pinned annual-catalogue Python runtime. The target annual workflow
+still contains only failed run #1.
+
+DEC-517 provides the only recovery path: a new one-shot workflow that proves the failed
+executor identity, proves run #2 is still absent, installs the pinned runtime, rebuilds
+DEC-499 on exact current main, and may submit exactly 2015 run #2 / attempt 1.
+
+DEC-513 now binds only to the successful recovery executor.
+
+Next live dependency:
+`SUCCESSFUL_2015_REPLACEMENT_RUN_2_THEN_DEC_513_CONCRETE_BINDING`.
