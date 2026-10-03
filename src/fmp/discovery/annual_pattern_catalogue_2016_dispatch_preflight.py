@@ -60,14 +60,14 @@ TRADING_AUTHORIZED = False
 def _git_blob_sha(path: Path) -> str:
     payload = Path(path).read_bytes()
     return hashlib.sha1(
-        f"blob {len(payload)}\\0".encode("ascii") + payload
+        f"blob {len(payload)}\0".encode("ascii") + payload
     ).hexdigest()
 
 
 def _canonical_json(value: object) -> bytes:
     return (
         json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
-        + "\\n"
+        + "\n"
     ).encode("utf-8")
 
 
