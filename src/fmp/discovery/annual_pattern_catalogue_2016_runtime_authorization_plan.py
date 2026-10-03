@@ -13,13 +13,13 @@ EXECUTION_AUTHORIZATION_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_execution_authorization.py"
 )
 EXPECTED_EXECUTION_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "9c1462d27c6e8ba01842d767a61163817926dcff"
+    "f3d93ba4701a5d9d80005664445104d1105ff25f"
 )
 EXECUTION_PREFLIGHT_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py"
 )
 EXPECTED_EXECUTION_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "d804bdefb58f803738ba47dcdf244b0646bbdade"
+    "9c89eb64c1e0ecda56fd9cfe0b26516e4a20abc3"
 )
 CURRENT_RUNTIME_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
