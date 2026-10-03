@@ -2003,3 +2003,10 @@
 - Requires a valid DEC-509 preflight and byte-exact repaired workflow/source identity.
 - Authorizes dispatch/read/execution/result production only for that exact run.
 - Contains no dispatch command and keeps reruns, later years, promotion, broker mutation, and trading locked.
+
+## 2026-10-03 — DEC-511 final read-only 2016 dispatch-action preflight
+
+- Added the final non-mutating check before the future exact 2016 workflow dispatch.
+- Rechecks current main, the exact DEC-510 source, repaired workflow, and two-run inventory.
+- Binds the successful 2015 predecessor by both run ID and head SHA.
+- Freezes exact dispatch inputs while keeping the dispatch action unexecuted and all later authority locked.
