@@ -231,6 +231,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_runtime_evidence_binding.py'
           -v
+      - name: Run read-only 2016 execution-preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2016_execution_preflight.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
