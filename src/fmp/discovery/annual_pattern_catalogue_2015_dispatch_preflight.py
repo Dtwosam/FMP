@@ -34,6 +34,8 @@ EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA = (
 )
 RUNTIME_SOURCE_PATH = "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 EXPECTED_RUNTIME_SOURCE_BLOB_SHA = "4f23996b90b4253af06774d0330003179264c8ee"
+EXECUTION_CLI_PATH = "scripts/phase8a_annual_pattern_catalogue.py"
+EXPECTED_EXECUTION_CLI_BLOB_SHA = "db2d20d95729f464deca6f46b17f66a5cd97e5e6"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
     "31633e87b79551f5b7dfa6b0deb76a82eb070129"
 )
@@ -69,6 +71,10 @@ def validate_2015_dispatch_preflight_sources(
         "runtime_source_blob_sha": (
             root / RUNTIME_SOURCE_PATH,
             EXPECTED_RUNTIME_SOURCE_BLOB_SHA,
+        ),
+        "execution_cli_blob_sha": (
+            root / EXECUTION_CLI_PATH,
+            EXPECTED_EXECUTION_CLI_BLOB_SHA,
         ),
         "active_workflow_blob_sha": (
             root / RESERVED_ACTIVE_WORKFLOW_PATH,
@@ -189,6 +195,7 @@ def validate_2015_dispatch_preflight(
         "version": ANNUAL_CATALOGUE_2015_DISPATCH_PREFLIGHT_VERSION,
         "authorization_source_blob_sha": EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA,
         "runtime_source_blob_sha": EXPECTED_RUNTIME_SOURCE_BLOB_SHA,
+        "execution_cli_blob_sha": EXPECTED_EXECUTION_CLI_BLOB_SHA,
         "active_workflow_blob_sha": EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA,
         "source_authorization_decision": "DEC-493",
         "source_authorization_version": (
@@ -241,6 +248,7 @@ __all__ = [
     "ANNUAL_CATALOGUE_2015_DISPATCH_PREFLIGHT_VERSION",
     "EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA",
     "EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA",
+    "EXPECTED_EXECUTION_CLI_BLOB_SHA",
     "EXPECTED_RUNTIME_SOURCE_BLOB_SHA",
     "build_2015_dispatch_preflight",
     "validate_2015_dispatch_preflight",
