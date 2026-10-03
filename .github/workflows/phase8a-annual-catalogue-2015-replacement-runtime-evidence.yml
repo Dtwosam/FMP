@@ -71,6 +71,7 @@ jobs:
           set -euo pipefail
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
           test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml)" = "74e9499d9485c8e2a402fb675c995cc1961ff16a"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml)" = "3957f1d62714c473714b68949cc3cfd9569493b3"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_review.py)" = "883f82c85d2738c46284d3675278dc061f4ca07c"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_freeze.py)" = "8e2a6ab27b4941e3ee12b5463247999200d33e69"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "505e9dcbfc518e7fc00b603cafef44077d105cfa"
@@ -78,10 +79,10 @@ jobs:
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_run_freeze.py)" = "f8a9a872195f01ca85627a6a6cac4a0c0672f82d"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "584871d8f55f1da0e5bd885f91542141dc523972"
 
-      - name: Bind target run to the DEC-512 executor
+      - name: Bind target run to the DEC-517 recovery executor
         run: |
           set -euo pipefail
-          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml/runs?branch=main&event=push&per_page=100"
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml/runs?branch=main&event=push&per_page=100"
           gh api "$endpoint" > "$RUNNER_TEMP/executor-runs.json"
 
           python - <<'PY'
@@ -98,9 +99,9 @@ jobs:
               row
               for row in payload.get("workflow_runs", [])
               if row.get("name")
-              == "phase8a-annual-catalogue-2015-replacement-one-shot-executor"
+              == "phase8a-annual-catalogue-2015-replacement-executor-recovery"
               and row.get("path")
-              == ".github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml"
+              == ".github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml"
               and row.get("event") == "push"
               and row.get("head_branch") == "main"
               and row.get("head_sha") == os.environ["TARGET_HEAD_SHA"]
