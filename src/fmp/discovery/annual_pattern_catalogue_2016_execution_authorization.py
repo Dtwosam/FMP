@@ -21,7 +21,7 @@ EXECUTION_PREFLIGHT_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py"
 )
 EXPECTED_EXECUTION_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "d804bdefb58f803738ba47dcdf244b0646bbdade"
+    "9c89eb64c1e0ecda56fd9cfe0b26516e4a20abc3"
 )
 RUNTIME_SOURCE_PATH = "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 EXPECTED_RUNTIME_SOURCE_BLOB_SHA = (
