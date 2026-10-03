@@ -46,7 +46,7 @@ jobs:
           test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml)" = "74e9499d9485c8e2a402fb675c995cc1961ff16a"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py)" = "0bc49eb42846196c56401a877c2500fe5543ff69"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py)" = "69a2f600e63e27185c744b87a70b86f1c424a2ab"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py)" = "89ad05565fa1aff8ce97ac0eb6a8d5579781ee62"
 
       - name: Require original DEC-512 executor failed before dispatch
