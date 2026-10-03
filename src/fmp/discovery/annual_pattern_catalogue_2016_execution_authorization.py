@@ -21,15 +21,15 @@ EXECUTION_PREFLIGHT_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py"
 )
 EXPECTED_EXECUTION_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "00b0df00f15e1d983c799e8991a88e03e010d2e3"
+    "d804bdefb58f803738ba47dcdf244b0646bbdade"
 )
 RUNTIME_SOURCE_PATH = "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 EXPECTED_RUNTIME_SOURCE_BLOB_SHA = (
-    "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b"
+    "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
-    "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+    "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 )
 
 
@@ -110,7 +110,7 @@ def build_2016_execution_authorization(
         raise ValueError("DEC-504 annual segment mismatch")
     if preflight.get("prior_segment_label") != "2015":
         raise ValueError("DEC-504 predecessor segment mismatch")
-    if preflight.get("expected_next_run_number") != 3:
+    if preflight.get("expected_next_run_number") != 377:
         raise ValueError("DEC-504 expected run number mismatch")
     if preflight.get("expected_next_run_attempt") != 1:
         raise ValueError("DEC-504 expected run attempt mismatch")
@@ -138,11 +138,11 @@ def build_2016_execution_authorization(
         "authorization_basis": (
             "standing_operator_autonomous_build_authorization"
         ),
-        "authorization_scope": "2016_run_3_attempt_1_only",
+        "authorization_scope": "2016_run_377_attempt_1_only",
         "annual_segment_label": "2016",
         "prior_segment_label": "2015",
         "previous_annual_freeze_run_id": previous_freeze_run_id,
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "annual_workflow_dispatch_authorized": True,
         "historical_artifact_read_authorized": True,
@@ -199,7 +199,7 @@ def validate_2016_execution_authorization(
         raise ValueError("DEC-504 annual segment mismatch")
     if value.get("prior_segment_label") != "2015":
         raise ValueError("DEC-504 predecessor mismatch")
-    if value.get("expected_run_number") != 3:
+    if value.get("expected_run_number") != 377:
         raise ValueError("DEC-504 run number mismatch")
     if value.get("expected_run_attempt") != 1:
         raise ValueError("DEC-504 run attempt mismatch")
