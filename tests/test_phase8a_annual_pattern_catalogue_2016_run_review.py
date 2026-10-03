@@ -322,6 +322,56 @@ class AnnualPatternCatalogue2016RunReviewTests(unittest.TestCase):
                 expected_head_sha=HEAD,
             )
 
+    def test_refingerprinted_artifact_inventory_tamper_is_rejected(self) -> None:
+        value = review_2016_run(
+            _dispatch_preflight(),
+            repository_root=Path("."),
+            run=_run(),
+            jobs_payload=_jobs(),
+            artifacts_payload=_artifacts(),
+            freeze_evidence=_freeze(),
+            freeze_artifact_zip_sha256="f" * 64,
+            expected_head_sha=HEAD,
+        )
+        tampered = copy.deepcopy(value)
+        cell_artifacts = tampered["cell_artifacts"]
+        assert isinstance(cell_artifacts, dict)
+        cell_artifacts.pop(next(iter(cell_artifacts)))
+        unsigned = dict(tampered)
+        unsigned.pop("review_fingerprint_sha256", None)
+        tampered["review_fingerprint_sha256"] = hashlib.sha256(
+            _canonical_json(unsigned)
+        ).hexdigest()
+        with self.assertRaisesRegex(
+            ValueError,
+            "cell artifact inventory mismatch",
+        ):
+            validate_2016_run_review(tampered)
+
+    def test_refingerprinted_duplicate_job_id_is_rejected(self) -> None:
+        value = review_2016_run(
+            _dispatch_preflight(),
+            repository_root=Path("."),
+            run=_run(),
+            jobs_payload=_jobs(),
+            artifacts_payload=_artifacts(),
+            freeze_evidence=_freeze(),
+            freeze_artifact_zip_sha256="f" * 64,
+            expected_head_sha=HEAD,
+        )
+        tampered = copy.deepcopy(value)
+        cell_job_ids = tampered["cell_job_ids"]
+        assert isinstance(cell_job_ids, dict)
+        first_name = next(iter(cell_job_ids))
+        cell_job_ids[first_name] = tampered["preflight_job_id"]
+        unsigned = dict(tampered)
+        unsigned.pop("review_fingerprint_sha256", None)
+        tampered["review_fingerprint_sha256"] = hashlib.sha256(
+            _canonical_json(unsigned)
+        ).hexdigest()
+        with self.assertRaisesRegex(ValueError, "job ids must be unique"):
+            validate_2016_run_review(tampered)
+
     def test_refingerprinted_next_segment_authority_tamper_is_rejected(self) -> None:
         value = review_2016_run(
             _dispatch_preflight(),
