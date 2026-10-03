@@ -28,7 +28,7 @@ def _source_preflight() -> dict[str, object]:
         "decision": "DEC-503",
         "version": "fmp-annual-catalogue-2016-execution-preflight-v1",
         "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
-        "runtime_source_blob_sha": "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b",
+        "runtime_source_blob_sha": "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "annual_workflow_run_count": 2,
         "failed_first_run_id": 37126711695,
@@ -131,7 +131,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallActionTests(
         )
         self.assertEqual(
             update["expected_current_blob_sha"],
-            "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b",
+            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
         )
         self.assertTrue(value["repository_mutation_authorized"])
         self.assertFalse(value["runtime_authorization_installed"])
