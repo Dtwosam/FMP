@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 freezes one complete 18-cell / 89,460-record annual catalogue; DEC-478 freezes the disabled annual workflow source; DEC-479 freezes its future installation mutation; DEC-480 freezes the hardened read-only install preflight; DEC-481 freezes the repository-hosted proof contract; DEC-482 freezes the exact read-only proof-workflow source; DEC-483 freezes its future file-creation mutation; DEC-484 now provides the finite read-only install preflight and requires explicit operator authorization as the next boundary. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge finite-bootstrap DEC-484. After merge, the only next gate is explicit operator authorization for the exact DEC-483 read-only proof-workflow file creation. The unopened provisional DEC-485/486 recursive branches are superseded and must not be opened or merged. Proof-workflow dispatch, annual workflow installation/dispatch, historical execution, Strategy V1 synthesis, demo/live, and trading remain locked.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-484 freeze the catalogue method, annual runtime, annual workflow source/install path, repository-hosted proof contract, exact proof-workflow source, exact install mutation, and finite install preflight. DEC-485 now records the exact read-only proof workflow as installed and available while proof dispatch remains locked. Annual workflow installation/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** DEC-484 is merged and its single authorized file-creation mutation has been executed exactly. Validate and merge DEC-485 installed-state receipt, then require a separate explicit proof-workflow dispatch authorization before any run. Annual-workflow installation/dispatch, historical catalogue execution, Strategy V1 synthesis, demo/live, and trading remain separately locked.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2669,3 +2669,18 @@ promotion, and trading remain locked.
 Next safe gate:
 `REPOSITORY_HOSTED_READ_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_INSTALL_PREFLIGHT_PROOF`.
 
+## 2026-10-03 — DEC-485 annual-catalogue preflight proof workflow installed
+
+The exact read-only proof workflow is now installed at
+`.github/workflows/phase8a-annual-catalogue-workflow-install-preflight-proof.yml`.
+
+Its bytes equal the frozen dormant template blob
+`0d6c93e2af04501f9ac2589fd24d6672b2b41910`. The one-file operator
+authorization that crossed DEC-484 is consumed, so future repository mutation is
+locked again.
+
+The workflow is available only as a manual `workflow_dispatch` surface and retains
+`contents: read` / `actions: read` permissions. It has not been dispatched.
+
+Next safe gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_AUTHORIZATION_BEFORE_RUN`.

@@ -1821,3 +1821,12 @@
 - Superseded the unopened provisional DEC-485/486 recursive-bootstrap branches; they are non-authoritative and must not be opened or merged.
 - Next gate is explicit operator authorization for the exact DEC-483 read-only proof-workflow file creation.
 
+## 2026-10-03 — DEC-485 annual-catalogue preflight proof workflow installation
+
+- Installed the active read-only proof workflow from the exact frozen dormant template.
+- Active and dormant workflow Git blobs are both `0d6c93e2af04501f9ac2589fd24d6672b2b41910`.
+- Added an installed-state receipt bound to DEC-484 source blob `ab434212007f3777fa4436a51268438ea44be6dd`.
+- Records the single-file installation authorization as consumed and future repository mutation as locked.
+- Keeps proof-workflow dispatch, annual-workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
+- Splits CI current installed-state verification from the historical pre-install snapshot.
+- Next gate is separate explicit proof-workflow dispatch authorization before any run.
