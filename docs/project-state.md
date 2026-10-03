@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 freezes dormant activation targets; DEC-506 defines the read-only install preflight; DEC-507 compiles the exact two-file action; DEC-508 defines the future exact post-install receipt; DEC-509 defines the read-only post-install dispatch preflight; DEC-510 defines the source-only exact run-3 authorization; DEC-511 now freezes the final exact dispatch parameters while keeping the dispatch unexecuted. 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-509/510/511. The next live gate is the exact 2016 run-3 dispatch, but it remains conditional on a concrete DEC-508 install receipt on exact current main; do not dispatch early. 2017+ and all trading authority remain locked.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, future concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 through DEC-511 freeze the dormant 2016 install/dispatch chain without executing it. DEC-512 now adds the exact one-shot repository-hosted 2015 replacement executor, and DEC-513 adds read-only DEC-500/501/502 post-run binding automation. The live annual workflow still has only failed run #1 until DEC-512 merges and executes. 2016 live activation, 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-512/513. Their merged-main execution should create exactly 2015 replacement run #2 / attempt 1 and, only on success, a concrete DEC-502 runtime binding artifact. After that evidence exists, refresh the exact DEC-503→508 chain against current main and apply only the frozen two-file 2016 runtime activation before any run-3 dispatch.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2990,3 +2990,22 @@ The dispatch action remains unexecuted and no dispatch command is embedded in th
 Next live gate:
 \`EXACT_2016_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN\`,
 only after the concrete DEC-508 install receipt exists on exact current main.
+
+## 2026-10-03 — DEC-512/513 replacement execution and evidence automation source-ready
+
+The live annual workflow inventory still contains only failed run
+\`37126711695\` / #1 / attempt 1.
+
+DEC-512 now provides the missing repository-hosted one-shot executor. On its first
+merged-main push it rebuilds DEC-499 against exact current main, requires that sole
+failed run, and submits exactly one 2015 replacement dispatch expected to become
+run #2 / attempt 1.
+
+DEC-513 is installed alongside it and is read-only. If run #2 completes successfully,
+it validates the exact run/job/artifact inventory under DEC-500, freezes it under
+DEC-501, binds concrete runtime evidence under DEC-502, and uploads the binding.
+
+No 2016 runtime mutation or run-3 dispatch occurs in either workflow.
+
+Next live dependency:
+\`CONCRETE_DEC_502_2015_RUNTIME_BINDING_FROM_SUCCESSFUL_RUN_2\`.
