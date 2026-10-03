@@ -8,14 +8,23 @@ from fmp.discovery.annual_pattern_catalogue_2015_replacement_execution_authoriza
     EXPECTED_REPLACEMENT_RUN_NUMBER,
 )
 
-WORKFLOW = Path(".github/workflows/phase8a-annual-pattern-catalogue.yml")
-RUNTIME = Path("src/fmp/discovery/annual_pattern_catalogue_runtime.py")
-GATE_TEMPLATE = Path(
-    "docs/superpowers/templates/"
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+WORKFLOW = (
+    REPOSITORY_ROOT
+    / ".github/workflows/phase8a-annual-pattern-catalogue.yml"
+)
+RUNTIME = (
+    REPOSITORY_ROOT
+    / "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
+)
+GATE_TEMPLATE = (
+    REPOSITORY_ROOT
+    / "docs/superpowers/templates/"
     "annual_pattern_catalogue_2016_runtime_authorization.py.disabled"
 )
-RUNTIME_TEMPLATE = Path(
-    "docs/superpowers/templates/"
+RUNTIME_TEMPLATE = (
+    REPOSITORY_ROOT
+    / "docs/superpowers/templates/"
     "annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled"
 )
 
