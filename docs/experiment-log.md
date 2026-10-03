@@ -3191,3 +3191,16 @@ Copy this section for each serious experiment:
 - Concrete DEC-508 receipt: REQUIRED after install.
 - Workflow dispatch / rerun / retry: NO.
 - Broker mutation / live order / real money / trading: NO.
+
+### EXP-20261003-099 — DEC-516 read-only post-install 2016 dispatch plan
+
+- Trigger: successful DEC-515 installer only.
+- DEC-515 artifact: unique, unexpired, digest-verified.
+- Concrete DEC-508 receipt: REQUIRED.
+- Concrete DEC-502 runtime binding: REQUIRED.
+- Installed gate/runtime blobs: EXACT.
+- Current main equals install commit: REQUIRED.
+- DEC-509 → DEC-510 → DEC-511: REBUILT IN ORDER.
+- Expected next annual run: #3 / attempt 1.
+- Dispatch command executed: NO.
+- Repository write / retry / rerun / trading authority: NO.
