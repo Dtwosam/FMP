@@ -1908,3 +1908,11 @@
 - Pins the DEC-495 failure receipt, DEC-496 upload repair, and repaired workflow.
 - Expects replacement run #2 / attempt 1.
 - Adds no replacement execution, 2016+, Strategy V1, promotion, or trading authority.
+
+## 2026-10-03 — DEC-498 2015 replacement execution authorization
+
+- Converted the standing autonomous-build instruction into a one-run replacement authorization.
+- Authorized only 2015 run #2 / attempt 1 after the consumed failed first run.
+- Threaded that exact identity through the live annual-catalogue runtime.
+- Preserved the DEC-493 first-run runtime as an exact historical snapshot.
+- Kept run #1 retry, run #3+, 2016+, Strategy V1, promotion, and all trading authority false.
