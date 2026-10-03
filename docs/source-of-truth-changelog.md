@@ -1961,3 +1961,10 @@
 - Scopes authorization to 2016 run #3 / attempt 1 with predecessor 2015.
 - Keeps live runtime installation and runtime gate activation false.
 - Adds no 2017+, Strategy V1, promotion, or trading authority.
+
+## 2026-10-03 — DEC-505 dormant 2016 runtime authorization plan
+
+- Added an exact dormant 2016 authorization-gate template.
+- Added an exact dormant runtime target wired only for 2016 run #3 / attempt 1.
+- Preserved the current live runtime unchanged.
+- Kept dispatch, 2016 runtime activation, 2017+, Strategy V1, promotion, and trading authority false.
