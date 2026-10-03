@@ -1,0 +1,90 @@
+from __future__ import annotations
+
+import hashlib
+from pathlib import Path
+import unittest
+
+from fmp.discovery.annual_pattern_catalogue_2015_replacement_execution_authorization import (
+    EXPECTED_REPLACEMENT_RUN_NUMBER,
+)
+from fmp.discovery.annual_pattern_catalogue_2016_execution_authorization import (
+    build_2016_execution_authorization,
+)
+
+
+WORKFLOW = Path(".github/workflows/phase8a-annual-pattern-catalogue.yml")
+RUNTIME = Path("src/fmp/discovery/annual_pattern_catalogue_runtime.py")
+GATE_TEMPLATE = Path(
+    "docs/superpowers/templates/"
+    "annual_pattern_catalogue_2016_runtime_authorization.py.disabled"
+)
+RUNTIME_TEMPLATE = Path(
+    "docs/superpowers/templates/"
+    "annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled"
+)
+
+
+def _git_blob_sha(path: Path) -> str:
+    payload = path.read_bytes()
+    return hashlib.sha1(
+        f"blob {len(payload)}\0".encode("ascii") + payload
+    ).hexdigest()
+
+
+class AnnualCatalogueWorkflowRecoveryRebindTests(unittest.TestCase):
+    def test_live_workflow_is_corrected_blob(self) -> None:
+        self.assertEqual(
+            _git_blob_sha(WORKFLOW),
+            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
+        )
+
+    def test_each_upload_block_has_one_hidden_file_flag(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        marker = "uses: actions/upload-artifact@v6"
+        blocks = [marker + suffix for suffix in text.split(marker)[1:]]
+        self.assertEqual(len(blocks), 3)
+        for name, path in (
+            ("phase8a-annual-catalogue-preflight-", "path: .preflight"),
+            ("phase8a-annual-catalogue-cell-", "path: .result"),
+            (
+                "phase8a-annual-catalogue-freeze-",
+                "path: .annual-freeze/annual-freeze.json",
+            ),
+        ):
+            with self.subTest(name=name):
+                matches = [block for block in blocks if name in block]
+                self.assertEqual(len(matches), 1)
+                self.assertIn(path, matches[0])
+                self.assertEqual(
+                    matches[0].count("include-hidden-files: true"),
+                    1,
+                )
+
+    def test_replacement_runtime_identity_is_exact_run_376(self) -> None:
+        self.assertEqual(EXPECTED_REPLACEMENT_RUN_NUMBER, 376)
+        runtime = RUNTIME.read_text(encoding="utf-8")
+        self.assertIn("if effective_run_number == 376:", runtime)
+        self.assertNotIn("if effective_run_number == 2:", runtime)
+
+    def test_dormant_2016_identity_is_exact_run_377(self) -> None:
+        gate = GATE_TEMPLATE.read_text(encoding="utf-8")
+        runtime = RUNTIME_TEMPLATE.read_text(encoding="utf-8")
+        self.assertIn("EXPECTED_RUN_NUMBER = 377", gate)
+        self.assertIn(
+            'segment == "2016" and effective_run_number == 377',
+            runtime,
+        )
+        self.assertIn("if effective_run_number == 376:", runtime)
+        self.assertNotIn("EXPECTED_RUN_NUMBER = 3", gate)
+
+    def test_live_2016_gate_remains_uninstalled(self) -> None:
+        self.assertFalse(
+            Path(
+                "src/fmp/discovery/"
+                "annual_pattern_catalogue_2016_runtime_authorization.py"
+            ).exists()
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
