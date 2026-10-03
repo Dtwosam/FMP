@@ -21,7 +21,7 @@ AUTHORIZATION_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_dispatch_authorization.py"
 )
 EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "71a211ef2098e93f7a5e09f195d0fefb83df1454"
+    "8de76c1d3a576d365a3d99f15336868165123dd0"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
@@ -157,6 +157,7 @@ def _validate_run_inventory(
         "run_attempt": 1,
         "event": "workflow_dispatch",
         "head_branch": "main",
+        "head_sha": authorization.get("successful_2015_run_head_sha"),
         "status": "completed",
         "conclusion": "success",
     }
