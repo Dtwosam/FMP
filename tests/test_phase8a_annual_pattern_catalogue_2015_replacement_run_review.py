@@ -215,7 +215,7 @@ class AnnualPatternCatalogue2015ReplacementRunReviewTests(unittest.TestCase):
     def test_tampered_freeze_is_rejected(self) -> None:
         freeze = copy.deepcopy(_freeze())
         freeze["annual_cell_count"] = 17
-        with self.assertRaisesRegex(ValueError, "annual_cell_count mismatch"):
+        with self.assertRaisesRegex(ValueError, "evidence fingerprint mismatch"):
             review_2015_replacement_run(
                 repository_root=Path("."),
                 run=_run(),
