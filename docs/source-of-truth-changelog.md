@@ -2025,3 +2025,11 @@
 - The workflow runs the frozen DEC-503 → DEC-504 → DEC-506 → DEC-507 chain on exact current main.
 - It outputs the exact two-file 2016 runtime-install action as immutable evidence only.
 - It has no repository-write or Actions-write permission and performs no mutation or dispatch.
+
+## 2026-10-03 — DEC-515 exact 2016 runtime installer
+
+- Added a success-only DEC-514 successor with contents-write and Actions-read permissions.
+- It applies only the frozen two-file DEC-507 mutation while exact current main remains unchanged.
+- Both resulting Git blobs are verified before a normal fast-forward push.
+- It creates and validates the concrete DEC-508 install receipt after the push.
+- It adds no workflow dispatch, rerun, broker, order, real-money, or trading authority.
