@@ -3178,3 +3178,15 @@ Copy this section for each serious experiment:
 - Repository mutation performed: NO.
 - Workflow dispatch performed: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-100 — DEC-517 replacement executor recovery
+
+- Original executor run: `37149151549`.
+- Original executor conclusion: FAILURE before dispatch.
+- Failure cause: missing pinned Python runtime / `polars` import.
+- Annual workflow dispatch inventory after failure: exactly run #1 only.
+- Target replacement slot consumed: NO.
+- Recovery installs pinned runtime before DEC-499 import: YES.
+- Recovery target: 2015 run #2 / attempt 1 only.
+- Retry / rerun / run 3+: NO.
+- 2016+ / promotion / broker / trading authority: NO.
