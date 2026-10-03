@@ -3261,3 +3261,14 @@ Copy this section for each serious experiment:
 - Expected next annual identity: run 378 / attempt 1.
 - Workflow dispatch / execution / result production: NO.
 - 2018+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-102 — DEC-524 source-only 2017 execution authorization
+
+- Source DEC-523 preflight: REQUIRED and validated.
+- Authorized segment: 2017 only.
+- Authorized run: 378 / attempt 1 only.
+- Historical read/execution/result authority: YES, contract-only.
+- Runtime authorization installed/active: NO.
+- Dispatch command present: NO.
+- Rerun / retry / replacement / 2018+: NO.
+- Strategy V1 / promotion / trading authority: NO.
