@@ -10378,3 +10378,24 @@ broker mutation, real-money action, and trading remain false.
 
 Next gate:
 `DETERMINISTIC_2015_REPLACEMENT_RUNTIME_EVIDENCE_FREEZE`.
+
+## DEC-501 — 2015 replacement-run runtime evidence freeze
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-READY DETERMINISTIC RUNTIME FREEZE
+
+DEC-501 deterministically freezes a valid DEC-500 review of the successful
+repaired 2015 replacement annual-catalogue run.
+
+It pins DEC-500 reviewer source blob
+`883f82c85d2738c46284d3675278dc061f4ca07c` and preserves the exact run/job/
+artifact identities, freeze ZIP SHA-256, canonical annual-freeze payload SHA-256,
+DEC-477 evidence fingerprint, annual totals, and DEC-500 review fingerprint.
+
+The output has one canonical `freeze_fingerprint_sha256`.
+
+2016+, cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live,
+broker mutation, real-money action, and trading remain false.
+
+Next gate:
+`CONCRETE_2015_ANNUAL_PATTERN_CATALOGUE_RUNTIME_EVIDENCE_BINDING`.
