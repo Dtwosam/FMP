@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 freezes one complete 18-cell / 89,460-record annual catalogue; DEC-478 freezes the disabled annual workflow source; DEC-479 freezes its future installation mutation; DEC-480 freezes the hardened read-only install preflight; DEC-481 freezes the hardened repository-hosted proof contract; DEC-482 freezes the exact-blob-pinned disabled read-only proof-workflow source; DEC-483 now freezes the exact future proof-workflow file-creation mutation while repository mutation remains locked. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** DEC-473 through DEC-482 are merged. Validate and merge DEC-483 on the exact DEC-482 merge, then build the read-only proof-workflow install preflight. Repository mutation, annual workflow installation/dispatch, historical execution, and trading remain separately locked.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 freezes Catalogue V1 and the full 2015-2026 collection scope; DEC-471 implements the source-only annual miner; DEC-472 freezes complete cell/aggregate evidence; DEC-473 implements the verified full-history loader; DEC-474 implements the source-only annual-segment adapter; DEC-475 composes the locked cell runtime; DEC-476 freezes 12 sequential annual runs; DEC-477 freezes one complete 18-cell / 89,460-record annual catalogue; DEC-478 freezes the disabled annual workflow source; DEC-479 freezes its future installation mutation; DEC-480 freezes the hardened read-only install preflight; DEC-481 freezes the repository-hosted proof contract; DEC-482 freezes the exact read-only proof-workflow source; DEC-483 freezes its future file-creation mutation; DEC-484 now provides the finite read-only install preflight and requires explicit operator authorization as the next boundary. Historical artifact-read authorization, catalogue execution/result production, next-segment execution, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge finite-bootstrap DEC-484. After merge, the only next gate is explicit operator authorization for the exact DEC-483 read-only proof-workflow file creation. The unopened provisional DEC-485/486 recursive branches are superseded and must not be opened or merged. Proof-workflow dispatch, annual workflow installation/dispatch, historical execution, Strategy V1 synthesis, demo/live, and trading remain locked.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2651,3 +2651,21 @@ promotion, and trading remain locked.
 
 Next safe gate:
 `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_INSTALL_PREFLIGHT`.
+## 2026-10-02 — DEC-484 proof-workflow install preflight source-ready
+
+DEC-484 validates the exact DEC-483 install contract, transitive DEC-482/481/480
+source identities, exact `main` head metadata, and continued absence of the active
+proof-workflow path. It fingerprints the full read-only preflight plus the embedded
+install action and semantically rejects rehashed authority, source, target, evidence,
+or extra-field drift.
+
+Its CLI exposes only `plan`; there is no install, execute, dispatch, or advance
+surface.
+
+Repository mutation, proof/annual workflow install/dispatch, historical
+read/execution/results, next-segment authority, cross-year results, Strategy V1,
+promotion, and trading remain locked.
+
+Next safe gate:
+`REPOSITORY_HOSTED_READ_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_INSTALL_PREFLIGHT_PROOF`.
+
