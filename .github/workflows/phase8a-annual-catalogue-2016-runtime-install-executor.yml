@@ -121,8 +121,13 @@ jobs:
           action_path="$(
             find "$RUNNER_TEMP/dec514-plan"               -type f -name dec507-install-action.json -print
           )"
+          binding_path="$(
+            find "$RUNNER_TEMP/dec514-plan"               -type f -name runtime-binding.json -print
+          )"
           test "$(printf '%s\n' "$action_path" | sed '/^$/d' | wc -l)" = "1"
+          test "$(printf '%s\n' "$binding_path" | sed '/^$/d' | wc -l)" = "1"
           cp "$action_path" "$RUNNER_TEMP/dec507-install-action.json"
+          cp "$binding_path" "$RUNNER_TEMP/runtime-binding.json"
 
       - name: Verify exact DEC-507 install action
         run: |
@@ -275,6 +280,7 @@ jobs:
             ${{ runner.temp }}/dec514-run.json
             ${{ runner.temp }}/dec514-artifacts.json
             ${{ runner.temp }}/dec507-install-action.json
+            ${{ runner.temp }}/runtime-binding.json
             ${{ runner.temp }}/install-commit-sha.txt
             ${{ runner.temp }}/changed-files.txt
             ${{ runner.temp }}/dec508-install-receipt.json
