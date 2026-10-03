@@ -3025,3 +3025,13 @@ Copy this section for each serious experiment:
 - Head mismatch: fail closed.
 - Refingerprinted authority tamper: fail closed.
 - 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-083 — DEC-502 artifact upload repair v2
+
+- Historical flawed workflow blob: `f7e65ee95f472918e390bceedd7cf2f38bbf7e92`.
+- Corrected live workflow blob: `09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`.
+- Preflight hidden-file flag count: 1.
+- Cell-product hidden-file flag count: 1.
+- Annual-freeze hidden-file flag count: 1.
+- Replacement run dispatched: NO.
+- 2016+ / Strategy V1 / promotion / trading authority: NO.
