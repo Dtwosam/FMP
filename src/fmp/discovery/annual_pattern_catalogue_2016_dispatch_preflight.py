@@ -25,13 +25,13 @@ INSTALL_RECEIPT_SOURCE_PATH = (
     "annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py"
 )
 EXPECTED_INSTALL_RECEIPT_SOURCE_BLOB_SHA = (
-    "f8ca1e614198c233dc9a4d918f242875e085ac6f"
+    "7da956910e24e788a2f2a60834c04048a660bc75"
 )
 RUNTIME_BINDING_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py"
 )
 EXPECTED_RUNTIME_BINDING_SOURCE_BLOB_SHA = (
-    "d77b26436d4255838908c909001928738f7e40b6"
+    "bbb3bba32c3677d3bd971a2744eb93498868433b"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
