@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-499 freeze the annual catalogue method, repaired workflow, failed first 2015 run, replacement authorization, and final replacement dispatch preflight. DEC-500 defines the successful-run reviewer; DEC-501 the deterministic freeze; DEC-502 the concrete 2015 binding; DEC-503 the read-only 2016 preflight; DEC-504 now defines a source-only 2016 authorization receipt while keeping live runtime installation inactive. 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-504. Runtime execution still requires a real successful 2015 replacement run, DEC-500/501/502 concrete evidence, DEC-503 evaluation, and only then installation of the scoped 2016 runtime gate.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 now freezes the exact dormant 2016 runtime gate and target runtime bytes without activating them. Live 2016 runtime authorization, 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-505, then add the read-only 2016 runtime-authorization install preflight that consumes a concrete DEC-504 receipt. Do not install the live 2016 runtime gate until the successful 2015 replacement run exists and DEC-500/501/502/503/504 have been concretely satisfied.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2907,3 +2907,14 @@ The receipt deliberately keeps `runtime_authorization_installed` and
 
 The next live mutation remains conditional on concrete 2015 runtime evidence and
 a valid DEC-503 preflight.
+
+## 2026-10-03 — DEC-505 dormant 2016 runtime activation plan source-ready
+
+The exact future 2016 gate and runtime target are frozen as dormant templates.
+The live runtime remains byte-identical to the pre-2016 state.
+
+The future gate is restricted to annual segment `2016`, workflow run #3 /
+attempt 1, and a positive previous annual-freeze run id.
+
+Next safe layer:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC504`.
