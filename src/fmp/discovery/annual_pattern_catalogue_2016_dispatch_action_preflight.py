@@ -21,7 +21,7 @@ AUTHORIZATION_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_dispatch_authorization.py"
 )
 EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "ffedb7b0f14f375e6b732678d95a2a48d21eb002"
+    "c6dc4dcaf0a7c5c410d86c921fc35828179be248"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
