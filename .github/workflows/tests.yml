@@ -160,7 +160,7 @@ jobs:
           runtime="src/fmp/discovery/annual_pattern_catalogue_runtime.py"
           saved="$RUNNER_TEMP/annual_pattern_catalogue_runtime.py"
           cp "$runtime" "$saved"
-          git show 029dac635d51b7f9ac775d28e24aab30e658b58c:"$runtime" > "$runtime"
+          cp tests/fixtures/phase8a_annual_pattern_catalogue_runtime_dec475.py.snapshot "$runtime"
           trap 'cp "$saved" "$runtime"' EXIT
           python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_execution_preflight.py' -v
       - name: Run installed annual-catalogue 2015 execution-authorization tests
@@ -170,6 +170,14 @@ jobs:
           python -m unittest discover
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_execution_authorization.py'
+          -v
+      - name: Run installed annual-catalogue first-2015 dispatch-preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2015_dispatch_preflight.py'
           -v
       - name: Run historical snapshot and general unit tests
         env:
