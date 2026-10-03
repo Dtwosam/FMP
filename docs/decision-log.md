@@ -10104,3 +10104,28 @@ Phase 8B, demo/live, broker mutation, real-money action, and trading remain fals
 
 Next gate after a real proof run:
 `CONCRETE_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_RUNTIME_EVIDENCE_FREEZE`.
+## DEC-489 — Annual catalogue proof-workflow runtime evidence freeze
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY DETERMINISTIC FREEZE / NO RUNTIME EVIDENCE CLAIM
+
+DEC-489 defines the deterministic freeze over a valid DEC-488 review of the first
+annual-catalogue proof-workflow run.
+
+It pins DEC-488 run-review source blob
+`ec92323d910785d342028c5896528fa1dcf1cc96`.
+
+The freeze preserves exact run/job/artifact identities, raw/canonical preflight
+hashes, repository-hosted proof fingerprint, preflight fingerprint, install-action
+fingerprint, and the consumed one-shot dispatch authorization. It emits one
+canonical `freeze_fingerprint_sha256`.
+
+The source may exist before the real run, but it cannot claim evidence until a
+valid DEC-488 review is supplied.
+
+Repository mutation, further proof dispatch, annual-workflow installation/dispatch,
+historical execution/results, Strategy V1 synthesis, Phase 8B, demo/live, broker
+mutation, real-money action, and trading remain false.
+
+Next gate after real reviewed evidence:
+`CONCRETE_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_RUNTIME_EVIDENCE_BINDING`.
