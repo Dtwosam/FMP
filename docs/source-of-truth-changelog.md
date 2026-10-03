@@ -2010,3 +2010,11 @@
 - Rechecks current main, the exact DEC-510 source, repaired workflow, and two-run inventory.
 - Binds the successful 2015 predecessor by both run ID and head SHA.
 - Freezes exact dispatch inputs while keeping the dispatch action unexecuted and all later authority locked.
+
+## 2026-10-03 — DEC-512/513 close the 2015 replacement execution gap
+
+- Added a repository-hosted one-shot executor for exactly the authorized 2015 replacement run 2 / attempt 1.
+- The executor rebuilds DEC-499 on exact merged main and refuses any pre-existing run 2 or later run.
+- Added a read-only post-run reviewer that validates DEC-500, freezes DEC-501, and binds DEC-502 concrete 2015 runtime evidence.
+- The evidence workflow verifies the annual-freeze ZIP against GitHub's artifact digest and has no Actions write permission.
+- No retry, rerun, 2016+ execution, promotion, broker mutation, real-money action, or trading authority is added.
