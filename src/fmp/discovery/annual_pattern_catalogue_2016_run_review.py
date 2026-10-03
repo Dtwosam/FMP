@@ -421,6 +421,34 @@ def review_2016_run(
     return review
 
 
+def _validate_review_artifact(
+    value: object,
+    *,
+    expected_name: str,
+) -> tuple[int, str]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"DEC-512 review artifact malformed: {expected_name}")
+    if value.get("name") != expected_name:
+        raise ValueError(f"DEC-512 review artifact name mismatch: {expected_name}")
+    artifact_id = _positive_int(
+        value.get("id"),
+        field=f"review artifact id {expected_name}",
+    )
+    size = _positive_int(
+        value.get("size_in_bytes"),
+        field=f"review artifact size {expected_name}",
+    )
+    del size
+    digest = value.get("digest")
+    if not isinstance(digest, str) or not digest.startswith("sha256:"):
+        raise ValueError(f"DEC-512 review artifact digest malformed: {expected_name}")
+    digest_sha256 = _validate_sha256(
+        digest.removeprefix("sha256:"),
+        field=f"review artifact digest {expected_name}",
+    )
+    return artifact_id, digest_sha256
+
+
 def validate_2016_run_review(
     value: Mapping[str, object],
 ) -> Mapping[str, object]:
@@ -432,26 +460,49 @@ def validate_2016_run_review(
     unsigned.pop("review_fingerprint_sha256", None)
     if _sha256_bytes(_canonical_json(unsigned)) != fingerprint:
         raise ValueError("DEC-512 review fingerprint mismatch")
-    if value.get("decision") != "DEC-512":
-        raise ValueError("DEC-512 decision mismatch")
-    if value.get("source_dispatch_preflight_decision") != "DEC-511":
-        raise ValueError("DEC-512 source dispatch preflight mismatch")
-    if value.get("run_number") != EXPECTED_RUN_NUMBER:
-        raise ValueError("DEC-512 run number mismatch")
-    if value.get("run_attempt") != EXPECTED_RUN_ATTEMPT:
-        raise ValueError("DEC-512 run attempt mismatch")
-    if value.get("run_conclusion") != "success":
-        raise ValueError("DEC-512 run conclusion mismatch")
-    if value.get("annual_segment_label") != ANNUAL_SEGMENT_LABEL:
-        raise ValueError("DEC-512 annual segment mismatch")
-    if value.get("annual_cell_count") != EXPECTED_CELLS_PER_SEGMENT:
-        raise ValueError("DEC-512 annual cell count mismatch")
-    if (
-        value.get("directional_record_count")
-        != EXPECTED_DIRECTIONAL_RECORDS_PER_SEGMENT
-    ):
-        raise ValueError("DEC-512 directional record count mismatch")
-    _positive_int(value.get("run_id"), field="run id")
+
+    exact = {
+        "decision": "DEC-512",
+        "version": "fmp-annual-catalogue-2016-run-review-v1",
+        "dispatch_preflight_source_blob_sha": (
+            EXPECTED_DISPATCH_PREFLIGHT_SOURCE_BLOB_SHA
+        ),
+        "segment_freeze_source_blob_sha": EXPECTED_SEGMENT_FREEZE_SOURCE_BLOB_SHA,
+        "active_workflow_blob_sha": EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA,
+        "source_dispatch_preflight_decision": "DEC-511",
+        "source_dispatch_preflight_version": (
+            "fmp-annual-catalogue-2016-dispatch-action-preflight-v1"
+        ),
+        "run_number": EXPECTED_RUN_NUMBER,
+        "run_attempt": EXPECTED_RUN_ATTEMPT,
+        "run_status": "completed",
+        "run_conclusion": "success",
+        "annual_segment_label": ANNUAL_SEGMENT_LABEL,
+        "annual_cell_count": EXPECTED_CELLS_PER_SEGMENT,
+        "directional_record_count": EXPECTED_DIRECTIONAL_RECORDS_PER_SEGMENT,
+        "dispatch_action_observed": True,
+        "dispatch_action_preflight_consumed": True,
+        "dispatch_authorization_consumed": True,
+        "review_validated": True,
+        "next_segment_execution_authorized": False,
+        "cross_year_result_production_authorized": False,
+        "strategy_v1_synthesis_authorized": False,
+        "promotion_authorized": False,
+        "phase8b_authorized": False,
+        "demo_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "live_order_authorized": False,
+        "real_money_authorized": False,
+        "trading_authorized": False,
+        "next_gate": "DETERMINISTIC_2016_RUNTIME_EVIDENCE_FREEZE",
+    }
+    for field, expected in exact.items():
+        if value.get(field) != expected:
+            raise ValueError(f"DEC-512 {field} mismatch")
+
+    run_id = _positive_int(value.get("run_id"), field="run id")
+    del run_id
+    run_head = _validate_commit(value.get("run_head_sha"), field="run head")
     previous_run_id = _positive_int(
         value.get("previous_annual_freeze_run_id"),
         field="previous annual freeze run id",
@@ -462,7 +513,7 @@ def validate_2016_run_review(
         value.get("successful_2015_run_head_sha"),
         field="successful 2015 run head",
     )
-    _validate_commit(value.get("run_head_sha"), field="run head")
+
     for field in (
         "source_dispatch_preflight_fingerprint_sha256",
         "freeze_artifact_zip_sha256",
@@ -470,30 +521,78 @@ def validate_2016_run_review(
         "freeze_evidence_fingerprint",
     ):
         _validate_sha256(value.get(field), field=field)
+
     for field in (
-        "dispatch_action_observed",
-        "dispatch_action_preflight_consumed",
-        "dispatch_authorization_consumed",
-        "review_validated",
+        "evaluable_record_count",
+        "zero_support_record_count",
+        "total_support",
     ):
-        if value.get(field) is not True:
-            raise ValueError(f"DEC-512 {field} must be true")
-    for field in (
-        "next_segment_execution_authorized",
-        "cross_year_result_production_authorized",
-        "strategy_v1_synthesis_authorized",
-        "promotion_authorized",
-        "phase8b_authorized",
-        "demo_order_authorized",
-        "broker_mutation_authorized",
-        "live_order_authorized",
-        "real_money_authorized",
-        "trading_authorized",
-    ):
-        if value.get(field) is not False:
-            raise ValueError(f"DEC-512 {field} must remain false")
-    if value.get("next_gate") != "DETERMINISTIC_2016_RUNTIME_EVIDENCE_FREEZE":
-        raise ValueError("DEC-512 next gate mismatch")
+        item = value.get(field)
+        if not isinstance(item, int) or isinstance(item, bool) or item < 0:
+            raise ValueError(f"DEC-512 {field} must be a non-negative integer")
+
+    preflight_job_id = _positive_int(
+        value.get("preflight_job_id"),
+        field="preflight job id",
+    )
+    freeze_job_id = _positive_int(
+        value.get("freeze_job_id"),
+        field="freeze job id",
+    )
+    cell_job_ids = value.get("cell_job_ids")
+    if not isinstance(cell_job_ids, Mapping):
+        raise ValueError("DEC-512 cell job ids malformed")
+    expected_job_names = set(_expected_cell_job_names())
+    if set(cell_job_ids) != expected_job_names:
+        raise ValueError("DEC-512 cell job id inventory mismatch")
+    job_ids = [preflight_job_id, freeze_job_id]
+    for name in sorted(expected_job_names):
+        job_ids.append(
+            _positive_int(
+                cell_job_ids.get(name),
+                field=f"cell job id {name}",
+            )
+        )
+    if len(set(job_ids)) != EXPECTED_JOB_COUNT:
+        raise ValueError("DEC-512 job ids must be unique")
+
+    preflight_name = (
+        f"phase8a-annual-catalogue-preflight-{ANNUAL_SEGMENT_LABEL}-{run_head}"
+    )
+    freeze_name = (
+        f"phase8a-annual-catalogue-freeze-{ANNUAL_SEGMENT_LABEL}-{run_head}"
+    )
+    artifact_ids: list[int] = []
+    preflight_id, _ = _validate_review_artifact(
+        value.get("preflight_artifact"),
+        expected_name=preflight_name,
+    )
+    artifact_ids.append(preflight_id)
+    freeze_id, freeze_digest = _validate_review_artifact(
+        value.get("freeze_artifact"),
+        expected_name=freeze_name,
+    )
+    artifact_ids.append(freeze_id)
+    if freeze_digest != value.get("freeze_artifact_zip_sha256"):
+        raise ValueError("DEC-512 freeze artifact ZIP digest mismatch")
+
+    cell_artifacts = value.get("cell_artifacts")
+    if not isinstance(cell_artifacts, Mapping):
+        raise ValueError("DEC-512 cell artifact inventory malformed")
+    expected_artifact_names = set(_expected_cell_artifact_names(run_head))
+    if set(cell_artifacts) != expected_artifact_names:
+        raise ValueError("DEC-512 cell artifact inventory mismatch")
+    for name in sorted(expected_artifact_names):
+        artifact_id, _ = _validate_review_artifact(
+            cell_artifacts.get(name),
+            expected_name=name,
+        )
+        artifact_ids.append(artifact_id)
+    if len(artifact_ids) != EXPECTED_ARTIFACT_COUNT:
+        raise ValueError("DEC-512 artifact count mismatch")
+    if len(set(artifact_ids)) != EXPECTED_ARTIFACT_COUNT:
+        raise ValueError("DEC-512 artifact ids must be unique")
+
     return value
 
 
