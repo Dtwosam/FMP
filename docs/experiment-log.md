@@ -2922,3 +2922,14 @@ Copy this section for each serious experiment:
 - DEC-475 historical read / execution / result authority: NO.
 - CLI surface: plan only.
 - Workflow dispatch / Strategy V1 / promotion / trading authority: NO.
+### EXP-20261003-076 — DEC-493 first 2015 execution authorization
+
+- Explicit operator authorization: YES.
+- Annual segment: `2015` only.
+- Expected annual workflow run: #1 / attempt 1.
+- Historical artifact reads for that run: YES.
+- Annual catalogue execution for that run: YES.
+- Annual result production for that run: YES.
+- Rerun / retry / replacement: NO.
+- 2016+ / next-segment execution: NO.
+- Strategy V1 / promotion / trading authority: NO.

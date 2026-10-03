@@ -139,8 +139,12 @@ jobs:
           set -euo pipefail
           annual=".github/workflows/phase8a-annual-pattern-catalogue.yml"
           annual_hidden="$RUNNER_TEMP/phase8a-annual-pattern-catalogue.yml"
+          annual_cli="scripts/phase8a_annual_pattern_catalogue.py"
+          annual_cli_hidden="$RUNNER_TEMP/phase8a_annual_pattern_catalogue.py"
           mv "$annual" "$annual_hidden"
-          trap 'mv "$annual_hidden" "$annual"' EXIT
+          cp "$annual_cli" "$annual_cli_hidden"
+          cp tests/fixtures/phase8a_annual_pattern_catalogue_cli_dec478.py.snapshot "$annual_cli"
+          trap 'mv "$annual_hidden" "$annual"; cp "$annual_cli_hidden" "$annual_cli"' EXIT
           python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_run_review.py' -v
           python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_run_freeze.py' -v
           python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_proof_workflow_runtime_evidence_binding.py' -v
@@ -152,13 +156,24 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_workflow_install_receipt.py'
           -v
-      - name: Run installed annual-catalogue 2015 execution-preflight tests
+      - name: Run pre-2015-authorization execution-preflight tests
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          runtime="src/fmp/discovery/annual_pattern_catalogue_runtime.py"
+          saved="$RUNNER_TEMP/annual_pattern_catalogue_runtime.py"
+          cp "$runtime" "$saved"
+          cp tests/fixtures/phase8a_annual_pattern_catalogue_runtime_dec475.py.snapshot "$runtime"
+          trap 'cp "$saved" "$runtime"' EXIT
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_execution_preflight.py' -v
+      - name: Run installed annual-catalogue 2015 execution-authorization tests
         env:
           PYTHONPATH: src
         run: >-
           python -m unittest discover
           -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_2015_execution_preflight.py'
+          -p 'test_phase8a_annual_pattern_catalogue_2015_execution_authorization.py'
           -v
       - name: Run historical snapshot and general unit tests
         env:
@@ -174,11 +189,15 @@ jobs:
           proof_hidden="$RUNNER_TEMP/phase8a-annual-catalogue-workflow-install-preflight-proof.yml"
           annual=".github/workflows/phase8a-annual-pattern-catalogue.yml"
           annual_hidden="$RUNNER_TEMP/phase8a-annual-pattern-catalogue.yml"
+          annual_cli="scripts/phase8a_annual_pattern_catalogue.py"
+          annual_cli_hidden="$RUNNER_TEMP/phase8a_annual_pattern_catalogue.py"
           mv "$active" "$hidden"
           mv "$recovery" "$recovery_hidden"
           mv "$proof" "$proof_hidden"
           mv "$annual" "$annual_hidden"
-          trap 'mv "$hidden" "$active"; mv "$recovery_hidden" "$recovery"; mv "$proof_hidden" "$proof"; mv "$annual_hidden" "$annual"' EXIT
+          cp "$annual_cli" "$annual_cli_hidden"
+          cp tests/fixtures/phase8a_annual_pattern_catalogue_cli_dec478.py.snapshot "$annual_cli"
+          trap 'mv "$hidden" "$active"; mv "$recovery_hidden" "$recovery"; mv "$proof_hidden" "$proof"; mv "$annual_hidden" "$annual"; cp "$annual_cli_hidden" "$annual_cli"' EXIT
           python -m unittest discover -s tests -v
       - name: Compile package
         run: python -m compileall -q src tests

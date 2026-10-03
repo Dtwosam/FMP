@@ -1879,3 +1879,9 @@
 - Requires exact current main and zero prior annual-workflow runs.
 - Encodes the 2015 no-predecessor invariant and expected run #1 / attempt 1.
 - Adds no dispatch, historical execution/result, Strategy V1, promotion, or trading authority.
+## 2026-10-03 — DEC-493 first 2015 execution authorization
+
+- Recorded explicit authorization for annual segment 2015, run #1, attempt 1 only.
+- Threaded the segment-scoped authorization through the existing runtime gate without opening the DEC-475 default path.
+- Runtime now resolves the GitHub workflow-dispatch segment plus run number/attempt and rejects later segments or retries.
+- Keeps 2016+, cross-year results, Strategy V1, promotion, and all trading authority false.

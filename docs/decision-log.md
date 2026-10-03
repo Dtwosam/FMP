@@ -10204,3 +10204,26 @@ false.
 
 Next gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+## DEC-493 — First 2015 annual catalogue execution authorization
+
+**Date:** 2026-10-03  
+**Status:** FIRST 2015 RUN AUTHORIZED / NOT STARTED
+
+DEC-493 records explicit operator authorization for exactly annual segment
+`2015`, workflow run #1, attempt 1.
+
+It pins DEC-492 execution-preflight source blob
+`d36343a6f2c69ccc2f942e537f5599cbc92b263b`, DEC-491 install-receipt source blob
+`970ab466dfa5f87c6955ad65da4653a993e9d6fd`, and active annual workflow blob
+`31633e87b79551f5b7dfa6b0deb76a82eb070129`.
+
+The runtime gate now recognizes only that exact 2015 first-run identity from the
+workflow-dispatch event and GitHub run-number/attempt metadata. The default DEC-475
+path remains locked.
+
+Rerun, retry, replacement, 2016+, next-segment execution, cross-year results,
+Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation,
+real-money action, and trading remain false.
+
+Next gate:
+`EXACT_FIRST_2015_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
