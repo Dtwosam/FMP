@@ -10594,3 +10594,18 @@ remain locked.
 
 Next gate:
 \`EXACT_2016_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN\`.
+
+## DEC-512 — Future 2016 annual-catalogue run review
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY POST-RUN REVIEW / NO DISPATCH EXECUTED
+
+DEC-512 defines the acceptance contract for a future successful 2016 workflow run 3,
+attempt 1. It consumes the exact DEC-511 preflight identity, requires all 20 expected
+successful jobs and artifacts, validates the 2016 segment freeze, and preserves the
+successful 2015 predecessor run ID and head SHA.
+
+The review itself performs no dispatch. 2017+, Strategy V1, promotion, broker mutation,
+demo/live orders, real-money action, and trading remain locked.
+
+Next gate: \`DETERMINISTIC_2016_RUNTIME_EVIDENCE_FREEZE\`.
