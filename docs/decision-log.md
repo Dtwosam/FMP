@@ -10356,3 +10356,29 @@ broker mutation, real-money action, and trading remain false.
 
 Next gate:
 `EXACT_2015_REPLACEMENT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+
+## DEC-500 — Annual catalogue artifact upload repair v2
+
+**Date:** 2026-10-03  
+**Status:** ARTIFACT UPLOAD DISTRIBUTION CORRECTED / EXECUTION NOT STARTED
+
+DEC-500 corrects the DEC-496 upload repair before any replacement 2015 run is
+dispatched.
+
+The DEC-496 workflow blob
+`f7e65ee95f472918e390bceedd7cf2f38bbf7e92` had three hidden-file flags
+concentrated on the preflight upload. Cell and annual-freeze uploads remained
+unrepaired.
+
+The flawed workflow is preserved as an exact fixture. The corrected live workflow
+blob is `09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`.
+
+The corrected workflow has exactly one `include-hidden-files: true` in each of
+the preflight, cell-product, and annual-freeze upload blocks.
+
+No replacement dispatch occurs in DEC-500. DEC-498 remains the standing run-#2
+authorization, but the final dispatch preflight must be refreshed against the
+corrected workflow before execution.
+
+Next gate:
+`REFRESH_2015_REPLACEMENT_DISPATCH_PREFLIGHT_AGAINST_CORRECTED_WORKFLOW`.
