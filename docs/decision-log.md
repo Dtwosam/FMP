@@ -10057,3 +10057,25 @@ trading remain false.
 
 Next gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
+## DEC-487 — Annual catalogue proof-workflow first dispatch authorization
+
+**Date:** 2026-10-03  
+**Status:** FIRST PROOF DISPATCH AUTHORIZED / RUN NOT STARTED
+
+DEC-487 records explicit operator authorization for exactly one first invocation of
+the installed annual-catalogue proof workflow.
+
+It pins DEC-486 dispatch-preflight source blob
+`9f5d4b2abbfdb02280b0011a5d61e189be1d6fed` and active workflow blob
+`0d6c93e2af04501f9ac2589fd24d6672b2b41910`.
+
+The scope is proof-workflow run #1 / attempt 1 only. Rerun, retry, and replacement
+remain forbidden.
+
+This decision authorizes the dispatch but does not trigger it. Repository mutation,
+annual-workflow installation/dispatch, historical reads/execution/results,
+next-segment execution, cross-year results, Strategy V1 synthesis, promotion,
+Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate:
+`EXACT_FIRST_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
