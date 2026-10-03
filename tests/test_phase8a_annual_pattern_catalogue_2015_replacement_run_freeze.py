@@ -73,7 +73,7 @@ def _run() -> dict[str, object]:
         "event": "workflow_dispatch",
         "head_branch": "main",
         "head_sha": HEAD,
-        "run_number": 2,
+        "run_number": 376,
         "run_attempt": 1,
         "status": "completed",
         "conclusion": "success",
@@ -155,7 +155,7 @@ class AnnualPatternCatalogue2015ReplacementRunFreezeTests(unittest.TestCase):
         )
         self.assertEqual(
             source["run_review_source_blob_sha"],
-            "883f82c85d2738c46284d3675278dc061f4ca07c",
+            "954718b9780004907c385ebb0496469d8433b844",
         )
 
     def test_freeze_is_deterministic_and_preserves_runtime_identities(self) -> None:
@@ -175,7 +175,7 @@ class AnnualPatternCatalogue2015ReplacementRunFreezeTests(unittest.TestCase):
             second["freeze_fingerprint_sha256"],
         )
         self.assertEqual(first["decision"], "DEC-501")
-        self.assertEqual(first["run_number"], 2)
+        self.assertEqual(first["run_number"], 376)
         self.assertEqual(first["run_attempt"], 1)
         self.assertEqual(first["annual_cell_count"], 18)
         self.assertEqual(first["directional_record_count"], 89460)
