@@ -223,6 +223,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_run_freeze.py'
           -v
+      - name: Run concrete 2015 runtime evidence binding tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2015_runtime_evidence_binding.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
