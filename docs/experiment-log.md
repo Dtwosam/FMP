@@ -3025,3 +3025,16 @@ Copy this section for each serious experiment:
 - Head mismatch: fail closed.
 - Refingerprinted authority tamper: fail closed.
 - 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-085 — DEC-502 concrete 2015 runtime binding
+
+- Input: semantically valid DEC-501 freeze.
+- Required run identity: #2 / attempt 1 / completed success.
+- Required jobs: preflight + 18 cells + freeze.
+- Required artifacts: preflight + 18 cells + freeze.
+- Freeze ZIP digest must match freeze artifact digest.
+- Preserves DEC-500 review fingerprint and DEC-501 freeze fingerprint.
+- Annual cells: 18.
+- Directional records: 89,460.
+- Binding fingerprint: canonical SHA-256.
+- 2016+ / Strategy V1 / promotion / trading authority: NO.
