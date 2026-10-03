@@ -10696,3 +10696,23 @@ remain outside DEC-518.
 
 Next gate:
 `READ_ONLY_POST_INSTALL_2016_DISPATCH_PLAN_ON_DEC_518_RECEIPT`.
+
+## DEC-519 — Folded read-only post-install 2016 dispatch plan
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY SECOND JOB / DISPATCH NOT EXECUTED
+
+To stay within GitHub's `workflow_run` chain-depth limit, DEC-519 is implemented as a
+second job inside the DEC-518 workflow rather than as another workflow-run successor.
+
+After the exact two-file install succeeds, this job drops to contents/actions read,
+downloads the DEC-518 evidence from the same run, validates the concrete DEC-508 receipt
+and DEC-502 predecessor binding on installed main, then rebuilds DEC-509 → DEC-510 →
+DEC-511.
+
+The resulting artifact freezes only the exact future 2016 run #3 / attempt 1 parameters.
+No workflow dispatch, repository mutation, rerun/retry, broker access, order placement,
+real-money action, or trading occurs.
+
+Next gate:
+`EXACT_2016_ANNUAL_PATTERN_CATALOGUE_RUN3_ONE_SHOT_DISPATCH`.
