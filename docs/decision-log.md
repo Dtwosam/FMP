@@ -10635,3 +10635,22 @@ use real money, or trade.
 
 Next gate:
 \`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_EXECUTION_PREFLIGHT\`.
+
+## DEC-514 — Automated read-only 2016 activation plan
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY POST-BINDING PLAN / MUTATION NOT EXECUTED
+
+DEC-514 consumes the successful DEC-513 concrete 2015 runtime-binding artifact only
+when the reviewer head still equals current main. It then runs the already-frozen
+DEC-503, DEC-504, DEC-506, and DEC-507 chain in order.
+
+The final output is the exact two-file 2016 runtime-install action: create the frozen
+2016 authorization gate and replace the runtime with the frozen 2016-wired target.
+
+The workflow has only contents/actions read permission. It does not apply the mutation,
+commit, push, dispatch or rerun workflows, authorize later years, access a broker, place
+orders, use real money, or trade.
+
+Next gate:
+\`APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_ACTION\`.
