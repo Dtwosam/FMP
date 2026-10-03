@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-490 freeze the annual catalogue method, annual runtime/workflow install path, repository-hosted preflight proof, one-shot proof dispatch, and concrete runtime evidence. DEC-491 now records the consumed annual-workflow installation authorization and exact installed workflow state. The annual workflow is installed but dispatch/execution remains locked. Historical catalogue execution/results, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-491. The next separate authority gate is explicit 2015 annual-pattern-catalogue execution authorization before any workflow dispatch. No 2015 run, artifact read, catalogue result, or later-year execution is authorized yet.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-491 freeze the annual catalogue method, exact installed annual workflow, proof chain, and consumed installation authorization. DEC-492 now defines the read-only first-2015 execution preflight over exact current main and zero annual-workflow runs. Annual workflow dispatch, historical artifact reads, catalogue execution/results, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-492. The next separate authority gate is explicit 2015 annual-pattern-catalogue execution authorization before the first workflow run. No annual workflow dispatch, historical artifact read, catalogue execution, or result production is authorized yet.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2764,6 +2764,18 @@ The active and dormant workflow blobs are both
 The installation authorization is consumed. The workflow remains manual-only and
 contains three separate execution gates. No workflow dispatch or annual catalogue
 execution is authorized.
+
+Next safe gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+
+## 2026-10-03 — DEC-492 first-2015 execution preflight source-ready
+
+The installed annual workflow now has a read-only first-run preflight that requires
+exact current main, zero prior annual workflow runs, expected run #1 / attempt 1,
+and the 2015 no-predecessor invariant.
+
+The DEC-475 runtime remains hard-closed for historical artifact reads, annual
+catalogue execution, and result production.
 
 Next safe gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_EXECUTION_AUTHORIZATION_BEFORE_RUN`.

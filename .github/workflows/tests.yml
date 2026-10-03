@@ -152,6 +152,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_workflow_install_receipt.py'
           -v
+      - name: Run installed annual-catalogue 2015 execution-preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2015_execution_preflight.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
