@@ -10575,3 +10575,22 @@ orders, real-money action, and trading remain false.
 
 Next gate:
 \`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_ACTION_PREFLIGHT\`.
+
+## DEC-511 — Final read-only 2016 dispatch-action preflight
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY FINAL PREFLIGHT / DISPATCH NOT EXECUTED
+
+DEC-511 consumes the exact DEC-510 authorization and rechecks current main, the repaired
+annual workflow, and the complete two-run predecessor inventory immediately before any
+future 2016 dispatch.
+
+The successful 2015 replacement run is bound by both run ID and head SHA. The dispatch
+parameters are frozen to \`main\`, annual segment \`2016\`, and that exact predecessor run ID.
+
+No dispatch command is present or executed. Reruns, retries, run 4+, later years,
+Strategy V1, promotion, broker mutation, demo/live orders, real-money action, and trading
+remain locked.
+
+Next gate:
+\`EXACT_2016_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN\`.
