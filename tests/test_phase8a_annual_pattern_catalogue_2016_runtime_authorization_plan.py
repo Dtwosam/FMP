@@ -29,7 +29,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase)
         )
         self.assertEqual(
             source["current_runtime_source_blob_sha"],
-            "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b",
+            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
