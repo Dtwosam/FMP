@@ -10716,3 +10716,25 @@ real-money action, or trading occurs.
 
 Next gate:
 `EXACT_2016_ANNUAL_PATTERN_CATALOGUE_RUN3_ONE_SHOT_DISPATCH`.
+
+## DEC-520 — Annual workflow validity and run-identity recovery
+
+**Date:** 2026-10-03  
+**Status:** WORKFLOW REPAIRED / EXACT RUN IDENTITIES REBOUND
+
+The DEC-496 workflow blob was invalid because three duplicate `include-hidden-files` keys
+were concentrated in one YAML mapping. GitHub recorded no-job push failures for that
+workflow and advanced its global run number through 375 without creating another manual
+annual dispatch.
+
+DEC-520 replaces the live annual workflow with corrected blob
+`09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`: each of the three upload steps has exactly
+one hidden-file flag. The prior malformed blob remains frozen as historical evidence.
+
+The replacement authorization/review/binding chain is rebound to exact GitHub workflow
+run 376 / attempt 1, and the 2016 execution/install/dispatch chain to exact run 377 /
+attempt 1. The preflight inventory still requires the sole prior manual dispatch to be
+failed run 1, so an unexpected intervening dispatch fails closed.
+
+DEC-520 authorizes no new dispatch, retry, rerun, later-year execution, broker mutation,
+order placement, real-money action, or trading.
