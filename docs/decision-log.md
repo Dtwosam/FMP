@@ -10738,3 +10738,26 @@ failed run 1, so an unexpected intervening dispatch fails closed.
 
 DEC-520 authorizes no new dispatch, retry, rerun, later-year execution, broker mutation,
 order placement, real-money action, or trading.
+
+## DEC-521 — Exact 2016 run-377 one-shot dispatch
+
+**Date:** 2026-10-03  
+**Status:** BOUNDED RESEARCH DISPATCH / RESULT NOT CLAIMED
+
+DEC-521 is folded into the recovered DEC-518 workflow as a third job after the exact
+runtime install and DEC-519 read-only plan. This preserves DEC-509/511's exact-current-main
+binding: no separate repository merge occurs between the plan and dispatch.
+
+The job requires installed main to remain the DEC-508 install commit, verifies the exact
+installed gate/runtime blobs, consumes the concrete DEC-502 predecessor and DEC-519
+DEC-509→510→511 bundle, and requires the annual global run counter to still end at
+successful run 376 with no run 377+ present.
+
+It then submits exactly one `2016` dispatch with the concrete predecessor run ID and
+resolves exact run 377 / attempt 1. The receipt claims only submission, not a result.
+
+Rerun/retry, run 378+, 2017+, Strategy V1, promotion, broker mutation, demo/live orders,
+real-money action, and trading remain false.
+
+Next gate:
+`REVIEW_2016_RUN_377_BEFORE_ANY_2017_EXECUTION`.
