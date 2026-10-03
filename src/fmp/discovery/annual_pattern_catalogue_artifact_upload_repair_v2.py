@@ -52,19 +52,15 @@ def _assert_upload_block(
     path_line: str,
 ) -> None:
     marker = "uses: actions/upload-artifact@v6"
-    cursor = 0
-    matches: list[str] = []
-    while True:
-        start = text.find(marker, cursor)
-        if start < 0:
-            break
-        end = text.find("\n  ", start + len(marker))
-        if end < 0:
-            end = len(text)
-        block = text[start:end]
-        if artifact_name_fragment in block:
-            matches.append(block)
-        cursor = start + len(marker)
+    blocks = [
+        marker + suffix
+        for suffix in text.split(marker)[1:]
+    ]
+    matches = [
+        block
+        for block in blocks
+        if artifact_name_fragment in block
+    ]
 
     if len(matches) != 1:
         raise ValueError(
