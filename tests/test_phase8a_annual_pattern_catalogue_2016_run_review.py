@@ -392,7 +392,7 @@ class AnnualPatternCatalogue2016RunReviewTests(unittest.TestCase):
         ).hexdigest()
         with self.assertRaisesRegex(
             ValueError,
-            "next_segment_execution_authorized must remain false",
+            "next_segment_execution_authorized mismatch",
         ):
             validate_2016_run_review(tampered)
 
