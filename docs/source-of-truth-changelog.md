@@ -2025,3 +2025,28 @@
 - The workflow runs the frozen DEC-503 → DEC-504 → DEC-506 → DEC-507 chain on exact current main.
 - It outputs the exact two-file 2016 runtime-install action as immutable evidence only.
 - It has no repository-write or Actions-write permission and performs no mutation or dispatch.
+
+## 2026-10-03 — DEC-517 recovers the unconsumed 2015 replacement slot
+
+- Recorded DEC-512 executor run `37149151549` as a pre-dispatch bootstrap failure.
+- Confirmed the annual workflow still has no run #2.
+- Added a separate one-shot recovery that installs the pinned annual-catalogue runtime before DEC-499.
+- Rebound DEC-513 concrete-evidence review to the successful recovery executor identity.
+- Updated DEC-514 to pin the recovered DEC-513 reviewer blob.
+- No retry/rerun, later-year execution, broker mutation, or trading authority was opened.
+
+## 2026-10-03 — DEC-518 recovered exact 2016 runtime installer
+
+- Installed the bounded two-file runtime installer on the same merge as the DEC-517 recovery chain.
+- The installer consumes only the recovered DEC-514 plan and carries the concrete DEC-502 binding forward.
+- It verifies exact current main and both frozen result blobs before a normal fast-forward push.
+- It builds the concrete DEC-508 receipt after the two-file install.
+- It adds no workflow-dispatch, rerun, broker, order, real-money, or trading authority.
+
+## 2026-10-03 — DEC-519 folds post-install planning into DEC-518
+
+- Avoids a fourth `workflow_run` successor by using a second job in the DEC-518 workflow.
+- The second job explicitly drops to contents/actions read permissions.
+- It consumes the same-run DEC-518 install artifact and validates concrete DEC-508/502 evidence.
+- It rebuilds DEC-509 → DEC-510 → DEC-511 and emits only the exact run-3 plan.
+- It performs no dispatch, repository mutation, rerun, broker, order, real-money, or trading action.

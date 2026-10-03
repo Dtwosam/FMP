@@ -38,7 +38,7 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
         self.assertIn('"run_attempt": 1', text)
         self.assertIn('"conclusion": "success"', text)
         self.assertIn(
-            "phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml",
+            "phase8a-annual-catalogue-2015-replacement-executor-recovery.yml",
             text,
         )
         self.assertIn('row.get("run_number") == 1', text)
@@ -49,12 +49,14 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
         for blob in (
             "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
             "74e9499d9485c8e2a402fb675c995cc1961ff16a",
+            "3957f1d62714c473714b68949cc3cfd9569493b3",
             "883f82c85d2738c46284d3675278dc061f4ca07c",
             "8e2a6ab27b4941e3ee12b5463247999200d33e69",
             "505e9dcbfc518e7fc00b603cafef44077d105cfa",
             "0e472b79d12c8a5f14963fac3ed718f5e2c28d02",
             "f8a9a872195f01ca85627a6a6cac4a0c0672f82d",
             "584871d8f55f1da0e5bd885f91542141dc523972",
+            "1ff32214dee10d877a067e750cd69ffad96d5fe5",
         ):
             self.assertIn(blob, text)
 

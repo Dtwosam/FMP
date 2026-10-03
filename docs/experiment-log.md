@@ -3178,3 +3178,40 @@ Copy this section for each serious experiment:
 - Repository mutation performed: NO.
 - Workflow dispatch performed: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-100 — DEC-517 replacement executor recovery
+
+- Original executor run: `37149151549`.
+- Original executor conclusion: FAILURE before dispatch.
+- Failure cause: missing pinned Python runtime / `polars` import.
+- Annual workflow dispatch inventory after failure: exactly run #1 only.
+- Target replacement slot consumed: NO.
+- Recovery installs pinned runtime before DEC-499 import: YES.
+- Recovery target: 2015 run #2 / attempt 1 only.
+- Retry / rerun / run 3+: NO.
+- 2016+ / promotion / broker / trading authority: NO.
+
+### EXP-20261003-101 — DEC-518 recovered exact 2016 runtime install
+
+- Trigger: successful recovered DEC-514 activation plan only.
+- DEC-514 workflow blob: `6069421af6ffc72a40bca9250627c9f81135fd16`.
+- DEC-514 artifact: unique, unexpired, digest-verified.
+- Concrete DEC-502 runtime binding carried forward: YES.
+- Mutation count: exactly 2 files.
+- Result gate blob: `87c00381c5c12a0593378f565e6be4bad003514f`.
+- Result runtime blob: `d7d3713cb3259e793c448153fd75ca043f511389`.
+- Push mode: normal fast-forward only.
+- Concrete DEC-508 receipt: REQUIRED.
+- Workflow dispatch / rerun / retry / broker / trading: NO.
+
+### EXP-20261003-102 — DEC-519 folded post-install 2016 dispatch plan
+
+- Execution location: second job of DEC-518 workflow.
+- Job dependency: successful exact install.
+- Job permissions: contents read / actions read.
+- Concrete DEC-508 receipt: REQUIRED.
+- Concrete DEC-502 binding: REQUIRED.
+- Installed gate/runtime blobs: EXACT.
+- DEC-509 → DEC-510 → DEC-511: REBUILT IN ORDER.
+- Expected next annual run: #3 / attempt 1.
+- Dispatch / mutation / rerun / retry / trading: NO.

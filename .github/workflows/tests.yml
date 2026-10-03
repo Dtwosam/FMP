@@ -319,6 +319,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_runtime_evidence_workflow.py'
           -v
+      - name: Run 2015 replacement executor-recovery tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_executor_recovery.py'
+          -v
       - name: Run read-only 2016 activation-plan workflow tests
         env:
           PYTHONPATH: src
@@ -326,6 +334,22 @@ jobs:
           python -m unittest discover
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2016_activation_plan_workflow.py'
+          -v
+      - name: Run recovered exact 2016 runtime-install executor tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2016_runtime_install_executor.py'
+          -v
+      - name: Run recovered read-only post-install 2016 dispatch-plan tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2016_post_install_dispatch_plan.py'
           -v
       - name: Run historical snapshot and general unit tests
         env:
