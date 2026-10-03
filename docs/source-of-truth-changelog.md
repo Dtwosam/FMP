@@ -2058,3 +2058,11 @@
 - Confirmed invalid push records advanced the global annual workflow counter through 375 without adding a manual dispatch.
 - Rebound the recovered 2015 replacement to exact run 376 / attempt 1 and future 2016 to exact run 377 / attempt 1.
 - Preserved fail-closed inventory checks and all later-year/trading locks.
+
+## 2026-10-03 — DEC-521 exact 2016 run-377 dispatch
+
+- Added the bounded third job after DEC-518 install and DEC-519 read-only planning.
+- It preserves the exact install-main binding by dispatching without an intervening repository merge.
+- It requires successful run 376 to remain the latest global annual run and no run 377+ to exist.
+- It submits exactly one 2016 dispatch with the concrete 2015 predecessor freeze run ID.
+- It claims no result and adds no retry, later-year, broker, order, real-money, or trading authority.
