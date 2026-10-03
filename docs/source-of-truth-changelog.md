@@ -1885,3 +1885,9 @@
 - Threaded the segment-scoped authorization through the existing runtime gate without opening the DEC-475 default path.
 - Runtime now resolves the GitHub workflow-dispatch segment plus run number/attempt and rejects later segments or retries.
 - Keeps 2016+, cross-year results, Strategy V1, promotion, and all trading authority false.
+## 2026-10-03 — DEC-494 first 2015 dispatch preflight
+
+- Added the read-only final preflight for the authorized first 2015 annual-catalogue run.
+- Pins DEC-493 authorization/runtime and the exact installed annual workflow.
+- Requires exact current main, zero prior annual-workflow runs, 2015, and run #1 / attempt 1.
+- Adds no dispatch command and no later-year, Strategy V1, promotion, or trading authority.
