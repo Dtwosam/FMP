@@ -3251,3 +3251,13 @@ Copy this section for each serious experiment:
 - Concrete 2016 runtime evidence binding output: YES.
 - Repository mutation / workflow dispatch / rerun / retry: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-101 — DEC-523 read-only 2017 execution preflight
+
+- Concrete DEC-522 2016 binding: REQUIRED.
+- Annual workflow-dispatch inventory: exactly runs 1, 376, and 377.
+- Successful 2016 predecessor run ID/head: bound to DEC-522.
+- Current main equals reviewed head: REQUIRED.
+- Expected next annual identity: run 378 / attempt 1.
+- Workflow dispatch / execution / result production: NO.
+- 2018+ / Strategy V1 / promotion / trading authority: NO.
