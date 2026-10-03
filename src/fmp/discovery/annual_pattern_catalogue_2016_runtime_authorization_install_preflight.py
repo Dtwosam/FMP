@@ -33,13 +33,13 @@ EXECUTION_AUTHORIZATION_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_execution_authorization.py"
 )
 EXPECTED_EXECUTION_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "9c1462d27c6e8ba01842d767a61163817926dcff"
+    "f3d93ba4701a5d9d80005664445104d1105ff25f"
 )
 RUNTIME_AUTHORIZATION_PLAN_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_plan.py"
 )
 EXPECTED_RUNTIME_AUTHORIZATION_PLAN_SOURCE_BLOB_SHA = (
-    "3167e959311b6695f4c2c18c8c8a7f419d8dca5d"
+    "f2e84069ed6b761fa5001ca6dd722cee05e63224"
 )
 
 REPOSITORY_MUTATION_AUTHORIZED = False
