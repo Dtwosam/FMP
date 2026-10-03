@@ -126,7 +126,8 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
             "real_money_authorized",
             "trading_authorized",
         ):
-            self.assertIn(f'assert binding["{field}"] is False', text)
+            self.assertIn(f'"{field}",', text)
+        self.assertIn("assert binding[field] is False, field", text)
 
 
 if __name__ == "__main__":
