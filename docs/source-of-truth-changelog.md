@@ -1830,3 +1830,10 @@
 - Keeps proof-workflow dispatch, annual-workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
 - Splits CI current installed-state verification from the historical pre-install snapshot.
 - Next gate is separate explicit proof-workflow dispatch authorization before any run.
+## 2026-10-03 — DEC-486 proof-workflow dispatch preflight
+
+- Added a read-only current-main preflight for the installed annual-catalogue proof workflow.
+- Pins DEC-485 receipt and the exact active proof-workflow blob.
+- Requires zero prior proof-workflow runs.
+- Exposes only a plan CLI and no dispatch/run/execute surface.
+- Keeps proof dispatch, annual workflow install/dispatch, historical execution/results, Strategy V1, promotion, and trading authority false.
