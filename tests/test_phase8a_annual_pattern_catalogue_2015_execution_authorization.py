@@ -134,6 +134,16 @@ class AnnualPatternCatalogue2015ExecutionAuthorizationTests(unittest.TestCase):
                     code_commit=CODE_COMMIT,
                 )
 
+    def test_cli_preflight_validates_installed_workflow_receipt(self) -> None:
+        script = Path("scripts/phase8a_annual_pattern_catalogue.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            "validate_annual_workflow_install_receipt_sources",
+            script,
+        )
+        self.assertNotIn("validate_dormant_source_files", script)
+
     def test_runtime_rejects_later_segment_from_event(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             event_path = Path(tmp) / "event.json"
