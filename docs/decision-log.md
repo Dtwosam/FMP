@@ -10780,3 +10780,23 @@ real-money action, or trading.
 
 Next gate:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT`.
+
+## DEC-523 — Read-only 2017 execution preflight
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-READY READ-ONLY PREFLIGHT / 2017 EXECUTION LOCKED
+
+DEC-523 consumes only a valid concrete DEC-522 2016 runtime-evidence binding and the exact
+three-run annual workflow-dispatch inventory: failed run 1, successful 2015 run 376, and
+successful 2016 run 377.
+
+It binds the 2017 predecessor to the concrete successful 2016 run ID, requires current
+main to equal the reviewed head, and freezes the next expected annual workflow identity
+as run 378 / attempt 1.
+
+No workflow dispatch, historical execution/result production, 2018+, Strategy V1,
+promotion, broker mutation, demo/live order, real-money action, or trading authority is
+granted.
+
+Next gate:
+`ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
