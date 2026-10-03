@@ -10157,3 +10157,27 @@ and trading remain false.
 
 Next gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_AUTHORIZATION_BEFORE_MUTATION`.
+## DEC-491 — Annual catalogue workflow install receipt
+
+**Date:** 2026-10-03  
+**Status:** ANNUAL WORKFLOW INSTALLED / EXECUTION LOCKED
+
+DEC-491 records the consumed explicit operator authorization and installed state
+for the annual-pattern-catalogue workflow.
+
+It pins DEC-490 runtime-evidence-binding source blob
+`ed6eccd796a6c35f9ed768a4bc1ce2d4ae78f830`, DEC-479 install-contract source blob
+`f9ac5dc517ec3efbb50057ade66c5b5aab2f52b3`, and exact dormant/active workflow
+blob `31633e87b79551f5b7dfa6b0deb76a82eb070129`.
+
+The active workflow is byte-identical to the frozen dormant template, remains
+manual-dispatch only with read-only repository/action permissions, and retains
+three separate execution gates.
+
+The install authorization is consumed. Further repository mutation,
+annual-workflow dispatch, historical artifact reads, annual catalogue execution,
+result production, cross-year results, Strategy V1 synthesis, promotion, Phase 8B,
+demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
