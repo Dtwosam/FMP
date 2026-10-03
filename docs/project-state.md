@@ -3113,3 +3113,14 @@ execution authority is granted.
 
 Next gate:
 `ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+
+## 2026-10-03 — DEC-524 source-only 2017 authorization source-ready
+
+A valid DEC-523 preflight can now be converted into an exact source-only authorization
+for 2017 run 378 / attempt 1.
+
+The contract carries the concrete successful 2016 predecessor ID forward, but runtime
+authorization is not installed and no dispatch command exists.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_PLAN`.
