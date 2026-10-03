@@ -3101,3 +3101,15 @@ completed. It grants no 2017, promotion, broker, order, real-money, or trading a
 
 Next gate after concrete DEC-522 evidence:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT`.
+
+## 2026-10-03 — DEC-523 read-only 2017 execution preflight source-ready
+
+After concrete DEC-522 evidence exists, the repository can build a read-only 2017
+preflight that binds the exact successful 2016 predecessor and requires the live annual
+workflow-dispatch inventory to remain exactly runs 1, 376, and 377.
+
+The next expected identity is frozen as run 378 / attempt 1. No 2017 dispatch or later
+execution authority is granted.
+
+Next gate:
+`ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
