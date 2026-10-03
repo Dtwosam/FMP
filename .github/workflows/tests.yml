@@ -327,6 +327,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_executor_recovery.py'
           -v
+      - name: Run corrected annual workflow rebind tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_workflow_recovery_rebind.py'
+          -v
       - name: Run read-only 2016 activation-plan workflow tests
         env:
           PYTHONPATH: src
