@@ -69,9 +69,9 @@ jobs:
       - name: Require exact frozen installer sources
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "992a0a04d6c278d157b4b852dfa0aef6a859a2e5"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "6046f07bb39518cfcce3ef11ebcb266ad8d8cab5"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "f8ca1e614198c233dc9a4d918f242875e085ac6f"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "3b81c15f77b024c1e777e4cb9a9a80ded18f2277"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "e5bb5dce82111a29997783fcdc4df0f70883700e"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "7da956910e24e788a2f2a60834c04048a660bc75"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "7d355784598c48d39ac0d3964145b46b878d18a3"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2016_runtime_authorization.py.disabled)" = "e6ef74733669ceb8cab13a1e0d25a236526266e3"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled)" = "995bb46ddd95563f904243c78ae4fc3cf3308968"
