@@ -5,7 +5,7 @@
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
 **Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 freezes dormant activation targets; DEC-506 defines the read-only install preflight; DEC-507 compiles the exact two-file action; DEC-508 defines the future exact post-install receipt; DEC-509 defines the read-only post-install dispatch preflight; DEC-510 defines the source-only exact run-3 authorization; DEC-511 now freezes the final exact dispatch parameters while keeping the dispatch unexecuted. 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-509/510/511. The next live gate is the exact 2016 run-3 dispatch, but it remains conditional on a concrete DEC-508 install receipt on exact current main; do not dispatch early. 2017+ and all trading authority remain locked.
+**Next milestone:** Validate and merge DEC-509/510/511/512. The next live gate remains the exact 2016 run-3 dispatch after a concrete DEC-508 install receipt; DEC-512 only prepares post-run review. 2017+ and all trading authority remain locked.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2990,3 +2990,13 @@ The dispatch action remains unexecuted and no dispatch command is embedded in th
 Next live gate:
 \`EXACT_2016_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN\`,
 only after the concrete DEC-508 install receipt exists on exact current main.
+
+## 2026-10-03 — DEC-512 future 2016 run reviewer source-ready
+
+A future successful 2016 run can now be accepted only after exact run/preflight identity,
+complete successful job and artifact inventories, and a valid 2016 segment freeze.
+
+This reviewer does not dispatch the workflow. The live gate remains the exact run-3
+dispatch only after the concrete DEC-508 install receipt exists on exact current main.
+
+Next post-run source gate: \`DETERMINISTIC_2016_RUNTIME_EVIDENCE_FREEZE\`.
