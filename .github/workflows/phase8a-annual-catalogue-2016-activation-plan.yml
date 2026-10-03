@@ -70,7 +70,7 @@ jobs:
       - name: Require frozen DEC-502 to DEC-507 source chain
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "92acbfe1f3fe59cfede9ba51f92d5930594de3ea"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "7688eba927872903e377134fef93923d49b22dc4"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "505e9dcbfc518e7fc00b603cafef44077d105cfa"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py)" = "00b0df00f15e1d983c799e8991a88e03e010d2e3"
@@ -81,6 +81,18 @@ jobs:
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_execution_authorization.py)" = "b4fd008939440791e52de0ae7c0015c4ee9576b8"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py)" = "5af3c5787c8904e3371f7840d2a71aa588f16eb9"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "07e883796cc2a6fea33df3891bc6595bd5270a81"
+          test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned annual catalogue planning runtime
+        run: python -m pip install -r requirements/exp061-discovery-run.txt -e .
+
+      - name: Require clean checkout after runtime install
+        run: test -z "$(git status --porcelain)"
 
       - name: Download exact DEC-513 runtime binding artifact
         run: |
