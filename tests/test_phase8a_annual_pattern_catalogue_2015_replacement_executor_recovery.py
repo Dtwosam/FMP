@@ -56,9 +56,9 @@ class AnnualCatalogue2015ReplacementExecutorRecoveryTests(unittest.TestCase):
         self.assertEqual(text.count(command), 1)
         self.assertIn("--ref main", text)
         self.assertIn("-f annual_segment_label=2015", text)
-        self.assertIn('row.get("run_number") == 2', text)
+        self.assertIn('row.get("run_number") == 376', text)
         self.assertIn('row.get("run_attempt") == 1', text)
-        self.assertIn('row.get("run_number") >= 3', text)
+        self.assertIn('row.get("run_number") >= 377', text)
         self.assertNotIn("-f annual_segment_label=2016", text)
 
     def test_recovery_receipt_keeps_later_authority_locked(self) -> None:
