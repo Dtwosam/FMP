@@ -9955,3 +9955,52 @@ demo/live, broker mutation, real-money action, and trading remain false.
 
 Next gate:
 `SOURCE_ONLY_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_INSTALL_PREFLIGHT_PROOF_WORKFLOW_INSTALL_PREFLIGHT`.
+## DEC-484 — Freeze read-only proof-workflow installation preflight
+
+**Date:** 2026-10-02  
+**Status:** SOURCE-ONLY READ-ONLY PREFLIGHT / REPOSITORY MUTATION LOCKED
+
+DEC-484 freezes the read-only preflight for the future DEC-483 proof-workflow
+installation action.
+
+It binds the merged DEC-483 authority
+`dedbe26106bbc791e8d13dea49656fcad14bc121` and exact install-contract blob
+`91c25b0d80ac05f28f20234a01717bf0af49f4f8`.
+
+The preflight requires exact current-main metadata, the reserved active proof
+workflow path to remain absent, the full semantically validated DEC-483 source
+report, and the exact one-action install plan.
+
+It fingerprints both the complete preflight and embedded DEC-483 install action,
+requires an exact top-level key set, revalidates the nested action semantically, and
+requires the separately reported install-source evidence to equal the validated
+action evidence. Rehashed authority changes, nested target/source changes,
+source-report substitution, or extra fields fail closed.
+
+The CLI exposes only `plan`; there is no install, execute, dispatch, or advance
+surface.
+
+DEC-484 terminates proof-workflow installation recursion. A read-only proof workflow
+must not require another proof workflow to prove installation of the workflow that
+would produce that proof. The preflight therefore records
+`proof_workflow_install_operator_authorization_required = true` while every actual
+install, dispatch, historical-execution, and trading authority remains false.
+
+The unopened provisional DEC-485 and DEC-486 recursive-bootstrap branches are
+superseded by this decision and are non-authoritative. They must not be opened or
+merged.
+
+Preflight source
+`src/fmp/discovery/annual_pattern_catalogue_workflow_install_preflight_proof_workflow_install_preflight.py`
+is blob `ab434212007f3777fa4436a51268438ea44be6dd`; plan-only CLI is blob
+`68b2dd39c9d08ff6e0c9568b5017a6c4c76273e7`; focused tests are blob
+`1184567227c93fe1bbc523a257c2d68ccb07e22d`; spec is blob
+`92ab149f1818d32953d2f5ddd40bea6738add386`.
+
+Repository mutation, proof-workflow installation/dispatch, annual-workflow
+installation/dispatch, historical reads, catalogue execution/results, next-segment
+execution, cross-year results, Strategy V1 synthesis, promotion, Phase 8B,
+demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate:
+`EXPLICIT_OPERATOR_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_INSTALL_AUTHORIZATION`.

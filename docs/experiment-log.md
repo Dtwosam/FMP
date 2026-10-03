@@ -2816,3 +2816,19 @@ Copy this section for each serious experiment:
 - Annual workflow install / dispatch / historical execution: NO.
 - Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
 - Next gate: source-only proof-workflow install preflight.
+### EXP-20261002-067 — DEC-484 proof-workflow install preflight
+
+- Binds exact DEC-483 install-contract source and validated source report.
+- Requires exact current-main metadata and reserved proof-workflow target absence.
+- Embeds and fingerprints the exact DEC-483 install action.
+- Exact top-level key set and semantic nested action/source validation.
+- Rehashed authority / target / source-report / extra-field tampering: rejected.
+- CLI surface: `plan` only; no install/execute/dispatch/advance command.
+- Repository mutation / proof-workflow install / dispatch: NO.
+- Annual workflow install / dispatch / historical execution: NO.
+- Cross-year result / Strategy V1 synthesis / promotion / trading authority: NO.
+- Finite bootstrap: no proof workflow may be required to prove its own installation.
+- Explicit operator authorization required before the exact proof-workflow file creation.
+- Unopened provisional DEC-485/486 recursive branches: superseded / non-authoritative.
+- Next gate: explicit operator proof-workflow install authorization.
+

@@ -1808,3 +1808,16 @@
 - Added exact action-key-set and nested source/mutation semantic validation.
 - Kept repository mutation, proof/annual workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
 - Next gate is a source-only read-only proof-workflow installation preflight.
+## 2026-10-02 — DEC-484 read-only proof-workflow installation preflight
+
+- Added a read-only preflight over the exact DEC-483 proof-workflow install contract.
+- Bound exact current-main metadata, target-path absence, and validated DEC-483 source evidence.
+- Added canonical fingerprints for the full preflight and embedded install action.
+- Added exact top-level key-set validation plus semantic rejection of rehashed nested target/source, source-report substitution, authority escalation, and extra fields.
+- Added a plan-only CLI with no install, execute, dispatch, or advance surface.
+- Kept repository mutation, proof/annual workflow install/dispatch, historical execution/results, cross-year results, Strategy V1 synthesis, promotion, and trading authority false.
+- Terminated proof-workflow installation recursion: a proof workflow is not required to prove installation of itself.
+- Added an explicit operator-authorization-required marker while keeping all actual install/dispatch/execution/trading authority false.
+- Superseded the unopened provisional DEC-485/486 recursive-bootstrap branches; they are non-authoritative and must not be opened or merged.
+- Next gate is explicit operator authorization for the exact DEC-483 read-only proof-workflow file creation.
+
