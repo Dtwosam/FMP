@@ -78,6 +78,18 @@ jobs:
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_run_review.py)" = "0e472b79d12c8a5f14963fac3ed718f5e2c28d02"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_run_freeze.py)" = "f8a9a872195f01ca85627a6a6cac4a0c0672f82d"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "584871d8f55f1da0e5bd885f91542141dc523972"
+          test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned annual catalogue review runtime
+        run: python -m pip install -r requirements/exp061-discovery-run.txt -e .
+
+      - name: Require clean checkout after runtime install
+        run: test -z "$(git status --porcelain)"
 
       - name: Bind target run to the DEC-517 recovery executor
         run: |
