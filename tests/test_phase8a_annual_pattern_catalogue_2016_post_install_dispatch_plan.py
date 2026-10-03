@@ -46,12 +46,12 @@ class AnnualCatalogue2016PostInstallDispatchPlanTests(unittest.TestCase):
         self.assertIn(
             'test "$(git hash-object '
             'src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" '
-            '= "87c00381c5c12a0593378f565e6be4bad003514f"',
+            '= "e6ef74733669ceb8cab13a1e0d25a236526266e3"',
             job,
         )
         self.assertIn(
             'test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" '
-            '= "d7d3713cb3259e793c448153fd75ca043f511389"',
+            '= "995bb46ddd95563f904243c78ae4fc3cf3308968"',
             job,
         )
 
@@ -71,7 +71,7 @@ class AnnualCatalogue2016PostInstallDispatchPlanTests(unittest.TestCase):
         self.assertIn('assert p509["decision"] == "DEC-509"', job)
         self.assertIn('assert a510["decision"] == "DEC-510"', job)
         self.assertIn('assert p511["decision"] == "DEC-511"', job)
-        self.assertIn('assert p511["expected_run_number"] == 3', job)
+        self.assertIn('assert p511["expected_run_number"] == 377', job)
         self.assertIn('assert p511["expected_run_attempt"] == 1', job)
 
     def test_dec519_freezes_run3_without_dispatch(self) -> None:
