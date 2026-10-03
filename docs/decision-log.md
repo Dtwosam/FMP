@@ -10462,3 +10462,22 @@ Therefore DEC-504 does not change the live runtime.
 
 Next gate:
 `INSTALL_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_AFTER_CONCRETE_PREFLIGHT`.
+
+## DEC-505 — 2016 runtime authorization install preflight
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY INSTALL PREFLIGHT / MUTATION LOCKED
+
+DEC-505 defines the read-only preflight for installing the scoped 2016 execution
+gate into the live annual-catalogue runtime.
+
+It requires a valid DEC-504 authorization receipt, exact current main, and proof
+that the current runtime does not already import or contain a 2016 execution gate.
+
+The plan contains exactly one runtime-file update for segment 2016, run #3 /
+attempt 1. Repository mutation, runtime installation, live dispatch/execution,
+2017+, Strategy V1, promotion, Phase 8B, demo/live, broker mutation, real-money
+action, and trading remain false.
+
+Next gate:
+`CONCRETE_2016_RUNTIME_AUTHORIZATION_INSTALL_MUTATION_AFTER_PREFLIGHT`.
