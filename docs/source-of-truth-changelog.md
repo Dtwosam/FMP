@@ -1968,3 +1968,10 @@
 - Added an exact dormant runtime target wired only for 2016 run #3 / attempt 1.
 - Preserved the current live runtime unchanged.
 - Kept dispatch, 2016 runtime activation, 2017+, Strategy V1, promotion, and trading authority false.
+
+## 2026-10-03 — DEC-506 read-only 2016 runtime install preflight
+
+- Added a canonical preflight for the future two-file 2016 runtime activation.
+- Requires a valid DEC-504 receipt, exact current main, and the exact DEC-505 dormant templates.
+- Keeps the active 2016 gate absent and the live runtime unchanged.
+- Adds no dispatch, 2016 execution/results, 2017+, Strategy V1, promotion, or trading authority.

@@ -3073,3 +3073,14 @@ Copy this section for each serious experiment:
 - Expected run: #3 / attempt 1.
 - Previous annual-freeze run id required: YES.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-089 — DEC-506 2016 runtime install preflight
+
+- Input authorization: canonical DEC-504 receipt.
+- Exact current main required: YES.
+- Segment / run identity: 2016 / #3 / attempt 1.
+- Previous annual-freeze run id required: YES.
+- Activation mutation file count: 2.
+- Live runtime mutation: NO.
+- Runtime gate active: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
