@@ -303,6 +303,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2016_dispatch_action_preflight.py'
           -v
+      - name: Run future 2016 runtime-review tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2016_run_review.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
