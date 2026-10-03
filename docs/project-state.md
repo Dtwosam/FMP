@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-511 freeze the annual catalogue and dormant 2016 install/dispatch chain. DEC-512's first repository-hosted replacement executor failed before dispatch because its runtime dependencies were absent; the annual run-2 slot remains unconsumed. DEC-517 defines the one-shot recovery, DEC-513/514 are rebound and dependency-complete, DEC-518 installs the exact two-file 2016 runtime authorization only after recovered evidence, and DEC-519 builds the post-install run-3 plan as a read-only second job. 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Merge the complete recovered DEC-517→519 chain. DEC-517 should create exactly 2015 replacement run #2 / attempt 1; DEC-513 should bind concrete DEC-502 evidence on success; DEC-514 should compile the exact activation plan; DEC-518 should install only the two frozen runtime files; DEC-519 should emit the read-only exact run-3 plan. Actual run #3 dispatch remains separate.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-511 freeze the annual catalogue and dormant 2016 install/dispatch chain. DEC-512's first repository-hosted replacement executor failed before dispatch because its runtime dependencies were absent. DEC-520 corrects the malformed DEC-496 workflow upload-key distribution and records that invalid push runs consumed GitHub workflow numbers through 375; the sole prior workflow_dispatch remains failed run 1. DEC-517 is rebound to the exact next GitHub workflow run 376, DEC-513/514 are dependency-complete, DEC-518 installs the exact two-file 2016 runtime authorization only after recovered evidence, and DEC-519 builds the post-install exact run-377 plan as a read-only second job. 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and squash-merge the corrected DEC-517→520 recovery chain. DEC-517 should create exactly 2015 replacement GitHub workflow run 376 / attempt 1; DEC-513 should bind concrete DEC-502 evidence on success; DEC-514 should compile the exact activation plan; DEC-518 should install only the two frozen runtime files; DEC-519 should emit the read-only exact run-377 plan. Actual run 377 dispatch remains separate.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -3055,3 +3055,23 @@ read-only DEC-519 post-install planning job.
 
 DEC-519 is folded into DEC-518 to avoid exceeding GitHub's workflow-run successor depth.
 The actual 2016 run #3 dispatch remains a separate gate.
+
+## 2026-10-03 — DEC-520 annual workflow validity and run-identity recovery
+
+The DEC-496 hidden-file repair was malformed YAML: all three `include-hidden-files: true`
+keys were attached to the preflight upload step. GitHub therefore emitted startup-failure
+push records for the annual workflow and incremented its global workflow run number through
+375, even though no additional `workflow_dispatch` occurred.
+
+The live workflow is corrected to blob
+`09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`, with exactly one hidden-file flag on
+each of the preflight, cell, and freeze uploads. New ordinary branch pushes no longer
+create annual-workflow runs.
+
+Because the global counter is now frozen at 375 while the dispatch inventory still contains
+only failed run 1, the recovered 2015 replacement is rebound to exact GitHub workflow run
+376 / attempt 1. The future 2016 authorization chain is rebound to exact run 377 / attempt 1.
+Any unexpected intervening dispatch still causes the one-shot preflights to fail closed.
+
+No additional dispatch, retry, later-year, broker, order, real-money, or trading authority
+is created by DEC-520.
