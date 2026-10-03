@@ -1844,3 +1844,10 @@
 - Scope is run #1 / attempt 1 only; rerun/retry/replacement remain false.
 - Does not trigger the workflow.
 - Keeps repository mutation, annual workflow install/dispatch, historical execution/results, Strategy V1, promotion, and trading authority false.
+## 2026-10-03 — DEC-488 future proof-workflow run reviewer
+
+- Added a strict read-only reviewer for the future first proof-workflow run.
+- Pins DEC-487 authorization, DEC-481 proof contract, and exact active workflow.
+- Requires first-run/attempt-1 success, successful job, unexpired exact-name artifact, and semantically valid preflight JSON.
+- Records raw/canonical payload identities and embeds the validated repository-hosted proof.
+- Adds no dispatch, annual-workflow, historical-execution, Strategy V1, or trading authority.
