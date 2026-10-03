@@ -10031,3 +10031,29 @@ remain false.
 
 Next gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
+## DEC-486 — Annual catalogue proof-workflow dispatch preflight
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY CURRENT-MAIN DISPATCH PREFLIGHT / NO RUN
+
+DEC-486 adds a read-only preflight for the installed annual-catalogue
+install-preflight proof workflow.
+
+It pins DEC-485 install-receipt source blob
+`638c988524ccf8ada27067c2b0bdb3403823a6f5` and active proof-workflow blob
+`0d6c93e2af04501f9ac2589fd24d6672b2b41910`.
+
+A valid preflight requires exact current-main metadata, the exact active workflow,
+DEC-485 installed/available state, dispatch authority still false, and zero
+proof-workflow runs.
+
+The CLI exposes only `plan`; it has no dispatch, execute, run, install, or advance
+surface.
+
+Proof-workflow dispatch, annual-workflow installation/dispatch, historical
+reads/execution/results, next-segment execution, cross-year results, Strategy V1
+synthesis, promotion, Phase 8B, demo/live, broker mutation, real-money action, and
+trading remain false.
+
+Next gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_PROOF_WORKFLOW_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
