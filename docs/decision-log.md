@@ -10308,3 +10308,27 @@ Replacement execution remains unauthorized.
 
 Next gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_REPLACEMENT_RUN_AUTHORIZATION_BEFORE_DISPATCH`.
+
+## DEC-498 — 2015 replacement execution authorization
+
+**Date:** 2026-10-03  
+**Status:** REPLACEMENT RUN #2 / ATTEMPT 1 AUTHORIZED / NOT STARTED
+
+DEC-498 records standing operator authorization to continue the annual-catalogue
+build chain autonomously through exactly one repaired 2015 replacement run.
+
+It pins DEC-497 replacement-preflight source blob
+`c69f8a9bf1130ae776b06670fba0c63c935afdc1`, DEC-495 failure receipt blob
+`1ae96e83dc5d895dce1c5f981f1c785401de22f5`, DEC-496 repair blob
+`adfa75b352a561667b8c23efbcfb07af804d1131`, and repaired workflow blob
+`f7e65ee95f472918e390bceedd7cf2f38bbf7e92`.
+
+The authorized runtime identity is annual segment 2015, run #2, attempt 1 only.
+The live runtime now recognizes that identity separately from the consumed run #1
+authorization. The old DEC-493 runtime remains preserved as a frozen snapshot.
+
+Rerun of failed run #1, attempt-2 retry, run #3+, 2016+, Strategy V1, promotion,
+Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate:
+`EXACT_2015_REPLACEMENT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
