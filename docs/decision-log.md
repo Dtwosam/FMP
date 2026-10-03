@@ -10423,3 +10423,24 @@ real-money action, and trading remain false.
 
 Next gate:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_EXECUTION_PREFLIGHT`.
+
+## DEC-503 — 2016 annual catalogue execution preflight
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-READY READ-ONLY 2016 PREFLIGHT
+
+DEC-503 defines the first 2016 annual-pattern-catalogue preflight over a concrete
+DEC-502 2015 runtime binding.
+
+It requires exact current main, exactly the two prior 2015 workflow runs, target
+segment 2016, predecessor segment 2015, and the successful 2015 replacement run id
+as the required previous annual freeze run.
+
+Expected next workflow identity is run #3 / attempt 1.
+
+The CLI is plan-only. Annual workflow dispatch, historical reads/execution/results,
+cross-year results, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker
+mutation, real-money action, and trading remain false.
+
+Next gate:
+`ANNUAL_PATTERN_CATALOGUE_2016_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
