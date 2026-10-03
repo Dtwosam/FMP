@@ -3178,3 +3178,16 @@ Copy this section for each serious experiment:
 - Repository mutation performed: NO.
 - Workflow dispatch performed: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-098 — DEC-515 exact 2016 runtime install executor
+
+- Trigger: successful DEC-514 activation plan only.
+- DEC-514 artifact: unique, unexpired, digest-verified.
+- Current main equals reviewed head before mutation: REQUIRED.
+- Mutation count: exactly 2 files.
+- Result gate blob: `87c00381c5c12a0593378f565e6be4bad003514f`.
+- Result runtime blob: `d7d3713cb3259e793c448153fd75ca043f511389`.
+- Push mode: normal fast-forward only; no force push.
+- Concrete DEC-508 receipt: REQUIRED after install.
+- Workflow dispatch / rerun / retry: NO.
+- Broker mutation / live order / real money / trading: NO.
