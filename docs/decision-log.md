@@ -10609,3 +10609,17 @@ The review itself performs no dispatch. 2017+, Strategy V1, promotion, broker mu
 demo/live orders, real-money action, and trading remain locked.
 
 Next gate: \`DETERMINISTIC_2016_RUNTIME_EVIDENCE_FREEZE\`.
+
+## DEC-513 — Deterministic 2016 runtime evidence freeze
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY POST-RUN FREEZE / NO LATER-YEAR AUTHORITY
+
+DEC-513 consumes only a valid hardened DEC-512 review and deterministically freezes the
+future 2016 run-3 runtime evidence. It preserves the run head, job/artifact identities,
+freeze digests, review fingerprint, and successful 2015 predecessor identity.
+
+2017+, Strategy V1, promotion, broker mutation, demo/live orders, real-money action, and
+trading remain locked.
+
+Next gate: \`CONCRETE_2016_ANNUAL_PATTERN_CATALOGUE_RUNTIME_EVIDENCE_BINDING\`.
