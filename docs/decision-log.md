@@ -10502,3 +10502,21 @@ and authorizes no repository mutation.
 
 Next gate:
 `EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_MUTATION`.
+
+## DEC-507 — Exact 2016 runtime authorization install action
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY EXACT MUTATION ACTION / LIVE RUNTIME UNCHANGED
+
+DEC-507 compiles a current-main-sensitive two-file activation action from a valid
+DEC-506 receipt.
+
+The action creates the frozen 2016 gate source and replaces the pre-2016 runtime
+with the frozen 2016-wired target. Any main-head drift invalidates the action.
+
+Standing autonomous-build authorization is bound only to those two exact mutations.
+DEC-507 itself does not apply them and leaves runtime activation, dispatch/execution,
+2017+, Strategy V1, promotion, and trading false.
+
+Next gate:
+`APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_ACTION`.

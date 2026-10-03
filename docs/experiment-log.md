@@ -3084,3 +3084,14 @@ Copy this section for each serious experiment:
 - Live runtime mutation: NO.
 - Runtime gate active: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-090 — DEC-507 exact 2016 runtime install action
+
+- Input: valid concrete DEC-506 preflight.
+- Exact current main recheck: REQUIRED.
+- Action count: 2.
+- Action 1: create active 2016 gate source.
+- Action 2: replace runtime with frozen 2016-wired target.
+- Extra mutation: rejected.
+- Live runtime mutation by compiler: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
