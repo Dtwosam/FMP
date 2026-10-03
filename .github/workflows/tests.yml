@@ -175,53 +175,29 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_run1_failure_receipt.py'
           -v
-      - name: Run annual-catalogue artifact-upload repair tests
+      - name: Run DEC-496 through DEC-501 workflow snapshot tests
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          annual=".github/workflows/phase8a-annual-pattern-catalogue.yml"
+          annual_saved="$RUNNER_TEMP/phase8a-annual-pattern-catalogue.dec502.yml"
+          cp "$annual" "$annual_saved"
+          cp tests/fixtures/phase8a_annual_pattern_catalogue_workflow_dec496.yml.snapshot "$annual"
+          trap 'cp "$annual_saved" "$annual"' EXIT
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_artifact_upload_repair.py' -v
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_dispatch_preflight.py' -v
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_execution_authorization.py' -v
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py' -v
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_run_review.py' -v
+          python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_run_freeze.py' -v
+      - name: Run corrected artifact-upload distribution tests
         env:
           PYTHONPATH: src
         run: >-
           python -m unittest discover
           -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_artifact_upload_repair.py'
-          -v
-      - name: Run 2015 replacement-dispatch preflight tests
-        env:
-          PYTHONPATH: src
-        run: >-
-          python -m unittest discover
-          -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_dispatch_preflight.py'
-          -v
-      - name: Run 2015 replacement execution-authorization tests
-        env:
-          PYTHONPATH: src
-        run: >-
-          python -m unittest discover
-          -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_execution_authorization.py'
-          -v
-      - name: Run final 2015 replacement dispatch-action preflight tests
-        env:
-          PYTHONPATH: src
-        run: >-
-          python -m unittest discover
-          -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py'
-          -v
-      - name: Run 2015 replacement-run reviewer tests
-        env:
-          PYTHONPATH: src
-        run: >-
-          python -m unittest discover
-          -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_run_review.py'
-          -v
-      - name: Run deterministic 2015 replacement-run freeze tests
-        env:
-          PYTHONPATH: src
-        run: >-
-          python -m unittest discover
-          -s tests
-          -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_run_freeze.py'
+          -p 'test_phase8a_annual_pattern_catalogue_artifact_upload_repair_v2.py'
           -v
       - name: Run historical snapshot and general unit tests
         env:
