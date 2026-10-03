@@ -10286,3 +10286,25 @@ No replacement execution is authorized by the repair.
 
 Next gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_REPLACEMENT_RUN_AUTHORIZATION_BEFORE_DISPATCH`.
+
+## DEC-497 — 2015 replacement-run dispatch preflight
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY REPLACEMENT PREFLIGHT / AUTHORIZATION LOCKED
+
+DEC-497 defines the read-only preflight for a possible replacement 2015 annual-pattern-catalogue run.
+
+It requires exact current main, exactly one prior annual workflow run, and that run
+must be the consumed failed run `37126711695` / #1 / attempt 1 on
+`fd85a886d07234ad584dcca08692b37e6af54b2e`.
+
+It pins DEC-495 failure-receipt source blob
+`1ae96e83dc5d895dce1c5f981f1c785401de22f5`, DEC-496 repair source blob
+`adfa75b352a561667b8c23efbcfb07af804d1131`, and repaired workflow blob
+`f7e65ee95f472918e390bceedd7cf2f38bbf7e92`.
+
+Expected replacement identity is run #2 / attempt 1. The CLI is plan-only.
+Replacement execution remains unauthorized.
+
+Next gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_REPLACEMENT_RUN_AUTHORIZATION_BEFORE_DISPATCH`.
