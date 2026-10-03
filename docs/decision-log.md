@@ -10462,3 +10462,24 @@ Therefore DEC-504 does not change the live runtime.
 
 Next gate:
 `INSTALL_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_AFTER_CONCRETE_PREFLIGHT`.
+
+## DEC-505 — Dormant 2016 runtime authorization plan
+
+**Date:** 2026-10-03  
+**Status:** DORMANT ACTIVATION PLAN / LIVE RUNTIME UNCHANGED
+
+DEC-505 freezes the exact future 2016 runtime activation without applying it.
+
+It pins DEC-504 authorization source blob
+`19d95a11e3ae1684d28ab17020f78bea39003bc8`, DEC-503 preflight source blob
+`00b0df00f15e1d983c799e8991a88e03e010d2e3`, current runtime blob
+`ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b`, active workflow blob
+`f7e65ee95f472918e390bceedd7cf2f38bbf7e92`, dormant 2016 gate blob
+`87c00381c5c12a0593378f565e6be4bad003514f`, and dormant target runtime blob
+`d7d3713cb3259e793c448153fd75ca043f511389`.
+
+The future gate is limited to segment 2016, run #3 / attempt 1, and requires a
+positive previous annual-freeze run id. Nothing is installed by DEC-505.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC504`.
