@@ -26,11 +26,11 @@ AUTHORIZATION_SOURCE_PATH = (
     "annual_pattern_catalogue_2015_replacement_execution_authorization.py"
 )
 EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "c63fc9f72ad34fa6fd903f2dde8e85570521c9b9"
+    "00f588ae2f641919a79e8baf1b262f73ce5834b2"
 )
 RUNTIME_SOURCE_PATH = "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 EXPECTED_RUNTIME_SOURCE_BLOB_SHA = (
-    "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b"
+    "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_REPAIRED_WORKFLOW_BLOB_SHA = (
