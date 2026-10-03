@@ -2885,3 +2885,17 @@ Copy this section for each serious experiment:
 - Further proof dispatch: NO.
 - Annual workflow install / dispatch / historical execution: NO.
 - Strategy V1 / promotion / trading authority: NO.
+### EXP-20261003-073 — DEC-490 proof-workflow runtime evidence binding
+
+- Proof run: `37120635769`, run #1 / attempt 1, success.
+- Main head: `6ee059cb451e7c6d2235b7744542dc194acc014e`.
+- Proof job: `111195887975`, success.
+- Artifact: `11273008137`, unexpired.
+- Artifact ZIP SHA-256: `3b242f14e89950eb828c614bf1b021dd51d9fc43b9045c2efccc6a1f7bcd8e32`.
+- Raw preflight SHA-256: `70f6aaaca16fbb5de9e481e135cd8ec85d6dc7c6df524fcf328e23fd0d8de3d3`.
+- Canonical preflight SHA-256: `f151fcbd487b40be35b54356f7b3002ba416812ec4ece2ea4bd7868cf5c0a163`.
+- DEC-481 proof fingerprint: `4ad886232c6af5566c8ac5581c153274b8328c7cd41d508ba93dcf343fdf8578`.
+- DEC-489 freeze fingerprint: `99397d1593f724bcc6024c5d0a2f4abf2b230273bf7ffb0edcc0b88562cd58fb`.
+- Further proof dispatch: NO.
+- Annual workflow install / dispatch / historical execution: NO.
+- Strategy V1 / promotion / trading authority: NO.
