@@ -2042,3 +2042,11 @@
 - It verifies exact current main and both frozen result blobs before a normal fast-forward push.
 - It builds the concrete DEC-508 receipt after the two-file install.
 - It adds no workflow-dispatch, rerun, broker, order, real-money, or trading authority.
+
+## 2026-10-03 — DEC-519 folds post-install planning into DEC-518
+
+- Avoids a fourth `workflow_run` successor by using a second job in the DEC-518 workflow.
+- The second job explicitly drops to contents/actions read permissions.
+- It consumes the same-run DEC-518 install artifact and validates concrete DEC-508/502 evidence.
+- It rebuilds DEC-509 → DEC-510 → DEC-511 and emits only the exact run-3 plan.
+- It performs no dispatch, repository mutation, rerun, broker, order, real-money, or trading action.
