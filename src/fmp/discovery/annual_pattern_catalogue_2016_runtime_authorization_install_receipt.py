@@ -28,7 +28,7 @@ INSTALL_ACTION_SOURCE_PATH = (
     "annual_pattern_catalogue_2016_runtime_authorization_install_action.py"
 )
 EXPECTED_INSTALL_ACTION_SOURCE_BLOB_SHA = (
-    "6046f07bb39518cfcce3ef11ebcb266ad8d8cab5"
+    "e5bb5dce82111a29997783fcdc4df0f70883700e"
 )
 
 ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED = False
