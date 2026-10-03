@@ -3152,3 +3152,12 @@ Copy this section for each serious experiment:
 - DEC-511 preflight fingerprint: REQUIRED.
 - Successful 2015 predecessor ID + head: preserved.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-096 — DEC-513 deterministic 2016 evidence freeze
+
+- Source DEC-512 reviewer: hardened source required.
+- Run identity: 2016 run 3, attempt 1, successful.
+- Job/artifact identities: preserved from validated review.
+- Review fingerprint: preserved.
+- Freeze output: canonical and deterministic.
+- Next-segment / Strategy V1 / promotion / trading authority: NO.
