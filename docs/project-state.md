@@ -3035,3 +3035,14 @@ DEC-513 now binds only to the successful recovery executor.
 
 Next live dependency:
 `SUCCESSFUL_2015_REPLACEMENT_RUN_2_THEN_DEC_513_CONCRETE_BINDING`.
+
+## 2026-10-03 — DEC-518 recovered runtime installer source-ready
+
+The exact two-file 2016 runtime installer is now included in the recovery merge itself,
+so it can receive the later successful DEC-514 workflow-run event without moving main
+between the recovered 2015 evidence head and the activation plan.
+
+DEC-518 performs no annual workflow dispatch.
+
+Next gate:
+`READ_ONLY_POST_INSTALL_2016_DISPATCH_PLAN_ON_DEC_518_RECEIPT`.
