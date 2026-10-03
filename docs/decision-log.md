@@ -10761,3 +10761,22 @@ real-money action, and trading remain false.
 
 Next gate:
 `REVIEW_2016_RUN_377_BEFORE_ANY_2017_EXECUTION`.
+
+## DEC-522 — Read-only 2016 run-377 evidence binding
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-READY READ-ONLY REVIEW / 2017 LOCKED
+
+DEC-522 binds only a completed successful annual-catalogue run 377 / attempt 1 whose run
+ID and head are also named by the exact DEC-521 dispatch receipt.
+
+The reviewer requires the exact 20-job and 20-artifact 2016 inventory, verifies the
+freeze ZIP against GitHub's SHA-256 artifact digest, and validates the embedded DEC-477
+2016 annual freeze before producing a concrete runtime-evidence binding.
+
+The reviewer has contents/actions read permission only. It performs no workflow dispatch,
+repository mutation, rerun/retry, 2017 execution, broker action, order placement,
+real-money action, or trading.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT`.
