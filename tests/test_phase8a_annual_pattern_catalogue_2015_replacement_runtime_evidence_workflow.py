@@ -56,6 +56,7 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
             "0e472b79d12c8a5f14963fac3ed718f5e2c28d02",
             "f8a9a872195f01ca85627a6a6cac4a0c0672f82d",
             "584871d8f55f1da0e5bd885f91542141dc523972",
+            "1ff32214dee10d877a067e750cd69ffad96d5fe5",
         ):
             self.assertIn(blob, text)
 
