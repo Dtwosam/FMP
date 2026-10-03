@@ -199,6 +199,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_execution_authorization.py'
           -v
+      - name: Run final 2015 replacement dispatch-action preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
