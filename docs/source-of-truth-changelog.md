@@ -1996,3 +1996,10 @@
 - Binds the DEC-508 install receipt to concrete DEC-502 predecessor evidence and the exact two-run inventory.
 - Requires current main to equal the recorded install commit and pins the repaired active workflow.
 - Keeps dispatch, execution/result production, later-year work, promotion, broker mutation, and trading authority false.
+
+## 2026-10-03 — DEC-510 source-only 2016 dispatch authorization
+
+- Added an exact authorization contract for annual segment 2016, run 3, attempt 1.
+- Requires a valid DEC-509 preflight and byte-exact repaired workflow/source identity.
+- Authorizes dispatch/read/execution/result production only for that exact run.
+- Contains no dispatch command and keeps reruns, later years, promotion, broker mutation, and trading locked.
