@@ -13,23 +13,23 @@ EXECUTION_AUTHORIZATION_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_execution_authorization.py"
 )
 EXPECTED_EXECUTION_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "19d95a11e3ae1684d28ab17020f78bea39003bc8"
+    "9c1462d27c6e8ba01842d767a61163817926dcff"
 )
 EXECUTION_PREFLIGHT_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py"
 )
 EXPECTED_EXECUTION_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "00b0df00f15e1d983c799e8991a88e03e010d2e3"
+    "d804bdefb58f803738ba47dcdf244b0646bbdade"
 )
 CURRENT_RUNTIME_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 )
 EXPECTED_CURRENT_RUNTIME_SOURCE_BLOB_SHA = (
-    "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b"
+    "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
-    "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+    "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 )
 
 DORMANT_2016_GATE_TEMPLATE_PATH = (
@@ -37,14 +37,14 @@ DORMANT_2016_GATE_TEMPLATE_PATH = (
     "annual_pattern_catalogue_2016_runtime_authorization.py.disabled"
 )
 EXPECTED_DORMANT_2016_GATE_TEMPLATE_BLOB_SHA = (
-    "87c00381c5c12a0593378f565e6be4bad003514f"
+    "e6ef74733669ceb8cab13a1e0d25a236526266e3"
 )
 DORMANT_RUNTIME_TARGET_TEMPLATE_PATH = (
     "docs/superpowers/templates/"
     "annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled"
 )
 EXPECTED_DORMANT_RUNTIME_TARGET_TEMPLATE_BLOB_SHA = (
-    "d7d3713cb3259e793c448153fd75ca043f511389"
+    "995bb46ddd95563f904243c78ae4fc3cf3308968"
 )
 
 TARGET_2016_GATE_SOURCE_PATH = (
@@ -133,7 +133,7 @@ def validate_2016_runtime_authorization_plan_sources(
     )
     if 'AUTHORIZED_ANNUAL_SEGMENT_LABEL = "2016"' not in gate_template:
         raise ValueError("DEC-505 dormant gate segment drift")
-    if "EXPECTED_RUN_NUMBER = 3" not in gate_template:
+    if "EXPECTED_RUN_NUMBER = 377" not in gate_template:
         raise ValueError("DEC-505 dormant gate run-number drift")
     if "EXPECTED_RUN_ATTEMPT = 1" not in gate_template:
         raise ValueError("DEC-505 dormant gate run-attempt drift")
@@ -147,7 +147,7 @@ def validate_2016_runtime_authorization_plan_sources(
     ).read_text(encoding="utf-8")
     if "require_2016_execution_authorized" not in runtime_target:
         raise ValueError("DEC-505 runtime target lacks 2016 gate")
-    if 'segment == "2016" and effective_run_number == 3' not in runtime_target:
+    if 'segment == "2016" and effective_run_number == 377' not in runtime_target:
         raise ValueError("DEC-505 runtime target routing drift")
     if (
         "DEC-505 2016 execution requires previous annual freeze run id"
@@ -173,7 +173,7 @@ def build_2016_runtime_authorization_plan(
         "source_authorization_decision": "DEC-504",
         "source_preflight_decision": "DEC-503",
         "annual_segment_label": "2016",
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "previous_annual_freeze_run_required": True,
         "target_gate_source_path": TARGET_2016_GATE_SOURCE_PATH,
