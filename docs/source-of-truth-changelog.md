@@ -1865,3 +1865,10 @@
 - Recomputed and pinned DEC-480, DEC-481, DEC-489, and DEC-490 fingerprints.
 - Marked the one-shot proof-dispatch authorization consumed.
 - Kept further proof dispatch, repository mutation, annual workflow install/dispatch, historical execution, Strategy V1, and trading authority false.
+## 2026-10-03 — DEC-491 annual workflow installed
+
+- Recorded the consumed explicit annual-workflow installation authorization.
+- Verified the active annual workflow is byte-identical to the frozen dormant template.
+- Preserved manual-only trigger, read-only permissions, and all three execution gates.
+- Marked the annual workflow installed/available.
+- Kept workflow dispatch, annual catalogue execution/results, Strategy V1, promotion, and trading authority false.

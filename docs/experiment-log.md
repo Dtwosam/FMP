@@ -2899,3 +2899,15 @@ Copy this section for each serious experiment:
 - Further proof dispatch: NO.
 - Annual workflow install / dispatch / historical execution: NO.
 - Strategy V1 / promotion / trading authority: NO.
+### EXP-20261003-074 — DEC-491 annual workflow install receipt
+
+- Explicit annual-workflow installation authorization: CONSUMED.
+- Active workflow path: `.github/workflows/phase8a-annual-pattern-catalogue.yml`.
+- Active workflow blob: `31633e87b79551f5b7dfa6b0deb76a82eb070129`.
+- Dormant template blob: `31633e87b79551f5b7dfa6b0deb76a82eb070129`.
+- Exact byte identity: YES.
+- Trigger mode: manual workflow_dispatch only.
+- Permissions: contents read / actions read.
+- Separate execution gates retained: 3.
+- Annual workflow dispatch / 2015 execution: NO.
+- Strategy V1 / promotion / trading authority: NO.
