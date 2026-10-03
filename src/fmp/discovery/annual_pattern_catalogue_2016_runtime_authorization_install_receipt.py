@@ -75,6 +75,12 @@ def _sha256_hex(value: object, *, field: str) -> str:
     return value.lower()
 
 
+def _positive_int(value: object, *, field: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+        raise ValueError(f"DEC-508 {field} must be a positive integer")
+    return value
+
+
 def _validate_commit(value: object, *, field: str) -> str:
     if not isinstance(value, str) or len(value) != 40:
         raise ValueError(f"DEC-508 {field} must be a 40-character Git commit")
@@ -154,8 +160,9 @@ def review_2016_runtime_authorization_install(
         "annual_segment_label": "2016",
         "expected_run_number": 3,
         "expected_run_attempt": 1,
-        "previous_annual_freeze_run_id": install_action.get(
-            "previous_annual_freeze_run_id"
+        "previous_annual_freeze_run_id": _positive_int(
+            install_action.get("previous_annual_freeze_run_id"),
+            field="previous annual freeze run id",
         ),
         "changed_file_count": 2,
         "changed_files": expected_files,
@@ -215,16 +222,34 @@ def validate_2016_runtime_authorization_install_receipt(
         raise ValueError("DEC-508 decision mismatch")
     if value.get("source_action_decision") != "DEC-507":
         raise ValueError("DEC-508 source action mismatch")
+    if value.get("install_action_source_blob_sha") != EXPECTED_INSTALL_ACTION_SOURCE_BLOB_SHA:
+        raise ValueError("DEC-508 install action source blob mismatch")
+    _sha256_hex(
+        value.get("source_action_fingerprint_sha256"),
+        field="source action fingerprint",
+    )
     if value.get("annual_segment_label") != "2016":
         raise ValueError("DEC-508 annual segment mismatch")
     if value.get("expected_run_number") != 3:
         raise ValueError("DEC-508 expected run number mismatch")
     if value.get("expected_run_attempt") != 1:
         raise ValueError("DEC-508 expected run attempt mismatch")
+    _positive_int(
+        value.get("previous_annual_freeze_run_id"),
+        field="previous annual freeze run id",
+    )
     _validate_commit(value.get("install_commit_sha"), field="install_commit_sha")
+    if value.get("repository_full_name") != "Dtwosam/FMP":
+        raise ValueError("DEC-508 repository mismatch")
+    if value.get("stage") != "ANNUAL_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALLED_DISPATCH_LOCKED":
+        raise ValueError("DEC-508 stage mismatch")
 
     if value.get("changed_file_count") != 2:
         raise ValueError("DEC-508 changed file count mismatch")
+    if value.get("installed_gate_source_path") != TARGET_2016_GATE_SOURCE_PATH:
+        raise ValueError("DEC-508 installed gate path mismatch")
+    if value.get("installed_runtime_source_path") != TARGET_RUNTIME_SOURCE_PATH:
+        raise ValueError("DEC-508 installed runtime path mismatch")
     if value.get("changed_files") != [
         TARGET_2016_GATE_SOURCE_PATH,
         TARGET_RUNTIME_SOURCE_PATH,
