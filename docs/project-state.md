@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-494 freeze the annual catalogue method, installed workflow, proof chain, 2015 authorization, and first-dispatch preflight. DEC-495 now binds the consumed failed first 2015 run, which terminated at artifact upload before any annual cell executed. DEC-496 repairs only hidden artifact packaging for the preflight, cell, and freeze uploads. Rerun/retry/replacement authority, 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-495/496. Then build a read-only replacement-run preflight over the repaired workflow and failed run receipt. A separate explicit 2015 replacement-run authorization is required before any second workflow dispatch.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-494 freeze the annual catalogue method, installed workflow, proof chain, 2015 authorization, and first-dispatch preflight. DEC-495 binds the consumed failed first 2015 run; DEC-496 repairs only hidden artifact packaging; DEC-497 now defines the read-only replacement-run preflight over the exact failed-run inventory and repaired workflow. Replacement execution, 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-497. The next authority gate is a separate explicit 2015 replacement-run authorization before any run #2 dispatch. No replacement execution or later-year execution is authorized yet.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2817,6 +2817,20 @@ DEC-496 sets `include-hidden-files: true` on the three annual workflow upload
 steps while preserving the pre-repair workflow snapshot.
 
 The original execution authorization is consumed. No replacement run is authorized.
+
+Next safe gate:
+`EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_REPLACEMENT_RUN_AUTHORIZATION_BEFORE_DISPATCH`.
+
+## 2026-10-03 — DEC-497 replacement-run preflight source-ready
+
+A possible replacement 2015 run now has a read-only preflight requiring exactly
+one prior annual run: failed run `37126711695` / #1 / attempt 1.
+
+The repaired workflow blob is
+`f7e65ee95f472918e390bceedd7cf2f38bbf7e92`.
+
+Expected replacement identity is run #2 / attempt 1, but replacement dispatch and
+execution remain unauthorized.
 
 Next safe gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_REPLACEMENT_RUN_AUTHORIZATION_BEFORE_DISPATCH`.
