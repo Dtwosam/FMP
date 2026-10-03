@@ -1975,3 +1975,10 @@
 - Requires a valid DEC-504 receipt, exact current main, and the exact DEC-505 dormant templates.
 - Keeps the active 2016 gate absent and the live runtime unchanged.
 - Adds no dispatch, 2016 execution/results, 2017+, Strategy V1, promotion, or trading authority.
+
+## 2026-10-03 — DEC-507 exact 2016 runtime install action
+
+- Added a canonical, current-main-sensitive two-file activation action compiler.
+- The compiler allows only the frozen 2016 gate creation and runtime replacement.
+- Rejects head drift and any extra mutation.
+- Does not itself alter the live runtime or authorize workflow dispatch/trading.
