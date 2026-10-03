@@ -21,13 +21,13 @@ RUN_FREEZE_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_freeze.py"
 )
 EXPECTED_RUN_FREEZE_SOURCE_BLOB_SHA = (
-    "d89dad00849970020ecc83a87e535f252a39a30e"
+    "c9e5028bd40a9dc1ad73b0560047405d458bc61e"
 )
 RUN_REVIEW_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_review.py"
 )
 EXPECTED_RUN_REVIEW_SOURCE_BLOB_SHA = (
-    "3dd2862e550ce0571a93d571e794cb929fb8e602"
+    "954718b9780004907c385ebb0496469d8433b844"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
