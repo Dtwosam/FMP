@@ -1938,3 +1938,11 @@
 - Preserves exact run/job/artifact and DEC-477 annual-freeze identities.
 - Emits one canonical freeze fingerprint.
 - Keeps 2016+, Strategy V1, promotion, and all trading authority false.
+
+## 2026-10-03 — DEC-502 concrete 2015 runtime evidence binding
+
+- Added a canonical binding compiler over a valid DEC-501 runtime freeze.
+- Requires exact concrete run/job/artifact inventory rather than placeholder identities.
+- Preserves DEC-500 review, DEC-501 freeze, and DEC-477 annual-freeze identities.
+- Emits one canonical binding fingerprint.
+- Keeps 2016+, Strategy V1, promotion, and all trading authority false.
