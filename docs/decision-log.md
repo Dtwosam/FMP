@@ -10444,3 +10444,21 @@ mutation, real-money action, and trading remain false.
 
 Next gate:
 `ANNUAL_PATTERN_CATALOGUE_2016_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+
+## DEC-504 — 2016 execution authorization contract
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY AUTHORIZATION / RUNTIME INACTIVE
+
+DEC-504 converts a valid DEC-503 preflight into a canonical 2016 execution-authorization receipt under the standing autonomous-build instruction.
+
+It scopes authorization to annual segment 2016, predecessor 2015, the concrete previous annual freeze run id, and expected workflow run #3 / attempt 1.
+
+The authorization contract may mark dispatch, historical reads, catalogue execution, and result production true for that exact scope, but it also requires `runtime_authorization_installed = false` and `runtime_gate_active = false`.
+
+Therefore DEC-504 does not change the live runtime.
+
+2017+, Strategy V1 synthesis, promotion, Phase 8B, demo/live, broker mutation, real-money action, and trading remain false.
+
+Next gate:
+`INSTALL_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_AFTER_CONCRETE_PREFLIGHT`.
