@@ -1982,3 +1982,10 @@
 - The compiler allows only the frozen 2016 gate creation and runtime replacement.
 - Rejects head drift and any extra mutation.
 - Does not itself alter the live runtime or authorize workflow dispatch/trading.
+
+## 2026-10-03 — DEC-508 future 2016 runtime install receipt
+
+- Added a reviewer for the exact two-file DEC-507 activation result.
+- Requires exact changed-file inventory and target Git blobs.
+- Marks runtime installation/gate active only after exact evidence is supplied.
+- Keeps workflow dispatch, later-year execution, Strategy V1, promotion, and trading authority false.

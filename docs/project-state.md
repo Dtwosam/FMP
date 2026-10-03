@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 freezes the dormant 2016 runtime targets; DEC-506 defines the read-only activation preflight; DEC-507 now compiles the exact current-main-sensitive two-file install action without applying it. Live 2016 runtime activation, 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-507. The exact two-file live runtime activation remains conditional on a concrete DEC-506 receipt derived from successful 2015 replacement runtime evidence. Continue source-only receipt/review preparation without applying the activation early.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 freezes dormant activation targets; DEC-506 defines the read-only install preflight; DEC-507 compiles the exact two-file action; DEC-508 now defines the future exact post-install receipt while keeping dispatch locked. Live 2016 activation remains conditional on concrete 2015 evidence. 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-507/508, then add the read-only 2016 dispatch preflight over a concrete DEC-508 install receipt, concrete DEC-502 2015 runtime binding, exact run inventory, and current main. Do not apply the live runtime activation before concrete DEC-506 evidence.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2943,3 +2943,14 @@ DEC-507 does not apply the action. The live runtime remains unchanged.
 Next live gate:
 `APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_ACTION`,
 only after the concrete 2015 evidence chain has completed.
+
+## 2026-10-03 — DEC-508 future 2016 runtime install receipt source-ready
+
+The exact post-install state can now be reviewed after the future DEC-507 two-file
+activation. A valid receipt requires the exact changed-file inventory and target
+Git blobs and marks the install action consumed/runtime gate active.
+
+Workflow dispatch remains locked by the receipt.
+
+Next safe source layer:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_PREFLIGHT`.
