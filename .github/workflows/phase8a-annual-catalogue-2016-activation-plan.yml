@@ -1,0 +1,274 @@
+name: phase8a-annual-catalogue-2016-activation-plan
+
+on:
+  workflow_run:
+    workflows:
+      - phase8a-annual-catalogue-2015-replacement-runtime-evidence
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  compile-activation-plan:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      SOURCE_REVIEW_RUN_ID: ${{ github.event.workflow_run.id }}
+      SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - name: Checkout exact reviewer head
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Require exact successful DEC-513 reviewer run
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_run"
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$(git rev-parse HEAD)" = "$SOURCE_HEAD_SHA"
+
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_REVIEW_RUN_ID" \
+            > "$RUNNER_TEMP/dec513-run.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "dec513-run.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          exact = {
+              "id": int(os.environ["SOURCE_REVIEW_RUN_ID"]),
+              "name": "phase8a-annual-catalogue-2015-replacement-runtime-evidence",
+              "path": (
+                  ".github/workflows/"
+                  "phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml"
+              ),
+              "event": "workflow_run",
+              "head_branch": "main",
+              "head_sha": os.environ["SOURCE_HEAD_SHA"],
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          PY
+
+      - name: Require frozen DEC-502 to DEC-507 source chain
+        run: |
+          set -euo pipefail
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "92eaa3ce149b337fdfd798aaffe0236083f99824"
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "505e9dcbfc518e7fc00b603cafef44077d105cfa"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py)" = "00b0df00f15e1d983c799e8991a88e03e010d2e3"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_authorization.py)" = "19d95a11e3ae1684d28ab17020f78bea39003bc8"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py)" = "c439292bd98fb009f773d6988f3138ac533007c9"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "9a5ad0b8f5e441bb67f7daee11aa8f8cc2aee535"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_execution_preflight.py)" = "2170a62c5d5ad91507796d10cfd7cf8d0c1e52f7"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_execution_authorization.py)" = "b4fd008939440791e52de0ae7c0015c4ee9576b8"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py)" = "5af3c5787c8904e3371f7840d2a71aa588f16eb9"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "07e883796cc2a6fea33df3891bc6595bd5270a81"
+
+      - name: Download exact DEC-513 runtime binding artifact
+        run: |
+          set -euo pipefail
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_REVIEW_RUN_ID/artifacts?per_page=100" \
+            > "$RUNNER_TEMP/dec513-artifacts.json"
+
+          artifact_id="$(
+            jq -r '
+              [
+                .artifacts[]
+                | select(
+                    (.expired == false)
+                    and (.name | startswith("annual-catalogue-2015-dec513-runtime-binding-"))
+                  )
+              ]
+              | if length == 1 then .[0].id else empty end
+            ' "$RUNNER_TEMP/dec513-artifacts.json"
+          )"
+          artifact_digest="$(
+            jq -r '
+              [
+                .artifacts[]
+                | select(
+                    (.expired == false)
+                    and (.name | startswith("annual-catalogue-2015-dec513-runtime-binding-"))
+                  )
+              ]
+              | if length == 1 then .[0].digest else empty end
+            ' "$RUNNER_TEMP/dec513-artifacts.json"
+          )"
+          test -n "$artifact_id"
+          case "$artifact_digest" in sha256:*) ;; *) exit 1 ;; esac
+          artifact_sha="$(printf '%s' "$artifact_digest" | sed 's/^sha256://')"
+
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+            > "$RUNNER_TEMP/dec513-binding.zip"
+
+          actual_sha="$(
+            sha256sum "$RUNNER_TEMP/dec513-binding.zip" | awk '{print $1}'
+          )"
+          test "$actual_sha" = "$artifact_sha"
+
+          mkdir -p "$RUNNER_TEMP/dec513-binding"
+          unzip -q "$RUNNER_TEMP/dec513-binding.zip" \
+            -d "$RUNNER_TEMP/dec513-binding"
+
+          binding_path="$(
+            find "$RUNNER_TEMP/dec513-binding" \
+              -type f -name runtime-binding.json -print
+          )"
+          test "$(printf '%s\n' "$binding_path" | sed '/^$/d' | wc -l)" = "1"
+          cp "$binding_path" "$RUNNER_TEMP/runtime-binding.json"
+
+      - name: Require current main still equals reviewed evidence head
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" \
+            > "$RUNNER_TEMP/main-branch.json"
+          main_sha="$(jq -r '.commit.sha' "$RUNNER_TEMP/main-branch.json")"
+          test "$main_sha" = "$SOURCE_HEAD_SHA"
+
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
+            > "$RUNNER_TEMP/annual-runs.json"
+
+      - name: Build DEC-503 concrete 2016 execution preflight
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2016_execution_preflight.py \
+            plan \
+            --runtime-binding-json "$RUNNER_TEMP/runtime-binding.json" \
+            --main-branch-json "$RUNNER_TEMP/main-branch.json" \
+            --annual-workflow-runs-json "$RUNNER_TEMP/annual-runs.json" \
+            --expected-head-sha "$SOURCE_HEAD_SHA" \
+            --out "$RUNNER_TEMP/dec503-preflight.json"
+
+      - name: Build DEC-504 source-only execution authorization
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2016_execution_authorization.py \
+            authorize \
+            --preflight-json "$RUNNER_TEMP/dec503-preflight.json" \
+            --out "$RUNNER_TEMP/dec504-authorization.json"
+
+      - name: Build DEC-506 read-only runtime install preflight
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py \
+            plan \
+            --authorization-json "$RUNNER_TEMP/dec504-authorization.json" \
+            --main-branch-json "$RUNNER_TEMP/main-branch.json" \
+            --expected-head-sha "$SOURCE_HEAD_SHA" \
+            --out "$RUNNER_TEMP/dec506-install-preflight.json"
+
+      - name: Compile exact DEC-507 two-file install action
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_action.py \
+            compile \
+            --preflight-json "$RUNNER_TEMP/dec506-install-preflight.json" \
+            --main-branch-json "$RUNNER_TEMP/main-branch.json" \
+            --expected-head-sha "$SOURCE_HEAD_SHA" \
+            --out "$RUNNER_TEMP/dec507-install-action.json"
+
+      - name: Verify compiled action remains unexecuted
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          binding = json.loads(
+              (temp / "runtime-binding.json").read_text(encoding="utf-8")
+          )
+          preflight = json.loads(
+              (temp / "dec503-preflight.json").read_text(encoding="utf-8")
+          )
+          authorization = json.loads(
+              (temp / "dec504-authorization.json").read_text(encoding="utf-8")
+          )
+          install_preflight = json.loads(
+              (temp / "dec506-install-preflight.json").read_text(encoding="utf-8")
+          )
+          action = json.loads(
+              (temp / "dec507-install-action.json").read_text(encoding="utf-8")
+          )
+
+          assert binding["decision"] == "DEC-502"
+          assert binding["run_number"] == 2
+          assert binding["run_attempt"] == 1
+          assert binding["run_conclusion"] == "success"
+
+          assert preflight["decision"] == "DEC-503"
+          assert preflight["annual_workflow_run_count"] == 2
+          assert preflight["expected_next_run_number"] == 3
+          assert preflight["expected_next_run_attempt"] == 1
+          assert preflight["annual_workflow_dispatch_authorized"] is False
+
+          assert authorization["decision"] == "DEC-504"
+          assert authorization["authorization_scope"] == "2016_run_3_attempt_1_only"
+          assert authorization["runtime_authorization_installed"] is False
+
+          assert install_preflight["decision"] == "DEC-506"
+          assert install_preflight["activation_mutation_file_count"] == 2
+          assert install_preflight["repository_mutation_authorized"] is False
+
+          assert action["decision"] == "DEC-507"
+          assert action["action_count"] == 2
+          create, update = action["actions"]
+          assert create["operation"] == "create"
+          assert create["target_path"] == (
+              "src/fmp/discovery/"
+              "annual_pattern_catalogue_2016_runtime_authorization.py"
+          )
+          assert create["expected_result_blob_sha"] == (
+              "87c00381c5c12a0593378f565e6be4bad003514f"
+          )
+          assert update["operation"] == "update"
+          assert update["target_path"] == (
+              "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
+          )
+          assert update["expected_result_blob_sha"] == (
+              "d7d3713cb3259e793c448153fd75ca043f511389"
+          )
+          assert action["repository_mutation_authorized"] is True
+          assert action["runtime_authorization_installed"] is False
+          assert action["runtime_gate_active"] is False
+          assert action["annual_workflow_dispatch_authorized"] is False
+          assert action["trading_authorized"] is False
+          PY
+
+      - name: Upload immutable DEC-514 activation plan bundle
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2016-dec514-activation-plan-${{ github.event.workflow_run.id }}
+          path: |
+            ${{ runner.temp }}/dec513-run.json
+            ${{ runner.temp }}/dec513-artifacts.json
+            ${{ runner.temp }}/runtime-binding.json
+            ${{ runner.temp }}/main-branch.json
+            ${{ runner.temp }}/annual-runs.json
+            ${{ runner.temp }}/dec503-preflight.json
+            ${{ runner.temp }}/dec504-authorization.json
+            ${{ runner.temp }}/dec506-install-preflight.json
+            ${{ runner.temp }}/dec507-install-action.json
+          if-no-files-found: error
