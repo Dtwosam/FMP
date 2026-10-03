@@ -70,13 +70,13 @@ jobs:
       - name: Require frozen DEC-502 to DEC-507 source chain
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "7850c6bac9657af104baac9729c60f50d3ed2a99"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "9cd5cb88359832b306a5105fa9b6fb5e464d5b6d"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "d77b26436d4255838908c909001928738f7e40b6"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py)" = "d804bdefb58f803738ba47dcdf244b0646bbdade"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_authorization.py)" = "9c1462d27c6e8ba01842d767a61163817926dcff"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py)" = "f39ff9cd4d9a53f5908036641be1031cee8e43c2"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "6046f07bb39518cfcce3ef11ebcb266ad8d8cab5"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "bbb3bba32c3677d3bd971a2744eb93498868433b"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py)" = "9c89eb64c1e0ecda56fd9cfe0b26516e4a20abc3"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_authorization.py)" = "f3d93ba4701a5d9d80005664445104d1105ff25f"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py)" = "6d8b4342118eca13872d89478efe052cd78b9c0a"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "e5bb5dce82111a29997783fcdc4df0f70883700e"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_execution_preflight.py)" = "2170a62c5d5ad91507796d10cfd7cf8d0c1e52f7"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_execution_authorization.py)" = "b4fd008939440791e52de0ae7c0015c4ee9576b8"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py)" = "5af3c5787c8904e3371f7840d2a71aa588f16eb9"
