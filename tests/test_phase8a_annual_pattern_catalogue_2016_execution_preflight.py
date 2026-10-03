@@ -51,14 +51,14 @@ def _binding() -> dict[str, object]:
         "version": "fmp-annual-catalogue-2015-runtime-evidence-binding-v1",
         "run_freeze_source_blob_sha": "8e2a6ab27b4941e3ee12b5463247999200d33e69",
         "run_review_source_blob_sha": "883f82c85d2738c46284d3675278dc061f4ca07c",
-        "active_workflow_blob_sha": "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+        "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "source_freeze_decision": "DEC-501",
         "source_freeze_version": "fmp-annual-catalogue-2015-replacement-run-freeze-v1",
         "stage": "ANNUAL_CATALOGUE_2015_CONCRETE_RUNTIME_EVIDENCE_BOUND",
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": "2015",
         "run_id": 424242,
-        "run_number": 2,
+        "run_number": 376,
         "run_attempt": 1,
         "run_status": "completed",
         "run_conclusion": "success",
@@ -118,7 +118,7 @@ def _runs() -> dict[str, object]:
         "workflow_runs": [
             {
                 "id": 424242,
-                "run_number": 2,
+                "run_number": 376,
                 "run_attempt": 1,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
@@ -151,7 +151,7 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
         )
         self.assertEqual(
             source["runtime_binding_source_blob_sha"],
-            "505e9dcbfc518e7fc00b603cafef44077d105cfa",
+            "bbb3bba32c3677d3bd971a2744eb93498868433b",
         )
         self.assertEqual(
             source["runtime_source_blob_sha"],
@@ -159,7 +159,7 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
-            "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
     def test_concrete_2015_binding_yields_read_only_2016_preflight(self) -> None:
@@ -182,7 +182,7 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
             binding["binding_fingerprint_sha256"],
         )
         self.assertEqual(value["annual_workflow_run_count"], 2)
-        self.assertEqual(value["expected_next_run_number"], 3)
+        self.assertEqual(value["expected_next_run_number"], 377)
         self.assertEqual(value["expected_next_run_attempt"], 1)
         self.assertFalse(value["annual_workflow_dispatch_authorized"])
         self.assertFalse(value["historical_artifact_read_authorized"])
