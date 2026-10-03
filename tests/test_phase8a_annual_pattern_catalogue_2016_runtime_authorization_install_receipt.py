@@ -25,8 +25,8 @@ from fmp.discovery.annual_pattern_catalogue_2016_runtime_authorization_install_r
 
 HEAD = "c" * 40
 INSTALL_COMMIT = "d" * 40
-GATE_BLOB = "87c00381c5c12a0593378f565e6be4bad003514f"
-RUNTIME_BLOB = "d7d3713cb3259e793c448153fd75ca043f511389"
+GATE_BLOB = "e6ef74733669ceb8cab13a1e0d25a236526266e3"
+RUNTIME_BLOB = "995bb46ddd95563f904243c78ae4fc3cf3308968"
 GATE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py"
 )
@@ -37,13 +37,13 @@ def _source_preflight() -> dict[str, object]:
     return {
         "decision": "DEC-503",
         "version": "fmp-annual-catalogue-2016-execution-preflight-v1",
-        "runtime_binding_source_blob_sha": "505e9dcbfc518e7fc00b603cafef44077d105cfa",
+        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
         "runtime_source_blob_sha": "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b",
-        "active_workflow_blob_sha": "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+        "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "annual_workflow_run_count": 2,
         "failed_first_run_id": 37126711695,
         "successful_2015_run_id": 424242,
-        "successful_2015_run_number": 2,
+        "successful_2015_run_number": 376,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": "b" * 40,
         "stage": (
@@ -59,7 +59,7 @@ def _source_preflight() -> dict[str, object]:
         "previous_runtime_binding_fingerprint": "1" * 64,
         "previous_runtime_freeze_fingerprint": "2" * 64,
         "previous_annual_freeze_evidence_fingerprint": "3" * 64,
-        "expected_next_run_number": 3,
+        "expected_next_run_number": 377,
         "expected_next_run_attempt": 1,
         "annual_workflow_dispatch_authorized": False,
         "historical_artifact_read_authorized": False,
@@ -116,7 +116,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallReceiptTests(
         )
         self.assertEqual(
             source["install_action_source_blob_sha"],
-            "9a5ad0b8f5e441bb67f7daee11aa8f8cc2aee535",
+            "e5bb5dce82111a29997783fcdc4df0f70883700e",
         )
 
     def test_exact_two_file_install_yields_dispatch_locked_receipt(self) -> None:
