@@ -3142,3 +3142,26 @@ Copy this section for each serious experiment:
 - Dispatch authority: YES, inherited exact-run contract.
 - Dispatch command present/executed: NO.
 - Rerun / retry / run 4+ / 2017+ / Strategy V1 / promotion / trading: NO.
+
+### EXP-20261003-095 — DEC-512 one-shot replacement executor
+
+- Live annual workflow inventory before execution: exactly run 1 only.
+- Required prior run: \`37126711695\`, #1, attempt 1, failed.
+- Authorized replacement: 2015, run #2, attempt 1 only.
+- Executor trigger: first merged-main push touching only its workflow path.
+- DEC-499 is rebuilt against exact merged main immediately before dispatch.
+- Target dispatch count added by executor: exactly 1.
+- Retry / rerun / run 3+: NO.
+- 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-096 — DEC-513 automated replacement evidence binding
+
+- Trigger: completed annual workflow run #2 only.
+- Required attempt / conclusion: attempt 1 / success.
+- Required executor: exact successful DEC-512 run at same head.
+- DEC-500 review: REQUIRED.
+- DEC-501 deterministic freeze: REQUIRED.
+- DEC-502 concrete runtime binding: REQUIRED.
+- Artifact ZIP SHA-256 verified against GitHub digest: YES.
+- Actions write / dispatch / retry / rerun: NO.
+- 2016+ / Strategy V1 / promotion / trading authority: NO.
