@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-497 freeze the annual catalogue method, installed/repaired workflow, proof chain, consumed failed first 2015 run, upload repair, and read-only replacement preflight. DEC-498 authorizes exactly repaired 2015 run #2 / attempt 1. DEC-499 now defines the final read-only dispatch preflight over exact current main and the single failed prior-run inventory. Run #3+, 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-499, then execute exactly one 2015 replacement workflow dispatch (#2 / attempt 1) from the terminal path. After completion, bind and freeze the run/job/artifact evidence before advancing to 2016.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-499 freeze the annual catalogue method, installed workflow, proof chain, consumed failed first 2015 run, initial upload repair, replacement authorization, and final replacement dispatch preflight. DEC-500 now corrects the artifact-upload repair distribution before any replacement run is dispatched. The live workflow has one hidden-file flag per preflight/cell/freeze upload. Run #2 remains authorized in principle by DEC-498 but must pass a refreshed dispatch preflight against the corrected workflow. Run #3+, 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-500, then refresh the 2015 replacement dispatch-action preflight against corrected workflow blob `09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`. Only after that refreshed gate may run #2 / attempt 1 be dispatched.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2857,3 +2857,12 @@ DEC-499 contains no dispatch command.
 
 Next runtime gate:
 `EXACT_2015_REPLACEMENT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+
+## 2026-10-03 — DEC-500 artifact upload repair v2 source-ready
+
+The live annual workflow now associates exactly one hidden-file upload flag with
+each of the preflight, cell-product, and annual-freeze upload steps.
+
+The flawed DEC-496 workflow remains frozen as a historical fixture.
+
+No replacement run has been dispatched from this corrected state.
