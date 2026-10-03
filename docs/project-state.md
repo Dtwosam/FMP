@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 freezes dormant activation targets; DEC-506 defines the read-only install preflight; DEC-507 compiles the exact two-file action; DEC-508 defines the future exact post-install receipt; DEC-509 now defines the read-only post-install dispatch preflight while keeping dispatch locked. Live 2016 activation remains conditional on concrete 2015 evidence. 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-508/509. After a concrete DEC-508 install receipt exists on exact current main, build the narrowly scoped 2016 dispatch authorization for run 3 attempt 1. Do not dispatch early; 2017+ and all trading authority remain locked.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-504 freeze the annual catalogue method, repaired 2015 workflow path, replacement-run evidence chain, concrete 2015 binding, read-only 2016 preflight, and source-only 2016 authorization. DEC-505 freezes dormant activation targets; DEC-506 defines the read-only install preflight; DEC-507 compiles the exact two-file action; DEC-508 defines the future exact post-install receipt; DEC-509 defines the read-only post-install dispatch preflight; DEC-510 now defines the source-only exact run-3 authorization while leaving dispatch unexecuted. 2017+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-508/509/510, then add a read-only final dispatch-action preflight for the exact 2016 run 3 attempt 1. Do not dispatch before the concrete DEC-508 install receipt exists on exact current main.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2965,3 +2965,16 @@ The preflight requires current main to equal the DEC-508 install commit. It reco
 
 Next source gate:
 `ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
+
+## 2026-10-03 — DEC-510 source-only 2016 dispatch authorization source-ready
+
+A valid DEC-509 preflight can now be converted into an exact authorization contract for
+2016 workflow run 3, attempt 1. The contract preserves the install-commit and predecessor
+bindings and authorizes only the historical read/execution/result surface needed by that
+one run.
+
+No dispatch command is present or executed. Reruns, later runs/years, Strategy V1,
+promotion, broker mutation, demo/live orders, real-money action, and trading remain locked.
+
+Next safe source gate:
+\`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2016_DISPATCH_ACTION_PREFLIGHT\`.
