@@ -164,7 +164,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_workflow_install_receipt.py' -v
           cp tests/fixtures/phase8a_annual_pattern_catalogue_runtime_dec475.py.snapshot "$runtime"
           python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_execution_preflight.py' -v
-          cp "$runtime_saved" "$runtime"
+          cp tests/fixtures/phase8a_annual_pattern_catalogue_runtime_dec493.py.snapshot "$runtime"
           python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_execution_authorization.py' -v
           python -m unittest discover -s tests -p 'test_phase8a_annual_pattern_catalogue_2015_dispatch_preflight.py' -v
       - name: Run failed first-2015 run receipt tests
@@ -190,6 +190,14 @@ jobs:
           python -m unittest discover
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_dispatch_preflight.py'
+          -v
+      - name: Run 2015 replacement execution-authorization tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2015_replacement_execution_authorization.py'
           -v
       - name: Run historical snapshot and general unit tests
         env:
