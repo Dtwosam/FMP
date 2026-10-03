@@ -10818,3 +10818,18 @@ demo/live orders, real-money action, and trading remain false.
 
 Next gate:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_PLAN`.
+
+## DEC-525 — Dormant 2017 runtime authorization plan
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-ONLY DORMANT PLAN / NO REPOSITORY MUTATION
+
+DEC-525 pins the exact DEC-523/524 sources, corrected annual workflow, expected post-2016
+runtime base, dormant 2017 gate, and combined runtime target.
+
+The runtime target preserves run 376 and 377 routing and adds only the exact 2017 run
+378 / attempt 1 route. The plan does not claim that the expected runtime base is already
+installed and grants no repository mutation or workflow dispatch authority.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC524`.
