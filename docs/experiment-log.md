@@ -3105,3 +3105,15 @@ Copy this section for each serious experiment:
 - Runtime gate installed/active: YES.
 - Annual workflow dispatch: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-092 — DEC-509 read-only 2016 dispatch preflight
+
+- DEC-508 install receipt: REQUIRED and validated.
+- Concrete DEC-502 predecessor binding: REQUIRED and matched.
+- Prior annual workflow run count: exactly 2.
+- Current main equals install commit: REQUIRED.
+- Expected 2016 run: number 3, attempt 1.
+- Runtime authorization installed/active: YES.
+- Dispatch command present: NO.
+- Annual workflow dispatch authority: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
