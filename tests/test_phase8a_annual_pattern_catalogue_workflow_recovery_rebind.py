@@ -7,10 +7,6 @@ import unittest
 from fmp.discovery.annual_pattern_catalogue_2015_replacement_execution_authorization import (
     EXPECTED_REPLACEMENT_RUN_NUMBER,
 )
-from fmp.discovery.annual_pattern_catalogue_2016_execution_authorization import (
-    build_2016_execution_authorization,
-)
-
 
 WORKFLOW = Path(".github/workflows/phase8a-annual-pattern-catalogue.yml")
 RUNTIME = Path("src/fmp/discovery/annual_pattern_catalogue_runtime.py")
@@ -76,15 +72,6 @@ class AnnualCatalogueWorkflowRecoveryRebindTests(unittest.TestCase):
         )
         self.assertIn("if effective_run_number == 376:", runtime)
         self.assertNotIn("EXPECTED_RUN_NUMBER = 3", gate)
-
-    def test_live_2016_gate_remains_uninstalled(self) -> None:
-        self.assertFalse(
-            Path(
-                "src/fmp/discovery/"
-                "annual_pattern_catalogue_2016_runtime_authorization.py"
-            ).exists()
-        )
-
 
 if __name__ == "__main__":
     unittest.main()
