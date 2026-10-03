@@ -2017,3 +2017,10 @@
 - Requires exact DEC-511 binding, complete job/artifact inventories, and valid 2016 freeze evidence.
 - Preserves the concrete 2015 predecessor identity.
 - Performs no dispatch and grants no later-year or trading authority.
+
+## 2026-10-03 — DEC-513 deterministic 2016 runtime evidence freeze
+
+- Added a deterministic freeze over the hardened future 2016 runtime review.
+- Preserves exact run, job, artifact, freeze, review, and predecessor identities.
+- Produces a canonical freeze fingerprint.
+- Keeps 2017+, promotion, broker mutation, and trading authority false.
