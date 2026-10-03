@@ -1924,3 +1924,11 @@
 - Pins DEC-498 authorization, the live replacement runtime, and repaired workflow.
 - Expects run #2 / attempt 1 and adds no embedded dispatch command.
 - Keeps run #3+, 2016+, Strategy V1, promotion, and all trading authority false.
+
+## 2026-10-03 — DEC-500 corrected artifact-upload repair distribution
+
+- Preserved the flawed DEC-496 workflow as a historical fixture.
+- Corrected the live annual workflow so preflight, cell, and freeze uploads each
+  carry exactly one hidden-file inclusion flag.
+- Added association-aware tests to prevent concentrated or misplaced repair flags.
+- Kept run #2 unstarted and all later-year execution/trading authority locked.
