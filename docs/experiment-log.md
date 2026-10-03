@@ -3014,3 +3014,14 @@ Copy this section for each serious experiment:
 - Freeze ZIP digest must match GitHub artifact digest.
 - Review fingerprint: canonical SHA-256.
 - 2016+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-084 — DEC-501 deterministic 2015 replacement-run freeze
+
+- Input: semantically valid DEC-500 review.
+- Preserved runtime identity: run #2 / attempt 1.
+- Preserved jobs/artifacts: preflight + 18 cells + freeze.
+- Preserved DEC-477 annual-freeze fingerprint and totals.
+- Output fingerprint: canonical SHA-256.
+- Head mismatch: fail closed.
+- Refingerprinted authority tamper: fail closed.
+- 2016+ / Strategy V1 / promotion / trading authority: NO.
