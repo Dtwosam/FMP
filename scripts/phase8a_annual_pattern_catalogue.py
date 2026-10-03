@@ -17,9 +17,11 @@ from fmp.discovery.annual_pattern_catalogue_segment_evidence import (
     compile_annual_segment_freeze,
     validate_annual_segment_freeze,
 )
+from fmp.discovery.annual_pattern_catalogue_workflow_install_receipt import (
+    validate_annual_workflow_install_receipt_sources,
+)
 from fmp.discovery.annual_pattern_catalogue_workflow_source import (
     validate_annual_segment_label,
-    validate_dormant_source_files,
     validate_prior_segment_freeze,
     validate_source_snapshots,
     workflow_source_payload,
@@ -66,8 +68,10 @@ def _write_bytes(path: Path, value: bytes) -> None:
 
 def _cmd_status(args: argparse.Namespace) -> int:
     value = workflow_source_payload(code_commit=args.code_commit)
-    value["dormant_source_files"] = validate_dormant_source_files(
-        repository_root=Path(".")
+    value["installed_workflow_receipt_sources"] = (
+        validate_annual_workflow_install_receipt_sources(
+            repository_root=Path(".")
+        )
     )
     print(json.dumps(value, sort_keys=True, indent=2, allow_nan=False))
     return 0
@@ -87,8 +91,10 @@ def _cmd_preflight(args: argparse.Namespace) -> int:
     value["workflow_source"] = workflow_source_payload(
         code_commit=args.code_commit
     )
-    value["dormant_source_files"] = validate_dormant_source_files(
-        repository_root=Path(".")
+    value["installed_workflow_receipt_sources"] = (
+        validate_annual_workflow_install_receipt_sources(
+            repository_root=Path(".")
+        )
     )
     _write_json(args.out, value)
     return 0
