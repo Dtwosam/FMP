@@ -79,6 +79,7 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
         self.assertNotIn("gh workflow run ", text)
         self.assertNotIn("gh run rerun", text)
         self.assertNotIn("rerun-failed-jobs", text)
+        self.assertIn("assert binding[field] is False, field", text)
         for field in (
             "next_segment_execution_authorized",
             "cross_year_result_production_authorized",
@@ -91,7 +92,7 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
             "real_money_authorized",
             "trading_authorized",
         ):
-            self.assertIn(f'assert binding["{field}"] is False', text)
+            self.assertIn(f'"{field}",', text)
 
 
 if __name__ == "__main__":
