@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-497 freeze the annual catalogue method, installed/repaired workflow, proof chain, consumed failed first 2015 run, upload repair, and read-only replacement preflight. DEC-498 authorizes exactly repaired 2015 run #2 / attempt 1. DEC-499 now defines the final read-only dispatch preflight over exact current main and the single failed prior-run inventory. Run #3+, 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-499, then execute exactly one 2015 replacement workflow dispatch (#2 / attempt 1) from the terminal path. After completion, bind and freeze the run/job/artifact evidence before advancing to 2016.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-499 freeze the annual catalogue method, repaired workflow, failed first 2015 run, replacement authorization, and final replacement dispatch preflight. DEC-500 now defines the semantic post-run reviewer for successful 2015 replacement run #2 / attempt 1, including exact 20-job/20-artifact inventory and DEC-477 freeze validation. 2016+, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-500, then add the deterministic review freeze. After those source-only layers are merged, execute exactly one 2015 replacement workflow dispatch from the terminal path and bind the concrete runtime evidence before advancing to 2016.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2857,3 +2857,11 @@ DEC-499 contains no dispatch command.
 
 Next runtime gate:
 `EXACT_2015_REPLACEMENT_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+
+## 2026-10-03 — DEC-500 replacement-run reviewer source-ready
+
+The successful replacement run will be accepted only if GitHub reports run #2 /
+attempt 1 with exactly 20 successful jobs and 20 unexpired artifacts, and the
+downloaded annual-freeze artifact validates under DEC-477 for segment `2015`.
+
+No later-year execution is authorized by the reviewer.
