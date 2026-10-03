@@ -23,7 +23,7 @@ DISPATCH_PREFLIGHT_SOURCE_PATH = (
     "annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py"
 )
 EXPECTED_DISPATCH_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "6701d3607d1576a81848810ec699ffd5b7a858a1"
+    "69a2f600e63e27185c744b87a70b86f1c424a2ab"
 )
 SEGMENT_FREEZE_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_segment_evidence.py"
