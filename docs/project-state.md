@@ -4,8 +4,8 @@
 **Repository:** `Dtwosam/FMP`  
 **V1 scope:** Forex only  
 **Current phase:** Phase 8A — Multi-pair, multi-strategy portfolio research
-**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-491 freeze the annual catalogue method, exact installed annual workflow, proof chain, and consumed installation authorization. DEC-492 now defines the read-only first-2015 execution preflight over exact current main and zero annual-workflow runs. Annual workflow dispatch, historical artifact reads, catalogue execution/results, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
-**Next milestone:** Validate and merge DEC-492. The next separate authority gate is explicit 2015 annual-pattern-catalogue execution authorization before the first workflow run. No annual workflow dispatch, historical artifact read, catalogue execution, or result production is authorized yet.
+**Phase status:** ACTIVE — DEC-469 remains the governing annual-first discovery method. DEC-470 through DEC-492 freeze the annual catalogue method, installed workflow, proof chain, and read-only first-2015 preflight. DEC-493 now records explicit authorization for exactly annual segment 2015, workflow run #1 / attempt 1, including its historical artifact reads, catalogue execution, and result production. The default DEC-475 gate remains locked; 2016+, reruns/retries, cross-year results, Strategy V1 synthesis, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+**Next milestone:** Validate and merge DEC-493, then recheck exact current main and zero annual-workflow runs immediately before the single authorized 2015 dispatch. After the run, freeze its exact run/job/artifact evidence before any 2016 decision.
 **Compatibility invariants:** DEC-268 changes the forward research direction to discovery-first market research, with DEC-469/470 defining the annual-first operating form. EXP-044 V1 CLOSED by DEC-262; authoritative EXP-015 Stage A evidence includes run `36279397331`; Stage B/C are not automatically authorized. Narrow representations remain pattern types/tools inside the annual catalogue rather than the governing method.
 
 ## 2026-10-02 — DEC-473 annual full-history loader source-ready
@@ -2779,3 +2779,17 @@ catalogue execution, and result production.
 
 Next safe gate:
 `EXPLICIT_ANNUAL_PATTERN_CATALOGUE_2015_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+
+## 2026-10-03 — DEC-493 first 2015 execution authorized
+
+Explicit operator authorization now covers exactly annual segment `2015`,
+annual-workflow run #1 / attempt 1.
+
+The authorization is segment-scoped and run-scoped. Calls without that exact
+GitHub workflow identity remain on the original DEC-475 hard-closed path, and any
+later segment or retry fails closed.
+
+No 2015 run has been started yet.
+
+Next safe gate:
+`EXACT_FIRST_2015_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
