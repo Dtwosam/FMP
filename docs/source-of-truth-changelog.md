@@ -1858,3 +1858,10 @@
 - Preserves concrete evidence identities and emits one canonical freeze fingerprint when real evidence is supplied.
 - Does not claim a runtime run before one exists.
 - Adds no further proof dispatch, annual workflow, historical execution, Strategy V1, or trading authority.
+## 2026-10-03 — DEC-490 concrete proof-workflow runtime evidence
+
+- Bound the exact successful proof run/job/artifact identities.
+- Recorded artifact ZIP and raw/canonical preflight SHA-256 identities.
+- Recomputed and pinned DEC-480, DEC-481, DEC-489, and DEC-490 fingerprints.
+- Marked the one-shot proof-dispatch authorization consumed.
+- Kept further proof dispatch, repository mutation, annual workflow install/dispatch, historical execution, Strategy V1, and trading authority false.
