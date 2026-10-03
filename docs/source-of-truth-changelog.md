@@ -2080,3 +2080,10 @@
 - Requires the exact failed-1 / successful-376 / successful-377 workflow-dispatch inventory.
 - Binds the 2017 predecessor to the successful 2016 run and freezes run 378 / attempt 1.
 - Adds no dispatch, execution, promotion, broker, order, real-money, or trading authority.
+
+## 2026-10-03 — DEC-524 source-only 2017 execution authorization
+
+- Added a source-only authorization contract for 2017 run 378 / attempt 1.
+- Preserves the concrete successful 2016 predecessor binding from DEC-523.
+- Authorizes historical read/execution/result production only at contract level.
+- Runtime activation, dispatch commands, later years, promotion, broker mutation, and trading remain locked.
