@@ -31,10 +31,10 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
     def test_reviewer_is_limited_to_replacement_run_two(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "github.event.workflow_run.run_number == 2",
+            "github.event.workflow_run.run_number == 376",
             text,
         )
-        self.assertIn('"run_number": 2', text)
+        self.assertIn('"run_number": 376', text)
         self.assertIn('"run_attempt": 1', text)
         self.assertIn('"conclusion": "success"', text)
         self.assertIn(
@@ -47,12 +47,12 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
     def test_reviewer_pins_exact_review_freeze_binding_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
             "74e9499d9485c8e2a402fb675c995cc1961ff16a",
-            "3957f1d62714c473714b68949cc3cfd9569493b3",
-            "883f82c85d2738c46284d3675278dc061f4ca07c",
-            "8e2a6ab27b4941e3ee12b5463247999200d33e69",
-            "505e9dcbfc518e7fc00b603cafef44077d105cfa",
+            "881ca3d0489620c6dab83dc42b3f681ef7ca2eef",
+            "954718b9780004907c385ebb0496469d8433b844",
+            "c9e5028bd40a9dc1ad73b0560047405d458bc61e",
+            "bbb3bba32c3677d3bd971a2744eb93498868433b",
             "0e472b79d12c8a5f14963fac3ed718f5e2c28d02",
             "f8a9a872195f01ca85627a6a6cac4a0c0672f82d",
             "584871d8f55f1da0e5bd885f91542141dc523972",
