@@ -3142,3 +3142,13 @@ Copy this section for each serious experiment:
 - Dispatch authority: YES, inherited exact-run contract.
 - Dispatch command present/executed: NO.
 - Rerun / retry / run 4+ / 2017+ / Strategy V1 / promotion / trading: NO.
+
+### EXP-20261003-095 — DEC-512 future 2016 run reviewer
+
+- Required run: 2016 workflow run 3, attempt 1, successful.
+- Required jobs: 20/20 successful.
+- Required artifacts: 20/20 present, unexpired, digest-valid.
+- Required freeze: valid 2016 segment evidence bound to the run head.
+- DEC-511 preflight fingerprint: REQUIRED.
+- Successful 2015 predecessor ID + head: preserved.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
