@@ -10833,3 +10833,7 @@ before continuing, and adds only the missing source-path environment.
 ## 2026-10-04 — DEC-535 concrete 2017 execution authorization
 
 Successful DEC-534 workflow run `37210041270` produced immutable preflight artifact `11306121033` with digest `sha256:531c468e36ac80f6c0c24620c14b78d2b2faad869d53be098efe7a2b31425e04`. DEC-535 binds only that concrete preflight and authorizes annual segment 2017 as exact workflow run 379 / attempt 1. The contract turns on only the historical read/execution/result and annual-workflow-dispatch authority needed by that future research run. The 2017 runtime gate is not installed, no dispatch command exists or executes, and run 380+, 2018+, strategy promotion, broker/order, real-money, and trading authority remain locked. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_PLAN`.
+
+## 2026-10-04 — DEC-536 dormant 2017 runtime authorization plan
+
+DEC-536 freezes the exact future 2017 runtime gate and combined annual runtime target after a valid DEC-535 authorization. The gate is limited to 2017 run 379 / attempt 1 and predecessor run `37206992367`; the runtime target preserves the existing 2016/run-378 and 2015 routes. Current runtime blob `b564f5a26fdef146fc6080962e7c4762b0b5949a` remains unchanged. Repository mutation, workflow dispatch, historical execution at the plan layer, run 380+, later-year, strategy, broker/order, real-money, and trading authority remain false. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC535`.
