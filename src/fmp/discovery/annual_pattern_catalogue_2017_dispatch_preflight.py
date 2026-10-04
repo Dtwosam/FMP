@@ -174,19 +174,38 @@ def _validate_annual_inventory(
         raise ValueError("DEC-540 annual run inventory mismatch")
 
     exact = {
-        1: (37126711695, "failure"),
-        376: (37191637168, "failure"),
-        377: (37198002653, "success"),
-        378: (37206992367, "success"),
+        1: (
+            37126711695,
+            "fd85a886d07234ad584dcca08692b37e6af54b2e",
+            "failure",
+        ),
+        376: (
+            37191637168,
+            "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
+            "failure",
+        ),
+        377: (
+            37198002653,
+            "a89db974be9a94481e7ed0990476bc661012f1e4",
+            "success",
+        ),
+        378: (
+            37206992367,
+            "2524fde355349581c9440a172d0384c3cbce31ed",
+            "success",
+        ),
     }
-    for number, (run_id, conclusion) in exact.items():
+    for number, (run_id, head_sha, conclusion) in exact.items():
         row = by_number[number]
         required = {
             "id": run_id,
+            "name": "phase8a-annual-pattern-catalogue",
+            "path": ACTIVE_WORKFLOW_PATH,
             "run_number": number,
             "run_attempt": 1,
             "event": "workflow_dispatch",
             "head_branch": "main",
+            "head_sha": head_sha,
             "status": "completed",
             "conclusion": conclusion,
         }
