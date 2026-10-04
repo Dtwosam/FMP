@@ -3215,3 +3215,7 @@ DEC-541 completed successfully as workflow run `37223700484` on `070b5ab9a9e6635
 ### 2026-10-04 — DEC-543/544 run-379 frontier
 
 DEC-542 is concrete from run `37226222971`, artifact `11311294443`, fingerprint `ef31f7ea8c5e50dacee9cd2462b701d17e422f1507b2eb048db781c764d4b2db`. The next atomic source chain installs both DEC-543 and DEC-544 before any 2017 dispatch: DEC-543 may submit only exact annual run 379 / attempt 1 for segment 2017 with predecessor `37206992367`, after revalidating current main, exact annual history, unchanged runtime/workflow blobs, and the bounded merge delta. DEC-544 is already present to review successful completion and can recover the review manually without rerunning research if GitHub omits the automatic successor. No run 380+, 2018 execution, strategy promotion, broker mutation, order execution, real-money action, or trading authority is opened. Next gate after concrete DEC-544 binding: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2018_EXECUTION_PREFLIGHT`.
+
+### 2026-10-04 — 2017 annual evidence pending recovery binding
+
+Annual run 379 / attempt 1 is successful and complete. The DEC-543 dispatcher is successful and the 2017 freeze artifact exists. The automatic DEC-544 reviewer did not run, so concrete 2017 runtime evidence is not yet bound. A read-only, one-shot recovery workflow is source-ready to produce that binding without rerunning annual research. Run 380+, 2018 execution, strategy promotion, broker/order, real-money, and trading remain locked.
