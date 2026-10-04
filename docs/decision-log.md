@@ -10889,3 +10889,7 @@ DEC-542 is concrete from workflow run `37226222971` on `edbbfd0ba3d33ecb61aa3ba6
 ## 2026-10-04 — DEC-544 run-379 evidence recovery
 
 Annual run `37227536041` (global run 379 / attempt 1) completed successfully on `7b4c1ef8573e280c067443b72f1534d9091d5b7f`, but the installed DEC-544 workflow-run reviewer did not start. A separate path-scoped, read-only recovery workflow is added to bind only that completed run using exact DEC-543 dispatcher artifact `11313110298` and exact 2017 freeze artifact `11312736203`. It requires annual history through 379 exactly, requires no run 380+, performs no annual dispatch/rerun/retry, and preserves all later execution/trading authority as false.
+
+## 2026-10-04 — DEC-545 concrete 2018 execution preflight
+
+Concrete recovered DEC-544 evidence now exists from workflow run `37228767187`, artifact `11313481023`, digest `sha256:f48dd73bbae1587bf8c6e97408295ab94761ab4536c7124532ef5b6f55c2d1d1`, and binding fingerprint `a454e3eef8a51260cc07f9103a7de0208f5408a18686bb1249ad05e349edd9ae`. DEC-545 binds that exact predecessor, requires annual history `{1 failure, 376 failure, 377 success, 378 success, 379 success}`, freezes 2018 at expected run 380 / attempt 1 with predecessor run `37227536041`, and remains fully read-only. No run-380 dispatch or later/trading authority is added.
