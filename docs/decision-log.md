@@ -10873,3 +10873,7 @@ Concrete DEC-538 workflow run `37219170862` produced artifact `11310165235` (dig
 ## 2026-10-04 — DEC-540 read-only 2017 dispatch preflight
 
 DEC-539 installer run `37219929487` successfully installed the frozen 2017 runtime authorization at commit `dcdf7210b0039077efa3a23c65c2ed8fa41e2427` and produced artifact `11309927463` (digest `6672b0642a763424541d971d84b273f8c2fde5089fcd736e6152fe8dc9a7e32e`). DEC-540 binds that exact receipt, installed gate/runtime blobs, and annual history `{1 failure, 376 failure, 377 success, 378 success}`, then freezes only future run 379 / attempt 1 with predecessor `37206992367`. It is read-only and contains no dispatch command. Run 380+, 2018+, strategy, broker/order, real-money, and trading authority remain locked.
+
+## 2026-10-04 — DEC-541 concrete 2017 dispatch authorization
+
+DEC-540 completed successfully as workflow run `37223000759` at head `f7983f960ae141f15c83b3cc05f6d6030140c802`, producing artifact `11311031268` with digest `sha256:a54675bd49ef6bb17d32f44b1d21a4adb10b541e3a248f583b05293505ef498d` and preflight fingerprint `7329cf4238c1aa8b608d7b4e41eaaaf643f78c3fb99f7ae399f6db303a75ffad`. DEC-541 binds that evidence and freezes source-only authorization for 2017 run 379 / attempt 1 with predecessor `37206992367`. No next-run command is present and all later scopes remain disabled.
