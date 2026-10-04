@@ -25,13 +25,16 @@ class AnnualCatalogue2016ActivationPlanWorkflowTests(unittest.TestCase):
         self.assertIn("  contents: read", text)
         self.assertIn("  actions: read", text)
         self.assertNotIn("  actions: write", text)
-        self.assertNotIn("workflow_dispatch:", text)
+        self.assertIn("  workflow_dispatch:", text)
+        self.assertIn("source_review_run_id:", text)
+        self.assertIn("source_head_sha:", text)
+        self.assertIn("github.event.workflow_run.event == 'workflow_run'", text)
         self.assertNotIn("  push:", text)
 
     def test_workflow_pins_exact_dec502_to_dec507_chain(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "6c2ca7b24e934d3626ea60779f223a4f55a6a6c7",
+            "b259e4013a7e74eb8df864acad04a31b7a1eac09",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
             "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
             "b6764addd7b471e65f05428f745fa93051bd8785",
