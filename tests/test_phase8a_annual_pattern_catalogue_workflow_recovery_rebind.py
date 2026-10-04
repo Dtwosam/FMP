@@ -75,21 +75,21 @@ class AnnualCatalogueWorkflowRecoveryRebindTests(unittest.TestCase):
                     1,
                 )
 
-    def test_replacement_runtime_identity_is_exact_run_376(self) -> None:
-        self.assertEqual(EXPECTED_REPLACEMENT_RUN_NUMBER, 376)
+    def test_replacement_runtime_identity_is_exact_run_378(self) -> None:
+        self.assertEqual(EXPECTED_REPLACEMENT_RUN_NUMBER, 377)
         runtime = RUNTIME.read_text(encoding="utf-8")
-        self.assertIn("if effective_run_number == 376:", runtime)
+        self.assertIn("if effective_run_number == 377:", runtime)
         self.assertNotIn("if effective_run_number == 2:", runtime)
 
-    def test_dormant_2016_identity_is_exact_run_377(self) -> None:
+    def test_dormant_2016_identity_is_exact_run_378(self) -> None:
         gate = GATE_TEMPLATE.read_text(encoding="utf-8")
         runtime = RUNTIME_TEMPLATE.read_text(encoding="utf-8")
-        self.assertIn("EXPECTED_RUN_NUMBER = 377", gate)
+        self.assertIn("EXPECTED_RUN_NUMBER = 378", gate)
         self.assertIn(
-            'segment == "2016" and effective_run_number == 377',
+            'segment == "2016" and effective_run_number == 378',
             runtime,
         )
-        self.assertIn("if effective_run_number == 376:", runtime)
+        self.assertIn("if effective_run_number == 377:", runtime)
         self.assertNotIn("EXPECTED_RUN_NUMBER = 3", gate.splitlines())
 
 
