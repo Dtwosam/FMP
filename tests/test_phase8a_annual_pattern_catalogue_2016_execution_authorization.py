@@ -77,6 +77,13 @@ def _preflight() -> dict[str, object]:
     os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
     "DEC-504 requires the 2016 preflight source state",
 )
+@unittest.skipIf(
+    Path(
+        "src/fmp/discovery/"
+        "annual_pattern_catalogue_2016_runtime_authorization.py"
+    ).is_file(),
+    "historical pre-install 2016 contract; installed state is covered by DEC-531/532",
+)
 class AnnualPatternCatalogue2016ExecutionAuthorizationTests(unittest.TestCase):
     def test_sources_pin_preflight_runtime_and_workflow(self) -> None:
         source = validate_2016_execution_authorization_sources(

@@ -188,6 +188,10 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
             source["dispatch_executor_workflow_blob_sha"],
             "c9cd42d41994760248009725adc12fd6a13d4511",
         )
+        self.assertEqual(
+            source["post_install_recovery_workflow_blob_sha"],
+            "bd2ecdead7cf560cc560c266cbf5d796350807b3",
+        )
 
     def test_successful_run377_is_bound_read_only(self) -> None:
         value = review_2016_run377_evidence(
@@ -214,6 +218,58 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
         self.assertTrue(value["runtime_evidence_bound"])
         self.assertFalse(value["next_segment_execution_authorized"])
         self.assertFalse(value["strategy_v1_synthesis_authorized"])
+        self.assertFalse(value["trading_authorized"])
+
+    def test_successful_run378_accepts_exact_dec532_recovery_receipt(self) -> None:
+        receipt = {
+            "decision": "DEC-532",
+            "stage": (
+                "ANNUAL_CATALOGUE_2016_RUN_378_POST_INSTALL_"
+                "REPAIR_DISPATCH_SUBMITTED"
+            ),
+            "source_repair_decision": "DEC-531",
+            "source_install_receipt_decision": "DEC-508",
+            "install_commit_sha": (
+                "525386dd68955e9f02909f9692987968ab15e516"
+            ),
+            "repair_head_sha": HEAD,
+            "previous_annual_freeze_run_id": PREVIOUS_RUN_ID,
+            "annual_segment_label": "2016",
+            "run_id": RUN_ID,
+            "run_number": 378,
+            "run_attempt": 1,
+            "run_head_sha": HEAD,
+            "dispatch_submitted": True,
+            "result_claimed": False,
+            "rerun_authorized": False,
+            "retry_authorized": False,
+            "replacement_run_authorized": False,
+            "run_379_or_later_authorized": False,
+            "next_segment_execution_authorized": False,
+            "cross_year_result_production_authorized": False,
+            "strategy_v1_synthesis_authorized": False,
+            "promotion_authorized": False,
+            "phase8b_authorized": False,
+            "demo_order_authorized": False,
+            "broker_mutation_authorized": False,
+            "live_order_authorized": False,
+            "real_money_authorized": False,
+            "trading_authorized": False,
+            "next_gate": "REVIEW_2016_RUN_378_BEFORE_ANY_2017_EXECUTION",
+        }
+        value = review_2016_run377_evidence(
+            repository_root=REPOSITORY_ROOT,
+            run=_run(),
+            jobs_payload=_jobs(),
+            artifacts_payload=_artifacts(),
+            freeze_evidence=_freeze(),
+            freeze_artifact_zip_sha256="f" * 64,
+            dispatch_receipt=receipt,
+            expected_head_sha=HEAD,
+        )
+        self.assertEqual(value["source_dispatch_receipt_decision"], "DEC-532")
+        self.assertTrue(value["dispatch_receipt_bound"])
+        self.assertFalse(value["next_segment_execution_authorized"])
         self.assertFalse(value["trading_authorized"])
 
     def test_failed_run377_is_rejected(self) -> None:

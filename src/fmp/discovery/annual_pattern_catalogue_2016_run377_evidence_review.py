@@ -35,6 +35,13 @@ DISPATCH_EXECUTOR_WORKFLOW_PATH = (
 EXPECTED_DISPATCH_EXECUTOR_WORKFLOW_BLOB_SHA = (
     "c9cd42d41994760248009725adc12fd6a13d4511"
 )
+POST_INSTALL_RECOVERY_WORKFLOW_PATH = (
+    ".github/workflows/"
+    "phase8a-annual-catalogue-2016-post-install-recovery.yml"
+)
+EXPECTED_POST_INSTALL_RECOVERY_WORKFLOW_BLOB_SHA = (
+    "bd2ecdead7cf560cc560c266cbf5d796350807b3"
+)
 
 ANNUAL_SEGMENT_LABEL = "2016"
 EXPECTED_RUN_NUMBER = 378
@@ -105,6 +112,10 @@ def validate_2016_run377_evidence_review_sources(
             root / DISPATCH_EXECUTOR_WORKFLOW_PATH,
             EXPECTED_DISPATCH_EXECUTOR_WORKFLOW_BLOB_SHA,
         ),
+        "post_install_recovery_workflow_blob_sha": (
+            root / POST_INSTALL_RECOVERY_WORKFLOW_PATH,
+            EXPECTED_POST_INSTALL_RECOVERY_WORKFLOW_BLOB_SHA,
+        ),
     }
     actual: dict[str, str] = {}
     for field, (path, expected_sha) in expected.items():
@@ -144,11 +155,8 @@ def _validate_dispatch_receipt(
     expected_head_sha: str,
     expected_run_id: int,
 ) -> dict[str, object]:
-    exact = {
-        "decision": "DEC-521",
-        "stage": "ANNUAL_CATALOGUE_2016_RUN_378_DISPATCH_SUBMITTED",
-        "source_plan_decision": "DEC-519",
-        "install_commit_sha": expected_head_sha,
+    decision = receipt.get("decision")
+    common = {
         "annual_segment_label": "2016",
         "run_id": expected_run_id,
         "run_number": 378,
@@ -172,6 +180,32 @@ def _validate_dispatch_receipt(
         "trading_authorized": False,
         "next_gate": "REVIEW_2016_RUN_378_BEFORE_ANY_2017_EXECUTION",
     }
+    if decision == "DEC-521":
+        exact = {
+            "decision": "DEC-521",
+            "stage": "ANNUAL_CATALOGUE_2016_RUN_378_DISPATCH_SUBMITTED",
+            "source_plan_decision": "DEC-519",
+            "install_commit_sha": expected_head_sha,
+            **common,
+        }
+    elif decision == "DEC-532":
+        exact = {
+            "decision": "DEC-532",
+            "stage": (
+                "ANNUAL_CATALOGUE_2016_RUN_378_POST_INSTALL_"
+                "REPAIR_DISPATCH_SUBMITTED"
+            ),
+            "source_repair_decision": "DEC-531",
+            "source_install_receipt_decision": "DEC-508",
+            "install_commit_sha": (
+                "525386dd68955e9f02909f9692987968ab15e516"
+            ),
+            "repair_head_sha": expected_head_sha,
+            **common,
+        }
+    else:
+        raise ValueError("DEC-522 dispatch receipt decision mismatch")
+
     for field, expected in exact.items():
         if receipt.get(field) != expected:
             raise ValueError(f"DEC-522 dispatch receipt {field} mismatch")
@@ -180,7 +214,7 @@ def _validate_dispatch_receipt(
         field="previous annual freeze run id",
     )
     return {
-        "source_dispatch_receipt_decision": "DEC-521",
+        "source_dispatch_receipt_decision": str(decision),
         "previous_annual_freeze_run_id": previous_run_id,
         "dispatch_receipt_bound": True,
     }
@@ -450,7 +484,6 @@ def validate_2016_run377_evidence_review(
         "run_attempt": 1,
         "run_status": "completed",
         "run_conclusion": "success",
-        "source_dispatch_receipt_decision": "DEC-521",
         "dispatch_receipt_bound": True,
         "annual_cell_count": 18,
         "directional_record_count": 89460,
@@ -471,6 +504,12 @@ def validate_2016_run377_evidence_review(
     for field, expected in exact.items():
         if value.get(field) != expected:
             raise ValueError(f"DEC-522 {field} mismatch")
+
+    if value.get("source_dispatch_receipt_decision") not in {
+        "DEC-521",
+        "DEC-532",
+    }:
+        raise ValueError("DEC-522 source dispatch receipt decision mismatch")
 
     _positive_int(value.get("run_id"), field="run id")
     _positive_int(

@@ -3117,3 +3117,7 @@ Global annual run 376 completed failure before annual cell execution. The failur
 ### 2026-10-04 — DEC-530 installer recovery
 
 Successful 2015 annual run 377 is concretely recoverable through DEC-513/514. The first explicit DEC-518→521 installer run (`37200408776`) failed before repository mutation because its changed-file guard ignored the newly created untracked gate file. Main remains unmodified by the installer and annual run 378 is unconsumed. DEC-530 is the bounded fresh-run repair; later-year and trading authority remain locked.
+
+### 2026-10-04 — 2016 post-install recovery
+
+The 2016 runtime installation is already present on main at `525386dd68955e9f02909f9692987968ab15e516`. Installer run `37205170186` failed only after the push, during DEC-508 construction, because of an installed-state circular import. Annual run 378 remains unconsumed. DEC-531 repairs the active DEC-505 gate import graph without rewriting the historical dormant install template; DEC-532 reconstructs the historical receipt from exact DEC-514 artifact evidence and gates one fresh run-378 dispatch. DEC-522 can bind either original DEC-521 provenance or exact DEC-532 repair provenance. Later-year and trading authority remain locked.

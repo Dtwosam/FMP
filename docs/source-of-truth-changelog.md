@@ -2089,3 +2089,7 @@ Recorded successful 2015 run 377 / attempt 1 (`37198002653`) and the absence of 
 ## 2026-10-04 — DEC-530 installer mutation-inventory repair
 
 Recorded installer run `37200408776` as a pre-commit failure. The exact two-file installer now inventories both tracked changes and untracked files, and DEC-522 accepts a unique successful installer from normal or explicit recovery mode. DEC-529 orchestrator recovery advances only via fresh workflow run 2 identities; annual run 378 remains the next unconsumed annual slot.
+
+## 2026-10-04 — DEC-531/532 post-install recovery
+
+Recorded that installer run `37205170186` pushed the exact DEC-518 two-file install before failing on a circular import during DEC-508 receipt construction. Added a lazy-import repair for the active 2016 gate, immutable post-install repair evidence, exact reconstruction of DEC-508 from DEC-514 run-2 artifact `11304088642`, and a bounded run-378 dispatch recovery path. DEC-522 now accepts the exact DEC-532 receipt while retaining all run-379+/2017+/trading locks.

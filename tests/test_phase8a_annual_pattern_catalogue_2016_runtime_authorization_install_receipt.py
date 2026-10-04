@@ -107,6 +107,13 @@ def _install_action() -> dict[str, object]:
     os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
     "DEC-508 requires the future 2016 install-action source state",
 )
+@unittest.skipIf(
+    Path(
+        "src/fmp/discovery/"
+        "annual_pattern_catalogue_2016_runtime_authorization.py"
+    ).is_file(),
+    "historical pre-install 2016 contract; installed state is covered by DEC-531/532",
+)
 class AnnualPatternCatalogue2016RuntimeAuthorizationInstallReceiptTests(
     unittest.TestCase
 ):
