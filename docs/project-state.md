@@ -3203,3 +3203,7 @@ DEC-538 is concrete from workflow run `37219170862` and artifact `11310165235`. 
 ### 2026-10-04 — DEC-540 2017 dispatch preflight
 
 DEC-539 is concrete: installer run `37219929487` advanced main to `dcdf7210b0039077efa3a23c65c2ed8fa41e2427` with installed gate blob `c1853eee...` and runtime blob `e9cbc76d...`, while annual run 379 remains absent. DEC-540 is source-ready as a path-scoped read-only preflight bound to artifact `11309927463`; it freezes exact 2017 run 379 / attempt 1 and predecessor run `37206992367` without authorizing dispatch. Next gate: `ANNUAL_PATTERN_CATALOGUE_2017_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
+
+### 2026-10-04 — DEC-541 frontier
+
+DEC-540 is concrete: run `37223000759`, head `f7983f960ae141f15c83b3cc05f6d6030140c802`, artifact `11311031268`, fingerprint `7329cf4238c1aa8b608d7b4e41eaaaf643f78c3fb99f7ae399f6db303a75ffad`. DEC-541 now freezes source-only authorization for annual segment 2017, exact run 379 / attempt 1, predecessor `37206992367`. The next gate is the read-only DEC-542 dispatch-action preflight; run 379 remains unsubmitted and later scopes remain locked.

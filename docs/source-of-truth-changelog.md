@@ -2134,3 +2134,7 @@ Bound the future 2017 runtime installation to concrete DEC-538 run `37219170862`
 ## 2026-10-04 — DEC-540 2017 dispatch preflight staged
 
 Bound the next read-only 2017 dispatch preflight to concrete DEC-539 install run `37219929487`, artifact `11309927463`, install commit `dcdf7210b0039077efa3a23c65c2ed8fa41e2427`, and the exact four-run annual history. Run 379 remains undispatched.
+
+## 2026-10-04 — DEC-540 bound into DEC-541
+
+Bound successful DEC-540 workflow run `37223000759` and artifact `11311031268` into DEC-541. The new source-only authorization targets exact annual run 379 / attempt 1 with predecessor `37206992367` and performs no workflow action or repository mutation.
