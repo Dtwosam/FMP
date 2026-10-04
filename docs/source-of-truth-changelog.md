@@ -2154,3 +2154,7 @@ Recorded successful annual run 379 and the missing automatic DEC-544 reviewer in
 ## 2026-10-04 — Add concrete DEC-545 2018 preflight
 
 Bound the next annual preflight to recovered DEC-544 artifact `11313481023` and binding fingerprint `a454e3eef8a51260cc07f9103a7de0208f5408a18686bb1249ad05e349edd9ae`. The preflight requires exact annual history through successful run 379 and freezes only the unused run-380 / attempt-1 identity for 2018. No dispatch or execution authority is introduced.
+
+## 2026-10-04 — Add DEC-546 2018 source-only authorization
+
+Bound 2018 authorization to concrete DEC-545 artifact `11313083318` and fingerprint `55b9378a78f54a99a9055da1ac0294e73c5e02434fc4ad17d38acea7ac5c6315`. The contract is exact to run 380 / attempt 1 and explicitly records runtime installation/gate/dispatch as false. No run 381+ or trading authority is introduced.

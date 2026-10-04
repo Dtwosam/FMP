@@ -3223,3 +3223,7 @@ Annual run 379 / attempt 1 is successful and complete. The DEC-543 dispatcher is
 ### 2026-10-04 — 2018 execution preflight source-ready
 
 DEC-544 concrete 2017 evidence is bound through recovery workflow run `37228767187` and artifact `11313481023`. DEC-545 now defines the next read-only annual preflight: segment 2018, predecessor 2017 run `37227536041`, expected global run 380 / attempt 1. Annual run 380 remains absent and undispatched. 2018 execution authorization, runtime installation, later-year execution, strategy promotion, broker/order, real-money, and trading remain locked.
+
+### 2026-10-04 — 2018 source-only execution authorization
+
+DEC-545 is concrete and immutable. DEC-546 now source-authorizes the exact 2018 annual research contract for expected run 380 / attempt 1, predecessor 2017 run `37227536041`. The current runtime still has no 2018 route, no dispatch command is present, and annual run 380 remains absent. The next gate is a read-only 2018 runtime authorization plan; later-year and trading authority remain locked.
