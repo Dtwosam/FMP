@@ -33,13 +33,13 @@ EXECUTION_AUTHORIZATION_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_execution_authorization.py"
 )
 EXPECTED_EXECUTION_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "f3d93ba4701a5d9d80005664445104d1105ff25f"
+    "c03a539c3c54fe7744c82d60f84b1dbd2cba9020"
 )
 RUNTIME_AUTHORIZATION_PLAN_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_plan.py"
 )
 EXPECTED_RUNTIME_AUTHORIZATION_PLAN_SOURCE_BLOB_SHA = (
-    "f2e84069ed6b761fa5001ca6dd722cee05e63224"
+    "26d703fa564bce6eecabf33d3dfd1de7ce4e7657"
 )
 
 REPOSITORY_MUTATION_AUTHORIZED = False
@@ -177,7 +177,7 @@ def build_2016_runtime_authorization_install_preflight(
 
     if authorization.get("annual_segment_label") != "2016":
         raise ValueError("DEC-506 authorization segment mismatch")
-    if authorization.get("expected_run_number") != 377:
+    if authorization.get("expected_run_number") != 378:
         raise ValueError("DEC-506 authorization run number mismatch")
     if authorization.get("expected_run_attempt") != 1:
         raise ValueError("DEC-506 authorization run attempt mismatch")
@@ -217,7 +217,7 @@ def build_2016_runtime_authorization_install_preflight(
         "repository_full_name": "Dtwosam/FMP",
         "expected_head_sha": expected_head_sha,
         "annual_segment_label": "2016",
-        "expected_run_number": 377,
+        "expected_run_number": 378,
         "expected_run_attempt": 1,
         "previous_annual_freeze_run_id": previous_freeze_run_id,
         "expected_current_runtime_source_blob_sha": (
@@ -302,7 +302,7 @@ def validate_2016_runtime_authorization_install_preflight(
         raise ValueError("DEC-506 source authorization mismatch")
     if value.get("annual_segment_label") != "2016":
         raise ValueError("DEC-506 annual segment mismatch")
-    if value.get("expected_run_number") != 377:
+    if value.get("expected_run_number") != 378:
         raise ValueError("DEC-506 expected run number mismatch")
     if value.get("expected_run_attempt") != 1:
         raise ValueError("DEC-506 expected run attempt mismatch")
