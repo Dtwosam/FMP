@@ -52,7 +52,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase)
         self.assertEqual(value["source_authorization_decision"], "DEC-504")
         self.assertEqual(value["source_preflight_decision"], "DEC-503")
         self.assertEqual(value["annual_segment_label"], "2016")
-        self.assertEqual(value["expected_run_number"], 377)
+        self.assertEqual(value["expected_run_number"], 378)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertTrue(value["previous_annual_freeze_run_required"])
         self.assertFalse(value["runtime_authorization_installed"])
@@ -79,7 +79,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase)
             "annual_pattern_catalogue_2016_runtime_authorization.py.disabled"
         ).read_text(encoding="utf-8")
         self.assertIn('AUTHORIZED_ANNUAL_SEGMENT_LABEL = "2016"', text)
-        self.assertIn("EXPECTED_RUN_NUMBER = 3", text)
+        self.assertIn("EXPECTED_RUN_NUMBER = 378", text)
         self.assertIn("EXPECTED_RUN_ATTEMPT = 1", text)
         self.assertIn("previous_annual_freeze_run_id", text)
         self.assertIn("TRADING_AUTHORIZED = False", text)
@@ -90,7 +90,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase)
             "annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled"
         ).read_text(encoding="utf-8")
         self.assertIn("require_2016_execution_authorized", text)
-        self.assertIn('segment == "2016" and effective_run_number == 377', text)
+        self.assertIn('segment == "2016" and effective_run_number == 378', text)
         self.assertIn(
             "DEC-505 2016 execution requires previous annual freeze run id",
             text,
