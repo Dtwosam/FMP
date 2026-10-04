@@ -2182,3 +2182,7 @@ Bound the concrete DEC-550 runtime-install receipt and installed blobs into a pa
 ## 2026-10-04 — DEC-552 2018 source-only dispatch authorization
 
 Bound the concrete DEC-551 artifact/fingerprint into a source-only run-380 authorization. The new authorization enables only the exact 2018 research contract and deliberately contains no dispatch command. All later-run and trading authority remains closed.
+
+## 2026-10-04 — DEC-553 2018 dispatch-action preflight
+
+Added the final read-only preflight before any 2018 annual dispatch. It is pinned to concrete DEC-552 run `37234867097`, artifact `11314579371`, and fingerprint `eb0089103203b334c12800643f74cc838e8e9e140b4b7868f48ba74793d1d043`, and freezes only the unconsumed run-380 / attempt-1 parameters with predecessor `37227536041`.
