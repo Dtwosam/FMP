@@ -33,9 +33,13 @@ EXPECTED_REPAIRED_WORKFLOW_BLOB_SHA = (
 )
 
 AUTHORIZED_ANNUAL_SEGMENT_LABEL = "2015"
-EXPECTED_REPLACEMENT_RUN_NUMBER = 376
+EXPECTED_REPLACEMENT_RUN_NUMBER = 377
 EXPECTED_REPLACEMENT_RUN_ATTEMPT = 1
 FAILED_FIRST_RUN_ID = 37126711695
+FAILED_REPLACEMENT_RUN_ID = 37191637168
+FAILED_REPLACEMENT_RUN_NUMBER = 376
+FAILED_REPLACEMENT_RUN_ATTEMPT = 1
+FAILED_REPLACEMENT_RUN_HEAD_SHA = "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"
 
 REPLACEMENT_RUN_AUTHORIZED = True
 HISTORICAL_ARTIFACT_READ_AUTHORIZED_FOR_REPLACEMENT = True
@@ -44,7 +48,7 @@ HISTORICAL_RESULT_PRODUCTION_AUTHORIZED_FOR_REPLACEMENT = True
 
 RERUN_FAILED_RUN_AUTHORIZED = False
 RETRY_FAILED_RUN_AUTHORIZED = False
-THIRD_OR_LATER_RUN_AUTHORIZED = False
+FOURTH_OR_LATER_RUN_AUTHORIZED = False
 NEXT_SEGMENT_EXECUTION_AUTHORIZED = False
 CROSS_YEAR_RESULT_PRODUCTION_AUTHORIZED = False
 STRATEGY_V1_SYNTHESIS_AUTHORIZED = False
@@ -131,7 +135,7 @@ def require_2015_replacement_execution_authorized(
         != EXPECTED_REPLACEMENT_RUN_NUMBER
     ):
         raise PermissionError(
-            "DEC-498 authorizes only replacement workflow run number 376"
+            "DEC-498 authorizes only replacement workflow run number 377"
         )
     if (
         _positive_int(run_attempt, field="run_attempt")
@@ -163,7 +167,11 @@ def build_2015_replacement_execution_authorization(
         **source,
         "stage": "ANNUAL_CATALOGUE_2015_REPLACEMENT_RUN_AUTHORIZED_NOT_STARTED",
         "authorization_basis": "standing_operator_autonomous_build_authorization",
-        "authorization_scope": "2015_replacement_run_376_attempt_1_only",
+        "authorization_scope": "2015_replacement_run_377_attempt_1_only",
+        "failed_replacement_run_id": FAILED_REPLACEMENT_RUN_ID,
+        "failed_replacement_run_number": FAILED_REPLACEMENT_RUN_NUMBER,
+        "failed_replacement_run_attempt": FAILED_REPLACEMENT_RUN_ATTEMPT,
+        "failed_replacement_run_head_sha": FAILED_REPLACEMENT_RUN_HEAD_SHA,
         "failed_first_run_id": FAILED_FIRST_RUN_ID,
         "annual_segment_label": AUTHORIZED_ANNUAL_SEGMENT_LABEL,
         "expected_run_number": EXPECTED_REPLACEMENT_RUN_NUMBER,
@@ -181,7 +189,7 @@ def build_2015_replacement_execution_authorization(
         ),
         "rerun_failed_run_authorized": RERUN_FAILED_RUN_AUTHORIZED,
         "retry_failed_run_authorized": RETRY_FAILED_RUN_AUTHORIZED,
-        "third_or_later_run_authorized": THIRD_OR_LATER_RUN_AUTHORIZED,
+        "fourth_or_later_run_authorized": FOURTH_OR_LATER_RUN_AUTHORIZED,
         "next_segment_execution_authorized": NEXT_SEGMENT_EXECUTION_AUTHORIZED,
         "cross_year_result_production_authorized": (
             CROSS_YEAR_RESULT_PRODUCTION_AUTHORIZED
