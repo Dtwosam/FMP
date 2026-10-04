@@ -3219,3 +3219,7 @@ DEC-542 is concrete from run `37226222971`, artifact `11311294443`, fingerprint 
 ### 2026-10-04 — 2017 annual evidence pending recovery binding
 
 Annual run 379 / attempt 1 is successful and complete. The DEC-543 dispatcher is successful and the 2017 freeze artifact exists. The automatic DEC-544 reviewer did not run, so concrete 2017 runtime evidence is not yet bound. A read-only, one-shot recovery workflow is source-ready to produce that binding without rerunning annual research. Run 380+, 2018 execution, strategy promotion, broker/order, real-money, and trading remain locked.
+
+### 2026-10-04 — 2018 execution preflight source-ready
+
+DEC-544 concrete 2017 evidence is bound through recovery workflow run `37228767187` and artifact `11313481023`. DEC-545 now defines the next read-only annual preflight: segment 2018, predecessor 2017 run `37227536041`, expected global run 380 / attempt 1. Annual run 380 remains absent and undispatched. 2018 execution authorization, runtime installation, later-year execution, strategy promotion, broker/order, real-money, and trading remain locked.
