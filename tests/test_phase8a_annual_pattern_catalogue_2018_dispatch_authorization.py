@@ -185,7 +185,7 @@ class AnnualPatternCatalogue2018DispatchAuthorizationTests(unittest.TestCase):
         ).hexdigest()
         with self.assertRaisesRegex(
             ValueError,
-            "preflight fingerprint mismatch|expected run number mismatch",
+            "preflight fingerprint mismatch|expected_run_number mismatch|expected run number mismatch",
         ):
             build_2018_dispatch_authorization(
                 preflight,
