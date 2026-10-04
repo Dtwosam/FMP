@@ -10780,3 +10780,7 @@ real-money action, or trading.
 
 Next gate:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT`.
+
+## 2026-10-04 — DEC-517 recovery implementation repair
+
+Recovery workflow run `37190929052` on merge `5417fddc015be92ed843de40be097381367b2c24` failed before dispatch at the post-install clean-checkout guard. The annual catalogue still has only failed manual run 1, so global run 376 remains unconsumed. The v2 implementation keeps the same recovery workflow identity, requires exact workflow run 2 / attempt 1, proves the failed run-1 provenance, replaces editable installs with dependency-only installs across the complete live successor chain, preserves every clean-checkout guard, and repins downstream workflow/source hashes through DEC-522. No later-year, broker, order, real-money, or trading authority is added.
