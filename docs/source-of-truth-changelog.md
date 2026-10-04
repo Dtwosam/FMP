@@ -2142,3 +2142,7 @@ Bound successful DEC-540 workflow run `37223000759` and artifact `11311031268` i
 ## 2026-10-04 — DEC-542 2017 final dispatch preflight
 
 Bound concrete DEC-541 run `37223700484`, artifact `11310658984`, and authorization fingerprint `16d42cb2552df761b80e0b32a23de5378f143c004946cfe2c816f280b17d8e8e` into a read-only final preflight for exact 2017 annual run 379 / attempt 1 with predecessor run `37206992367`. No annual dispatch is executed by DEC-542.
+
+## 2026-10-04 — Atomic DEC-543/544 run-379 chain
+
+Bound concrete DEC-542 workflow run `37226222971`, artifact `11311294443`, and preflight fingerprint `ef31f7ea8c5e50dacee9cd2462b701d17e422f1507b2eb048db781c764d4b2db` into an exact one-shot 2017 run-379 dispatcher and an atomically installed read-only run-379 evidence reviewer. The dispatcher rejects run 380+ and the reviewer grants no 2018+, strategy, broker/order, real-money, or trading authority.
