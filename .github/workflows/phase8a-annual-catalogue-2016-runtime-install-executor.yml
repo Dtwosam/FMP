@@ -594,10 +594,10 @@ jobs:
           set -euo pipefail
           gh api \
             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?per_page=100" \
-            > "$RUNNER_TEMP/annual-all-runs-before-377.json"
+            > "$RUNNER_TEMP/annual-all-runs-before-378.json"
           gh api \
             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
-            > "$RUNNER_TEMP/annual-dispatch-runs-before-377.json"
+            > "$RUNNER_TEMP/annual-dispatch-runs-before-378.json"
 
           python - <<'PY'
           import json
@@ -613,25 +613,25 @@ jobs:
               encoding="utf-8"
           ).strip()
           all_runs = json.loads(
-              (temp / "annual-all-runs-before-377.json").read_text(
+              (temp / "annual-all-runs-before-378.json").read_text(
                   encoding="utf-8"
               )
           )["workflow_runs"]
           dispatch_runs = json.loads(
-              (temp / "annual-dispatch-runs-before-377.json").read_text(
+              (temp / "annual-dispatch-runs-before-378.json").read_text(
                   encoding="utf-8"
               )
           )["workflow_runs"]
 
           assert all_runs
-          assert max(row["run_number"] for row in all_runs) == 376
-          assert not any(row["run_number"] >= 377 for row in all_runs)
+          assert max(row["run_number"] for row in all_runs) == 377
+          assert not any(row["run_number"] >= 378 for row in all_runs)
 
-          targets = [
+          predecessor = [
               row
               for row in all_runs
               if row.get("id") == binding["run_id"]
-              and row.get("run_number") == 376
+              and row.get("run_number") == 377
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
@@ -639,18 +639,25 @@ jobs:
               and row.get("status") == "completed"
               and row.get("conclusion") == "success"
           ]
-          assert len(targets) == 1
+          assert len(predecessor) == 1
 
-          assert len(dispatch_runs) == 2
+          assert len(dispatch_runs) == 3
           first = [row for row in dispatch_runs if row.get("run_number") == 1]
-          replacement = [
+          failed_376 = [
               row for row in dispatch_runs if row.get("run_number") == 376
+          ]
+          successful_377 = [
+              row for row in dispatch_runs if row.get("run_number") == 377
           ]
           assert len(first) == 1
           assert first[0]["id"] == 37126711695
           assert first[0]["conclusion"] == "failure"
-          assert len(replacement) == 1
-          assert replacement[0]["id"] == binding["run_id"]
+          assert len(failed_376) == 1
+          assert failed_376[0]["id"] == 37191637168
+          assert failed_376[0]["conclusion"] == "failure"
+          assert len(successful_377) == 1
+          assert successful_377[0]["id"] == binding["run_id"]
+          assert successful_377[0]["conclusion"] == "success"
 
           main = json.loads(
               (plan_root / "main-branch.json").read_text(encoding="utf-8")
