@@ -3109,3 +3109,7 @@ The atomic DEC-517–522 chain is installed on main at `5417fddc015be92ed843de40
 ### 2026-10-04 annual run-376 failure recovery
 
 Global annual run 376 completed failure before annual cell execution. The failure is frozen as DEC-526 and will not be retried. The next source-ready recovery path authorizes only fresh 2015 run 377 / attempt 1 through DEC-527/528 after validating the DEC-520 corrected installed workflow. The 2016 chain is rebound to run 378 and requires successful 2015 run 377 as its predecessor. Run 379+, 2017 execution, strategy promotion, broker mutation, order execution, real-money action, and trading remain locked.
+
+### 2026-10-04 explicit successor recovery
+
+2015 annual run 377 (`37198002653`) is successful and complete, but the expected DEC-513 workflow-run successor was not created. DEC-529 is source-ready to recover the successor chain explicitly without rerunning any annual research: DEC-513 → DEC-514 → DEC-518/519/521 → exact 2016 run 378 → DEC-522. The new orchestrator does not directly submit annual runs and keeps 2017+, promotion, broker/order, real-money, and trading authority closed.

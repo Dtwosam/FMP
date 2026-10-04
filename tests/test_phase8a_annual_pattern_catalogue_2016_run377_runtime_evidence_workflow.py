@@ -33,17 +33,20 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
         self.assertIn("  actions: read", text)
         self.assertNotIn("  contents: write", text)
         self.assertNotIn("  actions: write", text)
-        self.assertNotIn("workflow_dispatch:", text)
+        self.assertIn("  workflow_dispatch:", text)
+        self.assertIn("target_run_id:", text)
+        self.assertIn("target_head_sha:", text)
+        self.assertIn("target_run_number:", text)
         self.assertNotIn("  push:", text)
 
     def test_workflow_pins_exact_dec522_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "afe23d0deadad15f4ff489f3edcd611675f8f9a4",
+            "dcc4d71990e113acc25fd607ef9919734f2c0731",
             "9acc6bc7ce284dd7e82f037fa999d2fee02af44a",
             "1b14279864f01a1284c5be31552eee9bb3a2220c",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-            "078aca795be06a9d28e19b584b7122e975476711",
+            "1a4d9c975f79140f9d7e2173a4e102e4d07b2a6c",
             "1ff32214dee10d877a067e750cd69ffad96d5fe5",
         ):
             self.assertIn(blob, text)

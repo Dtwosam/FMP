@@ -1,0 +1,417 @@
+name: phase8a-annual-catalogue-explicit-successor-orchestrator
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-explicit-successor-orchestrator.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  recover-successors-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      INITIAL_MAIN_SHA: ${{ github.sha }}
+      RUN377_ID: "37198002653"
+      RUN377_HEAD_SHA: "a89db974be9a94481e7ed0990476bc661012f1e4"
+
+    steps:
+      - name: Checkout exact orchestrator landing
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Require exact first orchestrator push and frozen sources
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git rev-parse HEAD)" = "$INITIAL_MAIN_SHA"
+
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "b259e4013a7e74eb8df864acad04a31b7a1eac09"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "1893cd0d96e342ad30e8d5bdfc58b81781d28be6"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-runtime-install-executor.yml)" = "1a4d9c975f79140f9d7e2173a4e102e4d07b2a6c"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_run377_evidence_review.py)" = "dcc4d71990e113acc25fd607ef9919734f2c0731"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-run377-runtime-evidence.yml)" = "2a51f6d5a15ee6edf212009bd646047a3ec2546c"
+
+      - name: Require exact successful 2015 run 377 and no run 378
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-before.json"
+          gh api             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"             > "$RUNNER_TEMP/annual-before.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          main = json.loads((temp / "main-before.json").read_text())
+          assert main["commit"]["sha"] == os.environ["INITIAL_MAIN_SHA"]
+
+          payload = json.loads((temp / "annual-before.json").read_text())
+          rows = payload.get("workflow_runs")
+          assert isinstance(rows, list)
+          by_number = {row["run_number"]: row for row in rows}
+          assert set(by_number) == {1, 376, 377}
+          exact = {
+              1: (37126711695, "failure", "fd85a886d07234ad584dcca08692b37e6af54b2e"),
+              376: (37191637168, "failure", "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"),
+              377: (
+                  int(os.environ["RUN377_ID"]),
+                  "success",
+                  os.environ["RUN377_HEAD_SHA"],
+              ),
+          }
+          for number, (run_id, conclusion, head_sha) in exact.items():
+              row = by_number[number]
+              assert row["id"] == run_id
+              assert row["run_attempt"] == 1
+              assert row["event"] == "workflow_dispatch"
+              assert row["head_branch"] == "main"
+              assert row["head_sha"] == head_sha
+              assert row["status"] == "completed"
+              assert row["conclusion"] == conclusion
+          PY
+
+      - name: Require explicit successor slots are unused
+        run: |
+          set -euo pipefail
+          for workflow in             phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml             phase8a-annual-catalogue-2016-activation-plan.yml             phase8a-annual-catalogue-2016-runtime-install-executor.yml             phase8a-annual-catalogue-2016-run377-runtime-evidence.yml
+          do
+            count="$(
+              gh api                 "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?branch=main&event=workflow_dispatch&per_page=100"                 --jq '.workflow_runs | length'
+            )"
+            test "$count" = "0"
+          done
+
+      - name: Explicitly recover DEC-513 reviewer
+        run: |
+          set -euo pipefail
+          gh workflow run             phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml             --ref main             -f target_run_id="$RUN377_ID"             -f target_head_sha="$RUN377_HEAD_SHA"
+
+          workflow="phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml"
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?branch=main&event=workflow_dispatch&per_page=100"
+          run_id=""
+          for _ in $(seq 1 60); do
+            gh api "$endpoint" > "$RUNNER_TEMP/dec513-manual-runs.json"
+            run_id="$(
+              jq -r --arg head "$INITIAL_MAIN_SHA" '
+                [.workflow_runs[]
+                  | select(
+                      .event == "workflow_dispatch"
+                      and .head_branch == "main"
+                      and .head_sha == $head
+                      and .run_attempt == 1
+                    )]
+                | if length == 1 then .[0].id else empty end
+              ' "$RUNNER_TEMP/dec513-manual-runs.json"
+            )"
+            test -n "$run_id" && break
+            sleep 2
+          done
+          test -n "$run_id"
+          printf '%s\n' "$run_id" > "$RUNNER_TEMP/dec513-run-id.txt"
+
+          for _ in $(seq 1 180); do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id"               > "$RUNNER_TEMP/dec513-run.json"
+            status="$(jq -r '.status' "$RUNNER_TEMP/dec513-run.json")"
+            if test "$status" = "completed"; then
+              test "$(jq -r '.conclusion' "$RUNNER_TEMP/dec513-run.json")" = "success"
+              break
+            fi
+            sleep 5
+          done
+          test "$(jq -r '.status' "$RUNNER_TEMP/dec513-run.json")" = "completed"
+          test "$(jq -r '.conclusion' "$RUNNER_TEMP/dec513-run.json")" = "success"
+
+      - name: Explicitly recover DEC-514 activation plan
+        run: |
+          set -euo pipefail
+          dec513_run_id="$(cat "$RUNNER_TEMP/dec513-run-id.txt")"
+          gh workflow run             phase8a-annual-catalogue-2016-activation-plan.yml             --ref main             -f source_review_run_id="$dec513_run_id"             -f source_head_sha="$INITIAL_MAIN_SHA"
+
+          workflow="phase8a-annual-catalogue-2016-activation-plan.yml"
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?branch=main&event=workflow_dispatch&per_page=100"
+          run_id=""
+          for _ in $(seq 1 60); do
+            gh api "$endpoint" > "$RUNNER_TEMP/dec514-manual-runs.json"
+            run_id="$(
+              jq -r --arg head "$INITIAL_MAIN_SHA" '
+                [.workflow_runs[]
+                  | select(
+                      .event == "workflow_dispatch"
+                      and .head_branch == "main"
+                      and .head_sha == $head
+                      and .run_attempt == 1
+                    )]
+                | if length == 1 then .[0].id else empty end
+              ' "$RUNNER_TEMP/dec514-manual-runs.json"
+            )"
+            test -n "$run_id" && break
+            sleep 2
+          done
+          test -n "$run_id"
+          printf '%s\n' "$run_id" > "$RUNNER_TEMP/dec514-run-id.txt"
+
+          for _ in $(seq 1 180); do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id"               > "$RUNNER_TEMP/dec514-run.json"
+            status="$(jq -r '.status' "$RUNNER_TEMP/dec514-run.json")"
+            if test "$status" = "completed"; then
+              test "$(jq -r '.conclusion' "$RUNNER_TEMP/dec514-run.json")" = "success"
+              break
+            fi
+            sleep 5
+          done
+          test "$(jq -r '.status' "$RUNNER_TEMP/dec514-run.json")" = "completed"
+          test "$(jq -r '.conclusion' "$RUNNER_TEMP/dec514-run.json")" = "success"
+
+      - name: Explicitly recover DEC-518 through DEC-521
+        run: |
+          set -euo pipefail
+          dec514_run_id="$(cat "$RUNNER_TEMP/dec514-run-id.txt")"
+          gh workflow run             phase8a-annual-catalogue-2016-runtime-install-executor.yml             --ref main             -f source_plan_run_id="$dec514_run_id"             -f source_head_sha="$INITIAL_MAIN_SHA"
+
+          workflow="phase8a-annual-catalogue-2016-runtime-install-executor.yml"
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?branch=main&event=workflow_dispatch&per_page=100"
+          run_id=""
+          for _ in $(seq 1 60); do
+            gh api "$endpoint" > "$RUNNER_TEMP/dec518-manual-runs.json"
+            run_id="$(
+              jq -r --arg head "$INITIAL_MAIN_SHA" '
+                [.workflow_runs[]
+                  | select(
+                      .event == "workflow_dispatch"
+                      and .head_branch == "main"
+                      and .head_sha == $head
+                      and .run_attempt == 1
+                    )]
+                | if length == 1 then .[0].id else empty end
+              ' "$RUNNER_TEMP/dec518-manual-runs.json"
+            )"
+            test -n "$run_id" && break
+            sleep 2
+          done
+          test -n "$run_id"
+          printf '%s\n' "$run_id" > "$RUNNER_TEMP/dec518-run-id.txt"
+
+          for _ in $(seq 1 360); do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id"               > "$RUNNER_TEMP/dec518-run.json"
+            status="$(jq -r '.status' "$RUNNER_TEMP/dec518-run.json")"
+            if test "$status" = "completed"; then
+              test "$(jq -r '.conclusion' "$RUNNER_TEMP/dec518-run.json")" = "success"
+              break
+            fi
+            sleep 5
+          done
+          test "$(jq -r '.status' "$RUNNER_TEMP/dec518-run.json")" = "completed"
+          test "$(jq -r '.conclusion' "$RUNNER_TEMP/dec518-run.json")" = "success"
+
+      - name: Require exact successful annual run 378
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
+          run_id=""
+          for _ in $(seq 1 480); do
+            gh api "$endpoint" > "$RUNNER_TEMP/annual-after.json"
+            run_id="$(
+              jq -r '
+                [.workflow_runs[]
+                  | select(.run_number == 378 and .run_attempt == 1)]
+                | if length == 1 then .[0].id else empty end
+              ' "$RUNNER_TEMP/annual-after.json"
+            )"
+            if test -n "$run_id"; then
+              status="$(
+                jq -r --argjson id "$run_id" '
+                  .workflow_runs[] | select(.id == $id) | .status
+                ' "$RUNNER_TEMP/annual-after.json"
+              )"
+              if test "$status" = "completed"; then
+                break
+              fi
+            fi
+            sleep 5
+          done
+          test -n "$run_id"
+          jq -e --argjson id "$run_id" '
+            .workflow_runs
+            | map(select(.id == $id))
+            | length == 1
+          ' "$RUNNER_TEMP/annual-after.json" >/dev/null
+          conclusion="$(
+            jq -r --argjson id "$run_id" '
+              .workflow_runs[] | select(.id == $id) | .conclusion
+            ' "$RUNNER_TEMP/annual-after.json"
+          )"
+          test "$conclusion" = "success"
+          head_sha="$(
+            jq -r --argjson id "$run_id" '
+              .workflow_runs[] | select(.id == $id) | .head_sha
+            ' "$RUNNER_TEMP/annual-after.json"
+          )"
+          test -n "$head_sha"
+          test "$head_sha" != "$INITIAL_MAIN_SHA"
+
+          gh api "repos/$GITHUB_REPOSITORY/branches/main"             > "$RUNNER_TEMP/main-after-install.json"
+          test "$(
+            jq -r '.commit.sha' "$RUNNER_TEMP/main-after-install.json"
+          )" = "$head_sha"
+
+          printf '%s\n' "$run_id" > "$RUNNER_TEMP/run378-id.txt"
+          printf '%s\n' "$head_sha" > "$RUNNER_TEMP/run378-head-sha.txt"
+
+      - name: Recover DEC-522 only if automatic reviewer is absent
+        run: |
+          set -euo pipefail
+          run378_id="$(cat "$RUNNER_TEMP/run378-id.txt")"
+          run378_head="$(cat "$RUNNER_TEMP/run378-head-sha.txt")"
+          workflow="phase8a-annual-catalogue-2016-run377-runtime-evidence.yml"
+          auto_endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?branch=main&event=workflow_run&per_page=100"
+
+          auto_id=""
+          for _ in $(seq 1 6); do
+            gh api "$auto_endpoint" > "$RUNNER_TEMP/dec522-auto-runs.json"
+            auto_id="$(
+              jq -r --arg head "$run378_head" '
+                [.workflow_runs[]
+                  | select(
+                      .event == "workflow_run"
+                      and .head_branch == "main"
+                      and .head_sha == $head
+                      and .run_attempt == 1
+                    )]
+                | if length == 1 then .[0].id else empty end
+              ' "$RUNNER_TEMP/dec522-auto-runs.json"
+            )"
+            test -n "$auto_id" && break
+            sleep 5
+          done
+
+          if test -n "$auto_id"; then
+            reviewer_id="$auto_id"
+            printf '%s\n' "workflow_run" > "$RUNNER_TEMP/dec522-mode.txt"
+          else
+            gh workflow run "$workflow"               --ref main               -f target_run_id="$run378_id"               -f target_head_sha="$run378_head"               -f target_run_number=378
+
+            manual_endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?branch=main&event=workflow_dispatch&per_page=100"
+            reviewer_id=""
+            for _ in $(seq 1 60); do
+              gh api "$manual_endpoint" > "$RUNNER_TEMP/dec522-manual-runs.json"
+              reviewer_id="$(
+                jq -r --arg head "$run378_head" '
+                  [.workflow_runs[]
+                    | select(
+                        .event == "workflow_dispatch"
+                        and .head_branch == "main"
+                        and .head_sha == $head
+                        and .run_attempt == 1
+                      )]
+                  | if length == 1 then .[0].id else empty end
+                ' "$RUNNER_TEMP/dec522-manual-runs.json"
+              )"
+              test -n "$reviewer_id" && break
+              sleep 2
+            done
+            test -n "$reviewer_id"
+            printf '%s\n' "workflow_dispatch" > "$RUNNER_TEMP/dec522-mode.txt"
+          fi
+
+          printf '%s\n' "$reviewer_id" > "$RUNNER_TEMP/dec522-run-id.txt"
+          for _ in $(seq 1 240); do
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$reviewer_id"               > "$RUNNER_TEMP/dec522-run.json"
+            status="$(jq -r '.status' "$RUNNER_TEMP/dec522-run.json")"
+            if test "$status" = "completed"; then
+              test "$(jq -r '.conclusion' "$RUNNER_TEMP/dec522-run.json")" = "success"
+              break
+            fi
+            sleep 5
+          done
+          test "$(jq -r '.status' "$RUNNER_TEMP/dec522-run.json")" = "completed"
+          test "$(jq -r '.conclusion' "$RUNNER_TEMP/dec522-run.json")" = "success"
+
+          gh api             "repos/$GITHUB_REPOSITORY/actions/runs/$reviewer_id/artifacts?per_page=100"             > "$RUNNER_TEMP/dec522-artifacts.json"
+          artifact_name="annual-catalogue-2016-dec522-runtime-binding-$run378_id"
+          count="$(
+            jq -r --arg name "$artifact_name" '
+              [.artifacts[] | select(.name == $name and .expired == false)]
+              | length
+            ' "$RUNNER_TEMP/dec522-artifacts.json"
+          )"
+          test "$count" = "1"
+
+      - name: Write immutable explicit-successor receipt
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          receipt = {
+              "decision": "DEC-529",
+              "stage": "ANNUAL_CATALOGUE_EXPLICIT_SUCCESSOR_CHAIN_RECOVERED",
+              "orchestrator_head_sha": os.environ["INITIAL_MAIN_SHA"],
+              "source_2015_run_id": int(os.environ["RUN377_ID"]),
+              "source_2015_run_number": 377,
+              "source_2015_head_sha": os.environ["RUN377_HEAD_SHA"],
+              "dec513_reviewer_run_id": int(
+                  (temp / "dec513-run-id.txt").read_text().strip()
+              ),
+              "dec514_activation_run_id": int(
+                  (temp / "dec514-run-id.txt").read_text().strip()
+              ),
+              "dec518_521_executor_run_id": int(
+                  (temp / "dec518-run-id.txt").read_text().strip()
+              ),
+              "run378_id": int((temp / "run378-id.txt").read_text().strip()),
+              "run378_head_sha": (temp / "run378-head-sha.txt").read_text().strip(),
+              "dec522_reviewer_run_id": int(
+                  (temp / "dec522-run-id.txt").read_text().strip()
+              ),
+              "dec522_trigger_mode": (temp / "dec522-mode.txt").read_text().strip(),
+              "run379_or_later_authorized": False,
+              "next_segment_execution_authorized": False,
+              "strategy_v1_synthesis_authorized": False,
+              "promotion_authorized": False,
+              "phase8b_authorized": False,
+              "broker_mutation_authorized": False,
+              "live_order_authorized": False,
+              "real_money_authorized": False,
+              "trading_authorized": False,
+              "next_gate": "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT",
+          }
+          (temp / "dec529-explicit-successor-receipt.json").write_text(
+              json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload immutable DEC-529 recovery receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-dec529-explicit-successor-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/main-before.json
+            ${{ runner.temp }}/annual-before.json
+            ${{ runner.temp }}/dec513-run.json
+            ${{ runner.temp }}/dec514-run.json
+            ${{ runner.temp }}/dec518-run.json
+            ${{ runner.temp }}/annual-after.json
+            ${{ runner.temp }}/main-after-install.json
+            ${{ runner.temp }}/dec522-run.json
+            ${{ runner.temp }}/dec522-artifacts.json
+            ${{ runner.temp }}/dec529-explicit-successor-receipt.json
+          if-no-files-found: error

@@ -6,6 +6,16 @@ on:
       - phase8a-annual-pattern-catalogue
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      target_run_id:
+        description: Exact successful annual run 377 ID to review
+        required: true
+        type: string
+      target_head_sha:
+        description: Exact annual run 377 head SHA
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -13,27 +23,27 @@ permissions:
 
 jobs:
   review-freeze-bind:
-    if: ${{ github.event.workflow_run.run_number == 377 }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.run_number == 377 }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       PYTHONPATH: ${{ github.workspace }}/src
-      TARGET_RUN_ID: ${{ github.event.workflow_run.id }}
-      TARGET_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      TARGET_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.target_run_id || github.event.workflow_run.id }}
+      TARGET_HEAD_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.target_head_sha || github.event.workflow_run.head_sha }}
 
     steps:
       - name: Checkout exact replacement run source
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ env.TARGET_HEAD_SHA }}
           fetch-depth: 0
 
       - name: Require exact fresh 2015 run 377 attempt 1
         run: |
           set -euo pipefail
-          test "$GITHUB_EVENT_NAME" = "workflow_run"
+          case "$GITHUB_EVENT_NAME" in workflow_run|workflow_dispatch) ;; *) exit 1 ;; esac
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$(git rev-parse HEAD)" = "$TARGET_HEAD_SHA"
 
@@ -279,7 +289,7 @@ jobs:
       - name: Upload immutable DEC-513 concrete runtime evidence
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2015-dec513-runtime-binding-${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2015-dec513-runtime-binding-${{ env.TARGET_RUN_ID }}
           path: |
             ${{ runner.temp }}/replacement-run.json
             ${{ runner.temp }}/replacement-jobs.json

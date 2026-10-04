@@ -6,6 +6,16 @@ on:
       - phase8a-annual-catalogue-2015-replacement-runtime-evidence
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      source_review_run_id:
+        description: Exact successful DEC-513 reviewer run ID
+        required: true
+        type: string
+      source_head_sha:
+        description: Exact reviewer head SHA
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -13,27 +23,28 @@ permissions:
 
 jobs:
   compile-activation-plan:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'workflow_run') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       PYTHONPATH: ${{ github.workspace }}/src
-      SOURCE_REVIEW_RUN_ID: ${{ github.event.workflow_run.id }}
-      SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_REVIEW_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.source_review_run_id || github.event.workflow_run.id }}
+      SOURCE_HEAD_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.source_head_sha || github.event.workflow_run.head_sha }}
+      EXPECTED_SOURCE_EVENT: ${{ github.event_name == 'workflow_dispatch' && 'workflow_dispatch' || 'workflow_run' }}
 
     steps:
       - name: Checkout exact reviewer head
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ env.SOURCE_HEAD_SHA }}
           fetch-depth: 0
 
       - name: Require exact successful DEC-513 reviewer run
         run: |
           set -euo pipefail
-          test "$GITHUB_EVENT_NAME" = "workflow_run"
+          case "$GITHUB_EVENT_NAME" in workflow_run|workflow_dispatch) ;; *) exit 1 ;; esac
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$(git rev-parse HEAD)" = "$SOURCE_HEAD_SHA"
 
@@ -57,7 +68,7 @@ jobs:
                   ".github/workflows/"
                   "phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml"
               ),
-              "event": "workflow_run",
+              "event": os.environ["EXPECTED_SOURCE_EVENT"],
               "head_branch": "main",
               "head_sha": os.environ["SOURCE_HEAD_SHA"],
               "status": "completed",
@@ -70,7 +81,7 @@ jobs:
       - name: Require frozen DEC-502 to DEC-507 source chain
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "6c2ca7b24e934d3626ea60779f223a4f55a6a6c7"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "b259e4013a7e74eb8df864acad04a31b7a1eac09"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py)" = "b6764addd7b471e65f05428f745fa93051bd8785"
@@ -275,7 +286,7 @@ jobs:
       - name: Upload immutable DEC-514 activation plan bundle
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2016-dec514-activation-plan-${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2016-dec514-activation-plan-${{ env.SOURCE_REVIEW_RUN_ID }}
           path: |
             ${{ runner.temp }}/dec513-run.json
             ${{ runner.temp }}/dec513-artifacts.json
