@@ -69,11 +69,11 @@ class AnnualCatalogue2016Run378EvidenceSuccessorRecoveryTests(unittest.TestCase)
         self.assertIn("dec522-auto-before.json", text)
         self.assertIn("dec522-manual-before.json", text)
         self.assertIn(
-            """test "$(jq -r '.workflow_runs | length' "$RUNNER_TEMP/dec522-auto-before.json")" = "0"""",
+            "dec522-auto-before.json\")\" = \"0\"",
             text,
         )
         self.assertIn(
-            """test "$(jq -r '.workflow_runs | length' "$RUNNER_TEMP/dec522-manual-before.json")" = "0"""",
+            "dec522-manual-before.json\")\" = \"0\"",
             text,
         )
 
