@@ -2126,3 +2126,7 @@ Bound the 2017 install preflight to DEC-536 run `37215086807`, artifact
 `11307494750`, and its exact SHA-256 digest. The preflight is read-only and
 freezes only the two future runtime installation targets; annual run 379 remains
 undispatched.
+
+## 2026-10-04 — DEC-539 installer staged
+
+Bound the future 2017 runtime installation to concrete DEC-538 run `37219170862` / artifact `11310165235`. The only permitted repository mutation is the frozen 2017 gate plus frozen runtime target; annual dispatch and all later-year/trading surfaces remain locked.
