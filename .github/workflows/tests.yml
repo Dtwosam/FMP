@@ -507,6 +507,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2017_execution_authorization_workflow.py'
           -v
+      - name: Run DEC-536 2017 runtime-authorization plan tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2017_runtime_authorization_plan.py'
+          -v
+      - name: Run DEC-536 runtime-plan workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2017_runtime_authorization_plan_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
