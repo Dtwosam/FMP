@@ -127,7 +127,7 @@ def require_historical_catalogue_execution_authorized(
         and effective_run_number is not None
         and effective_run_attempt is not None
     ):
-        if effective_run_number == 376:
+        if effective_run_number == 377:
             require_2015_replacement_execution_authorized(
                 annual_segment_label=segment,
                 code_commit=code_commit,
