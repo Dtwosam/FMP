@@ -28,8 +28,8 @@ def _preflight() -> dict[str, object]:
     return {
         "decision": "DEC-503",
         "version": "fmp-annual-catalogue-2016-execution-preflight-v1",
-        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
-        "runtime_source_blob_sha": "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+        "runtime_binding_source_blob_sha": "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
+        "runtime_source_blob_sha": "f1fa50e7c862354931d919fe7da241de863f6834",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "annual_workflow_run_count": 2,
         "failed_first_run_id": 37126711695,
@@ -84,11 +84,11 @@ class AnnualPatternCatalogue2016ExecutionAuthorizationTests(unittest.TestCase):
         )
         self.assertEqual(
             source["execution_preflight_source_blob_sha"],
-            "9c89eb64c1e0ecda56fd9cfe0b26516e4a20abc3",
+            "b6764addd7b471e65f05428f745fa93051bd8785",
         )
         self.assertEqual(
             source["runtime_source_blob_sha"],
-            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+            "f1fa50e7c862354931d919fe7da241de863f6834",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
