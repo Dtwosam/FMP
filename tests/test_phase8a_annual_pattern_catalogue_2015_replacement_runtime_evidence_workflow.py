@@ -26,7 +26,9 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
         self.assertIn("  actions: read", text)
         self.assertNotIn("  actions: write", text)
         self.assertNotIn("  push:", text)
-        self.assertNotIn("workflow_dispatch:", text)
+        self.assertIn("  workflow_dispatch:", text)
+        self.assertIn("target_run_id:", text)
+        self.assertIn("target_head_sha:", text)
 
     def test_reviewer_is_limited_to_replacement_run_two(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
