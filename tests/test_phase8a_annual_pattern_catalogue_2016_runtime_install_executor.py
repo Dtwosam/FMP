@@ -43,6 +43,8 @@ class AnnualCatalogue2016RuntimeInstallExecutorTests(unittest.TestCase):
         self.assertIn("source_head_sha:", text)
         self.assertIn("github.event.workflow_run.event == 'workflow_run'", text)
         self.assertNotIn("  push:", text)
+        self.assertIn('assert int(os.environ["GITHUB_RUN_NUMBER"]) == 2', text)
+        self.assertIn('assert run.get("run_number") == 2', text)
 
     def test_installer_pins_exact_frozen_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -94,6 +96,8 @@ class AnnualCatalogue2016RuntimeInstallExecutorTests(unittest.TestCase):
             'test "$(git diff --cached --name-only | wc -l | tr -d \' \')" = "2"',
             text,
         )
+        self.assertIn("git ls-files --others --exclude-standard", text)
+        self.assertIn("| sort -u > \"$RUNNER_TEMP/changed-files.txt\"", text)
         self.assertIn("git push origin HEAD:main", text)
         self.assertNotIn("git push --force", text)
 
