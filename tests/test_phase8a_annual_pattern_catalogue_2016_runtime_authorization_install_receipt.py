@@ -25,8 +25,8 @@ from fmp.discovery.annual_pattern_catalogue_2016_runtime_authorization_install_r
 
 HEAD = "c" * 40
 INSTALL_COMMIT = "d" * 40
-GATE_BLOB = "e6ef74733669ceb8cab13a1e0d25a236526266e3"
-RUNTIME_BLOB = "995bb46ddd95563f904243c78ae4fc3cf3308968"
+GATE_BLOB = "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff"
+RUNTIME_BLOB = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
 GATE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py"
 )
@@ -37,8 +37,8 @@ def _source_preflight() -> dict[str, object]:
     return {
         "decision": "DEC-503",
         "version": "fmp-annual-catalogue-2016-execution-preflight-v1",
-        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
-        "runtime_source_blob_sha": "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+        "runtime_binding_source_blob_sha": "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
+        "runtime_source_blob_sha": "f1fa50e7c862354931d919fe7da241de863f6834",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "annual_workflow_run_count": 3,
         "failed_first_run_id": 37126711695,
@@ -116,7 +116,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallReceiptTests(
         )
         self.assertEqual(
             source["install_action_source_blob_sha"],
-            "e5bb5dce82111a29997783fcdc4df0f70883700e",
+            "0545f0474bdead4e479c07b9af889db842bf00dd",
         )
 
     def test_exact_two_file_install_yields_dispatch_locked_receipt(self) -> None:
