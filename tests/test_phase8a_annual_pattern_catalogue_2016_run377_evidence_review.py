@@ -77,7 +77,7 @@ def _run() -> dict[str, object]:
         "event": "workflow_dispatch",
         "head_branch": "main",
         "head_sha": HEAD,
-        "run_number": 377,
+        "run_number": 378,
         "run_attempt": 1,
         "status": "completed",
         "conclusion": "success",
@@ -138,13 +138,13 @@ def _artifacts() -> dict[str, object]:
 def _receipt() -> dict[str, object]:
     return {
         "decision": "DEC-521",
-        "stage": "ANNUAL_CATALOGUE_2016_RUN_377_DISPATCH_SUBMITTED",
+        "stage": "ANNUAL_CATALOGUE_2016_RUN_378_DISPATCH_SUBMITTED",
         "source_plan_decision": "DEC-519",
         "install_commit_sha": HEAD,
         "previous_annual_freeze_run_id": PREVIOUS_RUN_ID,
         "annual_segment_label": "2016",
         "run_id": RUN_ID,
-        "run_number": 377,
+        "run_number": 378,
         "run_attempt": 1,
         "run_head_sha": HEAD,
         "dispatch_submitted": True,
@@ -152,7 +152,7 @@ def _receipt() -> dict[str, object]:
         "rerun_authorized": False,
         "retry_authorized": False,
         "replacement_run_authorized": False,
-        "run_378_or_later_authorized": False,
+        "run_379_or_later_authorized": False,
         "next_segment_execution_authorized": False,
         "cross_year_result_production_authorized": False,
         "strategy_v1_synthesis_authorized": False,
@@ -163,7 +163,7 @@ def _receipt() -> dict[str, object]:
         "live_order_authorized": False,
         "real_money_authorized": False,
         "trading_authorized": False,
-        "next_gate": "REVIEW_2016_RUN_377_BEFORE_ANY_2017_EXECUTION",
+        "next_gate": "REVIEW_2016_RUN_378_BEFORE_ANY_2017_EXECUTION",
     }
 
 
@@ -186,10 +186,10 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
         )
         self.assertEqual(
             source["dispatch_executor_workflow_blob_sha"],
-            "58a1f60e18d7d9c6d78f1217f67663612d5117f1",
+            "8feda0e94b8e020503b89c145759cc5d94ab06f9",
         )
 
-    def test_successful_run377_is_bound_read_only(self) -> None:
+    def test_successful_run378_is_bound_read_only(self) -> None:
         value = review_2016_run377_evidence(
             repository_root=REPOSITORY_ROOT,
             run=_run(),
@@ -204,7 +204,7 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
         self.assertEqual(value["decision"], "DEC-522")
         self.assertEqual(value["annual_segment_label"], "2016")
         self.assertEqual(value["run_id"], RUN_ID)
-        self.assertEqual(value["run_number"], 377)
+        self.assertEqual(value["run_number"], 378)
         self.assertEqual(value["run_attempt"], 1)
         self.assertEqual(value["previous_annual_freeze_run_id"], PREVIOUS_RUN_ID)
         self.assertEqual(value["annual_cell_count"], 18)
@@ -216,7 +216,7 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
         self.assertFalse(value["strategy_v1_synthesis_authorized"])
         self.assertFalse(value["trading_authorized"])
 
-    def test_failed_run377_is_rejected(self) -> None:
+    def test_failed_run378_is_rejected(self) -> None:
         run = _run()
         run["conclusion"] = "failure"
         with self.assertRaisesRegex(ValueError, "run conclusion mismatch"):
