@@ -33,7 +33,7 @@ DISPATCH_EXECUTOR_WORKFLOW_PATH = (
     "phase8a-annual-catalogue-2016-runtime-install-executor.yml"
 )
 EXPECTED_DISPATCH_EXECUTOR_WORKFLOW_BLOB_SHA = (
-    "b5abc5ac723890c0f2fef975dfbc7e5703f81aa1"
+    "58a1f60e18d7d9c6d78f1217f67663612d5117f1"
 )
 
 ANNUAL_SEGMENT_LABEL = "2016"
