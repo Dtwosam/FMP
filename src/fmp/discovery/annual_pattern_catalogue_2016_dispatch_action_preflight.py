@@ -21,7 +21,7 @@ AUTHORIZATION_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_dispatch_authorization.py"
 )
 EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "c6dc4dcaf0a7c5c410d86c921fc35828179be248"
+    "bf050c38e0a4ff140f14c5cdce5c35eb41a729c4"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
@@ -30,6 +30,8 @@ EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
 
 FAILED_FIRST_RUN_ID = 37126711695
 FAILED_FIRST_RUN_HEAD_SHA = "fd85a886d07234ad584dcca08692b37e6af54b2e"
+FAILED_REPLACEMENT_RUN_ID = 37191637168
+FAILED_REPLACEMENT_RUN_HEAD_SHA = "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"
 
 
 def _git_blob_sha(path: Path) -> str:
@@ -116,9 +118,9 @@ def _validate_run_inventory(
     authorization: Mapping[str, object],
 ) -> dict[str, object]:
     runs = value.get("workflow_runs")
-    if not isinstance(runs, list) or len(runs) != 2:
+    if not isinstance(runs, list) or len(runs) != 3:
         raise ValueError(
-            "DEC-511 requires exactly two prior annual-catalogue workflow runs"
+            "DEC-511 requires exactly three prior annual-catalogue workflow runs"
         )
 
     by_number: dict[int, Mapping[str, object]] = {}
@@ -132,7 +134,7 @@ def _validate_run_inventory(
             raise ValueError("DEC-511 duplicate workflow run number")
         by_number[number] = raw
 
-    if set(by_number) != {1, 376}:
+    if set(by_number) != {1, 376, 377}:
         raise ValueError("DEC-511 workflow run number inventory mismatch")
 
     first = by_number[1]
@@ -150,10 +152,25 @@ def _validate_run_inventory(
         if first.get(field) != expected:
             raise ValueError(f"DEC-511 failed first run {field} mismatch")
 
-    second = by_number[376]
-    second_exact = {
-        "id": authorization.get("successful_2015_run_id"),
+    failed_replacement = by_number[376]
+    failed_replacement_exact = {
+        "id": FAILED_REPLACEMENT_RUN_ID,
         "run_number": 376,
+        "run_attempt": 1,
+        "event": "workflow_dispatch",
+        "head_branch": "main",
+        "head_sha": FAILED_REPLACEMENT_RUN_HEAD_SHA,
+        "status": "completed",
+        "conclusion": "failure",
+    }
+    for field, expected in failed_replacement_exact.items():
+        if failed_replacement.get(field) != expected:
+            raise ValueError(f"DEC-511 failed replacement run {field} mismatch")
+
+    successful_replacement = by_number[377]
+    successful_replacement_exact = {
+        "id": authorization.get("successful_2015_run_id"),
+        "run_number": 377,
         "run_attempt": 1,
         "event": "workflow_dispatch",
         "head_branch": "main",
@@ -161,19 +178,20 @@ def _validate_run_inventory(
         "status": "completed",
         "conclusion": "success",
     }
-    for field, expected in second_exact.items():
-        if second.get(field) != expected:
+    for field, expected in successful_replacement_exact.items():
+        if successful_replacement.get(field) != expected:
             raise ValueError(f"DEC-511 successful 2015 run {field} mismatch")
 
     return {
-        "annual_workflow_run_count": 2,
+        "annual_workflow_run_count": 3,
         "failed_first_run_id": FAILED_FIRST_RUN_ID,
+        "failed_replacement_run_id": FAILED_REPLACEMENT_RUN_ID,
         "successful_2015_run_id": _positive_int(
             authorization.get("successful_2015_run_id"),
             field="successful 2015 run id",
         ),
         "successful_2015_run_head_sha": _validate_commit(
-            second.get("head_sha"),
+            successful_replacement.get("head_sha"),
             field="successful 2015 run head",
         ),
     }
@@ -219,7 +237,7 @@ def build_2016_dispatch_action_preflight(
 
     if authorization.get("annual_segment_label") != "2016":
         raise ValueError("DEC-511 annual segment mismatch")
-    if authorization.get("expected_run_number") != 377:
+    if authorization.get("expected_run_number") != 378:
         raise ValueError("DEC-511 expected run number mismatch")
     if authorization.get("expected_run_attempt") != 1:
         raise ValueError("DEC-511 expected run attempt mismatch")
@@ -240,7 +258,7 @@ def build_2016_dispatch_action_preflight(
         "dispatch_command_present",
         "rerun_authorized",
         "retry_authorized",
-        "fourth_or_later_run_authorized",
+        "fifth_or_later_run_authorized",
         "next_segment_execution_authorized",
         "trading_authorized",
     ):
@@ -278,7 +296,7 @@ def build_2016_dispatch_action_preflight(
         "active_workflow_path": ACTIVE_WORKFLOW_PATH,
         "annual_segment_label": "2016",
         "previous_annual_freeze_run_id": previous_run_id,
-        "expected_run_number": 377,
+        "expected_run_number": 378,
         "expected_run_attempt": 1,
         "dispatch_ref": "main",
         "dispatch_input_annual_segment_label": "2016",
@@ -295,7 +313,7 @@ def build_2016_dispatch_action_preflight(
         "preflight_read_only": True,
         "rerun_authorized": False,
         "retry_authorized": False,
-        "fourth_or_later_run_authorized": False,
+        "fifth_or_later_run_authorized": False,
         "next_segment_execution_authorized": False,
         "cross_year_result_production_authorized": False,
         "strategy_v1_synthesis_authorized": False,
@@ -342,9 +360,9 @@ def validate_2016_dispatch_action_preflight(
         "repository_full_name": "Dtwosam/FMP",
         "active_workflow_path": ACTIVE_WORKFLOW_PATH,
         "annual_segment_label": "2016",
-        "annual_workflow_run_count": 2,
+        "annual_workflow_run_count": 3,
         "failed_first_run_id": FAILED_FIRST_RUN_ID,
-        "expected_run_number": 377,
+        "expected_run_number": 378,
         "expected_run_attempt": 1,
         "dispatch_ref": "main",
         "dispatch_input_annual_segment_label": "2016",
@@ -360,7 +378,7 @@ def validate_2016_dispatch_action_preflight(
         "preflight_read_only": True,
         "rerun_authorized": False,
         "retry_authorized": False,
-        "fourth_or_later_run_authorized": False,
+        "fifth_or_later_run_authorized": False,
         "next_segment_execution_authorized": False,
         "cross_year_result_production_authorized": False,
         "strategy_v1_synthesis_authorized": False,
