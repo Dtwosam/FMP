@@ -31,17 +31,17 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
     def test_reviewer_is_limited_to_replacement_run_two(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "github.event.workflow_run.run_number == 376",
+            "github.event.workflow_run.run_number == 377",
             text,
         )
-        self.assertIn('"run_number": 376', text)
+        self.assertIn('"run_number": 377', text)
         self.assertIn('"run_attempt": 1', text)
         self.assertIn('"conclusion": "success"', text)
         self.assertIn(
             "phase8a-annual-catalogue-2015-replacement-executor-recovery.yml",
             text,
         )
-        self.assertIn('row.get("run_number") == 2', text)
+        self.assertIn('row.get("run_number") == 3', text)
         self.assertIn('row.get("run_number") == 1', text)
         self.assertIn("37190929052", text)
         self.assertIn('row.get("run_attempt") == 1', text)
@@ -51,10 +51,10 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
         for blob in (
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
             "74e9499d9485c8e2a402fb675c995cc1961ff16a",
-            "b1a2acbe92a5fe2d956005303fdcce1119d38a2c",
-            "954718b9780004907c385ebb0496469d8433b844",
-            "c9e5028bd40a9dc1ad73b0560047405d458bc61e",
-            "bbb3bba32c3677d3bd971a2744eb93498868433b",
+            "350806f8d37e4deae6ff8a16551e7b07fd1d5958",
+            "d6935a7b31b028b955f182cf81bc2c123a321852",
+            "97cfd73d5693046f05104342cb74867d5dc471cc",
+            "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
             "0e472b79d12c8a5f14963fac3ed718f5e2c28d02",
             "f8a9a872195f01ca85627a6a6cac4a0c0672f82d",
             "584871d8f55f1da0e5bd885f91542141dc523972",
