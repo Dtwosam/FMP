@@ -2186,3 +2186,7 @@ Bound the concrete DEC-551 artifact/fingerprint into a source-only run-380 autho
 ## 2026-10-04 — DEC-553 2018 dispatch-action preflight
 
 Added the final read-only preflight before any 2018 annual dispatch. It is pinned to concrete DEC-552 run `37234867097`, artifact `11314579371`, and fingerprint `eb0089103203b334c12800643f74cc838e8e9e140b4b7868f48ba74793d1d043`, and freezes only the unconsumed run-380 / attempt-1 parameters with predecessor `37227536041`.
+
+## 2026-10-04 — DEC-554/555 2018 run-380 handoff
+
+Bound concrete DEC-553 evidence to an exact one-shot 2018 run-380 dispatcher and an atomically installed read-only run-380 reviewer. The dispatcher requires predecessor run `37227536041` and exact annual history through run 379. The reviewer binds only successful run-380 evidence and grants no 2019+ or trading authority.
