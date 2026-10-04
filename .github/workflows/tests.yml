@@ -175,6 +175,38 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2015_run1_failure_receipt.py'
           -v
+      - name: Run corrected annual installed-state receipt tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_workflow_corrected_install_receipt.py'
+          -v
+      - name: Run failed annual run-376 receipt tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2015_run376_failure_receipt.py'
+          -v
+      - name: Run fresh 2015 run-377 authorization tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2015_run377_execution_authorization.py'
+          -v
+      - name: Run annual runtime route tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_runtime.py'
+          -v
       - name: Run annual-catalogue artifact-upload repair tests
         env:
           PYTHONPATH: src
@@ -367,7 +399,7 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2016_post_install_dispatch_plan.py'
           -v
-      - name: Run exact 2016 run-377 dispatch executor tests
+      - name: Run exact 2016 run-378 dispatch executor tests
         env:
           PYTHONPATH: src
         run: >-
@@ -375,7 +407,7 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2016_run377_dispatch_executor.py'
           -v
-      - name: Run read-only 2016 run-377 evidence-review tests
+      - name: Run read-only 2016 run-378 evidence-review tests
         env:
           PYTHONPATH: src
         run: >-
@@ -383,7 +415,7 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2016_run377_evidence_review.py'
           -v
-      - name: Run read-only 2016 run-377 evidence-workflow tests
+      - name: Run read-only 2016 run-378 evidence-workflow tests
         env:
           PYTHONPATH: src
         run: >-
