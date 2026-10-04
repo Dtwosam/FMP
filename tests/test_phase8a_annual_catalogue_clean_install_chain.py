@@ -34,7 +34,7 @@ class AnnualCatalogueCleanInstallChainTests(unittest.TestCase):
         self.assertIn("4c14fa7db6eb812b89ecb79201f7e298fa9c04f3", text)
         self.assertIn("build_2015_run376_failure_receipt", text)
         self.assertIn("build_2015_run377_execution_authorization", text)
-        self.assertIn('"conclusion": "failure"', text)
+        self.assertIn('assert failed["conclusion"] == "failure"', text)
         self.assertEqual(
             text.count("gh workflow run phase8a-annual-pattern-catalogue.yml"),
             1,
