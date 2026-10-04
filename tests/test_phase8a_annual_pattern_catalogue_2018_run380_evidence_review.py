@@ -173,7 +173,7 @@ def _receipt() -> dict[str, object]:
         "live_order_authorized": False,
         "real_money_authorized": False,
         "trading_authorized": False,
-        "next_gate": "REVIEW_2018_RUN_380_BEFORE_ANY_2018_EXECUTION",
+        "next_gate": "REVIEW_2018_RUN_380_BEFORE_ANY_2019_EXECUTION",
     }
 
 
