@@ -2158,3 +2158,7 @@ Bound the next annual preflight to recovered DEC-544 artifact `11313481023` and 
 ## 2026-10-04 — Add DEC-546 2018 source-only authorization
 
 Bound 2018 authorization to concrete DEC-545 artifact `11313083318` and fingerprint `55b9378a78f54a99a9055da1ac0294e73c5e02434fc4ad17d38acea7ac5c6315`. The contract is exact to run 380 / attempt 1 and explicitly records runtime installation/gate/dispatch as false. No run 381+ or trading authority is introduced.
+
+## 2026-10-04 — Add DEC-547 2018 runtime authorization plan
+
+Bound the dormant 2018 runtime plan to concrete DEC-546 workflow run `37229862532`, artifact `11313482812`, digest `79e9bd2485160dd59fbb88a2d50f32a52b6cfd573f80555a8716fde4ea18c71e`, and authorization fingerprint `34fe76b3bd30d054853b43f660f996757e8bdb30793c03ad6937cc3078b427a0`. Frozen targets are gate blob `cd50f50156cf74c34cd97d69d24291dc373b390f` and runtime blob `410180c34a9e3500bbbb42310a5253b993ac7785`. The plan is read-only; annual run 380 remains undispatched.
