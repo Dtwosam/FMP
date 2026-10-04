@@ -46,7 +46,7 @@ jobs:
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization_install_action.py)" = "23abea26faf35d775d4f11a41ccf280d10eb78fd"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2018_runtime_authorization_install_action.py)" = "b91f76ca53381a732ff721ceeb6832eff22b028a"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization_install_preflight.py)" = "49e4549672a27bb8d985b0746d8914122072906d"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization_plan.py)" = "441b411cdae5b541226d3c0ef88b6cf687ce70da"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization_plan.py)" = "543752e5ecad05fed0b368170663a9329b0405aa"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "e9cbc76dc9e6866e80088d223498fbcc3b870fd1"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2018_runtime_authorization.py.disabled)" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2018_authorization.py.disabled)" = "410180c34a9e3500bbbb42310a5253b993ac7785"
