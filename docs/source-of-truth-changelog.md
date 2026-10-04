@@ -2138,3 +2138,7 @@ Bound the next read-only 2017 dispatch preflight to concrete DEC-539 install run
 ## 2026-10-04 — DEC-540 bound into DEC-541
 
 Bound successful DEC-540 workflow run `37223000759` and artifact `11311031268` into DEC-541. The new source-only authorization targets exact annual run 379 / attempt 1 with predecessor `37206992367` and performs no workflow action or repository mutation.
+
+## 2026-10-04 — DEC-542 2017 final dispatch preflight
+
+Bound concrete DEC-541 run `37223700484`, artifact `11310658984`, and authorization fingerprint `16d42cb2552df761b80e0b32a23de5378f143c004946cfe2c816f280b17d8e8e` into a read-only final preflight for exact 2017 annual run 379 / attempt 1 with predecessor run `37206992367`. No annual dispatch is executed by DEC-542.

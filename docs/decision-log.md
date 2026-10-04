@@ -10877,3 +10877,7 @@ DEC-539 installer run `37219929487` successfully installed the frozen 2017 runti
 ## 2026-10-04 — DEC-541 concrete 2017 dispatch authorization
 
 DEC-540 completed successfully as workflow run `37223000759` at head `f7983f960ae141f15c83b3cc05f6d6030140c802`, producing artifact `11311031268` with digest `sha256:a54675bd49ef6bb17d32f44b1d21a4adb10b541e3a248f583b05293505ef498d` and preflight fingerprint `7329cf4238c1aa8b608d7b4e41eaaaf643f78c3fb99f7ae399f6db303a75ffad`. DEC-541 binds that evidence and freezes source-only authorization for 2017 run 379 / attempt 1 with predecessor `37206992367`. No next-run command is present and all later scopes remain disabled.
+
+## 2026-10-04 — DEC-542 read-only 2017 dispatch-action preflight
+
+DEC-541 is concrete from workflow run `37223700484` and artifact `11310658984` (digest `97ee57fdb892b7041276bcd6c56da7ab06422e719c8b74aa322e35be80d243a3`), with authorization fingerprint `16d42cb2552df761b80e0b32a23de5378f143c004946cfe2c816f280b17d8e8e`. DEC-542 binds that exact authorization to the unchanged annual history `{1 failure, 376 failure, 377 success/2015, 378 success/2016}`, exact predecessor run `37206992367`, and expected 2017 run 379 / attempt 1. The workflow is contents/actions read-only, freezes the dispatch parameters, contains no dispatch command, and rejects any existing run 379+. Run 380+, 2018+, strategy, promotion, broker/order, real-money, and trading authority remain locked. Next gate: `EXACT_2017_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.

@@ -3207,3 +3207,7 @@ DEC-539 is concrete: installer run `37219929487` advanced main to `dcdf7210b0039
 ### 2026-10-04 — DEC-541 frontier
 
 DEC-540 is concrete: run `37223000759`, head `f7983f960ae141f15c83b3cc05f6d6030140c802`, artifact `11311031268`, fingerprint `7329cf4238c1aa8b608d7b4e41eaaaf643f78c3fb99f7ae399f6db303a75ffad`. DEC-541 now freezes source-only authorization for annual segment 2017, exact run 379 / attempt 1, predecessor `37206992367`. The next gate is the read-only DEC-542 dispatch-action preflight; run 379 remains unsubmitted and later scopes remain locked.
+
+### 2026-10-04 — DEC-542 frontier
+
+DEC-541 completed successfully as workflow run `37223700484` on `070b5ab9a9e6635ca26fa43f67ab71fdd49b3c1d`; artifact `11310658984` concretely authorizes only annual segment 2017, exact run 379 / attempt 1, predecessor `37206992367`. DEC-542 is source-ready as the final read-only action preflight: it rechecks current main and exact annual history, freezes only the run-379 dispatch parameters, and contains no dispatch command. Annual run 379 remains absent; run 380+, 2018+, strategy promotion, broker mutation, order execution, real-money action, and trading remain locked. Next gate: `EXACT_2017_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
