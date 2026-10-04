@@ -27,7 +27,7 @@ class AnnualPatternCatalogue2018Run380DispatchWorkflowTests(unittest.TestCase):
         self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
 
-    def test_dispatcher_pins_exact_dec542_evidence_and_runtime(self) -> None:
+    def test_dispatcher_pins_exact_dec553_evidence_and_runtime(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for value in (
             "37235949110",
@@ -73,8 +73,9 @@ class AnnualPatternCatalogue2018Run380DispatchWorkflowTests(unittest.TestCase):
         self.assertIn("-f previous_annual_freeze_run_id=37227536041", text)
         self.assertIn('row.get("run_number") == 380', text)
         self.assertIn('row.get("run_attempt") == 1', text)
-        self.assertIn('row.get("run_number") >= 380', text)
-        self.assertNotIn("-f annual_segment_label=2018", text)
+        self.assertIn('row["run_number"] >= 380', text)
+        self.assertIn('row.get("run_number") >= 381', text)
+        self.assertNotIn("-f annual_segment_label=2019", text)
 
     def test_dispatch_receipt_claims_submission_only(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -93,7 +94,7 @@ class AnnualPatternCatalogue2018Run380DispatchWorkflowTests(unittest.TestCase):
         self.assertIn('"real_money_authorized": False', text)
         self.assertIn('"trading_authorized": False', text)
         self.assertIn(
-            '"next_gate": "REVIEW_2018_RUN_380_BEFORE_ANY_2018_EXECUTION"',
+            '"next_gate": "REVIEW_2018_RUN_380_BEFORE_ANY_2019_EXECUTION"',
             text,
         )
 
