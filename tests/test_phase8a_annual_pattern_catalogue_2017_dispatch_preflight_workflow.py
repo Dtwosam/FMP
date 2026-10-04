@@ -38,7 +38,7 @@ class AnnualPatternCatalogue2017DispatchPreflightWorkflowTests(
             "11309927463",
             "6672b0642a763424541d971d84b273f8c2fde5089fcd736e6152fe8dc9a7e32e",
             "dcdf7210b0039077efa3a23c65c2ed8fa41e2427",
-            "613d04ca8c543c67a6f210abc6e333a5c87c519e",
+            "0e048756a1a9ca5f8d45896c6ff212d386996ed0",
             "0650e9ef326cc5517fcc3b19d1811062a51dd857",
         ):
             self.assertIn(value, text)
