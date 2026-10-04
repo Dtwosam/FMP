@@ -3148,3 +3148,7 @@ run-2 recovery is source-ready: it proves the failed run-1 identity, exports
 ### 2026-10-04 — DEC-535 concrete 2017 authorization
 
 Recovered DEC-534 run `37210041270` is successful and its artifact `11306121033` concretely freezes expected 2017 run 379 / attempt 1. DEC-535 is source-ready as a read-only repository-hosted authorization builder bound to that exact artifact. The current runtime remains `b564f5a26fdef146fc6080962e7c4762b0b5949a` with no 2017 route; run 379 is still absent. No dispatch, runtime mutation, run 380+, later-year, strategy, broker/order, real-money, or trading action is opened. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_PLAN`.
+
+### 2026-10-04 — DEC-535 bootstrap recovery
+
+DEC-535 workflow run `37213060816` failed only at Python import after all external provenance and run-379-slot checks succeeded. The failure performed no mutation or annual dispatch. A narrow run-2 recovery now proves that exact failure and installs the pinned research dependencies before rebuilding DEC-535. Annual run 379 remains absent; DEC-536 remains staged off-queue only.
