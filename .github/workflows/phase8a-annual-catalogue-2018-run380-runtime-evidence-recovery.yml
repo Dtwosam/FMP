@@ -29,7 +29,7 @@ jobs:
       FREEZE_ARTIFACT_DIGEST: "sha256:ce2cdb7b4aa5fa9a0c7130e444b067463f333c0324942d57166d60b0af42e2c1"
 
     steps:
-      - name: Checkout exact run-379 source
+      - name: Checkout exact run-380 source
         uses: actions/checkout@v6
         with:
           ref: ${{ env.TARGET_HEAD_SHA }}
@@ -101,7 +101,7 @@ jobs:
           assert len(prior) == 0
           PY
 
-      - name: Fetch exact run 379 and dispatcher evidence
+      - name: Fetch exact run 380 and dispatcher evidence
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/$TARGET_RUN_ID"             > "$RUNNER_TEMP/run380.json"
@@ -218,7 +218,7 @@ jobs:
       - name: Require clean review checkout
         run: test -z "$(git status --porcelain)"
 
-      - name: Review and bind exact run 379
+      - name: Review and bind exact run 380
         run: |
           set -euo pipefail
           freeze_sha="$(cat "$RUNNER_TEMP/run380-freeze-zip-sha256.txt")"
