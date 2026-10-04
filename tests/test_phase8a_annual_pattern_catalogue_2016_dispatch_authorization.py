@@ -28,13 +28,14 @@ def _preflight() -> dict[str, object]:
     value: dict[str, object] = {
         "decision": "DEC-509",
         "version": "fmp-annual-catalogue-2016-dispatch-preflight-v1",
-        "install_receipt_source_blob_sha": "7da956910e24e788a2f2a60834c04048a660bc75",
-        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
+        "install_receipt_source_blob_sha": "28fdf3ea39136b2d32a4c20c28fb5547e2c7d162",
+        "runtime_binding_source_blob_sha": "c50442443018922d32f4a19f9d2a31e70e1f53d6",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-        "annual_workflow_run_count": 2,
+        "annual_workflow_run_count": 3,
         "failed_first_run_id": 37126711695,
+        "failed_replacement_run_id": 37191637168,
         "successful_2015_run_id": 424242,
-        "successful_2015_run_number": 376,
+        "successful_2015_run_number": 377,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": "b" * 40,
         "source_install_receipt_decision": "DEC-508",
@@ -55,7 +56,7 @@ def _preflight() -> dict[str, object]:
         "annual_segment_label": "2016",
         "prior_segment_label": "2015",
         "previous_annual_freeze_run_id": 424242,
-        "expected_run_number": 377,
+        "expected_run_number": 378,
         "expected_run_attempt": 1,
         "install_action_consumed": True,
         "runtime_authorization_installed": True,
@@ -106,7 +107,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
         )
         self.assertEqual(
             source["dispatch_preflight_source_blob_sha"],
-            "e4afa2047cba8fbb066c755033e35e9b185c07a9",
+            "07802515d2cd8cdf8445dcc71be18c342596a83c",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
@@ -121,7 +122,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
         self.assertIs(validate_2016_dispatch_authorization(value), value)
         self.assertEqual(value["decision"], "DEC-510")
         self.assertEqual(value["annual_segment_label"], "2016")
-        self.assertEqual(value["expected_run_number"], 377)
+        self.assertEqual(value["expected_run_number"], 378)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertEqual(value["successful_2015_run_head_sha"], "b" * 40)
         self.assertTrue(value["runtime_authorization_installed"])
@@ -135,7 +136,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
         self.assertFalse(value["dispatch_command_present"])
         self.assertFalse(value["rerun_authorized"])
         self.assertFalse(value["retry_authorized"])
-        self.assertFalse(value["fourth_or_later_run_authorized"])
+        self.assertFalse(value["fifth_or_later_run_authorized"])
         self.assertFalse(value["next_segment_execution_authorized"])
         self.assertFalse(value["strategy_v1_synthesis_authorized"])
         self.assertFalse(value["trading_authorized"])
@@ -156,7 +157,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
 
     def test_source_preflight_run_number_drift_is_rejected(self) -> None:
         preflight = _preflight()
-        preflight["expected_run_number"] = 378
+        preflight["expected_run_number"] = 379
         _refingerprint(preflight)
         with self.assertRaisesRegex(
             ValueError,
@@ -173,7 +174,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
             repository_root=Path("."),
         )
         tampered = copy.deepcopy(value)
-        tampered["fourth_or_later_run_authorized"] = True
+        tampered["fifth_or_later_run_authorized"] = True
         unsigned = dict(tampered)
         unsigned.pop("authorization_fingerprint_sha256", None)
         tampered["authorization_fingerprint_sha256"] = hashlib.sha256(
@@ -181,7 +182,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
         ).hexdigest()
         with self.assertRaisesRegex(
             ValueError,
-            "fourth_or_later_run_authorized mismatch",
+            "fifth_or_later_run_authorized mismatch",
         ):
             validate_2016_dispatch_authorization(tampered)
 
