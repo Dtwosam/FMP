@@ -27,13 +27,13 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Require exact second recovery push after clean-install failure
+      - name: Require exact third recovery push after run-376 preflight failure
         run: |
           set -euo pipefail
           test "$GITHUB_ACTIONS" = "true"
           test "$GITHUB_EVENT_NAME" = "push"
           test "$GITHUB_REF" = "refs/heads/main"
-          test "$GITHUB_RUN_NUMBER" = "2"
+          test "$GITHUB_RUN_NUMBER" = "3"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$(git branch --show-current)" = "main"
@@ -46,7 +46,7 @@ jobs:
           test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml)" = "74e9499d9485c8e2a402fb675c995cc1961ff16a"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py)" = "69a2f600e63e27185c744b87a70b86f1c424a2ab"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py)" = "1d4637e9ce954e2910897abf350015fe964fba51"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py)" = "89ad05565fa1aff8ce97ac0eb6a8d5579781ee62"
 
       - name: Require original DEC-512 executor failed before dispatch
@@ -54,6 +54,7 @@ jobs:
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/37149151549" > "$RUNNER_TEMP/original-executor-run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/37190929052" > "$RUNNER_TEMP/failed-recovery-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37191615804" > "$RUNNER_TEMP/successful-recovery-run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/annual-runs-before.json"
 
           python - <<'PY'
@@ -100,18 +101,51 @@ jobs:
                   expected,
               )
 
+          successful_recovery = json.loads(
+              (temp / "successful-recovery-run.json").read_text(encoding="utf-8")
+          )
+          successful_recovery_exact = {
+              "id": 37191615804,
+              "name": "phase8a-annual-catalogue-2015-replacement-executor-recovery",
+              "path": ".github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
+              "run_number": 2,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in successful_recovery_exact.items():
+              assert successful_recovery.get(field) == expected, (
+                  field,
+                  successful_recovery.get(field),
+                  expected,
+              )
+
           payload = json.loads((temp / "annual-runs-before.json").read_text(encoding="utf-8"))
           rows = payload.get("workflow_runs")
           assert isinstance(rows, list)
-          assert len(rows) == 1
-          first = rows[0]
+          assert len(rows) == 2
+          by_number = {row["run_number"]: row for row in rows}
+          assert set(by_number) == {1, 376}
+
+          first = by_number[1]
           assert first["id"] == 37126711695
-          assert first["run_number"] == 1
           assert first["run_attempt"] == 1
           assert first["event"] == "workflow_dispatch"
           assert first["head_branch"] == "main"
           assert first["status"] == "completed"
           assert first["conclusion"] == "failure"
+
+          failed_replacement = by_number[376]
+          assert failed_replacement["id"] == 37191637168
+          assert failed_replacement["run_attempt"] == 1
+          assert failed_replacement["event"] == "workflow_dispatch"
+          assert failed_replacement["head_branch"] == "main"
+          assert failed_replacement["head_sha"] == "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"
+          assert failed_replacement["status"] == "completed"
+          assert failed_replacement["conclusion"] == "failure"
           PY
 
       - name: Set up Python
@@ -152,9 +186,10 @@ jobs:
           )
           assert preflight["decision"] == "DEC-499"
           assert preflight["expected_head_sha"] == os.environ["GITHUB_SHA"]
-          assert preflight["prior_run_count"] == 1
+          assert preflight["prior_run_count"] == 2
           assert preflight["failed_first_run_id"] == 37126711695
-          assert preflight["expected_replacement_run_number"] == 376
+          assert preflight["failed_replacement_run_id"] == 37191637168
+          assert preflight["expected_replacement_run_number"] == 377
           assert preflight["expected_replacement_run_attempt"] == 1
           assert preflight["replacement_run_authorized"] is True
           assert preflight["historical_artifact_read_authorized"] is True
@@ -165,7 +200,7 @@ jobs:
           for field in (
               "rerun_failed_run_authorized",
               "retry_failed_run_authorized",
-              "third_or_later_run_authorized",
+              "fourth_or_later_run_authorized",
               "next_segment_execution_authorized",
               "cross_year_result_production_authorized",
               "strategy_v1_synthesis_authorized",
@@ -185,7 +220,7 @@ jobs:
           set -euo pipefail
           gh workflow run phase8a-annual-pattern-catalogue.yml             --ref main             -f annual_segment_label=2015
 
-      - name: Resolve exact replacement run 376 attempt 1
+      - name: Resolve exact replacement run 377 attempt 1
         run: |
           set -euo pipefail
           endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
@@ -204,7 +239,7 @@ jobs:
               row for row in runs
               if row.get("name") == "phase8a-annual-pattern-catalogue"
               and row.get("path") == ".github/workflows/phase8a-annual-pattern-catalogue.yml"
-              and row.get("run_number") == 376
+              and row.get("run_number") == 377
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
@@ -212,7 +247,7 @@ jobs:
           ]
           later = [
               row for row in runs
-              if isinstance(row.get("run_number"), int) and row.get("run_number") >= 377
+              if isinstance(row.get("run_number"), int) and row.get("run_number") >= 378
           ]
           raise SystemExit(0 if len(targets) == 1 and later == [] else 1)
           PY
@@ -237,7 +272,7 @@ jobs:
               row for row in payload["workflow_runs"]
               if row.get("name") == "phase8a-annual-pattern-catalogue"
               and row.get("path") == ".github/workflows/phase8a-annual-pattern-catalogue.yml"
-              and row.get("run_number") == 376
+              and row.get("run_number") == 377
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
@@ -256,6 +291,13 @@ jobs:
               "original_executor_conclusion": "failure",
               "failed_recovery_run_id": 37190929052,
               "failed_recovery_conclusion": "failure",
+              "successful_recovery_run_id": 37191615804,
+              "successful_recovery_conclusion": "success",
+              "failed_replacement_run_id": 37191637168,
+              "failed_replacement_run_number": 376,
+              "failed_replacement_run_attempt": 1,
+              "failed_replacement_run_head_sha": "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
+              "failed_replacement_conclusion": "failure",
               "replacement_run_id": target["id"],
               "replacement_run_number": target["run_number"],
               "replacement_run_attempt": target["run_attempt"],
@@ -264,7 +306,7 @@ jobs:
               "result_claimed": False,
               "rerun_authorized": False,
               "retry_authorized": False,
-              "third_or_later_run_authorized": False,
+              "fourth_or_later_run_authorized": False,
               "next_segment_execution_authorized": False,
               "cross_year_result_production_authorized": False,
               "strategy_v1_synthesis_authorized": False,
@@ -291,6 +333,7 @@ jobs:
           path: |
             ${{ runner.temp }}/original-executor-run.json
             ${{ runner.temp }}/failed-recovery-run.json
+            ${{ runner.temp }}/successful-recovery-run.json
             ${{ runner.temp }}/annual-runs-before.json
             ${{ runner.temp }}/main-branch.json
             ${{ runner.temp }}/annual-runs-live.json
