@@ -44,13 +44,13 @@ class AnnualCatalogue2016RuntimeInstallExecutorTests(unittest.TestCase):
     def test_installer_pins_exact_frozen_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "578c460bcfe94d3b962c1a27f544b3536cc8a046",
-            "e5bb5dce82111a29997783fcdc4df0f70883700e",
-            "7da956910e24e788a2f2a60834c04048a660bc75",
+            "43762552a626140bcca8fed97ca3505c320e9a33",
+            "0545f0474bdead4e479c07b9af889db842bf00dd",
+            "3a5614af2393378ed664c4802806147d79ccd8c7",
             "7d355784598c48d39ac0d3964145b46b878d18a3",
-            "e6ef74733669ceb8cab13a1e0d25a236526266e3",
-            "995bb46ddd95563f904243c78ae4fc3cf3308968",
-            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+            "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff",
+            "b564f5a26fdef146fc6080962e7c4762b0b5949a",
+            "f1fa50e7c862354931d919fe7da241de863f6834",
             "1ff32214dee10d877a067e750cd69ffad96d5fe5",
         ):
             self.assertIn(blob, text)
