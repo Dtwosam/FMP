@@ -31,14 +31,41 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Require exact first read-only authorization push
+      - name: Require exact second read-only authorization push after bootstrap failure
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$GITHUB_EVENT_NAME" = "push"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37213060816"             > "$RUNNER_TEMP/failed-dec535-run1.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "failed-dec535-run1.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          exact = {
+              "id": 37213060816,
+              "name": "phase8a-annual-catalogue-2017-execution-authorization",
+              "path": ".github/workflows/phase8a-annual-catalogue-2017-execution-authorization.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "39e7bfaf072ef1943488f2feae732ff6a0800768",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "failure",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          PY
 
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2017_execution_authorization.py)" = "ef70a0aec215943a2d992a484fd95feb390c6e07"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2017_execution_preflight.py)" = "7e6e6a54d4111a44a68218e551c379fa342d3e27"
@@ -151,6 +178,20 @@ jobs:
               assert row["conclusion"] == conclusion
           PY
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned authorization dependencies
+        run: >-
+          python -m pip install
+          -r requirements/exp061-discovery-run.txt
+          scikit-learn==1.9.1
+
+      - name: Require clean authorization checkout
+        run: test -z "$(git status --porcelain)"
+
       - name: Build concrete DEC-535 authorization
         run: |
           set -euo pipefail
@@ -236,6 +277,7 @@ jobs:
         with:
           name: annual-catalogue-2017-dec535-execution-authorization-${{ github.sha }}
           path: |
+            ${{ runner.temp }}/failed-dec535-run1.json
             ${{ runner.temp }}/dec534-run.json
             ${{ runner.temp }}/dec534-artifacts.json
             ${{ runner.temp }}/dec534-2017-execution-preflight.json

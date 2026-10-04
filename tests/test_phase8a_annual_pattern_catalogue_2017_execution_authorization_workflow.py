@@ -33,6 +33,21 @@ class AnnualPatternCatalogue2017ExecutionAuthorizationWorkflowTests(
         self.assertNotIn("  actions: write", text)
         self.assertNotIn("workflow_dispatch:", text)
 
+    def test_workflow_binds_failed_run1_and_bootstraps_dependencies(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
+        self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
+        self.assertIn("37213060816", text)
+        self.assertIn("39e7bfaf072ef1943488f2feae732ff6a0800768", text)
+        self.assertIn('"run_number": 1', text)
+        self.assertIn('"conclusion": "failure"', text)
+        self.assertIn("actions/setup-python@v6", text)
+        self.assertIn('python-version: "3.12.14"', text)
+        self.assertIn("-r requirements/exp061-discovery-run.txt", text)
+        self.assertIn("scikit-learn==1.9.1", text)
+        self.assertIn('test -z "$(git status --porcelain)"', text)
+        self.assertNotIn("-e .", text)
+
     def test_workflow_pins_exact_dec534_provenance(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for value in (
