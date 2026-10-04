@@ -41,7 +41,9 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
             "phase8a-annual-catalogue-2015-replacement-executor-recovery.yml",
             text,
         )
+        self.assertIn('row.get("run_number") == 2', text)
         self.assertIn('row.get("run_number") == 1', text)
+        self.assertIn("37190929052", text)
         self.assertIn('row.get("run_attempt") == 1', text)
 
     def test_reviewer_pins_exact_review_freeze_binding_sources(self) -> None:
@@ -49,7 +51,7 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
         for blob in (
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
             "74e9499d9485c8e2a402fb675c995cc1961ff16a",
-            "881ca3d0489620c6dab83dc42b3f681ef7ca2eef",
+            "b1a2acbe92a5fe2d956005303fdcce1119d38a2c",
             "954718b9780004907c385ebb0496469d8433b844",
             "c9e5028bd40a9dc1ad73b0560047405d458bc61e",
             "bbb3bba32c3677d3bd971a2744eb93498868433b",
