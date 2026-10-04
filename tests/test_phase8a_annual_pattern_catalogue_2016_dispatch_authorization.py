@@ -28,8 +28,8 @@ def _preflight() -> dict[str, object]:
     value: dict[str, object] = {
         "decision": "DEC-509",
         "version": "fmp-annual-catalogue-2016-dispatch-preflight-v1",
-        "install_receipt_source_blob_sha": "7da956910e24e788a2f2a60834c04048a660bc75",
-        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
+        "install_receipt_source_blob_sha": "3a5614af2393378ed664c4802806147d79ccd8c7",
+        "runtime_binding_source_blob_sha": "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "annual_workflow_run_count": 3,
         "failed_first_run_id": 37126711695,
@@ -106,7 +106,7 @@ class AnnualPatternCatalogue2016DispatchAuthorizationTests(unittest.TestCase):
         )
         self.assertEqual(
             source["dispatch_preflight_source_blob_sha"],
-            "e4afa2047cba8fbb066c755033e35e9b185c07a9",
+            "b82000f86e49cc5c06d738ae1a32095f68f3252a",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
