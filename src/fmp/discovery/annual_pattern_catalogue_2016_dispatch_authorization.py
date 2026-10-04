@@ -218,7 +218,7 @@ def build_2016_dispatch_authorization(
         "dispatch_command_present": False,
         "rerun_authorized": False,
         "retry_authorized": False,
-        "fourth_or_later_run_authorized": False,
+        "fifth_or_later_run_authorized": False,
         "next_segment_execution_authorized": NEXT_SEGMENT_EXECUTION_AUTHORIZED,
         "cross_year_result_production_authorized": (
             CROSS_YEAR_RESULT_PRODUCTION_AUTHORIZED
@@ -285,7 +285,7 @@ def validate_2016_dispatch_authorization(
         "dispatch_command_present": False,
         "rerun_authorized": False,
         "retry_authorized": False,
-        "fourth_or_later_run_authorized": False,
+        "fifth_or_later_run_authorized": False,
         "next_segment_execution_authorized": False,
         "cross_year_result_production_authorized": False,
         "strategy_v1_synthesis_authorized": False,
