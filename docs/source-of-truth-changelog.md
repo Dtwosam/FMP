@@ -2198,3 +2198,7 @@ Recorded successful annual run 380 (`37237817538`) and its 20-artifact 2018 free
 ## 2026-10-04 — DEC-556 2019 preflight
 
 Bound recovered DEC-555 artifact `11317140969` and its exact binding/freeze fingerprints as the predecessor evidence for a read-only 2019 annual preflight. The expected next annual identity is run 381 / attempt 1; no dispatch or execution authority is opened.
+
+## 2026-10-04 — DEC-557 2019 authorization
+
+Added a source-only authorization contract for exact annual segment 2019 / run 381 / attempt 1, bound to concrete DEC-556 artifact `11317461212`. Runtime installation and dispatch remain separate locked gates; run 382+ and all strategy/trading authority remain closed.
