@@ -523,6 +523,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2017_runtime_authorization_plan_workflow.py'
           -v
+      - name: Run DEC-537 2017 runtime install-preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2017_runtime_authorization_install_preflight.py'
+          -v
+      - name: Run DEC-537 install-preflight workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2017_runtime_install_preflight_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
