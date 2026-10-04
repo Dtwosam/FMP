@@ -31,7 +31,7 @@ def _preflight() -> dict[str, object]:
         "runtime_binding_source_blob_sha": "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
         "runtime_source_blob_sha": "f1fa50e7c862354931d919fe7da241de863f6834",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-        "annual_workflow_run_count": 2,
+        "annual_workflow_run_count": 3,
         "failed_first_run_id": 37126711695,
         "successful_2015_run_id": 424242,
         "successful_2015_run_number": 376,
