@@ -61,9 +61,10 @@ class AnnualPatternCatalogue2017ExecutionAuthorizationWorkflowTests(
         self.assertNotIn("git push", text)
         self.assertNotIn("git commit", text)
         self.assertNotIn("git add", text)
-        self.assertIn('value["dispatch_command_present"]', text)
-        self.assertIn('value["dispatch_action_executed"]', text)
-        self.assertIn('value["trading_authorized"]', text)
+        self.assertIn('"dispatch_command_present",', text)
+        self.assertIn('"dispatch_action_executed",', text)
+        self.assertIn('"trading_authorized",', text)
+        self.assertIn("assert value[field] is False, field", text)
 
     def test_workflow_uploads_only_dec535_evidence_bundle(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
