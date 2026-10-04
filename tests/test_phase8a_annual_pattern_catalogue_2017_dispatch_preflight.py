@@ -100,6 +100,7 @@ def _run(
     *,
     run_id: int,
     number: int,
+    head_sha: str,
     conclusion: str,
 ) -> dict[str, object]:
     return {
@@ -108,7 +109,7 @@ def _run(
         "path": ".github/workflows/phase8a-annual-pattern-catalogue.yml",
         "event": "workflow_dispatch",
         "head_branch": "main",
-        "head_sha": "b" * 40,
+        "head_sha": head_sha,
         "run_number": number,
         "run_attempt": 1,
         "status": "completed",
@@ -119,10 +120,30 @@ def _run(
 def _annual_runs() -> dict[str, object]:
     return {
         "workflow_runs": [
-            _run(run_id=37206992367, number=378, conclusion="success"),
-            _run(run_id=37198002653, number=377, conclusion="success"),
-            _run(run_id=37191637168, number=376, conclusion="failure"),
-            _run(run_id=37126711695, number=1, conclusion="failure"),
+            _run(
+                run_id=37206992367,
+                number=378,
+                head_sha="2524fde355349581c9440a172d0384c3cbce31ed",
+                conclusion="success",
+            ),
+            _run(
+                run_id=37198002653,
+                number=377,
+                head_sha="a89db974be9a94481e7ed0990476bc661012f1e4",
+                conclusion="success",
+            ),
+            _run(
+                run_id=37191637168,
+                number=376,
+                head_sha="4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
+                conclusion="failure",
+            ),
+            _run(
+                run_id=37126711695,
+                number=1,
+                head_sha="fd85a886d07234ad584dcca08692b37e6af54b2e",
+                conclusion="failure",
+            ),
         ]
     }
 
@@ -182,7 +203,12 @@ class AnnualPatternCatalogue2017DispatchPreflightTests(unittest.TestCase):
         assert isinstance(rows, list)
         rows.insert(
             0,
-            _run(run_id=999999, number=379, conclusion="failure"),
+            _run(
+                run_id=999999,
+                number=379,
+                head_sha="d" * 40,
+                conclusion="failure",
+            ),
         )
         with self.assertRaisesRegex(ValueError, "exactly four prior"):
             build_2017_dispatch_preflight(
