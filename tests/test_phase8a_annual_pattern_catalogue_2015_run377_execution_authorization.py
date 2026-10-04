@@ -3,6 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 import unittest
 
+from fmp.discovery.annual_pattern_catalogue_2015_run376_failure_receipt import (
+    build_2015_run376_failure_receipt,
+)
 from fmp.discovery.annual_pattern_catalogue_2015_run377_execution_authorization import (
     build_2015_run377_execution_authorization,
     require_2015_run377_execution_authorized,
@@ -12,6 +15,45 @@ from fmp.discovery.annual_pattern_catalogue_2015_run377_execution_authorization 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 CODE_COMMIT = "a" * 40
+
+
+def _run376_failure_receipt() -> dict[str, object]:
+    return build_2015_run376_failure_receipt(
+        run={
+            "id": 37191637168,
+            "name": "phase8a-annual-pattern-catalogue",
+            "path": ".github/workflows/phase8a-annual-pattern-catalogue.yml",
+            "event": "workflow_dispatch",
+            "head_branch": "main",
+            "head_sha": "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
+            "run_number": 376,
+            "run_attempt": 1,
+            "status": "completed",
+            "conclusion": "failure",
+        },
+        jobs_payload={
+            "jobs": [
+                {
+                    "id": 111404873333,
+                    "name": "annual-preflight-2015",
+                    "status": "completed",
+                    "conclusion": "failure",
+                },
+                {
+                    "id": 111404951408,
+                    "name": "annual-cell-${{ inputs.annual_segment_label }}-${{ matrix.dataset.symbol }}-${{ matrix.dataset.timeframe }}-${{ matrix.dataset.horizon }}m",
+                    "status": "completed",
+                    "conclusion": "skipped",
+                },
+                {
+                    "id": 111404951817,
+                    "name": "annual-freeze-${{ inputs.annual_segment_label }}",
+                    "status": "completed",
+                    "conclusion": "skipped",
+                },
+            ]
+        },
+    )
 
 
 class AnnualCatalogue2015Run377ExecutionAuthorizationTests(unittest.TestCase):
@@ -33,13 +75,22 @@ class AnnualCatalogue2015Run377ExecutionAuthorizationTests(unittest.TestCase):
         )
 
     def test_exact_fresh_run377_is_authorized_without_retry_authority(self) -> None:
+        receipt = _run376_failure_receipt()
         value = build_2015_run377_execution_authorization(
             repository_root=REPOSITORY_ROOT,
+            run376_failure_receipt=receipt,
         )
         self.assertEqual(value["decision"], "DEC-527")
         self.assertEqual(value["annual_segment_label"], "2015")
         self.assertEqual(value["expected_run_number"], 377)
         self.assertEqual(value["expected_run_attempt"], 1)
+        self.assertEqual(value["source_failure_decision"], "DEC-526")
+        self.assertEqual(value["failed_run_id"], 37191637168)
+        self.assertEqual(value["failed_run_number"], 376)
+        self.assertEqual(
+            value["source_failure_receipt_fingerprint_sha256"],
+            receipt["receipt_fingerprint_sha256"],
+        )
         self.assertTrue(value["historical_artifact_read_authorized"])
         self.assertTrue(value["historical_catalogue_execution_authorized"])
         self.assertTrue(value["historical_result_production_authorized"])
