@@ -19,8 +19,8 @@ class AnnualPatternCatalogue2017RuntimeInstallExecutorTests(unittest.TestCase):
             text,
         )
         self.assertIn("  push:", text)
-        self.assertIn("      contents: write", text)
-        self.assertIn("      actions: read", text)
+        self.assertIn("  contents: write", text)
+        self.assertIn("  actions: read", text)
         self.assertNotIn("workflow_dispatch:", text)
         self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
