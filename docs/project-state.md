@@ -3259,3 +3259,7 @@ DEC-552 is concrete from workflow run `37234867097`, artifact `11314579371`, dig
 ### 2026-10-04 — DEC-554 / DEC-555 2018 run-380 dispatch package
 
 DEC-553 is concrete from workflow run `37235949110`, artifact `11315522989`, digest `sha256:e4d9b6c8661442c1a1debebac843f2dabf07bca6e36054dc7d2ed43a74f1375e`, and preflight fingerprint `ba609f06481c1b08e10d16dc772290cd0f3988de9ba32eaa56c13b5561ab86c2`. The atomic DEC-554/555 package freezes exact 2018 run 380 / attempt 1 with predecessor `37227536041`, requires annual history `{1 failure, 376 failure, 377 success, 378 success, 379 success}`, and rejects run 381+ after submission. DEC-555 is present before run 380 can complete and may only bind successful 2018 evidence. 2019+, Strategy V1, promotion, broker/order, real-money, and trading remain locked.
+
+### 2026-10-04 — Successful 2018 run 380 awaiting recovered DEC-555 binding
+
+Annual catalogue run `37237817538` is a successful 2018 run 380 / attempt 1 on `30971a996f514670a6f836d8e45cf80137197a4f`. All 18 cells, preflight, and freeze succeeded; the run has exactly 20 artifacts. The automatic DEC-555 `workflow_run` successor was not created. The staged recovery workflow is read-only, pins the exact DEC-554 receipt and 2018 freeze, requires no run 381+, and directly produces only the DEC-555 runtime binding. 2019 execution and all strategy/trading authority remain locked.

@@ -2190,3 +2190,7 @@ Added the final read-only preflight before any 2018 annual dispatch. It is pinne
 ## 2026-10-04 — DEC-554/555 2018 run-380 handoff
 
 Bound concrete DEC-553 evidence to an exact one-shot 2018 run-380 dispatcher and an atomically installed read-only run-380 reviewer. The dispatcher requires predecessor run `37227536041` and exact annual history through run 379. The reviewer binds only successful run-380 evidence and grants no 2019+ or trading authority.
+
+## 2026-10-04 — Recover DEC-555 evidence after missed run-380 successor
+
+Recorded successful annual run 380 (`37237817538`) and its 20-artifact 2018 freeze. Because the automatic DEC-555 successor did not fire, added a path-scoped read-only recovery that reuses the frozen DEC-555 reviewer and exact DEC-554 dispatcher evidence without rerunning or redispatching annual research.
