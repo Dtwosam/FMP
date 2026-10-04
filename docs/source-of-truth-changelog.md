@@ -2150,3 +2150,7 @@ Bound concrete DEC-542 workflow run `37226222971`, artifact `11311294443`, and p
 ## 2026-10-04 — Add DEC-544 read-only recovery path
 
 Recorded successful annual run 379 and the missing automatic DEC-544 reviewer invocation. Added a one-shot read-only recovery workflow pinned to run `37227536041`, DEC-543 dispatcher artifact `11313110298`, and freeze artifact `11312736203`. No annual research is rerun and run 380+ remains locked.
+
+## 2026-10-04 — Add concrete DEC-545 2018 preflight
+
+Bound the next annual preflight to recovered DEC-544 artifact `11313481023` and binding fingerprint `a454e3eef8a51260cc07f9103a7de0208f5408a18686bb1249ad05e349edd9ae`. The preflight requires exact annual history through successful run 379 and freezes only the unused run-380 / attempt-1 identity for 2018. No dispatch or execution authority is introduced.
