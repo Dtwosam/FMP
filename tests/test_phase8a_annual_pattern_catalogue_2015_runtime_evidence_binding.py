@@ -49,7 +49,7 @@ def _freeze() -> dict[str, object]:
     freeze: dict[str, object] = {
         "decision": "DEC-501",
         "version": "fmp-annual-catalogue-2015-replacement-run-freeze-v1",
-        "run_review_source_blob_sha": "954718b9780004907c385ebb0496469d8433b844",
+        "run_review_source_blob_sha": "d6935a7b31b028b955f182cf81bc2c123a321852",
         "source_review_decision": "DEC-500",
         "source_review_version": "fmp-annual-catalogue-2015-replacement-run-review-v1",
         "stage": "ANNUAL_CATALOGUE_2015_REPLACEMENT_RUNTIME_EVIDENCE_FROZEN",
@@ -115,11 +115,11 @@ class AnnualPatternCatalogue2015RuntimeEvidenceBindingTests(unittest.TestCase):
         )
         self.assertEqual(
             source["run_freeze_source_blob_sha"],
-            "c9e5028bd40a9dc1ad73b0560047405d458bc61e",
+            "97cfd73d5693046f05104342cb74867d5dc471cc",
         )
         self.assertEqual(
             source["run_review_source_blob_sha"],
-            "954718b9780004907c385ebb0496469d8433b844",
+            "d6935a7b31b028b955f182cf81bc2c123a321852",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
