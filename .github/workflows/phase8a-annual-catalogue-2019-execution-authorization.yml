@@ -49,8 +49,8 @@ jobs:
       - name: Fetch and verify exact DEC-556 preflight artifact
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC556_RUN_ID"             > "$RUNNER_TEMP/dec545-run.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC556_RUN_ID/artifacts?per_page=100"             > "$RUNNER_TEMP/dec545-artifacts.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC556_RUN_ID"             > "$RUNNER_TEMP/dec556-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC556_RUN_ID/artifacts?per_page=100"             > "$RUNNER_TEMP/dec556-artifacts.json"
 
           python - <<'PY'
           import json
@@ -58,7 +58,7 @@ jobs:
           from pathlib import Path
 
           temp = Path(os.environ["RUNNER_TEMP"])
-          run = json.loads((temp / "dec545-run.json").read_text(encoding="utf-8"))
+          run = json.loads((temp / "dec556-run.json").read_text(encoding="utf-8"))
           exact = {
               "id": int(os.environ["DEC556_RUN_ID"]),
               "name": "phase8a-annual-catalogue-2019-execution-preflight",
@@ -75,14 +75,14 @@ jobs:
               assert run.get(field) == expected, (field, run.get(field), expected)
 
           artifacts = json.loads(
-              (temp / "dec545-artifacts.json").read_text(encoding="utf-8")
+              (temp / "dec556-artifacts.json").read_text(encoding="utf-8")
           )["artifacts"]
           matches = [
               row
               for row in artifacts
               if row.get("id") == int(os.environ["DEC556_ARTIFACT_ID"])
               and row.get("name")
-              == "annual-catalogue-2019-dec545-execution-preflight-"
+              == "annual-catalogue-2019-dec556-execution-preflight-"
               + os.environ["DEC556_HEAD_SHA"]
               and row.get("expired") is False
               and row.get("digest") == os.environ["DEC556_ARTIFACT_DIGEST"]
@@ -90,28 +90,28 @@ jobs:
           assert len(matches) == 1
           PY
 
-          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC556_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec545-preflight.zip"
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC556_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec556-preflight.zip"
 
           expected_sha="${DEC556_ARTIFACT_DIGEST#sha256:}"
-          actual_sha="$(sha256sum "$RUNNER_TEMP/dec545-preflight.zip" | awk '{print $1}')"
+          actual_sha="$(sha256sum "$RUNNER_TEMP/dec556-preflight.zip" | awk '{print $1}')"
           test "$actual_sha" = "$expected_sha"
 
-          mkdir -p "$RUNNER_TEMP/dec545-preflight"
-          unzip -q "$RUNNER_TEMP/dec545-preflight.zip"             -d "$RUNNER_TEMP/dec545-preflight"
+          mkdir -p "$RUNNER_TEMP/dec556-preflight"
+          unzip -q "$RUNNER_TEMP/dec556-preflight.zip"             -d "$RUNNER_TEMP/dec556-preflight"
           preflight="$(
-            find "$RUNNER_TEMP/dec545-preflight"               -type f -name dec545-2019-execution-preflight.json -print
+            find "$RUNNER_TEMP/dec556-preflight"               -type f -name dec556-2019-execution-preflight.json -print
           )"
           test "$(printf '%s\n' "$preflight" | sed '/^$/d' | wc -l)" = "1"
-          cp "$preflight" "$RUNNER_TEMP/dec545-2019-execution-preflight.json"
+          cp "$preflight" "$RUNNER_TEMP/dec556-2019-execution-preflight.json"
 
-          test "$(jq -r '.decision' "$RUNNER_TEMP/dec545-2019-execution-preflight.json")" = "DEC-556"
-          test "$(jq -r '.expected_head_sha' "$RUNNER_TEMP/dec545-2019-execution-preflight.json")" = "$DEC556_HEAD_SHA"
-          test "$(jq -r '.preflight_fingerprint_sha256' "$RUNNER_TEMP/dec545-2019-execution-preflight.json")" = "$DEC556_PREFLIGHT_FINGERPRINT"
-          test "$(jq -r '.annual_segment_label' "$RUNNER_TEMP/dec545-2019-execution-preflight.json")" = "2019"
-          test "$(jq -r '.previous_annual_freeze_run_id' "$RUNNER_TEMP/dec545-2019-execution-preflight.json")" = "37237817538"
-          test "$(jq -r '.expected_next_run_number' "$RUNNER_TEMP/dec545-2019-execution-preflight.json")" = "381"
-          test "$(jq -r '.expected_next_run_attempt' "$RUNNER_TEMP/dec545-2019-execution-preflight.json")" = "1"
-          test "$(jq -r '.preflight_read_only' "$RUNNER_TEMP/dec545-2019-execution-preflight.json")" = "true"
+          test "$(jq -r '.decision' "$RUNNER_TEMP/dec556-2019-execution-preflight.json")" = "DEC-556"
+          test "$(jq -r '.expected_head_sha' "$RUNNER_TEMP/dec556-2019-execution-preflight.json")" = "$DEC556_HEAD_SHA"
+          test "$(jq -r '.preflight_fingerprint_sha256' "$RUNNER_TEMP/dec556-2019-execution-preflight.json")" = "$DEC556_PREFLIGHT_FINGERPRINT"
+          test "$(jq -r '.annual_segment_label' "$RUNNER_TEMP/dec556-2019-execution-preflight.json")" = "2019"
+          test "$(jq -r '.previous_annual_freeze_run_id' "$RUNNER_TEMP/dec556-2019-execution-preflight.json")" = "37237817538"
+          test "$(jq -r '.expected_next_run_number' "$RUNNER_TEMP/dec556-2019-execution-preflight.json")" = "381"
+          test "$(jq -r '.expected_next_run_attempt' "$RUNNER_TEMP/dec556-2019-execution-preflight.json")" = "1"
+          test "$(jq -r '.preflight_read_only' "$RUNNER_TEMP/dec556-2019-execution-preflight.json")" = "true"
 
       - name: Recheck current main and annual run-381 slot
         run: |
@@ -185,7 +185,7 @@ jobs:
 
           temp = Path(os.environ["RUNNER_TEMP"])
           preflight = json.loads(
-              (temp / "dec545-2019-execution-preflight.json").read_text(
+              (temp / "dec556-2019-execution-preflight.json").read_text(
                   encoding="utf-8"
               )
           )
@@ -194,7 +194,7 @@ jobs:
               repository_root=Path("."),
           )
           validate_2019_execution_authorization(value)
-          (temp / "dec546-2019-execution-authorization.json").write_text(
+          (temp / "dec557-2019-execution-authorization.json").write_text(
               json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n",
               encoding="utf-8",
           )
@@ -211,7 +211,7 @@ jobs:
           value = json.loads(
               (
                   Path(os.environ["RUNNER_TEMP"])
-                  / "dec546-2019-execution-authorization.json"
+                  / "dec557-2019-execution-authorization.json"
               ).read_text(encoding="utf-8")
           )
           assert value["decision"] == "DEC-557"
@@ -256,12 +256,12 @@ jobs:
       - name: Upload immutable DEC-557 authorization
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2019-dec546-execution-authorization-${{ github.sha }}
+          name: annual-catalogue-2019-dec557-execution-authorization-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/dec545-run.json
-            ${{ runner.temp }}/dec545-artifacts.json
-            ${{ runner.temp }}/dec545-2019-execution-preflight.json
+            ${{ runner.temp }}/dec556-run.json
+            ${{ runner.temp }}/dec556-artifacts.json
+            ${{ runner.temp }}/dec556-2019-execution-preflight.json
             ${{ runner.temp }}/main-branch.json
             ${{ runner.temp }}/annual-runs.json
-            ${{ runner.temp }}/dec546-2019-execution-authorization.json
+            ${{ runner.temp }}/dec557-2019-execution-authorization.json
           if-no-files-found: error
