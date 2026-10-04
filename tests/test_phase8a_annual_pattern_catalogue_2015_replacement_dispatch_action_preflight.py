@@ -30,6 +30,16 @@ def _runs() -> dict[str, object]:
                 "head_sha": "fd85a886d07234ad584dcca08692b37e6af54b2e",
                 "status": "completed",
                 "conclusion": "failure",
+            },
+            {
+                "id": 37191637168,
+                "run_number": 376,
+                "run_attempt": 1,
+                "event": "workflow_dispatch",
+                "head_branch": "main",
+                "head_sha": "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
+                "status": "completed",
+                "conclusion": "failure",
             }
         ]
     }
@@ -48,11 +58,11 @@ class AnnualPatternCatalogue2015ReplacementDispatchActionPreflightTests(
         )
         self.assertEqual(
             source["authorization_source_blob_sha"],
-            "00f588ae2f641919a79e8baf1b262f73ce5834b2",
+            "1f9291135739dc00f0271e13ade312b7650dfd87",
         )
         self.assertEqual(
             source["runtime_source_blob_sha"],
-            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+            "a33d851c176f20c43c49ee67c984c90e6088067c",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
@@ -72,7 +82,8 @@ class AnnualPatternCatalogue2015ReplacementDispatchActionPreflightTests(
         )
         self.assertEqual(value["decision"], "DEC-499")
         self.assertEqual(value["failed_first_run_id"], 37126711695)
-        self.assertEqual(value["expected_replacement_run_number"], 376)
+        self.assertEqual(value["failed_replacement_run_id"], 37191637168)
+        self.assertEqual(value["expected_replacement_run_number"], 377)
         self.assertEqual(value["expected_replacement_run_attempt"], 1)
         self.assertTrue(value["replacement_run_authorized"])
         self.assertTrue(value["historical_artifact_read_authorized"])
@@ -80,7 +91,7 @@ class AnnualPatternCatalogue2015ReplacementDispatchActionPreflightTests(
         self.assertTrue(value["historical_result_production_authorized"])
         self.assertFalse(value["rerun_failed_run_authorized"])
         self.assertFalse(value["retry_failed_run_authorized"])
-        self.assertFalse(value["third_or_later_run_authorized"])
+        self.assertFalse(value["fourth_or_later_run_authorized"])
         self.assertFalse(value["next_segment_execution_authorized"])
         self.assertFalse(value["strategy_v1_synthesis_authorized"])
         self.assertFalse(value["trading_authorized"])
@@ -95,7 +106,7 @@ class AnnualPatternCatalogue2015ReplacementDispatchActionPreflightTests(
             with self.subTest(count=len(rows)):
                 with self.assertRaisesRegex(
                     ValueError,
-                    "exactly one prior annual-catalogue workflow run",
+                    "exactly two prior annual-catalogue workflow runs",
                 ):
                     build_2015_replacement_dispatch_action_preflight(
                         repository_root=Path("."),
