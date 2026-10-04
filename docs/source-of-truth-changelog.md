@@ -2146,3 +2146,7 @@ Bound concrete DEC-541 run `37223700484`, artifact `11310658984`, and authorizat
 ## 2026-10-04 — Atomic DEC-543/544 run-379 chain
 
 Bound concrete DEC-542 workflow run `37226222971`, artifact `11311294443`, and preflight fingerprint `ef31f7ea8c5e50dacee9cd2462b701d17e422f1507b2eb048db781c764d4b2db` into an exact one-shot 2017 run-379 dispatcher and an atomically installed read-only run-379 evidence reviewer. The dispatcher rejects run 380+ and the reviewer grants no 2018+, strategy, broker/order, real-money, or trading authority.
+
+## 2026-10-04 — Add DEC-544 read-only recovery path
+
+Recorded successful annual run 379 and the missing automatic DEC-544 reviewer invocation. Added a one-shot read-only recovery workflow pinned to run `37227536041`, DEC-543 dispatcher artifact `11313110298`, and freeze artifact `11312736203`. No annual research is rerun and run 380+ remains locked.
