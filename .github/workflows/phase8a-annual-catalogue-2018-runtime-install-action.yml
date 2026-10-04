@@ -92,7 +92,7 @@ jobs:
           test "$(printf '%s\n' "$preflight" | sed '/^$/d' | wc -l)" = "1"
           cp "$preflight" "$RUNNER_TEMP/dec548-2018-runtime-install-preflight.json"
 
-      - name: Recheck current main, runtime, and annual run-379 slot
+      - name: Recheck current main, runtime, and annual run-380 slot
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-branch.json"
