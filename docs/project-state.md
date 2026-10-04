@@ -3255,3 +3255,7 @@ DEC-551 is concrete from workflow run `37233894381`, artifact `11314757055`, fin
 ### 2026-10-04 — DEC-553 final 2018 dispatch preflight
 
 DEC-552 is concrete from workflow run `37234867097`, artifact `11314579371`, digest `sha256:b30f3995ca0207b65f772b15b84b23d61d9f1826ba77aabadb2a0e84064d8709`, and authorization fingerprint `eb0089103203b334c12800643f74cc838e8e9e140b4b7868f48ba74793d1d043`. DEC-553 now freezes only the future 2018 dispatch parameters: main, segment 2018, predecessor `37227536041`, run 380 / attempt 1. It is read-only and contains no dispatch command. Run 380 remains unsubmitted; run 381+, 2019+, strategy/promotion, broker/order, real-money, and trading remain locked.
+
+### 2026-10-04 — DEC-554 / DEC-555 2018 run-380 dispatch package
+
+DEC-553 is concrete from workflow run `37235949110`, artifact `11315522989`, digest `sha256:e4d9b6c8661442c1a1debebac843f2dabf07bca6e36054dc7d2ed43a74f1375e`, and preflight fingerprint `ba609f06481c1b08e10d16dc772290cd0f3988de9ba32eaa56c13b5561ab86c2`. The atomic DEC-554/555 package freezes exact 2018 run 380 / attempt 1 with predecessor `37227536041`, requires annual history `{1 failure, 376 failure, 377 success, 378 success, 379 success}`, and rejects run 381+ after submission. DEC-555 is present before run 380 can complete and may only bind successful 2018 evidence. 2019+, Strategy V1, promotion, broker/order, real-money, and trading remain locked.
