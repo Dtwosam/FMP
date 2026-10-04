@@ -90,6 +90,8 @@ class AnnualCatalogue2016RuntimeInstallExecutorTests(unittest.TestCase):
             "annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled",
             text,
         )
+        self.assertIn("git ls-files --others --exclude-standard", text)
+        self.assertIn('git diff --name-only', text)
         self.assertIn(
             'test "$(git diff --cached --name-only | wc -l | tr -d \' \')" = "2"',
             text,
