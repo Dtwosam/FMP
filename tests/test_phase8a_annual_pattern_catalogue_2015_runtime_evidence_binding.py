@@ -56,7 +56,7 @@ def _freeze() -> dict[str, object]:
         "expected_head_sha": HEAD,
         "annual_segment_label": "2015",
         "run_id": 424242,
-        "run_number": 376,
+        "run_number": 377,
         "run_attempt": 1,
         "run_status": "completed",
         "run_conclusion": "success",
@@ -141,7 +141,7 @@ class AnnualPatternCatalogue2015RuntimeEvidenceBindingTests(unittest.TestCase):
             second["binding_fingerprint_sha256"],
         )
         self.assertEqual(first["decision"], "DEC-502")
-        self.assertEqual(first["run_number"], 376)
+        self.assertEqual(first["run_number"], 377)
         self.assertEqual(first["run_attempt"], 1)
         self.assertEqual(len(first["cell_job_ids"]), 18)
         self.assertEqual(len(first["cell_artifacts"]), 18)
