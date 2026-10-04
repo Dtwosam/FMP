@@ -10865,3 +10865,7 @@ current annual runtime with the frozen 2017-aware target. The repository-hosted
 DEC-538 builder remains read-only and does not apply either action. Annual run
 379 remains absent; dispatch, run 380+, later-year, strategy, broker/order,
 real-money, and trading authority remain locked.
+
+## 2026-10-04 — DEC-539 exact 2017 runtime authorization install
+
+Concrete DEC-538 workflow run `37219170862` produced artifact `11310165235` (digest `e210042872cbe191f4383fcba4a6ac9305fbdeb96acaed32d46e034acff1681d`). DEC-539 is the bounded repository mutation that may create only the frozen 2017 gate blob `c1853eee...` and update the annual runtime from `b564f5a2...` to `e9cbc76d...`. The executor rechecks unchanged main and the unconsumed run-379 slot before mutation and before push, proves the installed run-379 gate imports, and emits a concrete install receipt. It cannot dispatch the annual workflow and grants no run-380+, 2018+, strategy, broker/order, real-money, or trading authority.
