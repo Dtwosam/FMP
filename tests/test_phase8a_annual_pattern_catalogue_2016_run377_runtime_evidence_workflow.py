@@ -42,11 +42,11 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
     def test_workflow_pins_exact_dec522_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "dcc4d71990e113acc25fd607ef9919734f2c0731",
+            "2f527117292cf19e1d94245040c2bd64aeaff307",
             "9acc6bc7ce284dd7e82f037fa999d2fee02af44a",
             "1b14279864f01a1284c5be31552eee9bb3a2220c",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-            "1a4d9c975f79140f9d7e2173a4e102e4d07b2a6c",
+            "c9cd42d41994760248009725adc12fd6a13d4511",
             "1ff32214dee10d877a067e750cd69ffad96d5fe5",
         ):
             self.assertIn(blob, text)
@@ -71,6 +71,8 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
             "dec521-run378-dispatch-receipt.json",
             text,
         )
+        self.assertIn('(.event == "workflow_run") or (.event == "workflow_dispatch")', text)
+        self.assertNotIn("runs?event=workflow_run&branch=main", text)
         self.assertIn(
             "test \"$(jq -r '.run_id' "
             "\"$RUNNER_TEMP/dec521-receipt.json\")\" = \"$TARGET_RUN_ID\"",
