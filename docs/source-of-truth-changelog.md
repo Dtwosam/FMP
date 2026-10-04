@@ -2093,3 +2093,7 @@ Recorded installer run `37200408776` as a pre-commit failure. The exact two-file
 ## 2026-10-04 — DEC-531/532 post-install recovery
 
 Recorded that installer run `37205170186` pushed the exact DEC-518 two-file install before failing on a circular import during DEC-508 receipt construction. Added a lazy-import repair for the active 2016 gate, immutable post-install repair evidence, exact reconstruction of DEC-508 from DEC-514 run-2 artifact `11304088642`, and a bounded run-378 dispatch recovery path. DEC-522 now accepts the exact DEC-532 receipt while retaining all run-379+/2017+/trading locks.
+
+## 2026-10-04 — DEC-533 run-378 evidence successor recovery
+
+Recorded successful 2016 run 378 and the absence of its automatic DEC-522 successor. Added a one-shot recovery that binds exact DEC-532 provenance, dispatches only the read-only DEC-522 reviewer, verifies the resulting runtime-binding artifact, and keeps run 379+/2017+/trading authority closed.
