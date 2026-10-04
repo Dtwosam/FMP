@@ -10893,3 +10893,7 @@ Annual run `37227536041` (global run 379 / attempt 1) completed successfully on 
 ## 2026-10-04 — DEC-545 concrete 2018 execution preflight
 
 Concrete recovered DEC-544 evidence now exists from workflow run `37228767187`, artifact `11313481023`, digest `sha256:f48dd73bbae1587bf8c6e97408295ab94761ab4536c7124532ef5b6f55c2d1d1`, and binding fingerprint `a454e3eef8a51260cc07f9103a7de0208f5408a18686bb1249ad05e349edd9ae`. DEC-545 binds that exact predecessor, requires annual history `{1 failure, 376 failure, 377 success, 378 success, 379 success}`, freezes 2018 at expected run 380 / attempt 1 with predecessor run `37227536041`, and remains fully read-only. No run-380 dispatch or later/trading authority is added.
+
+## 2026-10-04 — DEC-546 source-only 2018 execution authorization
+
+DEC-546 consumes concrete DEC-545 workflow run `37229319220`, artifact `11313083318`, digest `sha256:36f76bba9cd3cef5fd1b3236f3bc80ad62029edf9c493ce10d946b7bcadf18a4`, and preflight fingerprint `55b9378a78f54a99a9055da1ac0294e73c5e02434fc4ad17d38acea7ac5c6315`. It authorizes only the exact 2018 research contract for run 380 / attempt 1 while requiring the current runtime to have no 2018 route or gate. Runtime installation, dispatch execution, run 381+, strategy/promotion, broker/order, real-money, and trading remain locked.
