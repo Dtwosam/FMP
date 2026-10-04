@@ -6,6 +6,16 @@ on:
       - phase8a-annual-catalogue-2016-activation-plan
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+      source_plan_run_id:
+        description: Exact successful DEC-514 activation-plan run ID
+        required: true
+        type: string
+      source_head_sha:
+        description: Exact activation-plan head SHA
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -13,7 +23,7 @@ permissions:
 
 jobs:
   install-runtime-authorization:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'workflow_run') }}
     permissions:
       contents: write
       actions: read
@@ -23,20 +33,21 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       PYTHONPATH: ${{ github.workspace }}/src
-      SOURCE_PLAN_RUN_ID: ${{ github.event.workflow_run.id }}
-      SOURCE_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_PLAN_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.source_plan_run_id || github.event.workflow_run.id }}
+      SOURCE_HEAD_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.source_head_sha || github.event.workflow_run.head_sha }}
+      EXPECTED_SOURCE_EVENT: ${{ github.event_name == 'workflow_dispatch' && 'workflow_dispatch' || 'workflow_run' }}
 
     steps:
       - name: Checkout exact activation-plan head
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ env.SOURCE_HEAD_SHA }}
           fetch-depth: 0
 
       - name: Require exact successful DEC-514 plan run
         run: |
           set -euo pipefail
-          test "$GITHUB_EVENT_NAME" = "workflow_run"
+          case "$GITHUB_EVENT_NAME" in workflow_run|workflow_dispatch) ;; *) exit 1 ;; esac
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$(git rev-parse HEAD)" = "$SOURCE_HEAD_SHA"
 
@@ -56,7 +67,7 @@ jobs:
               "id": int(os.environ["SOURCE_PLAN_RUN_ID"]),
               "name": "phase8a-annual-catalogue-2016-activation-plan",
               "path": ".github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml",
-              "event": "workflow_run",
+              "event": os.environ["EXPECTED_SOURCE_EVENT"],
               "head_branch": "main",
               "head_sha": os.environ["SOURCE_HEAD_SHA"],
               "status": "completed",
@@ -69,7 +80,7 @@ jobs:
       - name: Require exact frozen installer sources
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "43762552a626140bcca8fed97ca3505c320e9a33"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "1893cd0d96e342ad30e8d5bdfc58b81781d28be6"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "0545f0474bdead4e479c07b9af889db842bf00dd"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "3a5614af2393378ed664c4802806147d79ccd8c7"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "7d355784598c48d39ac0d3964145b46b878d18a3"
@@ -293,7 +304,7 @@ jobs:
       - name: Upload immutable DEC-518 install evidence
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2016-dec518-runtime-install-${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2016-dec518-runtime-install-${{ env.SOURCE_PLAN_RUN_ID }}
           path: |
             ${{ runner.temp }}/dec514-run.json
             ${{ runner.temp }}/dec514-artifacts.json
@@ -314,7 +325,7 @@ jobs:
     timeout-minutes: 20
     env:
       PYTHONPATH: ${{ github.workspace }}/src
-      SOURCE_PLAN_RUN_ID: ${{ github.event.workflow_run.id }}
+      SOURCE_PLAN_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.source_plan_run_id || github.event.workflow_run.id }}
 
     steps:
       - name: Checkout installed main
@@ -326,7 +337,7 @@ jobs:
       - name: Download exact DEC-518 install evidence from this workflow
         uses: actions/download-artifact@v6
         with:
-          name: annual-catalogue-2016-dec518-runtime-install-${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2016-dec518-runtime-install-${{ env.SOURCE_PLAN_RUN_ID }}
           path: ${{ runner.temp }}/dec518-evidence
 
       - name: Set up Python
@@ -463,7 +474,7 @@ jobs:
       - name: Upload immutable DEC-519 post-install dispatch plan
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2016-dec519-dispatch-plan-${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2016-dec519-dispatch-plan-${{ env.SOURCE_PLAN_RUN_ID }}
           path: |
             ${{ runner.temp }}/dec518-evidence/dec508-install-receipt.json
             ${{ runner.temp }}/dec518-evidence/runtime-binding.json
@@ -487,6 +498,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      SOURCE_PLAN_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.source_plan_run_id || github.event.workflow_run.id }}
 
     steps:
       - name: Checkout exact installed main
@@ -498,7 +510,7 @@ jobs:
       - name: Download exact DEC-519 dispatch plan from this workflow
         uses: actions/download-artifact@v6
         with:
-          name: annual-catalogue-2016-dec519-dispatch-plan-${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2016-dec519-dispatch-plan-${{ env.SOURCE_PLAN_RUN_ID }}
           path: ${{ runner.temp }}/dec519-plan
 
       - name: Require exact installed main and DEC-519 plan
@@ -824,7 +836,7 @@ jobs:
       - name: Upload immutable DEC-521 dispatch evidence
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2016-dec521-run378-dispatch-${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2016-dec521-run378-dispatch-${{ env.SOURCE_PLAN_RUN_ID }}
           path: |
             ${{ runner.temp }}/dec519-plan/dec511-dispatch-action-preflight.json
             ${{ runner.temp }}/dec519-plan/runtime-binding.json
