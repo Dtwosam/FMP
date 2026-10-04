@@ -35,6 +35,13 @@ DISPATCH_EXECUTOR_WORKFLOW_PATH = (
 EXPECTED_DISPATCH_EXECUTOR_WORKFLOW_BLOB_SHA = (
     "c9cd42d41994760248009725adc12fd6a13d4511"
 )
+POST_INSTALL_RECOVERY_WORKFLOW_PATH = (
+    ".github/workflows/"
+    "phase8a-annual-catalogue-2016-post-install-recovery.yml"
+)
+EXPECTED_POST_INSTALL_RECOVERY_WORKFLOW_BLOB_SHA = (
+    "bd2ecdead7cf560cc560c266cbf5d796350807b3"
+)
 
 ANNUAL_SEGMENT_LABEL = "2016"
 EXPECTED_RUN_NUMBER = 378
@@ -104,6 +111,10 @@ def validate_2016_run377_evidence_review_sources(
         "dispatch_executor_workflow_blob_sha": (
             root / DISPATCH_EXECUTOR_WORKFLOW_PATH,
             EXPECTED_DISPATCH_EXECUTOR_WORKFLOW_BLOB_SHA,
+        ),
+        "post_install_recovery_workflow_blob_sha": (
+            root / POST_INSTALL_RECOVERY_WORKFLOW_PATH,
+            EXPECTED_POST_INSTALL_RECOVERY_WORKFLOW_BLOB_SHA,
         ),
     }
     actual: dict[str, str] = {}
