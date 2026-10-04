@@ -26,15 +26,15 @@ AUTHORIZATION_SOURCE_PATH = (
     "annual_pattern_catalogue_2015_replacement_execution_authorization.py"
 )
 EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "c63fc9f72ad34fa6fd903f2dde8e85570521c9b9"
+    "00f588ae2f641919a79e8baf1b262f73ce5834b2"
 )
 RUNTIME_SOURCE_PATH = "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 EXPECTED_RUNTIME_SOURCE_BLOB_SHA = (
-    "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b"
+    "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_REPAIRED_WORKFLOW_BLOB_SHA = (
-    "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+    "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 )
 
 FAILED_FIRST_RUN_ID = 37126711695
@@ -225,7 +225,7 @@ def validate_2015_replacement_dispatch_action_preflight(
         raise ValueError("DEC-499 prior run count mismatch")
     if value.get("failed_first_run_id") != FAILED_FIRST_RUN_ID:
         raise ValueError("DEC-499 failed first run id mismatch")
-    if value.get("expected_replacement_run_number") != 2:
+    if value.get("expected_replacement_run_number") != 376:
         raise ValueError("DEC-499 replacement run number mismatch")
     if value.get("expected_replacement_run_attempt") != 1:
         raise ValueError("DEC-499 replacement run attempt mismatch")

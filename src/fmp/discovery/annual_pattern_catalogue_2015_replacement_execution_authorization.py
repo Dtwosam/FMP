@@ -13,7 +13,7 @@ REPLACEMENT_PREFLIGHT_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_replacement_dispatch_preflight.py"
 )
 EXPECTED_REPLACEMENT_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "c69f8a9bf1130ae776b06670fba0c63c935afdc1"
+    "e7a231e3bfb9093b9d1b289fb33b022c69571580"
 )
 FAILURE_RECEIPT_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_run1_failure_receipt.py"
@@ -29,11 +29,11 @@ EXPECTED_UPLOAD_REPAIR_SOURCE_BLOB_SHA = (
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_REPAIRED_WORKFLOW_BLOB_SHA = (
-    "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+    "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 )
 
 AUTHORIZED_ANNUAL_SEGMENT_LABEL = "2015"
-EXPECTED_REPLACEMENT_RUN_NUMBER = 2
+EXPECTED_REPLACEMENT_RUN_NUMBER = 376
 EXPECTED_REPLACEMENT_RUN_ATTEMPT = 1
 FAILED_FIRST_RUN_ID = 37126711695
 
@@ -131,7 +131,7 @@ def require_2015_replacement_execution_authorized(
         != EXPECTED_REPLACEMENT_RUN_NUMBER
     ):
         raise PermissionError(
-            "DEC-498 authorizes only replacement workflow run number 2"
+            "DEC-498 authorizes only replacement workflow run number 376"
         )
     if (
         _positive_int(run_attempt, field="run_attempt")
@@ -163,7 +163,7 @@ def build_2015_replacement_execution_authorization(
         **source,
         "stage": "ANNUAL_CATALOGUE_2015_REPLACEMENT_RUN_AUTHORIZED_NOT_STARTED",
         "authorization_basis": "standing_operator_autonomous_build_authorization",
-        "authorization_scope": "2015_replacement_run_2_attempt_1_only",
+        "authorization_scope": "2015_replacement_run_376_attempt_1_only",
         "failed_first_run_id": FAILED_FIRST_RUN_ID,
         "annual_segment_label": AUTHORIZED_ANNUAL_SEGMENT_LABEL,
         "expected_run_number": EXPECTED_REPLACEMENT_RUN_NUMBER,

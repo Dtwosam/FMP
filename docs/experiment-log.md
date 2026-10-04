@@ -3178,3 +3178,76 @@ Copy this section for each serious experiment:
 - Repository mutation performed: NO.
 - Workflow dispatch performed: NO.
 - 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-100 — DEC-517 replacement executor recovery
+
+- Original executor run: `37149151549`.
+- Original executor conclusion: FAILURE before dispatch.
+- Failure cause: missing pinned Python runtime / `polars` import.
+- Annual workflow dispatch inventory after failure: exactly run #1 only.
+- Target replacement slot consumed: NO.
+- Recovery installs pinned runtime before DEC-499 import: YES.
+- Recovery target: 2015 run #2 / attempt 1 only.
+- Retry / rerun / run 3+: NO.
+- 2016+ / promotion / broker / trading authority: NO.
+
+### EXP-20261003-101 — DEC-518 recovered exact 2016 runtime install
+
+- Trigger: successful recovered DEC-514 activation plan only.
+- DEC-514 workflow blob: `6069421af6ffc72a40bca9250627c9f81135fd16`.
+- DEC-514 artifact: unique, unexpired, digest-verified.
+- Concrete DEC-502 runtime binding carried forward: YES.
+- Mutation count: exactly 2 files.
+- Result gate blob: `87c00381c5c12a0593378f565e6be4bad003514f`.
+- Result runtime blob: `d7d3713cb3259e793c448153fd75ca043f511389`.
+- Push mode: normal fast-forward only.
+- Concrete DEC-508 receipt: REQUIRED.
+- Workflow dispatch / rerun / retry / broker / trading: NO.
+
+### EXP-20261003-102 — DEC-519 folded post-install 2016 dispatch plan
+
+- Execution location: second job of DEC-518 workflow.
+- Job dependency: successful exact install.
+- Job permissions: contents read / actions read.
+- Concrete DEC-508 receipt: REQUIRED.
+- Concrete DEC-502 binding: REQUIRED.
+- Installed gate/runtime blobs: EXACT.
+- DEC-509 → DEC-510 → DEC-511: REBUILT IN ORDER.
+- Expected next annual run: #3 / attempt 1.
+- Dispatch / mutation / rerun / retry / trading: NO.
+
+### EXP-20261003-103 — DEC-520 workflow validity and run-number recovery
+
+- Malformed live workflow before repair: duplicate YAML keys on preflight upload.
+- Last invalid annual workflow global run number observed: 375.
+- Additional annual `workflow_dispatch` runs observed: 0.
+- Corrected live workflow blob: `09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`.
+- Hidden-file flags after repair: exactly one per preflight/cell/freeze upload.
+- Recovered 2015 replacement identity: run 376 / attempt 1.
+- Future 2016 identity: run 377 / attempt 1.
+- New dispatch/retry/trading authority created by repair: NO.
+
+### EXP-20261003-099 — DEC-521 exact 2016 run-377 dispatch
+
+- Trigger: successful DEC-518 install + successful DEC-519 plan in the same workflow.
+- Installed main equals concrete DEC-508 install commit: REQUIRED.
+- Latest annual workflow global run before dispatch: 376, successful.
+- Manual dispatch inventory before dispatch: failed run 1 + successful run 376 only.
+- Authorized target: annual segment 2016, run 377, attempt 1.
+- Previous annual freeze input: exact concrete DEC-502 run ID.
+- Dispatch count: exactly 1.
+- Result claimed at dispatch time: NO.
+- Rerun / retry / run 378+: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.
+
+### EXP-20261003-100 — DEC-522 2016 run-377 evidence binding
+
+- Target: exact successful annual run 377 / attempt 1.
+- DEC-521 receipt/run ID/head binding: REQUIRED.
+- Successful job count: exactly 20.
+- Artifact count: exactly 20, unexpired, SHA-256 addressed.
+- 2016 freeze ZIP digest verified against GitHub: REQUIRED.
+- DEC-477 freeze validation: REQUIRED.
+- Concrete 2016 runtime evidence binding output: YES.
+- Repository mutation / workflow dispatch / rerun / retry: NO.
+- 2017+ / Strategy V1 / promotion / trading authority: NO.

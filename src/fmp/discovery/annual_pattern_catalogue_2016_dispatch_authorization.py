@@ -21,11 +21,11 @@ DISPATCH_PREFLIGHT_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2016_dispatch_preflight.py"
 )
 EXPECTED_DISPATCH_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "ab15723683f0fa37f5cc4511168cf264f47063c0"
+    "e4afa2047cba8fbb066c755033e35e9b185c07a9"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
-    "f7e65ee95f472918e390bceedd7cf2f38bbf7e92"
+    "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 )
 
 ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED = True
@@ -137,7 +137,7 @@ def build_2016_dispatch_authorization(
         raise ValueError("DEC-510 annual segment mismatch")
     if preflight.get("prior_segment_label") != "2015":
         raise ValueError("DEC-510 predecessor segment mismatch")
-    if preflight.get("expected_run_number") != 3:
+    if preflight.get("expected_run_number") != 377:
         raise ValueError("DEC-510 expected run number mismatch")
     if preflight.get("expected_run_attempt") != 1:
         raise ValueError("DEC-510 expected run attempt mismatch")
@@ -182,7 +182,7 @@ def build_2016_dispatch_authorization(
         ),
         "stage": "ANNUAL_CATALOGUE_2016_DISPATCH_AUTHORIZED_NOT_DISPATCHED",
         "authorization_basis": "standing_operator_autonomous_build_authorization",
-        "authorization_scope": "2016_run_3_attempt_1_only",
+        "authorization_scope": "2016_run_377_attempt_1_only",
         "repository_full_name": "Dtwosam/FMP",
         "expected_head_sha": expected_head_sha,
         "install_commit_sha": install_commit_sha,
@@ -197,7 +197,7 @@ def build_2016_dispatch_authorization(
             preflight.get("successful_2015_run_head_sha"),
             field="successful 2015 run head",
         ),
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "runtime_authorization_installed": True,
         "runtime_gate_active": True,
@@ -268,11 +268,11 @@ def validate_2016_dispatch_authorization(
         ),
         "stage": "ANNUAL_CATALOGUE_2016_DISPATCH_AUTHORIZED_NOT_DISPATCHED",
         "authorization_basis": "standing_operator_autonomous_build_authorization",
-        "authorization_scope": "2016_run_3_attempt_1_only",
+        "authorization_scope": "2016_run_377_attempt_1_only",
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": "2016",
         "prior_segment_label": "2015",
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "runtime_authorization_installed": True,
         "runtime_gate_active": True,

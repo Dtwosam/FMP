@@ -10654,3 +10654,129 @@ orders, use real money, or trade.
 
 Next gate:
 \`APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALL_ACTION\`.
+
+## DEC-517 — 2015 replacement executor recovery
+
+**Date:** 2026-10-03  
+**Status:** ONE-SHOT RECOVERY / TARGET RUN-2 SLOT UNCONSUMED
+
+The initial DEC-512 executor run `37149151549` failed before its dispatch step because
+the workflow omitted the pinned annual-catalogue Python dependency install. GitHub still
+reports exactly one annual `workflow_dispatch` run: failed 2015 run #1.
+
+DEC-517 adds a separate one-shot recovery workflow rather than weakening or rerunning the
+failed executor. It verifies that exact failure, installs the pinned runtime, rebuilds
+DEC-499 on exact current main, and may submit exactly 2015 run #2 / attempt 1.
+
+DEC-513 is rebound to accept evidence only when that run is tied to the successful
+DEC-517 recovery executor at the same head.
+
+Retry/rerun, run 3+, 2016+ execution, promotion, broker mutation, orders, real-money
+action, and trading remain locked.
+
+Next gate:
+`SUCCESSFUL_2015_REPLACEMENT_RUN_2_THEN_DEC_513_CONCRETE_BINDING`.
+
+## DEC-518 — Recovered exact 2016 runtime install executor
+
+**Date:** 2026-10-03  
+**Status:** BOUNDED REPOSITORY MUTATION / NO WORKFLOW DISPATCH
+
+DEC-518 is installed together with DEC-517 so the workflow-run successor already exists
+before the recovered 2015 evidence chain can reach DEC-514.
+
+It accepts only a successful recovered DEC-514 plan artifact, verifies the exact DEC-507
+two-file action and concrete DEC-502 binding, requires current main to remain unchanged,
+copies only the frozen 2016 gate/runtime templates, verifies their result blobs, and
+creates one normal fast-forward commit.
+
+The executor then builds the concrete DEC-508 post-install receipt. Annual workflow
+dispatch, rerun/retry, broker mutation, order placement, real-money action, and trading
+remain outside DEC-518.
+
+Next gate:
+`READ_ONLY_POST_INSTALL_2016_DISPATCH_PLAN_ON_DEC_518_RECEIPT`.
+
+## DEC-519 — Folded read-only post-install 2016 dispatch plan
+
+**Date:** 2026-10-03  
+**Status:** READ-ONLY SECOND JOB / DISPATCH NOT EXECUTED
+
+To stay within GitHub's `workflow_run` chain-depth limit, DEC-519 is implemented as a
+second job inside the DEC-518 workflow rather than as another workflow-run successor.
+
+After the exact two-file install succeeds, this job drops to contents/actions read,
+downloads the DEC-518 evidence from the same run, validates the concrete DEC-508 receipt
+and DEC-502 predecessor binding on installed main, then rebuilds DEC-509 → DEC-510 →
+DEC-511.
+
+The resulting artifact freezes only the exact future 2016 run #3 / attempt 1 parameters.
+No workflow dispatch, repository mutation, rerun/retry, broker access, order placement,
+real-money action, or trading occurs.
+
+Next gate:
+`EXACT_2016_ANNUAL_PATTERN_CATALOGUE_RUN3_ONE_SHOT_DISPATCH`.
+
+## DEC-520 — Annual workflow validity and run-identity recovery
+
+**Date:** 2026-10-03  
+**Status:** WORKFLOW REPAIRED / EXACT RUN IDENTITIES REBOUND
+
+The DEC-496 workflow blob was invalid because three duplicate `include-hidden-files` keys
+were concentrated in one YAML mapping. GitHub recorded no-job push failures for that
+workflow and advanced its global run number through 375 without creating another manual
+annual dispatch.
+
+DEC-520 replaces the live annual workflow with corrected blob
+`09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1`: each of the three upload steps has exactly
+one hidden-file flag. The prior malformed blob remains frozen as historical evidence.
+
+The replacement authorization/review/binding chain is rebound to exact GitHub workflow
+run 376 / attempt 1, and the 2016 execution/install/dispatch chain to exact run 377 /
+attempt 1. The preflight inventory still requires the sole prior manual dispatch to be
+failed run 1, so an unexpected intervening dispatch fails closed.
+
+DEC-520 authorizes no new dispatch, retry, rerun, later-year execution, broker mutation,
+order placement, real-money action, or trading.
+
+## DEC-521 — Exact 2016 run-377 one-shot dispatch
+
+**Date:** 2026-10-03  
+**Status:** BOUNDED RESEARCH DISPATCH / RESULT NOT CLAIMED
+
+DEC-521 is folded into the recovered DEC-518 workflow as a third job after the exact
+runtime install and DEC-519 read-only plan. This preserves DEC-509/511's exact-current-main
+binding: no separate repository merge occurs between the plan and dispatch.
+
+The job requires installed main to remain the DEC-508 install commit, verifies the exact
+installed gate/runtime blobs, consumes the concrete DEC-502 predecessor and DEC-519
+DEC-509→510→511 bundle, and requires the annual global run counter to still end at
+successful run 376 with no run 377+ present.
+
+It then submits exactly one `2016` dispatch with the concrete predecessor run ID and
+resolves exact run 377 / attempt 1. The receipt claims only submission, not a result.
+
+Rerun/retry, run 378+, 2017+, Strategy V1, promotion, broker mutation, demo/live orders,
+real-money action, and trading remain false.
+
+Next gate:
+`REVIEW_2016_RUN_377_BEFORE_ANY_2017_EXECUTION`.
+
+## DEC-522 — Read-only 2016 run-377 evidence binding
+
+**Date:** 2026-10-03  
+**Status:** SOURCE-READY READ-ONLY REVIEW / 2017 LOCKED
+
+DEC-522 binds only a completed successful annual-catalogue run 377 / attempt 1 whose run
+ID and head are also named by the exact DEC-521 dispatch receipt.
+
+The reviewer requires the exact 20-job and 20-artifact 2016 inventory, verifies the
+freeze ZIP against GitHub's SHA-256 artifact digest, and validates the embedded DEC-477
+2016 annual freeze before producing a concrete runtime-evidence binding.
+
+The reviewer has contents/actions read permission only. It performs no workflow dispatch,
+repository mutation, rerun/retry, 2017 execution, broker action, order placement,
+real-money action, or trading.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT`.

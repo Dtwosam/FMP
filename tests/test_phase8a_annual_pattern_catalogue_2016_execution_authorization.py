@@ -28,13 +28,13 @@ def _preflight() -> dict[str, object]:
     return {
         "decision": "DEC-503",
         "version": "fmp-annual-catalogue-2016-execution-preflight-v1",
-        "runtime_binding_source_blob_sha": "505e9dcbfc518e7fc00b603cafef44077d105cfa",
-        "runtime_source_blob_sha": "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b",
-        "active_workflow_blob_sha": "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
+        "runtime_source_blob_sha": "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+        "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "annual_workflow_run_count": 2,
         "failed_first_run_id": 37126711695,
         "successful_2015_run_id": 424242,
-        "successful_2015_run_number": 2,
+        "successful_2015_run_number": 376,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": "b" * 40,
         "stage": (
@@ -50,7 +50,7 @@ def _preflight() -> dict[str, object]:
         "previous_runtime_binding_fingerprint": "1" * 64,
         "previous_runtime_freeze_fingerprint": "2" * 64,
         "previous_annual_freeze_evidence_fingerprint": "3" * 64,
-        "expected_next_run_number": 3,
+        "expected_next_run_number": 377,
         "expected_next_run_attempt": 1,
         "annual_workflow_dispatch_authorized": False,
         "historical_artifact_read_authorized": False,
@@ -84,15 +84,15 @@ class AnnualPatternCatalogue2016ExecutionAuthorizationTests(unittest.TestCase):
         )
         self.assertEqual(
             source["execution_preflight_source_blob_sha"],
-            "00b0df00f15e1d983c799e8991a88e03e010d2e3",
+            "9c89eb64c1e0ecda56fd9cfe0b26516e4a20abc3",
         )
         self.assertEqual(
             source["runtime_source_blob_sha"],
-            "ef50c43fe6fe9c0cba3d220adf7d4b4883f5312b",
+            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
-            "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
     def test_authorization_receipt_is_scoped_but_runtime_inactive(self) -> None:
@@ -109,7 +109,7 @@ class AnnualPatternCatalogue2016ExecutionAuthorizationTests(unittest.TestCase):
         self.assertEqual(value["annual_segment_label"], "2016")
         self.assertEqual(value["prior_segment_label"], "2015")
         self.assertEqual(value["previous_annual_freeze_run_id"], 424242)
-        self.assertEqual(value["expected_run_number"], 3)
+        self.assertEqual(value["expected_run_number"], 377)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertTrue(value["annual_workflow_dispatch_authorized"])
         self.assertTrue(value["historical_artifact_read_authorized"])

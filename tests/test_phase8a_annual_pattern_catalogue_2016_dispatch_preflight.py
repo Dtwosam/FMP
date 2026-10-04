@@ -52,14 +52,14 @@ def _binding() -> dict[str, object]:
         "version": "fmp-annual-catalogue-2015-runtime-evidence-binding-v1",
         "run_freeze_source_blob_sha": "8e2a6ab27b4941e3ee12b5463247999200d33e69",
         "run_review_source_blob_sha": "883f82c85d2738c46284d3675278dc061f4ca07c",
-        "active_workflow_blob_sha": "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+        "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "source_freeze_decision": "DEC-501",
         "source_freeze_version": "fmp-annual-catalogue-2015-replacement-run-freeze-v1",
         "stage": "ANNUAL_CATALOGUE_2015_CONCRETE_RUNTIME_EVIDENCE_BOUND",
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": "2015",
         "run_id": 424242,
-        "run_number": 2,
+        "run_number": 376,
         "run_attempt": 1,
         "run_status": "completed",
         "run_conclusion": "success",
@@ -118,14 +118,14 @@ def _receipt(
     value: dict[str, object] = {
         "decision": "DEC-508",
         "version": "fmp-annual-catalogue-2016-runtime-authorization-install-receipt-v1",
-        "install_action_source_blob_sha": "9a5ad0b8f5e441bb67f7daee11aa8f8cc2aee535",
+        "install_action_source_blob_sha": "e5bb5dce82111a29997783fcdc4df0f70883700e",
         "source_action_decision": "DEC-507",
         "source_action_fingerprint_sha256": "5" * 64,
         "stage": "ANNUAL_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALLED_DISPATCH_LOCKED",
         "repository_full_name": "Dtwosam/FMP",
         "install_commit_sha": install_commit_sha,
         "annual_segment_label": "2016",
-        "expected_run_number": 3,
+        "expected_run_number": 377,
         "expected_run_attempt": 1,
         "previous_annual_freeze_run_id": previous_run_id,
         "changed_file_count": 2,
@@ -136,11 +136,11 @@ def _receipt(
         "installed_gate_source_path": (
             "src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py"
         ),
-        "installed_gate_source_blob_sha": "87c00381c5c12a0593378f565e6be4bad003514f",
+        "installed_gate_source_blob_sha": "e6ef74733669ceb8cab13a1e0d25a236526266e3",
         "installed_runtime_source_path": (
             "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
         ),
-        "installed_runtime_source_blob_sha": "d7d3713cb3259e793c448153fd75ca043f511389",
+        "installed_runtime_source_blob_sha": "995bb46ddd95563f904243c78ae4fc3cf3308968",
         "install_action_consumed": True,
         "runtime_authorization_installed": True,
         "runtime_gate_active": True,
@@ -175,7 +175,7 @@ def _runs() -> dict[str, object]:
         "workflow_runs": [
             {
                 "id": 424242,
-                "run_number": 2,
+                "run_number": 376,
                 "run_attempt": 1,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
@@ -208,15 +208,15 @@ class AnnualPatternCatalogue2016DispatchPreflightTests(unittest.TestCase):
         )
         self.assertEqual(
             source["install_receipt_source_blob_sha"],
-            "5b00b32bdcfa876e218de8af8274e8c64ec24c25",
+            "7da956910e24e788a2f2a60834c04048a660bc75",
         )
         self.assertEqual(
             source["runtime_binding_source_blob_sha"],
-            "505e9dcbfc518e7fc00b603cafef44077d105cfa",
+            "bbb3bba32c3677d3bd971a2744eb93498868433b",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
-            "f7e65ee95f472918e390bceedd7cf2f38bbf7e92",
+            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
     def test_exact_installed_state_yields_read_only_dispatch_preflight(self) -> None:
@@ -233,7 +233,7 @@ class AnnualPatternCatalogue2016DispatchPreflightTests(unittest.TestCase):
         self.assertEqual(value["annual_segment_label"], "2016")
         self.assertEqual(value["previous_annual_freeze_run_id"], 424242)
         self.assertEqual(value["annual_workflow_run_count"], 2)
-        self.assertEqual(value["expected_run_number"], 3)
+        self.assertEqual(value["expected_run_number"], 377)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertEqual(value["install_commit_sha"], MAIN_HEAD)
         self.assertTrue(value["install_action_consumed"])
@@ -255,7 +255,7 @@ class AnnualPatternCatalogue2016DispatchPreflightTests(unittest.TestCase):
         rows.append(
             {
                 "id": 525252,
-                "run_number": 3,
+                "run_number": 377,
                 "run_attempt": 1,
                 "event": "workflow_dispatch",
                 "head_branch": "main",

@@ -14,7 +14,7 @@ ANNUAL_CATALOGUE_2016_RUNTIME_AUTHORIZATION_VERSION = (
 )
 
 AUTHORIZED_ANNUAL_SEGMENT_LABEL = "2016"
-EXPECTED_RUN_NUMBER = 3
+EXPECTED_RUN_NUMBER = 377
 EXPECTED_RUN_ATTEMPT = 1
 
 RUNTIME_AUTHORIZATION_INSTALLED = True
@@ -74,7 +74,7 @@ def require_2016_execution_authorized(
     if annual_segment_label != AUTHORIZED_ANNUAL_SEGMENT_LABEL:
         raise PermissionError("DEC-505 authorizes annual catalogue execution only for 2016")
     if _positive_int(run_number, field="run_number") != EXPECTED_RUN_NUMBER:
-        raise PermissionError("DEC-505 authorizes only annual workflow run number 3")
+        raise PermissionError("DEC-505 authorizes only annual workflow run number 377")
     if _positive_int(run_attempt, field="run_attempt") != EXPECTED_RUN_ATTEMPT:
         raise PermissionError("DEC-505 authorizes only annual workflow run attempt 1")
     _positive_int(

@@ -178,6 +178,8 @@ jobs:
           path: .preflight
           if-no-files-found: error
           include-hidden-files: true
+          include-hidden-files: true
+          include-hidden-files: true
 
   annual_cell:
     needs: annual_preflight
@@ -427,7 +429,6 @@ jobs:
           name: phase8a-annual-catalogue-cell-${{ inputs.annual_segment_label }}-${{ matrix.dataset.symbol }}-${{ matrix.dataset.timeframe }}-${{ matrix.dataset.horizon }}m-${{ github.sha }}
           path: .result
           if-no-files-found: error
-          include-hidden-files: true
 
   annual_freeze:
     needs: annual_cell
@@ -481,4 +482,3 @@ jobs:
           name: phase8a-annual-catalogue-freeze-${{ inputs.annual_segment_label }}-${{ github.sha }}
           path: .annual-freeze/annual-freeze.json
           if-no-files-found: error
-          include-hidden-files: true
