@@ -32,14 +32,43 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Require exact first read-only authorization push
+      - name: Require exact second authorization push after syntax failure
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$GITHUB_EVENT_NAME" = "push"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37241492509" \
+            > "$RUNNER_TEMP/failed-dec557-builder-run.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "failed-dec557-builder-run.json"
+              ).read_text(encoding="utf-8")
+          )
+          exact = {
+              "id": 37241492509,
+              "name": "phase8a-annual-catalogue-2019-execution-authorization",
+              "path": ".github/workflows/phase8a-annual-catalogue-2019-execution-authorization.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "15828432541422e0690eb1128f8a45d5d8f1fe50",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "failure",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          PY
 
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_execution_authorization.py)" = "084fa62c7fd4855fc561038d991e1215df2ff73b"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_execution_preflight.py)" = "a813a8db59927eaf9108e010a5db84f6c6dafa27"
@@ -144,7 +173,8 @@ jobs:
               376: (37191637168, "failure"),
               377: (37198002653, "success"),
               378: (37206992367, "success"),
-              379: (37227536041, "success"),\n              380: (37237817538, "success"),
+              379: (37227536041, "success"),
+              380: (37237817538, "success"),
           }
           for number, (run_id, conclusion) in expected.items():
               row = by_number[number]
