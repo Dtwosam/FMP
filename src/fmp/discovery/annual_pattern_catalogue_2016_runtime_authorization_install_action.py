@@ -32,7 +32,7 @@ INSTALL_PREFLIGHT_SOURCE_PATH = (
     "annual_pattern_catalogue_2016_runtime_authorization_install_preflight.py"
 )
 EXPECTED_INSTALL_PREFLIGHT_SOURCE_BLOB_SHA = (
-    "6d8b4342118eca13872d89478efe052cd78b9c0a"
+    "776ec2e50afb4bf2d7ef6807b43ff91fdb31f732"
 )
 
 REPOSITORY_MUTATION_AUTHORIZED = True
@@ -196,7 +196,7 @@ def compile_2016_runtime_authorization_install_action(
         "repository_full_name": "Dtwosam/FMP",
         "expected_head_sha": expected_head_sha,
         "annual_segment_label": "2016",
-        "expected_run_number": 377,
+        "expected_run_number": 378,
         "expected_run_attempt": 1,
         "previous_annual_freeze_run_id": preflight.get(
             "previous_annual_freeze_run_id"
@@ -260,7 +260,7 @@ def validate_2016_runtime_authorization_install_action(
         raise ValueError("DEC-507 source preflight mismatch")
     if value.get("annual_segment_label") != "2016":
         raise ValueError("DEC-507 annual segment mismatch")
-    if value.get("expected_run_number") != 377:
+    if value.get("expected_run_number") != 378:
         raise ValueError("DEC-507 expected run number mismatch")
     if value.get("expected_run_attempt") != 1:
         raise ValueError("DEC-507 expected run attempt mismatch")
