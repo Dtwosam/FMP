@@ -10925,3 +10925,7 @@ Concrete DEC-551 workflow run `37233894381` on `35263ec4c59bae4733507c53b080f3ea
 ## 2026-10-04 — DEC-553 final read-only 2018 dispatch preflight
 
 Bound concrete DEC-552 workflow run `37234867097`, artifact `11314579371`, and authorization fingerprint `eb0089103203b334c12800643f74cc838e8e9e140b4b7868f48ba74793d1d043` into the final non-mutating 2018 dispatch-action preflight. DEC-553 requires exact annual history through successful run 379 and freezes only segment 2018 / run 380 / attempt 1 / predecessor `37227536041`. No dispatch is executed and all run 381+/later-year/trading scopes remain locked.
+
+## 2026-10-04 — DEC-554 / DEC-555 exact 2018 run-380 dispatch and evidence binding
+
+Concrete DEC-553 workflow run `37235949110` produced artifact `11315522989` with digest `sha256:e4d9b6c8661442c1a1debebac843f2dabf07bca6e36054dc7d2ed43a74f1375e` and preflight fingerprint `ba609f06481c1b08e10d16dc772290cd0f3988de9ba32eaa56c13b5561ab86c2`. DEC-554 may dispatch only 2018 annual run 380 / attempt 1 with predecessor `37227536041`, after rechecking exact annual history through successful run 379 and rejecting run 380+. DEC-555 is installed atomically and binds only a successful run 380 to the exact DEC-554 receipt, 20-job/20-artifact inventory, digest-verified freeze, and valid 2018 annual freeze. DEC-555 remains read-only and includes only a manual missed-successor recovery path. Run 381+, 2019+, strategy/promotion, broker/order, real-money, and trading authority remain locked.
