@@ -2108,3 +2108,7 @@ This supersedes the unmerged stale DEC-523 draft.
 ## 2026-10-04 — DEC-535 concrete 2017 authorization
 
 Added the exact source-only 2017 execution authorization bound to DEC-534 workflow run `37210041270` and artifact `11306121033`. The authorization is limited to annual run 379 / attempt 1, while the current runtime remains without a 2017 gate and no dispatch is performed.
+
+## 2026-10-04 — DEC-536 dormant 2017 runtime plan
+
+Frozen the exact dormant 2017 gate and combined runtime target behind concrete DEC-535. The plan adds no live runtime mutation or annual dispatch authority.
