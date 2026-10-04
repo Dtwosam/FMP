@@ -71,7 +71,7 @@ jobs:
           set -euo pipefail
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml)" = "74e9499d9485c8e2a402fb675c995cc1961ff16a"
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml)" = "350806f8d37e4deae6ff8a16551e7b07fd1d5958"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml)" = "e5c2d39decf653d31fcfcd8b9b44671f3061f711"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_review.py)" = "d6935a7b31b028b955f182cf81bc2c123a321852"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_freeze.py)" = "97cfd73d5693046f05104342cb74867d5dc471cc"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0"
