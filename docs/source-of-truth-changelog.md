@@ -2170,3 +2170,7 @@ Bound the read-only 2018 runtime-install preflight to concrete DEC-547 workflow 
 ## 2026-10-04 — Add DEC-549 exact 2018 runtime install action
 
 Bound the future two-file 2018 runtime mutation to concrete DEC-548 run `37231591329`, artifact `11314511176`, and digest `993afb2809aa675ee2df789a402cc736a5f4992f906394a2f9161ba66675887c`. The action is compiled only; no repository mutation or annual dispatch is performed.
+
+## 2026-10-04 — DEC-550 2018 runtime install contract
+
+Bound the exact DEC-549 action artifact and added the path-scoped two-file 2018 runtime installer plus immutable receipt. The installer validates current main, exact annual history through successful run 379, frozen target blobs, and preserved 2017 routing before pushing. Annual dispatch and all run-381+/trading authority remain closed.
