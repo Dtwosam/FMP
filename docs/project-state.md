@@ -3101,3 +3101,7 @@ completed. It grants no 2017, promotion, broker, order, real-money, or trading a
 
 Next gate after concrete DEC-522 evidence:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT`.
+
+### 2026-10-04 recovery status
+
+The atomic DEC-517–522 chain is installed on main at `5417fddc015be92ed843de40be097381367b2c24`. Its first DEC-517 recovery run (`37190929052`) failed safely before any annual dispatch because editable package installation dirtied the checkout. Annual global run 376 remains available. A source-ready clean-install v2 repair permits only recovery workflow run 2 / attempt 1, binds that repair to the failed run-1 provenance, and repins the downstream DEC-513→522 chain. 2017+, strategy promotion, broker mutation, order execution, real-money action, and trading remain locked.
