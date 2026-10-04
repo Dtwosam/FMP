@@ -2119,3 +2119,10 @@ Bound the staged 2017 runtime-authorization plan to successful DEC-535 workflow 
 `37213629059`, artifact `11307204031`, and its exact SHA-256 digest. Added a
 read-only repository-hosted builder and preserved the dormant runtime/gate targets.
 Annual run 379 is still undispatched.
+
+## 2026-10-04 — DEC-537 2017 runtime install preflight
+
+Bound the 2017 install preflight to DEC-536 run `37215086807`, artifact
+`11307494750`, and its exact SHA-256 digest. The preflight is read-only and
+freezes only the two future runtime installation targets; annual run 379 remains
+undispatched.
