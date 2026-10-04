@@ -2108,3 +2108,7 @@ This supersedes the unmerged stale DEC-523 draft.
 ## 2026-10-04 — DEC-535 concrete 2017 authorization
 
 Added the exact source-only 2017 execution authorization bound to DEC-534 workflow run `37210041270` and artifact `11306121033`. The authorization is limited to annual run 379 / attempt 1, while the current runtime remains without a 2017 gate and no dispatch is performed.
+
+## 2026-10-04 — DEC-535 bootstrap recovery
+
+Recorded failed DEC-535 workflow run `37213060816` and added an exact run-2, dependency-bootstrap recovery. The change adds no dispatch or repository-write authority.
