@@ -166,6 +166,7 @@ class AnnualPatternCatalogue2018ExecutionAuthorizationTests(unittest.TestCase):
         ).hexdigest()
         with self.assertRaisesRegex(
             ValueError,
+            "DEC-545 expected_next_run_number mismatch|"
             "source preflight fingerprint mismatch|expected run number mismatch",
         ):
             build_2018_execution_authorization(
