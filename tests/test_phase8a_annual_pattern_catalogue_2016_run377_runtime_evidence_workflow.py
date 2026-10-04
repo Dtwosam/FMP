@@ -39,11 +39,11 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
     def test_workflow_pins_exact_dec522_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "afe23d0deadad15f4ff489f3edcd611675f8f9a4",
+            "bf948fd6b3d658ba99eadbdea128fae3e5689652",
             "9acc6bc7ce284dd7e82f037fa999d2fee02af44a",
             "1b14279864f01a1284c5be31552eee9bb3a2220c",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-            "078aca795be06a9d28e19b584b7122e975476711",
+            "33562020bc8c598d70a5ac60089c115618e26694",
             "1ff32214dee10d877a067e750cd69ffad96d5fe5",
         ):
             self.assertIn(blob, text)
