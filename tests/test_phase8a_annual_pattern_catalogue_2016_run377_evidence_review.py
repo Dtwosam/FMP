@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import os
 from pathlib import Path
 import unittest
 
@@ -24,6 +25,7 @@ from fmp.discovery.pattern_protocol import (
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+PREINSTALL_SNAPSHOT = os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1"
 HEAD = "a" * 40
 RUN_ID = 777777
 PREVIOUS_RUN_ID = 666666
@@ -165,6 +167,10 @@ def _receipt() -> dict[str, object]:
     }
 
 
+@unittest.skipIf(
+    PREINSTALL_SNAPSHOT,
+    "historical preinstall snapshot intentionally hides annual workflow",
+)
 class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
     def test_sources_pin_segment_workflow_and_dispatch_executor(self) -> None:
         source = validate_2016_run377_evidence_review_sources(
