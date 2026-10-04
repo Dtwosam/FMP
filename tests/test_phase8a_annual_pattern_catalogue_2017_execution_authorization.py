@@ -176,7 +176,7 @@ class AnnualPatternCatalogue2017ExecutionAuthorizationTests(unittest.TestCase):
         ).hexdigest()
         with self.assertRaisesRegex(
             ValueError,
-            "expected run number mismatch",
+            "expected_next_run_number mismatch",
         ):
             build_2017_execution_authorization(
                 preflight,
