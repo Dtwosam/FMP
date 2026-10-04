@@ -431,22 +431,22 @@ jobs:
         run: |
           set -euo pipefail
           runtime="src/fmp/discovery/annual_pattern_catalogue_runtime.py"
-          gate="src/fmp/discovery/annual_pattern_catalogue_2017_runtime_authorization.py"
-          runtime_saved="$RUNNER_TEMP/annual_pattern_catalogue_runtime.dec539-installed.py"
-          gate_saved="$RUNNER_TEMP/annual_pattern_catalogue_2017_runtime_authorization.dec539-installed.py"
+          gate2017="src/fmp/discovery/annual_pattern_catalogue_2017_runtime_authorization.py"
+          gate2018="src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py"
           fixture="tests/fixtures/phase8a_annual_pattern_catalogue_runtime_pre_dec539.py.snapshot"
 
-          test "$(git hash-object "$runtime")" = "e9cbc76dc9e6866e80088d223498fbcc3b870fd1"
-          test "$(git hash-object "$gate")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
+          test "$(git hash-object "$runtime")" = "410180c34a9e3500bbbb42310a5253b993ac7785"
+          test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
+          test "$(git hash-object "$gate2018")" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
           test "$(git hash-object "$fixture")" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
 
-          cp "$runtime" "$runtime_saved"
-          cp "$gate" "$gate_saved"
           cp "$fixture" "$runtime"
-          rm "$gate"
+          rm "$gate2017"
+          rm "$gate2018"
 
           test "$(git hash-object "$runtime")" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
-          test ! -e "$gate"
+          test ! -e "$gate2017"
+          test ! -e "$gate2018"
 
       - name: Run post-install 2016 runtime-repair tests
         env:
@@ -581,16 +581,27 @@ jobs:
         run: |
           set -euo pipefail
           runtime="src/fmp/discovery/annual_pattern_catalogue_runtime.py"
-          gate="src/fmp/discovery/annual_pattern_catalogue_2017_runtime_authorization.py"
-          runtime_saved="$RUNNER_TEMP/annual_pattern_catalogue_runtime.dec539-installed.py"
-          gate_saved="$RUNNER_TEMP/annual_pattern_catalogue_2017_runtime_authorization.dec539-installed.py"
+          gate2017="src/fmp/discovery/annual_pattern_catalogue_2017_runtime_authorization.py"
+          gate2018="src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py"
+          runtime2017="docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2017_authorization.py.disabled"
+          gate2017_template="docs/superpowers/templates/annual_pattern_catalogue_2017_runtime_authorization.py.disabled"
 
-          cp "$runtime_saved" "$runtime"
-          cp "$gate_saved" "$gate"
+          cp "$runtime2017" "$runtime"
+          cp "$gate2017_template" "$gate2017"
+          rm -f "$gate2018"
 
           test "$(git hash-object "$runtime")" = "e9cbc76dc9e6866e80088d223498fbcc3b870fd1"
-          test "$(git hash-object "$gate")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
-          test -z "$(git diff --name-only -- "$runtime" "$gate")"
+          test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
+          test ! -e "$gate2018"
+
+          {
+            git diff --name-only -- "$runtime" "$gate2017" "$gate2018"
+          } | sort -u > "$RUNNER_TEMP/dec539-temporary-state-diff.txt"
+          cat > "$RUNNER_TEMP/dec539-temporary-state-expected.txt" <<'EOF'
+          src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py
+          src/fmp/discovery/annual_pattern_catalogue_runtime.py
+          EOF
+          diff -u             "$RUNNER_TEMP/dec539-temporary-state-expected.txt"             "$RUNNER_TEMP/dec539-temporary-state-diff.txt"
 
       - name: Run DEC-539 2017 runtime install-receipt tests
         env:
@@ -768,6 +779,23 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2018_runtime_install_action_workflow.py'
           -v
+      - name: Restore DEC550-installed annual runtime state
+        run: |
+          set -euo pipefail
+          runtime="src/fmp/discovery/annual_pattern_catalogue_runtime.py"
+          gate2017="src/fmp/discovery/annual_pattern_catalogue_2017_runtime_authorization.py"
+          gate2018="src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py"
+          runtime2018="docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2018_authorization.py.disabled"
+          gate2018_template="docs/superpowers/templates/annual_pattern_catalogue_2018_runtime_authorization.py.disabled"
+
+          cp "$runtime2018" "$runtime"
+          cp "$gate2018_template" "$gate2018"
+
+          test "$(git hash-object "$runtime")" = "410180c34a9e3500bbbb42310a5253b993ac7785"
+          test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
+          test "$(git hash-object "$gate2018")" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
+          test -z "$(git diff --name-only -- "$runtime" "$gate2017" "$gate2018")"
+
       - name: Run DEC-550 2018 runtime install-receipt tests
         env:
           PYTHONPATH: src
@@ -783,6 +811,22 @@ jobs:
           python -m unittest discover
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2018_runtime_install_executor.py'
+          -v
+      - name: Run DEC-551 2018 dispatch-preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2018_dispatch_preflight.py'
+          -v
+      - name: Run DEC-551 dispatch-preflight workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2018_dispatch_preflight_workflow.py'
           -v
       - name: Run historical snapshot and general unit tests
         env:

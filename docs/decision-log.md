@@ -10913,3 +10913,7 @@ Successful DEC-548 workflow run `37231591329` produced artifact `11314511176` wi
 ## 2026-10-04 — DEC-550 exact 2018 runtime authorization install
 
 Concrete DEC-549 workflow run `37232388248` on `3cfd1b38217c97bbd590214394f171075d2d0f54` produced artifact `11313752760` (digest `sha256:94c9ce6e08f013cb9ff8f662c78b3fafc0ba902fa590e5b27e89751ddd9069a3`). DEC-550 is the bounded repository mutation that may create only the frozen 2018 gate blob `cd50f501...` and update the annual runtime from `e9cbc76d...` to `410180c3...`. The executor rechecks unchanged main and the unconsumed run-380 slot before mutation and before push, proves the installed run-380 gate and preserved run-379 route, and emits a concrete install receipt. It cannot dispatch the annual workflow and grants no run-381+, 2019+, strategy, broker/order, real-money, or trading authority.
+
+## 2026-10-04 — DEC-551 read-only 2018 dispatch preflight
+
+DEC-550 completed as installer workflow run `37233054691` and produced artifact `11314488545` (digest `sha256:8b9732b24a5ef6163d8ab54f34d058eecd9e1c4ce1a68c79a88306178933df2d`), with exact install commit `1fc73dfc1e102996cecd5b9ffcb75d3ab4fa3ade`. DEC-551 binds that receipt, installed 2018 gate blob `cd50f501...`, runtime blob `410180c3...`, and the exact annual history through successful run 379. It freezes only future 2018 run 380 / attempt 1 with predecessor `37227536041`. The preflight remains read-only and grants no dispatch, run-381+, 2019+, strategy, broker/order, real-money, or trading authority.

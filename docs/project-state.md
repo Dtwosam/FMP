@@ -3243,3 +3243,7 @@ DEC-548 is concrete from workflow run `37231591329` and artifact `11314511176`. 
 ### 2026-10-04 — DEC-550 2018 runtime install executor
 
 DEC-549 is concrete from workflow run `37232388248`, artifact `11313752760`, digest `sha256:94c9ce6e08f013cb9ff8f662c78b3fafc0ba902fa590e5b27e89751ddd9069a3`. DEC-550 freezes the exact two-file 2018 runtime installation: create the 2018 gate from blob `cd50f501...` and update runtime from `e9cbc76d...` to `410180c3...`. The path-scoped executor remains the only repository mutation surface and performs no annual dispatch. Run 380 remains unconsumed until a later dispatch gate; run 381+, 2019+, strategy, broker/order, real-money, and trading remain locked.
+
+### 2026-10-04 — DEC-551 2018 dispatch preflight
+
+The 2018 runtime authorization is installed on main at `1fc73dfc1e102996cecd5b9ffcb75d3ab4fa3ade`, backed by DEC-550 workflow run `37233054691` and artifact `11314488545`. DEC-551 is the next read-only gate: exact annual history remains `{1, 376, 377, 378, 379}`, run 380 remains unconsumed, and the future target is only segment 2018 / run 380 / attempt 1 / predecessor `37227536041`. Annual dispatch, run 381+, 2019+, strategy/promotion, broker/order, real-money, and trading remain locked.
