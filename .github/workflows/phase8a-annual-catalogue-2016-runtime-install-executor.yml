@@ -75,6 +75,11 @@ jobs:
           }
           for field, expected in exact.items():
               assert run.get(field) == expected, (field, run.get(field), expected)
+          if os.environ["GITHUB_EVENT_NAME"] == "workflow_dispatch":
+              assert int(os.environ["GITHUB_RUN_NUMBER"]) == 2
+              assert int(os.environ["GITHUB_RUN_ATTEMPT"]) == 1
+              assert run.get("run_number") == 2
+              assert run.get("run_attempt") == 1
           PY
 
       - name: Require exact frozen installer sources
@@ -241,7 +246,10 @@ jobs:
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" = "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
 
-          git diff --name-only > "$RUNNER_TEMP/changed-files.txt"
+          {
+            git diff --name-only
+            git ls-files --others --exclude-standard
+          } | sort -u > "$RUNNER_TEMP/changed-files.txt"
           printf '%s\n'             "src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py"             "src/fmp/discovery/annual_pattern_catalogue_runtime.py"             > "$RUNNER_TEMP/expected-changed-files.txt"
           diff -u "$RUNNER_TEMP/expected-changed-files.txt" "$RUNNER_TEMP/changed-files.txt"
 
