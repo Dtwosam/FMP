@@ -26,6 +26,10 @@ class AnnualCatalogue2017ExecutionPreflightWorkflowTests(unittest.TestCase):
         self.assertNotIn("actions: write", text)
         self.assertNotIn("workflow_dispatch:", text)
         self.assertNotIn("gh workflow run ", text)
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
+        self.assertIn("PYTHONPATH: ${{ github.workspace }}/src", text)
+        self.assertIn("37209674158", text)
+        self.assertIn("0d6640f4833f2ddf377e4004cce9df7ea845f7da", text)
 
     def test_workflow_pins_exact_dec522_artifact_and_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
