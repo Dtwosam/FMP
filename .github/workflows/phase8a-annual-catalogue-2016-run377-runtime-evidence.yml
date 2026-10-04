@@ -83,11 +83,11 @@ jobs:
       - name: Require exact DEC-522 reviewer sources
         run: |
           set -euo pipefail
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_run377_evidence_review.py)" = "dcc4d71990e113acc25fd607ef9919734f2c0731"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_run377_evidence_review.py)" = "601ee6aeb1db10cee01d5b9b6a084c3780b4076f"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_run377_evidence_review.py)" = "9acc6bc7ce284dd7e82f037fa999d2fee02af44a"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_segment_evidence.py)" = "1b14279864f01a1284c5be31552eee9bb3a2220c"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-runtime-install-executor.yml)" = "1a4d9c975f79140f9d7e2173a4e102e4d07b2a6c"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-runtime-install-executor.yml)" = "052486811893386d3f3f6a24bf53be93b71df9d5"
           test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
 
       - name: Set up Python
