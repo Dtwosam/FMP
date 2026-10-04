@@ -69,7 +69,7 @@ jobs:
       - name: Require exact frozen installer sources
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "43762552a626140bcca8fed97ca3505c320e9a33"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "938ce71d68e7cd2d5318a635438ea0f85404a87c"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "0545f0474bdead4e479c07b9af889db842bf00dd"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "3a5614af2393378ed664c4802806147d79ccd8c7"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "7d355784598c48d39ac0d3964145b46b878d18a3"
