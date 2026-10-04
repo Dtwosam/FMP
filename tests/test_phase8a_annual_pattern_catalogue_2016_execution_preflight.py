@@ -58,7 +58,7 @@ def _binding() -> dict[str, object]:
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": "2015",
         "run_id": 424242,
-        "run_number": 376,
+        "run_number": 377,
         "run_attempt": 1,
         "run_status": "completed",
         "run_conclusion": "success",
@@ -118,13 +118,23 @@ def _runs() -> dict[str, object]:
         "workflow_runs": [
             {
                 "id": 424242,
-                "run_number": 376,
+                "run_number": 377,
                 "run_attempt": 1,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
                 "head_sha": RUN2_HEAD,
                 "status": "completed",
                 "conclusion": "success",
+            },
+            {
+                "id": 37191637168,
+                "run_number": 376,
+                "run_attempt": 1,
+                "event": "workflow_dispatch",
+                "head_branch": "main",
+                "head_sha": "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
+                "status": "completed",
+                "conclusion": "failure",
             },
             {
                 "id": 37126711695,
@@ -151,11 +161,11 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
         )
         self.assertEqual(
             source["runtime_binding_source_blob_sha"],
-            "bbb3bba32c3677d3bd971a2744eb93498868433b",
+            "c50442443018922d32f4a19f9d2a31e70e1f53d6",
         )
         self.assertEqual(
             source["runtime_source_blob_sha"],
-            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+            "a33d851c176f20c43c49ee67c984c90e6088067c",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
@@ -181,8 +191,8 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
             value["previous_runtime_binding_fingerprint"],
             binding["binding_fingerprint_sha256"],
         )
-        self.assertEqual(value["annual_workflow_run_count"], 2)
-        self.assertEqual(value["expected_next_run_number"], 377)
+        self.assertEqual(value["annual_workflow_run_count"], 3)
+        self.assertEqual(value["expected_next_run_number"], 378)
         self.assertEqual(value["expected_next_run_attempt"], 1)
         self.assertFalse(value["annual_workflow_dispatch_authorized"])
         self.assertFalse(value["historical_artifact_read_authorized"])
@@ -196,7 +206,7 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
     def test_missing_successful_replacement_run_is_rejected(self) -> None:
         with self.assertRaisesRegex(
             ValueError,
-            "exactly two prior annual-catalogue workflow runs",
+            "exactly three prior annual-catalogue workflow runs",
         ):
             build_2016_execution_preflight(
                 repository_root=Path("."),
