@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 import unittest
 
@@ -9,6 +10,7 @@ from fmp.discovery.annual_pattern_catalogue_2015_replacement_execution_authoriza
 )
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+PREINSTALL_SNAPSHOT = os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1"
 WORKFLOW = (
     REPOSITORY_ROOT
     / ".github/workflows/phase8a-annual-pattern-catalogue.yml"
@@ -37,12 +39,20 @@ def _git_blob_sha(path: Path) -> str:
 
 
 class AnnualCatalogueWorkflowRecoveryRebindTests(unittest.TestCase):
+    @unittest.skipIf(
+        PREINSTALL_SNAPSHOT,
+        "historical preinstall snapshot intentionally hides annual workflow",
+    )
     def test_live_workflow_is_corrected_blob(self) -> None:
         self.assertEqual(
             _git_blob_sha(WORKFLOW),
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
+    @unittest.skipIf(
+        PREINSTALL_SNAPSHOT,
+        "historical preinstall snapshot intentionally hides annual workflow",
+    )
     def test_each_upload_block_has_one_hidden_file_flag(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         marker = "uses: actions/upload-artifact@v6"
@@ -81,6 +91,7 @@ class AnnualCatalogueWorkflowRecoveryRebindTests(unittest.TestCase):
         )
         self.assertIn("if effective_run_number == 376:", runtime)
         self.assertNotIn("EXPECTED_RUN_NUMBER = 3", gate.splitlines())
+
 
 if __name__ == "__main__":
     unittest.main()
