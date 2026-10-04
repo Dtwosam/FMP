@@ -10846,3 +10846,12 @@ pins the current runtime, corrected annual workflow, dormant 2017 gate, and dorm
 runtime target; rechecks that annual run 379 is absent; and remains read-only. No
 runtime installation, repository mutation, annual dispatch, run 380+, later-year,
 strategy, broker/order, real-money, or trading authority is opened.
+
+## 2026-10-04 — DEC-537 concrete 2017 runtime install preflight
+
+Successful DEC-536 workflow run `37215086807` / artifact `11307494750`
+is now the sole concrete source for the 2017 runtime-install preflight. DEC-537
+pins the exact two dormant target blobs, rechecks the current runtime/main and
+annual history, and remains read-only. Repository mutation, runtime activation,
+annual dispatch, run 380+, 2018+, strategy, broker/order, real-money, and trading
+authority remain false.
