@@ -60,6 +60,42 @@ class AnnualPatternCatalogueRuntimeWiringTests(unittest.TestCase):
                 code_commit=CODE_COMMIT,
             )
 
+    def test_run377_routes_only_through_dec527_gate(self) -> None:
+        with patch.object(
+            runtime,
+            "require_2015_run377_execution_authorized",
+        ) as gate:
+            require_historical_catalogue_execution_authorized(
+                code_commit=CODE_COMMIT,
+                annual_segment_label="2015",
+                run_number=377,
+                run_attempt=1,
+            )
+        gate.assert_called_once_with(
+            annual_segment_label="2015",
+            code_commit=CODE_COMMIT,
+            run_number=377,
+            run_attempt=1,
+        )
+
+    def test_run376_keeps_historical_replacement_gate(self) -> None:
+        with patch.object(
+            runtime,
+            "require_2015_replacement_execution_authorized",
+        ) as gate:
+            require_historical_catalogue_execution_authorized(
+                code_commit=CODE_COMMIT,
+                annual_segment_label="2015",
+                run_number=376,
+                run_attempt=1,
+            )
+        gate.assert_called_once_with(
+            annual_segment_label="2015",
+            code_commit=CODE_COMMIT,
+            run_number=376,
+            run_attempt=1,
+        )
+
     def test_source_order_keeps_gate_before_loader(self) -> None:
         source = inspect.getsource(run_locked_annual_catalogue_cell)
         gate = source.index("require_historical_catalogue_execution_authorized")
