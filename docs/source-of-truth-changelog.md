@@ -2085,3 +2085,7 @@ Recorded annual run `37191637168` as an immutable preflight failure (DEC-526), a
 ## 2026-10-04 — Explicit annual successor recovery
 
 Recorded successful 2015 run 377 / attempt 1 (`37198002653`) and the absence of its DEC-513 `workflow_run` successor. Added source-ready DEC-529 explicit recovery entry points through DEC-522, with duplicate automatic successor suppression for manually recovered intermediate runs and no direct annual dispatch from the orchestrator.
+
+## 2026-10-04 — DEC-530 installer mutation-inventory repair
+
+Recorded installer run `37200408776` as a pre-commit failure. The exact two-file installer now inventories both tracked changes and untracked files, and DEC-522 accepts a unique successful installer from normal or explicit recovery mode. DEC-529 orchestrator recovery advances only via fresh workflow run 2 identities; annual run 378 remains the next unconsumed annual slot.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import unittest
 
@@ -12,8 +13,13 @@ from fmp.discovery.annual_pattern_catalogue_2015_run377_execution_authorization 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 CODE_COMMIT = "a" * 40
+PREINSTALL_SNAPSHOT = os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1"
 
 
+@unittest.skipIf(
+    PREINSTALL_SNAPSHOT,
+    "historical preinstall snapshot intentionally hides annual workflow",
+)
 class AnnualCatalogue2015Run377ExecutionAuthorizationTests(unittest.TestCase):
     def test_sources_pin_failed_run376_corrected_install_and_active_workflow(self) -> None:
         value = validate_2015_run377_execution_authorization_sources(

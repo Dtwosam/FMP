@@ -29,21 +29,21 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Require exact first orchestrator push and frozen sources
+      - name: Require exact second orchestrator push after installer inventory failure
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$GITHUB_EVENT_NAME" = "push"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$INITIAL_MAIN_SHA"
 
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "b259e4013a7e74eb8df864acad04a31b7a1eac09"
           test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "1893cd0d96e342ad30e8d5bdfc58b81781d28be6"
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-runtime-install-executor.yml)" = "1a4d9c975f79140f9d7e2173a4e102e4d07b2a6c"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_run377_evidence_review.py)" = "dcc4d71990e113acc25fd607ef9919734f2c0731"
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-run377-runtime-evidence.yml)" = "2a51f6d5a15ee6edf212009bd646047a3ec2546c"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-runtime-install-executor.yml)" = "c9cd42d41994760248009725adc12fd6a13d4511"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_run377_evidence_review.py)" = "2f527117292cf19e1d94245040c2bd64aeaff307"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-run377-runtime-evidence.yml)" = "6cb4ce89bc8d2300516ccdc900459d683ef315fe"
 
       - name: Require exact successful 2015 run 377 and no run 378
         run: |
@@ -85,16 +85,66 @@ jobs:
               assert row["conclusion"] == conclusion
           PY
 
-      - name: Require explicit successor slots are unused
+      - name: Require exact failed first explicit-successor attempt
         run: |
           set -euo pipefail
-          for workflow in             phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml             phase8a-annual-catalogue-2016-activation-plan.yml             phase8a-annual-catalogue-2016-runtime-install-executor.yml             phase8a-annual-catalogue-2016-run377-runtime-evidence.yml
-          do
-            count="$(
-              gh api                 "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow/runs?branch=main&event=workflow_dispatch&per_page=100"                 --jq '.workflow_runs | length'
-            )"
-            test "$count" = "0"
-          done
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37200339487" > "$RUNNER_TEMP/orchestrator-run1.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37200350839" > "$RUNNER_TEMP/dec513-run1.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37200374023" > "$RUNNER_TEMP/dec514-run1.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37200408776" > "$RUNNER_TEMP/dec518-run1.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          expected = (
+              (
+                  "orchestrator-run1.json",
+                  37200339487,
+                  "phase8a-annual-catalogue-explicit-successor-orchestrator",
+                  "push",
+                  "failure",
+              ),
+              (
+                  "dec513-run1.json",
+                  37200350839,
+                  "phase8a-annual-catalogue-2015-replacement-runtime-evidence",
+                  "workflow_dispatch",
+                  "success",
+              ),
+              (
+                  "dec514-run1.json",
+                  37200374023,
+                  "phase8a-annual-catalogue-2016-activation-plan",
+                  "workflow_dispatch",
+                  "success",
+              ),
+              (
+                  "dec518-run1.json",
+                  37200408776,
+                  "phase8a-annual-catalogue-2016-runtime-install-executor",
+                  "workflow_dispatch",
+                  "failure",
+              ),
+          )
+          for filename, run_id, name, event, conclusion in expected:
+              run = json.loads((temp / filename).read_text(encoding="utf-8"))
+              assert run["id"] == run_id
+              assert run["name"] == name
+              assert run["event"] == event
+              assert run["head_branch"] == "main"
+              assert run["head_sha"] == "66b0a9ba46ac0350abe635c5b8d1a6de60559648"
+              assert run["run_number"] == 1
+              assert run["run_attempt"] == 1
+              assert run["status"] == "completed"
+              assert run["conclusion"] == conclusion
+          PY
+
+          test "$(
+            gh api               "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-catalogue-2016-run377-runtime-evidence.yml/runs?branch=main&event=workflow_dispatch&per_page=100"               --jq '.workflow_runs | length'
+          )" = "0"
 
       - name: Explicitly recover DEC-513 reviewer
         run: |
@@ -361,8 +411,11 @@ jobs:
 
           temp = Path(os.environ["RUNNER_TEMP"])
           receipt = {
-              "decision": "DEC-529",
-              "stage": "ANNUAL_CATALOGUE_EXPLICIT_SUCCESSOR_CHAIN_RECOVERED",
+              "decision": "DEC-530",
+              "stage": "ANNUAL_CATALOGUE_EXPLICIT_SUCCESSOR_INSTALLER_REPAIR_RECOVERED",
+              "source_recovery_decision": "DEC-529",
+              "failed_orchestrator_run_id": 37200339487,
+              "failed_installer_run_id": 37200408776,
               "orchestrator_head_sha": os.environ["INITIAL_MAIN_SHA"],
               "source_2015_run_id": int(os.environ["RUN377_ID"]),
               "source_2015_run_number": 377,
@@ -393,16 +446,16 @@ jobs:
               "trading_authorized": False,
               "next_gate": "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT",
           }
-          (temp / "dec529-explicit-successor-receipt.json").write_text(
+          (temp / "dec530-explicit-successor-repair-receipt.json").write_text(
               json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False) + "\n",
               encoding="utf-8",
           )
           PY
 
-      - name: Upload immutable DEC-529 recovery receipt
+      - name: Upload immutable DEC-530 repair receipt
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-dec529-explicit-successor-${{ github.sha }}
+          name: annual-catalogue-dec530-explicit-successor-repair-${{ github.sha }}
           path: |
             ${{ runner.temp }}/main-before.json
             ${{ runner.temp }}/annual-before.json
@@ -413,5 +466,7 @@ jobs:
             ${{ runner.temp }}/main-after-install.json
             ${{ runner.temp }}/dec522-run.json
             ${{ runner.temp }}/dec522-artifacts.json
-            ${{ runner.temp }}/dec529-explicit-successor-receipt.json
+            ${{ runner.temp }}/orchestrator-run1.json
+            ${{ runner.temp }}/dec518-run1.json
+            ${{ runner.temp }}/dec530-explicit-successor-repair-receipt.json
           if-no-files-found: error

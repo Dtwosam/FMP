@@ -3113,3 +3113,7 @@ Global annual run 376 completed failure before annual cell execution. The failur
 ### 2026-10-04 explicit successor recovery
 
 2015 annual run 377 (`37198002653`) is successful and complete, but the expected DEC-513 workflow-run successor was not created. DEC-529 is source-ready to recover the successor chain explicitly without rerunning any annual research: DEC-513 → DEC-514 → DEC-518/519/521 → exact 2016 run 378 → DEC-522. The new orchestrator does not directly submit annual runs and keeps 2017+, promotion, broker/order, real-money, and trading authority closed.
+
+### 2026-10-04 — DEC-530 installer recovery
+
+Successful 2015 annual run 377 is concretely recoverable through DEC-513/514. The first explicit DEC-518→521 installer run (`37200408776`) failed before repository mutation because its changed-file guard ignored the newly created untracked gate file. Main remains unmodified by the installer and annual run 378 is unconsumed. DEC-530 is the bounded fresh-run repair; later-year and trading authority remain locked.
