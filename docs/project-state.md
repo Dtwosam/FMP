@@ -3167,3 +3167,16 @@ real-money/trading authority remains locked.
 
 Next gate:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC536`.
+
+### 2026-10-04 — DEC-537 concrete install preflight
+
+DEC-536 run `37215086807` completed successfully on
+`585feb304ab11ac2fead24eac05233960ba80e0e`; artifact `11307494750`
+(digest `80395e51c57ca26788ef4291d7cdf1e6e3e79ef6cf92893e9d37d14dd8bc2adc`)
+freezes the dormant 2017 runtime plan. DEC-537 is source-ready as a read-only,
+path-scoped install preflight bound to that exact artifact. It keeps the future
+mutation to exactly two files and leaves the 2017 gate uninstalled and annual
+run 379 absent.
+
+Next gate:
+`EXACT_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_INSTALL_MUTATION_AFTER_DEC537`.
