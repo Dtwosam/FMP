@@ -25,13 +25,13 @@ INSTALL_RECEIPT_SOURCE_PATH = (
     "annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py"
 )
 EXPECTED_INSTALL_RECEIPT_SOURCE_BLOB_SHA = (
-    "7da956910e24e788a2f2a60834c04048a660bc75"
+    "3a5614af2393378ed664c4802806147d79ccd8c7"
 )
 RUNTIME_BINDING_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py"
 )
 EXPECTED_RUNTIME_BINDING_SOURCE_BLOB_SHA = (
-    "bbb3bba32c3677d3bd971a2744eb93498868433b"
+    "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
@@ -40,6 +40,8 @@ EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
 
 FAILED_FIRST_RUN_ID = 37126711695
 FAILED_FIRST_RUN_HEAD_SHA = "fd85a886d07234ad584dcca08692b37e6af54b2e"
+FAILED_RUN376_ID = 37191637168
+FAILED_RUN376_HEAD_SHA = "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"
 
 ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED = False
 HISTORICAL_ARTIFACT_READ_AUTHORIZED = False
@@ -148,9 +150,9 @@ def _validate_run_inventory(
     runtime_binding: Mapping[str, object],
 ) -> dict[str, object]:
     runs = value.get("workflow_runs")
-    if not isinstance(runs, list) or len(runs) != 2:
+    if not isinstance(runs, list) or len(runs) != 3:
         raise ValueError(
-            "DEC-509 requires exactly two prior annual-catalogue workflow runs"
+            "DEC-509 requires exactly three prior annual-catalogue workflow runs"
         )
 
     by_number: dict[int, Mapping[str, object]] = {}
@@ -164,7 +166,7 @@ def _validate_run_inventory(
             raise ValueError("DEC-509 duplicate workflow run number")
         by_number[number] = raw
 
-    if set(by_number) != {1, 376}:
+    if set(by_number) != {1, 376, 377}:
         raise ValueError("DEC-509 workflow run number inventory mismatch")
 
     first = by_number[1]
@@ -182,10 +184,25 @@ def _validate_run_inventory(
         if first.get(field) != expected:
             raise ValueError(f"DEC-509 failed first run {field} mismatch")
 
-    second = by_number[376]
-    second_exact = {
-        "id": runtime_binding.get("run_id"),
+    failed_376 = by_number[376]
+    failed_376_exact = {
+        "id": FAILED_RUN376_ID,
         "run_number": 376,
+        "run_attempt": 1,
+        "event": "workflow_dispatch",
+        "head_branch": "main",
+        "head_sha": FAILED_RUN376_HEAD_SHA,
+        "status": "completed",
+        "conclusion": "failure",
+    }
+    for field, expected in failed_376_exact.items():
+        if failed_376.get(field) != expected:
+            raise ValueError(f"DEC-509 failed run376 {field} mismatch")
+
+    successful = by_number[377]
+    successful_exact = {
+        "id": runtime_binding.get("run_id"),
+        "run_number": 377,
         "run_attempt": 1,
         "event": "workflow_dispatch",
         "head_branch": "main",
@@ -193,18 +210,19 @@ def _validate_run_inventory(
         "status": "completed",
         "conclusion": "success",
     }
-    for field, expected in second_exact.items():
-        if second.get(field) != expected:
+    for field, expected in successful_exact.items():
+        if successful.get(field) != expected:
             raise ValueError(f"DEC-509 successful 2015 run {field} mismatch")
 
     return {
-        "annual_workflow_run_count": 2,
+        "annual_workflow_run_count": 3,
         "failed_first_run_id": FAILED_FIRST_RUN_ID,
+        "failed_run376_id": FAILED_RUN376_ID,
         "successful_2015_run_id": _positive_int(
             runtime_binding.get("run_id"),
             field="successful 2015 run id",
         ),
-        "successful_2015_run_number": 376,
+        "successful_2015_run_number": 377,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": _validate_commit(
             runtime_binding.get("run_head_sha"),
@@ -249,7 +267,7 @@ def build_2016_dispatch_preflight(
 
     if install_receipt.get("annual_segment_label") != "2016":
         raise ValueError("DEC-509 install receipt annual segment mismatch")
-    if install_receipt.get("expected_run_number") != 377:
+    if install_receipt.get("expected_run_number") != 378:
         raise ValueError("DEC-509 install receipt expected run number mismatch")
     if install_receipt.get("expected_run_attempt") != 1:
         raise ValueError("DEC-509 install receipt expected run attempt mismatch")
@@ -309,7 +327,7 @@ def build_2016_dispatch_preflight(
         "annual_segment_label": "2016",
         "prior_segment_label": "2015",
         "previous_annual_freeze_run_id": previous_run_id,
-        "expected_run_number": 377,
+        "expected_run_number": 378,
         "expected_run_attempt": 1,
         "install_action_consumed": True,
         "runtime_authorization_installed": True,
@@ -380,11 +398,11 @@ def validate_2016_dispatch_preflight(
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": "2016",
         "prior_segment_label": "2015",
-        "annual_workflow_run_count": 2,
+        "annual_workflow_run_count": 3,
         "failed_first_run_id": FAILED_FIRST_RUN_ID,
-        "successful_2015_run_number": 376,
+        "successful_2015_run_number": 377,
         "successful_2015_run_attempt": 1,
-        "expected_run_number": 377,
+        "expected_run_number": 378,
         "expected_run_attempt": 1,
         "install_action_consumed": True,
         "runtime_authorization_installed": True,
