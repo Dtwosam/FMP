@@ -467,6 +467,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2016_run377_runtime_evidence_workflow.py'
           -v
+      - name: Run DEC-533 run-378 successor-recovery tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_catalogue_2016_run378_evidence_successor_recovery.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
