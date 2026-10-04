@@ -18,6 +18,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
       DEC522_RUN_ID: "37208993431"
       DEC522_ARTIFACT_ID: "11305284883"
       DEC522_ARTIFACT_DIGEST: "sha256:6282a6765f659a5a5801e2b1c8804d0dd23b96c4f235a770cd8e0e6053caab8c"
@@ -29,14 +30,42 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Require exact first read-only preflight push
+      - name: Require exact second read-only preflight push after bootstrap failure
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$GITHUB_EVENT_NAME" = "push"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37209674158" \
+            > "$RUNNER_TEMP/failed-dec534-run1.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "failed-dec534-run1.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          exact = {
+              "id": 37209674158,
+              "name": "phase8a-annual-catalogue-2017-execution-preflight",
+              "path": ".github/workflows/phase8a-annual-catalogue-2017-execution-preflight.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "0d6640f4833f2ddf377e4004cce9df7ea845f7da",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "failure",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          PY
 
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2017_execution_preflight.py)" = "7e6e6a54d4111a44a68218e551c379fa342d3e27"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2017_execution_preflight.py)" = "0d22cd83b38c9a976ac98534d9fa9e4b626808b7"
@@ -223,6 +252,7 @@ jobs:
         with:
           name: annual-catalogue-2017-dec534-execution-preflight-${{ github.sha }}
           path: |
+            ${{ runner.temp }}/failed-dec534-run1.json
             ${{ runner.temp }}/dec522-run.json
             ${{ runner.temp }}/dec522-artifacts.json
             ${{ runner.temp }}/runtime-binding-2016.json
