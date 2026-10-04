@@ -46,7 +46,7 @@ class AnnualPatternCatalogue2015ReplacementExecutionAuthorizationTests(
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
-    def test_authorization_scope_is_exact_run_376_attempt_1(self) -> None:
+    def test_authorization_scope_is_exact_run_377_attempt_1(self) -> None:
         value = build_2015_replacement_execution_authorization(
             repository_root=Path("."),
         )
@@ -57,7 +57,9 @@ class AnnualPatternCatalogue2015ReplacementExecutionAuthorizationTests(
         )
         self.assertEqual(value["annual_segment_label"], "2015")
         self.assertEqual(value["failed_first_run_id"], 37126711695)
-        self.assertEqual(value["expected_run_number"], 376)
+        self.assertEqual(value["failed_replacement_run_id"], 37191637168)
+        self.assertEqual(value["failed_replacement_run_number"], 376)
+        self.assertEqual(value["expected_run_number"], 377)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertTrue(value["replacement_run_authorized"])
         self.assertTrue(value["historical_artifact_read_authorized"])
@@ -65,23 +67,23 @@ class AnnualPatternCatalogue2015ReplacementExecutionAuthorizationTests(
         self.assertTrue(value["historical_result_production_authorized"])
         self.assertFalse(value["rerun_failed_run_authorized"])
         self.assertFalse(value["retry_failed_run_authorized"])
-        self.assertFalse(value["third_or_later_run_authorized"])
+        self.assertFalse(value["fourth_or_later_run_authorized"])
         self.assertFalse(value["next_segment_execution_authorized"])
         self.assertFalse(value["strategy_v1_synthesis_authorized"])
         self.assertFalse(value["trading_authorized"])
 
-    def test_direct_gate_accepts_only_2015_run_376_attempt_1(self) -> None:
+    def test_direct_gate_accepts_only_2015_run_377_attempt_1(self) -> None:
         require_2015_replacement_execution_authorized(
             annual_segment_label="2015",
             code_commit=CODE_COMMIT,
-            run_number=376,
+            run_number=377,
             run_attempt=1,
         )
         for segment, number, attempt, message in (
-            ("2016", 376, 1, "only for annual segment 2015"),
-            ("2015", 1, 1, "run number 376"),
-            ("2015", 3, 1, "run number 376"),
-            ("2015", 376, 2, "run attempt 1"),
+            ("2016", 377, 1, "only for annual segment 2015"),
+            ("2015", 1, 1, "run number 377"),
+            ("2015", 3, 1, "run number 377"),
+            ("2015", 377, 2, "run attempt 1"),
         ):
             with self.subTest(
                 segment=segment,
@@ -101,7 +103,7 @@ class AnnualPatternCatalogue2015ReplacementExecutionAuthorizationTests(
             runtime.require_historical_catalogue_execution_authorized(
                 code_commit=CODE_COMMIT,
                 annual_segment_label="2015",
-                run_number=376,
+                run_number=377,
                 run_attempt=1,
             )
 
@@ -123,7 +125,7 @@ class AnnualPatternCatalogue2015ReplacementExecutionAuthorizationTests(
                 os.environ,
                 {
                     "GITHUB_EVENT_PATH": str(event_path),
-                    "GITHUB_RUN_NUMBER": "376",
+                    "GITHUB_RUN_NUMBER": "377",
                     "GITHUB_RUN_ATTEMPT": "1",
                 },
                 clear=True,
