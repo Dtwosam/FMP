@@ -2166,3 +2166,7 @@ Bound the dormant 2018 runtime plan to concrete DEC-546 workflow run `3722986253
 ## 2026-10-04 — Add DEC-548 2018 runtime install preflight
 
 Bound the read-only 2018 runtime-install preflight to concrete DEC-547 workflow run `37231060551`, artifact `11314500352`, and digest `633476f0bab6a5e1f3165cab44be176c05c01f955569ff0018cae957006ab56c`. The preflight freezes exactly two future targets—gate blob `cd50f50156cf74c34cd97d69d24291dc373b390f` and runtime blob `410180c34a9e3500bbbb42310a5253b993ac7785`—without applying either. Annual run 380 remains undispatched.
+
+## 2026-10-04 — Add DEC-549 exact 2018 runtime install action
+
+Bound the future two-file 2018 runtime mutation to concrete DEC-548 run `37231591329`, artifact `11314511176`, and digest `993afb2809aa675ee2df789a402cc736a5f4992f906394a2f9161ba66675887c`. The action is compiled only; no repository mutation or annual dispatch is performed.

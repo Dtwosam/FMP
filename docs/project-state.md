@@ -3235,3 +3235,7 @@ DEC-546 is concrete from workflow run `37229862532`, artifact `11313482812`, and
 ### 2026-10-04 — DEC-548 2018 runtime install preflight source-ready
 
 DEC-547 is concrete from workflow run `37231060551` and artifact `11314500352` (digest `633476f0bab6a5e1f3165cab44be176c05c01f955569ff0018cae957006ab56c`). DEC-548 now freezes the exact future two-file 2018 runtime installation while remaining read-only: create the 2018 gate from blob `cd50f50156cf74c34cd97d69d24291dc373b390f` and replace current runtime `e9cbc76dc9e6866e80088d223498fbcc3b870fd1` with target `410180c34a9e3500bbbb42310a5253b993ac7785`. Annual run 380 remains absent. Repository mutation, runtime activation, dispatch, run 381+, 2019+, strategy promotion, broker/order, real-money, and trading remain locked.
+
+### 2026-10-04 — DEC-549 exact 2018 install action source-ready
+
+DEC-548 is concrete from workflow run `37231591329` and artifact `11314511176`. DEC-549 now freezes the exact two-file future installation: create gate blob `cd50f50156cf74c34cd97d69d24291dc373b390f` and update runtime `e9cbc76dc9e6866e80088d223498fbcc3b870fd1` to `410180c34a9e3500bbbb42310a5253b993ac7785`. The builder does not mutate the repository. Annual run 380 remains undispatched; run 381+, 2019+, strategy, broker/order, real-money, and trading remain locked.

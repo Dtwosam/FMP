@@ -10905,3 +10905,7 @@ Successful DEC-546 workflow run `37229862532` and artifact `11313482812` (digest
 ## 2026-10-04 — DEC-548 concrete 2018 runtime install preflight
 
 Successful DEC-547 workflow run `37231060551` on `1c61ad18d07d6fbc034c20610d7a130e09630a66` produced artifact `11314500352` with digest `sha256:633476f0bab6a5e1f3165cab44be176c05c01f955569ff0018cae957006ab56c`. DEC-548 binds that exact plan plus the embedded DEC-546 authorization, freezes a future two-file installation (2018 gate blob `cd50f501...`, runtime target blob `410180c3...`), and requires the current runtime to remain `e9cbc76d...`. The preflight is read-only, requires annual history exactly through successful run 379, rejects run 380+, and performs no repository mutation or dispatch. Next gate: `EXACT_ANNUAL_PATTERN_CATALOGUE_2018_RUNTIME_AUTHORIZATION_INSTALL_MUTATION_AFTER_DEC548`.
+
+## 2026-10-04 — DEC-549 exact 2018 runtime install action
+
+Successful DEC-548 workflow run `37231591329` produced artifact `11314511176` with digest `sha256:993afb2809aa675ee2df789a402cc736a5f4992f906394a2f9161ba66675887c`. DEC-549 compiles exactly two future mutations: create the 2018 runtime gate from blob `cd50f501...` and replace current runtime `e9cbc76d...` with target `410180c3...`. The repository-hosted builder is read-only and applies nothing. Annual run 380 remains absent and dispatch/later-year/trading authority remains locked. Next gate: `APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2018_RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC549`.
