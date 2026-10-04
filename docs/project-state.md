@@ -3137,3 +3137,10 @@ without authorizing it. The earlier unmerged DEC-523 branch is obsolete.
 
 Next gate:
 `ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+
+### 2026-10-04 — DEC-534 bootstrap recovery
+
+DEC-534 workflow run `37209674158` failed after all evidence checks because
+the CLI source path was not exported. The run performed no mutation. A narrow
+run-2 recovery is source-ready: it proves the failed run-1 identity, exports
+`PYTHONPATH=src`, and rebuilds the same read-only run-379 preflight.
