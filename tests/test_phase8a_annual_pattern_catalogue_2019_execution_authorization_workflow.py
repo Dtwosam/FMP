@@ -74,6 +74,8 @@ class AnnualPatternCatalogue2019ExecutionAuthorizationWorkflowTests(
 
     def test_workflow_uploads_only_dec557_evidence_bundle(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("dec545", text)
+        self.assertNotIn("dec546", text)
         self.assertIn(
             "annual-catalogue-2019-dec557-execution-authorization-",
             text,
