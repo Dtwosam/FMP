@@ -2178,3 +2178,7 @@ Bound the exact DEC-549 action artifact and added the path-scoped two-file 2018 
 ## 2026-10-04 — DEC-551 2018 dispatch preflight
 
 Bound the concrete DEC-550 runtime-install receipt and installed blobs into a path-scoped read-only 2018 dispatch preflight. The builder validates exact annual history through run 379 and rejects any run 380+ before emitting its immutable artifact. No dispatch or trading authority is added.
+
+## 2026-10-04 — DEC-552 2018 source-only dispatch authorization
+
+Bound the concrete DEC-551 artifact/fingerprint into a source-only run-380 authorization. The new authorization enables only the exact 2018 research contract and deliberately contains no dispatch command. All later-run and trading authority remains closed.

@@ -3247,3 +3247,7 @@ DEC-549 is concrete from workflow run `37232388248`, artifact `11313752760`, dig
 ### 2026-10-04 — DEC-551 2018 dispatch preflight
 
 The 2018 runtime authorization is installed on main at `1fc73dfc1e102996cecd5b9ffcb75d3ab4fa3ade`, backed by DEC-550 workflow run `37233054691` and artifact `11314488545`. DEC-551 is the next read-only gate: exact annual history remains `{1, 376, 377, 378, 379}`, run 380 remains unconsumed, and the future target is only segment 2018 / run 380 / attempt 1 / predecessor `37227536041`. Annual dispatch, run 381+, 2019+, strategy/promotion, broker/order, real-money, and trading remain locked.
+
+### 2026-10-04 — DEC-552 2018 dispatch authorization
+
+DEC-551 is concrete from workflow run `37233894381`, artifact `11314757055`, fingerprint `f756088f404f77220b366eaffdfd36cfe805f9fcd91a274ef7c5a364994893c8`. DEC-552 is source-only authorization for segment 2018 / run 380 / attempt 1 / predecessor `37227536041`. The runtime remains installed, run 380 remains unconsumed, and no command has been submitted. Run 381+, 2019+, strategy/promotion, broker/order, real-money, and trading remain locked.
