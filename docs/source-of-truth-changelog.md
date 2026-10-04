@@ -2104,3 +2104,7 @@ Added the history-correct read-only 2017 execution preflight over concrete
 DEC-522 artifact `11305284883`. The contract preserves failed run 376, binds
 successful 2015/2016 runs 377/378, and expects 2017 at run 379 / attempt 1.
 This supersedes the unmerged stale DEC-523 draft.
+
+## 2026-10-04 — DEC-535 concrete 2017 authorization
+
+Added the exact source-only 2017 execution authorization bound to DEC-534 workflow run `37210041270` and artifact `11306121033`. The authorization is limited to annual run 379 / attempt 1, while the current runtime remains without a 2017 gate and no dispatch is performed.
