@@ -54,13 +54,13 @@ jobs:
       - name: Fetch and verify exact DEC-547 plan artifact
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC547_RUN_ID" > "$RUNNER_TEMP/dec536-run.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC547_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec536-artifacts.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC547_RUN_ID" > "$RUNNER_TEMP/dec547-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC547_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec547-artifacts.json"
           python - <<'PY'
           import json, os
           from pathlib import Path
           temp = Path(os.environ["RUNNER_TEMP"])
-          run = json.loads((temp / "dec536-run.json").read_text())
+          run = json.loads((temp / "dec547-run.json").read_text())
           exact = {
               "id": 37231060551,
               "name": "phase8a-annual-catalogue-2018-runtime-authorization-plan",
@@ -75,7 +75,7 @@ jobs:
           }
           for field, expected in exact.items():
               assert run.get(field) == expected, (field, run.get(field), expected)
-          payload = json.loads((temp / "dec536-artifacts.json").read_text())
+          payload = json.loads((temp / "dec547-artifacts.json").read_text())
           rows = [a for a in payload.get("artifacts", []) if a.get("id") == 11314500352]
           assert len(rows) == 1
           artifact = rows[0]
@@ -83,13 +83,13 @@ jobs:
           assert artifact["digest"] == "sha256:633476f0bab6a5e1f3165cab44be176c05c01f955569ff0018cae957006ab56c"
           assert artifact["expired"] is False
           PY
-          gh api -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC547_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec536.zip"
-          actual="$(sha256sum "$RUNNER_TEMP/dec536.zip" | awk '{print $1}')"
+          gh api -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC547_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec547.zip"
+          actual="$(sha256sum "$RUNNER_TEMP/dec547.zip" | awk '{print $1}')"
           test "$actual" = "633476f0bab6a5e1f3165cab44be176c05c01f955569ff0018cae957006ab56c"
-          mkdir -p "$RUNNER_TEMP/dec536"
-          unzip -q "$RUNNER_TEMP/dec536.zip" -d "$RUNNER_TEMP/dec536"
-          auth="$(find "$RUNNER_TEMP/dec536" -type f -name dec546-2018-execution-authorization.json -print)"
-          plan="$(find "$RUNNER_TEMP/dec536" -type f -name dec547-2018-runtime-authorization-plan.json -print)"
+          mkdir -p "$RUNNER_TEMP/dec547"
+          unzip -q "$RUNNER_TEMP/dec547.zip" -d "$RUNNER_TEMP/dec547"
+          auth="$(find "$RUNNER_TEMP/dec547" -type f -name dec546-2018-execution-authorization.json -print)"
+          plan="$(find "$RUNNER_TEMP/dec547" -type f -name dec547-2018-runtime-authorization-plan.json -print)"
           test "$(printf '%s\n' "$auth" | sed '/^$/d' | wc -l)" = "1"
           test "$(printf '%s\n' "$plan" | sed '/^$/d' | wc -l)" = "1"
           cp "$auth" "$RUNNER_TEMP/dec546-2018-execution-authorization.json"
@@ -179,8 +179,8 @@ jobs:
         with:
           name: annual-catalogue-2018-dec548-runtime-install-preflight-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/dec536-run.json
-            ${{ runner.temp }}/dec536-artifacts.json
+            ${{ runner.temp }}/dec547-run.json
+            ${{ runner.temp }}/dec547-artifacts.json
             ${{ runner.temp }}/dec546-2018-execution-authorization.json
             ${{ runner.temp }}/dec547-2018-runtime-authorization-plan.json
             ${{ runner.temp }}/main-branch.json
