@@ -12,7 +12,7 @@ WORKFLOW = (
 
 
 class AnnualCatalogueExplicitSuccessorOrchestratorTests(unittest.TestCase):
-    def test_orchestrator_is_one_shot_path_scoped_push_recovery(self) -> None:
+    def test_orchestrator_is_second_path_scoped_recovery(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
             "name: phase8a-annual-catalogue-explicit-successor-orchestrator",
@@ -25,7 +25,7 @@ class AnnualCatalogueExplicitSuccessorOrchestratorTests(unittest.TestCase):
             "phase8a-annual-catalogue-explicit-successor-orchestrator.yml",
             text,
         )
-        self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
         self.assertNotIn("workflow_dispatch:", text)
         self.assertNotIn("schedule:", text)
@@ -40,6 +40,22 @@ class AnnualCatalogueExplicitSuccessorOrchestratorTests(unittest.TestCase):
         self.assertIn("assert set(by_number) == {1, 376, 377}", text)
         self.assertIn("37191637168", text)
         self.assertIn("37126711695", text)
+
+    def test_orchestrator_proves_failed_first_attempt_before_retry(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        for run_id in (
+            "37200339487",
+            "37200350839",
+            "37200374023",
+            "37200408776",
+        ):
+            self.assertIn(run_id, text)
+        self.assertIn(
+            '"head_sha": "66b0a9ba46ac0350abe635c5b8d1a6de60559648"',
+            text,
+        )
+        self.assertIn('"conclusion": "failure"', text)
+        self.assertIn('"conclusion": "success"', text)
 
     def test_orchestrator_uses_explicit_successor_workflows_only(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -65,9 +81,9 @@ class AnnualCatalogueExplicitSuccessorOrchestratorTests(unittest.TestCase):
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
             "b259e4013a7e74eb8df864acad04a31b7a1eac09",
             "1893cd0d96e342ad30e8d5bdfc58b81781d28be6",
-            "1a4d9c975f79140f9d7e2173a4e102e4d07b2a6c",
-            "dcc4d71990e113acc25fd607ef9919734f2c0731",
-            "2a51f6d5a15ee6edf212009bd646047a3ec2546c",
+            "052486811893386d3f3f6a24bf53be93b71df9d5",
+            "601ee6aeb1db10cee01d5b9b6a084c3780b4076f",
+            "0903d7ea67f45aa16522d43b60c2ea07fba13334",
         ):
             self.assertIn(blob, text)
 
@@ -84,7 +100,7 @@ class AnnualCatalogueExplicitSuccessorOrchestratorTests(unittest.TestCase):
 
     def test_receipt_keeps_later_authority_locked(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn('"decision": "DEC-529"', text)
+        self.assertIn('"decision": "DEC-530"', text)
         for field in (
             "run379_or_later_authorized",
             "next_segment_execution_authorized",
