@@ -10837,3 +10837,12 @@ Successful DEC-534 workflow run `37210041270` produced immutable preflight artif
 ## 2026-10-04 — DEC-535 bootstrap recovery
 
 Repository-hosted DEC-535 workflow run `37213060816` passed exact DEC-534 artifact provenance and the unconsumed run-379 inventory, then failed before authorization construction because the research Python dependencies were not installed. No mutation or dispatch occurred. The recovery keeps the same workflow identity, permits only run 2 / attempt 1 after proving the failed run-1 identity, installs the pinned runtime dependencies without an editable project install, preserves the clean-checkout guard, and rebuilds the same source-only DEC-535 artifact. Run 379 remains unconsumed and all later-year/trading surfaces remain locked.
+
+## 2026-10-04 — DEC-536 concrete 2017 runtime-authorization plan
+
+Successful DEC-535 authorization run `37213629059` and artifact `11307204031`
+are now the sole concrete source for the 2017 runtime-authorization plan. The plan
+pins the current runtime, corrected annual workflow, dormant 2017 gate, and dormant
+runtime target; rechecks that annual run 379 is absent; and remains read-only. No
+runtime installation, repository mutation, annual dispatch, run 380+, later-year,
+strategy, broker/order, real-money, or trading authority is opened.
