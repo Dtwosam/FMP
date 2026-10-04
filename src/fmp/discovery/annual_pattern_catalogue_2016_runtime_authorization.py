@@ -1,13 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
-from fmp.discovery.annual_pattern_catalogue_2016_execution_authorization import (
-    ANNUAL_CATALOGUE_2016_EXECUTION_AUTHORIZATION_DECISION,
-    ANNUAL_CATALOGUE_2016_EXECUTION_AUTHORIZATION_VERSION,
-)
-
-
 ANNUAL_CATALOGUE_2016_RUNTIME_AUTHORIZATION_DECISION = "DEC-505"
 ANNUAL_CATALOGUE_2016_RUNTIME_AUTHORIZATION_VERSION = (
     "fmp-annual-catalogue-2016-runtime-authorization-v1"
@@ -64,6 +56,16 @@ def require_2016_execution_authorized(
     previous_annual_freeze_run_id: int,
 ) -> None:
     _validate_commit(code_commit)
+
+    # Import the source authorization lazily. The installed annual runtime imports
+    # this gate, while DEC-504's preflight imports the annual runtime to inspect
+    # its default locks. A module-level DEC-504 import therefore forms a cycle
+    # only after the gate is installed.
+    from .annual_pattern_catalogue_2016_execution_authorization import (
+        ANNUAL_CATALOGUE_2016_EXECUTION_AUTHORIZATION_DECISION,
+        ANNUAL_CATALOGUE_2016_EXECUTION_AUTHORIZATION_VERSION,
+    )
+
     if ANNUAL_CATALOGUE_2016_EXECUTION_AUTHORIZATION_DECISION != "DEC-504":
         raise PermissionError("DEC-505 DEC-504 decision drift")
     if (
@@ -74,7 +76,7 @@ def require_2016_execution_authorized(
     if annual_segment_label != AUTHORIZED_ANNUAL_SEGMENT_LABEL:
         raise PermissionError("DEC-505 authorizes annual catalogue execution only for 2016")
     if _positive_int(run_number, field="run_number") != EXPECTED_RUN_NUMBER:
-        raise PermissionError("DEC-505 authorizes only annual workflow run number 377")
+        raise PermissionError("DEC-505 authorizes only annual workflow run number 378")
     if _positive_int(run_attempt, field="run_attempt") != EXPECTED_RUN_ATTEMPT:
         raise PermissionError("DEC-505 authorizes only annual workflow run attempt 1")
     _positive_int(
