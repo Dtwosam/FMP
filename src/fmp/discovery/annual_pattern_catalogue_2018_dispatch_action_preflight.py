@@ -212,8 +212,6 @@ def _validate_run_inventory(payload: Mapping[str, object]) -> dict[str, object]:
         "successful_2016_run_head_sha": SUCCESSFUL_2016_RUN_HEAD_SHA,
         "successful_2017_run_id": SUCCESSFUL_2017_RUN_ID,
         "successful_2017_run_head_sha": SUCCESSFUL_2017_RUN_HEAD_SHA,
-        "successful_2017_run_id": SUCCESSFUL_2017_RUN_ID,
-        "successful_2017_run_head_sha": SUCCESSFUL_2017_RUN_HEAD_SHA,
     }
 
 
@@ -426,14 +424,16 @@ def validate_2018_dispatch_action_preflight(
         "authorization_head_sha": SOURCE_AUTHORIZATION_WORKFLOW_HEAD_SHA,
         "active_workflow_path": ACTIVE_WORKFLOW_PATH,
         "annual_segment_label": "2018",
-        "prior_segment_label": "2016",
-        "annual_workflow_run_count": 4,
+        "prior_segment_label": "2017",
+        "annual_workflow_run_count": 5,
         "failed_run_1_id": FAILED_RUN_1_ID,
         "failed_run_376_id": FAILED_RUN_376_ID,
         "successful_2015_run_id": SUCCESSFUL_2015_RUN_ID,
         "successful_2015_run_head_sha": SUCCESSFUL_2015_RUN_HEAD_SHA,
         "successful_2016_run_id": SUCCESSFUL_2016_RUN_ID,
         "successful_2016_run_head_sha": SUCCESSFUL_2016_RUN_HEAD_SHA,
+        "successful_2017_run_id": SUCCESSFUL_2017_RUN_ID,
+        "successful_2017_run_head_sha": SUCCESSFUL_2017_RUN_HEAD_SHA,
         "previous_annual_freeze_run_id": SUCCESSFUL_2017_RUN_ID,
         "expected_run_number": 380,
         "expected_run_attempt": 1,
