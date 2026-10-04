@@ -2,6 +2,11 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+from typing import Mapping
+
+from .annual_pattern_catalogue_2015_run376_failure_receipt import (
+    validate_2015_run376_failure_receipt,
+)
 
 
 ANNUAL_CATALOGUE_2015_RUN377_EXECUTION_AUTHORIZATION_DECISION = "DEC-527"
@@ -119,16 +124,33 @@ def require_2015_run377_execution_authorized(
 def build_2015_run377_execution_authorization(
     *,
     repository_root: Path,
+    run376_failure_receipt: Mapping[str, object],
 ) -> dict[str, object]:
     source = validate_2015_run377_execution_authorization_sources(
         repository_root=repository_root
     )
+    validate_2015_run376_failure_receipt(run376_failure_receipt)
+    if run376_failure_receipt.get("run_id") != 37191637168:
+        raise ValueError("DEC-527 run376 failure receipt id mismatch")
+    if run376_failure_receipt.get("run_number") != 376:
+        raise ValueError("DEC-527 run376 failure receipt number mismatch")
+    if run376_failure_receipt.get("run_attempt") != 1:
+        raise ValueError("DEC-527 run376 failure receipt attempt mismatch")
+    if run376_failure_receipt.get("run_conclusion") != "failure":
+        raise ValueError("DEC-527 run376 failure receipt conclusion mismatch")
     return {
         "decision": ANNUAL_CATALOGUE_2015_RUN377_EXECUTION_AUTHORIZATION_DECISION,
         "version": ANNUAL_CATALOGUE_2015_RUN377_EXECUTION_AUTHORIZATION_VERSION,
         **source,
         "stage": "ANNUAL_CATALOGUE_2015_RUN377_AUTHORIZED_NOT_STARTED",
-        "authorization_basis": "failed_run376_preflight_recovery",
+        "authorization_basis": "concrete_failed_run376_preflight_receipt",
+        "source_failure_decision": "DEC-526",
+        "source_failure_receipt_fingerprint_sha256": (
+            run376_failure_receipt["receipt_fingerprint_sha256"]
+        ),
+        "failed_run_id": run376_failure_receipt["run_id"],
+        "failed_run_number": run376_failure_receipt["run_number"],
+        "failed_run_attempt": run376_failure_receipt["run_attempt"],
         "annual_segment_label": "2015",
         "expected_run_number": 377,
         "expected_run_attempt": 1,
