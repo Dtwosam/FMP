@@ -1,0 +1,232 @@
+name: phase8a-annual-catalogue-2018-runtime-authorization-plan
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-2018-runtime-authorization-plan.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-concrete-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      DEC546_RUN_ID: "37229862532"
+      DEC546_HEAD_SHA: "8440244e1c77ecaf5773427d6d4efcd1a7d4dc16"
+      DEC546_ARTIFACT_ID: "11313482812"
+      DEC546_ARTIFACT_DIGEST: "sha256:79e9bd2485160dd59fbb88a2d50f32a52b6cfd573f80555a8716fde4ea18c71e"
+      DEC546_AUTHORIZATION_FINGERPRINT: "34fe76b3bd30d054853b43f660f996757e8bdb30793c03ad6937cc3078b427a0"
+
+    steps:
+      - name: Checkout exact DEC-547 landing
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Require exact first read-only plan push
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Require frozen DEC-547 sources
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization_plan.py)" = "543752e5ecad05fed0b368170663a9329b0405aa"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2018_runtime_authorization_plan.py)" = "411cc7022cd6a8acf9ccd13c83abf09cd76173f2"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2018_execution_authorization.py)" = "c50f1480ae6b39764f75974182830f149fc820fc"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "e9cbc76dc9e6866e80088d223498fbcc3b870fd1"
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2018_runtime_authorization.py.disabled)" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2018_authorization.py.disabled)" = "410180c34a9e3500bbbb42310a5253b993ac7785"
+
+      - name: Fetch and verify exact DEC-546 authorization artifact
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC546_RUN_ID"             > "$RUNNER_TEMP/dec546-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC546_RUN_ID/artifacts?per_page=100"             > "$RUNNER_TEMP/dec546-artifacts.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads((temp / "dec546-run.json").read_text(encoding="utf-8"))
+          exact = {
+              "id": int(os.environ["DEC546_RUN_ID"]),
+              "name": "phase8a-annual-catalogue-2018-execution-authorization",
+              "path": ".github/workflows/phase8a-annual-catalogue-2018-execution-authorization.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": os.environ["DEC546_HEAD_SHA"],
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+
+          payload = json.loads(
+              (temp / "dec546-artifacts.json").read_text(encoding="utf-8")
+          )
+          matches = [
+              row for row in payload.get("artifacts", [])
+              if row.get("id") == int(os.environ["DEC546_ARTIFACT_ID"])
+              and row.get("name")
+              == "annual-catalogue-2018-dec546-execution-authorization-"
+              + os.environ["DEC546_HEAD_SHA"]
+              and row.get("digest") == os.environ["DEC546_ARTIFACT_DIGEST"]
+              and row.get("expired") is False
+          ]
+          assert len(matches) == 1
+          PY
+
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC546_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec546.zip"
+          expected_sha="${DEC546_ARTIFACT_DIGEST#sha256:}"
+          actual_sha="$(sha256sum "$RUNNER_TEMP/dec546.zip" | awk '{print $1}')"
+          test "$actual_sha" = "$expected_sha"
+
+          mkdir -p "$RUNNER_TEMP/dec546"
+          unzip -q "$RUNNER_TEMP/dec546.zip" -d "$RUNNER_TEMP/dec546"
+          auth="$(
+            find "$RUNNER_TEMP/dec546"               -type f -name dec546-2018-execution-authorization.json -print
+          )"
+          test "$(printf '%s\n' "$auth" | sed '/^$/d' | wc -l)" = "1"
+          cp "$auth" "$RUNNER_TEMP/dec546-2018-execution-authorization.json"
+
+          test "$(jq -r '.decision' "$RUNNER_TEMP/dec546-2018-execution-authorization.json")" = "DEC-546"
+          test "$(jq -r '.authorization_fingerprint_sha256' "$RUNNER_TEMP/dec546-2018-execution-authorization.json")" = "$DEC546_AUTHORIZATION_FINGERPRINT"
+          test "$(jq -r '.annual_segment_label' "$RUNNER_TEMP/dec546-2018-execution-authorization.json")" = "2018"
+          test "$(jq -r '.expected_run_number' "$RUNNER_TEMP/dec546-2018-execution-authorization.json")" = "380"
+          test "$(jq -r '.expected_run_attempt' "$RUNNER_TEMP/dec546-2018-execution-authorization.json")" = "1"
+          test "$(jq -r '.runtime_authorization_installed' "$RUNNER_TEMP/dec546-2018-execution-authorization.json")" = "false"
+          test "$(jq -r '.runtime_gate_active' "$RUNNER_TEMP/dec546-2018-execution-authorization.json")" = "false"
+          test "$(jq -r '.dispatch_action_executed' "$RUNNER_TEMP/dec546-2018-execution-authorization.json")" = "false"
+
+      - name: Recheck current main and annual run-380 slot
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main"             > "$RUNNER_TEMP/main-branch.json"
+          gh api             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"             > "$RUNNER_TEMP/annual-runs.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          main = json.loads((temp / "main-branch.json").read_text(encoding="utf-8"))
+          assert main["commit"]["sha"] == os.environ["GITHUB_SHA"]
+
+          rows = json.loads(
+              (temp / "annual-runs.json").read_text(encoding="utf-8")
+          ).get("workflow_runs", [])
+          by_number = {row["run_number"]: row for row in rows}
+          assert set(by_number) == {1, 376, 377, 378, 379}
+          assert by_number[1]["conclusion"] == "failure"
+          assert by_number[376]["conclusion"] == "failure"
+          assert by_number[377]["conclusion"] == "success"
+          assert by_number[378]["conclusion"] == "success"
+          assert by_number[379]["conclusion"] == "success"
+          assert not any(row["run_number"] >= 380 for row in rows)
+          PY
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned plan dependencies
+        run: >-
+          python -m pip install
+          -r requirements/exp061-discovery-run.txt
+          scikit-learn==1.9.1
+
+      - name: Require clean plan checkout
+        run: test -z "$(git status --porcelain)"
+
+      - name: Build concrete DEC-547 plan
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2018_runtime_authorization_plan.py             plan             --authorization-json "$RUNNER_TEMP/dec546-2018-execution-authorization.json"             --out "$RUNNER_TEMP/dec547-2018-runtime-authorization-plan.json"
+
+      - name: Verify DEC-547 remains dormant and exact
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          value = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "dec547-2018-runtime-authorization-plan.json"
+              ).read_text(encoding="utf-8")
+          )
+          assert value["decision"] == "DEC-547"
+          assert value["source_authorization_workflow_run_id"] == 37229862532
+          assert value["source_authorization_artifact_id"] == 11313482812
+          assert value["source_authorization_artifact_digest"] == (
+              "sha256:79e9bd2485160dd59fbb88a2d50f32a52b6cfd573f80555a8716fde4ea18c71e"
+          )
+          assert value["source_authorization_fingerprint_sha256"] == (
+              "34fe76b3bd30d054853b43f660f996757e8bdb30793c03ad6937cc3078b427a0"
+          )
+          assert value["expected_run_number"] == 380
+          assert value["expected_run_attempt"] == 1
+          assert value["expected_previous_annual_freeze_run_id"] == 37227536041
+          assert value["target_gate_source_blob_sha"] == (
+              "cd50f50156cf74c34cd97d69d24291dc373b390f"
+          )
+          assert value["target_runtime_source_blob_sha"] == (
+              "410180c34a9e3500bbbb42310a5253b993ac7785"
+          )
+          assert value["plan_source_only"] is True
+          for field in (
+              "runtime_authorization_installed",
+              "runtime_gate_active",
+              "repository_mutation_authorized",
+              "annual_workflow_dispatch_authorized",
+              "historical_artifact_read_authorized",
+              "historical_catalogue_execution_authorized",
+              "historical_result_production_authorized",
+              "next_segment_execution_authorized",
+              "cross_year_result_production_authorized",
+              "strategy_v1_synthesis_authorized",
+              "promotion_authorized",
+              "phase8b_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert value[field] is False, field
+          PY
+
+      - name: Upload immutable DEC-547 runtime plan
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2018-dec547-runtime-authorization-plan-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/dec546-run.json
+            ${{ runner.temp }}/dec546-artifacts.json
+            ${{ runner.temp }}/dec546-2018-execution-authorization.json
+            ${{ runner.temp }}/main-branch.json
+            ${{ runner.temp }}/annual-runs.json
+            ${{ runner.temp }}/dec547-2018-runtime-authorization-plan.json
+          if-no-files-found: error
