@@ -21,7 +21,7 @@ class AnnualCatalogue2015ReplacementExecutorRecoveryTests(unittest.TestCase):
         self.assertIn("      - main", text)
         self.assertIn("  actions: write", text)
         self.assertIn("  contents: read", text)
-        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "3"', text)
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
         self.assertNotIn("schedule:", text)
         self.assertNotIn("workflow_dispatch:", text)
@@ -34,7 +34,9 @@ class AnnualCatalogue2015ReplacementExecutorRecoveryTests(unittest.TestCase):
         self.assertIn("37126711695", text)
         self.assertIn("37190929052", text)
         self.assertIn("5417fddc015be92ed843de40be097381367b2c24", text)
-        self.assertIn("assert len(rows) == 1", text)
+        self.assertIn("assert len(rows) == 2", text)
+        self.assertIn("37191615804", text)
+        self.assertIn("37191637168", text)
         self.assertIn('assert first["run_number"] == 1', text)
 
     def test_recovery_installs_pinned_runtime_before_dec499(self) -> None:
@@ -52,15 +54,15 @@ class AnnualCatalogue2015ReplacementExecutorRecoveryTests(unittest.TestCase):
         )
         self.assertIn('test -z "$(git status --porcelain)"', text)
 
-    def test_recovery_dispatches_exactly_2015_run_two(self) -> None:
+    def test_recovery_dispatches_exactly_2015_run_377(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         command = "gh workflow run phase8a-annual-pattern-catalogue.yml"
         self.assertEqual(text.count(command), 1)
         self.assertIn("--ref main", text)
         self.assertIn("-f annual_segment_label=2015", text)
-        self.assertIn('row.get("run_number") == 376', text)
+        self.assertIn('row.get("run_number") == 377', text)
         self.assertIn('row.get("run_attempt") == 1', text)
-        self.assertIn('row.get("run_number") >= 377', text)
+        self.assertIn('row.get("run_number") >= 378', text)
         self.assertNotIn("-f annual_segment_label=2016", text)
 
     def test_recovery_receipt_keeps_later_authority_locked(self) -> None:
@@ -71,7 +73,7 @@ class AnnualCatalogue2015ReplacementExecutorRecoveryTests(unittest.TestCase):
         for field in (
             "rerun_authorized",
             "retry_authorized",
-            "third_or_later_run_authorized",
+            "fourth_or_later_run_authorized",
             "next_segment_execution_authorized",
             "cross_year_result_production_authorized",
             "strategy_v1_synthesis_authorized",
