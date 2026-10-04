@@ -3227,3 +3227,7 @@ DEC-544 concrete 2017 evidence is bound through recovery workflow run `372287671
 ### 2026-10-04 — 2018 source-only execution authorization
 
 DEC-545 is concrete and immutable. DEC-546 now source-authorizes the exact 2018 annual research contract for expected run 380 / attempt 1, predecessor 2017 run `37227536041`. The current runtime still has no 2018 route, no dispatch command is present, and annual run 380 remains absent. The next gate is a read-only 2018 runtime authorization plan; later-year and trading authority remain locked.
+
+### 2026-10-04 — DEC-547 2018 runtime plan source-ready
+
+DEC-546 is concrete from workflow run `37229862532`, artifact `11313482812`, and authorization fingerprint `34fe76b3bd30d054853b43f660f996757e8bdb30793c03ad6937cc3078b427a0`. DEC-547 now freezes the future 2018 runtime gate and 2018-aware runtime target while keeping both uninstalled. The current runtime remains `e9cbc76dc9e6866e80088d223498fbcc3b870fd1`, annual run 380 remains absent, and the repository-hosted plan builder is read-only. The next gate is `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2018_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC547`. Run 381+, 2019+, strategy promotion, broker/order, real-money, and trading remain locked.
