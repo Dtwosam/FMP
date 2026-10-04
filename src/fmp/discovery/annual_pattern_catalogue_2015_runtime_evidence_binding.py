@@ -21,13 +21,13 @@ RUN_FREEZE_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_freeze.py"
 )
 EXPECTED_RUN_FREEZE_SOURCE_BLOB_SHA = (
-    "c9e5028bd40a9dc1ad73b0560047405d458bc61e"
+    "cf6accdf5137269fcdbad3eabd4fd6be1db4b3b3"
 )
 RUN_REVIEW_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_review.py"
 )
 EXPECTED_RUN_REVIEW_SOURCE_BLOB_SHA = (
-    "954718b9780004907c385ebb0496469d8433b844"
+    "bfb9d286454b6bff14af7d0126c7d33ccb63b91f"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
@@ -225,7 +225,7 @@ def validate_2015_runtime_evidence_binding(
         raise ValueError("DEC-502 source freeze decision mismatch")
     if value.get("annual_segment_label") != "2015":
         raise ValueError("DEC-502 annual segment mismatch")
-    if value.get("run_number") != 376:
+    if value.get("run_number") != 377:
         raise ValueError("DEC-502 run number mismatch")
     if value.get("run_attempt") != 1:
         raise ValueError("DEC-502 run attempt mismatch")
