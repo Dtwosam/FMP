@@ -624,6 +624,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2017_dispatch_preflight_workflow.py'
           -v
+      - name: Run DEC-541 2017 dispatch-authorization tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2017_dispatch_authorization.py'
+          -v
+      - name: Run DEC-541 dispatch-authorization workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2017_dispatch_authorization_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
