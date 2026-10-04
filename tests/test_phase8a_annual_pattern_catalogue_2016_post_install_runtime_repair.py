@@ -5,12 +5,11 @@ import importlib
 import os
 from pathlib import Path
 import unittest
-from unittest.mock import patch
 
-from fmp.discovery import annual_pattern_catalogue_2016_post_install_runtime_repair as repair_module
 from fmp.discovery.annual_pattern_catalogue_2016_post_install_runtime_repair import (
     build_2016_post_install_runtime_repair,
     validate_2016_post_install_runtime_repair,
+    validate_2016_post_install_runtime_repair_sources,
 )
 
 
@@ -78,41 +77,26 @@ class AnnualCatalogue2016PostInstallRuntimeRepairTests(unittest.TestCase):
             callable(module.require_historical_catalogue_execution_authorized)
         )
 
-    def test_sources_keep_historical_repaired_runtime_pins(self) -> None:
+    def test_sources_pin_repaired_gate_runtime_and_workflow(self) -> None:
+        value = validate_2016_post_install_runtime_repair_sources(
+            repository_root=REPOSITORY_ROOT,
+        )
         self.assertEqual(
-            repair_module.EXPECTED_ACTIVE_GATE_BLOB_SHA,
+            value["active_gate_blob_sha"],
             "5b034fba697c3de0c0f8b6140d6f84771f1ae54b",
         )
         self.assertEqual(
-            repair_module.EXPECTED_RUNTIME_BLOB_SHA,
+            value["runtime_blob_sha"],
             "b564f5a26fdef146fc6080962e7c4762b0b5949a",
         )
-        self.assertEqual(
-            repair_module.EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA,
-            "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-        )
-
-    def _historical_sources(self) -> dict[str, str]:
-        return {
-            "active_gate_blob_sha": repair_module.EXPECTED_ACTIVE_GATE_BLOB_SHA,
-            "runtime_blob_sha": repair_module.EXPECTED_RUNTIME_BLOB_SHA,
-            "active_workflow_blob_sha": (
-                repair_module.EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA
-            ),
-        }
 
     def test_exact_failed_installer_yields_dispatch_locked_repair(self) -> None:
-        with patch.object(
-            repair_module,
-            "validate_2016_post_install_runtime_repair_sources",
-            return_value=self._historical_sources(),
-        ):
-            value = build_2016_post_install_runtime_repair(
-                repository_root=REPOSITORY_ROOT,
-                installer_run=_run(),
-                installer_jobs=_jobs(),
-                repair_head_sha=REPAIR_HEAD,
-            )
+        value = build_2016_post_install_runtime_repair(
+            repository_root=REPOSITORY_ROOT,
+            installer_run=_run(),
+            installer_jobs=_jobs(),
+            repair_head_sha=REPAIR_HEAD,
+        )
         self.assertIs(validate_2016_post_install_runtime_repair(value), value)
         self.assertEqual(value["decision"], "DEC-531")
         self.assertEqual(
@@ -134,21 +118,13 @@ class AnnualCatalogue2016PostInstallRuntimeRepairTests(unittest.TestCase):
         for row in steps:
             if row["name"] == "Push only the exact install commit to main":
                 row["conclusion"] = "failure"
-        with patch.object(
-            repair_module,
-            "validate_2016_post_install_runtime_repair_sources",
-            return_value=self._historical_sources(),
-        ):
-            with self.assertRaisesRegex(
-                ValueError,
-                "required successful installer step",
-            ):
-                build_2016_post_install_runtime_repair(
-                    repository_root=REPOSITORY_ROOT,
-                    installer_run=_run(),
-                    installer_jobs=jobs,
-                    repair_head_sha=REPAIR_HEAD,
-                )
+        with self.assertRaisesRegex(ValueError, "required successful installer step"):
+            build_2016_post_install_runtime_repair(
+                repository_root=REPOSITORY_ROOT,
+                installer_run=_run(),
+                installer_jobs=jobs,
+                repair_head_sha=REPAIR_HEAD,
+            )
 
 
 if __name__ == "__main__":
