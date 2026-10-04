@@ -10909,3 +10909,7 @@ Successful DEC-547 workflow run `37231060551` on `1c61ad18d07d6fbc034c20610d7a13
 ## 2026-10-04 — DEC-549 exact 2018 runtime install action
 
 Successful DEC-548 workflow run `37231591329` produced artifact `11314511176` with digest `sha256:993afb2809aa675ee2df789a402cc736a5f4992f906394a2f9161ba66675887c`. DEC-549 compiles exactly two future mutations: create the 2018 runtime gate from blob `cd50f501...` and replace current runtime `e9cbc76d...` with target `410180c3...`. The repository-hosted builder is read-only and applies nothing. Annual run 380 remains absent and dispatch/later-year/trading authority remains locked. Next gate: `APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2018_RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC549`.
+
+## 2026-10-04 — DEC-550 exact 2018 runtime authorization install
+
+Concrete DEC-549 workflow run `37232388248` on `3cfd1b38217c97bbd590214394f171075d2d0f54` produced artifact `11313752760` (digest `sha256:94c9ce6e08f013cb9ff8f662c78b3fafc0ba902fa590e5b27e89751ddd9069a3`). DEC-550 is the bounded repository mutation that may create only the frozen 2018 gate blob `cd50f501...` and update the annual runtime from `e9cbc76d...` to `410180c3...`. The executor rechecks unchanged main and the unconsumed run-380 slot before mutation and before push, proves the installed run-380 gate and preserved run-379 route, and emits a concrete install receipt. It cannot dispatch the annual workflow and grants no run-381+, 2019+, strategy, broker/order, real-money, or trading authority.
