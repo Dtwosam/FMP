@@ -3239,3 +3239,7 @@ DEC-547 is concrete from workflow run `37231060551` and artifact `11314500352` (
 ### 2026-10-04 — DEC-549 exact 2018 install action source-ready
 
 DEC-548 is concrete from workflow run `37231591329` and artifact `11314511176`. DEC-549 now freezes the exact two-file future installation: create gate blob `cd50f50156cf74c34cd97d69d24291dc373b390f` and update runtime `e9cbc76dc9e6866e80088d223498fbcc3b870fd1` to `410180c34a9e3500bbbb42310a5253b993ac7785`. The builder does not mutate the repository. Annual run 380 remains undispatched; run 381+, 2019+, strategy, broker/order, real-money, and trading remain locked.
+
+### 2026-10-04 — DEC-550 2018 runtime install executor
+
+DEC-549 is concrete from workflow run `37232388248`, artifact `11313752760`, digest `sha256:94c9ce6e08f013cb9ff8f662c78b3fafc0ba902fa590e5b27e89751ddd9069a3`. DEC-550 freezes the exact two-file 2018 runtime installation: create the 2018 gate from blob `cd50f501...` and update runtime from `e9cbc76d...` to `410180c3...`. The path-scoped executor remains the only repository mutation surface and performs no annual dispatch. Run 380 remains unconsumed until a later dispatch gate; run 381+, 2019+, strategy, broker/order, real-money, and trading remain locked.
