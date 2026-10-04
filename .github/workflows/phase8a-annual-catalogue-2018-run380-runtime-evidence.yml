@@ -300,7 +300,7 @@ jobs:
       - name: Upload immutable DEC-555 runtime evidence
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2018-dec544-runtime-binding-${{ env.TARGET_RUN_ID }}
+          name: annual-catalogue-2018-dec555-runtime-binding-${{ env.TARGET_RUN_ID }}
           path: |
             ${{ runner.temp }}/run380.json
             ${{ runner.temp }}/run380-jobs.json
