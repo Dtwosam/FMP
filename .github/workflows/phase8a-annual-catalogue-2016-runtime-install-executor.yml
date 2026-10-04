@@ -687,14 +687,14 @@ jobs:
           )"
 
           gh api "repos/$GITHUB_REPOSITORY/branches/main" \
-            > "$RUNNER_TEMP/main-before-377.json"
-          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-before-377.json")" = "$INSTALL_COMMIT_SHA"
+            > "$RUNNER_TEMP/main-before-378.json"
+          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-before-378.json")" = "$INSTALL_COMMIT_SHA"
 
           gh api \
             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?per_page=100" \
             > "$RUNNER_TEMP/annual-all-runs-recheck.json"
           test "$(
-            jq '[.workflow_runs[] | select(.run_number >= 377)] | length' \
+            jq '[.workflow_runs[] | select(.run_number >= 378)] | length' \
               "$RUNNER_TEMP/annual-all-runs-recheck.json"
           )" = "0"
 
@@ -713,7 +713,7 @@ jobs:
           for _ in $(seq 1 30); do
             gh api \
               "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?per_page=100" \
-              > "$RUNNER_TEMP/annual-runs-after-377.json"
+              > "$RUNNER_TEMP/annual-runs-after-378.json"
             if python - <<'PY'
           import json
           import os
@@ -724,14 +724,14 @@ jobs:
               temp / "dec519-plan/install-commit-sha.txt"
           ).read_text(encoding="utf-8").strip()
           runs = json.loads(
-              (temp / "annual-runs-after-377.json").read_text(
+              (temp / "annual-runs-after-378.json").read_text(
                   encoding="utf-8"
               )
           )["workflow_runs"]
           target = [
               row
               for row in runs
-              if row.get("run_number") == 377
+              if row.get("run_number") == 378
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
@@ -741,7 +741,7 @@ jobs:
               row
               for row in runs
               if isinstance(row.get("run_number"), int)
-              and row.get("run_number") >= 378
+              and row.get("run_number") >= 379
           ]
           raise SystemExit(0 if len(target) == 1 and later == [] else 1)
           PY
@@ -769,14 +769,14 @@ jobs:
               encoding="utf-8"
           ).strip()
           runs = json.loads(
-              (temp / "annual-runs-after-377.json").read_text(
+              (temp / "annual-runs-after-378.json").read_text(
                   encoding="utf-8"
               )
           )["workflow_runs"]
           targets = [
               row
               for row in runs
-              if row.get("run_number") == 377
+              if row.get("run_number") == 378
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
@@ -787,13 +787,13 @@ jobs:
 
           receipt = {
               "decision": "DEC-521",
-              "stage": "ANNUAL_CATALOGUE_2016_RUN_377_DISPATCH_SUBMITTED",
+              "stage": "ANNUAL_CATALOGUE_2016_RUN_378_DISPATCH_SUBMITTED",
               "source_plan_decision": "DEC-519",
               "install_commit_sha": install_sha,
               "previous_annual_freeze_run_id": binding["run_id"],
               "annual_segment_label": "2016",
               "run_id": target["id"],
-              "run_number": 377,
+              "run_number": 378,
               "run_attempt": 1,
               "run_head_sha": install_sha,
               "dispatch_submitted": True,
@@ -801,7 +801,7 @@ jobs:
               "rerun_authorized": False,
               "retry_authorized": False,
               "replacement_run_authorized": False,
-              "run_378_or_later_authorized": False,
+              "run_379_or_later_authorized": False,
               "next_segment_execution_authorized": False,
               "cross_year_result_production_authorized": False,
               "strategy_v1_synthesis_authorized": False,
@@ -812,9 +812,9 @@ jobs:
               "live_order_authorized": False,
               "real_money_authorized": False,
               "trading_authorized": False,
-              "next_gate": "REVIEW_2016_RUN_377_BEFORE_ANY_2017_EXECUTION",
+              "next_gate": "REVIEW_2016_RUN_378_BEFORE_ANY_2017_EXECUTION",
           }
-          (temp / "dec521-run377-dispatch-receipt.json").write_text(
+          (temp / "dec521-run378-dispatch-receipt.json").write_text(
               json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False)
               + "\n",
               encoding="utf-8",
@@ -824,15 +824,15 @@ jobs:
       - name: Upload immutable DEC-521 dispatch evidence
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2016-dec521-run377-dispatch-${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2016-dec521-run378-dispatch-${{ github.event.workflow_run.id }}
           path: |
             ${{ runner.temp }}/dec519-plan/dec511-dispatch-action-preflight.json
             ${{ runner.temp }}/dec519-plan/runtime-binding.json
             ${{ runner.temp }}/dec519-plan/install-commit-sha.txt
-            ${{ runner.temp }}/annual-all-runs-before-377.json
-            ${{ runner.temp }}/annual-dispatch-runs-before-377.json
-            ${{ runner.temp }}/main-before-377.json
-            ${{ runner.temp }}/annual-runs-after-377.json
-            ${{ runner.temp }}/dec521-run377-dispatch-receipt.json
+            ${{ runner.temp }}/annual-all-runs-before-378.json
+            ${{ runner.temp }}/annual-dispatch-runs-before-378.json
+            ${{ runner.temp }}/main-before-378.json
+            ${{ runner.temp }}/annual-runs-after-378.json
+            ${{ runner.temp }}/dec521-run378-dispatch-receipt.json
           if-no-files-found: error
 
