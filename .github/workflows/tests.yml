@@ -427,6 +427,30 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2016_run377_dispatch_executor.py'
           -v
+      - name: Run post-install 2016 runtime-repair tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2016_post_install_runtime_repair.py'
+          -v
+      - name: Run post-install 2016 dispatch-recovery tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2016_post_install_dispatch_recovery.py'
+          -v
+      - name: Run post-install 2016 recovery-workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2016_post_install_recovery_workflow.py'
+          -v
       - name: Run read-only 2016 run-378 evidence-review tests
         env:
           PYTHONPATH: src
