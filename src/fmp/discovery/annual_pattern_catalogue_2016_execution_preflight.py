@@ -27,11 +27,11 @@ RUNTIME_BINDING_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py"
 )
 EXPECTED_RUNTIME_BINDING_SOURCE_BLOB_SHA = (
-    "bbb3bba32c3677d3bd971a2744eb93498868433b"
+    "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0"
 )
 RUNTIME_SOURCE_PATH = "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 EXPECTED_RUNTIME_SOURCE_BLOB_SHA = (
-    "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a"
+    "f1fa50e7c862354931d919fe7da241de863f6834"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
@@ -40,6 +40,8 @@ EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
 
 FAILED_FIRST_RUN_ID = 37126711695
 FAILED_FIRST_RUN_HEAD_SHA = "fd85a886d07234ad584dcca08692b37e6af54b2e"
+FAILED_RUN376_ID = 37191637168
+FAILED_RUN376_HEAD_SHA = "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"
 
 ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED = False
 HISTORICAL_ARTIFACT_READ_AUTHORIZED = False
@@ -134,9 +136,9 @@ def _validate_run_inventory(
     binding: Mapping[str, object],
 ) -> dict[str, object]:
     runs = value.get("workflow_runs")
-    if not isinstance(runs, list) or len(runs) != 2:
+    if not isinstance(runs, list) or len(runs) != 3:
         raise ValueError(
-            "DEC-503 requires exactly two prior annual-catalogue workflow runs"
+            "DEC-503 requires exactly three prior annual-catalogue workflow runs"
         )
 
     by_number: dict[int, Mapping[str, object]] = {}
@@ -150,7 +152,7 @@ def _validate_run_inventory(
             raise ValueError("DEC-503 duplicate workflow run number")
         by_number[number] = raw
 
-    if set(by_number) != {1, 376}:
+    if set(by_number) != {1, 376, 377}:
         raise ValueError("DEC-503 workflow run number inventory mismatch")
 
     first = by_number[1]
@@ -168,10 +170,25 @@ def _validate_run_inventory(
         if first.get(field) != expected:
             raise ValueError(f"DEC-503 failed first run {field} mismatch")
 
-    second = by_number[376]
-    second_exact = {
-        "id": binding.get("run_id"),
+    failed_376 = by_number[376]
+    failed_376_exact = {
+        "id": FAILED_RUN376_ID,
         "run_number": 376,
+        "run_attempt": 1,
+        "event": "workflow_dispatch",
+        "head_branch": "main",
+        "head_sha": FAILED_RUN376_HEAD_SHA,
+        "status": "completed",
+        "conclusion": "failure",
+    }
+    for field, expected in failed_376_exact.items():
+        if failed_376.get(field) != expected:
+            raise ValueError(f"DEC-503 failed run376 {field} mismatch")
+
+    successful = by_number[377]
+    successful_exact = {
+        "id": binding.get("run_id"),
+        "run_number": 377,
         "run_attempt": 1,
         "event": "workflow_dispatch",
         "head_branch": "main",
@@ -179,18 +196,19 @@ def _validate_run_inventory(
         "status": "completed",
         "conclusion": "success",
     }
-    for field, expected in second_exact.items():
-        if second.get(field) != expected:
-            raise ValueError(f"DEC-503 successful replacement run {field} mismatch")
+    for field, expected in successful_exact.items():
+        if successful.get(field) != expected:
+            raise ValueError(f"DEC-503 successful 2015 run {field} mismatch")
 
     return {
-        "annual_workflow_run_count": 2,
+        "annual_workflow_run_count": 3,
         "failed_first_run_id": FAILED_FIRST_RUN_ID,
+        "failed_run376_id": FAILED_RUN376_ID,
         "successful_2015_run_id": _positive_int(
             binding.get("run_id"),
             field="successful 2015 run id",
         ),
-        "successful_2015_run_number": 376,
+        "successful_2015_run_number": 377,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": _validate_commit(
             binding.get("run_head_sha"),
@@ -264,7 +282,7 @@ def build_2016_execution_preflight(
             runtime_binding.get("freeze_evidence_fingerprint"),
             field="previous annual freeze evidence fingerprint",
         ),
-        "expected_next_run_number": 377,
+        "expected_next_run_number": 378,
         "expected_next_run_attempt": 1,
         "annual_workflow_dispatch_authorized": (
             ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED
@@ -314,9 +332,9 @@ def validate_2016_execution_preflight(
         raise ValueError("DEC-503 predecessor must be required")
     if value.get("prior_segment_label") != "2015":
         raise ValueError("DEC-503 predecessor label mismatch")
-    if value.get("annual_workflow_run_count") != 2:
+    if value.get("annual_workflow_run_count") != 3:
         raise ValueError("DEC-503 workflow run count mismatch")
-    if value.get("expected_next_run_number") != 377:
+    if value.get("expected_next_run_number") != 378:
         raise ValueError("DEC-503 next run number mismatch")
     if value.get("expected_next_run_attempt") != 1:
         raise ValueError("DEC-503 next run attempt mismatch")
