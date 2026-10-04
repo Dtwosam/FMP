@@ -10921,3 +10921,7 @@ DEC-550 completed as installer workflow run `37233054691` and produced artifact 
 ## 2026-10-04 — DEC-552 source-only 2018 dispatch authorization
 
 Concrete DEC-551 workflow run `37233894381` on `35263ec4c59bae4733507c53b080f3ea07ff1325` produced artifact `11314757055` (digest `sha256:7a7ba8c4c008e6e1d6ce144eb8c2df17f506a18894d1487f044fef9533fcd9d7`) with preflight fingerprint `f756088f404f77220b366eaffdfd36cfe805f9fcd91a274ef7c5a364994893c8`. DEC-552 authorizes only the exact 2018 run-380 / attempt-1 research contract with predecessor `37227536041`. It is source-only: no dispatch command/action is present, and run 381+, 2019+, strategy, broker/order, real-money, and trading remain locked.
+
+## 2026-10-04 — DEC-553 final read-only 2018 dispatch preflight
+
+Bound concrete DEC-552 workflow run `37234867097`, artifact `11314579371`, and authorization fingerprint `eb0089103203b334c12800643f74cc838e8e9e140b4b7868f48ba74793d1d043` into the final non-mutating 2018 dispatch-action preflight. DEC-553 requires exact annual history through successful run 379 and freezes only segment 2018 / run 380 / attempt 1 / predecessor `37227536041`. No dispatch is executed and all run 381+/later-year/trading scopes remain locked.

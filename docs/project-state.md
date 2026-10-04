@@ -3251,3 +3251,7 @@ The 2018 runtime authorization is installed on main at `1fc73dfc1e102996cecd5b9f
 ### 2026-10-04 — DEC-552 2018 dispatch authorization
 
 DEC-551 is concrete from workflow run `37233894381`, artifact `11314757055`, fingerprint `f756088f404f77220b366eaffdfd36cfe805f9fcd91a274ef7c5a364994893c8`. DEC-552 is source-only authorization for segment 2018 / run 380 / attempt 1 / predecessor `37227536041`. The runtime remains installed, run 380 remains unconsumed, and no command has been submitted. Run 381+, 2019+, strategy/promotion, broker/order, real-money, and trading remain locked.
+
+### 2026-10-04 — DEC-553 final 2018 dispatch preflight
+
+DEC-552 is concrete from workflow run `37234867097`, artifact `11314579371`, digest `sha256:b30f3995ca0207b65f772b15b84b23d61d9f1826ba77aabadb2a0e84064d8709`, and authorization fingerprint `eb0089103203b334c12800643f74cc838e8e9e140b4b7868f48ba74793d1d043`. DEC-553 now freezes only the future 2018 dispatch parameters: main, segment 2018, predecessor `37227536041`, run 380 / attempt 1. It is read-only and contains no dispatch command. Run 380 remains unsubmitted; run 381+, 2019+, strategy/promotion, broker/order, real-money, and trading remain locked.
