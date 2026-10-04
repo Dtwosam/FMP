@@ -39,6 +39,7 @@ class AnnualPatternCatalogue2018RuntimeInstallActionWorkflowTests(
             "23abea26faf35d775d4f11a41ccf280d10eb78fd",
             "b91f76ca53381a732ff721ceeb6832eff22b028a",
             "49e4549672a27bb8d985b0746d8914122072906d",
+            "543752e5ecad05fed0b368170663a9329b0405aa",
         ):
             self.assertIn(value, text)
 
