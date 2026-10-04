@@ -3180,3 +3180,18 @@ run 379 absent.
 
 Next gate:
 `EXACT_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_INSTALL_MUTATION_AFTER_DEC537`.
+
+### 2026-10-04 — DEC-538 exact install action
+
+DEC-537 run `37215789401` completed successfully on
+`f8a8de09adc4b64b84b2129eacbc38d0eb00e645`; artifact `11308490990`
+(digest `892512ac79d2b372372871a143d887f01e5c96d9ed60ea8243f1cbfb4b7cc6ea`)
+freezes the read-only 2017 install preflight. DEC-538 now compiles exactly two
+future repository actions: create the 2017 runtime gate from blob
+`c1853eeec55ee98b3155a6054f07cf360793ba9b` and replace runtime blob
+`b564f5a26fdef146fc6080962e7c4762b0b5949a` with
+`e9cbc76dc9e6866e80088d223498fbcc3b870fd1`. The action is not yet applied,
+the gate remains absent, and annual run 379 remains undispatched.
+
+Next gate:
+`APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC538`.
