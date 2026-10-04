@@ -3271,3 +3271,7 @@ DEC-555 concrete 2018 runtime evidence is recovered through workflow run `372401
 ### 2026-10-04 — DEC-557 source-only 2019 authorization
 
 DEC-556 is concrete from run `37240728378` and artifact `11317461212`. DEC-557 is source-ready for 2019/run381/attempt1 only, with predecessor run `37237817538`. The current annual runtime remains the 2018-installed blob and has no 2019 route. No dispatch has occurred and annual run 381 remains absent. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2019_RUNTIME_AUTHORIZATION_PLAN`.
+
+### 2026-10-04 — DEC-557 builder recovery
+
+DEC-557 source contract remains valid, but its first repository builder run `37241492509` failed before artifact production due to a workflow syntax escape in the run-history dictionary. A read-only run-2 recovery is staged; annual run 381 remains absent. Runtime installation, dispatch, run382+, strategy/promotion, broker/order, real-money, and trading remain locked.

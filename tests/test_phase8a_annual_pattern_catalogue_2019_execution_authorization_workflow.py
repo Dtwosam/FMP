@@ -28,8 +28,11 @@ class AnnualPatternCatalogue2019ExecutionAuthorizationWorkflowTests(
         self.assertNotIn("  contents: write", text)
         self.assertNotIn("  actions: write", text)
         self.assertNotIn("workflow_dispatch:", text)
-        self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
+        self.assertIn("37241492509", text)
+        self.assertIn("15828432541422e0690eb1128f8a45d5d8f1fe50", text)
+        self.assertIn('"conclusion": "failure"', text)
 
     def test_workflow_pins_exact_dec556_provenance(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -55,6 +58,10 @@ class AnnualPatternCatalogue2019ExecutionAuthorizationWorkflowTests(
         )
         self.assertIn('379: (37227536041, "success")', text)
         self.assertIn('380: (37237817538, "success")', text)
+        self.assertNotIn(
+            '379: (37227536041, "success"),\\n              380:',
+            text,
+        )
         self.assertIn('row.get("run_number") >= 381', text)
         self.assertIn('value["expected_run_number"] == 381', text)
         self.assertIn('value["expected_run_attempt"] == 1', text)
