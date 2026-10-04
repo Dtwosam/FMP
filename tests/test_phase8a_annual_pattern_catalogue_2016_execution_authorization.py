@@ -50,7 +50,7 @@ def _preflight() -> dict[str, object]:
         "previous_runtime_binding_fingerprint": "1" * 64,
         "previous_runtime_freeze_fingerprint": "2" * 64,
         "previous_annual_freeze_evidence_fingerprint": "3" * 64,
-        "expected_next_run_number": 377,
+        "expected_next_run_number": 378,
         "expected_next_run_attempt": 1,
         "annual_workflow_dispatch_authorized": False,
         "historical_artifact_read_authorized": False,
@@ -109,7 +109,7 @@ class AnnualPatternCatalogue2016ExecutionAuthorizationTests(unittest.TestCase):
         self.assertEqual(value["annual_segment_label"], "2016")
         self.assertEqual(value["prior_segment_label"], "2015")
         self.assertEqual(value["previous_annual_freeze_run_id"], 424242)
-        self.assertEqual(value["expected_run_number"], 377)
+        self.assertEqual(value["expected_run_number"], 378)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertTrue(value["annual_workflow_dispatch_authorized"])
         self.assertTrue(value["historical_artifact_read_authorized"])
