@@ -27,92 +27,29 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Require exact second recovery push after clean-install failure
+      - name: Require exact third recovery push
         run: |
           set -euo pipefail
           test "$GITHUB_ACTIONS" = "true"
           test "$GITHUB_EVENT_NAME" = "push"
           test "$GITHUB_REF" = "refs/heads/main"
-          test "$GITHUB_RUN_NUMBER" = "2"
+          test "$GITHUB_RUN_NUMBER" = "3"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$(git branch --show-current)" = "main"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
           test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
 
-      - name: Require frozen recovery sources
+      - name: Require frozen post-run376 recovery sources
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml)" = "74e9499d9485c8e2a402fb675c995cc1961ff16a"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py)" = "69a2f600e63e27185c744b87a70b86f1c424a2ab"
-          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py)" = "89ad05565fa1aff8ce97ac0eb6a8d5579781ee62"
-
-      - name: Require original DEC-512 executor failed before dispatch
-        run: |
-          set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37149151549" > "$RUNNER_TEMP/original-executor-run.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37190929052" > "$RUNNER_TEMP/failed-recovery-run.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/annual-runs-before.json"
-
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          temp = Path(os.environ["RUNNER_TEMP"])
-          run = json.loads((temp / "original-executor-run.json").read_text(encoding="utf-8"))
-          exact = {
-              "id": 37149151549,
-              "name": "phase8a-annual-catalogue-2015-replacement-one-shot-executor",
-              "path": ".github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml",
-              "event": "push",
-              "head_branch": "main",
-              "head_sha": "ae6684d35003d1f63e7a53685d9c83fc906ec820",
-              "run_number": 1,
-              "run_attempt": 1,
-              "status": "completed",
-              "conclusion": "failure",
-          }
-          for field, expected in exact.items():
-              assert run.get(field) == expected, (field, run.get(field), expected)
-
-          failed_recovery = json.loads(
-              (temp / "failed-recovery-run.json").read_text(encoding="utf-8")
-          )
-          failed_recovery_exact = {
-              "id": 37190929052,
-              "name": "phase8a-annual-catalogue-2015-replacement-executor-recovery",
-              "path": ".github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml",
-              "event": "push",
-              "head_branch": "main",
-              "head_sha": "5417fddc015be92ed843de40be097381367b2c24",
-              "run_number": 1,
-              "run_attempt": 1,
-              "status": "completed",
-              "conclusion": "failure",
-          }
-          for field, expected in failed_recovery_exact.items():
-              assert failed_recovery.get(field) == expected, (
-                  field,
-                  failed_recovery.get(field),
-                  expected,
-              )
-
-          payload = json.loads((temp / "annual-runs-before.json").read_text(encoding="utf-8"))
-          rows = payload.get("workflow_runs")
-          assert isinstance(rows, list)
-          assert len(rows) == 1
-          first = rows[0]
-          assert first["id"] == 37126711695
-          assert first["run_number"] == 1
-          assert first["run_attempt"] == 1
-          assert first["event"] == "workflow_dispatch"
-          assert first["head_branch"] == "main"
-          assert first["status"] == "completed"
-          assert first["conclusion"] == "failure"
-          PY
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_workflow_corrected_install_receipt.py)" = "9c8237350484e3153f938a4df86d7f1c9955582e"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_run376_failure_receipt.py)" = "b57b055129f57be1e3164c3b24a53bf5a0277a57"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_run377_execution_authorization.py)" = "f65d13b2ddac075af65a86d08e8902e29fd18cfe"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "f1fa50e7c862354931d919fe7da241de863f6834"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue.py)" = "030bf98df2d5ffb50821bd0403f205c7c09f20f3"
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -125,67 +62,95 @@ jobs:
           -r requirements/exp061-discovery-run.txt
           scikit-learn==1.9.1
 
-      - name: Require clean checkout after runtime install
+      - name: Require clean checkout after dependency install
         run: test -z "$(git status --porcelain)"
 
-      - name: Re-fetch exact current main and annual inventory
+      - name: Fetch exact main, failed run 376, and annual inventory
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-branch.json"
           test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-branch.json")" = "$GITHUB_SHA"
-          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/annual-runs-live.json"
 
-      - name: Build exact DEC-499 replacement dispatch preflight
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37191637168"             > "$RUNNER_TEMP/run376.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37191637168/jobs?per_page=100"             > "$RUNNER_TEMP/run376-jobs.json"
+          gh api             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"             > "$RUNNER_TEMP/annual-runs-before.json"
+
+      - name: Build DEC-526 failure receipt and DEC-527 authorization
         run: |
           set -euo pipefail
-          python scripts/phase8a_annual_pattern_catalogue_2015_replacement_dispatch_action_preflight.py             plan             --main-branch-json "$RUNNER_TEMP/main-branch.json"             --annual-workflow-runs-json "$RUNNER_TEMP/annual-runs-live.json"             --expected-head-sha "$GITHUB_SHA"             --out "$RUNNER_TEMP/replacement-dispatch-preflight.json"
-
-      - name: Verify exact replacement preflight
-        run: |
           python - <<'PY'
           import json
           import os
           from pathlib import Path
 
-          preflight = json.loads(
-              (Path(os.environ["RUNNER_TEMP"]) / "replacement-dispatch-preflight.json").read_text(encoding="utf-8")
+          from fmp.discovery.annual_pattern_catalogue_2015_run376_failure_receipt import (
+              build_2015_run376_failure_receipt,
           )
-          assert preflight["decision"] == "DEC-499"
-          assert preflight["expected_head_sha"] == os.environ["GITHUB_SHA"]
-          assert preflight["prior_run_count"] == 1
-          assert preflight["failed_first_run_id"] == 37126711695
-          assert preflight["expected_replacement_run_number"] == 376
-          assert preflight["expected_replacement_run_attempt"] == 1
-          assert preflight["replacement_run_authorized"] is True
-          assert preflight["historical_artifact_read_authorized"] is True
-          assert preflight["historical_catalogue_execution_authorized"] is True
-          assert preflight["historical_result_production_authorized"] is True
-          assert preflight["dispatch_command_present"] is False
-          assert preflight["preflight_read_only"] is True
-          for field in (
-              "rerun_failed_run_authorized",
-              "retry_failed_run_authorized",
-              "third_or_later_run_authorized",
-              "next_segment_execution_authorized",
-              "cross_year_result_production_authorized",
-              "strategy_v1_synthesis_authorized",
-              "promotion_authorized",
-              "phase8b_authorized",
-              "demo_order_authorized",
-              "broker_mutation_authorized",
-              "live_order_authorized",
-              "real_money_authorized",
-              "trading_authorized",
-          ):
-              assert preflight[field] is False, field
+          from fmp.discovery.annual_pattern_catalogue_2015_run377_execution_authorization import (
+              build_2015_run377_execution_authorization,
+          )
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          runs = json.loads(
+              (temp / "annual-runs-before.json").read_text(encoding="utf-8")
+          )["workflow_runs"]
+          by_number = {row["run_number"]: row for row in runs}
+          assert set(by_number) == {1, 376}
+
+          first = by_number[1]
+          assert first["id"] == 37126711695
+          assert first["run_attempt"] == 1
+          assert first["head_sha"] == "fd85a886d07234ad584dcca08692b37e6af54b2e"
+          assert first["status"] == "completed"
+          assert first["conclusion"] == "failure"
+
+          failed = by_number[376]
+          assert failed["id"] == 37191637168
+          assert failed["run_attempt"] == 1
+          assert failed["head_sha"] == "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"
+          assert failed["status"] == "completed"
+          assert failed["conclusion"] == "failure"
+
+          receipt = build_2015_run376_failure_receipt(
+              run=json.loads((temp / "run376.json").read_text(encoding="utf-8")),
+              jobs_payload=json.loads(
+                  (temp / "run376-jobs.json").read_text(encoding="utf-8")
+              ),
+          )
+          authorization = build_2015_run377_execution_authorization(
+              repository_root=Path("."),
+          )
+
+          assert receipt["decision"] == "DEC-526"
+          assert receipt["result_produced"] is False
+          assert receipt["rerun_authorized"] is False
+          assert receipt["retry_authorized"] is False
+
+          assert authorization["decision"] == "DEC-527"
+          assert authorization["annual_segment_label"] == "2015"
+          assert authorization["expected_run_number"] == 377
+          assert authorization["expected_run_attempt"] == 1
+          assert authorization["rerun_run376_authorized"] is False
+          assert authorization["retry_run376_authorized"] is False
+          assert authorization["run_378_or_later_authorized"] is False
+          assert authorization["trading_authorized"] is False
+
+          (temp / "dec526-run376-failure.json").write_text(
+              json.dumps(receipt, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          (temp / "dec527-run377-authorization.json").write_text(
+              json.dumps(authorization, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
           PY
 
-      - name: Dispatch the sole authorized 2015 replacement run
+      - name: Dispatch exact fresh 2015 run 377
         run: |
           set -euo pipefail
           gh workflow run phase8a-annual-pattern-catalogue.yml             --ref main             -f annual_segment_label=2015
 
-      - name: Resolve exact replacement run 376 attempt 1
+      - name: Resolve exact run 377 attempt 1
         run: |
           set -euo pipefail
           endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
@@ -197,22 +162,28 @@ jobs:
           import os
           from pathlib import Path
 
-          payload = json.loads((Path(os.environ["RUNNER_TEMP"]) / "annual-runs-after.json").read_text(encoding="utf-8"))
-          runs = payload.get("workflow_runs")
-          assert isinstance(runs, list)
+          rows = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "annual-runs-after.json").read_text(
+                  encoding="utf-8"
+              )
+          )["workflow_runs"]
+
           targets = [
-              row for row in runs
+              row
+              for row in rows
               if row.get("name") == "phase8a-annual-pattern-catalogue"
               and row.get("path") == ".github/workflows/phase8a-annual-pattern-catalogue.yml"
-              and row.get("run_number") == 376
+              and row.get("run_number") == 377
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
               and row.get("head_sha") == os.environ["GITHUB_SHA"]
           ]
           later = [
-              row for row in runs
-              if isinstance(row.get("run_number"), int) and row.get("run_number") >= 377
+              row
+              for row in rows
+              if isinstance(row.get("run_number"), int)
+              and row["run_number"] >= 378
           ]
           raise SystemExit(0 if len(targets) == 1 and later == [] else 1)
           PY
@@ -224,7 +195,7 @@ jobs:
           done
           test "$found" = "1"
 
-      - name: Write immutable DEC-517 recovery dispatch receipt
+      - name: Write immutable DEC-528 run377 dispatch receipt
         run: |
           python - <<'PY'
           import json
@@ -232,39 +203,38 @@ jobs:
           from pathlib import Path
 
           temp = Path(os.environ["RUNNER_TEMP"])
-          payload = json.loads((temp / "annual-runs-after.json").read_text(encoding="utf-8"))
+          rows = json.loads(
+              (temp / "annual-runs-after.json").read_text(encoding="utf-8")
+          )["workflow_runs"]
           targets = [
-              row for row in payload["workflow_runs"]
-              if row.get("name") == "phase8a-annual-pattern-catalogue"
-              and row.get("path") == ".github/workflows/phase8a-annual-pattern-catalogue.yml"
-              and row.get("run_number") == 376
+              row
+              for row in rows
+              if row.get("run_number") == 377
               and row.get("run_attempt") == 1
-              and row.get("event") == "workflow_dispatch"
-              and row.get("head_branch") == "main"
               and row.get("head_sha") == os.environ["GITHUB_SHA"]
           ]
           assert len(targets) == 1
           target = targets[0]
+
           receipt = {
-              "decision": "DEC-517",
-              "stage": "ANNUAL_CATALOGUE_2015_REPLACEMENT_RECOVERY_DISPATCH_SUBMITTED",
+              "decision": "DEC-528",
+              "stage": "ANNUAL_CATALOGUE_2015_RUN377_DISPATCH_SUBMITTED",
               "recovery_executor_run_id": int(os.environ["GITHUB_RUN_ID"]),
-              "recovery_executor_run_number": int(os.environ["GITHUB_RUN_NUMBER"]),
-              "recovery_executor_run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "recovery_executor_run_number": 3,
+              "recovery_executor_run_attempt": 1,
               "recovery_executor_head_sha": os.environ["GITHUB_SHA"],
-              "original_executor_run_id": 37149151549,
-              "original_executor_conclusion": "failure",
-              "failed_recovery_run_id": 37190929052,
-              "failed_recovery_conclusion": "failure",
-              "replacement_run_id": target["id"],
-              "replacement_run_number": target["run_number"],
-              "replacement_run_attempt": target["run_attempt"],
-              "replacement_run_head_sha": target["head_sha"],
+              "source_failure_decision": "DEC-526",
+              "source_authorization_decision": "DEC-527",
+              "annual_segment_label": "2015",
+              "run_id": target["id"],
+              "run_number": 377,
+              "run_attempt": 1,
+              "run_head_sha": target["head_sha"],
               "dispatch_submitted": True,
               "result_claimed": False,
               "rerun_authorized": False,
               "retry_authorized": False,
-              "third_or_later_run_authorized": False,
+              "run_378_or_later_authorized": False,
               "next_segment_execution_authorized": False,
               "cross_year_result_production_authorized": False,
               "strategy_v1_synthesis_authorized": False,
@@ -275,26 +245,26 @@ jobs:
               "live_order_authorized": False,
               "real_money_authorized": False,
               "trading_authorized": False,
-              "next_gate": "REVIEW_2015_REPLACEMENT_RUN_WITH_DEC_513",
+              "next_gate": "REVIEW_2015_RUN377_BEFORE_ANY_2016_EXECUTION",
           }
-          (temp / "replacement-recovery-dispatch-receipt.json").write_text(
-              json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False) + "\n",
+          (temp / "dec528-run377-dispatch-receipt.json").write_text(
+              json.dumps(receipt, sort_keys=True, indent=2) + "\n",
               encoding="utf-8",
           )
           PY
 
-      - name: Upload immutable DEC-517 recovery evidence
+      - name: Upload immutable DEC-526 to DEC-528 recovery evidence
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2015-dec517-recovery-${{ github.sha }}
+          name: annual-catalogue-2015-dec528-run377-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/original-executor-run.json
-            ${{ runner.temp }}/failed-recovery-run.json
-            ${{ runner.temp }}/annual-runs-before.json
             ${{ runner.temp }}/main-branch.json
-            ${{ runner.temp }}/annual-runs-live.json
-            ${{ runner.temp }}/replacement-dispatch-preflight.json
+            ${{ runner.temp }}/run376.json
+            ${{ runner.temp }}/run376-jobs.json
+            ${{ runner.temp }}/annual-runs-before.json
+            ${{ runner.temp }}/dec526-run376-failure.json
+            ${{ runner.temp }}/dec527-run377-authorization.json
             ${{ runner.temp }}/annual-runs-after.json
-            ${{ runner.temp }}/replacement-recovery-dispatch-receipt.json
+            ${{ runner.temp }}/dec528-run377-dispatch-receipt.json
           if-no-files-found: warn
