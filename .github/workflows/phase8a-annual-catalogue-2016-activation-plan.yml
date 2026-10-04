@@ -70,7 +70,7 @@ jobs:
       - name: Require frozen DEC-502 to DEC-507 source chain
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "9cd5cb88359832b306a5105fa9b6fb5e464d5b6d"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml)" = "4d5813b301ab8e22fb2e1e9da36517dfe99f25bb"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "bbb3bba32c3677d3bd971a2744eb93498868433b"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_execution_preflight.py)" = "9c89eb64c1e0ecda56fd9cfe0b26516e4a20abc3"
@@ -89,7 +89,10 @@ jobs:
           python-version: "3.12.14"
 
       - name: Install pinned annual catalogue planning runtime
-        run: python -m pip install -r requirements/exp061-discovery-run.txt -e .
+        run: >-
+          python -m pip install
+          -r requirements/exp061-discovery-run.txt
+          scikit-learn==1.9.1
 
       - name: Require clean checkout after runtime install
         run: test -z "$(git status --porcelain)"

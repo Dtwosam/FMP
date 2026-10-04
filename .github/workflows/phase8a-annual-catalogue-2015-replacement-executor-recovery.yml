@@ -27,13 +27,13 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Require exact first recovery push
+      - name: Require exact second recovery push after clean-install failure
         run: |
           set -euo pipefail
           test "$GITHUB_ACTIONS" = "true"
           test "$GITHUB_EVENT_NAME" = "push"
           test "$GITHUB_REF" = "refs/heads/main"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$(git branch --show-current)" = "main"
@@ -53,6 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/runs/37149151549" > "$RUNNER_TEMP/original-executor-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37190929052" > "$RUNNER_TEMP/failed-recovery-run.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/annual-runs-before.json"
 
           python - <<'PY'
@@ -77,6 +78,28 @@ jobs:
           for field, expected in exact.items():
               assert run.get(field) == expected, (field, run.get(field), expected)
 
+          failed_recovery = json.loads(
+              (temp / "failed-recovery-run.json").read_text(encoding="utf-8")
+          )
+          failed_recovery_exact = {
+              "id": 37190929052,
+              "name": "phase8a-annual-catalogue-2015-replacement-executor-recovery",
+              "path": ".github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "5417fddc015be92ed843de40be097381367b2c24",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "failure",
+          }
+          for field, expected in failed_recovery_exact.items():
+              assert failed_recovery.get(field) == expected, (
+                  field,
+                  failed_recovery.get(field),
+                  expected,
+              )
+
           payload = json.loads((temp / "annual-runs-before.json").read_text(encoding="utf-8"))
           rows = payload.get("workflow_runs")
           assert isinstance(rows, list)
@@ -96,8 +119,11 @@ jobs:
         with:
           python-version: "3.12.14"
 
-      - name: Install pinned annual catalogue runtime
-        run: python -m pip install -r requirements/exp061-discovery-run.txt -e .
+      - name: Install pinned annual catalogue dependencies
+        run: >-
+          python -m pip install
+          -r requirements/exp061-discovery-run.txt
+          scikit-learn==1.9.1
 
       - name: Require clean checkout after runtime install
         run: test -z "$(git status --porcelain)"
@@ -159,7 +185,7 @@ jobs:
           set -euo pipefail
           gh workflow run phase8a-annual-pattern-catalogue.yml             --ref main             -f annual_segment_label=2015
 
-      - name: Resolve exact replacement run 2 attempt 1
+      - name: Resolve exact replacement run 376 attempt 1
         run: |
           set -euo pipefail
           endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
@@ -228,6 +254,8 @@ jobs:
               "recovery_executor_head_sha": os.environ["GITHUB_SHA"],
               "original_executor_run_id": 37149151549,
               "original_executor_conclusion": "failure",
+              "failed_recovery_run_id": 37190929052,
+              "failed_recovery_conclusion": "failure",
               "replacement_run_id": target["id"],
               "replacement_run_number": target["run_number"],
               "replacement_run_attempt": target["run_attempt"],
@@ -262,6 +290,7 @@ jobs:
           name: annual-catalogue-2015-dec517-recovery-${{ github.sha }}
           path: |
             ${{ runner.temp }}/original-executor-run.json
+            ${{ runner.temp }}/failed-recovery-run.json
             ${{ runner.temp }}/annual-runs-before.json
             ${{ runner.temp }}/main-branch.json
             ${{ runner.temp }}/annual-runs-live.json
