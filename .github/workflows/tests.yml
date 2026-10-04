@@ -427,6 +427,27 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2016_run377_dispatch_executor.py'
           -v
+      - name: Enter frozen pre-DEC539 annual runtime state
+        run: |
+          set -euo pipefail
+          runtime="src/fmp/discovery/annual_pattern_catalogue_runtime.py"
+          gate="src/fmp/discovery/annual_pattern_catalogue_2017_runtime_authorization.py"
+          runtime_saved="$RUNNER_TEMP/annual_pattern_catalogue_runtime.dec539-installed.py"
+          gate_saved="$RUNNER_TEMP/annual_pattern_catalogue_2017_runtime_authorization.dec539-installed.py"
+          fixture="tests/fixtures/phase8a_annual_pattern_catalogue_runtime_pre_dec539.py.snapshot"
+
+          test "$(git hash-object "$runtime")" = "e9cbc76dc9e6866e80088d223498fbcc3b870fd1"
+          test "$(git hash-object "$gate")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
+          test "$(git hash-object "$fixture")" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
+
+          cp "$runtime" "$runtime_saved"
+          cp "$gate" "$gate_saved"
+          cp "$fixture" "$runtime"
+          rm "$gate"
+
+          test "$(git hash-object "$runtime")" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
+          test ! -e "$gate"
+
       - name: Run post-install 2016 runtime-repair tests
         env:
           PYTHONPATH: src
@@ -555,6 +576,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2017_runtime_install_action_workflow.py'
           -v
+      - name: Restore DEC539-installed annual runtime state
+        if: always()
+        run: |
+          set -euo pipefail
+          runtime="src/fmp/discovery/annual_pattern_catalogue_runtime.py"
+          gate="src/fmp/discovery/annual_pattern_catalogue_2017_runtime_authorization.py"
+          runtime_saved="$RUNNER_TEMP/annual_pattern_catalogue_runtime.dec539-installed.py"
+          gate_saved="$RUNNER_TEMP/annual_pattern_catalogue_2017_runtime_authorization.dec539-installed.py"
+
+          cp "$runtime_saved" "$runtime"
+          cp "$gate_saved" "$gate"
+
+          test "$(git hash-object "$runtime")" = "e9cbc76dc9e6866e80088d223498fbcc3b870fd1"
+          test "$(git hash-object "$gate")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
+          test -z "$(git diff --name-only -- "$runtime" "$gate")"
+
       - name: Run DEC-539 2017 runtime install-receipt tests
         env:
           PYTHONPATH: src
@@ -570,6 +607,22 @@ jobs:
           python -m unittest discover
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2017_runtime_install_executor.py'
+          -v
+      - name: Run DEC-540 2017 dispatch-preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2017_dispatch_preflight.py'
+          -v
+      - name: Run DEC-540 dispatch-preflight workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2017_dispatch_preflight_workflow.py'
           -v
       - name: Run historical snapshot and general unit tests
         env:
