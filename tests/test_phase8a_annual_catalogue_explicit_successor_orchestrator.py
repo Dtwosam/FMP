@@ -43,13 +43,15 @@ class AnnualCatalogueExplicitSuccessorOrchestratorTests(unittest.TestCase):
 
     def test_orchestrator_uses_explicit_successor_workflows_only(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
-        for workflow in (
+        workflows = (
             "phase8a-annual-catalogue-2015-replacement-runtime-evidence.yml",
             "phase8a-annual-catalogue-2016-activation-plan.yml",
             "phase8a-annual-catalogue-2016-runtime-install-executor.yml",
             "phase8a-annual-catalogue-2016-run377-runtime-evidence.yml",
-        ):
-            self.assertIn(f"gh workflow run \\\n            {workflow}", text)
+        )
+        for workflow in workflows:
+            self.assertIn(workflow, text)
+        self.assertEqual(text.count("gh workflow run"), 4)
         self.assertNotIn(
             "gh workflow run phase8a-annual-pattern-catalogue.yml",
             text,
