@@ -3144,3 +3144,7 @@ DEC-534 workflow run `37209674158` failed after all evidence checks because
 the CLI source path was not exported. The run performed no mutation. A narrow
 run-2 recovery is source-ready: it proves the failed run-1 identity, exports
 `PYTHONPATH=src`, and rebuilds the same read-only run-379 preflight.
+
+### 2026-10-04 — DEC-535 concrete 2017 authorization
+
+Recovered DEC-534 run `37210041270` is successful and its artifact `11306121033` concretely freezes expected 2017 run 379 / attempt 1. DEC-535 is source-ready as a read-only repository-hosted authorization builder bound to that exact artifact. The current runtime remains `b564f5a26fdef146fc6080962e7c4762b0b5949a` with no 2017 route; run 379 is still absent. No dispatch, runtime mutation, run 380+, later-year, strategy, broker/order, real-money, or trading action is opened. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_PLAN`.
