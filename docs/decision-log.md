@@ -10869,3 +10869,7 @@ real-money, and trading authority remain locked.
 ## 2026-10-04 — DEC-539 exact 2017 runtime authorization install
 
 Concrete DEC-538 workflow run `37219170862` produced artifact `11310165235` (digest `e210042872cbe191f4383fcba4a6ac9305fbdeb96acaed32d46e034acff1681d`). DEC-539 is the bounded repository mutation that may create only the frozen 2017 gate blob `c1853eee...` and update the annual runtime from `b564f5a2...` to `e9cbc76d...`. The executor rechecks unchanged main and the unconsumed run-379 slot before mutation and before push, proves the installed run-379 gate imports, and emits a concrete install receipt. It cannot dispatch the annual workflow and grants no run-380+, 2018+, strategy, broker/order, real-money, or trading authority.
+
+## 2026-10-04 — DEC-540 read-only 2017 dispatch preflight
+
+DEC-539 installer run `37219929487` successfully installed the frozen 2017 runtime authorization at commit `dcdf7210b0039077efa3a23c65c2ed8fa41e2427` and produced artifact `11309927463` (digest `6672b0642a763424541d971d84b273f8c2fde5089fcd736e6152fe8dc9a7e32e`). DEC-540 binds that exact receipt, installed gate/runtime blobs, and annual history `{1 failure, 376 failure, 377 success, 378 success}`, then freezes only future run 379 / attempt 1 with predecessor `37206992367`. It is read-only and contains no dispatch command. Run 380+, 2018+, strategy, broker/order, real-money, and trading authority remain locked.
