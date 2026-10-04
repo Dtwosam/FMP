@@ -3152,3 +3152,18 @@ Recovered DEC-534 run `37210041270` is successful and its artifact `11306121033`
 ### 2026-10-04 — DEC-535 bootstrap recovery
 
 DEC-535 workflow run `37213060816` failed only at Python import after all external provenance and run-379-slot checks succeeded. The failure performed no mutation or annual dispatch. A narrow run-2 recovery now proves that exact failure and installs the pinned research dependencies before rebuilding DEC-535. Annual run 379 remains absent; DEC-536 remains staged off-queue only.
+
+### 2026-10-04 — DEC-536 concrete runtime plan
+
+DEC-535 recovery run `37213629059` completed successfully on
+`3283a51a41e4c3f71079be9ab9758fa739ab87b2`; artifact `11307204031`
+(digest `db62ce19a4f0805fa8255cdc25a1b3e8e35883e2aead2f98569077221273bb8c`)
+concretely authorizes only 2017 annual run 379 / attempt 1 at the source-contract
+layer. DEC-536 now freezes the future two-file runtime authorization target and
+adds a read-only builder that proves the exact DEC-535 artifact plus the current
+annual history before emitting the immutable plan. The 2017 runtime gate remains
+uninstalled, run 379 remains absent, and all run 380+/2018+/strategy/broker/order/
+real-money/trading authority remains locked.
+
+Next gate:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC536`.
