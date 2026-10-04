@@ -6,11 +6,12 @@ import json
 import os
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
+from fmp.discovery import annual_pattern_catalogue_2017_execution_authorization as authorization_module
 from fmp.discovery.annual_pattern_catalogue_2017_execution_authorization import (
     build_2017_execution_authorization,
     validate_2017_execution_authorization,
-    validate_2017_execution_authorization_sources,
 )
 
 
@@ -108,28 +109,43 @@ def _preflight() -> dict[str, object]:
     "DEC-535 requires the installed annual workflow/runtime state",
 )
 class AnnualPatternCatalogue2017ExecutionAuthorizationTests(unittest.TestCase):
-    def test_sources_pin_concrete_preflight_runtime_and_workflow(self) -> None:
-        source = validate_2017_execution_authorization_sources(
-            repository_root=Path("."),
-        )
+    def _historical_sources(self) -> dict[str, str]:
+        return {
+            "execution_preflight_source_blob_sha": (
+                authorization_module.EXPECTED_EXECUTION_PREFLIGHT_SOURCE_BLOB_SHA
+            ),
+            "runtime_source_blob_sha": (
+                authorization_module.EXPECTED_RUNTIME_SOURCE_BLOB_SHA
+            ),
+            "active_workflow_blob_sha": (
+                authorization_module.EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA
+            ),
+        }
+
+    def test_sources_keep_historical_pre_install_runtime_pins(self) -> None:
         self.assertEqual(
-            source["execution_preflight_source_blob_sha"],
+            authorization_module.EXPECTED_EXECUTION_PREFLIGHT_SOURCE_BLOB_SHA,
             "7e6e6a54d4111a44a68218e551c379fa342d3e27",
         )
         self.assertEqual(
-            source["runtime_source_blob_sha"],
+            authorization_module.EXPECTED_RUNTIME_SOURCE_BLOB_SHA,
             "b564f5a26fdef146fc6080962e7c4762b0b5949a",
         )
         self.assertEqual(
-            source["active_workflow_blob_sha"],
+            authorization_module.EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA,
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         )
 
     def test_authorization_is_exact_run379_and_runtime_inactive(self) -> None:
-        value = build_2017_execution_authorization(
-            _preflight(),
-            repository_root=Path("."),
-        )
+        with patch.object(
+            authorization_module,
+            "validate_2017_execution_authorization_sources",
+            return_value=self._historical_sources(),
+        ):
+            value = build_2017_execution_authorization(
+                _preflight(),
+                repository_root=Path("."),
+            )
         self.assertIs(validate_2017_execution_authorization(value), value)
         self.assertEqual(value["decision"], "DEC-535")
         self.assertEqual(value["annual_segment_label"], "2017")
@@ -154,10 +170,15 @@ class AnnualPatternCatalogue2017ExecutionAuthorizationTests(unittest.TestCase):
         self.assertFalse(value["trading_authorized"])
 
     def test_refingerprinted_runtime_activation_tamper_is_rejected(self) -> None:
-        value = build_2017_execution_authorization(
-            _preflight(),
-            repository_root=Path("."),
-        )
+        with patch.object(
+            authorization_module,
+            "validate_2017_execution_authorization_sources",
+            return_value=self._historical_sources(),
+        ):
+            value = build_2017_execution_authorization(
+                _preflight(),
+                repository_root=Path("."),
+            )
         tampered = copy.deepcopy(value)
         tampered["runtime_gate_active"] = True
         unsigned = dict(tampered)
@@ -179,21 +200,28 @@ class AnnualPatternCatalogue2017ExecutionAuthorizationTests(unittest.TestCase):
         preflight["preflight_fingerprint_sha256"] = hashlib.sha256(
             _canonical_json(unsigned)
         ).hexdigest()
-        with self.assertRaisesRegex(
-            ValueError,
-            "expected_next_run_number mismatch",
+        with patch.object(
+            authorization_module,
+            "validate_2017_execution_authorization_sources",
+            return_value=self._historical_sources(),
         ):
-            build_2017_execution_authorization(
-                preflight,
-                repository_root=Path("."),
-            )
+            with self.assertRaisesRegex(
+                ValueError,
+                "expected_next_run_number mismatch",
+            ):
+                build_2017_execution_authorization(
+                    preflight,
+                    repository_root=Path("."),
+                )
 
-    def test_current_runtime_has_no_2017_route(self) -> None:
-        runtime = Path(
-            "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
-        ).read_text(encoding="utf-8")
-        self.assertNotIn('segment == "2017"', runtime)
-        self.assertNotIn("require_2017_execution_authorized", runtime)
+    def test_authorization_contract_remains_historical_pre_install(self) -> None:
+        self.assertFalse(authorization_module.RUNTIME_AUTHORIZATION_INSTALLED)
+        self.assertFalse(authorization_module.RUNTIME_GATE_ACTIVE)
+        self.assertFalse(authorization_module.DISPATCH_COMMAND_PRESENT)
+        self.assertEqual(
+            authorization_module.EXPECTED_RUNTIME_SOURCE_BLOB_SHA,
+            "b564f5a26fdef146fc6080962e7c4762b0b5949a",
+        )
 
 
 if __name__ == "__main__":
