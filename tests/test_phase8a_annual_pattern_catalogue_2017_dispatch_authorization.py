@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import unittest
 
@@ -99,6 +100,10 @@ def _preflight() -> dict[str, object]:
     return value
 
 
+@unittest.skipIf(
+    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
+    "DEC-541 requires the installed DEC-539 runtime and active annual workflow",
+)
 class AnnualPatternCatalogue2017DispatchAuthorizationTests(unittest.TestCase):
     def test_sources_pin_dec540_and_installed_runtime(self) -> None:
         source = validate_2017_dispatch_authorization_sources(
