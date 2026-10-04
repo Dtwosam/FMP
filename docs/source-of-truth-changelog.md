@@ -2077,3 +2077,7 @@
 ## 2026-10-04 — Annual recovery clean-install repair
 
 Recorded failed DEC-517 recovery run `37190929052` as pre-dispatch evidence. Replaced editable installs in the live annual successor workflows with dependency-only installs while retaining `PYTHONPATH=src` and clean-checkout guards. Rebound the workflow/source SHA chain through DEC-522. Annual run 376 remains unconsumed.
+
+## 2026-10-04 — Run-376 failure and run-number rebind
+
+Recorded annual run `37191637168` as an immutable preflight failure (DEC-526), added a corrected installed-workflow validator that distinguishes the historical dormant blob from the DEC-520 active blob, authorized only fresh 2015 run 377 / attempt 1 (DEC-527), and rebound the existing 2016 execution/evidence chain to run 378. No rerun/retry or trading authority was introduced.
