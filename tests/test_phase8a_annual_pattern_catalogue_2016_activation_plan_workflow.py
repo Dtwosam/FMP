@@ -31,7 +31,7 @@ class AnnualCatalogue2016ActivationPlanWorkflowTests(unittest.TestCase):
     def test_workflow_pins_exact_dec502_to_dec507_chain(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "6c2ca7b24e934d3626ea60779f223a4f55a6a6c7",
+            "70f1460f0b5a703b084c40e2c361a229f876898e",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
             "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
             "b6764addd7b471e65f05428f745fa93051bd8785",
