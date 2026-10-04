@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import unittest
 
@@ -97,6 +98,10 @@ def _authorization() -> dict[str, object]:
     return value
 
 
+@unittest.skipIf(
+    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
+    "DEC-536 requires the installed annual workflow/runtime state",
+)
 class AnnualPatternCatalogue2017RuntimeAuthorizationPlanTests(unittest.TestCase):
     def test_sources_pin_authorization_runtime_workflow_and_templates(self) -> None:
         source = validate_2017_runtime_authorization_plan_sources(
