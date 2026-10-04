@@ -186,7 +186,7 @@ class AnnualPatternCatalogue2016Run377EvidenceReviewTests(unittest.TestCase):
         )
         self.assertEqual(
             source["dispatch_executor_workflow_blob_sha"],
-            "078aca795be06a9d28e19b584b7122e975476711",
+            "33562020bc8c598d70a5ac60089c115618e26694",
         )
 
     def test_successful_run377_is_bound_read_only(self) -> None:
