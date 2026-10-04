@@ -186,6 +186,7 @@ def _validate_dispatch_receipt(
         "source_preflight_fingerprint_sha256": (
             SOURCE_PREFLIGHT_FINGERPRINT_SHA256
         ),
+        "dispatch_head_sha": expected_head_sha,
         "annual_segment_label": ANNUAL_SEGMENT_LABEL,
         "previous_annual_freeze_run_id": EXPECTED_PREVIOUS_ANNUAL_FREEZE_RUN_ID,
         "run_id": expected_run_id,
