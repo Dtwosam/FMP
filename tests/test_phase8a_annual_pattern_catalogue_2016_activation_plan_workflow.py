@@ -31,13 +31,13 @@ class AnnualCatalogue2016ActivationPlanWorkflowTests(unittest.TestCase):
     def test_workflow_pins_exact_dec502_to_dec507_chain(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "4d5813b301ab8e22fb2e1e9da36517dfe99f25bb",
+            "6c2ca7b24e934d3626ea60779f223a4f55a6a6c7",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-            "bbb3bba32c3677d3bd971a2744eb93498868433b",
-            "9c89eb64c1e0ecda56fd9cfe0b26516e4a20abc3",
-            "f3d93ba4701a5d9d80005664445104d1105ff25f",
-            "6d8b4342118eca13872d89478efe052cd78b9c0a",
-            "e5bb5dce82111a29997783fcdc4df0f70883700e",
+            "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
+            "b6764addd7b471e65f05428f745fa93051bd8785",
+            "b60c03e7f2e18f62df04ec450a36aec5d9985cca",
+            "c52a88ff3159de35160c11061403172689433330",
+            "0545f0474bdead4e479c07b9af889db842bf00dd",
             "2170a62c5d5ad91507796d10cfd7cf8d0c1e52f7",
             "b4fd008939440791e52de0ae7c0015c4ee9576b8",
             "5af3c5787c8904e3371f7840d2a71aa588f16eb9",
@@ -77,11 +77,11 @@ class AnnualCatalogue2016ActivationPlanWorkflowTests(unittest.TestCase):
         )
         self.assertIn("annual_pattern_catalogue_runtime.py", text)
         self.assertIn(
-            "e6ef74733669ceb8cab13a1e0d25a236526266e3",
+            "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff",
             text,
         )
         self.assertIn(
-            "995bb46ddd95563f904243c78ae4fc3cf3308968",
+            "b564f5a26fdef146fc6080962e7c4762b0b5949a",
             text,
         )
         self.assertIn(

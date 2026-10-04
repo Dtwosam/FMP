@@ -13,14 +13,14 @@ WORKFLOW = Path(
 class AnnualCatalogue2016Run377DispatchExecutorTests(unittest.TestCase):
     def _dispatch_job(self) -> str:
         text = WORKFLOW.read_text(encoding="utf-8")
-        marker = "  dispatch-exact-2016-run-377:\n"
+        marker = "  dispatch-exact-2016-run-378:\n"
         self.assertIn(marker, text)
         return text.split(marker, 1)[1]
 
     def test_dec521_runs_only_after_install_and_read_only_plan(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "  dispatch-exact-2016-run-377:\n"
+            "  dispatch-exact-2016-run-378:\n"
             "    needs:\n"
             "      - install-runtime-authorization\n"
             "      - compile-post-install-dispatch-plan",
@@ -47,8 +47,8 @@ class AnnualCatalogue2016Run377DispatchExecutorTests(unittest.TestCase):
             self.assertIn(name, job)
         for blob in (
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-            "e6ef74733669ceb8cab13a1e0d25a236526266e3",
-            "995bb46ddd95563f904243c78ae4fc3cf3308968",
+            "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff",
+            "b564f5a26fdef146fc6080962e7c4762b0b5949a",
         ):
             self.assertIn(blob, job)
         self.assertIn(
@@ -60,26 +60,26 @@ class AnnualCatalogue2016Run377DispatchExecutorTests(unittest.TestCase):
             job,
         )
 
-    def test_dec521_requires_exact_376_to_377_slot(self) -> None:
+    def test_dec521_requires_exact_377_to_378_slot(self) -> None:
         job = self._dispatch_job()
         self.assertIn(
-            'assert max(row["run_number"] for row in all_runs) == 376',
+            'assert max(row["run_number"] for row in all_runs) == 377',
             job,
         )
         self.assertIn(
-            'assert not any(row["run_number"] >= 377 for row in all_runs)',
+            'assert not any(row["run_number"] >= 378 for row in all_runs)',
             job,
         )
-        self.assertIn("assert len(dispatch_runs) == 2", job)
+        self.assertIn("assert len(dispatch_runs) == 3", job)
         self.assertIn('row.get("run_number") == 376', job)
         self.assertIn('first[0]["id"] == 37126711695', job)
         self.assertIn('first[0]["conclusion"] == "failure"', job)
         self.assertIn(
-            "select(.run_number >= 377)",
+            "select(.run_number >= 378)",
             job,
         )
 
-    def test_dec521_dispatches_exactly_one_2016_run_377(self) -> None:
+    def test_dec521_dispatches_exactly_one_2016_run_378(self) -> None:
         job = self._dispatch_job()
         command = "gh workflow run phase8a-annual-pattern-catalogue.yml"
         self.assertEqual(job.count(command), 1)
@@ -89,16 +89,16 @@ class AnnualCatalogue2016Run377DispatchExecutorTests(unittest.TestCase):
             '-f previous_annual_freeze_run_id="$PREVIOUS_RUN_ID"',
             job,
         )
-        self.assertIn('row.get("run_number") == 377', job)
+        self.assertIn('row.get("run_number") == 378', job)
         self.assertIn('row.get("run_attempt") == 1', job)
-        self.assertIn('row.get("run_number") >= 378', job)
+        self.assertIn('row.get("run_number") >= 379', job)
         self.assertNotIn("-f annual_segment_label=2015", job)
 
     def test_dec521_receipt_keeps_later_authority_locked(self) -> None:
         job = self._dispatch_job()
         self.assertIn('"decision": "DEC-521"', job)
         self.assertIn(
-            '"stage": "ANNUAL_CATALOGUE_2016_RUN_377_DISPATCH_SUBMITTED"',
+            '"stage": "ANNUAL_CATALOGUE_2016_RUN_378_DISPATCH_SUBMITTED"',
             job,
         )
         self.assertIn('"dispatch_submitted": True', job)
@@ -107,7 +107,7 @@ class AnnualCatalogue2016Run377DispatchExecutorTests(unittest.TestCase):
             "rerun_authorized",
             "retry_authorized",
             "replacement_run_authorized",
-            "run_378_or_later_authorized",
+            "run_379_or_later_authorized",
             "next_segment_execution_authorized",
             "cross_year_result_production_authorized",
             "strategy_v1_synthesis_authorized",

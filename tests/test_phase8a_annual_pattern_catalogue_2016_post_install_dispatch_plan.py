@@ -14,7 +14,7 @@ class AnnualCatalogue2016PostInstallDispatchPlanTests(unittest.TestCase):
     def _post_install_job(self) -> str:
         text = WORKFLOW.read_text(encoding="utf-8")
         marker = "  compile-post-install-dispatch-plan:\n"
-        next_marker = "  dispatch-exact-2016-run-377:\n"
+        next_marker = "  dispatch-exact-2016-run-378:\n"
         self.assertIn(marker, text)
         self.assertIn(next_marker, text)
         return text.split(marker, 1)[1].split(next_marker, 1)[0]
@@ -48,12 +48,12 @@ class AnnualCatalogue2016PostInstallDispatchPlanTests(unittest.TestCase):
         self.assertIn(
             'test "$(git hash-object '
             'src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" '
-            '= "e6ef74733669ceb8cab13a1e0d25a236526266e3"',
+            '= "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff"',
             job,
         )
         self.assertIn(
             'test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" '
-            '= "995bb46ddd95563f904243c78ae4fc3cf3308968"',
+            '= "b564f5a26fdef146fc6080962e7c4762b0b5949a"',
             job,
         )
 
@@ -73,10 +73,10 @@ class AnnualCatalogue2016PostInstallDispatchPlanTests(unittest.TestCase):
         self.assertIn('assert p509["decision"] == "DEC-509"', job)
         self.assertIn('assert a510["decision"] == "DEC-510"', job)
         self.assertIn('assert p511["decision"] == "DEC-511"', job)
-        self.assertIn('assert p511["expected_run_number"] == 377', job)
+        self.assertIn('assert p511["expected_run_number"] == 378', job)
         self.assertIn('assert p511["expected_run_attempt"] == 1', job)
 
-    def test_dec519_freezes_run3_without_dispatch(self) -> None:
+    def test_dec519_freezes_run378_without_dispatch(self) -> None:
         job = self._post_install_job()
         self.assertIn('assert p511["dispatch_ref"] == "main"', job)
         self.assertIn(

@@ -12,12 +12,6 @@ from .annual_pattern_catalogue_2015_execution_authorization import (
 from .annual_pattern_catalogue_2015_replacement_execution_authorization import (
     require_2015_replacement_execution_authorized,
 )
-from .annual_pattern_catalogue_2015_run377_execution_authorization import (
-    require_2015_run377_execution_authorized,
-)
-from .annual_pattern_catalogue_2016_runtime_authorization import (
-    require_2016_execution_authorized,
-)
 from .annual_pattern_catalogue_adapter import (
     AdaptedAnnualCatalogueSegmentInputs,
     adapt_verified_annual_catalogue_segment,
@@ -86,30 +80,21 @@ def _validate_cell(symbol: str, timeframe: str, horizon_minutes: int) -> None:
         raise ValueError("DEC-475 unsupported horizon")
 
 
-def _workflow_dispatch_inputs_from_event() -> tuple[str | None, int | None]:
+def _workflow_dispatch_segment_from_event() -> str | None:
     event_path = os.environ.get("GITHUB_EVENT_PATH")
     if not event_path:
-        return None, None
+        return None
     try:
         value = json.loads(Path(event_path).read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        raise PermissionError("annual catalogue workflow dispatch metadata is invalid") from exc
+        raise PermissionError("DEC-493 workflow dispatch event metadata is invalid") from exc
     if not isinstance(value, Mapping):
-        raise PermissionError("annual catalogue workflow dispatch metadata is malformed")
+        raise PermissionError("DEC-493 workflow dispatch event metadata is malformed")
     inputs = value.get("inputs")
     if not isinstance(inputs, Mapping):
-        return None, None
+        return None
     segment = inputs.get("annual_segment_label")
-    raw_previous = inputs.get("previous_annual_freeze_run_id")
-    previous: int | None = None
-    if isinstance(raw_previous, str) and raw_previous:
-        try:
-            previous = int(raw_previous)
-        except ValueError as exc:
-            raise PermissionError(
-                "annual catalogue previous freeze run id is invalid"
-            ) from exc
-    return (segment if isinstance(segment, str) else None), previous
+    return segment if isinstance(segment, str) else None
 
 
 def _workflow_run_identity() -> tuple[int | None, int | None]:
@@ -129,51 +114,21 @@ def require_historical_catalogue_execution_authorized(
     annual_segment_label: str | None = None,
     run_number: int | None = None,
     run_attempt: int | None = None,
-    previous_annual_freeze_run_id: int | None = None,
 ) -> None:
     code_commit = _validate_commit(code_commit)
 
-    event_segment, event_previous_freeze_run_id = (
-        _workflow_dispatch_inputs_from_event()
-    )
-    segment = annual_segment_label or event_segment
+    segment = annual_segment_label or _workflow_dispatch_segment_from_event()
     env_run_number, env_run_attempt = _workflow_run_identity()
     effective_run_number = run_number if run_number is not None else env_run_number
     effective_run_attempt = run_attempt if run_attempt is not None else env_run_attempt
-    effective_previous_freeze_run_id = (
-        previous_annual_freeze_run_id
-        if previous_annual_freeze_run_id is not None
-        else event_previous_freeze_run_id
-    )
 
     if (
         segment is not None
         and effective_run_number is not None
         and effective_run_attempt is not None
     ):
-        if segment == "2016" and effective_run_number == 378:
-            if effective_previous_freeze_run_id is None:
-                raise PermissionError(
-                    "DEC-505 2016 execution requires previous annual freeze run id"
-                )
-            require_2016_execution_authorized(
-                annual_segment_label=segment,
-                code_commit=code_commit,
-                run_number=effective_run_number,
-                run_attempt=effective_run_attempt,
-                previous_annual_freeze_run_id=effective_previous_freeze_run_id,
-            )
-            return
         if effective_run_number == 376:
             require_2015_replacement_execution_authorized(
-                annual_segment_label=segment,
-                code_commit=code_commit,
-                run_number=effective_run_number,
-                run_attempt=effective_run_attempt,
-            )
-            return
-        if effective_run_number == 377:
-            require_2015_run377_execution_authorized(
                 annual_segment_label=segment,
                 code_commit=code_commit,
                 run_number=effective_run_number,

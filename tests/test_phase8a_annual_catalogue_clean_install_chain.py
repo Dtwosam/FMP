@@ -27,18 +27,20 @@ class AnnualCatalogueCleanInstallChainTests(unittest.TestCase):
                 self.assertIn("scikit-learn==1.9.1", text)
                 self.assertIn('git status --porcelain', text)
 
-    def test_recovery_v2_preserves_failed_v1_provenance(self) -> None:
+    def test_recovery_v3_preserves_failed_run376_provenance(self) -> None:
         text = (REPOSITORY_ROOT / WORKFLOWS[0]).read_text(encoding="utf-8")
-        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
-        self.assertIn("37190929052", text)
-        self.assertIn("5417fddc015be92ed843de40be097381367b2c24", text)
-        self.assertIn('"conclusion": "failure"', text)
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "3"', text)
+        self.assertIn("37191637168", text)
+        self.assertIn("4c14fa7db6eb812b89ecb79201f7e298fa9c04f3", text)
+        self.assertIn("build_2015_run376_failure_receipt", text)
+        self.assertIn("build_2015_run377_execution_authorization", text)
+        self.assertIn('assert failed["conclusion"] == "failure"', text)
         self.assertEqual(
             text.count("gh workflow run phase8a-annual-pattern-catalogue.yml"),
             1,
         )
-        self.assertIn('row.get("run_number") == 376', text)
-        self.assertIn('row.get("run_number") >= 377', text)
+        self.assertIn('row.get("run_number") == 377', text)
+        self.assertIn('row["run_number"] >= 378', text)
 
 
 if __name__ == "__main__":

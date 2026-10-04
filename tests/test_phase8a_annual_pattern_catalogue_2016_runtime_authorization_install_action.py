@@ -27,13 +27,13 @@ def _source_preflight() -> dict[str, object]:
     return {
         "decision": "DEC-503",
         "version": "fmp-annual-catalogue-2016-execution-preflight-v1",
-        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
-        "runtime_source_blob_sha": "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+        "runtime_binding_source_blob_sha": "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
+        "runtime_source_blob_sha": "f1fa50e7c862354931d919fe7da241de863f6834",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-        "annual_workflow_run_count": 2,
+        "annual_workflow_run_count": 3,
         "failed_first_run_id": 37126711695,
         "successful_2015_run_id": 424242,
-        "successful_2015_run_number": 376,
+        "successful_2015_run_number": 377,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": "b" * 40,
         "stage": (
@@ -49,7 +49,7 @@ def _source_preflight() -> dict[str, object]:
         "previous_runtime_binding_fingerprint": "1" * 64,
         "previous_runtime_freeze_fingerprint": "2" * 64,
         "previous_annual_freeze_evidence_fingerprint": "3" * 64,
-        "expected_next_run_number": 377,
+        "expected_next_run_number": 378,
         "expected_next_run_attempt": 1,
         "annual_workflow_dispatch_authorized": False,
         "historical_artifact_read_authorized": False,
@@ -100,7 +100,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallActionTests(
         )
         self.assertEqual(
             source["install_preflight_source_blob_sha"],
-            "6d8b4342118eca13872d89478efe052cd78b9c0a",
+            "c52a88ff3159de35160c11061403172689433330",
         )
 
     def test_action_is_exact_two_file_mutation_and_non_dispatching(self) -> None:
@@ -131,7 +131,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallActionTests(
         )
         self.assertEqual(
             update["expected_current_blob_sha"],
-            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+            "f1fa50e7c862354931d919fe7da241de863f6834",
         )
         self.assertTrue(value["repository_mutation_authorized"])
         self.assertFalse(value["runtime_authorization_installed"])

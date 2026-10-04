@@ -69,13 +69,13 @@ jobs:
       - name: Require exact frozen installer sources
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "578c460bcfe94d3b962c1a27f544b3536cc8a046"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "e5bb5dce82111a29997783fcdc4df0f70883700e"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "7da956910e24e788a2f2a60834c04048a660bc75"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2016-activation-plan.yml)" = "43762552a626140bcca8fed97ca3505c320e9a33"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_action.py)" = "0545f0474bdead4e479c07b9af889db842bf00dd"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "3a5614af2393378ed664c4802806147d79ccd8c7"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py)" = "7d355784598c48d39ac0d3964145b46b878d18a3"
-          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2016_runtime_authorization.py.disabled)" = "e6ef74733669ceb8cab13a1e0d25a236526266e3"
-          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled)" = "995bb46ddd95563f904243c78ae4fc3cf3308968"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2016_runtime_authorization.py.disabled)" = "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled)" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "f1fa50e7c862354931d919fe7da241de863f6834"
           test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
           test ! -e src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py
 
@@ -164,7 +164,7 @@ jobs:
           assert action["repository_full_name"] == "Dtwosam/FMP"
           assert action["expected_head_sha"] == os.environ["SOURCE_HEAD_SHA"]
           assert action["annual_segment_label"] == "2016"
-          assert action["expected_run_number"] == 377
+          assert action["expected_run_number"] == 378
           assert action["expected_run_attempt"] == 1
           assert action["action_count"] == 2
           assert action["repository_mutation_authorized"] is True
@@ -187,10 +187,10 @@ jobs:
                   "annual_pattern_catalogue_2016_runtime_authorization.py.disabled"
               ),
               "content_source_blob_sha": (
-                  "e6ef74733669ceb8cab13a1e0d25a236526266e3"
+                  "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff"
               ),
               "expected_result_blob_sha": (
-                  "e6ef74733669ceb8cab13a1e0d25a236526266e3"
+                  "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff"
               ),
           }
           assert update == {
@@ -198,17 +198,17 @@ jobs:
               "operation": "update",
               "target_path": "src/fmp/discovery/annual_pattern_catalogue_runtime.py",
               "expected_current_blob_sha": (
-                  "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a"
+                  "f1fa50e7c862354931d919fe7da241de863f6834"
               ),
               "content_source_path": (
                   "docs/superpowers/templates/"
                   "annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled"
               ),
               "content_source_blob_sha": (
-                  "995bb46ddd95563f904243c78ae4fc3cf3308968"
+                  "b564f5a26fdef146fc6080962e7c4762b0b5949a"
               ),
               "expected_result_blob_sha": (
-                  "995bb46ddd95563f904243c78ae4fc3cf3308968"
+                  "b564f5a26fdef146fc6080962e7c4762b0b5949a"
               ),
           }
           PY
@@ -227,8 +227,8 @@ jobs:
           cp             docs/superpowers/templates/annual_pattern_catalogue_2016_runtime_authorization.py.disabled             src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py
           cp             docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled             src/fmp/discovery/annual_pattern_catalogue_runtime.py
 
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" = "e6ef74733669ceb8cab13a1e0d25a236526266e3"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "995bb46ddd95563f904243c78ae4fc3cf3308968"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" = "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
 
           git diff --name-only > "$RUNNER_TEMP/changed-files.txt"
           printf '%s\n'             "src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py"             "src/fmp/discovery/annual_pattern_catalogue_runtime.py"             > "$RUNNER_TEMP/expected-changed-files.txt"
@@ -256,7 +256,7 @@ jobs:
         run: |
           set -euo pipefail
           INSTALL_COMMIT_SHA="$(cat "$RUNNER_TEMP/install-commit-sha.txt")"
-          python scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py             review             --install-action-json "$RUNNER_TEMP/dec507-install-action.json"             --install-commit-sha "$INSTALL_COMMIT_SHA"             --changed-file src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py             --changed-file src/fmp/discovery/annual_pattern_catalogue_runtime.py             --installed-gate-blob-sha e6ef74733669ceb8cab13a1e0d25a236526266e3             --installed-runtime-blob-sha 995bb46ddd95563f904243c78ae4fc3cf3308968             --out "$RUNNER_TEMP/dec508-install-receipt.json"
+          python scripts/phase8a_annual_pattern_catalogue_2016_runtime_authorization_install_receipt.py             review             --install-action-json "$RUNNER_TEMP/dec507-install-action.json"             --install-commit-sha "$INSTALL_COMMIT_SHA"             --changed-file src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py             --changed-file src/fmp/discovery/annual_pattern_catalogue_runtime.py             --installed-gate-blob-sha 4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff             --installed-runtime-blob-sha b564f5a26fdef146fc6080962e7c4762b0b5949a             --out "$RUNNER_TEMP/dec508-install-receipt.json"
 
       - name: Verify post-install main and receipt
         run: |
@@ -281,7 +281,7 @@ jobs:
           assert receipt["decision"] == "DEC-508"
           assert receipt["install_commit_sha"] == install_sha
           assert receipt["annual_segment_label"] == "2016"
-          assert receipt["expected_run_number"] == 377
+          assert receipt["expected_run_number"] == 378
           assert receipt["expected_run_attempt"] == 1
           assert receipt["changed_file_count"] == 2
           assert receipt["runtime_authorization_installed"] is True
@@ -348,8 +348,8 @@ jobs:
           set -euo pipefail
           INSTALL_COMMIT_SHA="$(cat "$RUNNER_TEMP/dec518-evidence/install-commit-sha.txt")"
           test "$(git rev-parse HEAD)" = "$INSTALL_COMMIT_SHA"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" = "e6ef74733669ceb8cab13a1e0d25a236526266e3"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "995bb46ddd95563f904243c78ae4fc3cf3308968"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" = "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
 
           python - <<'PY'
           import json
@@ -376,7 +376,7 @@ jobs:
 
           assert binding["decision"] == "DEC-502"
           assert binding["annual_segment_label"] == "2015"
-          assert binding["run_number"] == 376
+          assert binding["run_number"] == 377
           assert binding["run_attempt"] == 1
           assert binding["run_conclusion"] == "success"
           assert binding["runtime_evidence_bound"] is True
@@ -432,13 +432,13 @@ jobs:
           )
 
           assert p509["decision"] == "DEC-509"
-          assert p509["annual_workflow_run_count"] == 2
-          assert p509["expected_run_number"] == 377
+          assert p509["annual_workflow_run_count"] == 3
+          assert p509["expected_run_number"] == 378
           assert p509["expected_run_attempt"] == 1
           assert p509["annual_workflow_dispatch_authorized"] is False
 
           assert a510["decision"] == "DEC-510"
-          assert a510["authorization_scope"] == "2016_run_377_attempt_1_only"
+          assert a510["authorization_scope"] == "2016_run_378_attempt_1_only"
           assert a510["annual_workflow_dispatch_authorized"] is True
           assert a510["dispatch_command_present"] is False
           assert a510["dispatch_action_executed"] is False
@@ -448,7 +448,7 @@ jobs:
           assert p511["dispatch_ref"] == "main"
           assert p511["dispatch_input_annual_segment_label"] == "2016"
           assert p511["dispatch_input_previous_annual_freeze_run_id"] == str(binding["run_id"])
-          assert p511["expected_run_number"] == 377
+          assert p511["expected_run_number"] == 378
           assert p511["expected_run_attempt"] == 1
           assert p511["dispatch_parameters_frozen"] is True
           assert p511["annual_workflow_dispatch_authorized"] is True
@@ -475,7 +475,7 @@ jobs:
             ${{ runner.temp }}/dec511-dispatch-action-preflight.json
           if-no-files-found: error
 
-  dispatch-exact-2016-run-377:
+  dispatch-exact-2016-run-378:
     needs:
       - install-runtime-authorization
       - compile-post-install-dispatch-plan
@@ -510,8 +510,8 @@ jobs:
           test "$(git rev-parse HEAD)" = "$INSTALL_COMMIT_SHA"
           test "$(git rev-parse origin/main)" = "$INSTALL_COMMIT_SHA"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" = "e6ef74733669ceb8cab13a1e0d25a236526266e3"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "995bb46ddd95563f904243c78ae4fc3cf3308968"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py)" = "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
 
           python - <<'PY'
           import json
@@ -543,23 +543,23 @@ jobs:
 
           assert binding["decision"] == "DEC-502"
           assert binding["annual_segment_label"] == "2015"
-          assert binding["run_number"] == 376
+          assert binding["run_number"] == 377
           assert binding["run_attempt"] == 1
           assert binding["run_conclusion"] == "success"
           assert binding["runtime_evidence_bound"] is True
 
           assert p509["decision"] == "DEC-509"
           assert p509["expected_head_sha"] == install_sha
-          assert p509["annual_workflow_run_count"] == 2
+          assert p509["annual_workflow_run_count"] == 3
           assert p509["successful_2015_run_id"] == binding["run_id"]
-          assert p509["successful_2015_run_number"] == 376
-          assert p509["expected_run_number"] == 377
+          assert p509["successful_2015_run_number"] == 377
+          assert p509["expected_run_number"] == 378
           assert p509["expected_run_attempt"] == 1
           assert p509["annual_workflow_dispatch_authorized"] is False
 
           assert a510["decision"] == "DEC-510"
           assert a510["expected_head_sha"] == install_sha
-          assert a510["authorization_scope"] == "2016_run_377_attempt_1_only"
+          assert a510["authorization_scope"] == "2016_run_378_attempt_1_only"
           assert a510["annual_workflow_dispatch_authorized"] is True
           assert a510["dispatch_command_present"] is False
           assert a510["dispatch_action_executed"] is False
@@ -575,7 +575,7 @@ jobs:
           assert p511["dispatch_input_previous_annual_freeze_run_id"] == str(
               binding["run_id"]
           )
-          assert p511["expected_run_number"] == 377
+          assert p511["expected_run_number"] == 378
           assert p511["expected_run_attempt"] == 1
           assert p511["dispatch_parameters_frozen"] is True
           assert p511["annual_workflow_dispatch_authorized"] is True
@@ -589,15 +589,15 @@ jobs:
           assert p511["trading_authorized"] is False
           PY
 
-      - name: Require run 376 is still the exact latest annual workflow run
+      - name: Require run 377 is still the exact latest annual workflow run
         run: |
           set -euo pipefail
           gh api \
             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?per_page=100" \
-            > "$RUNNER_TEMP/annual-all-runs-before-377.json"
+            > "$RUNNER_TEMP/annual-all-runs-before-378.json"
           gh api \
             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
-            > "$RUNNER_TEMP/annual-dispatch-runs-before-377.json"
+            > "$RUNNER_TEMP/annual-dispatch-runs-before-378.json"
 
           python - <<'PY'
           import json
@@ -613,25 +613,25 @@ jobs:
               encoding="utf-8"
           ).strip()
           all_runs = json.loads(
-              (temp / "annual-all-runs-before-377.json").read_text(
+              (temp / "annual-all-runs-before-378.json").read_text(
                   encoding="utf-8"
               )
           )["workflow_runs"]
           dispatch_runs = json.loads(
-              (temp / "annual-dispatch-runs-before-377.json").read_text(
+              (temp / "annual-dispatch-runs-before-378.json").read_text(
                   encoding="utf-8"
               )
           )["workflow_runs"]
 
           assert all_runs
-          assert max(row["run_number"] for row in all_runs) == 376
-          assert not any(row["run_number"] >= 377 for row in all_runs)
+          assert max(row["run_number"] for row in all_runs) == 377
+          assert not any(row["run_number"] >= 378 for row in all_runs)
 
-          targets = [
+          predecessor = [
               row
               for row in all_runs
               if row.get("id") == binding["run_id"]
-              and row.get("run_number") == 376
+              and row.get("run_number") == 377
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
@@ -639,18 +639,25 @@ jobs:
               and row.get("status") == "completed"
               and row.get("conclusion") == "success"
           ]
-          assert len(targets) == 1
+          assert len(predecessor) == 1
 
-          assert len(dispatch_runs) == 2
+          assert len(dispatch_runs) == 3
           first = [row for row in dispatch_runs if row.get("run_number") == 1]
-          replacement = [
+          failed_376 = [
               row for row in dispatch_runs if row.get("run_number") == 376
+          ]
+          successful_377 = [
+              row for row in dispatch_runs if row.get("run_number") == 377
           ]
           assert len(first) == 1
           assert first[0]["id"] == 37126711695
           assert first[0]["conclusion"] == "failure"
-          assert len(replacement) == 1
-          assert replacement[0]["id"] == binding["run_id"]
+          assert len(failed_376) == 1
+          assert failed_376[0]["id"] == 37191637168
+          assert failed_376[0]["conclusion"] == "failure"
+          assert len(successful_377) == 1
+          assert successful_377[0]["id"] == binding["run_id"]
+          assert successful_377[0]["conclusion"] == "success"
 
           main = json.loads(
               (plan_root / "main-branch.json").read_text(encoding="utf-8")
@@ -658,7 +665,7 @@ jobs:
           assert main["commit"]["sha"] == install_sha
           PY
 
-      - name: Recheck slot and dispatch exact 2016 run 377
+      - name: Recheck slot and dispatch exact 2016 run 378
         run: |
           set -euo pipefail
           INSTALL_COMMIT_SHA="$(
@@ -680,14 +687,14 @@ jobs:
           )"
 
           gh api "repos/$GITHUB_REPOSITORY/branches/main" \
-            > "$RUNNER_TEMP/main-before-377.json"
-          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-before-377.json")" = "$INSTALL_COMMIT_SHA"
+            > "$RUNNER_TEMP/main-before-378.json"
+          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-before-378.json")" = "$INSTALL_COMMIT_SHA"
 
           gh api \
             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?per_page=100" \
             > "$RUNNER_TEMP/annual-all-runs-recheck.json"
           test "$(
-            jq '[.workflow_runs[] | select(.run_number >= 377)] | length' \
+            jq '[.workflow_runs[] | select(.run_number >= 378)] | length' \
               "$RUNNER_TEMP/annual-all-runs-recheck.json"
           )" = "0"
 
@@ -696,7 +703,7 @@ jobs:
             -f annual_segment_label=2016 \
             -f previous_annual_freeze_run_id="$PREVIOUS_RUN_ID"
 
-      - name: Resolve exact 2016 run 377 attempt 1
+      - name: Resolve exact 2016 run 378 attempt 1
         run: |
           set -euo pipefail
           INSTALL_COMMIT_SHA="$(
@@ -706,7 +713,7 @@ jobs:
           for _ in $(seq 1 30); do
             gh api \
               "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?per_page=100" \
-              > "$RUNNER_TEMP/annual-runs-after-377.json"
+              > "$RUNNER_TEMP/annual-runs-after-378.json"
             if python - <<'PY'
           import json
           import os
@@ -717,14 +724,14 @@ jobs:
               temp / "dec519-plan/install-commit-sha.txt"
           ).read_text(encoding="utf-8").strip()
           runs = json.loads(
-              (temp / "annual-runs-after-377.json").read_text(
+              (temp / "annual-runs-after-378.json").read_text(
                   encoding="utf-8"
               )
           )["workflow_runs"]
           target = [
               row
               for row in runs
-              if row.get("run_number") == 377
+              if row.get("run_number") == 378
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
@@ -734,7 +741,7 @@ jobs:
               row
               for row in runs
               if isinstance(row.get("run_number"), int)
-              and row.get("run_number") >= 378
+              and row.get("run_number") >= 379
           ]
           raise SystemExit(0 if len(target) == 1 and later == [] else 1)
           PY
@@ -746,7 +753,7 @@ jobs:
           done
           test "$found" = "1"
 
-      - name: Write immutable DEC-521 run-377 dispatch receipt
+      - name: Write immutable DEC-521 run-378 dispatch receipt
         run: |
           python - <<'PY'
           import json
@@ -762,14 +769,14 @@ jobs:
               encoding="utf-8"
           ).strip()
           runs = json.loads(
-              (temp / "annual-runs-after-377.json").read_text(
+              (temp / "annual-runs-after-378.json").read_text(
                   encoding="utf-8"
               )
           )["workflow_runs"]
           targets = [
               row
               for row in runs
-              if row.get("run_number") == 377
+              if row.get("run_number") == 378
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
@@ -780,13 +787,13 @@ jobs:
 
           receipt = {
               "decision": "DEC-521",
-              "stage": "ANNUAL_CATALOGUE_2016_RUN_377_DISPATCH_SUBMITTED",
+              "stage": "ANNUAL_CATALOGUE_2016_RUN_378_DISPATCH_SUBMITTED",
               "source_plan_decision": "DEC-519",
               "install_commit_sha": install_sha,
               "previous_annual_freeze_run_id": binding["run_id"],
               "annual_segment_label": "2016",
               "run_id": target["id"],
-              "run_number": 377,
+              "run_number": 378,
               "run_attempt": 1,
               "run_head_sha": install_sha,
               "dispatch_submitted": True,
@@ -794,7 +801,7 @@ jobs:
               "rerun_authorized": False,
               "retry_authorized": False,
               "replacement_run_authorized": False,
-              "run_378_or_later_authorized": False,
+              "run_379_or_later_authorized": False,
               "next_segment_execution_authorized": False,
               "cross_year_result_production_authorized": False,
               "strategy_v1_synthesis_authorized": False,
@@ -805,9 +812,9 @@ jobs:
               "live_order_authorized": False,
               "real_money_authorized": False,
               "trading_authorized": False,
-              "next_gate": "REVIEW_2016_RUN_377_BEFORE_ANY_2017_EXECUTION",
+              "next_gate": "REVIEW_2016_RUN_378_BEFORE_ANY_2017_EXECUTION",
           }
-          (temp / "dec521-run377-dispatch-receipt.json").write_text(
+          (temp / "dec521-run378-dispatch-receipt.json").write_text(
               json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False)
               + "\n",
               encoding="utf-8",
@@ -817,15 +824,15 @@ jobs:
       - name: Upload immutable DEC-521 dispatch evidence
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2016-dec521-run377-dispatch-${{ github.event.workflow_run.id }}
+          name: annual-catalogue-2016-dec521-run378-dispatch-${{ github.event.workflow_run.id }}
           path: |
             ${{ runner.temp }}/dec519-plan/dec511-dispatch-action-preflight.json
             ${{ runner.temp }}/dec519-plan/runtime-binding.json
             ${{ runner.temp }}/dec519-plan/install-commit-sha.txt
-            ${{ runner.temp }}/annual-all-runs-before-377.json
-            ${{ runner.temp }}/annual-dispatch-runs-before-377.json
-            ${{ runner.temp }}/main-before-377.json
-            ${{ runner.temp }}/annual-runs-after-377.json
-            ${{ runner.temp }}/dec521-run377-dispatch-receipt.json
+            ${{ runner.temp }}/annual-all-runs-before-378.json
+            ${{ runner.temp }}/annual-dispatch-runs-before-378.json
+            ${{ runner.temp }}/main-before-378.json
+            ${{ runner.temp }}/annual-runs-after-378.json
+            ${{ runner.temp }}/dec521-run378-dispatch-receipt.json
           if-no-files-found: error
 

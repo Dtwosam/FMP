@@ -14,7 +14,7 @@ from fmp.discovery.annual_pattern_catalogue_2016_execution_preflight import (
 
 
 MAIN_HEAD = "c" * 40
-RUN2_HEAD = "b" * 40
+RUN377_HEAD = "b" * 40
 
 
 def _canonical_json(value: object) -> bytes:
@@ -39,9 +39,9 @@ def _binding() -> dict[str, object]:
         for index in range(18)
     }
     cell_artifacts = {
-        f"phase8a-annual-catalogue-cell-2015-cell-{index:02d}-{RUN2_HEAD}": _artifact(
+        f"phase8a-annual-catalogue-cell-2015-cell-{index:02d}-{RUN377_HEAD}": _artifact(
             2000 + index,
-            f"phase8a-annual-catalogue-cell-2015-cell-{index:02d}-{RUN2_HEAD}",
+            f"phase8a-annual-catalogue-cell-2015-cell-{index:02d}-{RUN377_HEAD}",
             "d" * 64,
         )
         for index in range(18)
@@ -49,8 +49,8 @@ def _binding() -> dict[str, object]:
     value: dict[str, object] = {
         "decision": "DEC-502",
         "version": "fmp-annual-catalogue-2015-runtime-evidence-binding-v1",
-        "run_freeze_source_blob_sha": "8e2a6ab27b4941e3ee12b5463247999200d33e69",
-        "run_review_source_blob_sha": "883f82c85d2738c46284d3675278dc061f4ca07c",
+        "run_freeze_source_blob_sha": "97cfd73d5693046f05104342cb74867d5dc471cc",
+        "run_review_source_blob_sha": "d6935a7b31b028b955f182cf81bc2c123a321852",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "source_freeze_decision": "DEC-501",
         "source_freeze_version": "fmp-annual-catalogue-2015-replacement-run-freeze-v1",
@@ -58,22 +58,22 @@ def _binding() -> dict[str, object]:
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": "2015",
         "run_id": 424242,
-        "run_number": 376,
+        "run_number": 377,
         "run_attempt": 1,
         "run_status": "completed",
         "run_conclusion": "success",
-        "run_head_sha": RUN2_HEAD,
+        "run_head_sha": RUN377_HEAD,
         "preflight_job_id": 9001,
         "freeze_job_id": 9002,
         "cell_job_ids": cell_job_ids,
         "preflight_artifact": _artifact(
             3001,
-            f"phase8a-annual-catalogue-preflight-2015-{RUN2_HEAD}",
+            f"phase8a-annual-catalogue-preflight-2015-{RUN377_HEAD}",
             "e" * 64,
         ),
         "freeze_artifact": _artifact(
             3002,
-            f"phase8a-annual-catalogue-freeze-2015-{RUN2_HEAD}",
+            f"phase8a-annual-catalogue-freeze-2015-{RUN377_HEAD}",
             "f" * 64,
         ),
         "cell_artifacts": cell_artifacts,
@@ -118,13 +118,23 @@ def _runs() -> dict[str, object]:
         "workflow_runs": [
             {
                 "id": 424242,
+                "run_number": 377,
+                "run_attempt": 1,
+                "event": "workflow_dispatch",
+                "head_branch": "main",
+                "head_sha": RUN377_HEAD,
+                "status": "completed",
+                "conclusion": "success",
+            },
+            {
+                "id": 37191637168,
                 "run_number": 376,
                 "run_attempt": 1,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
-                "head_sha": RUN2_HEAD,
+                "head_sha": "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
                 "status": "completed",
-                "conclusion": "success",
+                "conclusion": "failure",
             },
             {
                 "id": 37126711695,
@@ -151,11 +161,11 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
         )
         self.assertEqual(
             source["runtime_binding_source_blob_sha"],
-            "bbb3bba32c3677d3bd971a2744eb93498868433b",
+            "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
         )
         self.assertEqual(
             source["runtime_source_blob_sha"],
-            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+            "f1fa50e7c862354931d919fe7da241de863f6834",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
@@ -181,8 +191,8 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
             value["previous_runtime_binding_fingerprint"],
             binding["binding_fingerprint_sha256"],
         )
-        self.assertEqual(value["annual_workflow_run_count"], 2)
-        self.assertEqual(value["expected_next_run_number"], 377)
+        self.assertEqual(value["annual_workflow_run_count"], 3)
+        self.assertEqual(value["expected_next_run_number"], 378)
         self.assertEqual(value["expected_next_run_attempt"], 1)
         self.assertFalse(value["annual_workflow_dispatch_authorized"])
         self.assertFalse(value["historical_artifact_read_authorized"])
@@ -196,14 +206,14 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
     def test_missing_successful_replacement_run_is_rejected(self) -> None:
         with self.assertRaisesRegex(
             ValueError,
-            "exactly two prior annual-catalogue workflow runs",
+            "exactly three prior annual-catalogue workflow runs",
         ):
             build_2016_execution_preflight(
                 repository_root=Path("."),
                 runtime_binding=_binding(),
                 main_branch=_main(),
                 annual_workflow_runs={
-                    "workflow_runs": [_runs()["workflow_runs"][1]]
+                    "workflow_runs": [_runs()["workflow_runs"][2]]
                 },
                 expected_head_sha=MAIN_HEAD,
             )
@@ -215,7 +225,7 @@ class AnnualPatternCatalogue2016ExecutionPreflightTests(unittest.TestCase):
         rows[0]["head_sha"] = "d" * 40
         with self.assertRaisesRegex(
             ValueError,
-            "successful replacement run head_sha mismatch",
+            "successful 2015 run head_sha mismatch",
         ):
             build_2016_execution_preflight(
                 repository_root=Path("."),

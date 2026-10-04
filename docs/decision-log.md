@@ -10784,3 +10784,7 @@ Next gate:
 ## 2026-10-04 — DEC-517 recovery implementation repair
 
 Recovery workflow run `37190929052` on merge `5417fddc015be92ed843de40be097381367b2c24` failed before dispatch at the post-install clean-checkout guard. The annual catalogue still has only failed manual run 1, so global run 376 remains unconsumed. The v2 implementation keeps the same recovery workflow identity, requires exact workflow run 2 / attempt 1, proves the failed run-1 provenance, replaces editable installs with dependency-only installs across the complete live successor chain, preserves every clean-checkout guard, and repins downstream workflow/source hashes through DEC-522. No later-year, broker, order, real-money, or trading authority is added.
+
+## 2026-10-04 — DEC-526/527/528 post-run376 recovery
+
+Annual catalogue run `37191637168` consumed global run 376 / attempt 1 and failed in the 2015 preflight before cell execution because the historical DEC-491 installed-workflow validator still required the pre-DEC-520 workflow blob. DEC-526 freezes that failure without retry authority. A corrected installed-state validator preserves historical DEC-491 evidence while validating the DEC-520 active workflow. DEC-527 authorizes only a fresh 2015 run 377 / attempt 1; DEC-528 is the exact repository-hosted dispatch receipt. The complete 2016 source/runtime/dispatch/evidence chain is rebound from run 377 to run 378. Run 376 cannot be retried or rerun, and run 379+, 2017+, broker/order/real-money/trading authority remain locked.

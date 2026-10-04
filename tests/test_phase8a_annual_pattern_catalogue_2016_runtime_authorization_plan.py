@@ -21,15 +21,15 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase)
         )
         self.assertEqual(
             source["execution_authorization_source_blob_sha"],
-            "f3d93ba4701a5d9d80005664445104d1105ff25f",
+            "b60c03e7f2e18f62df04ec450a36aec5d9985cca",
         )
         self.assertEqual(
             source["execution_preflight_source_blob_sha"],
-            "9c89eb64c1e0ecda56fd9cfe0b26516e4a20abc3",
+            "b6764addd7b471e65f05428f745fa93051bd8785",
         )
         self.assertEqual(
             source["current_runtime_source_blob_sha"],
-            "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+            "f1fa50e7c862354931d919fe7da241de863f6834",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
@@ -37,11 +37,11 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase)
         )
         self.assertEqual(
             source["dormant_2016_gate_template_blob_sha"],
-            "e6ef74733669ceb8cab13a1e0d25a236526266e3",
+            "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff",
         )
         self.assertEqual(
             source["dormant_runtime_target_template_blob_sha"],
-            "995bb46ddd95563f904243c78ae4fc3cf3308968",
+            "b564f5a26fdef146fc6080962e7c4762b0b5949a",
         )
 
     def test_plan_is_dormant_and_non_authorizing(self) -> None:
@@ -52,7 +52,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase)
         self.assertEqual(value["source_authorization_decision"], "DEC-504")
         self.assertEqual(value["source_preflight_decision"], "DEC-503")
         self.assertEqual(value["annual_segment_label"], "2016")
-        self.assertEqual(value["expected_run_number"], 377)
+        self.assertEqual(value["expected_run_number"], 378)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertTrue(value["previous_annual_freeze_run_required"])
         self.assertFalse(value["runtime_authorization_installed"])
@@ -79,7 +79,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase)
             "annual_pattern_catalogue_2016_runtime_authorization.py.disabled"
         ).read_text(encoding="utf-8")
         self.assertIn('AUTHORIZED_ANNUAL_SEGMENT_LABEL = "2016"', text)
-        self.assertIn("EXPECTED_RUN_NUMBER = 3", text)
+        self.assertIn("EXPECTED_RUN_NUMBER = 378", text)
         self.assertIn("EXPECTED_RUN_ATTEMPT = 1", text)
         self.assertIn("previous_annual_freeze_run_id", text)
         self.assertIn("TRADING_AUTHORIZED = False", text)
@@ -90,7 +90,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase)
             "annual_pattern_catalogue_runtime_with_2016_authorization.py.disabled"
         ).read_text(encoding="utf-8")
         self.assertIn("require_2016_execution_authorized", text)
-        self.assertIn('segment == "2016" and effective_run_number == 377', text)
+        self.assertIn('segment == "2016" and effective_run_number == 378', text)
         self.assertIn(
             "DEC-505 2016 execution requires previous annual freeze run id",
             text,

@@ -15,7 +15,7 @@ from fmp.discovery.annual_pattern_catalogue_2016_dispatch_preflight import (
 
 
 MAIN_HEAD = "e" * 40
-RUN2_HEAD = "b" * 40
+RUN377_HEAD = "b" * 40
 
 
 def _canonical_json(value: object) -> bytes:
@@ -40,9 +40,9 @@ def _binding() -> dict[str, object]:
         for index in range(18)
     }
     cell_artifacts = {
-        f"phase8a-annual-catalogue-cell-2015-cell-{index:02d}-{RUN2_HEAD}": _artifact(
+        f"phase8a-annual-catalogue-cell-2015-cell-{index:02d}-{RUN377_HEAD}": _artifact(
             2000 + index,
-            f"phase8a-annual-catalogue-cell-2015-cell-{index:02d}-{RUN2_HEAD}",
+            f"phase8a-annual-catalogue-cell-2015-cell-{index:02d}-{RUN377_HEAD}",
             "d" * 64,
         )
         for index in range(18)
@@ -50,8 +50,8 @@ def _binding() -> dict[str, object]:
     value: dict[str, object] = {
         "decision": "DEC-502",
         "version": "fmp-annual-catalogue-2015-runtime-evidence-binding-v1",
-        "run_freeze_source_blob_sha": "8e2a6ab27b4941e3ee12b5463247999200d33e69",
-        "run_review_source_blob_sha": "883f82c85d2738c46284d3675278dc061f4ca07c",
+        "run_freeze_source_blob_sha": "97cfd73d5693046f05104342cb74867d5dc471cc",
+        "run_review_source_blob_sha": "d6935a7b31b028b955f182cf81bc2c123a321852",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "source_freeze_decision": "DEC-501",
         "source_freeze_version": "fmp-annual-catalogue-2015-replacement-run-freeze-v1",
@@ -59,22 +59,22 @@ def _binding() -> dict[str, object]:
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": "2015",
         "run_id": 424242,
-        "run_number": 376,
+        "run_number": 377,
         "run_attempt": 1,
         "run_status": "completed",
         "run_conclusion": "success",
-        "run_head_sha": RUN2_HEAD,
+        "run_head_sha": RUN377_HEAD,
         "preflight_job_id": 9001,
         "freeze_job_id": 9002,
         "cell_job_ids": cell_job_ids,
         "preflight_artifact": _artifact(
             3001,
-            f"phase8a-annual-catalogue-preflight-2015-{RUN2_HEAD}",
+            f"phase8a-annual-catalogue-preflight-2015-{RUN377_HEAD}",
             "e" * 64,
         ),
         "freeze_artifact": _artifact(
             3002,
-            f"phase8a-annual-catalogue-freeze-2015-{RUN2_HEAD}",
+            f"phase8a-annual-catalogue-freeze-2015-{RUN377_HEAD}",
             "f" * 64,
         ),
         "cell_artifacts": cell_artifacts,
@@ -118,14 +118,14 @@ def _receipt(
     value: dict[str, object] = {
         "decision": "DEC-508",
         "version": "fmp-annual-catalogue-2016-runtime-authorization-install-receipt-v1",
-        "install_action_source_blob_sha": "e5bb5dce82111a29997783fcdc4df0f70883700e",
+        "install_action_source_blob_sha": "0545f0474bdead4e479c07b9af889db842bf00dd",
         "source_action_decision": "DEC-507",
         "source_action_fingerprint_sha256": "5" * 64,
         "stage": "ANNUAL_CATALOGUE_2016_RUNTIME_AUTHORIZATION_INSTALLED_DISPATCH_LOCKED",
         "repository_full_name": "Dtwosam/FMP",
         "install_commit_sha": install_commit_sha,
         "annual_segment_label": "2016",
-        "expected_run_number": 377,
+        "expected_run_number": 378,
         "expected_run_attempt": 1,
         "previous_annual_freeze_run_id": previous_run_id,
         "changed_file_count": 2,
@@ -136,11 +136,11 @@ def _receipt(
         "installed_gate_source_path": (
             "src/fmp/discovery/annual_pattern_catalogue_2016_runtime_authorization.py"
         ),
-        "installed_gate_source_blob_sha": "e6ef74733669ceb8cab13a1e0d25a236526266e3",
+        "installed_gate_source_blob_sha": "4bb008eedc2ca0676cf25dd3cfcebba5eac0eaff",
         "installed_runtime_source_path": (
             "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
         ),
-        "installed_runtime_source_blob_sha": "995bb46ddd95563f904243c78ae4fc3cf3308968",
+        "installed_runtime_source_blob_sha": "b564f5a26fdef146fc6080962e7c4762b0b5949a",
         "install_action_consumed": True,
         "runtime_authorization_installed": True,
         "runtime_gate_active": True,
@@ -174,16 +174,6 @@ def _runs() -> dict[str, object]:
     return {
         "workflow_runs": [
             {
-                "id": 424242,
-                "run_number": 376,
-                "run_attempt": 1,
-                "event": "workflow_dispatch",
-                "head_branch": "main",
-                "head_sha": RUN2_HEAD,
-                "status": "completed",
-                "conclusion": "success",
-            },
-            {
                 "id": 37126711695,
                 "run_number": 1,
                 "run_attempt": 1,
@@ -192,6 +182,26 @@ def _runs() -> dict[str, object]:
                 "head_sha": "fd85a886d07234ad584dcca08692b37e6af54b2e",
                 "status": "completed",
                 "conclusion": "failure",
+            },
+            {
+                "id": 37191637168,
+                "run_number": 376,
+                "run_attempt": 1,
+                "event": "workflow_dispatch",
+                "head_branch": "main",
+                "head_sha": "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
+                "status": "completed",
+                "conclusion": "failure",
+            },
+            {
+                "id": 424242,
+                "run_number": 377,
+                "run_attempt": 1,
+                "event": "workflow_dispatch",
+                "head_branch": "main",
+                "head_sha": RUN377_HEAD,
+                "status": "completed",
+                "conclusion": "success",
             },
         ]
     }
@@ -208,11 +218,11 @@ class AnnualPatternCatalogue2016DispatchPreflightTests(unittest.TestCase):
         )
         self.assertEqual(
             source["install_receipt_source_blob_sha"],
-            "7da956910e24e788a2f2a60834c04048a660bc75",
+            "3a5614af2393378ed664c4802806147d79ccd8c7",
         )
         self.assertEqual(
             source["runtime_binding_source_blob_sha"],
-            "bbb3bba32c3677d3bd971a2744eb93498868433b",
+            "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
@@ -232,8 +242,9 @@ class AnnualPatternCatalogue2016DispatchPreflightTests(unittest.TestCase):
         self.assertEqual(value["decision"], "DEC-509")
         self.assertEqual(value["annual_segment_label"], "2016")
         self.assertEqual(value["previous_annual_freeze_run_id"], 424242)
-        self.assertEqual(value["annual_workflow_run_count"], 2)
-        self.assertEqual(value["expected_run_number"], 377)
+        self.assertEqual(value["annual_workflow_run_count"], 3)
+        self.assertEqual(value["successful_2015_run_number"], 377)
+        self.assertEqual(value["expected_run_number"], 378)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertEqual(value["install_commit_sha"], MAIN_HEAD)
         self.assertTrue(value["install_action_consumed"])
@@ -249,13 +260,12 @@ class AnnualPatternCatalogue2016DispatchPreflightTests(unittest.TestCase):
         self.assertFalse(value["dispatch_command_present"])
         self.assertTrue(value["preflight_read_only"])
 
-    def test_third_workflow_run_is_rejected(self) -> None:
-        runs = _runs()
-        rows = list(runs["workflow_runs"])
+    def test_fourth_workflow_run_is_rejected(self) -> None:
+        rows = list(_runs()["workflow_runs"])
         rows.append(
             {
                 "id": 525252,
-                "run_number": 377,
+                "run_number": 378,
                 "run_attempt": 1,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
@@ -266,7 +276,7 @@ class AnnualPatternCatalogue2016DispatchPreflightTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(
             ValueError,
-            "exactly two prior annual-catalogue workflow runs",
+            "exactly three prior annual-catalogue workflow runs",
         ):
             build_2016_dispatch_preflight(
                 repository_root=Path("."),

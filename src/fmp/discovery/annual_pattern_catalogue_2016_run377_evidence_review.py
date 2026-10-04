@@ -15,7 +15,7 @@ from .pattern_protocol import HORIZONS_MINUTES, SYMBOLS, TIMEFRAMES
 
 ANNUAL_CATALOGUE_2016_RUN377_EVIDENCE_REVIEW_DECISION = "DEC-522"
 ANNUAL_CATALOGUE_2016_RUN377_EVIDENCE_REVIEW_VERSION = (
-    "fmp-annual-catalogue-2016-run377-evidence-review-v1"
+    "fmp-annual-catalogue-2016-run378-evidence-review-v1"
 )
 
 SEGMENT_EVIDENCE_SOURCE_PATH = (
@@ -33,11 +33,11 @@ DISPATCH_EXECUTOR_WORKFLOW_PATH = (
     "phase8a-annual-catalogue-2016-runtime-install-executor.yml"
 )
 EXPECTED_DISPATCH_EXECUTOR_WORKFLOW_BLOB_SHA = (
-    "58a1f60e18d7d9c6d78f1217f67663612d5117f1"
+    "078aca795be06a9d28e19b584b7122e975476711"
 )
 
 ANNUAL_SEGMENT_LABEL = "2016"
-EXPECTED_RUN_NUMBER = 377
+EXPECTED_RUN_NUMBER = 378
 EXPECTED_RUN_ATTEMPT = 1
 EXPECTED_JOB_COUNT = 20
 EXPECTED_ARTIFACT_COUNT = 20
@@ -146,12 +146,12 @@ def _validate_dispatch_receipt(
 ) -> dict[str, object]:
     exact = {
         "decision": "DEC-521",
-        "stage": "ANNUAL_CATALOGUE_2016_RUN_377_DISPATCH_SUBMITTED",
+        "stage": "ANNUAL_CATALOGUE_2016_RUN_378_DISPATCH_SUBMITTED",
         "source_plan_decision": "DEC-519",
         "install_commit_sha": expected_head_sha,
         "annual_segment_label": "2016",
         "run_id": expected_run_id,
-        "run_number": 377,
+        "run_number": 378,
         "run_attempt": 1,
         "run_head_sha": expected_head_sha,
         "dispatch_submitted": True,
@@ -159,7 +159,7 @@ def _validate_dispatch_receipt(
         "rerun_authorized": False,
         "retry_authorized": False,
         "replacement_run_authorized": False,
-        "run_378_or_later_authorized": False,
+        "run_379_or_later_authorized": False,
         "next_segment_execution_authorized": False,
         "cross_year_result_production_authorized": False,
         "strategy_v1_synthesis_authorized": False,
@@ -170,7 +170,7 @@ def _validate_dispatch_receipt(
         "live_order_authorized": False,
         "real_money_authorized": False,
         "trading_authorized": False,
-        "next_gate": "REVIEW_2016_RUN_377_BEFORE_ANY_2017_EXECUTION",
+        "next_gate": "REVIEW_2016_RUN_378_BEFORE_ANY_2017_EXECUTION",
     }
     for field, expected in exact.items():
         if receipt.get(field) != expected:
@@ -386,7 +386,7 @@ def review_2016_run377_evidence(
         **receipt,
         **jobs,
         **artifacts,
-        "stage": "ANNUAL_CATALOGUE_2016_RUN377_CONCRETE_RUNTIME_EVIDENCE_BOUND",
+        "stage": "ANNUAL_CATALOGUE_2016_RUN378_CONCRETE_RUNTIME_EVIDENCE_BOUND",
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": ANNUAL_SEGMENT_LABEL,
         "freeze_artifact_zip_sha256": freeze_zip_sha256,
@@ -442,11 +442,11 @@ def validate_2016_run377_evidence_review(
 
     exact = {
         "decision": "DEC-522",
-        "version": "fmp-annual-catalogue-2016-run377-evidence-review-v1",
-        "stage": "ANNUAL_CATALOGUE_2016_RUN377_CONCRETE_RUNTIME_EVIDENCE_BOUND",
+        "version": "fmp-annual-catalogue-2016-run378-evidence-review-v1",
+        "stage": "ANNUAL_CATALOGUE_2016_RUN378_CONCRETE_RUNTIME_EVIDENCE_BOUND",
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": "2016",
-        "run_number": 377,
+        "run_number": 378,
         "run_attempt": 1,
         "run_status": "completed",
         "run_conclusion": "success",

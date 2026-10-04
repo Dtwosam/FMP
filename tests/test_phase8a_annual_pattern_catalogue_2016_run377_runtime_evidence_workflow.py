@@ -13,16 +13,16 @@ WORKFLOW = (
 
 
 class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
-    def test_workflow_is_read_only_successful_run377_reviewer(self) -> None:
+    def test_workflow_is_read_only_successful_run378_reviewer(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "name: phase8a-annual-catalogue-2016-run377-runtime-evidence",
+            "name: phase8a-annual-catalogue-2016-run378-runtime-evidence",
             text,
         )
         self.assertIn("  workflow_run:", text)
         self.assertIn("      - phase8a-annual-pattern-catalogue", text)
         self.assertIn(
-            "github.event.workflow_run.run_number == 377",
+            "github.event.workflow_run.run_number == 378",
             text,
         )
         self.assertIn(
@@ -39,11 +39,11 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
     def test_workflow_pins_exact_dec522_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "28ca93d697907ec916df503a9e5d2669ab4dff75",
+            "afe23d0deadad15f4ff489f3edcd611675f8f9a4",
             "9acc6bc7ce284dd7e82f037fa999d2fee02af44a",
             "1b14279864f01a1284c5be31552eee9bb3a2220c",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-            "58a1f60e18d7d9c6d78f1217f67663612d5117f1",
+            "078aca795be06a9d28e19b584b7122e975476711",
             "1ff32214dee10d877a067e750cd69ffad96d5fe5",
         ):
             self.assertIn(blob, text)
@@ -51,7 +51,7 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
     def test_workflow_requires_unique_digest_verified_dec521_receipt(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
-            "annual-catalogue-2016-dec521-run377-dispatch-",
+            "annual-catalogue-2016-dec521-run378-dispatch-",
             text,
         )
         self.assertIn(
@@ -65,7 +65,7 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
         self.assertIn('case "$artifact_digest" in sha256:*)', text)
         self.assertIn('test "$actual_sha" = "$expected_sha"', text)
         self.assertIn(
-            "dec521-run377-dispatch-receipt.json",
+            "dec521-run378-dispatch-receipt.json",
             text,
         )
         self.assertIn(
@@ -86,7 +86,7 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
             text,
         )
         self.assertIn('assert binding["decision"] == "DEC-522"', text)
-        self.assertIn('assert binding["run_number"] == 377', text)
+        self.assertIn('assert binding["run_number"] == 378', text)
         self.assertIn('assert binding["run_attempt"] == 1', text)
         self.assertIn('assert binding["run_conclusion"] == "success"', text)
         self.assertIn('assert binding["runtime_evidence_bound"] is True', text)

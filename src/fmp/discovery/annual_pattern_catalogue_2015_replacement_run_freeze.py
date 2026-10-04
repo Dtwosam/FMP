@@ -21,7 +21,7 @@ RUN_REVIEW_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_review.py"
 )
 EXPECTED_RUN_REVIEW_SOURCE_BLOB_SHA = (
-    "954718b9780004907c385ebb0496469d8433b844"
+    "d6935a7b31b028b955f182cf81bc2c123a321852"
 )
 
 
@@ -178,7 +178,7 @@ def validate_2015_replacement_run_freeze(
         raise ValueError("DEC-501 source review decision mismatch")
     if value.get("annual_segment_label") != "2015":
         raise ValueError("DEC-501 annual segment mismatch")
-    if value.get("run_number") != 376:
+    if value.get("run_number") != 377:
         raise ValueError("DEC-501 run number mismatch")
     if value.get("run_attempt") != 1:
         raise ValueError("DEC-501 run attempt mismatch")

@@ -3105,3 +3105,7 @@ Next gate after concrete DEC-522 evidence:
 ### 2026-10-04 recovery status
 
 The atomic DEC-517–522 chain is installed on main at `5417fddc015be92ed843de40be097381367b2c24`. Its first DEC-517 recovery run (`37190929052`) failed safely before any annual dispatch because editable package installation dirtied the checkout. Annual global run 376 remains available. A source-ready clean-install v2 repair permits only recovery workflow run 2 / attempt 1, binds that repair to the failed run-1 provenance, and repins the downstream DEC-513→522 chain. 2017+, strategy promotion, broker mutation, order execution, real-money action, and trading remain locked.
+
+### 2026-10-04 annual run-376 failure recovery
+
+Global annual run 376 completed failure before annual cell execution. The failure is frozen as DEC-526 and will not be retried. The next source-ready recovery path authorizes only fresh 2015 run 377 / attempt 1 through DEC-527/528 after validating the DEC-520 corrected installed workflow. The 2016 chain is rebound to run 378 and requires successful 2015 run 377 as its predecessor. Run 379+, 2017 execution, strategy promotion, broker mutation, order execution, real-money action, and trading remain locked.
