@@ -3199,3 +3199,7 @@ Next gate:
 ### 2026-10-04 — DEC-539 exact 2017 runtime install
 
 DEC-538 is concrete from workflow run `37219170862` and artifact `11310165235`. DEC-539 is source-ready as the exact two-file installer: create the frozen 2017 runtime gate and replace the annual runtime with the frozen run-379 target. The installer requires the annual inventory to remain exactly failed runs 1/376 plus successful runs 377/378 and keeps run 379 absent until a later dispatch gate. It produces a concrete install receipt but performs no annual dispatch. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_DISPATCH_PREFLIGHT`.
+
+### 2026-10-04 — DEC-540 2017 dispatch preflight
+
+DEC-539 is concrete: installer run `37219929487` advanced main to `dcdf7210b0039077efa3a23c65c2ed8fa41e2427` with installed gate blob `c1853eee...` and runtime blob `e9cbc76d...`, while annual run 379 remains absent. DEC-540 is source-ready as a path-scoped read-only preflight bound to artifact `11309927463`; it freezes exact 2017 run 379 / attempt 1 and predecessor run `37206992367` without authorizing dispatch. Next gate: `ANNUAL_PATTERN_CATALOGUE_2017_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
