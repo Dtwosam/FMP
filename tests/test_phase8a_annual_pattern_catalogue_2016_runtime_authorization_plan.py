@@ -14,6 +14,13 @@ from fmp.discovery.annual_pattern_catalogue_2016_runtime_authorization_plan impo
     os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
     "DEC-505 requires the post-DEC-504 source state",
 )
+@unittest.skipIf(
+    Path(
+        "src/fmp/discovery/"
+        "annual_pattern_catalogue_2016_runtime_authorization.py"
+    ).is_file(),
+    "historical pre-install 2016 contract; installed state is covered by DEC-531/532",
+)
 class AnnualPatternCatalogue2016RuntimeAuthorizationPlanTests(unittest.TestCase):
     def test_sources_pin_authorization_preflight_runtime_workflow_and_templates(self) -> None:
         source = validate_2016_runtime_authorization_plan_sources(
