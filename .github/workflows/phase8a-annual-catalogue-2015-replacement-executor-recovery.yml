@@ -47,7 +47,7 @@ jobs:
           test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_workflow_corrected_install_receipt.py)" = "9c8237350484e3153f938a4df86d7f1c9955582e"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_run376_failure_receipt.py)" = "b57b055129f57be1e3164c3b24a53bf5a0277a57"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_run377_execution_authorization.py)" = "f65d13b2ddac075af65a86d08e8902e29fd18cfe"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_run377_execution_authorization.py)" = "dfcd18d2b3b0b199598ce32929eb3cd478da1376"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "f1fa50e7c862354931d919fe7da241de863f6834"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue.py)" = "030bf98df2d5ffb50821bd0403f205c7c09f20f3"
 
@@ -119,6 +119,7 @@ jobs:
           )
           authorization = build_2015_run377_execution_authorization(
               repository_root=Path("."),
+              run376_failure_receipt=receipt,
           )
 
           assert receipt["decision"] == "DEC-526"
@@ -127,6 +128,12 @@ jobs:
           assert receipt["retry_authorized"] is False
 
           assert authorization["decision"] == "DEC-527"
+          assert authorization["source_failure_decision"] == "DEC-526"
+          assert authorization["failed_run_id"] == 37191637168
+          assert authorization["failed_run_number"] == 376
+          assert authorization["source_failure_receipt_fingerprint_sha256"] == (
+              receipt["receipt_fingerprint_sha256"]
+          )
           assert authorization["annual_segment_label"] == "2015"
           assert authorization["expected_run_number"] == 377
           assert authorization["expected_run_attempt"] == 1
