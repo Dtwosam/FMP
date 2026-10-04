@@ -42,40 +42,42 @@ class AnnualCatalogue2016Run377RuntimeEvidenceWorkflowTests(unittest.TestCase):
     def test_workflow_pins_exact_dec522_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for blob in (
-            "2f527117292cf19e1d94245040c2bd64aeaff307",
+            "ad182ce30d32aff985558f3b2fd9370ca1141cc2",
             "9acc6bc7ce284dd7e82f037fa999d2fee02af44a",
             "1b14279864f01a1284c5be31552eee9bb3a2220c",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
             "c9cd42d41994760248009725adc12fd6a13d4511",
+            "bd2ecdead7cf560cc560c266cbf5d796350807b3",
             "1ff32214dee10d877a067e750cd69ffad96d5fe5",
         ):
             self.assertIn(blob, text)
 
-    def test_workflow_requires_unique_digest_verified_dec521_receipt(self) -> None:
+    def test_workflow_requires_unique_digest_verified_dispatch_receipt(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn(
+            "Resolve exact DEC-521 or DEC-532 dispatch evidence source",
+            text,
+        )
+        self.assertIn(
+            "phase8a-annual-catalogue-2016-post-install-recovery.yml",
+            text,
+        )
         self.assertIn(
             "annual-catalogue-2016-dec521-run378-dispatch-",
             text,
         )
         self.assertIn(
-            "if length == 1 then .[0].id else empty end",
+            "annual-catalogue-2016-dec532-run378-dispatch-",
             text,
         )
-        self.assertIn(
-            "if length == 1 then .[0].digest else empty end",
-            text,
-        )
+        self.assertIn("dec521-run378-dispatch-receipt.json", text)
+        self.assertIn("dec532-run378-dispatch-receipt.json", text)
+        self.assertIn("assert len(choices) == 1, choices", text)
         self.assertIn('case "$artifact_digest" in sha256:*)', text)
         self.assertIn('test "$actual_sha" = "$expected_sha"', text)
         self.assertIn(
-            "dec521-run378-dispatch-receipt.json",
-            text,
-        )
-        self.assertIn('(.event == "workflow_run") or (.event == "workflow_dispatch")', text)
-        self.assertNotIn("runs?event=workflow_run&branch=main", text)
-        self.assertIn(
             "test \"$(jq -r '.run_id' "
-            "\"$RUNNER_TEMP/dec521-receipt.json\")\" = \"$TARGET_RUN_ID\"",
+            "\"$RUNNER_TEMP/dispatch-receipt.json\")\" = \"$TARGET_RUN_ID\"",
             text,
         )
 
