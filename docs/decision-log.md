@@ -10855,3 +10855,13 @@ pins the exact two dormant target blobs, rechecks the current runtime/main and
 annual history, and remains read-only. Repository mutation, runtime activation,
 annual dispatch, run 380+, 2018+, strategy, broker/order, real-money, and trading
 authority remain false.
+
+## 2026-10-04 — DEC-538 exact 2017 runtime install action
+
+Successful DEC-537 workflow run `37215789401` / artifact `11308490990`
+now anchors the exact two-file 2017 runtime-install action. The action contract
+authorizes only creation of the frozen 2017 runtime gate and replacement of the
+current annual runtime with the frozen 2017-aware target. The repository-hosted
+DEC-538 builder remains read-only and does not apply either action. Annual run
+379 remains absent; dispatch, run 380+, later-year, strategy, broker/order,
+real-money, and trading authority remain locked.
