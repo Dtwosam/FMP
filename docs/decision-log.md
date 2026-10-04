@@ -10792,3 +10792,7 @@ Annual catalogue run `37191637168` consumed global run 376 / attempt 1 and faile
 ## 2026-10-04 — DEC-529 explicit successor recovery
 
 Annual run 377 / attempt 1 (`37198002653`) completed successfully on `a89db974be9a94481e7ed0990476bc661012f1e4` with the full 20-job/20-artifact 2015 catalogue, but its DEC-513 `workflow_run` successor did not start. DEC-529 adds exact manual-recovery inputs to DEC-513, DEC-514, DEC-518→521, and DEC-522 plus a one-shot path-scoped orchestrator. The orchestrator cannot directly dispatch the annual workflow; it can only recover the existing successor contracts in order, wait for exact run 378 success, and recover DEC-522 if its automatic completion trigger is also absent. Run 379+, 2017+, strategy promotion, broker mutation, order placement, real-money action, and trading remain locked.
+
+## 2026-10-04 — DEC-530 explicit successor installer recovery
+
+DEC-529 reached successful manual DEC-513 and DEC-514 successors, but installer workflow run `37200408776` failed before commit because `git diff --name-only` omitted the newly created untracked runtime gate. Annual run 378 remains unconsumed. DEC-530 changes the mutation inventory to tracked-plus-untracked paths, requires exact fresh installer workflow run 2 / attempt 1 from a fresh DEC-514 run 2, rebinds DEC-522 to one unique successful normal-or-explicit installer, and resumes the same path-scoped orchestrator only as run 2 after proving the prior failure chain. No rerun/retry, 379+, 2017+, broker, order, real-money, or trading authority is added.
