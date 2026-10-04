@@ -17,8 +17,8 @@ from fmp.discovery.annual_pattern_catalogue_segment_evidence import (
     compile_annual_segment_freeze,
     validate_annual_segment_freeze,
 )
-from fmp.discovery.annual_pattern_catalogue_workflow_install_receipt import (
-    validate_annual_workflow_install_receipt_sources,
+from fmp.discovery.annual_pattern_catalogue_workflow_corrected_install_receipt import (
+    validate_corrected_annual_workflow_install_receipt_sources,
 )
 from fmp.discovery.annual_pattern_catalogue_workflow_source import (
     validate_annual_segment_label,
@@ -69,7 +69,7 @@ def _write_bytes(path: Path, value: bytes) -> None:
 def _cmd_status(args: argparse.Namespace) -> int:
     value = workflow_source_payload(code_commit=args.code_commit)
     value["installed_workflow_receipt_sources"] = (
-        validate_annual_workflow_install_receipt_sources(
+        validate_corrected_annual_workflow_install_receipt_sources(
             repository_root=Path(".")
         )
     )
@@ -92,7 +92,7 @@ def _cmd_preflight(args: argparse.Namespace) -> int:
         code_commit=args.code_commit
     )
     value["installed_workflow_receipt_sources"] = (
-        validate_annual_workflow_install_receipt_sources(
+        validate_corrected_annual_workflow_install_receipt_sources(
             repository_root=Path(".")
         )
     )
