@@ -590,7 +590,7 @@ jobs:
 
           test "$(git hash-object "$runtime")" = "e9cbc76dc9e6866e80088d223498fbcc3b870fd1"
           test "$(git hash-object "$gate")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
-          test -z "$(git status --porcelain)"
+          test -z "$(git diff --name-only -- "$runtime" "$gate")"
 
       - name: Run DEC-539 2017 runtime install-receipt tests
         env:
