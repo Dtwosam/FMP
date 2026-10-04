@@ -2112,3 +2112,10 @@ Added the exact source-only 2017 execution authorization bound to DEC-534 workfl
 ## 2026-10-04 — DEC-535 bootstrap recovery
 
 Recorded failed DEC-535 workflow run `37213060816` and added an exact run-2, dependency-bootstrap recovery. The change adds no dispatch or repository-write authority.
+
+## 2026-10-04 — DEC-536 concrete 2017 runtime plan
+
+Bound the staged 2017 runtime-authorization plan to successful DEC-535 workflow run
+`37213629059`, artifact `11307204031`, and its exact SHA-256 digest. Added a
+read-only repository-hosted builder and preserved the dormant runtime/gate targets.
+Annual run 379 is still undispatched.
