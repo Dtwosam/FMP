@@ -10937,3 +10937,7 @@ Annual run `37237817538` completed successfully as run 380 / attempt 1 on `30971
 ## 2026-10-04 — DEC-556 concrete 2019 execution preflight
 
 Recovered DEC-555 evidence is concrete from workflow run `37240186365`, artifact `11317140969`, binding fingerprint `09950f6bfb577c4abe17a2466e466a08585fbcd05359ad5fa6c4bad16cce5fda`, and freeze fingerprint `355a1e5ca9282300a7a38e24dd3009ebe8470d1f029e62c38860bf710ac80559`. DEC-556 freezes only a read-only 2019 preflight against exact annual history through successful run 380. It expects future run 381 / attempt 1 with predecessor run `37237817538`. No dispatch, execution authorization, runtime mutation, run 382+, strategy, broker/order, real-money, or trading authority is added.
+
+## 2026-10-04 — DEC-557 source-only 2019 execution authorization
+
+Concrete DEC-556 preflight evidence is bound from workflow run `37240728378`, artifact `11317461212`, digest `sha256:09be3f1d11e77ab6da407a67346a6ff4d4ce631f4acb6265575da6db64eeb202`, and preflight fingerprint `3d311b8d8d387aca00f079bdab6b0531cf17aefc36913165cfb5eb265ad50421`. DEC-557 authorizes only the exact 2019/run381/attempt1 execution contract. Runtime installation, runtime gate activation, dispatch action, rerun/retry/replacement, run382+, later-year execution, strategy/promotion, broker/order, real-money, and trading remain false.

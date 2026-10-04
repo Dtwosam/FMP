@@ -3267,3 +3267,7 @@ Annual catalogue run `37237817538` is a successful 2018 run 380 / attempt 1 on `
 ### 2026-10-04 — DEC-556 2019 preflight frontier
 
 DEC-555 concrete 2018 runtime evidence is recovered through workflow run `37240186365` and artifact `11317140969` (digest `sha256:2d158ae5dc2040570c1738c6700b96d34d05820abe3cd71f91b3389c469094b5`). DEC-556 is source-ready as the next read-only annual preflight: segment 2019, predecessor 2018 run `37237817538`, expected global run 381 / attempt 1, with exact annual history `{1,376,377,378,379,380}`. Run 381 remains absent and undispatched. 2019 execution authorization, runtime installation, later-year execution, strategy/promotion, broker/order, real-money, and trading remain locked. Next gate: `ANNUAL_PATTERN_CATALOGUE_2019_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+
+### 2026-10-04 — DEC-557 source-only 2019 authorization
+
+DEC-556 is concrete from run `37240728378` and artifact `11317461212`. DEC-557 is source-ready for 2019/run381/attempt1 only, with predecessor run `37237817538`. The current annual runtime remains the 2018-installed blob and has no 2019 route. No dispatch has occurred and annual run 381 remains absent. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2019_RUNTIME_AUTHORIZATION_PLAN`.
