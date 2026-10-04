@@ -49,8 +49,8 @@ def _binding() -> dict[str, object]:
     value: dict[str, object] = {
         "decision": "DEC-502",
         "version": "fmp-annual-catalogue-2015-runtime-evidence-binding-v1",
-        "run_freeze_source_blob_sha": "8e2a6ab27b4941e3ee12b5463247999200d33e69",
-        "run_review_source_blob_sha": "883f82c85d2738c46284d3675278dc061f4ca07c",
+        "run_freeze_source_blob_sha": "97cfd73d5693046f05104342cb74867d5dc471cc",
+        "run_review_source_blob_sha": "d6935a7b31b028b955f182cf81bc2c123a321852",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "source_freeze_decision": "DEC-501",
         "source_freeze_version": "fmp-annual-catalogue-2015-replacement-run-freeze-v1",
