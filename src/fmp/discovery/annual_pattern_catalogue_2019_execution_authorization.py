@@ -148,9 +148,9 @@ def validate_2019_execution_authorization_sources(
 
     runtime_text = (root / RUNTIME_SOURCE_PATH).read_text(encoding="utf-8")
     if 'segment == "2019"' in runtime_text:
-        raise ValueError("DEC-557 runtime already routes 2018")
+        raise ValueError("DEC-557 runtime already routes 2019")
     if "require_2019_execution_authorized" in runtime_text:
-        raise ValueError("DEC-557 2018 runtime gate already active")
+        raise ValueError("DEC-557 2019 runtime gate already active")
     return actual
 
 
