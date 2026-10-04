@@ -10804,3 +10804,18 @@ Installer run `37205170186` successfully applied, committed, and pushed the exac
 ## 2026-10-04 — DEC-533 run-378 evidence successor recovery
 
 Annual run `37206992367` completed successfully as exact run 378 / attempt 1 with the full 20-job/20-artifact 2016 catalogue, but the automatic DEC-522 reviewer did not start. DEC-533 adds a one-shot path-scoped recovery that proves exact DEC-532 provenance, requires zero prior DEC-522 reviewer runs, dispatches only the existing read-only DEC-522 reviewer, and verifies the resulting concrete 2016 runtime-binding artifact. It cannot dispatch the annual catalogue or mutate repository contents. Run 379+, 2017 execution, strategy promotion, broker/order, real-money, and trading authority remain locked.
+
+## 2026-10-04 — DEC-534 concrete 2017 execution preflight
+
+DEC-522 is now concrete from reviewer run `37208993431`, artifact
+`11305284883`, binding fingerprint
+`c95d28505fab6a8c55c9889ba5da6565be3b63cb98321eea58d26196b60a2b40`,
+and successful 2016 annual run 378.
+
+DEC-534 supersedes the unmerged stale DEC-523 draft and validates the actual
+four-run annual history: failed run 1, failed run 376, successful 2015 run 377,
+and successful 2016 run 378. It freezes only the read-only 2017 preflight for
+expected run 379 / attempt 1. The next annual execution remains locked.
+
+Next gate:
+`ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_AUTHORIZATION_BEFORE_RUN`.

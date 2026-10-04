@@ -2097,3 +2097,10 @@ Recorded that installer run `37205170186` pushed the exact DEC-518 two-file inst
 ## 2026-10-04 — DEC-533 run-378 evidence successor recovery
 
 Recorded successful 2016 run 378 and the absence of its automatic DEC-522 successor. Added a one-shot recovery that binds exact DEC-532 provenance, dispatches only the read-only DEC-522 reviewer, verifies the resulting runtime-binding artifact, and keeps run 379+/2017+/trading authority closed.
+
+## 2026-10-04 — DEC-534 concrete 2017 preflight
+
+Added the history-correct read-only 2017 execution preflight over concrete
+DEC-522 artifact `11305284883`. The contract preserves failed run 376, binds
+successful 2015/2016 runs 377/378, and expects 2017 at run 379 / attempt 1.
+This supersedes the unmerged stale DEC-523 draft.

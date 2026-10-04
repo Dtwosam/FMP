@@ -3125,3 +3125,15 @@ The 2016 runtime installation is already present on main at `525386dd68955e9f029
 ### 2026-10-04 — DEC-533 run-378 evidence successor recovery
 
 2016 annual run 378 (`37206992367`) succeeded on `2524fde355349581c9440a172d0384c3cbce31ed` with all 20 jobs and 20 artifacts, backed by exact DEC-532 dispatch provenance. Its automatic DEC-522 successor is absent. DEC-533 is source-ready to invoke only the existing read-only DEC-522 reviewer and verify its concrete binding. Annual run 379+, 2017 execution, strategy promotion, broker mutation, order execution, real-money action, and trading remain locked. Next gate after concrete DEC-522 evidence: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_PREFLIGHT`.
+
+### 2026-10-04 — DEC-534 concrete 2017 preflight
+
+Concrete DEC-522 2016 evidence is bound by reviewer run `37208993431` and
+artifact `11305284883`. DEC-534 is source-ready and repository-hosted
+read-only: it requires exact annual history
+`{1 failure, 376 failure, 377 success/2015, 378 success/2016}`, binds the
+2016 predecessor evidence, and freezes expected 2017 run 379 / attempt 1
+without authorizing it. The earlier unmerged DEC-523 branch is obsolete.
+
+Next gate:
+`ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
