@@ -8,20 +8,20 @@ from typing import Mapping
 from .annual_pattern_catalogue_2018_execution_authorization import (
     ANNUAL_CATALOGUE_2018_EXECUTION_AUTHORIZATION_DECISION,
     ANNUAL_CATALOGUE_2018_EXECUTION_AUTHORIZATION_VERSION,
-    validate_2017_execution_authorization,
+    validate_2018_execution_authorization,
 )
 from .annual_pattern_catalogue_2018_runtime_authorization_plan import (
     ANNUAL_CATALOGUE_2018_RUNTIME_AUTHORIZATION_PLAN_DECISION,
     ANNUAL_CATALOGUE_2018_RUNTIME_AUTHORIZATION_PLAN_VERSION,
-    DORMANT_2017_GATE_TEMPLATE_PATH,
+    DORMANT_2018_GATE_TEMPLATE_PATH,
     DORMANT_RUNTIME_TARGET_TEMPLATE_PATH,
     EXPECTED_CURRENT_RUNTIME_SOURCE_BLOB_SHA,
-    EXPECTED_DORMANT_2017_GATE_TEMPLATE_BLOB_SHA,
+    EXPECTED_DORMANT_2018_GATE_TEMPLATE_BLOB_SHA,
     EXPECTED_DORMANT_RUNTIME_TARGET_TEMPLATE_BLOB_SHA,
-    TARGET_2017_GATE_SOURCE_PATH,
+    TARGET_2018_GATE_SOURCE_PATH,
     TARGET_RUNTIME_SOURCE_PATH,
-    validate_2017_runtime_authorization_plan,
-    validate_2017_runtime_authorization_plan_sources,
+    validate_2018_runtime_authorization_plan,
+    validate_2018_runtime_authorization_plan_sources,
 )
 
 
@@ -117,7 +117,7 @@ def _positive_int(value: object, *, field: str) -> int:
     return value
 
 
-def validate_2017_runtime_authorization_install_preflight_sources(
+def validate_2018_runtime_authorization_install_preflight_sources(
     *,
     repository_root: Path,
 ) -> dict[str, str]:
@@ -141,7 +141,7 @@ def validate_2017_runtime_authorization_install_preflight_sources(
             raise ValueError(f"DEC-548 {field} mismatch")
         actual[field] = sha
 
-    validate_2017_runtime_authorization_plan_sources(repository_root=root)
+    validate_2018_runtime_authorization_plan_sources(repository_root=root)
 
     if ANNUAL_CATALOGUE_2018_EXECUTION_AUTHORIZATION_DECISION != "DEC-546":
         raise ValueError("DEC-548 execution authorization decision drift")
@@ -160,7 +160,7 @@ def validate_2017_runtime_authorization_install_preflight_sources(
     return actual
 
 
-def build_2017_runtime_authorization_install_preflight(
+def build_2018_runtime_authorization_install_preflight(
     authorization: Mapping[str, object],
     plan: Mapping[str, object],
     *,
@@ -168,11 +168,11 @@ def build_2017_runtime_authorization_install_preflight(
     main_branch: Mapping[str, object],
     expected_head_sha: str,
 ) -> dict[str, object]:
-    source = validate_2017_runtime_authorization_install_preflight_sources(
+    source = validate_2018_runtime_authorization_install_preflight_sources(
         repository_root=Path(repository_root),
     )
-    validate_2017_execution_authorization(authorization)
-    validate_2017_runtime_authorization_plan(plan)
+    validate_2018_execution_authorization(authorization)
+    validate_2018_runtime_authorization_plan(plan)
 
     expected_head_sha = _validate_commit(
         expected_head_sha,
@@ -274,16 +274,16 @@ def build_2017_runtime_authorization_install_preflight(
         "expected_current_runtime_source_blob_sha": (
             EXPECTED_CURRENT_RUNTIME_SOURCE_BLOB_SHA
         ),
-        "dormant_gate_template_path": DORMANT_2017_GATE_TEMPLATE_PATH,
+        "dormant_gate_template_path": DORMANT_2018_GATE_TEMPLATE_PATH,
         "dormant_gate_template_blob_sha": (
-            EXPECTED_DORMANT_2017_GATE_TEMPLATE_BLOB_SHA
+            EXPECTED_DORMANT_2018_GATE_TEMPLATE_BLOB_SHA
         ),
         "dormant_runtime_target_template_path": DORMANT_RUNTIME_TARGET_TEMPLATE_PATH,
         "dormant_runtime_target_template_blob_sha": (
             EXPECTED_DORMANT_RUNTIME_TARGET_TEMPLATE_BLOB_SHA
         ),
-        "target_gate_source_path": TARGET_2017_GATE_SOURCE_PATH,
-        "target_gate_source_blob_sha": EXPECTED_DORMANT_2017_GATE_TEMPLATE_BLOB_SHA,
+        "target_gate_source_path": TARGET_2018_GATE_SOURCE_PATH,
+        "target_gate_source_blob_sha": EXPECTED_DORMANT_2018_GATE_TEMPLATE_BLOB_SHA,
         "target_runtime_source_path": TARGET_RUNTIME_SOURCE_PATH,
         "target_runtime_source_blob_sha": (
             EXPECTED_DORMANT_RUNTIME_TARGET_TEMPLATE_BLOB_SHA
@@ -324,11 +324,11 @@ def build_2017_runtime_authorization_install_preflight(
     value["preflight_fingerprint_sha256"] = _sha256_bytes(
         _canonical_json(value)
     )
-    validate_2017_runtime_authorization_install_preflight(value)
+    validate_2018_runtime_authorization_install_preflight(value)
     return value
 
 
-def validate_2017_runtime_authorization_install_preflight(
+def validate_2018_runtime_authorization_install_preflight(
     value: Mapping[str, object],
 ) -> Mapping[str, object]:
     fingerprint = _sha256_hex(
@@ -364,16 +364,16 @@ def validate_2017_runtime_authorization_install_preflight(
         "expected_current_runtime_source_blob_sha": (
             EXPECTED_CURRENT_RUNTIME_SOURCE_BLOB_SHA
         ),
-        "dormant_gate_template_path": DORMANT_2017_GATE_TEMPLATE_PATH,
+        "dormant_gate_template_path": DORMANT_2018_GATE_TEMPLATE_PATH,
         "dormant_gate_template_blob_sha": (
-            EXPECTED_DORMANT_2017_GATE_TEMPLATE_BLOB_SHA
+            EXPECTED_DORMANT_2018_GATE_TEMPLATE_BLOB_SHA
         ),
         "dormant_runtime_target_template_path": DORMANT_RUNTIME_TARGET_TEMPLATE_PATH,
         "dormant_runtime_target_template_blob_sha": (
             EXPECTED_DORMANT_RUNTIME_TARGET_TEMPLATE_BLOB_SHA
         ),
-        "target_gate_source_path": TARGET_2017_GATE_SOURCE_PATH,
-        "target_gate_source_blob_sha": EXPECTED_DORMANT_2017_GATE_TEMPLATE_BLOB_SHA,
+        "target_gate_source_path": TARGET_2018_GATE_SOURCE_PATH,
+        "target_gate_source_blob_sha": EXPECTED_DORMANT_2018_GATE_TEMPLATE_BLOB_SHA,
         "target_runtime_source_path": TARGET_RUNTIME_SOURCE_PATH,
         "target_runtime_source_blob_sha": (
             EXPECTED_DORMANT_RUNTIME_TARGET_TEMPLATE_BLOB_SHA
@@ -425,7 +425,7 @@ def validate_2017_runtime_authorization_install_preflight(
 __all__ = [
     "ANNUAL_CATALOGUE_2018_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_DECISION",
     "ANNUAL_CATALOGUE_2018_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_VERSION",
-    "build_2017_runtime_authorization_install_preflight",
-    "validate_2017_runtime_authorization_install_preflight",
-    "validate_2017_runtime_authorization_install_preflight_sources",
+    "build_2018_runtime_authorization_install_preflight",
+    "validate_2018_runtime_authorization_install_preflight",
+    "validate_2018_runtime_authorization_install_preflight_sources",
 ]
