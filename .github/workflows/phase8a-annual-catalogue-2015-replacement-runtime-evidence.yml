@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   review-freeze-bind:
-    if: ${{ github.event.workflow_run.run_number == 376 }}
+    if: ${{ github.event.workflow_run.run_number == 377 }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
@@ -30,7 +30,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
-      - name: Require exact replacement run 2 attempt 1
+      - name: Require exact replacement run 377 attempt 1
         run: |
           set -euo pipefail
           test "$GITHUB_EVENT_NAME" = "workflow_run"
@@ -57,7 +57,7 @@ jobs:
               "event": "workflow_dispatch",
               "head_branch": "main",
               "head_sha": os.environ["TARGET_HEAD_SHA"],
-              "run_number": 376,
+              "run_number": 377,
               "run_attempt": 1,
               "status": "completed",
               "conclusion": "success",
@@ -71,10 +71,10 @@ jobs:
           set -euo pipefail
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-one-shot-executor.yml)" = "74e9499d9485c8e2a402fb675c995cc1961ff16a"
-          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml)" = "b1a2acbe92a5fe2d956005303fdcce1119d38a2c"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_review.py)" = "954718b9780004907c385ebb0496469d8433b844"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_freeze.py)" = "c9e5028bd40a9dc1ad73b0560047405d458bc61e"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "bbb3bba32c3677d3bd971a2744eb93498868433b"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml)" = "a9969b2e5f0a20b2dd9a63ccfa58f4dc2eb7921c"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_review.py)" = "bfb9d286454b6bff14af7d0126c7d33ccb63b91f"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_replacement_run_freeze.py)" = "cf6accdf5137269fcdbad3eabd4fd6be1db4b3b3"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "c50442443018922d32f4a19f9d2a31e70e1f53d6"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_run_review.py)" = "0e472b79d12c8a5f14963fac3ed718f5e2c28d02"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_replacement_run_freeze.py)" = "f8a9a872195f01ca85627a6a6cac4a0c0672f82d"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2015_runtime_evidence_binding.py)" = "584871d8f55f1da0e5bd885f91542141dc523972"
@@ -120,6 +120,23 @@ jobs:
               and row.get("event") == "push"
               and row.get("head_branch") == "main"
               and row.get("head_sha") == os.environ["TARGET_HEAD_SHA"]
+              and row.get("run_number") == 3
+              and row.get("run_attempt") == 1
+              and row.get("status") == "completed"
+              and row.get("conclusion") == "success"
+          ]
+          prior_success = [
+              row
+              for row in payload.get("workflow_runs", [])
+              if row.get("id") == 37191615804
+              and row.get("name")
+              == "phase8a-annual-catalogue-2015-replacement-executor-recovery"
+              and row.get("path")
+              == ".github/workflows/phase8a-annual-catalogue-2015-replacement-executor-recovery.yml"
+              and row.get("event") == "push"
+              and row.get("head_branch") == "main"
+              and row.get("head_sha")
+              == "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"
               and row.get("run_number") == 2
               and row.get("run_attempt") == 1
               and row.get("status") == "completed"
@@ -143,6 +160,7 @@ jobs:
               and row.get("conclusion") == "failure"
           ]
           assert len(failed) == 1
+          assert len(prior_success) == 1
           assert len(matches) == 1
           PY
 
@@ -248,7 +266,7 @@ jobs:
           )
           assert binding["annual_segment_label"] == "2015"
           assert binding["run_id"] == int(os.environ["TARGET_RUN_ID"])
-          assert binding["run_number"] == 376
+          assert binding["run_number"] == 377
           assert binding["run_attempt"] == 1
           assert binding["run_status"] == "completed"
           assert binding["run_conclusion"] == "success"
