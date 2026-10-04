@@ -31,13 +31,13 @@ def _source_preflight() -> dict[str, object]:
     return {
         "decision": "DEC-503",
         "version": "fmp-annual-catalogue-2016-execution-preflight-v1",
-        "runtime_binding_source_blob_sha": "bbb3bba32c3677d3bd971a2744eb93498868433b",
-        "runtime_source_blob_sha": "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a",
+        "runtime_binding_source_blob_sha": "c50442443018922d32f4a19f9d2a31e70e1f53d6",
+        "runtime_source_blob_sha": "a33d851c176f20c43c49ee67c984c90e6088067c",
         "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         "annual_workflow_run_count": 2,
         "failed_first_run_id": 37126711695,
         "successful_2015_run_id": 424242,
-        "successful_2015_run_number": 376,
+        "successful_2015_run_number": 377,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": "b" * 40,
         "stage": (
@@ -53,7 +53,7 @@ def _source_preflight() -> dict[str, object]:
         "previous_runtime_binding_fingerprint": "1" * 64,
         "previous_runtime_freeze_fingerprint": "2" * 64,
         "previous_annual_freeze_evidence_fingerprint": "3" * 64,
-        "expected_next_run_number": 377,
+        "expected_next_run_number": 378,
         "expected_next_run_attempt": 1,
         "annual_workflow_dispatch_authorized": False,
         "historical_artifact_read_authorized": False,
@@ -98,11 +98,11 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallPreflightTests(
         )
         self.assertEqual(
             source["execution_authorization_source_blob_sha"],
-            "f3d93ba4701a5d9d80005664445104d1105ff25f",
+            "c03a539c3c54fe7744c82d60f84b1dbd2cba9020",
         )
         self.assertEqual(
             source["runtime_authorization_plan_source_blob_sha"],
-            "f2e84069ed6b761fa5001ca6dd722cee05e63224",
+            "26d703fa564bce6eecabf33d3dfd1de7ce4e7657",
         )
 
     def test_valid_concrete_authorization_yields_read_only_install_preflight(self) -> None:
@@ -120,7 +120,7 @@ class AnnualPatternCatalogue2016RuntimeAuthorizationInstallPreflightTests(
         self.assertEqual(value["decision"], "DEC-506")
         self.assertEqual(value["source_authorization_decision"], "DEC-504")
         self.assertEqual(value["annual_segment_label"], "2016")
-        self.assertEqual(value["expected_run_number"], 377)
+        self.assertEqual(value["expected_run_number"], 378)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertEqual(value["previous_annual_freeze_run_id"], 424242)
         self.assertEqual(value["activation_mutation_file_count"], 2)
