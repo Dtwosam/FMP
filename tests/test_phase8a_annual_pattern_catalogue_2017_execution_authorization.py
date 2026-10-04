@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import unittest
 
@@ -102,6 +103,10 @@ def _preflight() -> dict[str, object]:
     return value
 
 
+@unittest.skipIf(
+    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
+    "DEC-535 requires the installed annual workflow/runtime state",
+)
 class AnnualPatternCatalogue2017ExecutionAuthorizationTests(unittest.TestCase):
     def test_sources_pin_concrete_preflight_runtime_and_workflow(self) -> None:
         source = validate_2017_execution_authorization_sources(
