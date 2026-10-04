@@ -5,11 +5,13 @@ import json
 import os
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
+from fmp.discovery import annual_pattern_catalogue_2016_post_install_dispatch_recovery as recovery_module
+from fmp.discovery import annual_pattern_catalogue_2016_post_install_runtime_repair as repair_module
 from fmp.discovery.annual_pattern_catalogue_2016_post_install_dispatch_recovery import (
     build_2016_post_install_dispatch_recovery,
     validate_2016_post_install_dispatch_recovery,
-    validate_2016_post_install_dispatch_recovery_sources,
 )
 from fmp.discovery.annual_pattern_catalogue_2016_post_install_runtime_repair import (
     build_2016_post_install_runtime_repair,
@@ -178,12 +180,24 @@ def _repair() -> dict[str, object]:
             ],
         }]
     }
-    return build_2016_post_install_runtime_repair(
-        repository_root=REPOSITORY_ROOT,
-        installer_run=run,
-        installer_jobs=jobs,
-        repair_head_sha=HEAD,
-    )
+    historical_sources = {
+        "active_gate_blob_sha": repair_module.EXPECTED_ACTIVE_GATE_BLOB_SHA,
+        "runtime_blob_sha": repair_module.EXPECTED_RUNTIME_BLOB_SHA,
+        "active_workflow_blob_sha": (
+            repair_module.EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA
+        ),
+    }
+    with patch.object(
+        repair_module,
+        "validate_2016_post_install_runtime_repair_sources",
+        return_value=historical_sources,
+    ):
+        return build_2016_post_install_runtime_repair(
+            repository_root=REPOSITORY_ROOT,
+            installer_run=run,
+            installer_jobs=jobs,
+            repair_head_sha=HEAD,
+        )
 
 
 def _runs() -> dict[str, object]:
@@ -213,29 +227,51 @@ def _runs() -> dict[str, object]:
     "post-install dispatch recovery requires active annual runtime state",
 )
 class AnnualCatalogue2016PostInstallDispatchRecoveryTests(unittest.TestCase):
-    def test_sources_pin_repair_receipt_binding_and_runtime(self) -> None:
-        value = validate_2016_post_install_dispatch_recovery_sources(
-            repository_root=REPOSITORY_ROOT,
-        )
+    def _historical_sources(self) -> dict[str, str]:
+        return {
+            "repair_source_blob_sha": recovery_module.EXPECTED_REPAIR_SOURCE_BLOB_SHA,
+            "install_receipt_source_blob_sha": (
+                recovery_module.EXPECTED_INSTALL_RECEIPT_SOURCE_BLOB_SHA
+            ),
+            "runtime_binding_source_blob_sha": (
+                recovery_module.EXPECTED_RUNTIME_BINDING_SOURCE_BLOB_SHA
+            ),
+            "active_gate_blob_sha": recovery_module.EXPECTED_ACTIVE_GATE_BLOB_SHA,
+            "runtime_blob_sha": recovery_module.EXPECTED_RUNTIME_BLOB_SHA,
+            "active_workflow_blob_sha": (
+                recovery_module.EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA
+            ),
+        }
+
+    def test_sources_keep_historical_repair_runtime_pins(self) -> None:
         self.assertEqual(
-            value["repair_source_blob_sha"],
+            recovery_module.EXPECTED_REPAIR_SOURCE_BLOB_SHA,
             "fce9214787b487f9dacf083adec39a4507958d92",
         )
         self.assertEqual(
-            value["active_gate_blob_sha"],
+            recovery_module.EXPECTED_ACTIVE_GATE_BLOB_SHA,
             "5b034fba697c3de0c0f8b6140d6f84771f1ae54b",
+        )
+        self.assertEqual(
+            recovery_module.EXPECTED_RUNTIME_BLOB_SHA,
+            "b564f5a26fdef146fc6080962e7c4762b0b5949a",
         )
 
     def test_exact_repaired_state_authorizes_only_fresh_run378(self) -> None:
-        value = build_2016_post_install_dispatch_recovery(
-            repository_root=REPOSITORY_ROOT,
-            repair_receipt=_repair(),
-            install_receipt=_install_receipt(),
-            runtime_binding=_binding(),
-            main_branch={"name": "main", "commit": {"sha": HEAD}},
-            annual_workflow_runs=_runs(),
-            expected_head_sha=HEAD,
-        )
+        with patch.object(
+            recovery_module,
+            "validate_2016_post_install_dispatch_recovery_sources",
+            return_value=self._historical_sources(),
+        ):
+            value = build_2016_post_install_dispatch_recovery(
+                repository_root=REPOSITORY_ROOT,
+                repair_receipt=_repair(),
+                install_receipt=_install_receipt(),
+                runtime_binding=_binding(),
+                main_branch={"name": "main", "commit": {"sha": HEAD}},
+                annual_workflow_runs=_runs(),
+                expected_head_sha=HEAD,
+            )
         self.assertIs(validate_2016_post_install_dispatch_recovery(value), value)
         self.assertEqual(value["decision"], "DEC-532")
         self.assertEqual(value["expected_run_number"], 378)
@@ -256,16 +292,24 @@ class AnnualCatalogue2016PostInstallDispatchRecoveryTests(unittest.TestCase):
             "event": "workflow_dispatch", "head_branch": "main",
             "head_sha": HEAD, "status": "completed", "conclusion": "success",
         })
-        with self.assertRaisesRegex(ValueError, "exactly three prior annual"):
-            build_2016_post_install_dispatch_recovery(
-                repository_root=REPOSITORY_ROOT,
-                repair_receipt=_repair(),
-                install_receipt=_install_receipt(),
-                runtime_binding=_binding(),
-                main_branch={"name": "main", "commit": {"sha": HEAD}},
-                annual_workflow_runs=runs,
-                expected_head_sha=HEAD,
-            )
+        with patch.object(
+            recovery_module,
+            "validate_2016_post_install_dispatch_recovery_sources",
+            return_value=self._historical_sources(),
+        ):
+            with self.assertRaisesRegex(
+                ValueError,
+                "exactly three prior annual",
+            ):
+                build_2016_post_install_dispatch_recovery(
+                    repository_root=REPOSITORY_ROOT,
+                    repair_receipt=_repair(),
+                    install_receipt=_install_receipt(),
+                    runtime_binding=_binding(),
+                    main_branch={"name": "main", "commit": {"sha": HEAD}},
+                    annual_workflow_runs=runs,
+                    expected_head_sha=HEAD,
+                )
 
 
 if __name__ == "__main__":
