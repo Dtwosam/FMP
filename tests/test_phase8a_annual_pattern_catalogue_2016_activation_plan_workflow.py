@@ -33,11 +33,11 @@ class AnnualCatalogue2016ActivationPlanWorkflowTests(unittest.TestCase):
         for blob in (
             "4d5813b301ab8e22fb2e1e9da36517dfe99f25bb",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
-            "bbb3bba32c3677d3bd971a2744eb93498868433b",
-            "9c89eb64c1e0ecda56fd9cfe0b26516e4a20abc3",
-            "f3d93ba4701a5d9d80005664445104d1105ff25f",
-            "6d8b4342118eca13872d89478efe052cd78b9c0a",
-            "e5bb5dce82111a29997783fcdc4df0f70883700e",
+            "c50442443018922d32f4a19f9d2a31e70e1f53d6",
+            "c1a6dcaf5feb005c543097d56901612bff04878c",
+            "c03a539c3c54fe7744c82d60f84b1dbd2cba9020",
+            "776ec2e50afb4bf2d7ef6807b43ff91fdb31f732",
+            "ce2d4ab0ca348bc009277b2b03bdf32fcb703700",
             "2170a62c5d5ad91507796d10cfd7cf8d0c1e52f7",
             "b4fd008939440791e52de0ae7c0015c4ee9576b8",
             "5af3c5787c8904e3371f7840d2a71aa588f16eb9",
@@ -77,11 +77,11 @@ class AnnualCatalogue2016ActivationPlanWorkflowTests(unittest.TestCase):
         )
         self.assertIn("annual_pattern_catalogue_runtime.py", text)
         self.assertIn(
-            "e6ef74733669ceb8cab13a1e0d25a236526266e3",
+            "1110d07741863649a1cd3ec454bda555d5703bc0",
             text,
         )
         self.assertIn(
-            "995bb46ddd95563f904243c78ae4fc3cf3308968",
+            "7979ac17ebcaa13f0c8da5ca5632a8064196d28f",
             text,
         )
         self.assertIn(
