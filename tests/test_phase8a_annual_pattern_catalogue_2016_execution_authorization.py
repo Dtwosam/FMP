@@ -142,7 +142,7 @@ class AnnualPatternCatalogue2016ExecutionAuthorizationTests(unittest.TestCase):
 
     def test_wrong_preflight_run_number_is_rejected(self) -> None:
         preflight = _preflight()
-        preflight["expected_next_run_number"] = 4
+        preflight["expected_next_run_number"] = 379
         with self.assertRaisesRegex(ValueError, "next run number mismatch"):
             build_2016_execution_authorization(
                 preflight,
