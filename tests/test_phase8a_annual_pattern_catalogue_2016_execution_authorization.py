@@ -34,7 +34,7 @@ def _preflight() -> dict[str, object]:
         "annual_workflow_run_count": 3,
         "failed_first_run_id": 37126711695,
         "successful_2015_run_id": 424242,
-        "successful_2015_run_number": 376,
+        "successful_2015_run_number": 377,
         "successful_2015_run_attempt": 1,
         "successful_2015_run_head_sha": "b" * 40,
         "stage": (
