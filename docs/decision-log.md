@@ -10829,3 +10829,7 @@ because the workflow did not export `PYTHONPATH=src`.
 No repository or annual-workflow mutation occurred. The recovery keeps the same
 DEC-534 contract, requires exact workflow run 2 / attempt 1, proves failed run 1
 before continuing, and adds only the missing source-path environment.
+
+## 2026-10-04 — DEC-535 concrete 2017 execution authorization
+
+Successful DEC-534 workflow run `37210041270` produced immutable preflight artifact `11306121033` with digest `sha256:531c468e36ac80f6c0c24620c14b78d2b2faad869d53be098efe7a2b31425e04`. DEC-535 binds only that concrete preflight and authorizes annual segment 2017 as exact workflow run 379 / attempt 1. The contract turns on only the historical read/execution/result and annual-workflow-dispatch authority needed by that future research run. The 2017 runtime gate is not installed, no dispatch command exists or executes, and run 380+, 2018+, strategy promotion, broker/order, real-money, and trading authority remain locked. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2017_RUNTIME_AUTHORIZATION_PLAN`.
