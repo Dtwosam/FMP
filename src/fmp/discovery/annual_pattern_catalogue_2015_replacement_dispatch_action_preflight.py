@@ -26,11 +26,11 @@ AUTHORIZATION_SOURCE_PATH = (
     "annual_pattern_catalogue_2015_replacement_execution_authorization.py"
 )
 EXPECTED_AUTHORIZATION_SOURCE_BLOB_SHA = (
-    "00f588ae2f641919a79e8baf1b262f73ce5834b2"
+    "1f9291135739dc00f0271e13ade312b7650dfd87"
 )
 RUNTIME_SOURCE_PATH = "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 EXPECTED_RUNTIME_SOURCE_BLOB_SHA = (
-    "457c1ffe9cd012041a3d6c3a5568776d8c6fe68a"
+    "a33d851c176f20c43c49ee67c984c90e6088067c"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_REPAIRED_WORKFLOW_BLOB_SHA = (
@@ -41,6 +41,10 @@ FAILED_FIRST_RUN_ID = 37126711695
 FAILED_FIRST_RUN_NUMBER = 1
 FAILED_FIRST_RUN_ATTEMPT = 1
 FAILED_FIRST_RUN_HEAD_SHA = "fd85a886d07234ad584dcca08692b37e6af54b2e"
+FAILED_REPLACEMENT_RUN_ID = 37191637168
+FAILED_REPLACEMENT_RUN_NUMBER = 376
+FAILED_REPLACEMENT_RUN_ATTEMPT = 1
+FAILED_REPLACEMENT_RUN_HEAD_SHA = "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"
 
 
 def _git_blob_sha(path: Path) -> str:
@@ -116,14 +120,24 @@ def _validate_prior_run_inventory(
     runs = value.get("workflow_runs")
     if not isinstance(runs, list):
         raise ValueError("DEC-499 annual workflow_runs must be a list")
-    if len(runs) != 1:
+    if len(runs) != 2:
         raise ValueError(
-            "DEC-499 requires exactly one prior annual-catalogue workflow run"
+            "DEC-499 requires exactly two prior annual-catalogue workflow runs"
         )
-    row = runs[0]
-    if not isinstance(row, Mapping):
-        raise ValueError("DEC-499 prior run row is malformed")
-    exact = {
+    by_number: dict[int, Mapping[str, object]] = {}
+    for row in runs:
+        if not isinstance(row, Mapping):
+            raise ValueError("DEC-499 prior run row is malformed")
+        number = row.get("run_number")
+        if not isinstance(number, int) or isinstance(number, bool):
+            raise ValueError("DEC-499 prior run number is malformed")
+        if number in by_number:
+            raise ValueError("DEC-499 duplicate prior run number")
+        by_number[number] = row
+    if set(by_number) != {FAILED_FIRST_RUN_NUMBER, FAILED_REPLACEMENT_RUN_NUMBER}:
+        raise ValueError("DEC-499 prior run inventory mismatch")
+
+    exact_first = {
         "id": FAILED_FIRST_RUN_ID,
         "run_number": FAILED_FIRST_RUN_NUMBER,
         "run_attempt": FAILED_FIRST_RUN_ATTEMPT,
@@ -133,16 +147,35 @@ def _validate_prior_run_inventory(
         "status": "completed",
         "conclusion": "failure",
     }
-    for field, expected in exact.items():
-        if row.get(field) != expected:
+    for field, expected in exact_first.items():
+        if by_number[FAILED_FIRST_RUN_NUMBER].get(field) != expected:
             raise ValueError(f"DEC-499 prior failed run {field} mismatch")
+
+    exact_replacement = {
+        "id": FAILED_REPLACEMENT_RUN_ID,
+        "run_number": FAILED_REPLACEMENT_RUN_NUMBER,
+        "run_attempt": FAILED_REPLACEMENT_RUN_ATTEMPT,
+        "event": "workflow_dispatch",
+        "head_branch": "main",
+        "head_sha": FAILED_REPLACEMENT_RUN_HEAD_SHA,
+        "status": "completed",
+        "conclusion": "failure",
+    }
+    for field, expected in exact_replacement.items():
+        if by_number[FAILED_REPLACEMENT_RUN_NUMBER].get(field) != expected:
+            raise ValueError(f"DEC-499 failed replacement run {field} mismatch")
     return {
-        "prior_run_count": 1,
+        "prior_run_count": 2,
         "failed_first_run_id": FAILED_FIRST_RUN_ID,
         "failed_first_run_number": FAILED_FIRST_RUN_NUMBER,
         "failed_first_run_attempt": FAILED_FIRST_RUN_ATTEMPT,
         "failed_first_run_head_sha": FAILED_FIRST_RUN_HEAD_SHA,
         "failed_first_run_conclusion": "failure",
+        "failed_replacement_run_id": FAILED_REPLACEMENT_RUN_ID,
+        "failed_replacement_run_number": FAILED_REPLACEMENT_RUN_NUMBER,
+        "failed_replacement_run_attempt": FAILED_REPLACEMENT_RUN_ATTEMPT,
+        "failed_replacement_run_head_sha": FAILED_REPLACEMENT_RUN_HEAD_SHA,
+        "failed_replacement_run_conclusion": "failure",
     }
 
 
@@ -194,7 +227,7 @@ def build_2015_replacement_dispatch_action_preflight(
         "historical_result_production_authorized": True,
         "rerun_failed_run_authorized": False,
         "retry_failed_run_authorized": False,
-        "third_or_later_run_authorized": False,
+        "fourth_or_later_run_authorized": False,
         "next_segment_execution_authorized": False,
         "cross_year_result_production_authorized": False,
         "strategy_v1_synthesis_authorized": False,
@@ -221,11 +254,13 @@ def validate_2015_replacement_dispatch_action_preflight(
 ) -> Mapping[str, object]:
     if value.get("decision") != "DEC-499":
         raise ValueError("DEC-499 decision mismatch")
-    if value.get("prior_run_count") != 1:
+    if value.get("prior_run_count") != 2:
         raise ValueError("DEC-499 prior run count mismatch")
     if value.get("failed_first_run_id") != FAILED_FIRST_RUN_ID:
         raise ValueError("DEC-499 failed first run id mismatch")
-    if value.get("expected_replacement_run_number") != 376:
+    if value.get("failed_replacement_run_id") != FAILED_REPLACEMENT_RUN_ID:
+        raise ValueError("DEC-499 failed replacement run id mismatch")
+    if value.get("expected_replacement_run_number") != 377:
         raise ValueError("DEC-499 replacement run number mismatch")
     if value.get("expected_replacement_run_attempt") != 1:
         raise ValueError("DEC-499 replacement run attempt mismatch")
@@ -241,7 +276,7 @@ def validate_2015_replacement_dispatch_action_preflight(
     for field in (
         "rerun_failed_run_authorized",
         "retry_failed_run_authorized",
-        "third_or_later_run_authorized",
+        "fourth_or_later_run_authorized",
         "next_segment_execution_authorized",
         "cross_year_result_production_authorized",
         "strategy_v1_synthesis_authorized",
