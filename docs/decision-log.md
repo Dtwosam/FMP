@@ -10819,3 +10819,13 @@ expected run 379 / attempt 1. The next annual execution remains locked.
 
 Next gate:
 `ANNUAL_PATTERN_CATALOGUE_2017_EXECUTION_AUTHORIZATION_BEFORE_RUN`.
+
+## 2026-10-04 — DEC-534 bootstrap recovery
+
+The first repository-hosted DEC-534 preflight run (`37209674158`) passed its
+evidence and annual-history checks, then failed before preflight construction
+because the workflow did not export `PYTHONPATH=src`.
+
+No repository or annual-workflow mutation occurred. The recovery keeps the same
+DEC-534 contract, requires exact workflow run 2 / attempt 1, proves failed run 1
+before continuing, and adds only the missing source-path environment.
