@@ -50,7 +50,7 @@ def _preflight() -> dict[str, object]:
         ),
         "source_plan_canonical_sha256": "2" * 64,
         "stage": (
-            "ANNUAL_CATALOGUE_2017_RUNTIME_AUTHORIZATION_"
+            "ANNUAL_CATALOGUE_2018_RUNTIME_AUTHORIZATION_"
             "INSTALL_PREFLIGHT_READY"
         ),
         "repository_full_name": "Dtwosam/FMP",
@@ -154,7 +154,7 @@ class AnnualPatternCatalogue2018RuntimeAuthorizationInstallActionTests(
         self.assertEqual(value["decision"], "DEC-549")
         self.assertEqual(value["source_preflight_workflow_run_id"], 37231591329)
         self.assertEqual(value["source_preflight_artifact_id"], 11314511176)
-        self.assertEqual(value["expected_run_number"], 379)
+        self.assertEqual(value["expected_run_number"], 380)
         self.assertEqual(value["action_count"], 2)
         create, update = value["actions"]
         self.assertEqual(create["operation"], "create")
