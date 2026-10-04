@@ -51,7 +51,7 @@ class AnnualCatalogue2015ReplacementRuntimeEvidenceWorkflowTests(
         for blob in (
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
             "74e9499d9485c8e2a402fb675c995cc1961ff16a",
-            "350806f8d37e4deae6ff8a16551e7b07fd1d5958",
+            "e5c2d39decf653d31fcfcd8b9b44671f3061f711",
             "d6935a7b31b028b955f182cf81bc2c123a321852",
             "97cfd73d5693046f05104342cb74867d5dc471cc",
             "400e9715a6e3b2dab413ce2ecff0fbce8c46f6b0",
