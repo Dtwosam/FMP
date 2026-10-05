@@ -44,12 +44,12 @@ jobs:
       - name: Require frozen DEC-558 sources
         run: |
           set -euo pipefail
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization_plan.py)" = "837b984e1ccb101c125ec21d9be062a969a002e3"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization_plan.py)" = "41e7adba8b5061028d8adc7ef93d1fc02424039e"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2019_runtime_authorization_plan.py)" = "c29a37e70eed0e31f22a7c715e80555c44bf27a5"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_execution_authorization.py)" = "084fa62c7fd4855fc561038d991e1215df2ff73b"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "410180c34a9e3500bbbb42310a5253b993ac7785"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
-          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2019_runtime_authorization.py.disabled)" = "3f7f71882195e373940d922a451f426011728063"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2019_runtime_authorization.py.disabled)" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2019_authorization.py.disabled)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
 
       - name: Fetch and verify exact DEC-557 authorization artifact
@@ -191,7 +191,7 @@ jobs:
           assert value["expected_run_attempt"] == 1
           assert value["expected_previous_annual_freeze_run_id"] == 37237817538
           assert value["target_gate_source_blob_sha"] == (
-              "3f7f71882195e373940d922a451f426011728063"
+              "d87fe85a5b426fa92caf7d6cc165445590f4097c"
           )
           assert value["target_runtime_source_blob_sha"] == (
               "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
