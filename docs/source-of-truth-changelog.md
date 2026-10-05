@@ -2247,3 +2247,7 @@ fingerprint
 `33ea75e1f34b2d643617be37e254644193506dea7fd959772c9eb00115088709`)
 and exact predecessor `37237817538`. DEC-566 binds only successful exact
 run381 runtime evidence and advances only to a read-only 2020 preflight.
+
+## 2026-10-05 — DEC-567 2020 preflight source staged
+
+Added a source-only read-only 2020 execution preflight that consumes structurally valid DEC-566 evidence, binds the exact annual workflow history through run 381, and freezes run 382 / attempt 1 as the next possible annual identity. No dispatch surface or later authority is installed.
