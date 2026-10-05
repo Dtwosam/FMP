@@ -100,7 +100,7 @@ class AnnualPatternCatalogue2020RuntimeAuthorizationPlanTests(unittest.TestCase)
         )
         self.assertEqual(
             source["dormant_2020_gate_template_blob_sha"],
-            "f59b06f9ac0fd51742f3771b6875f22872ffefcd",
+            "695a50b418da752e1bd37d6302f209033ab611f5",
         )
         self.assertEqual(
             source["dormant_runtime_target_template_blob_sha"],
@@ -136,7 +136,7 @@ class AnnualPatternCatalogue2020RuntimeAuthorizationPlanTests(unittest.TestCase)
         )
         self.assertEqual(
             value["target_gate_source_blob_sha"],
-            "f59b06f9ac0fd51742f3771b6875f22872ffefcd",
+            "695a50b418da752e1bd37d6302f209033ab611f5",
         )
         self.assertEqual(
             value["target_runtime_source_blob_sha"],
