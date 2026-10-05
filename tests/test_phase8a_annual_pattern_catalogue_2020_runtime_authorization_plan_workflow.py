@@ -42,11 +42,11 @@ class AnnualPatternCatalogue2020RuntimeAuthorizationPlanWorkflowTests(
             "11346849851",
             "a03cd0d85672e8ae760b8490982fe93f541738c68b733860f10bb16caf968308",
             "cfd43db91d2703e743132e61540ed95acec11fc9d4f6f89d8a8c011345a95f55",
-            "143f04dd282c0527586c9f4165bc26b17a1c4a3a",
+            "2bf301c61642daf6ab9bfba3d3fa501f6351d9ea",
             "3e55a5f600df9cfe28e8de0e3971304f5ba55ab7",
             "270fea87dd298888f224f605a88e66215ae06911",
             "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e",
-            "f59b06f9ac0fd51742f3771b6875f22872ffefcd",
+            "695a50b418da752e1bd37d6302f209033ab611f5",
             "4e124365430672fa63825b272001937c60151644",
         ):
             self.assertIn(value, text)
