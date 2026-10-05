@@ -41,7 +41,7 @@ jobs:
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
 
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_dispatch_action_preflight.py)" = "e8575ae161aafa9893592512c7158f43b4aa1da7"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_dispatch_action_preflight.py)" = "ba9c090cda76750e080d5da21aad8f41c88611da"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2019_dispatch_action_preflight.py)" = "36565d2119da9326dfcbf9ed72178ecca7b2a9ae"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_dispatch_authorization.py)" = "aa614fd67367a53be2889651a701b63f1ef2a7c9"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py)" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
