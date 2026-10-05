@@ -2283,3 +2283,7 @@ Bound successful DEC-571 run `37327905209` and artifact `11352259131`. Added the
 ## 2026-10-05 — DEC-572 provenance binding repair
 
 Recorded failed installer run `37360538726` as pre-mutation evidence and corrected the executor's DEC-570 workflow/artifact assertions from stale 2019 IDs to `37321690650` / `11350136423`. The repair remains run-2-only and does not consume annual run 382.
+
+## 2026-10-05 — DEC-573 2020 dispatch preflight
+
+Bound the successful DEC-572 runtime installation and exact annual history into a read-only 2020/run382 dispatch preflight. Run 382 remains absent; no dispatch or trading-related authority is introduced.
