@@ -29,6 +29,15 @@ class AnnualPatternCatalogue2020RuntimeInstallActionWorkflowTests(
         self.assertNotIn("git push", text)
         self.assertNotIn("git commit", text)
 
+    def test_builder_recovery_is_exact_run_two_and_binds_failed_run_one(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
+        self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
+        self.assertIn("37327196175", text)
+        self.assertIn("8f37700f9b468a8aff35b4dc4d916580c9bccaa5", text)
+        self.assertIn('"run_number": 1', text)
+        self.assertIn('"conclusion": "failure"', text)
+
     def test_builder_pins_exact_dec570_evidence(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for value in (
