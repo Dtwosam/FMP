@@ -94,7 +94,7 @@ jobs:
       - name: Resolve exact successful DEC-578 recovery dispatcher
         run: |
           set -euo pipefail
-          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-catalogue-2020-run382-dispatch.yml/runs?event=push&branch=main&per_page=100"
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-catalogue-2020-run382-dispatch-recovery.yml/runs?event=push&branch=main&per_page=100"
           found=0
           for _ in $(seq 1 30); do
             gh api "$endpoint" > "$RUNNER_TEMP/dec578-runs.json"
