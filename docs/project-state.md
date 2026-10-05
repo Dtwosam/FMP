@@ -3334,3 +3334,7 @@ Annual catalogue run 381 completed successfully for 2019 with all 20 jobs and ex
 ### 2026-10-05 — Concrete 2020 preflight frontier
 
 Recovered DEC-566 evidence for successful 2019 run 381 is now concrete and immutable. DEC-567 binds that exact recovery artifact/fingerprint and the seven-run annual history, and may produce only a read-only 2020 preflight for expected annual run 382 / attempt 1. No run 382 exists yet and no 2020 dispatch or execution authority is active. Cross-year synthesis, Strategy V1, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
+
+### 2026-10-05 — 2020 source authorization frontier
+
+DEC-567 completed successfully and froze run 382 / attempt 1 with no dispatch. DEC-568 is now staged as a source-only authorization for the 2020 annual research contract. It does not install the runtime authorization and cannot dispatch the annual workflow. The next gate is a read-only 2020 runtime-authorization plan. Run 383+, cross-year synthesis, Strategy V1, Phase 8B, broker mutation, order execution, real-money action, and trading remain locked.
