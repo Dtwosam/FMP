@@ -3312,3 +3312,17 @@ requires exact history through successful 2018 run 380, binds predecessor run
 has been dispatched by DEC-564. Run 382+, 2020+, cross-year synthesis, Strategy
 V1, promotion, Phase 8B, broker mutation, order execution, real-money action,
 and trading remain locked.
+
+### 2026-10-05 — DEC-565/566 2019 run381 frontier
+
+Concrete DEC-564 evidence is bound to run `37309216521`, artifact
+`11344423884`, and fingerprint
+`33ea75e1f34b2d643617be37e254644193506dea7fd959772c9eb00115088709`.
+
+The next atomic landing installs DEC-565 and DEC-566 together. DEC-565 may
+submit only 2019 global annual run 381 / attempt 1 from current main with
+predecessor run `37237817538`; DEC-566 is already present on main before the
+dispatch can complete and may only review/bind a successful exact run381.
+No run 382+, 2020+, cross-year synthesis, Strategy V1, promotion, Phase 8B,
+broker mutation, order execution, real-money action, or trading authority is
+opened.
