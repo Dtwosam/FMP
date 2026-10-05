@@ -3366,3 +3366,7 @@ The corrected DEC-571 builder succeeded as run 2 / attempt 1 (`37327905209`) and
 ### 2026-10-05 — DEC-572 installer provenance repair
 
 The first DEC-572 installer workflow run `37360538726` on merge `ecbac06de8dd81acebbe6565651d8da2124d68f1` failed safely before repository mutation. The concrete DEC-571 artifact validated successfully, but the executor then compared its embedded DEC-570 provenance against stale 2019 IDs (`37295798286` / `11338796649`) instead of the correct 2020 DEC-570 run/artifact (`37321690650` / `11350136423`). Annual run 382 remains absent, the 2020 gate remains uninstalled, and runtime remains `07ddfe7a...`. The repair permits only installer workflow run 2 / attempt 1, binds failed run-1 provenance, and changes only those provenance assertions. No annual dispatch or trading authority is added.
+
+### 2026-10-05 — DEC-573 2020 dispatch-preflight frontier
+
+DEC-572 installer workflow run `37361230835` completed successfully and advanced main to install commit `3ee648808bc2982c02dd1cb10fd45911f6379dcb`. Artifact `11367191085` (digest `sha256:5f0f9862b411a9da4f0c383259ef78dc9df842be4a58ee06c43374a0b774d716`) carries install-receipt fingerprint `1f77559f7aadfb83e338e467148d86b2a99850d69909e689f04604fa19c3e7b4`. DEC-573 is the next read-only gate: exact annual history remains failed runs 1/376 plus successful runs 377–381, annual run 382 remains unconsumed, and the future target is only segment 2020 / run 382 / attempt 1 / predecessor `37310525635`. Next gate: `ANNUAL_PATTERN_CATALOGUE_2020_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
