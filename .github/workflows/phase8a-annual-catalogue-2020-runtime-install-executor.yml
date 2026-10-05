@@ -31,14 +31,37 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Require exact first installer push
+      - name: Require exact second installer push after stale provenance failure
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$GITHUB_EVENT_NAME" = "push"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37360538726" > "$RUNNER_TEMP/failed-dec572-run.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          run = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "failed-dec572-run.json").read_text()
+          )
+          exact = {
+              "id": 37360538726,
+              "name": "phase8a-annual-catalogue-2020-runtime-install-executor",
+              "path": ".github/workflows/phase8a-annual-catalogue-2020-runtime-install-executor.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "ecbac06de8dd81acebbe6565651d8da2124d68f1",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "failure",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          PY
 
       - name: Require frozen DEC-572 sources
         run: |
@@ -147,8 +170,8 @@ jobs:
           )
           validate_2020_runtime_authorization_install_action(value)
           assert value["decision"] == "DEC-571"
-          assert value["source_preflight_workflow_run_id"] == 37295798286
-          assert value["source_preflight_artifact_id"] == 11338796649
+          assert value["source_preflight_workflow_run_id"] == 37321690650
+          assert value["source_preflight_artifact_id"] == 11350136423
           assert value["expected_run_number"] == 382
           assert value["expected_run_attempt"] == 1
           assert value["previous_annual_freeze_run_id"] == 37310525635
