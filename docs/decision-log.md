@@ -11008,3 +11008,7 @@ false.
 
 Next gate after successful DEC-566 evidence:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2020_EXECUTION_PREFLIGHT`.
+
+## 2026-10-05 — DEC-566 run381 evidence recovery
+
+Annual run `37310525635` completed successfully as run 381 / attempt 1 on `8bcee3a7a834743f08bd9ad73109bfc09609a2fe`, but GitHub did not create the automatic DEC-566 workflow-run successor. The exact DEC-565 dispatcher run is `37310506796`; its receipt artifact is `11345118826` with digest `sha256:ab1f031f0b986521b64c2667029b48a8052c5f936bb0633aff536770fb64646f`. The exact 2019 freeze artifact is `11345931866` with digest `sha256:cc3f5100c276e30df87d721a15843ff56b533354a5adaba6699d716a2daa8178`. A one-shot read-only recovery reuses the frozen DEC-566 reviewer and produces only the missing runtime binding; no run 382+, 2020 execution, strategy, broker, order, real-money, or trading authority is added.
