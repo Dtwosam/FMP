@@ -10969,3 +10969,22 @@ DEC-561 installer run `37304310188` completed successfully and advanced main to 
 ## 2026-10-05 — DEC-563 source-only 2019 dispatch authorization
 
 Concrete DEC-562 preflight run `37305622078` produced artifact `11344155034` (digest `sha256:b7245744efdd4cd646b8eac6f094e9198e0f4d0cd2d36883c70685fa0feffbb7`) with fingerprint `b02c7c68f682f9706e3f9e4a6e4ade7826e1abb47d01330f543279221063fe45`. DEC-563 authorizes only the source contract for 2019 / run 381 / attempt 1 / predecessor `37237817538`; it contains no dispatch command and executes no action. Run382+, 2020+, strategy/promotion, broker/order, real-money, and trading authority remain locked.
+
+## 2026-10-05 — DEC-564 final read-only 2019 dispatch-action preflight
+
+Concrete DEC-563 authorization run `37306565277` succeeded on
+`c9b93843c2b853fc23d78cdbcebdbf51a3cc390e` and produced artifact
+`11344330424` with digest
+`sha256:06b72e13349a47106e36ce631713da55e51407fdeeb6dd26518c8115191bf520`
+and authorization fingerprint
+`fd554fbfd2ca556b0e4a6e65ddb00ec805809eda70d80a1e1a401edfeb71fcf8`.
+
+DEC-564 freezes only main / 2019 / predecessor run `37237817538` / annual run
+381 attempt 1 after revalidating exact annual history
+`{1 failure, 376 failure, 377–380 success}`. It rejects run 381+ if already
+present, performs no dispatch or repository mutation, and leaves rerun/retry,
+run 382+, 2020+, strategy/promotion, broker/order, real-money, and trading
+authority false.
+
+Next gate:
+`EXACT_2019_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
