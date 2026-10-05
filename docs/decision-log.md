@@ -11008,3 +11008,7 @@ false.
 
 Next gate after successful DEC-566 evidence:
 `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2020_EXECUTION_PREFLIGHT`.
+
+## 2026-10-05 — DEC-567 source-ready 2020 execution preflight
+
+DEC-567 is staged off-queue as the read-only successor to DEC-566. It accepts only a valid 2019 run-381 runtime binding and the exact seven-run annual inventory (failed runs 1/376, successful runs 377–381), then freezes 2020 as expected annual run 382 / attempt 1. It grants no dispatch, execution, result, cross-year, strategy, promotion, broker, order, real-money, or trading authority. Concrete artifact ID/digest/fingerprint pinning remains deferred until DEC-566 finishes.
