@@ -44,12 +44,12 @@ jobs:
       - name: Require frozen DEC-569 sources
         run: |
           set -euo pipefail
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization_plan.py)" = "143f04dd282c0527586c9f4165bc26b17a1c4a3a"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization_plan.py)" = "2bf301c61642daf6ab9bfba3d3fa501f6351d9ea"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2020_runtime_authorization_plan.py)" = "3e55a5f600df9cfe28e8de0e3971304f5ba55ab7"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_execution_authorization.py)" = "270fea87dd298888f224f605a88e66215ae06911"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
-          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2020_runtime_authorization.py.disabled)" = "f59b06f9ac0fd51742f3771b6875f22872ffefcd"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2020_runtime_authorization.py.disabled)" = "695a50b418da752e1bd37d6302f209033ab611f5"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2020_authorization.py.disabled)" = "4e124365430672fa63825b272001937c60151644"
 
       - name: Fetch and verify exact DEC-568 authorization artifact
@@ -192,7 +192,7 @@ jobs:
           assert value["expected_run_attempt"] == 1
           assert value["expected_previous_annual_freeze_run_id"] == 37310525635
           assert value["target_gate_source_blob_sha"] == (
-              "f59b06f9ac0fd51742f3771b6875f22872ffefcd"
+              "695a50b418da752e1bd37d6302f209033ab611f5"
           )
           assert value["target_runtime_source_blob_sha"] == (
               "4e124365430672fa63825b272001937c60151644"
