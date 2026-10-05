@@ -2263,3 +2263,7 @@ Bound the 2020 source-only execution authorization to the exact DEC-567 run/arti
 ## 2026-10-05 — DEC-569 2020 runtime plan staged
 
 Pinned the concrete DEC-568 workflow run/artifact/fingerprint and froze the dormant 2020 runtime gate and 2020-aware runtime target. The plan is read-only, run 382 remains unconsumed, and no runtime mutation or dispatch surface is introduced.
+
+## 2026-10-05 — DEC-569 next-gate label corrected
+
+Recorded the immutable first DEC-569 artifact with stale `AFTER_CONCRETE_DEC558` provenance and staged a run-2-only builder repair that emits `AFTER_CONCRETE_DEC569`. No authority or runtime state changes.

@@ -309,7 +309,7 @@ def build_2020_runtime_authorization_plan(
         "plan_source_only": True,
         "next_gate": (
             "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2020_RUNTIME_"
-            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC558"
+            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC569"
         ),
     }
     validate_2020_runtime_authorization_plan(value)
@@ -379,7 +379,7 @@ def validate_2020_runtime_authorization_plan(
         "plan_source_only": True,
         "next_gate": (
             "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2020_RUNTIME_"
-            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC558"
+            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC569"
         ),
     }
     for field, expected in exact.items():

@@ -32,19 +32,70 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Require exact first read-only plan push
+      - name: Require exact second read-only plan repair push
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$GITHUB_EVENT_NAME" = "push"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Bind exact stale DEC-569 run-1 artifact
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37317772668" > "$RUNNER_TEMP/dec569-stale-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37317772668/artifacts?per_page=100" > "$RUNNER_TEMP/dec569-stale-artifacts.json"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads((temp / "dec569-stale-run.json").read_text(encoding="utf-8"))
+          exact = {
+              "id": 37317772668,
+              "name": "phase8a-annual-catalogue-2020-runtime-authorization-plan",
+              "path": ".github/workflows/phase8a-annual-catalogue-2020-runtime-authorization-plan.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "9a421918550ad3b7114ac9074c1de07fc807281d",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+
+          artifacts = json.loads(
+              (temp / "dec569-stale-artifacts.json").read_text(encoding="utf-8")
+          ).get("artifacts", [])
+          matches = [
+              row
+              for row in artifacts
+              if row.get("id") == 11348625984
+              and row.get("name")
+              == "annual-catalogue-2020-dec569-runtime-authorization-plan-"
+              "9a421918550ad3b7114ac9074c1de07fc807281d"
+              and row.get("digest")
+              == "sha256:7dd8e882f729f8a1fb76edea15e2987b2c548585918e6761eed93620b01c186d"
+              and row.get("expired") is False
+          ]
+          assert len(matches) == 1
+          PY
+          gh api -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/11348625984/zip"             > "$RUNNER_TEMP/dec569-stale.zip"
+          test "$(sha256sum "$RUNNER_TEMP/dec569-stale.zip" | awk '{print $1}')" =             "7dd8e882f729f8a1fb76edea15e2987b2c548585918e6761eed93620b01c186d"
+          mkdir -p "$RUNNER_TEMP/dec569-stale"
+          unzip -q "$RUNNER_TEMP/dec569-stale.zip" -d "$RUNNER_TEMP/dec569-stale"
+          stale_plan="$(find "$RUNNER_TEMP/dec569-stale" -type f -name dec569-2020-runtime-authorization-plan.json -print)"
+          test "$(printf '%s\n' "$stale_plan" | sed '/^$/d' | wc -l)" = "1"
+          test "$(jq -r '.next_gate' "$stale_plan")" =             "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2020_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC558"
 
       - name: Require frozen DEC-569 sources
         run: |
           set -euo pipefail
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization_plan.py)" = "2bf301c61642daf6ab9bfba3d3fa501f6351d9ea"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization_plan.py)" = "cd420419cb149c23056edfcaf650d4d7e2d3775a"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2020_runtime_authorization_plan.py)" = "3e55a5f600df9cfe28e8de0e3971304f5ba55ab7"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_execution_authorization.py)" = "270fea87dd298888f224f605a88e66215ae06911"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
@@ -198,6 +249,10 @@ jobs:
               "4e124365430672fa63825b272001937c60151644"
           )
           assert value["plan_source_only"] is True
+          assert value["next_gate"] == (
+              "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2020_RUNTIME_"
+              "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC569"
+          )
           for field in (
               "runtime_authorization_installed",
               "runtime_gate_active",
