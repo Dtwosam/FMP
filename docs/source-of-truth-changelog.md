@@ -2214,3 +2214,7 @@ Bound the read-only install preflight to DEC-558 run `37294642532`, artifact `11
 ## 2026-10-05 — Add DEC-560 exact 2019 runtime install action
 
 Bound the future two-file 2019 runtime mutation to concrete DEC-559 run `37295798286`, artifact `11338796649`, digest `3d8b6933a1949c77a4e6b29df5bd86896a140d0011ba6859187d412df24cc8f9`, and preflight fingerprint `1c585ad2a2a0bdf3a0fc811376d1fa5701b293b2fd888abca30ea5c13fcf3861`. The action is compile-only; no repository mutation or annual dispatch is performed.
+
+## 2026-10-05 — Add DEC-561 2019 runtime install contract
+
+Bound the exact DEC-560 action artifact (`11341025756`, digest `dcd16ee2ddbdf9c5b17acfe6e79b54f1dbf6a38a839362ecc91a896f41520354`, fingerprint `c68df812693da1edfc5ab568afef50b2e70797a04b4c44cf22de7c3fc15bea35`) and added the path-scoped two-file 2019 runtime installer plus immutable receipt. The installer validates current main, exact annual history through successful run 380, frozen target blobs, and preserved 2018 routing before pushing. Annual dispatch and all run-382+/trading authority remain closed.

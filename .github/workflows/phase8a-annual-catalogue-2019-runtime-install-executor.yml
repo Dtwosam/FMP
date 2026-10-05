@@ -1,0 +1,298 @@
+name: phase8a-annual-catalogue-2019-runtime-install-executor
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-2019-runtime-install-executor.yml
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  install-runtime-authorization:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      DEC560_RUN_ID: "37299664787"
+      DEC560_HEAD_SHA: "bacb20c1d1541ac0b46076cef8ca9fe898559339"
+      DEC560_ARTIFACT_ID: "11341025756"
+      DEC560_ARTIFACT_DIGEST: "sha256:dcd16ee2ddbdf9c5b17acfe6e79b54f1dbf6a38a839362ecc91a896f41520354"
+
+    steps:
+      - name: Checkout exact DEC-561 landing
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Require exact first installer push
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Require frozen DEC-561 sources
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization_install_action.py)" = "15cc0c8e3b93453ecaf6ba1dfd635133279acb6c"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization_install_receipt.py)" = "5befb123f9d3f01cd4457c992c454c662a9f5b7d"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2019_runtime_authorization_install_receipt.py)" = "517b1756576b1eee47eb700ba8736fe730af26b1"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "410180c34a9e3500bbbb42310a5253b993ac7785"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2019_runtime_authorization.py.disabled)" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2019_authorization.py.disabled)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
+          test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
+
+      - name: Fetch and verify exact DEC-560 install action
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC560_RUN_ID" > "$RUNNER_TEMP/dec560-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC560_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec560-artifacts.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads((temp / "dec560-run.json").read_text())
+          exact = {
+              "id": 37299664787,
+              "name": "phase8a-annual-catalogue-2019-runtime-install-action",
+              "path": ".github/workflows/phase8a-annual-catalogue-2019-runtime-install-action.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "bacb20c1d1541ac0b46076cef8ca9fe898559339",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          payload = json.loads((temp / "dec560-artifacts.json").read_text())
+          rows = [a for a in payload.get("artifacts", []) if a.get("id") == 11341025756]
+          assert len(rows) == 1
+          artifact = rows[0]
+          assert artifact["name"] == "annual-catalogue-2019-dec560-runtime-install-action-bacb20c1d1541ac0b46076cef8ca9fe898559339"
+          assert artifact["digest"] == "sha256:dcd16ee2ddbdf9c5b17acfe6e79b54f1dbf6a38a839362ecc91a896f41520354"
+          assert artifact["expired"] is False
+          PY
+          gh api -H 'Accept: application/vnd.github+json' \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC560_ARTIFACT_ID/zip" \
+            > "$RUNNER_TEMP/dec560.zip"
+          actual="$(sha256sum "$RUNNER_TEMP/dec560.zip" | awk '{print $1}')"
+          test "$actual" = "dcd16ee2ddbdf9c5b17acfe6e79b54f1dbf6a38a839362ecc91a896f41520354"
+          mkdir -p "$RUNNER_TEMP/dec560"
+          unzip -q "$RUNNER_TEMP/dec560.zip" -d "$RUNNER_TEMP/dec560"
+          action="$(find "$RUNNER_TEMP/dec560" -type f -name dec560-2019-runtime-install-action.json -print)"
+          test "$(printf '%s\n' "$action" | sed '/^$/d' | wc -l)" = "1"
+          cp "$action" "$RUNNER_TEMP/dec560-2019-runtime-install-action.json"
+
+      - name: Recheck current main and unconsumed run-381 slot
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-before-install.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/annual-runs-before-install.json"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "410180c34a9e3500bbbb42310a5253b993ac7785"
+          test ! -e src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          temp = Path(os.environ["RUNNER_TEMP"])
+          main = json.loads((temp / "main-before-install.json").read_text())
+          assert main["commit"]["sha"] == os.environ["GITHUB_SHA"]
+          rows = json.loads((temp / "annual-runs-before-install.json").read_text()).get("workflow_runs", [])
+          by_number = {row["run_number"]: row for row in rows}
+          assert set(by_number) == {1, 376, 377, 378, 379, 380}
+          assert by_number[1]["conclusion"] == "failure"
+          assert by_number[376]["conclusion"] == "failure"
+          assert by_number[377]["conclusion"] == "success"
+          assert by_number[378]["conclusion"] == "success"
+          assert by_number[379]["conclusion"] == "success"
+          assert by_number[380]["conclusion"] == "success"
+          assert not any(row["run_number"] >= 381 for row in rows)
+          PY
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned installer dependencies
+        run: >-
+          python -m pip install
+          -r requirements/exp061-discovery-run.txt
+          scikit-learn==1.9.1
+
+      - name: Require clean installer checkout
+        run: test -z "$(git status --porcelain)"
+
+      - name: Validate concrete DEC-560 action
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from fmp.discovery.annual_pattern_catalogue_2019_runtime_authorization_install_action import (
+              validate_2019_runtime_authorization_install_action,
+          )
+          value = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "dec560-2019-runtime-install-action.json").read_text()
+          )
+          validate_2019_runtime_authorization_install_action(value)
+          assert value["decision"] == "DEC-560"
+          assert value["source_preflight_workflow_run_id"] == 37295798286
+          assert value["source_preflight_artifact_id"] == 11338796649
+          assert value["expected_run_number"] == 381
+          assert value["expected_run_attempt"] == 1
+          assert value["previous_annual_freeze_run_id"] == 37237817538
+          assert value["action_count"] == 2
+          assert value["install_action_fingerprint_sha256"] == "c68df812693da1edfc5ab568afef50b2e70797a04b4c44cf22de7c3fc15bea35"
+          assert value["repository_mutation_authorized"] is True
+          assert value["annual_workflow_dispatch_authorized"] is False
+          assert value["trading_authorized"] is False
+          PY
+
+      - name: Apply exact two-file 2019 runtime authorization install
+        run: |
+          set -euo pipefail
+          cp \
+            docs/superpowers/templates/annual_pattern_catalogue_2019_runtime_authorization.py.disabled \
+            src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py
+          cp \
+            docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2019_authorization.py.disabled \
+            src/fmp/discovery/annual_pattern_catalogue_runtime.py
+
+          {
+            git diff --name-only
+            git ls-files --others --exclude-standard
+          } | sort -u > "$RUNNER_TEMP/changed-files.txt"
+
+          cat > "$RUNNER_TEMP/expected-changed-files.txt" <<'EOF'
+          src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py
+          src/fmp/discovery/annual_pattern_catalogue_runtime.py
+          EOF
+          diff -u "$RUNNER_TEMP/expected-changed-files.txt" "$RUNNER_TEMP/changed-files.txt"
+
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py)" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
+
+          git add \
+            src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py \
+            src/fmp/discovery/annual_pattern_catalogue_runtime.py
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "2"
+          diff -u "$RUNNER_TEMP/expected-changed-files.txt" <(git diff --cached --name-only)
+
+      - name: Prove installed runtime imports and exact run-381 gate
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py \
+            src/fmp/discovery/annual_pattern_catalogue_runtime.py
+          python - <<'PY'
+          from fmp.discovery.annual_pattern_catalogue_runtime import (
+              require_historical_catalogue_execution_authorized,
+          )
+          require_historical_catalogue_execution_authorized(
+              code_commit="a" * 40,
+              annual_segment_label="2019",
+              run_number=381,
+              run_attempt=1,
+              previous_annual_freeze_run_id=37237817538,
+          )
+          require_historical_catalogue_execution_authorized(
+              code_commit="a" * 40,
+              annual_segment_label="2018",
+              run_number=380,
+              run_attempt=1,
+              previous_annual_freeze_run_id=37227536041,
+          )
+          try:
+              require_historical_catalogue_execution_authorized(
+                  code_commit="a" * 40,
+                  annual_segment_label="2019",
+                  run_number=382,
+                  run_attempt=1,
+                  previous_annual_freeze_run_id=37237817538,
+              )
+          except (PermissionError, ValueError):
+              pass
+          else:
+              raise AssertionError("run 382 must remain unauthorized")
+          PY
+
+      - name: Commit and push exact install
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "phase8a: install 2019 runtime authorization (DEC-561)"
+          git rev-parse HEAD > "$RUNNER_TEMP/install-commit-sha.txt"
+          git push origin HEAD:main
+
+      - name: Verify installed main and build DEC-561 receipt
+        run: |
+          set -euo pipefail
+          install_sha="$(cat "$RUNNER_TEMP/install-commit-sha.txt")"
+          found=0
+          for _ in $(seq 1 30); do
+            gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-after-install.json"
+            if test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-after-install.json")" = "$install_sha"; then
+              found=1
+              break
+            fi
+            sleep 2
+          done
+          test "$found" = "1"
+
+          gate_sha="$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py)"
+          runtime_sha="$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)"
+          python scripts/phase8a_annual_pattern_catalogue_2019_runtime_authorization_install_receipt.py \
+            review \
+            --action-json "$RUNNER_TEMP/dec560-2019-runtime-install-action.json" \
+            --install-commit-sha "$install_sha" \
+            --changed-files "$RUNNER_TEMP/changed-files.txt" \
+            --installed-gate-blob-sha "$gate_sha" \
+            --installed-runtime-blob-sha "$runtime_sha" \
+            --out "$RUNNER_TEMP/dec561-2019-runtime-install-receipt.json"
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          value = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "dec561-2019-runtime-install-receipt.json").read_text()
+          )
+          assert value["decision"] == "DEC-561"
+          assert value["runtime_authorization_installed"] is True
+          assert value["runtime_gate_active"] is True
+          assert value["install_action_consumed"] is True
+          assert value["expected_run_number"] == 381
+          assert value["previous_annual_freeze_run_id"] == 37237817538
+          assert value["annual_workflow_dispatch_authorized"] is False
+          assert value["next_segment_execution_authorized"] is False
+          assert value["trading_authorized"] is False
+          PY
+
+      - name: Upload immutable DEC-561 install evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2019-dec561-runtime-install-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/dec560-run.json
+            ${{ runner.temp }}/dec560-artifacts.json
+            ${{ runner.temp }}/dec560-2019-runtime-install-action.json
+            ${{ runner.temp }}/annual-runs-before-install.json
+            ${{ runner.temp }}/main-before-install.json
+            ${{ runner.temp }}/changed-files.txt
+            ${{ runner.temp }}/install-commit-sha.txt
+            ${{ runner.temp }}/main-after-install.json
+            ${{ runner.temp }}/dec561-2019-runtime-install-receipt.json
+          if-no-files-found: error
