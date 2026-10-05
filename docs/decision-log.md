@@ -10945,3 +10945,7 @@ Concrete DEC-556 preflight evidence is bound from workflow run `37240728378`, ar
 ## 2026-10-04 — DEC-557 builder recovery v2
 
 Repository-hosted DEC-557 builder run `37241492509` failed after verifying DEC-556 but before authorization construction because the annual-history Python block contained a literal `\\n` between run 379 and run 380. No annual dispatch occurred and run 381 remains unconsumed. The repaired workflow permits only its run 2 / attempt 1 and first binds the exact failed run-1 provenance. Authority is unchanged.
+
+## 2026-10-05 — DEC-558 2019 runtime authorization plan
+
+Concrete DEC-557 recovery run `37241812968` produced artifact `11317224241` with digest `sha256:ecdbb57924cf74945e9e8bba12dcaae2d869ef264813ef012d21ba175c5ef52e` and authorization fingerprint `c785127b20f57210e60ebd681d7b0e48a66f419fa8fbbbdd9cdd8fa560b464f9`. DEC-558 freezes a dormant 2019 gate (`d87fe85a...`) and 2019-aware runtime target (`07ddfe7a...`) for exact annual run 381 / attempt 1 with predecessor `37237817538`. The current runtime remains `410180c3...`, run 381 remains absent, and the plan is read-only with no repository mutation, dispatch, later-year, strategy, broker/order, real-money, or trading authority.
