@@ -2279,3 +2279,7 @@ Pinned concrete DEC-570 run/artifact/fingerprint evidence and froze the exact tw
 ## 2026-10-05 — DEC-572 2020 runtime install frontier
 
 Bound successful DEC-571 run `37327905209` and artifact `11352259131`. Added the exact two-file 2020 runtime installer and immutable DEC-572 receipt contract. Annual run 382 remains unconsumed.
+
+## 2026-10-05 — DEC-572 provenance binding repair
+
+Recorded failed installer run `37360538726` as pre-mutation evidence and corrected the executor's DEC-570 workflow/artifact assertions from stale 2019 IDs to `37321690650` / `11350136423`. The repair remains run-2-only and does not consume annual run 382.

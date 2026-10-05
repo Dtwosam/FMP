@@ -11040,3 +11040,7 @@ DEC-571 binds successful DEC-570 workflow run `37321690650`, artifact `113501364
 ## 2026-10-05 — DEC-572 exact 2020 runtime installation
 
 Concrete DEC-571 evidence is fixed at workflow run `37327905209`, artifact `11352259131`, digest `sha256:082c09ed64042f2c63252676be1d63aab6553c3cd92e3995256498ac4744b423`, and action fingerprint `0d617a5261a25d1fbdcc661fcc9518be63081ca442fb2ac068a2206f875e6939`. DEC-572 authorizes only the exact two-file 2020 runtime installation: create gate blob `695a50b418da752e1bd37d6302f209033ab611f5` and replace runtime `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e` with `4e124365430672fa63825b272001937c60151644`. The installer requires annual run 382 to remain absent and performs no annual dispatch.
+
+## 2026-10-05 — DEC-572 executor run-1 provenance failure
+
+DEC-572 executor run `37360538726` failed before applying or staging either runtime file. The downloaded DEC-571 action was valid and carried the correct 2020 DEC-570 provenance (`37321690650`, artifact `11350136423`), while the executor still asserted inherited 2019 DEC-559 IDs. Run 382 remained unconsumed. The bounded repair requires exact DEC-572 workflow run 2 / attempt 1, proves the failed run-1 identity, and corrects only the two stale provenance assertions. Mutation scope and all later-year/trading locks are unchanged.
