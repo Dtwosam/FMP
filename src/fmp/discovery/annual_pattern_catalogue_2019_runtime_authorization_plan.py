@@ -44,7 +44,7 @@ DORMANT_2019_GATE_TEMPLATE_PATH = (
     "annual_pattern_catalogue_2019_runtime_authorization.py.disabled"
 )
 EXPECTED_DORMANT_2019_GATE_TEMPLATE_BLOB_SHA = (
-    "3f7f71882195e373940d922a451f426011728063"
+    "d87fe85a5b426fa92caf7d6cc165445590f4097c"
 )
 DORMANT_RUNTIME_TARGET_TEMPLATE_PATH = (
     "docs/superpowers/templates/"
