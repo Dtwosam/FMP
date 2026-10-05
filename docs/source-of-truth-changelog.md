@@ -2222,3 +2222,7 @@ Bound the exact DEC-560 action artifact (`11341025756`, digest `dcd16ee2ddbdf9c5
 ## 2026-10-05 — DEC-562 2019 dispatch preflight
 
 Bound concrete DEC-561 install evidence and the exact installed 2019 gate/runtime into a read-only preflight for annual run 381 / attempt 1. The builder requires exact annual history through successful run 380 and rejects any run 381+. No dispatch or later/trading authority is added.
+
+## 2026-10-05 — DEC-563 2019 dispatch authorization
+
+Bound the exact DEC-562 preflight artifact/fingerprint into a source-only authorization for annual run 381 / attempt 1. Dispatch command/action remains absent; run382+/2020+/trading authority remains false.

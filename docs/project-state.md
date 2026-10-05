@@ -3295,3 +3295,7 @@ DEC-560 is concrete from workflow run `37299664787`, artifact `11341025756`, dig
 ### 2026-10-05 — DEC-562 2019 dispatch-preflight frontier
 
 DEC-561 is concrete from installer workflow run `37304310188`, artifact `11342593171`, digest `9739dda9...`, and install commit `ea3d63b5181fc592039c0c26d6decb358e43f7cc`. The installed 2019 gate is blob `d87fe85a...` and annual runtime is `07ddfe7a...`. DEC-562 is now source-ready as the next read-only gate: exact annual history remains failed runs 1/376 plus successful runs 377–380, run 381 remains unconsumed, and the future target is only segment 2019 / run 381 / attempt 1 / predecessor `37237817538`. Next gate: `ANNUAL_PATTERN_CATALOGUE_2019_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
+
+### 2026-10-05 — DEC-563 2019 source-only dispatch authorization
+
+DEC-562 is concrete from workflow run `37305622078`, artifact `11344155034`, digest `b7245744...`, and preflight fingerprint `b02c7c68...`. DEC-563 is the current frontier: source-only authorization for segment 2019 / run 381 / attempt 1 with predecessor `37237817538`. The decision may mark the exact future annual research dispatch/read/execution/result contract as authorized but contains no dispatch command and does not execute it. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2019_DISPATCH_ACTION_PREFLIGHT`.

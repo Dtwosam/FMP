@@ -10965,3 +10965,7 @@ Concrete DEC-560 workflow run `37299664787` on `bacb20c1d1541ac0b46076cef8ca9fe8
 ## 2026-10-05 — DEC-562 concrete 2019 dispatch preflight
 
 DEC-561 installer run `37304310188` completed successfully and advanced main to exact install commit `ea3d63b5181fc592039c0c26d6decb358e43f7cc`. Artifact `11342593171` (digest `sha256:9739dda98fe654435c9e58053b934cfba4f1cf8747ab79dcd7dcbe9e27e6492b`) carries install-receipt fingerprint `098d2d24fbce40943ccff16a9ae1374e77facc0804365fedbb15eb128b3ca7be`. DEC-562 is read-only and freezes only 2019 run 381 / attempt 1 with predecessor `37237817538`; run 381 remains absent and all run382+/2020+/strategy/broker/order/real-money/trading authority remains locked.
+
+## 2026-10-05 — DEC-563 source-only 2019 dispatch authorization
+
+Concrete DEC-562 preflight run `37305622078` produced artifact `11344155034` (digest `sha256:b7245744efdd4cd646b8eac6f094e9198e0f4d0cd2d36883c70685fa0feffbb7`) with fingerprint `b02c7c68f682f9706e3f9e4a6e4ade7826e1abb47d01330f543279221063fe45`. DEC-563 authorizes only the source contract for 2019 / run 381 / attempt 1 / predecessor `37237817538`; it contains no dispatch command and executes no action. Run382+, 2020+, strategy/promotion, broker/order, real-money, and trading authority remain locked.
