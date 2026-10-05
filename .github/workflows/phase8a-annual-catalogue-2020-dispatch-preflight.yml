@@ -55,21 +55,21 @@ jobs:
       - name: Fetch and verify exact DEC-572 install evidence
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC572_RUN_ID" > "$RUNNER_TEMP/dec561-run.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC572_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec561-artifacts.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC572_RUN_ID" > "$RUNNER_TEMP/dec572-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC572_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec572-artifacts.json"
           python - <<'PY'
           import json, os
           from pathlib import Path
 
           temp = Path(os.environ["RUNNER_TEMP"])
-          run = json.loads((temp / "dec561-run.json").read_text())
+          run = json.loads((temp / "dec572-run.json").read_text())
           exact = {
-              "id": 37304310188,
+              "id": 37361230835,
               "name": "phase8a-annual-catalogue-2020-runtime-install-executor",
               "path": ".github/workflows/phase8a-annual-catalogue-2020-runtime-install-executor.yml",
               "event": "push",
               "head_branch": "main",
-              "head_sha": "0e23f87b5990961bcfe8d4e6998fef20282f6626",
+              "head_sha": "2d57ea571111845cd58a34a0c25a89eabe233bcb",
               "run_number": 2,
               "run_attempt": 1,
               "status": "completed",
@@ -78,31 +78,31 @@ jobs:
           for field, expected in exact.items():
               assert run.get(field) == expected, (field, run.get(field), expected)
 
-          payload = json.loads((temp / "dec561-artifacts.json").read_text())
-          rows = [a for a in payload.get("artifacts", []) if a.get("id") == 11342593171]
+          payload = json.loads((temp / "dec572-artifacts.json").read_text())
+          rows = [a for a in payload.get("artifacts", []) if a.get("id") == 11367191085]
           assert len(rows) == 1
           artifact = rows[0]
           assert artifact["name"] == (
-              "annual-catalogue-2020-dec561-runtime-install-"
-              "0e23f87b5990961bcfe8d4e6998fef20282f6626"
+              "annual-catalogue-2020-dec572-runtime-install-"
+              "2d57ea571111845cd58a34a0c25a89eabe233bcb"
           )
           assert artifact["digest"] == (
-              "sha256:9739dda98fe654435c9e58053b934cfba4f1cf8747ab79dcd7dcbe9e27e6492b"
+              "sha256:5f0f9862b411a9da4f0c383259ef78dc9df842be4a58ee06c43374a0b774d716"
           )
           assert artifact["expired"] is False
           PY
 
-          gh api -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC572_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec561.zip"
-          actual="$(sha256sum "$RUNNER_TEMP/dec561.zip" | awk '{print $1}')"
-          test "$actual" = "9739dda98fe654435c9e58053b934cfba4f1cf8747ab79dcd7dcbe9e27e6492b"
+          gh api -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC572_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec572.zip"
+          actual="$(sha256sum "$RUNNER_TEMP/dec572.zip" | awk '{print $1}')"
+          test "$actual" = "5f0f9862b411a9da4f0c383259ef78dc9df842be4a58ee06c43374a0b774d716"
 
-          mkdir -p "$RUNNER_TEMP/dec561"
-          unzip -q "$RUNNER_TEMP/dec561.zip" -d "$RUNNER_TEMP/dec561"
-          receipt="$(find "$RUNNER_TEMP/dec561" -type f -name dec561-2020-runtime-install-receipt.json -print)"
+          mkdir -p "$RUNNER_TEMP/dec572"
+          unzip -q "$RUNNER_TEMP/dec572.zip" -d "$RUNNER_TEMP/dec572"
+          receipt="$(find "$RUNNER_TEMP/dec572" -type f -name dec572-2020-runtime-install-receipt.json -print)"
           test "$(printf '%s\n' "$receipt" | sed '/^$/d' | wc -l)" = "1"
-          cp "$receipt" "$RUNNER_TEMP/dec561-2020-runtime-install-receipt.json"
+          cp "$receipt" "$RUNNER_TEMP/dec572-2020-runtime-install-receipt.json"
 
-      - name: Recheck installed main and unconsumed run-381 slot
+      - name: Recheck installed main and unconsumed run-382 slot
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-branch.json"
@@ -110,8 +110,8 @@ jobs:
 
           test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-branch.json")" = "$GITHUB_SHA"
           git merge-base --is-ancestor "$DEC572_INSTALL_COMMIT_SHA" "$GITHUB_SHA"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py)" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py)" = "695a50b418da752e1bd37d6302f209033ab611f5"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "4e124365430672fa63825b272001937c60151644"
 
           python - <<'PY'
           import json, os
@@ -155,7 +155,7 @@ jobs:
       - name: Build concrete DEC-573 dispatch preflight
         run: |
           set -euo pipefail
-          python scripts/phase8a_annual_pattern_catalogue_2020_dispatch_preflight.py             plan             --install-receipt-json "$RUNNER_TEMP/dec561-2020-runtime-install-receipt.json"             --main-branch-json "$RUNNER_TEMP/main-branch.json"             --annual-workflow-runs-json "$RUNNER_TEMP/annual-runs.json"             --expected-head-sha "$GITHUB_SHA"             --out "$RUNNER_TEMP/dec562-2020-dispatch-preflight.json"
+          python scripts/phase8a_annual_pattern_catalogue_2020_dispatch_preflight.py             plan             --install-receipt-json "$RUNNER_TEMP/dec572-2020-runtime-install-receipt.json"             --main-branch-json "$RUNNER_TEMP/main-branch.json"             --annual-workflow-runs-json "$RUNNER_TEMP/annual-runs.json"             --expected-head-sha "$GITHUB_SHA"             --out "$RUNNER_TEMP/dec573-2020-dispatch-preflight.json"
 
       - name: Verify DEC-573 remains read-only and exact
         run: |
@@ -164,16 +164,16 @@ jobs:
           from pathlib import Path
 
           value = json.loads(
-              (Path(os.environ["RUNNER_TEMP"]) / "dec562-2020-dispatch-preflight.json").read_text()
+              (Path(os.environ["RUNNER_TEMP"]) / "dec573-2020-dispatch-preflight.json").read_text()
           )
           assert value["decision"] == "DEC-573"
-          assert value["source_installer_workflow_run_id"] == 37304310188
-          assert value["source_install_artifact_id"] == 11342593171
+          assert value["source_installer_workflow_run_id"] == 37361230835
+          assert value["source_install_artifact_id"] == 11367191085
           assert value["source_install_artifact_digest"] == (
-              "sha256:9739dda98fe654435c9e58053b934cfba4f1cf8747ab79dcd7dcbe9e27e6492b"
+              "sha256:5f0f9862b411a9da4f0c383259ef78dc9df842be4a58ee06c43374a0b774d716"
           )
           assert value["source_install_commit_sha"] == (
-              "ea3d63b5181fc592039c0c26d6decb358e43f7cc"
+              "3ee648808bc2982c02dd1cb10fd45911f6379dcb"
           )
           assert value["source_install_receipt_fingerprint_sha256"] == (
               "1f77559f7aadfb83e338e467148d86b2a99850d69909e689f04604fa19c3e7b4"
@@ -209,12 +209,12 @@ jobs:
       - name: Upload immutable DEC-573 dispatch preflight
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2020-dec562-dispatch-preflight-${{ github.sha }}
+          name: annual-catalogue-2020-dec573-dispatch-preflight-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/dec561-run.json
-            ${{ runner.temp }}/dec561-artifacts.json
-            ${{ runner.temp }}/dec561-2020-runtime-install-receipt.json
+            ${{ runner.temp }}/dec572-run.json
+            ${{ runner.temp }}/dec572-artifacts.json
+            ${{ runner.temp }}/dec572-2020-runtime-install-receipt.json
             ${{ runner.temp }}/main-branch.json
             ${{ runner.temp }}/annual-runs.json
-            ${{ runner.temp }}/dec562-2020-dispatch-preflight.json
+            ${{ runner.temp }}/dec573-2020-dispatch-preflight.json
           if-no-files-found: error
