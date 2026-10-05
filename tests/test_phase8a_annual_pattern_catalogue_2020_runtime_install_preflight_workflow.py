@@ -39,7 +39,7 @@ class AnnualPatternCatalogue2020RuntimeInstallPreflightWorkflowTests(
             "37318488687",
             "9f95010b402ce8413833dcdd5d051b2b45e795e7",
             "11349042014",
-            "855375a850fe4e90475f5f9dd4d4721fba5bbac6ce8162d3c9d6d3854bbc7f",
+            "855375a850fe4e90475f5f5b9dd4d4721fba5bbac6ce8162d3c9d6d3854bbc7f",
             "cb7df2aa6601c0ca81678ce700aad315a336ceaa",
             "4a577f814733051b560591e8cf3c054b43fdbff1",
             "cd420419cb149c23056edfcaf650d4d7e2d3775a",
