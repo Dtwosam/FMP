@@ -2251,3 +2251,7 @@ run381 runtime evidence and advances only to a read-only 2020 preflight.
 ## 2026-10-05 — Recover missing DEC-566 successor
 
 Recorded successful 2019 annual run 381, exact DEC-565 receipt provenance, and the absent automatic DEC-566 reviewer. Added a one-shot read-only recovery workflow that reconstructs only the DEC-566 runtime binding from immutable run/receipt/freeze evidence. No new annual dispatch authority is introduced.
+
+## 2026-10-05 — DEC-567 concretized from recovered DEC-566 evidence
+
+Pinned recovery run `37312368068`, artifact `11345528676`, its SHA-256 digest, and the exact DEC-566 binding/freeze fingerprints into the read-only 2020 execution preflight. The gate requires the complete annual history through successful run 381 and rejects any run 382+ state. No dispatch surface is introduced.
