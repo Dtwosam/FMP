@@ -92,6 +92,23 @@ jobs:
           test "$(printf '%s\n' "$preflight" | sed '/^$/d' | wc -l)" = "1"
           cp "$preflight" "$RUNNER_TEMP/dec559-2019-runtime-install-preflight.json"
 
+      - name: Verify exact DEC-559 preflight fingerprint
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          value = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "dec559-2019-runtime-install-preflight.json").read_text()
+          )
+          assert value["decision"] == "DEC-559"
+          assert value["preflight_fingerprint_sha256"] == "1c585ad2a2a0bdf3a0fc811376d1fa5701b293b2fd888abca30ea5c13fcf3861"
+          assert value["expected_run_number"] == 381
+          assert value["previous_annual_freeze_run_id"] == 37237817538
+          assert value["repository_mutation_authorized"] is False
+          assert value["annual_workflow_dispatch_authorized"] is False
+          assert value["trading_authorized"] is False
+          PY
+
       - name: Recheck current main, runtime, and annual run-381 slot
         run: |
           set -euo pipefail
