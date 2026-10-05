@@ -61,7 +61,7 @@ def _authorization() -> dict[str, object]:
         "run_381_or_later_authorized": False,
         "runtime_authorization_installed": False,
         "runtime_gate_active": False,
-        "runtime_source_blob_sha": "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e",
+        "runtime_source_blob_sha": "410180c34a9e3500bbbb42310a5253b993ac7785",
         "source_only_authorization": True,
         "source_preflight_artifact_digest": "sha256:09be3f1d11e77ab6da407a67346a6ff4d4ce631f4acb6265575da6db64eeb202",
         "source_preflight_artifact_id": 11317461212,
@@ -101,7 +101,7 @@ class AnnualPatternCatalogue2019RuntimeAuthorizationPlanTests(unittest.TestCase)
         )
         self.assertEqual(
             source["dormant_2018_gate_template_blob_sha"],
-            "3f7f71882195e373940d922a451f426011728063",
+            "d87fe85a5b426fa92caf7d6cc165445590f4097c",
         )
         self.assertEqual(
             source["dormant_runtime_target_template_blob_sha"],
@@ -134,7 +134,7 @@ class AnnualPatternCatalogue2019RuntimeAuthorizationPlanTests(unittest.TestCase)
         )
         self.assertEqual(
             value["target_gate_source_blob_sha"],
-            "3f7f71882195e373940d922a451f426011728063",
+            "d87fe85a5b426fa92caf7d6cc165445590f4097c",
         )
         self.assertEqual(
             value["target_runtime_source_blob_sha"],
