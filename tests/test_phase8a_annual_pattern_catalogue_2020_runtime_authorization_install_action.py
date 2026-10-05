@@ -117,7 +117,7 @@ def _preflight() -> dict[str, object]:
         "trading_authorized": False,
         "next_gate": (
             "EXACT_ANNUAL_PATTERN_CATALOGUE_2020_RUNTIME_"
-            "AUTHORIZATION_INSTALL_MUTATION_AFTER_DEC559"
+            "AUTHORIZATION_INSTALL_MUTATION_AFTER_DEC570"
         ),
     }
     value["preflight_fingerprint_sha256"] = hashlib.sha256(
