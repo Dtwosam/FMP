@@ -10961,3 +10961,7 @@ Concrete DEC-559 workflow run `37295798286` on `bb1c7901d1b5859bec97a381716166e9
 ## 2026-10-05 — DEC-561 exact 2019 runtime authorization install
 
 Concrete DEC-560 workflow run `37299664787` on `bacb20c1d1541ac0b46076cef8ca9fe898559339` produced artifact `11341025756` with digest `sha256:dcd16ee2ddbdf9c5b17acfe6e79b54f1dbf6a38a839362ecc91a896f41520354` and action fingerprint `c68df812693da1edfc5ab568afef50b2e70797a04b4c44cf22de7c3fc15bea35`. DEC-561 is the bounded repository mutation that may create only the frozen 2019 gate blob `d87fe85a...` and update the annual runtime from `410180c3...` to `07ddfe7a...`. The executor rechecks unchanged main and the unconsumed run-381 slot before mutation and before push, proves the installed run-381 gate and preserved run-380 route, and emits a concrete install receipt. It cannot dispatch the annual workflow and grants no run-382+, 2020+, strategy, broker/order, real-money, or trading authority.
+
+## 2026-10-05 — DEC-562 concrete 2019 dispatch preflight
+
+DEC-561 installer run `37304310188` completed successfully and advanced main to exact install commit `ea3d63b5181fc592039c0c26d6decb358e43f7cc`. Artifact `11342593171` (digest `sha256:9739dda98fe654435c9e58053b934cfba4f1cf8747ab79dcd7dcbe9e27e6492b`) carries install-receipt fingerprint `098d2d24fbce40943ccff16a9ae1374e77facc0804365fedbb15eb128b3ca7be`. DEC-562 is read-only and freezes only 2019 run 381 / attempt 1 with predecessor `37237817538`; run 381 remains absent and all run382+/2020+/strategy/broker/order/real-money/trading authority remains locked.

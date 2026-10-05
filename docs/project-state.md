@@ -3291,3 +3291,7 @@ DEC-559 is concrete from workflow run `37295798286`, artifact `11338796649`, dig
 ### 2026-10-05 — DEC-561 2019 runtime install executor
 
 DEC-560 is concrete from workflow run `37299664787`, artifact `11341025756`, digest `dcd16ee2...`, and action fingerprint `c68df812...`. DEC-561 freezes the exact two-file 2019 runtime installation: create the 2019 gate from blob `d87fe85a5b426fa92caf7d6cc165445590f4097c` and update runtime from `410180c34a9e3500bbbb42310a5253b993ac7785` to `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e`. The path-scoped executor is the only repository mutation surface and performs no annual dispatch. Run 381 remains unconsumed until a later dispatch gate; run 382+, 2020+, strategy, broker/order, real-money, and trading remain locked. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2019_DISPATCH_PREFLIGHT`.
+
+### 2026-10-05 — DEC-562 2019 dispatch-preflight frontier
+
+DEC-561 is concrete from installer workflow run `37304310188`, artifact `11342593171`, digest `9739dda9...`, and install commit `ea3d63b5181fc592039c0c26d6decb358e43f7cc`. The installed 2019 gate is blob `d87fe85a...` and annual runtime is `07ddfe7a...`. DEC-562 is now source-ready as the next read-only gate: exact annual history remains failed runs 1/376 plus successful runs 377–380, run 381 remains unconsumed, and the future target is only segment 2019 / run 381 / attempt 1 / predecessor `37237817538`. Next gate: `ANNUAL_PATTERN_CATALOGUE_2019_DISPATCH_AUTHORIZATION_BEFORE_RUN`.
