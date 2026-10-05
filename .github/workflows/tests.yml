@@ -1039,7 +1039,11 @@ jobs:
           test "$(git hash-object "$gate2018")" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
           test "$(git hash-object "$gate2019")" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
           test ! -e "$gate2020"
-          test -z "$(git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019")"
+          actual_diff="$(git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020")"
+          expected_diff="$(printf '%s\n' \
+            "src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py" \
+            "src/fmp/discovery/annual_pattern_catalogue_runtime.py")"
+          test "$actual_diff" = "$expected_diff"
 
       - name: Run DEC-562 2019 dispatch-preflight tests
         env:
