@@ -12,7 +12,7 @@ WORKFLOW = (
 
 
 class AnnualPatternCatalogue2020RuntimeInstallExecutorTests(unittest.TestCase):
-    def test_executor_is_path_scoped_exact_first_push(self) -> None:
+    def test_executor_is_path_scoped_exact_second_push(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
             "name: phase8a-annual-catalogue-2020-runtime-install-executor",
@@ -21,9 +21,12 @@ class AnnualPatternCatalogue2020RuntimeInstallExecutorTests(unittest.TestCase):
         self.assertIn("  contents: write", text)
         self.assertIn("  actions: read", text)
         self.assertNotIn("workflow_dispatch:", text)
-        self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
-        self.assertIn('"run_number": 2', text)
+        self.assertIn('"run_number": 1', text)
+        self.assertIn("37360538726", text)
+        self.assertIn("ecbac06de8dd81acebbe6565651d8da2124d68f1", text)
+        self.assertIn('"conclusion": "failure"', text)
 
     def test_executor_pins_exact_dec571_artifact_and_fingerprint(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -36,6 +39,8 @@ class AnnualPatternCatalogue2020RuntimeInstallExecutorTests(unittest.TestCase):
             "98043c92240d00a343087e4d5fcef56575ba319e",
             "7bcf5c20c5dce845901bca200e299b8dfeb364b3",
             "95092037ce42fa4c25c0c194c67c9a1f6cd40ab6",
+            "37321690650",
+            "11350136423",
         ):
             self.assertIn(value, text)
 
