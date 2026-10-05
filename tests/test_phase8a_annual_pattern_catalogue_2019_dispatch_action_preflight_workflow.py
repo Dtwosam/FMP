@@ -37,7 +37,7 @@ class AnnualPatternCatalogue2019DispatchActionPreflightWorkflowTests(
             "11344330424",
             "sha256:06b72e13349a47106e36ce631713da55e51407fdeeb6dd26518c8115191bf520",
             "fd554fbfd2ca556b0e4a6e65ddb00ec805809eda70d80a1e1a401edfeb71fcf8",
-            "e8575ae161aafa9893592512c7158f43b4aa1da7",
+            "ba9c090cda76750e080d5da21aad8f41c88611da",
             "36565d2119da9326dfcbf9ed72178ecca7b2a9ae",
             "aa614fd67367a53be2889651a701b63f1ef2a7c9",
             "d87fe85a5b426fa92caf7d6cc165445590f4097c",
