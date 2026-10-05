@@ -11032,3 +11032,7 @@ Concrete DEC-569 builder run `37317772668` completed successfully on `9a42191855
 ## 2026-10-05 — DEC-570 read-only 2020 runtime install preflight
 
 DEC-570 binds corrected DEC-569 workflow run `37318488687` and artifact `11349042014` (`sha256:855375a850fe4e90475f5f5b9dd4d4721fba5bbac6ce8162d3c9d6d3854bbc7f`, canonical plan SHA-256 `794ea5631bee374ec7a2e05c5efcb33e35f008d188114c879f7d2e68be72a7b0`). It validates only a future two-file 2020 runtime installation from installed runtime `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e` to gate `695a50b418da752e1bd37d6302f209033ab611f5` plus runtime target `4e124365430672fa63825b272001937c60151644`. The preflight performs no mutation or dispatch; run 382, later years, strategy, broker, order, real-money, and trading authority remain locked.
+
+## 2026-10-05 — DEC-571 exact 2020 runtime install action
+
+DEC-571 binds successful DEC-570 workflow run `37321690650`, artifact `11350136423` (`sha256:97eee3d49aec78ebbc1f3aa7190159d4dfba62c861f221163bd03c2699fdad7c`), and preflight fingerprint `367ec514057b011711ab9734a839f8cf03d1334125db336c947e979d923cab36`. It freezes only the two-file future mutation that creates the 2020 runtime gate from blob `695a50b418da752e1bd37d6302f209033ab611f5` and updates runtime `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e` to `4e124365430672fa63825b272001937c60151644`. The builder is read-only and performs no mutation or dispatch. Run 382, later-year execution, strategy/promotion, broker mutation, orders, real-money action, and trading remain locked.
