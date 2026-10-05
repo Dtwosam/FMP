@@ -2247,3 +2247,7 @@ fingerprint
 `33ea75e1f34b2d643617be37e254644193506dea7fd959772c9eb00115088709`)
 and exact predecessor `37237817538`. DEC-566 binds only successful exact
 run381 runtime evidence and advances only to a read-only 2020 preflight.
+
+## 2026-10-05 — Recover missing DEC-566 successor
+
+Recorded successful 2019 annual run 381, exact DEC-565 receipt provenance, and the absent automatic DEC-566 reviewer. Added a one-shot read-only recovery workflow that reconstructs only the DEC-566 runtime binding from immutable run/receipt/freeze evidence. No new annual dispatch authority is introduced.

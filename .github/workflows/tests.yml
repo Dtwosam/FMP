@@ -1098,6 +1098,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2019_run381_runtime_evidence_workflow.py'
           -v
+      - name: Run DEC-566 run381 evidence-recovery workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2019_run381_runtime_evidence_recovery_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src

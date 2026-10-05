@@ -3326,3 +3326,7 @@ dispatch can complete and may only review/bind a successful exact run381.
 No run 382+, 2020+, cross-year synthesis, Strategy V1, promotion, Phase 8B,
 broker mutation, order execution, real-money action, or trading authority is
 opened.
+
+### 2026-10-05 — 2019 evidence successor recovery
+
+Annual catalogue run 381 completed successfully for 2019 with all 20 jobs and expected artifacts. GitHub did not create the automatic DEC-566 reviewer, matching the prior successor-depth behavior seen after earlier annual runs. A path-scoped one-shot recovery is staged to bind the exact DEC-565 dispatcher receipt and 2019 freeze into the same non-authorizing DEC-566 runtime evidence. The next safe gate remains the read-only 2020 execution preflight; run 382 and all trading-related authority remain locked.
