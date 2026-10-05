@@ -540,6 +540,10 @@ def validate_2020_run382_recovery_evidence(
 
     _positive_int(value.get("run_id"), field="run id")
     _validate_commit(value.get("run_head_sha"), field="run head")
+    _validate_sha256(
+        value.get("recovery_authorization_fingerprint_sha256"),
+        field="recovery authorization fingerprint",
+    )
     for field in (
         "freeze_artifact_zip_sha256",
         "freeze_evidence_canonical_sha256",
