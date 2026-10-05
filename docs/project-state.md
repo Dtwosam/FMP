@@ -3350,3 +3350,7 @@ The first concrete DEC-569 plan artifact is safely dormant but contains one stal
 ### 2026-10-05 — DEC-570 2020 runtime install preflight staged
 
 The corrected DEC-569 concrete plan is bound from run `37318488687`, artifact `11349042014`, canonical SHA-256 `794ea5631bee374ec7a2e05c5efcb33e35f008d188114c879f7d2e68be72a7b0`. DEC-570 is a read-only preflight for the exact two-file 2020 gate/runtime mutation. The installed runtime remains `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e`, annual run 382 does not exist, and all trading surfaces remain locked.
+
+### 2026-10-05 — DEC-571 2020 runtime install action staged
+
+Concrete DEC-570 preflight evidence is bound from run `37321690650`, artifact `11350136423`, fingerprint `367ec514057b011711ab9734a839f8cf03d1334125db336c947e979d923cab36`. DEC-571 freezes the exact future two-file 2020 gate/runtime mutation but does not apply it. Current runtime remains `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e`; annual run 382 remains absent and all later-year/trading surfaces remain locked.
