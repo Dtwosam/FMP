@@ -67,12 +67,12 @@ def require_2020_execution_authorized(
     )
 
     if ANNUAL_CATALOGUE_2020_EXECUTION_AUTHORIZATION_DECISION != "DEC-568":
-        raise PermissionError("DEC-569 DEC-557 decision drift")
+        raise PermissionError("DEC-569 DEC-568 decision drift")
     if (
         ANNUAL_CATALOGUE_2020_EXECUTION_AUTHORIZATION_VERSION
         != "fmp-annual-catalogue-2020-execution-authorization-v1"
     ):
-        raise PermissionError("DEC-569 DEC-557 version drift")
+        raise PermissionError("DEC-569 DEC-568 version drift")
     if annual_segment_label != AUTHORIZED_ANNUAL_SEGMENT_LABEL:
         raise PermissionError(
             "DEC-569 authorizes annual catalogue execution only for 2020"
@@ -96,13 +96,13 @@ def require_2020_execution_authorized(
     if not RUNTIME_AUTHORIZATION_INSTALLED or not RUNTIME_GATE_ACTIVE:
         raise PermissionError("DEC-569 2020 runtime authorization is not active")
     if not ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED:
-        raise PermissionError("DEC-569 2019 workflow dispatch remains locked")
+        raise PermissionError("DEC-569 2020 workflow dispatch remains locked")
     if not HISTORICAL_ARTIFACT_READ_AUTHORIZED:
-        raise PermissionError("DEC-569 2019 historical reads remain locked")
+        raise PermissionError("DEC-569 2020 historical reads remain locked")
     if not HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED:
-        raise PermissionError("DEC-569 2019 catalogue execution remains locked")
+        raise PermissionError("DEC-569 2020 catalogue execution remains locked")
     if not HISTORICAL_RESULT_PRODUCTION_AUTHORIZED:
-        raise PermissionError("DEC-569 2019 result production remains locked")
+        raise PermissionError("DEC-569 2020 result production remains locked")
 
 
 def runtime_authorization_payload() -> dict[str, object]:
@@ -131,7 +131,7 @@ def runtime_authorization_payload() -> dict[str, object]:
         "rerun_authorized": RERUN_AUTHORIZED,
         "retry_authorized": RETRY_AUTHORIZED,
         "replacement_run_authorized": REPLACEMENT_RUN_AUTHORIZED,
-        "run_382_or_later_authorized": RUN_383_OR_LATER_AUTHORIZED,
+        "run_383_or_later_authorized": RUN_383_OR_LATER_AUTHORIZED,
         "next_segment_execution_authorized": NEXT_SEGMENT_EXECUTION_AUTHORIZED,
         "cross_year_result_production_authorized": (
             CROSS_YEAR_RESULT_PRODUCTION_AUTHORIZED
