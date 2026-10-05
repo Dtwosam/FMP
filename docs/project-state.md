@@ -3326,3 +3326,7 @@ dispatch can complete and may only review/bind a successful exact run381.
 No run 382+, 2020+, cross-year synthesis, Strategy V1, promotion, Phase 8B,
 broker mutation, order execution, real-money action, or trading authority is
 opened.
+
+### 2026-10-05 — 2020 source-ready frontier
+
+Annual catalogue runs 377–380 are complete successes for 2015–2018, while 2019 run 381 is the current live segment. DEC-567 is staged off-queue as a read-only 2020 execution preflight contract. It requires concrete successful DEC-566 evidence for 2019 and freezes only expected run 382 / attempt 1; no 2020 dispatch or execution authority is active. Cross-year synthesis, Strategy V1, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
