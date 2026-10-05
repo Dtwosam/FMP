@@ -927,6 +927,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2019_execution_preflight_workflow.py'
           -v
+      - name: Run source-ready DEC-567 2020 execution-preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2020_execution_preflight.py'
+          -v
       - name: Run concrete DEC-557 2019 authorization tests
         env:
           PYTHONPATH: src
