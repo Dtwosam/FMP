@@ -2267,3 +2267,7 @@ Pinned the concrete DEC-568 workflow run/artifact/fingerprint and froze the dorm
 ## 2026-10-05 — DEC-569 next-gate label corrected
 
 Recorded the immutable first DEC-569 artifact with stale `AFTER_CONCRETE_DEC558` provenance and staged a run-2-only builder repair that emits `AFTER_CONCRETE_DEC569`. No authority or runtime state changes.
+
+## 2026-10-05 — DEC-570 install preflight staged
+
+Pinned corrected DEC-569 run/artifact/canonical plan evidence and defined the read-only two-file 2020 runtime installation preflight. No repository mutation or annual dispatch is introduced.
