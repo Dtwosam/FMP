@@ -44,7 +44,7 @@ jobs:
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_dispatch_action_preflight.py)" = "26b2148f0d1f49eb8b817f2b2504a11dcb99199a"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2020_dispatch_action_preflight.py)" = "c15f361dfdf0a3f4909644c5ce0325b7225ac6f8"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_dispatch_authorization.py)" = "e6962667406a92982d60ed66b3a1cc48cf2c0bdc"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py)" = "695a50b418da752e1bd37d6302f209033ab611f5"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py)" = "695a50b418da752e1bd37d6302f209033ab611f5"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "4e124365430672fa63825b272001937c60151644"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 
