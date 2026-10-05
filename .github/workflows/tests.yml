@@ -1138,6 +1138,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2020_execution_authorization_workflow.py'
           -v
+      - name: Run DEC-569 2020 runtime authorization-plan tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2020_runtime_authorization_plan.py'
+          -v
+      - name: Run DEC-569 runtime plan-workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2020_runtime_authorization_plan_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
