@@ -143,6 +143,13 @@ class AnnualPatternCatalogue2020RuntimeAuthorizationPlanTests(unittest.TestCase)
             "4e124365430672fa63825b272001937c60151644",
         )
         self.assertTrue(value["plan_source_only"])
+        self.assertEqual(
+            value["next_gate"],
+            (
+                "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2020_RUNTIME_"
+                "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC569"
+            ),
+        )
         for field in (
             "runtime_authorization_installed",
             "runtime_gate_active",
