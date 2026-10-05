@@ -85,7 +85,7 @@ jobs:
           PY
           gh api -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC569_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec569.zip"
           actual="$(sha256sum "$RUNNER_TEMP/dec569.zip" | awk '{print $1}')"
-          test "$actual" = "7ee0dbfd168a8a63664419cce85e41a65fde46f9e492dbee65868386d74975a8"
+          test "$actual" = "855375a850fe4e90475f5f5b9dd4d4721fba5bbac6ce8162d3c9d6d3854bbc7f"
           mkdir -p "$RUNNER_TEMP/dec569"
           unzip -q "$RUNNER_TEMP/dec569.zip" -d "$RUNNER_TEMP/dec569"
           auth="$(find "$RUNNER_TEMP/dec569" -type f -name dec568-2020-execution-authorization.json -print)"
