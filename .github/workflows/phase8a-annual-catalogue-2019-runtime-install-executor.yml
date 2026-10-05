@@ -46,7 +46,7 @@ jobs:
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization_install_action.py)" = "15cc0c8e3b93453ecaf6ba1dfd635133279acb6c"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization_install_receipt.py)" = "5befb123f9d3f01cd4457c992c454c662a9f5b7d"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2019_runtime_authorization_install_receipt.py)" = "517b1756576b1eee47eb700ba8736fe730af26b1"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "410180c34a9e3500bbbb42310a5253b993ac7785"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2019_runtime_authorization.py.disabled)" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2019_authorization.py.disabled)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
           test "$(git hash-object requirements/exp061-discovery-run.txt)" = "1ff32214dee10d877a067e750cd69ffad96d5fe5"
@@ -99,7 +99,7 @@ jobs:
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-before-install.json"
           gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/annual-runs-before-install.json"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "410180c34a9e3500bbbb42310a5253b993ac7785"
           test ! -e src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py
           python - <<'PY'
           import json, os
