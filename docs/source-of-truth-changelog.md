@@ -2202,3 +2202,7 @@ Bound recovered DEC-555 artifact `11317140969` and its exact binding/freeze fing
 ## 2026-10-04 — DEC-557 2019 authorization
 
 Added a source-only authorization contract for exact annual segment 2019 / run 381 / attempt 1, bound to concrete DEC-556 artifact `11317461212`. Runtime installation and dispatch remain separate locked gates; run 382+ and all strategy/trading authority remain closed.
+
+## 2026-10-05 — Add DEC-558 2019 runtime authorization plan
+
+Bound the dormant 2019 runtime plan to concrete DEC-557 recovery workflow run `37241812968`, artifact `11317224241`, digest `ecdbb57924cf74945e9e8bba12dcaae2d869ef264813ef012d21ba175c5ef52e`, and authorization fingerprint `c785127b20f57210e60ebd681d7b0e48a66f419fa8fbbbdd9cdd8fa560b464f9`. Frozen targets are gate blob `d87fe85a5b426fa92caf7d6cc165445590f4097c` and runtime blob `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e`. The plan remains read-only; annual run 381 is undispatched.
