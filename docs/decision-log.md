@@ -10949,3 +10949,7 @@ Repository-hosted DEC-557 builder run `37241492509` failed after verifying DEC-5
 ## 2026-10-05 — DEC-558 2019 runtime authorization plan
 
 Concrete DEC-557 recovery run `37241812968` produced artifact `11317224241` with digest `sha256:ecdbb57924cf74945e9e8bba12dcaae2d869ef264813ef012d21ba175c5ef52e` and authorization fingerprint `c785127b20f57210e60ebd681d7b0e48a66f419fa8fbbbdd9cdd8fa560b464f9`. DEC-558 freezes a dormant 2019 gate (`d87fe85a...`) and 2019-aware runtime target (`07ddfe7a...`) for exact annual run 381 / attempt 1 with predecessor `37237817538`. The current runtime remains `410180c3...`, run 381 remains absent, and the plan is read-only with no repository mutation, dispatch, later-year, strategy, broker/order, real-money, or trading authority.
+
+## 2026-10-05 — DEC-559 2019 runtime install preflight
+
+Concrete DEC-558 workflow run `37294642532` produced plan artifact `11337484835` with digest `sha256:7ee0dbfd168a8a63664419cce85e41a65fde46f9e492dbee65868386d74975a8` and canonical plan SHA `5e35a860916137118e6a1ca9d751045373c59ad9e5e0ac373545b20740ccd074`. DEC-559 validates only the future two-file activation from current runtime `410180c3...` to dormant 2019 gate `d87fe85a...` plus runtime target `07ddfe7a...`. It remains read-only; run 381 and all mutation/dispatch/later-year/trading authority remain locked.
