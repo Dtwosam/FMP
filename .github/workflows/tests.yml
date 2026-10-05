@@ -1274,6 +1274,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2020_dispatch_authorization_workflow.py'
           -v
+      - name: Run DEC-575 2020 dispatch-action preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2020_dispatch_action_preflight.py'
+          -v
+      - name: Run DEC-575 dispatch-action preflight workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2020_dispatch_action_preflight_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
