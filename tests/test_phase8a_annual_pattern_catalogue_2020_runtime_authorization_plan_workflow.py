@@ -42,7 +42,7 @@ class AnnualPatternCatalogue2020RuntimeAuthorizationPlanWorkflowTests(
             "11346849851",
             "a03cd0d85672e8ae760b8490982fe93f541738c68b733860f10bb16caf968308",
             "cfd43db91d2703e743132e61540ed95acec11fc9d4f6f89d8a8c011345a95f55",
-            "2bf301c61642daf6ab9bfba3d3fa501f6351d9ea",
+            "cd420419cb149c23056edfcaf650d4d7e2d3775a",
             "3e55a5f600df9cfe28e8de0e3971304f5ba55ab7",
             "270fea87dd298888f224f605a88e66215ae06911",
             "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e",
@@ -65,6 +65,16 @@ class AnnualPatternCatalogue2020RuntimeAuthorizationPlanWorkflowTests(
             text,
         )
         self.assertIn('"run_number": 1', text)
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
+        for value in (
+            "37317772668",
+            "9a421918550ad3b7114ac9074c1de07fc807281d",
+            "11348625984",
+            "7dd8e882f729f8a1fb76edea15e2987b2c548585918e6761eed93620b01c186d",
+            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC558",
+            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC569",
+        ):
+            self.assertIn(value, text)
 
     def test_workflow_uses_dec568_and_dec569_names_consistently(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
