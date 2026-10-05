@@ -3283,3 +3283,7 @@ DEC-557 recovery run `37241812968` completed successfully and concretely authori
 ### 2026-10-05 — DEC-559 2019 install preflight
 
 DEC-558 is concrete at workflow run `37294642532`, artifact `11337484835`, digest `7ee0dbfd...`. DEC-559 now validates a two-file 2019 runtime activation target without executing it: create gate blob `d87fe85a5b426fa92caf7d6cc165445590f4097c` and replace runtime `410180c34a9e3500bbbb42310a5253b993ac7785` with `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e`. Annual run 381 remains absent. Next gate: `EXACT_ANNUAL_PATTERN_CATALOGUE_2019_RUNTIME_AUTHORIZATION_INSTALL_MUTATION_AFTER_DEC559`.
+
+### 2026-10-05 — DEC-560 2019 runtime install action frontier
+
+DEC-559 is concrete from workflow run `37295798286`, artifact `11338796649`, digest `3d8b6933...`, and preflight fingerprint `1c585ad2...`. DEC-560 now freezes the exact future two-file repository change for 2019: create gate blob `d87fe85a5b426fa92caf7d6cc165445590f4097c` and update runtime `410180c34a9e3500bbbb42310a5253b993ac7785` to `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e`. The action is compiled only; annual run 381 is still absent and the installed runtime remains unchanged. Next gate: `APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2019_RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC560`.
