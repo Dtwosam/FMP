@@ -6,11 +6,6 @@ import json
 import os
 from pathlib import Path
 import unittest
-from unittest.mock import patch
-
-from fmp.discovery.annual_pattern_catalogue_2020_execution_authorization import (
-    build_2020_execution_authorization,
-)
 from fmp.discovery.annual_pattern_catalogue_2020_runtime_authorization_plan import (
     build_2020_runtime_authorization_plan,
     validate_2020_runtime_authorization_plan,
@@ -28,53 +23,58 @@ def _canonical_json(value: object) -> bytes:
     ).encode("utf-8")
 
 
-def _preflight() -> dict[str, object]:
-    return {
-        "decision": "DEC-567",
-        "expected_head_sha": "35115a69cae452d0afd922549fe41b4b8e404fd7",
-        "preflight_fingerprint_sha256": (
-            "bfccf190a7abad8464bafbf96a039305a8034f754fdc7cd05f5825c65398204f"
-        ),
-        "annual_segment_label": "2020",
-        "prior_segment_label": "2019",
-        "previous_annual_freeze_run_id": 37310525635,
-        "expected_next_run_number": 382,
-        "expected_next_run_attempt": 1,
-        "preflight_read_only": True,
-        "source_runtime_binding_fingerprint_sha256": (
-            "a7063417dfb917f9b9019eb97c9a2803f50b4163ea524ea52c64b28a387720a2"
-        ),
-        "source_freeze_evidence_fingerprint_sha256": (
-            "6935506f20d6d46054fabed5200ba6cec33ea4f10b00d839cc1cfc7f1b92b918"
-        ),
-        "annual_workflow_dispatch_authorized": False,
-        "historical_artifact_read_authorized": False,
-        "historical_catalogue_execution_authorized": False,
-        "historical_result_production_authorized": False,
-        "next_segment_execution_authorized": False,
-        "cross_year_result_production_authorized": False,
-        "strategy_v1_synthesis_authorized": False,
-        "promotion_authorized": False,
-        "phase8b_authorized": False,
-        "demo_order_authorized": False,
-        "broker_mutation_authorized": False,
-        "live_order_authorized": False,
-        "real_money_authorized": False,
-        "trading_authorized": False,
-    }
-
-
 def _authorization() -> dict[str, object]:
-    preflight = _preflight()
-    with patch(
-        "fmp.discovery.annual_pattern_catalogue_2020_execution_authorization."
-        "validate_2020_execution_preflight",
-        return_value=preflight,
-    ):
-        return build_2020_execution_authorization(
-            preflight,
-            repository_root=REPOSITORY_ROOT,
-        )
+    return {
+        "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
+        "annual_segment_label": "2020",
+        "annual_workflow_dispatch_authorized": True,
+        "authorization_basis": "standing_operator_autonomous_build_authorization",
+        "authorization_contract_validated": True,
+        "authorization_fingerprint_sha256": "cfd43db91d2703e743132e61540ed95acec11fc9d4f6f89d8a8c011345a95f55",
+        "authorization_scope": "2020_run_382_attempt_1_only",
+        "broker_mutation_authorized": False,
+        "cross_year_result_production_authorized": False,
+        "decision": "DEC-568",
+        "demo_order_authorized": False,
+        "dispatch_action_executed": False,
+        "dispatch_command_present": False,
+        "execution_preflight_source_blob_sha": "e045b3e82d2f16e870c77b5b107d8d46fcf96f85",
+        "expected_run_attempt": 1,
+        "expected_run_number": 382,
+        "historical_artifact_read_authorized": True,
+        "historical_catalogue_execution_authorized": True,
+        "historical_result_production_authorized": True,
+        "live_order_authorized": False,
+        "next_gate": "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2020_RUNTIME_AUTHORIZATION_PLAN",
+        "next_segment_execution_authorized": False,
+        "phase8b_authorized": False,
+        "previous_annual_freeze_evidence_fingerprint_sha256": "6935506f20d6d46054fabed5200ba6cec33ea4f10b00d839cc1cfc7f1b92b918",
+        "previous_annual_freeze_run_id": 37310525635,
+        "previous_runtime_binding_fingerprint_sha256": "a7063417dfb917f9b9019eb97c9a2803f50b4163ea524ea52c64b28a387720a2",
+        "prior_segment_label": "2019",
+        "promotion_authorized": False,
+        "real_money_authorized": False,
+        "replacement_run_authorized": False,
+        "rerun_authorized": False,
+        "retry_authorized": False,
+        "run_383_or_later_authorized": False,
+        "runtime_authorization_installed": False,
+        "runtime_gate_active": False,
+        "runtime_source_blob_sha": "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e",
+        "source_only_authorization": True,
+        "source_preflight_artifact_digest": "sha256:182be0b68d721e3267a84bab37c5a3bcb5c25b84b546ba9565c20b6c2ee1f1b0",
+        "source_preflight_artifact_id": 11346985812,
+        "source_preflight_canonical_sha256": "597cbe83fccd3770172b54fa2f40a479e65cc6f4a366b541d727ad431fe70a80",
+        "source_preflight_decision": "DEC-567",
+        "source_preflight_fingerprint_sha256": "bfccf190a7abad8464bafbf96a039305a8034f754fdc7cd05f5825c65398204f",
+        "source_preflight_version": "fmp-annual-catalogue-2020-execution-preflight-v1",
+        "source_preflight_workflow_head_sha": "35115a69cae452d0afd922549fe41b4b8e404fd7",
+        "source_preflight_workflow_run_id": 37313687059,
+        "stage": "ANNUAL_CATALOGUE_2020_EXECUTION_AUTHORIZED_RUNTIME_NOT_INSTALLED",
+        "strategy_v1_synthesis_authorized": False,
+        "trading_authorized": False,
+        "version": "fmp-annual-catalogue-2020-execution-authorization-v1",
+    }
 
 
 @unittest.skipIf(
