@@ -47,7 +47,7 @@ jobs:
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2020_runtime_authorization_install_preflight.py)" = "4a577f814733051b560591e8cf3c054b43fdbff1"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization_plan.py)" = "cd420419cb149c23056edfcaf650d4d7e2d3775a"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_execution_authorization.py)" = "270fea87dd298888f224f605a88e66215ae06911"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "4e124365430672fa63825b272001937c60151644"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2020_runtime_authorization.py.disabled)" = "695a50b418da752e1bd37d6302f209033ab611f5"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2020_authorization.py.disabled)" = "4e124365430672fa63825b272001937c60151644"
 
@@ -136,14 +136,14 @@ jobs:
       - name: Build concrete DEC-570 install preflight
         run: |
           set -euo pipefail
-          python scripts/phase8a_annual_pattern_catalogue_2020_runtime_authorization_install_preflight.py             plan             --authorization-json "$RUNNER_TEMP/dec568-2020-execution-authorization.json"             --plan-json "$RUNNER_TEMP/dec569-2020-runtime-authorization-plan.json"             --main-branch-json "$RUNNER_TEMP/main-branch.json"             --expected-head-sha "$GITHUB_SHA"             --out "$RUNNER_TEMP/dec559-2020-runtime-install-preflight.json"
+          python scripts/phase8a_annual_pattern_catalogue_2020_runtime_authorization_install_preflight.py             plan             --authorization-json "$RUNNER_TEMP/dec568-2020-execution-authorization.json"             --plan-json "$RUNNER_TEMP/dec569-2020-runtime-authorization-plan.json"             --main-branch-json "$RUNNER_TEMP/main-branch.json"             --expected-head-sha "$GITHUB_SHA"             --out "$RUNNER_TEMP/dec570-2020-runtime-install-preflight.json"
 
       - name: Verify DEC-570 remains read-only and exact
         run: |
           python - <<'PY'
           import json, os
           from pathlib import Path
-          value = json.loads((Path(os.environ["RUNNER_TEMP"]) / "dec559-2020-runtime-install-preflight.json").read_text())
+          value = json.loads((Path(os.environ["RUNNER_TEMP"]) / "dec570-2020-runtime-install-preflight.json").read_text())
           assert value["decision"] == "DEC-570"
           assert value["source_plan_workflow_run_id"] == 37318488687
           assert value["source_plan_artifact_id"] == 11349042014
@@ -183,7 +183,7 @@ jobs:
       - name: Upload immutable DEC-570 install preflight
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2020-dec559-runtime-install-preflight-${{ github.sha }}
+          name: annual-catalogue-2020-dec570-runtime-install-preflight-${{ github.sha }}
           path: |
             ${{ runner.temp }}/dec569-run.json
             ${{ runner.temp }}/dec569-artifacts.json
@@ -191,5 +191,5 @@ jobs:
             ${{ runner.temp }}/dec569-2020-runtime-authorization-plan.json
             ${{ runner.temp }}/main-branch.json
             ${{ runner.temp }}/annual-runs.json
-            ${{ runner.temp }}/dec559-2020-runtime-install-preflight.json
+            ${{ runner.temp }}/dec570-2020-runtime-install-preflight.json
           if-no-files-found: error
