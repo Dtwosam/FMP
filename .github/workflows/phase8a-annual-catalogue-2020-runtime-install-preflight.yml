@@ -1,0 +1,195 @@
+name: phase8a-annual-catalogue-2020-runtime-install-preflight
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-2020-runtime-install-preflight.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-concrete-install-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      DEC569_RUN_ID: "37318488687"
+      DEC569_HEAD_SHA: "9f95010b402ce8413833dcdd5d051b2b45e795e7"
+      DEC569_ARTIFACT_ID: "11349042014"
+      DEC569_ARTIFACT_DIGEST: "sha256:855375a850fe4e90475f5f5b9dd4d4721fba5bbac6ce8162d3c9d6d3854bbc7f"
+
+    steps:
+      - name: Checkout exact DEC-570 landing
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Require exact first read-only install-preflight push
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Require frozen DEC-570 sources
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization_install_preflight.py)" = "cb7df2aa6601c0ca81678ce700aad315a336ceaa"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2020_runtime_authorization_install_preflight.py)" = "4a577f814733051b560591e8cf3c054b43fdbff1"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization_plan.py)" = "cd420419cb149c23056edfcaf650d4d7e2d3775a"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_execution_authorization.py)" = "270fea87dd298888f224f605a88e66215ae06911"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2020_runtime_authorization.py.disabled)" = "695a50b418da752e1bd37d6302f209033ab611f5"
+          test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2020_authorization.py.disabled)" = "4e124365430672fa63825b272001937c60151644"
+
+      - name: Fetch and verify exact DEC-569 plan artifact
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC569_RUN_ID" > "$RUNNER_TEMP/dec569-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC569_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec569-artifacts.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads((temp / "dec569-run.json").read_text())
+          exact = {
+              "id": 37318488687,
+              "name": "phase8a-annual-catalogue-2020-runtime-authorization-plan",
+              "path": ".github/workflows/phase8a-annual-catalogue-2020-runtime-authorization-plan.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "9f95010b402ce8413833dcdd5d051b2b45e795e7",
+              "run_number": 2,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          payload = json.loads((temp / "dec569-artifacts.json").read_text())
+          rows = [a for a in payload.get("artifacts", []) if a.get("id") == 11349042014]
+          assert len(rows) == 1
+          artifact = rows[0]
+          assert artifact["name"] == "annual-catalogue-2020-dec569-runtime-authorization-plan-9f95010b402ce8413833dcdd5d051b2b45e795e7"
+          assert artifact["digest"] == "sha256:855375a850fe4e90475f5f5b9dd4d4721fba5bbac6ce8162d3c9d6d3854bbc7f"
+          assert artifact["expired"] is False
+          PY
+          gh api -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC569_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec569.zip"
+          actual="$(sha256sum "$RUNNER_TEMP/dec569.zip" | awk '{print $1}')"
+          test "$actual" = "855375a850fe4e90475f5f5b9dd4d4721fba5bbac6ce8162d3c9d6d3854bbc7f"
+          mkdir -p "$RUNNER_TEMP/dec569"
+          unzip -q "$RUNNER_TEMP/dec569.zip" -d "$RUNNER_TEMP/dec569"
+          auth="$(find "$RUNNER_TEMP/dec569" -type f -name dec568-2020-execution-authorization.json -print)"
+          plan="$(find "$RUNNER_TEMP/dec569" -type f -name dec569-2020-runtime-authorization-plan.json -print)"
+          test "$(printf '%s\n' "$auth" | sed '/^$/d' | wc -l)" = "1"
+          test "$(printf '%s\n' "$plan" | sed '/^$/d' | wc -l)" = "1"
+          cp "$auth" "$RUNNER_TEMP/dec568-2020-execution-authorization.json"
+          cp "$plan" "$RUNNER_TEMP/dec569-2020-runtime-authorization-plan.json"
+
+      - name: Recheck current main and annual run-382 slot
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-branch.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/annual-runs.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          temp = Path(os.environ["RUNNER_TEMP"])
+          main = json.loads((temp / "main-branch.json").read_text())
+          assert main["commit"]["sha"] == os.environ["GITHUB_SHA"]
+          rows = json.loads((temp / "annual-runs.json").read_text()).get("workflow_runs", [])
+          by_number = {row["run_number"]: row for row in rows}
+          assert set(by_number) == {1, 376, 377, 378, 379, 380, 381}
+          assert by_number[1]["conclusion"] == "failure"
+          assert by_number[376]["conclusion"] == "failure"
+          assert by_number[377]["conclusion"] == "success"
+          assert by_number[378]["conclusion"] == "success"
+          assert by_number[379]["conclusion"] == "success"
+          assert by_number[380]["conclusion"] == "success"
+          assert by_number[381]["conclusion"] == "success"
+          assert not any(row["run_number"] >= 382 for row in rows)
+          PY
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned preflight dependencies
+        run: >-
+          python -m pip install
+          -r requirements/exp061-discovery-run.txt
+          scikit-learn==1.9.1
+
+      - name: Require clean preflight checkout
+        run: test -z "$(git status --porcelain)"
+
+      - name: Build concrete DEC-570 install preflight
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2020_runtime_authorization_install_preflight.py             plan             --authorization-json "$RUNNER_TEMP/dec568-2020-execution-authorization.json"             --plan-json "$RUNNER_TEMP/dec569-2020-runtime-authorization-plan.json"             --main-branch-json "$RUNNER_TEMP/main-branch.json"             --expected-head-sha "$GITHUB_SHA"             --out "$RUNNER_TEMP/dec570-2020-runtime-install-preflight.json"
+
+      - name: Verify DEC-570 remains read-only and exact
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          value = json.loads((Path(os.environ["RUNNER_TEMP"]) / "dec570-2020-runtime-install-preflight.json").read_text())
+          assert value["decision"] == "DEC-570"
+          assert value["source_plan_workflow_run_id"] == 37318488687
+          assert value["source_plan_artifact_id"] == 11349042014
+          assert value["source_plan_artifact_digest"] == "sha256:855375a850fe4e90475f5f5b9dd4d4721fba5bbac6ce8162d3c9d6d3854bbc7f"
+          assert value["expected_run_number"] == 382
+          assert value["expected_run_attempt"] == 1
+          assert value["previous_annual_freeze_run_id"] == 37310525635
+          assert value["activation_mutation_file_count"] == 2
+          assert value["runtime_install_preflight_ready"] is True
+          assert value["preflight_read_only"] is True
+          assert value["next_gate"] == (
+              "EXACT_ANNUAL_PATTERN_CATALOGUE_2020_RUNTIME_"
+              "AUTHORIZATION_INSTALL_MUTATION_AFTER_DEC570"
+          )
+          for field in (
+              "repository_mutation_authorized",
+              "runtime_authorization_installed",
+              "runtime_gate_active",
+              "annual_workflow_dispatch_authorized",
+              "historical_artifact_read_authorized",
+              "historical_catalogue_execution_authorized",
+              "historical_result_production_authorized",
+              "next_segment_execution_authorized",
+              "cross_year_result_production_authorized",
+              "strategy_v1_synthesis_authorized",
+              "promotion_authorized",
+              "phase8b_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert value[field] is False, field
+          PY
+
+      - name: Upload immutable DEC-570 install preflight
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2020-dec570-runtime-install-preflight-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/dec569-run.json
+            ${{ runner.temp }}/dec569-artifacts.json
+            ${{ runner.temp }}/dec568-2020-execution-authorization.json
+            ${{ runner.temp }}/dec569-2020-runtime-authorization-plan.json
+            ${{ runner.temp }}/main-branch.json
+            ${{ runner.temp }}/annual-runs.json
+            ${{ runner.temp }}/dec570-2020-runtime-install-preflight.json
+          if-no-files-found: error

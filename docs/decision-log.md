@@ -11028,3 +11028,7 @@ DEC-569 binds concrete DEC-568 workflow run `37315889656`, artifact `11346849851
 ## 2026-10-05 — DEC-569 next-gate implementation repair
 
 Concrete DEC-569 builder run `37317772668` completed successfully on `9a421918550ad3b7114ac9074c1de07fc807281d`, but its immutable artifact `11348625984` (`sha256:7dd8e882f729f8a1fb76edea15e2987b2c548585918e6761eed93620b01c186d`) exposed a stale inherited next-gate label ending in `AFTER_CONCRETE_DEC558`. The plan remained dormant and non-authorizing. This implementation repair changes only that provenance label to `AFTER_CONCRETE_DEC569`, pins the prior run-1 artifact as repair evidence, and permits only workflow run 2 / attempt 1 to regenerate DEC-569. Annual run 382 remains absent and no runtime mutation, dispatch, later-year, strategy, broker, order, real-money, or trading authority is added.
+
+## 2026-10-05 — DEC-570 read-only 2020 runtime install preflight
+
+DEC-570 binds corrected DEC-569 workflow run `37318488687` and artifact `11349042014` (`sha256:855375a850fe4e90475f5f5b9dd4d4721fba5bbac6ce8162d3c9d6d3854bbc7f`, canonical plan SHA-256 `794ea5631bee374ec7a2e05c5efcb33e35f008d188114c879f7d2e68be72a7b0`). It validates only a future two-file 2020 runtime installation from installed runtime `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e` to gate `695a50b418da752e1bd37d6302f209033ab611f5` plus runtime target `4e124365430672fa63825b272001937c60151644`. The preflight performs no mutation or dispatch; run 382, later years, strategy, broker, order, real-money, and trading authority remain locked.
