@@ -31,14 +31,34 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Require exact first read-only action push
+      - name: Require exact second read-only action push after syntax failure
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$GITHUB_EVENT_NAME" = "push"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37327196175" > "$RUNNER_TEMP/failed-dec571-run.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          run = json.loads((Path(os.environ["RUNNER_TEMP"]) / "failed-dec571-run.json").read_text())
+          exact = {
+              "id": 37327196175,
+              "name": "phase8a-annual-catalogue-2020-runtime-install-action",
+              "path": ".github/workflows/phase8a-annual-catalogue-2020-runtime-install-action.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "8f37700f9b468a8aff35b4dc4d916580c9bccaa5",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "failure",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+          PY
 
       - name: Require frozen DEC-571 sources
         run: |
@@ -130,7 +150,8 @@ jobs:
           assert by_number[377]["conclusion"] == "success"
           assert by_number[378]["conclusion"] == "success"
           assert by_number[379]["conclusion"] == "success"
-          assert by_number[380]["conclusion"] == "success"\n          assert by_number[381]["conclusion"] == "success"
+          assert by_number[380]["conclusion"] == "success"
+          assert by_number[381]["conclusion"] == "success"
           assert not any(row["run_number"] >= 382 for row in rows)
           PY
 
@@ -202,6 +223,7 @@ jobs:
         with:
           name: annual-catalogue-2020-dec571-runtime-install-action-${{ github.sha }}
           path: |
+            ${{ runner.temp }}/failed-dec571-run.json
             ${{ runner.temp }}/dec570-run.json
             ${{ runner.temp }}/dec570-artifacts.json
             ${{ runner.temp }}/dec570-2020-runtime-install-preflight.json
