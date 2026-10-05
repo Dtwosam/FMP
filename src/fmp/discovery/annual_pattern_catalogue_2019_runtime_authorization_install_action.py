@@ -228,7 +228,7 @@ def compile_2019_runtime_authorization_install_action(
         "stage": "ANNUAL_CATALOGUE_2019_RUNTIME_AUTHORIZATION_INSTALL_ACTION_READY",
         "authorization_basis": "standing_operator_autonomous_build_authorization",
         "activation_condition": (
-            "validated_concrete_dec548_preflight_and_unchanged_runtime_on_exact_main"
+            "validated_concrete_dec559_preflight_and_unchanged_runtime_on_exact_main"
         ),
         "repository_full_name": "Dtwosam/FMP",
         "source_preflight_expected_head_sha": SOURCE_PREFLIGHT_WORKFLOW_HEAD_SHA,
@@ -268,7 +268,7 @@ def compile_2019_runtime_authorization_install_action(
         "trading_authorized": TRADING_AUTHORIZED,
         "next_gate": (
             "APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2019_"
-            "RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC549"
+            "RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC560"
         ),
     }
     value["install_action_fingerprint_sha256"] = _sha256_bytes(
@@ -302,7 +302,7 @@ def validate_2019_runtime_authorization_install_action(
         "stage": "ANNUAL_CATALOGUE_2019_RUNTIME_AUTHORIZATION_INSTALL_ACTION_READY",
         "authorization_basis": "standing_operator_autonomous_build_authorization",
         "activation_condition": (
-            "validated_concrete_dec548_preflight_and_unchanged_runtime_on_exact_main"
+            "validated_concrete_dec559_preflight_and_unchanged_runtime_on_exact_main"
         ),
         "repository_full_name": "Dtwosam/FMP",
         "source_preflight_expected_head_sha": SOURCE_PREFLIGHT_WORKFLOW_HEAD_SHA,
@@ -330,7 +330,7 @@ def validate_2019_runtime_authorization_install_action(
         "trading_authorized": False,
         "next_gate": (
             "APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2019_"
-            "RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC549"
+            "RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC560"
         ),
     }
     for field, expected in exact.items():
