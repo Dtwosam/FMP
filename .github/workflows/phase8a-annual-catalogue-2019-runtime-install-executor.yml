@@ -79,7 +79,7 @@ jobs:
           rows = [a for a in payload.get("artifacts", []) if a.get("id") == 11341025756]
           assert len(rows) == 1
           artifact = rows[0]
-          assert artifact["name"] == "annual-catalogue-2018-dec560-runtime-install-action-bacb20c1d1541ac0b46076cef8ca9fe898559339"
+          assert artifact["name"] == "annual-catalogue-2019-dec560-runtime-install-action-bacb20c1d1541ac0b46076cef8ca9fe898559339"
           assert artifact["digest"] == "sha256:dcd16ee2ddbdf9c5b17acfe6e79b54f1dbf6a38a839362ecc91a896f41520354"
           assert artifact["expired"] is False
           PY
@@ -87,12 +87,12 @@ jobs:
             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC560_ARTIFACT_ID/zip" \
             > "$RUNNER_TEMP/dec560.zip"
           actual="$(sha256sum "$RUNNER_TEMP/dec560.zip" | awk '{print $1}')"
-          test "$actual" = "94c9ce6e08f013cb9ff8f662c78b3fafc0ba902fa590e5b27e89751ddd9069a3"
+          test "$actual" = "dcd16ee2ddbdf9c5b17acfe6e79b54f1dbf6a38a839362ecc91a896f41520354"
           mkdir -p "$RUNNER_TEMP/dec560"
           unzip -q "$RUNNER_TEMP/dec560.zip" -d "$RUNNER_TEMP/dec560"
-          action="$(find "$RUNNER_TEMP/dec560" -type f -name dec560-2018-runtime-install-action.json -print)"
+          action="$(find "$RUNNER_TEMP/dec560" -type f -name dec560-2019-runtime-install-action.json -print)"
           test "$(printf '%s\n' "$action" | sed '/^$/d' | wc -l)" = "1"
-          cp "$action" "$RUNNER_TEMP/dec560-2018-runtime-install-action.json"
+          cp "$action" "$RUNNER_TEMP/dec560-2019-runtime-install-action.json"
 
       - name: Recheck current main and unconsumed run-381 slot
         run: |
@@ -142,7 +142,7 @@ jobs:
               validate_2019_runtime_authorization_install_action,
           )
           value = json.loads(
-              (Path(os.environ["RUNNER_TEMP"]) / "dec560-2018-runtime-install-action.json").read_text()
+              (Path(os.environ["RUNNER_TEMP"]) / "dec560-2019-runtime-install-action.json").read_text()
           )
           validate_2019_runtime_authorization_install_action(value)
           assert value["decision"] == "DEC-560"
@@ -257,7 +257,7 @@ jobs:
           runtime_sha="$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)"
           python scripts/phase8a_annual_pattern_catalogue_2019_runtime_authorization_install_receipt.py \
             review \
-            --action-json "$RUNNER_TEMP/dec560-2018-runtime-install-action.json" \
+            --action-json "$RUNNER_TEMP/dec560-2019-runtime-install-action.json" \
             --install-commit-sha "$install_sha" \
             --changed-files "$RUNNER_TEMP/changed-files.txt" \
             --installed-gate-blob-sha "$gate_sha" \
@@ -288,7 +288,7 @@ jobs:
           path: |
             ${{ runner.temp }}/dec560-run.json
             ${{ runner.temp }}/dec560-artifacts.json
-            ${{ runner.temp }}/dec560-2018-runtime-install-action.json
+            ${{ runner.temp }}/dec560-2019-runtime-install-action.json
             ${{ runner.temp }}/annual-runs-before-install.json
             ${{ runner.temp }}/main-before-install.json
             ${{ runner.temp }}/changed-files.txt
