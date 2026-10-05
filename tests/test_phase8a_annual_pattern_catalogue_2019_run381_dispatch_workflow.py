@@ -75,7 +75,7 @@ class AnnualPatternCatalogue2019Run381DispatchWorkflowTests(unittest.TestCase):
         self.assertIn('row.get("run_attempt") == 1', text)
         self.assertIn('row["run_number"] >= 381', text)
         self.assertIn('row.get("run_number") >= 382', text)
-        self.assertNotIn("-f annual_segment_label=2019", text)
+        self.assertNotIn("-f annual_segment_label=2020", text)
 
     def test_dispatch_receipt_claims_submission_only(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
