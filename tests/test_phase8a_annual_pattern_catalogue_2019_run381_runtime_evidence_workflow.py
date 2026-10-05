@@ -94,7 +94,7 @@ class AnnualPatternCatalogue2019Run381RuntimeEvidenceWorkflowTests(
         )
         self.assertIn('assert binding["trading_authorized"] is False', text)
         self.assertIn(
-            "annual-catalogue-2019-dec555-runtime-binding-",
+            "annual-catalogue-2019-dec566-runtime-binding-",
             text,
         )
         self.assertIn(
