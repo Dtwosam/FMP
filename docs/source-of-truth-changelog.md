@@ -2226,3 +2226,13 @@ Bound concrete DEC-561 install evidence and the exact installed 2019 gate/runtim
 ## 2026-10-05 — DEC-563 2019 dispatch authorization
 
 Bound the exact DEC-562 preflight artifact/fingerprint into a source-only authorization for annual run 381 / attempt 1. Dispatch command/action remains absent; run382+/2020+/trading authority remains false.
+
+## 2026-10-05 — DEC-564 2019 dispatch-action preflight
+
+Added the final non-mutating 2019 dispatch-action preflight bound to concrete
+DEC-563 evidence: run `37306565277`, artifact `11344330424`, digest
+`sha256:06b72e13349a47106e36ce631713da55e51407fdeeb6dd26518c8115191bf520`,
+authorization fingerprint
+`fd554fbfd2ca556b0e4a6e65ddb00ec805809eda70d80a1e1a401edfeb71fcf8`.
+The preflight is exact to predecessor `37237817538` and annual run 381 /
+attempt 1, remains read-only, and grants no run 382+ or trading authority.

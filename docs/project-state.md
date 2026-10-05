@@ -3299,3 +3299,16 @@ DEC-561 is concrete from installer workflow run `37304310188`, artifact `1134259
 ### 2026-10-05 — DEC-563 2019 source-only dispatch authorization
 
 DEC-562 is concrete from workflow run `37305622078`, artifact `11344155034`, digest `b7245744...`, and preflight fingerprint `b02c7c68...`. DEC-563 is the current frontier: source-only authorization for segment 2019 / run 381 / attempt 1 with predecessor `37237817538`. The decision may mark the exact future annual research dispatch/read/execution/result contract as authorized but contains no dispatch command and does not execute it. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2019_DISPATCH_ACTION_PREFLIGHT`.
+
+### 2026-10-05 — DEC-564 2019 dispatch frontier
+
+The 2019 runtime is installed and DEC-563 concrete dispatch authorization is
+bound to workflow run `37306565277`, artifact `11344330424`, and fingerprint
+`fd554fbfd2ca556b0e4a6e65ddb00ec805809eda70d80a1e1a401edfeb71fcf8`.
+
+DEC-564 is the final read-only action preflight for annual segment 2019. It
+requires exact history through successful 2018 run 380, binds predecessor run
+`37237817538`, and reserves only global annual run 381 / attempt 1. No run 381
+has been dispatched by DEC-564. Run 382+, 2020+, cross-year synthesis, Strategy
+V1, promotion, Phase 8B, broker mutation, order execution, real-money action,
+and trading remain locked.
