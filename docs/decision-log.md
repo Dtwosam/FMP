@@ -11036,3 +11036,7 @@ DEC-570 binds corrected DEC-569 workflow run `37318488687` and artifact `1134904
 ## 2026-10-05 — DEC-571 exact 2020 runtime install action
 
 DEC-571 binds successful DEC-570 workflow run `37321690650`, artifact `11350136423` (`sha256:97eee3d49aec78ebbc1f3aa7190159d4dfba62c861f221163bd03c2699fdad7c`), and preflight fingerprint `367ec514057b011711ab9734a839f8cf03d1334125db336c947e979d923cab36`. It freezes only the two-file future mutation that creates the 2020 runtime gate from blob `695a50b418da752e1bd37d6302f209033ab611f5` and updates runtime `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e` to `4e124365430672fa63825b272001937c60151644`. The builder is read-only and performs no mutation or dispatch. Run 382, later-year execution, strategy/promotion, broker mutation, orders, real-money action, and trading remain locked.
+
+## 2026-10-05 — DEC-572 exact 2020 runtime installation
+
+Concrete DEC-571 evidence is fixed at workflow run `37327905209`, artifact `11352259131`, digest `sha256:082c09ed64042f2c63252676be1d63aab6553c3cd92e3995256498ac4744b423`, and action fingerprint `0d617a5261a25d1fbdcc661fcc9518be63081ca442fb2ac068a2206f875e6939`. DEC-572 authorizes only the exact two-file 2020 runtime installation: create gate blob `695a50b418da752e1bd37d6302f209033ab611f5` and replace runtime `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e` with `4e124365430672fa63825b272001937c60151644`. The installer requires annual run 382 to remain absent and performs no annual dispatch.

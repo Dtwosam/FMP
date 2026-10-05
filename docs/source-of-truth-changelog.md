@@ -2275,3 +2275,7 @@ Pinned corrected DEC-569 run/artifact/canonical plan evidence and defined the re
 ## 2026-10-05 — DEC-571 2020 install action frozen
 
 Pinned concrete DEC-570 run/artifact/fingerprint evidence and froze the exact two-file 2020 runtime authorization mutation. The repository-hosted builder is read-only; runtime installation and annual dispatch remain unexecuted.
+
+## 2026-10-05 — DEC-572 2020 runtime install frontier
+
+Bound successful DEC-571 run `37327905209` and artifact `11352259131`. Added the exact two-file 2020 runtime installer and immutable DEC-572 receipt contract. Annual run 382 remains unconsumed.

@@ -3358,3 +3358,7 @@ Concrete DEC-570 preflight evidence is bound from run `37321690650`, artifact `1
 ### 2026-10-05 DEC-571 builder repair
 
 The first repository-hosted DEC-571 install-action builder run (GitHub Actions run `37327196175`, run 1 / attempt 1, head `8f37700f9b468a8aff35b4dc4d916580c9bccaa5`) failed after the exact DEC-570 evidence checks because one inline Python assertion contained a literal escaped newline. No DEC-571 action artifact was produced and annual run 382 remains absent. The repair fixes that syntax only, requires exact builder run 2 / attempt 1, and binds the failed run-1 provenance before rebuilding the same read-only action artifact.
+
+### 2026-10-05 — DEC-572 2020 runtime installer ready
+
+The corrected DEC-571 builder succeeded as run 2 / attempt 1 (`37327905209`) and produced artifact `11352259131` with action fingerprint `0d617a5261a25d1fbdcc661fcc9518be63081ca442fb2ac068a2206f875e6939`. DEC-572 is source-ready to apply only the frozen 2020 gate/runtime pair. Annual run 382 remains absent; no 2020 annual dispatch is part of this installation step.
