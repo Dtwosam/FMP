@@ -185,11 +185,11 @@ jobs:
               ).read_text(encoding="utf-8")
           )
           assert receipt["decision"] == "DEC-576"
-          assert receipt["source_preflight_decision"] == "DEC-564"
-          assert receipt["source_preflight_workflow_run_id"] == 37309216521
-          assert receipt["source_preflight_artifact_id"] == 11344423884
+          assert receipt["source_preflight_decision"] == "DEC-575"
+          assert receipt["source_preflight_workflow_run_id"] == 37388217346
+          assert receipt["source_preflight_artifact_id"] == 11380193702
           assert receipt["source_preflight_fingerprint_sha256"] == (
-              "33ea75e1f34b2d643617be37e254644193506dea7fd959772c9eb00115088709"
+              "f0aad3d285539bbe2f0124db0a0869cc9a6813892c5be75252c46ade933a0a92"
           )
           assert receipt["dispatch_head_sha"] == os.environ["TARGET_HEAD_SHA"]
           assert receipt["annual_segment_label"] == "2020"
