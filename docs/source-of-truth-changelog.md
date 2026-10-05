@@ -2255,3 +2255,7 @@ Recorded successful 2019 annual run 381, exact DEC-565 receipt provenance, and t
 ## 2026-10-05 — DEC-567 concretized from recovered DEC-566 evidence
 
 Pinned recovery run `37312368068`, artifact `11345528676`, its SHA-256 digest, and the exact DEC-566 binding/freeze fingerprints into the read-only 2020 execution preflight. The gate requires the complete annual history through successful run 381 and rejects any run 382+ state. No dispatch surface is introduced.
+
+## 2026-10-05 — DEC-568 2020 source authorization staged
+
+Bound the 2020 source-only execution authorization to the exact DEC-567 run/artifact/fingerprint and expected annual identity 382 / attempt 1. Runtime installation, dispatch execution, later-year authority, and all trading surfaces remain disabled.
