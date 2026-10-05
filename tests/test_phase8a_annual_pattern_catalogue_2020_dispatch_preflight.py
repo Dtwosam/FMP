@@ -148,7 +148,7 @@ def _annual_runs() -> dict[str, object]:
     "DEC-573 requires installed annual workflow and 2020 runtime state",
 )
 class AnnualPatternCatalogue2020DispatchPreflightTests(unittest.TestCase):
-    def test_sources_pin_installed_runtime_and_dec561_receipt(self) -> None:
+    def test_sources_pin_installed_runtime_and_dec572_receipt(self) -> None:
         value = validate_2020_dispatch_preflight_sources(
             repository_root=REPOSITORY_ROOT,
         )
