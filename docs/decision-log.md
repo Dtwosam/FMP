@@ -11020,3 +11020,7 @@ DEC-567 now binds the recovered DEC-566 runtime evidence exactly: recovery run `
 ## 2026-10-05 — DEC-568 source-only 2020 execution authorization
 
 DEC-568 consumes only concrete DEC-567 workflow run `37313687059`, artifact `11346985812` (`sha256:182be0b68d721e3267a84bab37c5a3bcb5c25b84b546ba9565c20b6c2ee1f1b0`), and preflight fingerprint `bfccf190a7abad8464bafbf96a039305a8034f754fdc7cd05f5825c65398204f`. It authorizes the bounded 2020 research contract for run 382 / attempt 1 at source level only. The runtime gate remains uninstalled/inactive and no dispatch command or action exists. Run 383+, next-year execution, cross-year synthesis, strategy promotion, broker/order/real-money/trading authority remain false.
+
+## 2026-10-05 — DEC-569 read-only 2020 runtime authorization plan
+
+DEC-569 binds concrete DEC-568 workflow run `37315889656`, artifact `11346849851` (`sha256:a03cd0d85672e8ae760b8490982fe93f541738c68b733860f10bb16caf968308`), and authorization fingerprint `cfd43db91d2703e743132e61540ed95acec11fc9d4f6f89d8a8c011345a95f55`. It freezes dormant 2020 gate blob `695a50b418da752e1bd37d6302f209033ab611f5` and 2020-aware runtime target blob `4e124365430672fa63825b272001937c60151644` for exact annual run 382 / attempt 1 with predecessor run `37310525635`. No repository mutation, runtime installation, workflow dispatch, run 383+, 2021+, strategy, promotion, broker, order, real-money, or trading authority is added.

@@ -2259,3 +2259,7 @@ Pinned recovery run `37312368068`, artifact `11345528676`, its SHA-256 digest, a
 ## 2026-10-05 — DEC-568 2020 source authorization staged
 
 Bound the 2020 source-only execution authorization to the exact DEC-567 run/artifact/fingerprint and expected annual identity 382 / attempt 1. Runtime installation, dispatch execution, later-year authority, and all trading surfaces remain disabled.
+
+## 2026-10-05 — DEC-569 2020 runtime plan staged
+
+Pinned the concrete DEC-568 workflow run/artifact/fingerprint and froze the dormant 2020 runtime gate and 2020-aware runtime target. The plan is read-only, run 382 remains unconsumed, and no runtime mutation or dispatch surface is introduced.
