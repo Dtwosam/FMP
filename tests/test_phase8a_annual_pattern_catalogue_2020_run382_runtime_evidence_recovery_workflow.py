@@ -49,7 +49,7 @@ class AnnualPatternCatalogue2020Run382RuntimeEvidenceRecoveryWorkflowTests(
     def test_reviewer_pins_exact_recovery_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for value in (
-            "57686e0f037238e60345a2c2b565fe0abe72db44",
+            "7c721121197b83e687fd2c76773773f8ab4c07ae",
             "260d38c31182eafaeb64741f447df297b2640ef4",
             "2185ee4597a0255ec607db3ac7ed3acb9cee0aba",
             "cd170c2386034930f53645498f7d24ec13442b71",
