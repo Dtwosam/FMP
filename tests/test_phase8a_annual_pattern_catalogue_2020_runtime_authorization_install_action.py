@@ -188,6 +188,11 @@ class AnnualPatternCatalogue2020RuntimeAuthorizationInstallActionTests(
             "4e124365430672fa63825b272001937c60151644",
         )
         self.assertTrue(value["repository_mutation_authorized"])
+        self.assertEqual(
+            value["next_gate"],
+            "APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2020_"
+            "RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC571",
+        )
         for field in (
             "runtime_authorization_installed",
             "runtime_gate_active",
