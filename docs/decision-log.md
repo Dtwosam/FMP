@@ -11012,3 +11012,7 @@ Next gate after successful DEC-566 evidence:
 ## 2026-10-05 — DEC-566 run381 evidence recovery
 
 Annual run `37310525635` completed successfully as run 381 / attempt 1 on `8bcee3a7a834743f08bd9ad73109bfc09609a2fe`, but GitHub did not create the automatic DEC-566 workflow-run successor. The exact DEC-565 dispatcher run is `37310506796`; its receipt artifact is `11345118826` with digest `sha256:ab1f031f0b986521b64c2667029b48a8052c5f936bb0633aff536770fb64646f`. The exact 2019 freeze artifact is `11345931866` with digest `sha256:cc3f5100c276e30df87d721a15843ff56b533354a5adaba6699d716a2daa8178`. A one-shot read-only recovery reuses the frozen DEC-566 reviewer and produces only the missing runtime binding; no run 382+, 2020 execution, strategy, broker, order, real-money, or trading authority is added.
+
+## 2026-10-05 — DEC-567 concrete 2020 execution preflight
+
+DEC-567 now binds the recovered DEC-566 runtime evidence exactly: recovery run `37312368068` on `ae724ba3e59c17440a8cf222242316a9462bf98f`, artifact `11345528676` with digest `sha256:800e06ce5026efa517853db32edf424ade527dc3fa7f2b95d9d2edd128237700`, binding fingerprint `a7063417dfb917f9b9019eb97c9a2803f50b4163ea524ea52c64b28a387720a2`, and freeze fingerprint `6935506f20d6d46054fabed5200ba6cec33ea4f10b00d839cc1cfc7f1b92b918`. The one-shot repository workflow remains read-only and freezes only 2020 run 382 / attempt 1. No dispatch, execution, result, strategy, promotion, broker, order, real-money, or trading authority is added.
