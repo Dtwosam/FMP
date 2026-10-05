@@ -66,7 +66,7 @@ PREFLIGHT_JSON = r"""
   "successful_2015_run_id": 37198002653,
   "successful_2016_run_id": 37206992367,
   "successful_2017_run_id": 37227536041,
-  "successful_2018_run_id": 37310525635,
+  "successful_2018_run_id": 37237817538,
   "successful_2019_run_id": 37310525635,
   "trading_authorized": false,
   "version": "fmp-annual-catalogue-2020-dispatch-preflight-v1"
@@ -162,7 +162,7 @@ def _runs() -> dict[str, object]:
 
 @unittest.skipIf(
     os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
-    "DEC-575 requires the current installed 2019 runtime state",
+    "DEC-575 requires the current installed 2020 runtime state",
 )
 class AnnualPatternCatalogue2020DispatchActionPreflightTests(unittest.TestCase):
     def test_sources_pin_concrete_authorization_and_runtime(self) -> None:
@@ -265,9 +265,23 @@ class AnnualPatternCatalogue2020DispatchActionPreflightTests(unittest.TestCase):
     def test_concrete_authorization_head_drift_is_rejected(self) -> None:
         authorization = copy.deepcopy(_authorization())
         authorization["authorization_head_sha"] = "f" * 40
+        unsigned = dict(authorization)
+        unsigned.pop("authorization_fingerprint_sha256", None)
+        import hashlib
+        authorization["authorization_fingerprint_sha256"] = hashlib.sha256(
+            (
+                json.dumps(
+                    unsigned,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                )
+                + "\n"
+            ).encode("utf-8")
+        ).hexdigest()
         with self.assertRaisesRegex(
             ValueError,
-            "authorization fingerprint mismatch|source authorization head mismatch",
+            "source authorization head mismatch",
         ):
             build_2020_dispatch_action_preflight(
                 authorization,
