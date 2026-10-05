@@ -3330,3 +3330,7 @@ opened.
 ### 2026-10-05 — 2019 evidence successor recovery
 
 Annual catalogue run 381 completed successfully for 2019 with all 20 jobs and expected artifacts. GitHub did not create the automatic DEC-566 reviewer, matching the prior successor-depth behavior seen after earlier annual runs. A path-scoped one-shot recovery is staged to bind the exact DEC-565 dispatcher receipt and 2019 freeze into the same non-authorizing DEC-566 runtime evidence. The next safe gate remains the read-only 2020 execution preflight; run 382 and all trading-related authority remain locked.
+
+### 2026-10-05 — Concrete 2020 preflight frontier
+
+Recovered DEC-566 evidence for successful 2019 run 381 is now concrete and immutable. DEC-567 binds that exact recovery artifact/fingerprint and the seven-run annual history, and may produce only a read-only 2020 preflight for expected annual run 382 / attempt 1. No run 382 exists yet and no 2020 dispatch or execution authority is active. Cross-year synthesis, Strategy V1, Phase 8B, demo/live orders, broker mutation, real-money action, and trading remain locked.
