@@ -2210,3 +2210,7 @@ Bound the dormant 2019 runtime plan to concrete DEC-557 recovery workflow run `3
 ## 2026-10-05 — Add DEC-559 2019 runtime install preflight
 
 Bound the read-only install preflight to DEC-558 run `37294642532`, artifact `11337484835`, digest `7ee0dbfd168a8a63664419cce85e41a65fde46f9e492dbee65868386d74975a8`, and canonical plan SHA `5e35a860916137118e6a1ca9d751045373c59ad9e5e0ac373545b20740ccd074`. The exact future mutation remains two files and is not executed by DEC-559.
+
+## 2026-10-05 — Add DEC-560 exact 2019 runtime install action
+
+Bound the future two-file 2019 runtime mutation to concrete DEC-559 run `37295798286`, artifact `11338796649`, digest `3d8b6933a1949c77a4e6b29df5bd86896a140d0011ba6859187d412df24cc8f9`, and preflight fingerprint `1c585ad2a2a0bdf3a0fc811376d1fa5701b293b2fd888abca30ea5c13fcf3861`. The action is compile-only; no repository mutation or annual dispatch is performed.
