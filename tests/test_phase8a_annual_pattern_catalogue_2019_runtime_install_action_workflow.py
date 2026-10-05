@@ -50,7 +50,7 @@ class AnnualPatternCatalogue2019RuntimeInstallActionWorkflowTests(
             'git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" '
             '= "410180c34a9e3500bbbb42310a5253b993ac7785"'
         )
-        self.assertEqual(text.count(current_check), 1)
+        self.assertEqual(text.count(current_check), 2)
         self.assertIn(
             "test ! -e src/fmp/discovery/"
             "annual_pattern_catalogue_2019_runtime_authorization.py",
