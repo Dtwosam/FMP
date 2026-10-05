@@ -2236,3 +2236,14 @@ authorization fingerprint
 `fd554fbfd2ca556b0e4a6e65ddb00ec805809eda70d80a1e1a401edfeb71fcf8`.
 The preflight is exact to predecessor `37237817538` and annual run 381 /
 attempt 1, remains read-only, and grants no run 382+ or trading authority.
+
+## 2026-10-05 — DEC-565/566 2019 run381 atomic chain
+
+Added the atomic 2019 run381 dispatcher and evidence reviewer. The dispatcher
+is pinned to concrete DEC-564 evidence (run `37309216521`, artifact
+`11344423884`, digest
+`sha256:2d828fa08459a23172057722e8befc69d89891734e95980a4241be5121ac0db4`,
+fingerprint
+`33ea75e1f34b2d643617be37e254644193506dea7fd959772c9eb00115088709`)
+and exact predecessor `37237817538`. DEC-566 binds only successful exact
+run381 runtime evidence and advances only to a read-only 2020 preflight.

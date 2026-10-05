@@ -10988,3 +10988,23 @@ authority false.
 
 Next gate:
 `EXACT_2019_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`.
+
+## 2026-10-05 — DEC-565/566 exact 2019 run381 dispatch and evidence binding
+
+Concrete DEC-564 workflow run `37309216521` succeeded on
+`79bffed4149cdeee1f74b8c02efdec42cb05c800`, producing artifact
+`11344423884` with digest
+`sha256:2d828fa08459a23172057722e8befc69d89891734e95980a4241be5121ac0db4`
+and preflight fingerprint
+`33ea75e1f34b2d643617be37e254644193506dea7fd959772c9eb00115088709`.
+
+DEC-565 is the exact one-shot dispatcher for 2019 / predecessor
+`37237817538` / global annual run 381 attempt 1. DEC-566 is installed
+atomically before dispatch and binds only a successful exact run381 result,
+20-job/20-artifact inventory, valid freeze digest, and DEC-565 receipt.
+DEC-565 claims submission only; DEC-566 remains read-only. Run 382+, 2020+,
+strategy/promotion, broker/order, real-money, and trading authority remain
+false.
+
+Next gate after successful DEC-566 evidence:
+`READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2020_EXECUTION_PREFLIGHT`.

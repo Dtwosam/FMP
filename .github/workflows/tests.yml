@@ -1074,6 +1074,30 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2019_dispatch_action_preflight_workflow.py'
           -v
+      - name: Run DEC-565 run381 dispatch workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2019_run381_dispatch_workflow.py'
+          -v
+      - name: Run DEC-566 run381 evidence-review tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2019_run381_evidence_review.py'
+          -v
+      - name: Run DEC-566 run381 evidence-workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2019_run381_runtime_evidence_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
