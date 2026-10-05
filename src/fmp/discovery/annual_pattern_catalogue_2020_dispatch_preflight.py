@@ -1,0 +1,427 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+from typing import Mapping
+
+from .annual_pattern_catalogue_2020_runtime_authorization_install_receipt import (
+    ANNUAL_CATALOGUE_2020_RUNTIME_AUTHORIZATION_INSTALL_RECEIPT_DECISION,
+    ANNUAL_CATALOGUE_2020_RUNTIME_AUTHORIZATION_INSTALL_RECEIPT_VERSION,
+    validate_2020_runtime_authorization_install_receipt,
+)
+
+
+ANNUAL_CATALOGUE_2020_DISPATCH_PREFLIGHT_DECISION = "DEC-573"
+ANNUAL_CATALOGUE_2020_DISPATCH_PREFLIGHT_VERSION = (
+    "fmp-annual-catalogue-2020-dispatch-preflight-v1"
+)
+
+INSTALL_RECEIPT_SOURCE_PATH = (
+    "src/fmp/discovery/"
+    "annual_pattern_catalogue_2020_runtime_authorization_install_receipt.py"
+)
+EXPECTED_INSTALL_RECEIPT_SOURCE_BLOB_SHA = (
+    "7bcf5c20c5dce845901bca200e299b8dfeb364b3"
+)
+ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
+EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
+    "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
+)
+INSTALLED_GATE_PATH = (
+    "src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py"
+)
+EXPECTED_INSTALLED_GATE_BLOB_SHA = (
+    "695a50b418da752e1bd37d6302f209033ab611f5"
+)
+INSTALLED_RUNTIME_PATH = (
+    "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
+)
+EXPECTED_INSTALLED_RUNTIME_BLOB_SHA = (
+    "4e124365430672fa63825b272001937c60151644"
+)
+
+SOURCE_INSTALLER_WORKFLOW_RUN_ID = 37361230835
+SOURCE_INSTALLER_WORKFLOW_HEAD_SHA = "2d57ea571111845cd58a34a0c25a89eabe233bcb"
+SOURCE_INSTALL_ARTIFACT_ID = 11367191085
+SOURCE_INSTALL_ARTIFACT_DIGEST = (
+    "sha256:5f0f9862b411a9da4f0c383259ef78dc9df842be4a58ee06c43374a0b774d716"
+)
+SOURCE_INSTALL_COMMIT_SHA = "3ee648808bc2982c02dd1cb10fd45911f6379dcb"
+SOURCE_INSTALL_RECEIPT_FINGERPRINT_SHA256 = (
+    "1f77559f7aadfb83e338e467148d86b2a99850d69909e689f04604fa19c3e7b4"
+)
+
+EXPECTED_RUN_NUMBER = 382
+EXPECTED_RUN_ATTEMPT = 1
+EXPECTED_PREVIOUS_ANNUAL_FREEZE_RUN_ID = 37310525635
+
+ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED = False
+HISTORICAL_ARTIFACT_READ_AUTHORIZED = False
+HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED = False
+HISTORICAL_RESULT_PRODUCTION_AUTHORIZED = False
+NEXT_SEGMENT_EXECUTION_AUTHORIZED = False
+CROSS_YEAR_RESULT_PRODUCTION_AUTHORIZED = False
+STRATEGY_V1_SYNTHESIS_AUTHORIZED = False
+PROMOTION_AUTHORIZED = False
+PHASE8B_AUTHORIZED = False
+DEMO_ORDER_AUTHORIZED = False
+BROKER_MUTATION_AUTHORIZED = False
+LIVE_ORDER_AUTHORIZED = False
+REAL_MONEY_AUTHORIZED = False
+TRADING_AUTHORIZED = False
+
+
+def _git_blob_sha(path: Path) -> str:
+    payload = path.read_bytes()
+    return hashlib.sha1(
+        f"blob {len(payload)}\0".encode("ascii") + payload
+    ).hexdigest()
+
+
+def _canonical_json(value: object) -> bytes:
+    return (
+        json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        + "\n"
+    ).encode("utf-8")
+
+
+def _sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def _sha256_hex(value: object, *, field: str) -> str:
+    if not isinstance(value, str) or len(value) != 64:
+        raise ValueError(f"DEC-573 {field} must be a SHA-256 hex string")
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError(f"DEC-573 {field} must be hexadecimal") from exc
+    return value.lower()
+
+
+def _validate_commit(value: object, *, field: str) -> str:
+    if not isinstance(value, str) or len(value) != 40:
+        raise ValueError(f"DEC-573 {field} must be a 40-character Git commit")
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError(f"DEC-573 {field} must be hexadecimal") from exc
+    return value.lower()
+
+
+def validate_2020_dispatch_preflight_sources(
+    *,
+    repository_root: Path,
+) -> dict[str, str]:
+    root = Path(repository_root)
+    expected = {
+        "install_receipt_source_blob_sha": (
+            root / INSTALL_RECEIPT_SOURCE_PATH,
+            EXPECTED_INSTALL_RECEIPT_SOURCE_BLOB_SHA,
+        ),
+        "active_workflow_blob_sha": (
+            root / ACTIVE_WORKFLOW_PATH,
+            EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA,
+        ),
+        "installed_gate_blob_sha": (
+            root / INSTALLED_GATE_PATH,
+            EXPECTED_INSTALLED_GATE_BLOB_SHA,
+        ),
+        "installed_runtime_blob_sha": (
+            root / INSTALLED_RUNTIME_PATH,
+            EXPECTED_INSTALLED_RUNTIME_BLOB_SHA,
+        ),
+    }
+    actual: dict[str, str] = {}
+    for field, (source_path, expected_sha) in expected.items():
+        if not source_path.is_file():
+            raise ValueError(f"DEC-573 source file missing: {source_path}")
+        sha = _git_blob_sha(source_path)
+        if sha != expected_sha:
+            raise ValueError(f"DEC-573 {field} mismatch")
+        actual[field] = sha
+
+    if (
+        ANNUAL_CATALOGUE_2020_RUNTIME_AUTHORIZATION_INSTALL_RECEIPT_DECISION
+        != "DEC-572"
+    ):
+        raise ValueError("DEC-573 install receipt decision drift")
+    if (
+        ANNUAL_CATALOGUE_2020_RUNTIME_AUTHORIZATION_INSTALL_RECEIPT_VERSION
+        != "fmp-annual-catalogue-2020-runtime-authorization-install-receipt-v1"
+    ):
+        raise ValueError("DEC-573 install receipt version drift")
+    return actual
+
+
+def _validate_annual_inventory(
+    payload: Mapping[str, object],
+) -> dict[str, object]:
+    rows = payload.get("workflow_runs")
+    if not isinstance(rows, list):
+        raise ValueError("DEC-573 annual workflow_runs must be a list")
+    if len(rows) != 7:
+        raise ValueError("DEC-573 requires exactly seven prior annual workflow runs")
+    by_number: dict[int, Mapping[str, object]] = {}
+    for raw in rows:
+        if not isinstance(raw, Mapping):
+            raise ValueError("DEC-573 annual run row malformed")
+        number = raw.get("run_number")
+        if not isinstance(number, int) or isinstance(number, bool):
+            raise ValueError("DEC-573 annual run number malformed")
+        if number in by_number:
+            raise ValueError("DEC-573 duplicate annual run number")
+        by_number[number] = raw
+    if set(by_number) != {1, 376, 377, 378, 379, 380, 381}:
+        raise ValueError("DEC-573 annual run inventory mismatch")
+
+    exact = {
+        1: (
+            37126711695,
+            "fd85a886d07234ad584dcca08692b37e6af54b2e",
+            "failure",
+        ),
+        376: (
+            37191637168,
+            "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3",
+            "failure",
+        ),
+        377: (
+            37198002653,
+            "a89db974be9a94481e7ed0990476bc661012f1e4",
+            "success",
+        ),
+        378: (
+            37206992367,
+            "2524fde355349581c9440a172d0384c3cbce31ed",
+            "success",
+        ),
+        379: (
+            37227536041,
+            "7b4c1ef8573e280c067443b72f1534d9091d5b7f",
+            "success",
+        ),
+        380: (
+            37237817538,
+            "30971a996f514670a6f836d8e45cf80137197a4f",
+            "success",
+        ),
+        381: (
+            37310525635,
+            "8bcee3a7a834743f08bd9ad73109bfc09609a2fe",
+            "success",
+        ),
+    }
+    for number, (run_id, head_sha, conclusion) in exact.items():
+        row = by_number[number]
+        required = {
+            "id": run_id,
+            "name": "phase8a-annual-pattern-catalogue",
+            "path": ACTIVE_WORKFLOW_PATH,
+            "run_number": number,
+            "run_attempt": 1,
+            "event": "workflow_dispatch",
+            "head_branch": "main",
+            "head_sha": head_sha,
+            "status": "completed",
+            "conclusion": conclusion,
+        }
+        for field, expected in required.items():
+            if row.get(field) != expected:
+                raise ValueError(
+                    f"DEC-573 annual run {number} {field} mismatch"
+                )
+
+    return {
+        "annual_workflow_run_count": 7,
+        "failed_run_1_id": 37126711695,
+        "failed_run_376_id": 37191637168,
+        "successful_2015_run_id": 37198002653,
+        "successful_2016_run_id": 37206992367,
+        "successful_2017_run_id": 37227536041,
+        "successful_2018_run_id": 37237817538,
+        "successful_2019_run_id": 37310525635,
+    }
+
+
+def build_2020_dispatch_preflight(
+    install_receipt: Mapping[str, object],
+    *,
+    repository_root: Path,
+    main_branch: Mapping[str, object],
+    annual_workflow_runs: Mapping[str, object],
+    expected_head_sha: str,
+) -> dict[str, object]:
+    source = validate_2020_dispatch_preflight_sources(
+        repository_root=Path(repository_root),
+    )
+    validate_2020_runtime_authorization_install_receipt(install_receipt)
+
+    if install_receipt.get("install_commit_sha") != SOURCE_INSTALL_COMMIT_SHA:
+        raise ValueError("DEC-573 source install commit mismatch")
+    if (
+        install_receipt.get("install_receipt_fingerprint_sha256")
+        != SOURCE_INSTALL_RECEIPT_FINGERPRINT_SHA256
+    ):
+        raise ValueError("DEC-573 source install receipt fingerprint mismatch")
+    if install_receipt.get("expected_run_number") != EXPECTED_RUN_NUMBER:
+        raise ValueError("DEC-573 source receipt run number mismatch")
+    if install_receipt.get("expected_run_attempt") != EXPECTED_RUN_ATTEMPT:
+        raise ValueError("DEC-573 source receipt run attempt mismatch")
+    if (
+        install_receipt.get("previous_annual_freeze_run_id")
+        != EXPECTED_PREVIOUS_ANNUAL_FREEZE_RUN_ID
+    ):
+        raise ValueError("DEC-573 source receipt predecessor mismatch")
+    if install_receipt.get("runtime_authorization_installed") is not True:
+        raise ValueError("DEC-573 runtime authorization is not installed")
+    if install_receipt.get("runtime_gate_active") is not True:
+        raise ValueError("DEC-573 runtime gate is not active")
+    if install_receipt.get("annual_workflow_dispatch_authorized") is not False:
+        raise ValueError("DEC-573 source receipt dispatch authority drift")
+
+    expected_head_sha = _validate_commit(
+        expected_head_sha,
+        field="expected_head_sha",
+    )
+    if main_branch.get("name") != "main":
+        raise ValueError("DEC-573 requires main branch metadata")
+    commit = main_branch.get("commit")
+    if not isinstance(commit, Mapping):
+        raise ValueError("DEC-573 main commit is malformed")
+    if commit.get("sha") != expected_head_sha:
+        raise ValueError("DEC-573 current main head mismatch")
+
+    inventory = _validate_annual_inventory(annual_workflow_runs)
+    receipt_fingerprint = _sha256_hex(
+        install_receipt.get("install_receipt_fingerprint_sha256"),
+        field="install receipt fingerprint",
+    )
+
+    value: dict[str, object] = {
+        "decision": ANNUAL_CATALOGUE_2020_DISPATCH_PREFLIGHT_DECISION,
+        "version": ANNUAL_CATALOGUE_2020_DISPATCH_PREFLIGHT_VERSION,
+        **source,
+        **inventory,
+        "source_install_receipt_decision": "DEC-572",
+        "source_installer_workflow_run_id": SOURCE_INSTALLER_WORKFLOW_RUN_ID,
+        "source_installer_workflow_head_sha": SOURCE_INSTALLER_WORKFLOW_HEAD_SHA,
+        "source_install_artifact_id": SOURCE_INSTALL_ARTIFACT_ID,
+        "source_install_artifact_digest": SOURCE_INSTALL_ARTIFACT_DIGEST,
+        "source_install_commit_sha": SOURCE_INSTALL_COMMIT_SHA,
+        "source_install_receipt_fingerprint_sha256": receipt_fingerprint,
+        "stage": "ANNUAL_CATALOGUE_2020_DISPATCH_PREFLIGHT_READY",
+        "repository_full_name": "Dtwosam/FMP",
+        "expected_head_sha": expected_head_sha,
+        "annual_segment_label": "2020",
+        "previous_annual_freeze_run_id": EXPECTED_PREVIOUS_ANNUAL_FREEZE_RUN_ID,
+        "expected_run_number": EXPECTED_RUN_NUMBER,
+        "expected_run_attempt": EXPECTED_RUN_ATTEMPT,
+        "runtime_authorization_installed": True,
+        "runtime_gate_active": True,
+        "dispatch_command_present": False,
+        "preflight_read_only": True,
+        "annual_workflow_dispatch_authorized": ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED,
+        "historical_artifact_read_authorized": HISTORICAL_ARTIFACT_READ_AUTHORIZED,
+        "historical_catalogue_execution_authorized": (
+            HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED
+        ),
+        "historical_result_production_authorized": (
+            HISTORICAL_RESULT_PRODUCTION_AUTHORIZED
+        ),
+        "next_segment_execution_authorized": NEXT_SEGMENT_EXECUTION_AUTHORIZED,
+        "cross_year_result_production_authorized": (
+            CROSS_YEAR_RESULT_PRODUCTION_AUTHORIZED
+        ),
+        "strategy_v1_synthesis_authorized": STRATEGY_V1_SYNTHESIS_AUTHORIZED,
+        "promotion_authorized": PROMOTION_AUTHORIZED,
+        "phase8b_authorized": PHASE8B_AUTHORIZED,
+        "demo_order_authorized": DEMO_ORDER_AUTHORIZED,
+        "broker_mutation_authorized": BROKER_MUTATION_AUTHORIZED,
+        "live_order_authorized": LIVE_ORDER_AUTHORIZED,
+        "real_money_authorized": REAL_MONEY_AUTHORIZED,
+        "trading_authorized": TRADING_AUTHORIZED,
+        "next_gate": (
+            "ANNUAL_PATTERN_CATALOGUE_2020_DISPATCH_AUTHORIZATION_BEFORE_RUN"
+        ),
+    }
+    value["preflight_fingerprint_sha256"] = _sha256_bytes(
+        _canonical_json(value)
+    )
+    validate_2020_dispatch_preflight(value)
+    return value
+
+
+def validate_2020_dispatch_preflight(
+    value: Mapping[str, object],
+) -> Mapping[str, object]:
+    fingerprint = _sha256_hex(
+        value.get("preflight_fingerprint_sha256"),
+        field="preflight fingerprint",
+    )
+    unsigned = dict(value)
+    unsigned.pop("preflight_fingerprint_sha256", None)
+    if _sha256_bytes(_canonical_json(unsigned)) != fingerprint:
+        raise ValueError("DEC-573 preflight fingerprint mismatch")
+
+    exact = {
+        "decision": "DEC-573",
+        "version": "fmp-annual-catalogue-2020-dispatch-preflight-v1",
+        "install_receipt_source_blob_sha": EXPECTED_INSTALL_RECEIPT_SOURCE_BLOB_SHA,
+        "active_workflow_blob_sha": EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA,
+        "installed_gate_blob_sha": EXPECTED_INSTALLED_GATE_BLOB_SHA,
+        "installed_runtime_blob_sha": EXPECTED_INSTALLED_RUNTIME_BLOB_SHA,
+        "source_install_receipt_decision": "DEC-572",
+        "source_installer_workflow_run_id": SOURCE_INSTALLER_WORKFLOW_RUN_ID,
+        "source_installer_workflow_head_sha": SOURCE_INSTALLER_WORKFLOW_HEAD_SHA,
+        "source_install_artifact_id": SOURCE_INSTALL_ARTIFACT_ID,
+        "source_install_artifact_digest": SOURCE_INSTALL_ARTIFACT_DIGEST,
+        "source_install_commit_sha": SOURCE_INSTALL_COMMIT_SHA,
+        "source_install_receipt_fingerprint_sha256": (
+            SOURCE_INSTALL_RECEIPT_FINGERPRINT_SHA256
+        ),
+        "stage": "ANNUAL_CATALOGUE_2020_DISPATCH_PREFLIGHT_READY",
+        "repository_full_name": "Dtwosam/FMP",
+        "annual_segment_label": "2020",
+        "previous_annual_freeze_run_id": 37310525635,
+        "expected_run_number": 382,
+        "expected_run_attempt": 1,
+        "annual_workflow_run_count": 7,
+        "successful_2019_run_id": 37310525635,
+        "runtime_authorization_installed": True,
+        "runtime_gate_active": True,
+        "dispatch_command_present": False,
+        "preflight_read_only": True,
+        "annual_workflow_dispatch_authorized": False,
+        "historical_artifact_read_authorized": False,
+        "historical_catalogue_execution_authorized": False,
+        "historical_result_production_authorized": False,
+        "next_segment_execution_authorized": False,
+        "cross_year_result_production_authorized": False,
+        "strategy_v1_synthesis_authorized": False,
+        "promotion_authorized": False,
+        "phase8b_authorized": False,
+        "demo_order_authorized": False,
+        "broker_mutation_authorized": False,
+        "live_order_authorized": False,
+        "real_money_authorized": False,
+        "trading_authorized": False,
+        "next_gate": (
+            "ANNUAL_PATTERN_CATALOGUE_2020_DISPATCH_AUTHORIZATION_BEFORE_RUN"
+        ),
+    }
+    for field, expected in exact.items():
+        if value.get(field) != expected:
+            raise ValueError(f"DEC-573 {field} mismatch")
+    _validate_commit(value.get("expected_head_sha"), field="expected_head_sha")
+    return value
+
+
+__all__ = [
+    "ANNUAL_CATALOGUE_2020_DISPATCH_PREFLIGHT_DECISION",
+    "ANNUAL_CATALOGUE_2020_DISPATCH_PREFLIGHT_VERSION",
+    "build_2020_dispatch_preflight",
+    "validate_2020_dispatch_preflight",
+    "validate_2020_dispatch_preflight_sources",
+]
