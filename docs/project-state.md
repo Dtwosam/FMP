@@ -3338,3 +3338,7 @@ Recovered DEC-566 evidence for successful 2019 run 381 is now concrete and immut
 ### 2026-10-05 — 2020 source authorization frontier
 
 DEC-567 completed successfully and froze run 382 / attempt 1 with no dispatch. DEC-568 is now staged as a source-only authorization for the 2020 annual research contract. It does not install the runtime authorization and cannot dispatch the annual workflow. The next gate is a read-only 2020 runtime-authorization plan. Run 383+, cross-year synthesis, Strategy V1, Phase 8B, broker mutation, order execution, real-money action, and trading remain locked.
+
+### 2026-10-05 — 2020 runtime-plan frontier
+
+Concrete DEC-568 authorization is now available from workflow run `37315889656`, artifact `11346849851`, fingerprint `cfd43db91d2703e743132e61540ed95acec11fc9d4f6f89d8a8c011345a95f55`. DEC-569 stages only a read-only plan for installing the exact 2020/run382 runtime gate later. The installed runtime still ends at the 2019/run381 route. Annual run 382 does not exist. Cross-year synthesis, Strategy V1, Phase 8B, broker mutation, order execution, real-money action, and trading remain locked.
