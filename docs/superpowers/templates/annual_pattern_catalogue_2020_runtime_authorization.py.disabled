@@ -60,7 +60,7 @@ def require_2020_execution_authorized(
 ) -> None:
     _validate_commit(code_commit)
 
-    # Import DEC-557 lazily to avoid a cycle once the runtime imports this gate.
+    # Import DEC-568 lazily to avoid a cycle once the runtime imports this gate.
     from .annual_pattern_catalogue_2020_execution_authorization import (
         ANNUAL_CATALOGUE_2020_EXECUTION_AUTHORIZATION_DECISION,
         ANNUAL_CATALOGUE_2020_EXECUTION_AUTHORIZATION_VERSION,
