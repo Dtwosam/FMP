@@ -222,7 +222,7 @@ class AnnualPatternCatalogue2020Run382EvidenceReviewTests(unittest.TestCase):
         self.assertEqual(value["decision"], "DEC-577")
         self.assertEqual(value["annual_segment_label"], "2020")
         self.assertEqual(value["run_id"], RUN_ID)
-        self.assertEqual(value["run_number"], 381)
+        self.assertEqual(value["run_number"], 382)
         self.assertEqual(value["run_attempt"], 1)
         self.assertEqual(value["previous_annual_freeze_run_id"], 37310525635)
         self.assertEqual(value["annual_cell_count"], 18)
