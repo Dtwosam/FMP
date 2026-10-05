@@ -276,7 +276,7 @@ def compile_2020_runtime_authorization_install_action(
         "trading_authorized": TRADING_AUTHORIZED,
         "next_gate": (
             "APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2020_"
-            "RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC560"
+            "RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC571"
         ),
     }
     value["install_action_fingerprint_sha256"] = _sha256_bytes(
@@ -341,7 +341,7 @@ def validate_2020_runtime_authorization_install_action(
         "trading_authorized": False,
         "next_gate": (
             "APPLY_EXACT_ANNUAL_PATTERN_CATALOGUE_2020_"
-            "RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC560"
+            "RUNTIME_AUTHORIZATION_INSTALL_ACTION_AFTER_DEC571"
         ),
     }
     for field, expected in exact.items():
