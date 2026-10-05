@@ -36,7 +36,7 @@ class AnnualPatternCatalogue2019RuntimeInstallActionWorkflowTests(
             "bb1c7901d1b5859bec97a381716166e9024a6022",
             "11338796649",
             "3d8b6933a1949c77a4e6b29df5bd86896a140d0011ba6859187d412df24cc8f9",
-            "6b396d496b86dcc063141f271d1b46633af17764",
+            "15cc0c8e3b93453ecaf6ba1dfd635133279acb6c",
             "d406fd01bf308afd9003f29c06d20ff3da4ec3fc",
             "a3b087419f9b9dd8980139f5dc47db4de3f657fd",
             "41e7adba8b5061028d8adc7ef93d1fc02424039e",
