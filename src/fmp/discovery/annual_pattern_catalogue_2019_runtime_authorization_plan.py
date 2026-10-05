@@ -32,7 +32,7 @@ CURRENT_RUNTIME_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 )
 EXPECTED_CURRENT_RUNTIME_SOURCE_BLOB_SHA = (
-    "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
+    "410180c34a9e3500bbbb42310a5253b993ac7785"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
@@ -184,8 +184,10 @@ def validate_2019_runtime_authorization_plan_sources(
     ).read_text(encoding="utf-8")
     required_runtime = (
         "require_2019_execution_authorized",
-        'segment == "2019" and effective_run_number == 380',
+        'segment == "2019" and effective_run_number == 381',
         "DEC-558 2019 execution requires previous annual freeze run id",
+        'segment == "2018" and effective_run_number == 380',
+        "require_2018_execution_authorized",
         'segment == "2017" and effective_run_number == 379',
         "require_2017_execution_authorized",
         'segment == "2016" and effective_run_number == 378',
@@ -305,7 +307,7 @@ def build_2019_runtime_authorization_plan(
         "plan_source_only": True,
         "next_gate": (
             "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2019_RUNTIME_"
-            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC546"
+            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC558"
         ),
     }
     validate_2019_runtime_authorization_plan(value)
@@ -375,7 +377,7 @@ def validate_2019_runtime_authorization_plan(
         "plan_source_only": True,
         "next_gate": (
             "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2019_RUNTIME_"
-            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC546"
+            "AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC558"
         ),
     }
     for field, expected in exact.items():
