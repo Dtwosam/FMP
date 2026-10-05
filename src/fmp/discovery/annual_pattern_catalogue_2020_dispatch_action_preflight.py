@@ -316,7 +316,7 @@ def build_2020_dispatch_action_preflight(
         authorization.get("previous_annual_freeze_run_id"),
         field="previous annual freeze run id",
     )
-    if previous_run_id != inventory["successful_2018_run_id"]:
+    if previous_run_id != inventory["successful_2019_run_id"]:
         raise ValueError("DEC-575 predecessor run identity mismatch")
 
     value: dict[str, object] = {
