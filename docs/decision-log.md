@@ -11024,3 +11024,7 @@ DEC-568 consumes only concrete DEC-567 workflow run `37313687059`, artifact `113
 ## 2026-10-05 — DEC-569 read-only 2020 runtime authorization plan
 
 DEC-569 binds concrete DEC-568 workflow run `37315889656`, artifact `11346849851` (`sha256:a03cd0d85672e8ae760b8490982fe93f541738c68b733860f10bb16caf968308`), and authorization fingerprint `cfd43db91d2703e743132e61540ed95acec11fc9d4f6f89d8a8c011345a95f55`. It freezes dormant 2020 gate blob `695a50b418da752e1bd37d6302f209033ab611f5` and 2020-aware runtime target blob `4e124365430672fa63825b272001937c60151644` for exact annual run 382 / attempt 1 with predecessor run `37310525635`. No repository mutation, runtime installation, workflow dispatch, run 383+, 2021+, strategy, promotion, broker, order, real-money, or trading authority is added.
+
+## 2026-10-05 — DEC-569 next-gate implementation repair
+
+Concrete DEC-569 builder run `37317772668` completed successfully on `9a421918550ad3b7114ac9074c1de07fc807281d`, but its immutable artifact `11348625984` (`sha256:7dd8e882f729f8a1fb76edea15e2987b2c548585918e6761eed93620b01c186d`) exposed a stale inherited next-gate label ending in `AFTER_CONCRETE_DEC558`. The plan remained dormant and non-authorizing. This implementation repair changes only that provenance label to `AFTER_CONCRETE_DEC569`, pins the prior run-1 artifact as repair evidence, and permits only workflow run 2 / attempt 1 to regenerate DEC-569. Annual run 382 remains absent and no runtime mutation, dispatch, later-year, strategy, broker, order, real-money, or trading authority is added.
