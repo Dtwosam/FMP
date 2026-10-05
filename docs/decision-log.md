@@ -10953,3 +10953,7 @@ Concrete DEC-557 recovery run `37241812968` produced artifact `11317224241` with
 ## 2026-10-05 — DEC-559 2019 runtime install preflight
 
 Concrete DEC-558 workflow run `37294642532` produced plan artifact `11337484835` with digest `sha256:7ee0dbfd168a8a63664419cce85e41a65fde46f9e492dbee65868386d74975a8` and canonical plan SHA `5e35a860916137118e6a1ca9d751045373c59ad9e5e0ac373545b20740ccd074`. DEC-559 validates only the future two-file activation from current runtime `410180c3...` to dormant 2019 gate `d87fe85a...` plus runtime target `07ddfe7a...`. It remains read-only; run 381 and all mutation/dispatch/later-year/trading authority remain locked.
+
+## 2026-10-05 — DEC-560 exact 2019 runtime install action
+
+Concrete DEC-559 workflow run `37295798286` on `bb1c7901d1b5859bec97a381716166e9024a6022` produced artifact `11338796649` with digest `sha256:3d8b6933a1949c77a4e6b29df5bd86896a140d0011ba6859187d412df24cc8f9` and preflight fingerprint `1c585ad2a2a0bdf3a0fc811376d1fa5701b293b2fd888abca30ea5c13fcf3861`. DEC-560 freezes only the exact two-file 2019 runtime mutation: create gate blob `d87fe85a...` and update runtime from `410180c3...` to `07ddfe7a...`. The repository-hosted builder is read-only and only emits the action artifact. Run 381 remains unconsumed; runtime installation, dispatch, run 382+, later-year execution, strategy, broker/order, real-money, and trading remain locked.
