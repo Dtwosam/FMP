@@ -1314,6 +1314,30 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2020_run382_runtime_evidence_workflow.py'
           -v
+      - name: Run DEC-578 run382 dispatch-recovery tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2020_run382_dispatch_recovery.py'
+          -v
+      - name: Run DEC-579 run382 recovery evidence-review tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2020_run382_recovery_evidence_review.py'
+          -v
+      - name: Run DEC-579 run382 recovery evidence-workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2020_run382_runtime_evidence_recovery_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
