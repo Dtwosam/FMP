@@ -8,7 +8,7 @@ from typing import Mapping
 from .annual_pattern_catalogue_2019_dispatch_authorization import (
     ANNUAL_CATALOGUE_2019_DISPATCH_AUTHORIZATION_DECISION,
     ANNUAL_CATALOGUE_2019_DISPATCH_AUTHORIZATION_VERSION,
-    validate_2018_dispatch_authorization,
+    validate_2019_dispatch_authorization,
 )
 
 
@@ -231,7 +231,7 @@ def build_2019_dispatch_action_preflight(
     source = validate_2019_dispatch_action_preflight_sources(
         repository_root=Path(repository_root),
     )
-    validate_2018_dispatch_authorization(authorization)
+    validate_2019_dispatch_authorization(authorization)
 
     if authorization.get("decision") != "DEC-563":
         raise ValueError("DEC-564 source authorization decision mismatch")
