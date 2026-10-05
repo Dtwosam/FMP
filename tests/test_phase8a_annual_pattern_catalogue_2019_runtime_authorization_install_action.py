@@ -38,7 +38,9 @@ def _preflight() -> dict[str, object]:
             "41e7adba8b5061028d8adc7ef93d1fc02424039e"
         ),
         "source_authorization_decision": "DEC-557",
-        "source_authorization_fingerprint_sha256": "1" * 64,
+        "source_authorization_fingerprint_sha256": (
+            "c785127b20f57210e60ebd681d7b0e48a66f419fa8fbbbdd9cdd8fa560b464f9"
+        ),
         "source_plan_decision": "DEC-558",
         "source_plan_workflow_run_id": 37294642532,
         "source_plan_workflow_head_sha": (
@@ -48,7 +50,9 @@ def _preflight() -> dict[str, object]:
         "source_plan_artifact_digest": (
             "sha256:7ee0dbfd168a8a63664419cce85e41a65fde46f9e492dbee65868386d74975a8"
         ),
-        "source_plan_canonical_sha256": "2" * 64,
+        "source_plan_canonical_sha256": (
+            "5e35a860916137118e6a1ca9d751045373c59ad9e5e0ac373545b20740ccd074"
+        ),
         "stage": (
             "ANNUAL_CATALOGUE_2019_RUNTIME_AUTHORIZATION_"
             "INSTALL_PREFLIGHT_READY"
@@ -119,6 +123,9 @@ def _preflight() -> dict[str, object]:
     value["preflight_fingerprint_sha256"] = hashlib.sha256(
         _canonical_json(value)
     ).hexdigest()
+    assert value["preflight_fingerprint_sha256"] == (
+        "1c585ad2a2a0bdf3a0fc811376d1fa5701b293b2fd888abca30ea5c13fcf3861"
+    )
     return value
 
 
