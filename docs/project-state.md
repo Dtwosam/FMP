@@ -3275,3 +3275,7 @@ DEC-556 is concrete from run `37240728378` and artifact `11317461212`. DEC-557 i
 ### 2026-10-04 — DEC-557 builder recovery
 
 DEC-557 source contract remains valid, but its first repository builder run `37241492509` failed before artifact production due to a workflow syntax escape in the run-history dictionary. A read-only run-2 recovery is staged; annual run 381 remains absent. Runtime installation, dispatch, run382+, strategy/promotion, broker/order, real-money, and trading remain locked.
+
+### 2026-10-05 — DEC-558 2019 runtime plan
+
+DEC-557 recovery run `37241812968` completed successfully and concretely authorizes only 2019 annual run 381 / attempt 1. DEC-558 now freezes the future two-file runtime authorization target: dormant gate blob `d87fe85a5b426fa92caf7d6cc165445590f4097c` and runtime target blob `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e`. The installed runtime remains `410180c34a9e3500bbbb42310a5253b993ac7785`, run 381 is still unconsumed, and no mutation or dispatch is authorized by the plan. Next gate: `READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2019_RUNTIME_AUTHORIZATION_INSTALL_PREFLIGHT_AFTER_CONCRETE_DEC558`.
