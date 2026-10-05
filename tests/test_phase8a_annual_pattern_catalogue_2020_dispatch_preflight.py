@@ -51,7 +51,7 @@ INSTALL_RECEIPT_JSON = r"""
   "runtime_gate_active": true,
   "source_action_artifact_digest": "sha256:082c09ed64042f2c63252676be1d63aab6553c3cd92e3995256498ac4744b423",
   "source_action_artifact_id": 11352259131,
-  "source_action_decision": "DEC-560",
+  "source_action_decision": "DEC-571",
   "source_action_fingerprint_sha256": "0d617a5261a25d1fbdcc661fcc9518be63081ca442fb2ac068a2206f875e6939",
   "source_action_workflow_head_sha": "4ed1da1cdc5a8df1272fb1f06a803a57a8043427",
   "source_action_workflow_run_id": 37327905209,
