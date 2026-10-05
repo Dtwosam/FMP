@@ -2206,3 +2206,7 @@ Added a source-only authorization contract for exact annual segment 2019 / run 3
 ## 2026-10-05 — Add DEC-558 2019 runtime authorization plan
 
 Bound the dormant 2019 runtime plan to concrete DEC-557 recovery workflow run `37241812968`, artifact `11317224241`, digest `ecdbb57924cf74945e9e8bba12dcaae2d869ef264813ef012d21ba175c5ef52e`, and authorization fingerprint `c785127b20f57210e60ebd681d7b0e48a66f419fa8fbbbdd9cdd8fa560b464f9`. Frozen targets are gate blob `d87fe85a5b426fa92caf7d6cc165445590f4097c` and runtime blob `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e`. The plan remains read-only; annual run 381 is undispatched.
+
+## 2026-10-05 — Add DEC-559 2019 runtime install preflight
+
+Bound the read-only install preflight to DEC-558 run `37294642532`, artifact `11337484835`, digest `7ee0dbfd168a8a63664419cce85e41a65fde46f9e492dbee65868386d74975a8`, and canonical plan SHA `5e35a860916137118e6a1ca9d751045373c59ad9e5e0ac373545b20740ccd074`. The exact future mutation remains two files and is not executed by DEC-559.
