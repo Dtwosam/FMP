@@ -131,7 +131,7 @@ def runtime_authorization_payload() -> dict[str, object]:
         "rerun_authorized": RERUN_AUTHORIZED,
         "retry_authorized": RETRY_AUTHORIZED,
         "replacement_run_authorized": REPLACEMENT_RUN_AUTHORIZED,
-        "run_381_or_later_authorized": RUN_382_OR_LATER_AUTHORIZED,
+        "run_382_or_later_authorized": RUN_382_OR_LATER_AUTHORIZED,
         "next_segment_execution_authorized": NEXT_SEGMENT_EXECUTION_AUTHORIZED,
         "cross_year_result_production_authorized": (
             CROSS_YEAR_RESULT_PRODUCTION_AUTHORIZED
