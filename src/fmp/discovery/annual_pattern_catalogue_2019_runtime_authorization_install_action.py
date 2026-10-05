@@ -43,6 +43,9 @@ SOURCE_PREFLIGHT_ARTIFACT_ID = 11338796649
 SOURCE_PREFLIGHT_ARTIFACT_DIGEST = (
     "sha256:3d8b6933a1949c77a4e6b29df5bd86896a140d0011ba6859187d412df24cc8f9"
 )
+SOURCE_PREFLIGHT_FINGERPRINT_SHA256 = (
+    "1c585ad2a2a0bdf3a0fc811376d1fa5701b293b2fd888abca30ea5c13fcf3861"
+)
 
 EXPECTED_RUN_NUMBER = 381
 EXPECTED_RUN_ATTEMPT = 1
@@ -162,6 +165,11 @@ def compile_2019_runtime_authorization_install_action(
         != EXPECTED_PREVIOUS_ANNUAL_FREEZE_RUN_ID
     ):
         raise ValueError("DEC-560 source preflight predecessor mismatch")
+    if (
+        preflight.get("preflight_fingerprint_sha256")
+        != SOURCE_PREFLIGHT_FINGERPRINT_SHA256
+    ):
+        raise ValueError("DEC-560 source preflight fingerprint mismatch")
     if preflight.get("preflight_read_only") is not True:
         raise ValueError("DEC-560 source preflight must remain read-only")
     if preflight.get("repository_mutation_authorized") is not False:
@@ -299,6 +307,9 @@ def validate_2019_runtime_authorization_install_action(
         "source_preflight_workflow_head_sha": SOURCE_PREFLIGHT_WORKFLOW_HEAD_SHA,
         "source_preflight_artifact_id": SOURCE_PREFLIGHT_ARTIFACT_ID,
         "source_preflight_artifact_digest": SOURCE_PREFLIGHT_ARTIFACT_DIGEST,
+        "source_preflight_fingerprint_sha256": (
+            SOURCE_PREFLIGHT_FINGERPRINT_SHA256
+        ),
         "stage": "ANNUAL_CATALOGUE_2019_RUNTIME_AUTHORIZATION_INSTALL_ACTION_READY",
         "authorization_basis": "standing_operator_autonomous_build_authorization",
         "activation_condition": (
