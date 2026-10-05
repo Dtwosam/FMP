@@ -115,7 +115,7 @@ class AnnualPatternCatalogue2019RuntimeAuthorizationPlanTests(unittest.TestCase)
         )
         self.assertIs(validate_2019_runtime_authorization_plan(value), value)
         self.assertEqual(value["decision"], "DEC-558")
-        self.assertEqual(value["annual_segment_label"], "2018")
+        self.assertEqual(value["annual_segment_label"], "2019")
         self.assertEqual(value["expected_run_number"], 381)
         self.assertEqual(value["expected_run_attempt"], 1)
         self.assertEqual(
