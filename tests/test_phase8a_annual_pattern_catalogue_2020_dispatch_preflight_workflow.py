@@ -30,7 +30,7 @@ class AnnualPatternCatalogue2020DispatchPreflightWorkflowTests(
         self.assertNotIn("git push", text)
         self.assertNotIn("git commit", text)
 
-    def test_workflow_pins_exact_dec561_install_evidence(self) -> None:
+    def test_workflow_pins_exact_dec572_install_evidence(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for value in (
             "37361230835",
@@ -64,7 +64,7 @@ class AnnualPatternCatalogue2020DispatchPreflightWorkflowTests(
             text,
         )
 
-    def test_workflow_emits_read_only_dec562_artifact(self) -> None:
+    def test_workflow_emits_read_only_dec573_artifact(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('value["decision"] == "DEC-573"', text)
         self.assertIn('value["expected_run_number"] == 382', text)
@@ -79,7 +79,7 @@ class AnnualPatternCatalogue2020DispatchPreflightWorkflowTests(
         self.assertIn('"annual_workflow_dispatch_authorized",', text)
         self.assertIn('"trading_authorized",', text)
         self.assertIn(
-            "annual-catalogue-2020-dec562-dispatch-preflight-",
+            "annual-catalogue-2020-dec573-dispatch-preflight-",
             text,
         )
 
