@@ -22,7 +22,7 @@ The authorization is exact to annual segment 2020, global annual workflow run
 
 DEC-569 freezes, but does not install:
 
-- 2020 runtime gate blob `f59b06f9ac0fd51742f3771b6875f22872ffefcd`;
+- 2020 runtime gate blob `695a50b418da752e1bd37d6302f209033ab611f5`;
 - 2020-aware runtime target blob `4e124365430672fa63825b272001937c60151644`.
 
 The currently installed runtime remains
