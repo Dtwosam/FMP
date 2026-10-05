@@ -23,6 +23,7 @@ class AnnualPatternCatalogue2020RuntimeInstallExecutorTests(unittest.TestCase):
         self.assertNotIn("workflow_dispatch:", text)
         self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
+        self.assertIn('"run_number": 2', text)
 
     def test_executor_pins_exact_dec571_artifact_and_fingerprint(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
