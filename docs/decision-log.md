@@ -11044,3 +11044,7 @@ Concrete DEC-571 evidence is fixed at workflow run `37327905209`, artifact `1135
 ## 2026-10-05 — DEC-572 executor run-1 provenance failure
 
 DEC-572 executor run `37360538726` failed before applying or staging either runtime file. The downloaded DEC-571 action was valid and carried the correct 2020 DEC-570 provenance (`37321690650`, artifact `11350136423`), while the executor still asserted inherited 2019 DEC-559 IDs. Run 382 remained unconsumed. The bounded repair requires exact DEC-572 workflow run 2 / attempt 1, proves the failed run-1 identity, and corrects only the two stale provenance assertions. Mutation scope and all later-year/trading locks are unchanged.
+
+## 2026-10-05 — DEC-573 read-only 2020 dispatch preflight
+
+Concrete DEC-572 evidence is bound to installer run `37361230835`, artifact `11367191085`, install commit `3ee648808bc2982c02dd1cb10fd45911f6379dcb`, and receipt fingerprint `1f77559f7aadfb83e338e467148d86b2a99850d69909e689f04604fa19c3e7b4`. DEC-573 freezes only future 2020 run 382 / attempt 1 with predecessor run `37310525635`, requires the exact seven-run annual history, and rejects run 382+. It performs no dispatch or repository mutation and leaves all later-year, strategy, broker/order, real-money, and trading authority false.
