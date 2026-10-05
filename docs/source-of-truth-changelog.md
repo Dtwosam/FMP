@@ -2271,3 +2271,7 @@ Recorded the immutable first DEC-569 artifact with stale `AFTER_CONCRETE_DEC558`
 ## 2026-10-05 — DEC-570 install preflight staged
 
 Pinned corrected DEC-569 run/artifact/canonical plan evidence and defined the read-only two-file 2020 runtime installation preflight. No repository mutation or annual dispatch is introduced.
+
+## 2026-10-05 — DEC-571 2020 install action frozen
+
+Pinned concrete DEC-570 run/artifact/fingerprint evidence and froze the exact two-file 2020 runtime authorization mutation. The repository-hosted builder is read-only; runtime installation and annual dispatch remain unexecuted.
