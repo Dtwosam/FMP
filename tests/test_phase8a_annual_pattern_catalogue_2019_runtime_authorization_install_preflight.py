@@ -128,9 +128,7 @@ class AnnualPatternCatalogue2019RuntimeAuthorizationInstallPreflightTests(
         self.assertEqual(value["activation_mutation_file_count"], 2)
         self.assertEqual(
             value["expected_current_runtime_source_blob_sha"],
-            "410180c34a9e6866e80088d223498fbcc3b870fd1".replace(
-                "e6866", "e3500"
-            ),
+            "410180c34a9e3500bbbb42310a5253b993ac7785",
         )
         self.assertEqual(
             value["target_gate_source_blob_sha"],
