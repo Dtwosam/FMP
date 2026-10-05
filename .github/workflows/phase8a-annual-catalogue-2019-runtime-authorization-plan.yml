@@ -46,7 +46,7 @@ jobs:
           set -euo pipefail
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization_plan.py)" = "837b984e1ccb101c125ec21d9be062a969a002e3"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2019_runtime_authorization_plan.py)" = "c29a37e70eed0e31f22a7c715e80555c44bf27a5"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2018_execution_authorization.py)" = "084fa62c7fd4855fc561038d991e1215df2ff73b"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2019_execution_authorization.py)" = "084fa62c7fd4855fc561038d991e1215df2ff73b"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "410180c34a9e3500bbbb42310a5253b993ac7785"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test "$(git hash-object docs/superpowers/templates/annual_pattern_catalogue_2019_runtime_authorization.py.disabled)" = "3f7f71882195e373940d922a451f426011728063"
@@ -87,7 +87,7 @@ jobs:
               row for row in payload.get("artifacts", [])
               if row.get("id") == int(os.environ["DEC557_ARTIFACT_ID"])
               and row.get("name")
-              == "annual-catalogue-2018-dec557-execution-authorization-"
+              == "annual-catalogue-2019-dec557-execution-authorization-"
               + os.environ["DEC557_HEAD_SHA"]
               and row.get("digest") == os.environ["DEC557_ARTIFACT_DIGEST"]
               and row.get("expired") is False
@@ -110,8 +110,8 @@ jobs:
 
           test "$(jq -r '.decision' "$RUNNER_TEMP/dec557-2019-execution-authorization.json")" = "DEC-557"
           test "$(jq -r '.authorization_fingerprint_sha256' "$RUNNER_TEMP/dec557-2019-execution-authorization.json")" = "$DEC557_AUTHORIZATION_FINGERPRINT"
-          test "$(jq -r '.annual_segment_label' "$RUNNER_TEMP/dec557-2019-execution-authorization.json")" = "2018"
-          test "$(jq -r '.expected_run_number' "$RUNNER_TEMP/dec557-2019-execution-authorization.json")" = "380"
+          test "$(jq -r '.annual_segment_label' "$RUNNER_TEMP/dec557-2019-execution-authorization.json")" = "2019"
+          test "$(jq -r '.expected_run_number' "$RUNNER_TEMP/dec557-2019-execution-authorization.json")" = "381"
           test "$(jq -r '.expected_run_attempt' "$RUNNER_TEMP/dec557-2019-execution-authorization.json")" = "1"
           test "$(jq -r '.runtime_authorization_installed' "$RUNNER_TEMP/dec557-2019-execution-authorization.json")" = "false"
           test "$(jq -r '.runtime_gate_active' "$RUNNER_TEMP/dec557-2019-execution-authorization.json")" = "false"
@@ -222,7 +222,7 @@ jobs:
       - name: Upload immutable DEC-558 runtime plan
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2018-dec558-runtime-authorization-plan-${{ github.sha }}
+          name: annual-catalogue-2019-dec558-runtime-authorization-plan-${{ github.sha }}
           path: |
             ${{ runner.temp }}/dec557-run.json
             ${{ runner.temp }}/dec557-artifacts.json
