@@ -46,7 +46,7 @@ def _authorization() -> dict[str, object]:
         "historical_catalogue_execution_authorized": True,
         "historical_result_production_authorized": True,
         "live_order_authorized": False,
-        "next_gate": "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2018_RUNTIME_AUTHORIZATION_PLAN",
+        "next_gate": "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_2019_RUNTIME_AUTHORIZATION_PLAN",
         "next_segment_execution_authorized": False,
         "phase8b_authorized": False,
         "previous_annual_freeze_evidence_fingerprint_sha256": "355a1e5ca9282300a7a38e24dd3009ebe8470d1f029e62c38860bf710ac80559",
@@ -58,20 +58,20 @@ def _authorization() -> dict[str, object]:
         "replacement_run_authorized": False,
         "rerun_authorized": False,
         "retry_authorized": False,
-        "run_381_or_later_authorized": False,
+        "run_382_or_later_authorized": False,
         "runtime_authorization_installed": False,
         "runtime_gate_active": False,
         "runtime_source_blob_sha": "410180c34a9e3500bbbb42310a5253b993ac7785",
         "source_only_authorization": True,
         "source_preflight_artifact_digest": "sha256:09be3f1d11e77ab6da407a67346a6ff4d4ce631f4acb6265575da6db64eeb202",
         "source_preflight_artifact_id": 11317461212,
-        "source_preflight_canonical_sha256": "4bd0f016f8ce968c7bcce2c959daa10f6371926ed3462e763195a32f6814110e",
+        "source_preflight_canonical_sha256": "d55962b414ffa76cfa6c30ab5c717b540b1dbb91612f7e8cc993c08e036367db",
         "source_preflight_decision": "DEC-556",
         "source_preflight_fingerprint_sha256": "3d311b8d8d387aca00f079bdab6b0531cf17aefc36913165cfb5eb265ad50421",
         "source_preflight_version": "fmp-annual-catalogue-2019-execution-preflight-v1",
         "source_preflight_workflow_head_sha": "9fa3446b389cbbe1c8429968032ae573198e78b2",
         "source_preflight_workflow_run_id": 37240728378,
-        "stage": "ANNUAL_CATALOGUE_2018_EXECUTION_AUTHORIZED_RUNTIME_NOT_INSTALLED",
+        "stage": "ANNUAL_CATALOGUE_2019_EXECUTION_AUTHORIZED_RUNTIME_NOT_INSTALLED",
         "strategy_v1_synthesis_authorized": False,
         "trading_authorized": False,
         "version": "fmp-annual-catalogue-2019-execution-authorization-v1",
@@ -100,7 +100,7 @@ class AnnualPatternCatalogue2019RuntimeAuthorizationPlanTests(unittest.TestCase)
             "410180c34a9e3500bbbb42310a5253b993ac7785",
         )
         self.assertEqual(
-            source["dormant_2018_gate_template_blob_sha"],
+            source["dormant_2019_gate_template_blob_sha"],
             "d87fe85a5b426fa92caf7d6cc165445590f4097c",
         )
         self.assertEqual(
@@ -157,7 +157,7 @@ class AnnualPatternCatalogue2019RuntimeAuthorizationPlanTests(unittest.TestCase)
             / "docs/superpowers/templates/"
             "annual_pattern_catalogue_2019_runtime_authorization.py.disabled"
         ).read_text(encoding="utf-8")
-        self.assertIn('AUTHORIZED_ANNUAL_SEGMENT_LABEL = "2018"', text)
+        self.assertIn('AUTHORIZED_ANNUAL_SEGMENT_LABEL = "2019"', text)
         self.assertIn("EXPECTED_RUN_NUMBER = 381", text)
         self.assertIn("EXPECTED_RUN_ATTEMPT = 1", text)
         self.assertIn(
@@ -168,12 +168,13 @@ class AnnualPatternCatalogue2019RuntimeAuthorizationPlanTests(unittest.TestCase)
         self.assertIn("TRADING_AUTHORIZED = False", text)
         self.assertNotIn("gh workflow run ", text)
 
-    def test_runtime_target_adds_only_2018_route_and_preserves_history(self) -> None:
+    def test_runtime_target_adds_only_2019_route_and_preserves_history(self) -> None:
         text = (
             REPOSITORY_ROOT
             / "docs/superpowers/templates/"
             "annual_pattern_catalogue_runtime_with_2019_authorization.py.disabled"
         ).read_text(encoding="utf-8")
+        self.assertIn("require_2019_execution_authorized", text)
         self.assertIn("require_2018_execution_authorized", text)
         self.assertIn(
             'segment == "2019" and effective_run_number == 381',
