@@ -3354,3 +3354,7 @@ The corrected DEC-569 concrete plan is bound from run `37318488687`, artifact `1
 ### 2026-10-05 — DEC-571 2020 runtime install action staged
 
 Concrete DEC-570 preflight evidence is bound from run `37321690650`, artifact `11350136423`, fingerprint `367ec514057b011711ab9734a839f8cf03d1334125db336c947e979d923cab36`. DEC-571 freezes the exact future two-file 2020 gate/runtime mutation but does not apply it. Current runtime remains `07ddfe7a968de10cd1d4f8592760cc9eb9e6300e`; annual run 382 remains absent and all later-year/trading surfaces remain locked.
+
+### 2026-10-05 DEC-571 builder repair
+
+The first repository-hosted DEC-571 install-action builder run (GitHub Actions run `37327196175`, run 1 / attempt 1, head `8f37700f9b468a8aff35b4dc4d916580c9bccaa5`) failed after the exact DEC-570 evidence checks because one inline Python assertion contained a literal escaped newline. No DEC-571 action artifact was produced and annual run 382 remains absent. The repair fixes that syntax only, requires exact builder run 2 / attempt 1, and binds the failed run-1 provenance before rebuilding the same read-only action artifact.
