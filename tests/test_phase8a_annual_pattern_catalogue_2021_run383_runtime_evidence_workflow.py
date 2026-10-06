@@ -45,7 +45,7 @@ class AnnualPatternCatalogue2021Run383RuntimeEvidenceWorkflowTests(
         for value in (
             "542ace21e77c2bbdf5fec5312556c58d9e641da7",
             "1e80c0a61be899e62ac98540d1c7e0449f105008",
-            "226ac46f503fd14962ab54d38f7db5d5f4b8d9f8",
+            "17eaaa7bd6f7f25e4c6b553d49b3c2a0bf6412e2",
             "1b14279864f01a1284c5be31552eee9bb3a2220c",
             "0730061851beb76a426f2b3fd470cf1e35eb68d4",
             "cac68c905bedf3105aa7e766eaa968c87bff6ce9",
