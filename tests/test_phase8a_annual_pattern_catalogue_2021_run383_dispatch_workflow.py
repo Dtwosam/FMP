@@ -97,7 +97,7 @@ class AnnualPatternCatalogue2021Run383DispatchWorkflowTests(unittest.TestCase):
         self.assertIn('"real_money_authorized": False', text)
         self.assertIn('"trading_authorized": False', text)
         self.assertIn(
-            '"next_gate": "REVIEW_2021_RUN_382_BEFORE_ANY_2021_EXECUTION"',
+            '"next_gate": "REVIEW_2021_RUN_383_BEFORE_CROSS_YEAR_COMPARISON"',
             text,
         )
 
