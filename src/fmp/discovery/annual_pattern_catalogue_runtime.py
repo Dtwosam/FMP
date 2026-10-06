@@ -30,6 +30,9 @@ from .annual_pattern_catalogue_2019_runtime_authorization import (
 from .annual_pattern_catalogue_2020_runtime_authorization import (
     require_2020_execution_authorized,
 )
+from .annual_pattern_catalogue_2021_runtime_authorization import (
+    require_2021_execution_authorized,
+)
 from .annual_pattern_catalogue_adapter import (
     AdaptedAnnualCatalogueSegmentInputs,
     adapt_verified_annual_catalogue_segment,
@@ -163,6 +166,19 @@ def require_historical_catalogue_execution_authorized(
         and effective_run_number is not None
         and effective_run_attempt is not None
     ):
+        if segment == "2021" and effective_run_number == 383:
+            if effective_previous_freeze_run_id is None:
+                raise PermissionError(
+                    "DEC-582 2021 execution requires previous annual freeze run id"
+                )
+            require_2021_execution_authorized(
+                annual_segment_label=segment,
+                code_commit=code_commit,
+                run_number=effective_run_number,
+                run_attempt=effective_run_attempt,
+                previous_annual_freeze_run_id=effective_previous_freeze_run_id,
+            )
+            return
         if segment == "2020" and effective_run_number == 382:
             if effective_previous_freeze_run_id is None:
                 raise PermissionError(
