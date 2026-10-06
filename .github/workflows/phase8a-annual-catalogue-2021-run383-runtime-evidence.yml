@@ -96,14 +96,14 @@ jobs:
           endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-catalogue-2021-run383-dispatch.yml/runs?event=push&branch=main&per_page=100"
           found=0
           for _ in $(seq 1 30); do
-            gh api "$endpoint" > "$RUNNER_TEMP/dec576-runs.json"
+            gh api "$endpoint" > "$RUNNER_TEMP/dec589-runs.json"
             if python - <<'PY'
           import json
           import os
           from pathlib import Path
 
           rows = json.loads(
-              (Path(os.environ["RUNNER_TEMP"]) / "dec576-runs.json").read_text(
+              (Path(os.environ["RUNNER_TEMP"]) / "dec589-runs.json").read_text(
                   encoding="utf-8"
               )
           ).get("workflow_runs")
@@ -126,7 +126,7 @@ jobs:
           assert len(matches) <= 1
           if len(matches) == 1:
               (
-                  Path(os.environ["RUNNER_TEMP"]) / "dec576-run-id.txt"
+                  Path(os.environ["RUNNER_TEMP"]) / "dec589-run-id.txt"
               ).write_text(str(matches[0]["id"]) + "\n", encoding="utf-8")
           raise SystemExit(0 if len(matches) == 1 else 1)
           PY
@@ -141,37 +141,37 @@ jobs:
       - name: Download exact DEC-589 dispatch receipt
         run: |
           set -euo pipefail
-          source_run_id="$(cat "$RUNNER_TEMP/dec576-run-id.txt")"
-          gh api             "repos/$GITHUB_REPOSITORY/actions/runs/$source_run_id/artifacts?per_page=100"             > "$RUNNER_TEMP/dec576-artifacts.json"
+          source_run_id="$(cat "$RUNNER_TEMP/dec589-run-id.txt")"
+          gh api             "repos/$GITHUB_REPOSITORY/actions/runs/$source_run_id/artifacts?per_page=100"             > "$RUNNER_TEMP/dec589-artifacts.json"
 
           artifact_id="$(
             jq -r               '.artifacts[]
-               | select(.name | startswith("annual-catalogue-2021-dec576-run383-dispatch-"))
+               | select(.name | startswith("annual-catalogue-2021-dec589-run383-dispatch-"))
                | select(.expired == false)
-               | .id'               "$RUNNER_TEMP/dec576-artifacts.json"
+               | .id'               "$RUNNER_TEMP/dec589-artifacts.json"
           )"
           artifact_digest="$(
             jq -r               '.artifacts[]
-               | select(.name | startswith("annual-catalogue-2021-dec576-run383-dispatch-"))
+               | select(.name | startswith("annual-catalogue-2021-dec589-run383-dispatch-"))
                | select(.expired == false)
-               | .digest'               "$RUNNER_TEMP/dec576-artifacts.json"
+               | .digest'               "$RUNNER_TEMP/dec589-artifacts.json"
           )"
           test "$(printf '%s\n' "$artifact_id" | sed '/^$/d' | wc -l)" = "1"
           test -n "$artifact_digest"
           case "$artifact_digest" in sha256:*) ;; *) exit 1 ;; esac
 
-          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > "$RUNNER_TEMP/dec576.zip"
+          gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > "$RUNNER_TEMP/dec589.zip"
           expected_sha="${artifact_digest#sha256:}"
-          actual_sha="$(sha256sum "$RUNNER_TEMP/dec576.zip" | awk '{print $1}')"
+          actual_sha="$(sha256sum "$RUNNER_TEMP/dec589.zip" | awk '{print $1}')"
           test "$actual_sha" = "$expected_sha"
 
-          mkdir -p "$RUNNER_TEMP/dec576"
-          unzip -q "$RUNNER_TEMP/dec576.zip" -d "$RUNNER_TEMP/dec576"
+          mkdir -p "$RUNNER_TEMP/dec589"
+          unzip -q "$RUNNER_TEMP/dec589.zip" -d "$RUNNER_TEMP/dec589"
           receipt="$(
-            find "$RUNNER_TEMP/dec576"               -type f -name 'dec576-run383-dispatch-receipt.json' -print
+            find "$RUNNER_TEMP/dec589"               -type f -name 'dec589-run383-dispatch-receipt.json' -print
           )"
           test "$(printf '%s\n' "$receipt" | sed '/^$/d' | wc -l)" = "1"
-          cp "$receipt" "$RUNNER_TEMP/dec576-run383-dispatch-receipt.json"
+          cp "$receipt" "$RUNNER_TEMP/dec589-run383-dispatch-receipt.json"
 
           python - <<'PY'
           import json
@@ -181,7 +181,7 @@ jobs:
           receipt = json.loads(
               (
                   Path(os.environ["RUNNER_TEMP"])
-                  / "dec576-run383-dispatch-receipt.json"
+                  / "dec589-run383-dispatch-receipt.json"
               ).read_text(encoding="utf-8")
           )
           assert receipt["decision"] == "DEC-589"
@@ -262,7 +262,7 @@ jobs:
         run: |
           set -euo pipefail
           freeze_sha="$(cat "$RUNNER_TEMP/run383-freeze-zip-sha256.txt")"
-          python scripts/phase8a_annual_pattern_catalogue_2021_run383_evidence_review.py             review             --run-json "$RUNNER_TEMP/run383.json"             --jobs-json "$RUNNER_TEMP/run383-jobs.json"             --artifacts-json "$RUNNER_TEMP/run383-artifacts.json"             --freeze-evidence "$RUNNER_TEMP/annual-freeze-2021.json"             --freeze-artifact-zip-sha256 "$freeze_sha"             --dispatch-receipt-json "$RUNNER_TEMP/dec576-run383-dispatch-receipt.json"             --expected-head-sha "$TARGET_HEAD_SHA"             --out "$RUNNER_TEMP/runtime-binding-2021.json"
+          python scripts/phase8a_annual_pattern_catalogue_2021_run383_evidence_review.py             review             --run-json "$RUNNER_TEMP/run383.json"             --jobs-json "$RUNNER_TEMP/run383-jobs.json"             --artifacts-json "$RUNNER_TEMP/run383-artifacts.json"             --freeze-evidence "$RUNNER_TEMP/annual-freeze-2021.json"             --freeze-artifact-zip-sha256 "$freeze_sha"             --dispatch-receipt-json "$RUNNER_TEMP/dec589-run383-dispatch-receipt.json"             --expected-head-sha "$TARGET_HEAD_SHA"             --out "$RUNNER_TEMP/runtime-binding-2021.json"
 
       - name: Verify DEC-590 binding remains non-authorizing
         run: |
@@ -305,14 +305,14 @@ jobs:
       - name: Upload immutable DEC-590 runtime evidence
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2021-dec577-runtime-binding-${{ env.TARGET_RUN_ID }}
+          name: annual-catalogue-2021-dec590-runtime-binding-${{ env.TARGET_RUN_ID }}
           path: |
             ${{ runner.temp }}/run383.json
             ${{ runner.temp }}/run383-jobs.json
             ${{ runner.temp }}/run383-artifacts.json
-            ${{ runner.temp }}/dec576-runs.json
-            ${{ runner.temp }}/dec576-artifacts.json
-            ${{ runner.temp }}/dec576-run383-dispatch-receipt.json
+            ${{ runner.temp }}/dec589-runs.json
+            ${{ runner.temp }}/dec589-artifacts.json
+            ${{ runner.temp }}/dec589-run383-dispatch-receipt.json
             ${{ runner.temp }}/run383-freeze-zip-sha256.txt
             ${{ runner.temp }}/annual-freeze-2021.json
             ${{ runner.temp }}/runtime-binding-2021.json
