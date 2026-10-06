@@ -29,7 +29,7 @@ class AnnualPatternCatalogue2021DispatchActionPreflightWorkflowTests(
         self.assertNotIn("schedule:", text)
         self.assertNotIn("gh workflow run ", text)
 
-    def test_workflow_pins_exact_dec574_provenance(self) -> None:
+    def test_workflow_pins_exact_dec587_provenance(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for value in (
             "37508621309",
@@ -60,7 +60,9 @@ class AnnualPatternCatalogue2021DispatchActionPreflightWorkflowTests(
             "37206992367",
             "37227536041",
             "37237817538",
+            "37310525635",
             "37443770076",
+            "681e81e021d4970a67b18370142d55b17ec68864",
         ):
             self.assertIn(run_id, text)
         self.assertIn(
@@ -91,7 +93,7 @@ class AnnualPatternCatalogue2021DispatchActionPreflightWorkflowTests(
             text,
         )
 
-    def test_workflow_uploads_immutable_dec575_artifact(self) -> None:
+    def test_workflow_uploads_immutable_dec588_artifact(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
             "annual-catalogue-2021-dec588-dispatch-action-preflight-",
