@@ -227,8 +227,6 @@ def _validate_run_inventory(payload: Mapping[str, object]) -> dict[str, object]:
         "successful_2019_run_head_sha": SUCCESSFUL_2019_RUN_HEAD_SHA,
         "successful_2020_run_id": SUCCESSFUL_2020_RUN_ID,
         "successful_2020_run_head_sha": SUCCESSFUL_2020_RUN_HEAD_SHA,
-        "successful_2020_run_id": SUCCESSFUL_2020_RUN_ID,
-        "successful_2020_run_head_sha": SUCCESSFUL_2020_RUN_HEAD_SHA,
     }
 
 
