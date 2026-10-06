@@ -1520,6 +1520,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2021_dispatch_authorization_workflow.py'
           -v
+      - name: Run DEC-588 2021 dispatch-action preflight tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2021_dispatch_action_preflight.py'
+          -v
+      - name: Run DEC-588 dispatch-action preflight workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2021_dispatch_action_preflight_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
