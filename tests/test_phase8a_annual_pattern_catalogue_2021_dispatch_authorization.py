@@ -78,7 +78,7 @@ PREFLIGHT_JSON = r"""\n{
     "DEC-587 requires installed 2021 runtime and active annual workflow",
 )
 class AnnualPatternCatalogue2021DispatchAuthorizationTests(unittest.TestCase):
-    def test_sources_pin_dec573_and_installed_runtime(self) -> None:
+    def test_sources_pin_dec586_and_installed_runtime(self) -> None:
         source = validate_2021_dispatch_authorization_sources(
             repository_root=REPOSITORY_ROOT,
         )
