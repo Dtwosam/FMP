@@ -56,15 +56,15 @@ jobs:
       - name: Fetch and verify exact DEC-586 preflight evidence
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC586_RUN_ID" > "$RUNNER_TEMP/dec573-run.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC586_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec573-artifacts.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC586_RUN_ID" > "$RUNNER_TEMP/dec586-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC586_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec586-artifacts.json"
 
           python - <<'PY'
           import json, os
           from pathlib import Path
 
           temp = Path(os.environ["RUNNER_TEMP"])
-          run = json.loads((temp / "dec573-run.json").read_text())
+          run = json.loads((temp / "dec586-run.json").read_text())
           exact = {
               "id": 37501665304,
               "name": "phase8a-annual-catalogue-2021-dispatch-preflight",
@@ -80,12 +80,12 @@ jobs:
           for field, expected in exact.items():
               assert run.get(field) == expected, (field, run.get(field), expected)
 
-          payload = json.loads((temp / "dec573-artifacts.json").read_text())
+          payload = json.loads((temp / "dec586-artifacts.json").read_text())
           rows = [a for a in payload.get("artifacts", []) if a.get("id") == 11430072006]
           assert len(rows) == 1
           artifact = rows[0]
           assert artifact["name"] == (
-              "annual-catalogue-2021-dec573-dispatch-preflight-"
+              "annual-catalogue-2021-dec586-dispatch-preflight-"
               "b62616de10cc4362ff4f372e44e73fcd2be91366"
           )
           assert artifact["digest"] == (
@@ -96,26 +96,43 @@ jobs:
 
           gh api -H 'Accept: application/vnd.github+json' \
             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC586_ARTIFACT_ID/zip" \
-            > "$RUNNER_TEMP/dec573.zip"
-          actual="$(sha256sum "$RUNNER_TEMP/dec573.zip" | awk '{print $1}')"
-          test "$actual" = "bba88547a36138109e6178936fd632e9bc61e81f8725e12124d739477916c5fa"
+            > "$RUNNER_TEMP/dec586.zip"
+          actual="$(sha256sum "$RUNNER_TEMP/dec586.zip" | awk '{print $1}')"
+          test "$actual" = "e973c65ad1b72531e372a86cb028687733b8dfd9414fd901009c83d396621837"
 
-          mkdir -p "$RUNNER_TEMP/dec573"
-          unzip -q "$RUNNER_TEMP/dec573.zip" -d "$RUNNER_TEMP/dec573"
-          preflight="$(find "$RUNNER_TEMP/dec573" -type f -name dec573-2021-dispatch-preflight.json -print)"
+          mkdir -p "$RUNNER_TEMP/dec586"
+          unzip -q "$RUNNER_TEMP/dec586.zip" -d "$RUNNER_TEMP/dec586"
+          preflight="$(find "$RUNNER_TEMP/dec586" -type f -name dec586-2021-dispatch-preflight.json -print)"
           test "$(printf '%s\n' "$preflight" | sed '/^$/d' | wc -l)" = "1"
-          cp "$preflight" "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json"
+          cp "$preflight" "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json"
 
-          test "$(jq -r '.decision' "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json")" = "DEC-586"
-          test "$(jq -r '.expected_head_sha' "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json")" = "$DEC586_HEAD_SHA"
-          test "$(jq -r '.preflight_fingerprint_sha256' "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json")" = "$DEC586_PREFLIGHT_FINGERPRINT"
-          test "$(jq -r '.expected_run_number' "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json")" = "382"
-          test "$(jq -r '.expected_run_attempt' "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json")" = "1"
-          test "$(jq -r '.previous_annual_freeze_run_id' "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json")" = "37310525635"
-          test "$(jq -r '.preflight_read_only' "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json")" = "true"
-          test "$(jq -r '.annual_workflow_dispatch_authorized' "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json")" = "false"
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
 
-      - name: Recheck current main and unconsumed run-382 slot
+          path = Path(os.environ["RUNNER_TEMP"]) / "dec586-2021-dispatch-preflight.json"
+          value = json.loads(path.read_text(encoding="utf-8"))
+          canonical = (
+              json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+              + "\n"
+          ).encode("utf-8")
+          assert hashlib.sha256(canonical).hexdigest() == os.environ[
+              "DEC586_PREFLIGHT_CANONICAL_SHA256"
+          ]
+          PY
+
+          test "$(jq -r '.decision' "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json")" = "DEC-586"
+          test "$(jq -r '.expected_head_sha' "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json")" = "$DEC586_HEAD_SHA"
+          test "$(jq -r '.preflight_fingerprint_sha256' "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json")" = "$DEC586_PREFLIGHT_FINGERPRINT"
+          test "$(jq -r '.expected_run_number' "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json")" = "383"
+          test "$(jq -r '.expected_run_attempt' "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json")" = "1"
+          test "$(jq -r '.previous_annual_freeze_run_id' "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json")" = "37443770076"
+          test "$(jq -r '.preflight_read_only' "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json")" = "true"
+          test "$(jq -r '.annual_workflow_dispatch_authorized' "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json")" = "false"
+
+      - name: Recheck current main and unconsumed run-383 slot
         run: |
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-branch.json"
@@ -179,11 +196,11 @@ jobs:
           set -euo pipefail
           python scripts/phase8a_annual_pattern_catalogue_2021_dispatch_authorization.py \
             authorize \
-            --preflight-json "$RUNNER_TEMP/dec573-2021-dispatch-preflight.json" \
+            --preflight-json "$RUNNER_TEMP/dec586-2021-dispatch-preflight.json" \
             --authorization-head-sha "$GITHUB_SHA" \
-            --out "$RUNNER_TEMP/dec574-2021-dispatch-authorization.json"
+            --out "$RUNNER_TEMP/dec587-2021-dispatch-authorization.json"
 
-      - name: Verify DEC-587 is source-only and run-382 exact
+      - name: Verify DEC-587 is source-only and run-383 exact
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -193,7 +210,7 @@ jobs:
           value = json.loads(
               (
                   Path(os.environ["RUNNER_TEMP"])
-                  / "dec574-2021-dispatch-authorization.json"
+                  / "dec587-2021-dispatch-authorization.json"
               ).read_text()
           )
           assert value["decision"] == "DEC-587"
@@ -243,12 +260,12 @@ jobs:
       - name: Upload immutable DEC-587 authorization
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2021-dec574-dispatch-authorization-${{ github.sha }}
+          name: annual-catalogue-2021-dec587-dispatch-authorization-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/dec573-run.json
-            ${{ runner.temp }}/dec573-artifacts.json
-            ${{ runner.temp }}/dec573-2021-dispatch-preflight.json
+            ${{ runner.temp }}/dec586-run.json
+            ${{ runner.temp }}/dec586-artifacts.json
+            ${{ runner.temp }}/dec586-2021-dispatch-preflight.json
             ${{ runner.temp }}/main-branch.json
             ${{ runner.temp }}/annual-runs.json
-            ${{ runner.temp }}/dec574-2021-dispatch-authorization.json
+            ${{ runner.temp }}/dec587-2021-dispatch-authorization.json
           if-no-files-found: error
