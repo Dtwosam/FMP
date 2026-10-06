@@ -1,0 +1,472 @@
+name: phase8a-annual-catalogue-2020-run382-dispatch-recovery
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-2020-run382-dispatch-recovery.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  recover-run382-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      DEC575_RUN_ID: "37388217346"
+      DEC575_HEAD_SHA: "557b68e3361acfb1cd4dfdaf70c7b9fe63f68412"
+      DEC575_ARTIFACT_ID: "11380193702"
+      DEC575_ARTIFACT_DIGEST: "sha256:b061e88aa70a9897ddb129477ba62925c6ddd738b1cd49270bf46a1d4f3f7343"
+      DEC575_PREFLIGHT_FINGERPRINT: "f0aad3d285539bbe2f0124db0a0869cc9a6813892c5be75252c46ade933a0a92"
+      FAILED_DEC576_RUN_ID: "37390547252"
+      FAILED_DEC576_JOB_ID: "112034309419"
+      FAILED_DEC576_HEAD_SHA: "3baf4b86a53b4d53d2fc5788b9776006eeacfeee"
+
+    steps:
+      - name: Checkout exact DEC-578/579 landing
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Require exact first recovery push
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+
+      - name: Require only the atomic DEC-578/579 recovery landing
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$FAILED_DEC576_HEAD_SHA" "$GITHUB_SHA"
+          git diff --name-only "$FAILED_DEC576_HEAD_SHA" "$GITHUB_SHA" > "$RUNNER_TEMP/landing-changed-files.txt"
+
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          changed = {
+              line.strip()
+              for line in (
+                  Path(os.environ["RUNNER_TEMP"]) / "landing-changed-files.txt"
+              ).read_text(encoding="utf-8").splitlines()
+              if line.strip()
+          }
+          expected = {
+              ".github/workflows/phase8a-annual-catalogue-2020-run382-dispatch-recovery.yml",
+              ".github/workflows/phase8a-annual-catalogue-2020-run382-runtime-evidence-recovery.yml",
+              ".github/workflows/tests.yml",
+              "scripts/phase8a_annual_pattern_catalogue_2020_run382_recovery_evidence_review.py",
+              "src/fmp/discovery/annual_pattern_catalogue_2020_run382_dispatch_recovery_authorization.py",
+              "src/fmp/discovery/annual_pattern_catalogue_2020_run382_recovery_evidence_review.py",
+              "tests/test_phase8a_annual_pattern_catalogue_2020_run382_dispatch_recovery.py",
+              "tests/test_phase8a_annual_pattern_catalogue_2020_run382_recovery_evidence_review.py",
+              "tests/test_phase8a_annual_pattern_catalogue_2020_run382_runtime_evidence_recovery_workflow.py",
+          }
+          assert changed == expected, (sorted(changed), sorted(expected))
+          PY
+
+      - name: Require frozen recovery sources
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_run382_dispatch_recovery_authorization.py)" = "cd170c2386034930f53645498f7d24ec13442b71"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_run382_recovery_evidence_review.py)" = "7c721121197b83e687fd2c76773773f8ab4c07ae"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2020_run382_recovery_evidence_review.py)" = "260d38c31182eafaeb64741f447df297b2640ef4"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2020-run382-dispatch.yml)" = "8da7e442ee91e68dc0f4d22947d46c7709f10022"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_dispatch_action_preflight.py)" = "26b2148f0d1f49eb8b817f2b2504a11dcb99199a"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py)" = "695a50b418da752e1bd37d6302f209033ab611f5"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "4e124365430672fa63825b272001937c60151644"
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
+          test -f .github/workflows/phase8a-annual-catalogue-2020-run382-runtime-evidence-recovery.yml
+
+      - name: Pin failed DEC-576 provenance and prove no dispatch
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$FAILED_DEC576_RUN_ID" > "$RUNNER_TEMP/failed-dec576-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$FAILED_DEC576_RUN_ID/jobs?per_page=100" > "$RUNNER_TEMP/failed-dec576-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$FAILED_DEC576_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/failed-dec576-artifacts.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads((temp / "failed-dec576-run.json").read_text(encoding="utf-8"))
+          exact = {
+              "id": int(os.environ["FAILED_DEC576_RUN_ID"]),
+              "name": "phase8a-annual-catalogue-2020-run382-dispatch",
+              "path": ".github/workflows/phase8a-annual-catalogue-2020-run382-dispatch.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": os.environ["FAILED_DEC576_HEAD_SHA"],
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "failure",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+
+          jobs = json.loads(
+              (temp / "failed-dec576-jobs.json").read_text(encoding="utf-8")
+          )["jobs"]
+          assert len(jobs) == 1
+          job = jobs[0]
+          assert job["id"] == int(os.environ["FAILED_DEC576_JOB_ID"])
+          assert job["name"] == "dispatch-run382-once"
+          assert job["conclusion"] == "failure"
+          steps = {step["name"]: step["conclusion"] for step in job["steps"]}
+          assert steps["Fetch and verify exact DEC-575 final preflight"] == "failure"
+          assert steps["Recheck main and exact annual slot immediately before dispatch"] == "skipped"
+          assert steps["Dispatch exact 2020 annual run 382"] == "skipped"
+          assert steps["Resolve exact run 382 attempt 1"] == "skipped"
+          assert steps["Write immutable DEC-576 dispatch receipt"] == "skipped"
+          assert steps["Upload immutable DEC-576 dispatch evidence"] == "skipped"
+
+          artifacts = json.loads(
+              (temp / "failed-dec576-artifacts.json").read_text(encoding="utf-8")
+          )["artifacts"]
+          assert artifacts == []
+          PY
+
+      - name: Fetch and verify exact DEC-575 final preflight
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC575_RUN_ID" > "$RUNNER_TEMP/dec575-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC575_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec575-artifacts.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads((temp / "dec575-run.json").read_text(encoding="utf-8"))
+          exact = {
+              "id": int(os.environ["DEC575_RUN_ID"]),
+              "name": "phase8a-annual-catalogue-2020-dispatch-action-preflight",
+              "path": ".github/workflows/phase8a-annual-catalogue-2020-dispatch-action-preflight.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": os.environ["DEC575_HEAD_SHA"],
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+
+          artifacts = json.loads(
+              (temp / "dec575-artifacts.json").read_text(encoding="utf-8")
+          )
+          matches = [
+              row
+              for row in artifacts.get("artifacts", [])
+              if row.get("id") == int(os.environ["DEC575_ARTIFACT_ID"])
+              and row.get("expired") is False
+              and row.get("digest") == os.environ["DEC575_ARTIFACT_DIGEST"]
+          ]
+          assert len(matches) == 1
+          assert matches[0]["name"] == (
+              "annual-catalogue-2020-dec575-dispatch-action-preflight-"
+              + os.environ["DEC575_HEAD_SHA"]
+          )
+          PY
+
+          gh api -H 'Accept: application/vnd.github+json' "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC575_ARTIFACT_ID/zip" > "$RUNNER_TEMP/dec575.zip"
+          expected_sha="${DEC575_ARTIFACT_DIGEST#sha256:}"
+          actual_sha="$(sha256sum "$RUNNER_TEMP/dec575.zip" | awk '{print $1}')"
+          test "$actual_sha" = "$expected_sha"
+
+          mkdir -p "$RUNNER_TEMP/dec575"
+          unzip -q "$RUNNER_TEMP/dec575.zip" -d "$RUNNER_TEMP/dec575"
+          preflight_path="$(find "$RUNNER_TEMP/dec575" -type f -name 'dec575-2020-dispatch-action-preflight.json' -print)"
+          test "$(printf '%s\n' "$preflight_path" | sed '/^$/d' | wc -l)" = "1"
+          cp "$preflight_path" "$RUNNER_TEMP/dec575-2020-dispatch-action-preflight.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          value = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "dec575-2020-dispatch-action-preflight.json"
+              ).read_text(encoding="utf-8")
+          )
+          assert value["decision"] == "DEC-575"
+          assert value["expected_head_sha"] == os.environ["DEC575_HEAD_SHA"]
+          assert value["preflight_fingerprint_sha256"] == os.environ["DEC575_PREFLIGHT_FINGERPRINT"]
+          assert value["annual_segment_label"] == "2020"
+          assert value["previous_annual_freeze_run_id"] == 37310525635
+          assert value["expected_run_number"] == 382
+          assert value["expected_run_attempt"] == 1
+          assert value["dispatch_ref"] == "main"
+          assert value["dispatch_input_annual_segment_label"] == "2020"
+          assert value["dispatch_input_previous_annual_freeze_run_id"] == "37310525635"
+          assert value["dispatch_parameters_frozen"] is True
+          assert value["annual_workflow_dispatch_authorized"] is True
+          assert value["dispatch_command_present"] is False
+          assert value["dispatch_action_executed"] is False
+          assert value["run_383_or_later_authorized"] is False
+          assert value["trading_authorized"] is False
+          PY
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned recovery dependencies
+        run: >-
+          python -m pip install
+          -r requirements/exp061-discovery-run.txt
+          scikit-learn==1.9.1
+
+      - name: Require clean recovery checkout
+        run: test -z "$(git status --porcelain)"
+
+      - name: Build exact DEC-578 recovery authorization
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          from fmp.discovery.annual_pattern_catalogue_2020_run382_dispatch_recovery_authorization import (
+              build_2020_run382_dispatch_recovery_authorization,
+          )
+
+          value = build_2020_run382_dispatch_recovery_authorization(
+              repository_root=Path("."),
+          )
+          assert value["decision"] == "DEC-578"
+          assert value["failed_dispatcher_run_id"] == 37390547252
+          assert value["failed_dispatcher_job_id"] == 112034309419
+          assert value["failed_dispatcher_run_number"] == 1
+          assert value["failed_dispatcher_run_attempt"] == 1
+          assert value["failed_dispatcher_conclusion"] == "failure"
+          assert value["failed_dispatcher_dispatched_annual_run"] is False
+          assert value["annual_run_382_attempt_count"] == 0
+          assert value["annual_run_382_slot_consumed"] is False
+          assert value["annual_run_382_slot_verified_available"] is True
+          assert value["expected_recovery_run_number"] == 1
+          assert value["expected_recovery_run_attempt"] == 1
+          assert value["expected_target_run_number"] == 382
+          assert value["expected_target_run_attempt"] == 1
+          assert value["explicit_recovery_dispatch_authorized"] is True
+          assert value["annual_workflow_dispatch_authorized"] is True
+          assert value["run_383_or_later_authorized"] is False
+          assert value["trading_authorized"] is False
+
+          out = Path(os.environ["RUNNER_TEMP"]) / "dec578-recovery-authorization.json"
+          out.write_text(
+              json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Recheck main and exact annual slot immediately before recovery dispatch
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-branch.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" > "$RUNNER_TEMP/annual-runs-before.json"
+          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-branch.json")" = "$GITHUB_SHA"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          rows = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "annual-runs-before.json").read_text(
+                  encoding="utf-8"
+              )
+          )["workflow_runs"]
+          assert len(rows) == 7
+          by_number = {row["run_number"]: row for row in rows}
+          assert set(by_number) == {1, 376, 377, 378, 379, 380, 381}
+          expected = {
+              1: (37126711695, "fd85a886d07234ad584dcca08692b37e6af54b2e", "failure"),
+              376: (37191637168, "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3", "failure"),
+              377: (37198002653, "a89db974be9a94481e7ed0990476bc661012f1e4", "success"),
+              378: (37206992367, "2524fde355349581c9440a172d0384c3cbce31ed", "success"),
+              379: (37227536041, "7b4c1ef8573e280c067443b72f1534d9091d5b7f", "success"),
+              380: (37237817538, "30971a996f514670a6f836d8e45cf80137197a4f", "success"),
+              381: (37310525635, "8bcee3a7a834743f08bd9ad73109bfc09609a2fe", "success"),
+          }
+          for number, (run_id, head_sha, conclusion) in expected.items():
+              row = by_number[number]
+              assert row["id"] == run_id
+              assert row["run_attempt"] == 1
+              assert row["event"] == "workflow_dispatch"
+              assert row["head_branch"] == "main"
+              assert row["head_sha"] == head_sha
+              assert row["status"] == "completed"
+              assert row["conclusion"] == conclusion
+          assert not any(row["run_number"] >= 382 for row in rows)
+          PY
+
+      - name: Dispatch exact recovered 2020 annual run 382
+        run: |
+          set -euo pipefail
+          gh workflow run phase8a-annual-pattern-catalogue.yml \
+            --ref main \
+            -f annual_segment_label=2020 \
+            -f previous_annual_freeze_run_id=37310525635
+
+      - name: Resolve exact recovered run 382 attempt 1
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
+          found=0
+          for _ in $(seq 1 30); do
+            gh api "$endpoint" > "$RUNNER_TEMP/annual-runs-after.json"
+            if python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          rows = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "annual-runs-after.json").read_text(
+                  encoding="utf-8"
+              )
+          )["workflow_runs"]
+          targets = [
+              row
+              for row in rows
+              if row.get("name") == "phase8a-annual-pattern-catalogue"
+              and row.get("path") == ".github/workflows/phase8a-annual-pattern-catalogue.yml"
+              and row.get("run_number") == 382
+              and row.get("run_attempt") == 1
+              and row.get("event") == "workflow_dispatch"
+              and row.get("head_branch") == "main"
+              and row.get("head_sha") == os.environ["GITHUB_SHA"]
+          ]
+          later = [
+              row
+              for row in rows
+              if isinstance(row.get("run_number"), int)
+              and row["run_number"] >= 383
+          ]
+          raise SystemExit(0 if len(targets) == 1 and later == [] else 1)
+          PY
+            then
+              found=1
+              break
+            fi
+            sleep 2
+          done
+          test "$found" = "1"
+
+      - name: Write immutable DEC-578 recovery dispatch receipt
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          rows = json.loads(
+              (temp / "annual-runs-after.json").read_text(encoding="utf-8")
+          )["workflow_runs"]
+          targets = [
+              row
+              for row in rows
+              if row.get("run_number") == 382
+              and row.get("run_attempt") == 1
+              and row.get("head_sha") == os.environ["GITHUB_SHA"]
+          ]
+          assert len(targets) == 1
+          target = targets[0]
+          authorization = json.loads(
+              (temp / "dec578-recovery-authorization.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          receipt = {
+              "decision": "DEC-578",
+              "stage": "ANNUAL_CATALOGUE_2020_RUN_382_RECOVERY_DISPATCH_SUBMITTED",
+              "recovery_workflow": "phase8a-annual-catalogue-2020-run382-dispatch-recovery",
+              "recovery_run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "recovery_run_number": 1,
+              "recovery_run_attempt": 1,
+              "recovery_head_sha": os.environ["GITHUB_SHA"],
+              "recovery_authorization_fingerprint_sha256": (
+                  authorization["authorization_fingerprint_sha256"]
+              ),
+              "source_preflight_decision": "DEC-575",
+              "source_preflight_workflow_run_id": int(os.environ["DEC575_RUN_ID"]),
+              "source_preflight_workflow_head_sha": os.environ["DEC575_HEAD_SHA"],
+              "source_preflight_artifact_id": int(os.environ["DEC575_ARTIFACT_ID"]),
+              "source_preflight_artifact_digest": os.environ["DEC575_ARTIFACT_DIGEST"],
+              "source_preflight_fingerprint_sha256": os.environ["DEC575_PREFLIGHT_FINGERPRINT"],
+              "failed_dispatcher_decision": "DEC-576",
+              "failed_dispatcher_run_id": int(os.environ["FAILED_DEC576_RUN_ID"]),
+              "failed_dispatcher_job_id": int(os.environ["FAILED_DEC576_JOB_ID"]),
+              "failed_dispatcher_head_sha": os.environ["FAILED_DEC576_HEAD_SHA"],
+              "failed_dispatcher_run_number": 1,
+              "failed_dispatcher_run_attempt": 1,
+              "failed_dispatcher_conclusion": "failure",
+              "failed_dispatcher_dispatched_annual_run": False,
+              "annual_segment_label": "2020",
+              "previous_annual_freeze_run_id": 37310525635,
+              "run_id": target["id"],
+              "run_number": 382,
+              "run_attempt": 1,
+              "run_head_sha": target["head_sha"],
+              "dispatch_submitted": True,
+              "result_claimed": False,
+              "rerun_authorized": False,
+              "retry_authorized": False,
+              "replacement_run_authorized": False,
+              "run_383_or_later_authorized": False,
+              "next_segment_execution_authorized": False,
+              "cross_year_result_production_authorized": False,
+              "strategy_v1_synthesis_authorized": False,
+              "promotion_authorized": False,
+              "phase8b_authorized": False,
+              "demo_order_authorized": False,
+              "broker_mutation_authorized": False,
+              "live_order_authorized": False,
+              "real_money_authorized": False,
+              "trading_authorized": False,
+              "next_gate": "REVIEW_RECOVERED_2020_RUN_382_BEFORE_ANY_2021_EXECUTION",
+          }
+          (temp / "dec578-run382-recovery-dispatch-receipt.json").write_text(
+              json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload immutable DEC-578 recovery dispatch evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2020-dec578-run382-recovery-dispatch-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/failed-dec576-run.json
+            ${{ runner.temp }}/failed-dec576-jobs.json
+            ${{ runner.temp }}/failed-dec576-artifacts.json
+            ${{ runner.temp }}/dec575-run.json
+            ${{ runner.temp }}/dec575-artifacts.json
+            ${{ runner.temp }}/dec575-2020-dispatch-action-preflight.json
+            ${{ runner.temp }}/dec578-recovery-authorization.json
+            ${{ runner.temp }}/main-branch.json
+            ${{ runner.temp }}/annual-runs-before.json
+            ${{ runner.temp }}/annual-runs-after.json
+            ${{ runner.temp }}/dec578-run382-recovery-dispatch-receipt.json
+          if-no-files-found: error
