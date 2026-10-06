@@ -32,17 +32,70 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Require exact first authorization push
+      - name: Require exact second authorization push after stale source-path failure
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$GITHUB_EVENT_NAME" = "push"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
 
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37457496751" \
+            > "$RUNNER_TEMP/failed-dec581-builder-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37457496751/jobs?per_page=100" \
+            > "$RUNNER_TEMP/failed-dec581-builder-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37457496751/artifacts?per_page=100" \
+            > "$RUNNER_TEMP/failed-dec581-builder-artifacts.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads(
+              (temp / "failed-dec581-builder-run.json").read_text(encoding="utf-8")
+          )
+          exact = {
+              "id": 37457496751,
+              "name": "phase8a-annual-catalogue-2021-execution-authorization",
+              "path": ".github/workflows/phase8a-annual-catalogue-2021-execution-authorization.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "0eefbf14ef6a02a3cb6749f5e6dbad07fa22e3fa",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "failure",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+
+          jobs = json.loads(
+              (temp / "failed-dec581-builder-jobs.json").read_text(encoding="utf-8")
+          )["jobs"]
+          assert len(jobs) == 1
+          job = jobs[0]
+          assert job["id"] == 112248575079
+          assert job["name"] == "build-concrete-authorization"
+          assert job["conclusion"] == "failure"
+          steps = {step["name"]: step["conclusion"] for step in job["steps"]}
+          assert steps["Require exact first authorization push"] == "failure"
+          assert steps["Fetch and verify exact DEC-580 preflight artifact"] == "skipped"
+          assert steps["Build concrete DEC-581 authorization"] == "skipped"
+          assert steps["Upload immutable DEC-581 authorization"] == "skipped"
+
+          artifacts = json.loads(
+              (
+                  temp / "failed-dec581-builder-artifacts.json"
+              ).read_text(encoding="utf-8")
+          )["artifacts"]
+          assert artifacts == []
+          PY
+
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2021_execution_authorization.py)" = "3e086e82201ed0bea85226c115ae7a09e7d95983"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2020_execution_preflight.py)" = "981309374459ed6b99030f66d08ac5fc0e707dcc"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2021_execution_preflight.py)" = "981309374459ed6b99030f66d08ac5fc0e707dcc"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "4e124365430672fa63825b272001937c60151644"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
 
