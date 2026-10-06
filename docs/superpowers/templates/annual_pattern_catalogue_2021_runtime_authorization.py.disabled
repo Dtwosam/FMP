@@ -1,0 +1,155 @@
+from __future__ import annotations
+
+
+ANNUAL_CATALOGUE_2021_RUNTIME_AUTHORIZATION_DECISION = "DEC-582"
+ANNUAL_CATALOGUE_2021_RUNTIME_AUTHORIZATION_VERSION = (
+    "fmp-annual-catalogue-2021-runtime-authorization-v1"
+)
+
+AUTHORIZED_ANNUAL_SEGMENT_LABEL = "2021"
+EXPECTED_RUN_NUMBER = 383
+EXPECTED_RUN_ATTEMPT = 1
+EXPECTED_PREVIOUS_ANNUAL_FREEZE_RUN_ID = 37443770076
+
+RUNTIME_AUTHORIZATION_INSTALLED = True
+RUNTIME_GATE_ACTIVE = True
+ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED = True
+HISTORICAL_ARTIFACT_READ_AUTHORIZED = True
+HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED = True
+HISTORICAL_RESULT_PRODUCTION_AUTHORIZED = True
+
+RERUN_AUTHORIZED = False
+RETRY_AUTHORIZED = False
+REPLACEMENT_RUN_AUTHORIZED = False
+RUN_384_OR_LATER_AUTHORIZED = False
+NEXT_SEGMENT_EXECUTION_AUTHORIZED = False
+CROSS_YEAR_RESULT_PRODUCTION_AUTHORIZED = False
+STRATEGY_V1_SYNTHESIS_AUTHORIZED = False
+PROMOTION_AUTHORIZED = False
+PHASE8B_AUTHORIZED = False
+DEMO_ORDER_AUTHORIZED = False
+BROKER_MUTATION_AUTHORIZED = False
+LIVE_ORDER_AUTHORIZED = False
+REAL_MONEY_AUTHORIZED = False
+TRADING_AUTHORIZED = False
+
+
+def _validate_commit(value: object, *, field: str = "code_commit") -> str:
+    if not isinstance(value, str) or len(value) != 40:
+        raise ValueError(f"{field} must be a 40-character Git commit")
+    try:
+        int(value, 16)
+    except ValueError as exc:
+        raise ValueError(f"{field} must be hexadecimal") from exc
+    return value.lower()
+
+
+def _positive_int(value: object, *, field: str) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+        raise ValueError(f"{field} must be a positive integer")
+    return value
+
+
+def require_2021_execution_authorized(
+    *,
+    annual_segment_label: str,
+    code_commit: str,
+    run_number: int,
+    run_attempt: int,
+    previous_annual_freeze_run_id: int,
+) -> None:
+    _validate_commit(code_commit)
+
+    # Import DEC-581 lazily to avoid a cycle once the runtime imports this gate.
+    from .annual_pattern_catalogue_2021_execution_authorization import (
+        ANNUAL_CATALOGUE_2021_EXECUTION_AUTHORIZATION_DECISION,
+        ANNUAL_CATALOGUE_2021_EXECUTION_AUTHORIZATION_VERSION,
+    )
+
+    if ANNUAL_CATALOGUE_2021_EXECUTION_AUTHORIZATION_DECISION != "DEC-581":
+        raise PermissionError("DEC-582 DEC-581 decision drift")
+    if (
+        ANNUAL_CATALOGUE_2021_EXECUTION_AUTHORIZATION_VERSION
+        != "fmp-annual-catalogue-2021-execution-authorization-v1"
+    ):
+        raise PermissionError("DEC-582 DEC-581 version drift")
+    if annual_segment_label != AUTHORIZED_ANNUAL_SEGMENT_LABEL:
+        raise PermissionError(
+            "DEC-582 authorizes annual catalogue execution only for 2021"
+        )
+    if _positive_int(run_number, field="run_number") != EXPECTED_RUN_NUMBER:
+        raise PermissionError(
+            "DEC-582 authorizes only annual workflow run number 383"
+        )
+    if _positive_int(run_attempt, field="run_attempt") != EXPECTED_RUN_ATTEMPT:
+        raise PermissionError(
+            "DEC-582 authorizes only annual workflow run attempt 1"
+        )
+    if (
+        _positive_int(
+            previous_annual_freeze_run_id,
+            field="previous_annual_freeze_run_id",
+        )
+        != EXPECTED_PREVIOUS_ANNUAL_FREEZE_RUN_ID
+    ):
+        raise PermissionError("DEC-582 predecessor freeze run id mismatch")
+    if not RUNTIME_AUTHORIZATION_INSTALLED or not RUNTIME_GATE_ACTIVE:
+        raise PermissionError("DEC-582 2021 runtime authorization is not active")
+    if not ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED:
+        raise PermissionError("DEC-582 2021 workflow dispatch remains locked")
+    if not HISTORICAL_ARTIFACT_READ_AUTHORIZED:
+        raise PermissionError("DEC-582 2021 historical reads remain locked")
+    if not HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED:
+        raise PermissionError("DEC-582 2021 catalogue execution remains locked")
+    if not HISTORICAL_RESULT_PRODUCTION_AUTHORIZED:
+        raise PermissionError("DEC-582 2021 result production remains locked")
+
+
+def runtime_authorization_payload() -> dict[str, object]:
+    return {
+        "decision": ANNUAL_CATALOGUE_2021_RUNTIME_AUTHORIZATION_DECISION,
+        "version": ANNUAL_CATALOGUE_2021_RUNTIME_AUTHORIZATION_VERSION,
+        "source_authorization_decision": "DEC-581",
+        "stage": "ANNUAL_CATALOGUE_2021_RUNTIME_AUTHORIZATION_INSTALLED",
+        "annual_segment_label": AUTHORIZED_ANNUAL_SEGMENT_LABEL,
+        "expected_run_number": EXPECTED_RUN_NUMBER,
+        "expected_run_attempt": EXPECTED_RUN_ATTEMPT,
+        "previous_annual_freeze_run_required": True,
+        "expected_previous_annual_freeze_run_id": (
+            EXPECTED_PREVIOUS_ANNUAL_FREEZE_RUN_ID
+        ),
+        "runtime_authorization_installed": RUNTIME_AUTHORIZATION_INSTALLED,
+        "runtime_gate_active": RUNTIME_GATE_ACTIVE,
+        "annual_workflow_dispatch_authorized": ANNUAL_WORKFLOW_DISPATCH_AUTHORIZED,
+        "historical_artifact_read_authorized": HISTORICAL_ARTIFACT_READ_AUTHORIZED,
+        "historical_catalogue_execution_authorized": (
+            HISTORICAL_CATALOGUE_EXECUTION_AUTHORIZED
+        ),
+        "historical_result_production_authorized": (
+            HISTORICAL_RESULT_PRODUCTION_AUTHORIZED
+        ),
+        "rerun_authorized": RERUN_AUTHORIZED,
+        "retry_authorized": RETRY_AUTHORIZED,
+        "replacement_run_authorized": REPLACEMENT_RUN_AUTHORIZED,
+        "run_384_or_later_authorized": RUN_384_OR_LATER_AUTHORIZED,
+        "next_segment_execution_authorized": NEXT_SEGMENT_EXECUTION_AUTHORIZED,
+        "cross_year_result_production_authorized": (
+            CROSS_YEAR_RESULT_PRODUCTION_AUTHORIZED
+        ),
+        "strategy_v1_synthesis_authorized": STRATEGY_V1_SYNTHESIS_AUTHORIZED,
+        "promotion_authorized": PROMOTION_AUTHORIZED,
+        "phase8b_authorized": PHASE8B_AUTHORIZED,
+        "demo_order_authorized": DEMO_ORDER_AUTHORIZED,
+        "broker_mutation_authorized": BROKER_MUTATION_AUTHORIZED,
+        "live_order_authorized": LIVE_ORDER_AUTHORIZED,
+        "real_money_authorized": REAL_MONEY_AUTHORIZED,
+        "trading_authorized": TRADING_AUTHORIZED,
+    }
+
+
+__all__ = [
+    "ANNUAL_CATALOGUE_2021_RUNTIME_AUTHORIZATION_DECISION",
+    "ANNUAL_CATALOGUE_2021_RUNTIME_AUTHORIZATION_VERSION",
+    "require_2021_execution_authorized",
+    "runtime_authorization_payload",
+]
