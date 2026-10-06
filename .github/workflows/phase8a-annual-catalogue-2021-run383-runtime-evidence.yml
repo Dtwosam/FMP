@@ -1,6 +1,11 @@
 name: phase8a-annual-catalogue-2021-run383-runtime-evidence
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-2021-run383-runtime-evidence.yml
   workflow_run:
     workflows:
       - phase8a-annual-pattern-catalogue
@@ -24,18 +29,38 @@ permissions:
 
 jobs:
   review-bind-run383:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.run_number == 383 && github.event.workflow_run.conclusion == 'success') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.run_number == 383 && github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       PYTHONPATH: ${{ github.workspace }}/src
-      TARGET_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.target_run_id || github.event.workflow_run.id }}
-      TARGET_HEAD_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.target_head_sha || github.event.workflow_run.head_sha }}
-      TARGET_RUN_NUMBER: ${{ github.event_name == 'workflow_dispatch' && inputs.target_run_number || github.event.workflow_run.run_number }}
+      RECOVERY_TARGET_RUN_ID: "37531960014"
+      RECOVERY_TARGET_HEAD_SHA: "a1e194907c273a2fcdddfb4c24d64a96cfd8d263"
+      RECOVERY_TARGET_RUN_NUMBER: "383"
+      RECOVERY_DEC589_RUN_ID: "37531906353"
+      RECOVERY_DEC589_ARTIFACT_ID: "11445116144"
+      RECOVERY_DEC589_ARTIFACT_DIGEST: "sha256:fc03d22a19fe0cf8cd1348e6f5aad2ee755c4807f0e10cfffe0c0349420ca3b4"
+      RECOVERY_FREEZE_ARTIFACT_ID: "11444044655"
+      RECOVERY_FREEZE_ARTIFACT_DIGEST: "sha256:bdc4d7ecd42b65f9e461fd1803076aa51f74e57b5d9b4945cfb54f793bb4c839"
+      TARGET_RUN_ID: ${{ github.event_name == 'push' && '37531960014' || (github.event_name == 'workflow_dispatch' && inputs.target_run_id || github.event.workflow_run.id) }}
+      TARGET_HEAD_SHA: ${{ github.event_name == 'push' && 'a1e194907c273a2fcdddfb4c24d64a96cfd8d263' || (github.event_name == 'workflow_dispatch' && inputs.target_head_sha || github.event.workflow_run.head_sha) }}
+      TARGET_RUN_NUMBER: ${{ github.event_name == 'push' && '383' || (github.event_name == 'workflow_dispatch' && inputs.target_run_number || github.event.workflow_run.run_number) }}
 
     steps:
+      - name: Require bounded DEC-590 recovery push
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$TARGET_RUN_ID" = "$RECOVERY_TARGET_RUN_ID"
+          test "$TARGET_HEAD_SHA" = "$RECOVERY_TARGET_HEAD_SHA"
+          test "$TARGET_RUN_NUMBER" = "$RECOVERY_TARGET_RUN_NUMBER"
+
       - name: Checkout exact run-383 source
         uses: actions/checkout@v6
         with:
@@ -45,7 +70,7 @@ jobs:
       - name: Require exact successful 2021 run 383
         run: |
           set -euo pipefail
-          case "$GITHUB_EVENT_NAME" in workflow_run|workflow_dispatch) ;; *) exit 1 ;; esac
+          case "$GITHUB_EVENT_NAME" in push|workflow_run|workflow_dispatch) ;; *) exit 1 ;; esac
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$TARGET_RUN_NUMBER" = "383"
           test "$(git rev-parse HEAD)" = "$TARGET_HEAD_SHA"
@@ -142,6 +167,9 @@ jobs:
         run: |
           set -euo pipefail
           source_run_id="$(cat "$RUNNER_TEMP/dec589-run-id.txt")"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            test "$source_run_id" = "$RECOVERY_DEC589_RUN_ID"
+          fi
           gh api             "repos/$GITHUB_REPOSITORY/actions/runs/$source_run_id/artifacts?per_page=100"             > "$RUNNER_TEMP/dec589-artifacts.json"
 
           artifact_id="$(
@@ -159,6 +187,10 @@ jobs:
           test "$(printf '%s\n' "$artifact_id" | sed '/^$/d' | wc -l)" = "1"
           test -n "$artifact_digest"
           case "$artifact_digest" in sha256:*) ;; *) exit 1 ;; esac
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            test "$artifact_id" = "$RECOVERY_DEC589_ARTIFACT_ID"
+            test "$artifact_digest" = "$RECOVERY_DEC589_ARTIFACT_DIGEST"
+          fi
 
           gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > "$RUNNER_TEMP/dec589.zip"
           expected_sha="${artifact_digest#sha256:}"
@@ -229,6 +261,10 @@ jobs:
           )"
           test "$(printf '%s\n' "$artifact_id" | sed '/^$/d' | wc -l)" = "1"
           case "$expected_digest" in sha256:*) ;; *) exit 1 ;; esac
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            test "$artifact_id" = "$RECOVERY_FREEZE_ARTIFACT_ID"
+            test "$expected_digest" = "$RECOVERY_FREEZE_ARTIFACT_DIGEST"
+          fi
           expected_sha="${expected_digest#sha256:}"
 
           gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > "$RUNNER_TEMP/run383-freeze.zip"
