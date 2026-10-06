@@ -84,6 +84,10 @@ def _authorization() -> dict[str, object]:
     }
 
 
+@unittest.skipIf(
+    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
+    "DEC-582 requires the installed annual workflow/runtime state",
+)
 class AnnualPatternCatalogue2021RuntimeAuthorizationPlanTests(unittest.TestCase):
     def test_sources_pin_installed_runtime_and_dormant_targets(self) -> None:
         source = validate_2021_runtime_authorization_plan_sources(
