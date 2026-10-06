@@ -88,7 +88,7 @@ class AnnualPatternCatalogue2021ExecutionAuthorizationTests(unittest.TestCase):
         preflight = _preflight()
         with patch(
             "fmp.discovery.annual_pattern_catalogue_2021_execution_authorization."
-            "validate_2020_execution_preflight",
+            "validate_2021_execution_preflight",
             return_value=preflight,
         ):
             value = build_2021_execution_authorization(
@@ -130,7 +130,7 @@ class AnnualPatternCatalogue2021ExecutionAuthorizationTests(unittest.TestCase):
         preflight = _preflight()
         with patch(
             "fmp.discovery.annual_pattern_catalogue_2021_execution_authorization."
-            "validate_2020_execution_preflight",
+            "validate_2021_execution_preflight",
             return_value=preflight,
         ):
             value = build_2021_execution_authorization(
@@ -152,7 +152,7 @@ class AnnualPatternCatalogue2021ExecutionAuthorizationTests(unittest.TestCase):
         preflight["expected_next_run_number"] = 384
         with patch(
             "fmp.discovery.annual_pattern_catalogue_2021_execution_authorization."
-            "validate_2020_execution_preflight",
+            "validate_2021_execution_preflight",
             return_value=preflight,
         ):
             with self.assertRaisesRegex(ValueError, "expected run number mismatch"):
