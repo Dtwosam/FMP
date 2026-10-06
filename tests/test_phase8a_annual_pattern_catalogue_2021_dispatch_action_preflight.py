@@ -20,7 +20,8 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 HEAD = "e" * 40
 AUTHORIZATION_HEAD = "80ea2e3a75397e098168fefa04851019d18c80f2"
 
-PREFLIGHT_JSON = r"""\n{
+PREFLIGHT_JSON = r"""
+{
   "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
   "annual_segment_label": "2021",
   "annual_workflow_dispatch_authorized": false,
@@ -70,7 +71,11 @@ PREFLIGHT_JSON = r"""\n{
   "successful_2020_run_id": 37443770076,
   "trading_authorized": false,
   "version": "fmp-annual-catalogue-2021-dispatch-preflight-v1"
-}\n"""\n\n\ndef _preflight() -> dict[str, object]:
+}
+"""
+
+
+def _preflight() -> dict[str, object]:
     value = json.loads(PREFLIGHT_JSON)
     assert isinstance(value, dict)
     return value
@@ -199,7 +204,7 @@ class AnnualPatternCatalogue2021DispatchActionPreflightTests(unittest.TestCase):
         )
         self.assertIs(validate_2021_dispatch_action_preflight(value), value)
         self.assertEqual(value["decision"], "DEC-588")
-        self.assertEqual(value["annual_workflow_run_count"], 7)
+        self.assertEqual(value["annual_workflow_run_count"], 8)
         self.assertEqual(value["annual_segment_label"], "2021")
         self.assertEqual(value["prior_segment_label"], "2020")
         self.assertEqual(value["successful_2020_run_id"], 37443770076)
@@ -228,7 +233,7 @@ class AnnualPatternCatalogue2021DispatchActionPreflightTests(unittest.TestCase):
                 "id": 99999999999,
                 "name": "phase8a-annual-pattern-catalogue",
                 "path": ".github/workflows/phase8a-annual-pattern-catalogue.yml",
-                "run_number": 382,
+                "run_number": 383,
                 "run_attempt": 1,
                 "event": "workflow_dispatch",
                 "head_branch": "main",
