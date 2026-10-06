@@ -51,7 +51,7 @@ class AnnualPatternCatalogue2020Run382RuntimeEvidenceRecoveryWorkflowTests(
         for value in (
             "7c721121197b83e687fd2c76773773f8ab4c07ae",
             "260d38c31182eafaeb64741f447df297b2640ef4",
-            "2185ee4597a0255ec607db3ac7ed3acb9cee0aba",
+            "74074bf13937f93e0f8014066e04151fce90893f",
             "cd170c2386034930f53645498f7d24ec13442b71",
             "1b14279864f01a1284c5be31552eee9bb3a2220c",
             "26b2148f0d1f49eb8b817f2b2504a11dcb99199a",
