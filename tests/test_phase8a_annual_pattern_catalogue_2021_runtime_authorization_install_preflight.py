@@ -15,7 +15,7 @@ from fmp.discovery.annual_pattern_catalogue_2021_runtime_authorization_plan impo
 )
 
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[1]
 HEAD = "a" * 40
 
 
@@ -55,7 +55,7 @@ def _authorization() -> dict[str, object]:
         "previous_runtime_binding_fingerprint_sha256": (
             "ebde4b5ee78421cc2afb4c12c4ff2603b6d01f1990fbfe683aed11d00653a76c"
         ),
-        "prior_segment_label": "2021",
+        "prior_segment_label": "2020",
         "promotion_authorized": False,
         "real_money_authorized": False,
         "replacement_run_authorized": False,
@@ -64,7 +64,7 @@ def _authorization() -> dict[str, object]:
         "run_384_or_later_authorized": False,
         "runtime_authorization_installed": False,
         "runtime_gate_active": False,
-        "runtime_source_blob_sha": "d0db13ae9ae8dfbedf9c17ebe09d53f2ec4ff7e6",
+        "runtime_source_blob_sha": "4e124365430672fa63825b272001937c60151644",
         "source_only_authorization": True,
         "source_preflight_artifact_digest": (
             "sha256:f408d6cdd389bb9f25e84d6aec110a502a0ac9d8a1098d92c8709aab879f6f62"
@@ -89,6 +89,7 @@ def _authorization() -> dict[str, object]:
     }
 
 
+
 @unittest.skipIf(
     os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
     "DEC-583 requires installed annual workflow/runtime state",
@@ -99,12 +100,12 @@ class AnnualPatternCatalogue2021RuntimeAuthorizationInstallPreflightTests(
     def _plan(self) -> dict[str, object]:
         return build_2021_runtime_authorization_plan(
             _authorization(),
-            repository_root=REPOSITORY_ROOT,
+            repository_root=ROOT,
         )
 
-    def test_sources_pin_dec568_dec569_and_dormant_targets(self) -> None:
+    def test_sources_pin_dec581_dec582_and_dormant_targets(self) -> None:
         source = validate_2021_runtime_authorization_install_preflight_sources(
-            repository_root=REPOSITORY_ROOT,
+            repository_root=ROOT,
         )
         self.assertEqual(
             source["execution_authorization_source_blob_sha"],
@@ -119,7 +120,7 @@ class AnnualPatternCatalogue2021RuntimeAuthorizationInstallPreflightTests(
         value = build_2021_runtime_authorization_install_preflight(
             _authorization(),
             self._plan(),
-            repository_root=REPOSITORY_ROOT,
+            repository_root=ROOT,
             main_branch={"name": "main", "commit": {"sha": HEAD}},
             expected_head_sha=HEAD,
         )
@@ -196,7 +197,7 @@ class AnnualPatternCatalogue2021RuntimeAuthorizationInstallPreflightTests(
             build_2021_runtime_authorization_install_preflight(
                 _authorization(),
                 plan,
-                repository_root=REPOSITORY_ROOT,
+                repository_root=ROOT,
                 main_branch={"name": "main", "commit": {"sha": HEAD}},
                 expected_head_sha=HEAD,
             )
@@ -206,7 +207,7 @@ class AnnualPatternCatalogue2021RuntimeAuthorizationInstallPreflightTests(
             build_2021_runtime_authorization_install_preflight(
                 _authorization(),
                 self._plan(),
-                repository_root=REPOSITORY_ROOT,
+                repository_root=ROOT,
                 main_branch={"name": "main", "commit": {"sha": "b" * 40}},
                 expected_head_sha=HEAD,
             )
