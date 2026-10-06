@@ -157,7 +157,7 @@ def _validate_run_inventory(
     runtime_binding: Mapping[str, object],
 ) -> dict[str, object]:
     runs = value.get("workflow_runs")
-    if not isinstance(runs, list) or len(runs) != 7:
+    if not isinstance(runs, list) or len(runs) != 8:
         raise ValueError("DEC-580 requires exactly eight annual workflow dispatch runs")
 
     by_number: dict[int, Mapping[str, object]] = {}
