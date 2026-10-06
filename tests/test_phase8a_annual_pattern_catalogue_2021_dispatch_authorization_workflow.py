@@ -28,7 +28,7 @@ class AnnualPatternCatalogue2021DispatchAuthorizationWorkflowTests(
         self.assertNotIn("actions: write", text)
         self.assertNotIn("workflow_dispatch:", text)
 
-    def test_workflow_pins_exact_dec573_evidence(self) -> None:
+    def test_workflow_pins_exact_dec586_evidence(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for value in (
             "37501665304",
@@ -45,7 +45,7 @@ class AnnualPatternCatalogue2021DispatchAuthorizationWorkflowTests(
         ):
             self.assertIn(value, text)
 
-    def test_workflow_rechecks_unconsumed_run382_slot(self) -> None:
+    def test_workflow_rechecks_unconsumed_run383_slot(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn(
             "assert set(by_number) == {1, 376, 377, 378, 379, 380, 381, 382}",
@@ -67,11 +67,17 @@ class AnnualPatternCatalogue2021DispatchAuthorizationWorkflowTests(
             text,
         )
         self.assertIn('assert value[field] is False, field', text)
+        self.assertIn('"run_384_or_later_authorized",', text)
         self.assertNotIn("gh workflow run ", text)
         self.assertNotIn("gh run rerun", text)
         self.assertNotIn("rerun-failed-jobs", text)
         self.assertNotIn("git push", text)
         self.assertNotIn("git commit", text)
+
+    def test_workflow_has_no_stale_dec573_dec574_names(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        for stale in ("dec573", "dec574", "DEC573", "DEC574"):
+            self.assertNotIn(stale, text)
 
 
 if __name__ == "__main__":
