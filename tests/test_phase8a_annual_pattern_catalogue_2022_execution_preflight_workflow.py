@@ -29,8 +29,18 @@ class AnnualCatalogue2022ExecutionPreflightWorkflowTests(unittest.TestCase):
         self.assertNotIn("gh workflow run ", text)
         self.assertNotIn("gh run rerun", text)
         self.assertNotIn("gh api --method POST", text)
-        self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
+        self.assertIn("37539005579", text)
+        self.assertIn("112527115635", text)
+        self.assertIn(
+            "Require exact second DEC-591 landing run after missing dependency failure",
+            text,
+        )
+        self.assertIn("Install pinned preflight dependencies", text)
+        self.assertIn("requirements/exp061-discovery-run.txt", text)
+        self.assertIn("scikit-learn==1.9.1", text)
+        self.assertIn("assert artifacts == []", text)
 
     def test_workflow_pins_exact_dec590_recovery_evidence(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
