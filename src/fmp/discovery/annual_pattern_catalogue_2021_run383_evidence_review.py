@@ -209,7 +209,7 @@ def _validate_dispatch_receipt(
         "live_order_authorized": False,
         "real_money_authorized": False,
         "trading_authorized": False,
-        "next_gate": "REVIEW_2021_RUN_383_BEFORE_ANY_2021_EXECUTION",
+        "next_gate": "REVIEW_2021_RUN_383_BEFORE_CROSS_YEAR_COMPARISON",
     }
     for field, expected in exact.items():
         if receipt.get(field) != expected:
@@ -481,7 +481,7 @@ def validate_2021_run383_evidence_review(
         "stage": "ANNUAL_CATALOGUE_2021_RUN383_CONCRETE_RUNTIME_EVIDENCE_BOUND",
         "repository_full_name": "Dtwosam/FMP",
         "annual_segment_label": "2021",
-        "run_number": 382,
+        "run_number": 383,
         "run_attempt": 1,
         "run_status": "completed",
         "run_conclusion": "success",
