@@ -32,7 +32,7 @@ CURRENT_RUNTIME_SOURCE_PATH = (
     "src/fmp/discovery/annual_pattern_catalogue_runtime.py"
 )
 EXPECTED_CURRENT_RUNTIME_SOURCE_BLOB_SHA = (
-    "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
+    "4e124365430672fa63825b272001937c60151644"
 )
 ACTIVE_WORKFLOW_PATH = ".github/workflows/phase8a-annual-pattern-catalogue.yml"
 EXPECTED_ACTIVE_WORKFLOW_BLOB_SHA = (
