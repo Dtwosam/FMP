@@ -17,7 +17,8 @@ from fmp.discovery.annual_pattern_catalogue_2021_dispatch_authorization import (
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 AUTHORIZATION_HEAD = "a" * 40
 
-PREFLIGHT_JSON = r"""\n{
+PREFLIGHT_JSON = r"""
+{
   "active_workflow_blob_sha": "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
   "annual_segment_label": "2021",
   "annual_workflow_dispatch_authorized": false,
@@ -67,7 +68,11 @@ PREFLIGHT_JSON = r"""\n{
   "successful_2020_run_id": 37443770076,
   "trading_authorized": false,
   "version": "fmp-annual-catalogue-2021-dispatch-preflight-v1"
-}\n"""\n\n\ndef _preflight() -> dict[str, object]:
+}
+"""
+
+
+def _preflight() -> dict[str, object]:
     value = json.loads(PREFLIGHT_JSON)
     assert isinstance(value, dict)
     return value
