@@ -26,7 +26,7 @@ jobs:
       DEC588_PREFLIGHT_CANONICAL_SHA256: "c4c3261a522f381630740c016b7975bf2f469c447455996be86762113e8f22f3"
 
     steps:
-      - name: Checkout exact DEC-589/566 landing
+      - name: Checkout exact DEC-589/590 landing
         uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
@@ -191,7 +191,7 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/branches/main"             > "$RUNNER_TEMP/main-before-dispatch.json"
           test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-before-dispatch.json")" = "$GITHUB_SHA"
 
-          gh api             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"             > "$RUNNER_TEMP/annual-before-381.json"
+          gh api             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"             > "$RUNNER_TEMP/annual-before-383.json"
 
           python - <<'PY'
           import json
@@ -200,7 +200,7 @@ jobs:
 
           rows = json.loads(
               (
-                  Path(os.environ["RUNNER_TEMP"]) / "annual-before-381.json"
+                  Path(os.environ["RUNNER_TEMP"]) / "annual-before-383.json"
               ).read_text(encoding="utf-8")
           ).get("workflow_runs")
           assert isinstance(rows, list)
@@ -263,18 +263,18 @@ jobs:
           assert not any(row["run_number"] >= 383 for row in rows)
           PY
 
-      - name: Dispatch exact 2021 annual run 382
+      - name: Dispatch exact 2021 annual run 383
         run: |
           set -euo pipefail
           gh workflow run phase8a-annual-pattern-catalogue.yml             --ref main             -f annual_segment_label=2021             -f previous_annual_freeze_run_id=37443770076
 
-      - name: Resolve exact run 382 attempt 1
+      - name: Resolve exact run 383 attempt 1
         run: |
           set -euo pipefail
           endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
           found=0
           for _ in $(seq 1 30); do
-            gh api "$endpoint" > "$RUNNER_TEMP/annual-after-381.json"
+            gh api "$endpoint" > "$RUNNER_TEMP/annual-after-383.json"
             if python - <<'PY'
           import json
           import os
@@ -282,7 +282,7 @@ jobs:
 
           rows = json.loads(
               (
-                  Path(os.environ["RUNNER_TEMP"]) / "annual-after-381.json"
+                  Path(os.environ["RUNNER_TEMP"]) / "annual-after-383.json"
               ).read_text(encoding="utf-8")
           ).get("workflow_runs")
           assert isinstance(rows, list)
@@ -322,12 +322,12 @@ jobs:
 
           temp = Path(os.environ["RUNNER_TEMP"])
           rows = json.loads(
-              (temp / "annual-after-381.json").read_text(encoding="utf-8")
+              (temp / "annual-after-383.json").read_text(encoding="utf-8")
           )["workflow_runs"]
           targets = [
               row
               for row in rows
-              if row.get("run_number") == 382
+              if row.get("run_number") == 383
               and row.get("run_attempt") == 1
               and row.get("event") == "workflow_dispatch"
               and row.get("head_branch") == "main"
@@ -337,7 +337,7 @@ jobs:
           target = targets[0]
           receipt = {
               "decision": "DEC-589",
-              "stage": "ANNUAL_CATALOGUE_2021_RUN_382_DISPATCH_SUBMITTED",
+              "stage": "ANNUAL_CATALOGUE_2021_RUN_383_DISPATCH_SUBMITTED",
               "source_preflight_decision": "DEC-588",
               "source_preflight_workflow_run_id": int(os.environ["DEC588_RUN_ID"]),
               "source_preflight_workflow_head_sha": os.environ["DEC588_HEAD_SHA"],
@@ -367,9 +367,9 @@ jobs:
               "live_order_authorized": False,
               "real_money_authorized": False,
               "trading_authorized": False,
-              "next_gate": "REVIEW_2021_RUN_382_BEFORE_ANY_2021_EXECUTION",
+              "next_gate": "REVIEW_2021_RUN_383_BEFORE_CROSS_YEAR_COMPARISON",
           }
-          (temp / "dec576-run383-dispatch-receipt.json").write_text(
+          (temp / "dec589-run383-dispatch-receipt.json").write_text(
               json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False) + "\n",
               encoding="utf-8",
           )
@@ -378,14 +378,14 @@ jobs:
       - name: Upload immutable DEC-589 dispatch evidence
         uses: actions/upload-artifact@v6
         with:
-          name: annual-catalogue-2021-dec576-run383-dispatch-${{ github.run_id }}
+          name: annual-catalogue-2021-dec589-run383-dispatch-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/landing-changed-files.txt
             ${{ runner.temp }}/dec588-run.json
             ${{ runner.temp }}/dec588-artifacts.json
             ${{ runner.temp }}/dec588-2021-dispatch-action-preflight.json
             ${{ runner.temp }}/main-before-dispatch.json
-            ${{ runner.temp }}/annual-before-381.json
-            ${{ runner.temp }}/annual-after-381.json
-            ${{ runner.temp }}/dec576-run383-dispatch-receipt.json
+            ${{ runner.temp }}/annual-before-383.json
+            ${{ runner.temp }}/annual-after-383.json
+            ${{ runner.temp }}/dec589-run383-dispatch-receipt.json
           if-no-files-found: error
