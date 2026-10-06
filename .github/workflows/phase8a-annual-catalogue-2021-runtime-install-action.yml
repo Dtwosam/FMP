@@ -248,10 +248,7 @@ jobs:
           create, update = value["actions"]
           assert create["order"] == 1
           assert create["operation"] == "create"
-          assert create["target_path"] == (
-              "src/fmp/discovery/"
-              "annual_pattern_catalogue_2021_runtime_authorization.py"
-          )
+          assert create["target_path"] == "src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py"
           assert create["expected_target_absent"] is True
           assert create["expected_result_blob_sha"] == (
               "cac68c905bedf3105aa7e766eaa968c87bff6ce9"
