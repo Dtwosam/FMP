@@ -136,7 +136,7 @@ def _preflight() -> dict[str, object]:
 class AnnualPatternCatalogue2021RuntimeAuthorizationInstallActionTests(
     unittest.TestCase
 ):
-    def test_sources_pin_exact_dec559(self) -> None:
+    def test_sources_pin_exact_dec583(self) -> None:
         source = validate_2021_runtime_authorization_install_action_sources(
             repository_root=REPOSITORY_ROOT,
         )
