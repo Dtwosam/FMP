@@ -28,8 +28,19 @@ class AnnualCatalogue2021ExecutionAuthorizationWorkflowTests(unittest.TestCase):
         self.assertNotIn("workflow_dispatch:", text)
         self.assertNotIn("gh workflow run ", text)
         self.assertNotIn("gh run rerun", text)
-        self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "2"', text)
         self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
+        self.assertIn("37457496751", text)
+        self.assertIn("112248575079", text)
+        self.assertIn(
+            'steps["Require exact first authorization push"] == "failure"',
+            text,
+        )
+        self.assertIn(
+            'steps["Fetch and verify exact DEC-580 preflight artifact"] == "skipped"',
+            text,
+        )
+        self.assertIn("assert artifacts == []", text)
 
     def test_workflow_pins_exact_dec580_preflight(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -41,6 +52,7 @@ class AnnualCatalogue2021ExecutionAuthorizationWorkflowTests(unittest.TestCase):
             "42582ae521d339a1a1df7b46fae7675fd5bce6cc98669bdbaa211d3bd864129e",
             "3e086e82201ed0bea85226c115ae7a09e7d95983",
             "981309374459ed6b99030f66d08ac5fc0e707dcc",
+            "src/fmp/discovery/annual_pattern_catalogue_2021_execution_preflight.py",
             "4e124365430672fa63825b272001937c60151644",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
         ):
