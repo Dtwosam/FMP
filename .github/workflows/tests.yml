@@ -435,13 +435,15 @@ jobs:
           gate2018="src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py"
           gate2019="src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py"
           gate2020="src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py"
+          gate2021="src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py"
           fixture="tests/fixtures/phase8a_annual_pattern_catalogue_runtime_pre_dec539.py.snapshot"
 
-          test "$(git hash-object "$runtime")" = "4e124365430672fa63825b272001937c60151644"
+          test "$(git hash-object "$runtime")" = "d0db13ae9ae8dfbedf9c17ebe09d53f2ec4ff7e6"
           test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
           test "$(git hash-object "$gate2018")" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
           test "$(git hash-object "$gate2019")" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
           test "$(git hash-object "$gate2020")" = "695a50b418da752e1bd37d6302f209033ab611f5"
+          test "$(git hash-object "$gate2021")" = "cac68c905bedf3105aa7e766eaa968c87bff6ce9"
           test "$(git hash-object "$fixture")" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
 
           cp "$fixture" "$runtime"
@@ -449,12 +451,14 @@ jobs:
           rm "$gate2018"
           rm "$gate2019"
           rm "$gate2020"
+          rm "$gate2021"
 
           test "$(git hash-object "$runtime")" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
           test ! -e "$gate2017"
           test ! -e "$gate2018"
           test ! -e "$gate2019"
           test ! -e "$gate2020"
+          test ! -e "$gate2021"
 
       - name: Run post-install 2016 runtime-repair tests
         env:
@@ -593,6 +597,7 @@ jobs:
           gate2018="src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py"
           gate2019="src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py"
           gate2020="src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py"
+          gate2021="src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py"
           runtime2017="docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2017_authorization.py.disabled"
           gate2017_template="docs/superpowers/templates/annual_pattern_catalogue_2017_runtime_authorization.py.disabled"
 
@@ -601,20 +606,23 @@ jobs:
           rm -f "$gate2018"
           rm -f "$gate2019"
           rm -f "$gate2020"
+          rm -f "$gate2021"
 
           test "$(git hash-object "$runtime")" = "e9cbc76dc9e6866e80088d223498fbcc3b870fd1"
           test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
           test ! -e "$gate2018"
           test ! -e "$gate2019"
           test ! -e "$gate2020"
+          test ! -e "$gate2021"
 
           {
-            git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020"
+            git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020" "$gate2021"
           } | sort -u > "$RUNNER_TEMP/dec539-temporary-state-diff.txt"
           cat > "$RUNNER_TEMP/dec539-temporary-state-expected.txt" <<'EOF'
           src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py
           src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py
           src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py
+          src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py
           src/fmp/discovery/annual_pattern_catalogue_runtime.py
           EOF
           diff -u             "$RUNNER_TEMP/dec539-temporary-state-expected.txt"             "$RUNNER_TEMP/dec539-temporary-state-diff.txt"
@@ -803,6 +811,7 @@ jobs:
           gate2018="src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py"
           gate2019="src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py"
           gate2020="src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py"
+          gate2021="src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py"
           runtime2018="docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2018_authorization.py.disabled"
           gate2018_template="docs/superpowers/templates/annual_pattern_catalogue_2018_runtime_authorization.py.disabled"
 
@@ -810,19 +819,22 @@ jobs:
           cp "$gate2018_template" "$gate2018"
           rm -f "$gate2019"
           rm -f "$gate2020"
+          rm -f "$gate2021"
 
           test "$(git hash-object "$runtime")" = "410180c34a9e3500bbbb42310a5253b993ac7785"
           test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
           test "$(git hash-object "$gate2018")" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
           test ! -e "$gate2019"
           test ! -e "$gate2020"
+          test ! -e "$gate2021"
 
           {
-            git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020"
+            git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020" "$gate2021"
           } | sort -u > "$RUNNER_TEMP/dec550-temporary-state-diff.txt"
           cat > "$RUNNER_TEMP/dec550-temporary-state-expected.txt" <<'EOF'
           src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py
           src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py
+          src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py
           src/fmp/discovery/annual_pattern_catalogue_runtime.py
           EOF
           diff -u "$RUNNER_TEMP/dec550-temporary-state-expected.txt" "$RUNNER_TEMP/dec550-temporary-state-diff.txt"
@@ -1027,21 +1039,25 @@ jobs:
           gate2018="src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py"
           gate2019="src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py"
           gate2020="src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py"
+          gate2021="src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py"
           runtime2019="docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2019_authorization.py.disabled"
           gate2019_template="docs/superpowers/templates/annual_pattern_catalogue_2019_runtime_authorization.py.disabled"
 
           cp "$runtime2019" "$runtime"
           cp "$gate2019_template" "$gate2019"
           rm -f "$gate2020"
+          rm -f "$gate2021"
 
           test "$(git hash-object "$runtime")" = "07ddfe7a968de10cd1d4f8592760cc9eb9e6300e"
           test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
           test "$(git hash-object "$gate2018")" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
           test "$(git hash-object "$gate2019")" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
           test ! -e "$gate2020"
-          actual_diff="$(git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020")"
+          test ! -e "$gate2021"
+          actual_diff="$(git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020" "$gate2021")"
           expected_diff="$(printf '%s\n' \
             "src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py" \
+            "src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py" \
             "src/fmp/discovery/annual_pattern_catalogue_runtime.py")"
           test "$actual_diff" = "$expected_diff"
 
@@ -1213,18 +1229,25 @@ jobs:
           gate2018="src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py"
           gate2019="src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py"
           gate2020="src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py"
+          gate2021="src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py"
           runtime2020="docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2020_authorization.py.disabled"
           gate2020_template="docs/superpowers/templates/annual_pattern_catalogue_2020_runtime_authorization.py.disabled"
 
           cp "$runtime2020" "$runtime"
           cp "$gate2020_template" "$gate2020"
+          rm -f "$gate2021"
 
           test "$(git hash-object "$runtime")" = "4e124365430672fa63825b272001937c60151644"
           test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
           test "$(git hash-object "$gate2018")" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
           test "$(git hash-object "$gate2019")" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
           test "$(git hash-object "$gate2020")" = "695a50b418da752e1bd37d6302f209033ab611f5"
-          test -z "$(git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020")"
+          test ! -e "$gate2021"
+          actual_diff="$(git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020" "$gate2021")"
+          expected_diff="$(printf '%s\n' \
+            "src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py" \
+            "src/fmp/discovery/annual_pattern_catalogue_runtime.py")"
+          test "$actual_diff" = "$expected_diff"
 
       - name: Run DEC-572 2020 runtime install-receipt tests
         env:
@@ -1426,6 +1449,29 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2021_runtime_install_action_workflow.py'
           -v
+      - name: Restore DEC585-installed annual runtime state
+        run: |
+          set -euo pipefail
+          runtime="src/fmp/discovery/annual_pattern_catalogue_runtime.py"
+          gate2017="src/fmp/discovery/annual_pattern_catalogue_2017_runtime_authorization.py"
+          gate2018="src/fmp/discovery/annual_pattern_catalogue_2018_runtime_authorization.py"
+          gate2019="src/fmp/discovery/annual_pattern_catalogue_2019_runtime_authorization.py"
+          gate2020="src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py"
+          gate2021="src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py"
+          runtime2021="docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2021_authorization.py.disabled"
+          gate2021_template="docs/superpowers/templates/annual_pattern_catalogue_2021_runtime_authorization.py.disabled"
+
+          cp "$runtime2021" "$runtime"
+          cp "$gate2021_template" "$gate2021"
+
+          test "$(git hash-object "$runtime")" = "d0db13ae9ae8dfbedf9c17ebe09d53f2ec4ff7e6"
+          test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
+          test "$(git hash-object "$gate2018")" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
+          test "$(git hash-object "$gate2019")" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
+          test "$(git hash-object "$gate2020")" = "695a50b418da752e1bd37d6302f209033ab611f5"
+          test "$(git hash-object "$gate2021")" = "cac68c905bedf3105aa7e766eaa968c87bff6ce9"
+          test -z "$(git diff --name-only -- "$runtime" "$gate2017" "$gate2018" "$gate2019" "$gate2020" "$gate2021")"
+
       - name: Run DEC-585 2021 runtime install-receipt tests
         env:
           PYTHONPATH: src
