@@ -160,13 +160,13 @@ class AnnualPatternCatalogue2021RuntimeAuthorizationPlanTests(unittest.TestCase)
     def test_wrong_run_number_is_rejected(self) -> None:
         value = copy.deepcopy(_authorization())
         value["expected_run_number"] = 384
-        with self.assertRaisesRegex(ValueError, "expected run number mismatch"):
+        with self.assertRaisesRegex(ValueError, "DEC-581 authorization fingerprint mismatch"):
             build_2021_runtime_authorization_plan(value, repository_root=ROOT)
 
     def test_wrong_authorization_fingerprint_is_rejected(self) -> None:
         value = copy.deepcopy(_authorization())
         value["authorization_fingerprint_sha256"] = "0" * 64
-        with self.assertRaisesRegex(ValueError, "source authorization fingerprint mismatch"):
+        with self.assertRaisesRegex(ValueError, "DEC-581 authorization fingerprint mismatch"):
             build_2021_runtime_authorization_plan(value, repository_root=ROOT)
 
     def test_current_runtime_has_no_2021_route_and_target_gate_is_absent(self) -> None:
