@@ -50,7 +50,7 @@ jobs:
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test -f .github/workflows/phase8a-annual-catalogue-2021-run383-runtime-evidence.yml
 
-      - name: Require only the atomic DEC-589/566 landing delta
+      - name: Require only the atomic DEC-589/590 landing delta
         run: |
           set -euo pipefail
           git merge-base --is-ancestor "$DEC588_HEAD_SHA" "$GITHUB_SHA"
