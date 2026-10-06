@@ -74,7 +74,7 @@ class AnnualPatternCatalogue2021Run383RuntimeEvidenceWorkflowTests(
             text,
         )
         self.assertIn('assert binding["decision"] == "DEC-590"', text)
-        self.assertIn('assert binding["run_number"] == 382', text)
+        self.assertIn('assert binding["run_number"] == 383', text)
         self.assertIn(
             'assert binding["previous_annual_freeze_run_id"] == 37443770076',
             text,
