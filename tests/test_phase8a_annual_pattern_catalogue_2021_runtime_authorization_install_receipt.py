@@ -88,7 +88,7 @@ def _action() -> dict[str, object]:
 class AnnualPatternCatalogue2021RuntimeAuthorizationInstallReceiptTests(
     unittest.TestCase
 ):
-    def test_sources_pin_concrete_dec560_action(self) -> None:
+    def test_sources_pin_concrete_dec584_action(self) -> None:
         value = validate_2021_runtime_authorization_install_receipt_sources(
             repository_root=REPOSITORY_ROOT,
         )
