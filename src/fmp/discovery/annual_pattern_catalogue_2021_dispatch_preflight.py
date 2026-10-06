@@ -161,8 +161,8 @@ def _validate_annual_inventory(
     rows = payload.get("workflow_runs")
     if not isinstance(rows, list):
         raise ValueError("DEC-586 annual workflow_runs must be a list")
-    if len(rows) != 7:
-        raise ValueError("DEC-586 requires exactly seven prior annual workflow runs")
+    if len(rows) != 8:
+        raise ValueError("DEC-586 requires exactly eight prior annual workflow runs")
     by_number: dict[int, Mapping[str, object]] = {}
     for raw in rows:
         if not isinstance(raw, Mapping):
@@ -246,7 +246,8 @@ def _validate_annual_inventory(
         "successful_2016_run_id": 37206992367,
         "successful_2017_run_id": 37227536041,
         "successful_2018_run_id": 37237817538,
-        "successful_2019_run_id": 37310525635,\n        "successful_2020_run_id": 37443770076,
+        "successful_2019_run_id": 37310525635,
+        "successful_2020_run_id": 37443770076,
     }
 
 
@@ -392,7 +393,7 @@ def validate_2021_dispatch_preflight(
         "previous_annual_freeze_run_id": 37310525635,
         "expected_run_number": 382,
         "expected_run_attempt": 1,
-        "annual_workflow_run_count": 7,
+        "annual_workflow_run_count": 8,
         "successful_2019_run_id": 37310525635,
         "runtime_authorization_installed": True,
         "runtime_gate_active": True,
