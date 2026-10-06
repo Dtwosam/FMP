@@ -1,0 +1,273 @@
+name: phase8a-annual-catalogue-2022-execution-preflight
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-2022-execution-preflight.yml
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-concrete-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      DEC590_RECOVERY_RUN_ID: "37536632065"
+      DEC590_RECOVERY_HEAD_SHA: "2798003636d1858da38c564adbb70227cbb41e76"
+      DEC590_ARTIFACT_ID: "11446806853"
+      DEC590_ARTIFACT_DIGEST: "sha256:3b4ac4827390c2262b35bf38e28a0b82140b792c7e2f9eb2575122ecd1e37eda"
+      DEC590_BINDING_CANONICAL_SHA256: "7ea6ac7ec5a780bbd41fad754d3dce212d2d6e2e198ffe88cf9d85381133c683"
+      DEC590_BINDING_FINGERPRINT: "09aa36f87de239f692c90ae8aa5f41f6a3d5dd3015445979195a9dd9e9df2dfc"
+
+    steps:
+      - name: Checkout exact landing
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Require first DEC-591 landing run
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+      - name: Require frozen DEC-591 sources
+        run: |
+          set -euo pipefail
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2022_execution_preflight.py)" = "a52661d8abd910856bc5260898a7f21cc4958f94"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2022_execution_preflight.py)" = "c926a123133c6ffea080ad9674737648d8439bcf"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2021_run383_evidence_review.py)" = "542ace21e77c2bbdf5fec5312556c58d9e641da7"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_method.py)" = "d7486296c2e953d6b4e7602c753c5529ccf5eef2"
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2021-run383-runtime-evidence.yml)" = "5b91918b4a57a3c9518b4321c07e0e8eb1c74c88"
+
+      - name: Fetch and verify exact DEC-590 recovery artifact
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC590_RECOVERY_RUN_ID" > "$RUNNER_TEMP/dec590-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC590_RECOVERY_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec590-artifacts.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          run = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "dec590-run.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          exact = {
+              "id": int(os.environ["DEC590_RECOVERY_RUN_ID"]),
+              "name": "phase8a-annual-catalogue-2021-run383-runtime-evidence",
+              "path": ".github/workflows/phase8a-annual-catalogue-2021-run383-runtime-evidence.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": os.environ["DEC590_RECOVERY_HEAD_SHA"],
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+
+          artifacts = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "dec590-artifacts.json").read_text(
+                  encoding="utf-8"
+              )
+          )["artifacts"]
+          matches = [
+              row
+              for row in artifacts
+              if row.get("id") == int(os.environ["DEC590_ARTIFACT_ID"])
+              and row.get("name")
+              == "annual-catalogue-2021-dec590-runtime-binding-37531960014"
+              and row.get("expired") is False
+              and row.get("digest") == os.environ["DEC590_ARTIFACT_DIGEST"]
+          ]
+          assert len(matches) == 1
+          PY
+
+          gh api -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC590_ARTIFACT_ID/zip"             > "$RUNNER_TEMP/dec590-binding.zip"
+          expected_sha="${DEC590_ARTIFACT_DIGEST#sha256:}"
+          actual_sha="$(sha256sum "$RUNNER_TEMP/dec590-binding.zip" | awk '{print $1}')"
+          test "$actual_sha" = "$expected_sha"
+
+          mkdir -p "$RUNNER_TEMP/dec590-binding"
+          unzip -q "$RUNNER_TEMP/dec590-binding.zip" -d "$RUNNER_TEMP/dec590-binding"
+          binding="$(
+            find "$RUNNER_TEMP/dec590-binding"               -type f -name runtime-binding-2021.json -print
+          )"
+          test "$(printf '%s\n' "$binding" | sed '/^$/d' | wc -l)" = "1"
+          cp "$binding" "$RUNNER_TEMP/runtime-binding-2021.json"
+
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ["RUNNER_TEMP"]) / "runtime-binding-2021.json"
+          value = json.loads(path.read_text(encoding="utf-8"))
+          canonical = (
+              json.dumps(
+                  value,
+                  sort_keys=True,
+                  separators=(",", ":"),
+                  allow_nan=False,
+              )
+              + "\n"
+          ).encode("utf-8")
+          assert hashlib.sha256(canonical).hexdigest() == (
+              os.environ["DEC590_BINDING_CANONICAL_SHA256"]
+          )
+          assert value["decision"] == "DEC-590"
+          assert value["annual_segment_label"] == "2021"
+          assert value["run_id"] == 37531960014
+          assert value["run_number"] == 383
+          assert value["run_attempt"] == 1
+          assert value["run_conclusion"] == "success"
+          assert value["binding_fingerprint_sha256"] == (
+              os.environ["DEC590_BINDING_FINGERPRINT"]
+          )
+          assert value["runtime_evidence_bound"] is True
+          assert value["final_required_annual_segment_bound"] is True
+          assert value["next_gate"] == (
+              "READ_ONLY_ANNUAL_PATTERN_CATALOGUE_CROSS_YEAR_COMPARISON_PREFLIGHT"
+          )
+          assert value["next_segment_execution_authorized"] is False
+          assert value["cross_year_comparison_authorized"] is False
+          assert value["trading_authorized"] is False
+          PY
+
+      - name: Fetch exact current main and annual dispatch inventory
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/branches/main" > "$RUNNER_TEMP/main-branch.json"
+          gh api             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"             > "$RUNNER_TEMP/annual-runs.json"
+
+          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-branch.json")" = "$GITHUB_SHA"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          rows = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "annual-runs.json").read_text(
+                  encoding="utf-8"
+              )
+          )["workflow_runs"]
+          assert len(rows) == 9
+          by_number = {row["run_number"]: row for row in rows}
+          assert set(by_number) == {1, 376, 377, 378, 379, 380, 381, 382, 383}
+          expected = {
+              1: (37126711695, "failure", "fd85a886d07234ad584dcca08692b37e6af54b2e"),
+              376: (37191637168, "failure", "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3"),
+              377: (37198002653, "success", "a89db974be9a94481e7ed0990476bc661012f1e4"),
+              378: (37206992367, "success", "2524fde355349581c9440a172d0384c3cbce31ed"),
+              379: (37227536041, "success", "7b4c1ef8573e280c067443b72f1534d9091d5b7f"),
+              380: (37237817538, "success", "30971a996f514670a6f836d8e45cf80137197a4f"),
+              381: (37310525635, "success", "8bcee3a7a834743f08bd9ad73109bfc09609a2fe"),
+              382: (37443770076, "success", "681e81e021d4970a67b18370142d55b17ec68864"),
+              383: (37531960014, "success", "a1e194907c273a2fcdddfb4c24d64a96cfd8d263"),
+          }
+          for number, (run_id, conclusion, head_sha) in expected.items():
+              row = by_number[number]
+              assert row["id"] == run_id
+              assert row["run_attempt"] == 1
+              assert row["event"] == "workflow_dispatch"
+              assert row["head_branch"] == "main"
+              assert row["head_sha"] == head_sha
+              assert row["status"] == "completed"
+              assert row["conclusion"] == conclusion
+          assert not any(row["run_number"] >= 384 for row in rows)
+          PY
+
+      - name: Build concrete DEC-591 2022 execution preflight
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2022_execution_preflight.py             plan             --runtime-binding-json "$RUNNER_TEMP/runtime-binding-2021.json"             --main-branch-json "$RUNNER_TEMP/main-branch.json"             --annual-workflow-runs-json "$RUNNER_TEMP/annual-runs.json"             --expected-head-sha "$GITHUB_SHA"             --out "$RUNNER_TEMP/dec591-2022-execution-preflight.json"
+
+      - name: Verify DEC-591 supersedes only the bad successor claim
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          value = json.loads(
+              (
+                  Path(os.environ["RUNNER_TEMP"])
+                  / "dec591-2022-execution-preflight.json"
+              ).read_text(encoding="utf-8")
+          )
+          assert value["decision"] == "DEC-591"
+          assert value["source_runtime_binding_decision"] == "DEC-590"
+          assert value["source_runtime_binding_workflow_run_id"] == 37536632065
+          assert value["source_runtime_binding_artifact_id"] == 11446806853
+          assert value["source_runtime_binding_canonical_sha256"] == (
+              "7ea6ac7ec5a780bbd41fad754d3dce212d2d6e2e198ffe88cf9d85381133c683"
+          )
+          assert value["source_final_required_annual_segment_bound_claim"] is True
+          assert value["source_terminal_successor_claim_superseded_by_dec469"] is True
+          assert value["governing_method_decision"] == "DEC-469"
+          assert value["collection_segment_count"] == 12
+          assert value["collection_terminal_segment_label"] == (
+              "2026_YTD_TO_2026_08_20"
+          )
+          assert value["annual_segment_label"] == "2022"
+          assert value["prior_segment_label"] == "2021"
+          assert value["previous_annual_freeze_run_id"] == 37531960014
+          assert value["annual_workflow_run_count"] == 9
+          assert value["successful_2021_run_number"] == 383
+          assert value["expected_next_run_number"] == 384
+          assert value["expected_next_run_attempt"] == 1
+          assert value["preflight_read_only"] is True
+          for field in (
+              "annual_workflow_dispatch_authorized",
+              "historical_artifact_read_authorized",
+              "historical_catalogue_execution_authorized",
+              "historical_result_production_authorized",
+              "next_segment_execution_authorized",
+              "protected_history_access_authorized",
+              "cross_year_comparison_authorized",
+              "cross_year_result_production_authorized",
+              "strategy_v1_synthesis_authorized",
+              "promotion_authorized",
+              "phase8b_authorized",
+              "demo_order_authorized",
+              "broker_mutation_authorized",
+              "live_order_authorized",
+              "real_money_authorized",
+              "trading_authorized",
+          ):
+              assert value[field] is False, field
+          assert value["next_gate"] == (
+              "ANNUAL_PATTERN_CATALOGUE_2022_EXECUTION_AUTHORIZATION_BEFORE_RUN"
+          )
+          PY
+
+      - name: Upload immutable DEC-591 preflight
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2022-dec591-execution-preflight-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/dec590-run.json
+            ${{ runner.temp }}/dec590-artifacts.json
+            ${{ runner.temp }}/runtime-binding-2021.json
+            ${{ runner.temp }}/main-branch.json
+            ${{ runner.temp }}/annual-runs.json
+            ${{ runner.temp }}/dec591-2022-execution-preflight.json
+          if-no-files-found: error
