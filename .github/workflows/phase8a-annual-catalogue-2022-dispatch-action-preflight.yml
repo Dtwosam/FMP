@@ -64,7 +64,7 @@ jobs:
           run = json.loads((temp / "dec598-run.json").read_text(encoding="utf-8"))
           exact = {
               "id": int(os.environ["DEC598_RUN_ID"]),
-              "name": "phase8a-annual-catalogue-2022-dispatch-authorization",
+              "name": "phase8a-annual-catalogue-2022-dispatch-authorization-recovery",
               "path": ".github/workflows/phase8a-annual-catalogue-2022-dispatch-authorization-recovery.yml",
               "event": "push",
               "head_branch": "main",
