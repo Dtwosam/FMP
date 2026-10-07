@@ -43,7 +43,7 @@ jobs:
 
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2022_dispatch_action_preflight.py)" = "34a805b3ab9038e847097f51a3fcc1d5c1806a53"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2022_dispatch_action_preflight.py)" = "a2c752251d6a090539ddef9192e66b79e05ac789"
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2022_run384_evidence_review.py)" = "ab661758202a8ba679687321148192856be00554"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2022_run384_evidence_review.py)" = "7048781474ce74b8bbed0fd380f8edf4ec51491d"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2022_run384_evidence_review.py)" = "2d6a436c61b13fbd502b3807dc98087bcfa7ccea"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2022_runtime_authorization.py)" = "ecb21dc7106e7bd43447f4135c3a696251a75e05"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "f2734c7ea32355b1024d1097812578b23fc4409d"
