@@ -295,6 +295,8 @@ jobs:
           assert value["cross_year_result_production_authorized"] is False
           assert value["strategy_v1_synthesis_authorized"] is False
           assert value["promotion_authorized"] is False
+          assert value["phase8b_authorized"] is False
+          assert value["demo_order_authorized"] is False
           assert value["broker_mutation_authorized"] is False
           assert value["live_order_authorized"] is False
           assert value["real_money_authorized"] is False
