@@ -138,6 +138,7 @@ class AnnualCatalogue2023RuntimeAuthorizationPlanTests(unittest.TestCase):
             "strategy_v1_synthesis_authorized",
             "promotion_authorized",
             "phase8b_authorized",
+            "demo_order_authorized",
             "broker_mutation_authorized",
             "live_order_authorized",
             "real_money_authorized",
