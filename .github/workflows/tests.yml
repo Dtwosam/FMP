@@ -1851,6 +1851,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_runtime_install_preflight_workflow.py'
           -v
+      - name: Run DEC-606 2023 runtime install-action tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_runtime_authorization_install_action.py'
+          -v
+      - name: Run DEC-606 runtime install-action workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_runtime_install_action_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
