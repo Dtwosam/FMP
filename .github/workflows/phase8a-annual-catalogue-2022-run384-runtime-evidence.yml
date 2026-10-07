@@ -1,6 +1,11 @@
 name: phase8a-annual-catalogue-2022-run384-runtime-evidence
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-2022-run384-runtime-evidence.yml
   workflow_run:
     workflows:
       - phase8a-annual-pattern-catalogue
@@ -24,28 +29,48 @@ permissions:
 
 jobs:
   review-bind-run384:
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.run_number == 384 && github.event.workflow_run.conclusion == 'success') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event.workflow_run.run_number == 384 && github.event.workflow_run.conclusion == 'success') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       PYTHONPATH: ${{ github.workspace }}/src
-      TARGET_RUN_ID: ${{ github.event_name == 'workflow_dispatch' && inputs.target_run_id || github.event.workflow_run.id }}
-      TARGET_HEAD_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.target_head_sha || github.event.workflow_run.head_sha }}
-      TARGET_RUN_NUMBER: ${{ github.event_name == 'workflow_dispatch' && inputs.target_run_number || github.event.workflow_run.run_number }}
+      RECOVERY_TARGET_RUN_ID: "37663157285"
+      RECOVERY_TARGET_HEAD_SHA: "dd79687adc4ec179c56f91939cb600e6746fab5d"
+      RECOVERY_TARGET_RUN_NUMBER: "384"
+      RECOVERY_DEC600_RUN_ID: "37663125699"
+      RECOVERY_DEC600_ARTIFACT_ID: "11501542840"
+      RECOVERY_DEC600_ARTIFACT_DIGEST: "sha256:98ed52875dd04ab9880641d5f6b81af750a9f70e872d6d50f835cd16b2fbf600"
+      RECOVERY_FREEZE_ARTIFACT_ID: "11502162657"
+      RECOVERY_FREEZE_ARTIFACT_DIGEST: "sha256:9756c9d4bf9a3579b4495b03867adce774f78735203f66c3efef6792cc600ae9"
+      TARGET_RUN_ID: ${{ github.event_name == 'push' && '37663157285' || (github.event_name == 'workflow_dispatch' && inputs.target_run_id || github.event.workflow_run.id) }}
+      TARGET_HEAD_SHA: ${{ github.event_name == 'push' && 'dd79687adc4ec179c56f91939cb600e6746fab5d' || (github.event_name == 'workflow_dispatch' && inputs.target_head_sha || github.event.workflow_run.head_sha) }}
+      TARGET_RUN_NUMBER: ${{ github.event_name == 'push' && '384' || (github.event_name == 'workflow_dispatch' && inputs.target_run_number || github.event.workflow_run.run_number) }}
 
     steps:
-      - name: Checkout exact run-383 source
+      - name: Require bounded DEC-601 recovery push
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$TARGET_RUN_ID" = "$RECOVERY_TARGET_RUN_ID"
+          test "$TARGET_HEAD_SHA" = "$RECOVERY_TARGET_HEAD_SHA"
+          test "$TARGET_RUN_NUMBER" = "$RECOVERY_TARGET_RUN_NUMBER"
+
+      - name: Checkout exact run-384 source
         uses: actions/checkout@v6
         with:
           ref: ${{ env.TARGET_HEAD_SHA }}
           fetch-depth: 0
 
-      - name: Require exact successful 2022 run 383
+      - name: Require exact successful 2022 run 384
         run: |
           set -euo pipefail
-          case "$GITHUB_EVENT_NAME" in workflow_run|workflow_dispatch) ;; *) exit 1 ;; esac
+          case "$GITHUB_EVENT_NAME" in push|workflow_run|workflow_dispatch) ;; *) exit 1 ;; esac
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$TARGET_RUN_NUMBER" = "384"
           test "$(git rev-parse HEAD)" = "$TARGET_HEAD_SHA"
@@ -142,6 +167,9 @@ jobs:
         run: |
           set -euo pipefail
           source_run_id="$(cat "$RUNNER_TEMP/dec600-run-id.txt")"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            test "$source_run_id" = "$RECOVERY_DEC600_RUN_ID"
+          fi
           gh api             "repos/$GITHUB_REPOSITORY/actions/runs/$source_run_id/artifacts?per_page=100"             > "$RUNNER_TEMP/dec600-artifacts.json"
 
           artifact_id="$(
@@ -159,6 +187,10 @@ jobs:
           test "$(printf '%s\n' "$artifact_id" | sed '/^$/d' | wc -l)" = "1"
           test -n "$artifact_digest"
           case "$artifact_digest" in sha256:*) ;; *) exit 1 ;; esac
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            test "$artifact_id" = "$RECOVERY_DEC600_ARTIFACT_ID"
+            test "$artifact_digest" = "$RECOVERY_DEC600_ARTIFACT_DIGEST"
+          fi
 
           gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > "$RUNNER_TEMP/dec600.zip"
           expected_sha="${artifact_digest#sha256:}"
@@ -198,7 +230,7 @@ jobs:
           assert receipt["annual_segment_label"] == "2022"
           assert receipt["previous_annual_freeze_run_id"] == 37531960014
           assert receipt["run_id"] == int(os.environ["TARGET_RUN_ID"])
-          assert receipt["run_number"] == 383
+          assert receipt["run_number"] == 384
           assert receipt["run_attempt"] == 1
           assert receipt["run_head_sha"] == os.environ["TARGET_HEAD_SHA"]
           assert receipt["dispatch_submitted"] is True
@@ -231,6 +263,10 @@ jobs:
           )"
           test "$(printf '%s\n' "$artifact_id" | sed '/^$/d' | wc -l)" = "1"
           case "$expected_digest" in sha256:*) ;; *) exit 1 ;; esac
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            test "$artifact_id" = "$RECOVERY_FREEZE_ARTIFACT_ID"
+            test "$expected_digest" = "$RECOVERY_FREEZE_ARTIFACT_DIGEST"
+          fi
           expected_sha="${expected_digest#sha256:}"
 
           gh api             -H 'Accept: application/vnd.github+json'             "repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip"             > "$RUNNER_TEMP/run384-freeze.zip"
@@ -260,7 +296,7 @@ jobs:
       - name: Require clean review checkout
         run: test -z "$(git status --porcelain)"
 
-      - name: Review and bind exact run 383
+      - name: Review and bind exact run 384
         run: |
           set -euo pipefail
           freeze_sha="$(cat "$RUNNER_TEMP/run384-freeze-zip-sha256.txt")"

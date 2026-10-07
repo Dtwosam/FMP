@@ -20,6 +20,13 @@ class AnnualPatternCatalogue2022Run384RuntimeEvidenceWorkflowTests(
             "name: phase8a-annual-catalogue-2022-run384-runtime-evidence",
             text,
         )
+        self.assertIn("  push:", text)
+        self.assertIn("    branches:", text)
+        self.assertIn("      - main", text)
+        self.assertIn(
+            "phase8a-annual-catalogue-2022-run384-runtime-evidence.yml",
+            text,
+        )
         self.assertIn("  workflow_run:", text)
         self.assertIn("      - phase8a-annual-pattern-catalogue", text)
         self.assertIn("  workflow_dispatch:", text)
@@ -31,6 +38,14 @@ class AnnualPatternCatalogue2022Run384RuntimeEvidenceWorkflowTests(
             "github.event.workflow_run.conclusion == 'success'",
             text,
         )
+        self.assertIn("github.event_name == 'push'", text)
+        self.assertIn('RECOVERY_TARGET_RUN_ID: "37663157285"', text)
+        self.assertIn(
+            'RECOVERY_TARGET_HEAD_SHA: '
+            '"dd79687adc4ec179c56f91939cb600e6746fab5d"',
+            text,
+        )
+        self.assertIn('RECOVERY_TARGET_RUN_NUMBER: "384"', text)
 
     def test_reviewer_is_read_only(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
@@ -51,8 +66,33 @@ class AnnualPatternCatalogue2022Run384RuntimeEvidenceWorkflowTests(
             "ecb21dc7106e7bd43447f4135c3a696251a75e05",
             "f2734c7ea32355b1024d1097812578b23fc4409d",
             "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1",
+            "37663125699",
+            "11501542840",
+            "sha256:98ed52875dd04ab9880641d5f6b81af750a9f70e872d6d50f835cd16b2fbf600",
+            "11502162657",
+            "sha256:9756c9d4bf9a3579b4495b03867adce774f78735203f66c3efef6792cc600ae9",
         ):
             self.assertIn(value, text)
+
+    def test_recovery_push_is_one_shot_and_exact(self) -> None:
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn('test "$GITHUB_RUN_NUMBER" = "1"', text)
+        self.assertIn('test "$GITHUB_RUN_ATTEMPT" = "1"', text)
+        self.assertIn(
+            'test "$source_run_id" = "$RECOVERY_DEC600_RUN_ID"',
+            text,
+        )
+        self.assertIn(
+            'test "$artifact_id" = "$RECOVERY_DEC600_ARTIFACT_ID"',
+            text,
+        )
+        self.assertIn(
+            'test "$artifact_id" = "$RECOVERY_FREEZE_ARTIFACT_ID"',
+            text,
+        )
+        self.assertIn('assert receipt["run_number"] == 384', text)
+        self.assertNotIn('assert receipt["run_number"] == 383', text)
+        self.assertNotIn("run_385_or_later_authorized = True", text)
 
     def test_reviewer_requires_successful_dec600_same_head(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
