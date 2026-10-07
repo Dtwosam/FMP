@@ -1576,6 +1576,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2022_execution_preflight_workflow.py'
           -v
+      - name: Run DEC-592 2022 execution-authorization tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2022_execution_authorization.py'
+          -v
+      - name: Run DEC-592 execution-authorization workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2022_execution_authorization_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
