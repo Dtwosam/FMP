@@ -295,7 +295,7 @@ jobs:
           test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "2"
           diff -u "$RUNNER_TEMP/expected-changed-files.txt" <(git diff --cached --name-only)
 
-      - name: Prove installed runtime imports and exact run-383 gate
+      - name: Prove installed runtime imports and exact run-384 gate
         run: |
           set -euo pipefail
           python -m py_compile             src/fmp/discovery/annual_pattern_catalogue_2022_runtime_authorization.py             src/fmp/discovery/annual_pattern_catalogue_runtime.py
