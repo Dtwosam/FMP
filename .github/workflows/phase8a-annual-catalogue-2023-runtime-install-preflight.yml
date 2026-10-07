@@ -45,7 +45,7 @@ jobs:
       - name: Require frozen DEC-605 sources
         run: |
           set -euo pipefail
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_runtime_authorization_install_preflight.py)" = "2faa9d4ccb8029d5cac73f98d06b5726169599e2"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_runtime_authorization_install_preflight.py)" = "614784849bca811cbd822cd2243eec19f26163d1"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2023_runtime_authorization_install_preflight.py)" = "2335f0c106c628ff817e904f40a29b0f589fafca"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_runtime_authorization_plan.py)" = "fe5c18f8ffa5e3d698f91060ec8c28e0d0692318"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_execution_authorization.py)" = "2c4292abadbffb9dd87edaab67d9e32783facae7"
