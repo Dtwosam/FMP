@@ -49,6 +49,7 @@ jobs:
           git merge-base --is-ancestor "$FAILED_DEC603_HEAD_SHA" "$GITHUB_SHA"
 
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_execution_authorization.py)" = "2c4292abadbffb9dd87edaab67d9e32783facae7"
+          test "$(git hash-object .github/workflows/phase8a-annual-catalogue-2023-execution-authorization.yml)" = "2ee1d7832bf0fc4d516e283bcfb698e04ebfb975"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_execution_preflight.py)" = "d7e0823bc0d7513b6d7ee27a02fb5b519bc4818b"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "f2734c7ea32355b1024d1097812578b23fc4409d"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
