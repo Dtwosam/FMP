@@ -126,9 +126,9 @@ jobs:
           test "$(jq -r '.decision' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "DEC-597"
           test "$(jq -r '.expected_head_sha' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "$DEC597_HEAD_SHA"
           test "$(jq -r '.preflight_fingerprint_sha256' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "$DEC597_PREFLIGHT_FINGERPRINT"
-          test "$(jq -r '.expected_run_number' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "383"
+          test "$(jq -r '.expected_run_number' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "384"
           test "$(jq -r '.expected_run_attempt' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "1"
-          test "$(jq -r '.previous_annual_freeze_run_id' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "37443770076"
+          test "$(jq -r '.previous_annual_freeze_run_id' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "37531960014"
           test "$(jq -r '.preflight_read_only' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "true"
           test "$(jq -r '.annual_workflow_dispatch_authorized' "$RUNNER_TEMP/dec597-2022-dispatch-preflight.json")" = "false"
 
