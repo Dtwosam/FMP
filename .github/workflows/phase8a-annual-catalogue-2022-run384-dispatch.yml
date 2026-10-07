@@ -26,7 +26,7 @@ jobs:
       DEC599_PREFLIGHT_CANONICAL_SHA256: "59016a2a5a41e29eb046fe78fc4a35417da249a6cfada9388e16a0eaee7d7b61"
 
     steps:
-      - name: Checkout exact DEC-600/590 landing
+      - name: Checkout exact DEC-600/601 landing
         uses: actions/checkout@v6
         with:
           ref: ${{ github.sha }}
@@ -50,7 +50,7 @@ jobs:
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
           test -f .github/workflows/phase8a-annual-catalogue-2022-run384-runtime-evidence.yml
 
-      - name: Require only the atomic DEC-600/590 landing delta
+      - name: Require only the atomic DEC-600/601 landing delta
         run: |
           set -euo pipefail
           git merge-base --is-ancestor "$DEC599_HEAD_SHA" "$GITHUB_SHA"
@@ -191,7 +191,7 @@ jobs:
           gh api "repos/$GITHUB_REPOSITORY/branches/main"             > "$RUNNER_TEMP/main-before-dispatch.json"
           test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-before-dispatch.json")" = "$GITHUB_SHA"
 
-          gh api             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"             > "$RUNNER_TEMP/annual-before-383.json"
+          gh api             "repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"             > "$RUNNER_TEMP/annual-before-384.json"
 
           python - <<'PY'
           import json
@@ -200,7 +200,7 @@ jobs:
 
           rows = json.loads(
               (
-                  Path(os.environ["RUNNER_TEMP"]) / "annual-before-383.json"
+                  Path(os.environ["RUNNER_TEMP"]) / "annual-before-384.json"
               ).read_text(encoding="utf-8")
           ).get("workflow_runs")
           assert isinstance(rows, list)
@@ -273,13 +273,13 @@ jobs:
           set -euo pipefail
           gh workflow run phase8a-annual-pattern-catalogue.yml             --ref main             -f annual_segment_label=2022             -f previous_annual_freeze_run_id=37531960014
 
-      - name: Resolve exact run 383 attempt 1
+      - name: Resolve exact run 384 attempt 1
         run: |
           set -euo pipefail
           endpoint="repos/$GITHUB_REPOSITORY/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
           found=0
           for _ in $(seq 1 30); do
-            gh api "$endpoint" > "$RUNNER_TEMP/annual-after-383.json"
+            gh api "$endpoint" > "$RUNNER_TEMP/annual-after-384.json"
             if python - <<'PY'
           import json
           import os
@@ -287,7 +287,7 @@ jobs:
 
           rows = json.loads(
               (
-                  Path(os.environ["RUNNER_TEMP"]) / "annual-after-383.json"
+                  Path(os.environ["RUNNER_TEMP"]) / "annual-after-384.json"
               ).read_text(encoding="utf-8")
           ).get("workflow_runs")
           assert isinstance(rows, list)
@@ -327,7 +327,7 @@ jobs:
 
           temp = Path(os.environ["RUNNER_TEMP"])
           rows = json.loads(
-              (temp / "annual-after-383.json").read_text(encoding="utf-8")
+              (temp / "annual-after-384.json").read_text(encoding="utf-8")
           )["workflow_runs"]
           targets = [
               row
@@ -392,7 +392,7 @@ jobs:
             ${{ runner.temp }}/dec599-artifacts.json
             ${{ runner.temp }}/dec599-2022-dispatch-action-preflight.json
             ${{ runner.temp }}/main-before-dispatch.json
-            ${{ runner.temp }}/annual-before-383.json
-            ${{ runner.temp }}/annual-after-383.json
+            ${{ runner.temp }}/annual-before-384.json
+            ${{ runner.temp }}/annual-after-384.json
             ${{ runner.temp }}/dec600-run384-dispatch-receipt.json
           if-no-files-found: error
