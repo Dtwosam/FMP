@@ -43,9 +43,9 @@ class AnnualPatternCatalogue2022Run384RuntimeEvidenceWorkflowTests(
     def test_reviewer_pins_exact_dispatcher_and_review_sources(self) -> None:
         text = WORKFLOW.read_text(encoding="utf-8")
         for value in (
-            "ab661758202a8ba679687321148192856be00554",
+            "7048781474ce74b8bbed0fd380f8edf4ec51491d",
             "2d6a436c61b13fbd502b3807dc98087bcfa7ccea",
-            "557c8a8f25fffa7b181e001675272315a752b131",
+            "818cf0bb73cc7cd479e8718e3f868c05a17fcccf",
             "1b14279864f01a1284c5be31552eee9bb3a2220c",
             "34a805b3ab9038e847097f51a3fcc1d5c1806a53",
             "ecb21dc7106e7bd43447f4135c3a696251a75e05",
