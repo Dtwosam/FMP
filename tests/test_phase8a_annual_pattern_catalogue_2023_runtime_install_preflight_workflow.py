@@ -45,7 +45,7 @@ class AnnualPatternCatalogue2023RuntimeInstallPreflightWorkflowTests(
             "11512058473",
             "a43cd3c767082ae3c20587690e202f98da32c9824b0cda2f33d211ac19e21de8",
             "9c5841d3842bc1c342c0e4032460c30ec66c33d0d144c47c4cf1a3523a7d1440",
-            "2faa9d4ccb8029d5cac73f98d06b5726169599e2",
+            "614784849bca811cbd822cd2243eec19f26163d1",
             "2335f0c106c628ff817e904f40a29b0f589fafca",
             "fe5c18f8ffa5e3d698f91060ec8c28e0d0692318",
             "2c4292abadbffb9dd87edaab67d9e32783facae7",
