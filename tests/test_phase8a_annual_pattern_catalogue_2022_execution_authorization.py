@@ -206,7 +206,7 @@ class AnnualPatternCatalogue2022ExecutionAuthorizationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "runtime_gate_active mismatch"):
             validate_2022_execution_authorization(tampered)
 
-    def test_wrong_run_number_is_rejected(self) -> None:
+    def test_tampered_run_number_is_rejected_by_canonical_binding(self) -> None:
         preflight = _preflight()
         preflight["expected_next_run_number"] = 385
         with patch(
@@ -214,7 +214,10 @@ class AnnualPatternCatalogue2022ExecutionAuthorizationTests(unittest.TestCase):
             "validate_2022_execution_preflight",
             return_value=preflight,
         ):
-            with self.assertRaisesRegex(ValueError, "expected run number mismatch"):
+            with self.assertRaisesRegex(
+                ValueError,
+                "source preflight canonical hash mismatch",
+            ):
                 build_2022_execution_authorization(
                     preflight,
                     repository_root=REPOSITORY_ROOT,
