@@ -32,14 +32,64 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Require first DEC-591 landing run
+      - name: Require exact second DEC-591 landing run after missing dependency failure
         run: |
           set -euo pipefail
           test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
           test "$GITHUB_REF" = "refs/heads/main"
-          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_NUMBER" = "2"
           test "$GITHUB_RUN_ATTEMPT" = "1"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37539005579"             > "$RUNNER_TEMP/failed-dec591-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37539005579/jobs?per_page=100"             > "$RUNNER_TEMP/failed-dec591-jobs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/37539005579/artifacts?per_page=100"             > "$RUNNER_TEMP/failed-dec591-artifacts.json"
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads(
+              (temp / "failed-dec591-run.json").read_text(encoding="utf-8")
+          )
+          exact = {
+              "id": 37539005579,
+              "name": "phase8a-annual-catalogue-2022-execution-preflight",
+              "path": ".github/workflows/phase8a-annual-catalogue-2022-execution-preflight.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": "fa5a8b296115d1fc089ee3755c33109b22997172",
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "failure",
+          }
+          for field, expected in exact.items():
+              assert run.get(field) == expected, (field, run.get(field), expected)
+
+          jobs = json.loads(
+              (temp / "failed-dec591-jobs.json").read_text(encoding="utf-8")
+          )["jobs"]
+          assert len(jobs) == 1
+          job = jobs[0]
+          assert job["id"] == 112527115635
+          assert job["name"] == "build-concrete-preflight"
+          assert job["conclusion"] == "failure"
+          steps = {step["name"]: step["conclusion"] for step in job["steps"]}
+          assert steps["Require frozen DEC-591 sources"] == "success"
+          assert steps["Fetch and verify exact DEC-590 recovery artifact"] == "success"
+          assert steps["Fetch exact current main and annual dispatch inventory"] == "success"
+          assert steps["Build concrete DEC-591 2022 execution preflight"] == "failure"
+          assert steps["Verify DEC-591 supersedes only the bad successor claim"] == "skipped"
+          assert steps["Upload immutable DEC-591 preflight"] == "skipped"
+
+          artifacts = json.loads(
+              (temp / "failed-dec591-artifacts.json").read_text(encoding="utf-8")
+          )["artifacts"]
+          assert artifacts == []
+          PY
 
       - name: Require frozen DEC-591 sources
         run: |
@@ -195,6 +245,20 @@ jobs:
           assert not any(row["run_number"] >= 384 for row in rows)
           PY
 
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned preflight dependencies
+        run: >-
+          python -m pip install
+          -r requirements/exp061-discovery-run.txt
+          scikit-learn==1.9.1
+
+      - name: Require clean preflight checkout
+        run: test -z "$(git status --porcelain)"
+
       - name: Build concrete DEC-591 2022 execution preflight
         run: |
           set -euo pipefail
@@ -264,6 +328,9 @@ jobs:
         with:
           name: annual-catalogue-2022-dec591-execution-preflight-${{ github.sha }}
           path: |
+            ${{ runner.temp }}/failed-dec591-run.json
+            ${{ runner.temp }}/failed-dec591-jobs.json
+            ${{ runner.temp }}/failed-dec591-artifacts.json
             ${{ runner.temp }}/dec590-run.json
             ${{ runner.temp }}/dec590-artifacts.json
             ${{ runner.temp }}/runtime-binding-2021.json
