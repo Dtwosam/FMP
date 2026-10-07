@@ -52,6 +52,10 @@ class AnnualPatternCatalogue2022DispatchActionPreflightWorkflowTests(
             text,
         )
         self.assertIn(
+            '"name": "phase8a-annual-catalogue-2022-dispatch-authorization-recovery"',
+            text,
+        )
+        self.assertIn(
             "annual-catalogue-2022-dec598-dispatch-authorization-",
             text,
         )
