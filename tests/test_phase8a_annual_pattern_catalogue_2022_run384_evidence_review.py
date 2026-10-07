@@ -137,7 +137,7 @@ def _artifacts() -> dict[str, object]:
 def _receipt() -> dict[str, object]:
     return {
         "decision": "DEC-600",
-        "stage": "ANNUAL_CATALOGUE_2022_RUN_383_DISPATCH_SUBMITTED",
+        "stage": "ANNUAL_CATALOGUE_2022_RUN_384_DISPATCH_SUBMITTED",
         "source_preflight_decision": "DEC-599",
         "source_preflight_workflow_run_id": 37657193417,
         "source_preflight_workflow_head_sha": (
@@ -175,7 +175,7 @@ def _receipt() -> dict[str, object]:
         "live_order_authorized": False,
         "real_money_authorized": False,
         "trading_authorized": False,
-        "next_gate": "REVIEW_2022_RUN_383_BEFORE_CROSS_YEAR_COMPARISON",
+        "next_gate": "REVIEW_2022_RUN_384_BEFORE_CROSS_YEAR_COMPARISON",
     }
 
 
