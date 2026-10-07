@@ -223,9 +223,9 @@ def build_2023_runtime_authorization_install_preflight(
         "authorization_fingerprint_sha256"
     ):
         raise ValueError("DEC-605 plan/authorization fingerprint mismatch")
-    if plan.get("source_authorization_workflow_run_id") != 37608559036:
+    if plan.get("source_authorization_workflow_run_id") != 37685394468:
         raise ValueError("DEC-605 plan DEC-603 workflow run mismatch")
-    if plan.get("source_authorization_artifact_id") != 11475911390:
+    if plan.get("source_authorization_artifact_id") != 11511180606:
         raise ValueError("DEC-605 plan DEC-603 artifact mismatch")
     if plan.get("plan_source_only") is not True:
         raise ValueError("DEC-605 source plan must remain source-only")
