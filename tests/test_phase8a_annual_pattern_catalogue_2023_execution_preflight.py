@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -91,6 +92,10 @@ def _runs() -> dict[str, object]:
     }
 
 
+@unittest.skipIf(
+    os.environ.get("FMP_PREINSTALL_SNAPSHOT") == "1",
+    "DEC-602 requires installed annual workflow state",
+)
 class AnnualCatalogue2023ExecutionPreflightTests(unittest.TestCase):
     def _build(
         self,
