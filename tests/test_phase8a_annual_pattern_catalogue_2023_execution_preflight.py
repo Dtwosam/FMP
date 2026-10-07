@@ -140,7 +140,13 @@ class AnnualCatalogue2023ExecutionPreflightTests(unittest.TestCase):
 
     def test_valid_2022_binding_builds_read_only_protected_2023_preflight(self) -> None:
         value = self._build()
-        self.assertIs(validate_2023_execution_preflight(value), value)
+        canonical = value["source_runtime_binding_canonical_sha256"]
+        with patch(
+            "fmp.discovery.annual_pattern_catalogue_2023_execution_preflight."
+            "EXPECTED_RUNTIME_BINDING_CANONICAL_SHA256",
+            canonical,
+        ):
+            self.assertIs(validate_2023_execution_preflight(value), value)
         self.assertEqual(value["decision"], "DEC-602")
         self.assertEqual(value["annual_segment_label"], "2023")
         self.assertEqual(value["prior_segment_label"], "2022")
