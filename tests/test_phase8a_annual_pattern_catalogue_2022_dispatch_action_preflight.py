@@ -194,7 +194,7 @@ class AnnualPatternCatalogue2022DispatchActionPreflightTests(unittest.TestCase):
         )
         self.assertEqual(
             source["authorization_source_blob_sha"],
-            "34a805b3ab9038e847097f51a3fcc1d5c1806a53",
+            "2f234ac4a420eaacdf7a61007e442d15a61ed374",
         )
         self.assertEqual(
             source["active_workflow_blob_sha"],
@@ -261,7 +261,7 @@ class AnnualPatternCatalogue2022DispatchActionPreflightTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(
             ValueError,
-            "exactly eight prior annual workflow runs",
+            "exactly nine prior annual workflow runs",
         ):
             build_2022_dispatch_action_preflight(
                 _authorization(),
