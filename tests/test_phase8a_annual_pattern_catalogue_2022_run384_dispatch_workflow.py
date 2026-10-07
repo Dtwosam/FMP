@@ -38,7 +38,7 @@ class AnnualPatternCatalogue2022Run384DispatchWorkflowTests(unittest.TestCase):
             "59016a2a5a41e29eb046fe78fc4a35417da249a6cfada9388e16a0eaee7d7b61",
             "34a805b3ab9038e847097f51a3fcc1d5c1806a53",
             "a2c752251d6a090539ddef9192e66b79e05ac789",
-            "ab661758202a8ba679687321148192856be00554",
+            "7048781474ce74b8bbed0fd380f8edf4ec51491d",
             "2d6a436c61b13fbd502b3807dc98087bcfa7ccea",
             "ecb21dc7106e7bd43447f4135c3a696251a75e05",
             "f2734c7ea32355b1024d1097812578b23fc4409d",
