@@ -11063,3 +11063,17 @@ DEC-610 carries forward DEC-609's **source** protected-catalogue authority as pr
 
 Next gate **only after successful concrete DEC-610 evidence:** `EXACT_2023_ANNUAL_PATTERN_CATALOGUE_WORKFLOW_DISPATCH_ON_CURRENT_MAIN`. No actual dispatch is authorized by the DEC-610 *preflight artifact* alone.
 
+## 2026-10-08 — DEC-611 read-only 2023 dispatch immutability safety audit
+
+**Status:** SOURCE-READY, PENDING CI/MAIN LANDING; **DISPATCH BLOCKED**.
+
+DEC-469/470 remain the governing annual discovery method and accepted full-history protocol. DEC-607's exact protected 2023 runtime is installed, and DEC-608/609/610 supply concrete sequential preflight and source-only authorization for no more than the **future** 2023 catalogue run 385 / attempt 1 (predecessor successful 2022 run `37663157285`). DEC-610 landed at `58d17adbaf2238b6b774cb69f0434259984d1cb7`, with first-push run `37773291427` / attempt 1 / success and artifact `11547739610`, ZIP SHA-256 `e093274fc52e8e5abdb1bd08455f0fcdb2374bab15f3d507abfea59b91a60143`, preflight fingerprint `07f391338fe3d20c5e823f72a14cecdf454aec87a6e7638bdd8774f3c9b4b063`, canonical JSON SHA-256 `176cadda04eac41454d401bbabeeadc91e701307bbdd94054890ae89bf65689e`. No annual run 385 has been submitted.
+
+**Rejected action design:** Original PR #777 proposed a one-shot GitHub `workflow_dispatch` on `--ref main`. Its P1 review demonstrated a check/dispatch race: GitHub resolves the mutable branch after the prior local SHA check, potentially consuming unique run number 385 on an unvetted commit. Repository `main` is currently unprotected and there are no effective repository rulesets. PR #777 was closed **without merge or dispatch**. The repository's no-retry/no-replacement constraint makes post-submission identity detection insufficient.
+
+**Approved scope of the replacement DEC-611 source proposal:** Create a path-scoped read-only audit on its first main push. It must verify the exact DEC-610 workflow-run identity/artifact ZIP digest/canonical JSON/fingerprint, pinned DEC-607/609/610 runtime and workflow sources, current main SHA, and complete ten-run annual inventory; then emit an immutable **blocked** receipt. Neither an unprotected main nor a generic `protected=true` flag can prove a fully exclusive branch lock (including authorized bypass). The evidence may report the branch's reported protection state but **always** records `main_exclusive_lock_proven=false`, `dispatch_atomic_to_vetted_sha=false`, `dispatch_blocked=true`, `annual_workflow_dispatch_authorized=false` at the DEC-611 audit layer, `dispatch_command_present=false`, and `dispatch_action_executed=false`. This read-only audit does not withdraw the earlier narrowly scoped DEC-609/610 source authority; it prevents using that authority unsafely.
+
+No rerun, retry, replacement, run 386+, 2024+ catalogue execution, cross-year analysis/results, Strategy V1 synthesis/promotion, Phase 8B, broker mutation, demo/live orders, real-money action, or trading is authorized. A future **separate** decision must establish a provable exclusive main lock lasting throughout the dispatch request or reauthorize an immutable-ref design with retested workflow/runtime and renewed source-of-truth provenance. Mere branch protection cannot automatically unblock this audit.
+
+Next gate: `EXCLUSIVE_MAIN_LOCK_OR_REAUTHORIZED_IMMUTABLE_REF_DESIGN`. No submission, lock change, or broker action is part of DEC-611.
+
