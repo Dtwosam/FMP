@@ -1,0 +1,317 @@
+name: phase8a-annual-catalogue-2023-run385-dispatch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-2023-run385-dispatch.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch-run385-once:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      DEC610_RUN_ID: "37773291427"
+      DEC610_HEAD_SHA: "58d17adbaf2238b6b774cb69f0434259984d1cb7"
+      DEC610_ARTIFACT_ID: "11547739610"
+      DEC610_ARTIFACT_DIGEST: "sha256:e093274fc52e8e5abdb1bd08455f0fcdb2374bab15f3d507abfea59b91a60143"
+      DEC610_PREFLIGHT_FINGERPRINT: "07f391338fe3d20c5e823f72a14cecdf454aec87a6e7638bdd8774f3c9b4b063"
+      DEC610_PREFLIGHT_CANONICAL_SHA256: "176cadda04eac41454d401bbabeeadc91e701307bbdd94054890ae89bf65689e"
+
+    steps:
+      - name: Checkout exact DEC-611 landing
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Require one-shot first main push and frozen sources
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_EVENT_NAME" = "push"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_RUN_NUMBER" = "1"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_dispatch_action_preflight.py)" = "60923763b844b8a1348cbfcf2612b739b8c7c28a"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2023_dispatch_action_preflight.py)" = "8b8870e1e0d14ed0eb4208a7a0ec5fbff52a5764"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_dispatch_authorization.py)" = "b7f55dd68d5054c472b4e070521c411c02a4da3c"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_runtime_authorization.py)" = "cb4d32507dc93fa8a7a1296e630ce3bc9ee9c191"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "0fb5cf4d5de1355ff8faffcff565cbbabaf1d7a3"
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
+
+      - name: Require exact bounded DEC-611 landing delta
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$DEC610_HEAD_SHA" "$GITHUB_SHA"
+          git diff --name-only "$DEC610_HEAD_SHA" "$GITHUB_SHA" > "$RUNNER_TEMP/landing-changed-files.txt"
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          actual = set(
+              (Path(os.environ["RUNNER_TEMP"]) / "landing-changed-files.txt").read_text().splitlines()
+          )
+          expected = {
+              ".github/workflows/phase8a-annual-catalogue-2023-run385-dispatch.yml",
+              ".github/workflows/tests.yml",
+              "tests/test_phase8a_annual_pattern_catalogue_2023_run385_dispatch_workflow.py",
+              "docs/project-state.md",
+              "docs/decision-log.md",
+          }
+          assert actual == expected, (sorted(actual), sorted(expected))
+          PY
+
+      - name: Fetch and verify exact DEC-610 final preflight
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/actions/runs/$DEC610_RUN_ID" > "$RUNNER_TEMP/dec610-run.json"
+          gh api "repos/$GH_REPO/actions/runs/$DEC610_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec610-artifacts.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          temp = Path(os.environ["RUNNER_TEMP"])
+          run = json.loads((temp / "dec610-run.json").read_text())
+          exact = {
+              "id": int(os.environ["DEC610_RUN_ID"]),
+              "name": "phase8a-annual-catalogue-2023-dispatch-action-preflight",
+              "path": ".github/workflows/phase8a-annual-catalogue-2023-dispatch-action-preflight.yml",
+              "event": "push",
+              "head_branch": "main",
+              "head_sha": os.environ["DEC610_HEAD_SHA"],
+              "run_number": 1,
+              "run_attempt": 1,
+              "status": "completed",
+              "conclusion": "success",
+          }
+          for key, expected in exact.items():
+              assert run.get(key) == expected, (key, run.get(key), expected)
+          matches = [
+              a for a in json.loads((temp / "dec610-artifacts.json").read_text())["artifacts"]
+              if a.get("id") == int(os.environ["DEC610_ARTIFACT_ID"])
+          ]
+          assert len(matches) == 1
+          artifact = matches[0]
+          assert artifact["expired"] is False
+          assert artifact["digest"] == os.environ["DEC610_ARTIFACT_DIGEST"]
+          assert artifact["name"] == (
+              "annual-catalogue-2023-dec610-dispatch-action-preflight-"
+              + os.environ["DEC610_HEAD_SHA"]
+          )
+          PY
+          gh api -H 'Accept: application/vnd.github+json' \
+            "repos/$GH_REPO/actions/artifacts/$DEC610_ARTIFACT_ID/zip" \
+            > "$RUNNER_TEMP/dec610.zip"
+          actual_sha="$(sha256sum "$RUNNER_TEMP/dec610.zip" | awk '{print $1}')"
+          test "sha256:$actual_sha" = "$DEC610_ARTIFACT_DIGEST"
+          mkdir -p "$RUNNER_TEMP/dec610"
+          unzip -q "$RUNNER_TEMP/dec610.zip" -d "$RUNNER_TEMP/dec610"
+          path="$RUNNER_TEMP/dec610/dec610-2023-dispatch-action-preflight.json"
+          test -f "$path"
+          test "$(find "$RUNNER_TEMP/dec610" -name dec610-2023-dispatch-action-preflight.json -type f | wc -l)" = "1"
+          cp "$path" "$RUNNER_TEMP/dec610-2023-dispatch-action-preflight.json"
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          path = Path(os.environ["RUNNER_TEMP"]) / "dec610-2023-dispatch-action-preflight.json"
+          value = json.loads(path.read_text())
+          canonical = (json.dumps(
+              value, sort_keys=True, separators=(",", ":"), allow_nan=False,
+          ) + "\n").encode()
+          assert hashlib.sha256(canonical).hexdigest() == os.environ["DEC610_PREFLIGHT_CANONICAL_SHA256"]
+          assert value["decision"] == "DEC-610"
+          assert value["expected_head_sha"] == os.environ["DEC610_HEAD_SHA"]
+          assert value["preflight_fingerprint_sha256"] == os.environ["DEC610_PREFLIGHT_FINGERPRINT"]
+          exact = {
+              "source_authorization_decision": "DEC-609",
+              "source_authorization_workflow_run_id": 37770601661,
+              "source_authorization_artifact_id": 11547430955,
+              "source_authorization_workflow_head_sha": "7d40ccaf79270162dd96a8a1e7024dd94c3a72b7",
+              "annual_segment_label": "2023",
+              "previous_annual_freeze_run_id": 37663157285,
+              "expected_run_number": 385,
+              "expected_run_attempt": 1,
+              "dispatch_ref": "main",
+              "dispatch_input_annual_segment_label": "2023",
+              "dispatch_input_previous_annual_freeze_run_id": "37663157285",
+              "annual_workflow_run_count": 10,
+              "dispatch_parameters_frozen": True,
+              "annual_workflow_dispatch_authorized": True,
+              "source_authorization_protected_history_access_authorized": True,
+              "protected_catalogue_segment": True,
+              "preflight_read_only": True,
+              "protected_history_access_authorized": False,
+              "dispatch_command_present": False,
+              "dispatch_action_executed": False,
+              "trading_authorized": False,
+          }
+          for key, expected in exact.items():
+              assert type(value.get(key)) is type(expected) and value[key] == expected, key
+          for key in (
+              "rerun_authorized", "retry_authorized", "replacement_run_authorized",
+              "run_386_or_later_authorized", "next_segment_execution_authorized",
+              "cross_year_comparison_authorized", "cross_year_result_production_authorized",
+              "strategy_v1_synthesis_authorized", "promotion_authorized", "phase8b_authorized",
+              "demo_order_authorized", "broker_mutation_authorized", "live_order_authorized",
+              "real_money_authorized",
+          ):
+              assert value[key] is False, key
+          PY
+
+      - name: Recheck current main and exact unconsumed run-385 slot
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/branches/main" > "$RUNNER_TEMP/main-before-dispatch.json"
+          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-before-dispatch.json")" = "$GITHUB_SHA"
+          gh api "repos/$GH_REPO/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
+            > "$RUNNER_TEMP/annual-before-385.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload = json.loads((Path(os.environ["RUNNER_TEMP"]) / "annual-before-385.json").read_text())
+          rows = payload.get("workflow_runs")
+          assert isinstance(rows, list) and len(rows) == 10
+          expected = {
+              1: (37126711695, "fd85a886d07234ad584dcca08692b37e6af54b2e", "failure"),
+              376: (37191637168, "4c14fa7db6eb812b89ecb79201f7e298fa9c04f3", "failure"),
+              377: (37198002653, "a89db974be9a94481e7ed0990476bc661012f1e4", "success"),
+              378: (37206992367, "2524fde355349581c9440a172d0384c3cbce31ed", "success"),
+              379: (37227536041, "7b4c1ef8573e280c067443b72f1534d9091d5b7f", "success"),
+              380: (37237817538, "30971a996f514670a6f836d8e45cf80137197a4f", "success"),
+              381: (37310525635, "8bcee3a7a834743f08bd9ad73109bfc09609a2fe", "success"),
+              382: (37443770076, "681e81e021d4970a67b18370142d55b17ec68864", "success"),
+              383: (37531960014, "a1e194907c273a2fcdddfb4c24d64a96cfd8d263", "success"),
+              384: (37663157285, "dd79687adc4ec179c56f91939cb600e6746fab5d", "success"),
+          }
+          by_number = {r["run_number"]: r for r in rows}
+          assert len(by_number) == 10 and set(by_number) == set(expected)
+          for number, (run_id, sha, result) in expected.items():
+              row = by_number[number]
+              exact = {
+                  "id": run_id, "run_attempt": 1, "head_sha": sha,
+                  "name": "phase8a-annual-pattern-catalogue",
+                  "path": ".github/workflows/phase8a-annual-pattern-catalogue.yml",
+                  "event": "workflow_dispatch", "head_branch": "main",
+                  "status": "completed", "conclusion": result,
+              }
+              for field, expected_value in exact.items():
+                  assert row.get(field) == expected_value, (number, field)
+          assert not any(r["run_number"] >= 385 for r in rows)
+          PY
+
+      - name: Submit exactly protected 2023 annual run 385
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$GH_REPO/branches/main" --jq '.commit.sha')" = "$GITHUB_SHA"
+          gh workflow run phase8a-annual-pattern-catalogue.yml \
+            --ref main \
+            -f annual_segment_label=2023 \
+            -f previous_annual_freeze_run_id=37663157285
+
+      - name: Resolve exact submitted run 385 attempt 1
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GH_REPO/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100"
+          found=0
+          for _ in $(seq 1 30); do
+            gh api "$endpoint" > "$RUNNER_TEMP/annual-after-385.json"
+            if python - <<'PY'
+          import json, os
+          from pathlib import Path
+          rows = json.loads((Path(os.environ["RUNNER_TEMP"]) / "annual-after-385.json").read_text())["workflow_runs"]
+          matches = [
+              r for r in rows if r.get("run_number") == 385
+              and r.get("run_attempt") == 1
+              and r.get("event") == "workflow_dispatch"
+              and r.get("head_branch") == "main"
+              and r.get("head_sha") == os.environ["GITHUB_SHA"]
+          ]
+          assert len(matches) <= 1
+          assert not any(isinstance(r.get("run_number"), int) and r["run_number"] >= 386 for r in rows)
+          raise SystemExit(0 if len(matches) == 1 else 1)
+          PY
+            then
+              found=1
+              break
+            fi
+            sleep 2
+          done
+          test "$found" = 1
+
+      - name: Write bounded DEC-611 dispatch receipt
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          temp = Path(os.environ["RUNNER_TEMP"])
+          rows = json.loads((temp / "annual-after-385.json").read_text())["workflow_runs"]
+          exact = [
+              r for r in rows if r.get("run_number") == 385
+              and r.get("run_attempt") == 1 and r.get("head_sha") == os.environ["GITHUB_SHA"]
+              and r.get("event") == "workflow_dispatch"
+          ]
+          assert len(exact) == 1
+          target = exact[0]
+          receipt = {
+              "decision": "DEC-611",
+              "stage": "ANNUAL_CATALOGUE_PROTECTED_2023_RUN_385_DISPATCH_SUBMITTED",
+              "source_preflight_decision": "DEC-610",
+              "source_preflight_workflow_run_id": int(os.environ["DEC610_RUN_ID"]),
+              "source_preflight_workflow_head_sha": os.environ["DEC610_HEAD_SHA"],
+              "source_preflight_artifact_id": int(os.environ["DEC610_ARTIFACT_ID"]),
+              "source_preflight_artifact_digest": os.environ["DEC610_ARTIFACT_DIGEST"],
+              "source_preflight_fingerprint_sha256": os.environ["DEC610_PREFLIGHT_FINGERPRINT"],
+              "dispatch_head_sha": os.environ["GITHUB_SHA"],
+              "annual_segment_label": "2023",
+              "previous_annual_freeze_run_id": 37663157285,
+              "run_id": target["id"],
+              "run_number": 385,
+              "run_attempt": 1,
+              "run_head_sha": target["head_sha"],
+              "dispatch_submitted": True,
+              "result_claimed": False,
+              "protected_catalogue_segment": True,
+              "protected_history_access_authorized": True,
+              "rerun_authorized": False,
+              "retry_authorized": False,
+              "replacement_run_authorized": False,
+              "run_386_or_later_authorized": False,
+              "next_segment_execution_authorized": False,
+              "cross_year_comparison_authorized": False,
+              "cross_year_result_production_authorized": False,
+              "strategy_v1_synthesis_authorized": False,
+              "promotion_authorized": False,
+              "phase8b_authorized": False,
+              "demo_order_authorized": False,
+              "broker_mutation_authorized": False,
+              "live_order_authorized": False,
+              "real_money_authorized": False,
+              "trading_authorized": False,
+              "next_gate": "REVIEW_EXACT_2023_ANNUAL_RUN_385_EVIDENCE_BEFORE_2024",
+          }
+          (temp / "dec611-run385-dispatch-receipt.json").write_text(
+              json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False) + "\n"
+          )
+          PY
+
+      - name: Upload immutable DEC-611 dispatch receipt
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2023-dec611-run385-dispatch-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/landing-changed-files.txt
+            ${{ runner.temp }}/dec610-run.json
+            ${{ runner.temp }}/dec610-artifacts.json
+            ${{ runner.temp }}/dec610-2023-dispatch-action-preflight.json
+            ${{ runner.temp }}/main-before-dispatch.json
+            ${{ runner.temp }}/annual-before-385.json
+            ${{ runner.temp }}/annual-after-385.json
+            ${{ runner.temp }}/dec611-run385-dispatch-receipt.json
+          if-no-files-found: error

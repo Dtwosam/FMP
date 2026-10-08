@@ -1957,6 +1957,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_dispatch_action_preflight_workflow.py'
           -v
+      - name: Run DEC-611 2023 run385 dispatcher workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_run385_dispatch_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
