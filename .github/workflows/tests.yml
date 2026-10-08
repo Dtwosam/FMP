@@ -2045,6 +2045,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_ref_race_interleaving_model.py'
           -v
+      - name: Run DEC-620 untrusted lock interval coverage model tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_lock_witness_coverage.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
