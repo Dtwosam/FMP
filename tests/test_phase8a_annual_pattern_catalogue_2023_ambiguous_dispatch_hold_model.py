@@ -32,13 +32,17 @@ def _simulation(*, called: bool = True, outcome: str = "timeout") -> dict[str, o
 
 
 def _run(*, head_sha: str = A, run_number: int = 385, attempt: int = 1,
-         run_id: int = 42, predecessor: int = 37663157285) -> dict[str, object]:
+         run_id: int = 42, predecessor: int = 37663157285,
+         workflow_path: str = ".github/workflows/phase8a-annual-pattern-catalogue.yml",
+         annual_segment_label: str = "2023") -> dict[str, object]:
     return {
         "run_id": run_id,
         "run_number": run_number,
         "run_attempt": attempt,
         "event": "workflow_dispatch",
         "workflow": WORKFLOW,
+        "workflow_path": workflow_path,
+        "annual_segment_label": annual_segment_label,
         "head_sha": head_sha,
         "previous_annual_freeze_run_id": predecessor,
     }
@@ -107,6 +111,8 @@ class Run385AmbiguousDispatchHoldModelTests(unittest.TestCase):
             {"attempt": 2},
             {"run_number": 386},
             {"predecessor": 10},
+            {"workflow_path": ".github/workflows/other-annual.yml"},
+            {"annual_segment_label": "2024"},
         )
         for mutant in mutants:
             with self.subTest(mutant=mutant):
@@ -148,6 +154,8 @@ class Run385AmbiguousDispatchHoldModelTests(unittest.TestCase):
         a = _simulation(); a["observed_runs"] = [_run(head_sha="bad")]; inputs.append(a)
         a = _simulation(); a["observed_runs"] = [_run()]; a["observed_runs"][0]["unknown"] = 1; inputs.append(a)
         a = _simulation(); a["observed_runs"] = [_run()]; a["observed_runs"][0]["event"] = "push"; inputs.append(a)
+        a = _simulation(); a["observed_runs"] = [_run()]; a["observed_runs"][0]["workflow_path"] = 12; inputs.append(a)
+        a = _simulation(); a["observed_runs"] = [_run()]; a["observed_runs"][0]["annual_segment_label"] = False; inputs.append(a)
         a = _simulation(); a["observed_runs"] = [_run(run_id=i+1) for i in range(9)]; inputs.append(a)
         for idx, inp in enumerate(inputs):
             with self.subTest(idx=idx):
