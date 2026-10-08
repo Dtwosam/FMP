@@ -1957,6 +1957,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_dispatch_action_preflight_workflow.py'
           -v
+      - name: Run DEC-611 protected 2023 dispatch immutability audit tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_dispatch_immutability_audit.py'
+          -v
+      - name: Run DEC-611 dispatch immutability audit workflow tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_dispatch_immutability_audit_workflow.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
