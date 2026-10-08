@@ -2077,6 +2077,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_preaccess_identity_gate_topology_audit.py'
           -v
+      - name: Run DEC-624 inert three-layer precheckout and preinstall SHA admission tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_three_layer_admission_model.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
