@@ -36,6 +36,7 @@ INPUT_KEYS = frozenset((
 RUN_KEYS = frozenset((
     "run_id", "run_number", "run_attempt", "event", "workflow",
     "head_sha", "previous_annual_freeze_run_id",
+    "workflow_path", "annual_segment_label",
 ))
 DENIED = (
     "live_annual_run_inventory_authenticated",
@@ -110,6 +111,10 @@ def _validate_input(value: object) -> dict[str, object]:
         seen.add(item["run_id"])
         if not isinstance(item.get("workflow"), str) or not item["workflow"]:
             raise ValueError("DEC-621 invalid workflow")
+        if not isinstance(item.get("workflow_path"), str) or not item["workflow_path"]:
+            raise ValueError("DEC-621 invalid observed workflow path")
+        if not isinstance(item.get("annual_segment_label"), str) or not item["annual_segment_label"]:
+            raise ValueError("DEC-621 missing observed annual segment input")
         if item.get("event") != "workflow_dispatch":
             raise ValueError("DEC-621 only models workflow_dispatch run records")
         if not _is_sha(item.get("head_sha")):
@@ -131,6 +136,8 @@ def _report(*, repository_root: Path, input_doc: object) -> dict[str, object]:
             item["run_number"] == RUN_NUMBER
             and item["run_attempt"] == RUN_ATTEMPT
             and item["workflow"] == WORKFLOW
+            and item["workflow_path"] == ANNUAL_WORKFLOW_PATH
+            and item["annual_segment_label"] == "2023"
             and item["head_sha"] == expected
             and item["previous_annual_freeze_run_id"] == PREDECESSOR_RUN_ID
         )
