@@ -12,6 +12,8 @@ from fmp.discovery.annual_pattern_catalogue_2023_disarmed_tag_amendment_preview 
 
 
 def _assess(args: argparse.Namespace) -> int:
+    if args.out.resolve().is_relative_to(Path.cwd().resolve()):
+        raise ValueError("DEC-618 preview report must be written outside the checkout")
     result = build_2023_disarmed_tag_amendment_preview(repository_root=Path("."))
     validate_2023_disarmed_tag_amendment_preview(result)
     output = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
