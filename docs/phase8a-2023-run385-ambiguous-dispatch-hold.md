@@ -14,7 +14,7 @@ The active annual workflow is pinned at Git blob `09b3a8f5ace25f9bf316827b9f4f82
 
 The assess-only CLI takes an untrusted, local JSON file with strict fields: `schema`, `reviewed_code_sha` (lowercase 40-hex synthetic SHA), strict boolean `dispatch_call_made`, `client_observed_outcome` and a bounded list `observed_runs`. The allowed client outcomes are `not_called`, `local_validation_failed`, `http_accepted`, `http_rejected`, `transport_error`, `timeout` and `unknown`.
 
-Each hypothetical observed run contains a positive integer `run_id`, `run_number`, `run_attempt`, `previous_annual_freeze_run_id`, `workflow`, `event` (exactly `workflow_dispatch`) and lowercase `head_sha`. An exact synthetic match requires run 385, attempt 1, the approved predecessor, the annual workflow name and the input reviewed SHA. Inputs are not real GitHub run records.
+Each hypothetical observed run contains a positive integer `run_id`, `run_number`, `run_attempt`, `previous_annual_freeze_run_id`, `workflow`, the **exact** `workflow_path`, `annual_segment_label`, `event` (exactly `workflow_dispatch`) and lowercase `head_sha`. An exact synthetic match requires run 385, attempt 1, the approved predecessor, the annual workflow display name **and** the installed workflow path `.github/workflows/phase8a-annual-pattern-catalogue.yml`, input `annual_segment_label=2023` and the reviewed SHA. A different workflow file with the same display name or another annual segment is a conflict, not an exact match. Inputs are not real GitHub run records.
 
 | Offline case | Synthetic interpretation | Dispatch/retry allowed? |
 | --- | --- | --- |
