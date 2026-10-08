@@ -45,7 +45,8 @@ class AnnualPatternCatalogue2023RuntimeInstallExecutorRecoveryTests(unittest.Tes
             "Verify installed main and build DEC-607 receipt",
             "Upload immutable DEC-607 install evidence",
         ):
-            self.assertIn(f'assert steps["{name}"] == "skipped"', text)
+            self.assertIn(f'"{name}",', text)
+        self.assertIn('assert steps[name] == "skipped"', text)
         self.assertIn("assert artifacts == []", text)
 
     def test_recovery_corrects_only_dec605_provenance_assertions(self) -> None:
