@@ -76,6 +76,9 @@ def _source(root: Path) -> str:
 
 
 def _preview(source: str) -> tuple[str, str]:
+    # Refuse any changed original workflow job/guard topology, including test fixtures.
+    if verify_original_workflow_order(source) != list(REQUIRED_JOBS):
+        raise ValueError("DEC-618 original guard job ordering changed")
     # Never touch disk at the original workflow path: return only a diff.
     preview = source.replace(MAIN_REF_GUARD, DISARMED_GUARD)
     if preview.count(HARD_STOP_MESSAGE) != 3 or preview.count(MAIN_REF_GUARD) != 0:
