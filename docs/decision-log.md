@@ -11160,3 +11160,15 @@ The installed 2023 runtime gate cb4d32507dc93fa8a7a1296e630ce3bc9ee9c191 validat
 Every report preserves candidate_guard_installed=false, active_workflow_tag_compatible=false, workflow_amendment_authorized=false, runtime_amendment_authorized=false, immutable_tag_proven=false, annual_workflow_dispatch_authorized=false, dispatch_blocked=true, dispatch_action_executed=false and trading_authorized=false. No run 385 dispatch or retry, 2024+, cross-year synthesis, promotion, Phase 8B, broker/demo/live order or real-money action is authorized. Future release requires independent admin no-bypass witness spanning dispatch, reviewed workflow/runtime amendment and a fresh explicit one-shot decision. The exclusive-main lock path remains an alternative subject to the same independent immutability proof.
 
 Companion source-only design: docs/phase8a-2023-run385-tag-ref-guard-rehearsal.md.
+
+## 2026-10-08 — DEC-618 source-only disarmed annual tag amendment preview
+
+**Status:** SOURCE-ONLY / PENDING EXACT-HEAD CI AND INDEPENDENT REVIEW. DEC-617 PR #786 merged at a2a767d5a09a32282722bfb24b98dad96ef27c9c after passing full historical/general regression, compilation, focused tests and Phase 3. Reserved annual 2023 run 385 / attempt 1 remains unconsumed, following successful 2022 run 384/id 37663157285. Main remains unprotected and effective no-bypass tag proof is absent (issue #779).
+
+DEC-618 generates **only a local JSON/disarmed unified diff preview** of the three active annual workflow main-ref guards, using pinned original workflow blob 09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1 and DEC-617 job/event/ref ordering verification. The proposed synthetic ref refs/tags/fmp/phase8a/2023/run385/dec618-not-authorized is deliberately not approved; each proposed job adds an unconditional exit 1 hard stop. Original workflow bytes are required to reconstruct exactly after reversing the in-memory substitutions. The active workflow file is never written or installed.
+
+DEC-618 does not install a new runtime SHA/ref identity binding, authenticate tag immutability, provide an operator lock witness, change branch/tag/rulesets, create a workflow dispatcher, or permit historical execution. Its reports always set candidate_workflow_installed=false, runtime_amendment_installed=false, workflow_tag_execution_compatible=false, immutable_tag_proven=false, annual_workflow_dispatch_authorized=false, dispatch_blocked=true, dispatch_action_executed=false and trading_authorized=false. An affirmative source-only preview is not a release gate.
+
+Future tag execution still needs a separately authorized and independently tested three-job workflow+2023 runtime amendment, continuous authoritative admin proof of exact tag immutability/no bypass during the server-side request, renewed annual inventory and a distinct one-shot run 385 action decision. Exclusive-main lock remains a separate similarly gated alternative. No retries, 2024+, cross-year synthesis, promotion, Phase 8B, broker, demo/live, real money or trading.
+
+Design: docs/phase8a-2023-run385-disarmed-tag-amendment-preview.md.
