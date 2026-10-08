@@ -11232,3 +11232,13 @@ Any real design still requires independently authenticated continuous administra
 ### DEC-624 follow-up — exact DEC-623 merge verified, PR #793 now targets main
 
 DEC-623 PR #792 merged at `eeadf2d44475ba2a1765327b2630939b13564f64` after full exact-head checks (focused unit suite, historical/general regression, compile and Phase 3 acceptance) and clean code review. PR #793's base moved from DEC-623 feature branch to this independently verified `main`; its source-only three-layer predicate remains uninstalled. A new exact-head test and review gate is required before DEC-624 merge. The workflow blob `09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1` is unchanged. No annual dispatch, tag creation, historical read, retry, trading or authorization occurs, and issue #779 remains OPEN.
+
+## 2026-10-09 — DEC-625 uninstalled independent reviewed identity versus GitHub runner context boundary
+
+**Status:** SOURCE-ONLY / inert synthetic fixture / no real immutable ref, workflow or runtime amendment, administrative grant, research dispatch or trading authority. DEC-625 follows the verified DEC-624 landing at `433505888275e049067c2914d6fb7e05694cdc6d`.
+
+DEC-622 modeled exact runtime event, tag, workflow-ref and SHA comparisons; DEC-624 staged synthetic precheckout, preinstall and pre-evidence gate placements. DEC-625 closes an additional trust-model omission: **the expected reviewed ref/SHA cannot be derived from the same untrusted `github.ref`, `github.sha`, `github.workflow_ref` or `github.workflow_sha` values being checked.** A purported `reviewed` field inside the runner is not independently authenticated review evidence.
+
+The source-only fixture pins the unchanged annual workflow and 2023 runtime Git blobs, tests independent-source-vs-observed tuple matching, and rejects 25 manipulated inputs including coordinated self-attested SHA and tag changes on **both** sides of the comparison. Exact source-bound canonical report regeneration rejects a rehashed forged authorization, and all live execution/broker/trading permissions remain false. A positive fixture means synthetic equality only—not immutable ref proof, external review or a workflow command.
+
+Issue #779 remains OPEN: independently authenticated continuous no-bypass admin ref enforcement, separately reviewed real installed three-job and 2023 runtime gates using an external approved identity, fresh run-385 inventory and an explicit single action remain absent. The 2023 annual workflow dispatch slot must not be consumed; no retries, historical protected reads, phase promotions, future years or trading are authorized.
