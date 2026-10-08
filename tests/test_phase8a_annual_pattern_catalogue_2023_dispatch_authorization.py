@@ -105,6 +105,48 @@ class AnnualCatalogue2023DispatchAuthorizationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_2023_dispatch_authorization(changed, repository_root=ROOT, authorization_head_sha=HEAD)
 
+    def test_refingerprinted_protected_scope_mutations_are_rejected(self) -> None:
+        value = build_2023_dispatch_authorization(
+            _preflight(), repository_root=ROOT, authorization_head_sha=HEAD
+        )
+        for field in (
+            "source_authorization_protected_history_access_authorized",
+            "protected_catalogue_segment",
+            "governing_method_decision",
+            "governing_protocol_decision",
+            "protocol_full_collection_catalogue_use_authorized",
+            "protocol_2023_2026_catalogue_use_authorized",
+        ):
+            for operation in ("modify", "remove"):
+                with self.subTest(field=field, operation=operation):
+                    changed = copy.deepcopy(value)
+                    if operation == "remove":
+                        changed.pop(field)
+                    elif type(changed[field]) is bool:
+                        changed[field] = False
+                    else:
+                        changed[field] = "DEC-000"
+                    _refingerprint(changed, "authorization_fingerprint_sha256")
+                    with self.assertRaisesRegex(ValueError, f"{field} mismatch"):
+                        validate_2023_dispatch_authorization(changed)
+
+    def test_refingerprinted_numeric_boolean_provenance_is_rejected(self) -> None:
+        value = build_2023_dispatch_authorization(
+            _preflight(), repository_root=ROOT, authorization_head_sha=HEAD
+        )
+        for field in (
+            "source_authorization_protected_history_access_authorized",
+            "protected_catalogue_segment",
+            "protocol_full_collection_catalogue_use_authorized",
+            "protocol_2023_2026_catalogue_use_authorized",
+        ):
+            with self.subTest(field=field):
+                changed = copy.deepcopy(value)
+                changed[field] = 1
+                _refingerprint(changed, "authorization_fingerprint_sha256")
+                with self.assertRaisesRegex(ValueError, f"{field} mismatch"):
+                    validate_2023_dispatch_authorization(changed)
+
     def test_refingerprinted_run386_authority_is_rejected(self) -> None:
         value = build_2023_dispatch_authorization(
             _preflight(), repository_root=ROOT, authorization_head_sha=HEAD

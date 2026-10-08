@@ -45,7 +45,7 @@ jobs:
       - name: Require frozen DEC-609 sources
         run: |
           set -euo pipefail
-          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_dispatch_authorization.py)" = "a7065e073c29c5f965fbe7a5e8a92193597aa9bd"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_dispatch_authorization.py)" = "b7f55dd68d5054c472b4e070521c411c02a4da3c"
           test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2023_dispatch_authorization.py)" = "341091275d57b1222aa4a6b3e00212f7609ec37d"
           test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_dispatch_preflight.py)" = "fb4f8fa390e94a75a8d52c99cbc041e9bf1e8164"
           test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
@@ -247,6 +247,9 @@ jobs:
           assert value["source_authorization_protected_history_access_authorized"] is True
           assert value["governing_method_decision"] == "DEC-469"
           assert value["governing_protocol_decision"] == "DEC-470"
+          assert value["protected_catalogue_segment"] is True
+          assert value["protocol_full_collection_catalogue_use_authorized"] is True
+          assert value["protocol_2023_2026_catalogue_use_authorized"] is True
           assert value["authorization_scope"] == "2023_run_385_attempt_1_only"
           for field in (
               "dispatch_command_present",

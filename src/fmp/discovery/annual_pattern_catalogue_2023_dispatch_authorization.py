@@ -356,6 +356,12 @@ def validate_2023_dispatch_authorization(
         "installed_gate_blob_sha": EXPECTED_INSTALLED_GATE_BLOB_SHA,
         "installed_runtime_blob_sha": EXPECTED_INSTALLED_RUNTIME_BLOB_SHA,
         "source_preflight_decision": "DEC-608",
+        "source_authorization_protected_history_access_authorized": True,
+        "protected_catalogue_segment": True,
+        "governing_method_decision": "DEC-469",
+        "governing_protocol_decision": "DEC-470",
+        "protocol_full_collection_catalogue_use_authorized": True,
+        "protocol_2023_2026_catalogue_use_authorized": True,
         "source_preflight_version": (
             "fmp-annual-catalogue-2023-dispatch-preflight-v1"
         ),
@@ -406,7 +412,11 @@ def validate_2023_dispatch_authorization(
         ),
     }
     for field, expected in exact.items():
-        if value.get(field) != expected:
+        actual = value.get(field)
+        if (
+            (type(expected) is bool and actual is not expected)
+            or (type(expected) is not bool and actual != expected)
+        ):
             raise ValueError(f"DEC-609 {field} mismatch")
 
     _validate_commit(

@@ -27,7 +27,7 @@ class AnnualCatalogue2023DispatchAuthorizationWorkflowTests(unittest.TestCase):
             "11544233443", "7750c5d3b68b21dc7a4199e97ee3ce2fd8fdcb53fb6170c5270a78f695a512fc",
             "9f1533d5993c28c86f53d2c7bd0f219178465da2c0eb987ae923ac9af8aca695",
             "6044191b89bbd6b33338b86077715be7d925d30ac14cd38845c948523f6ae651",
-            "a7065e073c29c5f965fbe7a5e8a92193597aa9bd",
+            "b7f55dd68d5054c472b4e070521c411c02a4da3c",
             "341091275d57b1222aa4a6b3e00212f7609ec37d",
             "fb4f8fa390e94a75a8d52c99cbc041e9bf1e8164",
             "cb4d32507dc93fa8a7a1296e630ce3bc9ee9c191",
