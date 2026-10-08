@@ -103,6 +103,28 @@ class DisarmedTagAmendmentPreviewTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "hard-stop"):
             validate_2023_disarmed_tag_amendment_preview(changed)
 
+    def test_rehashed_payload_injection_and_forged_preview_sha_fail(self):
+        baseline = build_2023_disarmed_tag_amendment_preview(repository_root=ROOT)
+        forged = copy.deepcopy(baseline)
+        forged["preview_unified_diff"] += "\n+      - name: Inject authorization override\n+        run: echo unsafe\n"
+        _recompute(forged)
+        with self.assertRaisesRegex(ValueError, "preview diff mismatch"):
+            validate_2023_disarmed_tag_amendment_preview(forged)
+
+        forged = copy.deepcopy(baseline)
+        forged["preview_sha256"] = "0" * 64
+        _recompute(forged)
+        with self.assertRaisesRegex(ValueError, "preview SHA mismatch"):
+            validate_2023_disarmed_tag_amendment_preview(forged)
+
+        forged = copy.deepcopy(baseline)
+        forged["preview_unified_diff"] = forged["preview_unified_diff"].replace(
+            " (DISARMED PREVIEW ONLY)", " (EXECUTABLE WORKFLOW)",
+        )
+        _recompute(forged)
+        with self.assertRaisesRegex(ValueError, "preview diff mismatch"):
+            validate_2023_disarmed_tag_amendment_preview(forged)
+
     def test_preview_cli_cannot_dispatch_or_modify_workflow(self):
         source = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_disarmed_tag_amendment_preview.py").read_text(encoding="utf-8")
         self.assertIn('sub.add_parser("assess")', source)
