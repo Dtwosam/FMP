@@ -13,6 +13,7 @@ from fmp.discovery.annual_pattern_catalogue_2023_lock_witness_coverage import (
     VERSION,
     build_2023_run385_lock_witness_coverage,
     validate_2023_run385_lock_witness_coverage,
+    parse_untrusted_witness_json,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -157,12 +158,58 @@ class Run385LockWitnessCoverageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source-bound report payload mismatch"):
             validate_2023_run385_lock_witness_coverage(report)
 
+    def test_rehashed_bool_integer_and_numeric_retyping_is_rejected(self):
+        baseline = build_2023_run385_lock_witness_coverage(
+            repository_root=ROOT, witness=_witness(),
+        )
+        for key, replacement in (
+            ("witness_authenticated", 0),
+            ("real_money_authorized", 0),
+            ("dispatch_blocked", 1),
+            ("source_only_analysis", 1),
+            ("all_required_intervals_claimed_positive", 1),
+            ("expected_run_number", 385.0),
+        ):
+            with self.subTest(key=key):
+                report = copy.deepcopy(baseline)
+                report[key] = replacement
+                _rehash(report)
+                with self.assertRaisesRegex(ValueError, "source-bound report payload mismatch"):
+                    validate_2023_run385_lock_witness_coverage(report)
+
+    def test_duplicate_json_keys_rejected_before_any_claim_is_accepted(self):
+        valid = json.dumps(_witness(), sort_keys=True)
+        self.assertEqual(parse_untrusted_witness_json(valid), _witness())
+        malformed = (
+            valid.replace(
+                '"all_bypass_paths_blocked": true',
+                '"all_bypass_paths_blocked": false, "all_bypass_paths_blocked": true',
+                1,
+            ),
+            valid.replace(
+                '"ref": "refs/heads/main"',
+                '"ref": "refs/heads/malicious", "ref": "refs/heads/main"',
+                1,
+            ),
+            valid.replace(
+                '"resolved_ref_sha": "' + SHA + '"',
+                '"resolved_ref_sha": "' + ("b" * 40) +
+                '", "resolved_ref_sha": "' + SHA + '"',
+                1,
+            ),
+        )
+        for sample in malformed:
+            with self.subTest(sample=sample[:100]):
+                with self.assertRaisesRegex(ValueError, "duplicate JSON object key"):
+                    parse_untrusted_witness_json(sample)
+
     def test_cli_is_only_offline_assess_and_blocks_checkout_output(self):
         script = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_lock_witness_coverage.py").read_text(
             encoding="utf-8"
         )
         self.assertIn('sub.add_parser("assess")', script)
         self.assertIn("target.is_relative_to(root)", script)
+        self.assertIn("parse_untrusted_witness_json(", script)
         for forbidden in (
             "gh workflow run", "git push", "git tag", "subprocess.",
             "requests.", "gh api --method POST", 'sub.add_parser("dispatch")',
