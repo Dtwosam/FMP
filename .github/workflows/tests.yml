@@ -437,15 +437,17 @@ jobs:
           gate2020="src/fmp/discovery/annual_pattern_catalogue_2020_runtime_authorization.py"
           gate2021="src/fmp/discovery/annual_pattern_catalogue_2021_runtime_authorization.py"
           gate2022="src/fmp/discovery/annual_pattern_catalogue_2022_runtime_authorization.py"
+          gate2023="src/fmp/discovery/annual_pattern_catalogue_2023_runtime_authorization.py"
           fixture="tests/fixtures/phase8a_annual_pattern_catalogue_runtime_pre_dec539.py.snapshot"
 
-          test "$(git hash-object "$runtime")" = "f2734c7ea32355b1024d1097812578b23fc4409d"
+          test "$(git hash-object "$runtime")" = "0fb5cf4d5de1355ff8faffcff565cbbabaf1d7a3"
           test "$(git hash-object "$gate2017")" = "c1853eeec55ee98b3155a6054f07cf360793ba9b"
           test "$(git hash-object "$gate2018")" = "cd50f50156cf74c34cd97d69d24291dc373b390f"
           test "$(git hash-object "$gate2019")" = "d87fe85a5b426fa92caf7d6cc165445590f4097c"
           test "$(git hash-object "$gate2020")" = "695a50b418da752e1bd37d6302f209033ab611f5"
           test "$(git hash-object "$gate2021")" = "cac68c905bedf3105aa7e766eaa968c87bff6ce9"
           test "$(git hash-object "$gate2022")" = "ecb21dc7106e7bd43447f4135c3a696251a75e05"
+          test "$(git hash-object "$gate2023")" = "cb4d32507dc93fa8a7a1296e630ce3bc9ee9c191"
           test "$(git hash-object "$fixture")" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
 
           cp "$fixture" "$runtime"
@@ -455,6 +457,7 @@ jobs:
           rm "$gate2020"
           rm "$gate2021"
           rm "$gate2022"
+          rm "$gate2023"
 
           test "$(git hash-object "$runtime")" = "b564f5a26fdef146fc6080962e7c4762b0b5949a"
           test ! -e "$gate2017"
@@ -463,6 +466,7 @@ jobs:
           test ! -e "$gate2020"
           test ! -e "$gate2021"
           test ! -e "$gate2022"
+          test ! -e "$gate2023"
 
       - name: Run post-install 2016 runtime-repair tests
         env:
@@ -1686,11 +1690,14 @@ jobs:
           test "$(git hash-object "$runtime")" = "d0db13ae9ae8dfbedf9c17ebe09d53f2ec4ff7e6"
           test ! -e "$gate2022"
 
-          git checkout -- "$runtime" "$gate2022"
+          runtime2022="docs/superpowers/templates/annual_pattern_catalogue_runtime_with_2022_authorization.py.disabled"
+          cp "$runtime2022" "$runtime"
+          git checkout -- "$gate2022"
 
           test "$(git hash-object "$runtime")" = "f2734c7ea32355b1024d1097812578b23fc4409d"
           test "$(git hash-object "$gate2022")" = "ecb21dc7106e7bd43447f4135c3a696251a75e05"
-          test -z "$(git diff --name-only -- "$runtime" "$gate2022")"
+          test "$(git hash-object "$runtime2022")" = "f2734c7ea32355b1024d1097812578b23fc4409d"
+          test -z "$(git diff --name-only -- "$gate2022")"
       - name: Run DEC-597 2022 dispatch-preflight tests
         env:
           PYTHONPATH: src
@@ -1891,6 +1898,17 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_runtime_install_executor_recovery.py'
           -v
+      - name: Restore DEC607-installed annual runtime state
+        run: |
+          set -euo pipefail
+          runtime="src/fmp/discovery/annual_pattern_catalogue_runtime.py"
+          gate2023="src/fmp/discovery/annual_pattern_catalogue_2023_runtime_authorization.py"
+          test ! -e "$gate2023"
+          test "$(git hash-object "$runtime")" = "f2734c7ea32355b1024d1097812578b23fc4409d"
+          git checkout -- "$runtime" "$gate2023"
+          test "$(git hash-object "$runtime")" = "0fb5cf4d5de1355ff8faffcff565cbbabaf1d7a3"
+          test "$(git hash-object "$gate2023")" = "cb4d32507dc93fa8a7a1296e630ce3bc9ee9c191"
+          test -z "$(git diff --name-only -- "$runtime" "$gate2023")"
       - name: Run DEC-608 protected 2023 dispatch preflight tests
         env:
           PYTHONPATH: src
