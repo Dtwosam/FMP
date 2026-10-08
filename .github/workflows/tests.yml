@@ -2053,6 +2053,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_lock_witness_coverage.py'
           -v
+      - name: Run DEC-621 ambiguous dispatch no-retry hold model tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_ambiguous_dispatch_hold_model.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
