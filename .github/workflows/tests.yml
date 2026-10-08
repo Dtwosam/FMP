@@ -2061,6 +2061,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_ambiguous_dispatch_hold_model.py'
           -v
+      - name: Run DEC-622 inert 2023 runtime tag ref and SHA binding tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_runtime_tag_sha_binding_preview.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
