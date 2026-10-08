@@ -19,12 +19,12 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       PYTHONPATH: ${{ github.workspace }}/src
-      DEC597_RUN_ID: "37766405383"
-      DEC597_HEAD_SHA: "d9194944f53d311a9030deaf3ee37bff465634ed"
-      DEC597_ARTIFACT_ID: "11544233443"
-      DEC597_ARTIFACT_DIGEST: "sha256:7750c5d3b68b21dc7a4199e97ee3ce2fd8fdcb53fb6170c5270a78f695a512fc"
-      DEC597_PREFLIGHT_FINGERPRINT: "9f1533d5993c28c86f53d2c7bd0f219178465da2c0eb987ae923ac9af8aca695"
-      DEC597_PREFLIGHT_CANONICAL_SHA256: "6044191b89bbd6b33338b86077715be7d925d30ac14cd38845c948523f6ae651"
+      DEC608_RUN_ID: "37766405383"
+      DEC608_HEAD_SHA: "d9194944f53d311a9030deaf3ee37bff465634ed"
+      DEC608_ARTIFACT_ID: "11544233443"
+      DEC608_ARTIFACT_DIGEST: "sha256:7750c5d3b68b21dc7a4199e97ee3ce2fd8fdcb53fb6170c5270a78f695a512fc"
+      DEC608_PREFLIGHT_FINGERPRINT: "9f1533d5993c28c86f53d2c7bd0f219178465da2c0eb987ae923ac9af8aca695"
+      DEC608_PREFLIGHT_CANONICAL_SHA256: "6044191b89bbd6b33338b86077715be7d925d30ac14cd38845c948523f6ae651"
 
     steps:
       - name: Checkout exact DEC-609 landing
@@ -56,8 +56,8 @@ jobs:
       - name: Fetch and verify exact DEC-608 preflight evidence
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC597_RUN_ID" > "$RUNNER_TEMP/dec608-run.json"
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC597_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec608-artifacts.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC608_RUN_ID" > "$RUNNER_TEMP/dec608-run.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$DEC608_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec608-artifacts.json"
 
           python - <<'PY'
           import json, os
@@ -95,7 +95,7 @@ jobs:
           PY
 
           gh api -H 'Accept: application/vnd.github+json' \
-            "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC597_ARTIFACT_ID/zip" \
+            "repos/$GITHUB_REPOSITORY/actions/artifacts/$DEC608_ARTIFACT_ID/zip" \
             > "$RUNNER_TEMP/dec608.zip"
           actual="$(sha256sum "$RUNNER_TEMP/dec608.zip" | awk '{print $1}')"
           test "$actual" = "7750c5d3b68b21dc7a4199e97ee3ce2fd8fdcb53fb6170c5270a78f695a512fc"
@@ -119,13 +119,13 @@ jobs:
               + "\n"
           ).encode("utf-8")
           assert hashlib.sha256(canonical).hexdigest() == os.environ[
-              "DEC597_PREFLIGHT_CANONICAL_SHA256"
+              "DEC608_PREFLIGHT_CANONICAL_SHA256"
           ]
           PY
 
           test "$(jq -r '.decision' "$RUNNER_TEMP/dec608-2023-dispatch-preflight.json")" = "DEC-608"
-          test "$(jq -r '.expected_head_sha' "$RUNNER_TEMP/dec608-2023-dispatch-preflight.json")" = "$DEC597_HEAD_SHA"
-          test "$(jq -r '.preflight_fingerprint_sha256' "$RUNNER_TEMP/dec608-2023-dispatch-preflight.json")" = "$DEC597_PREFLIGHT_FINGERPRINT"
+          test "$(jq -r '.expected_head_sha' "$RUNNER_TEMP/dec608-2023-dispatch-preflight.json")" = "$DEC608_HEAD_SHA"
+          test "$(jq -r '.preflight_fingerprint_sha256' "$RUNNER_TEMP/dec608-2023-dispatch-preflight.json")" = "$DEC608_PREFLIGHT_FINGERPRINT"
           test "$(jq -r '.expected_run_number' "$RUNNER_TEMP/dec608-2023-dispatch-preflight.json")" = "385"
           test "$(jq -r '.expected_run_attempt' "$RUNNER_TEMP/dec608-2023-dispatch-preflight.json")" = "1"
           test "$(jq -r '.previous_annual_freeze_run_id' "$RUNNER_TEMP/dec608-2023-dispatch-preflight.json")" = "37663157285"
