@@ -2013,6 +2013,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_immutable_tag_feasibility.py'
           -v
+      - name: Run DEC-616 2023 tag ruleset static review tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_tag_ruleset_static_review.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
