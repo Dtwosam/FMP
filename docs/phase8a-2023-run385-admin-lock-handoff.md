@@ -53,3 +53,9 @@ Never paste an admin-read token into GitHub issues, PRs, repository files, Actio
 The offline read-only script scripts/phase8a_annual_pattern_catalogue_2023_admin_lock_handoff.py uses a verified DEC-612 JSON artifact, fresh read-only main and annual history snapshots, and an expected head SHA. It rejects altered DEC-612 provenance, changed frozen source blobs, shifted main or consumed run 385. Its output includes a deterministic fingerprint and required_human_proofs checklist. It **always** records dispatch_blocked=true, admin_evidence_gathered_by_this_packet=false and all execution/trading authorities false.
 
 **Next external gate:** HUMAN_ADMIN_EXCLUSIVE_MAIN_LOCK_WITNESS_AND_SEPARATE_DISPATCH_DECISION. The run-385 executor remains uninstalled and unarmed.
+
+## DEC-614 concrete first-push archive (verified 2026-10-08)
+
+The read-only artifact freeze is now complete. PR #782 merged at `ab7c5b34889e666ce14b8a00d572bcd0a07fb2cf`; first-main-push workflow run `37799674451` (attempt 1, successful) generated artifact `11559788794`, ZIP SHA-256 `52f2c02a3ac8002c2f8b7d043080bcf47292e36f9574e9d37bcce2fb93d4f11d`. Internal `dec614-2023-admin-lock-handoff.json` canonical SHA-256 is `7e470b83d4b9a04017955835ff412aa07a0a7dc91b2193b350354bbbf659a267`, and its independently recomputed handoff fingerprint is `6376c28695301ff68e44d2c353c47421c5f2a0b1574310ccf39e5508ae5ca3c0`.
+
+The artifact records current main unprotected, human/admin proof **not gathered**, and the exact remaining checklist. It does **not** prove an exclusive lock, does not approve one-shot annual run 385, and has no write/trading permissions. The ten prior annual runs remain frozen, with run 385 unconsumed. Administrator action under issue #779 and a separate action decision are still necessary. Never treat this packet as dispatch authorization.
