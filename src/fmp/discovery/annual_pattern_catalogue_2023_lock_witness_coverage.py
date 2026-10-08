@@ -82,6 +82,25 @@ def _digest(value: object) -> str:
     return hashlib.sha256(_canonical(value)).hexdigest()
 
 
+def _reject_duplicate_json_object_keys(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
+    # json.loads otherwise discards the earlier claim, including an explicit
+    # adverse bypass or ref-lock field overwritten by a later duplicate.
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("DEC-620 duplicate JSON object key: " + key)
+        result[key] = value
+    return result
+
+
+def parse_untrusted_witness_json(source: str) -> dict[str, object]:
+    value = json.loads(source, object_pairs_hook=_reject_duplicate_json_object_keys)
+    claims, _ = _validate_witness(value)
+    return claims
+
+
 def _validate_witness(witness: object) -> tuple[dict[str, object], str]:
     if not isinstance(witness, dict) or set(witness) != WITNESS_KEYS:
         raise ValueError("DEC-620 witness has invalid top-level fields")
@@ -185,5 +204,8 @@ def validate_2023_run385_lock_witness_coverage(value: Mapping[str, object]) -> N
         repository_root=Path(__file__).resolve().parents[3],
         witness=without_fingerprint.get("untrusted_witness"),
     )
-    if without_fingerprint != expected:
+    # Python's ordinary dict equality equates False to 0 and True to 1.
+    # Canonical JSON preserves those types and detects retyped permission
+    # fields even when the adversary recomputes the report SHA-256.
+    if _canonical(without_fingerprint) != _canonical(expected):
         raise ValueError("DEC-620 source-bound report payload mismatch")
