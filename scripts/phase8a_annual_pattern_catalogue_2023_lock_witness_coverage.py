@@ -8,6 +8,7 @@ from typing import Sequence
 from fmp.discovery.annual_pattern_catalogue_2023_lock_witness_coverage import (
     build_2023_run385_lock_witness_coverage,
     validate_2023_run385_lock_witness_coverage,
+    parse_untrusted_witness_json,
 )
 
 
@@ -18,7 +19,7 @@ def _assess(args: argparse.Namespace) -> int:
         raise ValueError("DEC-620 report output cannot be inside the checkout")
     # Inputs are caller-supplied, offline and unauthenticated. All outputs
     # continue to deny effective lock proof, dispatch and trading authority.
-    witness = json.loads(args.witness_json.read_text(encoding="utf-8"))
+    witness = parse_untrusted_witness_json(args.witness_json.read_text(encoding="utf-8"))
     report = build_2023_run385_lock_witness_coverage(
         repository_root=root, witness=witness,
     )
