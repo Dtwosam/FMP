@@ -88,7 +88,7 @@ class Run385RefRaceInterleavingTests(unittest.TestCase):
         self.assertFalse(report["real_tag_immutability_proven"])
         self.assertFalse(report["live_annual_run385_consumption_state_verified"])
         self.assertFalse(report["annual_dispatch_authorized"])
-        self.assertFalse(report["no_real_dispatch_performed"] is False)
+        self.assertTrue(report["no_real_dispatch_performed"])
         self.assertTrue(report["dispatch_blocked"])
 
     def test_rehashed_fake_live_authority_or_modified_schedule_rejected(self):
