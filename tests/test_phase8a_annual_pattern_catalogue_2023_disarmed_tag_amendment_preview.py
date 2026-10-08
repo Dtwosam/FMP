@@ -59,6 +59,7 @@ class DisarmedTagAmendmentPreviewTests(unittest.TestCase):
         self.assertFalse(report["candidate_workflow_installed"])
         self.assertFalse(report["workflow_tag_execution_compatible"])
         self.assertFalse(report["annual_workflow_dispatch_authorized"])
+        self.assertFalse(report["run_385_current_state_independently_verified"])
         self.assertTrue(report["dispatch_blocked"])
         self.assertFalse(report["trading_authorized"])
 
