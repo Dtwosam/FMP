@@ -36,7 +36,7 @@ An illustrative **untrusted, incomplete** sample (cannot yield a positive lock c
 }
 ```
 
-The all-a commit is a fabricated fixture and never a reviewed production SHA. Every interval, if present, is an object containing `interval` (one of the four labels listed above), `resolved_ref_sha` (lowercase 40-hex) and boolean keys `lock_effective`, `ref_updates_blocked`, `ref_deletion_blocked`, `ref_recreation_blocked`, `all_bypass_paths_blocked`, and `all_inherited_rules_visible`. The parser rejects any unknown keys and duplicate labels.
+The all-a commit is a fabricated fixture and never a reviewed production SHA. Every interval, if present, is an object containing `interval` (one of the four labels listed above), `resolved_ref_sha` (lowercase 40-hex) and boolean keys `lock_effective`, `ref_updates_blocked`, `ref_deletion_blocked`, `ref_recreation_blocked`, `all_bypass_paths_blocked`, and `all_inherited_rules_visible`. The parser rejects unknown keys, duplicate interval labels **and duplicate JSON object keys at every nesting level** (including a false bypass claim overwritten later by true). Independent report validation compares canonical JSON bytes rather than Python's type-coercing equality, so a rehashed `false` changed to integer `0`, `true` changed to `1` or a run number changed to a float cannot pass.
 
 Read-only example:
 
