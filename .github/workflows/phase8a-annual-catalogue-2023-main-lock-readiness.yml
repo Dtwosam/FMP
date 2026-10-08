@@ -132,19 +132,30 @@ jobs:
           PY
 
       - name: Fetch optional GitHub lock policy snapshots, fail closed on missing visibility
+        # GitHub's default GITHUB_TOKEN cannot read branch protection.
+        # Optional GitHub App/PAT must be scoped to Administration: read only.
+        # No credential or insufficient scope means null evidence, never unlocked.
+        env:
+          ADMIN_READ_TOKEN: ${{ secrets.FMP_GITHUB_ADMIN_READ_TOKEN }}
         run: |
           set -euo pipefail
-          if ! gh api "repos/$GH_REPO/branches/main/protection" \
-              > "$RUNNER_TEMP/branch-protection.json" 2> "$RUNNER_TEMP/protection-error.txt"; then
+          if [ -z "${ADMIN_READ_TOKEN:-}" ]; then
             printf 'null\n' > "$RUNNER_TEMP/branch-protection.json"
-          fi
-          if ! gh api "repos/$GH_REPO/rules/branches/main" \
-              > "$RUNNER_TEMP/effective-branch-rules.json" 2> "$RUNNER_TEMP/rules-error.txt"; then
             printf 'null\n' > "$RUNNER_TEMP/effective-branch-rules.json"
-          fi
-          if ! gh api "repos/$GH_REPO/rulesets?includes_parents=true&per_page=100" \
-              > "$RUNNER_TEMP/inherited-rulesets.json" 2> "$RUNNER_TEMP/rulesets-error.txt"; then
             printf 'null\n' > "$RUNNER_TEMP/inherited-rulesets.json"
+          else
+            if ! GH_TOKEN="$ADMIN_READ_TOKEN" gh api "repos/$GH_REPO/branches/main/protection" \
+                > "$RUNNER_TEMP/branch-protection.json" 2> "$RUNNER_TEMP/protection-error.txt"; then
+              printf 'null\n' > "$RUNNER_TEMP/branch-protection.json"
+            fi
+            if ! GH_TOKEN="$ADMIN_READ_TOKEN" gh api "repos/$GH_REPO/rules/branches/main" \
+                > "$RUNNER_TEMP/effective-branch-rules.json" 2> "$RUNNER_TEMP/rules-error.txt"; then
+              printf 'null\n' > "$RUNNER_TEMP/effective-branch-rules.json"
+            fi
+            if ! GH_TOKEN="$ADMIN_READ_TOKEN" gh api "repos/$GH_REPO/rulesets?includes_parents=true&per_page=100" \
+                > "$RUNNER_TEMP/inherited-rulesets.json" 2> "$RUNNER_TEMP/rulesets-error.txt"; then
+              printf 'null\n' > "$RUNNER_TEMP/inherited-rulesets.json"
+            fi
           fi
 
       - name: Setup Python

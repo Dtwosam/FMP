@@ -60,7 +60,12 @@ class Annual2023MainLockReadinessWorkflowTests(unittest.TestCase):
             "rulesets?includes_parents=true",
         ):
             self.assertIn(path, w)
-        self.assertEqual(w.count("printf 'null\\n'"), 3)
+        self.assertEqual(w.count("printf 'null\\n'"), 6)
+        self.assertIn("secrets.FMP_GITHUB_ADMIN_READ_TOKEN", w)
+        self.assertIn('GH_TOKEN="$ADMIN_READ_TOKEN" gh api', w)
+        self.assertIn('if [ -z "${ADMIN_READ_TOKEN:-}" ]; then', w)
+        self.assertIn("Administration: read only", w)
+        self.assertNotIn("ADMIN_READ_TOKEN: ${{ github.token }}", w)
         self.assertIn("r[\"dispatch_blocked\"] is True", w)
         self.assertIn("r[\"expected_run_number\"] == 385", w)
         self.assertIn("len(rows) == 10", w)
