@@ -37,7 +37,7 @@ LOCKED_FALSE = (
     "tag_protection_mutation_authorized",
     "annual_workflow_dispatch_authorized",
     "dispatch_action_executed",
-    "run_385_consumed",
+    "run_385_current_state_independently_verified",
     "retry_authorized",
     "rerun_authorized",
     "replacement_run_authorized",
