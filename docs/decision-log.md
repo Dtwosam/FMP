@@ -11115,3 +11115,11 @@ No annual-workflow dispatch command, actions-write/admin permission, branch prot
 
 Next gate: HUMAN_ADMIN_EXCLUSIVE_MAIN_LOCK_WITNESS_AND_SEPARATE_DISPATCH_DECISION (issue #779). No dispatch, branch-lock change or trading is authorized by DEC-614.
 
+### 2026-10-08 — DEC-614 concrete first-push artifact attestation (no action authorization)
+
+**Status: PASSED as a read-only evidence freeze only.** PR #782 merged on 2026-10-08 at SHA ab7c5b34889e666ce14b8a00d572bcd0a07fb2cf after exact-head full general/historical regression, compilation, Phase 3, focused workflow tests and review. First-main-push workflow phase8a-annual-catalogue-2023-admin-handoff-freeze run 37799674451, run number 1, attempt 1, event push, head ab7c5b34889e666ce14b8a00d572bcd0a07fb2cf, completed success. Artifact 11559788794, immutable archive digest sha256:52f2c02a3ac8002c2f8b7d043080bcf47292e36f9574e9d37bcce2fb93d4f11d. Extracted DEC-613 administrator handoff JSON had canonical SHA-256 7e470b83d4b9a04017955835ff412aa07a0a7dc91b2193b350354bbbf659a267 and verified content fingerprint 6376c28695301ff68e44d2c353c47421c5f2a0b1574310ccf39e5508ae5ca3c0. The archive and internal fingerprints were independently recalculated, not inferred from a workflow outcome alone.
+
+The packet binds the ten exact annual predecessor runs, ends at successful 2022 run 384 / id 37663157285 and expects only future 2023 run 385 / attempt 1. It reports human_proof_required=true, admin_evidence_gathered_by_this_packet=false, main_exclusive_lock_proven=false, dispatch_atomic_to_vetted_sha=false, annual_workflow_dispatch_authorized=false, dispatch_blocked=true, dispatch_action_executed=false, trading_authorized=false. A separate live check reconfirmed main at the exact merge SHA, unprotected, with no 385+ record. The first-main-push success does not retroactively allow a dispatch or resolve issue #779.
+
+**Next gate remains HUMAN_ADMIN_EXCLUSIVE_MAIN_LOCK_WITNESS_AND_SEPARATE_DISPATCH_DECISION.** No retry, replacement, run 386+, later-year execution, cross-year results, Strategy V1 synthesis/promotion, Phase 8B, broker mutation, demo/live order, real money or trading is approved.
+
