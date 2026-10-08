@@ -2029,6 +2029,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_tag_ref_guard_rehearsal.py'
           -v
+      - name: Run DEC-618 disarmed annual tag amendment preview tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_disarmed_tag_amendment_preview.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
