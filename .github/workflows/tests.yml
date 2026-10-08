@@ -1989,6 +1989,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_main_lock_readiness_workflow.py'
           -v
+      - name: Run DEC-613 2023 administrator lock handoff tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_admin_lock_handoff.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
