@@ -107,7 +107,8 @@ class Run385RefRaceInterleavingTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "source-bound report payload mismatch"):
                     validate_2023_run385_ref_race_interleaving_report(forged)
         forged = copy.deepcopy(report)
-        forged["profiles"][0]["schedules"][1]["wrong_sha_consumed_hypothetically"] = False
+        counterexample = next(row for row in forged["profiles"][0]["schedules"] if row["wrong_sha_consumed_hypothetically"])
+        counterexample["wrong_sha_consumed_hypothetically"] = False
         _rehash(forged)
         with self.assertRaisesRegex(ValueError, "source-bound report payload mismatch"):
             validate_2023_run385_ref_race_interleaving_report(forged)
