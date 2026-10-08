@@ -2069,6 +2069,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_runtime_tag_sha_binding_preview.py'
           -v
+      - name: Run DEC-623 inert pre-evidence identity gate topology audit tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_preaccess_identity_gate_topology_audit.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
