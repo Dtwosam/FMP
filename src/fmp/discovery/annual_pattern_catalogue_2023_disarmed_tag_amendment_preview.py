@@ -199,3 +199,12 @@ def validate_2023_disarmed_tag_amendment_preview(value: Mapping[str, object]) ->
         raise ValueError("DEC-618 diff disarm message mismatch")
     if diff.count("-          " + MAIN_REF_GUARD) != 3:
         raise ValueError("DEC-618 diff source guards mismatch")
+    # Independent validation is *not* a signature check. Rebuild the exact
+    # disarmed diff from the separately pinned original source, then compare
+    # all bytes and the preview SHA; a re-fingerprinted modified diff must fail.
+    original = _source(Path(__file__).resolve().parents[3])
+    expected_preview, expected_diff = _preview(original)
+    if diff != expected_diff:
+        raise ValueError("DEC-618 preview diff mismatch against pinned original source")
+    if preview_sha != hashlib.sha256(expected_preview.encode("utf-8")).hexdigest():
+        raise ValueError("DEC-618 preview SHA mismatch against pinned disarmed preview")
