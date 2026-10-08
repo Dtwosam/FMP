@@ -106,6 +106,7 @@ class DisarmedTagAmendmentPreviewTests(unittest.TestCase):
     def test_preview_cli_cannot_dispatch_or_modify_workflow(self):
         source = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_disarmed_tag_amendment_preview.py").read_text(encoding="utf-8")
         self.assertIn('sub.add_parser("assess")', source)
+        self.assertIn("args.out.resolve().is_relative_to(Path.cwd().resolve())", source)
         for forbidden in (
             "git push", "git tag", "gh workflow run", "subprocess.",
             "gh api --method POST", 'sub.add_parser("dispatch")',
