@@ -1,0 +1,220 @@
+name: phase8a-annual-catalogue-2023-main-lock-readiness
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/phase8a-annual-catalogue-2023-main-lock-readiness.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  record-run385-main-lock-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PYTHONPATH: ${{ github.workspace }}/src
+      DEC611_RUN_ID: "37778086874"
+      DEC611_HEAD_SHA: "329e467a924ec00956505355f6cc1da7a589207c"
+      DEC611_ARTIFACT_ID: "11550716769"
+      DEC611_ARTIFACT_DIGEST: "sha256:3a9412e93cabd68eb5f19e73bf2769fa610c081ea10ce5fa370fa2ba59bf1e93"
+      DEC611_FINGERPRINT: "f1842fd06bdba200be7ab521ed2735a9429df4836408a18297888d9c3d6416a5"
+      DEC611_CANONICAL_SHA256: "5de4c3b87b64795c14f84211c838c9d9e1400c4c32b06d46946cb10a00e3a026"
+
+    steps:
+      - name: Checkout exact read-only DEC-612 assessment source
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Require main and immutable source pins
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "Dtwosam/FMP"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$GITHUB_EVENT_NAME" = "push" -o "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_RUN_ATTEMPT" = "1"
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            test "$GITHUB_RUN_NUMBER" = "1"
+          fi
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_main_lock_readiness.py)" = "e4c76ef4993f03d51200139dee708250cf40e80f"
+          test "$(git hash-object scripts/phase8a_annual_pattern_catalogue_2023_main_lock_readiness.py)" = "001a7bfc2e689cf11a0992de86aeeb481647856d"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_dispatch_immutability_audit.py)" = "39b3898240b887a4f1418a9980fbe3b7b2c6f2d3"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_dispatch_action_preflight.py)" = "60923763b844b8a1348cbfcf2612b739b8c7c28a"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_dispatch_authorization.py)" = "b7f55dd68d5054c472b4e070521c411c02a4da3c"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_2023_runtime_authorization.py)" = "cb4d32507dc93fa8a7a1296e630ce3bc9ee9c191"
+          test "$(git hash-object src/fmp/discovery/annual_pattern_catalogue_runtime.py)" = "0fb5cf4d5de1355ff8faffcff565cbbabaf1d7a3"
+          test "$(git hash-object .github/workflows/phase8a-annual-pattern-catalogue.yml)" = "09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1"
+
+      - name: Reauthenticate immutable DEC-611 blocked-dispatch evidence
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/actions/runs/$DEC611_RUN_ID" > "$RUNNER_TEMP/dec611-run.json"
+          gh api "repos/$GH_REPO/actions/runs/$DEC611_RUN_ID/artifacts?per_page=100" > "$RUNNER_TEMP/dec611-artifacts.json"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          t = Path(os.environ["RUNNER_TEMP"])
+          r = json.loads((t / "dec611-run.json").read_text())
+          exact = {
+              "id": 37778086874,
+              "name": "phase8a-annual-catalogue-2023-dispatch-immutability-audit",
+              "path": ".github/workflows/phase8a-annual-catalogue-2023-dispatch-immutability-audit.yml",
+              "event": "push", "head_branch": "main",
+              "head_sha": os.environ["DEC611_HEAD_SHA"],
+              "run_number": 1, "run_attempt": 1,
+              "status": "completed", "conclusion": "success",
+          }
+          for k, expected in exact.items():
+              assert type(r.get(k)) is type(expected) and r[k] == expected, k
+          rows = json.loads((t / "dec611-artifacts.json").read_text())["artifacts"]
+          found = [x for x in rows if x.get("id") == 11550716769]
+          assert len(found) == 1
+          a = found[0]
+          assert a["expired"] is False
+          assert a["digest"] == os.environ["DEC611_ARTIFACT_DIGEST"]
+          assert a["name"] == (
+              "annual-catalogue-2023-dec611-dispatch-immutability-audit-"
+              + os.environ["DEC611_HEAD_SHA"]
+          )
+          PY
+          gh api -H 'Accept: application/vnd.github+json' \
+            "repos/$GH_REPO/actions/artifacts/$DEC611_ARTIFACT_ID/zip" > "$RUNNER_TEMP/dec611.zip"
+          actual="$(sha256sum "$RUNNER_TEMP/dec611.zip" | awk '{print $1}')"
+          test "sha256:$actual" = "$DEC611_ARTIFACT_DIGEST"
+          mkdir -p "$RUNNER_TEMP/dec611"
+          unzip -q "$RUNNER_TEMP/dec611.zip" -d "$RUNNER_TEMP/dec611"
+          path="$RUNNER_TEMP/dec611/dec611-2023-dispatch-immutability-audit.json"
+          test -f "$path"
+          test "$(find "$RUNNER_TEMP/dec611" -name dec611-2023-dispatch-immutability-audit.json -type f | wc -l)" = "1"
+          cp "$path" "$RUNNER_TEMP/dec611-audit.json"
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          v = json.loads((Path(os.environ["RUNNER_TEMP"]) / "dec611-audit.json").read_text())
+          data = (json.dumps(v, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode()
+          assert hashlib.sha256(data).hexdigest() == os.environ["DEC611_CANONICAL_SHA256"]
+          assert v["decision"] == "DEC-611"
+          assert v["expected_head_sha"] == os.environ["DEC611_HEAD_SHA"]
+          assert v["audit_fingerprint_sha256"] == os.environ["DEC611_FINGERPRINT"]
+          assert v["dispatch_blocked"] is True
+          assert v["main_exclusive_lock_proven"] is False
+          assert v["dispatch_action_executed"] is False
+          assert v["trading_authorized"] is False
+          PY
+
+      - name: Read current main and annual history
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/branches/main" > "$RUNNER_TEMP/main-branch.json"
+          gh api \
+            "repos/$GH_REPO/actions/workflows/phase8a-annual-pattern-catalogue.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
+            > "$RUNNER_TEMP/annual-runs.json"
+          test "$(jq -r '.name' "$RUNNER_TEMP/main-branch.json")" = "main"
+          test "$(jq -r '.commit.sha' "$RUNNER_TEMP/main-branch.json")" = "$GITHUB_SHA"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          rows = json.loads(
+              (Path(os.environ["RUNNER_TEMP"]) / "annual-runs.json").read_text()
+          )["workflow_runs"]
+          assert len(rows) == 10
+          assert {r["run_number"] for r in rows} == {1, 376, 377, 378, 379, 380, 381, 382, 383, 384}
+          assert not any(r["run_number"] >= 385 for r in rows)
+          PY
+
+      - name: Fetch optional GitHub lock policy snapshots, fail closed on missing visibility
+        # GitHub's default GITHUB_TOKEN cannot read branch protection.
+        # Optional GitHub App/PAT must be scoped to Administration: read only.
+        # No credential or insufficient scope means null evidence, never unlocked.
+        env:
+          ADMIN_READ_TOKEN: ${{ secrets.FMP_GITHUB_ADMIN_READ_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ADMIN_READ_TOKEN:-}" ]; then
+            printf 'null\n' > "$RUNNER_TEMP/branch-protection.json"
+            printf 'null\n' > "$RUNNER_TEMP/effective-branch-rules.json"
+            printf 'null\n' > "$RUNNER_TEMP/inherited-rulesets.json"
+          else
+            if ! GH_TOKEN="$ADMIN_READ_TOKEN" gh api "repos/$GH_REPO/branches/main/protection" \
+                > "$RUNNER_TEMP/branch-protection.json" 2> "$RUNNER_TEMP/protection-error.txt"; then
+              printf 'null\n' > "$RUNNER_TEMP/branch-protection.json"
+            fi
+            if ! GH_TOKEN="$ADMIN_READ_TOKEN" gh api "repos/$GH_REPO/rules/branches/main" \
+                > "$RUNNER_TEMP/effective-branch-rules.json" 2> "$RUNNER_TEMP/rules-error.txt"; then
+              printf 'null\n' > "$RUNNER_TEMP/effective-branch-rules.json"
+            fi
+            if ! GH_TOKEN="$ADMIN_READ_TOKEN" gh api "repos/$GH_REPO/rulesets?includes_parents=true&per_page=100" \
+                > "$RUNNER_TEMP/inherited-rulesets.json" 2> "$RUNNER_TEMP/rulesets-error.txt"; then
+              printf 'null\n' > "$RUNNER_TEMP/inherited-rulesets.json"
+            fi
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12.14"
+
+      - name: Install pinned read-only assessment requirements
+        run: >-
+          python -m pip install -r requirements/exp061-discovery-run.txt
+          scikit-learn==1.9.1
+
+      - name: Produce fail-closed DEC-612 readiness evidence
+        run: |
+          set -euo pipefail
+          python scripts/phase8a_annual_pattern_catalogue_2023_main_lock_readiness.py \
+            assess \
+            --dec611-audit-json "$RUNNER_TEMP/dec611-audit.json" \
+            --main-branch-json "$RUNNER_TEMP/main-branch.json" \
+            --annual-workflow-runs-json "$RUNNER_TEMP/annual-runs.json" \
+            --branch-protection-json "$RUNNER_TEMP/branch-protection.json" \
+            --effective-branch-rules-json "$RUNNER_TEMP/effective-branch-rules.json" \
+            --inherited-rulesets-json "$RUNNER_TEMP/inherited-rulesets.json" \
+            --expected-head-sha "$GITHUB_SHA" \
+            --out "$RUNNER_TEMP/dec612-main-lock-readiness.json"
+
+      - name: Assert no execution, no promotion, and no trading
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r = json.loads((Path(os.environ["RUNNER_TEMP"]) / "dec612-main-lock-readiness.json").read_text())
+          assert r["decision"] == "DEC-612"
+          assert r["expected_head_sha"] == os.environ["GITHUB_SHA"]
+          assert r["source_dec611_workflow_run_id"] == 37778086874
+          assert r["source_dec611_artifact_id"] == 11550716769
+          assert r["expected_run_number"] == 385 and r["expected_run_attempt"] == 1
+          assert r["dispatch_blocked"] is True
+          assert r["read_only"] is True
+          assert r["dispatch_command_present"] is False
+          assert r["main_exclusive_lock_proven"] is False
+          assert r["dispatch_atomic_to_vetted_sha"] is False
+          assert r["annual_workflow_dispatch_authorized"] is False
+          assert r["dispatch_action_executed"] is False
+          assert r["trading_authorized"] is False
+          PY
+
+      - name: Upload DEC-612 read-only lock-readiness snapshot
+        uses: actions/upload-artifact@v6
+        with:
+          name: annual-catalogue-2023-dec612-main-lock-readiness-${{ github.sha }}-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/dec611-run.json
+            ${{ runner.temp }}/dec611-artifacts.json
+            ${{ runner.temp }}/dec611-audit.json
+            ${{ runner.temp }}/main-branch.json
+            ${{ runner.temp }}/annual-runs.json
+            ${{ runner.temp }}/branch-protection.json
+            ${{ runner.temp }}/effective-branch-rules.json
+            ${{ runner.temp }}/inherited-rulesets.json
+            ${{ runner.temp }}/dec612-main-lock-readiness.json
+          if-no-files-found: error
