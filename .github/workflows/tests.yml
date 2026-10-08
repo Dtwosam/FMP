@@ -2005,6 +2005,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_admin_handoff_freeze_workflow.py'
           -v
+      - name: Run DEC-615 2023 immutable-tag feasibility tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_immutable_tag_feasibility.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
