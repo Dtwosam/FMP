@@ -95,6 +95,11 @@ class ReadOnlyPrCiEvidenceCliTests(unittest.TestCase):
         self.assertEqual(self.output.read_text(encoding="utf-8"), "important-existing-report\n")
         self.assertEqual(inventory(self.checkout), before)
 
+    def test_external_output_creation_uses_exclusive_create(self):
+        source = SOURCE.read_text(encoding="utf-8")
+        self.assertIn('target.open("x", encoding="utf-8")', source)
+        self.assertNotIn('target.write_text(content', source)
+
     def test_broken_or_untrusted_evidence_never_yields_authority(self):
         self.evidence.write_text("{invalid json", encoding="utf-8")
         result = self.run_assess(self.output)
