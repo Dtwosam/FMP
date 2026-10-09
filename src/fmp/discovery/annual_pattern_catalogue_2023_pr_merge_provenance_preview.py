@@ -21,6 +21,7 @@ PR_FIELDS = frozenset({
 RUN_FIELDS = frozenset({
     "workflow_path", "event", "run_head_sha", "run_pr_number",
     "run_pr_head_sha", "run_pr_base_sha", "attempt", "status", "conclusion",
+    "checkout_sha", "checkout_ref",
 })
 WORKFLOWS = (
     ".github/workflows/tests.yml",
@@ -42,6 +43,8 @@ def _run(path: str) -> dict[str, object]:
         "run_pr_number": 99999,
         "run_pr_head_sha": _HEAD,
         "run_pr_base_sha": _BASE,
+        "checkout_sha": _MERGE,
+        "checkout_ref": "refs/pull/99999/merge",
         "attempt": 1,
         "status": "completed",
         "conclusion": "success",
@@ -70,7 +73,8 @@ def classify_pr_ci_provenance(value: object) -> str:
     """Classify *reported Git metadata*, never independently certify a checkout.
 
     Result is one of:
-      REJECTED: incomplete/stale/failed/invalid CI or synthetic-merge join
+      REJECTED: incomplete/stale/failed/invalid CI or synthetic-merge join,
+                including reported runner checkout SHA/ref inconsistencies
       REPORTED_HEAD_TREE_EQUIVALENT: same Git tree at source and synthetic merge
       REPORTED_SYNTHETIC_MERGE_ONLY: valid joins, but trees differ
     """
@@ -105,6 +109,9 @@ def classify_pr_ci_provenance(value: object) -> str:
             or type(run["run_pr_number"]) is not int or run["run_pr_number"] != value["pr_number"]
             or not _is_sha(run["run_pr_head_sha"]) or run["run_pr_head_sha"] != value["head_sha"]
             or not _is_sha(run["run_pr_base_sha"]) or run["run_pr_base_sha"] != value["base_sha"]
+            or not _is_sha(run["checkout_sha"]) or run["checkout_sha"] != value["synthetic_merge_sha"]
+            or type(run["checkout_ref"]) is not str
+            or run["checkout_ref"] != f"refs/pull/{value['pr_number']}/merge"
             or type(run["attempt"]) is not int or run["attempt"] != 1
             or type(run["status"]) is not str or run["status"] != "completed"
             or type(run["conclusion"]) is not str or run["conclusion"] != "success"
@@ -153,6 +160,12 @@ def _counterexamples() -> tuple[tuple[str, dict[str, object]], ...]:
     add("missing_run", lambda d: d["run_evidence"].pop())
     add("unexpected_authorization", lambda d: d.__setitem__("merge_authorized", True))
     add("run_forged_permission", lambda d: d["run_evidence"][0].__setitem__("trusted_checkout", True))
+    add("checkout_was_raw_head", lambda d: d["run_evidence"][0].__setitem__("checkout_sha", _HEAD))
+    add("checkout_different_merge", lambda d: d["run_evidence"][1].__setitem__("checkout_sha", "f" * 40))
+    add("checkout_wrong_pr", lambda d: d["run_evidence"][0].__setitem__("checkout_ref", "refs/pull/99998/merge"))
+    add("checkout_was_main", lambda d: d["run_evidence"][1].__setitem__("checkout_ref", "refs/heads/main"))
+    add("checkout_sha_bool", lambda d: d["run_evidence"][0].__setitem__("checkout_sha", True))
+    add("checkout_ref_wrong_type", lambda d: d["run_evidence"][1].__setitem__("checkout_ref", 123))
     return tuple(cases)
 
 
