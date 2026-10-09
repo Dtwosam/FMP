@@ -19,14 +19,19 @@ from fmp.discovery.annual_pattern_catalogue_2023_review_manifest_identity_separa
 
 def _assess(args: argparse.Namespace) -> int:
     checkout = Path.cwd().resolve()
+    # Preserve cwd for the offline assessment, but not for output containment.
+    source_checkout = Path(__file__).resolve().parents[1]
     target = args.out.resolve()
-    if target.is_relative_to(checkout):
+    if target.is_relative_to(source_checkout):
         raise ValueError("DEC-625 refuses report writes anywhere inside checkout")
     report = build_review_manifest_identity_separation(repository_root=checkout)
     validate_review_manifest_identity_separation(report)
     payload = json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != payload:
-        raise ValueError("DEC-625 refuses conflicting report overwrite")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != payload:
+            raise ValueError("DEC-625 refuses conflicting report overwrite")
+        # Never rewrite identical reports, including a hard-linked source inode.
+        return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(payload, encoding="utf-8")
     return 0
