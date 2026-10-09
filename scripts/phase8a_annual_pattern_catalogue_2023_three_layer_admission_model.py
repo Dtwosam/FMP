@@ -16,8 +16,10 @@ from fmp.discovery.annual_pattern_catalogue_2023_three_layer_admission_model imp
 
 def _assess(args: argparse.Namespace) -> int:
     checkout = Path.cwd().resolve()
+    # Keep cwd for offline computation; source checkout owns output safety.
+    source_checkout = Path(__file__).resolve().parents[1]
     target = args.out.resolve()
-    if target.is_relative_to(checkout):
+    if target.is_relative_to(source_checkout):
         raise ValueError("DEC-624 refuses report writes anywhere inside checkout")
     report = build_three_layer_admission_model(repository_root=checkout)
     validate_three_layer_admission_model(report)
