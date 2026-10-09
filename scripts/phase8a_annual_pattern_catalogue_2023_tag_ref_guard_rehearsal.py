@@ -16,7 +16,9 @@ from fmp.discovery.annual_pattern_catalogue_2023_tag_ref_guard_rehearsal import 
 
 
 def _assess(args: argparse.Namespace) -> int:
-    checkout = Path.cwd().resolve()
+    # Anchor containment to the actual source checkout, not the caller's cwd.
+    # Invoking this CLI from scripts/ must not permit writing into repo root.
+    checkout = Path(__file__).resolve().parents[1]
     target = args.out.resolve()
     # Reject output targets inside the checkout before reading any input JSON.
     if target.is_relative_to(checkout):
