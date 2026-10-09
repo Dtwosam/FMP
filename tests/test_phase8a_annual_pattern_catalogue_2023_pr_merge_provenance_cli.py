@@ -16,7 +16,6 @@ from fmp.discovery.annual_pattern_catalogue_2023_pr_merge_provenance_preview imp
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_pr_merge_provenance_preview.py"
-MODULE = ROOT / "src/fmp/discovery/annual_pattern_catalogue_2023_pr_merge_provenance_preview.py"
 
 
 def inventory(checkout: Path) -> dict[str, str]:
@@ -34,11 +33,12 @@ class ReadOnlyPrCiEvidenceCliTests(unittest.TestCase):
         self.checkout = self.folder / "checkout"
         self.checkout.mkdir()
         (self.checkout / "scripts").mkdir()
-        (self.checkout / "src/fmp/discovery").mkdir(parents=True)
         shutil.copy2(SOURCE, self.checkout / "scripts" / SOURCE.name)
-        shutil.copy2(MODULE, self.checkout / "src/fmp/discovery" / MODULE.name)
-        (self.checkout / "src/fmp/__init__.py").write_text("", encoding="utf-8")
-        (self.checkout / "src/fmp/discovery/__init__.py").write_text("", encoding="utf-8")
+        # Test the *real* package import graph, not dummy package initializers.
+        shutil.copytree(
+            ROOT / "src/fmp", self.checkout / "src/fmp",
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+        )
         self.evidence = self.folder / "outside-evidence.json"
         self.evidence.write_text(json.dumps(fixture(), sort_keys=True), encoding="utf-8")
         self.output = self.folder / "reports" / "ci-provenance.json"
