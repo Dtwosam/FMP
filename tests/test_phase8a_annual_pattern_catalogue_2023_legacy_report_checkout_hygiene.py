@@ -3,6 +3,7 @@ from __future__ import annotations
 """DEC-631: real-process guard regression for 10 legacy source-only 2023 CLIs."""
 
 import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -163,6 +164,72 @@ class LegacyCliReadOnlyOutputHygieneTests(unittest.TestCase):
                         self.assertEqual(_checksum_files(checkout), before)
                         self.assertEqual(list(checkout.rglob("*.pyc")), [])
             self.assertFalse(missing.exists())
+
+
+    def test_all_eight_report_writers_preserve_external_hardlink_metadata(self):
+        """Call the real writer helpers, separately from domain-model validation."""
+        helper_scripts = tuple(suffix for suffix in CASES if suffix not in (
+            "admin_lock_handoff", "dispatch_immutability_audit",
+        ))
+        self.assertEqual(len(helper_scripts), 8)
+        probe = (
+            "import sys\n"
+            "from pathlib import Path\n"
+            "from runpy import run_path\n"
+            "module = run_path(sys.argv[1], run_name='dec631_writer_probe')\n"
+            "module['_write_json'](Path(sys.argv[2]), "
+            "{'decision':'DEC-631-TEST-ONLY','dispatch_blocked':True,"
+            "'trading_authorized':False})\n"
+        )
+        with tempfile.TemporaryDirectory(prefix="dec631-writer-positive-") as tmp:
+            root = Path(tmp)
+            checkout, scripts = _copy_checkout(root)
+            env = _env(checkout)
+            for suffix in helper_scripts:
+                with self.subTest(writer=suffix):
+                    script = scripts / f"{PREFIX}{suffix}.py"
+                    output = root / f"report-{suffix}.json"
+                    command = [sys.executable, "-c", probe, str(script), str(output)]
+                    before = _checksum_files(checkout)
+                    first = subprocess.run(
+                        command, cwd=checkout, env=env, capture_output=True,
+                        text=True, timeout=40, check=False,
+                    )
+                    self.assertEqual(first.returncode, 0, first.stderr)
+                    value = json.loads(output.read_text(encoding="utf-8"))
+                    self.assertEqual(value["decision"], "DEC-631-TEST-ONLY")
+                    self.assertIs(value["dispatch_blocked"], True)
+                    self.assertIs(value["trading_authorized"], False)
+                    self.assertEqual(_checksum_files(checkout), before)
+                    alias = checkout / f"hardlinked-{suffix}.json"
+                    os.link(output, alias)
+                    pinned = 1_600_000_000_000_000_000
+                    os.utime(output, ns=(pinned, pinned))
+                    expected_mtime = output.stat().st_mtime_ns
+                    with_link = _checksum_files(checkout)
+                    second = subprocess.run(
+                        command, cwd=checkout, env=env, capture_output=True,
+                        text=True, timeout=40, check=False,
+                    )
+                    self.assertEqual(second.returncode, 0, second.stderr)
+                    self.assertEqual(output.stat().st_mtime_ns, expected_mtime)
+                    self.assertEqual(alias.stat().st_mtime_ns, expected_mtime)
+                    self.assertEqual(_checksum_files(checkout), with_link)
+                    sentinel = root / f"conflict-{suffix}.json"
+                    sentinel.write_text("PRESERVE EXTERNAL SENTINEL\n", encoding="utf-8")
+                    conflict = subprocess.run(
+                        [sys.executable, "-c", probe, str(script), str(sentinel)],
+                        cwd=checkout, env=env, capture_output=True,
+                        text=True, timeout=40, check=False,
+                    )
+                    self.assertNotEqual(conflict.returncode, 0)
+                    self.assertIn("conflicting existing output", conflict.stderr)
+                    self.assertEqual(
+                        sentinel.read_text(encoding="utf-8"),
+                        "PRESERVE EXTERNAL SENTINEL\n",
+                    )
+                    self.assertEqual(_checksum_files(checkout), with_link)
+                    self.assertEqual(list(checkout.rglob("*.pyc")), [])
 
 
 if __name__ == "__main__":
