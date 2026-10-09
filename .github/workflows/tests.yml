@@ -2125,6 +2125,22 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_source_checkout_output_boundary.py'
           -v
+      - name: Run DEC-630 merged audit CLI output boundary regressions
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_merged_audit_output_boundary.py'
+          -v
+      - name: Run DEC-631 legacy audit report checkout hygiene regressions
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_legacy_report_checkout_hygiene.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
