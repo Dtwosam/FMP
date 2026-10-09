@@ -4,6 +4,10 @@ import copy
 import hashlib
 import json
 import os
+import shutil
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 import unittest
 
@@ -117,6 +121,36 @@ class PrecheckoutJobIfPreviewTests(unittest.TestCase):
                 _resign(forged)
                 with self.assertRaisesRegex(ValueError, "report body does not match pinned source"):
                     validate_precheckout_job_if_preview(forged)
+
+    def test_assess_process_does_not_emit_bytecode_to_checkout(self):
+        with tempfile.TemporaryDirectory(prefix="dec626-no-bytecode-") as directory:
+            temp_root = Path(directory)
+            checkout = temp_root / "checkout"
+            shutil.copytree(
+                ROOT / "src" / "fmp",
+                checkout / "src" / "fmp",
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+            workflow = checkout / ".github" / "workflows" / "phase8a-annual-pattern-catalogue.yml"
+            workflow.parent.mkdir(parents=True)
+            shutil.copy2(ROOT / ".github" / "workflows" / workflow.name, workflow)
+            script = checkout / "scripts" / "phase8a_annual_pattern_catalogue_2023_precheckout_job_if_preview.py"
+            script.parent.mkdir(parents=True)
+            shutil.copy2(ROOT / "scripts" / script.name, script)
+            output = temp_root / "job-if.json"
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(checkout / "src")
+            env.pop("PYTHONDONTWRITEBYTECODE", None)
+            env.pop("PYTHONPYCACHEPREFIX", None)
+            proc = subprocess.run(
+                [sys.executable, str(script), "assess", "--out", str(output)],
+                cwd=checkout, env=env, text=True, capture_output=True,
+                timeout=40, check=False,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertTrue(output.is_file())
+            self.assertEqual(json.loads(output.read_text())["decision"], "DEC-626")
+            self.assertEqual(list((checkout / "src").rglob("*.pyc")), [])
 
     def test_assess_only_command_source_has_no_execution_or_checkout_writes(self):
         content = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_precheckout_job_if_preview.py").read_text()
