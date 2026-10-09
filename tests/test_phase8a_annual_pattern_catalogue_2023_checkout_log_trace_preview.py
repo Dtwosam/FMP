@@ -16,7 +16,7 @@ class OfflineCheckoutTraceTests(unittest.TestCase):
         self.assertEqual(classify_pair(fixture()), 'REPORTED_TWO_LOG_CHECKOUT_MATCH')
         report = build_preview()
         validate_preview(report)
-        self.assertEqual(report['negative_case_count'], 33)
+        self.assertEqual(report['negative_case_count'], 41)
         for key in ('github_log_authenticity_proven', 'runner_identity_attested',
                     'independent_review_proven', 'merge_authorized',
                     'annual_dispatch_authorized', 'run385_authorized', 'trading_authorized'):
@@ -26,11 +26,24 @@ class OfflineCheckoutTraceTests(unittest.TestCase):
 
     def test_every_negative_case_is_rejected(self):
         cases = _counterexamples()
-        self.assertEqual(len(cases), 33)
+        self.assertEqual(len(cases), 41)
         self.assertEqual(len({n for n, _ in cases}), len(cases))
         for name, record in cases:
             with self.subTest(name=name):
                 self.assertEqual(classify_pair(record), 'REJECTED')
+
+    def test_paired_workflows_must_have_distinct_positive_run_and_job_ids(self):
+        for field in ('run_id', 'job_id'):
+            with self.subTest(field=field):
+                sample = fixture()
+                sample['run_evidence'][1][field] = sample['run_evidence'][0][field]
+                self.assertEqual(classify_pair(sample), 'REJECTED')
+                sample = fixture()
+                sample['run_evidence'][0][field] = True
+                self.assertEqual(classify_pair(sample), 'REJECTED')
+                sample = fixture()
+                sample['run_evidence'][0][field] = 0
+                self.assertEqual(classify_pair(sample), 'REJECTED')
 
     def test_log_parser_is_strict_on_identity_and_order(self):
         self.assertTrue(trace_matches(fixture_log(), PR, HEAD, BASE, MERGE))
