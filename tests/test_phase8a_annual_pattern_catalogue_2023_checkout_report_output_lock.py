@@ -3,6 +3,7 @@ from __future__ import annotations
 """DEC-628: actual CLI subprocess tests of checkout-local report-output denial."""
 
 import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -146,6 +147,71 @@ class CheckoutReportOutputLockTests(unittest.TestCase):
                         self.assertEqual(_file_hashes(checkout), baseline)
                         self.assertEqual(list(checkout.rglob("*.pyc")), [])
             self.assertFalse(missing.exists())
+
+    def test_real_assess_can_write_external_report_and_remains_denied(self):
+        """Successful offline audits still work without touching source files."""
+        with tempfile.TemporaryDirectory(prefix="dec628-positive-") as tmp:
+            parent = Path(tmp)
+            checkout = parent / "checkout"
+            shutil.copytree(
+                ROOT / "src" / "fmp",
+                checkout / "src" / "fmp",
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+            scripts = checkout / "scripts"
+            scripts.mkdir()
+            for suffix in ("tag_ruleset_static_review", "tag_ref_guard_rehearsal"):
+                name = f"{PREFIX}{suffix}.py"
+                shutil.copy2(ROOT / "scripts" / name, scripts / name)
+            workflow = checkout / ".github" / "workflows" / "phase8a-annual-pattern-catalogue.yml"
+            workflow.parent.mkdir(parents=True)
+            shutil.copy2(ROOT / ".github" / "workflows" / workflow.name, workflow)
+            ref = "refs/tags/fmp/phase8a/2023/run385/dec628-test-only"
+            ref_path = parent / "untrusted-ref.json"
+            ref_path.write_text(json.dumps({"ref": ref, "object": {"type": "commit", "sha": SHA}}))
+            rules_path = parent / "untrusted-rulesets.json"
+            rules_path.write_text("[]")
+            baseline = _file_hashes(checkout)
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(checkout / "src")
+            env.pop("PYTHONDONTWRITEBYTECODE", None)
+            env.pop("PYTHONPYCACHEPREFIX", None)
+            commands = (
+                (
+                    "tag_ruleset_static_review",
+                    [
+                        "--tag-ref", ref, "--reviewed-commit-sha", SHA,
+                        "--git-ref-json", str(ref_path), "--rulesets-json", str(rules_path),
+                    ],
+                    "DEC-616",
+                ),
+                (
+                    "tag_ref_guard_rehearsal",
+                    ["--candidate-tag-ref", ref, "--reviewed-commit-sha", SHA],
+                    "DEC-617",
+                ),
+            )
+            for suffix, flags, decision in commands:
+                with self.subTest(decision=decision):
+                    name = f"{PREFIX}{suffix}.py"
+                    out = parent / f"{suffix}.json"
+                    command = [
+                        sys.executable, str(scripts / name), "assess",
+                        *flags, "--out", str(out),
+                    ]
+                    # A repeated identical report must also be idempotent.
+                    for _ in range(2):
+                        completed = subprocess.run(
+                            command, cwd=checkout, env=env, text=True,
+                            capture_output=True, timeout=40, check=False,
+                        )
+                        self.assertEqual(completed.returncode, 0, completed.stderr)
+                        report = json.loads(out.read_text(encoding="utf-8"))
+                        self.assertEqual(report["decision"], decision)
+                        self.assertIs(report["dispatch_blocked"], True)
+                        self.assertIs(report["trading_authorized"], False)
+                        self.assertEqual(_file_hashes(checkout), baseline)
+                        self.assertEqual(list(checkout.rglob("*.pyc")), [])
 
     def test_resolved_external_output_is_not_rejected_as_checkout_local(self):
         with tempfile.TemporaryDirectory(prefix="dec628-outside-") as tmp:
