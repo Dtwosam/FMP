@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# A read-only audit must disable bytecode writes before project imports.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
