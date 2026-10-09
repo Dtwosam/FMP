@@ -63,7 +63,13 @@ def trace_matches(log: object, pr: int, head: str, base: str, merge: str) -> boo
     """Consistent *text*, not authenticated checkout / signed log proof."""
     if type(pr) is not int or pr <= 0 or any(not _sha(x) for x in (head, base, merge)):
         return False
-    if len({head, base, merge}) != 3 or type(log) is not str or len(log.encode('utf-8')) > 4 * 1024 * 1024:
+    if len({head, base, merge}) != 3 or type(log) is not str:
+        return False
+    try:
+        log_bytes = len(log.encode('utf-8'))
+    except UnicodeEncodeError:
+        return False
+    if log_bytes > 4 * 1024 * 1024:
         return False
     # Match complete timestamp-prefixed lines, not echoed shell fragments or substrings.
     log = log.lstrip('\ufeff')
@@ -184,6 +190,7 @@ def _counterexamples() -> tuple[tuple[str, dict[str, object]], ...]:
     add('duplicate_remote', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('From https://github.com/Dtwosam/FMP', 'From https://github.com/Dtwosam/FMP\n2026-10-09T00:00:00.0000000Z From https://github.com/Dtwosam/FMP')))
     add('extra_head_message', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log() + '2026-10-09T00:00:00.0000000Z HEAD is now at fffffff Merge unexpected into unexpected\n'))
     add('extra_log_query', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log() + '2026-10-09T00:00:00.0000000Z [command]/usr/bin/git log -1 --format=%H\n'))
+    add('invalid_unicode', lambda r: r['run_evidence'][0].__setitem__('checkout_log', '\ud800'))
     add('oversized_log', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log() + ('x' * (4 * 1024 * 1024))))
     return tuple(changes)
 
