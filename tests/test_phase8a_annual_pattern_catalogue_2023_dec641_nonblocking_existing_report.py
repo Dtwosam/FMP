@@ -74,9 +74,9 @@ class ExistingReportIdentitySafety(unittest.TestCase):
     @unittest.skipUnless(hasattr(os, "mkfifo"), "requires POSIX named pipes")
     def test_special_file_published_at_link_race_is_rejected(self):
         real_link = os.link
-        def compete(source, destination):
-            os.mkfifo(destination)
-            return real_link(source, destination)
+        def compete(source, destination, *args, **kwargs):
+            os.mkfifo(destination, dir_fd=kwargs["dst_dir_fd"])
+            return real_link(source, destination, *args, **kwargs)
         with mock.patch(
             "fmp.discovery.annual_pattern_catalogue_2023_external_report_create.os.link",
             side_effect=compete,

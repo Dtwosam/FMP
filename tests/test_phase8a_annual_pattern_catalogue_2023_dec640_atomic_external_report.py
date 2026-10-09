@@ -27,8 +27,8 @@ class AtomicExternalReportTests(unittest.TestCase):
         real_link = os.link
         observations = []
         def observe_link(source, destination, *args, **kwargs):
-            self.assertFalse(Path(destination).exists())
-            self.assertEqual(Path(source).read_text(), content)
+            self.assertFalse(self.target.exists())
+            self.assertEqual((self.target.parent / source).read_text(), content)
             observations.append(True)
             return real_link(source, destination, *args, **kwargs)
         with mock.patch(
@@ -43,7 +43,7 @@ class AtomicExternalReportTests(unittest.TestCase):
     def test_competing_conflicting_leaf_at_publish_is_untouched(self):
         real_link = os.link
         def competing_link(source, destination, *args, **kwargs):
-            Path(destination).write_text("competitor\n")
+            self.target.write_text("competitor\n")
             return real_link(source, destination, *args, **kwargs)
         with mock.patch(
             "fmp.discovery.annual_pattern_catalogue_2023_external_report_create.os.link",
@@ -57,7 +57,7 @@ class AtomicExternalReportTests(unittest.TestCase):
     def test_competing_identical_leaf_at_publish_is_accepted(self):
         real_link = os.link
         def competing_link(source, destination, *args, **kwargs):
-            Path(destination).write_text("proof\n")
+            self.target.write_text("proof\n")
             return real_link(source, destination, *args, **kwargs)
         with mock.patch(
             "fmp.discovery.annual_pattern_catalogue_2023_external_report_create.os.link",

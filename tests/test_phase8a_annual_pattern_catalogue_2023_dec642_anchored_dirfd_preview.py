@@ -100,32 +100,28 @@ class AnchoredAuditOutputPreviewTests(unittest.TestCase):
         self.assertEqual((moved / "proof.json").read_text(), "proof\n")
         self.assert_checkout_untouched()
 
-    def test_prior_shared_helper_parent_swap_writes_into_synthetic_checkout(self):
-        """Negative witness: demonstrates the *existing* implementation's race.
-
-        Both checkout and output are disposable paths under TemporaryDirectory.
-        This is intentionally not a runtime or real-checkout operation.
-        """
-        real_mkstemp = legacy.tempfile.mkstemp
-        relocated = self.root / "relocated-parent"
+    def test_live_shared_helper_rejects_parent_symlink_swap_before_open(self):
+        """DEC-643: the actual CLI-imported helper must now pin the parent."""
+        real_open = os.open
+        moved = self.root / "moved-live-parent"
         triggered = []
-        def swapping_mkstemp(*args, **kwargs):
-            if not triggered:
+        def racing_open(path, flags, *args, **kwargs):
+            if path == "report" and not triggered:
                 triggered.append(True)
-                self.parent.rename(relocated)
+                self.parent.rename(moved)
                 self.parent.symlink_to(self.checkout, target_is_directory=True)
-            return real_mkstemp(*args, **kwargs)
-        with mock.patch.object(
-            legacy.tempfile, "mkstemp", side_effect=swapping_mkstemp,
+            return real_open(path, flags, *args, **kwargs)
+        flags = lib._safe_flags()
+        with (
+            mock.patch.object(lib, "_safe_flags", return_value=flags),
+            mock.patch.object(lib.os, "open", side_effect=racing_open),
         ):
-            legacy.write_once_external_report(
-                self.target, "proof\n", "conflict"
-            )
+            with self.assertRaises(OSError):
+                legacy.write_once_external_report(
+                    self.target, "proof\n", "conflict"
+                )
         self.assertEqual(triggered, [True])
-        self.assertEqual((self.checkout / "proof.json").read_text(), "proof\n")
-        self.assertEqual(
-            (self.checkout / "locked.txt").read_bytes(), b"checkout-inventory"
-        )
+        self.assert_checkout_untouched()
 
     def test_concurrent_matching_content_is_idempotent(self):
         barrier = threading.Barrier(8)
