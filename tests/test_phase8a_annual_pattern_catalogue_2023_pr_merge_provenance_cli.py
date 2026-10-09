@@ -67,6 +67,28 @@ class ReadOnlyPrCiEvidenceCliTests(unittest.TestCase):
         for key in ("merge_authorized", "annual_dispatch_authorized", "run385_authorized", "trading_authorized"):
             self.assertFalse(value[key])
 
+    def test_differing_merge_tree_and_skipped_ci_keep_authority_denied(self):
+        evidence = fixture()
+        evidence["synthetic_merge_tree_sha"] = "e" * 40
+        self.evidence.write_text(json.dumps(evidence, sort_keys=True), encoding="utf-8")
+        before = inventory(self.checkout)
+        result = self.run_assess(self.output)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(self.output.read_text(encoding="utf-8"))
+        self.assertEqual(payload["classification"], "REPORTED_SYNTHETIC_MERGE_ONLY")
+        self.assertFalse(payload["merge_authorized"])
+        self.assertFalse(payload["run385_authorized"])
+        self.assertEqual(inventory(self.checkout), before)
+        self.output.unlink()
+        evidence["run_evidence"][0]["conclusion"] = "skipped"
+        self.evidence.write_text(json.dumps(evidence, sort_keys=True), encoding="utf-8")
+        result = self.run_assess(self.output)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(self.output.read_text(encoding="utf-8"))
+        self.assertEqual(payload["classification"], "REJECTED")
+        self.assertTrue(payload["dispatch_blocked"])
+        self.assertEqual(inventory(self.checkout), before)
+
     def test_checkout_local_paths_and_symlink_to_checkout_are_rejected(self):
         before = inventory(self.checkout)
         for target in (
