@@ -85,6 +85,29 @@ class ReadOnlyPrCiEvidenceCliTests(unittest.TestCase):
         self.assertIn("refuses reports", result.stderr)
         self.assertEqual(inventory(self.checkout), before)
 
+    def test_checkout_local_evidence_and_symlink_alias_are_rejected(self):
+        inside = self.checkout / "evidence.json"
+        inside.write_text(json.dumps(fixture(), sort_keys=True), encoding="utf-8")
+        before = inventory(self.checkout)
+        original = self.evidence
+        try:
+            self.evidence = inside
+            result = self.run_assess(self.output)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("refuses evidence reads", result.stderr)
+            self.assertFalse(self.output.exists())
+            self.assertEqual(inventory(self.checkout), before)
+            alias = self.folder / "evidence-alias.json"
+            alias.symlink_to(inside)
+            self.evidence = alias
+            result = self.run_assess(self.output)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("refuses evidence reads", result.stderr)
+            self.assertFalse(self.output.exists())
+            self.assertEqual(inventory(self.checkout), before)
+        finally:
+            self.evidence = original
+
     def test_conflicting_external_report_is_never_overwritten(self):
         self.output.parent.mkdir(parents=True)
         self.output.write_text("important-existing-report\n", encoding="utf-8")
