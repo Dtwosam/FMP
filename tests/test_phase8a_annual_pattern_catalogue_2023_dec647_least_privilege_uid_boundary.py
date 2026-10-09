@@ -14,6 +14,12 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
+
+
+def _restricted_child_environment(home: Path) -> dict[str, str]:
+    """Keep demonstration-only children free of inherited credentials."""
+    return {"PATH": os.defpath, "HOME": str(home), "PYTHONDONTWRITEBYTECODE": "1"}
 
 
 @unittest.skipUnless(
@@ -39,11 +45,14 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
         os.chown(self.payload, 65534, 65534)
 
     def actor(self, program: str, *args: str) -> subprocess.CompletedProcess:
+        setpriv_executable = shutil.which("setpriv")
+        self.assertIsNotNone(setpriv_executable)
         return subprocess.run(
-            ["setpriv", "--no-new-privs", "--bounding-set=-all",
+            [setpriv_executable, "--no-new-privs", "--bounding-set=-all",
              "--reuid=65534", "--regid=65534", "--clear-groups",
              sys.executable, "-B", "-c", program, *map(str, args)],
             capture_output=True, text=True, timeout=8,
+            env=_restricted_child_environment(self.root),
         )
 
     def assert_locked_inventory(self):
@@ -94,6 +103,16 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
             self.checkout.chmod(0o755)
         self.assert_locked_inventory()
 
+    def test_unprivileged_actor_does_not_inherit_synthetic_parent_secret(self):
+        name = "FMP_DEC648_SYNTHETIC_SECRET_ONLY"
+        with mock.patch.dict(os.environ, {name: "synthetic-secret-never-real"}):
+            proc = self.actor(
+                "import os; print(os.getenv('FMP_DEC648_SYNTHETIC_SECRET_ONLY', 'absent'))"
+            )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stdout.strip(), "absent")
+        self.assert_locked_inventory()
+
     def test_unprivileged_actor_has_no_new_privileges_and_no_effective_caps(self):
         program = "from pathlib import Path; print(Path('/proc/self/status').read_text())"
         proc = self.actor(program)
@@ -104,6 +123,16 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
 
 
 class WorkflowTrustBoundarySourceTests(unittest.TestCase):
+    def test_demo_child_environment_uses_explicit_allowlist(self):
+        name = "FMP_DEC648_SYNTHETIC_SECRET_ONLY"
+        with mock.patch.dict(os.environ, {name: "synthetic-secret-never-real"}):
+            env = _restricted_child_environment(Path("/synthetic/no-real-home"))
+        self.assertEqual(set(env), {"PATH", "HOME", "PYTHONDONTWRITEBYTECODE"})
+        self.assertEqual(env["PATH"], os.defpath)
+        self.assertEqual(env["PYTHONDONTWRITEBYTECODE"], "1")
+        self.assertNotIn(name, env)
+
+
     def test_frozen_annual_workflow_does_not_explicitly_drop_uid_privileges(self):
         root = Path(__file__).resolve().parents[1]
         # Historical tests may remove this file from the working tree while
