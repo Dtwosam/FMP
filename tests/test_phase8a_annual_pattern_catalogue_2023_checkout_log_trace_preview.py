@@ -16,7 +16,7 @@ class OfflineCheckoutTraceTests(unittest.TestCase):
         self.assertEqual(classify_pair(fixture()), 'REPORTED_TWO_LOG_CHECKOUT_MATCH')
         report = build_preview()
         validate_preview(report)
-        self.assertEqual(report['negative_case_count'], 41)
+        self.assertEqual(report['negative_case_count'], 44)
         for key in ('github_log_authenticity_proven', 'runner_identity_attested',
                     'independent_review_proven', 'merge_authorized',
                     'annual_dispatch_authorized', 'run385_authorized', 'trading_authorized'):
@@ -26,7 +26,7 @@ class OfflineCheckoutTraceTests(unittest.TestCase):
 
     def test_every_negative_case_is_rejected(self):
         cases = _counterexamples()
-        self.assertEqual(len(cases), 41)
+        self.assertEqual(len(cases), 44)
         self.assertEqual(len({n for n, _ in cases}), len(cases))
         for name, record in cases:
             with self.subTest(name=name):
@@ -44,6 +44,18 @@ class OfflineCheckoutTraceTests(unittest.TestCase):
                 sample = fixture()
                 sample['run_evidence'][0][field] = 0
                 self.assertEqual(classify_pair(sample), 'REJECTED')
+
+    def test_oversized_pr_number_and_invalid_or_reversed_timestamps_reject(self):
+        big_pr = 10**5000
+        self.assertFalse(trace_matches(fixture_log(), big_pr, HEAD, BASE, MERGE))
+        record = fixture()
+        record['pr_number'] = big_pr
+        self.assertEqual(classify_pair(record), 'REJECTED')
+        wrong_date = fixture_log().replace('2026-10-09T', '2026-99-99T')
+        self.assertFalse(trace_matches(wrong_date, PR, HEAD, BASE, MERGE))
+        backward = fixture_log().replace('2026-10-09T00:00:00.0000000Z From',
+                                         '2026-10-08T00:00:00.0000000Z From')
+        self.assertFalse(trace_matches(backward, PR, HEAD, BASE, MERGE))
 
     def test_log_parser_is_strict_on_identity_and_order(self):
         self.assertTrue(trace_matches(fixture_log(), PR, HEAD, BASE, MERGE))
