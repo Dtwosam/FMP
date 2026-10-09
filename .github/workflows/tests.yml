@@ -2093,6 +2093,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_review_manifest_identity_separation.py'
           -v
+      - name: Run DEC-626 inert three-job precheckout expression contract tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_precheckout_job_if_preview.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
