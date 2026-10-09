@@ -8,6 +8,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_execution_preflight import (
     build_2023_execution_preflight,
 )
@@ -27,11 +29,7 @@ def _write_json(path: Path, value: Mapping[str, object]) -> None:
         json.dumps(dict(value), sort_keys=True, indent=2, allow_nan=False)
         + "\n"
     )
-    if destination.exists():
-        if destination.read_text(encoding="utf-8") != payload:
-            raise ValueError(f"conflicting existing output: {destination}")
-        return
-    destination.write_text(payload, encoding="utf-8")
+    write_once_external_report(destination, payload, f"conflicting existing output: {destination}")
 
 
 def _cmd_plan(args: argparse.Namespace) -> int:
