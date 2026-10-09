@@ -39,7 +39,7 @@ def write_once_external_report(target: Path, content: str, conflict_message: str
 
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, name = tempfile.mkstemp(
-        prefix=f".{target.name}.", suffix=".tmp", dir=target.parent
+        prefix=".fmp-audit-", suffix=".tmp", dir=target.parent
     )
     staged = Path(name)
     try:

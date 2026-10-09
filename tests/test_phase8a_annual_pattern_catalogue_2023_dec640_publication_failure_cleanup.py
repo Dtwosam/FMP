@@ -69,6 +69,12 @@ class AtomicPublicationFailureTests(unittest.TestCase):
         self.assertFalse(missing.exists())
         self.assertEqual(list(self.target.parent.iterdir()), [self.target])
 
+    def test_long_but_valid_leaf_name_does_not_overflow_private_stage_name(self):
+        self.target = self.target.parent / ("r" * 250)
+        write_once_external_report(self.target, "long name proof\n", self.conflict)
+        self.assertEqual(self.target.read_text(), "long name proof\n")
+        self.assertEqual([p.name for p in self.target.parent.iterdir()], ["r" * 250])
+
     def test_identical_second_write_leaves_no_sibling_and_preserves_inode(self):
         write_once_external_report(self.target, "payload\n", self.conflict)
         before = self.target.stat()

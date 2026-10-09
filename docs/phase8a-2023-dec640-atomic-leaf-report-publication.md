@@ -15,3 +15,7 @@ The static tests from DEC-635, DEC-636, DEC-637, DEC-638 and DEC-639 are updated
 ## Residual hazards
 
 This is **leaf-level atomic publication**, not a defense against privileged attackers swapping parent-directory path components after checkout boundary resolution. It does not provide crash-durable directory entry semantics (directory fsync not performed), eliminate temporary siblings orphaned by a killed process, or prove safety on arbitrary filesystem / platform hardlink configurations. A filesystem that refuses hardlink creation fails closed rather than falling back to clobbering writes. No code here may become a live admission, dispatch or trading gate without an entirely separate independent security review. The original #796–800 review blocker and one-shot run385 hold persist.
+
+## Valid long report names
+
+The initial preview formed the private temporary prefix by copying the entire destination leaf name. On a typical Linux 255-byte filename filesystem, a valid 250-byte destination therefore failed with `ENAMETOOLONG` because the random suffix pushed the private filename over the limit. The revised staging filename uses a fixed `.fmp-audit-` prefix, independent of the user-controlled report name. The final output leaf still uses the exact requested name, and a new regression verifies a valid 250-character name succeeds without leaving temporary siblings. This is a compatibility correction, not additional dispatch authority.
