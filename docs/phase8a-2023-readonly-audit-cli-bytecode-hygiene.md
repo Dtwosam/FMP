@@ -27,13 +27,13 @@ These are exclusively offline audit/report surfaces. This change **does not alte
 The focused DEC-627 unit test copies the actual `src/fmp` package without caches and all 11 CLI scripts into a temporary checkout. It clears `PYTHONDONTWRITEBYTECODE` and `PYTHONPYCACHEPREFIX` in the subprocess environment, invokes each script with `--help` (which loads its imported modules but does not run any research or API action), and checks that:
 
 1. each process terminates successfully and exposes its single `assess` subcommand;
-2. the copied checkout's file inventory remains exactly unchanged after each process;
+2. the copied checkout's filename-and-SHA-256 content inventory remains exactly unchanged after each process;
 3. no `*.pyc` appears anywhere in the checkout; and
 4. each script sets the bytecode-write suppression **before** its first `fmp.discovery` import.
 
-A second subprocess regression goes beyond `--help` for four source-pinned, self-contained 2023 audits (DEC-618, DEC-622, DEC-623, DEC-624). It copies their CLI sources, the entire `fmp` package and the unchanged installed annual workflow into a clean temporary checkout; runs each real `assess --out` with output **outside** that checkout; verifies `dispatch_blocked=true`, `trading_authorized=false`, and the expected decision ID; and checks that the checkout file-name inventory remains unchanged with no `.pyc` files. These tests do **not** read protected historical artifacts or contact GitHub.
+A second subprocess regression goes beyond `--help` for four source-pinned, self-contained 2023 audits (DEC-618, DEC-622, DEC-623, DEC-624). It copies their CLI sources, the entire `fmp` package and the unchanged installed annual workflow into a clean temporary checkout; runs each real `assess --out` with output **outside** that checkout; verifies `dispatch_blocked=true`, `trading_authorized=false`, and the expected decision ID; and checks that the checkout filename-and-SHA-256 content inventory remains unchanged with no `.pyc` files. These tests do **not** read protected historical artifacts or contact GitHub.
 
-This test is deliberately limited to import-time bytecode hygiene. It does not pretend to prove that every future CLI branch, OS file operation or external dependency is read-only. More importantly, a no-write CLI still does not authenticate any review, tag, admin lock or GitHub context.
+These tests cover import-time and four normal offline assessment paths for the included commands, including creation and in-place byte changes under checkout; they are not proofs of arbitrary future CLI behavior. It does not pretend to prove that every future CLI branch, OS file operation or external dependency is read-only. More importantly, a no-write CLI still does not authenticate any review, tag, admin lock or GitHub context.
 
 ## Unchanged security restrictions
 
