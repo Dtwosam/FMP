@@ -53,6 +53,7 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
              sys.executable, "-B", "-c", program, *map(str, args)],
             capture_output=True, text=True, timeout=8,
             env=_restricted_child_environment(self.root),
+            cwd=self.root, close_fds=True,
         )
 
     def assert_locked_inventory(self):
@@ -122,7 +123,86 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
         self.assert_locked_inventory()
 
 
+    def _synthetic_root_only_canary(self) -> Path:
+        # Private test data only; never access the real checkout or credentials.
+        canary = self.root / "synthetic-private-canary.txt"
+        canary.write_text("synthetic-open-fd-canary\n")
+        canary.chmod(0o600)
+        return canary
+
+    def test_restricted_child_starts_in_disposable_working_directory(self):
+        proc = self.actor("import os; print(os.getcwd())")
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stdout.strip(), str(self.root.resolve()))
+        self.assert_locked_inventory()
+
+    def test_root_only_canary_cannot_be_read_by_restricted_path_open(self):
+        canary = self._synthetic_root_only_canary()
+        proc = self.actor(
+            "import sys; from pathlib import Path; print(Path(sys.argv[1]).read_text())",
+            canary,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("PermissionError", proc.stderr)
+        self.assert_locked_inventory()
+
+    def test_inheritable_parent_canary_fd_is_closed_in_restricted_child(self):
+        canary = self._synthetic_root_only_canary()
+        fd = os.open(canary, os.O_RDONLY)
+        try:
+            # Even an inheritable parent FD must not reach the default actor.
+            os.set_inheritable(fd, True)
+            code = (
+                "import os,sys\n"
+                "try:\n"
+                " print(os.read(int(sys.argv[1]), 128).decode())\n"
+                "except OSError:\n"
+                " print('closed')\n"
+            )
+            proc = self.actor(code, fd)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertEqual(proc.stdout.strip(), "closed")
+        finally:
+            os.close(fd)
+        self.assert_locked_inventory()
+
+    def test_explicit_pass_fds_can_expose_synthetic_canary_despite_uid_drop(self):
+        # NEGATIVE witness: deliberately opt into passing *synthetic* data.
+        # This is not the normal actor path and never uses a real credential.
+        canary = self._synthetic_root_only_canary()
+        fd = os.open(canary, os.O_RDONLY)
+        try:
+            os.set_inheritable(fd, True)
+            setpriv_executable = shutil.which("setpriv")
+            self.assertIsNotNone(setpriv_executable)
+            proc = subprocess.run(
+                [setpriv_executable, "--no-new-privs", "--bounding-set=-all",
+                 "--reuid=65534", "--regid=65534", "--clear-groups",
+                 sys.executable, "-B", "-c",
+                 "import os,sys; print(os.geteuid()); "
+                 "print(os.read(int(sys.argv[1]),128).decode().strip())", str(fd)],
+                env=_restricted_child_environment(self.root),
+                cwd=self.root, close_fds=True, pass_fds=(fd,),
+                capture_output=True, text=True, timeout=8,
+            )
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertEqual(proc.stdout.strip(), "65534\nsynthetic-open-fd-canary")
+        finally:
+            os.close(fd)
+        self.assert_locked_inventory()
+
+
 class WorkflowTrustBoundarySourceTests(unittest.TestCase):
+    def test_restricted_actor_explicitly_closes_fds_and_sets_fixture_cwd(self):
+        source = Path(__file__).read_text()
+        actor_source = source.split("    def actor(self, program:", 1)[1].split(
+            "    def assert_locked_inventory(self):", 1,
+        )[0]
+        self.assertIn("env=_restricted_child_environment(self.root)", actor_source)
+        self.assertIn("cwd=self.root", actor_source)
+        self.assertIn("close_fds=True", actor_source)
+        self.assertNotIn("pass_fds=", actor_source)
+
     def test_demo_child_environment_uses_explicit_allowlist(self):
         name = "FMP_DEC648_SYNTHETIC_SECRET_ONLY"
         with mock.patch.dict(os.environ, {name: "synthetic-secret-never-real"}):
