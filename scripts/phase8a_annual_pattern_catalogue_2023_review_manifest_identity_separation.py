@@ -11,6 +11,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_review_manifest_identity_separation import (
     build_review_manifest_identity_separation,
     validate_review_manifest_identity_separation,
@@ -27,13 +29,7 @@ def _assess(args: argparse.Namespace) -> int:
     report = build_review_manifest_identity_separation(repository_root=checkout)
     validate_review_manifest_identity_separation(report)
     payload = json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists():
-        if target.read_text(encoding="utf-8") != payload:
-            raise ValueError("DEC-625 refuses conflicting report overwrite")
-        # Never rewrite identical reports, including a hard-linked source inode.
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(payload, encoding="utf-8")
+    write_once_external_report(target, payload, "DEC-625 refuses conflicting report overwrite")
     return 0
 
 

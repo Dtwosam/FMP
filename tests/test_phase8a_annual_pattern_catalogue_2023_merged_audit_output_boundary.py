@@ -75,8 +75,16 @@ class MergedAuditOutputBoundaryTests(unittest.TestCase):
                     source.index("sys.dont_write_bytecode = True"),
                     source.index("from fmp.discovery."),
                 )
-                self.assertIn("    if target.exists():", source)
-                self.assertIn("    target.write_text(", source)
+                self.assertIn("write_once_external_report(target,", source)
+                self.assertIn(
+                    "from fmp.discovery.annual_pattern_catalogue_2023_external_report_create "
+                    "import write_once_external_report", source,
+                )
+                self.assertNotIn("    target.write_text(", source)
+                self.assertLess(
+                    source.index("if target.is_relative_to(source_checkout):"),
+                    source.index("write_once_external_report(target,"),
+                )
                 self.assertNotIn("args.out.write_text(", source)
 
     def test_real_subprocess_denies_fourteen_checkout_output_attempts(self):
