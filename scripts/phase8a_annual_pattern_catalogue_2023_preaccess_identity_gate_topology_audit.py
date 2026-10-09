@@ -17,8 +17,10 @@ from fmp.discovery.annual_pattern_catalogue_2023_preaccess_identity_gate_topolog
 
 def _assess(args: argparse.Namespace) -> int:
     checkout = Path.cwd().resolve()
+    # Keep cwd for offline computation; source checkout owns output safety.
+    source_checkout = Path(__file__).resolve().parents[1]
     target = args.out.resolve()
-    if target.is_relative_to(checkout):
+    if target.is_relative_to(source_checkout):
         raise ValueError("DEC-623 refuses writes anywhere inside checkout")
     report = build_2023_preaccess_identity_topology_audit(repository_root=checkout)
     validate_2023_preaccess_identity_topology_audit(report)
