@@ -18,14 +18,19 @@ from fmp.discovery.annual_pattern_catalogue_2023_precheckout_job_if_preview impo
 
 def _assess(args: argparse.Namespace) -> int:
     checkout = Path.cwd().resolve()
+    # Preserve cwd for the offline assessment, but not for output containment.
+    source_checkout = Path(__file__).resolve().parents[1]
     target = args.out.resolve()
-    if target.is_relative_to(checkout):
+    if target.is_relative_to(source_checkout):
         raise ValueError("DEC-626 refuses output inside checkout")
     report = build_precheckout_job_if_preview(repository_root=checkout)
     validate_precheckout_job_if_preview(report)
     data = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != data:
-        raise ValueError("DEC-626 refuses conflicting report overwrite")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != data:
+            raise ValueError("DEC-626 refuses conflicting report overwrite")
+        # Never rewrite identical reports, including a hard-linked source inode.
+        return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(data, encoding="utf-8")
     return 0
