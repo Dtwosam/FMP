@@ -42,6 +42,25 @@ class OfflineCheckoutTraceTests(unittest.TestCase):
                 self.assertFalse(trace_matches(fixture_log(), pr, head, base, merge))
         self.assertFalse(trace_matches(fixture_log().replace('2026-10-09T00:00:00.0000000Z ' + MERGE, 'tampered'), PR, HEAD, BASE, MERGE))
 
+    def test_observed_pr796_checkout_log_format_with_real_commit_ids(self):
+        # Exact checkout identity lines observed in GitHub's run 37871891308.
+        # This is a fixed format fixture, NOT a signed or authenticated log.
+        head = 'cd400c6ce3383753bb583cf544b4fa93df6c6850'
+        base = '53e203133bbc141b2f48c7b8b8241d56b35166a3'
+        merge = '8c4dbf08f3456558ad616beb94dab849e87268ff'
+        log = """2026-10-09T01:52:59.8911494Z ##[group]Fetching the repository
+2026-10-09T01:52:59.8920399Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +8c4dbf08f3456558ad616beb94dab849e87268ff:refs/remotes/pull/796/merge
+2026-10-09T01:53:01.4362360Z From https://github.com/Dtwosam/FMP
+2026-10-09T01:53:01.4454418Z ##[group]Checking out the ref
+2026-10-09T01:53:01.4456211Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/796/merge
+2026-10-09T01:53:01.5808482Z HEAD is now at 8c4dbf0 Merge cd400c6ce3383753bb583cf544b4fa93df6c6850 into 53e203133bbc141b2f48c7b8b8241d56b35166a3
+2026-10-09T01:53:01.5847529Z [command]/usr/bin/git log -1 --format=%H
+2026-10-09T01:53:01.5871164Z 8c4dbf08f3456558ad616beb94dab849e87268ff
+"""
+        self.assertTrue(trace_matches(log, 796, head, base, merge))
+        self.assertFalse(trace_matches(log, 796, merge, base, head))
+        self.assertFalse(trace_matches(log, 797, head, base, merge))
+
     def test_bom_supported_but_truncated_or_nontext_fail(self):
         self.assertTrue(trace_matches('\ufeff' + fixture_log(), PR, HEAD, BASE, MERGE))
         for bad in ('', None, False, 12, [], 'fake timestamp: ' + fixture_log()):
