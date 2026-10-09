@@ -18,6 +18,7 @@ from typing import Any, Mapping, Sequence
 sys.dont_write_bytecode = True
 
 SCHEMA = "dec650-structural-ledger-v1"
+MAX_JSON_BYTES = 1024 * 1024  # Reject oversized untrusted inputs before decoding.
 HEX40 = re.compile(r"[0-9a-f]{40}\Z")
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 SYMBOLS = ("EURUSD", "GBPUSD", "USDJPY")
@@ -109,7 +110,7 @@ def assess(policy: Any, ledger: Any) -> dict[str, Any]:
         if key in seen_keys:
             errors.append(f"{prefix}: duplicate job {key}")
         seen_keys.add(key)
-        if job.get("kind") not in JOB_TYPES:
+        if not isinstance(job.get("kind"), str) or job["kind"] not in JOB_TYPES:
             errors.append(f"{prefix}: unknown job kind")
         if job.get("kind") == "cell":
             m = job.get("matrix")
@@ -172,6 +173,14 @@ def _result(errors: list[str]) -> dict[str, Any]:
     }
 
 
+def _read_bounded(path: Path) -> bytes:
+    with path.open("rb") as handle:
+        value = handle.read(MAX_JSON_BYTES + 1)
+    if len(value) > MAX_JSON_BYTES:
+        raise ValueError("JSON input exceeds one-megabyte limit")
+    return value
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Offline DEC-650 ledger structure audit (NEVER authorizes execution)")
     parser.add_argument("--policy", type=Path, required=True)
@@ -179,14 +188,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--ledger", type=Path, required=True)
     args = parser.parse_args(argv)
     if not _sha64(args.policy_sha256):
-        parser.error("--policy-sha256 must be 64 lowercase hex digits")
+        result = _result(["policy digest must be 64 lowercase hex digits"])
+        print(json.dumps(result, sort_keys=True, separators=(",", ":")))
+        return 2
     try:
-        policy_bytes = args.policy.read_bytes()
+        policy_bytes = _read_bounded(args.policy)
         if hashlib.sha256(policy_bytes).hexdigest() != args.policy_sha256:
             result = _result(["policy byte digest mismatch"])
         else:
             policy = json.loads(policy_bytes)
-            ledger = json.loads(args.ledger.read_text(encoding="utf-8"))
+            ledger = json.loads(_read_bounded(args.ledger))
             result = assess(policy, ledger)
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
         result = _result(["cannot decode independent policy/ledger input: " + type(exc).__name__])
