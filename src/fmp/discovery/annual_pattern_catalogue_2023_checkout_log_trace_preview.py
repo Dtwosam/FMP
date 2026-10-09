@@ -93,6 +93,20 @@ def trace_matches(log: object, pr: int, head: str, base: str, merge: str) -> boo
     # The log command's full 40-hex SHA must be its immediately following output.
     if hits[4] != hits[3] + 1:
         return False
+    # Require one matching fetch-source line between fetch and checkout.
+    remote_lines = [(i, line) for i, line in enumerate(lines)
+                    if re.fullmatch(r'^' + STAMP + r'From https://github\.com/.*', line)]
+    if len(remote_lines) != 1 or not (hits[0] < remote_lines[0][0] < hits[1]):
+        return False
+    if not re.fullmatch(r'^' + STAMP + r'From https://github\.com/Dtwosam/FMP', remote_lines[0][1]):
+        return False
+    # A second HEAD or git-log query is conflicting runner evidence.
+    head_lines = [i for i, line in enumerate(lines)
+                  if re.match(r'^' + STAMP + r'HEAD is now at ', line)]
+    log_queries = [i for i, line in enumerate(lines)
+                   if re.match(r'^' + STAMP + r'\[command\]/usr/bin/git log -1 --format=', line)]
+    if head_lines != [hits[2]] or log_queries != [hits[3]]:
+        return False
     # An unexpected checkout to a different PR/branch is an ambiguity, not proof.
     all_checkout = [i for i, line in enumerate(lines) if re.search(r'^' + STAMP + r'\[command\]/usr/bin/git checkout --progress --force ', line)]
     all_fetch = [i for i, line in enumerate(lines) if re.search(r'^' + STAMP + r'\[command\]/usr/bin/git -c protocol\.version=2 fetch --no-tags', line)]
@@ -166,6 +180,10 @@ def _counterexamples() -> tuple[tuple[str, dict[str, object]], ...]:
     add('wrong_fetched_sha', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('origin +' + MERGE, 'origin +' + 'f' * 40)))
     add('no_timestamp', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('Z [command]/usr/bin/git log -1 --format=%H', 'Z fake [command]/usr/bin/git log -1 --format=%H')))
     add('echo_injection', lambda r: r['run_evidence'][0].__setitem__('checkout_log', 'echo checkout\n' + fixture_log().replace('Z [command]/usr/bin/git checkout --progress', 'Z echo [command]/usr/bin/git checkout --progress')))
+    add('wrong_remote', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('From https://github.com/Dtwosam/FMP', 'From https://github.com/other/FMP')))
+    add('duplicate_remote', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('From https://github.com/Dtwosam/FMP', 'From https://github.com/Dtwosam/FMP\n2026-10-09T00:00:00.0000000Z From https://github.com/Dtwosam/FMP')))
+    add('extra_head_message', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log() + '2026-10-09T00:00:00.0000000Z HEAD is now at fffffff Merge unexpected into unexpected\n'))
+    add('extra_log_query', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log() + '2026-10-09T00:00:00.0000000Z [command]/usr/bin/git log -1 --format=%H\n'))
     add('oversized_log', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log() + ('x' * (4 * 1024 * 1024))))
     return tuple(changes)
 
