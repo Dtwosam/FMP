@@ -232,5 +232,69 @@ class LegacyCliReadOnlyOutputHygieneTests(unittest.TestCase):
                     self.assertEqual(list(checkout.rglob("*.pyc")), [])
 
 
+    def test_real_dec613_handoff_external_report_remains_disarmed_on_repeat(self):
+        """A real offline DEC-613 report can succeed without a checkout write."""
+        from test_phase8a_annual_pattern_catalogue_2023_admin_lock_handoff import (
+            CURRENT_HEAD, _annual, _dec612,
+        )
+
+        with tempfile.TemporaryDirectory(prefix="dec631-dec613-positive-") as tmp:
+            root = Path(tmp)
+            checkout, scripts = _copy_checkout(root)
+            # DEC-613 pins this additional, unchanged predecessor source blob.
+            name = "phase8a_annual_pattern_catalogue_2023_main_lock_readiness.py"
+            shutil.copy2(ROOT / "scripts" / name, scripts / name)
+            env = _env(checkout)
+            readiness = root / "dec612-synthetic-readiness.json"
+            main_branch = root / "untrusted-main.json"
+            annual_runs = root / "untrusted-runs.json"
+            readiness.write_text(json.dumps(_dec612()), encoding="utf-8")
+            main_branch.write_text(
+                json.dumps({
+                    "name": "main",
+                    "commit": {"sha": CURRENT_HEAD},
+                    "protected": False,
+                }), encoding="utf-8",
+            )
+            annual_runs.write_text(json.dumps(_annual()), encoding="utf-8")
+            output = root / "dec613-outside-checkout.json"
+            command = [
+                sys.executable,
+                str(scripts / f"{PREFIX}admin_lock_handoff.py"),
+                "prepare",
+                "--dec612-readiness-json", str(readiness),
+                "--main-branch-json", str(main_branch),
+                "--annual-workflow-runs-json", str(annual_runs),
+                "--expected-head-sha", CURRENT_HEAD,
+                "--out", str(output),
+            ]
+            baseline = _checksum_files(checkout)
+            first = subprocess.run(
+                command, cwd=checkout, env=env, capture_output=True,
+                text=True, timeout=40, check=False,
+            )
+            self.assertEqual(first.returncode, 0, first.stderr)
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(report["decision"], "DEC-613")
+            self.assertIs(report["dispatch_blocked"], True)
+            self.assertIs(report["trading_authorized"], False)
+            self.assertEqual(_checksum_files(checkout), baseline)
+            linked = checkout / "hardlinked-dec613-report.json"
+            os.link(output, linked)
+            pinned = 1_600_000_000_000_000_000
+            os.utime(output, ns=(pinned, pinned))
+            mtime_before = output.stat().st_mtime_ns
+            with_link = _checksum_files(checkout)
+            repeated = subprocess.run(
+                command, cwd=checkout, env=env, capture_output=True,
+                text=True, timeout=40, check=False,
+            )
+            self.assertEqual(repeated.returncode, 0, repeated.stderr)
+            self.assertEqual(output.stat().st_mtime_ns, mtime_before)
+            self.assertEqual(linked.stat().st_mtime_ns, mtime_before)
+            self.assertEqual(_checksum_files(checkout), with_link)
+            self.assertEqual(list(checkout.rglob("*.pyc")), [])
+
+
 if __name__ == "__main__":
     unittest.main()
