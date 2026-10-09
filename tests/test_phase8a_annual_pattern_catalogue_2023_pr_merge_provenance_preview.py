@@ -44,11 +44,20 @@ class PrMergeProvenancePreviewTests(unittest.TestCase):
 
     def test_stale_merge_and_failed_or_skipped_ci_are_rejected(self):
         cases = _counterexamples()
-        self.assertEqual(len(cases), 26)
+        self.assertEqual(len(cases), 32)
         self.assertEqual(len({n for n, _ in cases}), len(cases))
         for name, sample in cases[1:]:
             with self.subTest(name=name):
                 self.assertEqual(classify_pr_ci_provenance(sample), "REJECTED")
+
+    def test_reported_runner_checkout_must_match_synthetic_merge(self):
+        sample = fixture()
+        self.assertEqual(classify_pr_ci_provenance(sample), "REPORTED_HEAD_TREE_EQUIVALENT")
+        sample["run_evidence"][0]["checkout_sha"] = sample["head_sha"]
+        self.assertEqual(classify_pr_ci_provenance(sample), "REJECTED")
+        sample = fixture()
+        sample["run_evidence"][1]["checkout_ref"] = "refs/heads/main"
+        self.assertEqual(classify_pr_ci_provenance(sample), "REJECTED")
 
     def test_wrong_input_shapes_are_rejected(self):
         for malformed in (None, "head", [], 123, True, {"pr_number": 99999}):
