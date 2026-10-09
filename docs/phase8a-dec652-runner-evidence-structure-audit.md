@@ -14,7 +14,7 @@ An actor may fabricate plausible observations, check statuses and hashes. This c
 
 ## Reviewed policy and ledger shape
 
-The **policy** JSON has schema=dec650-structural-ledger-v1, repository=Dtwosam/FMP, a 40-hex source_commit/source_tree/workflow_blob, explicit workflow_ref, segment=2023, integer run_number and previous_freeze_run_id, and run_attempt=1. The reviewer must separately authenticate its *exact raw-byte* SHA-256 before providing --policy-sha256. Self-generating a matching policy and hash does not establish independent authority.
+The **policy** JSON has schema=dec650-structural-ledger-v1, repository=Dtwosam/FMP, a 40-hex source_commit/source_tree/workflow_blob, explicit workflow_ref, segment=2023, **exact integer run_number=385**, **previous_freeze_run_id=37663157285**, and run_attempt=1. The reviewer must separately authenticate its *exact raw-byte* SHA-256 before providing --policy-sha256. Self-generating a matching policy and hash does not establish independent authority.
 
 The **ledger** repeats each policy identity and includes **20 uniquely identified job records**: one preflight, one freeze, plus 18 distinct cells spanning 3 symbols (EURUSD, GBPUSD, USDJPY), 3 timeframes (5m, 15m, 1h) and two horizons (60, 240). These coordinates reflect the committed annual workflow matrix at Git blob 09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1. No job is launched to collect data.
 
@@ -27,7 +27,7 @@ Every job must contain exactly twelve checks, each with status=PASS, skipped=fal
 - credential_leak_denied, checkout_inventory_unchanged, exclusive_external_publication
 - concurrent_publication_conflict_denied, failure_cleanup_clean
 
-A missing or duplicate job, wrong identity, wrong attempt, root actor, writable alias, leaked descriptor, skipped/failed check, missing evidence hash, changed checkout digest or mismatched policy digest yields BLOCKED. None of the data can be promoted from structural completeness to real OS proof without a separate trust mechanism and independent review.
+A missing or duplicate job, wrong identity, wrong 385/2022 predecessor, wrong attempt, root actor, writable alias, leaked descriptor, skipped/failed check, missing evidence hash, changed checkout digest or mismatched policy digest yields BLOCKED. None of the data can be promoted from structural completeness to real OS proof without a separate trust mechanism and independent review.
 
 ## Local commands
 
@@ -38,11 +38,11 @@ Only use previously collected, non-protected, independently permitted inputs:
       --policy-sha256 REVIEWER_AUTHENTICATED_64_HEX_DIGEST \
       --ledger /outside/runner-ledger.json
 
-Run the 23 synthetic regression cases without root, network, historical data or GitHub authorization:
+Run the 28 synthetic regression cases without root, network, historical data or GitHub authorization:
 
     python -B -m unittest discover -s tests -p 'test_dec650_ledger_structure_audit.py' -v
 
-Inputs over one mebibyte and malformed JSON job kinds fail closed with structured BLOCKED results. The synthetic success fixture explicitly demonstrates that **fabricated complete JSON still has no authorization authority**. The regressions also exercise missing/duplicated matrix jobs, identity drift, privilege skips, unsafe FD aliases, bad inventory, false capability policy and invalid reviewer policy digest.
+Inputs over one mebibyte, non-regular files (including FIFOs/directories), symbolic-link leaves and malformed JSON job kinds fail closed with structured BLOCKED results. The input opener uses nonblocking/no-follow descriptor flags and checks the opened inode with fstat; platforms lacking these safeguards reject the input rather than falling back to an unsafe open. These are **input robustness checks**, not filesystem isolation of an annual workflow. The synthetic success fixture explicitly demonstrates that **fabricated complete JSON still has no authorization authority**. The regressions also exercise missing/duplicated matrix jobs, identity drift, privilege skips, unsafe FD aliases, bad inventory, false capability policy and invalid reviewer policy digest.
 
 ## Scope and hard stops
 
