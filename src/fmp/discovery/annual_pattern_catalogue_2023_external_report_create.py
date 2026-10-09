@@ -8,13 +8,34 @@ outside this narrowly scoped filesystem contract.
 """
 
 import os
+import stat
 from pathlib import Path
 import tempfile
 
 
 def _require_identical(target: Path, content: str, conflict_message: str) -> None:
+    """Read only a regular existing report, bounded by expected report bytes.
+
+    O_NONBLOCK prevents a FIFO/device from blocking at open, O_NOFOLLOW rejects
+    last-component symlinks, and descriptor-based fstat avoids reading a file
+    type different from the one opened. All failures are output conflicts.
+    """
+    expected = content.encode("utf-8")
+    flags = (
+        os.O_RDONLY
+        | getattr(os, "O_NONBLOCK", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+    )
     try:
-        identical = target.read_text(encoding="utf-8") == content
+        fd = os.open(target, flags)
+        with os.fdopen(fd, "rb") as existing:
+            info = os.fstat(existing.fileno())
+            identical = (
+                stat.S_ISREG(info.st_mode)
+                and info.st_size == len(expected)
+                and existing.read(len(expected) + 1) == expected
+            )
     except (OSError, UnicodeError):
         raise ValueError(conflict_message) from None
     if not identical:
