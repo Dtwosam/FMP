@@ -296,5 +296,67 @@ class LegacyCliReadOnlyOutputHygieneTests(unittest.TestCase):
             self.assertEqual(list(checkout.rglob("*.pyc")), [])
 
 
+    def test_real_dec611_immutability_audit_external_report_is_idempotent(self):
+        """Synthetic historical inputs prove a real DEC-611 CLI audit remains disarmed."""
+        from test_phase8a_annual_pattern_catalogue_2023_dispatch_immutability_audit import (
+            HEAD, _annual, _dec610,
+        )
+
+        with tempfile.TemporaryDirectory(prefix="dec631-dec611-positive-") as tmp:
+            root = Path(tmp)
+            checkout, scripts = _copy_checkout(root)
+            env = _env(checkout)
+            dec610 = root / "synthetic-dec610-preflight.json"
+            branch = root / "untrusted-main.json"
+            inventory = root / "untrusted-runs.json"
+            dec610.write_text(json.dumps(_dec610()), encoding="utf-8")
+            branch.write_text(
+                json.dumps({
+                    "name": "main",
+                    "commit": {"sha": HEAD},
+                    "protected": False,
+                }), encoding="utf-8",
+            )
+            inventory.write_text(json.dumps(_annual()), encoding="utf-8")
+            output = root / "dec611-outside-checkout.json"
+            command = [
+                sys.executable,
+                str(scripts / f"{PREFIX}dispatch_immutability_audit.py"),
+                "audit",
+                "--dec610-preflight-json", str(dec610),
+                "--main-branch-json", str(branch),
+                "--annual-workflow-runs-json", str(inventory),
+                "--expected-head-sha", HEAD,
+                "--out", str(output),
+            ]
+            source_before = _checksum_files(checkout)
+            first = subprocess.run(
+                command, cwd=checkout, env=env, capture_output=True,
+                text=True, timeout=40, check=False,
+            )
+            self.assertEqual(first.returncode, 0, first.stderr)
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(report["decision"], "DEC-611")
+            self.assertIs(report["dispatch_blocked"], True)
+            self.assertIs(report["trading_authorized"], False)
+            self.assertEqual(_checksum_files(checkout), source_before)
+
+            hardlink = checkout / "hardlinked-dec611.json"
+            os.link(output, hardlink)
+            pinned_ns = 1_600_000_000_000_000_000
+            os.utime(output, ns=(pinned_ns, pinned_ns))
+            expected_mtime = output.stat().st_mtime_ns
+            source_with_link = _checksum_files(checkout)
+            repeat = subprocess.run(
+                command, cwd=checkout, env=env, capture_output=True,
+                text=True, timeout=40, check=False,
+            )
+            self.assertEqual(repeat.returncode, 0, repeat.stderr)
+            self.assertEqual(output.stat().st_mtime_ns, expected_mtime)
+            self.assertEqual(hardlink.stat().st_mtime_ns, expected_mtime)
+            self.assertEqual(_checksum_files(checkout), source_with_link)
+            self.assertEqual(list(checkout.rglob("*.pyc")), [])
+
+
 if __name__ == "__main__":
     unittest.main()
