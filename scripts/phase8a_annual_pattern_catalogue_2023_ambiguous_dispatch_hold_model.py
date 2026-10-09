@@ -31,8 +31,11 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_run385_ambiguous_dispatch_hold_report(report)
     text = json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != text:
-        raise ValueError("DEC-621 refuses conflicting report overwrite")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != text:
+            raise ValueError("DEC-621 refuses conflicting report overwrite")
+        # Avoid changing inode metadata on repeated identical outside reports.
+        return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
     return 0
