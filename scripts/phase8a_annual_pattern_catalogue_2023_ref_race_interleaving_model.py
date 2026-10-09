@@ -17,8 +17,10 @@ from fmp.discovery.annual_pattern_catalogue_2023_ref_race_interleaving_model imp
 
 def _assess(args: argparse.Namespace) -> int:
     checkout = Path.cwd().resolve()
+    # Keep cwd for offline computation; source checkout owns output safety.
+    source_checkout = Path(__file__).resolve().parents[1]
     target = args.out.resolve()
-    if target.is_relative_to(checkout):
+    if target.is_relative_to(source_checkout):
         raise ValueError("DEC-619 refuses output inside repository checkout")
     report = build_2023_run385_ref_race_interleaving_report(repository_root=checkout)
     validate_2023_run385_ref_race_interleaving_report(report)
