@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# Stop project imports from generating checkout bytecode files.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -22,6 +25,10 @@ def _read(path: Path) -> Mapping[str, object]:
 
 
 def _cmd_audit(args: argparse.Namespace) -> int:
+    source_checkout = Path(__file__).resolve().parents[1]
+    target = args.out.resolve()
+    if target.is_relative_to(source_checkout):
+        raise ValueError("DEC-611 refuses audit output inside checkout")
     value = audit_2023_dispatch_main_immutability(
         _read(args.dec610_preflight_json),
         repository_root=Path("."),
@@ -31,10 +38,12 @@ def _cmd_audit(args: argparse.Namespace) -> int:
     )
     validate_2023_dispatch_main_immutability_audit(value)
     payload = json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n"
-    if args.out.exists() and args.out.read_text(encoding="utf-8") != payload:
-        raise ValueError(f"conflicting existing output: {args.out}")
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(payload, encoding="utf-8")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != payload:
+            raise ValueError(f"conflicting existing output: {target}")
+        return 0
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(payload, encoding="utf-8")
     return 0
 
 

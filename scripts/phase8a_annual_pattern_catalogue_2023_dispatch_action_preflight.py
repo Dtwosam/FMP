@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# Stop project imports from generating checkout bytecode files.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -23,13 +26,19 @@ def _read_json(path: Path) -> Mapping[str, object]:
 
 def _write_json(path: Path, value: Mapping[str, object]) -> None:
     payload = json.dumps(dict(value), sort_keys=True, indent=2, allow_nan=False) + "\n"
-    if path.exists() and path.read_text(encoding="utf-8") != payload:
-        raise ValueError(f"conflicting existing output: {path}")
+    if path.exists():
+        if path.read_text(encoding="utf-8") != payload:
+            raise ValueError(f"conflicting existing output: {path}")
+        return
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(payload, encoding="utf-8")
 
 
 def _cmd_plan(args: argparse.Namespace) -> int:
+    source_checkout = Path(__file__).resolve().parents[1]
+    target = args.out.resolve()
+    if target.is_relative_to(source_checkout):
+        raise ValueError("DEC-610 refuses audit output inside checkout")
     value = build_2023_dispatch_action_preflight(
         _read_json(args.authorization_json),
         repository_root=Path("."),
@@ -38,7 +47,7 @@ def _cmd_plan(args: argparse.Namespace) -> int:
         expected_head_sha=args.expected_head_sha,
     )
     validate_2023_dispatch_action_preflight(value)
-    _write_json(args.out, value)
+    _write_json(target, value)
     return 0
 
 
