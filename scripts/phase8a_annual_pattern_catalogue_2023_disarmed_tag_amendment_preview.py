@@ -23,8 +23,11 @@ def _assess(args: argparse.Namespace) -> int:
     result = build_2023_disarmed_tag_amendment_preview(repository_root=Path("."))
     validate_2023_disarmed_tag_amendment_preview(result)
     output = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != output:
-        raise ValueError(f"DEC-618 refusing conflicting output: {target}")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != output:
+            raise ValueError(f"DEC-618 refusing conflicting output: {target}")
+        # Avoid changing inode metadata on repeated identical outside reports.
+        return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(output, encoding="utf-8")
     return 0
