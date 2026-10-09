@@ -4,6 +4,10 @@ import copy
 import hashlib
 import json
 import os
+import shutil
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 import unittest
 
@@ -135,6 +139,41 @@ class ReviewedIdentitySeparationTests(unittest.TestCase):
                 _refingerprint(tampered)
                 with self.assertRaisesRegex(ValueError, "forged or source-drifted"):
                     validate_review_manifest_identity_separation(tampered)
+
+    def test_assess_subprocess_emits_no_bytecode_in_clean_checkout(self):
+        # A source grep cannot establish read-only behavior: Python can write
+        # __pycache__ before the CLI even evaluates its output-path guard.
+        with tempfile.TemporaryDirectory(prefix="dec625-no-bytecode-") as directory:
+            temp_root = Path(directory)
+            checkout = temp_root / "checkout"
+            shutil.copytree(
+                ROOT / "src" / "fmp",
+                checkout / "src" / "fmp",
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+            workflow = checkout / ".github" / "workflows" / "phase8a-annual-pattern-catalogue.yml"
+            workflow.parent.mkdir(parents=True)
+            shutil.copy2(ROOT / ".github" / "workflows" / workflow.name, workflow)
+            script = checkout / "scripts" / "phase8a_annual_pattern_catalogue_2023_review_manifest_identity_separation.py"
+            script.parent.mkdir(parents=True)
+            shutil.copy2(ROOT / "scripts" / script.name, script)
+            outfile = temp_root / "review.json"
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(checkout / "src")
+            env.pop("PYTHONDONTWRITEBYTECODE", None)
+            env.pop("PYTHONPYCACHEPREFIX", None)
+            result = subprocess.run(
+                [sys.executable, str(script), "assess", "--out", str(outfile)],
+                cwd=checkout, env=env, text=True, capture_output=True,
+                timeout=40, check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(outfile.is_file())
+            self.assertEqual(json.loads(outfile.read_text())["decision"], "DEC-625")
+            self.assertEqual(
+                list((checkout / "src").rglob("*.pyc")), [],
+                "Assess-only CLI must never emit source-package bytecode",
+            )
 
     def test_cli_source_only_assess_and_off_checkout_output(self):
         source = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_review_manifest_identity_separation.py").read_text()
