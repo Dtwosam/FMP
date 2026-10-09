@@ -10,7 +10,9 @@ attested; a complete shape cannot demonstrate that OS measurements are true.
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+import stat
 import re
 import sys
 from typing import Any, Mapping, Sequence
@@ -84,8 +86,10 @@ def assess(policy: Any, ledger: Any) -> dict[str, Any]:
         errors.append("policy.workflow_ref must be an explicit ref")
     if policy.get("segment") != "2023":
         errors.append("policy.segment must be 2023")
-    if not _positive_int(policy.get("run_number")) or not _positive_int(policy.get("previous_freeze_run_id")):
-        errors.append("policy run/predecessor identities must be positive integers")
+    if type(policy.get("run_number")) is not int or policy.get("run_number") != 385:
+        errors.append("policy.run_number must be integer 385")
+    if type(policy.get("previous_freeze_run_id")) is not int or policy.get("previous_freeze_run_id") != 37663157285:
+        errors.append("policy.previous_freeze_run_id must be approved 2022 predecessor 37663157285")
     if policy.get("run_attempt") != 1 or type(policy.get("run_attempt")) is not int:
         errors.append("policy.run_attempt must be integer 1")
     for field in IDENTITY_FIELDS:
@@ -174,7 +178,20 @@ def _result(errors: list[str]) -> dict[str, Any]:
 
 
 def _read_bounded(path: Path) -> bytes:
-    with path.open("rb") as handle:
+    # O_NONBLOCK prevents a FIFO from hanging the audit before its size check.
+    # O_NOFOLLOW prevents the supplied leaf from becoming a symlink to an
+    # unintended local source between inspection and open. No unsafe fallback.
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    nonblock = getattr(os, "O_NONBLOCK", None)
+    if not isinstance(nofollow, int) or not isinstance(nonblock, int):
+        raise ValueError("platform lacks nonblocking nofollow input reads")
+    flags = os.O_RDONLY | nonblock | nofollow | getattr(os, "O_CLOEXEC", 0)
+    with os.fdopen(os.open(path, flags), "rb") as handle:
+        info = os.fstat(handle.fileno())
+        if not stat.S_ISREG(info.st_mode):
+            raise ValueError("JSON input must be a regular file")
+        if info.st_size > MAX_JSON_BYTES:
+            raise ValueError("JSON input exceeds one-megabyte limit")
         value = handle.read(MAX_JSON_BYTES + 1)
     if len(value) > MAX_JSON_BYTES:
         raise ValueError("JSON input exceeds one-megabyte limit")
