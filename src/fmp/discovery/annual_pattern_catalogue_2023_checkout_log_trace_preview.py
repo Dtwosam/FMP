@@ -20,7 +20,7 @@ PR = 99999  # nonexistent synthetic PR
 WORKFLOWS = ('.github/workflows/tests.yml', '.github/workflows/phase3-acceptance.yml')
 REQUIRED = frozenset({'repository', 'pr_number', 'head_sha', 'base_sha', 'merge_sha', 'run_evidence'})
 RUN_FIELDS = frozenset({'workflow_path', 'event', 'pr_number', 'head_sha', 'base_sha',
-                        'status', 'conclusion', 'attempt', 'checkout_log'})
+                        'status', 'conclusion', 'attempt', 'run_id', 'job_id', 'checkout_log'})
 STAMP = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z '
 SHA = r'[0-9a-f]{40}'
 
@@ -49,8 +49,9 @@ def fixture() -> dict[str, object]:
         'run_evidence': [
             {'workflow_path': workflow, 'event': 'pull_request', 'pr_number': PR,
              'head_sha': HEAD, 'base_sha': BASE, 'status': 'completed',
-             'conclusion': 'success', 'attempt': 1, 'checkout_log': fixture_log()}
-            for workflow in WORKFLOWS
+             'conclusion': 'success', 'attempt': 1, 'run_id': 500001 + index,
+             'job_id': 600001 + index, 'checkout_log': fixture_log()}
+            for index, workflow in enumerate(WORKFLOWS)
         ],
     }
 
@@ -134,6 +135,8 @@ def classify_pair(record: object) -> str:
     if type(runs) is not list or len(runs) != 2:
         return 'REJECTED'
     seen: set[str] = set()
+    run_ids: set[int] = set()
+    job_ids: set[int] = set()
     for run in runs:
         if not isinstance(run, Mapping) or set(run) != RUN_FIELDS:
             return 'REJECTED'
@@ -141,6 +144,12 @@ def classify_pair(record: object) -> str:
         if type(workflow) is not str or workflow not in WORKFLOWS or workflow in seen:
             return 'REJECTED'
         seen.add(workflow)
+        if (type(run['run_id']) is not int or run['run_id'] <= 0
+            or type(run['job_id']) is not int or run['job_id'] <= 0
+            or run['run_id'] in run_ids or run['job_id'] in job_ids):
+            return 'REJECTED'
+        run_ids.add(run['run_id'])
+        job_ids.add(run['job_id'])
         if (type(run['event']) is not str or run['event'] != 'pull_request'
             or type(run['pr_number']) is not int or run['pr_number'] != pr
             or type(run['head_sha']) is not str or run['head_sha'] != head
@@ -176,6 +185,14 @@ def _counterexamples() -> tuple[tuple[str, dict[str, object]], ...]:
     add('stale_run_head', lambda r: r['run_evidence'][0].__setitem__('head_sha', 'f' * 40))
     add('run_wrong_base', lambda r: r['run_evidence'][0].__setitem__('base_sha', 'f' * 40))
     add('not_pr_event', lambda r: r['run_evidence'][1].__setitem__('event', 'push'))
+    add('duplicate_run_id', lambda r: r['run_evidence'][1].__setitem__('run_id', 500001))
+    add('duplicate_job_id', lambda r: r['run_evidence'][1].__setitem__('job_id', 600001))
+    add('boolean_run_id', lambda r: r['run_evidence'][0].__setitem__('run_id', True))
+    add('boolean_job_id', lambda r: r['run_evidence'][0].__setitem__('job_id', True))
+    add('missing_run_id', lambda r: r['run_evidence'][0].pop('run_id'))
+    add('missing_job_id', lambda r: r['run_evidence'][0].pop('job_id'))
+    add('zero_run_id', lambda r: r['run_evidence'][1].__setitem__('run_id', 0))
+    add('string_job_id', lambda r: r['run_evidence'][1].__setitem__('job_id', '600002'))
     add('fake_authority', lambda r: r.__setitem__('dispatch_authorized', True))
     add('duplicate_checkout_command', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log() + fixture_log()))
     add('missing_result', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('Z ' + MERGE + '\n', 'Z <omitted>\n')))
