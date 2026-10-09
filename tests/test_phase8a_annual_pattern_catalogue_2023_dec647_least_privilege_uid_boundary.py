@@ -52,6 +52,7 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
              "--reuid=65534", "--regid=65534", "--clear-groups",
              sys.executable, "-B", "-c", program, *map(str, args)],
             capture_output=True, text=True, timeout=8,
+            stdin=subprocess.DEVNULL,
             env=_restricted_child_environment(self.root),
             cwd=self.root, close_fds=True,
         )
@@ -192,7 +193,82 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
         self.assert_locked_inventory()
 
 
+    def test_default_restricted_child_stdin_is_explicit_devnull(self):
+        proc = self.actor(
+            "import os; print(os.geteuid()); print(repr(os.read(0, 128)))"
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stdout.strip(), "65534\nb''")
+        self.assert_locked_inventory()
+
+    def test_explicit_private_stdin_bypasses_uid_read_denial(self):
+        # Deliberately pass only an inert synthetic root-owned canary.
+        canary = self._synthetic_root_only_canary()
+        setpriv_executable = shutil.which("setpriv")
+        self.assertIsNotNone(setpriv_executable)
+        with canary.open("rb") as private_input:
+            proc = subprocess.run(
+                [setpriv_executable, "--no-new-privs", "--bounding-set=-all",
+                 "--reuid=65534", "--regid=65534", "--clear-groups",
+                 sys.executable, "-B", "-c",
+                 "import os; print(os.geteuid()); "
+                 "print(os.read(0, 128).decode().strip())"],
+                stdin=private_input, capture_output=True, text=True,
+                env=_restricted_child_environment(self.root),
+                cwd=self.root, close_fds=True, timeout=8,
+            )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertEqual(proc.stdout.strip(), "65534\nsynthetic-open-fd-canary")
+        self.assert_locked_inventory()
+
+    def test_restricted_child_cannot_write_checkout_file_by_path(self):
+        target = self.checkout / "synthetic-denied.txt"
+        proc = self.actor(
+            "import sys; from pathlib import Path; "
+            "Path(sys.argv[1]).write_text('unexpected')",
+            target,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("PermissionError", proc.stderr)
+        self.assertFalse(target.exists())
+        self.assert_locked_inventory()
+
+    def test_preopened_stdout_can_write_synthetic_checkout_after_uid_drop(self):
+        # NEGATIVE control: root opens a *synthetic* checkout output first.
+        # The denied by-path test above proves this is a descriptor bypass.
+        target = self.checkout / "synthetic-preopened-stdout.txt"
+        setpriv_executable = shutil.which("setpriv")
+        self.assertIsNotNone(setpriv_executable)
+        with target.open("wb") as parent_opened_output:
+            proc = subprocess.run(
+                [setpriv_executable, "--no-new-privs", "--bounding-set=-all",
+                 "--reuid=65534", "--regid=65534", "--clear-groups",
+                 sys.executable, "-B", "-c",
+                 "import os; os.write(2, str(os.geteuid()).encode()); "
+                 "os.write(1, b'synthetic-fd-write\\n')"],
+                stdin=subprocess.DEVNULL, stdout=parent_opened_output,
+                stderr=subprocess.PIPE,
+                env=_restricted_child_environment(self.root),
+                cwd=self.root, close_fds=True, timeout=8,
+            )
+        self.assertEqual(proc.returncode, 0, proc.stderr.decode())
+        self.assertEqual(proc.stderr, b"65534")
+        self.assertEqual(target.read_bytes(), b"synthetic-fd-write\n")
+        self.assert_locked_inventory()
+
+
 class WorkflowTrustBoundarySourceTests(unittest.TestCase):
+    def test_normal_actor_closes_standard_input_and_captures_outputs(self):
+        source = Path(__file__).read_text()
+        actor_source = source.split("    def actor(self, program:", 1)[1].split(
+            "    def assert_locked_inventory(self):", 1,
+        )[0]
+        self.assertIn("stdin=subprocess.DEVNULL", actor_source)
+        self.assertIn("capture_output=True", actor_source)
+        self.assertIn("close_fds=True", actor_source)
+        self.assertNotIn("stdout=", actor_source)
+        self.assertNotIn("pass_fds=", actor_source)
+
     def test_restricted_actor_explicitly_closes_fds_and_sets_fixture_cwd(self):
         source = Path(__file__).read_text()
         actor_source = source.split("    def actor(self, program:", 1)[1].split(
