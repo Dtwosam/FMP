@@ -38,11 +38,11 @@ Only use previously collected, non-protected, independently permitted inputs:
       --policy-sha256 REVIEWER_AUTHENTICATED_64_HEX_DIGEST \
       --ledger /outside/runner-ledger.json
 
-Run the 20 synthetic regression cases without root, network, historical data or GitHub authorization:
+Run the 23 synthetic regression cases without root, network, historical data or GitHub authorization:
 
     python -B -m unittest discover -s tests -p 'test_dec650_ledger_structure_audit.py' -v
 
-The synthetic success fixture explicitly demonstrates that **fabricated complete JSON still has no authorization authority**. The regressions also exercise missing/duplicated matrix jobs, identity drift, privilege skips, unsafe FD aliases, bad inventory, false capability policy and invalid reviewer policy digest.
+Inputs over one mebibyte and malformed JSON job kinds fail closed with structured BLOCKED results. The synthetic success fixture explicitly demonstrates that **fabricated complete JSON still has no authorization authority**. The regressions also exercise missing/duplicated matrix jobs, identity drift, privilege skips, unsafe FD aliases, bad inventory, false capability policy and invalid reviewer policy digest.
 
 ## Scope and hard stops
 
