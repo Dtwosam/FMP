@@ -57,7 +57,7 @@ class BatchExclusiveOutputIntegrationTests(unittest.TestCase):
             ROOT / "src" / "fmp" / "discovery"
             / "annual_pattern_catalogue_2023_external_report_create.py"
         ).read_text(encoding="utf-8")
-        self.assertEqual(helper.count('target.open("x", encoding="utf-8")'), 1)
+        self.assertEqual(helper.count('os.link(staged, target)'), 1)
         self.assertIn("except FileExistsError:", helper)
         self.assertNotIn("target.write_text(", helper)
 
