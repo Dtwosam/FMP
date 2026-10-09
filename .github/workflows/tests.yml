@@ -2101,6 +2101,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_precheckout_job_if_preview.py'
           -v
+      - name: Run DEC-627 no-checkout-bytecode audit CLI regression tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_readonly_audit_cli_bytecode_hygiene.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
