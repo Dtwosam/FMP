@@ -95,5 +95,67 @@ class ReadonlyAuditCliBytecodeHygieneTests(unittest.TestCase):
                     self.assertEqual(list(checkout.rglob("*.pyc")), [])
 
 
+    def test_real_offline_assess_reports_preserve_checkout_and_deny_dispatch(self):
+        """Execute four real source-pinned assess subcommands, not only --help."""
+        import json
+
+        cases = {
+            "disarmed_tag_amendment_preview": "DEC-618",
+            "runtime_tag_sha_binding_preview": "DEC-622",
+            "preaccess_identity_gate_topology_audit": "DEC-623",
+            "three_layer_admission_model": "DEC-624",
+        }
+        with tempfile.TemporaryDirectory(prefix="dec627-assess-no-writes-") as tmp:
+            temp_root = Path(tmp)
+            checkout = temp_root / "checkout"
+            shutil.copytree(
+                ROOT / "src" / "fmp",
+                checkout / "src" / "fmp",
+                ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+            )
+            scripts = checkout / "scripts"
+            scripts.mkdir(parents=True)
+            workflow = checkout / ".github" / "workflows" / "phase8a-annual-pattern-catalogue.yml"
+            workflow.parent.mkdir(parents=True)
+            shutil.copy2(ROOT / ".github" / "workflows" / workflow.name, workflow)
+            for suffix in cases:
+                name = f"{PREFIX}{suffix}.py"
+                shutil.copy2(ROOT / "scripts" / name, scripts / name)
+            files_before = sorted(
+                p.relative_to(checkout).as_posix()
+                for p in checkout.rglob("*") if p.is_file()
+            )
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(checkout / "src")
+            env.pop("PYTHONDONTWRITEBYTECODE", None)
+            env.pop("PYTHONPYCACHEPREFIX", None)
+            for suffix, expected_decision in cases.items():
+                with self.subTest(command=suffix):
+                    name = f"{PREFIX}{suffix}.py"
+                    out = temp_root / f"{suffix}.json"
+                    completed = subprocess.run(
+                        [sys.executable, str(scripts / name), "assess", "--out", str(out)],
+                        cwd=checkout,
+                        env=env,
+                        text=True,
+                        capture_output=True,
+                        timeout=40,
+                        check=False,
+                    )
+                    self.assertEqual(completed.returncode, 0, completed.stderr)
+                    report = json.loads(out.read_text(encoding="utf-8"))
+                    self.assertEqual(report["decision"], expected_decision)
+                    self.assertIs(report["dispatch_blocked"], True)
+                    self.assertIs(report["trading_authorized"], False)
+                    self.assertEqual(
+                        sorted(p.relative_to(checkout).as_posix()
+                               for p in checkout.rglob("*") if p.is_file()),
+                        files_before,
+                        f"{name} changed its checkout during assess",
+                    )
+                    self.assertEqual(list(checkout.rglob("*.pyc")), [])
+
+
+
 if __name__ == "__main__":
     unittest.main()
