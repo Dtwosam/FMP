@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -25,8 +26,8 @@ def fixtures():
         "schema": module.SCHEMA, "repository": "Dtwosam/FMP",
         "source_commit": SHA40, "source_tree": "c" * 40,
         "workflow_blob": "d" * 40, "workflow_ref": "refs/heads/main",
-        "segment": "2023", "run_number": 1234, "run_attempt": 1,
-        "previous_freeze_run_id": 999,
+        "segment": "2023", "run_number": 385, "run_attempt": 1,
+        "previous_freeze_run_id": 37663157285,
     }
     keys = ["preflight"] + sorted(k for k in module._required_job_keys() if k.startswith("cell:")) + ["freeze"]
     jobs = []
@@ -81,6 +82,14 @@ class LedgerStructureTests(unittest.TestCase):
 
     def test_wrong_attempt_blocks(self):
         p, l = fixtures(); l["run_attempt"] = 2
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_wrong_positive_run_number_blocks(self):
+        p, l = fixtures(); p["run_number"] = 386; l["run_number"] = 386
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_wrong_positive_previous_freeze_run_blocks(self):
+        p, l = fixtures(); p["previous_freeze_run_id"] = 999; l["previous_freeze_run_id"] = 999
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
 
     def test_boolean_instead_of_positive_run_identity_blocks(self):
@@ -158,6 +167,48 @@ class LedgerStructureTests(unittest.TestCase):
             proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--policy", str(a), "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)], capture_output=True, text=True, check=False)
             self.assertEqual(proc.returncode, 0, proc.stderr)
             self.assertEqual(json.loads(proc.stdout)["status"], "STRUCTURALLY_COMPLETE_UNVERIFIED")
+
+    @unittest.skipUnless(hasattr(os, "mkfifo") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_fifo_input_does_not_hang(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); fifo = base / "fifo.json"; b = base / "l.json"
+            os.mkfifo(fifo); b.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(fifo),
+                 "--policy-sha256", SHA64, "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    @unittest.skipUnless(hasattr(os, "symlink") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_symlink_input_is_rejected(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); target = base / "real.json"; alias = base / "alias.json"; b = base / "l.json"
+            raw = json.dumps(policy).encode("utf-8")
+            target.write_bytes(raw); alias.symlink_to(target); b.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(alias),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    def test_cli_directory_input_is_rejected(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); b = base / "l.json"
+            b.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(base),
+                 "--policy-sha256", SHA64, "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
 
     def test_cli_wrong_policy_digest_fails_closed(self):
         policy, ledger = fixtures()
