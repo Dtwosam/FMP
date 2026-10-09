@@ -106,7 +106,13 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
 class WorkflowTrustBoundarySourceTests(unittest.TestCase):
     def test_frozen_annual_workflow_does_not_explicitly_drop_uid_privileges(self):
         root = Path(__file__).resolve().parents[1]
-        src = (root / ".github/workflows/phase8a-annual-pattern-catalogue.yml").read_text()
+        # Historical tests may remove this file from the working tree while
+        # leaving the tracked Git commit intact. Inspect committed evidence.
+        result = subprocess.run(
+            ["git", "show", "HEAD:.github/workflows/phase8a-annual-pattern-catalogue.yml"],
+            cwd=root, capture_output=True, text=True, check=True, timeout=10,
+        )
+        src = result.stdout
         self.assertEqual(src.count("uses: actions/checkout@v6"), 3)
         self.assertIn("contents: read", src)
         for marker in ("setpriv ", "--no-new-privs", "capsh ", "runuser "):
