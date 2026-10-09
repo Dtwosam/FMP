@@ -107,6 +107,29 @@ class LedgerStructureTests(unittest.TestCase):
         p, l = fixtures(); l["jobs"][1]["writable_checkout_aliases"] = ["synthetic-alias"]
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
 
+    def test_unhashable_kind_returns_blocked_not_exception(self):
+        p, l = fixtures(); l["jobs"][0]["kind"] = ["cell"]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_cli_bad_digest_format_emits_structured_blocked(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            a.write_text(json.dumps(policy)); b.write_text(json.dumps(ledger))
+            proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--policy", str(a), "--policy-sha256", "bogus", "--ledger", str(b)], capture_output=True, text=True, check=False)
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    def test_cli_oversized_json_fails_closed(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            a.write_bytes(b" " * (module.MAX_JSON_BYTES + 1))
+            b.write_text(json.dumps(ledger))
+            proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--policy", str(a), "--policy-sha256", hashlib.sha256(a.read_bytes()).hexdigest(), "--ledger", str(b)], capture_output=True, text=True, check=False)
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
     def test_bad_fd_blocks(self):
         p, l = fixtures(); l["jobs"][0]["standard_streams"]["1"] = "checkout-file"
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
