@@ -100,6 +100,35 @@ class ReadOnlyPrCiEvidenceCliTests(unittest.TestCase):
         self.assertIn('target.open("x", encoding="utf-8")', source)
         self.assertNotIn('target.write_text(content', source)
 
+    def test_duplicate_evidence_keys_are_rejected_without_output(self):
+        # Python's default json parser silently keeps the last duplicate key.
+        # Source provenance must not depend on an ambiguous JSON interpretation.
+        self.evidence.write_text('{"pr_number": 123, "pr_number": 99999}', encoding="utf-8")
+        before = inventory(self.checkout)
+        result = self.run_assess(self.output)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("duplicate JSON evidence keys", result.stderr)
+        self.assertFalse(self.output.exists())
+        self.assertEqual(inventory(self.checkout), before)
+
+    def test_non_json_nan_and_infinity_are_rejected(self):
+        for token in ("NaN", "Infinity", "-Infinity"):
+            with self.subTest(token=token):
+                self.evidence.write_text('{"value": ' + token + '}', encoding="utf-8")
+                result = self.run_assess(self.output)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("non-JSON numeric constant", result.stderr)
+                self.assertFalse(self.output.exists())
+
+    def test_oversized_untrusted_json_denied_without_checkout_write(self):
+        self.evidence.write_bytes(b" " * (1024 * 1024 + 1))
+        before = inventory(self.checkout)
+        result = self.run_assess(self.output)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("oversized JSON evidence", result.stderr)
+        self.assertFalse(self.output.exists())
+        self.assertEqual(inventory(self.checkout), before)
+
     def test_broken_or_untrusted_evidence_never_yields_authority(self):
         self.evidence.write_text("{invalid json", encoding="utf-8")
         result = self.run_assess(self.output)
