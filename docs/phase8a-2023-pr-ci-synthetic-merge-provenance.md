@@ -22,3 +22,17 @@ Official GitHub semantics:
 - https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target
 
 **Unchanged:** installed annual workflow and 2023 runtime, main, historical run 385, branch protection/rulesets, original #796–800 merge train. Independent code reviews remain mandatory.
+
+## Optional audit command — external reports only
+
+Run only on a local **untrusted** JSON evidence file you supply, with `PYTHONPATH=src`:
+
+```sh
+PYTHONPATH=src python scripts/phase8a_annual_pattern_catalogue_2023_pr_merge_provenance_preview.py assess \
+  --evidence /tmp/untrusted-pr-ci-evidence.json \
+  --out /tmp/pr-ci-provenance.json
+```
+
+The command creates no GitHub connection, never executes annual code, suppresses project Python bytecode writes, refuses any output path within its **source checkout** (including symlink aliases), and refuses conflicting external report overwrites. Re-running an identical report does not rewrite the output file. Its output is **only** a classification of the supplied data with a reproducible report fingerprint; it is not an authenticated workflow receipt. It cannot authorize a merge, dispatch, run385, or trading even for a matching-looking JSON file.
+
+The dedicated subprocess tests copy the module/CLI into a disposable checkout, force the bytecode-suppression environment variable off, run valid external reports twice, check exact checkout SHA-256 file inventories, reject checkout-local and symlink-alias outputs, reject conflicting external overwrites, and verify malformed/forged evidence does not grant authority. These tests do not cover arbitrary future filesystem races or changes to GitHub's actual event handling.
