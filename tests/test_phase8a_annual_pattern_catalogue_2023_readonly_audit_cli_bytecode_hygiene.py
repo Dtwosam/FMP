@@ -2,6 +2,7 @@ from __future__ import annotations
 
 """DEC-627: real-process audit CLI no-checkout-write regression."""
 
+import hashlib
 import os
 from pathlib import Path
 import shutil
@@ -25,6 +26,14 @@ ASSESS_ONLY_AUDITS = (
     "preaccess_identity_gate_topology_audit",
     "three_layer_admission_model",
 )
+
+
+def _checksum_inventory(checkout: Path) -> dict[str, str]:
+    # Compare file names AND bytes: new files or in-place source edits must fail.
+    return {
+        p.relative_to(checkout).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+        for p in sorted(checkout.rglob("*")) if p.is_file()
+    }
 
 
 @unittest.skipIf(
@@ -68,10 +77,7 @@ class ReadonlyAuditCliBytecodeHygieneTests(unittest.TestCase):
             # the CLI's own pre-import bytecode-write gate.
             env.pop("PYTHONDONTWRITEBYTECODE", None)
             env.pop("PYTHONPYCACHEPREFIX", None)
-            baseline = sorted(
-                p.relative_to(checkout).as_posix()
-                for p in checkout.rglob("*") if p.is_file()
-            )
+            baseline = _checksum_inventory(checkout)
             for suffix in ASSESS_ONLY_AUDITS:
                 name = f"{PREFIX}{suffix}.py"
                 with self.subTest(script=name):
@@ -87,8 +93,7 @@ class ReadonlyAuditCliBytecodeHygieneTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertIn("assess", result.stdout)
                     self.assertEqual(
-                        sorted(p.relative_to(checkout).as_posix()
-                               for p in checkout.rglob("*") if p.is_file()),
+                        _checksum_inventory(checkout),
                         baseline,
                         f"{name} wrote files inside checkout",
                     )
@@ -121,10 +126,7 @@ class ReadonlyAuditCliBytecodeHygieneTests(unittest.TestCase):
             for suffix in cases:
                 name = f"{PREFIX}{suffix}.py"
                 shutil.copy2(ROOT / "scripts" / name, scripts / name)
-            files_before = sorted(
-                p.relative_to(checkout).as_posix()
-                for p in checkout.rglob("*") if p.is_file()
-            )
+            files_before = _checksum_inventory(checkout)
             env = os.environ.copy()
             env["PYTHONPATH"] = str(checkout / "src")
             env.pop("PYTHONDONTWRITEBYTECODE", None)
@@ -148,8 +150,7 @@ class ReadonlyAuditCliBytecodeHygieneTests(unittest.TestCase):
                     self.assertIs(report["dispatch_blocked"], True)
                     self.assertIs(report["trading_authorized"], False)
                     self.assertEqual(
-                        sorted(p.relative_to(checkout).as_posix()
-                               for p in checkout.rglob("*") if p.is_file()),
+                        _checksum_inventory(checkout),
                         files_before,
                         f"{name} changed its checkout during assess",
                     )
