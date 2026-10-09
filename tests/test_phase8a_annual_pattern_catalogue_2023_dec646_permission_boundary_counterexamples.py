@@ -12,6 +12,7 @@ import os
 import runpy
 from pathlib import Path
 import stat
+import subprocess
 import tempfile
 import unittest
 
@@ -110,7 +111,13 @@ class CheckoutIsolationCounterexamples(unittest.TestCase):
 
     def test_annual_workflow_has_no_explicit_checkout_mount_isolation(self):
         root = Path(__file__).resolve().parents[1]
-        yaml = (root / ".github/workflows/phase8a-annual-pattern-catalogue.yml").read_text()
+        # Historical tests may remove the workflow from the mutable worktree.
+        # Git's HEAD tree remains the exact immutable content under review.
+        result = subprocess.run(
+            ["git", "show", "HEAD:.github/workflows/phase8a-annual-pattern-catalogue.yml"],
+            cwd=root, capture_output=True, text=True, check=True, timeout=10,
+        )
+        yaml = result.stdout
         self.assertEqual(yaml.count("uses: actions/checkout@v6"), 3)
         self.assertEqual(yaml.count("runs-on: ubuntu-latest"), 3)
         self.assertIn("contents: read", yaml)
