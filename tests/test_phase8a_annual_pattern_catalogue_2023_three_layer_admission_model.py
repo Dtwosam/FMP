@@ -145,7 +145,10 @@ class ThreeLayerAdmissionModelTests(unittest.TestCase):
         path = ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_three_layer_admission_model.py"
         script = path.read_text(encoding="utf-8")
         self.assertIn('sub.add_parser("assess")', script)
-        self.assertIn("target.is_relative_to(checkout)", script)
+        self.assertIn("source_checkout = Path(__file__).resolve().parents[1]", script)
+        self.assertIn("target = args.out.resolve()", script)
+        self.assertIn("if target.is_relative_to(source_checkout):", script)
+        self.assertNotIn("target.is_relative_to(checkout)", script)
         for prohibited in ("gh workflow run", "subprocess.", "requests.", "git push", "git tag", "os.system"):
             self.assertNotIn(prohibited, script)
 

@@ -131,7 +131,10 @@ class Run385RefRaceInterleavingTests(unittest.TestCase):
             _schedules(mutation_allowed=1)
         script = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_ref_race_interleaving_model.py").read_text(encoding="utf-8")
         self.assertIn('sub.add_parser("assess")', script)
-        self.assertIn("target.is_relative_to(checkout)", script)
+        self.assertIn("source_checkout = Path(__file__).resolve().parents[1]", script)
+        self.assertIn("target = args.out.resolve()", script)
+        self.assertIn("if target.is_relative_to(source_checkout):", script)
+        self.assertNotIn("target.is_relative_to(checkout)", script)
         for forbidden in ("git push", "git tag", "gh workflow run",
                           "subprocess.", "requests.", 'sub.add_parser("dispatch")'):
             self.assertNotIn(forbidden, script)
