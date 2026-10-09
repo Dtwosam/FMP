@@ -9,6 +9,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_ambiguous_dispatch_hold_model import (
     build_2023_run385_ambiguous_dispatch_hold_report,
     parse_untrusted_dispatch_simulation_json,
@@ -31,13 +33,7 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_run385_ambiguous_dispatch_hold_report(report)
     text = json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists():
-        if target.read_text(encoding="utf-8") != text:
-            raise ValueError("DEC-621 refuses conflicting report overwrite")
-        # Avoid changing inode metadata on repeated identical outside reports.
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(text, encoding="utf-8")
+    write_once_external_report(target, text, "DEC-621 refuses conflicting report overwrite")
     return 0
 
 

@@ -8,6 +8,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_three_layer_admission_model import (
     build_three_layer_admission_model,
     validate_three_layer_admission_model,
@@ -24,13 +26,7 @@ def _assess(args: argparse.Namespace) -> int:
     report = build_three_layer_admission_model(repository_root=checkout)
     validate_three_layer_admission_model(report)
     data = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
-    if target.exists():
-        if target.read_text(encoding="utf-8") != data:
-            raise ValueError("DEC-624 refuses conflicting output overwrite")
-        # Avoid changing inode metadata on repeated identical outside reports.
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(data, encoding="utf-8")
+    write_once_external_report(target, data, "DEC-624 refuses conflicting output overwrite")
     return 0
 
 

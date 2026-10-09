@@ -8,6 +8,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_dispatch_immutability_audit import (
     audit_2023_dispatch_main_immutability,
     validate_2023_dispatch_main_immutability_audit,
@@ -38,12 +40,7 @@ def _cmd_audit(args: argparse.Namespace) -> int:
     )
     validate_2023_dispatch_main_immutability_audit(value)
     payload = json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n"
-    if target.exists():
-        if target.read_text(encoding="utf-8") != payload:
-            raise ValueError(f"conflicting existing output: {target}")
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(payload, encoding="utf-8")
+    write_once_external_report(target, payload, f"conflicting existing output: {target}")
     return 0
 
 

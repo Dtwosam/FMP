@@ -80,9 +80,15 @@ class AuditSourceCheckoutBoundaryTests(unittest.TestCase):
                 self.assertIn(decision, code)
                 self.assertIn("sys.dont_write_bytecode = True", code)
                 self.assertNotIn("args.out.write_text(", code)
+                self.assertIn("write_once_external_report(target,", code)
+                self.assertIn(
+                    "from fmp.discovery.annual_pattern_catalogue_2023_external_report_create "
+                    "import write_once_external_report", code,
+                )
+                self.assertNotIn("target.write_text(", code)
                 self.assertLess(
                     code.index("if target.is_relative_to(source_checkout):"),
-                    code.index("    target.write_text("),
+                    code.index("write_once_external_report(target,"),
                 )
 
     def test_all_seven_denials_from_checkout_script_and_outside_cwds(self):

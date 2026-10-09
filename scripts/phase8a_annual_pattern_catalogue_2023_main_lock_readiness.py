@@ -9,6 +9,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_main_lock_readiness import (
     build_2023_main_lock_readiness,
     validate_2023_main_lock_readiness,
@@ -63,13 +65,7 @@ def _cmd_assess(args: argparse.Namespace) -> int:
     )
     validate_2023_main_lock_readiness(value)
     payload = json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists():
-        if target.read_text(encoding="utf-8") != payload:
-            raise ValueError(f"DEC-612 conflicting existing output: {target}")
-        # Do not rewrite identical reports: hard links may share checkout inodes.
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(payload, encoding="utf-8")
+    write_once_external_report(target, payload, f"DEC-612 conflicting existing output: {target}")
     return 0
 
 
