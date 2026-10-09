@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# The audit CLI is read-only even when environment bytecode suppression is off.
+# Set this before importing the project package, not after argument parsing.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
