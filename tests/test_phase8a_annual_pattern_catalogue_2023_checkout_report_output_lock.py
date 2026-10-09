@@ -199,8 +199,8 @@ class CheckoutReportOutputLockTests(unittest.TestCase):
                         sys.executable, str(scripts / name), "assess",
                         *flags, "--out", str(out),
                     ]
-                    # A repeated identical report must also be idempotent.
-                    for _ in range(2):
+                    # Repeated output must not rewrite even metadata on the same inode.
+                    for attempt in range(2):
                         completed = subprocess.run(
                             command, cwd=checkout, env=env, text=True,
                             capture_output=True, timeout=40, check=False,
@@ -210,6 +210,18 @@ class CheckoutReportOutputLockTests(unittest.TestCase):
                         self.assertEqual(report["decision"], decision)
                         self.assertIs(report["dispatch_blocked"], True)
                         self.assertIs(report["trading_authorized"], False)
+                        if attempt == 0:
+                            # A checkout hard link shares the external report inode.
+                            # Content inventories alone miss timestamp-only rewrites.
+                            linked = checkout / f"linked-{suffix}.json"
+                            os.link(out, linked)
+                            old_ns = 1_600_000_000_000_000_000
+                            os.utime(out, ns=(old_ns, old_ns))
+                            expected_mtime_ns = out.stat().st_mtime_ns
+                            baseline = _file_hashes(checkout)
+                        else:
+                            self.assertEqual(out.stat().st_mtime_ns, expected_mtime_ns)
+                            self.assertEqual(linked.stat().st_mtime_ns, expected_mtime_ns)
                         self.assertEqual(_file_hashes(checkout), baseline)
                         self.assertEqual(list(checkout.rglob("*.pyc")), [])
 

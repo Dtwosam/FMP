@@ -30,8 +30,11 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_tag_ref_guard_rehearsal(result)
     text = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != text:
-        raise ValueError(f"DEC-617 refuses to overwrite conflicting rehearsal: {target}")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != text:
+            raise ValueError(f"DEC-617 refuses to overwrite conflicting rehearsal: {target}")
+        # Do not rewrite identical reports: hard links may share checkout inodes.
+        return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(text, encoding="utf-8")
     return 0

@@ -42,8 +42,11 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_immutable_tag_feasibility(result)
     output = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != output:
-        raise ValueError(f"DEC-615 existing output conflicts: {target}")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != output:
+            raise ValueError(f"DEC-615 existing output conflicts: {target}")
+        # Do not rewrite identical reports: hard links may share checkout inodes.
+        return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(output, encoding="utf-8")
     return 0

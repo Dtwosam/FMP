@@ -40,8 +40,11 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_tag_ruleset_static_review(report)
     data = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != data:
-        raise ValueError(f"DEC-616 refuses to overwrite conflicting report: {target}")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != data:
+            raise ValueError(f"DEC-616 refuses to overwrite conflicting report: {target}")
+        # Do not rewrite identical reports: hard links may share checkout inodes.
+        return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(data, encoding="utf-8")
     return 0
