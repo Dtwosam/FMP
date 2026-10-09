@@ -42,7 +42,13 @@ def _assess(args: argparse.Namespace) -> int:
             raise ValueError("DEC-633 refuses conflicting report overwrite")
         return 0
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8")
+    # Exclusive creation closes the exists() -> write_text() overwrite race.
+    try:
+        with target.open("x", encoding="utf-8") as report_file:
+            report_file.write(content)
+    except FileExistsError:
+        if target.read_text(encoding="utf-8") != content:
+            raise ValueError("DEC-633 refuses conflicting report overwrite") from None
     return 0
 
 
