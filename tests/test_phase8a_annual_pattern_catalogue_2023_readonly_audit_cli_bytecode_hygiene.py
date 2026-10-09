@@ -100,6 +100,19 @@ class ReadonlyAuditCliBytecodeHygieneTests(unittest.TestCase):
                     self.assertEqual(list(checkout.rglob("*.pyc")), [])
 
 
+    def test_content_hash_inventory_detects_inplace_edits_and_new_files(self):
+        with tempfile.TemporaryDirectory(prefix="dec627-integrity-probe-") as tmp:
+            root = Path(tmp)
+            original = root / "same-name.txt"
+            original.write_bytes(b"alpha")
+            before = _checksum_inventory(root)
+            original.write_bytes(b"bravo")  # same length; filename unchanged
+            self.assertNotEqual(_checksum_inventory(root), before)
+            original.write_bytes(b"alpha")
+            self.assertEqual(_checksum_inventory(root), before)
+            (root / "new.txt").write_bytes(b"new")
+            self.assertNotEqual(_checksum_inventory(root), before)
+
     def test_real_offline_assess_reports_preserve_checkout_and_deny_dispatch(self):
         """Execute four real source-pinned assess subcommands, not only --help."""
         import json
@@ -155,7 +168,23 @@ class ReadonlyAuditCliBytecodeHygieneTests(unittest.TestCase):
                         f"{name} changed its checkout during assess",
                     )
                     self.assertEqual(list(checkout.rglob("*.pyc")), [])
-
+                    # Deny caller-controlled output paths inside the checkout,
+                    # and prove a rejected write cannot leave new/changed files.
+                    forbidden = checkout / f"forbidden-{suffix}.json"
+                    rejected = subprocess.run(
+                        [sys.executable, str(scripts / name), "assess", "--out", str(forbidden)],
+                        cwd=checkout,
+                        env=env,
+                        text=True,
+                        capture_output=True,
+                        timeout=40,
+                        check=False,
+                    )
+                    self.assertNotEqual(rejected.returncode, 0)
+                    self.assertIn("checkout", rejected.stderr.lower())
+                    self.assertFalse(forbidden.exists())
+                    self.assertEqual(_checksum_inventory(checkout), files_before)
+                    self.assertEqual(list(checkout.rglob("*.pyc")), [])
 
 
 if __name__ == "__main__":
