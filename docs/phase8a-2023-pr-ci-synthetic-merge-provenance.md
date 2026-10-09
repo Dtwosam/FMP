@@ -4,7 +4,7 @@
 
 GitHub's `pull_request` event normally checks out `refs/pull/NUMBER/merge`, not necessarily the raw source head. Workflow run `head_sha` metadata can identify the source PR head even while the checkout uses the merge commit. An operator must therefore distinguish the SHA metadata from the actual tested Git tree.
 
-The model joins a synthetic PR record with two purported CI runs (`tests.yml` and `phase3-acceptance.yml`). It rejects any mismatch in the PR number, exact source head, base SHA, two-parent synthetic merge commit, run attempt, workflow identities, `pull_request` event, and completed-success conclusions. A passed or skipped result on a stale head cannot be interpreted as a current-head pass.
+The model joins a synthetic PR record with two purported CI runs (`tests.yml` and `phase3-acceptance.yml`). Each supplied run record also declares the purported runner checkout SHA and ref; these must match the exact synthetic merge SHA and `refs/pull/NUMBER/merge`. It rejects any mismatch in the PR number, exact source head, base SHA, two-parent synthetic merge commit, runner checkout identity, run attempt, workflow identities, `pull_request` event, and completed-success conclusions. A passed or skipped result on a stale head cannot be interpreted as a current-head pass.
 
 Classification is deliberately narrow:
 
@@ -15,6 +15,8 @@ Classification is deliberately narrow:
 These labels are **classifications of supplied metadata**, not authenticated GitHub checks, a checkout trace, an independently signed receipt, or permission to merge. This offline model neither queries GitHub nor proves the actual runner checked out that merge SHA. Independent review, the exact live workflow definition, real run/log/checkout provenance, and a post-review final ref check still must be handled separately. Even a `REPORTED_HEAD_TREE_EQUIVALENT` fixture reports `actual_pr_merge_permitted=false`, `annual_dispatch_authorized=false`, `run385_authorized=false`, and `trading_authorized=false`.
 
 At the 2026-10-09 read-only inspection of FMP, PR #796's actual synthetic merge tree differed from its head tree because current main contributed two unchanged-in-PR paths, while PRs #797–802 had matching trees. This is a **scope-of-evidence distinction**, not a failing CI result. It is specifically unsafe to label #796's green synthetic merge checks as having tested an identical raw PR-head tree.
+
+At the 2026-10-09 follow-up, the actual completed **tests** and **Phase 3** job logs for each PR #796–802 (14 logs total) were inspected. For all 14 jobs, `git fetch` fetched its exact synthetic merge SHA into the corresponding `refs/remotes/pull/NUMBER/merge`, and `git log -1 --format=%H` reported the same exact SHA following checkout. This is **observed runner evidence for those specific past runs**; the offline model does not contact GitHub or independently verify a user-supplied claim of a checkout SHA.
 
 Official GitHub semantics:
 
