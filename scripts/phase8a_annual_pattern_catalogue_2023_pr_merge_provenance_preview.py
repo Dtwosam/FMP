@@ -46,7 +46,12 @@ def _assess(args: argparse.Namespace) -> int:
     target = args.out.resolve()
     if target.is_relative_to(checkout):
         raise ValueError("DEC-633 refuses reports anywhere inside source checkout")
-    evidence = _load_evidence(args.evidence)
+    input_path = args.evidence.resolve()
+    if input_path.is_relative_to(checkout):
+        raise ValueError("DEC-633 refuses evidence reads inside source checkout")
+    if not input_path.is_file():
+        raise ValueError("DEC-633 requires an existing regular external evidence file")
+    evidence = _load_evidence(input_path)
     payload = {
         "decision": "DEC-633",
         "classification": classify_pr_ci_provenance(evidence),
