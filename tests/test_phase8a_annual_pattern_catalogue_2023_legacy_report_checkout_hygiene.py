@@ -87,10 +87,12 @@ class LegacyCliReadOnlyOutputHygieneTests(unittest.TestCase):
                 self.assertIn("target = args.out.resolve()", code)
                 self.assertIn("if target.is_relative_to(source_checkout):", code)
                 self.assertIn(f"{decision} refuses audit output inside checkout", code)
+                guard_index = code.index("if target.is_relative_to(source_checkout):")
+                # Helpers may assign "value" before the guarded handler.
+                # Compare against the first builder invocation *after* the guard.
                 self.assertLess(
-                    code.index("if target.is_relative_to(source_checkout):"),
-                    code.index("    value = ") if "    value = " in code
-                    else code.index("    _write_json("),
+                    guard_index,
+                    code.index("    value = ", guard_index),
                 )
                 self.assertIn("sys.dont_write_bytecode = True", code)
                 self.assertLess(
