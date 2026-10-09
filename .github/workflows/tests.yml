@@ -2117,6 +2117,14 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_checkout_report_output_lock.py'
           -v
+      - name: Run DEC-629 source-checkout audit output boundary regressions
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_source_checkout_output_boundary.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
