@@ -21,7 +21,7 @@ DEC-627 PR #796 independently fixes import-time Python bytecode writes in these 
 
 For each of the four audited CLIs, immediately on entry to its assess handler:
 
-1. Resolve the checkout using `Path.cwd().resolve()`, and resolve the requested output path using `args.out.resolve()`.
+1. Resolve the **actual source checkout** using `Path(__file__).resolve().parents[1]` (never the caller's mutable working-directory choice), and resolve the requested output path using `args.out.resolve()`.
 2. If the fully resolved target `is_relative_to(checkout)`, raise a decision-specific `ValueError` **before reading any supplied JSON input or evaluating its security claims**.
 3. Use the resolved target consistently for conflict checks, parent creation and report write. Preserve the existing refusal to overwrite conflicting outside-checkout output.
 
@@ -29,7 +29,7 @@ There is no new permission flag, GitHub API call, active workflow change, tag mu
 
 ## Adversarial execution tests
 
-The focused DEC-628 CI test launches all four actual CLI assess commands from a temporary copied checkout, with no upstream Python bytecode suppression and deliberately **missing input files**. For each CLI, five output cases must fail before any input-file read: checkout-relative, checkout-absolute, parent-relative, symlink-aliased checkout path, and an existing checkout file. In all **20** combinations, the expected decision-specific checkout denial is emitted and the SHA-256 content inventory of the copied checkout is identical; the original sentinel is untouched; no `.pyc` or input file appears.
+The focused DEC-628 CI test launches all four actual CLI assess commands from a temporary copied checkout, with no upstream Python bytecode suppression and deliberately **missing input files**. For each CLI, nine output cases must fail before any input-file read: checkout-relative, checkout-absolute, parent-relative, symlink-aliased checkout, an existing checkout file, two subdirectory-to-repository paths, an absolute path launched from a working directory outside the checkout, and an existing checkout file launched from a subdirectory. In all **36** combinations, the expected decision-specific checkout denial is emitted and the SHA-256 content inventory of the copied checkout is identical; the original sentinel is untouched; no `.pyc` or input file appears.
 
 Static tests also ensure the checks occur before any audit computation and the output uses the resolved target.
 
