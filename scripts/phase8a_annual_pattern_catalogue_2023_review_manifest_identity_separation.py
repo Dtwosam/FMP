@@ -4,6 +4,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# Disable bytecode emission before importing any project modules. The audit is
+# read-only even when PYTHONDONTWRITEBYTECODE is unset.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
