@@ -9,6 +9,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_tag_ruleset_static_review import (
     inspect_2023_tag_ruleset_snapshot,
     validate_2023_tag_ruleset_static_review,
@@ -40,13 +42,7 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_tag_ruleset_static_review(report)
     data = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
-    if target.exists():
-        if target.read_text(encoding="utf-8") != data:
-            raise ValueError(f"DEC-616 refuses to overwrite conflicting report: {target}")
-        # Do not rewrite identical reports: hard links may share checkout inodes.
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(data, encoding="utf-8")
+    write_once_external_report(target, data, f"DEC-616 refuses to overwrite conflicting report: {target}")
     return 0
 
 

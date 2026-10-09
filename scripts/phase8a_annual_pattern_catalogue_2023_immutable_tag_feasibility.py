@@ -9,6 +9,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_immutable_tag_feasibility import (
     build_2023_immutable_tag_feasibility,
     validate_2023_immutable_tag_feasibility,
@@ -42,13 +44,7 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_immutable_tag_feasibility(result)
     output = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists():
-        if target.read_text(encoding="utf-8") != output:
-            raise ValueError(f"DEC-615 existing output conflicts: {target}")
-        # Do not rewrite identical reports: hard links may share checkout inodes.
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(output, encoding="utf-8")
+    write_once_external_report(target, output, f"DEC-615 existing output conflicts: {target}")
     return 0
 
 
