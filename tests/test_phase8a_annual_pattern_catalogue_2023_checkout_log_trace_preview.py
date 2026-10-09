@@ -16,7 +16,7 @@ class OfflineCheckoutTraceTests(unittest.TestCase):
         self.assertEqual(classify_pair(fixture()), 'REPORTED_TWO_LOG_CHECKOUT_MATCH')
         report = build_preview()
         validate_preview(report)
-        self.assertEqual(report['negative_case_count'], 32)
+        self.assertEqual(report['negative_case_count'], 33)
         for key in ('github_log_authenticity_proven', 'runner_identity_attested',
                     'independent_review_proven', 'merge_authorized',
                     'annual_dispatch_authorized', 'run385_authorized', 'trading_authorized'):
@@ -26,7 +26,7 @@ class OfflineCheckoutTraceTests(unittest.TestCase):
 
     def test_every_negative_case_is_rejected(self):
         cases = _counterexamples()
-        self.assertEqual(len(cases), 32)
+        self.assertEqual(len(cases), 33)
         self.assertEqual(len({n for n, _ in cases}), len(cases))
         for name, record in cases:
             with self.subTest(name=name):
