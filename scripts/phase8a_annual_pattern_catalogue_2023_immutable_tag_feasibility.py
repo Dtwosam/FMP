@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# The audit CLI is read-only even when environment bytecode suppression is off.
+# Set this before importing the project package, not after argument parsing.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Mapping, Sequence
 
@@ -22,6 +26,13 @@ def _read_object(path: Path) -> Mapping[str, object]:
 
 
 def _assess(args: argparse.Namespace) -> int:
+    # Anchor containment to the actual source checkout, not the caller's cwd.
+    # Invoking this CLI from scripts/ must not permit writing into repo root.
+    checkout = Path(__file__).resolve().parents[1]
+    target = args.out.resolve()
+    # Reject output targets inside the checkout before reading any input JSON.
+    if target.is_relative_to(checkout):
+        raise ValueError("DEC-615 refuses audit output inside checkout")
     result = build_2023_immutable_tag_feasibility(
         repository_root=Path("."),
         handoff=_read_object(args.dec614_handoff_json),
@@ -31,10 +42,13 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_immutable_tag_feasibility(result)
     output = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if args.out.exists() and args.out.read_text(encoding="utf-8") != output:
-        raise ValueError(f"DEC-615 existing output conflicts: {args.out}")
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(output, encoding="utf-8")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != output:
+            raise ValueError(f"DEC-615 existing output conflicts: {target}")
+        # Do not rewrite identical reports: hard links may share checkout inodes.
+        return 0
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(output, encoding="utf-8")
     return 0
 
 

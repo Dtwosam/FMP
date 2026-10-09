@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# The audit CLI is read-only even when environment bytecode suppression is off.
+# Set this before importing the project package, not after argument parsing.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
@@ -12,6 +16,13 @@ from fmp.discovery.annual_pattern_catalogue_2023_tag_ref_guard_rehearsal import 
 
 
 def _assess(args: argparse.Namespace) -> int:
+    # Anchor containment to the actual source checkout, not the caller's cwd.
+    # Invoking this CLI from scripts/ must not permit writing into repo root.
+    checkout = Path(__file__).resolve().parents[1]
+    target = args.out.resolve()
+    # Reject output targets inside the checkout before reading any input JSON.
+    if target.is_relative_to(checkout):
+        raise ValueError("DEC-617 refuses audit output inside checkout")
     result = build_2023_tag_ref_guard_rehearsal(
         repository_root=Path("."),
         candidate_tag_ref=args.candidate_tag_ref,
@@ -19,10 +30,13 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_tag_ref_guard_rehearsal(result)
     text = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if args.out.exists() and args.out.read_text(encoding="utf-8") != text:
-        raise ValueError(f"DEC-617 refuses to overwrite conflicting rehearsal: {args.out}")
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(text, encoding="utf-8")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != text:
+            raise ValueError(f"DEC-617 refuses to overwrite conflicting rehearsal: {target}")
+        # Do not rewrite identical reports: hard links may share checkout inodes.
+        return 0
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
     return 0
 
 

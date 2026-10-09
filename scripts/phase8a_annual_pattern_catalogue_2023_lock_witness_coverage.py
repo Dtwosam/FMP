@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# The audit CLI is read-only even when environment bytecode suppression is off.
+# Set this before importing the project package, not after argument parsing.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
@@ -14,8 +18,10 @@ from fmp.discovery.annual_pattern_catalogue_2023_lock_witness_coverage import (
 
 def _assess(args: argparse.Namespace) -> int:
     root = Path.cwd().resolve()
+    # Keep cwd for offline computation; source checkout owns output safety.
+    source_checkout = Path(__file__).resolve().parents[1]
     target = args.out.resolve()
-    if target.is_relative_to(root):
+    if target.is_relative_to(source_checkout):
         raise ValueError("DEC-620 report output cannot be inside the checkout")
     # Inputs are caller-supplied, offline and unauthenticated. All outputs
     # continue to deny effective lock proof, dispatch and trading authority.
@@ -25,8 +31,11 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_run385_lock_witness_coverage(report)
     serialized = json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != serialized:
-        raise ValueError("DEC-620 refuses conflicting report overwrite")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != serialized:
+            raise ValueError("DEC-620 refuses conflicting report overwrite")
+        # Avoid changing inode metadata on repeated identical outside reports.
+        return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(serialized, encoding="utf-8")
     return 0

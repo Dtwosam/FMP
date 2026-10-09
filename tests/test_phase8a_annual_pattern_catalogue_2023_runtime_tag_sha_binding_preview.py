@@ -135,7 +135,10 @@ class InertRuntimeTagShaBindingPreviewTests(unittest.TestCase):
             ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_runtime_tag_sha_binding_preview.py"
         ).read_text(encoding="utf-8")
         self.assertIn('sub.add_parser("assess")', code)
-        self.assertIn("target.is_relative_to(checkout)", code)
+        self.assertIn("source_checkout = Path(__file__).resolve().parents[1]", code)
+        self.assertIn("target = args.out.resolve()", code)
+        self.assertIn("if target.is_relative_to(source_checkout):", code)
+        self.assertNotIn("target.is_relative_to(checkout)", code)
         for prohibited in (
             "gh workflow run", "subprocess.", "requests.", "git push", "git tag",
             "os.system", 'sub.add_parser("dispatch")',

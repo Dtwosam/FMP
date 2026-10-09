@@ -208,7 +208,10 @@ class Run385LockWitnessCoverageTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn('sub.add_parser("assess")', script)
-        self.assertIn("target.is_relative_to(root)", script)
+        self.assertIn("source_checkout = Path(__file__).resolve().parents[1]", script)
+        self.assertIn("target = args.out.resolve()", script)
+        self.assertIn("if target.is_relative_to(source_checkout):", script)
+        self.assertNotIn("target.is_relative_to(root)", script)
         self.assertIn("parse_untrusted_witness_json(", script)
         for forbidden in (
             "gh workflow run", "git push", "git tag", "subprocess.",

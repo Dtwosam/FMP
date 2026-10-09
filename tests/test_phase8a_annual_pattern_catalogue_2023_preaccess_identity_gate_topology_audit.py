@@ -132,7 +132,10 @@ class InertPreaccessIdentityGateTopologyAuditTests(unittest.TestCase):
     def test_cli_only_assess_and_cannot_write_inside_checkout(self):
         script = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_preaccess_identity_gate_topology_audit.py").read_text()
         self.assertIn('sub.add_parser("assess")', script)
-        self.assertIn("target.is_relative_to(checkout)", script)
+        self.assertIn("source_checkout = Path(__file__).resolve().parents[1]", script)
+        self.assertIn("target = args.out.resolve()", script)
+        self.assertIn("if target.is_relative_to(source_checkout):", script)
+        self.assertNotIn("target.is_relative_to(checkout)", script)
         for prohibited in ("gh workflow run", "subprocess.", "requests.", "git push", "git tag", "os.system"):
             self.assertNotIn(prohibited, script)
 

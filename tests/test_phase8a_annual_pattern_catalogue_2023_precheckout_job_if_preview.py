@@ -155,7 +155,10 @@ class PrecheckoutJobIfPreviewTests(unittest.TestCase):
     def test_assess_only_command_source_has_no_execution_or_checkout_writes(self):
         content = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_precheckout_job_if_preview.py").read_text()
         self.assertIn('add_parser("assess")', content)
-        self.assertIn("target.is_relative_to(checkout)", content)
+        self.assertIn("source_checkout = Path(__file__).resolve().parents[1]", content)
+        self.assertIn("target = args.out.resolve()", content)
+        self.assertIn("target.is_relative_to(source_checkout)", content)
+        self.assertNotIn("target.is_relative_to(checkout)", content)
         for forbidden in ("gh workflow run", "subprocess.", "requests.", "git push", "git tag", "os.system"):
             self.assertNotIn(forbidden, content)
 
