@@ -25,8 +25,11 @@ def _assess(args: argparse.Namespace) -> int:
     report = build_2023_runtime_tag_sha_binding_preview(repository_root=checkout)
     validate_2023_runtime_tag_sha_binding_preview(report)
     content = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != content:
-        raise ValueError("DEC-622 refuses conflicting output overwrite")
+    if target.exists():
+        if target.read_text(encoding="utf-8") != content:
+            raise ValueError("DEC-622 refuses conflicting output overwrite")
+        # Avoid changing inode metadata on repeated identical outside reports.
+        return 0
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
     return 0
