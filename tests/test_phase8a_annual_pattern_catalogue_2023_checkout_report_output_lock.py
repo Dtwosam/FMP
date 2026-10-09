@@ -75,6 +75,8 @@ class CheckoutReportOutputLockTests(unittest.TestCase):
                 self.assertEqual(source.count(guard), 1)
                 self.assertIn(f'{decision} refuses audit output inside checkout', source)
                 self.assertIn('target = args.out.resolve()', source)
+                self.assertIn('checkout = Path(__file__).resolve().parents[1]', source)
+                self.assertNotIn('checkout = Path.cwd().resolve()', source)
                 self.assertIn('sys.dont_write_bytecode = True', source)
                 self.assertLess(source.index(guard), source.index('    value = build_') if decision == "DEC-612"
                                 else source.index('    result = build_') if decision in {"DEC-615", "DEC-617"}
@@ -116,20 +118,26 @@ class CheckoutReportOutputLockTests(unittest.TestCase):
             for suffix, decision in DECISIONS.items():
                 name = f"{PREFIX}{suffix}.py"
                 attempts = (
-                    ("relative", "reports/rejected.json"),
-                    ("absolute", str(reports / "rejected.json")),
-                    ("parent_relative", "../checkout/reports/rejected.json"),
-                    ("symlink_alias", str(outside_link / "reports" / "rejected.json")),
-                    ("existing_file", str(sentinel)),
+                    ("relative", "reports/rejected.json", checkout),
+                    ("absolute", str(reports / "rejected.json"), checkout),
+                    ("parent_relative", "../checkout/reports/rejected.json", checkout),
+                    ("symlink_alias", str(outside_link / "reports" / "rejected.json"), checkout),
+                    ("existing_file", str(sentinel), checkout),
+                    # The old Path.cwd() guard would accept these locations,
+                    # even though the source is still under the same checkout.
+                    ("subdir_to_parent", "../reports/rejected.json", scripts),
+                    ("subdir_parent_sibling", "../../checkout/reports/rejected.json", scripts),
+                    ("outside_cwd_absolute", str(reports / "rejected.json"), parent),
+                    ("subdir_existing", str(sentinel), scripts),
                 )
-                for label, out in attempts:
+                for label, out, workdir in attempts:
                     with self.subTest(decision=decision, mode=label):
                         cmd = [
                             sys.executable, str(scripts / name), "assess",
                             *_input_args(suffix, missing), "--out", out,
                         ]
                         completed = subprocess.run(
-                            cmd, cwd=checkout, env=env, text=True, capture_output=True,
+                            cmd, cwd=workdir, env=env, text=True, capture_output=True,
                             timeout=40, check=False,
                         )
                         self.assertNotEqual(completed.returncode, 0)
