@@ -65,7 +65,26 @@ Even a perfect checkout sandbox **cannot** close the check-then-dispatch race in
 
 As of the source review, `main` is at `53e203133bbc141b2f48c7b8b8241d56b35166a3`, `protected:false`, with no rulesets; the last observed annual dispatch is **run 384**, not 385. This is a snapshot, not authority.
 
-## 6. Stop conditions and scope
+## 6. Evidence ledger and fail-closed verdict format
+
+An independent reviewer needs one **redacted, source-bound, immutable proof bundle per job type**; a single preflight run cannot stand in for the 18 matrix cell executions and freeze. Capture structured measurements before and *during* the restricted child, plus a final checkout-inventory digest from a separately trusted observer. A test that reads `/proc/self/status` only after the process exits, or a static `stat()` snapshot, is not a race-safe proof. The evidence publisher must never leak real credentials or token values.
+
+Each bundle must bind at minimum these fields (the schema is an acceptance **proposal**, not installed code):
+
+| Evidence field | Required proof and rejection condition |
+| --- | --- |
+| `source_commit`, `source_tree`, `workflow_blob`, `synthetic_merge` | Exact content-addressed identities; verify **raw PR source** separately from synthetic merge (DEC-646 correction disappeared from descendants despite a green parent merge) |
+| `runner_identity`, `kernel`, `runner_image`, `job_type`, `matrix_coordinates` | Attested actual job/OS identity; absent/unknown values fail |
+| `mount_namespace`, `mountinfo`, `source_mount`, `source_aliases`, `input_mounts`, `output_mount` | Real observed topology and read-only enforcement; any writable checkout alias or unexamined namespace actor blocks |
+| `actor_uid_gid_groups`, `capability_sets`, `no_new_privs`, `seccomp`, `privilege_recovery` | Record policy and negative execution result; any sudo/remount/suid/capability recovery route blocks |
+| `cwd`, `env_allowlist_keys`, `fd_0_1_2_targets`, `other_inherited_fds` | Record safe destinations and *names*, never secret contents; undefined descriptors, token-bearing handles or cwd aliases block |
+| `checkout_before_after_digest`, `attempt_log`, `race_replay` | Independently observed checkout inventory and denied create/truncate/chmod/rename/FD-write operations, including adversarial timing |
+| `external_report_receipt`, `exclusive_create`, `failure_cleanup` | Successful off-checkout publication, byte digest, collision rejection and no orphan/ambiguous partial result |
+| `test_results`, `skipped`, `exceptions`, `independent_reviewer` | Every mandatory proof executed; any privileged skip, missing check or unresolved exception means **NOT AUTHORIZED** |
+
+The verdict must use explicit three-way status: `PASS` only when all required checks and independent evidence pass; `BLOCKED` on any missing/skip/inconclusive result; `FAIL` when an exploit or unauthorized write is demonstrated. **Only a fully evidenced PASS** may be considered by a separate annual action reviewer, and even PASS does *not* authorize dispatch while the immutable-main and run-number gate remains unresolved. No protected annual workflow is to be executed merely to collect these experimental proofs.
+
+## 7. Stop conditions and scope
 
 - No changes to `main`, annual workflows, tags, rulesets, runners or permissions.
 - No protected evidence reads or mutations, annual 2023/run 385 dispatch, retry, or rerun.
