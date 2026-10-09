@@ -36,7 +36,7 @@ class MergedAuditExclusiveOutputIntegrationTests(unittest.TestCase):
             ROOT / "src" / "fmp" / "discovery"
             / "annual_pattern_catalogue_2023_external_report_create.py"
         ).read_text(encoding="utf-8")
-        self.assertIn('target.open("x", encoding="utf-8")', helper)
+        self.assertIn('os.link(staged, target)', helper)
         self.assertIn("except FileExistsError:", helper)
         self.assertNotIn("subprocess", helper)
         self.assertNotIn("requests", helper)

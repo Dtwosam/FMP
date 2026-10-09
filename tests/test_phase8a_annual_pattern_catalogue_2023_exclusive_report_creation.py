@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -32,34 +33,40 @@ class ExclusiveAuditReportTests(unittest.TestCase):
             write_once_external_report(self.target, 'replacement\n', self.conflict)
         self.assertEqual(self.target.read_text(), 'original\n')
 
-    def test_competing_file_at_exclusive_open_is_not_overwritten(self):
-        real_open = Path.open
+    def test_competing_file_at_atomic_publish_is_not_overwritten(self):
+        real_link = os.link
         triggered = []
-        def competing_open(path, mode='r', *args, **kwargs):
-            if path == self.target and mode == 'x':
+        def competing_link(source, destination, *args, **kwargs):
+            if Path(destination) == self.target:
                 triggered.append(True)
-                with real_open(path, 'w', encoding='utf-8') as handle:
-                    handle.write('competitor\n')
-            return real_open(path, mode, *args, **kwargs)
-        with mock.patch.object(Path, 'open', new=competing_open):
+                self.target.write_text('competitor\n')
+            return real_link(source, destination, *args, **kwargs)
+        with mock.patch(
+            'fmp.discovery.annual_pattern_catalogue_2023_external_report_create.os.link',
+            side_effect=competing_link,
+        ):
             with self.assertRaisesRegex(ValueError, 'conflicting external report'):
                 write_once_external_report(self.target, 'ours\n', self.conflict)
         self.assertEqual(triggered, [True])
         self.assertEqual(self.target.read_text(), 'competitor\n')
+        self.assertEqual(sorted(p.name for p in self.target.parent.iterdir()), ['proof.json'])
 
-    def test_competing_identical_file_is_not_rewritten(self):
-        real_open = Path.open
+    def test_competing_identical_file_at_atomic_publish_is_not_rewritten(self):
+        real_link = os.link
         triggered = []
-        def competing_open(path, mode='r', *args, **kwargs):
-            if path == self.target and mode == 'x':
+        def competing_link(source, destination, *args, **kwargs):
+            if Path(destination) == self.target:
                 triggered.append(True)
-                with real_open(path, 'w', encoding='utf-8') as handle:
-                    handle.write('proof\n')
-            return real_open(path, mode, *args, **kwargs)
-        with mock.patch.object(Path, 'open', new=competing_open):
+                self.target.write_text('proof\n')
+            return real_link(source, destination, *args, **kwargs)
+        with mock.patch(
+            'fmp.discovery.annual_pattern_catalogue_2023_external_report_create.os.link',
+            side_effect=competing_link,
+        ):
             write_once_external_report(self.target, 'proof\n', self.conflict)
         self.assertEqual(triggered, [True])
         self.assertEqual(self.target.read_text(), 'proof\n')
+        self.assertEqual(sorted(p.name for p in self.target.parent.iterdir()), ['proof.json'])
 
     def test_dangling_symlink_never_creates_through_target(self):
         self.target.parent.mkdir(parents=True)
@@ -81,7 +88,7 @@ class ExclusiveAuditReportTests(unittest.TestCase):
 
     def test_helper_is_only_leaf_exclusive_create_not_annual_dispatch(self):
         src = (Path(__file__).resolve().parents[1] / 'src' / 'fmp' / 'discovery' / 'annual_pattern_catalogue_2023_external_report_create.py').read_text()
-        self.assertIn('target.open("x", encoding="utf-8")', src)
+        self.assertIn('os.link(staged, target)', src)
         self.assertNotIn('target.write_text(', src)
         self.assertNotIn('subprocess', src)
         self.assertNotIn('requests', src)

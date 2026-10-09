@@ -33,7 +33,7 @@ class CombinedExclusiveOutputRehearsalTests(unittest.TestCase):
     def test_single_shared_writer_uses_exclusive_leaf_create(self):
         module = ROOT / "src/fmp/discovery/annual_pattern_catalogue_2023_external_report_create.py"
         content = module.read_text(encoding="utf-8")
-        self.assertEqual(content.count('target.open("x", encoding="utf-8")'), 1)
+        self.assertEqual(content.count('os.link(staged, target)'), 1)
         self.assertIn("except FileExistsError:", content)
         self.assertNotIn("target.write_text(", content)
 
