@@ -10,6 +10,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_precheckout_job_if_preview import (
     build_precheckout_job_if_preview,
     validate_precheckout_job_if_preview,
@@ -26,13 +28,7 @@ def _assess(args: argparse.Namespace) -> int:
     report = build_precheckout_job_if_preview(repository_root=checkout)
     validate_precheckout_job_if_preview(report)
     data = json.dumps(report, sort_keys=True, indent=2, allow_nan=False) + "\n"
-    if target.exists():
-        if target.read_text(encoding="utf-8") != data:
-            raise ValueError("DEC-626 refuses conflicting report overwrite")
-        # Never rewrite identical reports, including a hard-linked source inode.
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(data, encoding="utf-8")
+    write_once_external_report(target, data, "DEC-626 refuses conflicting report overwrite")
     return 0
 
 
