@@ -18,8 +18,10 @@ from fmp.discovery.annual_pattern_catalogue_2023_lock_witness_coverage import (
 
 def _assess(args: argparse.Namespace) -> int:
     root = Path.cwd().resolve()
+    # Keep cwd for offline computation; source checkout owns output safety.
+    source_checkout = Path(__file__).resolve().parents[1]
     target = args.out.resolve()
-    if target.is_relative_to(root):
+    if target.is_relative_to(source_checkout):
         raise ValueError("DEC-620 report output cannot be inside the checkout")
     # Inputs are caller-supplied, offline and unauthenticated. All outputs
     # continue to deny effective lock proof, dispatch and trading authority.
