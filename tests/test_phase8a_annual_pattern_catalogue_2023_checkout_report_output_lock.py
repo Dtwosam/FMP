@@ -82,7 +82,13 @@ class CheckoutReportOutputLockTests(unittest.TestCase):
                 self.assertLess(source.index(guard), source.index('    value = build_') if decision == "DEC-612"
                                 else source.index('    result = build_') if decision in {"DEC-615", "DEC-617"}
                                 else source.index('    report = inspect_'))
-                self.assertIn('target.write_text(', source)
+                self.assertIn('write_once_external_report(target,', source)
+                self.assertIn(
+                    'from fmp.discovery.annual_pattern_catalogue_2023_external_report_create '
+                    'import write_once_external_report', source,
+                )
+                self.assertNotIn('target.write_text(', source)
+                self.assertLess(source.index(guard), source.index('write_once_external_report(target,'))
                 self.assertNotIn('args.out.write_text(', source)
 
     def test_cli_rejects_relative_absolute_and_symlinked_checkout_outputs_first(self):
