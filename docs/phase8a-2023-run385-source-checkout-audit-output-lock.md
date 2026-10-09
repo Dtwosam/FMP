@@ -14,7 +14,7 @@ All seven handlers resolve `source_checkout = Path(__file__).resolve().parents[1
 
 - Copy `src/fmp`, the seven real scripts and the unchanged installed annual workflow to a temporary checkout. Explicitly unset external bytecode-suppression variables.
 - Run each CLI with seven checkout-local output attempts: repo-root relative, `scripts/` relative, `scripts/` parent-relative, absolute output from outside cwd, symlink-aliased checkout from outside, existing checkout sentinel from outside, and source script as target. All **49** real subprocess calls must deny the target with decision-specific checkout errors and preserve source filename/SHA-256 inventory, sentinel bytes, and zero `.pyc` files.
-- DEC-620 and DEC-621 use deliberately missing input JSON files; a checkout refusal must occur first, before input access. Five source-pinned real `assess` positive cases (DEC-618/619/622/623/624) must emit legitimate external reports with `dispatch_blocked=true` and `trading_authorized=false` while preserving checkout bytes.
+- DEC-620 and DEC-621 use deliberately missing input JSON files; a checkout refusal must occur first, before input access. All seven real `assess` positive cases (DEC-618 through DEC-624, using external synthetic unauthenticated fixture JSON for DEC-620/621) must emit legitimate outside-checkout reports with `dispatch_blocked=true` and `trading_authorized=false`. Each script must now return without rewriting an identical existing report. The test hard-links its external report into a disposable checkout, pins the shared inode's mtime, repeats the report and demands unchanged mtime and source SHA-256 inventory; file hashes alone miss metadata-only writes.
 
 ## Remaining limitations and sequence
 
