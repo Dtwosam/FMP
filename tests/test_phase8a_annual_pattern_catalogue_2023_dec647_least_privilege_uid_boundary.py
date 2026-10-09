@@ -126,7 +126,7 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
     def _synthetic_root_only_canary(self) -> Path:
         # Private test data only; never access the real checkout or credentials.
         canary = self.root / "synthetic-private-canary.txt"
-        canary.write_text("synthetic-open-fd-canary\\n")
+        canary.write_text("synthetic-open-fd-canary\n")
         canary.chmod(0o600)
         return canary
 
@@ -153,11 +153,11 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
             # Even an inheritable parent FD must not reach the default actor.
             os.set_inheritable(fd, True)
             code = (
-                "import os,sys\\n"
-                "try:\\n"
-                " print(os.read(int(sys.argv[1]), 128).decode())\\n"
-                "except OSError:\\n"
-                " print('closed')\\n"
+                "import os,sys\n"
+                "try:\n"
+                " print(os.read(int(sys.argv[1]), 128).decode())\n"
+                "except OSError:\n"
+                " print('closed')\n"
             )
             proc = self.actor(code, fd)
             self.assertEqual(proc.returncode, 0, proc.stderr)
@@ -186,7 +186,7 @@ class DisposableLeastPrivilegeTests(unittest.TestCase):
                 capture_output=True, text=True, timeout=8,
             )
             self.assertEqual(proc.returncode, 0, proc.stderr)
-            self.assertEqual(proc.stdout.strip(), "65534\\nsynthetic-open-fd-canary")
+            self.assertEqual(proc.stdout.strip(), "65534\nsynthetic-open-fd-canary")
         finally:
             os.close(fd)
         self.assert_locked_inventory()
