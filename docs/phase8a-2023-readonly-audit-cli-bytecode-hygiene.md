@@ -31,7 +31,7 @@ The focused DEC-627 unit test copies the actual `src/fmp` package without caches
 3. no `*.pyc` appears anywhere in the checkout; and
 4. each script sets the bytecode-write suppression **before** its first `fmp.discovery` import.
 
-A second subprocess regression goes beyond `--help` for four source-pinned, self-contained 2023 audits (DEC-618, DEC-622, DEC-623, DEC-624). It copies their CLI sources, the entire `fmp` package and the unchanged installed annual workflow into a clean temporary checkout; runs each real `assess --out` with output **outside** that checkout; verifies `dispatch_blocked=true`, `trading_authorized=false`, and the expected decision ID; and checks that the checkout file inventory remains byte-for-byte unchanged with no `.pyc` files. These tests do **not** read protected historical artifacts or contact GitHub.
+A second subprocess regression goes beyond `--help` for four source-pinned, self-contained 2023 audits (DEC-618, DEC-622, DEC-623, DEC-624). It copies their CLI sources, the entire `fmp` package and the unchanged installed annual workflow into a clean temporary checkout; runs each real `assess --out` with output **outside** that checkout; verifies `dispatch_blocked=true`, `trading_authorized=false`, and the expected decision ID; and checks that the checkout file-name inventory remains unchanged with no `.pyc` files. These tests do **not** read protected historical artifacts or contact GitHub.
 
 This test is deliberately limited to import-time bytecode hygiene. It does not pretend to prove that every future CLI branch, OS file operation or external dependency is read-only. More importantly, a no-write CLI still does not authenticate any review, tag, admin lock or GitHub context.
 
