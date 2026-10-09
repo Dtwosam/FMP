@@ -9,6 +9,7 @@ import copy
 import hashlib
 import json
 import re
+from datetime import datetime
 from collections.abc import Mapping
 
 DECISION = 'DEC-634'
@@ -62,7 +63,7 @@ def _sha(value: object) -> bool:
 
 def trace_matches(log: object, pr: int, head: str, base: str, merge: str) -> bool:
     """Consistent *text*, not authenticated checkout / signed log proof."""
-    if type(pr) is not int or pr <= 0 or any(not _sha(x) for x in (head, base, merge)):
+    if type(pr) is not int or not 0 < pr < 10**12 or any(not _sha(x) for x in (head, base, merge)):
         return False
     if len({head, base, merge}) != 3 or type(log) is not str:
         return False
@@ -107,6 +108,14 @@ def trace_matches(log: object, pr: int, head: str, base: str, merge: str) -> boo
         return False
     if not re.fullmatch(r'^' + STAMP + r'From https://github\.com/Dtwosam/FMP', remote_lines[0][1]):
         return False
+    # Timestamp order is required, not merely syntactically timestamp-like lines.
+    try:
+        event_times = [datetime.fromisoformat(lines[i].split(' ', 1)[0].replace('Z', '+00:00'))
+                       for i in (0, hits[0], remote_lines[0][0], hits[1], hits[2], hits[3], hits[4])]
+    except ValueError:
+        return False
+    if event_times != sorted(event_times):
+        return False
     # A second HEAD or git-log query is conflicting runner evidence.
     head_lines = [i for i, line in enumerate(lines)
                   if re.match(r'^' + STAMP + r'HEAD is now at ', line)]
@@ -127,7 +136,7 @@ def classify_pair(record: object) -> str:
     if type(record['repository']) is not str or record['repository'] != REPO:
         return 'REJECTED'
     pr, head, base, merge = (record[k] for k in ('pr_number', 'head_sha', 'base_sha', 'merge_sha'))
-    if type(pr) is not int or pr <= 0 or not all(_sha(v) for v in (head, base, merge)):
+    if type(pr) is not int or not 0 < pr < 10**12 or not all(_sha(v) for v in (head, base, merge)):
         return 'REJECTED'
     if len({head, base, merge}) != 3:
         return 'REJECTED'
@@ -173,6 +182,7 @@ def _counterexamples() -> tuple[tuple[str, dict[str, object]], ...]:
     add('head_changed', lambda r: r.__setitem__('head_sha', 'f' * 40))
     add('base_changed', lambda r: r.__setitem__('base_sha', 'f' * 40))
     add('merge_changed', lambda r: r.__setitem__('merge_sha', 'f' * 40))
+    add('pr_id_unrepresentably_long', lambda r: r.__setitem__('pr_number', 10**5000))
     add('bad_pr_type', lambda r: r.__setitem__('pr_number', True))
     add('no_second_workflow', lambda r: r['run_evidence'].pop())
     add('duplicate_tests', lambda r: r['run_evidence'][1].__setitem__('workflow_path', WORKFLOWS[0]))
@@ -201,6 +211,8 @@ def _counterexamples() -> tuple[tuple[str, dict[str, object]], ...]:
     add('wrong_fetch_ref', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('origin +' + MERGE + ':refs/remotes/pull/99999/merge', 'origin +' + MERGE + ':refs/remotes/pull/99998/merge')))
     add('tampered_head_message', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('Merge ' + HEAD, 'Merge ' + 'f' * 40)))
     add('wrong_fetched_sha', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('origin +' + MERGE, 'origin +' + 'f' * 40)))
+    add('impossible_timestamp', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('2026-10-09T', '2026-99-99T')))
+    add('reversed_timestamp', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('2026-10-09T00:00:00.0000000Z From', '2026-10-08T00:00:00.0000000Z From')))
     add('no_timestamp', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('Z [command]/usr/bin/git log -1 --format=%H', 'Z fake [command]/usr/bin/git log -1 --format=%H')))
     add('echo_injection', lambda r: r['run_evidence'][0].__setitem__('checkout_log', 'echo checkout\n' + fixture_log().replace('Z [command]/usr/bin/git checkout --progress', 'Z echo [command]/usr/bin/git checkout --progress')))
     add('wrong_remote', lambda r: r['run_evidence'][0].__setitem__('checkout_log', fixture_log().replace('From https://github.com/Dtwosam/FMP', 'From https://github.com/other/FMP')))
