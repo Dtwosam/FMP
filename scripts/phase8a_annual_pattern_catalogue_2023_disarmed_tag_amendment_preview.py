@@ -9,6 +9,8 @@ sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
 
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
+
 from fmp.discovery.annual_pattern_catalogue_2023_disarmed_tag_amendment_preview import (
     build_2023_disarmed_tag_amendment_preview,
     validate_2023_disarmed_tag_amendment_preview,
@@ -23,13 +25,7 @@ def _assess(args: argparse.Namespace) -> int:
     result = build_2023_disarmed_tag_amendment_preview(repository_root=Path("."))
     validate_2023_disarmed_tag_amendment_preview(result)
     output = json.dumps(result, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists():
-        if target.read_text(encoding="utf-8") != output:
-            raise ValueError(f"DEC-618 refusing conflicting output: {target}")
-        # Avoid changing inode metadata on repeated identical outside reports.
-        return 0
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(output, encoding="utf-8")
+    write_once_external_report(target, output, f"DEC-618 refusing conflicting output: {target}")
     return 0
 
 
