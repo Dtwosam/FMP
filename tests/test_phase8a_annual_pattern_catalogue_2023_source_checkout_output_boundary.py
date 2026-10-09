@@ -12,6 +12,13 @@ import sys
 import tempfile
 import unittest
 
+from fmp.discovery.annual_pattern_catalogue_2023_lock_witness_coverage import (
+    VERSION as WITNESS_VERSION, INTERVALS, REQUIRED_CLAIMS,
+)
+from fmp.discovery.annual_pattern_catalogue_2023_ambiguous_dispatch_hold_model import (
+    VERSION as SIMULATION_VERSION,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 PREFIX = "phase8a_annual_pattern_catalogue_2023_"
 DECISIONS = {
@@ -130,35 +137,79 @@ class AuditSourceCheckoutBoundaryTests(unittest.TestCase):
                         self.assertEqual(list(checkout.rglob("*.pyc")), [])
             self.assertFalse(missing.exists())
 
-    def test_real_external_reports_remain_readonly_and_disarmed(self):
-        # DEC-620 and DEC-621 require separate external untrusted JSON fixtures.
-        sources = (
-            "disarmed_tag_amendment_preview",
-            "ref_race_interleaving_model",
-            "runtime_tag_sha_binding_preview",
-            "preaccess_identity_gate_topology_audit",
-            "three_layer_admission_model",
-        )
-        with tempfile.TemporaryDirectory(prefix="dec629-positive-") as tmp:
+    def test_all_seven_external_reports_are_inode_idempotent(self):
+        """No second write, even when an external report shares a checkout inode."""
+        with tempfile.TemporaryDirectory(prefix="dec629-idempotent-") as tmp:
             root = Path(tmp)
             checkout, scripts = _checkout(root)
             env = _env(checkout)
-            baseline = _inventory(checkout)
-            for suffix in sources:
-                with self.subTest(decision=DECISIONS[suffix]):
-                    report_path = root / f"{suffix}.json"
-                    result = subprocess.run(
-                        [sys.executable, str(scripts / f"{PREFIX}{suffix}.py"),
-                         "assess", "--out", str(report_path)],
-                        cwd=checkout, env=env, text=True, capture_output=True,
-                        timeout=40, check=False,
+            witness = {
+                "schema": WITNESS_VERSION,
+                "ref": "refs/heads/main",
+                "reviewed_commit_sha": "a" * 40,
+                "intervals": [
+                    {
+                        "interval": label,
+                        "resolved_ref_sha": "a" * 40,
+                        **{field: True for field in REQUIRED_CLAIMS},
+                    }
+                    for label in INTERVALS
+                ],
+            }
+            simulation = {
+                "schema": SIMULATION_VERSION,
+                "reviewed_code_sha": "a" * 40,
+                "dispatch_call_made": False,
+                "client_observed_outcome": "not_called",
+                "observed_runs": [],
+            }
+            witness_file = root / "untrusted-witness.json"
+            simulation_file = root / "untrusted-simulation.json"
+            witness_file.write_text(json.dumps(witness), encoding="utf-8")
+            simulation_file.write_text(json.dumps(simulation), encoding="utf-8")
+
+            for suffix, decision in DECISIONS.items():
+                with self.subTest(decision=decision):
+                    flags = (
+                        ["--witness-json", str(witness_file)]
+                        if suffix == "lock_witness_coverage"
+                        else ["--simulation-json", str(simulation_file)]
+                        if suffix == "ambiguous_dispatch_hold_model"
+                        else []
                     )
-                    self.assertEqual(result.returncode, 0, result.stderr)
+                    report_path = root / f"{suffix}.json"
+                    command = [
+                        sys.executable, str(scripts / f"{PREFIX}{suffix}.py"),
+                        "assess", *flags, "--out", str(report_path),
+                    ]
+                    before = _inventory(checkout)
+                    first = subprocess.run(
+                        command, cwd=checkout, env=env, text=True,
+                        capture_output=True, timeout=40, check=False,
+                    )
+                    self.assertEqual(first.returncode, 0, first.stderr)
                     report = json.loads(report_path.read_text(encoding="utf-8"))
-                    self.assertEqual(report["decision"], DECISIONS[suffix])
+                    self.assertEqual(report["decision"], decision)
                     self.assertIs(report["dispatch_blocked"], True)
                     self.assertIs(report["trading_authorized"], False)
-                    self.assertEqual(_inventory(checkout), baseline)
+                    self.assertEqual(_inventory(checkout), before)
+
+                    # A hardlink reveals metadata writes invisible to SHA-256
+                    # even when the external and checkout bytes remain identical.
+                    linked = checkout / f"linked-{suffix}.json"
+                    os.link(report_path, linked)
+                    pinned = 1_600_000_000_000_000_000
+                    os.utime(report_path, ns=(pinned, pinned))
+                    mtime_before = report_path.stat().st_mtime_ns
+                    linked_inventory = _inventory(checkout)
+                    second = subprocess.run(
+                        command, cwd=checkout, env=env, text=True,
+                        capture_output=True, timeout=40, check=False,
+                    )
+                    self.assertEqual(second.returncode, 0, second.stderr)
+                    self.assertEqual(report_path.stat().st_mtime_ns, mtime_before)
+                    self.assertEqual(linked.stat().st_mtime_ns, mtime_before)
+                    self.assertEqual(_inventory(checkout), linked_inventory)
                     self.assertEqual(list(checkout.rglob("*.pyc")), [])
 
 
