@@ -210,7 +210,10 @@ class Run385AmbiguousDispatchHoldModelTests(unittest.TestCase):
     def test_script_assess_only_and_no_checkout_writes(self):
         code = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_ambiguous_dispatch_hold_model.py").read_text(encoding="utf-8")
         self.assertIn('sub.add_parser("assess")', code)
-        self.assertIn("target.is_relative_to(checkout)", code)
+        self.assertIn("source_checkout = Path(__file__).resolve().parents[1]", code)
+        self.assertIn("target = args.out.resolve()", code)
+        self.assertIn("if target.is_relative_to(source_checkout):", code)
+        self.assertNotIn("target.is_relative_to(checkout)", code)
         self.assertIn("parse_untrusted_dispatch_simulation_json(", code)
         for prohibited in (
             "gh workflow run", "gh api --method POST", "git push", "git tag",

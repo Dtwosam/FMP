@@ -2,8 +2,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# The audit CLI is read-only even when environment bytecode suppression is off.
+# Set this before importing the project package, not after argument parsing.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Sequence
+
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
 
 from fmp.discovery.annual_pattern_catalogue_2023_ambiguous_dispatch_hold_model import (
     build_2023_run385_ambiguous_dispatch_hold_report,
@@ -14,8 +20,10 @@ from fmp.discovery.annual_pattern_catalogue_2023_ambiguous_dispatch_hold_model i
 
 def _assess(args: argparse.Namespace) -> int:
     checkout = Path.cwd().resolve()
+    # Keep cwd for offline computation; source checkout owns output safety.
+    source_checkout = Path(__file__).resolve().parents[1]
     target = args.out.resolve()
-    if target.is_relative_to(checkout):
+    if target.is_relative_to(source_checkout):
         raise ValueError("DEC-621 refuses any report output inside checkout")
     input_doc = parse_untrusted_dispatch_simulation_json(
         args.simulation_json.read_text(encoding="utf-8")
@@ -25,10 +33,7 @@ def _assess(args: argparse.Namespace) -> int:
     )
     validate_2023_run385_ambiguous_dispatch_hold_report(report)
     text = json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if target.exists() and target.read_text(encoding="utf-8") != text:
-        raise ValueError("DEC-621 refuses conflicting report overwrite")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(text, encoding="utf-8")
+    write_once_external_report(target, text, "DEC-621 refuses conflicting report overwrite")
     return 0
 
 

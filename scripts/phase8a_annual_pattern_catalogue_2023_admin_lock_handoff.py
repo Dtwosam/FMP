@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# Stop project imports from generating checkout bytecode files.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Mapping, Sequence
+
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
 
 from fmp.discovery.annual_pattern_catalogue_2023_admin_lock_handoff import (
     build_2023_admin_lock_handoff,
@@ -22,6 +27,10 @@ def _read_object(path: Path) -> Mapping[str, object]:
 
 
 def _prepare(args: argparse.Namespace) -> int:
+    source_checkout = Path(__file__).resolve().parents[1]
+    target = args.out.resolve()
+    if target.is_relative_to(source_checkout):
+        raise ValueError("DEC-613 refuses audit output inside checkout")
     value = build_2023_admin_lock_handoff(
         readiness=_read_object(args.dec612_readiness_json),
         repository_root=Path("."),
@@ -31,10 +40,7 @@ def _prepare(args: argparse.Namespace) -> int:
     )
     validate_2023_admin_lock_handoff(value)
     payload = json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    if args.out.exists() and args.out.read_text(encoding="utf-8") != payload:
-        raise ValueError(f"DEC-613 conflicting output: {args.out}")
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(payload, encoding="utf-8")
+    write_once_external_report(target, payload, f"DEC-613 conflicting output: {target}")
     return 0
 
 

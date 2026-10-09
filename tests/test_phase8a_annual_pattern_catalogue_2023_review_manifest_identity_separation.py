@@ -178,7 +178,10 @@ class ReviewedIdentitySeparationTests(unittest.TestCase):
     def test_cli_source_only_assess_and_off_checkout_output(self):
         source = (ROOT / "scripts/phase8a_annual_pattern_catalogue_2023_review_manifest_identity_separation.py").read_text()
         self.assertIn('add_parser("assess")', source)
-        self.assertIn("target.is_relative_to(checkout)", source)
+        self.assertIn("source_checkout = Path(__file__).resolve().parents[1]", source)
+        self.assertIn("target = args.out.resolve()", source)
+        self.assertIn("target.is_relative_to(source_checkout)", source)
+        self.assertNotIn("target.is_relative_to(checkout)", source)
         for banned in ("gh workflow run", "subprocess.", "requests.", "git tag", "git push", "os.system"):
             self.assertNotIn(banned, source)
 

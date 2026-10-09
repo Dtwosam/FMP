@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
+# Keep project imports from writing checkout bytecode files.
+sys.dont_write_bytecode = True
 from pathlib import Path
 from typing import Mapping, Sequence
+
+from fmp.discovery.annual_pattern_catalogue_2023_external_report_create import write_once_external_report
 
 from fmp.discovery.annual_pattern_catalogue_2023_runtime_authorization_plan import (
     build_2023_runtime_authorization_plan,
@@ -26,17 +31,19 @@ def _write_json(path: Path, value: Mapping[str, object]) -> None:
         indent=2,
         allow_nan=False,
     ) + "\n"
-    if destination.exists() and destination.read_text(encoding="utf-8") != payload:
-        raise ValueError(f"conflicting existing output: {destination}")
-    destination.write_text(payload, encoding="utf-8")
+    write_once_external_report(destination, payload, f"conflicting existing output: {destination}")
 
 
 def _cmd_plan(args: argparse.Namespace) -> int:
+    source_checkout = Path(__file__).resolve().parents[1]
+    target = args.out.resolve()
+    if target.is_relative_to(source_checkout):
+        raise ValueError("DEC-604 refuses audit output inside checkout")
     value = build_2023_runtime_authorization_plan(
         _read_json(args.authorization_json),
         repository_root=Path("."),
     )
-    _write_json(args.out, value)
+    _write_json(target, value)
     return 0
 
 

@@ -2101,6 +2101,46 @@ jobs:
           -s tests
           -p 'test_phase8a_annual_pattern_catalogue_2023_precheckout_job_if_preview.py'
           -v
+      - name: Run DEC-627 no-checkout-bytecode audit CLI regression tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_readonly_audit_cli_bytecode_hygiene.py'
+          -v
+      - name: Run DEC-628 offline audit checkout-output denial tests
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_checkout_report_output_lock.py'
+          -v
+      - name: Run DEC-629 source-checkout audit output boundary regressions
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_source_checkout_output_boundary.py'
+          -v
+      - name: Run DEC-630 merged audit CLI output boundary regressions
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_merged_audit_output_boundary.py'
+          -v
+      - name: Run DEC-631 legacy audit report checkout hygiene regressions
+        env:
+          PYTHONPATH: src
+        run: >-
+          python -m unittest discover
+          -s tests
+          -p 'test_phase8a_annual_pattern_catalogue_2023_legacy_report_checkout_hygiene.py'
+          -v
       - name: Run historical snapshot and general unit tests
         env:
           PYTHONPATH: src
