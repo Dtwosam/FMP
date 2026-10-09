@@ -56,9 +56,9 @@ class AtomicPublicationFailureTests(unittest.TestCase):
     def test_target_replaced_with_dangling_symlink_while_publishing_never_follows(self):
         real_link = os.link
         missing = self.directory / "would-be-outside"
-        def race(source, destination):
-            Path(destination).symlink_to(missing)
-            return real_link(source, destination)
+        def race(source, destination, *args, **kwargs):
+            self.target.symlink_to(missing)
+            return real_link(source, destination, *args, **kwargs)
         with mock.patch(
             "fmp.discovery.annual_pattern_catalogue_2023_external_report_create.os.link",
             side_effect=race,

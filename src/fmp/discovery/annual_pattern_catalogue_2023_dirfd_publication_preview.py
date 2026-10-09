@@ -12,13 +12,17 @@ import secrets
 import stat
 
 
+_SUPPORTS_DIR_FD = all(
+    fn in os.supports_dir_fd
+    for fn in (os.open, os.mkdir, os.stat, os.link, os.unlink)
+)
+
+
 def _safe_flags() -> tuple[int, int, int]:
     required = ("O_DIRECTORY", "O_NOFOLLOW", "O_NONBLOCK")
     if any(not isinstance(getattr(os, name, None), int) for name in required):
         raise RuntimeError("platform cannot enforce no-symlink nonblocking audit output")
-    if any(fn not in os.supports_dir_fd for fn in (
-        os.open, os.mkdir, os.stat, os.link, os.unlink,
-    )):
+    if not _SUPPORTS_DIR_FD:
         raise RuntimeError("platform lacks dir_fd audit report support")
     cloexec = getattr(os, "O_CLOEXEC", 0)
     return (

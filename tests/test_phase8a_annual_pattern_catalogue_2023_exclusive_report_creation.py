@@ -37,7 +37,7 @@ class ExclusiveAuditReportTests(unittest.TestCase):
         real_link = os.link
         triggered = []
         def competing_link(source, destination, *args, **kwargs):
-            if Path(destination) == self.target:
+            if destination == self.target.name:
                 triggered.append(True)
                 self.target.write_text('competitor\n')
             return real_link(source, destination, *args, **kwargs)
@@ -55,7 +55,7 @@ class ExclusiveAuditReportTests(unittest.TestCase):
         real_link = os.link
         triggered = []
         def competing_link(source, destination, *args, **kwargs):
-            if Path(destination) == self.target:
+            if destination == self.target.name:
                 triggered.append(True)
                 self.target.write_text('proof\n')
             return real_link(source, destination, *args, **kwargs)
@@ -88,7 +88,7 @@ class ExclusiveAuditReportTests(unittest.TestCase):
 
     def test_helper_is_only_leaf_exclusive_create_not_annual_dispatch(self):
         src = (Path(__file__).resolve().parents[1] / 'src' / 'fmp' / 'discovery' / 'annual_pattern_catalogue_2023_external_report_create.py').read_text()
-        self.assertIn('os.link(staged, target)', src)
+        self.assertIn('preview_write_once_external_report(target, content, conflict_message)', src)
         self.assertNotIn('target.write_text(', src)
         self.assertNotIn('subprocess', src)
         self.assertNotIn('requests', src)
