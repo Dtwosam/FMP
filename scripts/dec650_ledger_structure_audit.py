@@ -198,6 +198,26 @@ def _read_bounded(path: Path) -> bytes:
     return value
 
 
+def _unique_object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON object key")
+        result[key] = value
+    return result
+
+
+def _reject_nonfinite(value: str) -> None:
+    raise ValueError("nonstandard nonfinite JSON number")
+
+
+def _strict_json(value: bytes) -> Any:
+    return json.loads(
+        value, object_pairs_hook=_unique_object_pairs,
+        parse_constant=_reject_nonfinite,
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Offline DEC-650 ledger structure audit (NEVER authorizes execution)")
     parser.add_argument("--policy", type=Path, required=True)
@@ -213,8 +233,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         if hashlib.sha256(policy_bytes).hexdigest() != args.policy_sha256:
             result = _result(["policy byte digest mismatch"])
         else:
-            policy = json.loads(policy_bytes)
-            ledger = json.loads(_read_bounded(args.ledger))
+            policy = _strict_json(policy_bytes)
+            ledger = _strict_json(_read_bounded(args.ledger))
             result = assess(policy, ledger)
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
         result = _result(["cannot decode independent policy/ledger input: " + type(exc).__name__])
