@@ -496,6 +496,73 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['overflow'])
         self.assertFalse(parsed['well_formed'])
 
+    def test_short_regular_source_read_fails_closed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            sample = Path(folder) / "sample"
+            sample.write_bytes(b"LONGER-PUBLIC-FILE")
+            with patch.object(module.os, "read", return_value=b"X"):
+                with self.assertRaisesRegex(OSError, "incompletely"):
+                    module._snapshot_regular(sample)
+
+    def test_source_grows_during_open_fd_read_and_blocks(self):
+        with tempfile.TemporaryDirectory() as folder:
+            sample = Path(folder) / "sample"
+            sample.write_bytes(b"PUBLIC")
+            original_read = os.read
+            def concurrent_append(fd, n):
+                with open(sample, "ab") as writer:
+                    writer.write(b"-SYNTHETIC-APPEND")
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                return original_read(fd, n)
+            with patch.object(module.os, "read", side_effect=concurrent_append):
+                with self.assertRaisesRegex(OSError, "changed or was read incompletely"):
+                    module._snapshot_regular(sample)
+
+    def test_same_length_source_rewrite_during_snapshot_blocks(self):
+        with tempfile.TemporaryDirectory() as folder:
+            sample = Path(folder) / "sample"
+            sample.write_bytes(b"ORIGINAL")
+            original_read = os.read
+            def concurrent_update(fd, n):
+                # Changed bytes/mtime and ctime, without changing length.
+                with open(sample, "r+b") as writer:
+                    writer.write(b"REPLACED")
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                return original_read(fd, n)
+            with patch.object(module.os, "read", side_effect=concurrent_update):
+                with self.assertRaises(OSError):
+                    module._snapshot_regular(sample)
+
+    def test_source_metadata_change_during_snapshot_blocks(self):
+        with tempfile.TemporaryDirectory() as folder:
+            sample = Path(folder) / "sample"
+            sample.write_bytes(b"PUBLIC")
+            original_read = os.read
+            def modified_metadata(fd, n):
+                os.utime(sample, ns=(1_600_000_000_000_000_000, 1_600_000_000_000_000_000))
+                return original_read(fd, n)
+            with patch.object(module.os, "read", side_effect=modified_metadata):
+                with self.assertRaises(OSError):
+                    module._snapshot_regular(sample)
+
+    def test_oversized_synthetic_sample_is_rejected_without_read(self):
+        with tempfile.TemporaryDirectory() as folder:
+            sample = Path(folder) / "sample"
+            sample.write_bytes(b"X" * 4097)
+            with patch.object(module.os, "read") as read:
+                with self.assertRaisesRegex(OSError, "bounded regular inode"):
+                    module._snapshot_regular(sample)
+                read.assert_not_called()
+
+    def test_empty_regular_file_snapshot_is_bounded(self):
+        with tempfile.TemporaryDirectory() as folder:
+            sample = Path(folder) / "sample"
+            sample.write_bytes(b"")
+            _inode, data = module._snapshot_regular(sample)
+            self.assertEqual(data, b"")
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

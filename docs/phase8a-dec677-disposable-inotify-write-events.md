@@ -85,6 +85,16 @@ Nine new source-defined tests bring the suite to **73 tests** (five manual Linux
 
 This is a conservative offline parser consistency check, **not trusted kernel telemetry** or proof of actual OS-enforced write prevention. Runtime inode aliases, privileged host siblings and the 20 real protected annual jobs remain outside this toy observer.
 
+## DEC-685 — Reject short or changed source-file snapshot reads
+
+Even a no-following, bounded regular-file descriptor does not automatically guarantee an **internally consistent** observation when another writer can modify the inode during the read. The predecessor checked initial size at most 4 KiB, then accepted whatever number of bytes `os.read` returned. A short read, growth/shrink or changed inode metadata could appear as if it were the complete expected source.
+
+The new helper reads at most the validated original size plus one byte and requires **exactly the originally observed size**. It then takes a second `fstat` and compares device, inode, size, modification time and change time against the first `fstat`. A mismatched length or metadata produces an explicit fail-stop `OSError`, causing `BLOCKED` rather than a clean observation. The code does not follow a symlink, block on a FIFO or open any real annual source path.
+
+Six added tests increase the synthetic suite to **79 source-defined cases**. They inject a short `read`, concurrent append, same-length content rewrite, metadata change and oversized rejection, plus an empty-file bounded control. These tests run only against generated public temporary files.
+
+**Limitation:** `fstat` before and after a read is another point-in-time measurement. An adversary able to write, restore bytes and manipulate metadata could evade it; even honest filesystems may not offer forensic causality guarantees from nanosecond timestamps. The actual runner still needs OS-enforced prevention and independently authenticated evidence, not a snapshot heuristic.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
