@@ -205,6 +205,14 @@ Three source-only test methods add **512 pseudo-random byte buffers**, **512 ind
 
 The corpus cannot prove exhaustive coverage, authenticated kernel records, continuous observation, OS write prevention or annual authorization. Five real Linux demonstrations remain manual opt-in; independent reviewer assessment and exact-head Phase 3/full CI are required.
 
+## DEC-700 — Match the transient *file* witness, not a directory pair
+
+The DEC-688 transient control matches a child `IN_CREATE` followed by `IN_DELETE` with the same basename. The actual opt-in control creates a **regular file**, but the matcher ignored `IN_ISDIR`. Two events for a short-lived *directory* could therefore set `transient_directory_control_detected=true`, even though the deliberate file control had not been witnessed. The overall negative result was already `BLOCKED`; its evidence-accounting field was too permissive.
+
+The matcher now tracks only creates without `IN_ISDIR` and credits a matched delete only when that delete also lacks `IN_ISDIR`. A directory create/delete with the same name clears a stale pending file creation rather than legitimizing it. Directory entry changes of either type still independently **BLOCK** the main evaluation. Five additional source-defined tests bring the suite to **138 methods**: directory-only pair, mixed-type pairs in both directions, directory recreation invalidating pending file evidence, and a legitimate file pair. Five manually opt-in real Linux demonstrations remain unchanged.
+
+No kernel provenance or read-only OS enforcement follows. Phase 3/full CI at the exact head and independent source/security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
