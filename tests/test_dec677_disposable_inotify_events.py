@@ -2706,6 +2706,57 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 4)
 
+
+    def test_hostile_inventory_tuple_element_cannot_fake_original_leaf(self):
+        class AlwaysEqual:
+            def __eq__(self, _other):
+                return True
+        self.assertTrue((AlwaysEqual(),) == ('sample',))
+        verdict = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=(AlwaysEqual(),))
+        self.assertFalse(verdict['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['can_authorize_dispatch'])
+
+    def test_str_subclass_cannot_impersonate_original_leaf(self):
+        class ForgedName(str):
+            def __eq__(self, _other):
+                return True
+        self.assertTrue((ForgedName('malicious'),) == ('sample',))
+        verdict = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=(ForgedName('malicious'),))
+        self.assertFalse(verdict['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_hostile_expected_sibling_inventory_member_cannot_fake_witness(self):
+        class ForgedName:
+            def __eq__(self, _other):
+                return True
+        forged = ('sample', ForgedName())
+        self.assertTrue(forged == ('sample', 'unexpected-public-sibling'))
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(b'unexpected-public-sibling'))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=forged, sibling_snapshot_stable=True,
+            sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_plain_filename_tuple_preserves_positive_local_unverified_control(self):
+        verdict = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',))
+        self.assertTrue(verdict['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(verdict['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertFalse(verdict['independent_os_proof_verified'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
