@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+import tempfile
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/dec653_disposable_mount_witness.py"
 spec = importlib.util.spec_from_file_location("dec653_witness", SCRIPT)
@@ -18,7 +20,7 @@ def synthetic_report():
     return {
         "checks": {key: True for key in module.CHECKS},
         "status": {**{key: "0000000000000000" for key in module.CAPS}, "NoNewPrivs": "1"},
-        "inherited_fd_probe": "not_provided",
+        "inherited_fd_probe": "closed_before_consumer",
     }
 
 
@@ -70,6 +72,11 @@ class DisposableOSWitnessTests(unittest.TestCase):
     def test_inventory_change_blocks(self):
         self.assertEqual(module._evaluate(synthetic_report(), False)["status"], "BLOCKED")
 
+    def test_missing_fd_observation_not_enough(self):
+        report = synthetic_report()
+        report["inherited_fd_probe"] = "not_provided"
+        self.assertEqual(module._evaluate(report, True)["status"], "BLOCKED")
+
     def test_missing_fd_provenance_blocks(self):
         report = synthetic_report()
         del report["inherited_fd_probe"]
@@ -92,6 +99,56 @@ class DisposableOSWitnessTests(unittest.TestCase):
             with self.subTest(value=str(value)):
                 self.assertEqual(module._evaluate(value, True)["status"], "BLOCKED")
 
+    def test_pinned_directory_detects_unexpected_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "sample").write_bytes(b"synthetic")
+            fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                baseline_dir, baseline = os.fstat(fd), module._sample_snapshot(fd)
+                self.assertIsNotNone(baseline)
+                self.assertTrue(module._unchanged_disposable_source(root, fd, baseline_dir, baseline))
+                (root / "unexpected").write_bytes(b"changed")
+                self.assertFalse(module._unchanged_disposable_source(root, fd, baseline_dir, baseline))
+            finally:
+                os.close(fd)
+
+    def test_swapped_symlink_not_followed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "sample").write_bytes(b"fake")
+            (root / "other").write_bytes(b"do not open")
+            fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                (root / "sample").unlink()
+                (root / "sample").symlink_to(root / "other")
+                with self.assertRaises(OSError):
+                    module._sample_snapshot(fd)
+                self.assertEqual((root / "other").read_bytes(), b"do not open")
+            finally:
+                os.close(fd)
+
+    def test_oversized_sample_snapshot_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "sample").write_bytes(b"X" * 4097)
+            fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                self.assertIsNone(module._sample_snapshot(fd))
+            finally:
+                os.close(fd)
+
+    def test_tmpdir_override_does_not_redirect_demo(self):
+        class StopBeforeCreating(Exception):
+            pass
+        with patch.dict(os.environ, {"TMPDIR": "/caller-selected"}):
+            with patch.object(module.shutil, "which", return_value="/usr/bin/utility"):
+                with patch.object(module.sys, "platform", "linux"):
+                    with patch.object(module.tempfile, "TemporaryDirectory", side_effect=StopBeforeCreating) as create:
+                        with self.assertRaises(StopBeforeCreating):
+                            module.run_demo()
+                        self.assertEqual(create.call_args.kwargs["dir"], "/tmp")
+
     def test_cli_without_optin_is_blocked(self):
         cmd = [sys.executable, "-B", str(SCRIPT)]
         process = subprocess.run(cmd, capture_output=True, text=True, timeout=4)
@@ -100,19 +157,36 @@ class DisposableOSWitnessTests(unittest.TestCase):
         self.assertEqual(result["status"], "BLOCKED")
         self.assertFalse(result["can_authorize_dispatch"])
 
+    def test_help_cannot_return_zero(self):
+        proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--help"],
+                              capture_output=True, text=True, timeout=4)
+        self.assertNotEqual(proc.returncode, 0)
+
+    def test_rejects_caller_selected_source(self):
+        proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--source", "/protected"],
+                              capture_output=True, text=True, timeout=4)
+        self.assertNotEqual(proc.returncode, 0)
+
+    def test_unsupported_platform_blocks(self):
+        with patch.object(module.sys, "platform", "win32"):
+            self.assertEqual(module.run_demo()["status"], "BLOCKED")
+
     @unittest.skipUnless(os.environ.get("DEC653_EXECUTE_DISPOSABLE_OS_TEST") == "1",
                          "manual opt-in only; not CI acceptance")
     def test_optin_disposable_os_witness_remains_nonauthorizing(self):
         result = module.run_demo()
-        self.assertIn(result["status"], ("LOCAL_DISPOSABLE_WITNESS_UNVERIFIED", "BLOCKED"))
+        self.assertEqual(result["status"], "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED", result)
         self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
 
 
     @unittest.skipUnless(os.environ.get("DEC653_EXECUTE_DISPOSABLE_OS_TEST") == "1",
                          "manual opt-in only; not CI acceptance")
     def test_optin_inherited_fd_counterexample_remains_blocked(self):
         result = module.run_demo(inject_checkout_fd=True)
-        self.assertEqual(result["status"], "BLOCKED")
+        self.assertEqual(result["status"], "BLOCKED", result)
+        self.assertIn("disposable checkout inventory changed", result["findings"])
+        self.assertIn("writable checkout descriptor inherited or unaccounted for", result["findings"])
         self.assertFalse(result["can_authorize_dispatch"])
         self.assertFalse(result["independent_os_proof_verified"])
 

@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -23,10 +24,12 @@ sys.dont_write_bytecode = True
 # It creates a read-only bind mount of the disposable checkout and then runs
 # a child with all capability sets empty. No host mount is changed.
 _NAMESPACE_SETUP = r'''
-import json, os, subprocess, sys
+import fcntl, json, os, subprocess, sys
 source, external, executable, inject = sys.argv[1:]
-# Explicit negative control: preopen a writable checkout FD before remount.
-preopened = os.open(os.path.join(source, "sample"), os.O_WRONLY) if inject == "1" else None
+# In both modes, open a writable FD before remount, to test closure.
+original = os.open(os.path.join(source, "sample"), os.O_WRONLY)
+preopened = fcntl.fcntl(original, fcntl.F_DUPFD_CLOEXEC, 200)
+os.close(original)
 def run(*argv):
     subprocess.run(argv, check=True, stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL, timeout=8)
@@ -36,13 +39,12 @@ run("mount", "-o", "remount,bind,ro", source)
 args = ["setpriv", "--bounding-set=-all", "--inh-caps=-all",
         "--ambient-caps=-all", "--no-new-privs", "--", executable,
         "-B", "-c", "__ATTACK__", source, external,
-        str(preopened if preopened is not None else -1)]
+        str(preopened)]
 p = subprocess.run(args, stdin=subprocess.DEVNULL, capture_output=True,
                    text=True, timeout=10, env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
                                                "LANG": "C"}, close_fds=True,
-                   pass_fds=(preopened,) if preopened is not None else ())
-if preopened is not None:
-    os.close(preopened)
+                   pass_fds=(preopened,) if inject == "1" else ())
+os.close(preopened)
 if p.returncode != 0:
     raise SystemExit(11)
 print(p.stdout, end="")
@@ -51,14 +53,13 @@ print(p.stdout, end="")
 _RESTRICTED_ATTACK = r'''
 import json, os, subprocess, sys
 source, external, inherited_fd = sys.argv[1:]
-probe = "not_provided"
-if int(inherited_fd) >= 0:
-    try:
-        os.write(int(inherited_fd), b"INHERITED_FD_BYPASS\n")
-    except OSError:
-        probe = "write_denied"
-    else:
-        probe = "write_succeeded"
+probe = "unknown"
+try:
+    os.write(int(inherited_fd), b"INHERITED_FD_BYPASS\n")
+except OSError as exc:
+    probe = "closed_before_consumer" if exc.errno == 9 else "other_write_error"
+else:
+    probe = "write_succeeded"
 status = {}
 for line in open("/proc/self/status", encoding="ascii"):
     key = line.split(":", 1)[0]
@@ -109,7 +110,7 @@ def _evaluate(raw: Any, unchanged: bool) -> dict[str, Any]:
         return _result("BLOCKED", ["synthetic witness output is malformed"])
     checks, proc = raw["checks"], raw["status"]
     findings = []
-    if raw.get("inherited_fd_probe") != "not_provided":
+    if raw.get("inherited_fd_probe") != "closed_before_consumer":
         findings.append("writable checkout descriptor inherited or unaccounted for")
     for name in CHECKS:
         if checks.get(name) is not True:
@@ -126,40 +127,79 @@ def _evaluate(raw: Any, unchanged: bool) -> dict[str, Any]:
                    {name: checks.get(name) is True for name in CHECKS})
 
 
+def _sample_snapshot(directory_fd: int) -> tuple[int, int, str] | None:
+    """Snapshot synthetic file by anchored FD, never follow a swapped symlink."""
+    flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    fd = os.open("sample", flags, dir_fd=directory_fd)
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_size > 4096:
+            return None
+        data = os.read(fd, 4097)
+        if len(data) > 4096:
+            return None
+        return (info.st_dev, info.st_ino, hashlib.sha256(data).hexdigest())
+    finally:
+        os.close(fd)
+
+
+def _unchanged_disposable_source(source: Path, directory_fd: int,
+                                 original_dir: os.stat_result,
+                                 original_snapshot: tuple[int, int, str] | None) -> bool:
+    """Check pinned synthetic inode and directory, with no path-following reads."""
+    try:
+        now = os.stat(source, follow_symlinks=False)
+        if (now.st_dev, now.st_ino) != (original_dir.st_dev, original_dir.st_ino):
+            return False
+        return (original_snapshot is not None
+                and _sample_snapshot(directory_fd) == original_snapshot
+                and sorted(os.listdir(directory_fd)) == ["sample"])
+    except OSError:
+        return False
+
+
 def run_demo(inject_checkout_fd: bool = False) -> dict[str, Any]:
     """Run only against internally generated disposable data, never a supplied path."""
     if sys.platform != "linux" or not all(shutil.which(n) for n in ("unshare", "mount", "setpriv")):
         return _result("BLOCKED", ["Linux namespace prerequisites unavailable"])
-    with tempfile.TemporaryDirectory(prefix="dec653-disposable-") as directory:
+    # Fixed trusted scratch root: caller-controlled TMPDIR must never route
+    # our synthetic writes into an arbitrary repository or protected tree.
+    if not os.path.isdir("/tmp") or os.path.islink("/tmp"):
+        return _result("BLOCKED", ["fixed disposable temporary root is unavailable"])
+    with tempfile.TemporaryDirectory(prefix="dec653-disposable-", dir="/tmp") as directory:
         source = Path(directory) / "checkout"
         external = Path(directory) / "external"
         source.mkdir(mode=0o700)
         external.mkdir(mode=0o700)
         sample = source / "sample"
         sample.write_bytes(b"DEC653_DISPOSABLE_ONLY\n")
-        before = hashlib.sha256(sample.read_bytes()).hexdigest()
-        setup = _NAMESPACE_SETUP.replace('"__ATTACK__"', repr(_RESTRICTED_ATTACK))
+        directory_fd = os.open(source, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         try:
-            p = subprocess.run(
-                ["unshare", "--user", "--map-root-user", "--mount", "--",
-                 sys.executable, "-B", "-c", setup, str(source), str(external), sys.executable,
-                 "1" if inject_checkout_fd else "0"],
-                cwd=directory, stdin=subprocess.DEVNULL, capture_output=True,
-                text=True, timeout=25, close_fds=True,
-                env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C"},
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            return _result("BLOCKED", ["disposable namespace witness could not execute"])
-        unchanged = (sample.exists() and hashlib.sha256(sample.read_bytes()).hexdigest() == before
-                     and sorted(x.name for x in source.iterdir()) == ["sample"])
-        if p.returncode != 0:
-            return _result("BLOCKED", ["disposable namespace setup or child failed"])
-        try:
-            raw = json.loads(p.stdout)
-        except (ValueError, TypeError):
-            return _result("BLOCKED", ["disposable witness did not produce valid JSON"])
-        return _evaluate(raw, unchanged)
+            original_dir = os.fstat(directory_fd)
+            before = _sample_snapshot(directory_fd)
+            setup = _NAMESPACE_SETUP.replace('"__ATTACK__"', repr(_RESTRICTED_ATTACK))
+            try:
+                p = subprocess.run(
+                    ["unshare", "--user", "--map-root-user", "--mount", "--",
+                     sys.executable, "-B", "-c", setup, str(source), str(external), sys.executable,
+                     "1" if inject_checkout_fd else "0"],
+                    cwd=directory, stdin=subprocess.DEVNULL, capture_output=True,
+                    text=True, timeout=25, close_fds=True,
+                    env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C"},
+                    check=False,
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                return _result("BLOCKED", ["disposable namespace witness could not execute"])
+            unchanged = _unchanged_disposable_source(source, directory_fd, original_dir, before)
+            if p.returncode != 0:
+                return _result("BLOCKED", ["disposable namespace setup or child failed"])
+            try:
+                raw = json.loads(p.stdout)
+            except (ValueError, TypeError):
+                return _result("BLOCKED", ["disposable witness did not produce valid JSON"])
+            return _evaluate(raw, unchanged)
+        finally:
+            os.close(directory_fd)
 
 
 def main(argv: list[str] | None = None) -> int:
