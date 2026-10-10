@@ -183,6 +183,12 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
               directory_inventory_ok: bool = True,
               sibling_negative: bool = False,
               transient_sibling_negative: bool = False) -> dict[str, Any]:
+    # Snapshot values reach hashlib below. A wrong type or oversized injected
+    # snapshot cannot be accepted as a coherent bounded public fixture, nor
+    # escape the fail-closed JSON verdict with an uncontrolled TypeError.
+    if (type(before) is not bytes or type(after) is not bytes
+            or len(before) > 4096 or len(after) > 4096):
+        return _outcome(["disposable source snapshot must be bounded bytes"])
     events = _classify_stream(data, watch, directory_watch)
     checks = {
         # An observer which now depends on two distinct kernel watches may
