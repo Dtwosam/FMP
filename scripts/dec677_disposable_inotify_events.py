@@ -388,6 +388,8 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
     lib.inotify_add_watch.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_uint32]
     lib.inotify_add_watch.restype = ctypes.c_int
     fd = lib.inotify_init1(os.O_NONBLOCK | os.O_CLOEXEC)
+    if type(fd) is not int:
+        raise OSError("disposable inotify_init1 returned a noninteger descriptor")
     if fd < 0:
         raise OSError(ctypes.get_errno(), "disposable inotify_init1 failed")
     if fd <= 2:
@@ -396,12 +398,14 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
         os.close(fd)
         raise OSError("disposable inotify watcher used a standard descriptor")
     wd = lib.inotify_add_watch(fd, os.fsencode(path), MASK)
-    if wd < 0:
+    if type(wd) is not int or not 0 <= wd <= MAX_WATCH_DESCRIPTOR:
         error = ctypes.get_errno()
         os.close(fd)
-        raise OSError(error, "disposable inotify_add_watch failed")
+        raise OSError(error or 22, "disposable inotify_add_watch failed")
     directory_wd = lib.inotify_add_watch(fd, os.fsencode(path.parent), DIRECTORY_MASK)
-    if directory_wd < 0 or directory_wd == wd:
+    if (type(directory_wd) is not int
+            or not 0 <= directory_wd <= MAX_WATCH_DESCRIPTOR
+            or directory_wd == wd):
         error = ctypes.get_errno()
         os.close(fd)
         raise OSError(error or 22, "disposable directory inotify_add_watch failed")
