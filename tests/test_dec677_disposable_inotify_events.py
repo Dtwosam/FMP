@@ -1237,6 +1237,7 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['expected_sibling_created'])
         verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
                                    directory_watch=10, directory_inventory_ok=False,
+                                   directory_inventory_names=("sample", "unexpected-public-sibling"),
                                    sibling_negative=True)
         self.assertTrue(verdict['observed_checks']['sibling_creation_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
@@ -1269,6 +1270,43 @@ class DisposableInotifyTests(unittest.TestCase):
                                    sibling_negative=True)
         self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
+
+
+    def test_dirty_inventory_with_only_other_sibling_is_not_expected_file(self):
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(b'unexpected-public-sibling'))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=("sample", "unrelated"),
+            sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_missing_or_untrusted_final_inventory_is_not_a_control_witness(self):
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(b'unexpected-public-sibling'))
+        for names in (None, [], ["sample", "unexpected-public-sibling"],
+                      ("unexpected-public-sibling", "sample"),
+                      ("sample",), ("sample", "unrelated")):
+            with self.subTest(names=repr(names)):
+                verdict = module._evaluate(
+                    b'public', b'public', raw, 9, True, False,
+                    directory_watch=10, directory_inventory_ok=False,
+                    directory_inventory_names=names,
+                    sibling_negative=True)
+                self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+                self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_expected_inventory_without_create_event_does_not_witness_control(self):
+        verdict = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=("sample", "unexpected-public-sibling"),
+            sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertIn('synthetic directory-event negative control not detected',
+                      verdict['findings'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
