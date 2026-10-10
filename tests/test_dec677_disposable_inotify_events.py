@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -86,6 +87,85 @@ class DisposableInotifyTests(unittest.TestCase):
         p = subprocess.run([sys.executable, '-B', str(SCRIPT), '--source', '/protected'],
                            capture_output=True, text=True, timeout=4)
         self.assertNotEqual(p.returncode, 0)
+
+    def test_same_bytes_different_inode_blocks_without_any_event_claim(self):
+        r = module._evaluate(b'same', b'same', b'', 9, True, False,
+                             inode_stable=False)
+        self.assertEqual(r['status'], 'BLOCKED')
+        self.assertTrue(r['observed_checks']['final_digest_equal'])
+        self.assertFalse(r['observed_checks']['watched_inode_matches_final_path'])
+        self.assertFalse(r['can_authorize_dispatch'])
+
+    def test_ambiguous_or_truthy_inode_identity_blocks(self):
+        for value in (False, None, 1, 'true', []):
+            with self.subTest(value=repr(value)):
+                r = module._evaluate(b'same', b'same', b'', 9, True, False,
+                                     inode_stable=value)
+                self.assertEqual(r['status'], 'BLOCKED')
+
+    def test_replacement_control_not_detected_is_still_blocked(self):
+        r = module._evaluate(b'same', b'same', b'', 9, True, False,
+                             inode_stable=True, replacement_negative=True)
+        self.assertEqual(r['status'], 'BLOCKED')
+        self.assertIn('synthetic inode-replacement negative control not detected', r['findings'])
+
+    def test_pinned_regular_inode_and_exact_bytes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'sample'
+            path.write_bytes(b'PUBLIC')
+            ident, data = module._snapshot_regular(path)
+            st = path.stat()
+            self.assertEqual(ident, (st.st_dev, st.st_ino))
+            self.assertEqual(data, b'PUBLIC')
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'), 'POSIX nofollow required')
+    def test_symlink_snapshot_is_not_followed(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            target = root / 'public-target'
+            target.write_bytes(b'PUBLIC')
+            (root / 'sample').symlink_to(target)
+            with self.assertRaises(OSError):
+                module._snapshot_regular(root / 'sample')
+            self.assertEqual(target.read_bytes(), b'PUBLIC')
+
+    @unittest.skipUnless(hasattr(os, 'mkfifo') and hasattr(os, 'O_NOFOLLOW'),
+                         'POSIX named pipes required')
+    def test_fifo_replacement_snapshot_is_bounded(self):
+        # A FIFO substitution must not block indefinitely before fstat.
+        with tempfile.TemporaryDirectory() as folder:
+            sample = Path(folder) / 'sample'
+            os.mkfifo(sample)
+            code = ("import importlib.util,sys;"
+                    "spec=importlib.util.spec_from_file_location('m',sys.argv[1]);"
+                    "m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);"
+                    "m._snapshot_regular(__import__('pathlib').Path(sys.argv[2]))")
+            p = subprocess.run([sys.executable, '-B', '-c', code, str(SCRIPT), str(sample)],
+                               capture_output=True, text=True, timeout=3)
+            self.assertNotEqual(p.returncode, 0)
+            self.assertIn('bounded regular inode', p.stderr)
+
+    def test_conflicting_manual_negative_controls_never_run(self):
+        r = module.run_demo(negative=True, replace_watched_inode=True)
+        self.assertEqual(r['status'], 'BLOCKED')
+        self.assertFalse(r['can_authorize_dispatch'])
+
+    def test_mutually_exclusive_inotify_cli_options(self):
+        p = subprocess.run([sys.executable, '-B', str(SCRIPT),
+                            '--execute-inode-replacement-negative',
+                            '--execute-reverted-write-negative'],
+                           capture_output=True, text=True, timeout=4)
+        self.assertNotEqual(p.returncode, 0)
+
+    @unittest.skipUnless(os.environ.get('DEC677_EXECUTE_INOTIFY_TEST') == '1',
+                         'manual opt-in; not annual runner identity proof')
+    def test_real_identical_bytes_new_inode_negative_blocks(self):
+        r = module.run_demo(replace_watched_inode=True)
+        self.assertEqual(r['status'], 'BLOCKED', r)
+        self.assertTrue(r['observed_checks']['final_digest_equal'])
+        self.assertFalse(r['observed_checks']['watched_inode_matches_final_path'])
+        self.assertFalse(r['can_authorize_dispatch'])
+        self.assertFalse(r['independent_os_proof_verified'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
