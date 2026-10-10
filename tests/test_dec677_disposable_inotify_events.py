@@ -1495,6 +1495,53 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(wr)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_end_of_observation_event_drain_is_after_final_snapshot(self):
+        rd, wr = os.pipe()
+        order = []
+        try:
+            def fake_snapshot(_path):
+                order.append('snapshot')
+                return ((3, 7), module.BEFORE)
+            def fake_drain(_fd):
+                order.append('drain')
+                return b''
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular', side_effect=fake_snapshot):
+                    with patch.object(module, '_read_pending', side_effect=fake_drain):
+                        result = module.run_demo()
+            self.assertEqual(order, ['snapshot', 'snapshot', 'drain'])
+            self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_modification_during_final_snapshot_is_drained_before_verdict(self):
+        rd, wr = os.pipe()
+        pending = []
+        snapshot_calls = []
+        try:
+            def fake_snapshot(_path):
+                snapshot_calls.append(1)
+                if len(snapshot_calls) == 2:
+                    pending.append(ev(wd=9, mask=module.IN_MODIFY))
+                return ((3, 7), module.BEFORE)
+            def fake_drain(_fd):
+                observed = b''.join(pending)
+                pending.clear()
+                return observed
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular', side_effect=fake_snapshot):
+                    with patch.object(module, '_read_pending', side_effect=fake_drain):
+                        result = module.run_demo()
+            self.assertEqual(len(snapshot_calls), 2)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertFalse(result['observed_checks']['no_observed_writes'])
+            self.assertFalse(result['can_authorize_dispatch'])
+        finally:
+            os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

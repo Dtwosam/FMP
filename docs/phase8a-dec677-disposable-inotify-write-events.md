@@ -287,6 +287,14 @@ The demo now installs both file and parent-directory watches first, then obtains
 
 It narrows one self-observation window but does not prove continuous external kernel-event provenance or close the inherent gap after a final queue drain; DEC-650 actual OS isolation and independent qualified review remain required.
 
+## DEC-710 — Drain events after final source and directory observations
+
+The demo previously called `_read_pending(fd)` **before** reading its final source inode, enumerating child filenames and optionally checking the surviving sibling inode. A write or directory mutation occurring during these later observations could miss the collected event stream while all end-state checks appeared internally consistent. This is a real sampling-order gap in the self-generated observer; inotify does not prevent the write.
+
+The observer now completes all final bounded/no-follow source and optional sibling snapshots and the directory inventory **before** its bounded event-queue drain. It then evaluates the drained events against the end-state evidence, while the same inotify FD stays installed until cleanup. Two new Linux-gated mocked-order regressions raise the suite to **168 source-defined tests**, verifying that final snapshot precedes the drain and that an injected modification during that snapshot is reported as `BLOCKED`.
+
+This shrinks only the **in-process sample interval**. It cannot guarantee no write after the final drain, that no pending records appear outside the polling window, that an adversarial process could not tamper with the observer, or that OS-backed write denial exists. Exact-head CI and independent qualified OS security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
