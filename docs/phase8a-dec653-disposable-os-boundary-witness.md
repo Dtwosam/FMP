@@ -94,6 +94,16 @@ Five manual Linux modes are now mutually exclusive: normal, inherited high writa
 
 The suite now has **42 source-defined tests**, including five manual OS demonstrations that ordinary GitHub CI skips. Author-side local results are not independent OS proof. A qualified real runner review must verify actual environment names and handling, values without disclosing them, argv/proc and FD inheritance, independent credentials audit, uploader boundary and all 20 annual jobs.
 
+## DEC-660 synthetic command-line (argv) canary exposure
+
+An attacker-readable process argument is a **third independent leak path** beyond file descriptors and environment variables. Even if the restricted consumer has no inherited writable checkout handles and the environment is cleaned, embedding a secret in its command line can expose it to process introspection, diagnostics or logs.
+
+The new opt-in \`--execute-argv-counterexample\` mode appends an entirely **public synthetic marker**, \`DEC660_PUBLIC_FAKE_ARGV_CANARY\`, to the restricted child's command arguments. The child reports **only a category** \`argv_probe=canary_present\`; the parent returns **BLOCKED** (exit 2). A missing/unexpected argv claim also blocks. The normal mode passes no extra argument, observes \`argv_probe=absent\`, and still returns only \`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED\` (exit 3). Every result continues to set \`can_authorize_dispatch=false\` and \`independent_os_proof_verified=false\`.
+
+The six explicit mutually exclusive disposable modes now test normal closed handles and five negative controls: high-FD write, FD1 stdout write, FD0 public canary read, public environment variable canary, and public argv canary. The code never handles real tokens, protected annual data, broker parameters or another checkout. It does not contact the network or run the annual workflow.
+
+There are **48 source-defined tests**, including six manual opt-in Linux demonstrations skipped during normal CI. Author-side local test replication verified 41 cases with 3 older demonstration skips while directly executing the new argv observation. **No independent real-runner proof or CI acceptance is implied.**
+
 ## Security limitations
 
 This is a negative witness on a brand-new fake checkout, not an independently authenticated production report. The child supplies some of its own observations; a separate trusted observer has not verified its live mount table, UIDs, capabilities, descriptors, seccomp or environment across 20 real annual jobs. The experiment does not secure trusted staging, checkout aliases or sibling writers, the external uploader or race scheduling on the actual GitHub runner.

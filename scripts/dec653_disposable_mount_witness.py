@@ -47,6 +47,9 @@ args = ["setpriv", "--bounding-set=-all", "--inh-caps=-all",
         "--ambient-caps=-all", "--no-new-privs", "--", executable,
         "-B", "-c", "__ATTACK__", source, external,
         str(preopened), inject]
+if inject == "5":
+    # Fake, public test string only; never pass actual secrets in argv.
+    args.append("DEC660_PUBLIC_FAKE_ARGV_CANARY")
 child_env = {"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C"}
 if inject == "4":
     # PUBLIC test marker, never any real repository credential or token.
@@ -69,7 +72,7 @@ print(p.stderr if inject == "2" else p.stdout, end="")
 
 _RESTRICTED_ATTACK = r'''
 import json, os, subprocess, sys
-source, external, inherited_fd, inject = sys.argv[1:]
+source, external, inherited_fd, inject, *extra_argv = sys.argv[1:]
 probe = "unknown"
 try:
     os.write(int(inherited_fd), b"INHERITED_FD_BYPASS\n")
@@ -86,6 +89,12 @@ elif stdin_bytes == b"DEC658_PUBLIC_FAKE_CREDENTIAL\n":
     stdin_probe = "canary_received"
 else:
     stdin_probe = "unexpected_input"
+if not extra_argv:
+    argv_probe = "absent"
+elif extra_argv == ["DEC660_PUBLIC_FAKE_ARGV_CANARY"]:
+    argv_probe = "canary_present"
+else:
+    argv_probe = "unexpected_args"
 environment_value = os.environ.get("DEC659_SYNTHETIC_ACCESS_TOKEN")
 if environment_value is None:
     env_probe = "absent"
@@ -131,7 +140,8 @@ print(json.dumps({"checks": checks, "status": status,
                   "inherited_fd_probe": probe,
                   "stdio_probe": stdio_probe,
                   "stdin_probe": stdin_probe,
-                  "env_probe": env_probe}, sort_keys=True),
+                  "env_probe": env_probe,
+                  "argv_probe": argv_probe}, sort_keys=True),
       file=sys.stderr if inject == "2" else sys.stdout)
 '''
 
@@ -163,6 +173,8 @@ def _evaluate(raw: Any, unchanged: bool) -> dict[str, Any]:
         findings.append("standard input descriptor exposed data or lacks safe provenance")
     if raw.get("env_probe") != "absent":
         findings.append("synthetic credential environment reached restricted process")
+    if raw.get("argv_probe") != "absent":
+        findings.append("synthetic command-line canary reached restricted process")
     for name in CHECKS:
         if checks.get(name) is not True:
             findings.append("OS denial not demonstrated: " + name)
@@ -210,9 +222,11 @@ def _unchanged_disposable_source(source: Path, directory_fd: int,
 
 
 def run_demo(inject_checkout_fd: bool = False, inject_stdout_fd: bool = False,
-             inject_stdin_fd: bool = False, inject_env_canary: bool = False) -> dict[str, Any]:
+             inject_stdin_fd: bool = False, inject_env_canary: bool = False,
+             inject_argv_canary: bool = False) -> dict[str, Any]:
     """Run only against internally generated disposable data, never a supplied path."""
-    if sum((inject_checkout_fd, inject_stdout_fd, inject_stdin_fd, inject_env_canary)) > 1:
+    if sum((inject_checkout_fd, inject_stdout_fd, inject_stdin_fd,
+            inject_env_canary, inject_argv_canary)) > 1:
         return _result("BLOCKED", ["conflicting synthetic descriptor-injection modes"])
     if sys.platform != "linux" or not all(shutil.which(n) for n in ("unshare", "mount", "setpriv")):
         return _result("BLOCKED", ["Linux namespace prerequisites unavailable"])
@@ -236,7 +250,7 @@ def run_demo(inject_checkout_fd: bool = False, inject_stdout_fd: bool = False,
                 p = subprocess.run(
                     ["unshare", "--user", "--map-root-user", "--mount", "--",
                      sys.executable, "-B", "-c", setup, str(source), str(external), sys.executable,
-                     "4" if inject_env_canary else ("3" if inject_stdin_fd else ("2" if inject_stdout_fd else ("1" if inject_checkout_fd else "0")))],
+                     "5" if inject_argv_canary else ("4" if inject_env_canary else ("3" if inject_stdin_fd else ("2" if inject_stdout_fd else ("1" if inject_checkout_fd else "0"))))],
                     cwd=directory, stdin=subprocess.DEVNULL, capture_output=True,
                     text=True, timeout=25, close_fds=True,
                     env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C"},
@@ -264,14 +278,16 @@ def main(argv: list[str] | None = None) -> int:
     modes.add_argument("--execute-stdio-counterexample", action="store_true")
     modes.add_argument("--execute-stdin-counterexample", action="store_true")
     modes.add_argument("--execute-env-counterexample", action="store_true")
+    modes.add_argument("--execute-argv-counterexample", action="store_true")
     args = parser.parse_args(argv)
     if (args.execute_disposable_demo or args.execute_fd_counterexample
             or args.execute_stdio_counterexample or args.execute_stdin_counterexample
-            or args.execute_env_counterexample):
+            or args.execute_env_counterexample or args.execute_argv_counterexample):
         result = run_demo(inject_checkout_fd=args.execute_fd_counterexample,
                           inject_stdout_fd=args.execute_stdio_counterexample,
                           inject_stdin_fd=args.execute_stdin_counterexample,
-                          inject_env_canary=args.execute_env_counterexample)
+                          inject_env_canary=args.execute_env_counterexample,
+                          inject_argv_canary=args.execute_argv_counterexample)
     else:
         result = _result("BLOCKED", ["explicit disposable demo opt-in required"])
     print(json.dumps(result, separators=(",", ":"), sort_keys=True))
