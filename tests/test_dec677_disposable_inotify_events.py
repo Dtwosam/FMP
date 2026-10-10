@@ -1238,6 +1238,7 @@ class DisposableInotifyTests(unittest.TestCase):
         verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
                                    directory_watch=10, directory_inventory_ok=False,
                                    directory_inventory_names=("sample", "unexpected-public-sibling"),
+                                   sibling_snapshot_stable=True,
                                    sibling_negative=True)
         self.assertTrue(verdict['observed_checks']['sibling_creation_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
@@ -1307,6 +1308,49 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
         self.assertIn('synthetic directory-event negative control not detected',
                       verdict['findings'])
+
+
+    def test_matching_sibling_event_and_names_need_stable_inode_bytes(self):
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(b'unexpected-public-sibling'))
+        for stable in (None, False, 1, 'true', [], {}):
+            with self.subTest(stable=repr(stable)):
+                verdict = module._evaluate(
+                    b'public', b'public', raw, 9, True, False,
+                    directory_watch=10, directory_inventory_ok=False,
+                    directory_inventory_names=("sample", "unexpected-public-sibling"),
+                    sibling_snapshot_stable=stable, sibling_negative=True)
+                self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+                self.assertEqual(verdict['status'], 'BLOCKED')
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW') and hasattr(os, 'symlink'),
+                         'POSIX no-follow symlinks required')
+    def test_disposable_sibling_pin_refuses_different_inode_and_symlink(self):
+        with tempfile.TemporaryDirectory() as folder:
+            parent = Path(folder)
+            sibling = parent / 'unexpected-public-sibling'
+            sibling.write_bytes(b'PUBLIC-EXTRA')
+            inode, payload = module._snapshot_regular(sibling)
+            self.assertEqual(payload, b'PUBLIC-EXTRA')
+            sibling.unlink()
+            substitute = parent / 'new-public-target'
+            substitute.write_bytes(b'PUBLIC-EXTRA')
+            sibling.symlink_to(substitute)
+            with self.assertRaises(OSError):
+                module._snapshot_regular(sibling)
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'),
+                         'POSIX no-follow snapshot required')
+    def test_disposable_sibling_same_inode_rewritten_bytes_are_detected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            sibling = Path(folder) / 'unexpected-public-sibling'
+            sibling.write_bytes(b'PUBLIC-EXTRA')
+            inode, payload = module._snapshot_regular(sibling)
+            sibling.write_bytes(b'CHANGED')
+            next_inode, next_payload = module._snapshot_regular(sibling)
+            self.assertEqual(inode, next_inode)
+            self.assertNotEqual(payload, next_payload)
+            self.assertFalse(inode == next_inode and payload == next_payload == b'PUBLIC-EXTRA')
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):

@@ -245,6 +245,14 @@ The observer now collects the actual **sorted tuple of generated filenames**, an
 
 Both the generated fixture name and the decoder share one constant. This only prevents the synthetic evaluator from overstating **its own local negative-control witness**; no independent protected runner source provenance, hostile mount namespace coverage or actual write prevention is established. Exact-head CI and qualified independent security review remain necessary.
 
+## DEC-705 — Persistent sibling final entry must still be the pinned regular inode
+
+DEC-704 checks exact final filename inventory and the named `IN_CREATE` record, but filenames alone do not prove the surviving `unexpected-public-sibling` path still references the **same regular file** the negative control created. An actor could replace that pathname with a symlink or different inode, or rewrite its bytes, while retaining the expected directory entry names.
+
+The disposable demo now records the synthetic sibling's initial regular-file `(st_dev, st_ino)` and exact `PUBLIC-EXTRA` bytes using the existing bounded `O_NOFOLLOW` snapshot helper. After draining events, it takes another bounded/no-follow sibling snapshot. Its dedicated control only counts when the same inode and bytes remain, in addition to the exact final inventory and directory-watch creation event. A missing or symlink-substituted sibling causes a fail-closed `BLOCKED` outcome. The evaluator uses a strict `sibling_snapshot_stable is True` flag for synthetic fault tests.
+
+Three added source-defined regression methods bring the suite to **156 cases**: malformed/false stability claims, a symlink substitution refusal, and same-inode rewritten bytes. This is two point-in-time observations on a generated `/tmp` fixture, not continuous source immutability, mount-alias exclusion, authenticated host evidence or actual OS-enforced prevention. Exact-head CI and qualified independent security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
