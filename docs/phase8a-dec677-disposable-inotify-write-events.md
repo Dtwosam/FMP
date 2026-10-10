@@ -605,6 +605,12 @@ The disposable runner creates its own public `sample` file using the fixed `BEFO
 
 DEC-752 now requires the baseline snapshot bytes and final snapshot bytes to equal the exact generated `BEFORE` fixture. Any mismatch raises handled `OSError` before starting deliberate negative controls or performing the final inventory/queue claims, and the installed watch FD closes. Two new source-defined regression methods bring the suite to **319 uniquely named methods**, covering unexpected baseline and final synthetic snapshot bytes. Legitimate generated control, write-and-revert, inode substitution, and sibling tests preserve their expected `BEFORE` payload. These are local fixture-consistency checks and cannot authenticate the watcher or authorize annual run385.
 
+## DEC-753 — Close allocated inotify FDs if a watch registration raises
+
+`_start_watch` already closed its nonstdio FD on negative or malformed watch-ID returns. However, a ctypes wrapper or injected `inotify_add_watch` call could also **raise** before either registration finished. Because `run_demo` receives the FD only after both watch registrations succeed, its outer cleanup cannot release that partially initialized FD. DEC-753 centralizes ownership of the allocated FD through the two registration calls. Both invalid return codes and raised exceptions close the FD exactly once; unexpected Python exceptions become handled `OSError` after cleanup. Normal complete dual-watch registrations still transfer ownership to `run_demo`.
+
+Three source-defined tests increase the suite to **322 uniquely named methods**: first registration raises, directory registration raises, and an unexpected wrapper exception converts to a controlled error after closing the allocated FD. This reduces synthetic observer resource leaks, not evidence gaps in independent OS-enforced annual isolation or immutable dispatch admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
