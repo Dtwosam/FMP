@@ -197,6 +197,14 @@ After enforcing native minimal 16-byte padding in DEC-696/697, the decoder still
 
 The parser now caps the basename at 255 non-NUL bytes while retaining exact kernel name-field rounding. Three tests bring the suite to **130 source-defined methods**: 255-byte name boundary structurally accepted, 256-byte name rejected, and a 300-byte name cannot forge matched transient negative-control detection. This remains confined to the disposable /tmp observer, not a trusted OS evidence collector, and exact-head CI plus independent source/security review are still required.
 
+## DEC-699 — Bounded deterministic adversarial event corpus
+
+Earlier DEC-677–698 regressions individually exercised malformed fields, watch identities and event layout. A reproducible broader corpus now probes combinations without using real annual data or arbitrary operating-system paths.
+
+Three source-only test methods add **512 pseudo-random byte buffers**, **512 independently synthesized forged inotify headers** and bounded bit flips across two legitimate-looking event records. Seeds are fixed and data sizes bounded, so CI is deterministic and cheap. The tests insist that the parser doesn't throw on hostile bytes and that every evaluated outcome preserves `can_authorize_dispatch=false`, `independent_os_proof_verified=false`; forged event headers are always `BLOCKED`. This raises the source-defined suite to **133 test methods**, while leaving production code untouched.
+
+The corpus cannot prove exhaustive coverage, authenticated kernel records, continuous observation, OS write prevention or annual authorization. Five real Linux demonstrations remain manual opt-in; independent reviewer assessment and exact-head Phase 3/full CI are required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
