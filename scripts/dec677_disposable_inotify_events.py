@@ -93,6 +93,9 @@ def _classify_stream(data: bytes, watch: int,
     # or vice versa, without an observable replacement/rename transition.
     observed_child_is_directory: dict[bytes, bool] = {}
     deleted_entries: set[bytes] = set()
+    # Each rename cookie represents at most one move-from and one move-to
+    # record in this bounded observation, even if other events intervene.
+    rename_cookie_actions: dict[int, int] = {}
     matched_transient_pairs = 0
     expected_transient_pairs = 0
     expected_sibling_created = False
@@ -120,8 +123,16 @@ def _classify_stream(data: bytes, watch: int,
             okay = False
         # Linux pairs rename events with a nonzero cookie. A zero cookie
         # on a move record cannot prove a complete named move transition.
-        if mask & (IN_MOVED_FROM | IN_MOVED_TO) and cookie == 0:
+        move_action = mask & (IN_MOVED_FROM | IN_MOVED_TO)
+        if move_action and cookie == 0:
             okay = False
+        if move_action and cookie:
+            prior = rename_cookie_actions.get(cookie, 0)
+            # Repeating the same rename direction with the same cookie
+            # cannot represent two independent kernel moves.
+            if prior & move_action:
+                okay = False
+            rename_cookie_actions[cookie] = prior | move_action
         if nbytes > 4096 or nbytes > len(data) - pos:
             okay = False
             break
