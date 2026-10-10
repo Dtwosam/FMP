@@ -22,6 +22,16 @@ Explicit temporary simulation:
 
 CLI returns only BLOCKED (exit **2**) or LOCAL_DISPOSABLE_WITNESS_UNVERIFIED (exit **3**). An internal _claim returns SYNTHETIC_RESERVATION_UNVERIFIED as a test-only event. **No state or return code grants any real dispatch authority**; every outcome includes can_authorize_dispatch=false, server_enforcement_verified=false, annual_run_385_consumed=false.
 
+## DEC-676 — Terminal ambiguous handoff before any hypothetical transport
+
+The base DEC-675 model stops at an atomic local RESERVED slot. That prevents a second ordinary local claimant, but does not explicitly represent **uncertainty around delivery of a future one-shot remote request**. This stacked source-only revision adds a terminal HANDOFF_UNKNOWN state. The helper changes exactly one matching RESERVED claim to HANDOFF_UNKNOWN under BEGIN IMMEDIATE and commits it **before any possible external side effect**. The research tool has **NO remote transport code or supplied callback**.
+
+Once marked unknown, the same claimant, another claimant, a caller with a different claim ID, or a restarted local process cannot replay or reset the slot through the public API. Missing/wrong claim IDs and handoff requests prior to a reservation return BLOCKED. The fake 24-thread demo now asserts persistence of this terminal uncertainty, a blocked second handoff, and blocked replay. There is no route to DISPATCHED, DELIVERED, safe retry or actual workflow authorization.
+
+Six added regression cases bring the defined suite to **23 tests**. Local testing passed all 23, including process-level race cases and the earlier direct-ledger-tampering negative control. The latter remains decisive: **a privileged SQLite writer can reset state directly**. Therefore HANDOFF_UNKNOWN is a toy protocol state, not a tamper-proof server-side ledger, an authenticated remote receipt or a GitHub workflow admission gate.
+
+An actual external operation may be delivered despite a lost acknowledgment, or fail before delivery. This model cannot distinguish those cases, and does not submit a request to find out. Under the real DEC-651 acceptance contract, a run-385 result cannot be retried on ambiguity without a separately reviewed and explicitly authorized protocol. This draft grants no such permission.
+
 ## Explicit negative proof: same-user ledger tampering
 
 One adversarial unit test directly changes the local SQLite row from RESERVED back to UNCLAIMED using a separate writable connection. A subsequent synthetic claim can reserve again. This **deliberately demonstrates that SQLite concurrency safety is NOT a security boundary against a ledger owner or privileged actor**. The test still verifies both authorization flags false.
