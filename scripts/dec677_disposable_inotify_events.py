@@ -191,7 +191,8 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
               directory_inventory_names: tuple[str, ...] | None = None,
               sibling_snapshot_stable: bool | None = None,
               sibling_negative: bool = False,
-              transient_sibling_negative: bool = False) -> dict[str, Any]:
+              transient_sibling_negative: bool = False,
+              midpoint_snapshot_matches_expected: bool | None = None) -> dict[str, Any]:
     # Snapshot values reach hashlib below. A wrong type or oversized injected
     # snapshot cannot be accepted as a coherent bounded public fixture, nor
     # escape the fail-closed JSON verdict with an uncontrolled TypeError.
@@ -229,8 +230,12 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         ) if transient_sibling_negative else True,
         "event_stream_complete": events["well_formed"] and not events["overflow"] and not events["invalidated"] and watcher_alive is True,
         "no_observed_writes": events["write_events"] == 0,
+        "midpoint_source_snapshot_matches_expected": (
+            midpoint_snapshot_matches_expected is True
+        ) if negative else True,
         "negative_control_detected": (
-            events["well_formed"] and not events["overflow"]
+            midpoint_snapshot_matches_expected is True
+            and events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
             and events["source_modify_events"] >= 2
         ) if negative else True,
@@ -357,12 +362,23 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
             original_inode, original_bytes = _snapshot_regular(path)
             fd, wd, dir_wd = _start_watch(path)
             try:
+                midpoint_matches_expected = None
                 if negative:
-                    for value in (AFTER, BEFORE):
-                        with open(path, "wb") as f:
-                            f.write(value)
-                            f.flush()
-                            os.fsync(f.fileno())
+                    # This is generated public data; observe the intermediate
+                    # changed inode/bytes rather than inferring a revert from
+                    # a matching final digest plus event counts alone.
+                    with open(path, "wb") as f:
+                        f.write(AFTER)
+                        f.flush()
+                        os.fsync(f.fileno())
+                    midpoint_inode, midpoint_bytes = _snapshot_regular(path)
+                    midpoint_matches_expected = (
+                        midpoint_inode == original_inode and midpoint_bytes == AFTER
+                    )
+                    with open(path, "wb") as f:
+                        f.write(BEFORE)
+                        f.flush()
+                        os.fsync(f.fileno())
                 if replace_watched_inode:
                     # An inode-targeted watch is not an identity proof for a
                     # mutable pathname. Substitute a precreated identical file.
@@ -400,7 +416,8 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                                  directory_inventory_names=inventory_names,
                                  sibling_snapshot_stable=sibling_snapshot_stable,
                                  sibling_negative=create_sibling,
-                                 transient_sibling_negative=transient_sibling)
+                                 transient_sibling_negative=transient_sibling,
+                                 midpoint_snapshot_matches_expected=midpoint_matches_expected)
             finally:
                 os.close(fd)
     except (OSError, AttributeError, ValueError):
