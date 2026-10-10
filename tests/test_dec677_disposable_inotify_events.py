@@ -2970,6 +2970,62 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
         self.assertFalse(result['can_authorize_dispatch'])
 
+
+    def test_directory_only_persistent_negative_refuses_source_attrib(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE,
+                  data=named(b'unexpected-public-sibling'))
+               + ev(wd=9, mask=module.IN_ATTRIB))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['source_attribute_events'], 1)
+        result = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=('sample', 'unexpected-public-sibling'),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertFalse(result['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_directory_only_transient_negative_refuses_source_attrib(self):
+        target = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=target)
+               + ev(wd=9, mask=module.IN_ATTRIB)
+               + ev(wd=10, mask=module.IN_DELETE, data=target))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['source_attribute_events'], 1)
+        result = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',),
+            transient_midpoint_verified=True, transient_sibling_negative=True)
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_directory_watch_attrib_does_not_impersonate_source_inode_attrib(self):
+        target = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=target)
+               + ev(wd=10, mask=module.IN_ATTRIB, data=target)
+               + ev(wd=10, mask=module.IN_DELETE, data=target))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['source_attribute_events'], 0)
+        result = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',),
+            transient_midpoint_verified=True, transient_sibling_negative=True)
+        self.assertTrue(result['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_truncated_stream_defaults_source_attrib_counter_to_zero_but_blocks(self):
+        parsed = module._classify_stream(b'', -1, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['source_attribute_events'], 0)
+        result = module._evaluate(
+            b'public', b'public', b'\x00' * 5, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertFalse(result['can_authorize_dispatch'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
