@@ -28,7 +28,8 @@ def ev(wd=9, mask=None, data=b''):
 
 class DisposableInotifyTests(unittest.TestCase):
     def test_empty_stream_has_no_events_but_never_authorizes(self):
-        r = module._evaluate(b'same', b'same', b'', 9, True, False)
+        r = module._evaluate(b'same', b'same', b'', 9, True, False,
+                             directory_watch=10)
         self.assertEqual(r['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertFalse(r['can_authorize_dispatch'])
         self.assertFalse(r['independent_os_proof_verified'])
@@ -562,6 +563,39 @@ class DisposableInotifyTests(unittest.TestCase):
             sample.write_bytes(b"")
             _inode, data = module._snapshot_regular(sample)
             self.assertEqual(data, b"")
+
+    def test_file_only_quiet_watch_cannot_be_reported_complete(self):
+        r = module._evaluate(b'public', b'public', b'', 9, True, False)
+        self.assertEqual(r['status'], 'BLOCKED')
+        self.assertFalse(r['observed_checks']['both_watches_identified'])
+        self.assertFalse(r['can_authorize_dispatch'])
+
+    def test_file_and_directory_watches_quiet_is_only_locally_unverified(self):
+        r = module._evaluate(b'public', b'public', b'', 9, True, False,
+                             directory_watch=10)
+        self.assertEqual(r['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertTrue(r['observed_checks']['both_watches_identified'])
+        self.assertFalse(r['independent_os_proof_verified'])
+
+    def test_fake_aliased_watch_pair_blocks(self):
+        r = module._evaluate(b'a', b'a', b'', 9, True, False,
+                             directory_watch=9)
+        self.assertEqual(r['status'], 'BLOCKED')
+        self.assertFalse(r['observed_checks']['both_watches_identified'])
+
+    def test_invalid_watch_identity_cannot_be_a_clean_receipt(self):
+        for watch in (True, False, -1, '9', None):
+            with self.subTest(watch=repr(watch)):
+                r = module._evaluate(b'a', b'a', b'', watch, True, False,
+                                     directory_watch=10)
+                self.assertEqual(r['status'], 'BLOCKED')
+
+    def test_noninteger_directory_watch_cannot_be_clean(self):
+        for directory_watch in (None, False, True, -1, 9, '10'):
+            with self.subTest(directory_watch=repr(directory_watch)):
+                r = module._evaluate(b'a', b'a', b'', 9, True, False,
+                                     directory_watch=directory_watch)
+                self.assertEqual(r['status'], 'BLOCKED')
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
