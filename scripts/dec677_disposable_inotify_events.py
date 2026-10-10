@@ -99,6 +99,8 @@ def _classify_stream(data: bytes, watch: int,
     # Each rename cookie represents at most one move-from and one move-to
     # record in this bounded observation, even if other events intervene.
     rename_cookie_actions: dict[int, int] = {}
+    # A rename cannot change the moved inode from a file to a directory.
+    rename_cookie_is_directory: dict[int, bool] = {}
     matched_transient_pairs = 0
     expected_transient_pairs = 0
     expected_sibling_created = False
@@ -139,6 +141,11 @@ def _classify_stream(data: bytes, watch: int,
             # events between them, but Linux emits FROM before TO.
             if move_action == IN_MOVED_FROM and prior & IN_MOVED_TO:
                 okay = False
+            current_is_directory = bool(mask & IN_ISDIR)
+            if (cookie in rename_cookie_is_directory
+                    and rename_cookie_is_directory[cookie] != current_is_directory):
+                okay = False
+            rename_cookie_is_directory[cookie] = current_is_directory
             rename_cookie_actions[cookie] = prior | move_action
         if nbytes > 4096 or nbytes > len(data) - pos:
             okay = False
