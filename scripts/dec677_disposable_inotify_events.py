@@ -388,7 +388,13 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
 
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
              create_sibling: bool = False, transient_sibling: bool = False) -> dict[str, Any]:
-    if sum((negative, replace_watched_inode, create_sibling, transient_sibling)) > 1:
+    # The direct helper is also exercised by synthetic callers, not only the
+    # argparse Boolean switches. Reject injected truthy/non-numeric values
+    # before arithmetic or any generated filesystem operation.
+    modes = (negative, replace_watched_inode, create_sibling, transient_sibling)
+    if any(type(mode) is not bool for mode in modes):
+        return _outcome(["disposable negative-control modes must be booleans"])
+    if sum(modes) > 1:
         return _outcome(["conflicting synthetic negative-control modes"])
     if sys.platform != "linux" or not os.path.isdir("/tmp") or os.path.islink("/tmp"):
         return _outcome(["Linux disposable kernel event monitor unavailable"])
