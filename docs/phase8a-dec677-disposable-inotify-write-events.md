@@ -681,6 +681,12 @@ DEC-764 adds `_plausible_inventory_basename` to check exact Python `str` and nat
 
 This is local synthetic inventory coherence, not kernel-origin authentication, independent OS write prevention, or annual-runner authorization.
 
+## DEC-765 — Fail closed on unexpected generated runner mutation-wrapper exceptions
+
+The disposable observer's individual inotify-registration, snapshot, event drain and bounded scan helpers already normalize unexpected ordinary Python wrapper errors into handled `OSError`. However, `run_demo` itself makes several public `/tmp` fixture mutation calls: `Path.write_bytes`, `os.replace`, write/revert file operations and `os.fsync`. With a patched Python wrapper, an ordinary `RuntimeError` could bypass the runner's final `except (OSError, AttributeError, ValueError)` and emit no fail-closed JSON receipt.
+
+DEC-765 broadens only the **disposable runner's final error boundary** to ordinary `Exception`, keeping the same `BLOCKED` receipt and existing nonstdio FD `finally` cleanup while not suppressing `KeyboardInterrupt` or `SystemExit`. Three new source-defined regression tests increase the suite to **356 uniquely named methods**: a generated-source creation wrapper failure happens before any watch; a replacement wrapper failure blocks with the valid pipe observer FD closed; and a reverted-write `fsync` wrapper failure also blocks and closes the observer FD. This is local defensive fault-injection handling, not production permission or OS confinement.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

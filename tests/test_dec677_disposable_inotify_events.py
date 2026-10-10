@@ -3908,6 +3908,55 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(module._plausible_inventory_basename('x' * 256))
         self.assertFalse(module._plausible_inventory_basename('é' * 128))
 
+
+    def test_runner_initial_public_file_write_runtime_error_blocks_without_watch(self):
+        with patch.object(module.Path, 'write_bytes',
+                          side_effect=RuntimeError('synthetic generated fixture writer')):
+            with patch.object(module, '_start_watch') as register:
+                outcome = module.run_demo()
+        self.assertEqual(outcome['status'], 'BLOCKED')
+        self.assertFalse(outcome['can_authorize_dispatch'])
+        self.assertFalse(outcome['independent_os_proof_verified'])
+        register.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_runner_replacement_wrapper_runtime_error_blocks_and_closes_watch(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((3, 7), module.BEFORE)):
+                    with patch.object(module.os, 'replace',
+                                      side_effect=RuntimeError('synthetic replacement wrapper')):
+                        with patch.object(module, '_read_pending') as drain:
+                            result = module.run_demo(replace_watched_inode=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertFalse(result['can_authorize_dispatch'])
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_runner_revert_fsync_runtime_error_blocks_and_closes_watch(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((3, 7), module.BEFORE)):
+                    with patch.object(module.os, 'fsync',
+                                      side_effect=RuntimeError('synthetic fsync wrapper')):
+                        with patch.object(module, '_read_pending') as drain:
+                            result = module.run_demo(negative=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertFalse(result['independent_os_proof_verified'])
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

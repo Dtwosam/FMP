@@ -763,7 +763,10 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                                  transient_midpoint_verified=transient_midpoint_verified)
             finally:
                 os.close(fd)
-    except (OSError, AttributeError, ValueError):
+    except Exception:
+        # This is only a generated /tmp demonstration. A patched Python
+        # file-mutator or cleanup wrapper must not leak an unhandled exception
+        # instead of the same permanently nonauthorizing BLOCKED verdict.
         return _outcome(["disposable inotify setup, read or cleanup failed"])
 
 
