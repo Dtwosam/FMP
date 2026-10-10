@@ -217,8 +217,12 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         ),
         "final_digest_equal": before == after and hashlib.sha256(before).digest() == hashlib.sha256(after).digest(),
         "watched_inode_matches_final_path": inode_stable is True,
-        "no_directory_entry_mutations": (events["directory_changes"] == 0
-                                          and directory_inventory_ok is True),
+        "no_directory_entry_mutations": (
+            events["directory_changes"] == 0
+            and directory_inventory_ok is True
+            and type(directory_inventory_names) is tuple
+            and directory_inventory_names == ("sample",)
+        ),
         "sibling_creation_control_detected": (
             events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
