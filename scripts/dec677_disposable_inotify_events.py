@@ -145,10 +145,16 @@ def _classify_stream(data: bytes, watch: int,
             if child_name is not None:
                 change = mask & DIRECTORY_CHANGES
                 if change == IN_CREATE:
-                    created_entries.add(child_name)
-                elif change == IN_DELETE and child_name in created_entries:
-                    created_entries.remove(child_name)
-                    matched_transient_pairs += 1
+                    # This negative control creates a regular-file sibling.
+                    # IN_ISDIR denotes an actual directory, not that file.
+                    if mask & IN_ISDIR:
+                        created_entries.discard(child_name)
+                    else:
+                        created_entries.add(child_name)
+                elif change == IN_DELETE:
+                    if not mask & IN_ISDIR and child_name in created_entries:
+                        matched_transient_pairs += 1
+                    created_entries.discard(child_name)
         if mask & (IN_IGNORED | IN_DELETE_SELF | IN_MOVE_SELF):
             invalidated = True
         if mask & (IN_MODIFY | IN_CLOSE_WRITE | IN_ATTRIB):
