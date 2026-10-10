@@ -167,6 +167,68 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(r['can_authorize_dispatch'])
         self.assertFalse(r['independent_os_proof_verified'])
 
+    def test_directory_create_event_is_separately_accounted(self):
+        data = ev(wd=10, mask=module.IN_CREATE, data=b'new-file\\x00')
+        observed = module._classify_stream(data, 9, directory_watch=10)
+        self.assertTrue(observed['well_formed'])
+        self.assertEqual(observed['directory_changes'], 1)
+        self.assertEqual(observed['write_events'], 0)
+
+    def test_all_synthetic_directory_mutations_block(self):
+        for mask in (module.IN_CREATE, module.IN_DELETE,
+                     module.IN_MOVED_FROM, module.IN_MOVED_TO):
+            with self.subTest(mask=mask):
+                data = ev(wd=10, mask=mask)
+                verdict = module._evaluate(b'a', b'a', data, 9, True, False,
+                                           directory_watch=10)
+                self.assertEqual(verdict['status'], 'BLOCKED')
+                self.assertFalse(verdict['observed_checks']['no_directory_entry_mutations'])
+
+    def test_final_directory_inventory_catches_silent_extra_leaf(self):
+        verdict = module._evaluate(b'a', b'a', b'', 9, True, False,
+                                   directory_watch=10, directory_inventory_ok=False)
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertTrue(verdict['observed_checks']['final_digest_equal'])
+        self.assertFalse(verdict['observed_checks']['no_directory_entry_mutations'])
+
+    def test_unknown_fd_watch_with_directory_watch_still_blocks(self):
+        verdict = module._evaluate(b'a', b'a', ev(wd=11, mask=module.IN_CREATE),
+                                   9, True, False, directory_watch=10)
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+
+    def test_unverified_sibling_negative_is_always_blocked(self):
+        verdict = module._evaluate(b'a', b'a', b'', 9, True, False,
+                                   directory_watch=10, directory_inventory_ok=True,
+                                   sibling_negative=True)
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertIn('synthetic directory-event negative control not detected',
+                      verdict['findings'])
+        self.assertFalse(verdict['can_authorize_dispatch'])
+
+    def test_fake_sibling_creation_conflicts_with_other_injections(self):
+        self.assertEqual(module.run_demo(negative=True, create_sibling=True)['status'],
+                         'BLOCKED')
+        self.assertEqual(module.run_demo(replace_watched_inode=True,
+                                         create_sibling=True)['status'], 'BLOCKED')
+
+    def test_cli_disallows_multiple_negative_inotify_modes(self):
+        p = subprocess.run([sys.executable, '-B', str(SCRIPT),
+                            '--execute-sibling-creation-negative',
+                            '--execute-inode-replacement-negative'],
+                           capture_output=True, text=True, timeout=4)
+        self.assertNotEqual(p.returncode, 0)
+
+    @unittest.skipUnless(os.environ.get('DEC677_EXECUTE_INOTIFY_TEST') == '1',
+                         'manual disposable directory watch, not annual runner proof')
+    def test_real_sibling_creation_blocks_despite_sample_unchanged(self):
+        result = module.run_demo(create_sibling=True)
+        self.assertEqual(result['status'], 'BLOCKED', result)
+        self.assertTrue(result['observed_checks']['final_digest_equal'])
+        self.assertTrue(result['observed_checks']['watched_inode_matches_final_path'])
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertFalse(result['can_authorize_dispatch'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
