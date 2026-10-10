@@ -1,0 +1,509 @@
+from __future__ import annotations
+
+"""Synthetic-only fixtures. They do NOT reproduce actual runner OS isolation."""
+
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts/dec650_ledger_structure_audit.py"
+spec = importlib.util.spec_from_file_location("dec650_ledger_structure_audit", SCRIPT)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+SHA40 = "a" * 40
+SHA64 = "b" * 64
+
+
+def fixtures():
+    policy = {
+        "schema": module.SCHEMA, "repository": "Dtwosam/FMP",
+        "source_commit": SHA40, "source_tree": "c" * 40,
+        "workflow_blob": "d" * 40, "synthetic_merge": "e" * 40,
+        "workflow_ref": "refs/heads/main",
+        "independent_reviewer_identity": "synthetic-reviewer",
+        "independent_review_receipt_sha256": SHA64,
+        "env_allowlist_keys": ["PATH", "LANG"],
+        "segment": "2023", "run_number": 385, "run_attempt": 1,
+        "previous_freeze_run_id": 37663157285,
+    }
+    keys = ["preflight"] + sorted(k for k in module._required_job_keys() if k.startswith("cell:")) + ["freeze"]
+    jobs = []
+    for i, key in enumerate(keys, 1):
+        parts = key.split(":")
+        jobs.append({
+            "kind": parts[0],
+            "matrix": {"symbol": parts[1], "timeframe": parts[2], "horizon": int(parts[3])} if len(parts) == 4 else None,
+            "job_id": 10000 + i,
+            "runner_identity": "synthetic-runner-id", "runner_image": "synthetic-image",
+            "kernel": "synthetic-kernel", "mount_namespace": "synthetic-ns",
+            "mountinfo_sha256": SHA64, "source_mount_id": "synthetic-mount",
+            "input_mount_id": "synthetic-input", "output_mount_id": "synthetic-output",
+            "observer_identity": "synthetic-observer",
+            "uid_map_sha256": SHA64, "gid_map_sha256": SHA64,
+            "observer_manifest_sha256": SHA64, "attempt_log_sha256": SHA64,
+            "race_replay_sha256": SHA64, "external_report_receipt_sha256": SHA64,
+            "cleanup_receipt_sha256": SHA64, "argv_sha256": SHA64,
+            "restricted_uid": 65534, "restricted_gid": 65534,
+            "supplementary_groups": [], "no_new_privs": True,
+            "permitted_capabilities": "0", "ambient_capabilities": "0",
+            "seccomp_mode": "filter", "working_directory": "/tmp/synthetic-cwd",
+            "process_executable": "/usr/bin/python3", "env_allowlist_keys": ["PATH", "LANG"],
+            "cwd_outside_checkout": True, "input_mounts_readonly": True,
+            "output_mount_outside_checkout": True, "publisher_isolated": True,
+            "privileged_skips": [], "unresolved_exceptions": [],
+            "effective_capabilities": "0", "checkout_mount_readonly": True,
+            "writable_checkout_aliases": [], "unapproved_inherited_fds": [],
+            "standard_streams": {"0": "devnull", "1": "external-log", "2": "external-log"},
+            "checkout_before_sha256": SHA64, "checkout_after_sha256": SHA64,
+            "checks": {name: {"status": "PASS", "skipped": False, "privileged_test_executed": True, "evidence_sha256": SHA64} for name in module.REQUIRED_CHECKS},
+        })
+    return policy, {**policy, "jobs": jobs}
+
+
+class LedgerStructureTests(unittest.TestCase):
+    def test_complete_fabricated_evidence_can_never_authorize(self):
+        policy, ledger = fixtures()
+        result = module.assess(policy, ledger)
+        self.assertEqual(result["status"], "STRUCTURALLY_COMPLETE_UNVERIFIED")
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
+
+    def test_exact_twenty_unique_jobs(self):
+        _, ledger = fixtures()
+        self.assertEqual(len(ledger["jobs"]), 20)
+        self.assertEqual(len({module._job_key(j) for j in ledger["jobs"]}), 20)
+
+    def test_missing_freeze_blocks(self):
+        p, l = fixtures(); l["jobs"].pop()
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_extreme_job_count_fails_without_enumerating_findings(self):
+        policy, ledger = fixtures()
+        ledger["jobs"] = [{} for _ in range(10000)]
+        result = module.assess(policy, ledger)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertEqual(result["findings"], ["expected 20 jobs, received 10000"])
+
+    def test_cli_extreme_job_count_bounded_output(self):
+        policy, ledger = fixtures()
+        ledger["jobs"] = [{} for _ in range(10000)]
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            policy_path, ledger_path = base / "policy.json", base / "ledger.json"
+            policy_bytes = json.dumps(policy).encode("utf-8")
+            policy_path.write_bytes(policy_bytes)
+            ledger_path.write_text(json.dumps(ledger))
+            result = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(policy_path),
+                 "--policy-sha256", hashlib.sha256(policy_bytes).hexdigest(),
+                 "--ledger", str(ledger_path)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertLess(len(result.stdout), 512)
+            self.assertEqual(json.loads(result.stdout)["findings"],
+                             ["expected 20 jobs, received 10000"])
+
+    def test_duplicate_cell_cannot_replace_missing_cell(self):
+        p, l = fixtures(); l["jobs"][3] = dict(l["jobs"][2])
+        result = module.assess(p, l)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertTrue(any("duplicate job" in x for x in result["findings"]))
+
+    def test_wrong_source_sha_blocks(self):
+        p, l = fixtures(); l["source_commit"] = "e" * 40
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_changed_workflow_blob_blocks(self):
+        p, l = fixtures(); l["workflow_blob"] = "f" * 40
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_wrong_attempt_blocks(self):
+        p, l = fixtures(); l["run_attempt"] = 2
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_wrong_positive_run_number_blocks(self):
+        p, l = fixtures(); p["run_number"] = 386; l["run_number"] = 386
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_wrong_positive_previous_freeze_run_blocks(self):
+        p, l = fixtures(); p["previous_freeze_run_id"] = 999; l["previous_freeze_run_id"] = 999
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_boolean_instead_of_positive_run_identity_blocks(self):
+        p, l = fixtures(); p["run_number"] = True; l["run_number"] = True
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_privileged_skip_blocks(self):
+        p, l = fixtures(); l["jobs"][0]["checks"]["checkout_path_write_denied"]["skipped"] = True
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_failed_check_blocks(self):
+        p, l = fixtures(); l["jobs"][0]["checks"]["checkout_path_write_denied"]["status"] = "FAIL"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_missing_evidence_hash_blocks(self):
+        p, l = fixtures(); l["jobs"][0]["checks"]["directory_reparent_denied"].pop("evidence_sha256")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_unreported_gid_or_groups_block(self):
+        p, l = fixtures()
+        l["jobs"][0].pop("restricted_gid")
+        l["jobs"][1]["supplementary_groups"] = [1000]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_missing_observer_or_publication_receipts_block(self):
+        p, l = fixtures()
+        l["jobs"][0].pop("observer_manifest_sha256")
+        l["jobs"][1].pop("external_report_receipt_sha256")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_unconfined_seccomp_or_permitted_caps_block(self):
+        p, l = fixtures()
+        l["jobs"][0]["seccomp_mode"] = "unconfined"
+        l["jobs"][1]["permitted_capabilities"] = "1"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_missing_synthetic_merge_blocks(self):
+        p, l = fixtures()
+        p.pop("synthetic_merge")
+        l.pop("synthetic_merge")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_tag_workflow_ref_blocks_under_installed_main_guards(self):
+        p, l = fixtures()
+        p["workflow_ref"] = "refs/tags/preview"
+        l["workflow_ref"] = "refs/tags/preview"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_divergent_repeated_environment_policy_blocks(self):
+        p, l = fixtures()
+        l["env_allowlist_keys"] = ["PATH"]
+        # Job-level lists still match the reviewed policy: the duplicate
+        # ledger header alone must not contradict that approved source.
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_reviewer_receipt_digest_must_match_policy(self):
+        p, l = fixtures()
+        l["independent_review_receipt_sha256"] = "c" * 64
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_missing_policy_reviewer_receipt_blocks(self):
+        p, l = fixtures()
+        p.pop("independent_review_receipt_sha256")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_missing_review_receipt_blocks(self):
+        p, l = fixtures()
+        l.pop("independent_review_receipt_sha256")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_unreviewed_environment_key_blocks(self):
+        p, l = fixtures()
+        p["env_allowlist_keys"] = ["PATH", "LANG", "AWS_ACCESS_KEY_ID"]
+        for job in l["jobs"]:
+            job["env_allowlist_keys"] = ["PATH", "LANG", "AWS_ACCESS_KEY_ID"]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_environment_claim_must_match_reviewed_policy(self):
+        p, l = fixtures()
+        l["jobs"][0]["env_allowlist_keys"] = ["LANG", "PATH"]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_nul_in_process_path_blocks(self):
+        p, l = fixtures()
+        l["jobs"][0]["working_directory"] = "/tmp/synthetic" + chr(0) + "/cwd"
+        l["jobs"][1]["process_executable"] = "/usr/bin" + chr(0) + "/python3"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_credential_env_or_checkout_cwd_blocks(self):
+        p, l = fixtures()
+        l["jobs"][0]["env_allowlist_keys"].append("GH_TOKEN")
+        l["jobs"][1]["cwd_outside_checkout"] = False
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_skipped_actor_and_missing_race_replay_block(self):
+        p, l = fixtures()
+        l["jobs"][0]["privileged_skips"] = ["mount remount denied"]
+        l["jobs"][1].pop("race_replay_sha256")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_root_actor_blocks(self):
+        p, l = fixtures(); l["jobs"][0]["restricted_uid"] = 0
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_writable_alias_blocks(self):
+        p, l = fixtures(); l["jobs"][1]["writable_checkout_aliases"] = ["synthetic-alias"]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_malformed_job_coordinates_not_reflected_in_result(self):
+        policy, ledger = fixtures()
+        canary = "UNTRUSTED_SECRET_LIKE_CANARY_NOT_FOR_DIAGNOSTICS"
+        ledger["jobs"][0]["kind"] = canary
+        ledger["jobs"][1]["matrix"]["symbol"] = canary
+        result = module.assess(policy, ledger)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertNotIn(canary, json.dumps(result))
+
+    def test_cli_does_not_echo_untrusted_coordinate_canary(self):
+        policy, ledger = fixtures()
+        canary = "UNTRUSTED_SECRET_LIKE_CANARY_NOT_FOR_DIAGNOSTICS"
+        ledger["jobs"][0]["kind"] = canary
+        ledger["jobs"][1]["matrix"]["symbol"] = canary
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            a, b = base / "policy.json", base / "ledger.json"
+            raw = json.dumps(policy).encode("utf-8")
+            a.write_bytes(raw)
+            b.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(a),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+            self.assertNotIn(canary, proc.stdout + proc.stderr)
+
+    def test_unhashable_kind_returns_blocked_not_exception(self):
+        p, l = fixtures(); l["jobs"][0]["kind"] = ["cell"]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_cli_bad_digest_format_emits_structured_blocked(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            a.write_text(json.dumps(policy)); b.write_text(json.dumps(ledger))
+            proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--policy", str(a), "--policy-sha256", "bogus", "--ledger", str(b)], capture_output=True, text=True, check=False)
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    def test_cli_oversized_json_fails_closed(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            a.write_bytes(b" " * (module.MAX_JSON_BYTES + 1))
+            b.write_text(json.dumps(ledger))
+            proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--policy", str(a), "--policy-sha256", hashlib.sha256(a.read_bytes()).hexdigest(), "--ledger", str(b)], capture_output=True, text=True, check=False)
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    def test_bad_fd_blocks(self):
+        p, l = fixtures(); l["jobs"][0]["standard_streams"]["1"] = "checkout-file"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_leaked_inherited_fd_blocks(self):
+        p, l = fixtures(); l["jobs"][0]["unapproved_inherited_fds"] = [11]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_inventory_mismatch_blocks(self):
+        p, l = fixtures(); l["jobs"][0]["checkout_after_sha256"] = "f" * 64
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_no_new_privs_missing_blocks(self):
+        p, l = fixtures(); l["jobs"][0]["no_new_privs"] = False
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_reused_job_id_blocks(self):
+        p, l = fixtures(); l["jobs"][1]["job_id"] = l["jobs"][0]["job_id"]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_cli_unverified_structure_never_returns_success_exit(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            raw = json.dumps(policy).encode("utf-8"); a.write_bytes(raw); b.write_text(json.dumps(ledger))
+            proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--policy", str(a), "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)], capture_output=True, text=True, check=False)
+            self.assertEqual(proc.returncode, 3, proc.stderr)
+            result = json.loads(proc.stdout)
+            self.assertEqual(result["status"], "STRUCTURALLY_COMPLETE_UNVERIFIED")
+            self.assertFalse(result["can_authorize_dispatch"])
+            self.assertFalse(result["independent_os_proof_verified"])
+
+    @unittest.skipUnless(hasattr(os, "mkfifo") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_fifo_input_does_not_hang(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); fifo = base / "fifo.json"; b = base / "l.json"
+            os.mkfifo(fifo); b.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(fifo),
+                 "--policy-sha256", SHA64, "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    @unittest.skipUnless(hasattr(os, "symlink") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_symlink_input_is_rejected(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); target = base / "real.json"; alias = base / "alias.json"; b = base / "l.json"
+            raw = json.dumps(policy).encode("utf-8")
+            target.write_bytes(raw); alias.symlink_to(target); b.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(alias),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    @unittest.skipUnless(hasattr(os, "O_DIRECTORY") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_symlinked_parent_directory_rejected(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); real = base / "real"; real.mkdir()
+            alias = base / "alias"
+            alias.symlink_to(real, target_is_directory=True)
+            raw = json.dumps(policy).encode("utf-8")
+            (real / "policy.json").write_bytes(raw)
+            ledger_file = base / "ledger.json"
+            ledger_file.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(alias / "policy.json"),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(),
+                 "--ledger", str(ledger_file)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    @unittest.skipUnless(hasattr(os, "O_DIRECTORY") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_parent_traversal_rejected(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            data = base / "data"
+            data.mkdir()
+            raw = json.dumps(policy).encode("utf-8")
+            (data / "policy.json").write_bytes(raw)
+            (base / "ledger.json").write_text(json.dumps(ledger))
+            path = data / ".." / "data" / "policy.json"
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(path),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(),
+                 "--ledger", str(base / "ledger.json")],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    @unittest.skipUnless(hasattr(os, "O_DIRECTORY") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_relative_regular_inputs_preserve_unverified_exit(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            raw = json.dumps(policy).encode("utf-8")
+            (base / "policy.json").write_bytes(raw)
+            (base / "ledger.json").write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", "policy.json",
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(),
+                 "--ledger", "ledger.json"],
+                cwd=base, capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 3, proc.stderr)
+            result = json.loads(proc.stdout)
+            self.assertEqual(result["status"], "STRUCTURALLY_COMPLETE_UNVERIFIED")
+            self.assertFalse(result["can_authorize_dispatch"])
+
+    def test_cli_directory_input_is_rejected(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); b = base / "l.json"
+            b.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(base),
+                 "--policy-sha256", SHA64, "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    def test_cli_duplicate_policy_keys_fail_closed(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            raw = (json.dumps(policy)[:-1] + ', "run_number": 385}').encode("utf-8")
+            a.write_bytes(raw); b.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(a),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    def test_cli_duplicate_nested_ledger_keys_fail_closed(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            raw = json.dumps(policy).encode("utf-8")
+            a.write_bytes(raw)
+            nested = json.dumps(ledger).replace('"job_id": 10001', '"job_id": 10001, "job_id": 10001', 1)
+            b.write_text(nested)
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(a),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    def test_cli_nan_ledger_value_fails_closed(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            raw = json.dumps(policy).encode("utf-8")
+            a.write_bytes(raw)
+            b.write_text(json.dumps(ledger).replace('"restricted_uid": 65534', '"restricted_uid": NaN', 1))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(a),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    def test_cli_deeply_nested_json_returns_blocked_not_traceback(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            raw = json.dumps(policy).encode("utf-8")
+            a.write_bytes(raw)
+            # Deep nesting is smaller than the byte limit but exceeds the
+            # standard JSON decoder recursion limit on Python 3 runners.
+            b.write_bytes(b"[" * 10000 + b"0" + b"]" * 10000)
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(a),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(),
+                 "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            payload = json.loads(proc.stdout)
+            self.assertEqual(payload["status"], "BLOCKED")
+            self.assertFalse(payload["can_authorize_dispatch"])
+            self.assertFalse(payload["independent_os_proof_verified"])
+
+    def test_cli_wrong_policy_digest_fails_closed(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            a.write_text(json.dumps(policy)); b.write_text(json.dumps(ledger))
+            proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--policy", str(a), "--policy-sha256", "e" * 64, "--ledger", str(b)], capture_output=True, text=True, check=False)
+            self.assertEqual(proc.returncode, 2)
+            self.assertFalse(json.loads(proc.stdout)["can_authorize_dispatch"])
+
+
+if __name__ == "__main__":
+    unittest.main()
