@@ -2349,6 +2349,59 @@ class DisposableInotifyTests(unittest.TestCase):
         parsed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertFalse(parsed['well_formed'])
 
+
+    def test_created_file_cannot_be_removed_as_same_name_directory(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE | module.IN_ISDIR, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_created_directory_cannot_be_removed_as_same_name_file(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+
+    def test_created_child_moved_out_with_wrong_kind_is_malformed(self):
+        name = named(b'public-child')
+        for first, second in (
+            (module.IN_CREATE, module.IN_MOVED_FROM | module.IN_ISDIR),
+            (module.IN_CREATE | module.IN_ISDIR, module.IN_MOVED_FROM),
+        ):
+            with self.subTest(first=first, second=second):
+                raw = (ev(wd=10, mask=first, data=name)
+                       + ev(wd=10, mask=second, data=name, cookie=10))
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertFalse(parsed['well_formed'])
+
+    def test_matching_file_and_directory_kind_deletions_remain_valid(self):
+        name = named(b'public-child')
+        for isdir in (0, module.IN_ISDIR):
+            with self.subTest(isdir=isdir):
+                raw = (ev(wd=10, mask=module.IN_CREATE | isdir, data=name)
+                       + ev(wd=10, mask=module.IN_DELETE | isdir, data=name))
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertTrue(parsed['well_formed'])
+
+    def test_move_in_replaces_previously_observed_kind_then_matching_delete_valid(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_TO | module.IN_ISDIR, data=name, cookie=42)
+               + ev(wd=10, mask=module.IN_DELETE | module.IN_ISDIR, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 3)
+
+    def test_preexisting_child_delete_with_untracked_kind_is_structurally_valid(self):
+        name = named(b'preexisting')
+        raw = ev(wd=10, mask=module.IN_DELETE | module.IN_ISDIR, data=name)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 1)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
