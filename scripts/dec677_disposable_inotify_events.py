@@ -286,6 +286,12 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         and 0 <= directory_watch <= MAX_WATCH_DESCRIPTOR
         and directory_watch != watch
     )
+    directory_intact = (
+        events["directory_changes"] == 0
+        and directory_inventory_ok is True
+        and type(directory_inventory_names) is tuple
+        and directory_inventory_names == ("sample",)
+    )
     checks = {
         # An observer which now depends on two distinct kernel watches may
         # never call a file-only observation "complete" merely because the
@@ -293,12 +299,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         "both_watches_identified": both_watches_identified,
         "final_digest_equal": before == after and hashlib.sha256(before).digest() == hashlib.sha256(after).digest(),
         "watched_inode_matches_final_path": inode_stable is True,
-        "no_directory_entry_mutations": (
-            events["directory_changes"] == 0
-            and directory_inventory_ok is True
-            and type(directory_inventory_names) is tuple
-            and directory_inventory_names == ("sample",)
-        ),
+        "no_directory_entry_mutations": directory_intact,
         "sibling_creation_control_detected": (
             both_watches_identified
             and before == after and inode_stable is True
@@ -336,7 +337,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             midpoint_snapshot_matches_expected is True
         ) if negative else True,
         "negative_control_detected": (
-            both_watches_identified
+            both_watches_identified and directory_intact
             and midpoint_snapshot_matches_expected is True
             and before == after
             and inode_stable is True
