@@ -2780,6 +2780,41 @@ class DisposableInotifyTests(unittest.TestCase):
                         module._read_pending(invalid_fd)
                     poll_factory.assert_not_called()
 
+
+    def test_truncated_local_event_buffer_cannot_claim_no_writes(self):
+        result = module._evaluate(
+            b'public', b'public', b'\x00' * 7, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertFalse(result['observed_checks']['no_observed_writes'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_missing_parent_watch_cannot_claim_no_writes(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=None, directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['both_watches_identified'])
+        self.assertFalse(result['observed_checks']['no_observed_writes'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_dead_watcher_cannot_claim_unchanged_write_history(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, False, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertFalse(result['observed_checks']['no_observed_writes'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_valid_quiet_dual_watch_buffer_still_reports_no_observed_writes(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',))
+        self.assertTrue(result['observed_checks']['event_stream_complete'])
+        self.assertTrue(result['observed_checks']['no_observed_writes'])
+        self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertFalse(result['can_authorize_dispatch'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
