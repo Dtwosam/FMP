@@ -1708,7 +1708,8 @@ class DisposableInotifyTests(unittest.TestCase):
                + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=3)
                + ev(wd=10, mask=module.IN_DELETE, data=name))
         parsed = module._classify_stream(raw, 9, directory_watch=10)
-        self.assertTrue(parsed['well_formed'])
+        # No IN_CREATE / IN_MOVED_TO after move-out can justify the delete.
+        self.assertFalse(parsed['well_formed'])
         self.assertEqual(parsed['transient_create_delete_pairs'], 0)
         self.assertEqual(parsed['expected_transient_pairs'], 0)
         verdict = module._evaluate(
@@ -2401,6 +2402,49 @@ class DisposableInotifyTests(unittest.TestCase):
         parsed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 1)
+
+
+    def test_moved_out_child_cannot_be_deleted_without_reentry(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=20)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        observed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(observed['well_formed'])
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                   directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+
+    def test_deleted_child_cannot_move_out_without_reentry(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_DELETE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=20))
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_two_same_name_move_outs_without_reentry_are_incomplete(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=20)
+               + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=21))
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_move_out_move_in_delete_same_name_is_complete(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=20)
+               + ev(wd=10, mask=module.IN_MOVED_TO, data=name, cookie=21)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        observed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(observed['well_formed'])
+        self.assertEqual(observed['directory_changes'], 3)
+
+    def test_move_out_create_delete_same_name_is_complete(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=20)
+               + ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        observed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(observed['well_formed'])
+        self.assertEqual(observed['transient_create_delete_pairs'], 1)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
