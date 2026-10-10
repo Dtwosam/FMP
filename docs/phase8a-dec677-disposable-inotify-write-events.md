@@ -343,6 +343,12 @@ The disposable demo now uses the existing 4KiB bounded, no-follow `_snapshot_reg
 
 Three new source-defined regressions bring the suite to **188 methods**: matching event pair without trusted midpoint, known midpoint but wrong event pair, and an actual generated/no-follow regular-file snapshot followed by deletion (on hosts with `O_NOFOLLOW`). These remain self-generated public point-in-time observations, **not** independent kernel provenance, continuous immutable source or annual OS-confinement proof. Exact-head CI and qualified review remain required.
 
+## DEC-717 — A write/revert negative requires original final bytes and inode
+
+DEC-708 added an intermediate exact public changed-source snapshot; DEC-701 required two original source-file `IN_MODIFY` records. But `negative_control_detected` still did not require the *final* bytes or watched inode identity to equal their baseline. If a direct synthetic evaluator input had valid midpoint evidence and events but ended with altered bytes (not reverted) or a replaced inode containing identical bytes, the dedicated **write/revert** negative could be claimed as detected. The main outcome was already BLOCKED; only its evidence accounting was overstated.
+
+The specific negative-control predicate now also requires strict `before == after` and `inode_stable is True`, matching the existing separate `final_digest_equal` and `watched_inode_matches_final_path` checks. Three new source-defined methods bring the suite to **191**: unrestored final bytes defeat the control claim, a replaced inode with matching bytes defeats it, and unchanged final bytes/inode with two true source `IN_MODIFY` records and a known midpoint preserve a **BLOCKED** positive negative-control observation. These checks remain merely point-in-time public sample evidence, not cryptographic proof of absence of other writers, authenticated inotify, or real annual runner OS protection.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
