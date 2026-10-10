@@ -1797,6 +1797,36 @@ class DisposableInotifyTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 module._snapshot_regular(transient)
 
+
+    def test_source_write_without_restored_final_bytes_is_not_revert_control(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) * 2
+        verdict = module._evaluate(
+            b'baseline', b'changed', raw, 9, True, True,
+            directory_watch=10, midpoint_snapshot_matches_expected=True)
+        self.assertFalse(verdict['observed_checks']['final_digest_equal'])
+        self.assertTrue(verdict['observed_checks']['midpoint_source_snapshot_matches_expected'])
+        self.assertFalse(verdict['observed_checks']['negative_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['can_authorize_dispatch'])
+
+    def test_source_inode_swap_with_same_final_bytes_is_not_revert_control(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) * 2
+        verdict = module._evaluate(
+            b'baseline', b'baseline', raw, 9, True, True, inode_stable=False,
+            directory_watch=10, midpoint_snapshot_matches_expected=True)
+        self.assertTrue(verdict['observed_checks']['final_digest_equal'])
+        self.assertFalse(verdict['observed_checks']['watched_inode_matches_final_path'])
+        self.assertFalse(verdict['observed_checks']['negative_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_restored_source_inode_and_bytes_preserve_observed_negative(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) * 2
+        verdict = module._evaluate(
+            b'baseline', b'baseline', raw, 9, True, True, inode_stable=True,
+            directory_watch=10, midpoint_snapshot_matches_expected=True)
+        self.assertTrue(verdict['observed_checks']['negative_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
