@@ -19,6 +19,7 @@ sys.dont_write_bytecode = True
 
 BEFORE = b"DEC677_PUBLIC_SOURCE\n"
 AFTER = b"DEC677_PUBLIC_CHANGED\n"
+PERSISTENT_SIBLING_NAME = "unexpected-public-sibling"
 IN_MODIFY = 0x00000002
 IN_CLOSE_WRITE = 0x00000008
 IN_ATTRIB = 0x00000004
@@ -144,7 +145,7 @@ def _classify_stream(data: bytes, watch: int,
             observed_directory_changes += 1
             # The persistent sibling negative creates this exact regular file,
             # not just any unrelated entry or a similarly named directory.
-            if (mask & DIRECTORY_CHANGES) == IN_CREATE and not mask & IN_ISDIR and child_name == b"unexpected-public-sibling":
+            if (mask & DIRECTORY_CHANGES) == IN_CREATE and not mask & IN_ISDIR and child_name == PERSISTENT_SIBLING_NAME.encode("ascii"):
                 expected_sibling_created = True
             # A transient create/remove witness needs the same valid basename
             # created before deletion. Two arbitrary entry events are not proof.
@@ -187,6 +188,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
               inode_stable: bool = True, replacement_negative: bool = False,
               directory_watch: int | None = None,
               directory_inventory_ok: bool = True,
+              directory_inventory_names: tuple[str, ...] | None = None,
               sibling_negative: bool = False,
               transient_sibling_negative: bool = False) -> dict[str, Any]:
     # Snapshot values reach hashlib below. A wrong type or oversized injected
@@ -214,6 +216,8 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
             and directory_inventory_ok is False
+            and type(directory_inventory_names) is tuple
+            and directory_inventory_names == ("sample", PERSISTENT_SIBLING_NAME)
             and events["expected_sibling_created"] is True
         ) if sibling_negative else True,
         "transient_directory_control_detected": (
@@ -364,19 +368,21 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     replacement.write_bytes(BEFORE)
                     os.replace(replacement, path)
                 if create_sibling:
-                    (Path(folder) / "unexpected-public-sibling").write_bytes(b"PUBLIC-EXTRA")
+                    (Path(folder) / PERSISTENT_SIBLING_NAME).write_bytes(b"PUBLIC-EXTRA")
                 if transient_sibling:
                     transient = Path(folder) / "temporary-public-sibling"
                     transient.write_bytes(b"PUBLIC-TEMPORARY")
                     transient.unlink()
                 raw = _read_pending(fd)
                 final_inode, end = _snapshot_regular(path)
-                inventory_ok = sorted(p.name for p in Path(folder).iterdir()) == ["sample"]
+                inventory_names = tuple(sorted(p.name for p in Path(folder).iterdir()))
+                inventory_ok = inventory_names == ("sample",)
                 return _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
                                  replacement_negative=replace_watched_inode,
                                  directory_watch=dir_wd,
                                  directory_inventory_ok=inventory_ok,
+                                 directory_inventory_names=inventory_names,
                                  sibling_negative=create_sibling,
                                  transient_sibling_negative=transient_sibling)
             finally:
