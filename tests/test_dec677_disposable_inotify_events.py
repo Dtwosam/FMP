@@ -1093,6 +1093,51 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertFalse(verdict['can_authorize_dispatch'])
                 self.assertFalse(verdict['independent_os_proof_verified'])
 
+
+    def test_transient_directory_creation_and_removal_not_file_witness(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR)
+               + ev(wd=10, mask=module.IN_DELETE | module.IN_ISDIR))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+        verdict = module._evaluate(b'same', b'same', raw, 9, True, False,
+                                   directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_file_create_followed_by_directory_delete_not_matched(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE)
+               + ev(wd=10, mask=module.IN_DELETE | module.IN_ISDIR))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+        verdict = module._evaluate(b'same', b'same', raw, 9, True, False,
+                                   directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+
+    def test_directory_create_then_regular_file_delete_not_matched(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR)
+               + ev(wd=10, mask=module.IN_DELETE))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+
+    def test_directory_recreation_clears_prior_regular_creation(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE)
+               + ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR)
+               + ev(wd=10, mask=module.IN_DELETE))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+
+    def test_regular_file_create_delete_still_counts_once(self):
+        raw = ev(wd=10, mask=module.IN_CREATE) + ev(wd=10, mask=module.IN_DELETE)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['transient_create_delete_pairs'], 1)
+        verdict = module._evaluate(b'same', b'same', raw, 9, True, False,
+                                   directory_watch=10, transient_sibling_negative=True)
+        self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
