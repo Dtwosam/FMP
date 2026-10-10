@@ -1928,6 +1928,52 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['expected_transient_pairs'], 1)
 
+
+    def test_disposable_mode_values_require_exact_bool_type(self):
+        for invalid in (None, 1, 0, "true", "false", [], {}, 0.5, float('nan')):
+            for mode in range(4):
+                with self.subTest(invalid=repr(invalid), mode=mode):
+                    args = [False, False, False, False]
+                    args[mode] = invalid
+                    result = module.run_demo(*args)
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIn('disposable negative-control modes must be booleans',
+                                  result['findings'])
+                    self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_conflicting_real_boolean_negative_modes_still_block(self):
+        for indices in ((0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)):
+            with self.subTest(indices=indices):
+                args = [False, False, False, False]
+                for index in indices:
+                    args[index] = True
+                result = module.run_demo(*args)
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertIn('conflicting synthetic negative-control modes',
+                              result['findings'])
+                self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_invalid_mode_type_precedes_linux_and_filesystem_setup(self):
+        with patch.object(module.sys, 'platform', 'linux'):
+            with patch.object(module.tempfile, 'TemporaryDirectory') as directory:
+                result = module.run_demo(negative="nonboolean")
+                directory.assert_not_called()
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_valid_bool_modes_on_unsupported_host_fail_closed(self):
+        with patch.object(module.sys, 'platform', 'win32'):
+            for args in ((False, False, False, False),
+                         (True, False, False, False),
+                         (False, True, False, False),
+                         (False, False, True, False),
+                         (False, False, False, True)):
+                with self.subTest(args=args):
+                    result = module.run_demo(*args)
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIn('Linux disposable kernel event monitor unavailable',
+                                  result['findings'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
