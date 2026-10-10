@@ -38,11 +38,11 @@ Only use previously collected, non-protected, independently permitted inputs:
       --policy-sha256 REVIEWER_AUTHENTICATED_64_HEX_DIGEST \
       --ledger /outside/runner-ledger.json
 
-Run the 31 synthetic regression cases without root, network, historical data or GitHub authorization:
+Run the 32 synthetic regression cases without root, network, historical data or GitHub authorization:
 
     python -B -m unittest discover -s tests -p 'test_dec650_ledger_structure_audit.py' -v
 
-Inputs over one mebibyte, non-regular files (including FIFOs/directories), symbolic-link leaves and malformed JSON job kinds fail closed with structured BLOCKED results. The input opener uses nonblocking/no-follow descriptor flags and checks the opened inode with fstat; platforms lacking these safeguards reject the input rather than falling back to an unsafe open. These are **input robustness checks**, not filesystem isolation of an annual workflow. JSON decoding additionally rejects duplicate object keys at any nesting depth and non-standard NaN/Infinity literals, so contradictory attestations cannot be silently normalized by the parser. The synthetic success fixture explicitly demonstrates that **fabricated complete JSON still has no authorization authority**. The regressions also exercise missing/duplicated matrix jobs, identity drift, privilege skips, unsafe FD aliases, bad inventory, false capability policy and invalid reviewer policy digest.
+Inputs over one mebibyte, non-regular files (including FIFOs/directories), symbolic-link leaves and malformed JSON job kinds fail closed with structured BLOCKED results. The input opener uses nonblocking/no-follow descriptor flags and checks the opened inode with fstat; platforms lacking these safeguards reject the input rather than falling back to an unsafe open. These are **input robustness checks**, not filesystem isolation of an annual workflow. JSON decoding additionally rejects duplicate object keys at any nesting depth and non-standard NaN/Infinity literals, so contradictory attestations cannot be silently normalized by the parser. Deeply nested evidence that exceeds the JSON decoder's recursion limit is reported as structured BLOCKED rather than terminating with an unhandled traceback. The synthetic success fixture explicitly demonstrates that **fabricated complete JSON still has no authorization authority**. The regressions also exercise missing/duplicated matrix jobs, identity drift, privilege skips, unsafe FD aliases, bad inventory, false capability policy and invalid reviewer policy digest.
 
 ## Scope and hard stops
 
