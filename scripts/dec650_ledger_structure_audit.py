@@ -19,7 +19,7 @@ from typing import Any, Mapping, Sequence
 
 sys.dont_write_bytecode = True
 
-SCHEMA = "dec650-structural-ledger-v1"
+SCHEMA = "dec650-structural-ledger-v2"
 MAX_JSON_BYTES = 1024 * 1024  # Reject oversized untrusted inputs before decoding.
 HEX40 = re.compile(r"[0-9a-f]{40}\Z")
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
@@ -35,10 +35,12 @@ REQUIRED_CHECKS = frozenset((
     "concurrent_publication_conflict_denied", "failure_cleanup_clean",
 ))
 JOB_TYPES = frozenset(("preflight", "cell", "freeze"))
+# Conservative name-only list; actual values require independent review.
+SAFE_ENV_KEY_NAMES = frozenset(("PATH", "LANG", "LC_ALL", "TZ", "HOME", "TMPDIR", "PYTHONPATH", "PYTHONDONTWRITEBYTECODE", "PYTHONHASHSEED"))
 IDENTITY_FIELDS = (
     "repository", "source_commit", "source_tree", "workflow_blob",
-    "workflow_ref", "segment", "run_number", "run_attempt",
-    "previous_freeze_run_id",
+    "synthetic_merge", "workflow_ref", "segment", "run_number",
+    "run_attempt", "previous_freeze_run_id", "independent_reviewer_identity",
 )
 
 
@@ -79,11 +81,22 @@ def assess(policy: Any, ledger: Any) -> dict[str, Any]:
         errors.append("schema version mismatch")
     if policy.get("repository") != "Dtwosam/FMP":
         errors.append("expected repository must be Dtwosam/FMP")
-    for field in ("source_commit", "source_tree", "workflow_blob"):
+    for field in ("source_commit", "source_tree", "workflow_blob", "synthetic_merge"):
         if not _sha40(policy.get(field)):
             errors.append(f"policy.{field} must be a lowercase 40-hex SHA")
-    if not isinstance(policy.get("workflow_ref"), str) or not policy["workflow_ref"].startswith("refs/"):
-        errors.append("policy.workflow_ref must be an explicit ref")
+    if policy.get("workflow_ref") != "refs/heads/main":
+        errors.append("policy.workflow_ref must match installed annual workflow main guard")
+    reviewer = policy.get("independent_reviewer_identity")
+    if not isinstance(reviewer, str) or not reviewer.strip() or len(reviewer) > 128:
+        errors.append("policy.independent_reviewer_identity missing or malformed")
+    if not _sha64(ledger.get("independent_review_receipt_sha256")):
+        errors.append("ledger.independent_review_receipt_sha256 missing or malformed")
+    approved_env = policy.get("env_allowlist_keys")
+    if (not isinstance(approved_env, list) or not approved_env
+            or any(not isinstance(k, str) or k not in SAFE_ENV_KEY_NAMES for k in approved_env)
+            or len(approved_env) != len(set(k for k in approved_env if isinstance(k, str)))):
+        errors.append("policy.env_allowlist_keys not an explicit safe distinct name list")
+        approved_env = None
     if policy.get("segment") != "2023":
         errors.append("policy.segment must be 2023")
     if type(policy.get("run_number")) is not int or policy.get("run_number") != 385:
@@ -160,12 +173,9 @@ def assess(policy: Any, ledger: Any) -> dict[str, Any]:
             if not isinstance(value, str) or not value.startswith("/") or chr(0) in value:
                 errors.append(f"{prefix}: {location} must be an explicit absolute path")
         env_keys = job.get("env_allowlist_keys")
-        if (not isinstance(env_keys, list) or not env_keys
-                or any(not isinstance(v, str) or re.fullmatch(r"[A-Z_][A-Z0-9_]*", v) is None
-                       or any(secret in v for secret in ("TOKEN", "SECRET", "PASSWORD", "CREDENTIAL"))
-                       for v in env_keys)
-                or len(env_keys) != len(set(v for v in env_keys if isinstance(v, str)))):
-            errors.append(f"{prefix}: missing, duplicate or credential-bearing env keys")
+        if (approved_env is None or not isinstance(env_keys, list)
+                or env_keys != approved_env):
+            errors.append(f"{prefix}: environment keys do not exactly match reviewed safe policy")
         for gate in ("cwd_outside_checkout", "input_mounts_readonly",
                      "output_mount_outside_checkout", "publisher_isolated"):
             if job.get(gate) is not True:
