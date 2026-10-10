@@ -42,7 +42,8 @@ class DisposableInotifyTests(unittest.TestCase):
 
     def test_two_writes_and_revert_always_block(self):
         r = module._evaluate(b'same', b'same',
-                             ev(mask=module.IN_MODIFY) * 2, 9, True, True)
+                             ev(mask=module.IN_MODIFY) * 2, 9, True, True,
+                             midpoint_snapshot_matches_expected=True)
         self.assertEqual(r['status'], 'BLOCKED')
         self.assertTrue(r['observed_checks']['final_digest_equal'])
         self.assertTrue(r['observed_checks']['negative_control_detected'])
@@ -731,7 +732,8 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['source_content_write_events'], 2)
         self.assertEqual(parsed['source_modify_events'], 2)
         result = module._evaluate(b'a', b'a', stream, 9, True, True,
-                                  directory_watch=10)
+                                  directory_watch=10,
+                                  midpoint_snapshot_matches_expected=True)
         self.assertTrue(result['observed_checks']['negative_control_detected'])
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertFalse(result['can_authorize_dispatch'])
@@ -1170,7 +1172,8 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['source_modify_events'], 2)
         self.assertEqual(parsed['source_content_write_events'], 3)
         result = module._evaluate(b'same', b'same', stream, 9, True, True,
-                                  directory_watch=10)
+                                  directory_watch=10,
+                                  midpoint_snapshot_matches_expected=True)
         self.assertTrue(result['observed_checks']['negative_control_detected'])
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertFalse(result['can_authorize_dispatch'])
@@ -1409,6 +1412,46 @@ class DisposableInotifyTests(unittest.TestCase):
             sibling_snapshot_stable=True, sibling_negative=True)
         self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
+
+
+    def test_source_modify_events_without_midpoint_do_not_prove_revert(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) * 2
+        for midway in (None, False, 1, "true", b'AFTER'):
+            with self.subTest(midway=repr(midway)):
+                verdict = module._evaluate(
+                    b'public', b'public', raw, 9, True, True,
+                    directory_watch=10,
+                    midpoint_snapshot_matches_expected=midway)
+                self.assertFalse(verdict['observed_checks']['negative_control_detected'])
+                self.assertFalse(verdict['observed_checks']['midpoint_source_snapshot_matches_expected'])
+                self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_exact_midpoint_and_two_file_modifications_witness_control(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) * 2
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, True,
+            directory_watch=10, midpoint_snapshot_matches_expected=True)
+        self.assertTrue(verdict['observed_checks']['midpoint_source_snapshot_matches_expected'])
+        self.assertTrue(verdict['observed_checks']['negative_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['can_authorize_dispatch'])
+
+    def test_midpoint_proof_without_two_source_modifies_not_witness(self):
+        raw = ev(wd=9, mask=module.IN_CLOSE_WRITE) * 2
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, True,
+            directory_watch=10, midpoint_snapshot_matches_expected=True)
+        self.assertTrue(verdict['observed_checks']['midpoint_source_snapshot_matches_expected'])
+        self.assertFalse(verdict['observed_checks']['negative_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_midpoint_proof_with_invalid_event_stream_not_witness(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) * 2 + b'BROKEN'
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, True,
+            directory_watch=10, midpoint_snapshot_matches_expected=True)
+        self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+        self.assertFalse(verdict['observed_checks']['negative_control_detected'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
