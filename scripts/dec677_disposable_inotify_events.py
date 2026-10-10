@@ -451,7 +451,12 @@ def _read_pending(fd: int) -> bytes:
     chunks: list[bytes] = []
     size = 0
     poller = select.poll()
-    poller.register(fd, select.POLLIN | select.POLLERR | select.POLLHUP | select.POLLNVAL)
+    registered = poller.register(
+        fd, select.POLLIN | select.POLLERR | select.POLLHUP | select.POLLNVAL)
+    # CPython poll.register mutates the poll set and returns None. An
+    # injected non-void result is not evidence of a successful registration.
+    if registered is not None:
+        raise OSError("synthetic inotify poll registration returned malformed status")
 
     def is_readable(timeout_ms: int) -> bool:
         readiness = poller.poll(timeout_ms)
