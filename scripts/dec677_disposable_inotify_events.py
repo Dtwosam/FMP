@@ -41,6 +41,8 @@ EVENT = struct.Struct("iIII")
 # Kernel inotify watch descriptors are signed 32-bit integers. An arbitrary
 # Python int is not evidence of a possible installed Linux watch identity.
 MAX_WATCH_DESCRIPTOR = (1 << 31) - 1
+# Linux UAPI limits.h NAME_MAX for a single directory-entry component.
+MAX_EVENT_BASENAME = 255
 
 
 def _outcome(findings: list[str], checks: dict[str, bool] | None = None) -> dict[str, Any]:
@@ -116,7 +118,8 @@ def _classify_stream(data: bytes, watch: int,
                 # sizeof(struct inotify_event)) length, not any arbitrary
                 # multiple of the header size with extra zero padding.
                 padded_len = ((terminator + EVENT.size) // EVENT.size) * EVENT.size
-                if (terminator <= 0 or nbytes != padded_len
+                if (terminator <= 0 or terminator > MAX_EVENT_BASENAME
+                        or nbytes != padded_len
                         or name_bytes[:terminator] in (b".", b"..")
                         or b"/" in name_bytes[:terminator]
                         or any(byte != 0 for byte in name_bytes[terminator:])):
