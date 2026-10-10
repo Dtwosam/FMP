@@ -58,13 +58,26 @@ def _positive_int(value: Any) -> bool:
 
 
 def _job_key(job: Mapping[str, Any]) -> str:
+    """Use only approved coordinate tokens in diagnostic and de-duplication keys.
+
+    Never interpolate an arbitrary evidence value into findings or CI logs.
+    """
     kind = job.get("kind")
     if kind != "cell":
-        return str(kind)
+        return kind if isinstance(kind, str) and kind in ("preflight", "freeze") else "invalid-job-kind"
     matrix = job.get("matrix")
     if not isinstance(matrix, dict):
-        return "cell:invalid-matrix"
-    return f"cell:{matrix.get('symbol')}:{matrix.get('timeframe')}:{matrix.get('horizon')}"
+        return "cell:invalid-coordinates"
+    symbol = matrix.get("symbol")
+    timeframe = matrix.get("timeframe")
+    horizon = matrix.get("horizon")
+    if not (
+        isinstance(symbol, str) and symbol in SYMBOLS
+        and isinstance(timeframe, str) and timeframe in TIMEFRAMES
+        and type(horizon) is int and horizon in HORIZONS
+    ):
+        return "cell:invalid-coordinates"
+    return f"cell:{symbol}:{timeframe}:{horizon}"
 
 
 def _required_job_keys() -> set[str]:
