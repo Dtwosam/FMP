@@ -789,7 +789,16 @@ def main(argv: list[str] | None = None) -> int:
     choices.add_argument("--execute-inode-replacement-negative", action="store_true")
     choices.add_argument("--execute-sibling-creation-negative", action="store_true")
     choices.add_argument("--execute-transient-directory-negative", action="store_true")
-    args = p.parse_args(argv)
+    try:
+        args = p.parse_args(argv)
+    except SystemExit:
+        # argparse normally exits before the receipt is printed for an
+        # unsupported source path or conflicting switches. Keep the parser's
+        # nonzero result, but also emit our standard nonauthorizing JSON.
+        print(json.dumps(
+            _outcome(["disposable observer CLI arguments rejected"]),
+            sort_keys=True, separators=(",", ":")))
+        return 2
     result = (run_demo(negative=args.execute_reverted_write_negative,
                        replace_watched_inode=args.execute_inode_replacement_negative,
                        create_sibling=args.execute_sibling_creation_negative,
