@@ -3252,13 +3252,17 @@ class DisposableInotifyTests(unittest.TestCase):
                 with patch.object(module, '_start_watch', return_value=(fd, 9, 10)):
                     with patch.object(module, '_snapshot_regular') as snapshot:
                         with patch.object(module, '_read_pending') as drain:
-                            with patch.object(module.os, 'close') as close:
+                            # TemporaryDirectory cleanup legitimately closes
+                            # internal scan FDs. Preserve those real closes and
+                            # prohibit only unsafe closure of the injected stdio.
+                            real_close = os.close
+                            with patch.object(module.os, 'close', wraps=real_close) as close:
                                 result = module.run_demo()
                 self.assertEqual(result['status'], 'BLOCKED')
                 self.assertFalse(result['can_authorize_dispatch'])
                 snapshot.assert_not_called()
                 drain.assert_not_called()
-                close.assert_not_called()
+                self.assertNotIn((fd,), [call.args for call in close.call_args_list])
 
     @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
     def test_run_demo_rejects_patched_aliased_watch_ids_and_closes_fd(self):
@@ -3343,6 +3347,28 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertEqual(result['status'], 'BLOCKED')
             self.assertEqual(snapshot.call_count, 2)
             self.assertFalse(result['independent_os_proof_verified'])
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_run_demo_rejects_nonstr_watch_descriptor_and_closes_valid_fd(self):
+        rd, wr = os.pipe()
+        class NeverCompare:
+            def __eq__(self, _other):
+                raise AssertionError('invalid watch identity must not compare')
+        try:
+            with patch.object(module, '_start_watch',
+                              return_value=(rd, 9, NeverCompare())):
+                with patch.object(module, '_snapshot_regular') as snapshot:
+                    with patch.object(module, '_read_pending') as drain:
+                        result = module.run_demo()
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertFalse(result['can_authorize_dispatch'])
+            snapshot.assert_not_called()
             drain.assert_not_called()
             with self.assertRaises(OSError):
                 os.fstat(rd)
