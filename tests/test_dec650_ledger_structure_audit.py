@@ -288,14 +288,17 @@ class LedgerStructureTests(unittest.TestCase):
         p, l = fixtures(); l["jobs"][1]["job_id"] = l["jobs"][0]["job_id"]
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
 
-    def test_cli_success_only_means_unverified_structure(self):
+    def test_cli_unverified_structure_never_returns_success_exit(self):
         policy, ledger = fixtures()
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp); a = base / "p.json"; b = base / "l.json"
             raw = json.dumps(policy).encode("utf-8"); a.write_bytes(raw); b.write_text(json.dumps(ledger))
             proc = subprocess.run([sys.executable, "-B", str(SCRIPT), "--policy", str(a), "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)], capture_output=True, text=True, check=False)
-            self.assertEqual(proc.returncode, 0, proc.stderr)
-            self.assertEqual(json.loads(proc.stdout)["status"], "STRUCTURALLY_COMPLETE_UNVERIFIED")
+            self.assertEqual(proc.returncode, 3, proc.stderr)
+            result = json.loads(proc.stdout)
+            self.assertEqual(result["status"], "STRUCTURALLY_COMPLETE_UNVERIFIED")
+            self.assertFalse(result["can_authorize_dispatch"])
+            self.assertFalse(result["independent_os_proof_verified"])
 
     @unittest.skipUnless(hasattr(os, "mkfifo") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
     def test_cli_fifo_input_does_not_hang(self):
