@@ -3405,6 +3405,47 @@ class DisposableInotifyTests(unittest.TestCase):
                     module._read_pending(17)
                 read.assert_not_called()
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_generated_runner_rejects_wrong_baseline_fixture_before_mutation(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((3, 7), b'UNEXPECTED INITIAL')) as snapshot:
+                    with patch.object(module, '_read_pending') as drain:
+                        result = module.run_demo()
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertFalse(result['can_authorize_dispatch'])
+            snapshot.assert_called_once()
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_generated_runner_rejects_wrong_final_fixture_before_inventory(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular', side_effect=(
+                    ((3, 7), module.BEFORE),
+                    ((3, 7), b'UNEXPECTED FINAL'),
+                )) as snapshot:
+                    with patch.object(module, '_bounded_inventory_names') as inventory:
+                        with patch.object(module, '_read_pending') as drain:
+                            result = module.run_demo()
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertEqual(snapshot.call_count, 2)
+            inventory.assert_not_called()
+            drain.assert_not_called()
+            self.assertFalse(result['independent_os_proof_verified'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
