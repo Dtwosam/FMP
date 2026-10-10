@@ -68,6 +68,19 @@ def fixtures():
 
 
 class LedgerStructureTests(unittest.TestCase):
+    def test_cli_help_never_exits_zero(self):
+        # argparse's default -h/--help returns 0; a shell gate must not
+        # mistake even an informational invocation for an approval.
+        for flag in ("-h", "--help"):
+            with self.subTest(flag=flag):
+                proc = subprocess.run(
+                    [sys.executable, "-B", str(SCRIPT), flag],
+                    capture_output=True, text=True, timeout=4, check=False,
+                )
+                self.assertEqual(proc.returncode, 2, proc.stderr)
+                self.assertIn("usage:", proc.stdout)
+                self.assertNotIn('"can_authorize_dispatch":true', proc.stdout)
+
     def test_complete_fabricated_evidence_can_never_authorize(self):
         policy, ledger = fixtures()
         result = module.assess(policy, ledger)
