@@ -537,6 +537,14 @@ DEC-741 separates evidence from requirement applicability. Each mode-specific Bo
 
 This only improves transparency of self-generated public event receipts, not independent kernel attestation or annual OS confinement. Exact-head Phase 3/full historical CI, qualified independent review, and separately controlled real OS isolation/admission gates remain necessary. The failed CI ancestors #898–902, #904 and #906 remain red; a strict descendant #908 fixes two inherited stale test assertions but cannot alter historical runs.
 
+## DEC-742 — A directory-only negative requires no source inode metadata mutation
+
+DEC-734 required zero original-source content-write events for persistent/transient sibling negatives, but the Linux source-file watch can also report `IN_ATTRIB` on source inode chmod/ownership/time/metadata changes. Such metadata activity can occur without changing baseline/final sampled bytes or replacing the inode. The prior evaluator could still credit an isolated *directory-only* negative despite its own source watch recording metadata mutation. Every result remained BLOCKED, but the mode-specific evidence label overstated the isolation of the deliberate control.
+
+DEC-742 tracks `source_attribute_events` from `IN_ATTRIB` on the **original source file watch ID only**, and requires its counter be zero alongside `source_content_write_events` in both sibling-negative detection predicates. An attribute event observed on the *directory watch* for a generated child remains distinct; it must not impersonate a source-inode metadata change. Four new source-defined tests bring the suite to **293 methods**: persistent source metadata activity invalidates isolated control detection, transient source metadata activity invalidates, generated-child directory-watch attribute notification does not count as source mutation, and invalid decoder return remains fail closed with zero diagnostic count.
+
+This is toy /tmp event attribution, not independent host kernel telemetry or protection against unobserved write races. DEC-650/651 annual isolation and immutable admission remain BLOCKED. Exact-head Phase 3/full regression and independent source/security review required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
