@@ -655,6 +655,12 @@ Two new source-defined tests bring the suite to **341 unique test methods**: neg
 
 The previous DEC-759 rename-cookie check is a deliberately fail-closed record-shape rule: zero-cookie move records are treated as uncertain even if some unusual kernel corner case might produce them. The inotify manual associates cookies with rename events but this local decoder is not independent kernel proof.
 
+## DEC-761 — Reject duplicate rename directions for one inotify cookie
+
+The disposable parser now treats zero-cookie move records as uncertain, but did not validate *repeated uses* of a nonzero rename cookie. The kernel uses a cookie to associate the one `IN_MOVED_FROM` and one `IN_MOVED_TO` event from a rename. A bounded injected stream containing two `IN_MOVED_FROM` or two `IN_MOVED_TO` records under the same cookie should not claim a coherent rename timeline, even if the two filenames differ.
+
+DEC-761 remembers, within the already bounded event byte buffer, which direction was observed for each nonzero cookie. A duplicate direction makes the overall stream malformed. A normal matching move-from/move-to pair remains accepted, as do unpaired directions because the other rename event may lie outside this watch. The check does not demand adjacent records or claim authentication of cookie values. Three new source-defined methods raise the suite to **344 distinct test methods**: duplicate move-from rejection, duplicate move-to rejection, and preservation of ordinary paired-cookie parsing. This does not establish a trusted independent event source or OS-level annual write prevention.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
