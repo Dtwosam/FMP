@@ -10,6 +10,7 @@ its live descriptor targets. No credential values or absolute paths are emitted.
 import argparse
 import json
 import os
+import select
 from pathlib import Path
 import subprocess
 import sys
@@ -18,7 +19,8 @@ from typing import Any
 
 sys.dont_write_bytecode = True
 
-_CHILD = "import sys; sys.stdin.buffer.read(1)"
+_CHILD = ("import sys;sys.stdout.buffer.write(b'R');"
+          "sys.stdout.buffer.flush();sys.stdin.buffer.read(1)")
 _REQUIRED = ("stdio_pipes", "safe_cwd", "no_checkout_fd", "no_extra_fd", "child_exited")
 
 
@@ -97,6 +99,11 @@ def run_demo(inject_checkout_fd: bool = False) -> dict[str, Any]:
             raw: dict[str, bool] = {}
             exit_ok = False
             try:
+                # Verify the interpreter is actually at its paused read, not
+                # still transiently opening bootstrap descriptors pre-exec.
+                ready, _, _ = select.select([child.stdout], [], [], 5)
+                if not ready or os.read(child.stdout.fileno(), 1) != b"R":
+                    raise OSError("synthetic child did not reach observer barrier")
                 raw = _snapshot(child.pid, checkout, scratch)
             finally:
                 try:
