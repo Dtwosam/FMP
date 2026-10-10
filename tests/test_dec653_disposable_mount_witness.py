@@ -18,6 +18,7 @@ def synthetic_report():
     return {
         "checks": {key: True for key in module.CHECKS},
         "status": {**{key: "0000000000000000" for key in module.CAPS}, "NoNewPrivs": "1"},
+        "inherited_fd_probe": "not_provided",
     }
 
 
@@ -69,6 +70,23 @@ class DisposableOSWitnessTests(unittest.TestCase):
     def test_inventory_change_blocks(self):
         self.assertEqual(module._evaluate(synthetic_report(), False)["status"], "BLOCKED")
 
+    def test_missing_fd_provenance_blocks(self):
+        report = synthetic_report()
+        del report["inherited_fd_probe"]
+        self.assertEqual(module._evaluate(report, True)["status"], "BLOCKED")
+
+    def test_injected_writable_fd_blocks_even_if_other_checks_pass(self):
+        report = synthetic_report()
+        report["inherited_fd_probe"] = "write_succeeded"
+        result = module._evaluate(report, True)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["can_authorize_dispatch"])
+
+    def test_denied_inherited_fd_still_needs_explicit_provenance(self):
+        report = synthetic_report()
+        report["inherited_fd_probe"] = "write_denied"
+        self.assertEqual(module._evaluate(report, True)["status"], "BLOCKED")
+
     def test_malformed_synthetic_outputs_block(self):
         for value in (None, {}, [], "hello", {"checks": {}, "status": []}):
             with self.subTest(value=str(value)):
@@ -88,6 +106,15 @@ class DisposableOSWitnessTests(unittest.TestCase):
         result = module.run_demo()
         self.assertIn(result["status"], ("LOCAL_DISPOSABLE_WITNESS_UNVERIFIED", "BLOCKED"))
         self.assertFalse(result["can_authorize_dispatch"])
+
+
+    @unittest.skipUnless(os.environ.get("DEC653_EXECUTE_DISPOSABLE_OS_TEST") == "1",
+                         "manual opt-in only; not CI acceptance")
+    def test_optin_inherited_fd_counterexample_remains_blocked(self):
+        result = module.run_demo(inject_checkout_fd=True)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
 
 
 if __name__ == "__main__":

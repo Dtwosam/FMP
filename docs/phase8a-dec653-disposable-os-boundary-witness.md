@@ -30,6 +30,16 @@ Synthetic unit regressions (real OS test skipped without explicit opt-in):
 
 A reviewer may run the opt-in OS test with DEC653_EXECUTE_DISPOSABLE_OS_TEST=1, using their own disposable environment. The script requires the Linux unshare, mount and setpriv utilities and support for unprivileged user namespaces; unsupported hosts remain BLOCKED.
 
+## DEC-654 deliberately injected preopened-FD counterexample
+
+A second, mutually exclusive **opt-in mode** intentionally opens a writable descriptor to the temporary synthetic checkout **before** mounting the same directory read-only, then passes that descriptor to the otherwise restricted child. The child attempts a write through that preopened file descriptor. The outer parent detects changed source bytes and marks the result **BLOCKED** (exit 2), including a specific inherited-checkout-descriptor finding. In the local disposable Linux reproduction, the injected write succeeded despite all capabilities being zero and the bind mount showing read-only. This is a real local **negative counterexample** to treating read-only mounts as complete write isolation, not permission to access actual annual source.
+
+    python -B scripts/dec653_disposable_mount_witness.py --execute-fd-counterexample
+
+A normal, non-injected local demo reports the descriptor probe as not provided; any missing or injected descriptor provenance now forces BLOCKED. The 15 source-defined synthetic regression tests include explicit negative checks and two OS demonstrations **skipped by default**. The experiment is limited to internally generated temporary files and never accepts a repository source path.
+
+**Required future OS boundary:** ensure trusted staging closes writable checkout descriptors (including descriptors 0/1/2 and parent/proc-fd aliases) *before* the restricted consumer starts, and independently prove no actor can reintroduce them. A mount-table snapshot by itself is insufficient. The demonstration itself does not implement that trusted end-to-end production lifecycle.
+
 ## Security limitations
 
 This is a negative witness on a brand-new fake checkout, not an independently authenticated production report. The child supplies some of its own observations; a separate trusted observer has not verified its live mount table, UIDs, capabilities, descriptors, seccomp or environment across 20 real annual jobs. The experiment does not secure trusted staging, checkout aliases or sibling writers, the external uploader or race scheduling on the actual GitHub runner.
