@@ -216,6 +216,35 @@ class LedgerStructureTests(unittest.TestCase):
         p, l = fixtures(); l["jobs"][1]["writable_checkout_aliases"] = ["synthetic-alias"]
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
 
+    def test_malformed_job_coordinates_not_reflected_in_result(self):
+        policy, ledger = fixtures()
+        canary = "UNTRUSTED_SECRET_LIKE_CANARY_NOT_FOR_DIAGNOSTICS"
+        ledger["jobs"][0]["kind"] = canary
+        ledger["jobs"][1]["matrix"]["symbol"] = canary
+        result = module.assess(policy, ledger)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertNotIn(canary, json.dumps(result))
+
+    def test_cli_does_not_echo_untrusted_coordinate_canary(self):
+        policy, ledger = fixtures()
+        canary = "UNTRUSTED_SECRET_LIKE_CANARY_NOT_FOR_DIAGNOSTICS"
+        ledger["jobs"][0]["kind"] = canary
+        ledger["jobs"][1]["matrix"]["symbol"] = canary
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            a, b = base / "policy.json", base / "ledger.json"
+            raw = json.dumps(policy).encode("utf-8")
+            a.write_bytes(raw)
+            b.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(a),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(), "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+            self.assertNotIn(canary, proc.stdout + proc.stderr)
+
     def test_unhashable_kind_returns_blocked_not_exception(self):
         p, l = fixtures(); l["jobs"][0]["kind"] = ["cell"]
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
