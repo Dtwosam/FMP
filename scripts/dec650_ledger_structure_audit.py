@@ -157,7 +157,7 @@ def assess(policy: Any, ledger: Any) -> dict[str, Any]:
             errors.append(f"{prefix}: restricted seccomp mode missing")
         for location in ("working_directory", "process_executable"):
             value = job.get(location)
-            if not isinstance(value, str) or not value.startswith("/") or "\\x00" in value:
+            if not isinstance(value, str) or not value.startswith("/") or chr(0) in value:
                 errors.append(f"{prefix}: {location} must be an explicit absolute path")
         env_keys = job.get("env_allowlist_keys")
         if (not isinstance(env_keys, list) or not env_keys
