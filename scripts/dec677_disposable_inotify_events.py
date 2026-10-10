@@ -429,18 +429,25 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
         # observer on fd 0, 1 or 2. Refuse that uncertain stdio boundary.
         os.close(fd)
         raise OSError("disposable inotify watcher used a standard descriptor")
-    wd = lib.inotify_add_watch(fd, os.fsencode(path), MASK)
-    if type(wd) is not int or not 0 <= wd <= MAX_WATCH_DESCRIPTOR:
-        error = ctypes.get_errno()
+    # After successful nonstdio allocation, this function owns fd until it
+    # returns the complete dual-watch tuple. A ctypes call that raises (not
+    # just one returning -1) must not leak the observer descriptor.
+    try:
+        wd = lib.inotify_add_watch(fd, os.fsencode(path), MASK)
+        if type(wd) is not int or not 0 <= wd <= MAX_WATCH_DESCRIPTOR:
+            error = ctypes.get_errno()
+            raise OSError(error or 22, "disposable inotify_add_watch failed")
+        directory_wd = lib.inotify_add_watch(fd, os.fsencode(path.parent), DIRECTORY_MASK)
+        if (type(directory_wd) is not int
+                or not 0 <= directory_wd <= MAX_WATCH_DESCRIPTOR
+                or directory_wd == wd):
+            error = ctypes.get_errno()
+            raise OSError(error or 22, "disposable directory inotify_add_watch failed")
+    except Exception as error:
         os.close(fd)
-        raise OSError(error or 22, "disposable inotify_add_watch failed")
-    directory_wd = lib.inotify_add_watch(fd, os.fsencode(path.parent), DIRECTORY_MASK)
-    if (type(directory_wd) is not int
-            or not 0 <= directory_wd <= MAX_WATCH_DESCRIPTOR
-            or directory_wd == wd):
-        error = ctypes.get_errno()
-        os.close(fd)
-        raise OSError(error or 22, "disposable directory inotify_add_watch failed")
+        if isinstance(error, OSError):
+            raise
+        raise OSError("disposable inotify watch registration raised unexpectedly") from error
     return fd, wd, directory_wd
 
 

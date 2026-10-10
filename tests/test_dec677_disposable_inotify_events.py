@@ -3446,6 +3446,63 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(wr)
 
+
+    def test_first_inotify_watch_exception_closes_allocated_fd_once(self):
+        class Callable:
+            def __init__(self, result): self.result = result; self.calls = 0
+            def __call__(self, *_args):
+                self.calls += 1
+                if isinstance(self.result, Exception):
+                    raise self.result
+                return self.result
+        init = Callable(17)
+        add = Callable(OSError(5, 'synthetic registration failure'))
+        class FakeLib:
+            inotify_init1 = init
+            inotify_add_watch = add
+        with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaises(OSError):
+                    module._start_watch(Path('/tmp/public-fake-only'))
+                close.assert_called_once_with(17)
+        self.assertEqual(add.calls, 1)
+
+    def test_directory_watch_exception_closes_allocated_fd_once(self):
+        class Callable:
+            def __init__(self, outputs): self.outputs = iter(outputs); self.calls = 0
+            def __call__(self, *_args):
+                self.calls += 1
+                outcome = next(self.outputs)
+                if isinstance(outcome, Exception):
+                    raise outcome
+                return outcome
+        add = Callable([9, OSError(5, 'synthetic directory failure')])
+        class FakeLib:
+            inotify_init1 = Callable([17])
+            inotify_add_watch = add
+        with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaises(OSError):
+                    module._start_watch(Path('/tmp/public-fake-only'))
+                close.assert_called_once_with(17)
+        self.assertEqual(add.calls, 2)
+
+    def test_unexpected_watch_exception_is_handled_after_cleanup(self):
+        class Callable:
+            def __init__(self, outcome): self.outcome = outcome
+            def __call__(self, *_args):
+                if isinstance(self.outcome, Exception):
+                    raise self.outcome
+                return self.outcome
+        class FakeLib:
+            inotify_init1 = Callable(17)
+            inotify_add_watch = Callable(RuntimeError('synthetic broken wrapper'))
+        with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaisesRegex(OSError, 'registration raised unexpectedly'):
+                    module._start_watch(Path('/tmp/public-fake-only'))
+                close.assert_called_once_with(17)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
