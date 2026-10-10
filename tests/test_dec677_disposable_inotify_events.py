@@ -3735,7 +3735,7 @@ class DisposableInotifyTests(unittest.TestCase):
             st_mtime_ns = 100
             st_ctime_ns = 200
         self.assertEqual(module._checked_snapshot_metadata(FakeStat()),
-                         (1, 2, 1, 100, 200))
+                         (module.stat.S_IFREG | 0o600, 1, 2, 1, 100, 200))
 
 
     def test_duplicate_move_from_cookie_direction_is_not_complete(self):
@@ -3820,6 +3820,44 @@ class DisposableInotifyTests(unittest.TestCase):
                         os.fstat(rd)
                 finally:
                     os.close(wr)
+
+
+    def test_snapshot_rejects_mode_change_between_fstat_observations(self):
+        class FakeStat:
+            def __init__(self, mode):
+                self.st_mode = module.stat.S_IFREG | mode
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+        with patch.object(module.os, 'open', return_value=17):
+            with patch.object(module.os, 'fstat',
+                              side_effect=(FakeStat(0o600), FakeStat(0o400))):
+                with patch.object(module.os, 'read', return_value=b'x') as read:
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'inode changed'):
+                            module._snapshot_regular(Path('/tmp/public-fake-only'))
+                        read.assert_called_once_with(17, 2)
+                        close.assert_called_once_with(17)
+
+    def test_snapshot_same_mode_still_returns_device_inode_and_bytes(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        with patch.object(module.os, 'open', return_value=17):
+            with patch.object(module.os, 'fstat', return_value=FakeStat()):
+                with patch.object(module.os, 'read', return_value=b'x') as read:
+                    with patch.object(module.os, 'close') as close:
+                        self.assertEqual(
+                            module._snapshot_regular(Path('/tmp/public-fake-only')),
+                            ((1, 2), b'x'))
+                        read.assert_called_once_with(17, 2)
+                        close.assert_called_once_with(17)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
