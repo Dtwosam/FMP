@@ -3287,6 +3287,68 @@ class DisposableInotifyTests(unittest.TestCase):
         snapshot.assert_not_called()
         drain.assert_not_called()
 
+
+    def test_direct_snapshot_result_rejects_malformed_helper_return(self):
+        class Comparable:
+            def __eq__(self, _other):
+                return True
+        malformed = (
+            [((1, 2), b'public')],
+            (1, 2),
+            ((True, 2), b'public'),
+            ((Comparable(), 2), b'public'),
+            ((1, -2), b'public'),
+            ((1, 2), bytearray(b'public')),
+            ((1, 2), b'x' * 4097),
+        )
+        for value in malformed:
+            with self.subTest(value=type(value).__name__):
+                with self.assertRaises(OSError):
+                    module._checked_snapshot_result(value)
+        self.assertEqual(module._checked_snapshot_result(((0, 2), b'public')),
+                         ((0, 2), b'public'))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_run_demo_rejects_patched_hostile_first_snapshot_before_drain(self):
+        rd, wr = os.pipe()
+        class ForgedInode:
+            def __eq__(self, _other):
+                return True
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((ForgedInode(), 7), module.BEFORE)) as snapshot:
+                    with patch.object(module, '_read_pending') as drain:
+                        result = module.run_demo()
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertFalse(result['can_authorize_dispatch'])
+            snapshot.assert_called_once()
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_run_demo_rejects_injected_oversized_final_snapshot_before_drain(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular', side_effect=(
+                    ((3, 7), module.BEFORE),
+                    ((3, 7), b'x' * 4097),
+                )) as snapshot:
+                    with patch.object(module, '_read_pending') as drain:
+                        result = module.run_demo()
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertEqual(snapshot.call_count, 2)
+            self.assertFalse(result['independent_os_proof_verified'])
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
