@@ -64,7 +64,7 @@ def _classify_stream(data: bytes, watch: int,
                      directory_watch: int | None = None) -> dict[str, Any]:
     """Parse a bounded kernel event buffer, fail closed on bad identity/overflow."""
     if (type(data) is not bytes or type(watch) is not int
-            or not 0 <= watch <= MAX_WATCH_DESCRIPTOR):
+            or not 1 <= watch <= MAX_WATCH_DESCRIPTOR):
         return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False, "expected_transient_pairs": 0, "pending_new_child_names": (), "source_attribute_events": 0}
     if len(data) > 65536:
         return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False, "expected_transient_pairs": 0, "pending_new_child_names": (), "source_attribute_events": 0}
@@ -73,7 +73,7 @@ def _classify_stream(data: bytes, watch: int,
     # or use a non-integer WD to make a fabricated observation appear quiet.
     if directory_watch is not None and (
         type(directory_watch) is not int
-        or not 0 <= directory_watch <= MAX_WATCH_DESCRIPTOR
+        or not 1 <= directory_watch <= MAX_WATCH_DESCRIPTOR
         or directory_watch == watch
     ):
         return {"well_formed": False, "overflow": True, "invalidated": True,
@@ -312,9 +312,9 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         return _outcome(["disposable source snapshot must be bounded bytes"])
     events = _classify_stream(data, watch, directory_watch)
     both_watches_identified = (
-        type(watch) is int and 0 <= watch <= MAX_WATCH_DESCRIPTOR
+        type(watch) is int and 1 <= watch <= MAX_WATCH_DESCRIPTOR
         and type(directory_watch) is int
-        and 0 <= directory_watch <= MAX_WATCH_DESCRIPTOR
+        and 1 <= directory_watch <= MAX_WATCH_DESCRIPTOR
         and directory_watch != watch
     )
     # Only plain Path.name strings are valid inventory evidence. Tuple
@@ -461,12 +461,12 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
     # just one returning -1) must not leak the observer descriptor.
     try:
         wd = lib.inotify_add_watch(fd, os.fsencode(path), MASK)
-        if type(wd) is not int or not 0 <= wd <= MAX_WATCH_DESCRIPTOR:
+        if type(wd) is not int or not 1 <= wd <= MAX_WATCH_DESCRIPTOR:
             error = ctypes.get_errno()
             raise OSError(error or 22, "disposable inotify_add_watch failed")
         directory_wd = lib.inotify_add_watch(fd, os.fsencode(path.parent), DIRECTORY_MASK)
         if (type(directory_wd) is not int
-                or not 0 <= directory_wd <= MAX_WATCH_DESCRIPTOR
+                or not 1 <= directory_wd <= MAX_WATCH_DESCRIPTOR
                 or directory_wd == wd):
             error = ctypes.get_errno()
             raise OSError(error or 22, "disposable directory inotify_add_watch failed")
@@ -665,9 +665,9 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
             if type(fd) is not int or not 3 <= fd <= MAX_FILE_DESCRIPTOR:
                 raise OSError("disposable watch registration has invalid file descriptor")
             try:
-                if (type(wd) is not int or not 0 <= wd <= MAX_WATCH_DESCRIPTOR
+                if (type(wd) is not int or not 1 <= wd <= MAX_WATCH_DESCRIPTOR
                         or type(dir_wd) is not int
-                        or not 0 <= dir_wd <= MAX_WATCH_DESCRIPTOR
+                        or not 1 <= dir_wd <= MAX_WATCH_DESCRIPTOR
                         or wd == dir_wd):
                     raise OSError("disposable watch registration has invalid watch identities")
                 original_inode, original_bytes = _checked_snapshot_result(_snapshot_regular(path))
