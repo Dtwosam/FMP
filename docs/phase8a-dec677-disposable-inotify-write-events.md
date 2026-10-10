@@ -501,6 +501,14 @@ DEC-736 computes one `inventory_names_are_plain` prerequisite: an exact tuple wi
 
 This repairs only a local untrusted Python input contract, not host audit authenticity, OS-enforced write prevention or annual run385 eligibility. Independent qualified review plus exact-head Phase 3/full CI remain mandatory.
 
+## DEC-737 — Repair inherited full-CI test-contract mismatches without rewriting failed PRs
+
+Exact-head full historical regressions **#898–902, #904 and #906 completed FAILURE** despite Phase 3 success. Source-defined CI log review found two inherited test-contract errors, neither a demonstrated bypass of the observer: DEC-727 changed a correct fail-closed `_read_pending` error message to `"requires a nonstdio integer fd"` while the older invalid-FD regression still expected the outdated `"requires an integer fd"`; DEC-731 made an unrelated child genuinely disappear before final inventory, so its synthetic stream now contains **two** file `CREATE→DELETE` pairs, while the old test still expected the generic pair counter to be **one**. The exact targeted negative-control pair count is nevertheless **one**, as intended.
+
+DEC-737 corrects the two stale assertions in the disposable unit tests without changing observer implementation. Two explicit regressions verify all generic paired names vs one exact target and that invalid FD 0–2/noninteger values retain the expected blocked/no-poll contract. This brings the suite to **273 source-defined tests**. Prior failing CI runs remain permanently RED at their old heads; this strictly stacked new child requires its own fresh successful exact-head Phase 3 and full historical regression before acceptance. More failures on older heads may still need separate review.
+
+No FMP annual job, protected source, installed workflow/ruleset, broker or runner is accessed. This is internal synthetic test maintenance, not independent source immutability proof; DEC-650/651 remain BLOCKED.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
