@@ -3640,6 +3640,40 @@ class DisposableInotifyTests(unittest.TestCase):
             module._checked_snapshot_result(((maximum, maximum), module.BEFORE)),
             ((maximum, maximum), module.BEFORE))
 
+
+    def test_inotify_library_loader_runtime_error_is_handled_without_close(self):
+        with patch.object(module.ctypes, 'CDLL',
+                          side_effect=RuntimeError('synthetic loader failure')):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaisesRegex(OSError, 'initialization raised unexpectedly'):
+                    module._start_watch(Path('/tmp/public-fake-only'))
+                close.assert_not_called()
+
+    def test_inotify_init_runtime_error_is_handled_without_close(self):
+        class Callable:
+            def __init__(self, result): self.result = result
+            def __call__(self, *_args):
+                if isinstance(self.result, Exception):
+                    raise self.result
+                return self.result
+        class FakeLib:
+            inotify_init1 = Callable(RuntimeError('synthetic init wrapper failure'))
+            inotify_add_watch = Callable(9)
+        with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaisesRegex(OSError, 'initialization raised unexpectedly'):
+                    module._start_watch(Path('/tmp/public-fake-only'))
+                close.assert_not_called()
+
+    def test_inotify_loader_native_oserror_is_preserved(self):
+        with patch.object(module.ctypes, 'CDLL',
+                          side_effect=OSError(12, 'synthetic native loader failure')):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaises(OSError) as outcome:
+                    module._start_watch(Path('/tmp/public-fake-only'))
+                self.assertEqual(outcome.exception.errno, 12)
+                close.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
