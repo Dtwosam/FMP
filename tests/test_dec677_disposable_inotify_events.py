@@ -3859,6 +3859,55 @@ class DisposableInotifyTests(unittest.TestCase):
                         read.assert_called_once_with(17, 2)
                         close.assert_called_once_with(17)
 
+
+    def test_bounded_inventory_rejects_invalid_linux_encoded_names(self):
+        class Entry:
+            def __init__(self, name):
+                self.name = name
+        class Scan:
+            def __init__(self, name):
+                self.name = name
+                self.calls = 0
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def __iter__(self):
+                return self
+            def __next__(self):
+                self.calls += 1
+                if self.calls == 1:
+                    return Entry(self.name)
+                raise StopIteration
+        invalid = ('', '.', '..', 'child/name', 'bad\\0name',
+                   'x' * 256, 'é' * 128, '\\ud800')
+        for name in invalid:
+            with self.subTest(name=repr(name)):
+                scan = Scan(name)
+                with patch.object(module.os, 'scandir', return_value=scan):
+                    with self.assertRaisesRegex(OSError, 'malformed entry name'):
+                        module._bounded_inventory_names(Path('/tmp/public-fake-only'))
+                self.assertEqual(scan.calls, 2)
+
+    def test_evaluator_rejects_impossible_encoded_inventory_names(self):
+        invalid = ('', '.', '..', 'child/name', 'bad\\0name',
+                   'x' * 256, 'é' * 128, '\\ud800')
+        for name in invalid:
+            with self.subTest(name=repr(name)):
+                result = module._evaluate(
+                    b'public', b'public', b'', 9, True, False,
+                    directory_watch=10, directory_inventory_names=(name,))
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+                self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_inventory_accepts_bounded_linux_surrogateescaped_byte_name(self):
+        name = os.fsdecode(b'public-\\xff-entry')
+        self.assertTrue(module._plausible_inventory_basename(name))
+        self.assertTrue(module._plausible_inventory_basename('x' * 255))
+        self.assertFalse(module._plausible_inventory_basename('x' * 256))
+        self.assertFalse(module._plausible_inventory_basename('é' * 128))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
