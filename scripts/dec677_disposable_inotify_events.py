@@ -113,6 +113,7 @@ def _classify_stream(data: bytes, watch: int,
             if nbytes:
                 terminator = name_bytes.find(b"\x00")
                 if (nbytes % 4 != 0 or terminator <= 0
+                        or name_bytes[:terminator] in (b".", b"..")
                         or b"/" in name_bytes[:terminator]
                         or any(byte != 0 for byte in name_bytes[terminator:])):
                     okay = False
