@@ -8,6 +8,7 @@ attested; a complete shape cannot demonstrate that OS measurements are true.
 """
 
 import argparse
+from contextlib import ExitStack
 import hashlib
 import json
 import os
@@ -240,21 +241,37 @@ def _result(errors: list[str]) -> dict[str, Any]:
 
 
 def _read_bounded(path: Path) -> bytes:
-    # O_NONBLOCK prevents a FIFO from hanging the audit before its size check.
-    # O_NOFOLLOW prevents the supplied leaf from becoming a symlink to an
-    # unintended local source between inspection and open. No unsafe fallback.
+    """Read from anchored, no-follow path components; never follow aliases.
+
+    Opening directory components via descriptors avoids symlinked parent paths.
+    This is a local input guard, NOT proof of isolated runner mounts/writers.
+    """
     nofollow = getattr(os, "O_NOFOLLOW", None)
     nonblock = getattr(os, "O_NONBLOCK", None)
-    if not isinstance(nofollow, int) or not isinstance(nonblock, int):
-        raise ValueError("platform lacks nonblocking nofollow input reads")
-    flags = os.O_RDONLY | nonblock | nofollow | getattr(os, "O_CLOEXEC", 0)
-    with os.fdopen(os.open(path, flags), "rb") as handle:
-        info = os.fstat(handle.fileno())
-        if not stat.S_ISREG(info.st_mode):
-            raise ValueError("JSON input must be a regular file")
-        if info.st_size > MAX_JSON_BYTES:
-            raise ValueError("JSON input exceeds one-megabyte limit")
-        value = handle.read(MAX_JSON_BYTES + 1)
+    directory = getattr(os, "O_DIRECTORY", None)
+    if (not all(isinstance(flag, int) for flag in (nofollow, nonblock, directory))
+            or os.open not in os.supports_dir_fd):
+        raise ValueError("platform lacks anchored nonblocking nofollow input reads")
+    parts = path.parts
+    if not parts or ".." in parts or not path.name:
+        raise ValueError("JSON input has unsafe path components")
+    dir_flags = os.O_RDONLY | directory | nofollow | getattr(os, "O_CLOEXEC", 0)
+    root = "/" if path.is_absolute() else "."
+    parents = parts[1:-1] if path.is_absolute() else parts[:-1]
+    with ExitStack() as stack:
+        current_fd = os.open(root, dir_flags)
+        stack.callback(os.close, current_fd)
+        for component in parents:
+            current_fd = os.open(component, dir_flags, dir_fd=current_fd)
+            stack.callback(os.close, current_fd)
+        file_flags = os.O_RDONLY | nonblock | nofollow | getattr(os, "O_CLOEXEC", 0)
+        with os.fdopen(os.open(parts[-1], file_flags, dir_fd=current_fd), "rb") as handle:
+            info = os.fstat(handle.fileno())
+            if not stat.S_ISREG(info.st_mode):
+                raise ValueError("JSON input must be a regular file")
+            if info.st_size > MAX_JSON_BYTES:
+                raise ValueError("JSON input exceeds one-megabyte limit")
+            value = handle.read(MAX_JSON_BYTES + 1)
     if len(value) > MAX_JSON_BYTES:
         raise ValueError("JSON input exceeds one-megabyte limit")
     return value
