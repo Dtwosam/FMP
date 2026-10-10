@@ -243,7 +243,8 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['can_authorize_dispatch'])
 
     def test_create_then_remove_events_detected_despite_final_inventory_match(self):
-        stream = ev(wd=10, mask=module.IN_CREATE) + ev(wd=10, mask=module.IN_DELETE)
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=named(b'temporary-public-sibling'))
+                  + ev(wd=10, mask=module.IN_DELETE, data=named(b'temporary-public-sibling')))
         result = module._evaluate(b'unchanged', b'unchanged', stream, 9, True, False,
                                   directory_watch=10, directory_inventory_ok=True,
                                   transient_sibling_negative=True)
@@ -676,9 +677,9 @@ class DisposableInotifyTests(unittest.TestCase):
                       result['findings'])
 
     def test_named_create_delete_pair_survives_interleaved_unrelated_event(self):
-        stream = (ev(wd=10, mask=module.IN_CREATE, data=named(b'a'))
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=named(b'temporary-public-sibling'))
                   + ev(wd=10, mask=module.IN_CREATE, data=named(b'b'))
-                  + ev(wd=10, mask=module.IN_DELETE, data=named(b'a')))
+                  + ev(wd=10, mask=module.IN_DELETE, data=named(b'temporary-public-sibling')))
         parsed = module._classify_stream(stream, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['transient_create_delete_pairs'], 1)
@@ -1133,7 +1134,8 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['transient_create_delete_pairs'], 0)
 
     def test_regular_file_create_delete_still_counts_once(self):
-        raw = ev(wd=10, mask=module.IN_CREATE) + ev(wd=10, mask=module.IN_DELETE)
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=named(b'temporary-public-sibling'))
+               + ev(wd=10, mask=module.IN_DELETE, data=named(b'temporary-public-sibling')))
         parsed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['transient_create_delete_pairs'], 1)
@@ -1541,6 +1543,63 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertFalse(result['can_authorize_dispatch'])
         finally:
             os.close(wr)
+
+
+    def test_unrelated_regular_create_delete_pair_is_not_expected_control(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=named(b'unrelated'))
+               + ev(wd=10, mask=module.IN_DELETE, data=named(b'unrelated')))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['transient_create_delete_pairs'], 1)
+        self.assertEqual(parsed['expected_transient_pairs'], 0)
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                   directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_specific_regular_transient_pair_counts_one_expected_control(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['expected_transient_pairs'], 1)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 1)
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                   directory_watch=10, transient_sibling_negative=True)
+        self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_expected_name_directory_events_do_not_count_as_file_control(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR, data=name)
+               + ev(wd=10, mask=module.IN_DELETE | module.IN_ISDIR, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertEqual(parsed['expected_transient_pairs'], 0)
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                   directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+
+    def test_expected_create_and_other_leaf_delete_does_not_count(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE,
+                  data=named(b'temporary-public-sibling'))
+               + ev(wd=10, mask=module.IN_DELETE, data=named(b'other')))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertEqual(parsed['expected_transient_pairs'], 0)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+
+    def test_expected_pair_with_overflow_cannot_claim_transient_control(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name)
+               + ev(wd=-1, mask=module.IN_Q_OVERFLOW))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertEqual(parsed['expected_transient_pairs'], 1)
+        self.assertTrue(parsed['overflow'])
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                   directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
