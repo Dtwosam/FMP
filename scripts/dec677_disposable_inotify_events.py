@@ -566,7 +566,7 @@ def _bounded_inventory_names(folder: Path) -> tuple[str, ...]:
     return tuple(sorted(names))
 
 
-def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int]:
+def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int]:
     """Reject patched fstat metadata before size arithmetic or comparisons."""
     fields = ("st_mode", "st_dev", "st_ino", "st_size",
               "st_mtime_ns", "st_ctime_ns")
@@ -581,7 +581,9 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int]:
             or not 0 <= dev <= MAX_KERNEL_STAT_ID
             or not 0 <= ino <= MAX_KERNEL_STAT_ID or not 0 <= size <= 4096):
         raise OSError("disposable sample is not a bounded regular inode")
-    return dev, ino, size, mtime_ns, ctime_ns
+    # Keep validated mode in the comparison tuple: a chmod-style mutation
+    # cannot be hidden just because inode, size and timestamps appear equal.
+    return mode, dev, ino, size, mtime_ns, ctime_ns
 
 
 def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
@@ -603,18 +605,18 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
         raise OSError("disposable regular snapshot used a standard descriptor")
     try:
         initial = _checked_snapshot_metadata(os.fstat(fd))
-        data = os.read(fd, initial[2] + 1)
+        data = os.read(fd, initial[3] + 1)
         # A real os.read() is bounded by the requested size and yields
         # plain immutable bytes. Malformed mock/injected data must become a
         # controlled blocked snapshot, not TypeError or forged completeness.
-        if type(data) is not bytes or len(data) > initial[2] + 1:
+        if type(data) is not bytes or len(data) > initial[3] + 1:
             raise OSError("disposable regular snapshot read returned impossible bytes")
         final = _checked_snapshot_metadata(os.fstat(fd))
         # This detects a short read or some concurrent inode mutations. It
         # does NOT prove freedom from an adversarial write-and-restore race.
-        if len(data) != initial[2] or initial != final:
+        if len(data) != initial[3] or initial != final:
             raise OSError("disposable inode changed or was read incompletely")
-        return (initial[0], initial[1]), data
+        return (initial[1], initial[2]), data
     except Exception as error:
         if isinstance(error, OSError):
             raise
