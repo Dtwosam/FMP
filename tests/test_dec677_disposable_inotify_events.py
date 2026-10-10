@@ -1352,6 +1352,35 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertNotEqual(payload, next_payload)
             self.assertFalse(inode == next_inode and payload == next_payload == b'PUBLIC-EXTRA')
 
+
+    def test_malformed_event_decoder_early_returns_have_complete_dicts(self):
+        oversized = b'Z' * 65537
+        for data, watch, directory_watch in (
+            ('not-bytes', 9, 10),
+            (b'', -1, 10),
+            (b'', 1 << 31, 10),
+            (oversized, 9, 10),
+            (b'', 9, 9),
+            (b'', 9, 'bad-directory-watch'),
+        ):
+            with self.subTest(data_type=type(data).__name__, watch=watch,
+                              directory_watch=directory_watch):
+                parsed = module._classify_stream(data, watch, directory_watch)
+                self.assertFalse(parsed['well_formed'])
+                self.assertTrue(parsed['overflow'])
+                self.assertTrue(parsed['invalidated'])
+                self.assertEqual(parsed['source_modify_events'], 0)
+                self.assertFalse(parsed['expected_sibling_created'])
+                self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+
+    def test_malformed_watch_identity_still_returns_blocked_evaluation(self):
+        verdict = module._evaluate(b'public', b'public', b'', 9, True, False,
+                                   directory_watch=9)
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['can_authorize_dispatch'])
+        self.assertFalse(verdict['independent_os_proof_verified'])
+        self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

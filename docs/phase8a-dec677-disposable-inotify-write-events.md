@@ -253,6 +253,14 @@ The disposable demo now records the synthetic sibling's initial regular-file `(s
 
 Three added source-defined regression methods bring the suite to **156 cases**: malformed/false stability claims, a symlink substitution refusal, and same-inode rewritten bytes. This is two point-in-time observations on a generated `/tmp` fixture, not continuous source immutability, mount-alias exclusion, authenticated host evidence or actual OS-enforced prevention. Exact-head CI and qualified independent security review remain required.
 
+## DEC-706 — Restore syntactic validity of early fail-closed decoder returns
+
+An audit of exact-head full historical GitHub CI found that #874–876 **failed**, despite passing Phase 3. The failing test-module import identified a `SyntaxError` in `scripts/dec677_disposable_inotify_events.py` around the start of `_classify_stream`. DEC-701 expanded the decoder's early-return dictionaries with a new counter and inadvertently removed their closing `}` characters; DEC-703 later added another field to those same lines without restoring the missing braces. All three defensive return branches had malformed Python source, so unit tests were never imported.
+
+This child patch restores the **three closing braces only** in the observer source; it also adds two synthetic methods exercising malformed buffer, watch identity, directory identity and blocked evaluation returns. The source-defined suite increases to **158 tests**. The historical failing #874–876 heads remain unchanged and **must not be relabeled green**; exact-head Phase 3 and full CI are required independently for this fix.
+
+No annual workflow, protected inputs, real runner controls or authoritative dispatch settings were modified.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
