@@ -56,9 +56,9 @@ def _classify_stream(data: bytes, watch: int,
     """Parse a bounded kernel event buffer, fail closed on bad identity/overflow."""
     if (not isinstance(data, bytes) or type(watch) is not int
             or not 0 <= watch <= MAX_WATCH_DESCRIPTOR):
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0}
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0}
     if len(data) > 65536:
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0}
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0}
     # The two watch identities come from distinct kernel registrations. An
     # untrusted caller must not alias the directory watch to the file watch,
     # or use a non-integer WD to make a fabricated observation appear quiet.
@@ -68,10 +68,11 @@ def _classify_stream(data: bytes, watch: int,
         or directory_watch == watch
     ):
         return {"well_formed": False, "overflow": True, "invalidated": True,
-                "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0}
+                "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0}
     pos = 0
     observed_writes = 0
     source_content_writes = 0
+    source_modifications = 0
     observed_directory_changes = 0
     created_entries: set[bytes] = set()
     matched_transient_pairs = 0
@@ -163,11 +164,16 @@ def _classify_stream(data: bytes, watch: int,
         # directory-only activity or file metadata IN_ATTRIB events.
         if wd == watch and mask & (IN_MODIFY | IN_CLOSE_WRITE):
             source_content_writes += 1
+        # IN_CLOSE_WRITE means an fd opened for writing was closed. It can
+        # occur with no bytes written, so it cannot attest a modification.
+        if wd == watch and mask & IN_MODIFY:
+            source_modifications += 1
     return {"well_formed": okay and pos == len(data), "overflow": overflow,
             "invalidated": invalidated, "write_events": observed_writes,
             "directory_changes": observed_directory_changes,
             "transient_create_delete_pairs": matched_transient_pairs,
-            "source_content_write_events": source_content_writes}
+            "source_content_write_events": source_content_writes,
+            "source_modify_events": source_modifications}
 
 
 def _evaluate(before: bytes, after: bytes, data: bytes,
@@ -202,7 +208,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         "negative_control_detected": (
             events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
-            and events["source_content_write_events"] >= 2
+            and events["source_modify_events"] >= 2
         ) if negative else True,
     }
     findings = ["synthetic inotify property missing: " + k for k, v in checks.items() if v is not True]
