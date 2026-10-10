@@ -1015,6 +1015,35 @@ class DisposableInotifyTests(unittest.TestCase):
                                   directory_watch=10)
         self.assertFalse(result['observed_checks']['event_stream_complete'])
 
+
+    def test_max_linux_255_byte_basename_remains_structurally_possible(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=named(b'a' * 255))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 1)
+        self.assertEqual(len(raw) - module.EVENT.size, 256)
+
+    def test_overlong_256_byte_basename_fails_closed_even_when_padded(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=named(b'a' * 256))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                  directory_watch=10)
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_impossible_long_name_does_not_validate_transient_control(self):
+        data = named(b'z' * 300)
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=data)
+               + ev(wd=10, mask=module.IN_DELETE, data=data))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                   directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
