@@ -325,7 +325,8 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         # source plus the one persistent sibling. Refuse longer injected
         # inventories before scanning their potentially many members.
         and 1 <= len(directory_inventory_names) <= 2
-        and all(type(name) is str for name in directory_inventory_names)
+        and all(_plausible_inventory_basename(name)
+                for name in directory_inventory_names)
     )
     directory_intact = (
         both_watches_identified and events["well_formed"]
@@ -546,6 +547,19 @@ def _read_pending_checked(fd: int) -> bytes:
     return b"".join(chunks)
 
 
+def _plausible_inventory_basename(name: Any) -> bool:
+    """Bound an exact Python name to a Linux single-component byte basename."""
+    if type(name) is not str:
+        return False
+    try:
+        encoded = os.fsencode(name)
+    except Exception:
+        return False
+    return (0 < len(encoded) <= MAX_EVENT_BASENAME
+            and encoded not in (b".", b"..")
+            and b"/" not in encoded and b"\x00" not in encoded)
+
+
 def _bounded_inventory_names(folder: Path) -> tuple[str, ...]:
     """Read at most two admissible children plus one over-limit witness.
 
@@ -560,8 +574,9 @@ def _bounded_inventory_names(folder: Path) -> tuple[str, ...]:
         if isinstance(error, OSError):
             raise
         raise OSError("disposable inventory scan raised unexpectedly") from error
-    # Do not sort injected custom name objects with attacker-defined __lt__.
-    if any(type(name) is not str for name in names):
+    # Do not sort injected custom name objects or impossible overlong Linux
+    # basenames. Check byte length (not Unicode codepoints) before sorting.
+    if any(not _plausible_inventory_basename(name) for name in names):
         raise OSError("disposable inventory returned a malformed entry name")
     return tuple(sorted(names))
 
