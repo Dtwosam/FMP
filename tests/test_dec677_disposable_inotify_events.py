@@ -248,7 +248,7 @@ class DisposableInotifyTests(unittest.TestCase):
         result = module._evaluate(b'unchanged', b'unchanged', stream, 9, True, False,
                                   directory_watch=10, directory_inventory_ok=True,
                                   directory_inventory_names=("sample",),
-                                  transient_sibling_negative=True)
+                                  transient_sibling_negative=True, transient_midpoint_verified=True)
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertTrue(result['observed_checks']['final_digest_equal'])
         self.assertTrue(result['observed_checks']['watched_inode_matches_final_path'])
@@ -686,7 +686,7 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['transient_create_delete_pairs'], 1)
         result = module._evaluate(b'a', b'a', stream, 9, True, False,
                                   directory_watch=10, directory_inventory_names=("sample",),
-                                  transient_sibling_negative=True)
+                                  transient_sibling_negative=True, transient_midpoint_verified=True)
         self.assertTrue(result['observed_checks']['transient_directory_control_detected'])
         self.assertEqual(result['status'], 'BLOCKED')
 
@@ -1143,7 +1143,7 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['transient_create_delete_pairs'], 1)
         verdict = module._evaluate(b'same', b'same', raw, 9, True, False,
                                    directory_watch=10, directory_inventory_names=("sample",),
-                                  transient_sibling_negative=True)
+                                  transient_sibling_negative=True, transient_midpoint_verified=True)
         self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
 
@@ -1570,7 +1570,7 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['transient_create_delete_pairs'], 1)
         verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
                                    directory_watch=10, directory_inventory_names=("sample",),
-                                  transient_sibling_negative=True)
+                                  transient_sibling_negative=True, transient_midpoint_verified=True)
         self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
 
@@ -1639,7 +1639,7 @@ class DisposableInotifyTests(unittest.TestCase):
             b'public', b'public', raw, 9, True, False,
             directory_watch=10, directory_inventory_ok=True,
             directory_inventory_names=("sample",),
-            transient_sibling_negative=True)
+            transient_sibling_negative=True, transient_midpoint_verified=True)
         self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
         self.assertFalse(verdict['can_authorize_dispatch'])
@@ -1742,7 +1742,7 @@ class DisposableInotifyTests(unittest.TestCase):
             b'public', b'public', raw, 9, True, False,
             directory_watch=10, directory_inventory_ok=True,
             directory_inventory_names=("sample",),
-            transient_sibling_negative=True)
+            transient_sibling_negative=True, transient_midpoint_verified=True)
         self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
 
@@ -1755,6 +1755,47 @@ class DisposableInotifyTests(unittest.TestCase):
         parsed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['expected_transient_pairs'], 1)
+
+
+    def test_transient_pair_with_unobserved_intermediate_file_cannot_claim_control(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        for value in (None, False, 1, 'true', (), []):
+            with self.subTest(value=repr(value)):
+                verdict = module._evaluate(
+                    b'public', b'public', raw, 9, True, False,
+                    directory_watch=10, directory_inventory_ok=True,
+                    directory_inventory_names=("sample",),
+                    transient_sibling_negative=True, transient_midpoint_verified=value)
+                self.assertFalse(verdict['observed_checks']['transient_midpoint_regular_file_verified'])
+                self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+                self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_transient_midpoint_without_expected_kernel_pair_does_not_claim_control(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=named(b'other'))
+               + ev(wd=10, mask=module.IN_DELETE, data=named(b'other')))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_names=("sample",),
+            transient_sibling_negative=True, transient_midpoint_verified=True)
+        self.assertTrue(verdict['observed_checks']['transient_midpoint_regular_file_verified'])
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'), 'POSIX no-follow snapshot required')
+    def test_generated_transient_midpoint_is_bounded_regular_public_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            transient = Path(folder) / module.TRANSIENT_SIBLING_NAME
+            transient.write_bytes(b'PUBLIC-TEMPORARY')
+            inode, content = module._snapshot_regular(transient)
+            self.assertIs(type(inode), tuple)
+            self.assertEqual(len(inode), 2)
+            self.assertEqual(content, b'PUBLIC-TEMPORARY')
+            transient.unlink()
+            self.assertFalse(transient.exists())
+            with self.assertRaises(OSError):
+                module._snapshot_regular(transient)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):

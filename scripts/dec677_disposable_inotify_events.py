@@ -202,7 +202,8 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
               sibling_snapshot_stable: bool | None = None,
               sibling_negative: bool = False,
               transient_sibling_negative: bool = False,
-              midpoint_snapshot_matches_expected: bool | None = None) -> dict[str, Any]:
+              midpoint_snapshot_matches_expected: bool | None = None,
+              transient_midpoint_verified: bool | None = None) -> dict[str, Any]:
     # Snapshot values reach hashlib below. A wrong type or oversized injected
     # snapshot cannot be accepted as a coherent bounded public fixture, nor
     # escape the fail-closed JSON verdict with an uncontrolled TypeError.
@@ -237,8 +238,12 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and sibling_snapshot_stable is True
             and events["expected_sibling_created"] is True
         ) if sibling_negative else True,
+        "transient_midpoint_regular_file_verified": (
+            transient_midpoint_verified is True
+        ) if transient_sibling_negative else True,
         "transient_directory_control_detected": (
-            events["well_formed"] and not events["overflow"]
+            transient_midpoint_verified is True
+            and events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
             and directory_inventory_ok is True
             and type(directory_inventory_names) is tuple
@@ -411,9 +416,18 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 if create_sibling:
                     sibling_path.write_bytes(b"PUBLIC-EXTRA")
                     sibling_initial_inode, sibling_initial_bytes = _snapshot_regular(sibling_path)
+                transient_midpoint_verified = None
                 if transient_sibling:
                     transient = Path(folder) / TRANSIENT_SIBLING_NAME
                     transient.write_bytes(b"PUBLIC-TEMPORARY")
+                    # Prove this toy control really had the expected bounded
+                    # regular file on disk before removing its directory entry.
+                    transient_inode, transient_payload = _snapshot_regular(transient)
+                    transient_midpoint_verified = (
+                        type(transient_inode) is tuple
+                        and len(transient_inode) == 2
+                        and transient_payload == b"PUBLIC-TEMPORARY"
+                    )
                     transient.unlink()
                 final_inode, end = _snapshot_regular(path)
                 inventory_names = tuple(sorted(p.name for p in Path(folder).iterdir()))
@@ -440,7 +454,8 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                                  sibling_snapshot_stable=sibling_snapshot_stable,
                                  sibling_negative=create_sibling,
                                  transient_sibling_negative=transient_sibling,
-                                 midpoint_snapshot_matches_expected=midpoint_matches_expected)
+                                 midpoint_snapshot_matches_expected=midpoint_matches_expected,
+                                 transient_midpoint_verified=transient_midpoint_verified)
             finally:
                 os.close(fd)
     except (OSError, AttributeError, ValueError):
