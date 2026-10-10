@@ -22,12 +22,18 @@ AFTER = b"DEC677_PUBLIC_CHANGED\n"
 IN_MODIFY = 0x00000002
 IN_CLOSE_WRITE = 0x00000008
 IN_ATTRIB = 0x00000004
+IN_MOVED_FROM = 0x00000040
+IN_MOVED_TO = 0x00000080
+IN_CREATE = 0x00000100
+IN_DELETE = 0x00000200
 IN_DELETE_SELF = 0x00000400
 IN_MOVE_SELF = 0x00000800
 IN_Q_OVERFLOW = 0x00004000
 IN_IGNORED = 0x00008000
 MASK = (IN_MODIFY | IN_CLOSE_WRITE | IN_ATTRIB | IN_DELETE_SELF |
         IN_MOVE_SELF | IN_Q_OVERFLOW | IN_IGNORED)
+DIRECTORY_CHANGES = IN_MOVED_FROM | IN_MOVED_TO | IN_CREATE | IN_DELETE
+DIRECTORY_MASK = MASK | DIRECTORY_CHANGES
 EVENT = struct.Struct("iIII")
 
 
@@ -37,14 +43,16 @@ def _outcome(findings: list[str], checks: dict[str, bool] | None = None) -> dict
             "can_authorize_dispatch": False, "independent_os_proof_verified": False}
 
 
-def _classify_stream(data: bytes, watch: int) -> dict[str, Any]:
+def _classify_stream(data: bytes, watch: int,
+                     directory_watch: int | None = None) -> dict[str, Any]:
     """Parse a bounded kernel event buffer, fail closed on bad identity/overflow."""
     if not isinstance(data, bytes) or type(watch) is not int or watch < 0:
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0}
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0}
     if len(data) > 65536:
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0}
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0}
     pos = 0
     observed_writes = 0
+    observed_directory_changes = 0
     overflow = False
     invalidated = False
     okay = True
@@ -60,23 +68,31 @@ def _classify_stream(data: bytes, watch: int) -> dict[str, Any]:
         pos += nbytes
         if mask & IN_Q_OVERFLOW:
             overflow = True
-        elif wd != watch:
+        elif wd != watch and (directory_watch is None or wd != directory_watch):
             okay = False
+        if directory_watch is not None and wd == directory_watch and mask & DIRECTORY_CHANGES:
+            observed_directory_changes += 1
         if mask & (IN_IGNORED | IN_DELETE_SELF | IN_MOVE_SELF):
             invalidated = True
         if mask & (IN_MODIFY | IN_CLOSE_WRITE | IN_ATTRIB):
             observed_writes += 1
     return {"well_formed": okay and pos == len(data), "overflow": overflow,
-            "invalidated": invalidated, "write_events": observed_writes}
+            "invalidated": invalidated, "write_events": observed_writes,
+            "directory_changes": observed_directory_changes}
 
 
 def _evaluate(before: bytes, after: bytes, data: bytes,
               watch: int, watcher_alive: bool, negative: bool,
-              inode_stable: bool = True, replacement_negative: bool = False) -> dict[str, Any]:
-    events = _classify_stream(data, watch)
+              inode_stable: bool = True, replacement_negative: bool = False,
+              directory_watch: int | None = None,
+              directory_inventory_ok: bool = True,
+              sibling_negative: bool = False) -> dict[str, Any]:
+    events = _classify_stream(data, watch, directory_watch)
     checks = {
         "final_digest_equal": before == after and hashlib.sha256(before).digest() == hashlib.sha256(after).digest(),
         "watched_inode_matches_final_path": inode_stable is True,
+        "no_directory_entry_mutations": (events["directory_changes"] == 0
+                                          and directory_inventory_ok is True),
         "event_stream_complete": events["well_formed"] and not events["overflow"] and not events["invalidated"] and watcher_alive is True,
         "no_observed_writes": events["write_events"] == 0,
         "negative_control_detected": (events["write_events"] >= 2) if negative else True,
@@ -88,10 +104,14 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         findings.append("deliberate disposable source inode substitution must never be admitted")
         if inode_stable is True:
             findings.append("synthetic inode-replacement negative control not detected")
+    if sibling_negative:
+        findings.append("deliberate disposable sibling creation must never be admitted")
+        if events["directory_changes"] == 0 and directory_inventory_ok is True:
+            findings.append("synthetic directory-event negative control not detected")
     return _outcome(findings, checks)
 
 
-def _start_watch(path: Path) -> tuple[int, int]:
+def _start_watch(path: Path) -> tuple[int, int, int]:
     lib = ctypes.CDLL(None, use_errno=True)
     lib.inotify_init1.argtypes = [ctypes.c_int]
     lib.inotify_init1.restype = ctypes.c_int
@@ -105,7 +125,12 @@ def _start_watch(path: Path) -> tuple[int, int]:
         error = ctypes.get_errno()
         os.close(fd)
         raise OSError(error, "disposable inotify_add_watch failed")
-    return fd, wd
+    directory_wd = lib.inotify_add_watch(fd, os.fsencode(path.parent), DIRECTORY_MASK)
+    if directory_wd < 0 or directory_wd == wd:
+        error = ctypes.get_errno()
+        os.close(fd)
+        raise OSError(error or 22, "disposable directory inotify_add_watch failed")
+    return fd, wd, directory_wd
 
 
 def _read_pending(fd: int) -> bytes:
@@ -142,8 +167,9 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
         os.close(fd)
 
 
-def run_demo(negative: bool = False, replace_watched_inode: bool = False) -> dict[str, Any]:
-    if negative and replace_watched_inode:
+def run_demo(negative: bool = False, replace_watched_inode: bool = False,
+             create_sibling: bool = False) -> dict[str, Any]:
+    if sum((negative, replace_watched_inode, create_sibling)) > 1:
         return _outcome(["conflicting synthetic negative-control modes"])
     if sys.platform != "linux" or not os.path.isdir("/tmp") or os.path.islink("/tmp"):
         return _outcome(["Linux disposable kernel event monitor unavailable"])
@@ -152,7 +178,7 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False) -> dic
             path = Path(folder) / "sample"
             path.write_bytes(BEFORE)
             original_inode, original_bytes = _snapshot_regular(path)
-            fd, wd = _start_watch(path)
+            fd, wd, dir_wd = _start_watch(path)
             try:
                 if negative:
                     for value in (AFTER, BEFORE):
@@ -166,11 +192,17 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False) -> dic
                     replacement = Path(folder) / "public-replacement"
                     replacement.write_bytes(BEFORE)
                     os.replace(replacement, path)
+                if create_sibling:
+                    (Path(folder) / "unexpected-public-sibling").write_bytes(b"PUBLIC-EXTRA")
                 raw = _read_pending(fd)
                 final_inode, end = _snapshot_regular(path)
+                inventory_ok = sorted(p.name for p in Path(folder).iterdir()) == ["sample"]
                 return _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
-                                 replacement_negative=replace_watched_inode)
+                                 replacement_negative=replace_watched_inode,
+                                 directory_watch=dir_wd,
+                                 directory_inventory_ok=inventory_ok,
+                                 sibling_negative=create_sibling)
             finally:
                 os.close(fd)
     except (OSError, AttributeError, ValueError):
@@ -184,11 +216,14 @@ def main(argv: list[str] | None = None) -> int:
     choices.add_argument("--execute-disposable-control", action="store_true")
     choices.add_argument("--execute-reverted-write-negative", action="store_true")
     choices.add_argument("--execute-inode-replacement-negative", action="store_true")
+    choices.add_argument("--execute-sibling-creation-negative", action="store_true")
     args = p.parse_args(argv)
     result = (run_demo(negative=args.execute_reverted_write_negative,
-                       replace_watched_inode=args.execute_inode_replacement_negative)
+                       replace_watched_inode=args.execute_inode_replacement_negative,
+                       create_sibling=args.execute_sibling_creation_negative)
               if (args.execute_disposable_control or args.execute_reverted_write_negative
-                  or args.execute_inode_replacement_negative)
+                  or args.execute_inode_replacement_negative
+                  or args.execute_sibling_creation_negative)
               else _outcome(["explicit synthetic observer opt-in required"]))
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 3 if result["status"] == "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED" else 2
