@@ -46,6 +46,8 @@ EVENT = struct.Struct("iIII")
 MAX_WATCH_DESCRIPTOR = (1 << 31) - 1
 # A Linux FD returned by int-valued libc/POSIX APIs cannot exceed INT_MAX.
 MAX_FILE_DESCRIPTOR = (1 << 31) - 1
+# Linux stat st_dev and st_ino are unsigned 64-bit kernel/ABI identities.
+MAX_KERNEL_STAT_ID = (1 << 64) - 1
 # Linux UAPI limits.h NAME_MAX for a single directory-entry component.
 MAX_EVENT_BASENAME = 255
 
@@ -550,7 +552,8 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int]:
     if any(type(value) is not int for value in values):
         raise OSError("disposable fstat returned noninteger metadata")
     mode, dev, ino, size, mtime_ns, ctime_ns = values
-    if not stat.S_ISREG(mode) or dev < 0 or ino < 0 or not 0 <= size <= 4096:
+    if (not stat.S_ISREG(mode) or not 0 <= dev <= MAX_KERNEL_STAT_ID
+            or not 0 <= ino <= MAX_KERNEL_STAT_ID or not 0 <= size <= 4096):
         raise OSError("disposable sample is not a bounded regular inode")
     return dev, ino, size, mtime_ns, ctime_ns
 
@@ -600,7 +603,8 @@ def _checked_snapshot_result(value: Any) -> tuple[tuple[int, int], bytes]:
         raise OSError("disposable snapshot result has invalid shape")
     identity, data = value
     if (type(identity) is not tuple or len(identity) != 2
-            or any(type(part) is not int or part < 0 for part in identity)
+            or any(type(part) is not int or not 0 <= part <= MAX_KERNEL_STAT_ID
+                   for part in identity)
             or type(data) is not bytes or len(data) > 4096):
         raise OSError("disposable snapshot result has invalid identity or bytes")
     return identity, data

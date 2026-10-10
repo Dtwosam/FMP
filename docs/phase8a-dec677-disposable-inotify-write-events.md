@@ -629,6 +629,12 @@ A previous guard validates that `poller.register` returns None and that poll-rea
 
 Three new source-defined tests bring the suite to **330 distinct test methods**: injected poll factory failure, readiness failure, and read failure. Each refuses an event stream with the expected call count rather than claiming a quiet observation. This only hardens generated local instrumentation against mocked wrappers and does not prove OS-enforced write denial, independent kernel event provenance, or immutable annual run385 dispatch.
 
+## DEC-757 — Bound synthetic Linux stat device and inode identifiers
+
+The DEC-747 first/final fstat validation and DEC-749 snapshot helper result guard require plain nonnegative integer device/inode IDs, but still accepted arbitrarily large exact Python integers (for example `1 << 64`) that cannot fit in Linux's unsigned 64-bit `st_dev` or `st_ino` fields. Such impossible injected IDs cannot establish believable local inode provenance, even when a patched helper returns the same large number twice.
+
+DEC-757 defines `MAX_KERNEL_STAT_ID=(1<<64)-1` and applies the same 0..UINT64_MAX bound both to direct `os.fstat` metadata and to every higher-level injected snapshot helper result. Three source-defined methods bring the suite to **333 uniquely named tests**: oversized device/inode fstat values fail before read and close the valid FD, oversized helper IDs fail closed, and valid synthetic UINT64_MAX boundary values remain supported. Normal generated kernel IDs are unchanged. The bounds are not proof of independent OS protection or immutable run admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
