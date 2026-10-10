@@ -229,6 +229,14 @@ The evaluator now rejects wrong-type snapshots or snapshot lengths above 4096 by
 
 This protects the narrow harness API, not all callers/filesystems or real annual runner source integrity. Exact-head CI and independent review remain required.
 
+## DEC-703 — Persistent sibling witness must name the expected regular file
+
+The DEC-679 persistent-sibling negative creates the exact regular filename `unexpected-public-sibling` inside the disposable directory and leaves it present at final inventory. Its later evaluator only asked whether **any** directory mutation was observed or the final inventory was dirty. An unrelated filename or a directory creation could therefore make the control look detected, even if the expected file was never observed. Overall status was already `BLOCKED`, but the affirmative negative-control evidence was too weak.
+
+The decoder now records whether a valid directory-watch `IN_CREATE` (without `IN_ISDIR`) named the **expected regular sibling**. The dedicated `sibling_creation_control_detected` check also requires an intact/live stream and final inventory *not* equal to the original single-file inventory. A directory or unrelated child cannot spoof the negative observation. Five regression methods raise the suite to **150 source-defined cases**, including unrelated child creation, correct expected filename, directory-kind spoof, clean final inventory despite claimed creation, and queue overflow after an otherwise correct event.
+
+This remains a self-generated untrusted `/tmp` observation. A dirty inventory boolean is not independently authenticated evidence of a specific surviving file, and no OS prevention or annual run authorization follows. Exact-head CI and independent security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

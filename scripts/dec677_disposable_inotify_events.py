@@ -56,9 +56,9 @@ def _classify_stream(data: bytes, watch: int,
     """Parse a bounded kernel event buffer, fail closed on bad identity/overflow."""
     if (not isinstance(data, bytes) or type(watch) is not int
             or not 0 <= watch <= MAX_WATCH_DESCRIPTOR):
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0}
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False
     if len(data) > 65536:
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0}
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False
     # The two watch identities come from distinct kernel registrations. An
     # untrusted caller must not alias the directory watch to the file watch,
     # or use a non-integer WD to make a fabricated observation appear quiet.
@@ -68,7 +68,7 @@ def _classify_stream(data: bytes, watch: int,
         or directory_watch == watch
     ):
         return {"well_formed": False, "overflow": True, "invalidated": True,
-                "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0}
+                "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False
     pos = 0
     observed_writes = 0
     source_content_writes = 0
@@ -76,6 +76,7 @@ def _classify_stream(data: bytes, watch: int,
     observed_directory_changes = 0
     created_entries: set[bytes] = set()
     matched_transient_pairs = 0
+    expected_sibling_created = False
     overflow = False
     invalidated = False
     okay = True
@@ -141,6 +142,10 @@ def _classify_stream(data: bytes, watch: int,
             okay = False
         if directory_watch is not None and wd == directory_watch and mask & DIRECTORY_CHANGES:
             observed_directory_changes += 1
+            # The persistent sibling negative creates this exact regular file,
+            # not just any unrelated entry or a similarly named directory.
+            if (mask & DIRECTORY_CHANGES) == IN_CREATE and not mask & IN_ISDIR and child_name == b"unexpected-public-sibling":
+                expected_sibling_created = True
             # A transient create/remove witness needs the same valid basename
             # created before deletion. Two arbitrary entry events are not proof.
             if child_name is not None:
@@ -173,7 +178,8 @@ def _classify_stream(data: bytes, watch: int,
             "directory_changes": observed_directory_changes,
             "transient_create_delete_pairs": matched_transient_pairs,
             "source_content_write_events": source_content_writes,
-            "source_modify_events": source_modifications}
+            "source_modify_events": source_modifications,
+            "expected_sibling_created": expected_sibling_created}
 
 
 def _evaluate(before: bytes, after: bytes, data: bytes,
@@ -204,6 +210,12 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         "watched_inode_matches_final_path": inode_stable is True,
         "no_directory_entry_mutations": (events["directory_changes"] == 0
                                           and directory_inventory_ok is True),
+        "sibling_creation_control_detected": (
+            events["well_formed"] and not events["overflow"]
+            and not events["invalidated"] and watcher_alive is True
+            and directory_inventory_ok is False
+            and events["expected_sibling_created"] is True
+        ) if sibling_negative else True,
         "transient_directory_control_detected": (
             events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
@@ -226,7 +238,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             findings.append("synthetic inode-replacement negative control not detected")
     if sibling_negative:
         findings.append("deliberate disposable sibling creation must never be admitted")
-        if events["directory_changes"] == 0 and directory_inventory_ok is True:
+        if checks["sibling_creation_control_detected"] is not True:
             findings.append("synthetic directory-event negative control not detected")
     if transient_sibling_negative:
         findings.append("deliberate create/remove cannot prove directory immutability")
