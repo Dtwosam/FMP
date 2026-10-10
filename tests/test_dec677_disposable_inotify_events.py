@@ -1184,6 +1184,40 @@ class DisposableInotifyTests(unittest.TestCase):
                                   directory_watch=10)
         self.assertFalse(result['observed_checks']['negative_control_detected'])
 
+
+    def test_malformed_source_snapshot_inputs_are_blocked_without_exception(self):
+        for before, after in (('text', b'public'), (b'public', 'text'),
+                              (None, b'public'), (b'public', None),
+                              (bytearray(b'public'), b'public'),
+                              (b'public', memoryview(b'public')),
+                              ([], b'public'), (True, b'public')):
+            with self.subTest(before=repr(before), after=repr(after)):
+                verdict = module._evaluate(before, after, b'', 9, True, False,
+                                           directory_watch=10)
+                self.assertEqual(verdict['status'], 'BLOCKED')
+                self.assertFalse(verdict['can_authorize_dispatch'])
+                self.assertFalse(verdict['independent_os_proof_verified'])
+                self.assertIn('disposable source snapshot must be bounded bytes',
+                              verdict['findings'])
+
+    def test_source_snapshots_larger_than_4096_bytes_fail_closed(self):
+        for before, after in ((b'x' * 4097, b'x'),
+                              (b'x', b'x' * 4097)):
+            with self.subTest(initial_length=len(before), final_length=len(after)):
+                verdict = module._evaluate(before, after, b'', 9, True, False,
+                                           directory_watch=10)
+                self.assertEqual(verdict['status'], 'BLOCKED')
+                self.assertIn('disposable source snapshot must be bounded bytes',
+                              verdict['findings'])
+
+    def test_maximum_bounded_snapshot_is_locally_unverified_not_authorized(self):
+        payload = b'X' * 4096
+        verdict = module._evaluate(payload, payload, b'', 9, True, False,
+                                   directory_watch=10)
+        self.assertEqual(verdict['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertFalse(verdict['can_authorize_dispatch'])
+        self.assertFalse(verdict['independent_os_proof_verified'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
