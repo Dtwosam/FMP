@@ -835,6 +835,35 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['source_content_write_events'], 2)
 
+
+    def test_directory_create_never_names_dot_or_dotdot_entries(self):
+        for name in (b'.\x00\x00\x00', b'..\x00\x00'):
+            with self.subTest(name=name):
+                raw = ev(wd=10, mask=module.IN_CREATE, data=name)
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertFalse(parsed['well_formed'])
+                verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                           directory_watch=10)
+                self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_impossible_dot_segments_cannot_validate_transient_control(self):
+        for name in (b'.\x00\x00\x00', b'..\x00\x00'):
+            with self.subTest(name=name):
+                raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+                       + ev(wd=10, mask=module.IN_DELETE, data=name))
+                result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                          directory_watch=10,
+                                          transient_sibling_negative=True)
+                self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+                self.assertFalse(result['observed_checks']['event_stream_complete'])
+                self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_dot_prefixed_real_leaf_remains_valid_structure(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b'.env\x00\x00\x00')
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 1)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

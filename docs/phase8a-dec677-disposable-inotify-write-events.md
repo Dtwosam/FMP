@@ -151,6 +151,14 @@ The decoder now requires **exactly one** supported primary action bit. `IN_ISDIR
 
 This deliberately conservative decoder change does not establish kernel authenticity, job-wide visibility or OS write prevention. Exact-head GitHub CI and independent review required.
 
+## DEC-693 — Reject impossible dot-directory entry names
+
+The decoder already rejected empty or slash-containing child basenames but still accepted `.` and `..` as named directory-entry mutations. These are special directory navigation components, not new removable children that Linux `IN_CREATE`/`IN_DELETE` can legitimately report. The matching-pair negative witness could therefore count a fabricated create/delete pair for `.` as detected.
+
+The parser now rejects exact `b"."` and `b".."` in named directory-watch events. Three source-defined regressions raise the suite to **112 tests**, covering both impossible single create names, forged matching transient pairs, and valid dot-prefixed actual names like `.env`. All suspicious/invalid events still BLOCK; real Linux samples and repository isolation remain out of scope.
+
+This is another bounded synthetic-decoder consistency check, not kernel provenance or write-prevention evidence; exact-head CI and independent review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
