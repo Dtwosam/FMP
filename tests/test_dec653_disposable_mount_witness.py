@@ -24,6 +24,7 @@ def synthetic_report():
         "stdio_probe": "not_provided",
         "stdin_probe": "safe_eof",
         "env_probe": "absent",
+        "argv_probe": "absent",
     }
 
 
@@ -152,6 +153,37 @@ class DisposableOSWitnessTests(unittest.TestCase):
         proc = subprocess.run(
             [sys.executable, "-B", str(SCRIPT),
              "--execute-env-counterexample", "--execute-stdio-counterexample"],
+            capture_output=True, text=True, timeout=4, check=False,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+
+    def test_missing_argv_provenance_blocks(self):
+        raw = synthetic_report()
+        raw.pop("argv_probe")
+        self.assertEqual(module._evaluate(raw, True)["status"], "BLOCKED")
+
+    def test_public_argv_canary_blocks(self):
+        raw = synthetic_report()
+        raw["argv_probe"] = "canary_present"
+        result = module._evaluate(raw, True)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("synthetic command-line canary reached restricted process", result["findings"])
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
+
+    def test_unknown_argv_observation_blocks(self):
+        raw = synthetic_report()
+        raw["argv_probe"] = "unexpected_args"
+        self.assertEqual(module._evaluate(raw, True)["status"], "BLOCKED")
+
+    def test_argv_and_env_injection_conflict_blocks(self):
+        result = module.run_demo(inject_argv_canary=True, inject_env_canary=True)
+        self.assertEqual(result["status"], "BLOCKED")
+
+    def test_cli_rejects_argv_and_stdin_modes_together(self):
+        proc = subprocess.run(
+            [sys.executable, "-B", str(SCRIPT),
+             "--execute-argv-counterexample", "--execute-stdin-counterexample"],
             capture_output=True, text=True, timeout=4, check=False,
         )
         self.assertNotEqual(proc.returncode, 0)
@@ -337,6 +369,16 @@ class DisposableOSWitnessTests(unittest.TestCase):
         result = module.run_demo(inject_env_canary=True)
         self.assertEqual(result["status"], "BLOCKED", result)
         self.assertIn("synthetic credential environment reached restricted process", result["findings"])
+        self.assertNotIn("disposable checkout inventory changed", result["findings"])
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
+
+    @unittest.skipUnless(os.environ.get("DEC653_EXECUTE_DISPOSABLE_OS_TEST") == "1",
+                         "manual opt-in only; not CI acceptance")
+    def test_optin_argv_canary_blocks_without_source_mutation(self):
+        result = module.run_demo(inject_argv_canary=True)
+        self.assertEqual(result["status"], "BLOCKED", result)
+        self.assertIn("synthetic command-line canary reached restricted process", result["findings"])
         self.assertNotIn("disposable checkout inventory changed", result["findings"])
         self.assertFalse(result["can_authorize_dispatch"])
         self.assertFalse(result["independent_os_proof_verified"])
