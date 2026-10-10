@@ -389,6 +389,14 @@ The parser now requires **`type(data) is bytes`** before reading its length or u
 
 This is synthetic Python input hardening only; no annual runner artifact, privilege, workflow, installed gate, broker or trading action is touched. Exact-head Phase 3/full regression and independent security review required.
 
+## DEC-723 — Validate inotify collector FD and poll record types before equality
+
+The DEC-690 collector checks that the only poll response compares equal to `(fd, select.POLLIN)`, but a patched or malformed element may implement `__eq__` that returns `True` while being neither a kernel `(int,int)` record nor normal `POLLIN` readiness. A `tuple` or `int` subclass can likewise spoof the equality comparison; without strict types, the collector could call `os.read` after fictitious readiness. Separately, the direct collector helper did not validate `fd` before registering, allowing non-integer or negative injected file descriptors to reach polling.
+
+Now `_read_pending` requires a nonnegative exact Python integer FD before constructing a poll object and, for nonempty readiness, **one exact `tuple` containing exactly two exact integer values** before comparing against `(fd, select.POLLIN)`. Rejected shapes produce the existing handled fail-closed `OSError`, before any `os.read`. Four synthetic regressions raise the suite to **214 source-defined methods**: forged equality object, forged tuple subclass, bool/int subclasses or wrong tuple arity, and invalid FDs. Genuine `select.poll.poll()` emits a list of plain `(int,int)` pairs and retains prior behavior.
+
+This tests untrusted Python collector input shape, **not** real OS write prevention, source provenance or dispatcher authorization. Phase 3/full exact-head CI and independent security review required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

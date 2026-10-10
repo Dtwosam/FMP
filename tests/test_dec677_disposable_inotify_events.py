@@ -2054,6 +2054,60 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['source_modify_events'], 1)
         self.assertFalse(parsed['overflow'])
 
+
+    def test_forged_eq_readiness_object_cannot_fake_exact_pollin(self):
+        class AlwaysEqual:
+            def __eq__(self, _other):
+                return True
+        class Ready:
+            def register(self, *_args): pass
+            def poll(self, _timeout): return [AlwaysEqual()]
+        with patch.object(module.select, 'poll', return_value=Ready()):
+            with patch.object(module.os, 'read') as read:
+                with self.assertRaisesRegex(OSError, 'lost readable status'):
+                    module._read_pending(17)
+                read.assert_not_called()
+
+    def test_poll_tuple_subclass_with_forged_equality_is_refused(self):
+        class ForgedTuple(tuple):
+            def __eq__(self, _other):
+                return True
+        class Ready:
+            def register(self, *_args): pass
+            def poll(self, _timeout): return [ForgedTuple((18, 0))]
+        with patch.object(module.select, 'poll', return_value=Ready()):
+            with patch.object(module.os, 'read') as read:
+                with self.assertRaisesRegex(OSError, 'lost readable status'):
+                    module._read_pending(17)
+                read.assert_not_called()
+
+    def test_poll_tuple_with_boolean_or_int_subclass_is_refused(self):
+        class SpoofInt(int):
+            def __eq__(self, _other):
+                return True
+        class Ready:
+            def __init__(self, record): self.record = record
+            def register(self, *_args): pass
+            def poll(self, _timeout): return [self.record]
+        for record in ((17, True), (True, module.select.POLLIN),
+                       (SpoofInt(17), module.select.POLLIN),
+                       (17, SpoofInt(module.select.POLLIN)), (17,),
+                       (17, module.select.POLLIN, 3)):
+            with self.subTest(record=record):
+                with patch.object(module.select, 'poll', return_value=Ready(record)):
+                    with patch.object(module.os, 'read') as read:
+                        with self.assertRaisesRegex(OSError, 'lost readable status'):
+                            module._read_pending(17)
+                        read.assert_not_called()
+
+    def test_collector_rejects_noninteger_fd_before_poll_registration(self):
+        with patch.object(module.select, 'poll') as factory:
+            for fd in (None, True, False, '17', -1, 17.0):
+                with self.subTest(fd=repr(fd)):
+                    with self.assertRaisesRegex(OSError, 'requires an integer fd'):
+                        module._read_pending(fd)
+            factory.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
