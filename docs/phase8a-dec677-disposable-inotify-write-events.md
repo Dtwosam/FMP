@@ -127,6 +127,14 @@ The decoder keeps `write_events` conservative for fail-closed blocking, while se
 
 This stronger self-check still cannot authenticate the kernel record origin or establish prevention, continuity, or annual runner confinement. Exact-head CI and independent review required; no authorization change.
 
+## DEC-690 — Require exact inotify poll readability, not arbitrary poll activity
+
+The bounded collector previously treated any nonempty `poll()` response as readable unless it included an explicit error/HUP/NVAL bit or an unknown FD. A record containing `POLLPRI`, unknown bits, or even **zero readiness flags** could trigger an `os.read` and appear to satisfy collection if an injected read returned event bytes. That is not evidence that the registered inotify queue reported normal readable status.
+
+The collector now accepts either an **empty** readiness result (quiet) or **one exact** `(registered_fd, POLLIN)` record. Other masks, unexpected IDs or duplicate records raise a fail-closed `OSError` before attempting to read. Three new source-defined regression methods raise the suite to **101 cases**: invalid/zero/unknown flags (multiple subcases), duplicate poll entries, and a valid `POLLIN` control. Existing EOF, overflow, bounded-drain and poll error/HUP/NVAL tests still apply.
+
+This does not establish continuous completeness or trustworthy kernel-originated evidence, only internally conservative handling of the observer's readiness input. Exact-head CI and independent review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

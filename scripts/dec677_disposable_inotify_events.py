@@ -229,10 +229,14 @@ def _read_pending(fd: int) -> bytes:
 
     def is_readable(timeout_ms: int) -> bool:
         readiness = poller.poll(timeout_ms)
-        if any(descriptor != fd or flags & (select.POLLERR | select.POLLHUP | select.POLLNVAL)
-               for descriptor, flags in readiness):
+        if not readiness:
+            return False
+        # One fd is registered: the only acceptable readiness is one exact
+        # POLLIN report. POLLPRI, zero/unknown bits or duplicate reports do
+        # not establish that this inotify queue can be safely drained.
+        if len(readiness) != 1 or readiness[0] != (fd, select.POLLIN):
             raise OSError("synthetic inotify event collector lost readable status")
-        return bool(readiness)
+        return True
 
     for _ in range(16):
         if not is_readable(250):
