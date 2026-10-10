@@ -70,6 +70,20 @@ Manual example on a permitted disposable Linux host:
 
     python -B scripts/dec653_disposable_mount_witness.py --execute-stdio-counterexample
 
+## DEC-658 standard-input FD0 synthetic canary disclosure
+
+The previous experiments demonstrate dangerous *write* authority inherited through high file descriptors and stdout (FD1). This revision demonstrates a separate **read/confidentiality** boundary: an untrusted child may inherit a privileged input handle as **stdin (FD0)**, even when the checkout is mounted read-only, process capabilities are zero, and the child environment is reduced.
+
+The new opt-in \`--execute-stdin-counterexample\` mode creates a short **public, hard-coded fake credential** inside its disposable external directory, opens it read-only, and gives that opened descriptor to the restricted child's stdin. The child reads FD0, compares bytes against the public fixture (without printing or storing sensitive data) and records \`stdin_probe=canary_received\`. The parent treats every value other than \`safe_eof\`, including an absent claim, as **BLOCKED** (exit 2). The fake source checkout remains unchanged in this read-only disclosure case. A normal disposable child uses stdin=/dev/null, observes EOF and receives only \`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED\` (exit 3); this status never grants approval.
+
+All four explicit modes are mutually exclusive. Only a fixed public synthetic string and internally generated temporary files are involved; no repository, real tokens, environment secrets, runner credentials, protected evidence, or broker connection is accessed. This child self-report is **untrusted** and cannot substitute for independent observer inspection of real FD0/1/2 symlink targets, permissions, or readable aliases.
+
+**36 source-defined regression tests** now cover the FD0 canary and negative claims, including four optional Linux OS demos (skipped in standard CI). Local regression and manual-mode validation are author-side only; independent exact-source CI/security review remain mandatory. DEC-650 real OS isolation and DEC-651 one-shot dispatch admission remain BLOCKED.
+
+Manual disposable mode:
+
+    python -B scripts/dec653_disposable_mount_witness.py --execute-stdin-counterexample
+
 ## Security limitations
 
 This is a negative witness on a brand-new fake checkout, not an independently authenticated production report. The child supplies some of its own observations; a separate trusted observer has not verified its live mount table, UIDs, capabilities, descriptors, seccomp or environment across 20 real annual jobs. The experiment does not secure trusted staging, checkout aliases or sibling writers, the external uploader or race scheduling on the actual GitHub runner.
