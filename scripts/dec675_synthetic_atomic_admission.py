@@ -44,7 +44,7 @@ def _initialize(db: Path) -> None:
             expected_sha TEXT NOT NULL,
             expected_actor TEXT NOT NULL,
             expected_payload TEXT NOT NULL,
-            state TEXT NOT NULL CHECK (state IN ('UNCLAIMED', 'RESERVED')),
+            state TEXT NOT NULL CHECK (state IN ('UNCLAIMED', 'RESERVED', 'HANDOFF_UNKNOWN')),
             claim_id TEXT
         )""")
         conn.execute(
@@ -94,6 +94,43 @@ def _claim(db: Path, *, sha: str, actor: str, payload: str,
         connection.close()
 
 
+
+def _mark_synthetic_handoff_unknown(db: Path, claim_id: str) -> dict[str, Any]:
+    """Durably record an unknown result BEFORE a hypothetical remote action.
+
+    There is NO remote action or callback. Never declare delivered, successful
+    dispatch, cancelled, or replay-safe: only a terminal fake unknown state.
+    """
+    if not isinstance(claim_id, str) or not (0 < len(claim_id) <= 128):
+        return _answer("BLOCKED", "invalid fake reservation identity")
+    try:
+        conn = sqlite3.connect(db.as_uri() + "?mode=rw", uri=True,
+                               timeout=5, isolation_level=None)
+    except (sqlite3.Error, OSError, ValueError):
+        return _answer("BLOCKED", "synthetic ledger unavailable; no replay")
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        result = conn.execute(
+            """UPDATE reservations SET state='HANDOFF_UNKNOWN'
+               WHERE slot=? AND state='RESERVED' AND claim_id=?""",
+            (SLOT, claim_id),
+        )
+        if result.rowcount != 1:
+            conn.rollback()
+            return _answer("BLOCKED", "no matching reservation or already unknown")
+        conn.commit()
+        return _answer("SYNTHETIC_HANDOFF_UNKNOWN",
+                       "locally marked UNKNOWN before any possible transport; DO NOT RETRY")
+    except sqlite3.Error:
+        try:
+            conn.rollback()
+        except sqlite3.Error:
+            pass
+        return _answer("BLOCKED", "synthetic handoff ledger uncertain; DO NOT RETRY")
+    finally:
+        conn.close()
+
+
 def _inspect(db: Path) -> tuple[str, str | None]:
     with sqlite3.connect(db.as_uri() + "?mode=ro", uri=True) as conn:
         row = conn.execute("SELECT state, claim_id FROM reservations WHERE slot=?", (SLOT,)).fetchone()
@@ -122,12 +159,25 @@ def run_demo(workers: int = 24) -> dict[str, Any]:
             persisted, claim_id = _inspect(db)
             replay = _claim(db, sha=EXPECTED_SHA, actor=EXPECTED_ACTOR,
                             payload=EXPECTED_PAYLOAD, claim_id="replay-after-crash")
+            unknown = _mark_synthetic_handoff_unknown(db, claim_id or "")
+            unknown_state, unknown_claim = _inspect(db)
+            second_handoff = _mark_synthetic_handoff_unknown(db, claim_id or "")
+            post_unknown_replay = _claim(db, sha=EXPECTED_SHA,
+                                         actor=EXPECTED_ACTOR, payload=EXPECTED_PAYLOAD,
+                                         claim_id="replay-after-unknown")
             checks = {
                 "exactly_one_atomic_fake_reservation": len(winners) == 1,
                 "other_contenders_rejected": len(blocked) == workers - 1,
                 "durable_reservation_observed": persisted == "RESERVED" and
                                                 claim_id is not None and claim_id != "replay-after-crash",
                 "replay_after_restart_rejected": replay["status"] == "BLOCKED",
+                "ambiguous_handoff_is_terminal": (
+                    unknown["status"] == "SYNTHETIC_HANDOFF_UNKNOWN"
+                    and unknown_state == "HANDOFF_UNKNOWN"
+                    and unknown_claim == claim_id
+                    and second_handoff["status"] == "BLOCKED"
+                    and post_unknown_replay["status"] == "BLOCKED"
+                ),
                 "no_authorizing_output": all(x["can_authorize_dispatch"] is False and
                                                x["server_enforcement_verified"] is False
                                                for x in outcomes),
