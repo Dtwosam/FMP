@@ -22,6 +22,7 @@ def synthetic_report():
         "status": {**{key: "0000000000000000" for key in module.CAPS}, "NoNewPrivs": "1"},
         "inherited_fd_probe": "closed_before_consumer",
         "stdio_probe": "not_provided",
+        "stdin_probe": "safe_eof",
     }
 
 
@@ -92,6 +93,35 @@ class DisposableOSWitnessTests(unittest.TestCase):
         proc = subprocess.run([sys.executable, "-B", str(SCRIPT),
                               "--execute-fd-counterexample", "--execute-stdio-counterexample"],
                               capture_output=True, text=True, timeout=4, check=False)
+        self.assertNotEqual(proc.returncode, 0)
+
+    def test_missing_stdin_provenance_blocks(self):
+        raw = synthetic_report()
+        del raw["stdin_probe"]
+        self.assertEqual(module._evaluate(raw, True)["status"], "BLOCKED")
+
+    def test_inherited_stdin_canary_blocks_without_source_change(self):
+        raw = synthetic_report()
+        raw["stdin_probe"] = "canary_received"
+        result = module._evaluate(raw, True)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("standard input descriptor exposed data or lacks safe provenance", result["findings"])
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
+
+    def test_arbitrary_stdin_claim_blocks(self):
+        raw = synthetic_report()
+        raw["stdin_probe"] = "unexpected_input"
+        self.assertEqual(module._evaluate(raw, True)["status"], "BLOCKED")
+
+    def test_stdio_and_stdin_injection_conflict_blocks(self):
+        result = module.run_demo(inject_stdout_fd=True, inject_stdin_fd=True)
+        self.assertEqual(result["status"], "BLOCKED")
+
+    def test_cli_stdin_mode_conflicts_with_high_fd_mode(self):
+        proc = subprocess.run([sys.executable, "-B", str(SCRIPT),
+                              "--execute-fd-counterexample", "--execute-stdin-counterexample"],
+                              capture_output=True, text=True, timeout=4)
         self.assertNotEqual(proc.returncode, 0)
 
     def test_inventory_change_blocks(self):
@@ -256,6 +286,16 @@ class DisposableOSWitnessTests(unittest.TestCase):
         self.assertEqual(result["status"], "BLOCKED", result)
         self.assertIn("disposable checkout inventory changed", result["findings"])
         self.assertIn("checkout-writable standard stream inherited or unaccounted for", result["findings"])
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
+
+    @unittest.skipUnless(os.environ.get("DEC653_EXECUTE_DISPOSABLE_OS_TEST") == "1",
+                         "manual opt-in only; not CI acceptance")
+    def test_optin_inherited_stdin_canary_is_blocked_without_checkout_write(self):
+        result = module.run_demo(inject_stdin_fd=True)
+        self.assertEqual(result["status"], "BLOCKED", result)
+        self.assertIn("standard input descriptor exposed data or lacks safe provenance", result["findings"])
+        self.assertNotIn("disposable checkout inventory changed", result["findings"])
         self.assertFalse(result["can_authorize_dispatch"])
         self.assertFalse(result["independent_os_proof_verified"])
 
