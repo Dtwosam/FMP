@@ -280,16 +280,17 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             or len(before) > 4096 or len(after) > 4096):
         return _outcome(["disposable source snapshot must be bounded bytes"])
     events = _classify_stream(data, watch, directory_watch)
+    both_watches_identified = (
+        type(watch) is int and 0 <= watch <= MAX_WATCH_DESCRIPTOR
+        and type(directory_watch) is int
+        and 0 <= directory_watch <= MAX_WATCH_DESCRIPTOR
+        and directory_watch != watch
+    )
     checks = {
         # An observer which now depends on two distinct kernel watches may
         # never call a file-only observation "complete" merely because the
         # file event queue was quiet. Missing watch identity is fail-closed.
-        "both_watches_identified": (
-            type(watch) is int and 0 <= watch <= MAX_WATCH_DESCRIPTOR
-            and type(directory_watch) is int
-            and 0 <= directory_watch <= MAX_WATCH_DESCRIPTOR
-            and directory_watch != watch
-        ),
+        "both_watches_identified": both_watches_identified,
         "final_digest_equal": before == after and hashlib.sha256(before).digest() == hashlib.sha256(after).digest(),
         "watched_inode_matches_final_path": inode_stable is True,
         "no_directory_entry_mutations": (
@@ -299,7 +300,8 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and directory_inventory_names == ("sample",)
         ),
         "sibling_creation_control_detected": (
-            before == after and inode_stable is True
+            both_watches_identified
+            and before == after and inode_stable is True
             and events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
             and directory_inventory_ok is False
@@ -313,7 +315,8 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             transient_midpoint_verified is True
         ) if transient_sibling_negative else True,
         "transient_directory_control_detected": (
-            transient_midpoint_verified is True
+            both_watches_identified
+            and transient_midpoint_verified is True
             and before == after and inode_stable is True
             and events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
@@ -323,13 +326,18 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and events["expected_transient_pairs"] >= 1
             and events["pending_new_child_names"] == ()
         ) if transient_sibling_negative else True,
-        "event_stream_complete": events["well_formed"] and not events["overflow"] and not events["invalidated"] and watcher_alive is True,
+        "event_stream_complete": (
+            both_watches_identified and events["well_formed"]
+            and not events["overflow"] and not events["invalidated"]
+            and watcher_alive is True
+        ),
         "no_observed_writes": events["write_events"] == 0,
         "midpoint_source_snapshot_matches_expected": (
             midpoint_snapshot_matches_expected is True
         ) if negative else True,
         "negative_control_detected": (
-            midpoint_snapshot_matches_expected is True
+            both_watches_identified
+            and midpoint_snapshot_matches_expected is True
             and before == after
             and inode_stable is True
             and events["well_formed"] and not events["overflow"]

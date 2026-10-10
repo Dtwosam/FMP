@@ -461,6 +461,14 @@ Five new source-defined tests bring the suite to **251 methods**: surviving unre
 
 This improves internal event-vs-inventory consistency only; it does not guarantee Linux provenance, trusted observation of missed events, or annual runner OS confinement. Exact-head Phase 3/full historical CI plus independent source/security review required.
 
+## DEC-732 — Complete local observation requires two distinct installed watch IDs
+
+The evaluator separately reported `both_watches_identified=false` when the directory watch was absent, malformed or aliased to the source-file watch, but its `event_stream_complete` property only examined parseability, overflow, invalidation and the local `watcher_alive` flag. Consequently the parser could call a **file-only quiet buffer a complete observation**, and a synthetic write/revert negative with two file-watch `IN_MODIFY` notifications plus intermediate snapshot could claim `negative_control_detected=true` despite never identifying the parent directory watch. Overall status remained BLOCKED due to a separate failed check, but those specific evidence labels were misleading.
+
+DEC-732 computes a single strict `both_watches_identified` predicate and makes it a prerequisite for `event_stream_complete` and every specific negative-control detection claim. The parser's `well_formed` result continues to mean only valid *buffer syntax*, not continuous watch coverage. The earlier positive synthetic write/revert fixture is updated to explicitly provide the same second watch as the real disposable demo. Four new source-defined tests increase the suite to **255 methods**, checking absent directory watch, write/revert with a missing watch, aliased file/directory watch descriptors, and a valid dual-watch quiet local unverified observation.
+
+These are two *local* inotify watch-descriptor values, not independently attested watcher registration or source isolation. A green unit test cannot authorize annual run385. Exact-head Phase 3/full regression and qualified security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
