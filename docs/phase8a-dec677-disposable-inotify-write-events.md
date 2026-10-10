@@ -79,7 +79,7 @@ Seven new source-defined regressions raise the suite to **64 cases**, with five 
 
 The earlier inotify decoder bounded the `len` field but did not validate its contents. A directory `IN_CREATE` record with **no filename**, an un-terminated filename, embedded invalid path separators or nonzero trailing padding could therefore appear structurally well formed. A regular-file watch event could also carry a fabricated filename. This is distinct from DEC-683's mask/watch-ID provenance requirement.
 
-The parser now requires `len=0` for the known regular-file watch and the special overflow event. For a directory-watch child-entry mutation, a **nonempty, single-basename**, NUL-terminated filename is mandatory. Named fields must be 4-byte aligned, with only zero bytes following the first NUL; slash-containing path strings are rejected. A directory watcher can still receive name-free self events that do not report child directory-entry mutations. The existing synthetic `ev()` helper was updated to produce realistic named and zero-padded directory child events.
+The parser now requires `len=0` for the known regular-file watch and the special overflow event. For a directory-watch child-entry mutation, a **nonempty, single-basename**, NUL-terminated filename is mandatory. DEC-684 originally required 4-byte alignment (corrected to native 16-byte alignment in DEC-696 below), with only zero bytes following the first NUL; slash-containing path strings are rejected. A directory watcher can still receive name-free self events that do not report child directory-entry mutations. The existing synthetic `ev()` helper was updated to produce realistic named and zero-padded directory child events.
 
 Nine new source-defined tests bring the suite to **73 tests** (five manual Linux demonstrations stay optional/skipped in routine CI). Cases cover missing filename, no terminator, nonzero padding, empty name, path separators, a named file-watch record, unaligned name length, correct padding and a named overflow record. Malformed layout yields `BLOCKED`, never zero exit or real authority.
 
@@ -174,6 +174,14 @@ After DEC-688 required matching create/delete names, the synthetic evaluator sti
 The transient control now requires `well_formed`, **no** queue overflow, **no** watch invalidation, strict live-watcher truth and at least one matching child create/delete pair. The dedicated missing-negative finding is tied to that complete predicate as well. Four synthetic fault-injection tests bring the suite to **119 source-defined cases**: malformed trailing event, queue overflow, removed watch and dead collector after an otherwise valid pair. The existing valid pair stays detected but **BLOCKED** and never authorizes an annual runner.
 
 This is evidence-accounting consistency for the disposable observer, not a claim of complete trusted kernel monitoring or OS confinement. Exact-head CI and independent source/security review remain required.
+
+## DEC-696 — Validate Linux's native 16-byte inotify name padding
+
+DEC-684 used `len % 4 == 0` for the event name field and wrote matching synthetic fixtures. Linux's `fs/notify/inotify/inotify_user.c` instead calculates **`roundup(name_len + 1, sizeof(struct inotify_event))`**, with a 16-byte inotify event header. Four-, eight- and twelve-byte child-name payloads were therefore incorrectly accepted as plausible kernel records.
+
+The parser now uses `nbytes % EVENT.size == 0`. The synthetic fixture supplies native 16-byte-padding, including directory changes, matched transient create/delete records, dot-prefixed names, impossible-name negatives, and named overflow spoofs. Four new tests increase the source-defined suite to **123**: bad 4/8/12 padding, valid 16-byte minimum, valid 32-byte padded long name and named directory metadata alignment.
+
+The real Linux source files and `inotify(7)` justify this structural correction, but no kernel event is independently authenticated and this does not establish actual OS write prevention or annual-runner proof. Exact-head Phase 3/full CI and qualified independent review remain required.
 
 ## Important limitations
 

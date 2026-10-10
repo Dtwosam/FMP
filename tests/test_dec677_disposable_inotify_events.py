@@ -16,13 +16,18 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
 
+def named(basename: bytes) -> bytes:
+    # Linux inotify pads the NUL-terminated name to the 16-byte event header.
+    return basename + b"\x00" * (module.EVENT.size - len(basename) % module.EVENT.size)
+
+
 def ev(wd=9, mask=None, data=b'', cookie=0):
     if mask is None:
         mask = module.IN_CLOSE_WRITE
     # A real directory-entry event includes a NUL-terminated, padded name.
     # Preserve the explicit data argument for adversarial malformed records.
     if wd == 10 and mask & module.DIRECTORY_CHANGES and not data:
-        data = b"public\x00\x00"
+        data = named(b"public")
     return module.EVENT.pack(wd, mask, cookie, len(data)) + data
 
 
@@ -173,7 +178,7 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(r['independent_os_proof_verified'])
 
     def test_directory_create_event_is_separately_accounted(self):
-        data = ev(wd=10, mask=module.IN_CREATE, data=b'new-file\x00\x00\x00\x00')
+        data = ev(wd=10, mask=module.IN_CREATE, data=named(b'new-file'))
         observed = module._classify_stream(data, 9, directory_watch=10)
         self.assertTrue(observed['well_formed'])
         self.assertEqual(observed['directory_changes'], 1)
@@ -460,23 +465,23 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
 
     def test_directory_name_without_nul_terminator_blocks(self):
-        raw = ev(wd=10, mask=module.IN_CREATE, data=b"ABCD")
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b"A" * 16)
         self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
 
     def test_directory_name_without_zero_padding_blocks(self):
-        raw = ev(wd=10, mask=module.IN_CREATE, data=b"a\x00X\x00")
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b"a\x00X" + b"\x00" * 13)
         self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
 
     def test_empty_directory_child_name_blocks(self):
-        raw = ev(wd=10, mask=module.IN_CREATE, data=b"\x00\x00\x00\x00")
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b"\x00" * 16)
         self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
 
     def test_directory_leaf_name_cannot_include_path_separator(self):
-        raw = ev(wd=10, mask=module.IN_CREATE, data=b"a/b\x00")
+        raw = ev(wd=10, mask=module.IN_CREATE, data=named(b"a/b"))
         self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
 
     def test_file_watch_event_cannot_have_name_payload(self):
-        raw = ev(wd=9, mask=module.IN_CLOSE_WRITE, data=b"fake\x00\x00\x00\x00")
+        raw = ev(wd=9, mask=module.IN_CLOSE_WRITE, data=named(b"fake"))
         self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
         self.assertEqual(module._evaluate(b'x', b'x', raw, 9, True, False,
                                           directory_watch=10)['status'], 'BLOCKED')
@@ -486,13 +491,13 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
 
     def test_valid_zero_padded_directory_basename_is_accepted_structurally(self):
-        raw = ev(wd=10, mask=module.IN_CREATE, data=b"abc\x00")
+        raw = ev(wd=10, mask=module.IN_CREATE, data=named(b"abc"))
         parsed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 1)
 
     def test_special_overflow_event_cannot_carry_child_name(self):
-        raw = ev(wd=-1, mask=module.IN_Q_OVERFLOW, data=b"abc\x00")
+        raw = ev(wd=-1, mask=module.IN_Q_OVERFLOW, data=named(b"abc"))
         parsed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertTrue(parsed['overflow'])
         self.assertFalse(parsed['well_formed'])
@@ -653,8 +658,8 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
 
     def test_create_then_delete_of_different_leaf_is_not_matched(self):
-        stream = (ev(wd=10, mask=module.IN_CREATE, data=b'a\x00\x00\x00')
-                  + ev(wd=10, mask=module.IN_DELETE, data=b'b\x00\x00\x00'))
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=named(b'a'))
+                  + ev(wd=10, mask=module.IN_DELETE, data=named(b'b')))
         parsed = module._classify_stream(stream, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['transient_create_delete_pairs'], 0)
@@ -668,9 +673,9 @@ class DisposableInotifyTests(unittest.TestCase):
                       result['findings'])
 
     def test_named_create_delete_pair_survives_interleaved_unrelated_event(self):
-        stream = (ev(wd=10, mask=module.IN_CREATE, data=b'a\x00\x00\x00')
-                  + ev(wd=10, mask=module.IN_CREATE, data=b'b\x00\x00\x00')
-                  + ev(wd=10, mask=module.IN_DELETE, data=b'a\x00\x00\x00'))
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=named(b'a'))
+                  + ev(wd=10, mask=module.IN_CREATE, data=named(b'b'))
+                  + ev(wd=10, mask=module.IN_DELETE, data=named(b'a')))
         parsed = module._classify_stream(stream, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['transient_create_delete_pairs'], 1)
@@ -837,7 +842,7 @@ class DisposableInotifyTests(unittest.TestCase):
 
 
     def test_directory_create_never_names_dot_or_dotdot_entries(self):
-        for name in (b'.\x00\x00\x00', b'..\x00\x00'):
+        for name in (named(b'.'), named(b'..')):
             with self.subTest(name=name):
                 raw = ev(wd=10, mask=module.IN_CREATE, data=name)
                 parsed = module._classify_stream(raw, 9, directory_watch=10)
@@ -847,7 +852,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(verdict['status'], 'BLOCKED')
 
     def test_impossible_dot_segments_cannot_validate_transient_control(self):
-        for name in (b'.\x00\x00\x00', b'..\x00\x00'):
+        for name in (named(b'.'), named(b'..')):
             with self.subTest(name=name):
                 raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
                        + ev(wd=10, mask=module.IN_DELETE, data=name))
@@ -859,7 +864,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(result['status'], 'BLOCKED')
 
     def test_dot_prefixed_real_leaf_remains_valid_structure(self):
-        raw = ev(wd=10, mask=module.IN_CREATE, data=b'.env\x00\x00\x00')
+        raw = ev(wd=10, mask=module.IN_CREATE, data=named(b'.env'))
         parsed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 1)
@@ -936,6 +941,41 @@ class DisposableInotifyTests(unittest.TestCase):
                                   directory_watch=10, transient_sibling_negative=True)
         self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
         self.assertEqual(result['status'], 'BLOCKED')
+
+
+    def test_four_eight_and_twelve_byte_named_fields_rejected(self):
+        for n in (4, 8, 12):
+            with self.subTest(name_field_length=n):
+                raw = ev(wd=10, mask=module.IN_CREATE,
+                         data=b'x' + b'\x00' * (n - 1))
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertFalse(parsed['well_formed'])
+                result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                          directory_watch=10)
+                self.assertFalse(result['observed_checks']['event_stream_complete'])
+                self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_minimum_native_sixteen_byte_named_field_supported(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=named(b'abc'))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 1)
+        self.assertEqual(len(raw), module.EVENT.size * 2)
+
+    def test_longer_native_thirty_two_byte_padded_name_supported(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=named(b'a' * 17))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 1)
+        self.assertEqual(len(raw), module.EVENT.size * 3)
+
+    def test_named_directory_metadata_requires_native_name_alignment(self):
+        raw = ev(wd=10, mask=module.IN_MODIFY, data=b'x\x00\x00\x00')
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+        valid = ev(wd=10, mask=module.IN_MODIFY, data=named(b'x'))
+        parsed = module._classify_stream(valid, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['write_events'], 1)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
