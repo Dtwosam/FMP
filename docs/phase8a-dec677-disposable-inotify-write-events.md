@@ -397,6 +397,12 @@ Now `_read_pending` requires a nonnegative exact Python integer FD before constr
 
 This tests untrusted Python collector input shape, **not** real OS write prevention, source provenance or dispatcher authorization. Phase 3/full exact-head CI and independent security review required.
 
+## DEC-724 — Snapshot helper must reject impossible `os.read` return shapes
+
+The disposable regular-inode snapshot already required a bounded file size and compared the returned byte count with stat metadata. But the result of `os.read(fd, st_size+1)` was not type-checked before `len(data)`; synthetic fault injection returning `None`, a string, list or hostile `bytes` subclass could raise an uncontrolled `TypeError` or a mocked length exception instead of the normal fail-closed `OSError` handled by the demo. In addition, an impossible mocked result longer than the requested count did not have a dedicated shape guard.
+
+The helper now requires an **exact immutable `bytes` result no longer than the requested `st_size+1`** before consulting post-read metadata or accepting a snapshot. Invalid shapes raise a handled `OSError`. Four source-defined POSIX-gated methods bring the suite to **218 tests**, covering non-byte read results, hostile subclass, oversized mocked read, and actual generated regular-file bytes/inode identity. The generated /tmp demo and all annual runner hard stops remain unchanged; this does not authenticate read provenance or OS write prevention. Exact-head Phase 3/full regression and independent security review remain necessary.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
