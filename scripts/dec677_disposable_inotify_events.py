@@ -135,6 +135,10 @@ def _classify_stream(data: bytes, watch: int,
             # cannot represent two independent kernel moves.
             if prior & move_action:
                 okay = False
+            # The two halves of one observed rename may have unrelated
+            # events between them, but Linux emits FROM before TO.
+            if move_action == IN_MOVED_FROM and prior & IN_MOVED_TO:
+                okay = False
             rename_cookie_actions[cookie] = prior | move_action
         if nbytes > 4096 or nbytes > len(data) - pos:
             okay = False

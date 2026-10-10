@@ -4069,6 +4069,41 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertFalse(result['can_authorize_dispatch'])
 
+
+    def test_reversed_rename_pair_same_cookie_is_not_a_complete_stream(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_TO,
+                  data=named(b'new-name'), cookie=321)
+               + ev(wd=10, mask=module.IN_MOVED_FROM,
+                    data=named(b'old-name'), cookie=321))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+        outcome = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(outcome['status'], 'BLOCKED')
+        self.assertFalse(outcome['observed_checks']['event_stream_complete'])
+
+    def test_opposite_direction_unpaired_rename_cookies_remain_well_formed(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_TO,
+                  data=named(b'new-name'), cookie=321)
+               + ev(wd=10, mask=module.IN_MOVED_FROM,
+                    data=named(b'old-name'), cookie=322))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_interleaved_matching_rename_pair_retains_complete_stream(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=named(b'old-name'), cookie=321)
+               + ev(wd=9, mask=module.IN_ATTRIB)
+               + ev(wd=10, mask=module.IN_MOVED_TO,
+                    data=named(b'new-name'), cookie=321))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+        self.assertEqual(parsed['source_attribute_events'], 1)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
