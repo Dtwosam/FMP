@@ -545,6 +545,14 @@ DEC-742 tracks `source_attribute_events` from `IN_ATTRIB` on the **original sour
 
 This is toy /tmp event attribution, not independent host kernel telemetry or protection against unobserved write races. DEC-650/651 annual isolation and immutable admission remain BLOCKED. Exact-head Phase 3/full regression and independent source/security review required.
 
+## DEC-743 — Do not assert quiet directory inventory without a complete local event stream
+
+An exact final generated inventory `("sample",)` and zero `directory_changes` in a truncated/incomplete event buffer did not prove no intervening directory mutation. Yet the evaluator's `no_directory_entry_mutations` property was True whenever the parsed counter was zero and the final sampled name tuple matched, even if the event decoder reported overflow/malformed watch input or the collector was dead. The overall verdict remained BLOCKED due to other checks, but the standalone "no directory entry mutations" evidence claim was overstated.
+
+DEC-743 adds the same prerequisites as `event_stream_complete` to the shared `directory_intact` predicate: two distinct source/directory watches, well-formed complete buffer, no overflow or invalidated watch, living collector, zero observed directory entry changes, and an exact plain-string final inventory of just the original public sample. This also ensures the source-write/revert negative, which requires `directory_intact`, cannot claim isolated operation when directory observation is incomplete. Four new source-defined tests bring the suite to **297 methods**: truncated record, dead watcher, missing parent watcher, and valid complete local quiet inventory (still local-unverified and nonauthorizing).
+
+This does not constitute independently verified OS no-write confinement or unforgeable kernel provenance. The real DEC-650/651 annual runner gates remain BLOCKED, with exact-head full regression and qualified independent security review required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

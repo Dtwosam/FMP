@@ -3026,6 +3026,43 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['observed_checks']['event_stream_complete'])
         self.assertFalse(result['can_authorize_dispatch'])
 
+
+    def test_truncated_buffer_cannot_prove_quiet_directory_inventory(self):
+        result = module._evaluate(
+            b'public', b'public', b'\x00' * 7, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_dead_directory_watcher_cannot_prove_no_directory_mutations(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, False, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_missing_parent_watch_cannot_claim_original_directory_intact(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=None, directory_inventory_ok=True,
+            directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['both_watches_identified'])
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_valid_dual_watch_empty_buffer_and_only_sample_still_quiet(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',))
+        self.assertTrue(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertFalse(result['can_authorize_dispatch'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
