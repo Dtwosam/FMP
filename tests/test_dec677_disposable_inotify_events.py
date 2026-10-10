@@ -35,7 +35,7 @@ def ev(wd=9, mask=None, data=b'', cookie=0):
 class DisposableInotifyTests(unittest.TestCase):
     def test_empty_stream_has_no_events_but_never_authorizes(self):
         r = module._evaluate(b'same', b'same', b'', 9, True, False,
-                             directory_watch=10)
+                             directory_watch=10, directory_inventory_names=("sample",))
         self.assertEqual(r['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertFalse(r['can_authorize_dispatch'])
         self.assertFalse(r['independent_os_proof_verified'])
@@ -582,7 +582,7 @@ class DisposableInotifyTests(unittest.TestCase):
 
     def test_file_and_directory_watches_quiet_is_only_locally_unverified(self):
         r = module._evaluate(b'public', b'public', b'', 9, True, False,
-                             directory_watch=10)
+                             directory_watch=10, directory_inventory_names=("sample",))
         self.assertEqual(r['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertTrue(r['observed_checks']['both_watches_identified'])
         self.assertFalse(r['independent_os_proof_verified'])
@@ -631,7 +631,7 @@ class DisposableInotifyTests(unittest.TestCase):
         adjacent = largest - 1
         self.assertTrue(module._classify_stream(b'', largest, directory_watch=adjacent)['well_formed'])
         result = module._evaluate(b'a', b'a', b'', largest, True, False,
-                                  directory_watch=adjacent)
+                                  directory_watch=adjacent, directory_inventory_names=("sample",))
         self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertFalse(result['can_authorize_dispatch'])
 
@@ -1221,7 +1221,7 @@ class DisposableInotifyTests(unittest.TestCase):
     def test_maximum_bounded_snapshot_is_locally_unverified_not_authorized(self):
         payload = b'X' * 4096
         verdict = module._evaluate(payload, payload, b'', 9, True, False,
-                                   directory_watch=10)
+                                   directory_watch=10, directory_inventory_names=("sample",))
         self.assertEqual(verdict['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertFalse(verdict['can_authorize_dispatch'])
         self.assertFalse(verdict['independent_os_proof_verified'])
@@ -1654,6 +1654,35 @@ class DisposableInotifyTests(unittest.TestCase):
             directory_inventory_names=("sample",),
             transient_sibling_negative=True)
         self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+
+
+    def test_quiet_stream_without_final_names_cannot_claim_clean_inventory(self):
+        verdict = module._evaluate(b'public', b'public', b'', 9, True, False,
+                                   directory_watch=10, directory_inventory_ok=True)
+        self.assertFalse(verdict['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['can_authorize_dispatch'])
+
+    def test_wrong_final_names_or_type_cannot_claim_clean_directory(self):
+        for names in (None, ['sample'], ('other',), ('other', 'sample'),
+                      ('sample', 'extra')):
+            with self.subTest(names=repr(names)):
+                verdict = module._evaluate(
+                    b'public', b'public', b'', 9, True, False,
+                    directory_watch=10, directory_inventory_ok=True,
+                    directory_inventory_names=names)
+                self.assertFalse(verdict['observed_checks']['no_directory_entry_mutations'])
+                self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_exact_final_single_source_and_quiet_stream_remain_only_local(self):
+        verdict = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',))
+        self.assertTrue(verdict['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(verdict['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertFalse(verdict['independent_os_proof_verified'])
+        self.assertFalse(verdict['can_authorize_dispatch'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
