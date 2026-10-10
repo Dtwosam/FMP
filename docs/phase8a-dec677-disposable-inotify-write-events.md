@@ -213,6 +213,14 @@ The matcher now tracks only creates without `IN_ISDIR` and credits a matched del
 
 No kernel provenance or read-only OS enforcement follows. Phase 3/full CI at the exact head and independent source/security review remain required.
 
+## DEC-701 — Write-open closes are not proof of two modified contents
+
+The DEC-689 file-watch provenance fix still counted both `IN_MODIFY` and `IN_CLOSE_WRITE` in `source_content_write_events` for the deliberate write/revert control. Linux `inotify(7)` defines `IN_CLOSE_WRITE` as the **closing of a file opened for writing**, which does not itself prove a write occurred. Two close notifications, or a single modify followed by close, could thus make `negative_control_detected=true` without observations of two distinct source modifications. Overall status was already `BLOCKED` but the positive negative-control finding overstated its evidence.
+
+A separate `source_modify_events` counter now requires at least **two `IN_MODIFY` notifications from the original regular-file watch** for this specific negative-control claim, along with the existing intact/live stream gate. The conservative `write_events` and `source_content_write_events` remain unchanged to block any suspicious file or directory activity. Four new regression methods bring the synthetic suite to **142 cases**: two close-write-only events, one modify + close, two modifies with an interleaved close, and directory-only modifies. Existing positive fixture assertions now use actual modify records.
+
+This is still only untrusted event metadata; a modify notification does not prove specific intermediate file contents, absence of aliases, independent provenance or OS write prevention. The live Linux opt-in demonstrations still need external verification, exact-head CI and qualified security review.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
