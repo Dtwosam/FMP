@@ -3540,6 +3540,36 @@ class DisposableInotifyTests(unittest.TestCase):
                             module._snapshot_regular(Path('/tmp/public-fake-only'))
                         close.assert_called_once_with(17)
 
+
+    def test_inventory_scandir_wrapper_exception_is_handled(self):
+        with patch.object(module.os, 'scandir',
+                          side_effect=RuntimeError('synthetic scandir failure')):
+            with self.assertRaisesRegex(OSError, 'inventory scan raised unexpectedly'):
+                module._bounded_inventory_names(Path('/tmp/public-fake-only'))
+
+    def test_inventory_iterator_exception_after_first_entry_is_handled(self):
+        class Entry:
+            name = 'sample'
+        class Scandir:
+            def __init__(self):
+                self.calls = 0
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def __iter__(self):
+                return self
+            def __next__(self):
+                self.calls += 1
+                if self.calls == 1:
+                    return Entry()
+                raise RuntimeError('synthetic broken directory iterator')
+        scan = Scandir()
+        with patch.object(module.os, 'scandir', return_value=scan):
+            with self.assertRaisesRegex(OSError, 'inventory scan raised unexpectedly'):
+                module._bounded_inventory_names(Path('/tmp/public-fake-only'))
+        self.assertEqual(scan.calls, 2)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
