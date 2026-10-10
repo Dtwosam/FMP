@@ -345,7 +345,11 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and not events["overflow"] and not events["invalidated"]
             and watcher_alive is True
         ),
-        "no_observed_writes": events["write_events"] == 0,
+        "no_observed_writes": (
+            both_watches_identified and events["well_formed"]
+            and not events["overflow"] and not events["invalidated"]
+            and watcher_alive is True and events["write_events"] == 0
+        ),
         "midpoint_source_snapshot_matches_expected": (
             midpoint_snapshot_matches_expected is True
         ) if negative else True,
