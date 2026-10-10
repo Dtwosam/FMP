@@ -897,6 +897,46 @@ class DisposableInotifyTests(unittest.TestCase):
                         with self.assertRaisesRegex(OSError, 'impossible chunk shape'):
                             module._read_pending(17)
 
+
+    def test_transient_pair_with_trailing_malformed_event_does_not_claim_detection(self):
+        matched = ev(wd=10, mask=module.IN_CREATE) + ev(wd=10, mask=module.IN_DELETE)
+        raw = matched + b'\x00' * 7
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 1)
+        self.assertFalse(parsed['well_formed'])
+        result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                  directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertIn('synthetic transient directory negative control not observed',
+                      result['findings'])
+
+    def test_transient_pair_with_queue_overflow_does_not_claim_detection(self):
+        matched = ev(wd=10, mask=module.IN_CREATE) + ev(wd=10, mask=module.IN_DELETE)
+        raw = matched + ev(wd=-1, mask=module.IN_Q_OVERFLOW)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['overflow'])
+        self.assertEqual(parsed['transient_create_delete_pairs'], 1)
+        result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                  directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_transient_pair_with_removed_watch_does_not_claim_detection(self):
+        matched = ev(wd=10, mask=module.IN_CREATE) + ev(wd=10, mask=module.IN_DELETE)
+        raw = matched + ev(wd=9, mask=module.IN_IGNORED)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['invalidated'])
+        result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                  directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+
+    def test_transient_pair_without_live_collector_does_not_claim_detection(self):
+        raw = ev(wd=10, mask=module.IN_CREATE) + ev(wd=10, mask=module.IN_DELETE)
+        result = module._evaluate(b'a', b'a', raw, 9, False, False,
+                                  directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
