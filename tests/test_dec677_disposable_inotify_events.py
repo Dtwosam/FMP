@@ -3177,6 +3177,73 @@ class DisposableInotifyTests(unittest.TestCase):
             with self.assertRaisesRegex(OSError, 'malformed entry name'):
                 module._bounded_inventory_names(Path('/tmp/public-fake-only'))
 
+
+    def test_snapshot_rejects_bad_first_fstat_field_types_before_read(self):
+        class FakeStat:
+            def __init__(self, **changes):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+                for key, value in changes.items():
+                    setattr(self, key, value)
+        invalid = (('st_mode', True), ('st_dev', 1.0),
+                   ('st_ino', None), ('st_size', '1'),
+                   ('st_mtime_ns', object()), ('st_ctime_ns', False))
+        for field, value in invalid:
+            with self.subTest(field=field):
+                with patch.object(module.os, 'open', return_value=17):
+                    with patch.object(module.os, 'fstat',
+                                      return_value=FakeStat(**{field: value})):
+                        with patch.object(module.os, 'read') as read:
+                            with patch.object(module.os, 'close') as close:
+                                with self.assertRaisesRegex(OSError, 'noninteger metadata'):
+                                    module._snapshot_regular(Path('/tmp/public-fake-only'))
+                                read.assert_not_called()
+                                close.assert_called_once_with(17)
+
+    def test_snapshot_rejects_comparator_forged_fstat_inode_before_read(self):
+        class AlwaysEqual:
+            def __eq__(self, _other):
+                return True
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = AlwaysEqual()
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        with patch.object(module.os, 'open', return_value=17):
+            with patch.object(module.os, 'fstat', return_value=FakeStat()):
+                with patch.object(module.os, 'read') as read:
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'noninteger metadata'):
+                            module._snapshot_regular(Path('/tmp/public-fake-only'))
+                        read.assert_not_called()
+                        close.assert_called_once_with(17)
+
+    def test_snapshot_rejects_bad_final_fstat_metadata_and_closes_fd(self):
+        class FakeStat:
+            def __init__(self, ctime):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = ctime
+        with patch.object(module.os, 'open', return_value=17):
+            with patch.object(module.os, 'fstat',
+                              side_effect=(FakeStat(200), FakeStat(object()))) as fstat:
+                with patch.object(module.os, 'read', return_value=b'x') as read:
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'noninteger metadata'):
+                            module._snapshot_regular(Path('/tmp/public-fake-only'))
+                        self.assertEqual(fstat.call_count, 2)
+                        read.assert_called_once_with(17, 2)
+                        close.assert_called_once_with(17)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
