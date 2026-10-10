@@ -255,6 +255,27 @@ class LedgerStructureTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 2)
             self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
 
+    def test_cli_deeply_nested_json_returns_blocked_not_traceback(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); a = base / "p.json"; b = base / "l.json"
+            raw = json.dumps(policy).encode("utf-8")
+            a.write_bytes(raw)
+            # Deep nesting is smaller than the byte limit but exceeds the
+            # standard JSON decoder recursion limit on Python 3 runners.
+            b.write_bytes(b"[" * 10000 + b"0" + b"]" * 10000)
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(a),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(),
+                 "--ledger", str(b)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            payload = json.loads(proc.stdout)
+            self.assertEqual(payload["status"], "BLOCKED")
+            self.assertFalse(payload["can_authorize_dispatch"])
+            self.assertFalse(payload["independent_os_proof_verified"])
+
     def test_cli_wrong_policy_digest_fails_closed(self):
         policy, ledger = fixtures()
         with tempfile.TemporaryDirectory() as tmp:
