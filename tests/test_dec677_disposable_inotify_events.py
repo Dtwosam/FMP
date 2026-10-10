@@ -358,6 +358,50 @@ class DisposableInotifyTests(unittest.TestCase):
             with patch.object(module.os, 'read', return_value=event):
                 self.assertEqual(module._read_pending(17), event)
 
+    def test_zero_mask_event_is_not_a_quiet_observation(self):
+        raw = ev(wd=9, mask=0)
+        parsed = module._classify_stream(raw, 9)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(module._evaluate(b'a', b'a', raw, 9, True, False)['status'], 'BLOCKED')
+
+    def test_unknown_high_event_flag_blocks(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY | 0x80000000)
+        self.assertFalse(module._classify_stream(raw, 9)['well_formed'])
+
+    def test_unhandled_unmount_event_flag_blocks(self):
+        raw = ev(wd=9, mask=0x00002000)
+        self.assertFalse(module._classify_stream(raw, 9)['well_formed'])
+
+    def test_directory_marker_without_action_blocks(self):
+        raw = ev(wd=10, mask=module.IN_ISDIR)
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_directory_marker_with_valid_create_action_is_supported(self):
+        raw = ev(wd=10, mask=module.IN_ISDIR | module.IN_CREATE)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 1)
+        self.assertEqual(module._evaluate(b'a', b'a', raw, 9, True, False,
+                                          directory_watch=10)['status'], 'BLOCKED')
+
+    def test_overflow_event_with_unexpected_watch_number_blocks(self):
+        raw = ev(wd=9, mask=module.IN_Q_OVERFLOW)
+        parsed = module._classify_stream(raw, 9)
+        self.assertTrue(parsed['overflow'])
+        self.assertFalse(parsed['well_formed'])
+
+    def test_overflow_with_extra_action_mask_is_malformed(self):
+        raw = ev(wd=-1, mask=module.IN_Q_OVERFLOW | module.IN_CREATE)
+        parsed = module._classify_stream(raw, 9)
+        self.assertTrue(parsed['overflow'])
+        self.assertFalse(parsed['well_formed'])
+
+    def test_known_single_file_event_remains_well_formed(self):
+        raw = ev(wd=9, mask=module.IN_CLOSE_WRITE)
+        parsed = module._classify_stream(raw, 9)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['write_events'], 1)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
