@@ -647,6 +647,14 @@ The parser already rejects a nonzero rename cookie on write/create/delete action
 
 DEC-759 requires a nonzero cookie for both directory move directions. Three source-defined regression methods bring the suite to **339 uniquely named tests**: either standalone zero-cookie move is an incomplete stream, a two-record zero-cookie move sequence cannot be accepted as complete, and nonzero-cookie move records preserve existing accounting. The change does not attempt to equate a matching or mismatched cookie pair with independent kernel provenance. Real generated sibling and temporary controls remain unchanged. This is a narrow fail-closed record-layout check, not actual OS confinement or annual authorization.
 
+## DEC-760 — Refuse impossible synthetic file-mode widths before treating an inode as regular
+
+A forged fstat result could supply an arbitrary-width integer `st_mode` with regular-file type bits in its low half. `stat.S_ISREG` masks those low type bits, meaning the earlier plain-integer and regular-file checks could accept a value wider than the Linux 32-bit `mode_t` ABI. DEC-760 requires the initial and final fstat mode field to be in `0..UINT32_MAX` before evaluating its regular-file type. Other metadata and FD checks remain intact.
+
+Two new source-defined tests bring the suite to **341 unique test methods**: negative or oversized synthetic mode fields fail before `os.read` and close the allocated FD, and a legitimate generated regular-file mode remains acceptable. This is a synthetic fstat boundary check and does not authenticate a kernel observation or establish annual OS isolation.
+
+The previous DEC-759 rename-cookie check is a deliberately fail-closed record-shape rule: zero-cookie move records are treated as uncertain even if some unusual kernel corner case might produce them. The inotify manual associates cookies with rename events but this local decoder is not independent kernel proof.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
