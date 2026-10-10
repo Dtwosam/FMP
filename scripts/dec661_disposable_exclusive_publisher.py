@@ -50,6 +50,30 @@ class PublicationCleanupIncomplete(OSError):
     """Final name was not linked, but staging cleanup failed: DO NOT RETRY."""
 
 
+def _verify_published_link(directory_fd: int, stage_fd: int, payload: bytes) -> None:
+    """Inspect the published FD against the still-open staged inode.
+
+    This checks *observed* inode and byte identity in disposable conditions.
+    It is not a defense against a privileged writer changing content later.
+    """
+    stage = os.fstat(stage_fd)
+    if not stat.S_ISREG(stage.st_mode) or stage.st_size != len(payload):
+        raise OSError("staged report is not the expected bounded regular inode")
+    flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    published_fd = os.open(REPORT_NAME, flags, dir_fd=directory_fd)
+    try:
+        linked = os.fstat(published_fd)
+        if (not stat.S_ISREG(linked.st_mode)
+                or (linked.st_dev, linked.st_ino) != (stage.st_dev, stage.st_ino)
+                or linked.st_size != len(payload)):
+            raise OSError("published name does not reference the staged report inode")
+        data = os.read(published_fd, len(payload) + 1)
+        if data != payload:
+            raise OSError("published bytes do not match the staged public report")
+    finally:
+        os.close(published_fd)
+
+
 def _publish_once(directory_fd: int, payload: bytes,
                   writer: Callable[[int, bytes], int] = os.write) -> None:
     """Create externally with O_EXCL; link completed bytes into final name.
@@ -75,6 +99,9 @@ def _publish_once(directory_fd: int, payload: bytes,
         os.link(pending, REPORT_NAME, src_dir_fd=directory_fd,
                 dst_dir_fd=directory_fd, follow_symlinks=False)
         linked = True
+        # The link operation may succeed on a substituted pending symlink or
+        # inode. Treat any mismatch after linking as UNKNOWN, never success.
+        _verify_published_link(directory_fd, fd, payload)
         os.fsync(directory_fd)
     except Exception as exc:
         failure = exc
