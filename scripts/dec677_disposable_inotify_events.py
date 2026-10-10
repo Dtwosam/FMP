@@ -229,6 +229,14 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
               transient_sibling_negative: bool = False,
               midpoint_snapshot_matches_expected: bool | None = None,
               transient_midpoint_verified: bool | None = None) -> dict[str, Any]:
+    # The direct evaluator must not claim two incompatible deliberate
+    # negative controls, even if called without the CLI/run_demo mode gate.
+    controls = (negative, replacement_negative, sibling_negative,
+                transient_sibling_negative)
+    if any(type(control) is not bool for control in controls):
+        return _outcome(["disposable evaluator negative controls must be booleans"])
+    if sum(controls) > 1:
+        return _outcome(["conflicting synthetic evaluator negative controls"])
     # Snapshot values reach hashlib below. A wrong type or oversized injected
     # snapshot cannot be accepted as a coherent bounded public fixture, nor
     # escape the fail-closed JSON verdict with an uncontrolled TypeError.

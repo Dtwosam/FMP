@@ -411,6 +411,14 @@ Both dedicated directory negative control predicates now also require strict equ
 
 These point-in-time assertions do not establish continuous OS source immutability, authenticated host observers or permission for annual runner dispatch. Exact-head CI and qualified independent review remain mandatory.
 
+## DEC-726 — Enforce one strictly Boolean negative-control mode in direct evaluator
+
+The public CLI and `run_demo` helper already ensure negative modes are mutually exclusive and strictly Boolean, but the standalone internal `_evaluate` helper accepts four flags representing the same incompatible deliberate controls without validating their types or exclusivity. A direct synthetic caller could request both a write/revert and sibling negative, or pass an injected truthy string/number, and receive potentially affirmative control fields for a scenario that the actual demo refuses to execute. The overall outcome was still BLOCKED, but the local evidence receipt could overstate what a single control observed.
+
+The evaluator now rejects any non-`bool` of `negative`, `replacement_negative`, `sibling_negative` or `transient_sibling_negative`, and rejects more than one true flag **before parsing any event buffer**. Invalid combinations return ordinary deterministic BLOCKED results. Four additional source-defined unit methods bring the suite to **226 methods**, covering malformed values in all positions, all six two-mode conflicts, early gate before decoding, and a valid no-negative clean-but-unverified control. No real Linux demonstrations run in these tests.
+
+This enforces consistency only between the toy evaluator API and its CLI, not authenticated Linux kernel evidence, real protected-runner isolation or run385 authorization. Exact-head Phase 3/full CI and independent security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
