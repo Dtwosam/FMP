@@ -299,6 +299,10 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
     # element __eq__ implementations can otherwise forge exact-name matches.
     inventory_names_are_plain = (
         type(directory_inventory_names) is tuple
+        # The disposable success contract only permits one source name or
+        # source plus the one persistent sibling. Refuse longer injected
+        # inventories before scanning their potentially many members.
+        and 1 <= len(directory_inventory_names) <= 2
         and all(type(name) is str for name in directory_inventory_names)
     )
     directory_intact = (
