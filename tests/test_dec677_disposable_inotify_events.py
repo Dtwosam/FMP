@@ -43,6 +43,7 @@ class DisposableInotifyTests(unittest.TestCase):
     def test_two_writes_and_revert_always_block(self):
         r = module._evaluate(b'same', b'same',
                              ev(mask=module.IN_MODIFY) * 2, 9, True, True,
+                             directory_watch=10,
                              midpoint_snapshot_matches_expected=True)
         self.assertEqual(r['status'], 'BLOCKED')
         self.assertTrue(r['observed_checks']['final_digest_equal'])
@@ -2516,6 +2517,42 @@ class DisposableInotifyTests(unittest.TestCase):
                 parsed = module._classify_stream(data, wd, directory_watch=directory)
                 self.assertFalse(parsed['well_formed'])
                 self.assertEqual(parsed['pending_new_child_names'], ())
+
+
+    def test_quiet_buffer_without_directory_watch_is_not_complete(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=None, directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['both_watches_identified'])
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_two_source_modifications_without_directory_watch_are_not_full_control(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) * 2
+        result = module._evaluate(
+            b'public', b'public', raw, 9, True, True,
+            directory_watch=None, midpoint_snapshot_matches_expected=True)
+        self.assertFalse(result['observed_checks']['both_watches_identified'])
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertFalse(result['observed_checks']['negative_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_aliased_watch_descriptors_do_not_claim_complete_stream(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=9, directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['both_watches_identified'])
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_two_distinct_valid_watches_retain_quiet_local_unverified(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertTrue(result['observed_checks']['both_watches_identified'])
+        self.assertTrue(result['observed_checks']['event_stream_complete'])
+        self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertFalse(result['can_authorize_dispatch'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
