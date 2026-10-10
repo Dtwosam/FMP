@@ -50,6 +50,14 @@ The synthetic temp checkout is now rooted at fixed /tmp instead of honoring call
 
 There are **23 source-defined regression tests**; 2 optional Linux OS demonstrations are skipped in ordinary CI. The separately executed opt-in disposable Linux suite passed 23/23 on the local test host. Independent source review and current exact-head GitHub CI remain necessary.
 
+## DEC-656 FIFO and directory-swap input safety
+
+A further local read-path review found that O_NOFOLLOW by itself does **not** prevent blocking on a FIFO substituted for a previously regular file. A concurrent writer could cause the bounded parent snapshot to stall before its fstat check. The local synthetic snapshot now opens with **O_NONBLOCK** in addition to O_NOFOLLOW; non-regular FIFOs are rejected by fstat without waiting for a writer. A subprocess regression exercises a synthetic FIFO and requires termination within three seconds.
+
+The second new regression replaces the disposable checkout directory pathname with a symlink while the parent retains the original directory descriptor. The final comparison must reject the changed directory inode rather than following the replacement. This remains a disposable, synthetic demonstration of failure handling; it does not address real annual-runner sibling-write authority.
+
+**25 source-defined tests** are now present; the same two actual Linux mount demonstrations require manual opt-in and are skipped in default CI. These tests passed both default and opt-in local runs; current-head GitHub CI and an independent reviewer still remain mandatory.
+
 ## Security limitations
 
 This is a negative witness on a brand-new fake checkout, not an independently authenticated production report. The child supplies some of its own observations; a separate trusted observer has not verified its live mount table, UIDs, capabilities, descriptors, seccomp or environment across 20 real annual jobs. The experiment does not secure trusted staging, checkout aliases or sibling writers, the external uploader or race scheduling on the actual GitHub runner.
