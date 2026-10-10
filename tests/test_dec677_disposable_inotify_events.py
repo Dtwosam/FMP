@@ -3604,6 +3604,42 @@ class DisposableInotifyTests(unittest.TestCase):
                     module._read_pending(17)
                 read.assert_called_once_with(17, 4096)
 
+
+    def test_snapshot_metadata_refuses_impossible_unsigned_device_inode_ids(self):
+        class FakeStat:
+            def __init__(self, **changes):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+                for field, value in changes.items():
+                    setattr(self, field, value)
+        for field in ('st_dev', 'st_ino'):
+            with self.subTest(field=field):
+                with patch.object(module.os, 'open', return_value=17):
+                    with patch.object(module.os, 'fstat',
+                                      return_value=FakeStat(**{field: 1 << 64})):
+                        with patch.object(module.os, 'read') as read:
+                            with patch.object(module.os, 'close') as close:
+                                with self.assertRaisesRegex(OSError, 'bounded regular inode'):
+                                    module._snapshot_regular(Path('/tmp/public-fake-only'))
+                                read.assert_not_called()
+                                close.assert_called_once_with(17)
+
+    def test_snapshot_helper_result_rejects_impossible_device_inode_width(self):
+        for identity in ((1 << 64, 7), (3, 1 << 64)):
+            with self.subTest(identity=identity):
+                with self.assertRaisesRegex(OSError, 'invalid identity or bytes'):
+                    module._checked_snapshot_result((identity, module.BEFORE))
+
+    def test_snapshot_helper_result_preserves_maximum_uint64_identity_values(self):
+        maximum = module.MAX_KERNEL_STAT_ID
+        self.assertEqual(
+            module._checked_snapshot_result(((maximum, maximum), module.BEFORE)),
+            ((maximum, maximum), module.BEFORE))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
