@@ -3765,6 +3765,62 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 2)
 
+
+    def test_zero_file_watch_cannot_claim_dual_watch_completeness(self):
+        parsed = module._classify_stream(b'', 0, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        result = module._evaluate(b'public', b'public', b'', 0, True, False,
+                                  directory_watch=10, directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['both_watches_identified'])
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_zero_directory_watch_cannot_claim_quiet_observation(self):
+        parsed = module._classify_stream(b'', 9, directory_watch=0)
+        self.assertFalse(parsed['well_formed'])
+        result = module._evaluate(b'public', b'public', b'', 9, True, False,
+                                  directory_watch=0, directory_inventory_names=('sample',))
+        self.assertFalse(result['observed_checks']['both_watches_identified'])
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_watch_registration_refuses_zero_wd_and_closes_valid_fd(self):
+        class CFunction:
+            def __init__(self, values): self.values = iter(values); self.calls = 0
+            def __call__(self, *_args):
+                self.calls += 1
+                return next(self.values)
+        for watch_ids, count in (((0, 10), 1), ((9, 0), 2)):
+            with self.subTest(watch_ids=watch_ids):
+                add = CFunction(watch_ids)
+                class FakeLib:
+                    inotify_init1 = CFunction((17,))
+                    inotify_add_watch = add
+                with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaises(OSError):
+                            module._start_watch(Path('/tmp/public-fake-only'))
+                        close.assert_called_once_with(17)
+                self.assertEqual(add.calls, count)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_runner_rejects_patched_zero_wd_before_snapshot(self):
+        for file_wd, dir_wd in ((0, 10), (9, 0)):
+            with self.subTest(file_wd=file_wd, dir_wd=dir_wd):
+                rd, wr = os.pipe()
+                try:
+                    with patch.object(module, '_start_watch', return_value=(rd, file_wd, dir_wd)):
+                        with patch.object(module, '_snapshot_regular') as snapshot:
+                            with patch.object(module, '_read_pending') as drain:
+                                result = module.run_demo()
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    snapshot.assert_not_called()
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(rd)
+                finally:
+                    os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
