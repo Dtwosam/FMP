@@ -653,8 +653,8 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
 
     def test_create_then_delete_of_different_leaf_is_not_matched(self):
-        stream = (ev(wd=10, mask=module.IN_CREATE, data=b'a\\x00\\x00\\x00')
-                  + ev(wd=10, mask=module.IN_DELETE, data=b'b\\x00\\x00\\x00'))
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=b'a\x00\x00\x00')
+                  + ev(wd=10, mask=module.IN_DELETE, data=b'b\x00\x00\x00'))
         parsed = module._classify_stream(stream, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['transient_create_delete_pairs'], 0)
@@ -668,9 +668,9 @@ class DisposableInotifyTests(unittest.TestCase):
                       result['findings'])
 
     def test_named_create_delete_pair_survives_interleaved_unrelated_event(self):
-        stream = (ev(wd=10, mask=module.IN_CREATE, data=b'a\\x00\\x00\\x00')
-                  + ev(wd=10, mask=module.IN_CREATE, data=b'b\\x00\\x00\\x00')
-                  + ev(wd=10, mask=module.IN_DELETE, data=b'a\\x00\\x00\\x00'))
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=b'a\x00\x00\x00')
+                  + ev(wd=10, mask=module.IN_CREATE, data=b'b\x00\x00\x00')
+                  + ev(wd=10, mask=module.IN_DELETE, data=b'a\x00\x00\x00'))
         parsed = module._classify_stream(stream, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['transient_create_delete_pairs'], 1)
