@@ -119,6 +119,14 @@ The parser now tracks validated directory-watch child names: an `IN_CREATE` must
 
 This is **not authenticated or complete kernel evidence**; it merely stops the harness from overstating its own negative-control observation. All modes remain nonauthorizing, and exact-head CI plus independent review are still needed.
 
+## DEC-689 — Source-write negative control requires source-file content events
+
+The earlier write/revert negative check used `write_events >= 2`, a conservative counter of **both file and directory watch** modification/attribute records. Two metadata notifications on the directory watch, or two `IN_ATTRIB` notifications on the watched file, could mark `negative_control_detected=true` without observing any write to the original source file's content. The overall verdict remained `BLOCKED`, but the negative-control detection claim was too broad.
+
+The decoder keeps `write_events` conservative for fail-closed blocking, while separately counting `source_content_write_events`: only `IN_MODIFY` or `IN_CLOSE_WRITE` attributed to the original *file watch*. The deliberate write/revert control now requires **two source-content event records**, a well-formed, non-overflowed, non-invalidated event stream and a confirmed live collector flag. Four added synthetic tests raise the suite to **98 source-defined cases**: two directory-only writes, two file metadata-only events, one source plus one directory write, and a valid two-event source-content control.
+
+This stronger self-check still cannot authenticate the kernel record origin or establish prevention, continuity, or annual runner confinement. Exact-head CI and independent review required; no authorization change.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
