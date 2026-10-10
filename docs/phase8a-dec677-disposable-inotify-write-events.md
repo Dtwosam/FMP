@@ -673,6 +673,14 @@ The snapshot helper validates that each fstat result is a bounded regular-file m
 
 DEC-763 includes the validated mode in the canonical six-part stat tuple and compares it across both observations. It updates the bounded read-size index while keeping the externally returned snapshot identity as `(device, inode)`. Two new regression methods raise the suite to **350 uniquely named tests**: an otherwise identical mode change is rejected with FD cleanup, and unchanged mode still returns the original device/inode and payload. The direct metadata-contract assertion is adjusted to match the new six-part tuple without relaxing any check. This catches injected mode drift but does not prove the absence of races or independently authenticate host write denial.
 
+## DEC-764 — Validate the encoded byte shape of inventory basenames
+
+DEC-746 bounds live `os.scandir` enumeration to three entries. The previous scanner and direct evaluator then checked exact Python `str` types, but permitted synthetic names that no Linux `DirEntry.name` from a single directory component could represent, such as a 256-byte UTF-8 filename, embedded slash or NUL, `.`/`..`, or an unencodable surrogate.
+
+DEC-764 adds `_plausible_inventory_basename` to check exact Python `str` and native `os.fsencode` roundtrip into a nonempty Linux basename of at most 255 **encoded bytes**, excluding slash, NUL and dot/dotdot names. Both bounded scanner and direct evaluator use the same predicate, with unexpected injected encoding failures treated as negative evidence rather than allowing exceptions to authorize. The scanner validates before sorting and still enumerates no more than three entries. The direct evaluator refuses impossible names before deriving quiet-directory claims. Valid surrogate-escaped names derived from real arbitrary-byte Linux filenames are still allowed. Three new source-defined regressions bring the suite to **353 uniquely named test methods**.
+
+This is local synthetic inventory coherence, not kernel-origin authentication, independent OS write prevention, or annual-runner authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
