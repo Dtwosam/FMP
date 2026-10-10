@@ -159,6 +159,14 @@ The parser now rejects exact `b"."` and `b".."` in named directory-watch events.
 
 This is another bounded synthetic-decoder consistency check, not kernel provenance or write-prevention evidence; exact-head CI and independent review remain required.
 
+## DEC-694 — Enforce poll return type and single-read maximum
+
+After restricting the readiness mask in DEC-690, the collector could still interpret `select.poll.poll()` returning a false-like **non-list** (`None`, tuple or map) as a legitimately quiet event queue. Those are not valid Python `select.poll.poll()` results. Likewise, the collector previously trusted the shape of a patched `os.read(fd, 4096)` response: an impossible **4097-byte** return could be appended if the aggregate remained below 64 KiB, and non-byte returns could produce uncontrolled `TypeError` rather than a reported `BLOCKED` result.
+
+The collector now insists on an actual readiness *list* and a `bytes` chunk with length at most 4096 on each readable pass. Other values raise a handled `OSError`; actual EOF and empty-queue race errors retain their existing fail-closed results. Three new synthetic fault-test methods bring the test suite to **115 source-defined cases**, exercising malformed quietness, oversized chunks and non-byte chunks. The collector's kernel demonstrated cases remain manual opt-in.
+
+As elsewhere, this validates local collector assumptions only; neither injected/mock safety nor a quiet poll establishes complete trusted host observation. Exact-head CI and independent security review required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
