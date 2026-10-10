@@ -229,6 +229,66 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
         self.assertFalse(result['can_authorize_dispatch'])
 
+    def test_create_then_remove_events_detected_despite_final_inventory_match(self):
+        stream = ev(wd=10, mask=module.IN_CREATE) + ev(wd=10, mask=module.IN_DELETE)
+        result = module._evaluate(b'unchanged', b'unchanged', stream, 9, True, False,
+                                  directory_watch=10, directory_inventory_ok=True,
+                                  transient_sibling_negative=True)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertTrue(result['observed_checks']['final_digest_equal'])
+        self.assertTrue(result['observed_checks']['watched_inode_matches_final_path'])
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertTrue(result['observed_checks']['transient_directory_control_detected'])
+        self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_undetected_transient_directory_negative_blocks(self):
+        result = module._evaluate(b'a', b'a', b'', 9, True, False,
+                                  directory_watch=10, directory_inventory_ok=True,
+                                  transient_sibling_negative=True)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertIn('synthetic transient directory negative control not observed',
+                      result['findings'])
+
+    def test_one_event_cannot_validate_two_event_negative(self):
+        result = module._evaluate(b'a', b'a', ev(wd=10, mask=module.IN_CREATE),
+                                  9, True, False, directory_watch=10,
+                                  transient_sibling_negative=True)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+
+    def test_transient_event_parser_counts_two_distinct_directory_events(self):
+        stream = ev(wd=10, mask=module.IN_CREATE) + ev(wd=10, mask=module.IN_DELETE)
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_transient_directory_mode_conflicts_with_other_negative_modes(self):
+        for args in ({'negative': True}, {'replace_watched_inode': True},
+                     {'create_sibling': True}):
+            with self.subTest(args=args):
+                result = module.run_demo(transient_sibling=True, **args)
+                self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_conflicting_transient_directory_cli_modes_fail_closed(self):
+        p = subprocess.run([sys.executable, '-B', str(SCRIPT),
+                            '--execute-transient-directory-negative',
+                            '--execute-sibling-creation-negative'],
+                           capture_output=True, text=True, timeout=4)
+        self.assertNotEqual(p.returncode, 0)
+
+    @unittest.skipUnless(os.environ.get('DEC677_EXECUTE_INOTIFY_TEST') == '1',
+                         'manual Linux temporary create/delete events, NOT annual proof')
+    def test_real_disposable_transient_sibling_event_negative_blocks(self):
+        result = module.run_demo(transient_sibling=True)
+        self.assertEqual(result['status'], 'BLOCKED', result)
+        self.assertTrue(result['observed_checks']['final_digest_equal'])
+        self.assertTrue(result['observed_checks']['watched_inode_matches_final_path'])
+        self.assertTrue(result['observed_checks']['transient_directory_control_detected'])
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertFalse(result['can_authorize_dispatch'])
+        self.assertFalse(result['independent_os_proof_verified'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

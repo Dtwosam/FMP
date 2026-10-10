@@ -86,13 +86,17 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
               inode_stable: bool = True, replacement_negative: bool = False,
               directory_watch: int | None = None,
               directory_inventory_ok: bool = True,
-              sibling_negative: bool = False) -> dict[str, Any]:
+              sibling_negative: bool = False,
+              transient_sibling_negative: bool = False) -> dict[str, Any]:
     events = _classify_stream(data, watch, directory_watch)
     checks = {
         "final_digest_equal": before == after and hashlib.sha256(before).digest() == hashlib.sha256(after).digest(),
         "watched_inode_matches_final_path": inode_stable is True,
         "no_directory_entry_mutations": (events["directory_changes"] == 0
                                           and directory_inventory_ok is True),
+        "transient_directory_control_detected": (
+            events["directory_changes"] >= 2 if transient_sibling_negative else True
+        ),
         "event_stream_complete": events["well_formed"] and not events["overflow"] and not events["invalidated"] and watcher_alive is True,
         "no_observed_writes": events["write_events"] == 0,
         "negative_control_detected": (events["write_events"] >= 2) if negative else True,
@@ -108,6 +112,10 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         findings.append("deliberate disposable sibling creation must never be admitted")
         if events["directory_changes"] == 0 and directory_inventory_ok is True:
             findings.append("synthetic directory-event negative control not detected")
+    if transient_sibling_negative:
+        findings.append("deliberate create/remove cannot prove directory immutability")
+        if events["directory_changes"] < 2:
+            findings.append("synthetic transient directory negative control not observed")
     return _outcome(findings, checks)
 
 
@@ -168,8 +176,8 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
 
 
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
-             create_sibling: bool = False) -> dict[str, Any]:
-    if sum((negative, replace_watched_inode, create_sibling)) > 1:
+             create_sibling: bool = False, transient_sibling: bool = False) -> dict[str, Any]:
+    if sum((negative, replace_watched_inode, create_sibling, transient_sibling)) > 1:
         return _outcome(["conflicting synthetic negative-control modes"])
     if sys.platform != "linux" or not os.path.isdir("/tmp") or os.path.islink("/tmp"):
         return _outcome(["Linux disposable kernel event monitor unavailable"])
@@ -194,6 +202,10 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     os.replace(replacement, path)
                 if create_sibling:
                     (Path(folder) / "unexpected-public-sibling").write_bytes(b"PUBLIC-EXTRA")
+                if transient_sibling:
+                    transient = Path(folder) / "temporary-public-sibling"
+                    transient.write_bytes(b"PUBLIC-TEMPORARY")
+                    transient.unlink()
                 raw = _read_pending(fd)
                 final_inode, end = _snapshot_regular(path)
                 inventory_ok = sorted(p.name for p in Path(folder).iterdir()) == ["sample"]
@@ -202,7 +214,8 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                                  replacement_negative=replace_watched_inode,
                                  directory_watch=dir_wd,
                                  directory_inventory_ok=inventory_ok,
-                                 sibling_negative=create_sibling)
+                                 sibling_negative=create_sibling,
+                                 transient_sibling_negative=transient_sibling)
             finally:
                 os.close(fd)
     except (OSError, AttributeError, ValueError):
@@ -217,13 +230,16 @@ def main(argv: list[str] | None = None) -> int:
     choices.add_argument("--execute-reverted-write-negative", action="store_true")
     choices.add_argument("--execute-inode-replacement-negative", action="store_true")
     choices.add_argument("--execute-sibling-creation-negative", action="store_true")
+    choices.add_argument("--execute-transient-directory-negative", action="store_true")
     args = p.parse_args(argv)
     result = (run_demo(negative=args.execute_reverted_write_negative,
                        replace_watched_inode=args.execute_inode_replacement_negative,
-                       create_sibling=args.execute_sibling_creation_negative)
+                       create_sibling=args.execute_sibling_creation_negative,
+                       transient_sibling=args.execute_transient_directory_negative)
               if (args.execute_disposable_control or args.execute_reverted_write_negative
                   or args.execute_inode_replacement_negative
-                  or args.execute_sibling_creation_negative)
+                  or args.execute_sibling_creation_negative
+                  or args.execute_transient_directory_negative)
               else _outcome(["explicit synthetic observer opt-in required"]))
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 3 if result["status"] == "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED" else 2
