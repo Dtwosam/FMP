@@ -21,6 +21,7 @@ def synthetic_report():
         "checks": {key: True for key in module.CHECKS},
         "status": {**{key: "0000000000000000" for key in module.CAPS}, "NoNewPrivs": "1"},
         "inherited_fd_probe": "closed_before_consumer",
+        "stdio_probe": "not_provided",
     }
 
 
@@ -68,6 +69,30 @@ class DisposableOSWitnessTests(unittest.TestCase):
         report = synthetic_report()
         report["status"]["NoNewPrivs"] = "0"
         self.assertEqual(module._evaluate(report, True)["status"], "BLOCKED")
+
+    def test_missing_stdio_probe_blocks(self):
+        raw = synthetic_report()
+        del raw["stdio_probe"]
+        self.assertEqual(module._evaluate(raw, True)["status"], "BLOCKED")
+
+    def test_injected_writable_stdout_blocks(self):
+        raw = synthetic_report()
+        raw["stdio_probe"] = "write_succeeded"
+        result = module._evaluate(raw, True)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("checkout-writable standard stream inherited or unaccounted for", result["findings"])
+        self.assertFalse(result["can_authorize_dispatch"])
+
+    def test_conflicting_injected_fd_modes_block(self):
+        result = module.run_demo(inject_checkout_fd=True, inject_stdout_fd=True)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["can_authorize_dispatch"])
+
+    def test_cli_injection_modes_are_mutually_exclusive(self):
+        proc = subprocess.run([sys.executable, "-B", str(SCRIPT),
+                              "--execute-fd-counterexample", "--execute-stdio-counterexample"],
+                              capture_output=True, text=True, timeout=4, check=False)
+        self.assertNotEqual(proc.returncode, 0)
 
     def test_inventory_change_blocks(self):
         self.assertEqual(module._evaluate(synthetic_report(), False)["status"], "BLOCKED")
@@ -221,6 +246,16 @@ class DisposableOSWitnessTests(unittest.TestCase):
         self.assertEqual(result["status"], "BLOCKED", result)
         self.assertIn("disposable checkout inventory changed", result["findings"])
         self.assertIn("writable checkout descriptor inherited or unaccounted for", result["findings"])
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
+
+    @unittest.skipUnless(os.environ.get("DEC653_EXECUTE_DISPOSABLE_OS_TEST") == "1",
+                         "manual opt-in only; not CI acceptance")
+    def test_optin_standard_stream_counterexample_is_blocked(self):
+        result = module.run_demo(inject_stdout_fd=True)
+        self.assertEqual(result["status"], "BLOCKED", result)
+        self.assertIn("disposable checkout inventory changed", result["findings"])
+        self.assertIn("checkout-writable standard stream inherited or unaccounted for", result["findings"])
         self.assertFalse(result["can_authorize_dispatch"])
         self.assertFalse(result["independent_os_proof_verified"])
 

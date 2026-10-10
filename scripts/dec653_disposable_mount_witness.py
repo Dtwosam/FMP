@@ -39,20 +39,22 @@ run("mount", "-o", "remount,bind,ro", source)
 args = ["setpriv", "--bounding-set=-all", "--inh-caps=-all",
         "--ambient-caps=-all", "--no-new-privs", "--", executable,
         "-B", "-c", "__ATTACK__", source, external,
-        str(preopened)]
-p = subprocess.run(args, stdin=subprocess.DEVNULL, capture_output=True,
+        str(preopened), inject]
+p = subprocess.run(args, stdin=subprocess.DEVNULL,
+                   stdout=preopened if inject == "2" else subprocess.PIPE,
+                   stderr=subprocess.PIPE,
                    text=True, timeout=10, env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
                                                "LANG": "C"}, close_fds=True,
                    pass_fds=(preopened,) if inject == "1" else ())
 os.close(preopened)
 if p.returncode != 0:
     raise SystemExit(11)
-print(p.stdout, end="")
+print(p.stderr if inject == "2" else p.stdout, end="")
 '''
 
 _RESTRICTED_ATTACK = r'''
 import json, os, subprocess, sys
-source, external, inherited_fd = sys.argv[1:]
+source, external, inherited_fd, inject = sys.argv[1:]
 probe = "unknown"
 try:
     os.write(int(inherited_fd), b"INHERITED_FD_BYPASS\n")
@@ -60,6 +62,14 @@ except OSError as exc:
     probe = "closed_before_consumer" if exc.errno == 9 else "other_write_error"
 else:
     probe = "write_succeeded"
+stdio_probe = "not_provided"
+if inject == "2":
+    try:
+        os.write(1, b"STDIO_FD_BYPASS\n")
+    except OSError:
+        stdio_probe = "write_denied"
+    else:
+        stdio_probe = "write_succeeded"
 status = {}
 for line in open("/proc/self/status", encoding="ascii"):
     key = line.split(":", 1)[0]
@@ -87,7 +97,9 @@ checks["readonly_mount"] = any((len(f := line.split()) >= 6 and
                                   f[4] == source and "ro" in f[5].split(","))
                                  for line in mounts)
 print(json.dumps({"checks": checks, "status": status,
-                  "inherited_fd_probe": probe}, sort_keys=True))
+                  "inherited_fd_probe": probe,
+                  "stdio_probe": stdio_probe}, sort_keys=True),
+      file=sys.stderr if inject == "2" else sys.stdout)
 '''
 
 CHECKS = ("create", "truncate", "chmod", "reparent", "remount", "readonly_mount")
@@ -112,6 +124,8 @@ def _evaluate(raw: Any, unchanged: bool) -> dict[str, Any]:
     findings = []
     if raw.get("inherited_fd_probe") != "closed_before_consumer":
         findings.append("writable checkout descriptor inherited or unaccounted for")
+    if raw.get("stdio_probe") != "not_provided":
+        findings.append("checkout-writable standard stream inherited or unaccounted for")
     for name in CHECKS:
         if checks.get(name) is not True:
             findings.append("OS denial not demonstrated: " + name)
@@ -158,8 +172,10 @@ def _unchanged_disposable_source(source: Path, directory_fd: int,
         return False
 
 
-def run_demo(inject_checkout_fd: bool = False) -> dict[str, Any]:
+def run_demo(inject_checkout_fd: bool = False, inject_stdout_fd: bool = False) -> dict[str, Any]:
     """Run only against internally generated disposable data, never a supplied path."""
+    if inject_checkout_fd and inject_stdout_fd:
+        return _result("BLOCKED", ["conflicting synthetic descriptor-injection modes"])
     if sys.platform != "linux" or not all(shutil.which(n) for n in ("unshare", "mount", "setpriv")):
         return _result("BLOCKED", ["Linux namespace prerequisites unavailable"])
     # Fixed trusted scratch root: caller-controlled TMPDIR must never route
@@ -182,7 +198,7 @@ def run_demo(inject_checkout_fd: bool = False) -> dict[str, Any]:
                 p = subprocess.run(
                     ["unshare", "--user", "--map-root-user", "--mount", "--",
                      sys.executable, "-B", "-c", setup, str(source), str(external), sys.executable,
-                     "1" if inject_checkout_fd else "0"],
+                     "2" if inject_stdout_fd else ("1" if inject_checkout_fd else "0")],
                     cwd=directory, stdin=subprocess.DEVNULL, capture_output=True,
                     text=True, timeout=25, close_fds=True,
                     env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C"},
@@ -207,9 +223,11 @@ def main(argv: list[str] | None = None) -> int:
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--execute-disposable-demo", action="store_true")
     modes.add_argument("--execute-fd-counterexample", action="store_true")
+    modes.add_argument("--execute-stdio-counterexample", action="store_true")
     args = parser.parse_args(argv)
-    if args.execute_disposable_demo or args.execute_fd_counterexample:
-        result = run_demo(inject_checkout_fd=args.execute_fd_counterexample)
+    if args.execute_disposable_demo or args.execute_fd_counterexample or args.execute_stdio_counterexample:
+        result = run_demo(inject_checkout_fd=args.execute_fd_counterexample,
+                          inject_stdout_fd=args.execute_stdio_counterexample)
     else:
         result = _result("BLOCKED", ["explicit disposable demo opt-in required"])
     print(json.dumps(result, separators=(",", ":"), sort_keys=True))

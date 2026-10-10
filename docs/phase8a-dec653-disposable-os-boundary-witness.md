@@ -58,6 +58,18 @@ The second new regression replaces the disposable checkout directory pathname wi
 
 **25 source-defined tests** are now present; the same two actual Linux mount demonstrations require manual opt-in and are skipped in default CI. These tests passed both default and opt-in local runs; current-head GitHub CI and an independent reviewer still remain mandatory.
 
+## DEC-657 standard-output file-descriptor counterexample
+
+DEC-655 proved that close_fds=true closes high-numbered preopened file handles. **It does not establish safety of standard descriptors 0/1/2.** The new manual \`--execute-stdio-counterexample\` mode deliberately installs the already-open writable synthetic checkout FD as restricted-child **standard output (FD 1)**, without opting a high-numbered FD into pass_fds. The restricted child writes a short marker to stdout through that preopened handle; the readonly bind mount still denies ordinary path writes but the synthetic sample bytes change. The parent independently detects changed inventory and returns **BLOCKED**, exit 2, with a standard-stream finding. Structured untrusted child diagnostic data is emitted through a separate captured stderr pipe in this intentionally adversarial mode.
+
+Normal opt-in and high-numbered-FD counterexample modes continue to use explicitly captured pipes for stdout/stderr and \`/dev/null\` for stdin. The three run modes are mutually exclusive at the CLI. All modes remain restricted to newly created disposable files, nonauthorizing, with no actual FMP annual checkout, protected-data, workflow or trading access.
+
+Local default regression result: **30 defined tests, 3 manual Linux demonstrations skipped**. With explicit local opt-in, **30/30 passed**, including the new standard-output writable-handle negative witness. None of these results can be promoted into actual runner acceptance without independent OS measurements and a reviewed trusted staging/uploader boundary; this is only a local negative control.
+
+Manual example on a permitted disposable Linux host:
+
+    python -B scripts/dec653_disposable_mount_witness.py --execute-stdio-counterexample
+
 ## Security limitations
 
 This is a negative witness on a brand-new fake checkout, not an independently authenticated production report. The child supplies some of its own observations; a separate trusted observer has not verified its live mount table, UIDs, capabilities, descriptors, seccomp or environment across 20 real annual jobs. The experiment does not secure trusted staging, checkout aliases or sibling writers, the external uploader or race scheduling on the actual GitHub runner.
