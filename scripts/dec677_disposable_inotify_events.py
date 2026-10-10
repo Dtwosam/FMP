@@ -513,6 +513,22 @@ def _bounded_inventory_names(folder: Path) -> tuple[str, ...]:
     return tuple(sorted(names))
 
 
+def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int]:
+    """Reject patched fstat metadata before size arithmetic or comparisons."""
+    fields = ("st_mode", "st_dev", "st_ino", "st_size",
+              "st_mtime_ns", "st_ctime_ns")
+    try:
+        values = tuple(getattr(st, field) for field in fields)
+    except Exception as error:
+        raise OSError("disposable fstat returned unreadable metadata") from error
+    if any(type(value) is not int for value in values):
+        raise OSError("disposable fstat returned noninteger metadata")
+    mode, dev, ino, size, mtime_ns, ctime_ns = values
+    if not stat.S_ISREG(mode) or dev < 0 or ino < 0 or not 0 <= size <= 4096:
+        raise OSError("disposable sample is not a bounded regular inode")
+    return dev, ino, size, mtime_ns, ctime_ns
+
+
 def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
     """Read only a bounded regular inode through a non-following FD."""
     flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
@@ -526,26 +542,19 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
         os.close(fd)
         raise OSError("disposable regular snapshot used a standard descriptor")
     try:
-        st = os.fstat(fd)
-        if not stat.S_ISREG(st.st_mode) or not 0 <= st.st_size <= 4096:
-            raise OSError("disposable sample is not a bounded regular inode")
-        data = os.read(fd, st.st_size + 1)
+        initial = _checked_snapshot_metadata(os.fstat(fd))
+        data = os.read(fd, initial[2] + 1)
         # A real os.read() is bounded by the requested size and yields
         # plain immutable bytes. Malformed mock/injected data must become a
         # controlled blocked snapshot, not TypeError or forged completeness.
-        if type(data) is not bytes or len(data) > st.st_size + 1:
+        if type(data) is not bytes or len(data) > initial[2] + 1:
             raise OSError("disposable regular snapshot read returned impossible bytes")
-        after = os.fstat(fd)
+        final = _checked_snapshot_metadata(os.fstat(fd))
         # This detects a short read or some concurrent inode mutations. It
         # does NOT prove freedom from an adversarial write-and-restore race.
-        if len(data) != st.st_size or (
-            st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns
-        ) != (
-            after.st_dev, after.st_ino, after.st_size,
-            after.st_mtime_ns, after.st_ctime_ns
-        ):
+        if len(data) != initial[2] or initial != final:
             raise OSError("disposable inode changed or was read incompletely")
-        return (st.st_dev, st.st_ino), data
+        return (initial[0], initial[1]), data
     finally:
         os.close(fd)
 
