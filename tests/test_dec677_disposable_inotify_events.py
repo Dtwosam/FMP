@@ -1323,6 +1323,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
                 self.assertEqual(verdict['status'], 'BLOCKED')
 
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW') and hasattr(os, 'symlink'),
+                         'POSIX no-follow symlinks required')
     def test_disposable_sibling_pin_refuses_different_inode_and_symlink(self):
         with tempfile.TemporaryDirectory() as folder:
             parent = Path(folder)
@@ -1337,6 +1339,8 @@ class DisposableInotifyTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 module._snapshot_regular(sibling)
 
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'),
+                         'POSIX no-follow snapshot required')
     def test_disposable_sibling_same_inode_rewritten_bytes_are_detected(self):
         with tempfile.TemporaryDirectory() as folder:
             sibling = Path(folder) / 'unexpected-public-sibling'
