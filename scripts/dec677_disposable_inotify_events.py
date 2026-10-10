@@ -216,6 +216,12 @@ def _classify_stream(data: bytes, watch: int,
                         observed_child_is_directory[child_name] = bool(mask & IN_ISDIR)
                         deleted_entries.discard(child_name)
                     else:
+                        # Like deletion, move-out leaves this basename known
+                        # absent. Without a fresh create/move-in, a later
+                        # delete or move-out cannot be the complete history.
+                        if child_name in deleted_entries:
+                            okay = False
+                        deleted_entries.add(child_name)
                         if (child_name in observed_child_is_directory
                                 and observed_child_is_directory[child_name] != bool(mask & IN_ISDIR)):
                             okay = False
