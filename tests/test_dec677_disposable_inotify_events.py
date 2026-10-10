@@ -1974,6 +1974,53 @@ class DisposableInotifyTests(unittest.TestCase):
                     self.assertIn('Linux disposable kernel event monitor unavailable',
                                   result['findings'])
 
+
+    def test_two_deletes_of_same_child_make_stream_incomplete(self):
+        name = named(b'temporary-public-sibling')
+        stream = ev(wd=10, mask=module.IN_DELETE, data=name) * 2
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        verdict = module._evaluate(
+            b'a', b'a', stream, 9, True, False, directory_watch=10,
+            directory_inventory_ok=True, directory_inventory_names=("sample",),
+            transient_sibling_negative=True, transient_midpoint_verified=True)
+        self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_duplicate_unrelated_delete_contaminates_valid_transient_pair(self):
+        target = named(b'temporary-public-sibling')
+        other = named(b'other')
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=target)
+                  + ev(wd=10, mask=module.IN_DELETE, data=other)
+                  + ev(wd=10, mask=module.IN_DELETE, data=other)
+                  + ev(wd=10, mask=module.IN_DELETE, data=target))
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        verdict = module._evaluate(
+            b'a', b'a', stream, 9, True, False, directory_watch=10,
+            directory_inventory_ok=True, directory_inventory_names=("sample",),
+            transient_sibling_negative=True, transient_midpoint_verified=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+
+    def test_delete_create_delete_same_child_is_valid_timeline(self):
+        name = named(b'temporary-public-sibling')
+        stream = (ev(wd=10, mask=module.IN_DELETE, data=name)
+                  + ev(wd=10, mask=module.IN_CREATE, data=name)
+                  + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['expected_transient_pairs'], 1)
+
+    def test_delete_move_into_name_delete_is_valid_timeline(self):
+        name = named(b'temporary-public-sibling')
+        stream = (ev(wd=10, mask=module.IN_DELETE, data=name)
+                  + ev(wd=10, mask=module.IN_MOVED_TO, data=name, cookie=19)
+                  + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['expected_transient_pairs'], 0)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

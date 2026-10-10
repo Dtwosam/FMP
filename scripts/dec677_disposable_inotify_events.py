@@ -77,6 +77,7 @@ def _classify_stream(data: bytes, watch: int,
     source_modifications = 0
     observed_directory_changes = 0
     created_entries: set[bytes] = set()
+    deleted_entries: set[bytes] = set()
     matched_transient_pairs = 0
     expected_transient_pairs = 0
     expected_sibling_created = False
@@ -161,6 +162,9 @@ def _classify_stream(data: bytes, watch: int,
             if child_name is not None:
                 change = mask & DIRECTORY_CHANGES
                 if change == IN_CREATE:
+                    # A new child clears any pending previous deletion for
+                    # this basename, whether the child is a file or dir.
+                    deleted_entries.discard(child_name)
                     # This negative control creates a regular-file sibling.
                     # IN_ISDIR denotes an actual directory, not that file.
                     if mask & IN_ISDIR:
@@ -174,12 +178,20 @@ def _classify_stream(data: bytes, watch: int,
                             okay = False
                         created_entries.add(child_name)
                 elif change == IN_DELETE:
+                    # Two consecutive same-name removals with no new child
+                    # created or moved into that name contradict a complete
+                    # directory-entry timeline. Reject the entire stream.
+                    if child_name in deleted_entries:
+                        okay = False
+                    deleted_entries.add(child_name)
                     if not mask & IN_ISDIR and child_name in created_entries:
                         matched_transient_pairs += 1
                         if child_name == TRANSIENT_SIBLING_NAME.encode("ascii"):
                             expected_transient_pairs += 1
                     created_entries.discard(child_name)
                 elif change in (IN_MOVED_FROM, IN_MOVED_TO):
+                    if change == IN_MOVED_TO:
+                        deleted_entries.discard(child_name)
                     # After a move involving this basename, a previously
                     # created inode may have left or been replaced. A later
                     # IN_DELETE no longer proves create->unlink of that inode.
