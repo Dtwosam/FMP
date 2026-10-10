@@ -53,6 +53,15 @@ def _classify_stream(data: bytes, watch: int,
         return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0}
     if len(data) > 65536:
         return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0}
+    # The two watch identities come from distinct kernel registrations. An
+    # untrusted caller must not alias the directory watch to the file watch,
+    # or use a non-integer WD to make a fabricated observation appear quiet.
+    if directory_watch is not None and (
+        type(directory_watch) is not int or directory_watch < 0
+        or directory_watch == watch
+    ):
+        return {"well_formed": False, "overflow": True, "invalidated": True,
+                "write_events": 0, "directory_changes": 0}
     pos = 0
     observed_writes = 0
     observed_directory_changes = 0
@@ -79,6 +88,11 @@ def _classify_stream(data: bytes, watch: int,
             if wd != -1 or mask != IN_Q_OVERFLOW:
                 okay = False
         elif wd != watch and (directory_watch is None or wd != directory_watch):
+            okay = False
+        elif wd == watch and mask & (DIRECTORY_CHANGES | IN_ISDIR):
+            # This watch belongs to a known *regular file*. An IN_CREATE,
+            # IN_DELETE or move event on its WD is not a write to the file,
+            # and must never silently pass as an empty directory observation.
             okay = False
         if directory_watch is not None and wd == directory_watch and mask & DIRECTORY_CHANGES:
             observed_directory_changes += 1

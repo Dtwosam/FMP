@@ -67,6 +67,14 @@ Eight source-defined tests raise the current harness to **57 tests** (five manua
 
 Requiring known flags makes the parser more conservative but cannot ensure uninterrupted observation, kernel policy enforcement, coverage of every inode alias, completeness across the job lifetime, an untampered observer or actual 20-job runner evidence.
 
+## DEC-683 — Bind event meaning to the right watch descriptor
+
+The DEC-682 parser checks event mask allowlisting and accepts records for either the original **regular-file** watch or its **containing-directory** watch. It did not enforce which category of event belonged to which object. A syntactically valid `IN_CREATE`, `IN_DELETE`, `IN_MOVED_FROM` or `IN_MOVED_TO` record attributed to the *file* watch could therefore be accepted without increasing `write_events` or `directory_changes`, making that malformed observation look clean. Likewise, the `IN_ISDIR` modifier on the known regular-file watch was not rejected.
+
+The new decoder rejects all directory-entry masks or `IN_ISDIR` on the regular-file watch, and fails closed if the claimed directory-watch identity is not a nonnegative strict integer **distinct from the file-watch ID**. A real directory create event on the directory watch and a valid file close-write event remain separately counted, preserving intended Linux behavior.
+
+Seven new source-defined regressions raise the suite to **64 cases**, with five manually opt-in local Linux demonstrations still skipped during ordinary CI. The tests cover all directory-entry event types misattributed to the file, unexpected directory modifier, a single-file-watch spoof, aliased watch IDs, malformed watch ID values, legitimate dual-watch events and normal file write events. These check parser consistency only; actual watcher registration and source integrity require independent proof on the restricted runner.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

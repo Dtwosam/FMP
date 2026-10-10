@@ -402,6 +402,54 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['write_events'], 1)
 
+    def test_file_watch_cannot_claim_a_directory_create_or_delete(self):
+        for mask in (module.IN_CREATE, module.IN_DELETE,
+                     module.IN_MOVED_FROM, module.IN_MOVED_TO):
+            with self.subTest(mask=mask):
+                raw = ev(wd=9, mask=mask)
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertFalse(parsed['well_formed'])
+                verdict = module._evaluate(b'PUBLIC', b'PUBLIC', raw, 9, True, False,
+                                           directory_watch=10)
+                self.assertEqual(verdict['status'], 'BLOCKED')
+                self.assertTrue(verdict['observed_checks']['final_digest_equal'])
+                self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+
+    def test_file_watch_cannot_claim_isdir_modifier(self):
+        for mask in (module.IN_MODIFY | module.IN_ISDIR, module.IN_ISDIR | module.IN_CREATE):
+            with self.subTest(mask=mask):
+                self.assertFalse(module._classify_stream(ev(wd=9, mask=mask), 9,
+                                                        directory_watch=10)['well_formed'])
+
+    def test_single_file_watch_directory_change_is_never_quiet(self):
+        raw = ev(wd=9, mask=module.IN_CREATE)
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False)
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+
+    def test_directory_identity_cannot_equal_file_identity(self):
+        parsed = module._classify_stream(b'', 9, directory_watch=9)
+        self.assertFalse(parsed['well_formed'])
+        verdict = module._evaluate(b'a', b'a', b'', 9, True, False, directory_watch=9)
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_invalid_directory_watch_id_fail_closed(self):
+        for directory_watch in (True, False, -1, '10', 3.0, [], {}):
+            with self.subTest(directory_watch=repr(directory_watch)):
+                self.assertFalse(module._classify_stream(b'', 9, directory_watch)['well_formed'])
+
+    def test_legitimate_directory_event_and_file_write_still_count(self):
+        data = ev(wd=10, mask=module.IN_CREATE) + ev(wd=9, mask=module.IN_CLOSE_WRITE)
+        result = module._classify_stream(data, 9, directory_watch=10)
+        self.assertTrue(result['well_formed'])
+        self.assertEqual(result['directory_changes'], 1)
+        self.assertEqual(result['write_events'], 1)
+
+    def test_file_only_known_write_event_still_recognized(self):
+        result = module._classify_stream(ev(wd=9, mask=module.IN_CLOSE_WRITE), 9)
+        self.assertTrue(result['well_formed'])
+        self.assertEqual(result['write_events'], 1)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
