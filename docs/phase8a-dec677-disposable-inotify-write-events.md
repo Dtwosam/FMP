@@ -435,6 +435,14 @@ The decoder now tracks **all observed newly occupied basenames**, including name
 
 Five new source-defined tests bring the suite to **235 methods**: duplicate directory-create, file→directory and directory→file creates without removal, legitimate directory delete followed by file creation, and illegal create after same-name move-in with no removal. Any malformed stream still BLOCKS and cannot credit a synthetic negative control. Exact-head Phase 3/full regression and independent source/security review required; this does not authenticate the kernel, prevent writes or resolve annual run385 admission.
 
+## DEC-729 — Reject impossible observed file/directory kind transitions
+
+DEC-728 records which child basenames were created or moved into a watched directory, but does not remember whether a newly observed entry was a **regular file or a directory**. A synthetic sequence `IN_CREATE(file-name) → IN_DELETE|IN_ISDIR(same-name)`, or a newly created directory followed by a same-name **file** `IN_MOVED_FROM`, was still reported as a well-formed complete observer stream, despite no intervening replacement to justify the changed entry kind. Such a sequence can misrepresent event completeness even though the overall result remains BLOCKED.
+
+DEC-729 adds a separate per-name observed entry-kind dictionary. A child `IN_CREATE` stores `IN_ISDIR`; a matching `IN_DELETE` or `IN_MOVED_FROM` must have the same kind if that entry was previously observed. `IN_MOVED_TO` legitimately may replace an existing target and therefore replaces its kind record; a delete/move-out removes the record. A delete of a preexisting child whose kind has not been established is not rejected solely because its kind is unknown.
+
+Six source-defined unit methods bring the suite to **241** tests, covering opposite-kind deletes, wrong-kind move-outs, valid paired file/directory lifecycles, a kind-changing move-in replacement, and preexisting deletion. These are bounded, local synthetic event-contract checks. They cannot verify inode identity or guarantee OS-enforced absence of writes, and do not authorize annual dispatch.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
