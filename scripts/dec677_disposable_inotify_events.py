@@ -414,12 +414,20 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
 
 
 def _start_watch(path: Path) -> tuple[int, int, int]:
-    lib = ctypes.CDLL(None, use_errno=True)
-    lib.inotify_init1.argtypes = [ctypes.c_int]
-    lib.inotify_init1.restype = ctypes.c_int
-    lib.inotify_add_watch.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_uint32]
-    lib.inotify_add_watch.restype = ctypes.c_int
-    fd = lib.inotify_init1(os.O_NONBLOCK | os.O_CLOEXEC)
+    # Until inotify_init1 yields an integer FD, no descriptor is owned here.
+    # Unexpected injected loader/signature/init errors must still produce a
+    # handled BLOCKED result rather than escaping as RuntimeError.
+    try:
+        lib = ctypes.CDLL(None, use_errno=True)
+        lib.inotify_init1.argtypes = [ctypes.c_int]
+        lib.inotify_init1.restype = ctypes.c_int
+        lib.inotify_add_watch.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_uint32]
+        lib.inotify_add_watch.restype = ctypes.c_int
+        fd = lib.inotify_init1(os.O_NONBLOCK | os.O_CLOEXEC)
+    except Exception as error:
+        if isinstance(error, OSError):
+            raise
+        raise OSError("disposable inotify initialization raised unexpectedly") from error
     if type(fd) is not int:
         raise OSError("disposable inotify_init1 returned a noninteger descriptor")
     if fd > MAX_FILE_DESCRIPTOR:
