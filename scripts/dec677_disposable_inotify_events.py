@@ -398,7 +398,6 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     transient = Path(folder) / "temporary-public-sibling"
                     transient.write_bytes(b"PUBLIC-TEMPORARY")
                     transient.unlink()
-                raw = _read_pending(fd)
                 final_inode, end = _snapshot_regular(path)
                 inventory_names = tuple(sorted(p.name for p in Path(folder).iterdir()))
                 inventory_ok = inventory_names == ("sample",)
@@ -411,6 +410,10 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         sibling_final_inode == sibling_initial_inode
                         and sibling_final_bytes == sibling_initial_bytes == b"PUBLIC-EXTRA"
                     )
+                # Drain after final snapshots and directory enumeration, so
+                # events emitted *during* those reads are not silently left
+                # outside the disposable observer's sampled interval.
+                raw = _read_pending(fd)
                 return _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
                                  replacement_negative=replace_watched_inode,
