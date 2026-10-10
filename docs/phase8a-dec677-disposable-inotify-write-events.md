@@ -357,6 +357,14 @@ The observer now clears the expected-sibling creation flag on a same-name delete
 
 Four new source-defined tests bring the suite to **195 methods**: same-name delete cancels the claim, move-out cancels, move-in cancels, and unrelated child activity preserves the event-specific claim (still overall BLOCKED). This is synthetic basename lifecycle consistency, not a kernel-authenticated inode lineage proof, OS enforcement, or authorization for the annual runner. Exact-head full regression and independent source/security review required.
 
+## DEC-719 — Duplicate same-name create events invalidate event-stream completeness
+
+The synthetic decoder previously held pending named `IN_CREATE` events in a set. Two consecutive `IN_CREATE` events for the **same regular child basename**, without an intervening deletion or move, collapsed into the same set entry. A later `IN_DELETE` could therefore satisfy a transient control, even though the same-name duplicate was inconsistent with a complete ordered observation of real directory-entry creation. A second create for the same existing entry needs an intervening removal/replacement to be a distinct valid event.
+
+The decoder now marks the **entire stream malformed** when it encounters `IN_CREATE` for a still-pending regular-file basename. This does not authenticate Linux telemetry or prohibit legitimate unrelated names. A legitimate `CREATE → DELETE → CREATE → DELETE` sequence and a new create after same-name move remain supported. Four source-defined regression methods bring the suite to **199**. Two check that a duplicate target or unrelated basename cannot permit an affirmative transient negative claim, while two retain repeated properly separated controls. Deliberate mutation cases remain overall BLOCKED; Phase 3/full CI and independent security review are required.
+
+This is an intentionally conservative consistency filter over fake bounded inotify records, NOT proof of real no-write OS isolation, loss-free kernels or annual runner permissions.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

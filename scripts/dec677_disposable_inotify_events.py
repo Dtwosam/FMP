@@ -166,6 +166,12 @@ def _classify_stream(data: bytes, watch: int,
                     if mask & IN_ISDIR:
                         created_entries.discard(child_name)
                     else:
+                        # A second create for the exact same directory entry
+                        # without an intervening delete/move contradicts a
+                        # complete kernel event sequence. Do not interpret
+                        # a later delete as trusted transient-file evidence.
+                        if child_name in created_entries:
+                            okay = False
                         created_entries.add(child_name)
                 elif change == IN_DELETE:
                     if not mask & IN_ISDIR and child_name in created_entries:

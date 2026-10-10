@@ -1876,6 +1876,58 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(result['observed_checks']['sibling_creation_control_detected'])
         self.assertEqual(result['status'], 'BLOCKED')
 
+
+    def test_duplicate_create_then_delete_same_leaf_fails_closed(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=("sample",),
+            transient_sibling_negative=True, transient_midpoint_verified=True)
+        self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_duplicate_create_unrelated_leaf_fails_stream_closed(self):
+        target = named(b'temporary-public-sibling')
+        other = named(b'other')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=target)
+               + ev(wd=10, mask=module.IN_CREATE, data=other)
+               + ev(wd=10, mask=module.IN_CREATE, data=other)
+               + ev(wd=10, mask=module.IN_DELETE, data=target))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=("sample",),
+            transient_sibling_negative=True, transient_midpoint_verified=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+
+    def test_create_delete_create_delete_same_leaf_remains_two_witnesses(self):
+        name = named(b'temporary-public-sibling')
+        pair = (ev(wd=10, mask=module.IN_CREATE, data=name)
+                + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(pair + pair, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['expected_transient_pairs'], 2)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 2)
+
+    def test_create_move_out_then_create_same_leaf_is_not_duplicate(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=71)
+               + ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['expected_transient_pairs'], 1)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
