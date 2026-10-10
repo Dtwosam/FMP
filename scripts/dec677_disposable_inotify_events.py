@@ -57,9 +57,9 @@ def _classify_stream(data: bytes, watch: int,
     """Parse a bounded kernel event buffer, fail closed on bad identity/overflow."""
     if (not isinstance(data, bytes) or type(watch) is not int
             or not 0 <= watch <= MAX_WATCH_DESCRIPTOR):
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False}
     if len(data) > 65536:
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False}
     # The two watch identities come from distinct kernel registrations. An
     # untrusted caller must not alias the directory watch to the file watch,
     # or use a non-integer WD to make a fabricated observation appear quiet.
@@ -69,7 +69,7 @@ def _classify_stream(data: bytes, watch: int,
         or directory_watch == watch
     ):
         return {"well_formed": False, "overflow": True, "invalidated": True,
-                "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False
+                "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False}
     pos = 0
     observed_writes = 0
     source_content_writes = 0
