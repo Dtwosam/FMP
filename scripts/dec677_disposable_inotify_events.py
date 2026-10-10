@@ -84,7 +84,11 @@ def _classify_stream(data: bytes, watch: int,
         pos += EVENT.size
         # A syntactically complete event with no known action or unexpected
         # flags must not be interpreted as a clean inotify observation.
-        if not (mask & EVENT_ACTIONS) or mask & ~EVENT_ALLOWED:
+        actions = mask & EVENT_ACTIONS
+        # Linux emits one primary inotify action per record. IN_ISDIR is a
+        # modifier, not permission to combine unrelated create/write/close
+        # actions into a fabricated single event.
+        if not actions or actions & (actions - 1) or mask & ~EVENT_ALLOWED:
             okay = False
         # The inotify cookie correlates rename/move records only. A cookie
         # on a file write, child create/delete, overflow or self event is
