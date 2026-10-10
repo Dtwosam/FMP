@@ -18,7 +18,7 @@ The **policy** JSON has schema=dec650-structural-ledger-v1, repository=Dtwosam/F
 
 The **ledger** repeats each policy identity and includes **20 uniquely identified job records**: one preflight, one freeze, plus 18 distinct cells spanning 3 symbols (EURUSD, GBPUSD, USDJPY), 3 timeframes (5m, 15m, 1h) and two horizons (60, 240). These coordinates reflect the committed annual workflow matrix at Git blob 09b3a8f5ace25f9bf316827b9f4f82df7f72d4e1. No job is launched to collect data.
 
-Each job requires a positive unique job_id, kind and exact matrix coordinates (null for non-cells), runner_image/kernel/mount_namespace/mountinfo_sha256/source_mount_id, non-root restricted_uid, no_new_privs=true, effective_capabilities="0" (normalized), checkout_mount_readonly=true, empty writable_checkout_aliases and unapproved_inherited_fds, safe standard_streams for FD 0/1/2, and equal 64-hex checkout before/after digests. These values are unverified *claims* supplied by the ledger author.
+Each job requires a positive unique job_id, kind and exact matrix coordinates (null for non-cells), runner_identity/runner_image/kernel/mount_namespace and mountinfo SHA-256, explicit source/input/output mount IDs, observer_identity and manifest digest, UID/GID maps, non-root restricted UID and GID, empty supplementary groups, no_new_privs=true, all effective/permitted/ambient capabilities recorded zero, and seccomp mode `filter` or `strict`. It also requires absolute working directory and executable names, argv digest, a nonempty allowlist of environment variable names without credential-bearing names, explicit outside-checkout cwd, read-only inputs, external output and separately isolated publisher, empty privileged_skips and unresolved_exceptions, empty writable_checkout_aliases and unapproved_inherited_fds, safe standard_streams for FD 0/1/2, equal 64-hex checkout before/after digests, and observer/attempt/race/external-publication/cleanup SHA-256 receipts. These values remain unverified *claims* supplied by the ledger author; checking whether a field exists does **not** establish real isolation, independent attestation or byte-level authenticity.
 
 Every job must contain exactly twelve checks, each with status=PASS, skipped=false, privileged_test_executed=true, and a 64-hex evidence_sha256:
 
@@ -27,7 +27,7 @@ Every job must contain exactly twelve checks, each with status=PASS, skipped=fal
 - credential_leak_denied, checkout_inventory_unchanged, exclusive_external_publication
 - concurrent_publication_conflict_denied, failure_cleanup_clean
 
-A missing or duplicate job, wrong identity, wrong 385/2022 predecessor, wrong attempt, root actor, writable alias, leaked descriptor, skipped/failed check, missing evidence hash, changed checkout digest or mismatched policy digest yields BLOCKED. None of the data can be promoted from structural completeness to real OS proof without a separate trust mechanism and independent review.
+A missing or duplicate job, wrong identity, wrong 385/2022 predecessor, wrong attempt, root actor, nonempty supplementary groups, unconfined seccomp, unaccounted permitted or ambient capabilities, missing observer or race-replay receipt, unsafe environment variable name, writable alias, leaked descriptor, skipped/failed check, missing evidence hash, changed checkout digest or mismatched policy digest yields BLOCKED. None of the data can be promoted from structural completeness to real OS proof without a separate trust mechanism and independent review.
 
 ## Local commands
 
@@ -38,7 +38,7 @@ Only use previously collected, non-protected, independently permitted inputs:
       --policy-sha256 REVIEWER_AUTHENTICATED_64_HEX_DIGEST \
       --ledger /outside/runner-ledger.json
 
-Run the 32 synthetic regression cases without root, network, historical data or GitHub authorization:
+Run the 37 synthetic regression cases without root, network, historical data or GitHub authorization:
 
     python -B -m unittest discover -s tests -p 'test_dec650_ledger_structure_audit.py' -v
 
