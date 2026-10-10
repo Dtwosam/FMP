@@ -864,6 +864,39 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 1)
 
+
+    def test_nonlist_poll_return_cannot_be_treated_as_quiet(self):
+        for value in (None, (), {}, False):
+            with self.subTest(value=repr(value)):
+                class BrokenPoll:
+                    def register(self, *_args): pass
+                    def poll(self, _timeout): return value
+                with patch.object(module.select, 'poll', return_value=BrokenPoll()):
+                    with patch.object(module.os, 'read') as read:
+                        with self.assertRaisesRegex(OSError, 'malformed readiness'):
+                            module._read_pending(17)
+                        read.assert_not_called()
+
+    def test_impossible_inotify_read_chunk_larger_than_requested_blocks(self):
+        class Ready:
+            def register(self, *_args): pass
+            def poll(self, _timeout): return [(17, module.select.POLLIN)]
+        with patch.object(module.select, 'poll', return_value=Ready()):
+            with patch.object(module.os, 'read', return_value=b'X' * 4097):
+                with self.assertRaisesRegex(OSError, 'impossible chunk shape'):
+                    module._read_pending(17)
+
+    def test_nonbytes_inotify_read_result_fails_closed(self):
+        for value in ('bytes-looking', bytearray(b'X'), [88], 0):
+            with self.subTest(value=repr(value)):
+                class Ready:
+                    def register(self, *_args): pass
+                    def poll(self, _timeout): return [(17, module.select.POLLIN)]
+                with patch.object(module.select, 'poll', return_value=Ready()):
+                    with patch.object(module.os, 'read', return_value=value):
+                        with self.assertRaisesRegex(OSError, 'impossible chunk shape'):
+                            module._read_pending(17)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
