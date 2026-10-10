@@ -329,6 +329,65 @@ class LedgerStructureTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 2)
             self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
 
+    @unittest.skipUnless(hasattr(os, "O_DIRECTORY") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_symlinked_parent_directory_rejected(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp); real = base / "real"; real.mkdir()
+            alias = base / "alias"
+            alias.symlink_to(real, target_is_directory=True)
+            raw = json.dumps(policy).encode("utf-8")
+            (real / "policy.json").write_bytes(raw)
+            ledger_file = base / "ledger.json"
+            ledger_file.write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(alias / "policy.json"),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(),
+                 "--ledger", str(ledger_file)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    @unittest.skipUnless(hasattr(os, "O_DIRECTORY") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_parent_traversal_rejected(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            data = base / "data"
+            data.mkdir()
+            raw = json.dumps(policy).encode("utf-8")
+            (data / "policy.json").write_bytes(raw)
+            (base / "ledger.json").write_text(json.dumps(ledger))
+            path = data / ".." / "data" / "policy.json"
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(path),
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(),
+                 "--ledger", str(base / "ledger.json")],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 2, proc.stderr)
+            self.assertEqual(json.loads(proc.stdout)["status"], "BLOCKED")
+
+    @unittest.skipUnless(hasattr(os, "O_DIRECTORY") and hasattr(os, "O_NOFOLLOW"), "POSIX-only")
+    def test_cli_relative_regular_inputs_preserve_unverified_exit(self):
+        policy, ledger = fixtures()
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            raw = json.dumps(policy).encode("utf-8")
+            (base / "policy.json").write_bytes(raw)
+            (base / "ledger.json").write_text(json.dumps(ledger))
+            proc = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", "policy.json",
+                 "--policy-sha256", hashlib.sha256(raw).hexdigest(),
+                 "--ledger", "ledger.json"],
+                cwd=base, capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(proc.returncode, 3, proc.stderr)
+            result = json.loads(proc.stdout)
+            self.assertEqual(result["status"], "STRUCTURALLY_COMPLETE_UNVERIFIED")
+            self.assertFalse(result["can_authorize_dispatch"])
+
     def test_cli_directory_input_is_rejected(self):
         policy, ledger = fixtures()
         with tempfile.TemporaryDirectory() as tmp:
