@@ -105,6 +105,12 @@ Five additional regression cases bring this stacked suite to **84 source-defined
 
 **Limit:** two integer labels in an untrusted test are not proof that kernel watches were actually installed and retained for the lifetime of an annual job. Only independent OS and observer attestation can establish real coverage. The source remains nonauthorizing and out of production.
 
+## DEC-687 — Bound claimed watch identities to Linux signed 32-bit descriptors
+
+The DEC-686 dual-watch presence test required strict nonnegative Python integers and distinct file/directory IDs, but accepted arbitrarily large integers. Linux inotify watch descriptors are returned as **signed 32-bit** values by `inotify_add_watch`. A caller could therefore pass two impossible positive numbers with an empty synthetic event stream and obtain `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, falsely implying even the internal watch-identity structure was plausible.
+
+Both the byte-stream decoder and evaluator now require each watch ID to lie in the inclusive signed nonnegative range `0..2^31-1` and remain distinct. Four new source-defined tests raise the suite to **88 cases**: impossible file-watch IDs, impossible directory-watch IDs, the inclusive maximum boundary, and an oversized directory watch alongside a legitimate file event. These are parser-consistency checks on invented public event records, not kernel provenance claims. The status remains `BLOCKED` or `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never authorization. Exact-head Phase 3/full regression and independent review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
