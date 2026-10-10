@@ -36,10 +36,24 @@ def fixtures():
         jobs.append({
             "kind": parts[0],
             "matrix": {"symbol": parts[1], "timeframe": parts[2], "horizon": int(parts[3])} if len(parts) == 4 else None,
-            "job_id": 10000 + i, "runner_image": "synthetic-image",
+            "job_id": 10000 + i,
+            "runner_identity": "synthetic-runner-id", "runner_image": "synthetic-image",
             "kernel": "synthetic-kernel", "mount_namespace": "synthetic-ns",
             "mountinfo_sha256": SHA64, "source_mount_id": "synthetic-mount",
-            "restricted_uid": 65534, "no_new_privs": True,
+            "input_mount_id": "synthetic-input", "output_mount_id": "synthetic-output",
+            "observer_identity": "synthetic-observer",
+            "uid_map_sha256": SHA64, "gid_map_sha256": SHA64,
+            "observer_manifest_sha256": SHA64, "attempt_log_sha256": SHA64,
+            "race_replay_sha256": SHA64, "external_report_receipt_sha256": SHA64,
+            "cleanup_receipt_sha256": SHA64, "argv_sha256": SHA64,
+            "restricted_uid": 65534, "restricted_gid": 65534,
+            "supplementary_groups": [], "no_new_privs": True,
+            "permitted_capabilities": "0", "ambient_capabilities": "0",
+            "seccomp_mode": "filter", "working_directory": "/tmp/synthetic-cwd",
+            "process_executable": "/usr/bin/python3", "env_allowlist_keys": ["PATH", "LANG"],
+            "cwd_outside_checkout": True, "input_mounts_readonly": True,
+            "output_mount_outside_checkout": True, "publisher_isolated": True,
+            "privileged_skips": [], "unresolved_exceptions": [],
             "effective_capabilities": "0", "checkout_mount_readonly": True,
             "writable_checkout_aliases": [], "unapproved_inherited_fds": [],
             "standard_streams": {"0": "devnull", "1": "external-log", "2": "external-log"},
@@ -106,6 +120,36 @@ class LedgerStructureTests(unittest.TestCase):
 
     def test_missing_evidence_hash_blocks(self):
         p, l = fixtures(); l["jobs"][0]["checks"]["directory_reparent_denied"].pop("evidence_sha256")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_unreported_gid_or_groups_block(self):
+        p, l = fixtures()
+        l["jobs"][0].pop("restricted_gid")
+        l["jobs"][1]["supplementary_groups"] = [1000]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_missing_observer_or_publication_receipts_block(self):
+        p, l = fixtures()
+        l["jobs"][0].pop("observer_manifest_sha256")
+        l["jobs"][1].pop("external_report_receipt_sha256")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_unconfined_seccomp_or_permitted_caps_block(self):
+        p, l = fixtures()
+        l["jobs"][0]["seccomp_mode"] = "unconfined"
+        l["jobs"][1]["permitted_capabilities"] = "1"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_credential_env_or_checkout_cwd_blocks(self):
+        p, l = fixtures()
+        l["jobs"][0]["env_allowlist_keys"].append("GH_TOKEN")
+        l["jobs"][1]["cwd_outside_checkout"] = False
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_skipped_actor_and_missing_race_replay_block(self):
+        p, l = fixtures()
+        l["jobs"][0]["privileged_skips"] = ["mount remount denied"]
+        l["jobs"][1].pop("race_replay_sha256")
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
 
     def test_root_actor_blocks(self):
