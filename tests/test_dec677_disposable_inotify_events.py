@@ -1237,7 +1237,7 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['expected_sibling_created'])
         verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
                                    directory_watch=10, directory_inventory_ok=False,
-                                   directory_inventory_names=("sample", "unexpected-public-sibling"),
+                                   directory_inventory_names=("unexpected-public-sibling", "sample"),
                                    sibling_snapshot_stable=True,
                                    sibling_negative=True)
         self.assertTrue(verdict['observed_checks']['sibling_creation_control_detected'])
@@ -1288,7 +1288,7 @@ class DisposableInotifyTests(unittest.TestCase):
         raw = ev(wd=10, mask=module.IN_CREATE,
                  data=named(b'unexpected-public-sibling'))
         for names in (None, [], ["sample", "unexpected-public-sibling"],
-                      ("unexpected-public-sibling", "sample"),
+                      ("sample", "unexpected-public-sibling"),
                       ("sample",), ("sample", "unrelated")):
             with self.subTest(names=repr(names)):
                 verdict = module._evaluate(
@@ -1380,6 +1380,35 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(verdict['can_authorize_dispatch'])
         self.assertFalse(verdict['independent_os_proof_verified'])
         self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+
+
+    def test_sorted_directory_enumeration_recognizes_correct_persistent_sibling(self):
+        with tempfile.TemporaryDirectory() as folder:
+            parent = Path(folder)
+            (parent / "sample").write_bytes(b"public")
+            (parent / module.PERSISTENT_SIBLING_NAME).write_bytes(b"PUBLIC-EXTRA")
+            names = tuple(sorted(path.name for path in parent.iterdir()))
+            self.assertEqual(names, ("unexpected-public-sibling", "sample"))
+            raw = ev(wd=10, mask=module.IN_CREATE,
+                     data=named(b"unexpected-public-sibling"))
+            verdict = module._evaluate(
+                b"public", b"public", raw, 9, True, False,
+                directory_watch=10, directory_inventory_ok=False,
+                directory_inventory_names=names, sibling_snapshot_stable=True,
+                sibling_negative=True)
+            self.assertTrue(verdict['observed_checks']['sibling_creation_control_detected'])
+            self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_unsorted_input_tuple_cannot_claim_persistent_sibling_witness(self):
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(b"unexpected-public-sibling"))
+        verdict = module._evaluate(
+            b"public", b"public", raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=("sample", "unexpected-public-sibling"),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
