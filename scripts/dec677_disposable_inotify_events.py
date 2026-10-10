@@ -112,9 +112,11 @@ def _classify_stream(data: bytes, watch: int,
                 okay = False
             if nbytes:
                 terminator = name_bytes.find(b"\x00")
-                # Linux inotify_user.c rounds basename_len + 1 to the
-                # sizeof(struct inotify_event) boundary, not 4 bytes.
-                if (nbytes % EVENT.size != 0 or terminator <= 0
+                # Linux returns the *minimum* roundup(name_len + 1,
+                # sizeof(struct inotify_event)) length, not any arbitrary
+                # multiple of the header size with extra zero padding.
+                padded_len = ((terminator + EVENT.size) // EVENT.size) * EVENT.size
+                if (terminator <= 0 or nbytes != padded_len
                         or name_bytes[:terminator] in (b".", b"..")
                         or b"/" in name_bytes[:terminator]
                         or any(byte != 0 for byte in name_bytes[terminator:])):
