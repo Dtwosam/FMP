@@ -38,6 +38,9 @@ EVENT_ACTIONS = MASK | DIRECTORY_CHANGES
 EVENT_ALLOWED = EVENT_ACTIONS | IN_ISDIR
 DIRECTORY_MASK = EVENT_ACTIONS
 EVENT = struct.Struct("iIII")
+# Kernel inotify watch descriptors are signed 32-bit integers. An arbitrary
+# Python int is not evidence of a possible installed Linux watch identity.
+MAX_WATCH_DESCRIPTOR = (1 << 31) - 1
 
 
 def _outcome(findings: list[str], checks: dict[str, bool] | None = None) -> dict[str, Any]:
@@ -49,7 +52,8 @@ def _outcome(findings: list[str], checks: dict[str, bool] | None = None) -> dict
 def _classify_stream(data: bytes, watch: int,
                      directory_watch: int | None = None) -> dict[str, Any]:
     """Parse a bounded kernel event buffer, fail closed on bad identity/overflow."""
-    if not isinstance(data, bytes) or type(watch) is not int or watch < 0:
+    if (not isinstance(data, bytes) or type(watch) is not int
+            or not 0 <= watch <= MAX_WATCH_DESCRIPTOR):
         return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0}
     if len(data) > 65536:
         return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0}
@@ -57,7 +61,8 @@ def _classify_stream(data: bytes, watch: int,
     # untrusted caller must not alias the directory watch to the file watch,
     # or use a non-integer WD to make a fabricated observation appear quiet.
     if directory_watch is not None and (
-        type(directory_watch) is not int or directory_watch < 0
+        type(directory_watch) is not int
+        or not 0 <= directory_watch <= MAX_WATCH_DESCRIPTOR
         or directory_watch == watch
     ):
         return {"well_formed": False, "overflow": True, "invalidated": True,
@@ -134,9 +139,10 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         # never call a file-only observation "complete" merely because the
         # file event queue was quiet. Missing watch identity is fail-closed.
         "both_watches_identified": (
-            type(watch) is int and watch >= 0
+            type(watch) is int and 0 <= watch <= MAX_WATCH_DESCRIPTOR
             and type(directory_watch) is int
-            and directory_watch >= 0 and directory_watch != watch
+            and 0 <= directory_watch <= MAX_WATCH_DESCRIPTOR
+            and directory_watch != watch
         ),
         "final_digest_equal": before == after and hashlib.sha256(before).digest() == hashlib.sha256(after).digest(),
         "watched_inode_matches_final_path": inode_stable is True,
