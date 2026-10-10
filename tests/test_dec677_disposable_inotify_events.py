@@ -633,6 +633,60 @@ class DisposableInotifyTests(unittest.TestCase):
                                    directory_watch=1 << 31)
         self.assertEqual(verdict['status'], 'BLOCKED')
 
+
+    def test_two_creates_cannot_validate_a_create_remove_negative(self):
+        stream = ev(wd=10, mask=module.IN_CREATE) * 2
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertEqual(parsed['directory_changes'], 2)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+        result = module._evaluate(b'a', b'a', stream, 9, True, False,
+                                  directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_two_deletes_cannot_validate_a_create_remove_negative(self):
+        stream = ev(wd=10, mask=module.IN_DELETE) * 2
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+        result = module._evaluate(b'a', b'a', stream, 9, True, False,
+                                  directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+
+    def test_create_then_delete_of_different_leaf_is_not_matched(self):
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=b'a\\x00\\x00\\x00')
+                  + ev(wd=10, mask=module.IN_DELETE, data=b'b\\x00\\x00\\x00'))
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+
+    def test_delete_then_create_is_not_a_transient_completion(self):
+        stream = ev(wd=10, mask=module.IN_DELETE) + ev(wd=10, mask=module.IN_CREATE)
+        result = module._evaluate(b'a', b'a', stream, 9, True, False,
+                                  directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertIn('synthetic transient directory negative control not observed',
+                      result['findings'])
+
+    def test_named_create_delete_pair_survives_interleaved_unrelated_event(self):
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=b'a\\x00\\x00\\x00')
+                  + ev(wd=10, mask=module.IN_CREATE, data=b'b\\x00\\x00\\x00')
+                  + ev(wd=10, mask=module.IN_DELETE, data=b'a\\x00\\x00\\x00'))
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['transient_create_delete_pairs'], 1)
+        result = module._evaluate(b'a', b'a', stream, 9, True, False,
+                                  directory_watch=10, transient_sibling_negative=True)
+        self.assertTrue(result['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_combined_create_delete_mask_cannot_forge_a_pair(self):
+        raw = ev(wd=10, mask=module.IN_CREATE | module.IN_DELETE)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+        result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                  directory_watch=10, transient_sibling_negative=True)
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
