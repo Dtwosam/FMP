@@ -9,6 +9,7 @@ This executable checker complements [DEC-650 runner-isolation contract](https://
 - **BLOCKED** (exit 2): missing, conflicting, skipped, failed or structurally unsafe evidence.
 - **STRUCTURALLY_COMPLETE_UNVERIFIED** (exit **3**, deliberately nonzero): every specified field is present and consistent in *untrusted JSON*. This is **not a security PASS**. A wrapper which executes `if audit; then ...` must never treat this unverified evidence as success.
 - Both states **always** include can_authorize_dispatch=false and independent_os_proof_verified=false.
+- **`-h`/`--help` exits 2**, despite displaying ordinary argparse usage text. The default zero status would be unsafe for shell wrappers that treat any exit 0 as a dispatch signal. Usage/errors are not evidence verdicts and must never be interpreted as authorization.
 
 An actor may fabricate plausible observations, check statuses and hashes. This code cannot independently authenticate those statements. The actual DEC-650 reviewer must verify real OS mounts, capabilities, inherited descriptors, checkout inventories, report receipts, kernel measurements and observer provenance. This checker is neither an OS enforcement mechanism nor a GitHub dispatch admission control. Passing it can **never** consume or authorize run 385.
 
@@ -38,7 +39,7 @@ Only use previously collected, non-protected, independently permitted inputs:
       --policy-sha256 REVIEWER_AUTHENTICATED_64_HEX_DIGEST \
       --ledger /outside/runner-ledger.json
 
-Run the 53 synthetic regression cases without root, network, historical data or GitHub authorization:
+Run the 54 synthetic regression cases without root, network, historical data or GitHub authorization:
 
     python -B -m unittest discover -s tests -p 'test_dec650_ledger_structure_audit.py' -v
 

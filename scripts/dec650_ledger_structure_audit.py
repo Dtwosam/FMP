@@ -46,6 +46,14 @@ IDENTITY_FIELDS = (
 )
 
 
+class NonAuthorizingArgumentParser(argparse.ArgumentParser):
+    """Never expose argparse's otherwise-successful --help exit code 0."""
+
+    def exit(self, status: int = 0, message: str | None = None) -> None:
+        # Exit 0 could be mistaken for authorization by shell wrappers.
+        super().exit(status if status != 0 else 2, message)
+
+
 def _sha40(value: Any) -> bool:
     return isinstance(value, str) and HEX40.fullmatch(value) is not None
 
@@ -300,7 +308,7 @@ def _strict_json(value: bytes) -> Any:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Offline DEC-650 ledger structure audit (NEVER authorizes execution)")
+    parser = NonAuthorizingArgumentParser(description="Offline DEC-650 ledger structure audit (NEVER authorizes execution)")
     parser.add_argument("--policy", type=Path, required=True)
     parser.add_argument("--policy-sha256", required=True, help="Reviewer-supplied SHA-256 of exact policy bytes")
     parser.add_argument("--ledger", type=Path, required=True)
