@@ -111,6 +111,14 @@ The DEC-686 dual-watch presence test required strict nonnegative Python integers
 
 Both the byte-stream decoder and evaluator now require each watch ID to lie in the inclusive signed nonnegative range `0..2^31-1` and remain distinct. Four new source-defined tests raise the suite to **88 cases**: impossible file-watch IDs, impossible directory-watch IDs, the inclusive maximum boundary, and an oversized directory watch alongside a legitimate file event. These are parser-consistency checks on invented public event records, not kernel provenance claims. The status remains `BLOCKED` or `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never authorization. Exact-head Phase 3/full regression and independent review remain required.
 
+## DEC-688 — A transient sibling must have a matching create/delete event pair
+
+The earlier transient-directory negative check equated **two directory-change records** with evidence of a create-then-delete control. Two `IN_CREATE` records, two `IN_DELETE` records, or a create for one leaf followed by a delete for another could satisfy `transient_directory_control_detected`. The final outcome was still `BLOCKED`, but the claimed negative-control detection was not supported by its events.
+
+The parser now tracks validated directory-watch child names: an `IN_CREATE` must precede an `IN_DELETE` of the **same basename** to count as a `transient_create_delete_pairs` witness. The evaluator uses at least one matched pair for the deliberate transient negative mode, instead of simply counting events. Six new synthetic regressions bring the suite to **94 source-defined tests**: duplicate creates, duplicate deletes, mismatched names, reversed order, interleaved matching events and a combined-action spoof. The real Linux demonstration still creates and unlinks one disposable sibling after watch installation.
+
+This is **not authenticated or complete kernel evidence**; it merely stops the harness from overstating its own negative-control observation. All modes remain nonauthorizing, and exact-head CI plus independent review are still needed.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
