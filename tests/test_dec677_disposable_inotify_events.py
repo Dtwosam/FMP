@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import random
 from pathlib import Path
 import subprocess
 import sys
@@ -1043,6 +1044,54 @@ class DisposableInotifyTests(unittest.TestCase):
                                    directory_watch=10, transient_sibling_negative=True)
         self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
+
+
+    def test_deterministic_malformed_byte_corpus_cannot_authorize(self):
+        rng = random.Random(0xDEC699)
+        for index in range(512):
+            raw = bytes(rng.getrandbits(8) for _ in range(rng.randrange(160)))
+            with self.subTest(case=index, length=len(raw)):
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertIs(type(parsed['well_formed']), bool)
+                self.assertGreaterEqual(parsed['write_events'], 0)
+                self.assertGreaterEqual(parsed['directory_changes'], 0)
+                verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
+                                           directory_watch=10)
+                self.assertIn(verdict['status'],
+                              ('BLOCKED', 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED'))
+                self.assertFalse(verdict['can_authorize_dispatch'])
+                self.assertFalse(verdict['independent_os_proof_verified'])
+
+    def test_deterministic_forged_kernel_headers_always_block(self):
+        rng = random.Random(0xDEC69A)
+        for index in range(512):
+            watch = rng.choice((9, 10, 11, -1))
+            mask = rng.getrandbits(32)
+            cookie = rng.getrandbits(32)
+            declared = rng.randrange(5000)
+            name = bytes(rng.getrandbits(8) for _ in range(rng.randrange(64)))
+            raw = module.EVENT.pack(watch, mask, cookie, declared) + name
+            with self.subTest(case=index):
+                verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
+                                           directory_watch=10)
+                self.assertEqual(verdict['status'], 'BLOCKED')
+                self.assertFalse(verdict['can_authorize_dispatch'])
+                self.assertFalse(verdict['independent_os_proof_verified'])
+
+    def test_bounded_bit_flip_mutations_never_promote_local_evidence(self):
+        base = (ev(wd=9, mask=module.IN_MODIFY)
+                + ev(wd=10, mask=module.IN_CREATE))
+        for offset in range(len(base)):
+            for bit in (1, 8, 128):
+                mutated = bytearray(base)
+                mutated[offset] ^= bit
+                verdict = module._evaluate(
+                    b'public', b'public', bytes(mutated), 9, True, False,
+                    directory_watch=10)
+                self.assertIn(verdict['status'],
+                              ('BLOCKED', 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED'))
+                self.assertFalse(verdict['can_authorize_dispatch'])
+                self.assertFalse(verdict['independent_os_proof_verified'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
