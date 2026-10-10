@@ -75,6 +75,16 @@ The new decoder rejects all directory-entry masks or `IN_ISDIR` on the regular-f
 
 Seven new source-defined regressions raise the suite to **64 cases**, with five manually opt-in local Linux demonstrations still skipped during ordinary CI. The tests cover all directory-entry event types misattributed to the file, unexpected directory modifier, a single-file-watch spoof, aliased watch IDs, malformed watch ID values, legitimate dual-watch events and normal file write events. These check parser consistency only; actual watcher registration and source integrity require independent proof on the restricted runner.
 
+## DEC-684 — Bound event filename layout to the watch type
+
+The earlier inotify decoder bounded the `len` field but did not validate its contents. A directory `IN_CREATE` record with **no filename**, an un-terminated filename, embedded invalid path separators or nonzero trailing padding could therefore appear structurally well formed. A regular-file watch event could also carry a fabricated filename. This is distinct from DEC-683's mask/watch-ID provenance requirement.
+
+The parser now requires `len=0` for the known regular-file watch and the special overflow event. For a directory-watch child-entry mutation, a **nonempty, single-basename**, NUL-terminated filename is mandatory. Named fields must be 4-byte aligned, with only zero bytes following the first NUL; slash-containing path strings are rejected. A directory watcher can still receive name-free self events that do not report child directory-entry mutations. The existing synthetic `ev()` helper was updated to produce realistic named and zero-padded directory child events.
+
+Nine new source-defined tests bring the suite to **73 tests** (five manual Linux demonstrations stay optional/skipped in routine CI). Cases cover missing filename, no terminator, nonzero padding, empty name, path separators, a named file-watch record, unaligned name length, correct padding and a named overflow record. Malformed layout yields `BLOCKED`, never zero exit or real authority.
+
+This is a conservative offline parser consistency check, **not trusted kernel telemetry** or proof of actual OS-enforced write prevention. Runtime inode aliases, privileged host siblings and the 20 real protected annual jobs remain outside this toy observer.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

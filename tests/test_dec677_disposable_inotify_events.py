@@ -19,6 +19,10 @@ spec.loader.exec_module(module)
 def ev(wd=9, mask=None, data=b''):
     if mask is None:
         mask = module.IN_CLOSE_WRITE
+    # A real directory-entry event includes a NUL-terminated, padded name.
+    # Preserve the explicit data argument for adversarial malformed records.
+    if wd == 10 and mask & module.DIRECTORY_CHANGES and not data:
+        data = b"public\x00\x00"
     return module.EVENT.pack(wd, mask, 0, len(data)) + data
 
 
@@ -168,7 +172,7 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(r['independent_os_proof_verified'])
 
     def test_directory_create_event_is_separately_accounted(self):
-        data = ev(wd=10, mask=module.IN_CREATE, data=b'new-file\\x00')
+        data = ev(wd=10, mask=module.IN_CREATE, data=b'new-file\x00\x00\x00\x00')
         observed = module._classify_stream(data, 9, directory_watch=10)
         self.assertTrue(observed['well_formed'])
         self.assertEqual(observed['directory_changes'], 1)
@@ -449,6 +453,48 @@ class DisposableInotifyTests(unittest.TestCase):
         result = module._classify_stream(ev(wd=9, mask=module.IN_CLOSE_WRITE), 9)
         self.assertTrue(result['well_formed'])
         self.assertEqual(result['write_events'], 1)
+
+    def test_directory_child_event_requires_filename(self):
+        raw = module.EVENT.pack(10, module.IN_CREATE, 0, 0)
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_directory_name_without_nul_terminator_blocks(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b"ABCD")
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_directory_name_without_zero_padding_blocks(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b"a\x00X\x00")
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_empty_directory_child_name_blocks(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b"\x00\x00\x00\x00")
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_directory_leaf_name_cannot_include_path_separator(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b"a/b\x00")
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_file_watch_event_cannot_have_name_payload(self):
+        raw = ev(wd=9, mask=module.IN_CLOSE_WRITE, data=b"fake\x00\x00\x00\x00")
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+        self.assertEqual(module._evaluate(b'x', b'x', raw, 9, True, False,
+                                          directory_watch=10)['status'], 'BLOCKED')
+
+    def test_misaligned_directory_name_field_blocks(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b"a\x00\x00")
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_valid_zero_padded_directory_basename_is_accepted_structurally(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=b"abc\x00")
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 1)
+
+    def test_special_overflow_event_cannot_carry_child_name(self):
+        raw = ev(wd=-1, mask=module.IN_Q_OVERFLOW, data=b"abc\x00")
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['overflow'])
+        self.assertFalse(parsed['well_formed'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
