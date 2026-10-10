@@ -3119,6 +3119,64 @@ class DisposableInotifyTests(unittest.TestCase):
                 close.assert_not_called()
         self.assertEqual(add.calls, 0)
 
+
+    def test_live_inventory_read_accepts_generated_one_and_two_name_cases(self):
+        with tempfile.TemporaryDirectory() as folder:
+            parent = Path(folder)
+            (parent / 'sample').write_bytes(b'public')
+            self.assertEqual(module._bounded_inventory_names(parent),
+                             ('sample',))
+            (parent / module.PERSISTENT_SIBLING_NAME).write_bytes(b'extra')
+            self.assertEqual(module._bounded_inventory_names(parent),
+                             tuple(sorted(('sample', module.PERSISTENT_SIBLING_NAME))))
+
+    def test_live_inventory_stops_after_third_entry_and_blocks_quiet_claim(self):
+        class Entry:
+            def __init__(self, name):
+                self.name = name
+        class Scandir:
+            def __init__(self):
+                self.reads = 0
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def __iter__(self):
+                return self
+            def __next__(self):
+                self.reads += 1
+                if self.reads > 3:
+                    raise AssertionError('scanned beyond sufficient rejection witness')
+                return Entry(('sample', 'public-a', 'public-b')[self.reads - 1])
+        scan = Scandir()
+        with patch.object(module.os, 'scandir', return_value=scan) as scandir:
+            names = module._bounded_inventory_names(Path('/tmp/public-fake-only'))
+            scandir.assert_called_once()
+        self.assertEqual(scan.reads, 3)
+        self.assertEqual(len(names), 3)
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=names)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_live_inventory_rejects_nonplain_entry_name_before_sort(self):
+        class HostileName:
+            def __lt__(self, _other):
+                raise AssertionError('must not sort malformed names')
+        class Entry:
+            name = HostileName()
+        class Scandir:
+            def __enter__(self):
+                return iter((Entry(),))
+            def __exit__(self, *_args):
+                return False
+        with patch.object(module.os, 'scandir', return_value=Scandir()):
+            with self.assertRaisesRegex(OSError, 'malformed entry name'):
+                module._bounded_inventory_names(Path('/tmp/public-fake-only'))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

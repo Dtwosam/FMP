@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import ctypes
 import hashlib
+from itertools import islice
 import json
 import os
 from pathlib import Path
@@ -497,6 +498,21 @@ def _read_pending(fd: int) -> bytes:
     return b"".join(chunks)
 
 
+def _bounded_inventory_names(folder: Path) -> tuple[str, ...]:
+    """Read at most two admissible children plus one over-limit witness.
+
+    os.scandir is lazy; Path.iterdir may materialize a full directory before
+    callers slice the results. The third child is enough to refuse a clean
+    synthetic inventory without examining an unbounded number of names.
+    """
+    with os.scandir(folder) as entries:
+        names = tuple(entry.name for entry in islice(entries, 3))
+    # Do not sort injected custom name objects with attacker-defined __lt__.
+    if any(type(name) is not str for name in names):
+        raise OSError("disposable inventory returned a malformed entry name")
+    return tuple(sorted(names))
+
+
 def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
     """Read only a bounded regular inode through a non-following FD."""
     flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
@@ -599,7 +615,7 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     )
                     transient.unlink()
                 final_inode, end = _snapshot_regular(path)
-                inventory_names = tuple(sorted(p.name for p in Path(folder).iterdir()))
+                inventory_names = _bounded_inventory_names(Path(folder))
                 inventory_ok = inventory_names == ("sample",)
                 sibling_snapshot_stable = None
                 if create_sibling:
