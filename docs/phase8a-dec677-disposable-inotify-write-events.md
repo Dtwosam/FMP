@@ -365,6 +365,14 @@ The decoder now marks the **entire stream malformed** when it encounters `IN_CRE
 
 This is an intentionally conservative consistency filter over fake bounded inotify records, NOT proof of real no-write OS isolation, loss-free kernels or annual runner permissions.
 
+## DEC-720 — Require strictly boolean opt-in mode parameters before any setup
+
+The executable CLI supplies boolean flags, but the directly callable `run_demo` helper previously evaluated `sum((negative, replace_watched_inode, create_sibling, transient_sibling))` without checking the argument types. Values such as `"true"`, `None`, lists, maps or `NaN` can raise unexpected `TypeError`, silently skip mode selection or cause unintended truthiness, instead of returning a deterministic **BLOCKED** receipt. This is an internal API robustness risk, not a confirmed annual runner defect.
+
+The helper now requires exact `bool` for each of its four mode arguments before computing their sum, checking host readiness or creating a public disposable directory. Four new source-defined test methods raise the suite to **203**: malformed inputs in all mode positions, all mutually conflicting valid boolean combinations, invalid mode rejection before any directory setup, and valid boolean modes on an unsupported host. All malformed inputs fail closed. This does not change argparse, any installed workflow, file permission or trading system, and none of these new tests opt into a real Linux demonstration.
+
+Review remains draft-only, with exact-head Phase 3/full regression and independent security source review needed.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
