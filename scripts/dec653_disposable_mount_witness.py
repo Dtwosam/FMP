@@ -129,7 +129,7 @@ def _evaluate(raw: Any, unchanged: bool) -> dict[str, Any]:
 
 def _sample_snapshot(directory_fd: int) -> tuple[int, int, str] | None:
     """Snapshot synthetic file by anchored FD, never follow a swapped symlink."""
-    flags = os.O_RDONLY | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
     fd = os.open("sample", flags, dir_fd=directory_fd)
     try:
         info = os.fstat(fd)
