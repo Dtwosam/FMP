@@ -257,6 +257,8 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         ) if negative else True,
         "negative_control_detected": (
             midpoint_snapshot_matches_expected is True
+            and before == after
+            and inode_stable is True
             and events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
             and events["source_modify_events"] >= 2
