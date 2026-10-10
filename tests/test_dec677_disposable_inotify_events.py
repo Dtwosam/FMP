@@ -3737,6 +3737,34 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(module._checked_snapshot_metadata(FakeStat()),
                          (1, 2, 1, 100, 200))
 
+
+    def test_duplicate_move_from_cookie_direction_is_not_complete(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=named(b'one'), cookie=71)
+               + ev(wd=10, mask=module.IN_MOVED_FROM,
+                    data=named(b'two'), cookie=71))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_duplicate_move_to_cookie_direction_is_not_complete(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_TO,
+                  data=named(b'one'), cookie=81)
+               + ev(wd=10, mask=module.IN_MOVED_TO,
+                    data=named(b'two'), cookie=81))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_matching_move_cookie_directions_remain_complete(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=named(b'old-name'), cookie=99)
+               + ev(wd=10, mask=module.IN_MOVED_TO,
+                    data=named(b'new-name'), cookie=99))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
