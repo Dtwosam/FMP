@@ -301,7 +301,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
         result = _result(["cannot decode independent policy/ledger input: " + type(exc).__name__])
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
-    return 0 if result["status"] == "STRUCTURALLY_COMPLETE_UNVERIFIED" else 2
+    # All synthetic/unattested outcomes must be nonzero: an ordinary shell
+    # `if audit; then dispatch` must NEVER treat shape-only evidence as approval.
+    # Exit 3 distinguishes unverified completeness from BLOCKED (exit 2).
+    return 3 if result["status"] == "STRUCTURALLY_COMPLETE_UNVERIFIED" else 2
 
 
 if __name__ == "__main__":
