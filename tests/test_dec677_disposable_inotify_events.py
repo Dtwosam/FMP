@@ -3375,6 +3375,36 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(wr)
 
+
+    def test_poll_register_nonvoid_return_never_checks_readiness(self):
+        for response in (False, True, 0, 17, 'registered'):
+            with self.subTest(response=repr(response)):
+                class Nonvoid:
+                    def register(self, *_args):
+                        return response
+                    def poll(self, _timeout):
+                        raise AssertionError('no poll after malformed registration')
+                with patch.object(module.select, 'poll', return_value=Nonvoid()):
+                    with patch.object(module.os, 'read') as read:
+                        with self.assertRaisesRegex(OSError, 'registration returned malformed'):
+                            module._read_pending(17)
+                        read.assert_not_called()
+
+    def test_poll_register_forged_none_comparator_is_rejected(self):
+        class LooksNone:
+            def __eq__(self, _other):
+                return True
+        class Forged:
+            def register(self, *_args):
+                return LooksNone()
+            def poll(self, _timeout):
+                raise AssertionError('must not poll unvalidated registration')
+        with patch.object(module.select, 'poll', return_value=Forged()):
+            with patch.object(module.os, 'read') as read:
+                with self.assertRaisesRegex(OSError, 'registration returned malformed'):
+                    module._read_pending(17)
+                read.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
