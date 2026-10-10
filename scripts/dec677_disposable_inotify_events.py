@@ -80,6 +80,10 @@ def _classify_stream(data: bytes, watch: int,
     # Names observed to enter after watch registration, as either regular
     # files or directories. This is not a full preexisting directory census.
     occupied_new_entries: set[bytes] = set()
+    # For entries introduced since registration, record whether the name
+    # referred to a directory. A regular file cannot disappear as a dir,
+    # or vice versa, without an observable replacement/rename transition.
+    observed_child_is_directory: dict[bytes, bool] = {}
     deleted_entries: set[bytes] = set()
     matched_transient_pairs = 0
     expected_transient_pairs = 0
@@ -171,6 +175,7 @@ def _classify_stream(data: bytes, watch: int,
                     if child_name in occupied_new_entries:
                         okay = False
                     occupied_new_entries.add(child_name)
+                    observed_child_is_directory[child_name] = bool(mask & IN_ISDIR)
                     # A new child clears any pending previous deletion for
                     # this basename, whether the child is a file or dir.
                     deleted_entries.discard(child_name)
@@ -187,6 +192,10 @@ def _classify_stream(data: bytes, watch: int,
                             okay = False
                         created_entries.add(child_name)
                 elif change == IN_DELETE:
+                    if (child_name in observed_child_is_directory
+                            and observed_child_is_directory[child_name] != bool(mask & IN_ISDIR)):
+                        okay = False
+                    observed_child_is_directory.pop(child_name, None)
                     occupied_new_entries.discard(child_name)
                     # Two consecutive same-name removals with no new child
                     # created or moved into that name contradict a complete
@@ -201,9 +210,16 @@ def _classify_stream(data: bytes, watch: int,
                     created_entries.discard(child_name)
                 elif change in (IN_MOVED_FROM, IN_MOVED_TO):
                     if change == IN_MOVED_TO:
+                        # A rename may legitimately replace an occupied
+                        # target. The arriving entry establishes its type.
                         occupied_new_entries.add(child_name)
+                        observed_child_is_directory[child_name] = bool(mask & IN_ISDIR)
                         deleted_entries.discard(child_name)
                     else:
+                        if (child_name in observed_child_is_directory
+                                and observed_child_is_directory[child_name] != bool(mask & IN_ISDIR)):
+                            okay = False
+                        observed_child_is_directory.pop(child_name, None)
                         occupied_new_entries.discard(child_name)
                     # After a move involving this basename, a previously
                     # created inode may have left or been replaced. A later
