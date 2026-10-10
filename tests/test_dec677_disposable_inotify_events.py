@@ -2906,6 +2906,70 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertEqual(module._start_watch(Path('/tmp/public-fake-only')),
                              (17, 9, 10))
 
+
+    def test_mode_free_quiet_receipt_does_not_claim_any_unexecuted_control(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        for key in ('negative_control_detected',
+                    'midpoint_source_snapshot_matches_expected',
+                    'sibling_creation_control_detected',
+                    'transient_midpoint_regular_file_verified',
+                    'transient_directory_control_detected'):
+            with self.subTest(key=key):
+                self.assertFalse(result['observed_checks'][key])
+                self.assertFalse(any(key in finding for finding in result['findings']))
+        self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_source_write_control_does_not_claim_inactive_directory_controls(self):
+        result = module._evaluate(
+            b'public', b'public', ev(wd=9, mask=module.IN_MODIFY) * 2,
+            9, True, True, directory_watch=10,
+            directory_inventory_names=('sample',),
+            midpoint_snapshot_matches_expected=True)
+        self.assertTrue(result['observed_checks']['negative_control_detected'])
+        self.assertFalse(result['observed_checks']['sibling_creation_control_detected'])
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_persistent_sibling_control_does_not_claim_other_modes(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=named(b'unexpected-public-sibling'))
+        result = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=('sample', 'unexpected-public-sibling'),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertTrue(result['observed_checks']['sibling_creation_control_detected'])
+        self.assertFalse(result['observed_checks']['negative_control_detected'])
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_transient_sibling_control_does_not_claim_inactive_persistent(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        result = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',),
+            transient_midpoint_verified=True, transient_sibling_negative=True)
+        self.assertTrue(result['observed_checks']['transient_midpoint_regular_file_verified'])
+        self.assertTrue(result['observed_checks']['transient_directory_control_detected'])
+        self.assertFalse(result['observed_checks']['sibling_creation_control_detected'])
+        self.assertFalse(result['observed_checks']['negative_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_replacement_control_does_not_claim_any_other_negative(self):
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            inode_stable=False, replacement_negative=True,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['observed_checks']['negative_control_detected'])
+        self.assertFalse(result['observed_checks']['sibling_creation_control_detected'])
+        self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
+        self.assertFalse(result['can_authorize_dispatch'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
