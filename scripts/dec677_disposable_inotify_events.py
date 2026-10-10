@@ -180,8 +180,10 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         "no_directory_entry_mutations": (events["directory_changes"] == 0
                                           and directory_inventory_ok is True),
         "transient_directory_control_detected": (
-            events["transient_create_delete_pairs"] >= 1 if transient_sibling_negative else True
-        ),
+            events["well_formed"] and not events["overflow"]
+            and not events["invalidated"] and watcher_alive is True
+            and events["transient_create_delete_pairs"] >= 1
+        ) if transient_sibling_negative else True,
         "event_stream_complete": events["well_formed"] and not events["overflow"] and not events["invalidated"] and watcher_alive is True,
         "no_observed_writes": events["write_events"] == 0,
         "negative_control_detected": (
@@ -203,7 +205,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             findings.append("synthetic directory-event negative control not detected")
     if transient_sibling_negative:
         findings.append("deliberate create/remove cannot prove directory immutability")
-        if events["transient_create_delete_pairs"] < 1:
+        if checks["transient_directory_control_detected"] is not True:
             findings.append("synthetic transient directory negative control not observed")
     return _outcome(findings, checks)
 
