@@ -305,6 +305,14 @@ Five focused source-defined tests bring the suite to **173 methods**: reject unr
 
 The tighter toy basename attribution is not independent kernel-origin proof, actual write prevention or annual run385 authorization. Exact-head Phase 3/full CI and independent qualified review remain necessary.
 
+## DEC-712 — Transient negative requires the expected clean final inventory
+
+DEC-711 tied the transient-create/delete pair to the exact generated basename. However, the negative control still claimed detection when an expected create/delete pair appeared **even if another unexpected directory entry survived** or final directory enumeration was missing. A deliberate transient sibling should leave the directory with exactly the original `sample` entry after the expected create/delete events.
+
+The `transient_directory_control_detected` check now also demands strict `directory_inventory_ok is True` and a strictly typed `directory_inventory_names == ("sample",)` tuple. An unrelated surviving child, an untrusted list, missing names or a false inventory flag defeats the local detection claim, while the overall deliberate negative always BLOCKS. Four source-defined regressions bring the suite to **177 methods**; four existing positive synthetic fixtures are updated to supply the expected final inventory, matching the real demo's enumeration.
+
+This only checks self-generated /tmp filenames against expected event counts. It is not continuous host-wide directory immutability or proof that no protected checkout contents changed. Exact-head CI and independent qualified security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
