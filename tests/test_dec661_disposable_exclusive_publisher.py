@@ -162,6 +162,71 @@ class ExclusiveSyntheticPublicationTests(unittest.TestCase):
         self.assertFalse(report["can_authorize_dispatch"])
         self.assertFalse(report["independent_os_proof_verified"])
 
+    def test_directory_fsync_repeated_after_pending_unlink(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            fd = self._dirfd(directory)
+            original_fsync = os.fsync
+            calls = []
+            try:
+                def count_fsync(target_fd):
+                    calls.append(target_fd)
+                    return original_fsync(target_fd)
+                with patch.object(module.os, "fsync", side_effect=count_fsync):
+                    module._publish_once(fd, b"two-directory-syncs")
+                self.assertEqual(calls.count(fd), 2)
+                self.assertEqual(len(calls), 3)  # staging file once; directory twice
+                self.assertEqual(module._read_report(fd), b"two-directory-syncs")
+                self.assertEqual(os.listdir(fd), [module.REPORT_NAME])
+            finally:
+                os.close(fd)
+
+    def test_post_cleanup_second_directory_fsync_failure_is_ambiguous(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            fd = self._dirfd(directory)
+            original_fsync = os.fsync
+            directory_calls = 0
+            try:
+                def second_fsync_fails(target_fd):
+                    nonlocal directory_calls
+                    if target_fd == fd:
+                        directory_calls += 1
+                        if directory_calls == 2:
+                            raise OSError("synthetic cleanup durability uncertainty")
+                    return original_fsync(target_fd)
+                with patch.object(module.os, "fsync", side_effect=second_fsync_fails):
+                    with self.assertRaises(module.PublicationOutcomeUnknown) as caught:
+                        module._publish_once(fd, b"report-cannot-be-retried")
+                self.assertEqual(directory_calls, 2)
+                self.assertIn("DO NOT RETRY", str(caught.exception))
+                self.assertEqual(module._read_report(fd), b"report-cannot-be-retried")
+                self.assertEqual(os.listdir(fd), [module.REPORT_NAME])
+                with self.assertRaises(FileExistsError):
+                    module._publish_once(fd, b"replay")
+            finally:
+                os.close(fd)
+
+    def test_post_publication_peer_direct_write_is_not_prevented_by_exclusive_name(self):
+        # Explicit negative counterexample: a same-user writer with the path
+        # can modify *content* even though a second exclusive name is denied.
+        # Real security needs a separate enforced publisher/reader boundary.
+        with tempfile.TemporaryDirectory() as directory:
+            fd = self._dirfd(directory)
+            try:
+                module._publish_once(fd, b"trusted-report")
+                with self.assertRaises(FileExistsError):
+                    module._publish_once(fd, b"second-publisher")
+                with open(Path(directory) / module.REPORT_NAME, "wb") as writer:
+                    writer.write(b"tampered")
+                self.assertEqual(module._read_report(fd), b"tampered")
+                self.assertNotEqual(module._read_report(fd), b"trusted-report")
+                verdict = module._result(["peer content mutation is not prevented"])
+                self.assertEqual(verdict["status"], "BLOCKED")
+                self.assertFalse(verdict["can_authorize_dispatch"])
+            finally:
+                os.close(fd)
+
     def test_symlink_collision_cannot_overwrite_target(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
