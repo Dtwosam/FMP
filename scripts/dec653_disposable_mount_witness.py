@@ -24,7 +24,9 @@ sys.dont_write_bytecode = True
 # a child with all capability sets empty. No host mount is changed.
 _NAMESPACE_SETUP = r'''
 import json, os, subprocess, sys
-source, external, executable = sys.argv[1:]
+source, external, executable, inject = sys.argv[1:]
+# Explicit negative control: preopen a writable checkout FD before remount.
+preopened = os.open(os.path.join(source, "sample"), os.O_WRONLY) if inject == "1" else None
 def run(*argv):
     subprocess.run(argv, check=True, stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL, timeout=8)
@@ -33,10 +35,14 @@ run("mount", "--bind", source, source)
 run("mount", "-o", "remount,bind,ro", source)
 args = ["setpriv", "--bounding-set=-all", "--inh-caps=-all",
         "--ambient-caps=-all", "--no-new-privs", "--", executable,
-        "-B", "-c", "__ATTACK__", source, external]
+        "-B", "-c", "__ATTACK__", source, external,
+        str(preopened if preopened is not None else -1)]
 p = subprocess.run(args, stdin=subprocess.DEVNULL, capture_output=True,
                    text=True, timeout=10, env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
-                                               "LANG": "C"}, close_fds=True)
+                                               "LANG": "C"}, close_fds=True,
+                   pass_fds=(preopened,) if preopened is not None else ())
+if preopened is not None:
+    os.close(preopened)
 if p.returncode != 0:
     raise SystemExit(11)
 print(p.stdout, end="")
@@ -44,7 +50,15 @@ print(p.stdout, end="")
 
 _RESTRICTED_ATTACK = r'''
 import json, os, subprocess, sys
-source, external = sys.argv[1:]
+source, external, inherited_fd = sys.argv[1:]
+probe = "not_provided"
+if int(inherited_fd) >= 0:
+    try:
+        os.write(int(inherited_fd), b"INHERITED_FD_BYPASS\n")
+    except OSError:
+        probe = "write_denied"
+    else:
+        probe = "write_succeeded"
 status = {}
 for line in open("/proc/self/status", encoding="ascii"):
     key = line.split(":", 1)[0]
@@ -71,7 +85,8 @@ mounts = open("/proc/self/mountinfo", encoding="utf-8").read().splitlines()
 checks["readonly_mount"] = any((len(f := line.split()) >= 6 and
                                   f[4] == source and "ro" in f[5].split(","))
                                  for line in mounts)
-print(json.dumps({"checks": checks, "status": status}, sort_keys=True))
+print(json.dumps({"checks": checks, "status": status,
+                  "inherited_fd_probe": probe}, sort_keys=True))
 '''
 
 CHECKS = ("create", "truncate", "chmod", "reparent", "remount", "readonly_mount")
@@ -94,6 +109,8 @@ def _evaluate(raw: Any, unchanged: bool) -> dict[str, Any]:
         return _result("BLOCKED", ["synthetic witness output is malformed"])
     checks, proc = raw["checks"], raw["status"]
     findings = []
+    if raw.get("inherited_fd_probe") != "not_provided":
+        findings.append("writable checkout descriptor inherited or unaccounted for")
     for name in CHECKS:
         if checks.get(name) is not True:
             findings.append("OS denial not demonstrated: " + name)
@@ -109,7 +126,7 @@ def _evaluate(raw: Any, unchanged: bool) -> dict[str, Any]:
                    {name: checks.get(name) is True for name in CHECKS})
 
 
-def run_demo() -> dict[str, Any]:
+def run_demo(inject_checkout_fd: bool = False) -> dict[str, Any]:
     """Run only against internally generated disposable data, never a supplied path."""
     if sys.platform != "linux" or not all(shutil.which(n) for n in ("unshare", "mount", "setpriv")):
         return _result("BLOCKED", ["Linux namespace prerequisites unavailable"])
@@ -125,7 +142,8 @@ def run_demo() -> dict[str, Any]:
         try:
             p = subprocess.run(
                 ["unshare", "--user", "--map-root-user", "--mount", "--",
-                 sys.executable, "-B", "-c", setup, str(source), str(external), sys.executable],
+                 sys.executable, "-B", "-c", setup, str(source), str(external), sys.executable,
+                 "1" if inject_checkout_fd else "0"],
                 cwd=directory, stdin=subprocess.DEVNULL, capture_output=True,
                 text=True, timeout=25, close_fds=True,
                 env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C"},
@@ -146,10 +164,14 @@ def run_demo() -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="DEC-653 disposable Linux OS-denial witness; NEVER annual authorization", add_help=False)
-    parser.add_argument("--execute-disposable-demo", action="store_true")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--execute-disposable-demo", action="store_true")
+    modes.add_argument("--execute-fd-counterexample", action="store_true")
     args = parser.parse_args(argv)
-    result = run_demo() if args.execute_disposable_demo else _result(
-        "BLOCKED", ["no local OS witness executed; explicit disposable demo opt-in required"])
+    if args.execute_disposable_demo or args.execute_fd_counterexample:
+        result = run_demo(inject_checkout_fd=args.execute_fd_counterexample)
+    else:
+        result = _result("BLOCKED", ["explicit disposable demo opt-in required"])
     print(json.dumps(result, separators=(",", ":"), sort_keys=True))
     return 3 if result["status"] == "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED" else 2
 
