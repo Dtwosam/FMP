@@ -4141,6 +4141,75 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 2)
 
+
+    def test_rename_cookie_order_type_and_interleaving_matrix(self):
+        for cookie in (0, 23, (1 << 32) - 1):
+            for from_directory in (False, True):
+                for to_directory in (False, True):
+                    for reversed_pair in (False, True):
+                        for interleaved in (False, True):
+                            with self.subTest(cookie=cookie, from_dir=from_directory,
+                                              to_dir=to_directory, reverse=reversed_pair,
+                                              interleaved=interleaved):
+                                from_mask = module.IN_MOVED_FROM
+                                to_mask = module.IN_MOVED_TO
+                                if from_directory:
+                                    from_mask |= module.IN_ISDIR
+                                if to_directory:
+                                    to_mask |= module.IN_ISDIR
+                                from_event = ev(wd=10, mask=from_mask,
+                                                data=named(b'old-child'), cookie=cookie)
+                                to_event = ev(wd=10, mask=to_mask,
+                                              data=named(b'new-child'), cookie=cookie)
+                                records = [to_event, from_event] if reversed_pair else [
+                                    from_event, to_event]
+                                if interleaved:
+                                    records.insert(1, ev(wd=9, mask=module.IN_ATTRIB))
+                                raw = b''.join(records)
+                                parsed = module._classify_stream(
+                                    raw, 9, directory_watch=10)
+                                expected = (
+                                    cookie != 0 and not reversed_pair
+                                    and from_directory == to_directory)
+                                self.assertIs(parsed['well_formed'], expected)
+                                self.assertEqual(parsed['directory_changes'], 2)
+                                result = module._evaluate(
+                                    b'public', b'public', raw, 9, True, False,
+                                    directory_watch=10,
+                                    directory_inventory_names=('sample',))
+                                self.assertEqual(result['status'], 'BLOCKED')
+                                self.assertFalse(result['can_authorize_dispatch'])
+                                self.assertFalse(result['independent_os_proof_verified'])
+
+    def test_distinct_unpaired_rename_cookie_stream_stays_bounded_and_blocks(self):
+        raw = b''.join(
+            ev(wd=10, mask=module.IN_MOVED_FROM,
+               data=named(('old-%03d' % i).encode('ascii')), cookie=i + 1)
+            for i in range(128))
+        self.assertLess(len(raw), 65536)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 128)
+        result = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_delayed_duplicate_rename_cookie_refuses_full_stream(self):
+        first = ev(wd=10, mask=module.IN_MOVED_FROM,
+                   data=named(b'first-child'), cookie=17)
+        middle = b''.join(
+            ev(wd=10, mask=module.IN_MOVED_FROM,
+               data=named(('other-%03d' % i).encode('ascii')),
+               cookie=i + 1000)
+            for i in range(64))
+        last = ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=named(b'last-child'), cookie=17)
+        parsed = module._classify_stream(first + middle + last, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 66)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
