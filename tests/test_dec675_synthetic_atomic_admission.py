@@ -76,6 +76,47 @@ class SyntheticAtomicAdmissionTests(unittest.TestCase):
         self.assertEqual(r["status"], "BLOCKED")
         self.assertFalse(absent.exists())
 
+    def test_fake_handoff_marked_unknown_without_any_transport(self):
+        self.claim()
+        record = module._mark_synthetic_handoff_unknown(self.db, 'first')
+        self.assertEqual(record['status'], 'SYNTHETIC_HANDOFF_UNKNOWN')
+        self.assertIn('DO NOT RETRY', record['detail'])
+        self.assertFalse(record['can_authorize_dispatch'])
+        self.assertFalse(record['server_enforcement_verified'])
+        self.assertEqual(module._inspect(self.db), ('HANDOFF_UNKNOWN', 'first'))
+
+    def test_unknown_handoff_cannot_be_repeated_or_released(self):
+        self.claim()
+        module._mark_synthetic_handoff_unknown(self.db, 'first')
+        self.assertEqual(module._mark_synthetic_handoff_unknown(self.db, 'first')['status'], 'BLOCKED')
+        self.assertEqual(self.claim(claim_id='late')['status'], 'BLOCKED')
+        self.assertEqual(module._inspect(self.db), ('HANDOFF_UNKNOWN', 'first'))
+
+    def test_foreign_claim_id_cannot_move_handoff_state(self):
+        self.claim()
+        self.assertEqual(module._mark_synthetic_handoff_unknown(self.db, 'different')['status'], 'BLOCKED')
+        self.assertEqual(module._inspect(self.db), ('RESERVED', 'first'))
+
+    def test_unknown_mark_before_reservation_blocks(self):
+        self.assertEqual(module._mark_synthetic_handoff_unknown(self.db, 'first')['status'], 'BLOCKED')
+        self.assertEqual(module._inspect(self.db), ('UNCLAIMED', None))
+
+    def test_invalid_handoff_id_blocks(self):
+        self.claim()
+        for bad in ('', 'X' * 129, None, 42):
+            with self.subTest(bad=bad):
+                self.assertEqual(module._mark_synthetic_handoff_unknown(self.db, bad)['status'], 'BLOCKED')
+        self.assertEqual(module._inspect(self.db), ('RESERVED', 'first'))
+
+    def test_unknown_state_survives_new_connection(self):
+        self.claim()
+        module._mark_synthetic_handoff_unknown(self.db, 'first')
+        with sqlite3.connect(self.db) as conn:
+            row = conn.execute('SELECT state, claim_id FROM reservations WHERE slot=?',
+                               (module.SLOT,)).fetchone()
+        self.assertEqual(row, ('HANDOFF_UNKNOWN', 'first'))
+        self.assertEqual(self.claim(claim_id='new process')['status'], 'BLOCKED')
+
     def test_threaded_race_grants_exactly_one_fake_slot(self):
         with ThreadPoolExecutor(max_workers=12) as executor:
             tasks = [executor.submit(self.claim, claim_id=f"writer-{i}") for i in range(12)]
