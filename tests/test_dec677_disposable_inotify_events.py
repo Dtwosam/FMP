@@ -2150,6 +2150,57 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertEqual(data, b'ABC')
             self.assertEqual(identity, (path.stat().st_dev, path.stat().st_ino))
 
+
+    def test_persistent_sibling_cannot_claim_isolated_negative_with_modified_source(self):
+        name = named(b'unexpected-public-sibling')
+        raw = ev(wd=10, mask=module.IN_CREATE, data=name)
+        verdict = module._evaluate(
+            b'public-before', b'public-after', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=('sample', 'unexpected-public-sibling'),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['final_digest_equal'])
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_persistent_sibling_cannot_claim_isolated_negative_after_source_inode_swap(self):
+        name = named(b'unexpected-public-sibling')
+        raw = ev(wd=10, mask=module.IN_CREATE, data=name)
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False, inode_stable=False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=('sample', 'unexpected-public-sibling'),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['watched_inode_matches_final_path'])
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_transient_sibling_cannot_claim_isolated_negative_with_modified_source(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        verdict = module._evaluate(
+            b'public-before', b'public-after', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',),
+            transient_midpoint_verified=True, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['final_digest_equal'])
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_transient_sibling_cannot_claim_isolated_negative_after_source_inode_swap(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False, inode_stable=False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',),
+            transient_midpoint_verified=True, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['watched_inode_matches_final_path'])
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

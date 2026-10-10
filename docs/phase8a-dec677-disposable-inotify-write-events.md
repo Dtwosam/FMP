@@ -403,6 +403,14 @@ The disposable regular-inode snapshot already required a bounded file size and c
 
 The helper now requires an **exact immutable `bytes` result no longer than the requested `st_size+1`** before consulting post-read metadata or accepting a snapshot. Invalid shapes raise a handled `OSError`. Four source-defined POSIX-gated methods bring the suite to **218 tests**, covering non-byte read results, hostile subclass, oversized mocked read, and actual generated regular-file bytes/inode identity. The generated /tmp demo and all annual runner hard stops remain unchanged; this does not authenticate read provenance or OS write prevention. Exact-head Phase 3/full regression and independent security review remain necessary.
 
+## DEC-725 — Directory negative controls require the original source to stay unchanged
+
+The persistent and transient sibling negative controls are intended to probe **directory-entry mutation while the generated `sample` source stays untouched**. Earlier checks validated the expected child event and final inventory but could mark `sibling_creation_control_detected` or `transient_directory_control_detected` true even when the original source's final bytes differed from baseline or its inode was replaced. Every such case already returned overall BLOCKED, but the specific claim of an *isolated directory-only negative* was overstated.
+
+Both dedicated directory negative control predicates now also require strict equality of the original and final bounded public source bytes and `inode_stable is True` in addition to their existing named event, file-kind, intermediate-snapshot, final-inventory and event-stream completeness gates. Four new source-defined regression methods bring the suite to **222 tests**: changed source bytes and substituted source inode separately defeat persistent and transient sibling-control detection. Legitimate generated directory-only controls retain their existing BLOCKED outcomes.
+
+These point-in-time assertions do not establish continuous OS source immutability, authenticated host observers or permission for annual runner dispatch. Exact-head CI and qualified independent review remain mandatory.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
