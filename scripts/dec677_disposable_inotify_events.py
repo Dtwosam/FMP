@@ -517,8 +517,13 @@ def _bounded_inventory_names(folder: Path) -> tuple[str, ...]:
     callers slice the results. The third child is enough to refuse a clean
     synthetic inventory without examining an unbounded number of names.
     """
-    with os.scandir(folder) as entries:
-        names = tuple(entry.name for entry in islice(entries, 3))
+    try:
+        with os.scandir(folder) as entries:
+            names = tuple(entry.name for entry in islice(entries, 3))
+    except Exception as error:
+        if isinstance(error, OSError):
+            raise
+        raise OSError("disposable inventory scan raised unexpectedly") from error
     # Do not sort injected custom name objects with attacker-defined __lt__.
     if any(type(name) is not str for name in names):
         raise OSError("disposable inventory returned a malformed entry name")
