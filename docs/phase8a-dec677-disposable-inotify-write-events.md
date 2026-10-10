@@ -135,6 +135,14 @@ The collector now accepts either an **empty** readiness result (quiet) or **one 
 
 This does not establish continuous completeness or trustworthy kernel-originated evidence, only internally conservative handling of the observer's readiness input. Exact-head CI and independent review remain required.
 
+## DEC-691 — Reject rename-cookie contamination in non-move inotify events
+
+The previous decoder ignored the 32-bit `inotify_event.cookie` field. Linux associates that field with directory move/rename events; non-move events do not gain a nonzero rename cookie. Consequently, a synthetic `IN_MODIFY`, `IN_CLOSE_WRITE`, `IN_ATTRIB`, `IN_CREATE` or `IN_DELETE` could carry a fabricated nonzero move cookie and still be treated as structurally normal.
+
+Nonzero cookies are now rejected **unless** the event includes `IN_MOVED_FROM` or `IN_MOVED_TO`. We do not claim to authenticate or correlate move pairs; any directory move remains a blocked mutation. Four new source-defined tests raise the suite to **105 methods**: file non-move spoof, directory non-move spoof, valid paired-looking move-cookie records (still BLOCKED) and a zero-cookie file-event control. Ordinary inotify demonstrations remain manual and cannot authorize the annual workflow.
+
+This checks one field's meaning, not actual kernel-origin authenticity or OS isolation. Exact-head CI and independent review are still needed.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
