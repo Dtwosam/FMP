@@ -321,6 +321,14 @@ The general check now requires **zero directory mutation events**, strictly true
 
 This remains only the integrity of the observer's self-generated fixtures. Source-tree immutability, trustworthy externally controlled evidence and actual OS write prohibition are not established. Exact-head CI and independent qualified security review are required.
 
+## DEC-714 — Correct the DEC-707 filename-sort regression (historical red CI)
+
+The historical exact-head full regressions **#878–884 FAILED** although Phase 3 completed green. Source inspection and the actual CI trace established one shared cause: DEC-707 **incorrectly claimed** Python sorts `"unexpected-public-sibling"` before `"sample"`. Python in fact sorts `"sample"` first (`'s' < 'u'`). The DEC-707 assertion, its malformed-inventory inverse test and synthetic positive fixture reversed a previously correct DEC-704 ordering. Three named tests consequently failed in full regression, while the implementation's dynamic `tuple(sorted(...))` comparison already produced the correct order.
+
+DEC-714 restores the three incorrect fixtures to **`("sample", "unexpected-public-sibling")`**, and leaves the dynamic sorted implementation unchanged. An extra regression method explicitly cross-checks Python's actual lexical order with a valid expected sibling witness (still `BLOCKED`). The suite is now **181 source-defined methods**. **DEC-707's explanatory paragraph above is historically inaccurate and is superseded by this finding**; failing parent CI results must remain recorded and must not be relabeled green. Only a new exact-head full successful test run can validate the repair.
+
+This fixes one synthetic test contract mismatch, not authenticated kernel observations or annual runner isolation; DEC-650/651 remain BLOCKED.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

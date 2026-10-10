@@ -1245,7 +1245,7 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['expected_sibling_created'])
         verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
                                    directory_watch=10, directory_inventory_ok=False,
-                                   directory_inventory_names=("unexpected-public-sibling", "sample"),
+                                   directory_inventory_names=("sample", "unexpected-public-sibling"),
                                    sibling_snapshot_stable=True,
                                    sibling_negative=True)
         self.assertTrue(verdict['observed_checks']['sibling_creation_control_detected'])
@@ -1296,7 +1296,7 @@ class DisposableInotifyTests(unittest.TestCase):
         raw = ev(wd=10, mask=module.IN_CREATE,
                  data=named(b'unexpected-public-sibling'))
         for names in (None, [], ["sample", "unexpected-public-sibling"],
-                      ("sample", "unexpected-public-sibling"),
+                      ("unexpected-public-sibling", "sample"),
                       ("sample",), ("sample", "unrelated")):
             with self.subTest(names=repr(names)):
                 verdict = module._evaluate(
@@ -1396,7 +1396,7 @@ class DisposableInotifyTests(unittest.TestCase):
             (parent / "sample").write_bytes(b"public")
             (parent / module.PERSISTENT_SIBLING_NAME).write_bytes(b"PUBLIC-EXTRA")
             names = tuple(sorted(path.name for path in parent.iterdir()))
-            self.assertEqual(names, ("unexpected-public-sibling", "sample"))
+            self.assertEqual(names, ("sample", "unexpected-public-sibling"))
             raw = ev(wd=10, mask=module.IN_CREATE,
                      data=named(b"unexpected-public-sibling"))
             verdict = module._evaluate(
@@ -1413,7 +1413,7 @@ class DisposableInotifyTests(unittest.TestCase):
         verdict = module._evaluate(
             b"public", b"public", raw, 9, True, False,
             directory_watch=10, directory_inventory_ok=False,
-            directory_inventory_names=("sample", "unexpected-public-sibling"),
+            directory_inventory_names=("unexpected-public-sibling", "sample"),
             sibling_snapshot_stable=True, sibling_negative=True)
         self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
@@ -1683,6 +1683,23 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(verdict['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertFalse(verdict['independent_os_proof_verified'])
         self.assertFalse(verdict['can_authorize_dispatch'])
+
+    def test_sibling_sort_uses_python_lexical_order_in_contract_and_fixture(self):
+        # The contract and fixture must agree with Python's actual ordering:
+        # lowercase 's' precedes lowercase 'u'.
+        expected = ("sample", module.PERSISTENT_SIBLING_NAME)
+        self.assertEqual(tuple(sorted(expected)), expected)
+        self.assertEqual(tuple(sorted(reversed(expected))), expected)
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(module.PERSISTENT_SIBLING_NAME.encode('ascii')))
+        observed = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=expected,
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertTrue(observed['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(observed['status'], 'BLOCKED')
+        self.assertFalse(observed['can_authorize_dispatch'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
