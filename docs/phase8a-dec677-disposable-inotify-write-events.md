@@ -313,6 +313,14 @@ The `transient_directory_control_detected` check now also demands strict `direct
 
 This only checks self-generated /tmp filenames against expected event counts. It is not continuous host-wide directory immutability or proof that no protected checkout contents changed. Exact-head CI and independent qualified security review remain required.
 
+## DEC-713 — A quiet stream is not a clean directory without named inventory
+
+The general `no_directory_entry_mutations` check still credited a quiet event buffer and caller-supplied `directory_inventory_ok=True`, **even if the exact final filenames were absent, differently typed, or inconsistent with the synthetic original**. DEC-704 and DEC-712 already required exact filenames for their two specific negative controls; the default local-clean observation remained weaker.
+
+The general check now requires **zero directory mutation events**, strictly true inventory flag and an exact tuple `directory_inventory_names == ("sample",)`. Unknown or false-typed names cannot claim a clean generated directory; actual `run_demo` already enumerates and passes that sorted tuple. Four older synthetic clean controls are updated to supply the same positive evidence as the demo. Three added tests bring the suite to **180 source-defined methods**, covering missing final filenames, wrong type/wrong names, and exact single original filename with a nonauthorizing local-unverified result.
+
+This remains only the integrity of the observer's self-generated fixtures. Source-tree immutability, trustworthy externally controlled evidence and actual OS write prohibition are not established. Exact-head CI and independent qualified security review are required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
