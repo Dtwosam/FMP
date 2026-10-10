@@ -147,8 +147,15 @@ def _classify_stream(data: bytes, watch: int,
             observed_directory_changes += 1
             # The persistent sibling negative creates this exact regular file,
             # not just any unrelated entry or a similarly named directory.
-            if (mask & DIRECTORY_CHANGES) == IN_CREATE and not mask & IN_ISDIR and child_name == PERSISTENT_SIBLING_NAME.encode("ascii"):
-                expected_sibling_created = True
+            if child_name == PERSISTENT_SIBLING_NAME.encode("ascii"):
+                action = mask & DIRECTORY_CHANGES
+                if action == IN_CREATE and not mask & IN_ISDIR:
+                    expected_sibling_created = True
+                else:
+                    # A later same-name deletion, move, or directory-kind
+                    # replacement destroys the provenance of the expected
+                    # persistent *regular* file from its earlier creation.
+                    expected_sibling_created = False
             # A transient create/remove witness needs the same valid basename
             # created before deletion. Two arbitrary entry events are not proof.
             if child_name is not None:
