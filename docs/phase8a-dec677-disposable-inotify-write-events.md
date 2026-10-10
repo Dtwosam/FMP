@@ -559,6 +559,12 @@ DEC-736 made sampled final inventory members strictly plain strings before tuple
 
 The evaluator now requires an exact tuple of **one or two** elements *before* checking each member is an exact `str`. Larger inventories fail the quiet/negative evidence predicates immediately rather than scanning their contents. Two new source-defined methods bring the suite to **299 tests**: a large 2,001-name injected inventory cannot claim quietness, while the exact two-name persistent sibling control remains recognizable yet overall BLOCKED. No protected data is involved and this does not guarantee authenticated kernel provenance or annual OS confinement. Full exact-head CI and independent security review remain required.
 
+## DEC-745 — Bound Linux observer FD integers to signed 32-bit range
+
+DEC-727/739/740 required exact integer nonstdio file descriptors from libc and `os.open`, but allowed an arbitrarily large **exact** Python integer from an injected helper or `os.open` mock. Real Linux file descriptors are represented by signed C `int` and therefore do not exceed `INT_MAX=(1<<31)-1`; an injected `1<<64`-style value cannot be a valid open Linux handle and can cause `OverflowError` when passed to `select.poll.register`, `os.fstat`, or a ctypes function instead of a deterministic fail-closed receipt.
+
+DEC-745 defines `MAX_FILE_DESCRIPTOR`, validates the typed return of `inotify_init1` before installing watches, rejects oversized IDs from `_read_pending` before polling, and rejects oversized mock snapshot FDs before `os.fstat`. Three source-defined tests bring the suite to **302 methods**: impossible FD in event collector, impossible snapshot FD, and impossible fake libc FD without watch registration. Invalid synthetic FDs never authorize; genuine POSIX FDs retain prior functionality. This is local API-boundary robustness, not real host OS confinement or annual dispatch authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
