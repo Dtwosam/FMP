@@ -44,7 +44,8 @@ class DisposableInotifyTests(unittest.TestCase):
         r = module._evaluate(b'same', b'same',
                              ev(mask=module.IN_MODIFY) * 2, 9, True, True,
                              directory_watch=10,
-                             midpoint_snapshot_matches_expected=True)
+                             midpoint_snapshot_matches_expected=True,
+                                  directory_inventory_names=("sample",))
         self.assertEqual(r['status'], 'BLOCKED')
         self.assertTrue(r['observed_checks']['final_digest_equal'])
         self.assertTrue(r['observed_checks']['negative_control_detected'])
@@ -738,7 +739,8 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['source_modify_events'], 2)
         result = module._evaluate(b'a', b'a', stream, 9, True, True,
                                   directory_watch=10,
-                                  midpoint_snapshot_matches_expected=True)
+                                  midpoint_snapshot_matches_expected=True,
+                                  directory_inventory_names=("sample",))
         self.assertTrue(result['observed_checks']['negative_control_detected'])
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertFalse(result['can_authorize_dispatch'])
@@ -1180,7 +1182,8 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['source_content_write_events'], 3)
         result = module._evaluate(b'same', b'same', stream, 9, True, True,
                                   directory_watch=10,
-                                  midpoint_snapshot_matches_expected=True)
+                                  midpoint_snapshot_matches_expected=True,
+                                  directory_inventory_names=("sample",))
         self.assertTrue(result['observed_checks']['negative_control_detected'])
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertFalse(result['can_authorize_dispatch'])
@@ -1437,7 +1440,8 @@ class DisposableInotifyTests(unittest.TestCase):
         raw = ev(wd=9, mask=module.IN_MODIFY) * 2
         verdict = module._evaluate(
             b'public', b'public', raw, 9, True, True,
-            directory_watch=10, midpoint_snapshot_matches_expected=True)
+            directory_watch=10, midpoint_snapshot_matches_expected=True,
+                                  directory_inventory_names=("sample",))
         self.assertTrue(verdict['observed_checks']['midpoint_source_snapshot_matches_expected'])
         self.assertTrue(verdict['observed_checks']['negative_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
@@ -1826,7 +1830,8 @@ class DisposableInotifyTests(unittest.TestCase):
         raw = ev(wd=9, mask=module.IN_MODIFY) * 2
         verdict = module._evaluate(
             b'baseline', b'baseline', raw, 9, True, True, inode_stable=True,
-            directory_watch=10, midpoint_snapshot_matches_expected=True)
+            directory_watch=10, midpoint_snapshot_matches_expected=True,
+                                  directory_inventory_names=("sample",))
         self.assertTrue(verdict['observed_checks']['negative_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
 
@@ -2553,6 +2558,58 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(result['observed_checks']['event_stream_complete'])
         self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertFalse(result['can_authorize_dispatch'])
+
+
+    def test_source_write_revert_with_unrelated_directory_creation_is_not_isolated(self):
+        raw = (ev(wd=9, mask=module.IN_MODIFY) * 2
+               + ev(wd=10, mask=module.IN_CREATE, data=named(b'unrelated-child')))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, True,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=('sample', 'unrelated-child'),
+            midpoint_snapshot_matches_expected=True)
+        self.assertTrue(verdict['observed_checks']['midpoint_source_snapshot_matches_expected'])
+        self.assertFalse(verdict['observed_checks']['no_directory_entry_mutations'])
+        self.assertFalse(verdict['observed_checks']['negative_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_write_revert_with_unrelated_transient_directory_pair_is_not_isolated(self):
+        name = named(b'other-child')
+        raw = (ev(wd=9, mask=module.IN_MODIFY) * 2
+               + ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, True,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',),
+            midpoint_snapshot_matches_expected=True)
+        self.assertTrue(verdict['observed_checks']['event_stream_complete'])
+        self.assertFalse(verdict['observed_checks']['no_directory_entry_mutations'])
+        self.assertFalse(verdict['observed_checks']['negative_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_write_revert_requires_actual_typed_final_original_inventory(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) * 2
+        for names in (None, [], ('sample', 'unrelated'), ('other',), 'sample'):
+            with self.subTest(names=repr(names)):
+                verdict = module._evaluate(
+                    b'public', b'public', raw, 9, True, True,
+                    directory_watch=10, directory_inventory_ok=True,
+                    directory_inventory_names=names,
+                    midpoint_snapshot_matches_expected=True)
+                self.assertFalse(verdict['observed_checks']['negative_control_detected'])
+                self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_write_revert_original_directory_and_midpoint_preserve_control(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) * 2
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, True,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',),
+            midpoint_snapshot_matches_expected=True)
+        self.assertTrue(verdict['observed_checks']['negative_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['can_authorize_dispatch'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
