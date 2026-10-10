@@ -43,6 +43,8 @@ EVENT = struct.Struct("iIII")
 # Kernel inotify watch descriptors are signed 32-bit integers. An arbitrary
 # Python int is not evidence of a possible installed Linux watch identity.
 MAX_WATCH_DESCRIPTOR = (1 << 31) - 1
+# A Linux FD returned by int-valued libc/POSIX APIs cannot exceed INT_MAX.
+MAX_FILE_DESCRIPTOR = (1 << 31) - 1
 # Linux UAPI limits.h NAME_MAX for a single directory-entry component.
 MAX_EVENT_BASENAME = 255
 
@@ -417,6 +419,8 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
     fd = lib.inotify_init1(os.O_NONBLOCK | os.O_CLOEXEC)
     if type(fd) is not int:
         raise OSError("disposable inotify_init1 returned a noninteger descriptor")
+    if fd > MAX_FILE_DESCRIPTOR:
+        raise OSError("disposable inotify_init1 returned an oversized descriptor")
     if fd < 0:
         raise OSError(ctypes.get_errno(), "disposable inotify_init1 failed")
     if fd <= 2:
@@ -441,7 +445,7 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
 
 def _read_pending(fd: int) -> bytes:
     """Bounded event drain; never present an unreadable/pending queue as quiet."""
-    if type(fd) is not int or fd <= 2:
+    if type(fd) is not int or not 3 <= fd <= MAX_FILE_DESCRIPTOR:
         raise OSError("synthetic inotify collector requires a nonstdio integer fd")
     chunks: list[bytes] = []
     size = 0
@@ -500,7 +504,7 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
     # The temporary observer can be invoked in a process with closed stdio.
     # Refuse snapshot handles allocated onto fd 0-2 (or malformed patched
     # handles); never close a standard I/O descriptor as an afterthought.
-    if type(fd) is not int or fd < 0:
+    if type(fd) is not int or not 0 <= fd <= MAX_FILE_DESCRIPTOR:
         raise OSError("disposable regular snapshot requires a valid integer fd")
     if fd <= 2:
         os.close(fd)
