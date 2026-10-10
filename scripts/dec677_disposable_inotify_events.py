@@ -302,7 +302,10 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         and all(type(name) is str for name in directory_inventory_names)
     )
     directory_intact = (
-        events["directory_changes"] == 0
+        both_watches_identified and events["well_formed"]
+        and not events["overflow"] and not events["invalidated"]
+        and watcher_alive is True
+        and events["directory_changes"] == 0
         and directory_inventory_ok is True
         and inventory_names_are_plain
         and directory_inventory_names == ("sample",)
