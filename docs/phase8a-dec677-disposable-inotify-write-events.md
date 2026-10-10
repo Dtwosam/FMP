@@ -167,6 +167,14 @@ The collector now insists on an actual readiness *list* and a `bytes` chunk with
 
 As elsewhere, this validates local collector assumptions only; neither injected/mock safety nor a quiet poll establishes complete trusted host observation. Exact-head CI and independent security review required.
 
+## DEC-695 — Negative control detection requires a complete, live event stream
+
+After DEC-688 required matching create/delete names, the synthetic evaluator still set `transient_directory_control_detected=true` when it saw a matching pair even if the **same stream was truncated, overflowed, invalidated or had no live collector**. Such a stream was always `BLOCKED`, but the negative-control detection field overstated the reliability of the witness. DEC-689's source-write negative already demanded an intact event stream; the transient-directory control did not.
+
+The transient control now requires `well_formed`, **no** queue overflow, **no** watch invalidation, strict live-watcher truth and at least one matching child create/delete pair. The dedicated missing-negative finding is tied to that complete predicate as well. Four synthetic fault-injection tests bring the suite to **119 source-defined cases**: malformed trailing event, queue overflow, removed watch and dead collector after an otherwise valid pair. The existing valid pair stays detected but **BLOCKED** and never authorizes an annual runner.
+
+This is evidence-accounting consistency for the disposable observer, not a claim of complete trusted kernel monitoring or OS confinement. Exact-head CI and independent source/security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
