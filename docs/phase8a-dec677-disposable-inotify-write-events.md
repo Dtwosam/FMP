@@ -517,6 +517,12 @@ The property now requires **two distinct valid watch IDs, complete parse, no ove
 
 DEC-737's two inherited stale test fixtures were corrected in the immediate parent draft #908; those historical red ancestors remain red. Exact-head Phase 3, full historical regression and qualified independent security review remain required.
 
+## DEC-739 — Reject standard descriptor reuse in generated regular-file snapshots
+
+DEC-727 rejected `inotify_init1` watcher FDs 0–2 to avoid occupying or subsequently closing a closed standard descriptor. But the same risk existed in the separate `_snapshot_regular` helper: it directly used `fd=os.open(path,...)` then `os.close(fd)` in its finally block. If a parent process closed stdin/stdout/stderr, Linux could allocate the snapshot file on 0–2. The toy helper would later close or repurpose what would normally be process standard I/O. This did **not** authorize dispatch or prove any actual annual runner exploit, but it was inconsistent with the established disposable FD boundary.
+
+DEC-739 requires a valid exact integer nonnegative snapshot FD and refuses descriptor 0, 1 or 2 **before any fstat, read or other inode handling**, closing a newly allocated low FD exactly once. Malformed synthetic return types fail closed without attempting to close a non-FD object. Three source-defined regression methods increase the suite to **280 methods**: mocked allocated low FDs, malformed mock FD returns, and a normal no-follow snapshot of generated public content. This does not introduce any protected OS paths or installed workflows. Independent exact-head Phase 3/full CI, real host-level OS isolation and security review remain necessary.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
