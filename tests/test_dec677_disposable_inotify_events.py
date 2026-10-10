@@ -686,7 +686,8 @@ class DisposableInotifyTests(unittest.TestCase):
                   + ev(wd=10, mask=module.IN_DELETE, data=named(b'b')))
         parsed = module._classify_stream(stream, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
-        self.assertEqual(parsed['transient_create_delete_pairs'], 1)
+        self.assertEqual(parsed['transient_create_delete_pairs'], 2)
+        self.assertEqual(parsed['expected_transient_pairs'], 1)
         result = module._evaluate(b'a', b'a', stream, 9, True, False,
                                   directory_watch=10, directory_inventory_names=("sample",),
                                   transient_sibling_negative=True, transient_midpoint_verified=True)
@@ -2112,7 +2113,7 @@ class DisposableInotifyTests(unittest.TestCase):
         with patch.object(module.select, 'poll') as factory:
             for fd in (None, True, False, '17', -1, 17.0):
                 with self.subTest(fd=repr(fd)):
-                    with self.assertRaisesRegex(OSError, 'requires an integer fd'):
+                    with self.assertRaisesRegex(OSError, 'requires a nonstdio integer fd'):
                         module._read_pending(fd)
             factory.assert_not_called()
 
@@ -2756,6 +2757,28 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(verdict['observed_checks']['no_directory_entry_mutations'])
         self.assertEqual(verdict['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertFalse(verdict['independent_os_proof_verified'])
+
+
+    def test_regular_file_pair_counter_includes_unrelated_control_child(self):
+        target = named(b'temporary-public-sibling')
+        other = named(b'public-unrelated')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=target)
+               + ev(wd=10, mask=module.IN_CREATE, data=other)
+               + ev(wd=10, mask=module.IN_DELETE, data=target)
+               + ev(wd=10, mask=module.IN_DELETE, data=other))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['transient_create_delete_pairs'], 2)
+        self.assertEqual(parsed['expected_transient_pairs'], 1)
+        self.assertEqual(parsed['pending_new_child_names'], ())
+
+    def test_collector_invalid_fd_error_message_matches_stdin_safety_contract(self):
+        for invalid_fd in (None, True, -1, 0, 1, 2, '12'):
+            with self.subTest(fd=repr(invalid_fd)):
+                with patch.object(module.select, 'poll') as poll_factory:
+                    with self.assertRaisesRegex(OSError, 'requires a nonstdio integer fd'):
+                        module._read_pending(invalid_fd)
+                    poll_factory.assert_not_called()
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
