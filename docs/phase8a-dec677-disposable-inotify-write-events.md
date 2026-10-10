@@ -237,6 +237,14 @@ The decoder now records whether a valid directory-watch `IN_CREATE` (without `IN
 
 This remains a self-generated untrusted `/tmp` observation. A dirty inventory boolean is not independently authenticated evidence of a specific surviving file, and no OS prevention or annual run authorization follows. Exact-head CI and independent security review remain required.
 
+## DEC-704 — Bind persistent sibling negative to its exact final filename inventory
+
+DEC-703 required the correct `IN_CREATE` filename and a dirty final directory inventory, but `directory_inventory_ok=False` only means the final inventory differs from `["sample"]`. A different extra leaf could keep that boolean false after the expected sibling was deleted, while the earlier expected `IN_CREATE` event still made the persistent-file negative appear detected.
+
+The observer now collects the actual **sorted tuple of generated filenames**, and the persistent-sibling control only counts when it equals exactly `("sample", "unexpected-public-sibling")` and the expected regular-file `IN_CREATE` was recorded on an intact live directory watch. The evaluator's new optional `directory_inventory_names` argument is used only for that specific control; missing, list-typed, reordered or mismatched names cannot satisfy the predicate. Three added unit methods raise the suite to **153 source-defined tests**, distinguishing wrong final leaf, malformed/missing inventory, and an expected inventory without the expected event. The existing positive unit fixture is updated to supply the exact expected names.
+
+Both the generated fixture name and the decoder share one constant. This only prevents the synthetic evaluator from overstating **its own local negative-control witness**; no independent protected runner source provenance, hostile mount namespace coverage or actual write prevention is established. Exact-head CI and qualified independent security review remain necessary.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
