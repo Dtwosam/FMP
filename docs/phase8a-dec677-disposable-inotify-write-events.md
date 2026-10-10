@@ -553,6 +553,12 @@ DEC-743 adds the same prerequisites as `event_stream_complete` to the shared `di
 
 This does not constitute independently verified OS no-write confinement or unforgeable kernel provenance. The real DEC-650/651 annual runner gates remain BLOCKED, with exact-head full regression and qualified independent security review required.
 
+## DEC-744 — Bound synthetic final inventory size before inspecting member types
+
+DEC-736 made sampled final inventory members strictly plain strings before tuple equality, preventing equality spoofing. The direct evaluator nevertheless accepted an **unbounded tuple** from a synthetic caller and visited every element with `all(type(name) is str for name in ...)`, even when there were thousands of names and the final exact expected tuple could never match. The actual generated disposable-demo accepted success shapes are only `("sample",)` or `("sample","unexpected-public-sibling")`; extra entries always BLOCK. Requiring a bounded shape before traversing candidate values is consistent with the model's bounded evidence and diagnostic limitations.
+
+The evaluator now requires an exact tuple of **one or two** elements *before* checking each member is an exact `str`. Larger inventories fail the quiet/negative evidence predicates immediately rather than scanning their contents. Two new source-defined methods bring the suite to **299 tests**: a large 2,001-name injected inventory cannot claim quietness, while the exact two-name persistent sibling control remains recognizable yet overall BLOCKED. No protected data is involved and this does not guarantee authenticated kernel provenance or annual OS confinement. Full exact-head CI and independent security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
