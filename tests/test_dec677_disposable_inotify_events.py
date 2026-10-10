@@ -3705,6 +3705,38 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 2)
 
+
+    def test_snapshot_rejects_impossible_linux_mode_width_before_read(self):
+        class FakeStat:
+            def __init__(self, mode):
+                self.st_mode = mode
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+        for mode in (-1, (1 << 32) | module.stat.S_IFREG | 0o600):
+            with self.subTest(mode=mode):
+                with patch.object(module.os, 'open', return_value=17):
+                    with patch.object(module.os, 'fstat', return_value=FakeStat(mode)):
+                        with patch.object(module.os, 'read') as read:
+                            with patch.object(module.os, 'close') as close:
+                                with self.assertRaisesRegex(OSError, 'bounded regular inode'):
+                                    module._snapshot_regular(Path('/tmp/public-fake-only'))
+                                read.assert_not_called()
+                                close.assert_called_once_with(17)
+
+    def test_snapshot_regular_mode_within_uint32_remains_valid(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        self.assertEqual(module._checked_snapshot_metadata(FakeStat()),
+                         (1, 2, 1, 100, 200))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
