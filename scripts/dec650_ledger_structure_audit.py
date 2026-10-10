@@ -127,15 +127,52 @@ def assess(policy: Any, ledger: Any) -> dict[str, Any]:
             errors.append(f"{prefix}: invalid or reused job ID")
         else:
             job_ids.add(jid)
-        for f in ("runner_image", "kernel", "mount_namespace", "mountinfo_sha256", "source_mount_id"):
+        # DEC-650 demands actor and observer provenance, not merely a mount
+        # namespace label. These are still untrusted statements in JSON.
+        for f in (
+            "runner_identity", "runner_image", "kernel", "mount_namespace",
+            "mountinfo_sha256", "source_mount_id", "input_mount_id",
+            "output_mount_id", "observer_identity", "uid_map_sha256",
+            "gid_map_sha256", "observer_manifest_sha256",
+            "attempt_log_sha256", "race_replay_sha256",
+            "external_report_receipt_sha256", "cleanup_receipt_sha256",
+            "argv_sha256",
+        ):
             v = job.get(f)
-            if f == "mountinfo_sha256":
+            if f.endswith("_sha256"):
                 if not _sha64(v):
                     errors.append(f"{prefix}: missing valid {f}")
             elif not isinstance(v, str) or not v.strip():
                 errors.append(f"{prefix}: missing {f}")
         if not _positive_int(job.get("restricted_uid")):
             errors.append(f"{prefix}: restricted UID must be nonroot integer")
+        if not _positive_int(job.get("restricted_gid")):
+            errors.append(f"{prefix}: restricted GID must be nonroot integer")
+        if job.get("supplementary_groups") != []:
+            errors.append(f"{prefix}: supplementary groups not demonstrated empty")
+        for capability in ("permitted_capabilities", "ambient_capabilities"):
+            if job.get(capability) != "0":
+                errors.append(f"{prefix}: {capability} not recorded zero")
+        if job.get("seccomp_mode") not in ("filter", "strict"):
+            errors.append(f"{prefix}: restricted seccomp mode missing")
+        for location in ("working_directory", "process_executable"):
+            value = job.get(location)
+            if not isinstance(value, str) or not value.startswith("/") or "\\x00" in value:
+                errors.append(f"{prefix}: {location} must be an explicit absolute path")
+        env_keys = job.get("env_allowlist_keys")
+        if (not isinstance(env_keys, list) or not env_keys
+                or any(not isinstance(v, str) or re.fullmatch(r"[A-Z_][A-Z0-9_]*", v) is None
+                       or any(secret in v for secret in ("TOKEN", "SECRET", "PASSWORD", "CREDENTIAL"))
+                       for v in env_keys)
+                or len(env_keys) != len(set(v for v in env_keys if isinstance(v, str)))):
+            errors.append(f"{prefix}: missing, duplicate or credential-bearing env keys")
+        for gate in ("cwd_outside_checkout", "input_mounts_readonly",
+                     "output_mount_outside_checkout", "publisher_isolated"):
+            if job.get(gate) is not True:
+                errors.append(f"{prefix}: {gate} not established")
+        for empty in ("privileged_skips", "unresolved_exceptions"):
+            if job.get(empty) != []:
+                errors.append(f"{prefix}: {empty} absent or nonempty")
         if job.get("no_new_privs") is not True:
             errors.append(f"{prefix}: no_new_privs must be true")
         if job.get("effective_capabilities") != "0":
