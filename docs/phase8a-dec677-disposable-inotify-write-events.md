@@ -617,6 +617,12 @@ DEC-753 covers raised watch-registration exceptions after allocating the observe
 
 DEC-754 catches unexpected ordinary exceptions around opening and around the bounded read/stat block, preserves existing OSError behavior, converts other exceptions to controlled OSError, and closes an already valid opened descriptor exactly once in `finally`. If open failed, it never closes an unallocated handle. Three new source-defined regression methods bring the suite to **325 distinct test methods**, verifying unexpected errors from `os.open`, `os.fstat`, and `os.read` with the correct cleanup. The annual-runner authorization fields remain unchanged and no protected file is accessed.
 
+## DEC-755 — Normalize unexpected bounded directory scan wrapper failures
+
+The disposable runner now reads at most three entries through `os.scandir`, but injected scanner constructors, entry objects or iterators could raise ordinary Python exceptions that bypass `run_demo`'s handled `OSError` failure path. The scan helper now keeps the bounded three-entry limit and existing exact-name checks, while converting unexpected scanner-construction or enumeration exceptions into handled `OSError`. Genuine `OSError` exceptions retain their original shape.
+
+Two new source-defined tests bring the suite to **327 unique test methods**: one patched scanner constructor raises; another iterator yields a valid first name and then raises. Both refuse inventory evidence without visiting more children or reporting a quiet observation. Real generated one/two-name directories are unchanged. This is synthetic API-boundary robustness, not authenticated kernel observation or annual OS write-prevention.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
