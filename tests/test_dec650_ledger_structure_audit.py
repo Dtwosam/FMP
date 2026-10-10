@@ -25,7 +25,10 @@ def fixtures():
     policy = {
         "schema": module.SCHEMA, "repository": "Dtwosam/FMP",
         "source_commit": SHA40, "source_tree": "c" * 40,
-        "workflow_blob": "d" * 40, "workflow_ref": "refs/heads/main",
+        "workflow_blob": "d" * 40, "synthetic_merge": "e" * 40,
+        "workflow_ref": "refs/heads/main",
+        "independent_reviewer_identity": "synthetic-reviewer",
+        "env_allowlist_keys": ["PATH", "LANG"],
         "segment": "2023", "run_number": 385, "run_attempt": 1,
         "previous_freeze_run_id": 37663157285,
     }
@@ -60,7 +63,7 @@ def fixtures():
             "checkout_before_sha256": SHA64, "checkout_after_sha256": SHA64,
             "checks": {name: {"status": "PASS", "skipped": False, "privileged_test_executed": True, "evidence_sha256": SHA64} for name in module.REQUIRED_CHECKS},
         })
-    return policy, {**policy, "jobs": jobs}
+    return policy, {**policy, "independent_review_receipt_sha256": SHA64, "jobs": jobs}
 
 
 class LedgerStructureTests(unittest.TestCase):
@@ -138,6 +141,35 @@ class LedgerStructureTests(unittest.TestCase):
         p, l = fixtures()
         l["jobs"][0]["seccomp_mode"] = "unconfined"
         l["jobs"][1]["permitted_capabilities"] = "1"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_missing_synthetic_merge_blocks(self):
+        p, l = fixtures()
+        p.pop("synthetic_merge")
+        l.pop("synthetic_merge")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_tag_workflow_ref_blocks_under_installed_main_guards(self):
+        p, l = fixtures()
+        p["workflow_ref"] = "refs/tags/preview"
+        l["workflow_ref"] = "refs/tags/preview"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_missing_review_receipt_blocks(self):
+        p, l = fixtures()
+        l.pop("independent_review_receipt_sha256")
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_unreviewed_environment_key_blocks(self):
+        p, l = fixtures()
+        p["env_allowlist_keys"] = ["PATH", "LANG", "AWS_ACCESS_KEY_ID"]
+        for job in l["jobs"]:
+            job["env_allowlist_keys"] = ["PATH", "LANG", "AWS_ACCESS_KEY_ID"]
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_environment_claim_must_match_reviewed_policy(self):
+        p, l = fixtures()
+        l["jobs"][0]["env_allowlist_keys"] = ["LANG", "PATH"]
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
 
     def test_nul_in_process_path_blocks(self):
