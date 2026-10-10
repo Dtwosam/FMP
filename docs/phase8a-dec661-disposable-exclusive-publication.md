@@ -24,6 +24,12 @@ Every result includes can_authorize_dispatch=false and independent_os_proof_veri
 
 The 12 synthetic-only regressions cover exact bytes, collision, symlink/FIFO non-follow, empty/oversized payload, partial/failed writers, non-progress, cleanup, inert default CLI, unsupported environment and nonzero opt-in behavior. No protected or historical artifact is loaded.
 
+## DEC-662 disposable simultaneous-publication scheduling test
+
+A second draft variant runs two *synthetic* publishers against the same fixed, external report filename with a concurrency barrier. Each contender stages a different public payload using its own directory FD and tries the link-if-absent step. Over eight disposable rounds, the regression requires exactly **one published winner** and **one FileExistsError loser**, an exact final payload from the winner set, and no remaining pending files. An accidental overwrite or duplicate success fails the test.
+
+This is a scheduling witness of the underlying Linux exclusive hard-link name creation, not a proof of safety under hostile privileged sibling writers, cross-mount aliases, malicious directory replacement, crash recovery, or authentication of real report content. The documented **trusted single-writer assumption remains mandatory** for any actual annual-runner deployment design. One additional regression brings the source-defined total to 13.
+
 ## Precise limitations
 
 This demonstration assumes its generated external directory is a trusted single-writer namespace. An adversarial privileged sibling could change directory contents or aliases; the code does not prove race-safe cleanup, absence of writable checkout aliases, durable delivery to GitHub artifacts, actual production runner permissions, rollback on fsync errors, or correctness of cross-filesystem publication. os.link requires pending/final files on the same filesystem; failures are BLOCKED and must never be silently retried.
