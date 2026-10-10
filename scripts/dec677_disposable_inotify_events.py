@@ -326,6 +326,11 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
     fd = lib.inotify_init1(os.O_NONBLOCK | os.O_CLOEXEC)
     if fd < 0:
         raise OSError(ctypes.get_errno(), "disposable inotify_init1 failed")
+    if fd <= 2:
+        # A host whose standard descriptors are closed may allocate the new
+        # observer on fd 0, 1 or 2. Refuse that uncertain stdio boundary.
+        os.close(fd)
+        raise OSError("disposable inotify watcher used a standard descriptor")
     wd = lib.inotify_add_watch(fd, os.fsencode(path), MASK)
     if wd < 0:
         error = ctypes.get_errno()
@@ -341,8 +346,8 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
 
 def _read_pending(fd: int) -> bytes:
     """Bounded event drain; never present an unreadable/pending queue as quiet."""
-    if type(fd) is not int or fd < 0:
-        raise OSError("synthetic inotify collector requires an integer fd")
+    if type(fd) is not int or fd <= 2:
+        raise OSError("synthetic inotify collector requires a nonstdio integer fd")
     chunks: list[bytes] = []
     size = 0
     poller = select.poll()
