@@ -4104,6 +4104,43 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['directory_changes'], 2)
         self.assertEqual(parsed['source_attribute_events'], 1)
 
+
+    def test_paired_rename_cannot_change_file_into_directory(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=named(b'old-file'), cookie=49)
+               + ev(wd=10, mask=module.IN_MOVED_TO | module.IN_ISDIR,
+                    data=named(b'new-dir'), cookie=49))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_paired_rename_cannot_change_directory_into_file(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM | module.IN_ISDIR,
+                  data=named(b'old-dir'), cookie=50)
+               + ev(wd=10, mask=module.IN_MOVED_TO,
+                    data=named(b'new-file'), cookie=50))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_paired_rename_matching_file_kind_remains_well_formed(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=named(b'old-file'), cookie=51)
+               + ev(wd=10, mask=module.IN_MOVED_TO,
+                    data=named(b'new-file'), cookie=51))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_paired_rename_matching_directory_kind_remains_well_formed(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM | module.IN_ISDIR,
+                  data=named(b'old-dir'), cookie=52)
+               + ev(wd=10, mask=module.IN_MOVED_TO | module.IN_ISDIR,
+                    data=named(b'new-dir'), cookie=52))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
