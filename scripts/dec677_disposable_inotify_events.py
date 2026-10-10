@@ -218,7 +218,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and not events["invalidated"] and watcher_alive is True
             and directory_inventory_ok is False
             and type(directory_inventory_names) is tuple
-            and directory_inventory_names == ("sample", PERSISTENT_SIBLING_NAME)
+            and directory_inventory_names == tuple(sorted(("sample", PERSISTENT_SIBLING_NAME)))
             and sibling_snapshot_stable is True
             and events["expected_sibling_created"] is True
         ) if sibling_negative else True,
