@@ -80,11 +80,16 @@ def _classify_stream(data: bytes, watch: int,
         if len(data) - pos < EVENT.size:
             okay = False
             break
-        wd, mask, _cookie, nbytes = EVENT.unpack_from(data, pos)
+        wd, mask, cookie, nbytes = EVENT.unpack_from(data, pos)
         pos += EVENT.size
         # A syntactically complete event with no known action or unexpected
         # flags must not be interpreted as a clean inotify observation.
         if not (mask & EVENT_ACTIONS) or mask & ~EVENT_ALLOWED:
+            okay = False
+        # The inotify cookie correlates rename/move records only. A cookie
+        # on a file write, child create/delete, overflow or self event is
+        # not a valid observation of that event's kernel layout.
+        if cookie and not mask & (IN_MOVED_FROM | IN_MOVED_TO):
             okay = False
         if nbytes > 4096 or nbytes > len(data) - pos:
             okay = False

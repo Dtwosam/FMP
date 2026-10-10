@@ -16,14 +16,14 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
 
-def ev(wd=9, mask=None, data=b''):
+def ev(wd=9, mask=None, data=b'', cookie=0):
     if mask is None:
         mask = module.IN_CLOSE_WRITE
     # A real directory-entry event includes a NUL-terminated, padded name.
     # Preserve the explicit data argument for adversarial malformed records.
     if wd == 10 and mask & module.DIRECTORY_CHANGES and not data:
         data = b"public\x00\x00"
-    return module.EVENT.pack(wd, mask, 0, len(data)) + data
+    return module.EVENT.pack(wd, mask, cookie, len(data)) + data
 
 
 class DisposableInotifyTests(unittest.TestCase):
@@ -765,6 +765,39 @@ class DisposableInotifyTests(unittest.TestCase):
         with patch.object(module.select, 'poll', return_value=Normal()):
             with patch.object(module.os, 'read', return_value=record):
                 self.assertEqual(module._read_pending(17), record)
+
+
+    def test_nonmove_file_content_event_cannot_carry_rename_cookie(self):
+        for mask in (module.IN_MODIFY, module.IN_CLOSE_WRITE, module.IN_ATTRIB):
+            with self.subTest(mask=mask):
+                raw = ev(wd=9, mask=mask, cookie=1234)
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertFalse(parsed['well_formed'])
+                result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                          directory_watch=10)
+                self.assertFalse(result['observed_checks']['event_stream_complete'])
+                self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_nonmove_directory_child_event_cannot_carry_rename_cookie(self):
+        for mask in (module.IN_CREATE, module.IN_DELETE):
+            with self.subTest(mask=mask):
+                raw = ev(wd=10, mask=mask, cookie=1234)
+                self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_move_from_and_to_cookie_is_retained_without_claiming_pairing(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM, cookie=1234)
+               + ev(wd=10, mask=module.IN_MOVED_TO, cookie=1234))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False, directory_watch=10)
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_quiet_control_preserves_zero_cookie_file_event(self):
+        parsed = module._classify_stream(ev(wd=9, mask=module.IN_CLOSE_WRITE), 9,
+                                         directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['source_content_write_events'], 1)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
