@@ -50,6 +50,9 @@ MAX_FILE_DESCRIPTOR = (1 << 31) - 1
 MAX_KERNEL_STAT_ID = (1 << 64) - 1
 # Linux stat mode_t is an unsigned 32-bit value, not an arbitrary Python int.
 MAX_KERNEL_STAT_MODE = (1 << 32) - 1
+# Linux timespec uses signed 64-bit seconds plus 0..999999999 nanoseconds.
+MIN_KERNEL_TIMESTAMP_NS = -(1 << 63) * 1_000_000_000
+MAX_KERNEL_TIMESTAMP_NS = (1 << 63) * 1_000_000_000 - 1
 # Linux UAPI limits.h NAME_MAX for a single directory-entry component.
 MAX_EVENT_BASENAME = 255
 
@@ -596,6 +599,9 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int]:
             or not 0 <= dev <= MAX_KERNEL_STAT_ID
             or not 0 <= ino <= MAX_KERNEL_STAT_ID or not 0 <= size <= 4096):
         raise OSError("disposable sample is not a bounded regular inode")
+    if (not MIN_KERNEL_TIMESTAMP_NS <= mtime_ns <= MAX_KERNEL_TIMESTAMP_NS
+            or not MIN_KERNEL_TIMESTAMP_NS <= ctime_ns <= MAX_KERNEL_TIMESTAMP_NS):
+        raise OSError("disposable fstat has impossible nanosecond timestamps")
     # Keep validated mode in the comparison tuple: a chmod-style mutation
     # cannot be hidden just because inode, size and timestamps appear equal.
     return mode, dev, ino, size, mtime_ns, ctime_ns

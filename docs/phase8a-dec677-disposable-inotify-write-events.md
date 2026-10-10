@@ -687,6 +687,14 @@ The disposable observer's individual inotify-registration, snapshot, event drain
 
 DEC-765 broadens only the **disposable runner's final error boundary** to ordinary `Exception`, keeping the same `BLOCKED` receipt and existing nonstdio FD `finally` cleanup while not suppressing `KeyboardInterrupt` or `SystemExit`. Three new source-defined regression tests increase the suite to **356 uniquely named methods**: a generated-source creation wrapper failure happens before any watch; a replacement wrapper failure blocks with the valid pipe observer FD closed; and a reverted-write `fsync` wrapper failure also blocks and closes the observer FD. This is local defensive fault-injection handling, not production permission or OS confinement.
 
+## DEC-766 — Refuse impossible Linux snapshot nanosecond time fields
+
+DEC-747 enforces exact `int` types on `st_mtime_ns` and `st_ctime_ns` and DEC-763 preserves metadata changes across two snapshots. However, synthetic fstat objects could still inject arbitrary-precision Python integers far beyond Linux's signed 64-bit timespec seconds plus bounded nanosecond fraction, potentially making a forged timestamp pair appear coherent.
+
+DEC-766 defines conservative Linux timespec-derived nanosecond limits from `-2^63 * 10^9` through `2^63 * 10^9 - 1` inclusive. Both exact plain integer timestamp fields must lie within that range before reads or comparisons. The existing regular-file/device/inode/size/mode validation and outward snapshot API remain unchanged. Three source-defined methods bring the suite to **359 uniquely named tests**: injected out-of-range mtime/ctime values fail before read and close a valid FD, both extreme representable bounds remain allowed, and negative pre-epoch timestamps are preserved.
+
+This is a bounded local synthetic fstat input contract, not independently verified kernel clocks, OS-enforced no-write protection or annual-runner authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
