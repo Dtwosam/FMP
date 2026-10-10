@@ -295,6 +295,16 @@ The observer now completes all final bounded/no-follow source and optional sibli
 
 This shrinks only the **in-process sample interval**. It cannot guarantee no write after the final drain, that no pending records appear outside the polling window, that an adversarial process could not tamper with the observer, or that OS-backed write denial exists. Exact-head CI and independent qualified OS security review remain required.
 
+## DEC-711 — Match the transient negative to its exact generated basename
+
+The transient write/remove mode creates a regular child named `temporary-public-sibling`. DEC-688 and DEC-700 required same-basename ordered creation/deletion with no `IN_ISDIR`, but accepted **any** transient regular-file pair as detection of this specific negative control. A completely unrelated create/delete pair could therefore claim `transient_directory_control_detected=true` even though the deliberate filename was not witnessed; the overall result still BLOCKED.
+
+The decoder retains the general `transient_create_delete_pairs` counter and adds an `expected_transient_pairs` count for the exact generated regular child. Only that latter counter qualifies the negative-control predicate alongside the existing live, well-formed, nonoverflowed and noninvalidated stream conditions. The actual generator and parser share one constant. Three older synthetic positive cases now use the true expected name.
+
+Five focused source-defined tests bring the suite to **173 methods**: reject unrelated pairs, detect the known regular child (still BLOCKED), reject same-name directory pairs, reject mismatched create/delete basenames and reject valid expected pair followed by queue overflow. The five manual opt-in Linux disposable demonstrations remain separate.
+
+The tighter toy basename attribution is not independent kernel-origin proof, actual write prevention or annual run385 authorization. Exact-head Phase 3/full CI and independent qualified review remain necessary.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
