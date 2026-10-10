@@ -493,6 +493,14 @@ DEC-735 treats `IN_MOVED_TO` of an opposite kind to a still-tracked occupied nam
 
 The isolated microprobe is not execution of annual protected jobs or of the five manually opted-in repository demos. Exact-head Phase 3/full historical CI and qualified independent review remain required.
 
+## DEC-736 — Exact plain strings required in final inventory tuple
+
+The evaluator already required `type(directory_inventory_names) is tuple` but never validated element types. Python tuple equality invokes the elements' `__eq__` methods, allowing a synthetic caller to pass `(AlwaysEqual(),)` or `(ForgedStrSubclass(),)` which compares equal to the expected `("sample",)`. The quiet original-directory predicate could therefore be spoofed while the overall verdict appeared locally unverified; persistent sibling evidence likewise used tuple equality against two expected names. The actual disposable directory's `Path.name` values are plain built-in strings, so such injected elements are not plausible kernel/file enumeration output.
+
+DEC-736 computes one `inventory_names_are_plain` prerequisite: an exact tuple with **every element of exact type `str`** before trusting any final inventory equality. The quiet-directory, persistent sibling and transient directory checks use this same prerequisite. Four new source-defined tests bring the suite to **271 methods**: hostile always-equal element, forged str subclass, expected sibling impersonator, and preserved plain-string local unverified control. All malformed inputs remain BLOCKED and cannot authorize dispatch.
+
+This repairs only a local untrusted Python input contract, not host audit authenticity, OS-enforced write prevention or annual run385 eligibility. Independent qualified review plus exact-head Phase 3/full CI remain mandatory.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
