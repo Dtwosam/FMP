@@ -58,9 +58,9 @@ def _classify_stream(data: bytes, watch: int,
     """Parse a bounded kernel event buffer, fail closed on bad identity/overflow."""
     if (type(data) is not bytes or type(watch) is not int
             or not 0 <= watch <= MAX_WATCH_DESCRIPTOR):
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False, "expected_transient_pairs": 0}
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False, "expected_transient_pairs": 0, "pending_new_child_names": ()}
     if len(data) > 65536:
-        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False, "expected_transient_pairs": 0}
+        return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False, "expected_transient_pairs": 0, "pending_new_child_names": ()}
     # The two watch identities come from distinct kernel registrations. An
     # untrusted caller must not alias the directory watch to the file watch,
     # or use a non-integer WD to make a fabricated observation appear quiet.
@@ -70,7 +70,7 @@ def _classify_stream(data: bytes, watch: int,
         or directory_watch == watch
     ):
         return {"well_formed": False, "overflow": True, "invalidated": True,
-                "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False, "expected_transient_pairs": 0}
+                "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False, "expected_transient_pairs": 0, "pending_new_child_names": ()}
     pos = 0
     observed_writes = 0
     source_content_writes = 0
@@ -250,7 +250,8 @@ def _classify_stream(data: bytes, watch: int,
             "expected_transient_pairs": expected_transient_pairs,
             "source_content_write_events": source_content_writes,
             "source_modify_events": source_modifications,
-            "expected_sibling_created": expected_sibling_created}
+            "expected_sibling_created": expected_sibling_created,
+            "pending_new_child_names": tuple(sorted(occupied_new_entries))}
 
 
 def _evaluate(before: bytes, after: bytes, data: bytes,
@@ -306,6 +307,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and directory_inventory_names == tuple(sorted(("sample", PERSISTENT_SIBLING_NAME)))
             and sibling_snapshot_stable is True
             and events["expected_sibling_created"] is True
+            and events["pending_new_child_names"] == (PERSISTENT_SIBLING_NAME.encode("ascii"),)
         ) if sibling_negative else True,
         "transient_midpoint_regular_file_verified": (
             transient_midpoint_verified is True
@@ -319,6 +321,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and type(directory_inventory_names) is tuple
             and directory_inventory_names == ("sample",)
             and events["expected_transient_pairs"] >= 1
+            and events["pending_new_child_names"] == ()
         ) if transient_sibling_negative else True,
         "event_stream_complete": events["well_formed"] and not events["overflow"] and not events["invalidated"] and watcher_alive is True,
         "no_observed_writes": events["write_events"] == 0,

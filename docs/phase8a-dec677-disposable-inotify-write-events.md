@@ -451,6 +451,16 @@ The decoder now marks the basename as absent on every `IN_MOVED_FROM` and reject
 
 This extends only synthetic event-timeline consistency for disposable public fixtures. It cannot authenticate kernel provenance, prove observed watch continuity or establish annual OS isolation. Exact-head CI and independent source/security review remain required.
 
+## DEC-731 — Reconcile pending observed child entries with final directory inventory
+
+The disposable directory negative controls validate an exact final inventory of generated filenames, but their inotify event classifier did not expose names of **additional entries created or moved into the directory but never observed removed**. For example, a transient control could be marked detected after `CREATE(temporary-public-sibling) → CREATE(other) → DELETE(temporary-public-sibling)` even though the final inventory was supplied as `("sample",)`. An earlier synthetic positive fixture expected this contradiction to pass. Persistent-sibling evidence had the same issue if an additional child survived alongside `unexpected-public-sibling`.
+
+The decoder now reports a sorted immutable tuple `pending_new_child_names` of child basenames known present from observed creates/move-ins since registration, updated by delete/move-out. The persistent directory control requires **exactly the named persistent child** pending; the transient control requires **no pending new child**, in addition to all existing exact event, source-inode, file snapshot, watcher and inventory checks. Early malformed-buffer returns supply an empty diagnostic tuple but still fail closed. This is deliberately limited to observed entries, not an independently trusted full filesystem census.
+
+Five new source-defined tests bring the suite to **251 methods**: surviving unrelated child cannot be reconciled in transient or persistent controls, a fully removed unrelated child is allowed, the exact persistent child appears as the sole pending name, and malformed decoder returns carry no claimed pending names. The older positive synthetic fixture now includes deletion of its unrelated child so it matches its own stated final clean inventory.
+
+This improves internal event-vs-inventory consistency only; it does not guarantee Linux provenance, trusted observation of missed events, or annual runner OS confinement. Exact-head Phase 3/full historical CI plus independent source/security review required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
