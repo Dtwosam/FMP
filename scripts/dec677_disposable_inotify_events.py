@@ -544,7 +544,12 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int]:
 def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
     """Read only a bounded regular inode through a non-following FD."""
     flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
-    fd = os.open(path, flags)
+    try:
+        fd = os.open(path, flags)
+    except Exception as error:
+        if isinstance(error, OSError):
+            raise
+        raise OSError("disposable snapshot open raised unexpectedly") from error
     # The temporary observer can be invoked in a process with closed stdio.
     # Refuse snapshot handles allocated onto fd 0-2 (or malformed patched
     # handles); never close a standard I/O descriptor as an afterthought.
@@ -567,6 +572,10 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
         if len(data) != initial[2] or initial != final:
             raise OSError("disposable inode changed or was read incompletely")
         return (initial[0], initial[1]), data
+    except Exception as error:
+        if isinstance(error, OSError):
+            raise
+        raise OSError("disposable snapshot syscall raised unexpectedly") from error
     finally:
         os.close(fd)
 

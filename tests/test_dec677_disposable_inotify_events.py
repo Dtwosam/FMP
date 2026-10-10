@@ -3503,6 +3503,43 @@ class DisposableInotifyTests(unittest.TestCase):
                     module._start_watch(Path('/tmp/public-fake-only'))
                 close.assert_called_once_with(17)
 
+
+    def test_snapshot_unexpected_open_exception_is_handled_before_fd_cleanup(self):
+        with patch.object(module.os, 'open',
+                          side_effect=RuntimeError('synthetic broken open')):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaisesRegex(OSError, 'snapshot open raised unexpectedly'):
+                    module._snapshot_regular(Path('/tmp/public-fake-only'))
+                close.assert_not_called()
+
+    def test_snapshot_unexpected_fstat_exception_closes_valid_fd(self):
+        with patch.object(module.os, 'open', return_value=17):
+            with patch.object(module.os, 'fstat',
+                              side_effect=RuntimeError('synthetic broken fstat')):
+                with patch.object(module.os, 'read') as read:
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'snapshot syscall raised unexpectedly'):
+                            module._snapshot_regular(Path('/tmp/public-fake-only'))
+                        read.assert_not_called()
+                        close.assert_called_once_with(17)
+
+    def test_snapshot_unexpected_read_exception_closes_valid_fd(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        with patch.object(module.os, 'open', return_value=17):
+            with patch.object(module.os, 'fstat', return_value=FakeStat()):
+                with patch.object(module.os, 'read',
+                                  side_effect=RuntimeError('synthetic broken read')):
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'snapshot syscall raised unexpectedly'):
+                            module._snapshot_regular(Path('/tmp/public-fake-only'))
+                        close.assert_called_once_with(17)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
