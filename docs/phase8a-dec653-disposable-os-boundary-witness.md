@@ -84,6 +84,16 @@ Manual disposable mode:
 
     python -B scripts/dec653_disposable_mount_witness.py --execute-stdin-counterexample
 
+## DEC-659 synthetic environment credential-inheritance counterexample
+
+A read-only mount, emptied inherited file descriptors, safe FD0/FD1/FD2 bindings and cleared Linux capabilities do **not** by themselves guarantee that the restricted child receives no confidential environment values. The opt-in \`--execute-env-counterexample\` mode demonstrates this distinct process-boundary failure by adding a fixed **public synthetic canary**, \`DEC659_SYNTHETIC_ACCESS_TOKEN=DEC659_PUBLIC_FAKE_CANARY\`, to that disposable child's explicitly controlled environment.
+
+The restricted child reports **only** \`env_probe=canary_present\`; the canary value is never emitted into stdout or stored in a report. The parent treats every value except \`env_probe=absent\` as **BLOCKED** (exit 2), even if the fake checkout inventory has not changed. In the normal mode, the child's environment has only specified PATH and LANG, the canary is absent and the local result remains \`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED\` (exit 3) — never a security PASS.
+
+Five manual Linux modes are now mutually exclusive: normal, inherited high writable FD, writable stdout FD1, readable stdin FD0 synthetic canary, and environment synthetic canary. All public fixtures are created inside an internal temporary sandbox. No real token, password, broker credential, protected annual artifact, or network service is accessed.
+
+The suite now has **42 source-defined tests**, including five manual OS demonstrations that ordinary GitHub CI skips. Author-side local results are not independent OS proof. A qualified real runner review must verify actual environment names and handling, values without disclosing them, argv/proc and FD inheritance, independent credentials audit, uploader boundary and all 20 annual jobs.
+
 ## Security limitations
 
 This is a negative witness on a brand-new fake checkout, not an independently authenticated production report. The child supplies some of its own observations; a separate trusted observer has not verified its live mount table, UIDs, capabilities, descriptors, seccomp or environment across 20 real annual jobs. The experiment does not secure trusted staging, checkout aliases or sibling writers, the external uploader or race scheduling on the actual GitHub runner.
