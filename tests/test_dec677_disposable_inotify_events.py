@@ -4036,6 +4036,39 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['can_authorize_dispatch'])
         self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
 
+
+    def test_disposable_cli_unknown_switch_emits_blocked_json_receipt(self):
+        p = subprocess.run(
+            [sys.executable, '-B', str(SCRIPT), '--source', '/protected'],
+            capture_output=True, text=True, timeout=4)
+        self.assertEqual(p.returncode, 2)
+        result = json.loads(p.stdout)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+        self.assertFalse(result['independent_os_proof_verified'])
+        self.assertIn('CLI arguments rejected', result['findings'][0])
+
+    def test_disposable_cli_conflicting_negative_switches_emit_blocked_receipt(self):
+        p = subprocess.run(
+            [sys.executable, '-B', str(SCRIPT),
+             '--execute-inode-replacement-negative',
+             '--execute-sibling-creation-negative'],
+            capture_output=True, text=True, timeout=4)
+        self.assertEqual(p.returncode, 2)
+        result = json.loads(p.stdout)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+        self.assertFalse(result['independent_os_proof_verified'])
+
+    def test_disposable_cli_unknown_help_switch_emits_blocked_receipt(self):
+        p = subprocess.run(
+            [sys.executable, '-B', str(SCRIPT), '--help'],
+            capture_output=True, text=True, timeout=4)
+        self.assertEqual(p.returncode, 2)
+        result = json.loads(p.stdout)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
