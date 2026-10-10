@@ -695,6 +695,12 @@ DEC-766 defines conservative Linux timespec-derived nanosecond limits from `-2^6
 
 This is a bounded local synthetic fstat input contract, not independently verified kernel clocks, OS-enforced no-write protection or annual-runner authorization.
 
+## DEC-767 — Reject oversized names before filesystem encoding and malformed encoder returns
+
+DEC-764 adds a shared scanner/evaluator basename predicate requiring a valid Linux single-component filename of at most 255 encoded bytes. The helper initially called `os.fsencode` before checking the length. A synthetic plain string with an arbitrarily large character count could therefore force an unnecessary proportional-size encoding allocation even though it was already impossible to represent as a Linux basename. A patched encoder returning a nonbytes or bytes subclass could also reach subsequent comparisons and formatting.
+
+DEC-767 checks the exact string's codepoint length `1..255` **before encoding**, then requires an exact immutable `bytes` result from `os.fsencode` before checking encoded-byte length and forbidden separators. Real Linux filenames and surrogateescaped byte names retain their accepted behavior. Three new source-defined tests bring the suite to **362 unique test methods**: overlong injected names never invoke the encoder, patched nonbytes/hostile-subclass encoder results cannot pass, and an injected encoder exception cannot create a quiet evaluator result. It still enumerates at most three directory entries, and all receipts remain nonauthorizing.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
