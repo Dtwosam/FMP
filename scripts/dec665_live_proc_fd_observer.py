@@ -47,18 +47,45 @@ def _evaluate(raw: Any, injected: bool) -> dict[str, Any]:
     return _result(findings, {field: raw.get(field) is True for field in _REQUIRED})
 
 
-def _snapshot(pid: int, checkout: Path, expected_cwd: Path) -> dict[str, bool]:
-    """Read a still-running child's procfs names, not its self-reported claims."""
-    fd_root = Path("/proc") / str(pid) / "fd"
-    names = os.listdir(fd_root)
+def _read_fd_targets(fd_directory: int) -> dict[int, str]:
+    """Bounded FD-relative read of procfs symlinks, without opening FD targets."""
+    names = os.listdir(fd_directory)
     if len(names) > 128:
         raise OSError("synthetic child has an unexpectedly large FD table")
     targets: dict[int, str] = {}
     for name in names:
         if not name.isdecimal():
             raise OSError("unexpected proc fd entry")
-        targets[int(name)] = os.readlink(fd_root / name)
-    cwd = os.readlink(Path("/proc") / str(pid) / "cwd")
+        targets[int(name)] = os.readlink(name, dir_fd=fd_directory)
+    return targets
+
+
+def _require_stable_snapshot(before: dict[int, str], after: dict[int, str],
+                             cwd_before: str, cwd_after: str) -> tuple[dict[int, str], str]:
+    """Reject changed FD topology or cwd even across two immediate scans."""
+    if before != after:
+        raise OSError("live child descriptor targets changed between snapshots")
+    if cwd_before != cwd_after:
+        raise OSError("live child cwd changed between snapshots")
+    return after, cwd_after
+
+
+def _snapshot(pid: int, checkout: Path, expected_cwd: Path) -> dict[str, bool]:
+    """Take two consistent FD snapshots while the paused fake child is alive.
+
+    A stable pair is NOT continuous confinement or independently attested
+    safety on an actual runner.
+    """
+    proc_root = Path("/proc") / str(pid)
+    fd_dir = os.open(proc_root / "fd", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        first = _read_fd_targets(fd_dir)
+        cwd_first = os.readlink(proc_root / "cwd")
+        second = _read_fd_targets(fd_dir)
+        cwd_second = os.readlink(proc_root / "cwd")
+    finally:
+        os.close(fd_dir)
+    targets, cwd = _require_stable_snapshot(first, second, cwd_first, cwd_second)
     checkout_prefix = str(checkout) + os.sep
     checkout_fd = any(t == str(checkout) or t.startswith(checkout_prefix)
                       for t in targets.values())

@@ -76,6 +76,34 @@ class LiveProcFdObserverTests(unittest.TestCase):
         case["safe_cwd"] = False
         self.assertEqual(module._evaluate(case, False)["status"], "BLOCKED")
 
+    def test_stable_two_procfd_snapshots_are_accepted_structurally(self):
+        table = {0: "pipe:[1]", 1: "pipe:[2]", 2: "pipe:[3]"}
+        observed, cwd = module._require_stable_snapshot(table, table.copy(), "/tmp/a", "/tmp/a")
+        self.assertEqual(observed, table)
+        self.assertEqual(cwd, "/tmp/a")
+
+    def test_changed_fd_target_between_live_scans_blocks(self):
+        before = {0: "pipe:[1]", 1: "pipe:[2]", 2: "pipe:[3]"}
+        after = before.copy()
+        after[4] = "/tmp/disposable/checkout/sample"
+        with self.assertRaises(OSError):
+            module._require_stable_snapshot(before, after, "/tmp/scratch", "/tmp/scratch")
+
+    def test_changed_cwd_between_live_scans_blocks(self):
+        table = {0: "pipe:[1]", 1: "pipe:[2]", 2: "pipe:[3]"}
+        with self.assertRaises(OSError):
+            module._require_stable_snapshot(table, table.copy(), "/tmp/scratch", "/tmp/checkout")
+
+    def test_proc_fd_relative_reader_uses_only_symlink_targets(self):
+        # The reader must never follow/invoke an inherited FD target.
+        with patch.object(module.os, "listdir", return_value=["0", "1", "2"]):
+            with patch.object(module.os, "readlink", side_effect=lambda name, dir_fd=None: "pipe:[" + name + "]") as readlink:
+                found = module._read_fd_targets(123)
+        self.assertEqual(found, {0: "pipe:[0]", 1: "pipe:[1]", 2: "pipe:[2]"})
+        self.assertEqual(readlink.call_count, 3)
+        for call in readlink.call_args_list:
+            self.assertEqual(call.kwargs, {"dir_fd": 123})
+
     def test_default_cli_does_not_launch_or_authorize(self):
         proc = subprocess.run([sys.executable, "-B", str(SCRIPT)],
                               capture_output=True, text=True, timeout=4, check=False)
