@@ -48,6 +48,8 @@ MAX_WATCH_DESCRIPTOR = (1 << 31) - 1
 MAX_FILE_DESCRIPTOR = (1 << 31) - 1
 # Linux stat st_dev and st_ino are unsigned 64-bit kernel/ABI identities.
 MAX_KERNEL_STAT_ID = (1 << 64) - 1
+# Linux stat mode_t is an unsigned 32-bit value, not an arbitrary Python int.
+MAX_KERNEL_STAT_MODE = (1 << 32) - 1
 # Linux UAPI limits.h NAME_MAX for a single directory-entry component.
 MAX_EVENT_BASENAME = 255
 
@@ -564,7 +566,8 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int]:
     if any(type(value) is not int for value in values):
         raise OSError("disposable fstat returned noninteger metadata")
     mode, dev, ino, size, mtime_ns, ctime_ns = values
-    if (not stat.S_ISREG(mode) or not 0 <= dev <= MAX_KERNEL_STAT_ID
+    if (not 0 <= mode <= MAX_KERNEL_STAT_MODE or not stat.S_ISREG(mode)
+            or not 0 <= dev <= MAX_KERNEL_STAT_ID
             or not 0 <= ino <= MAX_KERNEL_STAT_ID or not 0 <= size <= 4096):
         raise OSError("disposable sample is not a bounded regular inode")
     return dev, ino, size, mtime_ns, ctime_ns
