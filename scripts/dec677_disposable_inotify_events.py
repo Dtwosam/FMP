@@ -323,10 +323,10 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and sibling_snapshot_stable is True
             and events["expected_sibling_created"] is True
             and events["pending_new_child_names"] == (PERSISTENT_SIBLING_NAME.encode("ascii"),)
-        ) if sibling_negative else True,
+        ) if sibling_negative else False,
         "transient_midpoint_regular_file_verified": (
             transient_midpoint_verified is True
-        ) if transient_sibling_negative else True,
+        ) if transient_sibling_negative else False,
         "transient_directory_control_detected": (
             both_watches_identified
             and events["source_content_write_events"] == 0
@@ -339,7 +339,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and directory_inventory_names == ("sample",)
             and events["expected_transient_pairs"] >= 1
             and events["pending_new_child_names"] == ()
-        ) if transient_sibling_negative else True,
+        ) if transient_sibling_negative else False,
         "event_stream_complete": (
             both_watches_identified and events["well_formed"]
             and not events["overflow"] and not events["invalidated"]
@@ -352,7 +352,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         ),
         "midpoint_source_snapshot_matches_expected": (
             midpoint_snapshot_matches_expected is True
-        ) if negative else True,
+        ) if negative else False,
         "negative_control_detected": (
             both_watches_identified and directory_intact
             and midpoint_snapshot_matches_expected is True
@@ -361,9 +361,23 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
             and events["source_modify_events"] >= 2
-        ) if negative else True,
+        ) if negative else False,
     }
-    findings = ["synthetic inotify property missing: " + k for k, v in checks.items() if v is not True]
+    # Inactive negative-control fields must say False (not observed), not
+    # True (detected). They are NOT requirements for another mode or a
+    # clean quiet local experiment and must not create missing properties.
+    gated_checks = {
+        "sibling_creation_control_detected": sibling_negative,
+        "transient_midpoint_regular_file_verified": transient_sibling_negative,
+        "transient_directory_control_detected": transient_sibling_negative,
+        "midpoint_source_snapshot_matches_expected": negative,
+        "negative_control_detected": negative,
+    }
+    findings = [
+        "synthetic inotify property missing: " + key
+        for key, value in checks.items()
+        if value is not True and gated_checks.get(key, True)
+    ]
     if negative:
         findings.append("deliberate disposable write/restore must never be admitted")
     if replacement_negative:
