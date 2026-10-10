@@ -222,11 +222,19 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
     fd = os.open(path, flags)
     try:
         st = os.fstat(fd)
-        if not stat.S_ISREG(st.st_mode) or st.st_size > 4096:
+        if not stat.S_ISREG(st.st_mode) or not 0 <= st.st_size <= 4096:
             raise OSError("disposable sample is not a bounded regular inode")
-        data = os.read(fd, 4097)
-        if len(data) > 4096:
-            raise OSError("disposable source snapshot exceeds bound")
+        data = os.read(fd, st.st_size + 1)
+        after = os.fstat(fd)
+        # This detects a short read or some concurrent inode mutations. It
+        # does NOT prove freedom from an adversarial write-and-restore race.
+        if len(data) != st.st_size or (
+            st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns
+        ) != (
+            after.st_dev, after.st_ino, after.st_size,
+            after.st_mtime_ns, after.st_ctime_ns
+        ):
+            raise OSError("disposable inode changed or was read incompletely")
         return (st.st_dev, st.st_ino), data
     finally:
         os.close(fd)
