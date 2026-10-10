@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import select
+import stat
 import struct
 import sys
 import tempfile
@@ -70,10 +71,12 @@ def _classify_stream(data: bytes, watch: int) -> dict[str, Any]:
 
 
 def _evaluate(before: bytes, after: bytes, data: bytes,
-              watch: int, watcher_alive: bool, negative: bool) -> dict[str, Any]:
+              watch: int, watcher_alive: bool, negative: bool,
+              inode_stable: bool = True, replacement_negative: bool = False) -> dict[str, Any]:
     events = _classify_stream(data, watch)
     checks = {
         "final_digest_equal": before == after and hashlib.sha256(before).digest() == hashlib.sha256(after).digest(),
+        "watched_inode_matches_final_path": inode_stable is True,
         "event_stream_complete": events["well_formed"] and not events["overflow"] and not events["invalidated"] and watcher_alive is True,
         "no_observed_writes": events["write_events"] == 0,
         "negative_control_detected": (events["write_events"] >= 2) if negative else True,
@@ -81,6 +84,10 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
     findings = ["synthetic inotify property missing: " + k for k, v in checks.items() if v is not True]
     if negative:
         findings.append("deliberate disposable write/restore must never be admitted")
+    if replacement_negative:
+        findings.append("deliberate disposable source inode substitution must never be admitted")
+        if inode_stable is True:
+            findings.append("synthetic inode-replacement negative control not detected")
     return _outcome(findings, checks)
 
 
@@ -119,13 +126,32 @@ def _read_pending(fd: int) -> bytes:
     return b"".join(chunks)
 
 
-def run_demo(negative: bool = False) -> dict[str, Any]:
+def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
+    """Read only a bounded regular inode through a non-following FD."""
+    flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
+    fd = os.open(path, flags)
+    try:
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode) or st.st_size > 4096:
+            raise OSError("disposable sample is not a bounded regular inode")
+        data = os.read(fd, 4097)
+        if len(data) > 4096:
+            raise OSError("disposable source snapshot exceeds bound")
+        return (st.st_dev, st.st_ino), data
+    finally:
+        os.close(fd)
+
+
+def run_demo(negative: bool = False, replace_watched_inode: bool = False) -> dict[str, Any]:
+    if negative and replace_watched_inode:
+        return _outcome(["conflicting synthetic negative-control modes"])
     if sys.platform != "linux" or not os.path.isdir("/tmp") or os.path.islink("/tmp"):
         return _outcome(["Linux disposable kernel event monitor unavailable"])
     try:
         with tempfile.TemporaryDirectory(prefix="dec677-disposable-", dir="/tmp") as folder:
             path = Path(folder) / "sample"
             path.write_bytes(BEFORE)
+            original_inode, original_bytes = _snapshot_regular(path)
             fd, wd = _start_watch(path)
             try:
                 if negative:
@@ -134,9 +160,17 @@ def run_demo(negative: bool = False) -> dict[str, Any]:
                             f.write(value)
                             f.flush()
                             os.fsync(f.fileno())
+                if replace_watched_inode:
+                    # An inode-targeted watch is not an identity proof for a
+                    # mutable pathname. Substitute a precreated identical file.
+                    replacement = Path(folder) / "public-replacement"
+                    replacement.write_bytes(BEFORE)
+                    os.replace(replacement, path)
                 raw = _read_pending(fd)
-                end = path.read_bytes()
-                return _evaluate(BEFORE, end, raw, wd, True, negative)
+                final_inode, end = _snapshot_regular(path)
+                return _evaluate(original_bytes, end, raw, wd, True, negative,
+                                 inode_stable=(original_inode == final_inode),
+                                 replacement_negative=replace_watched_inode)
             finally:
                 os.close(fd)
     except (OSError, AttributeError, ValueError):
@@ -149,9 +183,12 @@ def main(argv: list[str] | None = None) -> int:
     choices = p.add_mutually_exclusive_group()
     choices.add_argument("--execute-disposable-control", action="store_true")
     choices.add_argument("--execute-reverted-write-negative", action="store_true")
+    choices.add_argument("--execute-inode-replacement-negative", action="store_true")
     args = p.parse_args(argv)
-    result = (run_demo(negative=args.execute_reverted_write_negative)
-              if args.execute_disposable_control or args.execute_reverted_write_negative
+    result = (run_demo(negative=args.execute_reverted_write_negative,
+                       replace_watched_inode=args.execute_inode_replacement_negative)
+              if (args.execute_disposable_control or args.execute_reverted_write_negative
+                  or args.execute_inode_replacement_negative)
               else _outcome(["explicit synthetic observer opt-in required"]))
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 3 if result["status"] == "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED" else 2
