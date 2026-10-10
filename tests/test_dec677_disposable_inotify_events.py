@@ -3879,8 +3879,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 if self.calls == 1:
                     return Entry(self.name)
                 raise StopIteration
-        invalid = ('', '.', '..', 'child/name', 'bad\\0name',
-                   'x' * 256, 'é' * 128, '\\ud800')
+        invalid = ('', '.', '..', 'child/name', 'bad\0name',
+                   'x' * 256, 'é' * 128, '\ud800')
         for name in invalid:
             with self.subTest(name=repr(name)):
                 scan = Scan(name)
@@ -3890,8 +3890,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(scan.calls, 2)
 
     def test_evaluator_rejects_impossible_encoded_inventory_names(self):
-        invalid = ('', '.', '..', 'child/name', 'bad\\0name',
-                   'x' * 256, 'é' * 128, '\\ud800')
+        invalid = ('', '.', '..', 'child/name', 'bad\0name',
+                   'x' * 256, 'é' * 128, '\ud800')
         for name in invalid:
             with self.subTest(name=repr(name)):
                 result = module._evaluate(
@@ -3902,7 +3902,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertFalse(result['can_authorize_dispatch'])
 
     def test_inventory_accepts_bounded_linux_surrogateescaped_byte_name(self):
-        name = os.fsdecode(b'public-\\xff-entry')
+        name = os.fsdecode(b'public-\xff-entry')
         self.assertTrue(module._plausible_inventory_basename(name))
         self.assertTrue(module._plausible_inventory_basename('x' * 255))
         self.assertFalse(module._plausible_inventory_basename('x' * 256))
