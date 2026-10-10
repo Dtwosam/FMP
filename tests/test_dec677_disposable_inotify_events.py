@@ -3674,6 +3674,37 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(outcome.exception.errno, 12)
                 close.assert_not_called()
 
+
+    def test_directory_move_without_rename_cookie_is_not_well_formed(self):
+        for action in (module.IN_MOVED_FROM, module.IN_MOVED_TO):
+            with self.subTest(action=action):
+                raw = ev(wd=10, mask=action,
+                         data=named(b'public-moved-child'), cookie=0)
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertFalse(parsed['well_formed'])
+                self.assertEqual(parsed['directory_changes'], 1)
+                result = module._evaluate(
+                    b'public', b'public', raw, 9, True, False,
+                    directory_watch=10, directory_inventory_names=('sample',))
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['observed_checks']['event_stream_complete'])
+
+    def test_two_zero_cookie_moves_cannot_claim_complete_stream(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=0)
+               + ev(wd=10, mask=module.IN_MOVED_TO, data=name, cookie=0))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_named_moves_with_nonzero_cookies_keep_existing_semantics(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=31)
+               + ev(wd=10, mask=module.IN_MOVED_TO, data=name, cookie=32))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

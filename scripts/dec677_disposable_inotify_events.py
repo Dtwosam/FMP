@@ -116,6 +116,10 @@ def _classify_stream(data: bytes, watch: int,
         # not a valid observation of that event's kernel layout.
         if cookie and not mask & (IN_MOVED_FROM | IN_MOVED_TO):
             okay = False
+        # Linux pairs rename events with a nonzero cookie. A zero cookie
+        # on a move record cannot prove a complete named move transition.
+        if mask & (IN_MOVED_FROM | IN_MOVED_TO) and cookie == 0:
+            okay = False
         if nbytes > 4096 or nbytes > len(data) - pos:
             okay = False
             break
