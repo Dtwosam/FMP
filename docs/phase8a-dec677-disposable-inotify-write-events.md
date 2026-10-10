@@ -349,6 +349,14 @@ DEC-708 added an intermediate exact public changed-source snapshot; DEC-701 requ
 
 The specific negative-control predicate now also requires strict `before == after` and `inode_stable is True`, matching the existing separate `final_digest_equal` and `watched_inode_matches_final_path` checks. Three new source-defined methods bring the suite to **191**: unrestored final bytes defeat the control claim, a replaced inode with matching bytes defeats it, and unchanged final bytes/inode with two true source `IN_MODIFY` records and a known midpoint preserve a **BLOCKED** positive negative-control observation. These checks remain merely point-in-time public sample evidence, not cryptographic proof of absence of other writers, authenticated inotify, or real annual runner OS protection.
 
+## DEC-718 — Keep the persistent sibling witness valid only while creation remains unrevoked
+
+The DEC-703 persistent sibling negative tracked `expected_sibling_created=True` once the correct regular-file `IN_CREATE` had appeared, but never cleared it. A subsequent `IN_DELETE`, `IN_MOVED_FROM` or `IN_MOVED_TO` involving **that same expected filename** can delete, relocate or substitute the created inode. Keeping the old create flag latched would allow `sibling_creation_control_detected=true` if the evaluator also received a purported correct final inventory and sibling snapshot, even though the event sequence contradicted the original creation's persistence.
+
+The observer now clears the expected-sibling creation flag on a same-name delete, move, or directory-kind replacement; a genuinely new regular-file `IN_CREATE` can establish a new pending witness. Unrelated names do not clear that file-specific state, and the final inventory/inode checks and overall BLOCKED status remain mandatory.
+
+Four new source-defined tests bring the suite to **195 methods**: same-name delete cancels the claim, move-out cancels, move-in cancels, and unrelated child activity preserves the event-specific claim (still overall BLOCKED). This is synthetic basename lifecycle consistency, not a kernel-authenticated inode lineage proof, OS enforcement, or authorization for the annual runner. Exact-head full regression and independent source/security review required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

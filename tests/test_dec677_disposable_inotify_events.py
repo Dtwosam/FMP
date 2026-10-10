@@ -1827,6 +1827,55 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(verdict['observed_checks']['negative_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
 
+
+    def test_expected_persistent_sibling_create_then_delete_not_current(self):
+        name = named(b'unexpected-public-sibling')
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=name)
+                  + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertFalse(parsed['expected_sibling_created'])
+        result = module._evaluate(
+            b'public', b'public', stream, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=("sample", "unexpected-public-sibling"),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertFalse(result['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_expected_persistent_sibling_move_away_cancels_claim(self):
+        name = named(b'unexpected-public-sibling')
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=name)
+                  + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=101))
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertFalse(parsed['expected_sibling_created'])
+
+    def test_same_name_move_in_does_not_preserve_prior_create_claim(self):
+        name = named(b'unexpected-public-sibling')
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=name)
+                  + ev(wd=10, mask=module.IN_MOVED_TO, data=name, cookie=102))
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertFalse(parsed['expected_sibling_created'])
+
+    def test_unrelated_child_does_not_invalidate_expected_persistent_sibling(self):
+        target = named(b'unexpected-public-sibling')
+        other = named(b'unrelated')
+        stream = (ev(wd=10, mask=module.IN_CREATE, data=target)
+                  + ev(wd=10, mask=module.IN_CREATE, data=other)
+                  + ev(wd=10, mask=module.IN_DELETE, data=other))
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertTrue(parsed['expected_sibling_created'])
+        result = module._evaluate(
+            b'public', b'public', stream, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=("sample", "unexpected-public-sibling"),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertTrue(result['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
