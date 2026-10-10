@@ -3063,6 +3063,28 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertFalse(result['can_authorize_dispatch'])
 
+
+    def test_oversized_plain_inventory_cannot_claim_quiet_generated_directory(self):
+        names = ('sample',) + tuple('public-extra-%d' % i for i in range(2000))
+        result = module._evaluate(
+            b'public', b'public', b'', 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=names)
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_expected_two_name_persistent_inventory_remains_supported(self):
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(b'unexpected-public-sibling'))
+        result = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=('sample', 'unexpected-public-sibling'),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertTrue(result['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
