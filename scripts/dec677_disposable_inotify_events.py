@@ -291,10 +291,16 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         and 0 <= directory_watch <= MAX_WATCH_DESCRIPTOR
         and directory_watch != watch
     )
+    # Only plain Path.name strings are valid inventory evidence. Tuple
+    # element __eq__ implementations can otherwise forge exact-name matches.
+    inventory_names_are_plain = (
+        type(directory_inventory_names) is tuple
+        and all(type(name) is str for name in directory_inventory_names)
+    )
     directory_intact = (
         events["directory_changes"] == 0
         and directory_inventory_ok is True
-        and type(directory_inventory_names) is tuple
+        and inventory_names_are_plain
         and directory_inventory_names == ("sample",)
     )
     checks = {
@@ -312,7 +318,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
             and directory_inventory_ok is False
-            and type(directory_inventory_names) is tuple
+            and inventory_names_are_plain
             and directory_inventory_names == tuple(sorted(("sample", PERSISTENT_SIBLING_NAME)))
             and sibling_snapshot_stable is True
             and events["expected_sibling_created"] is True
@@ -329,7 +335,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
             and events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
             and directory_inventory_ok is True
-            and type(directory_inventory_names) is tuple
+            and inventory_names_are_plain
             and directory_inventory_names == ("sample",)
             and events["expected_transient_pairs"] >= 1
             and events["pending_new_child_names"] == ()
