@@ -2815,6 +2815,38 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertFalse(result['can_authorize_dispatch'])
 
+
+    def test_snapshot_rejects_fd_allocated_on_stdio_before_fstat(self):
+        for fd in (0, 1, 2):
+            with self.subTest(fd=fd):
+                with patch.object(module.os, 'open', return_value=fd):
+                    with patch.object(module.os, 'close') as closed:
+                        with patch.object(module.os, 'fstat') as stat_call:
+                            with self.assertRaisesRegex(OSError, 'standard descriptor'):
+                                module._snapshot_regular(Path('/tmp/public-synthetic'))
+                            closed.assert_called_once_with(fd)
+                            stat_call.assert_not_called()
+
+    def test_snapshot_rejects_malformed_open_fd_before_fstat(self):
+        for fd in (None, False, -1, '17', 17.0):
+            with self.subTest(fd=repr(fd)):
+                with patch.object(module.os, 'open', return_value=fd):
+                    with patch.object(module.os, 'close') as close:
+                        with patch.object(module.os, 'fstat') as stat_call:
+                            with self.assertRaisesRegex(OSError, 'valid integer fd'):
+                                module._snapshot_regular(Path('/tmp/public-synthetic'))
+                            close.assert_not_called()
+                            stat_call.assert_not_called()
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'), 'POSIX no-follow snapshot required')
+    def test_generated_public_snapshot_uses_nonstdio_fd(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'sample'
+            path.write_bytes(b'PUBLIC-DATA')
+            inode, content = module._snapshot_regular(path)
+            self.assertIs(type(inode), tuple)
+            self.assertEqual(content, b'PUBLIC-DATA')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
