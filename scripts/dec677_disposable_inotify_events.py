@@ -239,6 +239,10 @@ def _read_pending(fd: int) -> bytes:
 
     def is_readable(timeout_ms: int) -> bool:
         readiness = poller.poll(timeout_ms)
+        # select.poll.poll() promises a list. None, a malformed wrapper or
+        # another falsely-empty value cannot stand in for kernel quietness.
+        if type(readiness) is not list:
+            raise OSError("synthetic inotify poll returned malformed readiness")
         if not readiness:
             return False
         # One fd is registered: the only acceptable readiness is one exact
@@ -255,6 +259,8 @@ def _read_pending(fd: int) -> bytes:
             chunk = os.read(fd, 4096)
         except BlockingIOError as error:
             raise OSError("synthetic watch readiness raced an empty event queue") from error
+        if type(chunk) is not bytes or len(chunk) > 4096:
+            raise OSError("synthetic inotify read returned impossible chunk shape")
         if not chunk:
             raise OSError("synthetic watch became EOF after readiness")
         chunks.append(chunk)
