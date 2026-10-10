@@ -728,6 +728,44 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertFalse(result['can_authorize_dispatch'])
 
+
+    def test_poll_zero_pri_and_unknown_flags_are_not_valid_readiness(self):
+        for flags in (0, module.select.POLLPRI,
+                      module.select.POLLIN | module.select.POLLPRI,
+                      module.select.POLLIN | 0x8000):
+            with self.subTest(flags=flags):
+                class InvalidReady:
+                    def register(self, *_args): pass
+                    def poll(self, _timeout): return [(17, flags)]
+                with patch.object(module.select, 'poll', return_value=InvalidReady()):
+                    with patch.object(module.os, 'read') as read:
+                        with self.assertRaisesRegex(OSError, 'lost readable status'):
+                            module._read_pending(17)
+                        read.assert_not_called()
+
+    def test_duplicate_readiness_records_do_not_trigger_an_unverified_read(self):
+        class DuplicateReady:
+            def register(self, *_args): pass
+            def poll(self, _timeout):
+                return [(17, module.select.POLLIN), (17, module.select.POLLIN)]
+        with patch.object(module.select, 'poll', return_value=DuplicateReady()):
+            with patch.object(module.os, 'read') as read:
+                with self.assertRaisesRegex(OSError, 'lost readable status'):
+                    module._read_pending(17)
+                read.assert_not_called()
+
+    def test_valid_single_pollin_event_drains_once_without_special_flags(self):
+        record = ev(wd=9, mask=module.IN_CLOSE_WRITE)
+        class Normal:
+            def __init__(self): self.calls = 0
+            def register(self, *_args): pass
+            def poll(self, _timeout):
+                self.calls += 1
+                return [(17, module.select.POLLIN)] if self.calls == 1 else []
+        with patch.object(module.select, 'poll', return_value=Normal()):
+            with patch.object(module.os, 'read', return_value=record):
+                self.assertEqual(module._read_pending(17), record)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
