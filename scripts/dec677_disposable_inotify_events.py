@@ -56,7 +56,7 @@ def _outcome(findings: list[str], checks: dict[str, bool] | None = None) -> dict
 def _classify_stream(data: bytes, watch: int,
                      directory_watch: int | None = None) -> dict[str, Any]:
     """Parse a bounded kernel event buffer, fail closed on bad identity/overflow."""
-    if (not isinstance(data, bytes) or type(watch) is not int
+    if (type(data) is not bytes or type(watch) is not int
             or not 0 <= watch <= MAX_WATCH_DESCRIPTOR):
         return {"well_formed": False, "overflow": True, "invalidated": True, "write_events": 0, "directory_changes": 0, "transient_create_delete_pairs": 0, "source_content_write_events": 0, "source_modify_events": 0, "expected_sibling_created": False, "expected_transient_pairs": 0}
     if len(data) > 65536:

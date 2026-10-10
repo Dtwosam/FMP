@@ -2021,6 +2021,39 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['expected_transient_pairs'], 0)
 
+
+    def test_inotify_decoder_rejects_hostile_bytes_subclass_before_len(self):
+        class HostileBytes(bytes):
+            def __len__(self):
+                raise RuntimeError('injected len side effect')
+
+        parsed = module._classify_stream(HostileBytes(b''), 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertTrue(parsed['overflow'])
+        self.assertTrue(parsed['invalidated'])
+        verdict = module._evaluate(
+            b'public', b'public', HostileBytes(b''), 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['can_authorize_dispatch'])
+
+    def test_inotify_decoder_rejects_bytes_subclass_with_spoofed_length(self):
+        class PretendEmpty(bytes):
+            def __len__(self):
+                return 0
+
+        raw = module.EVENT.pack(9, module.IN_MODIFY, 0, 0)
+        parsed = module._classify_stream(PretendEmpty(raw), 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['source_modify_events'], 0)
+
+    def test_inotify_decoder_plain_bytes_still_parse_normal_event(self):
+        raw = bytes(module.EVENT.pack(9, module.IN_MODIFY, 0, 0))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['source_modify_events'], 1)
+        self.assertFalse(parsed['overflow'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

@@ -381,6 +381,14 @@ The parser now tracks the most recent removal of each child name. A repeated `IN
 
 The only independent spot-check was a separate public `/tmp` microprobe observing real `IN_CREATE, IN_DELETE, IN_CREATE, IN_DELETE` for one reused filename; it does not authenticate the observer or establish actual annual OS confinement. Full regression and qualified independent review remain necessary.
 
+## DEC-722 — Require exact immutable bytes for decoded event buffers
+
+The decoder previously used `isinstance(data, bytes)`. A Python `bytes` subclass can override methods such as `__len__` even though it inherits from `bytes`. A hostile synthetic caller could pass a subclass that raises when asked its length, triggering an uncontrolled exception, or spoofs a zero-length stream despite nonempty underlying bytes. That is not the shape returned by a genuine kernel `os.read`, and it does not establish a quiet observation.
+
+The parser now requires **`type(data) is bytes`** before reading its length or unpacking any events. Three new source-defined methods increase the suite to **210**, covering a subclass with raising `__len__`, a subclass lying about its length, and a genuine plain-bytes file modification event that remains recognized. All malformed inputs return a fail-closed classification and overall BLOCKED when evaluated. The bounded collector already insists that `os.read` returns an exact `bytes` chunk.
+
+This is synthetic Python input hardening only; no annual runner artifact, privilege, workflow, installed gate, broker or trading action is touched. Exact-head Phase 3/full regression and independent security review required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
