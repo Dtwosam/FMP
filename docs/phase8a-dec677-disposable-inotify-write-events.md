@@ -419,6 +419,14 @@ The evaluator now rejects any non-`bool` of `negative`, `replacement_negative`, 
 
 This enforces consistency only between the toy evaluator API and its CLI, not authenticated Linux kernel evidence, real protected-runner isolation or run385 authorization. Exact-head Phase 3/full CI and independent security review remain required.
 
+## DEC-727 — Disposable inotify watcher must not occupy standard descriptors
+
+Linux allocates the lowest free file descriptor for `inotify_init1`. If a parent process previously closed stdin, stdout or stderr, the new inotify watcher may receive descriptor **0, 1 or 2**, crossing a standard-I/O trust and cleanup boundary for the toy observer. The prior code accepted these descriptors and later closed them as though they were ordinary isolated observer handles. This is not evidence of a real runner exploit, but it is a poor boundary for any experimental instrumentation.
+
+The disposable `_start_watch` helper now closes and rejects any newly allocated FD in **0–2 before installing either watch**. The bounded `_read_pending` collector requires an exact Python integer FD greater than 2 before poll registration. Four new synthetic test methods bring the suite to **230**: reject STD FDs before poll, reject+close each mocked low inotify init FD without calling `inotify_add_watch`, allow a normal fake FD 17 with two distinct registered watches, and preserve the ordinary quiet poll control. All are fake/libc-mocked rather than real annual tasks.
+
+This protects only the generated local experiment's standard-descriptor handling; DEC-650 still requires independently demonstrated actual stdio and OS confinement across all annual jobs, and DEC-651 remains a separate immutable one-shot admission blocker. Exact-head Phase 3/full regression and independent security review are required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

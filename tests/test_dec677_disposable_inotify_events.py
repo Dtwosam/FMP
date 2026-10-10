@@ -2249,6 +2249,68 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['can_authorize_dispatch'])
         self.assertFalse(result['independent_os_proof_verified'])
 
+
+    def test_disposable_collector_never_registers_stdio_fds(self):
+        with patch.object(module.select, 'poll') as factory:
+            for fd in (0, 1, 2, -1, None, True):
+                with self.subTest(fd=repr(fd)):
+                    with self.assertRaisesRegex(OSError, 'nonstdio integer fd'):
+                        module._read_pending(fd)
+            factory.assert_not_called()
+
+    def test_inotify_init1_stdio_fd_is_closed_before_watches(self):
+        class CFunction:
+            def __init__(self, value):
+                self.value = value
+                self.argtypes = None
+                self.restype = None
+                self.calls = 0
+            def __call__(self, *_args):
+                self.calls += 1
+                return self.value
+        for fd in (0, 1, 2):
+            with self.subTest(fd=fd):
+                init = CFunction(fd)
+                add_watch = CFunction(9)
+                class FakeLib:
+                    inotify_init1 = init
+                    inotify_add_watch = add_watch
+                with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'standard descriptor'):
+                            module._start_watch(Path('/tmp/public-fake-only'))
+                        close.assert_called_once_with(fd)
+                self.assertEqual(add_watch.calls, 0)
+
+    def test_disposable_watcher_nonstdio_fd_still_registers_two_watches(self):
+        class CFunction:
+            def __init__(self, values):
+                self.values = iter(values)
+                self.argtypes = None
+                self.restype = None
+                self.calls = 0
+            def __call__(self, *_args):
+                self.calls += 1
+                return next(self.values)
+        init = CFunction([17])
+        add = CFunction([9, 10])
+        class FakeLib:
+            inotify_init1 = init
+            inotify_add_watch = add
+        with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+            result = module._start_watch(Path('/tmp/public-fake-only'))
+        self.assertEqual(result, (17, 9, 10))
+        self.assertEqual(add.calls, 2)
+
+    def test_disposable_collector_exact_regular_fd_retains_quiet_poll(self):
+        class Quiet:
+            def register(self, *_args): pass
+            def poll(self, _timeout): return []
+        with patch.object(module.select, 'poll', return_value=Quiet()):
+            with patch.object(module.os, 'read') as read:
+                self.assertEqual(module._read_pending(17), b'')
+                read.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
