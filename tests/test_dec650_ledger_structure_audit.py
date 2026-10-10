@@ -140,6 +140,12 @@ class LedgerStructureTests(unittest.TestCase):
         l["jobs"][1]["permitted_capabilities"] = "1"
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
 
+    def test_nul_in_process_path_blocks(self):
+        p, l = fixtures()
+        l["jobs"][0]["working_directory"] = "/tmp/synthetic" + chr(0) + "/cwd"
+        l["jobs"][1]["process_executable"] = "/usr/bin" + chr(0) + "/python3"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
     def test_credential_env_or_checkout_cwd_blocks(self):
         p, l = fixtures()
         l["jobs"][0]["env_allowlist_keys"].append("GH_TOKEN")
