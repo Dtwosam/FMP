@@ -269,6 +269,16 @@ The comparison now uses `tuple(sorted(("sample", PERSISTENT_SIBLING_NAME)))`, an
 
 This is the second post-#876 consistency repair, stacked on DEC-706 syntax restoration, not proof of independently trusted Linux event coverage or enforced source immutability. Exact-head CI and qualified source/security review are required.
 
+## DEC-708 — Verify the *intermediate* disposable write/revert snapshot
+
+The write/revert negative had a meaningful evidence gap even after DEC-701 required two file-watch `IN_MODIFY` records: its final bytes and digest matched the initial contents, but there was **no point-in-time snapshot** proving this generated sample had reached the intended `AFTER` bytes between writes. Two modifications followed by a final `BEFORE` digest cannot alone attribute the intermediate payload or the deliberate revert.
+
+In the **public, self-generated `/tmp` fixture only**, the demo now takes a bounded, no-follow `_snapshot_regular` immediately after writing/fsyncing `AFTER`, verifies the original inode and exact changed bytes, then writes/fsyncs `BEFORE`. The evaluator's `midpoint_source_snapshot_matches_expected` check requires strict `True`, and the negative-control detection also requires this condition in addition to the existing two source `IN_MODIFY` records, intact/live event stream and ordinary overall BLOCKED outcome.
+
+Four added synthetic tests raise the suite to **164 source-defined methods**: missing/wrong-type/false midpoint evidence, valid intermediate evidence plus two modifies, midpoint evidence with close-write-only events, and malformed event stream after two modifies. Three earlier synthetic positive cases explicitly supply the local midpoint flag. The five optional real Linux demos remain untrusted and manual.
+
+Two self-generated point-in-time snapshots plus notification metadata are **not** continuous OS immutability, a kernel-authenticated audit, intermediate-proof cryptographic attestation, or annual-runner authority. Exact-head CI and qualified independent review are mandatory.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
