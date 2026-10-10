@@ -359,9 +359,12 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
         with tempfile.TemporaryDirectory(prefix="dec677-disposable-", dir="/tmp") as folder:
             path = Path(folder) / "sample"
             path.write_bytes(BEFORE)
-            original_inode, original_bytes = _snapshot_regular(path)
+            # Start observing both the inode and parent directory *before*
+            # taking the baseline. A prewatch snapshot would leave an
+            # unobserved gap before kernel watch registration.
             fd, wd, dir_wd = _start_watch(path)
             try:
+                original_inode, original_bytes = _snapshot_regular(path)
                 midpoint_matches_expected = None
                 if negative:
                     # This is generated public data; observe the intermediate

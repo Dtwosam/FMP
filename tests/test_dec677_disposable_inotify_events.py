@@ -1453,6 +1453,48 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(verdict['observed_checks']['event_stream_complete'])
         self.assertFalse(verdict['observed_checks']['negative_control_detected'])
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_baseline_snapshot_is_taken_after_both_watches_registered(self):
+        rd, wr = os.pipe()
+        order = []
+        try:
+            def fake_watch(_path):
+                order.append('watch-file-and-directory')
+                return rd, 9, 10
+            def fake_snapshot(_path):
+                order.append('bounded-snapshot')
+                return ((3, 7), module.BEFORE)
+            def fake_drain(_fd):
+                order.append('event-drain')
+                return b''
+            with patch.object(module, '_start_watch', side_effect=fake_watch):
+                with patch.object(module, '_snapshot_regular', side_effect=fake_snapshot):
+                    with patch.object(module, '_read_pending', side_effect=fake_drain):
+                        verdict = module.run_demo()
+            self.assertEqual(order[0:2], ['watch-file-and-directory', 'bounded-snapshot'])
+            self.assertEqual(verdict['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertFalse(verdict['can_authorize_dispatch'])
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_initial_snapshot_failure_closes_installed_watch_fd(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  side_effect=OSError('failed initial snapshot')):
+                    with patch.object(module, '_read_pending') as drain:
+                        verdict = module.run_demo()
+                        drain.assert_not_called()
+            self.assertEqual(verdict['status'], 'BLOCKED')
+            self.assertFalse(verdict['can_authorize_dispatch'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

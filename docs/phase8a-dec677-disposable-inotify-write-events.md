@@ -279,6 +279,14 @@ Four added synthetic tests raise the suite to **164 source-defined methods**: mi
 
 Two self-generated point-in-time snapshots plus notification metadata are **not** continuous OS immutability, a kernel-authenticated audit, intermediate-proof cryptographic attestation, or annual-runner authority. Exact-head CI and qualified independent review are mandatory.
 
+## DEC-709 — Install both watches before taking the baseline snapshot
+
+The disposable demo previously opened and read its original `sample` inode **before** calling `_start_watch`. A file rewrite between that initial read and the actual Linux inotify watch registrations could escape the event log, even though a later before/after digest might match. The fresh `/tmp` fixture's permissions limit the practical exposure but do not justify presenting an unobserved baseline window as part of complete event capture.
+
+The demo now installs both file and parent-directory watches first, then obtains the initial bounded regular-file snapshot **inside the watch FD's `try/finally` cleanup scope**. An initial snapshot failure now closes the installed inotify FD and fails closed. Two synthetic, POSIX-safe but Linux-gated regression methods increase the suite to **166**: assert the registration precedes the initial source snapshot and assert FD cleanup when that snapshot fails. This does not change any real annual workflow, protected source file or permission setting.
+
+It narrows one self-observation window but does not prove continuous external kernel-event provenance or close the inherent gap after a final queue drain; DEC-650 actual OS isolation and independent qualified review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
