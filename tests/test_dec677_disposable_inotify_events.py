@@ -3957,6 +3957,57 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(wr)
 
+
+    def test_snapshot_rejects_out_of_range_linux_stat_nanoseconds(self):
+        class FakeStat:
+            def __init__(self, **change):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+                for key, value in change.items():
+                    setattr(self, key, value)
+        for field in ('st_mtime_ns', 'st_ctime_ns'):
+            for invalid in (module.MIN_KERNEL_TIMESTAMP_NS - 1,
+                            module.MAX_KERNEL_TIMESTAMP_NS + 1, 1 << 128):
+                with self.subTest(field=field, invalid=invalid):
+                    with patch.object(module.os, 'open', return_value=17):
+                        with patch.object(module.os, 'fstat',
+                                          return_value=FakeStat(**{field: invalid})):
+                            with patch.object(module.os, 'read') as read:
+                                with patch.object(module.os, 'close') as close:
+                                    with self.assertRaisesRegex(OSError, 'impossible nanosecond'):
+                                        module._snapshot_regular(Path('/tmp/public-fake-only'))
+                                    read.assert_not_called()
+                                    close.assert_called_once_with(17)
+
+    def test_stat_metadata_accepts_signed_linux_nanosecond_boundaries(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_size = 1
+            st_mtime_ns = module.MIN_KERNEL_TIMESTAMP_NS
+            st_ctime_ns = module.MAX_KERNEL_TIMESTAMP_NS
+        self.assertEqual(
+            module._checked_snapshot_metadata(FakeStat()),
+            (FakeStat.st_mode, 1, 2, 1, module.MIN_KERNEL_TIMESTAMP_NS,
+             module.MAX_KERNEL_TIMESTAMP_NS))
+
+    def test_stat_metadata_accepts_negative_pre_epoch_timestamps(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_size = 1
+            st_mtime_ns = -1_000_000_000
+            st_ctime_ns = -1
+        self.assertEqual(
+            module._checked_snapshot_metadata(FakeStat()),
+            (FakeStat.st_mode, 1, 2, 1, -1_000_000_000, -1))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
