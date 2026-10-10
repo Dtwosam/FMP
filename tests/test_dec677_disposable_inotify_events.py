@@ -680,7 +680,8 @@ class DisposableInotifyTests(unittest.TestCase):
     def test_named_create_delete_pair_survives_interleaved_unrelated_event(self):
         stream = (ev(wd=10, mask=module.IN_CREATE, data=named(b'temporary-public-sibling'))
                   + ev(wd=10, mask=module.IN_CREATE, data=named(b'b'))
-                  + ev(wd=10, mask=module.IN_DELETE, data=named(b'temporary-public-sibling')))
+                  + ev(wd=10, mask=module.IN_DELETE, data=named(b'temporary-public-sibling'))
+                  + ev(wd=10, mask=module.IN_DELETE, data=named(b'b')))
         parsed = module._classify_stream(stream, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['transient_create_delete_pairs'], 1)
@@ -2445,6 +2446,76 @@ class DisposableInotifyTests(unittest.TestCase):
         observed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertTrue(observed['well_formed'])
         self.assertEqual(observed['transient_create_delete_pairs'], 1)
+
+
+    def test_transient_control_rejects_surviving_unrelated_observed_child(self):
+        target = named(b'temporary-public-sibling')
+        other = named(b'unremoved-public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=target)
+               + ev(wd=10, mask=module.IN_CREATE, data=other)
+               + ev(wd=10, mask=module.IN_DELETE, data=target))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['pending_new_child_names'], (b'unremoved-public-child',))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',),
+            transient_midpoint_verified=True, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_persistent_control_rejects_surviving_unrelated_observed_child(self):
+        target = named(b'unexpected-public-sibling')
+        other = named(b'other-public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=target)
+               + ev(wd=10, mask=module.IN_CREATE, data=other))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertEqual(parsed['pending_new_child_names'],
+                         (b'other-public-child', b'unexpected-public-sibling'))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=('sample', 'unexpected-public-sibling'),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_transient_control_allows_fully_removed_unrelated_observed_child(self):
+        target = named(b'temporary-public-sibling')
+        other = named(b'other-public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=target)
+               + ev(wd=10, mask=module.IN_CREATE, data=other)
+               + ev(wd=10, mask=module.IN_DELETE, data=target)
+               + ev(wd=10, mask=module.IN_DELETE, data=other))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['pending_new_child_names'], ())
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',),
+            transient_midpoint_verified=True, transient_sibling_negative=True)
+        self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_sibling_control_single_expected_child_is_only_pending_name(self):
+        name = named(b'unexpected-public-sibling')
+        parsed = module._classify_stream(
+            ev(wd=10, mask=module.IN_CREATE, data=name), 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['pending_new_child_names'], (b'unexpected-public-sibling',))
+
+    def test_malformed_early_stream_has_no_observed_surviving_children(self):
+        for data, wd, directory in (
+            ('wrong-buffer', 9, 10),
+            (b'', -1, 10),
+            (b'', 9, 9),
+        ):
+            with self.subTest(wd=wd, directory=directory):
+                parsed = module._classify_stream(data, wd, directory_watch=directory)
+                self.assertFalse(parsed['well_formed'])
+                self.assertEqual(parsed['pending_new_child_names'], ())
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
