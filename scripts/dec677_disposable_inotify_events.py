@@ -453,6 +453,15 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
 
 def _read_pending(fd: int) -> bytes:
     """Bounded event drain; never present an unreadable/pending queue as quiet."""
+    try:
+        return _read_pending_checked(fd)
+    except Exception as error:
+        if isinstance(error, OSError):
+            raise
+        raise OSError("synthetic inotify collector wrapper raised unexpectedly") from error
+
+
+def _read_pending_checked(fd: int) -> bytes:
     if type(fd) is not int or not 3 <= fd <= MAX_FILE_DESCRIPTOR:
         raise OSError("synthetic inotify collector requires a nonstdio integer fd")
     chunks: list[bytes] = []
