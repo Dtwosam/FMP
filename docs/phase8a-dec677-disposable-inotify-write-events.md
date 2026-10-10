@@ -373,6 +373,14 @@ The helper now requires exact `bool` for each of its four mode arguments before 
 
 Review remains draft-only, with exact-head Phase 3/full regression and independent security source review needed.
 
+## DEC-721 — Duplicate same-name deletes cannot be treated as a complete event stream
+
+The same issue addressed for repeated `IN_CREATE` in DEC-719 affects `IN_DELETE`: two removals for the exact same directory-entry basename cannot both describe an unchanged complete timeline unless a new entry arrived between them. The prior decoder did not track pending deletes, so `DELETE(name) → DELETE(name)` remained syntactically well-formed, even though the stream could be missing a creation, rename, or other predecessor. If such a duplicate appeared alongside a valid-looking transient target pair, the evaluator could overstate `event_stream_complete` or negative-control detection.
+
+The parser now tracks the most recent removal of each child name. A repeated `IN_DELETE` without intervening same-name `IN_CREATE` or `IN_MOVED_TO` marks the whole stream **not well formed**. A new child or move-in clears that deletion flag; a delete of an entry that already existed before the observer started remains acceptable. Four source-defined regressions bring the suite to **207 methods**: duplicate same-name deletes, duplicate unrelated delete poisoning otherwise expected evidence, a valid delete/create/delete timeline, and a valid delete/move-in/delete timeline. All negative controls still BLOCK and do not authorize dispatch.
+
+The only independent spot-check was a separate public `/tmp` microprobe observing real `IN_CREATE, IN_DELETE, IN_CREATE, IN_DELETE` for one reused filename; it does not authenticate the observer or establish actual annual OS confinement. Full regression and qualified independent review remain necessary.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
