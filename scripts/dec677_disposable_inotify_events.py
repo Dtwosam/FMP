@@ -552,13 +552,17 @@ def _read_pending_checked(fd: int) -> bytes:
 
 def _plausible_inventory_basename(name: Any) -> bool:
     """Bound an exact Python name to a Linux single-component byte basename."""
-    if type(name) is not str:
+    if type(name) is not str or not 1 <= len(name) <= MAX_EVENT_BASENAME:
+        # UTF-8 or filesystem bytes cannot be shorter than codepoint count.
+        # Avoid encoding oversized injected names just to discover overflow.
         return False
     try:
         encoded = os.fsencode(name)
     except Exception:
         return False
-    return (0 < len(encoded) <= MAX_EVENT_BASENAME
+    # A patched encoder result may forge comparison or truthiness. The real
+    # os.fsencode result is an exact immutable bytes object.
+    return (type(encoded) is bytes and 0 < len(encoded) <= MAX_EVENT_BASENAME
             and encoded not in (b".", b"..")
             and b"/" not in encoded and b"\x00" not in encoded)
 

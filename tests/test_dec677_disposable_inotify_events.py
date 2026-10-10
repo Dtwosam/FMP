@@ -4008,6 +4008,34 @@ class DisposableInotifyTests(unittest.TestCase):
             module._checked_snapshot_metadata(FakeStat()),
             (FakeStat.st_mode, 1, 2, 1, -1_000_000_000, -1))
 
+
+    def test_inventory_rejects_overlong_name_before_encoding(self):
+        with patch.object(module.os, 'fsencode',
+                          side_effect=AssertionError('must not encode overlong name')) as encode:
+            self.assertFalse(module._plausible_inventory_basename('x' * 256))
+            self.assertFalse(module._plausible_inventory_basename('x' * 100000))
+            encode.assert_not_called()
+
+    def test_inventory_rejects_injected_nonbytes_encoder_results(self):
+        class ForgedBytes(bytes):
+            def __eq__(self, other):
+                return True
+        for response in (None, True, 'sample', bytearray(b'sample'),
+                         ForgedBytes(b'sample')):
+            with self.subTest(response=repr(response)):
+                with patch.object(module.os, 'fsencode', return_value=response):
+                    self.assertFalse(module._plausible_inventory_basename('sample'))
+
+    def test_inventory_encoders_that_raise_fail_closed_in_evaluator(self):
+        with patch.object(module.os, 'fsencode',
+                          side_effect=RuntimeError('synthetic broken fsencode')):
+            result = module._evaluate(
+                b'public', b'public', b'', 9, True, False,
+                directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+        self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
