@@ -281,6 +281,78 @@ class ExclusiveSyntheticPublicationTests(unittest.TestCase):
                     real_unlink(pending, dir_fd=dirfd)
                 os.close(dirfd)
 
+    def test_unchanged_published_inode_and_bytes_verify(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fd = self._dirfd(directory)
+            try:
+                module._publish_once(fd, b"same-public-inode")
+                public_fd = os.open(module.REPORT_NAME, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=fd)
+                try:
+                    module._verify_published_link(fd, public_fd, b"same-public-inode")
+                finally:
+                    os.close(public_fd)
+            finally:
+                os.close(fd)
+
+    def test_after_link_same_inode_wrong_bytes_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            fd = self._dirfd(directory)
+            try:
+                module._publish_once(fd, b"original")
+                public_fd = os.open(module.REPORT_NAME, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=fd)
+                try:
+                    with self.assertRaises(OSError):
+                        module._verify_published_link(fd, public_fd, b"different")
+                finally:
+                    os.close(public_fd)
+            finally:
+                os.close(fd)
+
+    def test_pending_symlink_swap_before_link_is_unknown_not_success(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "public-decoy").write_bytes(b"PUBLIC-DECOY")
+            fd = self._dirfd(directory)
+            original_link = os.link
+            try:
+                def replace_before_link(src, dst, **kwargs):
+                    src_fd = kwargs["src_dir_fd"]
+                    os.unlink(src, dir_fd=src_fd)
+                    os.symlink("public-decoy", src, dir_fd=src_fd)
+                    return original_link(src, dst, **kwargs)
+                with patch.object(module.os, "link", side_effect=replace_before_link):
+                    with self.assertRaises(module.PublicationOutcomeUnknown) as caught:
+                        module._publish_once(fd, b"expected")
+                self.assertIn("DO NOT RETRY", str(caught.exception))
+                self.assertTrue((root / module.REPORT_NAME).is_symlink())
+                self.assertEqual((root / "public-decoy").read_bytes(), b"PUBLIC-DECOY")
+                self.assertFalse(any(p.name.startswith(".pending-") for p in root.iterdir()))
+            finally:
+                os.close(fd)
+
+    def test_pending_regular_inode_swap_before_link_is_unknown(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "public-decoy").write_bytes(b"EXPECTED")
+            fd = self._dirfd(directory)
+            original_link = os.link
+            try:
+                def replace_before_link(src, dst, **kwargs):
+                    src_fd = kwargs["src_dir_fd"]
+                    os.unlink(src, dir_fd=src_fd)
+                    original_link("public-decoy", src, src_dir_fd=src_fd, dst_dir_fd=src_fd,
+                                  follow_symlinks=False)
+                    return original_link(src, dst, **kwargs)
+                with patch.object(module.os, "link", side_effect=replace_before_link):
+                    with self.assertRaises(module.PublicationOutcomeUnknown):
+                        module._publish_once(fd, b"EXPECTED")
+                self.assertEqual(module._read_report(fd), b"EXPECTED")
+                self.assertFalse(any(p.name.startswith(".pending-") for p in root.iterdir()))
+            finally:
+                os.close(fd)
+
     def test_symlink_collision_cannot_overwrite_target(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

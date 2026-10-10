@@ -60,6 +60,16 @@ Two additional fault-injection regressions bring the synthetic suite to **22 def
 
 Neither exception certifies the actual state of GitHub artifact publication. Both are local source-only stop signals and cannot replace trusted receipt inspection, independent OS isolation, immutable single-authority annual dispatch, or separate authorization.
 
+## DEC-668 verify that final report name refers to the staged inode
+
+The previous publisher exclusively created a pending file and then linked the **pending pathname** to the final report name. A directory actor able to replace the pending pathname *after staging but before the link* can cause the final name to refer to a different inode or even a symlink. O_EXCL on the pending file alone does not bind the later pathname lookup to the original open descriptor. The old implementation could report local publication success without checking that identity.
+
+The new post-link inspection opens the final name using O_NOFOLLOW and O_NONBLOCK, checks its device+inode numbers match the still-open original staged FD, checks both are bounded regular files of expected length, and compares final bytes against the exact public synthetic payload. A failed check **after successful link** raises PublicationOutcomeUnknown with the existing DO NOT RETRY rule; a clean report still does not authorize any annual action.
+
+Four new negative/positive tests bring the source-defined count to **26**. Two use a patched deterministic link boundary to substitute the pending name immediately before the real link syscall: a public symlink and a different public regular inode with even identical bytes. Both must result in explicit publication uncertainty, not a false success. Two test the identity/byte verifier directly. Tests use only disposable public files.
+
+**Limitations:** Post-link verification is a point-in-time check. A privileged or same-UID actor with direct write access can change the report before, during or after that check; this does not establish immutable published content, a trusted observer, host OS separation, remote receipt or production authorization. Reviewers must independently verify source correctness and actual annual-runner control boundaries.
+
 ## Precise limitations
 
 This demonstration assumes its generated external directory is a trusted single-writer namespace. An adversarial privileged sibling could change directory contents or aliases; the code does not prove race-safe cleanup, absence of writable checkout aliases, durable delivery to GitHub artifacts, actual production runner permissions, rollback on fsync errors, or correctness of cross-filesystem publication. os.link requires pending/final files on the same filesystem; failures are BLOCKED and must never be silently retried.
