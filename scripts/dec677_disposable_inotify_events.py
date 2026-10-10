@@ -26,6 +26,7 @@ IN_MOVED_FROM = 0x00000040
 IN_MOVED_TO = 0x00000080
 IN_CREATE = 0x00000100
 IN_DELETE = 0x00000200
+IN_ISDIR = 0x40000000
 IN_DELETE_SELF = 0x00000400
 IN_MOVE_SELF = 0x00000800
 IN_Q_OVERFLOW = 0x00004000
@@ -33,7 +34,9 @@ IN_IGNORED = 0x00008000
 MASK = (IN_MODIFY | IN_CLOSE_WRITE | IN_ATTRIB | IN_DELETE_SELF |
         IN_MOVE_SELF | IN_Q_OVERFLOW | IN_IGNORED)
 DIRECTORY_CHANGES = IN_MOVED_FROM | IN_MOVED_TO | IN_CREATE | IN_DELETE
-DIRECTORY_MASK = MASK | DIRECTORY_CHANGES
+EVENT_ACTIONS = MASK | DIRECTORY_CHANGES
+EVENT_ALLOWED = EVENT_ACTIONS | IN_ISDIR
+DIRECTORY_MASK = EVENT_ACTIONS
 EVENT = struct.Struct("iIII")
 
 
@@ -62,12 +65,19 @@ def _classify_stream(data: bytes, watch: int,
             break
         wd, mask, _cookie, nbytes = EVENT.unpack_from(data, pos)
         pos += EVENT.size
+        # A syntactically complete event with no known action or unexpected
+        # flags must not be interpreted as a clean inotify observation.
+        if not (mask & EVENT_ACTIONS) or mask & ~EVENT_ALLOWED:
+            okay = False
         if nbytes > 4096 or nbytes > len(data) - pos:
             okay = False
             break
         pos += nbytes
         if mask & IN_Q_OVERFLOW:
             overflow = True
+            # Linux uses wd=-1 for queue overflow. Mixed flags are uncertain.
+            if wd != -1 or mask != IN_Q_OVERFLOW:
+                okay = False
         elif wd != watch and (directory_watch is None or wd != directory_watch):
             okay = False
         if directory_watch is not None and wd == directory_watch and mask & DIRECTORY_CHANGES:

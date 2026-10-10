@@ -59,6 +59,14 @@ This stacked correction now examines poll error, HUP, NVAL and unexpected descri
 
 Seven additional regressions bring the source-defined count to **49** (five real Linux demonstrations remain manual opt-in). Adversarial tests simulate persistent unread data at the exact 64KiB cap, an exactly drained cap, poll errors and unexpected FD, readable EOF, readiness races, and an ordinary one-chunk drain. This is **input handling hardening**, not a guarantee of kernel event completeness across the entire process lifetime. A quiet instant does not prove future events cannot arrive after watch closure, or that all mount/inode aliases were instrumented.
 
+## DEC-682 — Reject structurally complete but semantically unknown event records
+
+Even a bounded, fully drained byte buffer is not reliable evidence if the decoder accepts **a zero action mask** or unknown event flag bits and treats the record as uneventful. This stacked change explicitly enumerates the supported file and directory inotify action flags, allows `IN_ISDIR` only as a modifier of a real event, and rejects records with no known action or unsupported flags. `IN_Q_OVERFLOW` must be the sole mask of an event with the kernel's special watch descriptor `-1`; inconsistent overflow reports fail closed rather than being ignored.
+
+Eight source-defined tests raise the current harness to **57 tests** (five manual Linux OS demos remain opt-in and skipped by default). They cover a zero mask, unknown high flag, unhandled unmount flag, a bare directory marker, valid directory marker plus create, wrong watch number for queue overflow, mixed overflow flags and a known valid close-write event. These are **synthetic parser inputs**, not independently authenticated kernel records; successful parsing can only yield LOCAL_DISPOSABLE_WITNESS_UNVERIFIED, never an annual security PASS.
+
+Requiring known flags makes the parser more conservative but cannot ensure uninterrupted observation, kernel policy enforcement, coverage of every inode alias, completeness across the job lifetime, an untampered observer or actual 20-job runner evidence.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
