@@ -2611,6 +2611,62 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(verdict['status'], 'BLOCKED')
         self.assertFalse(verdict['can_authorize_dispatch'])
 
+
+    def test_persistent_directory_only_negative_refuses_source_modify_event(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE,
+                  data=named(b'unexpected-public-sibling'))
+               + ev(wd=9, mask=module.IN_MODIFY))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=('sample', 'unexpected-public-sibling'),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertTrue(verdict['observed_checks']['final_digest_equal'])
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_persistent_directory_only_negative_refuses_source_close_write_event(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE,
+                  data=named(b'unexpected-public-sibling'))
+               + ev(wd=9, mask=module.IN_CLOSE_WRITE))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=False,
+            directory_inventory_names=('sample', 'unexpected-public-sibling'),
+            sibling_snapshot_stable=True, sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_transient_directory_only_negative_refuses_source_modify_event(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=9, mask=module.IN_MODIFY)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',),
+            transient_midpoint_verified=True, transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_transient_directory_only_negative_allows_sibling_close_write(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_CLOSE_WRITE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['source_content_write_events'], 0)
+        self.assertGreater(parsed['write_events'], 0)
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=('sample',),
+            transient_midpoint_verified=True, transient_sibling_negative=True)
+        self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
