@@ -142,20 +142,37 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
 
 
 def _read_pending(fd: int) -> bytes:
+    """Bounded event drain; never present an unreadable/pending queue as quiet."""
     chunks: list[bytes] = []
     size = 0
     poller = select.poll()
-    poller.register(fd, select.POLLIN | select.POLLERR | select.POLLHUP)
+    poller.register(fd, select.POLLIN | select.POLLERR | select.POLLHUP | select.POLLNVAL)
+
+    def is_readable(timeout_ms: int) -> bool:
+        readiness = poller.poll(timeout_ms)
+        if any(descriptor != fd or flags & (select.POLLERR | select.POLLHUP | select.POLLNVAL)
+               for descriptor, flags in readiness):
+            raise OSError("synthetic inotify event collector lost readable status")
+        return bool(readiness)
+
     for _ in range(16):
-        if not poller.poll(250):
+        if not is_readable(250):
             break
-        chunk = os.read(fd, 4096)
+        try:
+            chunk = os.read(fd, 4096)
+        except BlockingIOError as error:
+            raise OSError("synthetic watch readiness raced an empty event queue") from error
         if not chunk:
-            break
+            raise OSError("synthetic watch became EOF after readiness")
         chunks.append(chunk)
         size += len(chunk)
         if size > 65536:
             raise OSError("synthetic event queue exceeds bounded observation")
+    else:
+        # A bounded collector may not silently truncate a still-readable
+        # queue, hiding later IN_Q_OVERFLOW or directory event records.
+        if is_readable(0):
+            raise OSError("synthetic inotify event queue still pending after drain limit")
     return b"".join(chunks)
 
 
