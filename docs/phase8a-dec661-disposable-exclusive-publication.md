@@ -30,6 +30,16 @@ A second draft variant runs two *synthetic* publishers against the same fixed, e
 
 This is a scheduling witness of the underlying Linux exclusive hard-link name creation, not a proof of safety under hostile privileged sibling writers, cross-mount aliases, malicious directory replacement, crash recovery, or authentication of real report content. The documented **trusted single-writer assumption remains mandatory** for any actual annual-runner deployment design. One additional regression brings the source-defined total to 13.
 
+## DEC-663 ambiguous publication outcome: fail closed, never retry
+
+**Important distinction:** final-name creation by link-if-absent is atomic, but the durable outcome remains **unknown** after a successful link if a subsequent directory fsync fails or pending-file cleanup raises. Treating this as an ordinary unpublished error could encourage an unsafe replay. The implementation now marks post-link exceptions with **PublicationOutcomeUnknown**, explicitly saying DO NOT RETRY, rather than incorrectly representing the report as absent.
+
+The function tracks whether it crossed the final-name link boundary. It attempts descriptor close and pending unlink separately, even if one fails, and retains the first error. If any error occurs **after** a successful link, it raises PublicationOutcomeUnknown; it does not unlink, overwrite or recreate the final name. Before the link, an error still blocks and attempts to remove the pending synthetic file, without pretending errors in cleanup were recovered.
+
+Four additional fault-injection regressions bring the source-defined total to **17**: staged-file fsync failure leaves no final report, post-link directory fsync failure leaves a final report but raises the explicit ambiguity exception, post-link pending cleanup failure leaves an orphan and raises ambiguity, and all such failure results remain nonauthorizing. The tests assert that a naive second publication attempt receives FileExistsError and cannot overwrite the first bytes. They deliberately use only disposable directories and injected filesystem errors, not protected data or actual workflow artifacts.
+
+This is a source-only negative fault witness, not a crash-recovery protocol, transactional GitHub artifact delivery, exclusive publisher proof or authorization for a second attempt after network ambiguity. An actual production uploader must have an independently specified failure/receipt policy and no automated retry on ambiguous delivery.
+
 ## Precise limitations
 
 This demonstration assumes its generated external directory is a trusted single-writer namespace. An adversarial privileged sibling could change directory contents or aliases; the code does not prove race-safe cleanup, absence of writable checkout aliases, durable delivery to GitHub artifacts, actual production runner permissions, rollback on fsync errors, or correctness of cross-filesystem publication. os.link requires pending/final files on the same filesystem; failures are BLOCKED and must never be silently retried.

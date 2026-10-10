@@ -88,6 +88,80 @@ class ExclusiveSyntheticPublicationTests(unittest.TestCase):
                 finally:
                     os.close(dirfd)
 
+    def test_post_link_directory_fsync_failure_is_ambiguous_not_aborted(self):
+        # The name exists even though the publisher reports a failure.
+        # Never turn this into an automatic retry signal.
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            fd = self._dirfd(directory)
+            original_fsync = os.fsync
+            try:
+                def injected_fsync(target_fd):
+                    if target_fd == fd:
+                        raise OSError("synthetic post-link durability failure")
+                    return original_fsync(target_fd)
+                with patch.object(module.os, "fsync", side_effect=injected_fsync):
+                    with self.assertRaises(module.PublicationOutcomeUnknown) as caught:
+                        module._publish_once(fd, b"first-durable-unknown")
+                self.assertIn("DO NOT RETRY", str(caught.exception))
+                self.assertEqual(module._read_report(fd), b"first-durable-unknown")
+                self.assertEqual(os.listdir(fd), [module.REPORT_NAME])
+                with self.assertRaises(FileExistsError):
+                    module._publish_once(fd, b"no second publication")
+                self.assertEqual(module._read_report(fd), b"first-durable-unknown")
+            finally:
+                os.close(fd)
+
+    def test_post_link_pending_cleanup_failure_is_ambiguous(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            fd = self._dirfd(directory)
+            unlink_real = os.unlink
+            pending_name = None
+            try:
+                def fail_cleanup(path, *args, **kwargs):
+                    if isinstance(path, str) and path.startswith(".pending-"):
+                        raise OSError("synthetic pending cleanup failure")
+                    return unlink_real(path, *args, **kwargs)
+                with patch.object(module.os, "unlink", side_effect=fail_cleanup):
+                    with self.assertRaises(module.PublicationOutcomeUnknown) as caught:
+                        module._publish_once(fd, b"fully-linked-but-pending-left")
+                self.assertIn("DO NOT RETRY", str(caught.exception))
+                entries = os.listdir(fd)
+                self.assertEqual(len(entries), 2)
+                pending = [name for name in entries if name.startswith(".pending-")]
+                self.assertEqual(len(pending), 1)
+                pending_name = pending[0]
+                self.assertEqual(module._read_report(fd), b"fully-linked-but-pending-left")
+            finally:
+                if pending_name is not None:
+                    unlink_real(pending_name, dir_fd=fd)
+                os.close(fd)
+
+    def test_pre_link_file_fsync_failure_never_creates_final_report(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            fd = self._dirfd(directory)
+            original_fsync = os.fsync
+            try:
+                def injected_fsync(target_fd):
+                    if target_fd != fd:
+                        raise OSError("synthetic staged-file fsync failure")
+                    return original_fsync(target_fd)
+                with patch.object(module.os, "fsync", side_effect=injected_fsync):
+                    with self.assertRaises(OSError) as caught:
+                        module._publish_once(fd, b"not-published")
+                self.assertNotIsInstance(caught.exception, module.PublicationOutcomeUnknown)
+                self.assertEqual(os.listdir(fd), [])
+            finally:
+                os.close(fd)
+
+    def test_post_link_error_does_not_change_authorization_contract(self):
+        report = module._result(["final name linked; durability unknown"])
+        self.assertEqual(report["status"], "BLOCKED")
+        self.assertFalse(report["can_authorize_dispatch"])
+        self.assertFalse(report["independent_os_proof_verified"])
+
     def test_symlink_collision_cannot_overwrite_target(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

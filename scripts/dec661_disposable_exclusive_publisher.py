@@ -39,12 +39,20 @@ def _write_all(fd: int, payload: bytes, writer: Callable[[int, bytes], int]) -> 
         position += written
 
 
+class PublicationOutcomeUnknown(OSError):
+    """The final name was linked, but durable delivery cannot be confirmed.
+
+    Stop: no retry, overwriting, or claim of a safely aborted publication.
+    """
+
+
 def _publish_once(directory_fd: int, payload: bytes,
                   writer: Callable[[int, bytes], int] = os.write) -> None:
     """Create externally with O_EXCL; link completed bytes into final name.
 
     Requires a trusted single-writer *synthetic* directory; this does not prove
     security against concurrent privileged namespace writers or a real runner.
+    A post-link fsync or cleanup failure is *ambiguous*, never safe to retry.
     """
     if not isinstance(payload, bytes) or not payload or len(payload) > MAX_BYTES:
         raise ValueError("invalid synthetic report payload")
@@ -52,17 +60,38 @@ def _publish_once(directory_fd: int, payload: bytes,
              getattr(os, "O_CLOEXEC", 0))
     pending = ".pending-" + secrets.token_hex(16)
     fd = os.open(pending, flags, 0o600, dir_fd=directory_fd)
+    linked = False
+    failure: Exception | None = None
     try:
         _write_all(fd, payload, writer)
         os.fsync(fd)
+        # Never rename-overwrite. Final name creation is atomic, but success
+        # of this link does NOT by itself prove the directory is durable.
         os.link(pending, REPORT_NAME, src_dir_fd=directory_fd,
                 dst_dir_fd=directory_fd, follow_symlinks=False)
-        # No rename-overwrite. An existing regular file, symlink, or FIFO
-        # at REPORT_NAME raises FileExistsError rather than being replaced.
+        linked = True
         os.fsync(directory_fd)
+    except Exception as exc:
+        failure = exc
     finally:
-        os.close(fd)
-        os.unlink(pending, dir_fd=directory_fd)
+        # Attempt both cleanups even if one fails, without hiding the first
+        # cause or presenting a post-link failure as an aborted publication.
+        try:
+            os.close(fd)
+        except OSError as exc:
+            if failure is None:
+                failure = exc
+        try:
+            os.unlink(pending, dir_fd=directory_fd)
+        except OSError as exc:
+            if failure is None:
+                failure = exc
+    if failure is not None:
+        if linked:
+            raise PublicationOutcomeUnknown(
+                "final name linked; durability/cleanup uncertain, DO NOT RETRY"
+            ) from failure
+        raise failure
 
 
 def _read_report(directory_fd: int) -> bytes:
