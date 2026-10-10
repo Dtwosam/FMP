@@ -183,6 +183,14 @@ The parser now uses `nbytes % EVENT.size == 0`. The synthetic fixture supplies n
 
 The real Linux source files and `inotify(7)` justify this structural correction, but no kernel event is independently authenticated and this does not establish actual OS write prevention or annual-runner proof. Exact-head Phase 3/full CI and qualified independent review remain required.
 
+## DEC-697 — Require the exact minimal Linux name-field roundup
+
+DEC-696 corrected 4-byte padding to a multiple of the 16-byte inotify event header, but still accepted **arbitrarily extra zero padding**. For example, a one-character basename with a 32-byte name field passed the decoder even though Linux `round_event_name_len` emits the **minimum** `roundup(name_len+1, sizeof(struct inotify_event))` size: 16 bytes for that basename.
+
+The decoder now requires `nbytes == ((terminator + EVENT.size) // EVENT.size) * EVENT.size`, after validating the terminating NUL. Four new source-defined tests raise the suite to **127 tests**: reject an over-padded one-byte basename, reject a 15-byte name with 48 bytes of padding, preserve exact 15-byte/16-byte basename boundaries, and reject excessive padding on named directory metadata events. Existing negative controls and opt-in live Linux demonstrations remain nonauthorizing.
+
+The Linux kernel source confirms the exact packing rule. This is a source-grounded structural consistency repair, not an authenticated OS audit or annual run385 permission. Exact-head CI and independent security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
