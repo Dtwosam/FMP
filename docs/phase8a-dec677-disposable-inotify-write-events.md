@@ -95,6 +95,16 @@ Six added tests increase the synthetic suite to **79 source-defined cases**. The
 
 **Limitation:** `fstat` before and after a read is another point-in-time measurement. An adversary able to write, restore bytes and manipulate metadata could evade it; even honest filesystems may not offer forensic causality guarantees from nanosecond timestamps. The actual runner still needs OS-enforced prevention and independently authenticated evidence, not a snapshot heuristic.
 
+## DEC-686 — Complete two-watch coverage is mandatory for a clean toy outcome
+
+Since DEC-679, the disposable observer's threat model depends on **both** a watch on the original regular-file inode and a separate watch on the containing fake checkout directory. The parser could inspect a file-only stream without its optional directory-watch ID and report structural consistency; the evaluator could then return LOCAL_DISPOSABLE_WITNESS_UNVERIFIED for a quiet file-only observation. That **understates the coverage actually required** to assess directory-entry changes.
+
+The evaluator now requires strict integer, nonnegative and *distinct* file and directory watch IDs as an additional observed property, `both_watches_identified`. Missing, aliased or malformed watch identifiers make the overall result `BLOCKED`, even if event bytes, inode identity and final inventory happen to look unchanged. A quiet synthetic two-watch result remains only LOCAL_DISPOSABLE_WITNESS_UNVERIFIED, exit 3, never annual authorization.
+
+Five additional regression cases bring this stacked suite to **84 source-defined tests**, with five manually opt-in real Linux scenarios still skipped by normal CI. Tests distinguish missing file-only coverage, valid two-watch toy completeness, aliased watch identities, wrong type/negative file IDs and invalid directory watch IDs. The existing synthetic clean test was updated to supply the legitimate separate directory-watch ID.
+
+**Limit:** two integer labels in an untrusted test are not proof that kernel watches were actually installed and retained for the lifetime of an annual job. Only independent OS and observer attestation can establish real coverage. The source remains nonauthorizing and out of production.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

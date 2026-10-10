@@ -130,6 +130,14 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
               transient_sibling_negative: bool = False) -> dict[str, Any]:
     events = _classify_stream(data, watch, directory_watch)
     checks = {
+        # An observer which now depends on two distinct kernel watches may
+        # never call a file-only observation "complete" merely because the
+        # file event queue was quiet. Missing watch identity is fail-closed.
+        "both_watches_identified": (
+            type(watch) is int and watch >= 0
+            and type(directory_watch) is int
+            and directory_watch >= 0 and directory_watch != watch
+        ),
         "final_digest_equal": before == after and hashlib.sha256(before).digest() == hashlib.sha256(after).digest(),
         "watched_inode_matches_final_path": inode_stable is True,
         "no_directory_entry_mutations": (events["directory_changes"] == 0
