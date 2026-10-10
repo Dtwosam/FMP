@@ -41,6 +41,7 @@ IDENTITY_FIELDS = (
     "repository", "source_commit", "source_tree", "workflow_blob",
     "synthetic_merge", "workflow_ref", "segment", "run_number",
     "run_attempt", "previous_freeze_run_id", "independent_reviewer_identity",
+    "env_allowlist_keys", "independent_review_receipt_sha256",
 )
 
 
@@ -89,8 +90,9 @@ def assess(policy: Any, ledger: Any) -> dict[str, Any]:
     reviewer = policy.get("independent_reviewer_identity")
     if not isinstance(reviewer, str) or not reviewer.strip() or len(reviewer) > 128:
         errors.append("policy.independent_reviewer_identity missing or malformed")
-    if not _sha64(ledger.get("independent_review_receipt_sha256")):
-        errors.append("ledger.independent_review_receipt_sha256 missing or malformed")
+    for origin, record in (("policy", policy), ("ledger", ledger)):
+        if not _sha64(record.get("independent_review_receipt_sha256")):
+            errors.append(f"{origin}.independent_review_receipt_sha256 missing or malformed")
     approved_env = policy.get("env_allowlist_keys")
     if (not isinstance(approved_env, list) or not approved_env
             or any(not isinstance(k, str) or k not in SAFE_ENV_KEY_NAMES for k in approved_env)
