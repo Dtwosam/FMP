@@ -231,6 +231,9 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         "transient_directory_control_detected": (
             events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
+            and directory_inventory_ok is True
+            and type(directory_inventory_names) is tuple
+            and directory_inventory_names == ("sample",)
             and events["expected_transient_pairs"] >= 1
         ) if transient_sibling_negative else True,
         "event_stream_complete": events["well_formed"] and not events["overflow"] and not events["invalidated"] and watcher_alive is True,
