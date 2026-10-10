@@ -2201,6 +2201,54 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
 
+
+    def test_evaluator_rejects_nonboolean_negative_control_inputs(self):
+        for invalid in (None, 0, 1, "true", "", [], {}, 1.0, float('nan')):
+            for index in range(4):
+                with self.subTest(value=repr(invalid), index=index):
+                    flags = [False, False, False, False]
+                    flags[index] = invalid
+                    result = module._evaluate(
+                        b'public', b'public', b'', 9, True, flags[0],
+                        replacement_negative=flags[1],
+                        sibling_negative=flags[2],
+                        transient_sibling_negative=flags[3],
+                        directory_watch=10, directory_inventory_names=('sample',))
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIn('disposable evaluator negative controls must be booleans',
+                                  result['findings'])
+                    self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_evaluator_rejects_all_pairwise_conflicting_negative_modes(self):
+        for a in range(4):
+            for b in range(a + 1, 4):
+                flags = [False, False, False, False]
+                flags[a] = flags[b] = True
+                result = module._evaluate(
+                    b'public', b'public', b'', 9, True, flags[0],
+                    replacement_negative=flags[1], sibling_negative=flags[2],
+                    transient_sibling_negative=flags[3],
+                    directory_watch=10, directory_inventory_names=('sample',))
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertIn('conflicting synthetic evaluator negative controls',
+                              result['findings'])
+                self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_evaluator_mode_gate_rejects_before_stream_parser(self):
+        with patch.object(module, '_classify_stream') as classifier:
+            result = module._evaluate(b'public', b'public', b'', 9, True, False,
+                                      replacement_negative=True, sibling_negative=True,
+                                      directory_watch=10)
+            classifier.assert_not_called()
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_evaluator_valid_mode_free_path_remains_locally_unverified(self):
+        result = module._evaluate(b'public', b'public', b'', 9, True, False,
+                                  directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertFalse(result['can_authorize_dispatch'])
+        self.assertFalse(result['independent_os_proof_verified'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
