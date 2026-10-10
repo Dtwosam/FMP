@@ -30,6 +30,13 @@ source, external, executable, inject = sys.argv[1:]
 original = os.open(os.path.join(source, "sample"), os.O_WRONLY)
 preopened = fcntl.fcntl(original, fcntl.F_DUPFD_CLOEXEC, 200)
 os.close(original)
+# A PUBLIC fake credential is created only in our disposable external directory.
+# The negative control passes a read-only handle as child FD0.
+fake_canary = b"DEC658_PUBLIC_FAKE_CREDENTIAL\n"
+canary_path = os.path.join(external, "synthetic-canary")
+with open(canary_path, "wb") as handle:
+    handle.write(fake_canary)
+canary_fd = os.open(canary_path, os.O_RDONLY | os.O_CLOEXEC) if inject == "3" else None
 def run(*argv):
     subprocess.run(argv, check=True, stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL, timeout=8)
@@ -40,13 +47,18 @@ args = ["setpriv", "--bounding-set=-all", "--inh-caps=-all",
         "--ambient-caps=-all", "--no-new-privs", "--", executable,
         "-B", "-c", "__ATTACK__", source, external,
         str(preopened), inject]
-p = subprocess.run(args, stdin=subprocess.DEVNULL,
-                   stdout=preopened if inject == "2" else subprocess.PIPE,
-                   stderr=subprocess.PIPE,
-                   text=True, timeout=10, env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
-                                               "LANG": "C"}, close_fds=True,
-                   pass_fds=(preopened,) if inject == "1" else ())
-os.close(preopened)
+try:
+    p = subprocess.run(args,
+                       stdin=canary_fd if inject == "3" else subprocess.DEVNULL,
+                       stdout=preopened if inject == "2" else subprocess.PIPE,
+                       stderr=subprocess.PIPE,
+                       text=True, timeout=10, env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
+                                                   "LANG": "C"}, close_fds=True,
+                       pass_fds=(preopened,) if inject == "1" else ())
+finally:
+    os.close(preopened)
+    if canary_fd is not None:
+        os.close(canary_fd)
 if p.returncode != 0:
     raise SystemExit(11)
 print(p.stderr if inject == "2" else p.stdout, end="")
@@ -62,6 +74,15 @@ except OSError as exc:
     probe = "closed_before_consumer" if exc.errno == 9 else "other_write_error"
 else:
     probe = "write_succeeded"
+# All modes explicitly probe FD0. /dev/null gives EOF in clean modes;
+# a malicious inherited fake credential handle exposes only a public canary.
+stdin_bytes = os.read(0, 64)
+if stdin_bytes == b"":
+    stdin_probe = "safe_eof"
+elif stdin_bytes == b"DEC658_PUBLIC_FAKE_CREDENTIAL\n":
+    stdin_probe = "canary_received"
+else:
+    stdin_probe = "unexpected_input"
 stdio_probe = "not_provided"
 if inject == "2":
     try:
@@ -98,7 +119,8 @@ checks["readonly_mount"] = any((len(f := line.split()) >= 6 and
                                  for line in mounts)
 print(json.dumps({"checks": checks, "status": status,
                   "inherited_fd_probe": probe,
-                  "stdio_probe": stdio_probe}, sort_keys=True),
+                  "stdio_probe": stdio_probe,
+                  "stdin_probe": stdin_probe}, sort_keys=True),
       file=sys.stderr if inject == "2" else sys.stdout)
 '''
 
@@ -126,6 +148,8 @@ def _evaluate(raw: Any, unchanged: bool) -> dict[str, Any]:
         findings.append("writable checkout descriptor inherited or unaccounted for")
     if raw.get("stdio_probe") != "not_provided":
         findings.append("checkout-writable standard stream inherited or unaccounted for")
+    if raw.get("stdin_probe") != "safe_eof":
+        findings.append("standard input descriptor exposed data or lacks safe provenance")
     for name in CHECKS:
         if checks.get(name) is not True:
             findings.append("OS denial not demonstrated: " + name)
@@ -172,9 +196,10 @@ def _unchanged_disposable_source(source: Path, directory_fd: int,
         return False
 
 
-def run_demo(inject_checkout_fd: bool = False, inject_stdout_fd: bool = False) -> dict[str, Any]:
+def run_demo(inject_checkout_fd: bool = False, inject_stdout_fd: bool = False,
+             inject_stdin_fd: bool = False) -> dict[str, Any]:
     """Run only against internally generated disposable data, never a supplied path."""
-    if inject_checkout_fd and inject_stdout_fd:
+    if sum((inject_checkout_fd, inject_stdout_fd, inject_stdin_fd)) > 1:
         return _result("BLOCKED", ["conflicting synthetic descriptor-injection modes"])
     if sys.platform != "linux" or not all(shutil.which(n) for n in ("unshare", "mount", "setpriv")):
         return _result("BLOCKED", ["Linux namespace prerequisites unavailable"])
@@ -198,7 +223,7 @@ def run_demo(inject_checkout_fd: bool = False, inject_stdout_fd: bool = False) -
                 p = subprocess.run(
                     ["unshare", "--user", "--map-root-user", "--mount", "--",
                      sys.executable, "-B", "-c", setup, str(source), str(external), sys.executable,
-                     "2" if inject_stdout_fd else ("1" if inject_checkout_fd else "0")],
+                     "3" if inject_stdin_fd else ("2" if inject_stdout_fd else ("1" if inject_checkout_fd else "0"))],
                     cwd=directory, stdin=subprocess.DEVNULL, capture_output=True,
                     text=True, timeout=25, close_fds=True,
                     env={"PATH": "/usr/sbin:/usr/bin:/sbin:/bin", "LANG": "C"},
@@ -224,10 +249,13 @@ def main(argv: list[str] | None = None) -> int:
     modes.add_argument("--execute-disposable-demo", action="store_true")
     modes.add_argument("--execute-fd-counterexample", action="store_true")
     modes.add_argument("--execute-stdio-counterexample", action="store_true")
+    modes.add_argument("--execute-stdin-counterexample", action="store_true")
     args = parser.parse_args(argv)
-    if args.execute_disposable_demo or args.execute_fd_counterexample or args.execute_stdio_counterexample:
+    if (args.execute_disposable_demo or args.execute_fd_counterexample
+            or args.execute_stdio_counterexample or args.execute_stdin_counterexample):
         result = run_demo(inject_checkout_fd=args.execute_fd_counterexample,
-                          inject_stdout_fd=args.execute_stdio_counterexample)
+                          inject_stdout_fd=args.execute_stdio_counterexample,
+                          inject_stdin_fd=args.execute_stdin_counterexample)
     else:
         result = _result("BLOCKED", ["explicit disposable demo opt-in required"])
     print(json.dumps(result, separators=(",", ":"), sort_keys=True))
