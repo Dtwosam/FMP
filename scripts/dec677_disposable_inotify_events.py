@@ -302,6 +302,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         "no_directory_entry_mutations": directory_intact,
         "sibling_creation_control_detected": (
             both_watches_identified
+            and events["source_content_write_events"] == 0
             and before == after and inode_stable is True
             and events["well_formed"] and not events["overflow"]
             and not events["invalidated"] and watcher_alive is True
@@ -317,6 +318,7 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
         ) if transient_sibling_negative else True,
         "transient_directory_control_detected": (
             both_watches_identified
+            and events["source_content_write_events"] == 0
             and transient_midpoint_verified is True
             and before == after and inode_stable is True
             and events["well_formed"] and not events["overflow"]
