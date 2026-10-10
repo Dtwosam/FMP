@@ -3570,6 +3570,40 @@ class DisposableInotifyTests(unittest.TestCase):
                 module._bounded_inventory_names(Path('/tmp/public-fake-only'))
         self.assertEqual(scan.calls, 2)
 
+
+    def test_event_collector_poll_factory_exception_becomes_handled_oserror(self):
+        with patch.object(module.select, 'poll',
+                          side_effect=RuntimeError('synthetic broken poll factory')):
+            with patch.object(module.os, 'read') as read:
+                with self.assertRaisesRegex(OSError, 'collector wrapper raised unexpectedly'):
+                    module._read_pending(17)
+                read.assert_not_called()
+
+    def test_event_collector_poll_readiness_exception_becomes_handled_oserror(self):
+        class BrokenPoll:
+            def register(self, *_args):
+                return None
+            def poll(self, _timeout):
+                raise RuntimeError('synthetic broken poll response')
+        with patch.object(module.select, 'poll', return_value=BrokenPoll()):
+            with patch.object(module.os, 'read') as read:
+                with self.assertRaisesRegex(OSError, 'collector wrapper raised unexpectedly'):
+                    module._read_pending(17)
+                read.assert_not_called()
+
+    def test_event_collector_osread_exception_becomes_handled_oserror(self):
+        class Ready:
+            def register(self, *_args):
+                return None
+            def poll(self, _timeout):
+                return [(17, module.select.POLLIN)]
+        with patch.object(module.select, 'poll', return_value=Ready()):
+            with patch.object(module.os, 'read',
+                              side_effect=RuntimeError('synthetic broken read')) as read:
+                with self.assertRaisesRegex(OSError, 'collector wrapper raised unexpectedly'):
+                    module._read_pending(17)
+                read.assert_called_once_with(17, 4096)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
