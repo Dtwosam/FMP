@@ -2847,6 +2847,65 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertIs(type(inode), tuple)
             self.assertEqual(content, b'PUBLIC-DATA')
 
+
+    def test_inotify_init_rejects_noninteger_ctypes_result_before_registering(self):
+        class Callable:
+            def __init__(self, result): self.result = result
+            def __call__(self, *_args): return self.result
+        for invalid in (None, True, '17', 17.0):
+            with self.subTest(value=repr(invalid)):
+                class FakeLib:
+                    inotify_init1 = Callable(invalid)
+                    inotify_add_watch = Callable(9)
+                with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'noninteger descriptor'):
+                            module._start_watch(Path('/tmp/public-fake-only'))
+                        close.assert_not_called()
+
+    def test_inotify_first_watch_rejects_noninteger_or_impossible_id(self):
+        class Callable:
+            def __init__(self, result): self.result = result; self.calls = 0
+            def __call__(self, *_args): self.calls += 1; return self.result
+        for invalid in (None, True, '9', 9.0, (1 << 31)):
+            with self.subTest(value=repr(invalid)):
+                add = Callable(invalid)
+                class FakeLib:
+                    inotify_init1 = Callable(17)
+                    inotify_add_watch = add
+                with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'inotify_add_watch failed'):
+                            module._start_watch(Path('/tmp/public-fake-only'))
+                        close.assert_called_once_with(17)
+                        self.assertEqual(add.calls, 1)
+
+    def test_inotify_directory_watch_rejects_noninteger_or_impossible_id(self):
+        class Callable:
+            def __init__(self, values): self.values = iter(values)
+            def __call__(self, *_args): return next(self.values)
+        for invalid in (None, False, '10', 10.0, (1 << 31), 9):
+            with self.subTest(value=repr(invalid)):
+                class FakeLib:
+                    inotify_init1 = Callable([17])
+                    inotify_add_watch = Callable([9, invalid])
+                with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'directory inotify_add_watch failed'):
+                            module._start_watch(Path('/tmp/public-fake-only'))
+                        close.assert_called_once_with(17)
+
+    def test_inotify_ctypes_plain_integer_ids_keep_normal_two_watch_result(self):
+        class Callable:
+            def __init__(self, values): self.values = iter(values)
+            def __call__(self, *_args): return next(self.values)
+        class FakeLib:
+            inotify_init1 = Callable([17])
+            inotify_add_watch = Callable([9, 10])
+        with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+            self.assertEqual(module._start_watch(Path('/tmp/public-fake-only')),
+                             (17, 9, 10))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
