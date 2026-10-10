@@ -329,6 +329,12 @@ DEC-714 restores the three incorrect fixtures to **`("sample", "unexpected-publi
 
 This fixes one synthetic test contract mismatch, not authenticated kernel observations or annual runner isolation; DEC-650/651 remain BLOCKED.
 
+## DEC-715 — Cancel a pending transient-file witness on same-name moves
+
+The disposable parser tracks a per-name `IN_CREATE` followed by `IN_DELETE` to recognize the transient public sibling control. An intervening `IN_MOVED_FROM` or `IN_MOVED_TO` for the **same basename** makes that historical create's inode identity ambiguous: the created file may have left the directory, or a replacement with that name may have arrived before the observed delete. The earlier matcher did not invalidate the pending basename, potentially claiming the deliberate create/unlink witness even though those two records might reference different inodes. Every such mutation already BLOCKED, but the `transient_directory_control_detected` evidence claim could be overstated.
+
+DEC-715 clears a pending create whenever `IN_MOVED_FROM` or `IN_MOVED_TO` affects the same named directory entry. A new ordinary regular-file `IN_CREATE` is required before a later matching `IN_DELETE` can count. Four new source-defined unit tests bring the suite to **185 methods**: same-name move-out and move-in invalidate pending evidence, unrelated name moves do not invalidate a valid target pair, and a new create following the same-name move can form a new pair. All deliberate negative cases still BLOCK. This refinement only tightens the local observer's event-correlation claims and does not establish kernel provenance, prevent renames, or substitute for actual annual-runner OS isolation.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

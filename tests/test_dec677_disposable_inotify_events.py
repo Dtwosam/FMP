@@ -1701,6 +1701,61 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(observed['status'], 'BLOCKED')
         self.assertFalse(observed['can_authorize_dispatch'])
 
+
+    def test_move_away_cancels_pending_transient_create_claim(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=3)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+        self.assertEqual(parsed['expected_transient_pairs'], 0)
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=("sample",),
+            transient_sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_move_into_same_basename_cancels_original_create_claim(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_TO, data=name, cookie=7)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['transient_create_delete_pairs'], 0)
+        self.assertEqual(parsed['expected_transient_pairs'], 0)
+
+    def test_unrelated_move_does_not_invalidate_expected_regular_file_pair(self):
+        target = named(b'temporary-public-sibling')
+        unrelated = named(b'another-public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=target)
+               + ev(wd=10, mask=module.IN_MOVED_FROM, data=unrelated, cookie=5)
+               + ev(wd=10, mask=module.IN_DELETE, data=target))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['expected_transient_pairs'], 1)
+        verdict = module._evaluate(
+            b'public', b'public', raw, 9, True, False,
+            directory_watch=10, directory_inventory_ok=True,
+            directory_inventory_names=("sample",),
+            transient_sibling_negative=True)
+        self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_new_create_after_name_move_can_form_its_own_pair(self):
+        name = named(b'temporary-public-sibling')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=4)
+               + ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['expected_transient_pairs'], 1)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

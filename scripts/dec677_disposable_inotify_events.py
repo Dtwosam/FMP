@@ -166,6 +166,11 @@ def _classify_stream(data: bytes, watch: int,
                         if child_name == TRANSIENT_SIBLING_NAME.encode("ascii"):
                             expected_transient_pairs += 1
                     created_entries.discard(child_name)
+                elif change in (IN_MOVED_FROM, IN_MOVED_TO):
+                    # After a move involving this basename, a previously
+                    # created inode may have left or been replaced. A later
+                    # IN_DELETE no longer proves create->unlink of that inode.
+                    created_entries.discard(child_name)
         if mask & (IN_IGNORED | IN_DELETE_SELF | IN_MOVE_SELF):
             invalidated = True
         if mask & (IN_MODIFY | IN_CLOSE_WRITE | IN_ATTRIB):
