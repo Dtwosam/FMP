@@ -227,6 +227,60 @@ class ExclusiveSyntheticPublicationTests(unittest.TestCase):
             finally:
                 os.close(fd)
 
+    def test_collision_with_failed_pending_cleanup_is_not_plain_fileexists(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            dirfd = self._dirfd(directory)
+            real_unlink = os.unlink
+            pending = None
+            try:
+                module._publish_once(dirfd, b"original")
+                def fail_pending_unlink(name, *args, **kwargs):
+                    if isinstance(name, str) and name.startswith(".pending-"):
+                        raise OSError("disposable simulated failed cleanup")
+                    return real_unlink(name, *args, **kwargs)
+                with patch.object(module.os, "unlink", side_effect=fail_pending_unlink):
+                    with self.assertRaises(module.PublicationCleanupIncomplete) as caught:
+                        module._publish_once(dirfd, b"collision")
+                self.assertIn("DO NOT RETRY", str(caught.exception))
+                self.assertEqual(module._read_report(dirfd), b"original")
+                entries = os.listdir(dirfd)
+                self.assertEqual(len(entries), 2)
+                pending = next(x for x in entries if x.startswith(".pending-"))
+                self.assertIsNotNone(caught.exception.__cause__)
+            finally:
+                if pending is not None:
+                    real_unlink(pending, dir_fd=dirfd)
+                os.close(dirfd)
+
+    def test_failed_stage_write_and_cleanup_leaves_unknown_pending_state(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as directory:
+            dirfd = self._dirfd(directory)
+            real_unlink = os.unlink
+            pending = None
+            try:
+                def fail_pending_unlink(name, *args, **kwargs):
+                    if isinstance(name, str) and name.startswith(".pending-"):
+                        raise OSError("synthetic cleanup failure")
+                    return real_unlink(name, *args, **kwargs)
+                def fail_writer(_fd, _data):
+                    raise OSError("synthetic staged write failure")
+                with patch.object(module.os, "unlink", side_effect=fail_pending_unlink):
+                    with self.assertRaises(module.PublicationCleanupIncomplete) as caught:
+                        module._publish_once(dirfd, b"not-final", writer=fail_writer)
+                self.assertIn("DO NOT RETRY", str(caught.exception))
+                pending_entries = os.listdir(dirfd)
+                self.assertEqual(len(pending_entries), 1)
+                self.assertTrue(pending_entries[0].startswith(".pending-"))
+                pending = pending_entries[0]
+                with self.assertRaises(FileNotFoundError):
+                    module._read_report(dirfd)
+            finally:
+                if pending is not None:
+                    real_unlink(pending, dir_fd=dirfd)
+                os.close(dirfd)
+
     def test_symlink_collision_cannot_overwrite_target(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

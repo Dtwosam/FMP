@@ -50,6 +50,16 @@ A third intentionally adversarial test exposes the trust assumption behind exclu
 
 There are now **20 source-defined synthetic regression tests** (no real annual dataset). None of these changes establishes a privileged single-writer external namespace, runner isolation, a secure upload receipt, atomic GitHub one-shot dispatch or trading authority. Independent exact-head CI and qualified review remain mandatory.
 
+## DEC-667 incomplete staging cleanup after a pre-link failure
+
+Before DEC-667, the publisher retained the *first* exception from the publication attempt. If a final-name collision raised FileExistsError and subsequent pending-file cleanup also failed, the caller still received **only FileExistsError**, concealing the leaked temporary report and possibly encouraging a retry. The same flaw applied to a staged-write failure followed by failed cleanup.
+
+DEC-667 adds **PublicationCleanupIncomplete**, used when final-name linking did not succeed but descriptor close or pending-file unlink failed. It explicitly says **DO NOT RETRY** and chains the cleanup cause. This is distinct from **PublicationOutcomeUnknown**, which still means the final report name *was linked* but durability/cleanup is uncertain. A normal, clean collision with successful cleanup still raises FileExistsError; a failed cleanup cannot be reported as a clean collision.
+
+Two additional fault-injection regressions bring the synthetic suite to **22 defined tests**, reproducing (a) an existing final name plus deliberately orphaned pending file and (b) staged-write failure plus deliberately orphaned pending file, without any annual data. Both must surface PublicationCleanupIncomplete, leave existing final bytes intact when applicable, and never be treated as safe automatic retries.
+
+Neither exception certifies the actual state of GitHub artifact publication. Both are local source-only stop signals and cannot replace trusted receipt inspection, independent OS isolation, immutable single-authority annual dispatch, or separate authorization.
+
 ## Precise limitations
 
 This demonstration assumes its generated external directory is a trusted single-writer namespace. An adversarial privileged sibling could change directory contents or aliases; the code does not prove race-safe cleanup, absence of writable checkout aliases, durable delivery to GitHub artifacts, actual production runner permissions, rollback on fsync errors, or correctness of cross-filesystem publication. os.link requires pending/final files on the same filesystem; failures are BLOCKED and must never be silently retried.

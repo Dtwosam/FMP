@@ -46,6 +46,10 @@ class PublicationOutcomeUnknown(OSError):
     """
 
 
+class PublicationCleanupIncomplete(OSError):
+    """Final name was not linked, but staging cleanup failed: DO NOT RETRY."""
+
+
 def _publish_once(directory_fd: int, payload: bytes,
                   writer: Callable[[int, bytes], int] = os.write) -> None:
     """Create externally with O_EXCL; link completed bytes into final name.
@@ -62,6 +66,7 @@ def _publish_once(directory_fd: int, payload: bytes,
     fd = os.open(pending, flags, 0o600, dir_fd=directory_fd)
     linked = False
     failure: Exception | None = None
+    cleanup_failure: OSError | None = None
     try:
         _write_all(fd, payload, writer)
         os.fsync(fd)
@@ -79,11 +84,14 @@ def _publish_once(directory_fd: int, payload: bytes,
         try:
             os.close(fd)
         except OSError as exc:
+            cleanup_failure = exc
             if failure is None:
                 failure = exc
         try:
             os.unlink(pending, dir_fd=directory_fd)
         except OSError as exc:
+            if cleanup_failure is None:
+                cleanup_failure = exc
             if failure is None:
                 failure = exc
     if linked and failure is None:
@@ -99,6 +107,10 @@ def _publish_once(directory_fd: int, payload: bytes,
             raise PublicationOutcomeUnknown(
                 "final name linked; durability/cleanup uncertain, DO NOT RETRY"
             ) from failure
+        if cleanup_failure is not None:
+            raise PublicationCleanupIncomplete(
+                "final name not linked; staging cleanup incomplete, DO NOT RETRY"
+            ) from cleanup_failure
         raise failure
 
 
