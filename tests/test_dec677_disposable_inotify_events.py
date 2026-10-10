@@ -3244,6 +3244,49 @@ class DisposableInotifyTests(unittest.TestCase):
                         read.assert_called_once_with(17, 2)
                         close.assert_called_once_with(17)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_run_demo_refuses_patched_stdio_fd_without_close_or_snapshot(self):
+        for fd in (0, 1, 2):
+            with self.subTest(fd=fd):
+                with patch.object(module, '_start_watch', return_value=(fd, 9, 10)):
+                    with patch.object(module, '_snapshot_regular') as snapshot:
+                        with patch.object(module, '_read_pending') as drain:
+                            with patch.object(module.os, 'close') as close:
+                                result = module.run_demo()
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['can_authorize_dispatch'])
+                snapshot.assert_not_called()
+                drain.assert_not_called()
+                close.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_run_demo_rejects_patched_aliased_watch_ids_and_closes_fd(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 9)):
+                with patch.object(module, '_snapshot_regular') as snapshot:
+                    with patch.object(module, '_read_pending') as drain:
+                        result = module.run_demo()
+            self.assertEqual(result['status'], 'BLOCKED')
+            snapshot.assert_not_called()
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_run_demo_refuses_non_tuple_registration_before_snapshot(self):
+        with patch.object(module, '_start_watch', return_value=[17, 9, 10]):
+            with patch.object(module, '_snapshot_regular') as snapshot:
+                with patch.object(module, '_read_pending') as drain:
+                    result = module.run_demo()
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['independent_os_proof_verified'])
+        snapshot.assert_not_called()
+        drain.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

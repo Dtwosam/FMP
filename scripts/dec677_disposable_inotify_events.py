@@ -578,8 +578,21 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
             # Start observing both the inode and parent directory *before*
             # taking the baseline. A prewatch snapshot would leave an
             # unobserved gap before kernel watch registration.
-            fd, wd, dir_wd = _start_watch(path)
+            # Guard the helper return again at the runner boundary. A
+            # patched registration must not close stdio, install a one-watch
+            # "quiet" result, or reach filesystem reads with forged WDs.
+            registered = _start_watch(path)
+            if type(registered) is not tuple or len(registered) != 3:
+                raise OSError("disposable watch registration has invalid shape")
+            fd, wd, dir_wd = registered
+            if type(fd) is not int or not 3 <= fd <= MAX_FILE_DESCRIPTOR:
+                raise OSError("disposable watch registration has invalid file descriptor")
             try:
+                if (type(wd) is not int or not 0 <= wd <= MAX_WATCH_DESCRIPTOR
+                        or type(dir_wd) is not int
+                        or not 0 <= dir_wd <= MAX_WATCH_DESCRIPTOR
+                        or wd == dir_wd):
+                    raise OSError("disposable watch registration has invalid watch identities")
                 original_inode, original_bytes = _snapshot_regular(path)
                 midpoint_matches_expected = None
                 if negative:
