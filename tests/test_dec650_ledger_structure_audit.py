@@ -84,6 +84,34 @@ class LedgerStructureTests(unittest.TestCase):
         p, l = fixtures(); l["jobs"].pop()
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
 
+    def test_extreme_job_count_fails_without_enumerating_findings(self):
+        policy, ledger = fixtures()
+        ledger["jobs"] = [{} for _ in range(10000)]
+        result = module.assess(policy, ledger)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertEqual(result["findings"], ["expected 20 jobs, received 10000"])
+
+    def test_cli_extreme_job_count_bounded_output(self):
+        policy, ledger = fixtures()
+        ledger["jobs"] = [{} for _ in range(10000)]
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            policy_path, ledger_path = base / "policy.json", base / "ledger.json"
+            policy_bytes = json.dumps(policy).encode("utf-8")
+            policy_path.write_bytes(policy_bytes)
+            ledger_path.write_text(json.dumps(ledger))
+            result = subprocess.run(
+                [sys.executable, "-B", str(SCRIPT), "--policy", str(policy_path),
+                 "--policy-sha256", hashlib.sha256(policy_bytes).hexdigest(),
+                 "--ledger", str(ledger_path)],
+                capture_output=True, text=True, timeout=4, check=False,
+            )
+            self.assertEqual(result.returncode, 2, result.stderr)
+            self.assertLess(len(result.stdout), 512)
+            self.assertEqual(json.loads(result.stdout)["findings"],
+                             ["expected 20 jobs, received 10000"])
+
     def test_duplicate_cell_cannot_replace_missing_cell(self):
         p, l = fixtures(); l["jobs"][3] = dict(l["jobs"][2])
         result = module.assess(p, l)
