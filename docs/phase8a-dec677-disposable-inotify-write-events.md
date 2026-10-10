@@ -641,6 +641,12 @@ The registration path now closes its allocated FD when either watch-registration
 
 Three source-defined methods increase the suite to **336 unique tests**: unexpected library-loader failure, unexpected init-wrapper failure, and preservation of the original native `OSError.errno`. Existing stdio refusal, normal dual watch registration and resource ownership semantics are unchanged. This improves local fault-injection correctness only; it does not establish independent annual runner OS enforcement or immutable admission.
 
+## DEC-759 — Require a nonzero rename cookie on synthetic directory moves
+
+The parser already rejects a nonzero rename cookie on write/create/delete actions, but accepted a `IN_MOVED_FROM` or `IN_MOVED_TO` child event with cookie zero. Linux uses a nonzero rename cookie to correlate these move actions. An injected zero-cookie move cannot be considered a faithful complete kernel event sequence even when the name, watch descriptor and final inventory otherwise look plausible.
+
+DEC-759 requires a nonzero cookie for both directory move directions. Three source-defined regression methods bring the suite to **339 uniquely named tests**: either standalone zero-cookie move is an incomplete stream, a two-record zero-cookie move sequence cannot be accepted as complete, and nonzero-cookie move records preserve existing accounting. The change does not attempt to equate a matching or mismatched cookie pair with independent kernel provenance. Real generated sibling and temporary controls remain unchanged. This is a narrow fail-closed record-layout check, not actual OS confinement or annual authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
