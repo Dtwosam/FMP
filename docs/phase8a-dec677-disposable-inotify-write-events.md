@@ -667,6 +667,12 @@ The inotify add-watch API specifies nonnegative return values, while the Linux i
 
 DEC-762 requires IDs in `1..INT_MAX` at all eight local validation occurrences: initial event decoder, supplied directory watch, evaluator's two-watch completeness predicate, both C return values, and runner-boundary assertions. An injected zero result fails before snapshot, and a valid already-allocated inotify FD is closed on rejected registration. Four new source-defined methods increase the suite to **348 distinct test methods**, covering both direct zero-watch shapes, C registration cleanup and runner pre-snapshot refusal. This is deliberately conservative synthetic identity validation, not independent OS attestation.
 
+## DEC-763 — Preserve validated regular-file mode in before/after fstat comparison
+
+The snapshot helper validates that each fstat result is a bounded regular-file mode, but its canonical comparison tuple previously discarded `st_mode` and compared only device, inode, size, mtime_ns and ctime_ns. A synthetic before/after pair with changed permission bits and forged unchanged timestamps could therefore pass the consistency test despite a real metadata difference.
+
+DEC-763 includes the validated mode in the canonical six-part stat tuple and compares it across both observations. It updates the bounded read-size index while keeping the externally returned snapshot identity as `(device, inode)`. Two new regression methods raise the suite to **350 uniquely named tests**: an otherwise identical mode change is rejected with FD cleanup, and unchanged mode still returns the original device/inode and payload. The direct metadata-contract assertion is adjusted to match the new six-part tuple without relaxing any check. This catches injected mode drift but does not prove the absence of races or independently authenticate host write denial.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
