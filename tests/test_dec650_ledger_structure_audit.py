@@ -28,6 +28,7 @@ def fixtures():
         "workflow_blob": "d" * 40, "synthetic_merge": "e" * 40,
         "workflow_ref": "refs/heads/main",
         "independent_reviewer_identity": "synthetic-reviewer",
+        "independent_review_receipt_sha256": SHA64,
         "env_allowlist_keys": ["PATH", "LANG"],
         "segment": "2023", "run_number": 385, "run_attempt": 1,
         "previous_freeze_run_id": 37663157285,
@@ -63,7 +64,7 @@ def fixtures():
             "checkout_before_sha256": SHA64, "checkout_after_sha256": SHA64,
             "checks": {name: {"status": "PASS", "skipped": False, "privileged_test_executed": True, "evidence_sha256": SHA64} for name in module.REQUIRED_CHECKS},
         })
-    return policy, {**policy, "independent_review_receipt_sha256": SHA64, "jobs": jobs}
+    return policy, {**policy, "jobs": jobs}
 
 
 class LedgerStructureTests(unittest.TestCase):
@@ -153,6 +154,23 @@ class LedgerStructureTests(unittest.TestCase):
         p, l = fixtures()
         p["workflow_ref"] = "refs/tags/preview"
         l["workflow_ref"] = "refs/tags/preview"
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_divergent_repeated_environment_policy_blocks(self):
+        p, l = fixtures()
+        l["env_allowlist_keys"] = ["PATH"]
+        # Job-level lists still match the reviewed policy: the duplicate
+        # ledger header alone must not contradict that approved source.
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_reviewer_receipt_digest_must_match_policy(self):
+        p, l = fixtures()
+        l["independent_review_receipt_sha256"] = "c" * 64
+        self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
+
+    def test_missing_policy_reviewer_receipt_blocks(self):
+        p, l = fixtures()
+        p.pop("independent_review_receipt_sha256")
         self.assertEqual(module.assess(p, l)["status"], "BLOCKED")
 
     def test_missing_review_receipt_blocks(self):
