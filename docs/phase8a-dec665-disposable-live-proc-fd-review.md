@@ -21,6 +21,14 @@ If /proc inspection is unavailable or ambiguous, readiness times out, the child 
 
 The 16 source-defined tests include two *explicitly opt-in* live Linux observations, skipped in regular CI; the other cases use synthetic field failures, malformed claims, rejected options and nonauthorization assertions.
 
+## DEC-666 pinned double-snapshot stability check
+
+The original DEC-665 parent scanned a live child's /proc/PID/fd symlink table only **once**. A process that closed/replaced a descriptor or changed its working directory during the read could have produced a mixed-time observation. This revision opens and holds an **O_NOFOLLOW directory FD** to the child's procfd directory, enumerates targets relative to that pinned directory (readlinkat-style, without opening the target files), and takes **two independent immediate scans**. It also reads /proc/PID/cwd twice. Any difference in either FD table or cwd fails closed, rather than silently treating the observation as internally consistent.
+
+Four additional synthetic tests (total **20 source-defined tests**, including two opt-in Linux demonstrations) cover consistent snapshots, new/changed FD targets, changed cwd and FD-relative symlink reading. The observer still returns no actual paths or token values to the caller, and all results remain nonauthorizing.
+
+**Important limitation:** two consistent snapshots do NOT establish that a malicious child cannot close and reopen dangerous handles before, between or after them. A stronger child can fork, change namespace or escape the toy readiness barrier, and a host principal can interfere with /proc. This remains offline process-observer research, not DEC-650 actual runner independent security attestation.
+
 ## Security scope and critical limitations
 
 Unlike a child that self-reports its own file descriptors after termination, this experiment has a distinct parent **inspect a running child** before releasing it, but this alone does not create a trusted attestation or close all TOCTOU windows. The child is not a real annual CLI and does **not** enforce a non-owner UID, mount namespaces, capability/seccomp policy or deny all host-side aliases. The parent is only trustworthy under a hypothetical trusted host setup; /proc may be denied or manipulated by a stronger host principal. A one-time snapshot cannot ensure that a process never acquires new FDs after release. A malicious child could also fork, reassign descriptors or escape the simplistic one-byte barrier; this hardcoded child deliberately does not exercise those cases.
