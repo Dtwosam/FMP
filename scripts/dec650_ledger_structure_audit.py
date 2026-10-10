@@ -236,7 +236,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             policy = _strict_json(policy_bytes)
             ledger = _strict_json(_read_bounded(args.ledger))
             result = assess(policy, ledger)
-    except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
         result = _result(["cannot decode independent policy/ledger input: " + type(exc).__name__])
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 0 if result["status"] == "STRUCTURALLY_COMPLETE_UNVERIFIED" else 2
