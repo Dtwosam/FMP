@@ -81,7 +81,23 @@ def _classify_stream(data: bytes, watch: int,
         if nbytes > 4096 or nbytes > len(data) - pos:
             okay = False
             break
+        name_bytes = data[pos:pos + nbytes]
         pos += nbytes
+        # The fixed regular-file watch and the special overflow event must
+        # not have a child filename. Directory child events require one
+        # NUL-terminated, zero-padded, bounded single basename.
+        if wd == watch or mask & IN_Q_OVERFLOW:
+            if nbytes:
+                okay = False
+        elif directory_watch is not None and wd == directory_watch:
+            if nbytes == 0 and mask & DIRECTORY_CHANGES:
+                okay = False
+            if nbytes:
+                terminator = name_bytes.find(b"\x00")
+                if (nbytes % 4 != 0 or terminator <= 0
+                        or b"/" in name_bytes[:terminator]
+                        or any(byte != 0 for byte in name_bytes[terminator:])):
+                    okay = False
         if mask & IN_Q_OVERFLOW:
             overflow = True
             # Linux uses wd=-1 for queue overflow. Mixed flags are uncertain.
