@@ -977,6 +977,44 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['write_events'], 1)
 
+
+    def test_short_child_name_cannot_claim_extra_thirty_two_byte_padding(self):
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(b'a') + b'\x00' * module.EVENT.size)
+        self.assertEqual(len(raw) - module.EVENT.size, 32)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                  directory_watch=10)
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_fifteen_byte_basename_with_unnecessary_extra_padding_is_invalid(self):
+        raw = ev(wd=10, mask=module.IN_DELETE,
+                 data=named(b'x' * 15) + b'\x00' * 32)
+        self.assertEqual(len(raw) - module.EVENT.size, 48)
+        self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
+
+    def test_exact_native_roundup_at_fifteen_and_sixteen_character_boundary(self):
+        for size, expected in ((15, 16), (16, 32)):
+            with self.subTest(name_length=size):
+                data = named(b'x' * size)
+                self.assertEqual(len(data), expected)
+                parsed = module._classify_stream(
+                    ev(wd=10, mask=module.IN_CREATE, data=data),
+                    9, directory_watch=10)
+                self.assertTrue(parsed['well_formed'])
+                self.assertEqual(parsed['directory_changes'], 1)
+
+    def test_named_directory_metadata_cannot_claim_arbitrary_extra_padding(self):
+        raw = ev(wd=10, mask=module.IN_MODIFY,
+                 data=named(b'leaf') + b'\x00' * 16)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        result = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                  directory_watch=10)
+        self.assertFalse(result['observed_checks']['event_stream_complete'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
