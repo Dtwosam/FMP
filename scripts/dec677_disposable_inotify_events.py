@@ -466,6 +466,14 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
     """Read only a bounded regular inode through a non-following FD."""
     flags = os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW | getattr(os, "O_CLOEXEC", 0)
     fd = os.open(path, flags)
+    # The temporary observer can be invoked in a process with closed stdio.
+    # Refuse snapshot handles allocated onto fd 0-2 (or malformed patched
+    # handles); never close a standard I/O descriptor as an afterthought.
+    if type(fd) is not int or fd < 0:
+        raise OSError("disposable regular snapshot requires a valid integer fd")
+    if fd <= 2:
+        os.close(fd)
+        raise OSError("disposable regular snapshot used a standard descriptor")
     try:
         st = os.fstat(fd)
         if not stat.S_ISREG(st.st_mode) or not 0 <= st.st_size <= 4096:
