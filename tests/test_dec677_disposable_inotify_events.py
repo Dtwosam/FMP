@@ -289,6 +289,75 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['can_authorize_dispatch'])
         self.assertFalse(result['independent_os_proof_verified'])
 
+    def test_synthetic_drain_rejects_unread_queue_at_bounded_limit(self):
+        class AlwaysReady:
+            def register(self, *_args): pass
+            def poll(self, _timeout): return [(17, module.select.POLLIN)]
+        with patch.object(module.select, 'poll', return_value=AlwaysReady()):
+            with patch.object(module.os, 'read', return_value=b'X' * 4096):
+                with self.assertRaisesRegex(OSError, 'still pending'):
+                    module._read_pending(17)
+
+    def test_synthetic_drain_accepts_exact_limit_only_when_empty(self):
+        class ReadySixteen:
+            def __init__(self): self.calls = 0
+            def register(self, *_args): pass
+            def poll(self, _timeout):
+                self.calls += 1
+                return [(17, module.select.POLLIN)] if self.calls <= 16 else []
+        with patch.object(module.select, 'poll', return_value=ReadySixteen()):
+            with patch.object(module.os, 'read', return_value=b'Y' * 4096):
+                self.assertEqual(len(module._read_pending(17)), 65536)
+
+    def test_poll_error_hup_or_nval_must_fail_closed(self):
+        for status in (module.select.POLLERR, module.select.POLLHUP,
+                       module.select.POLLNVAL):
+            with self.subTest(status=status):
+                class BadPoll:
+                    def register(self, *_args): pass
+                    def poll(self, _timeout): return [(17, status)]
+                with patch.object(module.select, 'poll', return_value=BadPoll()):
+                    with self.assertRaises(OSError):
+                        module._read_pending(17)
+
+    def test_event_collector_unexpected_descriptor_blocks(self):
+        class Wrong:
+            def register(self, *_args): pass
+            def poll(self, _timeout): return [(999, module.select.POLLIN)]
+        with patch.object(module.select, 'poll', return_value=Wrong()):
+            with self.assertRaises(OSError):
+                module._read_pending(17)
+
+    def test_watched_event_collector_eof_after_readable_blocks(self):
+        class Ready:
+            def register(self, *_args): pass
+            def poll(self, _timeout): return [(17, module.select.POLLIN)]
+        with patch.object(module.select, 'poll', return_value=Ready()):
+            with patch.object(module.os, 'read', return_value=b''):
+                with self.assertRaisesRegex(OSError, 'EOF'):
+                    module._read_pending(17)
+
+    def test_inotify_poll_readiness_disagreement_fails_closed(self):
+        class Ready:
+            def register(self, *_args): pass
+            def poll(self, _timeout): return [(17, module.select.POLLIN)]
+        with patch.object(module.select, 'poll', return_value=Ready()):
+            with patch.object(module.os, 'read', side_effect=BlockingIOError()):
+                with self.assertRaisesRegex(OSError, 'raced an empty event queue'):
+                    module._read_pending(17)
+
+    def test_clean_one_chunk_and_no_more_events_is_collected(self):
+        event = ev(wd=9, mask=module.IN_CLOSE_WRITE)
+        class Single:
+            def __init__(self): self.calls = 0
+            def register(self, *_args): pass
+            def poll(self, _timeout):
+                self.calls += 1
+                return [(17, module.select.POLLIN)] if self.calls == 1 else []
+        with patch.object(module.select, 'poll', return_value=Single()):
+            with patch.object(module.os, 'read', return_value=event):
+                self.assertEqual(module._read_pending(17), event)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
