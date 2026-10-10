@@ -7,7 +7,7 @@ This executable checker complements [DEC-650 runner-isolation contract](https://
 ## Output is never approval
 
 - **BLOCKED** (exit 2): missing, conflicting, skipped, failed or structurally unsafe evidence.
-- **STRUCTURALLY_COMPLETE_UNVERIFIED** (exit 0): every specified field is present and consistent in *untrusted JSON*. This is **not a security PASS**.
+- **STRUCTURALLY_COMPLETE_UNVERIFIED** (exit **3**, deliberately nonzero): every specified field is present and consistent in *untrusted JSON*. This is **not a security PASS**. A wrapper which executes `if audit; then ...` must never treat this unverified evidence as success.
 - Both states **always** include can_authorize_dispatch=false and independent_os_proof_verified=false.
 
 An actor may fabricate plausible observations, check statuses and hashes. This code cannot independently authenticate those statements. The actual DEC-650 reviewer must verify real OS mounts, capabilities, inherited descriptors, checkout inventories, report receipts, kernel measurements and observer provenance. This checker is neither an OS enforcement mechanism nor a GitHub dispatch admission control. Passing it can **never** consume or authorize run 385.
