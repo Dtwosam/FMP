@@ -331,6 +331,8 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
 
 def _read_pending(fd: int) -> bytes:
     """Bounded event drain; never present an unreadable/pending queue as quiet."""
+    if type(fd) is not int or fd < 0:
+        raise OSError("synthetic inotify collector requires an integer fd")
     chunks: list[bytes] = []
     size = 0
     poller = select.poll()
@@ -347,7 +349,14 @@ def _read_pending(fd: int) -> bytes:
         # One fd is registered: the only acceptable readiness is one exact
         # POLLIN report. POLLPRI, zero/unknown bits or duplicate reports do
         # not establish that this inotify queue can be safely drained.
-        if len(readiness) != 1 or readiness[0] != (fd, select.POLLIN):
+        if len(readiness) != 1:
+            raise OSError("synthetic inotify event collector lost readable status")
+        record = readiness[0]
+        # A patched or malformed object must not masquerade as a real
+        # kernel-ready (int fd, int events) pair via a forged __eq__ method.
+        if (type(record) is not tuple or len(record) != 2
+                or type(record[0]) is not int or type(record[1]) is not int
+                or record != (fd, select.POLLIN)):
             raise OSError("synthetic inotify event collector lost readable status")
         return True
 
