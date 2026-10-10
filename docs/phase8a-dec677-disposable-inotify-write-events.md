@@ -261,6 +261,14 @@ This child patch restores the **three closing braces only** in the observer sour
 
 No annual workflow, protected inputs, real runner controls or authoritative dispatch settings were modified.
 
+## DEC-707 — Match the actual sorted sibling directory inventory
+
+The DEC-704/705 persistent-sibling control collects `tuple(sorted(p.name for p in Path(folder).iterdir()))`, but compared it against `("sample", "unexpected-public-sibling")`. Python sorts `"unexpected-public-sibling"` **before** `"sample"`, so the actual correct generated directory could **never** satisfy that constant, even with an intact event stream and the correct sibling inode. Historical positive synthetic fixtures had copied the wrong tuple and concealed the mismatch.
+
+The comparison now uses `tuple(sorted(("sample", PERSISTENT_SIBLING_NAME)))`, and the positive fixture uses the true order `("unexpected-public-sibling", "sample")`. The old supposedly-reordered negative is inverted. Two new source-defined tests raise the suite to **160**: a temporary generated directory's *actual sorted enumeration* must satisfy the local persistent-sibling control and an incorrectly ordered direct tuple must not. They do not execute annual runners or their protected data.
+
+This is the second post-#876 consistency repair, stacked on DEC-706 syntax restoration, not proof of independently trusted Linux event coverage or enforced source immutability. Exact-head CI and qualified source/security review are required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
