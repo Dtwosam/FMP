@@ -799,6 +799,42 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['source_content_write_events'], 1)
 
+
+    def test_multiple_source_action_bits_are_not_one_credible_event(self):
+        for mask in (module.IN_MODIFY | module.IN_CLOSE_WRITE,
+                     module.IN_MODIFY | module.IN_ATTRIB):
+            with self.subTest(mask=mask):
+                raw = ev(wd=9, mask=mask)
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertFalse(parsed['well_formed'])
+                result = module._evaluate(b'a', b'a', raw, 9, True, True,
+                                          directory_watch=10)
+                self.assertFalse(result['observed_checks']['negative_control_detected'])
+                self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_multiple_directory_primary_bits_are_malformed(self):
+        for mask in (module.IN_CREATE | module.IN_DELETE,
+                     module.IN_CREATE | module.IN_MODIFY,
+                     module.IN_MOVED_FROM | module.IN_MOVED_TO):
+            with self.subTest(mask=mask):
+                raw = ev(wd=10, mask=mask)
+                self.assertFalse(module._classify_stream(raw, 9,
+                                                         directory_watch=10)['well_formed'])
+
+    def test_directory_isdir_modifier_still_allows_one_primary_action(self):
+        raw = ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 1)
+        result = module._evaluate(b'a', b'a', raw, 9, True, False, directory_watch=10)
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_distinct_single_action_source_records_remain_valid(self):
+        raw = ev(wd=9, mask=module.IN_MODIFY) + ev(wd=9, mask=module.IN_CLOSE_WRITE)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['source_content_write_events'], 2)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

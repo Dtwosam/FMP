@@ -143,6 +143,14 @@ Nonzero cookies are now rejected **unless** the event includes `IN_MOVED_FROM` o
 
 This checks one field's meaning, not actual kernel-origin authenticity or OS isolation. Exact-head CI and independent review are still needed.
 
+## DEC-692 — Reject multiple primary action bits in one event record
+
+The parser already rejected an actionless event or unknown flags, but accepted a single synthetic record combining two unrelated primary actions (e.g. `IN_MODIFY | IN_CLOSE_WRITE` or `IN_CREATE | IN_DELETE`). Such fabricated combinations could be interpreted as internally well-formed even though the inotify API emits one primary event action per record. In particular, a mixed source-file mask should not be mistaken for one authentic content event.
+
+The decoder now requires **exactly one** supported primary action bit. `IN_ISDIR` remains an allowed modifier on the directory watch, and ordinary individual `IN_MODIFY`, `IN_CLOSE_WRITE`, `IN_CREATE` and `IN_DELETE` records remain supported in their appropriate watch scope. Four new source-defined tests raise the suite to **109 cases**, checking multi-action file records, multi-action directory records, valid `IN_ISDIR` directory create and two valid separate source writes.
+
+This deliberately conservative decoder change does not establish kernel authenticity, job-wide visibility or OS write prevention. Exact-head GitHub CI and independent review required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
