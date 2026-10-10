@@ -40,6 +40,16 @@ Four additional fault-injection regressions bring the source-defined total to **
 
 This is a source-only negative fault witness, not a crash-recovery protocol, transactional GitHub artifact delivery, exclusive publisher proof or authorization for a second attempt after network ambiguity. An actual production uploader must have an independently specified failure/receipt policy and no automated retry on ambiguous delivery.
 
+## DEC-664 separate cleanup durability and postpublication writer boundaries
+
+Directory metadata changes have two distinct durability points: (a) creation of the final hard-link name, and (b) removal of the pending name. The DEC-663 implementation fsynced the directory **before** unlinking the pending staging filename. Under a crash, the deletion might not yet be durable. This revision adds a **second directory fsync after successful pending unlink**, without ever converting a post-link fsync failure into an ordinary clean abort. Any error after successful final-name link still produces PublicationOutcomeUnknown and the required DO NOT RETRY stop condition.
+
+Two synthetic tests inspect both directory sync calls and inject a failure on **only the second one**: the final report exists, no pending name remains in the live directory listing, yet the result is **ambiguous and non-retryable**, not authorizing. This distinguishes observed state from guaranteed crash durability, and retains the usual limitations of mocked fsync results.
+
+A third intentionally adversarial test exposes the trust assumption behind exclusive creation: after an exclusive file is published, **another actor with direct write authority to that final file can still change its bytes**. The test confirms a duplicate exclusive publication is rejected while a direct same-user write succeeds. Therefore **link-if-absent protects the final filename from publication collisions, not final content immutability**. Without real operating-system separation for the publisher/report and independent receipt verification, a clean local report is not trusted evidence.
+
+There are now **20 source-defined synthetic regression tests** (no real annual dataset). None of these changes establishes a privileged single-writer external namespace, runner isolation, a secure upload receipt, atomic GitHub one-shot dispatch or trading authority. Independent exact-head CI and qualified review remain mandatory.
+
 ## Precise limitations
 
 This demonstration assumes its generated external directory is a trusted single-writer namespace. An adversarial privileged sibling could change directory contents or aliases; the code does not prove race-safe cleanup, absence of writable checkout aliases, durable delivery to GitHub artifacts, actual production runner permissions, rollback on fsync errors, or correctness of cross-filesystem publication. os.link requires pending/final files on the same filesystem; failures are BLOCKED and must never be silently retried.
