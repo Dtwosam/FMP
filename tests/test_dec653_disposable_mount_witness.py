@@ -23,6 +23,7 @@ def synthetic_report():
         "inherited_fd_probe": "closed_before_consumer",
         "stdio_probe": "not_provided",
         "stdin_probe": "safe_eof",
+        "env_probe": "absent",
     }
 
 
@@ -122,6 +123,37 @@ class DisposableOSWitnessTests(unittest.TestCase):
         proc = subprocess.run([sys.executable, "-B", str(SCRIPT),
                               "--execute-fd-counterexample", "--execute-stdin-counterexample"],
                               capture_output=True, text=True, timeout=4)
+        self.assertNotEqual(proc.returncode, 0)
+
+    def test_missing_env_provenance_blocks(self):
+        raw = synthetic_report()
+        raw.pop("env_probe")
+        self.assertEqual(module._evaluate(raw, True)["status"], "BLOCKED")
+
+    def test_public_env_canary_blocks(self):
+        raw = synthetic_report()
+        raw["env_probe"] = "canary_present"
+        result = module._evaluate(raw, True)
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertIn("synthetic credential environment reached restricted process", result["findings"])
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
+
+    def test_unknown_env_probe_blocks(self):
+        raw = synthetic_report()
+        raw["env_probe"] = "unexpected_value"
+        self.assertEqual(module._evaluate(raw, True)["status"], "BLOCKED")
+
+    def test_env_conflict_with_fd0_mode_blocks(self):
+        result = module.run_demo(inject_stdin_fd=True, inject_env_canary=True)
+        self.assertEqual(result["status"], "BLOCKED")
+
+    def test_cli_rejects_env_and_stdout_combo(self):
+        proc = subprocess.run(
+            [sys.executable, "-B", str(SCRIPT),
+             "--execute-env-counterexample", "--execute-stdio-counterexample"],
+            capture_output=True, text=True, timeout=4, check=False,
+        )
         self.assertNotEqual(proc.returncode, 0)
 
     def test_inventory_change_blocks(self):
@@ -295,6 +327,16 @@ class DisposableOSWitnessTests(unittest.TestCase):
         result = module.run_demo(inject_stdin_fd=True)
         self.assertEqual(result["status"], "BLOCKED", result)
         self.assertIn("standard input descriptor exposed data or lacks safe provenance", result["findings"])
+        self.assertNotIn("disposable checkout inventory changed", result["findings"])
+        self.assertFalse(result["can_authorize_dispatch"])
+        self.assertFalse(result["independent_os_proof_verified"])
+
+    @unittest.skipUnless(os.environ.get("DEC653_EXECUTE_DISPOSABLE_OS_TEST") == "1",
+                         "manual opt-in only; not CI acceptance")
+    def test_optin_public_env_canary_is_blocked_without_checkout_write(self):
+        result = module.run_demo(inject_env_canary=True)
+        self.assertEqual(result["status"], "BLOCKED", result)
+        self.assertIn("synthetic credential environment reached restricted process", result["findings"])
         self.assertNotIn("disposable checkout inventory changed", result["findings"])
         self.assertFalse(result["can_authorize_dispatch"])
         self.assertFalse(result["independent_os_proof_verified"])
