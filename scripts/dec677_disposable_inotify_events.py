@@ -611,6 +611,8 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         or wd == dir_wd):
                     raise OSError("disposable watch registration has invalid watch identities")
                 original_inode, original_bytes = _checked_snapshot_result(_snapshot_regular(path))
+                if original_bytes != BEFORE:
+                    raise OSError("disposable generated source baseline differs from fixture")
                 midpoint_matches_expected = None
                 if negative:
                     # This is generated public data; observe the intermediate
@@ -654,6 +656,8 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     )
                     transient.unlink()
                 final_inode, end = _checked_snapshot_result(_snapshot_regular(path))
+                if end != BEFORE:
+                    raise OSError("disposable generated source final bytes differ from fixture")
                 inventory_names = _bounded_inventory_names(Path(folder))
                 inventory_ok = inventory_names == ("sample",)
                 sibling_snapshot_stable = None
