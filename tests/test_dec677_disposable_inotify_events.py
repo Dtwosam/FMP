@@ -597,6 +597,42 @@ class DisposableInotifyTests(unittest.TestCase):
                                      directory_watch=directory_watch)
                 self.assertEqual(r['status'], 'BLOCKED')
 
+
+    def test_oversized_file_watch_id_cannot_make_a_quiet_receipt(self):
+        for wd in (1 << 31, 1 << 32, 1 << 63):
+            with self.subTest(wd=wd):
+                self.assertFalse(module._classify_stream(b'', wd, directory_watch=10)['well_formed'])
+                result = module._evaluate(b'a', b'a', b'', wd, True, False,
+                                          directory_watch=10)
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['observed_checks']['both_watches_identified'])
+
+    def test_oversized_directory_watch_id_cannot_make_a_quiet_receipt(self):
+        for wd in (1 << 31, 1 << 32, 1 << 63):
+            with self.subTest(wd=wd):
+                self.assertFalse(module._classify_stream(b'', 9, directory_watch=wd)['well_formed'])
+                result = module._evaluate(b'a', b'a', b'', 9, True, False,
+                                          directory_watch=wd)
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['observed_checks']['both_watches_identified'])
+
+    def test_signed_32_bit_watch_upper_boundary_remains_structurally_valid(self):
+        largest = (1 << 31) - 1
+        adjacent = largest - 1
+        self.assertTrue(module._classify_stream(b'', largest, directory_watch=adjacent)['well_formed'])
+        result = module._evaluate(b'a', b'a', b'', largest, True, False,
+                                  directory_watch=adjacent)
+        self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_oversized_directory_identity_blocks_even_with_valid_file_event(self):
+        raw = ev(wd=9, mask=module.IN_CLOSE_WRITE)
+        result = module._classify_stream(raw, 9, directory_watch=1 << 31)
+        self.assertFalse(result['well_formed'])
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                   directory_watch=1 << 31)
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
