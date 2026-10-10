@@ -1218,6 +1218,58 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(verdict['can_authorize_dispatch'])
         self.assertFalse(verdict['independent_os_proof_verified'])
 
+
+    def test_unrelated_created_leaf_does_not_validate_expected_sibling_control(self):
+        raw = ev(wd=10, mask=module.IN_CREATE, data=named(b'unrelated'))
+        verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
+                                   directory_watch=10, directory_inventory_ok=False,
+                                   sibling_negative=True)
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertIn('synthetic directory-event negative control not detected',
+                      verdict['findings'])
+
+    def test_expected_regular_file_creation_and_inventory_drift_detect_control(self):
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(b'unexpected-public-sibling'))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertTrue(parsed['expected_sibling_created'])
+        verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
+                                   directory_watch=10, directory_inventory_ok=False,
+                                   sibling_negative=True)
+        self.assertTrue(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+        self.assertFalse(verdict['can_authorize_dispatch'])
+
+    def test_matching_directory_creation_is_not_regular_sibling_witness(self):
+        raw = ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR,
+                 data=named(b'unexpected-public-sibling'))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['expected_sibling_created'])
+        verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
+                                   directory_watch=10, directory_inventory_ok=False,
+                                   sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+
+    def test_expected_sibling_with_quiet_final_inventory_not_confirmed(self):
+        raw = ev(wd=10, mask=module.IN_CREATE,
+                 data=named(b'unexpected-public-sibling'))
+        verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
+                                   directory_watch=10, directory_inventory_ok=True,
+                                   sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+
+    def test_expected_sibling_followed_by_overflow_cannot_claim_detection(self):
+        raw = (ev(wd=10, mask=module.IN_CREATE,
+                  data=named(b'unexpected-public-sibling'))
+               + ev(wd=-1, mask=module.IN_Q_OVERFLOW))
+        verdict = module._evaluate(b'public', b'public', raw, 9, True, False,
+                                   directory_watch=10, directory_inventory_ok=False,
+                                   sibling_negative=True)
+        self.assertFalse(verdict['observed_checks']['sibling_creation_control_detected'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
