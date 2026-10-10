@@ -129,7 +129,9 @@ def assess(policy: Any, ledger: Any) -> dict[str, Any]:
     if not isinstance(jobs, list):
         return _result(errors + ["jobs must be an array of 20 individual job records"])
     if len(jobs) != 20:
-        errors.append(f"expected 20 jobs, received {len(jobs)}")
+        # A one-megabyte JSON array can contain enormous numbers of tiny jobs.
+        # Never expand its contents into unbounded findings/log output.
+        return _result(errors + [f"expected 20 jobs, received {len(jobs)}"])
     seen_keys: set[str] = set()
     job_ids: set[int] = set()
     for index, job in enumerate(jobs):
