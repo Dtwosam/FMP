@@ -2311,6 +2311,44 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(module._read_pending(17), b'')
                 read.assert_not_called()
 
+
+    def test_duplicate_same_directory_create_is_incomplete_stream(self):
+        name = named(b'new-public-dir')
+        raw = ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR, data=name) * 2
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+
+    def test_file_create_followed_by_directory_create_same_name_is_incomplete(self):
+        name = named(b'same-name')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+
+    def test_directory_create_followed_by_file_create_same_name_is_incomplete(self):
+        name = named(b'same-name')
+        raw = (ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR, data=name)
+               + ev(wd=10, mask=module.IN_CREATE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+
+    def test_same_name_directory_delete_then_file_create_is_coherent(self):
+        name = named(b'same-name')
+        raw = (ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR, data=name)
+               + ev(wd=10, mask=module.IN_DELETE | module.IN_ISDIR, data=name)
+               + ev(wd=10, mask=module.IN_CREATE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 3)
+
+    def test_move_into_known_basename_blocks_unseparated_new_create(self):
+        name = named(b'same-name')
+        raw = (ev(wd=10, mask=module.IN_MOVED_TO, data=name, cookie=77)
+               + ev(wd=10, mask=module.IN_CREATE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

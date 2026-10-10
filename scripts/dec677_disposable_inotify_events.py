@@ -77,6 +77,9 @@ def _classify_stream(data: bytes, watch: int,
     source_modifications = 0
     observed_directory_changes = 0
     created_entries: set[bytes] = set()
+    # Names observed to enter after watch registration, as either regular
+    # files or directories. This is not a full preexisting directory census.
+    occupied_new_entries: set[bytes] = set()
     deleted_entries: set[bytes] = set()
     matched_transient_pairs = 0
     expected_transient_pairs = 0
@@ -162,6 +165,12 @@ def _classify_stream(data: bytes, watch: int,
             if child_name is not None:
                 change = mask & DIRECTORY_CHANGES
                 if change == IN_CREATE:
+                    # Files and directories share one namespace. Creating a
+                    # second child at an already observed occupied basename
+                    # without a delete or move-out cannot be a complete log.
+                    if child_name in occupied_new_entries:
+                        okay = False
+                    occupied_new_entries.add(child_name)
                     # A new child clears any pending previous deletion for
                     # this basename, whether the child is a file or dir.
                     deleted_entries.discard(child_name)
@@ -178,6 +187,7 @@ def _classify_stream(data: bytes, watch: int,
                             okay = False
                         created_entries.add(child_name)
                 elif change == IN_DELETE:
+                    occupied_new_entries.discard(child_name)
                     # Two consecutive same-name removals with no new child
                     # created or moved into that name contradict a complete
                     # directory-entry timeline. Reject the entire stream.
@@ -191,7 +201,10 @@ def _classify_stream(data: bytes, watch: int,
                     created_entries.discard(child_name)
                 elif change in (IN_MOVED_FROM, IN_MOVED_TO):
                     if change == IN_MOVED_TO:
+                        occupied_new_entries.add(child_name)
                         deleted_entries.discard(child_name)
+                    else:
+                        occupied_new_entries.discard(child_name)
                     # After a move involving this basename, a previously
                     # created inode may have left or been replaced. A later
                     # IN_DELETE no longer proves create->unlink of that inode.

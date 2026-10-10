@@ -427,6 +427,14 @@ The disposable `_start_watch` helper now closes and rejects any newly allocated 
 
 This protects only the generated local experiment's standard-descriptor handling; DEC-650 still requires independently demonstrated actual stdio and OS confinement across all annual jobs, and DEC-651 remains a separate immutable one-shot admission blocker. Exact-head Phase 3/full regression and independent security review are required.
 
+## DEC-728 — Track occupied names for both file and directory creates
+
+DEC-719 rejected two unseparated regular-file `IN_CREATE` events for the same basename, but its pending set intentionally tracked only regular files used by the transient-file negative. A duplicate **directory** `IN_CREATE|IN_ISDIR`, or an impossible file-create followed immediately by a directory-create for the same still-present filename, could still be called a complete stream. Linux directory entries share a namespace regardless of whether they are files or directories; absent a removal or move-out, two independent same-name creations do not describe a coherent observed entry history.
+
+The decoder now tracks **all observed newly occupied basenames**, including named directory creates and move-ins, while retaining the separate regular-file matching set. `IN_DELETE` or `IN_MOVED_FROM` clears occupancy; `IN_MOVED_TO` marks the arrival. A repeated `IN_CREATE` for an occupied name, regardless of `IN_ISDIR`, marks the entire buffered stream not well-formed. This is a bounded, conservative observation of events **since registration**, not a census of preexisting children.
+
+Five new source-defined tests bring the suite to **235 methods**: duplicate directory-create, file→directory and directory→file creates without removal, legitimate directory delete followed by file creation, and illegal create after same-name move-in with no removal. Any malformed stream still BLOCKS and cannot credit a synthetic negative control. Exact-head Phase 3/full regression and independent source/security review required; this does not authenticate the kernel, prevent writes or resolve annual run385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
