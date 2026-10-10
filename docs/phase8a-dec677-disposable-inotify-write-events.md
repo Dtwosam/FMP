@@ -623,6 +623,12 @@ The disposable runner now reads at most three entries through `os.scandir`, but 
 
 Two new source-defined tests bring the suite to **327 unique test methods**: one patched scanner constructor raises; another iterator yields a valid first name and then raises. Both refuse inventory evidence without visiting more children or reporting a quiet observation. Real generated one/two-name directories are unchanged. This is synthetic API-boundary robustness, not authenticated kernel observation or annual OS write-prevention.
 
+## DEC-756 — Normalize unexpected disposable event collector wrapper exceptions
+
+A previous guard validates that `poller.register` returns None and that poll-readiness records have exact kernel-ready shapes. Yet patched `select.poll` factories, `poll` methods, or `os.read` wrappers can throw unexpected ordinary Python exceptions instead of legitimate `OSError`, bypassing `run_demo`'s fail-closed receipt handler. DEC-756 keeps the existing `_read_pending` API and byte/drain bounds, moving its implementation into `_read_pending_checked` with a narrow adapter around it. The adapter preserves original `OSError` behavior and converts other ordinary exceptions into handled `OSError`.
+
+Three new source-defined tests bring the suite to **330 distinct test methods**: injected poll factory failure, readiness failure, and read failure. Each refuses an event stream with the expected call count rather than claiming a quiet observation. This only hardens generated local instrumentation against mocked wrappers and does not prove OS-enforced write denial, independent kernel event provenance, or immutable annual run385 dispatch.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
