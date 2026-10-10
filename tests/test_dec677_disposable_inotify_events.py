@@ -2394,14 +2394,15 @@ class DisposableInotifyTests(unittest.TestCase):
                 parsed = module._classify_stream(raw, 9, directory_watch=10)
                 self.assertTrue(parsed['well_formed'])
 
-    def test_move_in_replaces_previously_observed_kind_then_matching_delete_valid(self):
+    def test_move_in_after_observed_move_out_can_change_entry_kind(self):
         name = named(b'public-child')
         raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=41)
                + ev(wd=10, mask=module.IN_MOVED_TO | module.IN_ISDIR, data=name, cookie=42)
                + ev(wd=10, mask=module.IN_DELETE | module.IN_ISDIR, data=name))
         parsed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
-        self.assertEqual(parsed['directory_changes'], 3)
+        self.assertEqual(parsed['directory_changes'], 4)
 
     def test_preexisting_child_delete_with_untracked_kind_is_structurally_valid(self):
         name = named(b'preexisting')
@@ -2666,6 +2667,44 @@ class DisposableInotifyTests(unittest.TestCase):
             transient_midpoint_verified=True, transient_sibling_negative=True)
         self.assertTrue(verdict['observed_checks']['transient_directory_control_detected'])
         self.assertEqual(verdict['status'], 'BLOCKED')
+
+
+    def test_occupied_regular_child_cannot_directly_move_in_directory_same_name(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_TO | module.IN_ISDIR, data=name, cookie=91))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        verdict = module._evaluate(b'a', b'a', raw, 9, True, False,
+                                   directory_watch=10, directory_inventory_names=('sample',))
+        self.assertFalse(verdict['observed_checks']['event_stream_complete'])
+        self.assertEqual(verdict['status'], 'BLOCKED')
+
+    def test_occupied_directory_cannot_directly_move_in_file_same_name(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE | module.IN_ISDIR, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_TO, data=name, cookie=91))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+
+    def test_move_in_over_known_same_kind_target_remains_coherent(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_TO, data=name, cookie=91)
+               + ev(wd=10, mask=module.IN_DELETE, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 3)
+
+    def test_kind_change_after_move_out_remains_coherent(self):
+        name = named(b'public-child')
+        raw = (ev(wd=10, mask=module.IN_CREATE, data=name)
+               + ev(wd=10, mask=module.IN_MOVED_FROM, data=name, cookie=91)
+               + ev(wd=10, mask=module.IN_MOVED_TO | module.IN_ISDIR, data=name, cookie=92)
+               + ev(wd=10, mask=module.IN_DELETE | module.IN_ISDIR, data=name))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 4)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):

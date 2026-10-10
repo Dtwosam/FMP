@@ -210,8 +210,13 @@ def _classify_stream(data: bytes, watch: int,
                     created_entries.discard(child_name)
                 elif change in (IN_MOVED_FROM, IN_MOVED_TO):
                     if change == IN_MOVED_TO:
-                        # A rename may legitimately replace an occupied
-                        # target. The arriving entry establishes its type.
+                        # An ordinary rename may replace an existing target
+                        # of the SAME kind. A file-to-directory substitution
+                        # requires the previous name to depart first (for
+                        # example through renameat2 RENAME_EXCHANGE).
+                        if (child_name in observed_child_is_directory
+                                and observed_child_is_directory[child_name] != bool(mask & IN_ISDIR)):
+                            okay = False
                         occupied_new_entries.add(child_name)
                         observed_child_is_directory[child_name] = bool(mask & IN_ISDIR)
                         deleted_entries.discard(child_name)

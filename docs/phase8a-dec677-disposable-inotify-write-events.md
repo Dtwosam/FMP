@@ -485,6 +485,14 @@ DEC-734 requires **zero `source_content_write_events` on the source-file watch d
 
 This prevents internally contradictory synthetic evidence labels, not real write/restore races, untrusted host logging, or any annual-runner permission risk. Exact-head Phase 3/full historical CI and qualified security review still required.
 
+## DEC-735 — Kind-changing rename target requires observed prior departure
+
+DEC-729 began tracking whether newly observed directory entries were files or directories but allowed an `IN_MOVED_TO` record of the opposite kind to unconditionally overwrite the tracked entry kind **without any preceding deletion or move-out**. That accepted a synthetic file→directory rename replacement which ordinary Linux `rename(2)` rejects with `ENOTDIR` (and the reverse with `EISDIR`). A DEC-729 synthetic test incorrectly treated the kind change as automatically legitimate. The more advanced `renameat2(RENAME_EXCHANGE)` operation can swap different kinds, but in a separately generated Linux `/tmp` microprobe exchanging a file and directory it emitted **matching move-out then move-in** records for each watched name.
+
+DEC-735 treats `IN_MOVED_TO` of an opposite kind to a still-tracked occupied name as a malformed/incomplete stream unless a prior `IN_DELETE` or `IN_MOVED_FROM` removed the old kind. Moving in over an already occupied **same-kind** target remains supported for normal rename replacement. The old positive synthetic fixture is corrected to include the observed move-out. Four new source-defined methods increase the suite to **267 tests**, covering both opposite-kind mismatches, ordinary same-kind rename replacement, and a legitimate move-out then opposite-kind move-in. This conservative toy event contract does not prove independent host event provenance or OS confinement.
+
+The isolated microprobe is not execution of annual protected jobs or of the five manually opted-in repository demos. Exact-head Phase 3/full historical CI and qualified independent review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
