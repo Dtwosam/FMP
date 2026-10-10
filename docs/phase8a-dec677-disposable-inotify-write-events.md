@@ -477,6 +477,14 @@ The evaluator now shares a single `directory_intact` property with its existing 
 
 This is **not** continuous kernel audit or trusted OS-enforced source immutability, merely internally consistent disposable evidence accounting. Real annual run385 remains blocked pending independent OS and exclusive server-side admission proof. Exact-head Phase 3 and full historical regression plus qualified review required.
 
+## DEC-734 — Directory-only negatives cannot include watched source-write events
+
+DEC-725 required matching original/final public source bytes and inode for sibling-directory negative controls. But a **write and restoration of the watched source inode** can leave its bytes and identity unchanged while generating `IN_MODIFY` or `IN_CLOSE_WRITE`. The evaluator could still claim a successful *directory-only* persistent or transient sibling control even though the same event stream recorded source-file write activity. Every such run already BLOCKED overall, but its specific evidence attribution was too permissive.
+
+DEC-734 requires **zero `source_content_write_events` on the source-file watch descriptor** for both sibling-directory control predicates. It does **not** reject a directory-watch `IN_CLOSE_WRITE` record for the generated sibling, which is expected when writing the public child file and was never a write to the source inode. Four new source-defined methods bring the suite to **263 tests**: persistent sibling with watched source `IN_MODIFY` or `IN_CLOSE_WRITE` cannot claim directory-only control, transient sibling with source modification cannot claim it, and a transient sibling's own directory-watch close-write remains a valid (still BLOCKED) control observation.
+
+This prevents internally contradictory synthetic evidence labels, not real write/restore races, untrusted host logging, or any annual-runner permission risk. Exact-head Phase 3/full historical CI and qualified security review still required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
