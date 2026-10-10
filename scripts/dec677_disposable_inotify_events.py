@@ -392,6 +392,11 @@ def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
         if not stat.S_ISREG(st.st_mode) or not 0 <= st.st_size <= 4096:
             raise OSError("disposable sample is not a bounded regular inode")
         data = os.read(fd, st.st_size + 1)
+        # A real os.read() is bounded by the requested size and yields
+        # plain immutable bytes. Malformed mock/injected data must become a
+        # controlled blocked snapshot, not TypeError or forged completeness.
+        if type(data) is not bytes or len(data) > st.st_size + 1:
+            raise OSError("disposable regular snapshot read returned impossible bytes")
         after = os.fstat(fd)
         # This detects a short read or some concurrent inode mutations. It
         # does NOT prove freedom from an adversarial write-and-restore race.

@@ -2108,6 +2108,48 @@ class DisposableInotifyTests(unittest.TestCase):
                         module._read_pending(fd)
             factory.assert_not_called()
 
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'), 'POSIX no-follow snapshot required')
+    def test_snapshot_nonbyte_read_results_raise_handled_oserror(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'sample'
+            path.write_bytes(b'ABC')
+            for value in (None, 'ABC', [], bytearray(b'ABC'), 123):
+                with self.subTest(value=repr(value)):
+                    with patch.object(module.os, 'read', return_value=value):
+                        with self.assertRaisesRegex(OSError, 'impossible bytes'):
+                            module._snapshot_regular(path)
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'), 'POSIX no-follow snapshot required')
+    def test_snapshot_bytes_subclass_with_forged_length_is_refused(self):
+        class Spoofed(bytes):
+            def __len__(self):
+                raise RuntimeError('spoofed buffer length')
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'sample'
+            path.write_bytes(b'ABC')
+            with patch.object(module.os, 'read', return_value=Spoofed(b'ABC')):
+                with self.assertRaisesRegex(OSError, 'impossible bytes'):
+                    module._snapshot_regular(path)
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'), 'POSIX no-follow snapshot required')
+    def test_snapshot_oversized_read_result_is_refused(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'sample'
+            path.write_bytes(b'ABC')
+            with patch.object(module.os, 'read', return_value=b'ABCDE'):
+                with self.assertRaisesRegex(OSError, 'impossible bytes'):
+                    module._snapshot_regular(path)
+
+    @unittest.skipUnless(hasattr(os, 'O_NOFOLLOW'), 'POSIX no-follow snapshot required')
+    def test_normal_public_snapshot_bytes_and_inode_still_work(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'sample'
+            path.write_bytes(b'ABC')
+            identity, data = module._snapshot_regular(path)
+            self.assertEqual(data, b'ABC')
+            self.assertEqual(identity, (path.stat().st_dev, path.stat().st_ino))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
