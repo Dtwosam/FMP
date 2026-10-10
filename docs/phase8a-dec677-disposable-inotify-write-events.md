@@ -509,6 +509,14 @@ DEC-737 corrects the two stale assertions in the disposable unit tests without c
 
 No FMP annual job, protected source, installed workflow/ruleset, broker or runner is accessed. This is internal synthetic test maintenance, not independent source immutability proof; DEC-650/651 remain BLOCKED.
 
+## DEC-738 — Do not call missing or malformed coverage "no observed writes"
+
+The evaluator's `no_observed_writes` property previously compared the decoder's `write_events == 0` counter **without establishing that the local kernel event stream was complete**. The malformed-buffer early exit intentionally returned zero event counters; consequently an incomplete, overflowed, invalidated, dead-watcher or missing directory-watch observation could claim `no_observed_writes=true`. Although a separate required check kept overall status BLOCKED, that affirmative observation was misleading.
+
+The property now requires **two distinct valid watch IDs, complete parse, no overflow/invalidation, living local watcher and zero write notifications**. It uses exactly the safety boundaries already established for `event_stream_complete` and does not change the criterion for a genuine locally quiet case. Four source-defined regression methods bring the suite to **277 methods**: truncated buffer, missing directory watch, dead watcher and complete dual-watch quiet observation. The last case remains `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never authorization. This is synthetic metadata accounting, NOT proof that a kernel has independently prevented writes or issued authenticated host telemetry.
+
+DEC-737's two inherited stale test fixtures were corrected in the immediate parent draft #908; those historical red ancestors remain red. Exact-head Phase 3, full historical regression and qualified independent security review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
