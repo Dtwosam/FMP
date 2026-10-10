@@ -138,6 +138,40 @@ class DisposableOSWitnessTests(unittest.TestCase):
             finally:
                 os.close(fd)
 
+    def test_fifo_leaf_snapshot_never_blocks(self):
+        # A prior regular-file-to-FIFO swap must not hang CI or exhaust worker slots.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            os.mkfifo(root / "sample")
+            program = (
+                "import importlib.util,os,sys; "
+                "s=importlib.util.spec_from_file_location('w',sys.argv[1]); "
+                "m=importlib.util.module_from_spec(s); s.loader.exec_module(m); "
+                "fd=os.open(sys.argv[2],os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW); "
+                "print(m._sample_snapshot(fd) is None)"
+            )
+            proc = subprocess.run([sys.executable, "-B", "-c", program, str(SCRIPT), str(root)],
+                                  capture_output=True, text=True, timeout=3, check=False)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            self.assertEqual(proc.stdout.strip(), "True")
+
+    def test_swapped_disposable_directory_blocks_without_following_link(self):
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            root = parent / "checkout"
+            root.mkdir()
+            (root / "sample").write_bytes(b"synthetic")
+            fd = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                original_dir = os.fstat(fd)
+                before = module._sample_snapshot(fd)
+                (parent / "other").mkdir()
+                root.rename(parent / "old")
+                root.symlink_to(parent / "other", target_is_directory=True)
+                self.assertFalse(module._unchanged_disposable_source(root, fd, original_dir, before))
+            finally:
+                os.close(fd)
+
     def test_tmpdir_override_does_not_redirect_demo(self):
         class StopBeforeCreating(Exception):
             pass
