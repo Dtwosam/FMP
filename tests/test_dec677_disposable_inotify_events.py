@@ -687,6 +687,47 @@ class DisposableInotifyTests(unittest.TestCase):
                                   directory_watch=10, transient_sibling_negative=True)
         self.assertFalse(result['observed_checks']['transient_directory_control_detected'])
 
+
+    def test_directory_write_events_cannot_impersonate_source_rewrite_control(self):
+        stream = ev(wd=10, mask=module.IN_MODIFY) * 2
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['write_events'], 2)
+        self.assertEqual(parsed['source_content_write_events'], 0)
+        result = module._evaluate(b'a', b'a', stream, 9, True, True,
+                                  directory_watch=10)
+        self.assertFalse(result['observed_checks']['negative_control_detected'])
+        self.assertFalse(result['observed_checks']['no_observed_writes'])
+        self.assertEqual(result['status'], 'BLOCKED')
+
+    def test_file_attrib_events_cannot_impersonate_content_rewrite_control(self):
+        stream = ev(wd=9, mask=module.IN_ATTRIB) * 2
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertEqual(parsed['write_events'], 2)
+        self.assertEqual(parsed['source_content_write_events'], 0)
+        result = module._evaluate(b'a', b'a', stream, 9, True, True,
+                                  directory_watch=10)
+        self.assertFalse(result['observed_checks']['negative_control_detected'])
+
+    def test_one_source_write_plus_directory_write_is_not_two_source_writes(self):
+        stream = ev(wd=9, mask=module.IN_MODIFY) + ev(wd=10, mask=module.IN_MODIFY)
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertEqual(parsed['source_content_write_events'], 1)
+        result = module._evaluate(b'a', b'a', stream, 9, True, True,
+                                  directory_watch=10)
+        self.assertFalse(result['observed_checks']['negative_control_detected'])
+
+    def test_two_valid_source_content_events_still_witness_negative_control(self):
+        stream = ev(wd=9, mask=module.IN_MODIFY) + ev(wd=9, mask=module.IN_CLOSE_WRITE)
+        parsed = module._classify_stream(stream, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['source_content_write_events'], 2)
+        result = module._evaluate(b'a', b'a', stream, 9, True, True,
+                                  directory_watch=10)
+        self.assertTrue(result['observed_checks']['negative_control_detected'])
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
