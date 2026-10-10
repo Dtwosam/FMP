@@ -3085,6 +3085,40 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(result['observed_checks']['sibling_creation_control_detected'])
         self.assertEqual(result['status'], 'BLOCKED')
 
+
+    def test_collector_rejects_oversized_integer_fd_before_poll(self):
+        fd = module.MAX_FILE_DESCRIPTOR + 1
+        with patch.object(module.select, 'poll') as factory:
+            with self.assertRaisesRegex(OSError, 'nonstdio integer fd'):
+                module._read_pending(fd)
+            factory.assert_not_called()
+
+    def test_snapshot_rejects_oversized_integer_fd_before_fstat(self):
+        fd = module.MAX_FILE_DESCRIPTOR + 1
+        with patch.object(module.os, 'open', return_value=fd):
+            with patch.object(module.os, 'close') as close:
+                with patch.object(module.os, 'fstat') as fstat:
+                    with self.assertRaisesRegex(OSError, 'valid integer fd'):
+                        module._snapshot_regular(Path('/tmp/public-fake-only'))
+                    close.assert_not_called()
+                    fstat.assert_not_called()
+
+    def test_inotify_init_rejects_impossible_unsigned_width_before_any_watches(self):
+        class Callable:
+            def __init__(self, value): self.value = value; self.calls = 0
+            def __call__(self, *_args): self.calls += 1; return self.value
+        init = Callable(module.MAX_FILE_DESCRIPTOR + 1)
+        add = Callable(9)
+        class FakeLib:
+            inotify_init1 = init
+            inotify_add_watch = add
+        with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaisesRegex(OSError, 'oversized descriptor'):
+                    module._start_watch(Path('/tmp/public-fake-only'))
+                close.assert_not_called()
+        self.assertEqual(add.calls, 0)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
