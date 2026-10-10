@@ -635,6 +635,12 @@ The DEC-747 first/final fstat validation and DEC-749 snapshot helper result guar
 
 DEC-757 defines `MAX_KERNEL_STAT_ID=(1<<64)-1` and applies the same 0..UINT64_MAX bound both to direct `os.fstat` metadata and to every higher-level injected snapshot helper result. Three source-defined methods bring the suite to **333 uniquely named tests**: oversized device/inode fstat values fail before read and close the valid FD, oversized helper IDs fail closed, and valid synthetic UINT64_MAX boundary values remain supported. Normal generated kernel IDs are unchanged. The bounds are not proof of independent OS protection or immutable run admission.
 
+## DEC-758 — Normalize unexpected inotify library and initialization wrapper failures
+
+The registration path now closes its allocated FD when either watch-registration operation raises, but a patched `ctypes.CDLL` constructor, callable signature setup, or `inotify_init1` invocation could still raise an unexpected ordinary Python exception **before the initializer returned any descriptor**. That would escape the runner's handled error path. DEC-758 wraps only the no-FD-owned setup and initialization stage, preserving genuine `OSError` and converting non-OSError failures into handled `OSError`. There is deliberately no close attempt before a valid FD is returned.
+
+Three source-defined methods increase the suite to **336 unique tests**: unexpected library-loader failure, unexpected init-wrapper failure, and preservation of the original native `OSError.errno`. Existing stdio refusal, normal dual watch registration and resource ownership semantics are unchanged. This improves local fault-injection correctness only; it does not establish independent annual runner OS enforcement or immutable admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
