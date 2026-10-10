@@ -221,6 +221,14 @@ A separate `source_modify_events` counter now requires at least **two `IN_MODIFY
 
 This is still only untrusted event metadata; a modify notification does not prove specific intermediate file contents, absence of aliases, independent provenance or OS write prevention. The live Linux opt-in demonstrations still need external verification, exact-head CI and qualified security review.
 
+## DEC-702 — Bound and type-check simulated before/after source snapshots
+
+The `_snapshot_regular` helper reads an at-most-4096-byte regular synthetic inode, but the independent evaluator `_evaluate` unconditionally invoked `hashlib.sha256(before)` and `hashlib.sha256(after)` before checking whether callers supplied actual bounded `bytes`. A malformed injected `str`, `None`, list or boolean snapshot could raise `TypeError` instead of returning the intended `BLOCKED` JSON receipt. An oversized direct-input snapshot also exceeded the helper's documented 4 KiB domain.
+
+The evaluator now rejects wrong-type snapshots or snapshot lengths above 4096 bytes immediately with an explicitly nonauthorizing `BLOCKED` outcome. Three synthetic unit methods bring the suite to **145 cases**, covering malformed value types, oversized initial/final snapshots, and an exact-limit clean-but-unverified control. `run_demo` still uses only freshly generated public files and the preexisting bounded FD snapshot.
+
+This protects the narrow harness API, not all callers/filesystems or real annual runner source integrity. Exact-head CI and independent review remain required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
