@@ -86,6 +86,14 @@ def _publish_once(directory_fd: int, payload: bytes,
         except OSError as exc:
             if failure is None:
                 failure = exc
+    if linked and failure is None:
+        # The first directory fsync makes the new final name durable. The
+        # subsequent unlink of the pending name is a SECOND metadata change:
+        # fsync again to establish durable cleanup, or remain ambiguous.
+        try:
+            os.fsync(directory_fd)
+        except OSError as exc:
+            failure = exc
     if failure is not None:
         if linked:
             raise PublicationOutcomeUnknown(
