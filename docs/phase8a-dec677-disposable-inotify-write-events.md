@@ -611,6 +611,12 @@ DEC-752 now requires the baseline snapshot bytes and final snapshot bytes to equ
 
 Three source-defined tests increase the suite to **322 uniquely named methods**: first registration raises, directory registration raises, and an unexpected wrapper exception converts to a controlled error after closing the allocated FD. This reduces synthetic observer resource leaks, not evidence gaps in independent OS-enforced annual isolation or immutable dispatch admission.
 
+## DEC-754 — Normalize unexpected snapshot API exceptions into handled local failures
+
+DEC-753 covers raised watch-registration exceptions after allocating the observer FD. Its counterpart at the snapshot boundary still exposed injected Python exceptions from `os.open`, `os.fstat`, or `os.read` as unhandled `RuntimeError` rather than the disposable runner's handled `OSError` path. Real POSIX failures are already OSError, but fault-injected wrappers must not bypass fail-closed JSON results.
+
+DEC-754 catches unexpected ordinary exceptions around opening and around the bounded read/stat block, preserves existing OSError behavior, converts other exceptions to controlled OSError, and closes an already valid opened descriptor exactly once in `finally`. If open failed, it never closes an unallocated handle. Three new source-defined regression methods bring the suite to **325 distinct test methods**, verifying unexpected errors from `os.open`, `os.fstat`, and `os.read` with the correct cleanup. The annual-runner authorization fields remain unchanged and no protected file is accessed.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
