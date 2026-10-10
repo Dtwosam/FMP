@@ -40,6 +40,16 @@ A normal, non-injected local demo reports the descriptor probe as not provided; 
 
 **Required future OS boundary:** ensure trusted staging closes writable checkout descriptors (including descriptors 0/1/2 and parent/proc-fd aliases) *before* the restricted consumer starts, and independently prove no actor can reintroduce them. A mount-table snapshot by itself is insufficient. The demonstration itself does not implement that trusted end-to-end production lifecycle.
 
+## DEC-655 checked closure of a preopened writable descriptor
+
+The predecessor DEC-654 compares a clean mode that did **not open** the writable checkout FD with an injected mode that did. This revision strengthens the comparison: **both** modes open the same disposable writable checkout file before the readonly remount, duplicating it to high FD 200+ with CLOEXEC. In the clean mode the parent starts the child with close_fds=true and **does not** opt that FD into pass_fds. The restricted child attempts os.write against the advertised high FD and observes EBADF, recorded as closed_before_consumer. The resulting local verdict is only LOCAL_DISPOSABLE_WITNESS_UNVERIFIED (exit 3).
+
+In the adversarial opt-in mode, the parent explicitly adds that high FD to pass_fds. The restricted child can write through the already-open handle despite the readonly bind mount; the parent sees changed *synthetic* inventory and returns BLOCKED (exit 2). Both outcomes keep can_authorize_dispatch=false and independent_os_proof_verified=false. This is a **limited local comparison**, not a general audit of all inherited descriptor targets or production runner isolation.
+
+The synthetic temp checkout is now rooted at fixed /tmp instead of honoring caller-provided TMPDIR, and the parent snapshots the fake source by a pinned directory descriptor and O_NOFOLLOW regular-file opener. It caps snapshot bytes at 4 KiB, compares inode identity and contents, and avoids following a swapped sample symlink when checking the child result. A host where /tmp is a symlink or missing is BLOCKED. These changes are local-test input protections, not hardening installed annual sources or proof against malicious sibling writers.
+
+There are **23 source-defined regression tests**; 2 optional Linux OS demonstrations are skipped in ordinary CI. The separately executed opt-in disposable Linux suite passed 23/23 on the local test host. Independent source review and current exact-head GitHub CI remain necessary.
+
 ## Security limitations
 
 This is a negative witness on a brand-new fake checkout, not an independently authenticated production report. The child supplies some of its own observations; a separate trusted observer has not verified its live mount table, UIDs, capabilities, descriptors, seccomp or environment across 20 real annual jobs. The experiment does not secure trusted staging, checkout aliases or sibling writers, the external uploader or race scheduling on the actual GitHub runner.
