@@ -3,6 +3,8 @@ from __future__ import annotations
 """DEC-661 synthetic-only tests: no annual data, no GitHub, no trading."""
 
 import importlib.util
+from concurrent.futures import ThreadPoolExecutor
+import threading
 import json
 import os
 from pathlib import Path
@@ -55,6 +57,36 @@ class ExclusiveSyntheticPublicationTests(unittest.TestCase):
                 self.assertEqual(os.listdir(fd), [module.REPORT_NAME])
             finally:
                 os.close(fd)
+
+    def test_two_simultaneous_publishers_have_one_winner_no_overwrite(self):
+        # A small disposable scheduling witness for atomic link-if-absent.
+        # It does not cover hostile cross-namespace or privileged writers.
+        for _ in range(8):
+            with tempfile.TemporaryDirectory() as directory:
+                barrier = threading.Barrier(2, timeout=5)
+                payloads = (b"writer-a", b"writer-b")
+                def contender(payload):
+                    ownfd = self._dirfd(directory)
+                    try:
+                        barrier.wait()
+                        try:
+                            module._publish_once(ownfd, payload)
+                        except FileExistsError:
+                            return "collision"
+                        return "published"
+                    finally:
+                        os.close(ownfd)
+                with ThreadPoolExecutor(max_workers=2) as pool:
+                    a = pool.submit(contender, payloads[0])
+                    b = pool.submit(contender, payloads[1])
+                    outcomes = sorted((a.result(timeout=8), b.result(timeout=8)))
+                self.assertEqual(outcomes, ["collision", "published"])
+                dirfd = self._dirfd(directory)
+                try:
+                    self.assertIn(module._read_report(dirfd), payloads)
+                    self.assertEqual(os.listdir(dirfd), [module.REPORT_NAME])
+                finally:
+                    os.close(dirfd)
 
     def test_symlink_collision_cannot_overwrite_target(self):
         with tempfile.TemporaryDirectory() as directory:
