@@ -191,6 +191,12 @@ The decoder now requires `nbytes == ((terminator + EVENT.size) // EVENT.size) * 
 
 The Linux kernel source confirms the exact packing rule. This is a source-grounded structural consistency repair, not an authenticated OS audit or annual run385 permission. Exact-head CI and independent security review remain required.
 
+## DEC-698 — Bound directory child basename to Linux NAME_MAX
+
+After enforcing native minimal 16-byte padding in DEC-696/697, the decoder still accepted a structurally padded `IN_CREATE` for a filename of **256 bytes or more**. Linux's UAPI `include/uapi/linux/limits.h` defines `NAME_MAX = 255` bytes for a single filename component, and `inotify(7)` describes the emitted `name` as a child basename rather than a full path.
+
+The parser now caps the basename at 255 non-NUL bytes while retaining exact kernel name-field rounding. Three tests bring the suite to **130 source-defined methods**: 255-byte name boundary structurally accepted, 256-byte name rejected, and a 300-byte name cannot forge matched transient negative-control detection. This remains confined to the disposable /tmp observer, not a trusted OS evidence collector, and exact-head CI plus independent source/security review are still required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
