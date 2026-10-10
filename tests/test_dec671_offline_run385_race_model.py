@@ -10,6 +10,7 @@ import unittest
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts/dec671_offline_run385_race_model.py"
 spec = importlib.util.spec_from_file_location("dec671", SCRIPT)
 module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
 spec.loader.exec_module(module)
 
 
