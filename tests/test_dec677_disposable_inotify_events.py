@@ -8270,6 +8270,81 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux timestamp stat errors')
+    def test_unreadable_timestamp_property_blocks_at_both_last_sample_probes(self):
+        native_lstat = os.lstat
+        native_snapshot = module._snapshot_regular
+        cases = (('postdrain', 'st_mtime_ns'),
+                 ('postdrain', 'st_ctime_ns'),
+                 ('after-last-snapshot', 'st_mtime_ns'),
+                 ('after-last-snapshot', 'st_ctime_ns'))
+        for boundary, field in cases:
+            with self.subTest(boundary=boundary, field=field):
+                read_fd, write_fd = os.pipe()
+                state = {'sample_path': None, 'drained': False,
+                         'snapshots': 0, 'injected': False}
+
+                class UnreadableStat:
+                    def __init__(self, native):
+                        self.native = native
+
+                    def __getattr__(self, name):
+                        if name == field:
+                            raise RuntimeError('synthetic unreadable timestamp attribute')
+                        return getattr(self.native, name)
+
+                def register(path):
+                    state['sample_path'] = os.fspath(path)
+                    return read_fd, 9, 10
+
+                def snapshot(path):
+                    result = native_snapshot(path)
+                    state['snapshots'] += 1
+                    return result
+
+                def drain(_fd):
+                    state['drained'] = True
+                    return b''
+
+                def lstat(path, *args, **kwargs):
+                    native = native_lstat(path, *args, **kwargs)
+                    expected_snapshots = (
+                        2 if boundary == 'postdrain' else 3)
+                    if (state['drained']
+                            and state['snapshots'] == expected_snapshots
+                            and not state['injected']
+                            and os.fspath(path) == state['sample_path']):
+                        state['injected'] = True
+                        return UnreadableStat(native)
+                    return native
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=register) as watcher:
+                            with patch.object(module, '_snapshot_regular',
+                                              side_effect=snapshot) as snapshots:
+                                with patch.object(module, '_read_pending',
+                                                  side_effect=drain) as reader:
+                                    with patch.object(module, '_evaluate') as evaluate:
+                                        receipt = module.run_demo()
+                    self.assertTrue(state['injected'])
+                    self.assertEqual(state['snapshots'],
+                                     2 if boundary == 'postdrain' else 3)
+                    self.assertEqual(snapshots.call_count, state['snapshots'])
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertIs(receipt['can_authorize_dispatch'], False)
+                    self.assertIs(receipt['independent_os_proof_verified'], False)
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

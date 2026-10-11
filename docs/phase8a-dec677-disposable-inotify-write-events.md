@@ -1783,6 +1783,28 @@ for DEC-650 annual no-write confinement, nor server-side DEC-651
 one-shot run385 admission; both remain BLOCKED.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-868 — Unreadable timestamp attributes block at both last-sample probes
+
+DEC-865/866 requires plain native bounded `st_mtime_ns` and
+`st_ctime_ns` around the final generated no-follow snapshot, including
+malformed-value rejection. DEC-868 adds one Linux-only synthetic
+regression method that makes either nanosecond timestamp *unreadable*
+via a raising property wrapper at either the post-event-drain probe or
+the post-final-snapshot probe. Each case must yield `BLOCKED` without
+evaluating a local witness, preserve both false authority fields, and
+close the watcher FD. The test also pins whether the third snapshot was
+allowed to occur, preventing accidental read-order regressions.
+
+This child changes tests and observer documentation only, inheriting
+DEC-867's legacy writer-close fixture repair without relaxing any
+runtime guard. **530 distinct source-defined test methods**.
+All earlier failed exact heads remain failed: the repair needs
+separate exact-head Phase 3 and full historical CI and independent
+security review. No independent OS no-write evidence or run385
+admission is established. DEC-650 and DEC-651 remain BLOCKED.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
