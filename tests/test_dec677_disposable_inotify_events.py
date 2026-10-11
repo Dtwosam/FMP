@@ -5400,6 +5400,66 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertFalse(result['can_authorize_dispatch'])
                 register.assert_not_called()
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux observer')
+    def test_hardlink_initial_alias_helper_requires_exact_true(self):
+        class TruthBomb:
+            def __bool__(self):
+                raise AssertionError('must never evaluate injected truthiness')
+        for injected in (1, 'yes', object(), TruthBomb(), False, None):
+            with self.subTest(injected=type(injected).__name__):
+                rd, wr = os.pipe()
+                try:
+                    with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                        with patch.object(module, '_snapshot_regular',
+                                          return_value=((1, 2), module.BEFORE)) as snap:
+                            with patch.object(module.os, 'link', return_value=None):
+                                with patch.object(module, '_plausible_generated_hardlink_pair',
+                                                  return_value=injected) as verify:
+                                    with patch.object(module, '_read_pending') as drain:
+                                        result = module.run_demo(hardlink_negative=True)
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIn('negative alias not verified', ' '.join(result['findings']))
+                    self.assertFalse(result['can_authorize_dispatch'])
+                    self.assertFalse(result['independent_os_proof_verified'])
+                    self.assertEqual(snap.call_count, 1)
+                    verify.assert_called_once()
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(rd)
+                finally:
+                    os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux observer')
+    def test_hardlink_postrefusal_alias_helper_requires_exact_true(self):
+        class TruthBomb:
+            def __bool__(self):
+                raise AssertionError('must never evaluate injected truthiness')
+        for injected in (1, 'yes', object(), TruthBomb(), False, None):
+            with self.subTest(injected=type(injected).__name__):
+                rd, wr = os.pipe()
+                try:
+                    with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                        with patch.object(module, '_snapshot_regular',
+                                          side_effect=(((1, 2), module.BEFORE),
+                                                       module._SnapshotHardlinkCountError('two links'))) as snap:
+                            with patch.object(module.os, 'link', return_value=None):
+                                with patch.object(module, '_plausible_generated_hardlink_pair',
+                                                  side_effect=(True, injected)) as verify:
+                                    with patch.object(module, '_read_pending') as drain:
+                                        result = module.run_demo(hardlink_negative=True)
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIn('changed during guard probe', ' '.join(result['findings']))
+                    self.assertNotIn('negative control blocked', ' '.join(result['findings']))
+                    self.assertFalse(result['can_authorize_dispatch'])
+                    self.assertEqual(snap.call_count, 2)
+                    self.assertEqual(verify.call_count, 2)
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(rd)
+                finally:
+                    os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
