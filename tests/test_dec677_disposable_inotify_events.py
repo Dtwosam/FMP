@@ -7810,6 +7810,46 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertIs(validated['can_authorize_dispatch'], False)
                 self.assertIs(validated['independent_os_proof_verified'], False)
 
+
+    def test_cli_serializes_detached_receipt_when_runner_input_changes_late(self):
+        clean = module._evaluate(
+            module.BEFORE, module.BEFORE, b'', 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        blocked = module._outcome(
+            ['synthetic blocked finding'], {'synthetic': False})
+        native_dumps = module.json.dumps
+        for case, original, expected_code in (
+                ('local', clean, 3), ('blocked', blocked, 2)):
+            with self.subTest(case=case):
+                expected = json.loads(native_dumps(original))
+                did_mutate = []
+
+                def mutate_original_before_json(checked, **kwargs):
+                    # The CLI should serialize the independent validated copy,
+                    # even if a synthetic caller still retains its source dict.
+                    original['status'] = 'AUTHORIZED'
+                    original['can_authorize_dispatch'] = True
+                    original['independent_os_proof_verified'] = True
+                    original['findings'].append('late injected finding')
+                    original['observed_checks']['late_injected_check'] = True
+                    did_mutate.append(True)
+                    return native_dumps(checked, **kwargs)
+
+                stdout = io.StringIO()
+                with patch.object(module, 'run_demo',
+                                  return_value=original) as runner:
+                    with patch.object(module.json, 'dumps',
+                                      side_effect=mutate_original_before_json):
+                        with contextlib.redirect_stdout(stdout):
+                            exit_code = module.main(['--execute-disposable-control'])
+                self.assertEqual(did_mutate, [True])
+                self.assertEqual(exit_code, expected_code)
+                observed = json.loads(stdout.getvalue())
+                self.assertEqual(observed, expected)
+                self.assertIs(observed['can_authorize_dispatch'], False)
+                self.assertIs(observed['independent_os_proof_verified'], False)
+                runner.assert_called_once()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

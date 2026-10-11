@@ -1614,6 +1614,28 @@ boundary hardening, not a no-write OS proof or annual-runner authorization.
 DEC-650 and DEC-651 stay BLOCKED; exact-head Phase 3/full historical CI
 and qualified independent review are mandatory. **DRAFT / NEVER MERGE**.
 
+
+## DEC-861 — Integration test: serialize the detached receipt, not caller input
+
+DEC-860 returns independent bounded native copies of validated receipts,
+but its regression only exercised the validator directly. DEC-861 adds
+one in-process CLI integration method for both a genuine local-unverified
+receipt and a BLOCKED receipt. A synthetic JSON serialization wrapper
+mutates the original runner-owned dictionary, findings and observed-check
+map **after validation and just before serialization**. The captured CLI
+JSON must still equal the pre-mutation native receipt, retain exact false
+dispatch/OS-proof flags, and preserve the original exit code (3 for
+local-unverified, 2 for BLOCKED). This child changes tests and docs only:
+**520 source-defined test methods** on the strict line.
+
+This demonstrates a narrow sequential aliasing property in the Python
+CLI. It does not provide race-free OS confinement, protect against full
+malicious interpreter takeover or provide annual run385 authorization.
+DEC-650 independent 20-job annual OS no-write proof and DEC-651 immutable
+exclusive admission remain BLOCKED. Exact-head Phase 3/full historical
+CI and qualified independent security review remain required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
