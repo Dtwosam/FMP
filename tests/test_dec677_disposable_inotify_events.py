@@ -5473,7 +5473,7 @@ class DisposableInotifyTests(unittest.TestCase):
             pass
         invalid = (None, True, 'path', bytearray(b'/tmp/file'),
                    ForgedBytes(b'/tmp/file'), b'', b'relative/file',
-                   b'/tmp/file\\x00other', b'/' + b'x' * 4096)
+                   b'/tmp/file\x00other', b'/' + b'x' * 4096)
         for value in invalid:
             with self.subTest(path_bytes=repr(value)[:80]):
                 native = FakeLib()
@@ -5497,7 +5497,7 @@ class DisposableInotifyTests(unittest.TestCase):
             def __init__(self):
                 self.inotify_init1 = NativeCall((17,))
                 self.inotify_add_watch = NativeCall((9, 10))
-        for invalid in (None, True, b'', b'tmp', b'/tmp\\x00wrong',
+        for invalid in (None, True, b'', b'tmp', b'/tmp\x00wrong',
                         b'/' + b'x' * 4096):
             with self.subTest(parent=repr(invalid)[:80]):
                 native = FakeLib()
