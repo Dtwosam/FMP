@@ -9250,6 +9250,73 @@ class DisposableInotifyTests(unittest.TestCase):
                         module._read_pending_checked(17, initial_timeout_ms=value)
                     make_poller.assert_not_called()
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real generated native inotify late receipt event')
+    def test_real_kernel_inotify_transient_during_receipt_census_blocks(self):
+        # This Linux-only negative uses actual kernel inotify watches and
+        # actual os.scandir, create/unlink, poll and read. All paths are
+        # newly generated public /tmp files, never annual evidence.
+        native_watch = module._start_watch
+        native_scan = module._bounded_inventory_names
+        native_early = module._read_pending
+        native_late = module._read_receipt_pending
+        state = {'scans': 0, 'watch': None, 'first': None,
+                 'late': None, 'created': False, 'removed': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['watch'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def early(fd):
+            raw = native_early(fd)
+            state['first'] = raw
+            return raw
+
+        def late(fd):
+            raw = native_late(fd)
+            state['late'] = raw
+            return raw
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                sibling = folder / 'late-kernel-public-sibling'
+                sibling.write_bytes(b'PUBLIC-REAL-LATE-EVENT')
+                state['created'] = sibling.is_file()
+                os.unlink(sibling)
+                state['removed'] = not os.path.lexists(sibling)
+            return names
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as scanner:
+                with patch.object(module, '_read_pending',
+                                  side_effect=early) as early_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=late) as late_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['scans'], 3)
+        self.assertEqual(scanner.call_count, 3)
+        self.assertTrue(state['created'])
+        self.assertTrue(state['removed'])
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['watch']
+        decoded = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(decoded['well_formed'])
+        self.assertGreaterEqual(decoded['directory_changes'], 2)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        early_reader.assert_called_once()
+        late_reader.assert_called_once()
+        evaluator.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
