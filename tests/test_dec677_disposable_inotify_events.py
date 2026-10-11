@@ -9783,6 +9783,84 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real late source same-byte write kernel events')
+    def test_real_kernel_same_byte_write_after_last_sample_stat_caught_by_late_drain(self):
+        # Real Linux dual inotify watch on a newly generated public /tmp
+        # sample. Rewriting exactly the original bytes *after* the last
+        # metadata observation must not yield a local clean witness.
+        native_watch = module._start_watch
+        native_timestamps = module._checked_generated_sample_change_timestamps
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'path': None, 'fd': None, 'wds': None,
+                 'checks': 0, 'bytes_equal': None, 'inode_equal': None,
+                 'first': None, 'late': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['path'] = path
+            state['fd'] = fd
+            state['wds'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def checked(record):
+            stamps = native_timestamps(record)
+            state['checks'] += 1
+            if state['checks'] == 3:
+                sample = state['path']
+                before = os.lstat(sample)
+                with open(sample, 'r+b') as writer:
+                    count = writer.write(module.BEFORE)
+                    self.assertEqual(count, len(module.BEFORE))
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                after = os.lstat(sample)
+                state['inode_equal'] = ((before.st_dev, before.st_ino) ==
+                                        (after.st_dev, after.st_ino))
+                state['bytes_equal'] = sample.read_bytes() == module.BEFORE
+            return stamps
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['late'] = native_last(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=checked) as checker:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as late_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['checks'], 3)
+        self.assertEqual(checker.call_count, 3)
+        self.assertIs(state['inode_equal'], True)
+        self.assertIs(state['bytes_equal'], True)
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['wds']
+        events = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(events['well_formed'])
+        self.assertGreaterEqual(events['source_modify_events'], 1)
+        self.assertGreaterEqual(events['source_content_write_events'], 1)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        late_reader.assert_called_once()
+        evaluator.assert_not_called()
+        self.assertIsNotNone(state['fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

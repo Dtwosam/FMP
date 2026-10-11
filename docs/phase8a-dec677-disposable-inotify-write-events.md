@@ -2315,6 +2315,29 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own exact-head
 Phase 3, full historical suite and qualified independent review
 required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-890 — Real same-byte source overwrite after final receipt metadata
+
+DEC-889 tests real watched-source deletion after the final sample stat.
+DEC-890 tests a different kernel event: after the third and final
+source timestamp validator has read its original native record, write
+the **same public bytes** back through a native `r+b` file descriptor,
+flush/fsync and close it. The generated sample's dev/ino and final
+bytes remain identical. The first native inotify drain is empty, but
+the last immediate kernel drain must contain well-formed `IN_MODIFY`
+(and other content-write) events against the watched source. Such
+activity must produce `BLOCKED` before any local evaluator call,
+both authority and proof flags exactly false and a closed watcher FD.
+
+One Linux-native regression increases the strict tip to **562
+distinct source-defined test methods**. This is only a generated
+public /tmp negative control. Matching bytes do not confer
+independent OS-enforced write prohibition, continuous authenticated
+monitoring, or immutable annual server admission. DEC-650/#820 and
+DEC-651/#821/#779 remain BLOCKED. Own exact-head Phase 3/full
+historical CI and qualified independent review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
