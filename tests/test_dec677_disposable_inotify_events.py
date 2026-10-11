@@ -4940,7 +4940,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 # A synthetic baseline identity unrelated to the actual
                 # generated temporary inode must not credit the alias.
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((0, 0), module.BEFORE)) as snapshot:
+                                  return_value=((0, (1 << 64) - 1), module.BEFORE)) as snapshot:
                     result = module.run_demo(hardlink_negative=True)
             self.assertEqual(result['status'], 'BLOCKED')
             self.assertIn('negative alias not verified', ' '.join(result['findings']))
@@ -5134,6 +5134,56 @@ class DisposableInotifyTests(unittest.TestCase):
                     source, alias))
                 self.assertTrue(os.path.isdir(folder))
             self.assertEqual(observed, [str(alias)])
+
+
+    def test_generated_snapshot_rejects_zero_inode_before_read(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 0
+            st_nlink = 1
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+            st_uid = 10
+            st_gid = 20
+        with patch.object(module.os, 'open', return_value=17):
+            with patch.object(module.os, 'fstat', return_value=FakeStat()):
+                with patch.object(module.os, 'read') as read:
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaisesRegex(OSError, 'bounded regular inode'):
+                            module._snapshot_regular(Path('/tmp/public-fake-only'))
+                        read.assert_not_called()
+                        close.assert_called_once_with(17)
+
+    def test_injected_generated_snapshot_result_refuses_zero_inode(self):
+        for dev in (0, 1, module.MAX_KERNEL_STAT_ID):
+            with self.subTest(device=dev):
+                with self.assertRaisesRegex(OSError, 'invalid identity or bytes'):
+                    module._checked_snapshot_result(((dev, 0), module.BEFORE))
+        self.assertEqual(
+            module._checked_snapshot_result(((0, 1), module.BEFORE)),
+            ((0, 1), module.BEFORE))
+
+    def test_generated_hardlink_pair_rejects_zero_inode_stat_and_baseline(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 0
+            st_nlink = 2
+            st_uid = 10
+            st_gid = 20
+            st_size = len(module.BEFORE)
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        with patch.object(module.os, 'stat',
+                          side_effect=AssertionError('zero baseline must not stat')) as observed:
+            self.assertFalse(module._plausible_generated_hardlink_pair(
+                Path('/tmp/public-a'), Path('/tmp/public-b'), expected_inode=(1, 0)))
+            observed.assert_not_called()
+        with patch.object(module.os, 'stat', return_value=FakeStat()):
+            self.assertFalse(module._plausible_generated_hardlink_pair(
+                Path('/tmp/public-a'), Path('/tmp/public-b')))
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
