@@ -767,6 +767,14 @@ DEC-747–777 now check the disposable snapshot's stat mode, device, inode, one-
 
 Three new source-defined methods increase the suite to **395 uniquely named methods**. Only synthetic test code and documentation change; no watcher source logic or annual permissions. These adversarial local regression cases do not authenticate kernel origin independently or establish host OS write denial.
 
+## DEC-779 — Verify generated hard-link negative-control alias before claiming a refusal
+
+DEC-775 makes a deliberately `BLOCKED` hard-link negative control available through an explicit CLI flag. Its first version called `os.link` and attempted a rejecting snapshot, but a patched link wrapper could return success without creating any alias. A later unrelated snapshot error might then be misdescribed as detection of a real two-linked inode.
+
+DEC-779 adds `_plausible_generated_hardlink_pair`, a fail-closed **same-process local** check after creating the public alias but before attempting its guarded snapshot. It uses no-follow `os.stat` on the source and alias, requires exact ordinary integer mode/device/inode/link-count fields, both regular-file modes with no forbidden high bits, bounded identity values, exactly two hard links on each path, and identical `(mode, device, inode, nlink)` tuples. Missing or malformed values become an explicit `BLOCKED` alias-unverified finding; they never contribute to a claimed guard detection. This is not independent verification of kernel or annual host permissions.
+
+Four source-defined tests increase the suite to **399 uniquely named methods**, covering mismatched/injected stat identities, missing aliases, an inert mocked link syscall that returns normally without creating an alias (while still cleaning up the watcher FD), and a live disposable Linux link/unlink identity cycle. Only the generated /tmp observer source, synthetic tests, and documentation change.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
