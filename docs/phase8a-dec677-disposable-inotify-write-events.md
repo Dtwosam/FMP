@@ -964,6 +964,13 @@ The disposable prewrite directory checks already require no-follow private owner
 
 This is synthetic metadata contract hardening, not a separately trusted kernel proof or an OS-enforced annual runner sandbox; all 20 annual jobs and immutable run385 admission still require independent review.
 
+
+## DEC-813 — Refuse preexisting sample before first generated write
+
+Even a correctly shaped private owner-matched /tmp folder can be a **substituted existing directory** already containing `sample`. The previous `Path.write_bytes(BEFORE)` could overwrite an existing generated public file or follow a planted symlink before either inotify watch was installed. DEC-813 adds a no-follow `os.lstat(sample)` preflight immediately after the generated folder checks: only a native `FileNotFoundError` (missing entry) permits the initial public write; any existing sample or unexpected lstat error fails closed. Two new source-defined methods raise this strict stack to **460 unique tests**, asserting planted file/symlink bytes stay unchanged, no sample writer or watcher runs, and injected stat errors remain blocked.
+
+This carries the independently drafted #1012 negative-control behavior onto the deeper #1013 lineage without rewriting siblings. The lstat check is **not atomic O_EXCL creation**, does not close pathname races, does not prove independently OS-enforced annual isolation and does not authorize run385.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

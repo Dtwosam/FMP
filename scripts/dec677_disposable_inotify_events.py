@@ -860,6 +860,17 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
     try:
         with tempfile.TemporaryDirectory(prefix=DISPOSABLE_PREFIX, dir="/tmp") as folder:
             path = _checked_generated_folder(folder) / "sample"
+            # An injected context-manager folder can already contain a
+            # sample or a symlink redirecting the very first public write.
+            # Only an absent basename may proceed to generated creation.
+            try:
+                os.lstat(path)
+            except FileNotFoundError:
+                pass
+            except Exception as error:
+                raise OSError("disposable sample prewrite lstat failed") from error
+            else:
+                raise OSError("disposable sample already exists before write")
             path.write_bytes(BEFORE)
             # Start observing both the inode and parent directory *before*
             # taking the baseline. A prewatch snapshot would leave an
