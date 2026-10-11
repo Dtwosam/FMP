@@ -6946,6 +6946,46 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux sample drain size')
+    def test_sample_size_change_during_event_drain_blocks_before_evaluation(self):
+        for late_bytes in (b'', module.BEFORE + b'PUBLIC-APPEND'):
+            with self.subTest(late_bytes=repr(late_bytes)):
+                read_fd, write_fd = os.pipe()
+                state = {'sample': None, 'drained': False,
+                         'initial_inode': None, 'final_inode': None}
+
+                def register(path):
+                    state['sample'] = path
+                    state['initial_inode'] = os.lstat(path).st_ino
+                    return read_fd, 9, 10
+
+                def drain(_fd):
+                    state['sample'].write_bytes(late_bytes)
+                    state['final_inode'] = os.lstat(state['sample']).st_ino
+                    state['drained'] = True
+                    return b''
+
+                try:
+                    with patch.object(module, '_start_watch',
+                                      side_effect=register) as watcher:
+                        with patch.object(module, '_read_pending',
+                                          side_effect=drain) as reader:
+                            with patch.object(module, '_evaluate') as evaluate:
+                                receipt = module.run_demo()
+                    self.assertTrue(state['drained'])
+                    self.assertEqual(state['initial_inode'], state['final_inode'])
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertFalse(receipt['can_authorize_dispatch'])
+                    self.assertFalse(receipt['independent_os_proof_verified'])
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

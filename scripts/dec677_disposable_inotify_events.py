@@ -1137,10 +1137,18 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 # generated replacement negative control must still reach
                 # its own evaluator instead of preempting its proof.
                 if not replace_watched_inode:
+                    drained_sample_record = os.lstat(path)
                     drained_sample_inode = _checked_initial_sample_identity(
-                        os.lstat(path))
+                        drained_sample_record)
                     if drained_sample_inode != initial_sample_inode:
                         raise OSError("disposable sample inode changed during event drain")
+                    # Even without an inode substitution, the sample can be
+                    # truncated or extended while draining. Check its bounded
+                    # size without treating this as a postdrain byte proof.
+                    drained_sample_size = drained_sample_record.st_size
+                    if (type(drained_sample_size) is not int
+                            or drained_sample_size != len(BEFORE)):
+                        raise OSError("disposable sample size changed during event drain")
                 return _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
                                  replacement_negative=replace_watched_inode,
