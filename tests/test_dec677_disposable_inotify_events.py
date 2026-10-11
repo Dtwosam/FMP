@@ -1542,7 +1542,9 @@ class DisposableInotifyTests(unittest.TestCase):
                 with patch.object(module, '_snapshot_regular', side_effect=fake_snapshot):
                     with patch.object(module, '_read_pending', side_effect=fake_drain):
                         result = module.run_demo()
-            self.assertEqual(order, ['snapshot', 'snapshot', 'drain'])
+            # DEC-845 intentionally takes a third no-follow sample snapshot
+            # after draining: the predrain snapshot still precedes the drain.
+            self.assertEqual(order, ['snapshot', 'snapshot', 'drain', 'snapshot'])
             self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         finally:
             os.close(wr)
@@ -1566,7 +1568,9 @@ class DisposableInotifyTests(unittest.TestCase):
                 with patch.object(module, '_snapshot_regular', side_effect=fake_snapshot):
                     with patch.object(module, '_read_pending', side_effect=fake_drain):
                         result = module.run_demo()
-            self.assertEqual(len(snapshot_calls), 2)
+            # One additional postdrain sample read must not make the earlier
+            # observed IN_MODIFY event disappear from the final verdict.
+            self.assertEqual(len(snapshot_calls), 3)
             self.assertEqual(result['status'], 'BLOCKED')
             self.assertFalse(result['observed_checks']['no_observed_writes'])
             self.assertFalse(result['can_authorize_dispatch'])

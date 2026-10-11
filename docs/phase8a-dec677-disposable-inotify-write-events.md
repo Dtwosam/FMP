@@ -1323,6 +1323,28 @@ OS-enforced no-write confinement and DEC-651 immutable exclusive run385
 server admission remain **BLOCKED**. New exact-head Phase 3/full historical
 CI and qualified security review are required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-849 — Repair stale historical snapshot-order assertions after DEC-845
+
+The exact-head full historical test workflow for DEC-846 (#1061), run
+`38146780792`, completed **failure** with exactly two inherited assertions:
+`test_end_of_observation_event_drain_is_after_final_snapshot` expected
+`snapshot, snapshot, drain`, and
+`test_modification_during_final_snapshot_is_drained_before_verdict`
+expected two snapshots. DEC-845 had **intentionally** added a final bounded
+no-follow sample read **after** event draining. The runtime executed
+`snapshot, snapshot, drain, snapshot` and blocked already-observed writes;
+the older assertions were stale.
+
+DEC-849 updates only those two historical tests to the actual three-snapshot
+sequence and keeps their normal nonauthorizing and write-observed
+assertions. It does not weaken, bypass, or remove any runtime guard. The
+source-defined test method count stays **502**. CI failure at #1061
+remains an immutable fact; this strict descendant needs its **own** exact
+Phase 3/full historical CI green result and independent review. Non-atomic
+synthetic observations never satisfy DEC-650 confinement or DEC-651 run385
+admission. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
