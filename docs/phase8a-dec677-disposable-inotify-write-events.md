@@ -1097,6 +1097,14 @@ A parallel [#1040](https://github.com/Dtwosam/FMP/pull/1040) (strict sibling of 
 
 One new source-defined method increases the integrated branch from **486 to 487**. **Test/docs-only**, generated observer runtime unchanged from #1041; #1040's independent sibling head, comments and CI remain intact. The mutation test demonstrates a same-process CPython input-integrity assertion only, not independent kernel/OS filesystem confinement or run385 dispatch authority. This child needs its own Phase 3, full historical tests and qualified review.
 
+## DEC-832 — Real generated inode identity for synthetic snapshot ordering tests
+
+DEC-830 source hardening in [#1041](https://github.com/Dtwosam/FMP/pull/1041) verifies the first watched no-follow snapshot's `(dev, ino)` still matches the initial exclusive writer FD. Before that guard, three synthetic observer ordering tests returned the hard-coded identity `(3,7)` from their fake snapshot despite a genuinely allocated temporary `sample` inode. Under the new runtime invariant this stops the runner at the first snapshot instead of exercising the intended quiet baseline, second-snapshot ordering or event draining. DEC-832 repairs **only these three tests** to obtain the actual newly generated sample's `os.lstat` device/inode while still mocking the snapshot bytes and retained synthetic event ordering. No runtime provenance check is bypassed.
+
+Also ports the narrower unrelated fstat-mock repair from [#1043](https://github.com/Dtwosam/FMP/pull/1043): fake `fstat(19)` is scoped to that descriptor, while legitimate native tempfile cleanup's `fstat(3)` delegates to the original syscall. Original #1038 full CI recorded actual `[call(19),call(3)]` and remains RED.
+
+**Test/docs-only**, strict immediate child of [#1042](https://github.com/Dtwosam/FMP/pull/1042), retaining **487 uniquely named source-defined methods**. Other legacy fake snapshot cases may still require exact-head CI diagnosis; do not claim full suite green. This is locally generated public Linux data, no OS confinement or run385 authority. Qualified review and exact-head Phase 3/full historical CI are necessary.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
