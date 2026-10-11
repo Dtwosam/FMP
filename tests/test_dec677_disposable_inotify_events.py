@@ -8072,6 +8072,122 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+
+    def test_generated_sample_change_timestamp_bounds_are_native_integers(self):
+        class FakeStat:
+            def __init__(self, mtime_ns=12, ctime_ns=34):
+                self.st_mtime_ns = mtime_ns
+                self.st_ctime_ns = ctime_ns
+
+        self.assertEqual(
+            module._checked_generated_sample_change_timestamps(FakeStat()),
+            (12, 34))
+        for field in ('st_mtime_ns', 'st_ctime_ns'):
+            for invalid in (True, False, 1.5, '123', None,
+                            module.MIN_KERNEL_TIMESTAMP_NS - 1,
+                            module.MAX_KERNEL_TIMESTAMP_NS + 1):
+                with self.subTest(field=field, invalid=repr(invalid)):
+                    values = {'mtime_ns': 12, 'ctime_ns': 34}
+                    values['mtime_ns' if field == 'st_mtime_ns' else 'ctime_ns'] = invalid
+                    with self.assertRaisesRegex(OSError, 'timestamps malformed'):
+                        module._checked_generated_sample_change_timestamps(
+                            FakeStat(**values))
+        with self.assertRaisesRegex(OSError, 'timestamps unreadable'):
+            module._checked_generated_sample_change_timestamps(object())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux post-final timestamps')
+    def test_last_snapshot_timestamp_drift_blocks_before_local_evaluator(self):
+        native_lstat = os.lstat
+        native_snapshot = module._snapshot_regular
+        for field in ('st_mtime_ns', 'st_ctime_ns'):
+            with self.subTest(field=field):
+                read_fd, write_fd = os.pipe()
+                state = {'sample': None, 'snapshots': 0, 'tampered': False}
+
+                class ChangedStat:
+                    def __init__(self, original):
+                        self.original = original
+
+                    def __getattr__(self, name):
+                        value = getattr(self.original, name)
+                        if name == field:
+                            return value + 1
+                        return value
+
+                def register(path):
+                    state['sample'] = os.fspath(path)
+                    return read_fd, 9, 10
+
+                def snapshot(path):
+                    result = native_snapshot(path)
+                    state['snapshots'] += 1
+                    return result
+
+                def patched_lstat(path, *args, **kwargs):
+                    record = native_lstat(path, *args, **kwargs)
+                    if (state['snapshots'] == 3 and not state['tampered']
+                            and os.fspath(path) == state['sample']):
+                        state['tampered'] = True
+                        return ChangedStat(record)
+                    return record
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=patched_lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=register) as watcher:
+                            with patch.object(module, '_snapshot_regular',
+                                              side_effect=snapshot) as snapshots:
+                                with patch.object(module, '_read_pending',
+                                                  return_value=b'') as reader:
+                                    with patch.object(module, '_evaluate') as evaluate:
+                                        result = module.run_demo()
+                    self.assertTrue(state['tampered'])
+                    self.assertEqual(state['snapshots'], 3)
+                    self.assertEqual(snapshots.call_count, 3)
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIs(result['can_authorize_dispatch'], False)
+                    self.assertIs(result['independent_os_proof_verified'], False)
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux stable timestamps')
+    def test_native_final_snapshot_timestamps_stay_local_only(self):
+        read_fd, write_fd = os.pipe()
+        actual = module._checked_generated_sample_change_timestamps
+        seen = []
+
+        def record_timestamps(stat_record):
+            stamps = actual(stat_record)
+            seen.append(stamps)
+            return stamps
+
+        try:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=record_timestamps) as timestamps:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as drain:
+                        outcome = module.run_demo()
+            self.assertEqual(timestamps.call_count, 2)
+            self.assertEqual(seen[0], seen[1])
+            self.assertEqual(outcome['status'],
+                             'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(outcome['can_authorize_dispatch'], False)
+            self.assertIs(outcome['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            drain.assert_called_once_with(read_fd)
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

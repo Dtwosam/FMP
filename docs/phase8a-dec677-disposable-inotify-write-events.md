@@ -1710,6 +1710,32 @@ DEC-651 remain BLOCKED. Exact-head Phase 3, full historical CI and
 qualified independent security review remain mandatory.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-865 — Compare sample mtime and ctime across the final snapshot
+
+DEC-864 makes a late same-inode pathname replacement, truncation or access
+metadata change observable after the third bounded no-follow sample read.
+It still did not compare source `st_mtime_ns` and `st_ctime_ns` from
+just **before** and just **after** that final read. A write restoring
+identical bytes can preserve inode, size and mode while changing those
+timestamps. DEC-865 validates native bounded signed-Linux timestamps and
+requires both to match across the last snapshot. Read failures, malformed
+timestamps and observed drift all yield `BLOCKED` before evaluation.
+
+Three source-defined tests cover malformed timestamp types and ranges,
+synthetic mtime/ctime drift exactly at the last sample lstat after the
+third snapshot, and a normal generated sample with stable timestamps,
+a closed watcher FD and permanently false authorization fields.
+**528 source-defined test methods** at this strict child head.
+
+Linux timestamp comparison is a sequential diagnostic, **not** atomic
+confinement: timestamps may be restored, coerced or altered after the
+final check, and these are generated `/tmp` toy fixtures. It does not
+authorize the 20-job annual runner. DEC-650 independent OS no-write
+proof and DEC-651 immutable one-shot run385 admission remain BLOCKED.
+Independent exact-head Phase 3/full historical CI and qualified
+security review remain required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
