@@ -3351,12 +3351,10 @@ class DisposableInotifyTests(unittest.TestCase):
     @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
     def test_run_demo_rejects_injected_oversized_final_snapshot_before_drain(self):
         rd, wr = os.pipe()
+        synthetic_contents = iter((module.BEFORE, b'x' * 4097))
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
-                with patch.object(module, '_snapshot_regular', side_effect=(
-                    ((3, 7), module.BEFORE),
-                    ((3, 7), b'x' * 4097),
-                )) as snapshot:
+                with patch.object(module, '_snapshot_regular', side_effect=lambda path: native_created_sample_snapshot(path, next(synthetic_contents))) as snapshot:
                     with patch.object(module, '_read_pending') as drain:
                         result = module.run_demo()
             self.assertEqual(result['status'], 'BLOCKED')
@@ -3442,12 +3440,10 @@ class DisposableInotifyTests(unittest.TestCase):
     @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
     def test_generated_runner_rejects_wrong_final_fixture_before_inventory(self):
         rd, wr = os.pipe()
+        synthetic_contents = iter((module.BEFORE, b'UNEXPECTED FINAL'))
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
-                with patch.object(module, '_snapshot_regular', side_effect=(
-                    ((3, 7), module.BEFORE),
-                    ((3, 7), b'UNEXPECTED FINAL'),
-                )) as snapshot:
+                with patch.object(module, '_snapshot_regular', side_effect=lambda path: native_created_sample_snapshot(path, next(synthetic_contents))) as snapshot:
                     with patch.object(module, '_bounded_inventory_names',
                                       return_value=()) as inventory:
                         with patch.object(module, '_read_pending') as drain:
@@ -3961,7 +3957,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((3, 7), module.BEFORE)):
+                                  side_effect=lambda path: native_created_sample_snapshot(path)):
                     with patch.object(module.os, 'replace',
                                       side_effect=RuntimeError('synthetic replacement wrapper')):
                         with patch.object(module, '_read_pending') as drain:
@@ -3980,7 +3976,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((3, 7), module.BEFORE)):
+                                  side_effect=lambda path: native_created_sample_snapshot(path)):
                     with patch.object(module.os, 'fsync',
                                       side_effect=RuntimeError('synthetic fsync wrapper')):
                         with patch.object(module, '_read_pending') as drain:
@@ -4413,7 +4409,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((1, 2), module.BEFORE)) as snapshot:
+                                  side_effect=lambda path: native_created_sample_snapshot(path)) as snapshot:
                     with patch.object(module, '_plausible_generated_hardlink_pair',
                                       return_value=True):
                         with patch.object(module, '_read_pending') as drain:
@@ -4459,7 +4455,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((1, 2), module.BEFORE)):
+                                  side_effect=lambda path: native_created_sample_snapshot(path)):
                     with patch.object(module.os, 'link',
                                       side_effect=RuntimeError('synthetic link syscall wrapper')):
                         with patch.object(module, '_read_pending') as drain:
@@ -4664,7 +4660,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((1, 2), module.BEFORE)) as snapshot:
+                                  side_effect=lambda path: native_created_sample_snapshot(path)) as snapshot:
                     with patch.object(module.os, 'link', return_value=None):
                         result = module.run_demo(hardlink_negative=True)
             self.assertEqual(result['status'], 'BLOCKED')
@@ -4698,7 +4694,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 try:
                     with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                         with patch.object(module, '_snapshot_regular',
-                                          return_value=((1, 2), module.BEFORE)) as snapshot:
+                                          side_effect=lambda path: native_created_sample_snapshot(path)) as snapshot:
                             with patch.object(module.os, 'link', return_value=invalid):
                                 with patch.object(module, '_plausible_generated_hardlink_pair') as verify:
                                     outcome = module.run_demo(hardlink_negative=True)
@@ -5067,7 +5063,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 try:
                     with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                         with patch.object(module, '_snapshot_regular',
-                                          return_value=((1, 2), module.BEFORE)) as snapshot:
+                                          side_effect=lambda path: native_created_sample_snapshot(path)) as snapshot:
                             with patch.object(module.os, 'link',
                                               side_effect=native_error):
                                 with patch.object(module, '_plausible_generated_hardlink_pair') as verify:
@@ -5101,7 +5097,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((1, 2), module.BEFORE)) as snapshot:
+                                  side_effect=lambda path: native_created_sample_snapshot(path)) as snapshot:
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module.os, 'stat',
                                           side_effect=missing_only_generated_alias) as stat:
@@ -5137,7 +5133,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((1, 2), module.BEFORE)) as snapshot:
+                                  side_effect=lambda path: native_created_sample_snapshot(path)) as snapshot:
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module.os, 'stat',
                                           side_effect=stat_only_missing_alias):
@@ -5441,7 +5437,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 try:
                     with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                         with patch.object(module, '_snapshot_regular',
-                                          return_value=((1, 2), module.BEFORE)) as snap:
+                                          side_effect=lambda path: native_created_sample_snapshot(path)) as snap:
                             with patch.object(module.os, 'link', return_value=None):
                                 with patch.object(module, '_plausible_generated_hardlink_pair',
                                                   return_value=injected) as verify:

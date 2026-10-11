@@ -1105,6 +1105,12 @@ Also ports the narrower unrelated fstat-mock repair from [#1043](https://github.
 
 **Test/docs-only**, strict immediate child of [#1042](https://github.com/Dtwosam/FMP/pull/1042), retaining **487 uniquely named source-defined methods**. Other legacy fake snapshot cases may still require exact-head CI diagnosis; do not claim full suite green. This is locally generated public Linux data, no OS confinement or run385 authority. Qualified review and exact-head Phase 3/full historical CI are necessary.
 
+## DEC-833 — Preserve later negative controls after first-snapshot inode pin
+
+DEC-830's stronger original O_EXCL writer / first watched snapshot equality check exposes inherited fixture inconsistency: two tests returned constant `(3,7)` instead of the actual native generated `sample` identity, and several hard-link/negative-control tests returned `(1,2)` despite using a genuine generated public inode. A false first baseline now stops before intended later snapshots, syscall failures or event draining. DEC-832 repaired three ordering tests, while this DEC-833 child repairs **twelve additional downstream-control test scopes**: the first fake snapshot obtains the actual newly generated file's device/inode via a shared native `os.lstat` helper, but leaves synthetic bytes, second-snapshot oversized/unexpected final fixtures, negative-control expected diagnostics and injected write, fsync and link errors intact. It never mocks or bypasses the new source-level inode continuity guard.
+
+**Test/docs-only**, strictly child of [#1044](https://github.com/Dtwosam/FMP/pull/1044) with **487 source-defined distinct test methods** (none added). Other fake-alias scenarios remain for CI review; the current generated toy still cannot prove independently OS-enforced annual confinement, kernel provenance or run385 admission. Exact-head Phase 3/full historical CI and qualified security review required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
