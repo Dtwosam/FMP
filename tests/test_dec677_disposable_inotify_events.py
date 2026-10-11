@@ -10019,6 +10019,83 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real late watched-source symlink swap kernel events')
+    def test_real_kernel_symlink_swap_after_last_sample_stat_caught_by_late_drain(self):
+        # Replace ONLY the generated /tmp sample pathname with a relative
+        # symlink targeting another generated public file after the final
+        # sample record was already inspected. No protected path is used.
+        native_watch = module._start_watch
+        native_timestamps = module._checked_generated_sample_change_timestamps
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'sample': None, 'fd': None, 'wds': None,
+                 'checks': 0, 'symlink': False, 'target': None,
+                 'bytes_equal': None, 'first': None, 'late': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['fd'] = fd
+            state['wds'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def checked(record):
+            stamps = native_timestamps(record)
+            state['checks'] += 1
+            if state['checks'] == 3:
+                sample = state['sample']
+                target = sample.parent / 'public-late-symlink-target'
+                target.write_bytes(module.BEFORE)
+                replacement = sample.parent / 'public-late-link'
+                replacement.symlink_to(target.name)
+                os.replace(replacement, sample)
+                state['symlink'] = sample.is_symlink()
+                state['target'] = os.readlink(sample)
+                state['bytes_equal'] = sample.read_bytes() == module.BEFORE
+            return stamps
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['late'] = native_last(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=checked) as checker:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as late_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['checks'], 3)
+        self.assertEqual(checker.call_count, 3)
+        self.assertTrue(state['symlink'])
+        self.assertEqual(state['target'], 'public-late-symlink-target')
+        self.assertIs(state['bytes_equal'], True)
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['wds']
+        events = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(events['well_formed'])
+        self.assertTrue(events['invalidated'])
+        self.assertGreaterEqual(events['directory_changes'], 1)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        late_reader.assert_called_once()
+        evaluator.assert_not_called()
+        self.assertIsNotNone(state['fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
