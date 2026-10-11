@@ -38,6 +38,19 @@ def native_created_sample_snapshot(path, data=module.BEFORE):
     return ((record.st_dev, record.st_ino), data)
 
 
+def native_created_sample_sequence(*observations):
+    """Keep a real initial inode before injected second-snapshot failures."""
+    pending = iter(observations)
+
+    def snapshot(path):
+        item = next(pending)
+        if isinstance(item, Exception):
+            raise item
+        return native_created_sample_snapshot(path, item)
+
+    return snapshot
+
+
 class DisposableInotifyTests(unittest.TestCase):
     def test_empty_stream_has_no_events_but_never_authorizes(self):
         r = module._evaluate(b'same', b'same', b'', 9, True, False,
@@ -4739,7 +4752,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  side_effect=(((1, 2), module.BEFORE),
+                                  side_effect=native_created_sample_sequence(module.BEFORE,
                                                OSError('unrelated read failure'))):
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module, '_plausible_generated_hardlink_pair',
@@ -4760,7 +4773,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  side_effect=(((1, 2), module.BEFORE),
+                                  side_effect=native_created_sample_sequence(module.BEFORE,
                                                module._SnapshotHardlinkCountError('two links'))):
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module, '_plausible_generated_hardlink_pair',
@@ -4836,7 +4849,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  side_effect=(((1, 2), module.BEFORE),
+                                  side_effect=native_created_sample_sequence(module.BEFORE,
                                                module._SnapshotHardlinkCountError('two links'))):
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module, '_plausible_generated_hardlink_pair',
@@ -4858,7 +4871,7 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  side_effect=(((1, 2), module.BEFORE),
+                                  side_effect=native_created_sample_sequence(module.BEFORE,
                                                module._SnapshotHardlinkCountError('two links'))):
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module, '_plausible_generated_hardlink_pair',
@@ -4942,14 +4955,20 @@ class DisposableInotifyTests(unittest.TestCase):
         rd, wr = os.pipe()
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
-                # A synthetic baseline identity unrelated to the actual
-                # generated temporary inode must not credit the alias.
+                # A baseline identity unrelated to the actual initial O_EXCL
+                # writer must now fail BEFORE any hard-link alias probes.
                 with patch.object(module, '_snapshot_regular',
                                   return_value=((0, 0), module.BEFORE)) as snapshot:
-                    result = module.run_demo(hardlink_negative=True)
+                    with patch.object(module.os, 'link') as link:
+                        with patch.object(module, '_plausible_generated_hardlink_pair') as verify:
+                            result = module.run_demo(hardlink_negative=True)
             self.assertEqual(result['status'], 'BLOCKED')
-            self.assertIn('negative alias not verified', ' '.join(result['findings']))
+            self.assertIn('disposable inotify setup, read or cleanup failed',
+                          result['findings'])
             self.assertEqual(snapshot.call_count, 1)
+            link.assert_not_called()
+            verify.assert_not_called()
+            self.assertFalse(result['can_authorize_dispatch'])
             self.assertFalse(result['independent_os_proof_verified'])
             with self.assertRaises(OSError):
                 os.fstat(rd)
@@ -5466,7 +5485,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 try:
                     with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                         with patch.object(module, '_snapshot_regular',
-                                          side_effect=(((1, 2), module.BEFORE),
+                                          side_effect=native_created_sample_sequence(module.BEFORE,
                                                        module._SnapshotHardlinkCountError('two links'))) as snap:
                             with patch.object(module.os, 'link', return_value=None):
                                 with patch.object(module, '_plausible_generated_hardlink_pair',
