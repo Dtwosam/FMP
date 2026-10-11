@@ -5557,7 +5557,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertFalse(result['independent_os_proof_verified'])
 
     def test_inventory_exact_native_and_surrogateescaped_names_still_validate(self):
-        for name in ('sample', 'a' * 255, os.fsdecode(b'public-\\xff-entry')):
+        for name in ('sample', 'a' * 255, os.fsdecode(b'public-' + bytes([255]) + b'-entry')):
             with self.subTest(name=repr(name)):
                 self.assertTrue(module._plausible_inventory_basename(name))
         with patch.object(module.os, 'fsencode', return_value=b'a' * 255):
@@ -5583,10 +5583,10 @@ class DisposableInotifyTests(unittest.TestCase):
     @unittest.skipUnless(sys.platform == 'linux', 'generated Linux /tmp inventory')
     def test_live_generated_inventory_surrogateescape_matches_real_bytes(self):
         with tempfile.TemporaryDirectory(prefix='dec805-public-', dir='/tmp') as folder:
-            name = os.fsdecode(b'public-\\xff-entry')
+            name = os.fsdecode(b'public-' + bytes([255]) + b'-entry')
             sample = Path(folder) / name
             sample.write_bytes(b'PUBLIC')
-            self.assertEqual(os.fsencode(name), b'public-\\xff-entry')
+            self.assertEqual(os.fsencode(name), b'public-' + bytes([255]) + b'-entry')
             self.assertEqual(module._bounded_inventory_names(Path(folder)), (name,))
 
 
@@ -5698,6 +5698,16 @@ class DisposableInotifyTests(unittest.TestCase):
                               side_effect=RuntimeError('synthetic owner API')):
                 with self.assertRaisesRegex(OSError, 'owner probe failed'):
                     module._checked_generated_folder(path)
+
+
+    def test_inventory_nonutf8_byte_roundtrip_rejects_encoder_substitution(self):
+        raw_name = b'public-' + bytes([255]) + b'-entry'
+        decoded = os.fsdecode(raw_name)
+        self.assertEqual(os.fsencode(decoded), raw_name)
+        self.assertTrue(module._plausible_inventory_basename(decoded))
+        self.assertFalse(module._plausible_inventory_basename(''))
+        with patch.object(module.os, 'fsencode', return_value=b'public-other-entry'):
+            self.assertFalse(module._plausible_inventory_basename(decoded))
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
