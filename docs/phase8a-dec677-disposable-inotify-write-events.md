@@ -841,6 +841,14 @@ DEC-789 narrows that injected error to paths ending in `/public-hardlink-alias`;
 
 **Historical #959 remains RED at its exact original full CI head**, even if this strictly parent-pinned child passes; descendants never revise previous job conclusions. The original #919/#920 failed heads also stay RED. This is a test-only mock-boundary correction, not independent annual OS isolation or dispatch approval.
 
+## DEC-790 — Refuse zero inode IDs in generated sample and local alias identities
+
+The local generated `/tmp` experiment compares kernel device/inode identities. Its prior synthetic validators permitted `st_ino=0` or returned snapshot identities `(dev,0)` because they bounded inode values as unsigned 64-bit numbers starting at zero. For this deliberately created regular-file fixture, **zero is not a verifiable inode identity**. A patched fstat or snapshot helper returning zero should fail closed rather than assert a plausible stable watched object or credited alias.
+
+DEC-790 requires `1 <= st_ino <= UINT64_MAX` at the checked fstat boundary and the two-link alias verifier, and requires a positive integer inode component in both the injected snapshot-result helper and the pinned alias baseline tuple. Device ID zero remains representable; signedness, exact integer checks and upper bounds stay intact. The existing deliberately wrong-baseline test uses a nonzero but impossible-to-match synthetic inode instead of zero, so it still reaches the targeted alias mismatch path. Three new source-defined tests increase the suite to **422 distinct test methods**: fstat zero inode refusal before read with FD cleanup, malformed result identity refusal and valid device-zero/positive-inode control, and alias stat/baseline zero-inode refusal before any inappropriate stat read.
+
+This is only a deliberately conservative **local witness** identity contract, not a Linux ABI claim that every mounted filesystem everywhere must provide nonzero inode IDs, and not production OS confinement or dispatch authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
