@@ -450,6 +450,20 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
     return _outcome(findings, checks)
 
 
+def _checked_watch_path_bytes(path: Path) -> bytes:
+    """Ensure a native C-string pathname cannot alias through NUL truncation."""
+    try:
+        encoded = os.fsencode(path)
+    except Exception as error:
+        raise OSError("disposable inotify watch pathname encoding failed") from error
+    # Linux PATH_MAX includes the terminating NUL; Python's ctypes c_char_p
+    # would silently truncate an injected byte string containing NUL.
+    if (type(encoded) is not bytes or not 1 <= len(encoded) <= 4095
+            or not encoded.startswith(b"/") or b"\x00" in encoded):
+        raise OSError("disposable inotify watch pathname is malformed")
+    return encoded
+
+
 def _start_watch(path: Path) -> tuple[int, int, int]:
     # Until inotify_init1 yields an integer FD, no descriptor is owned here.
     # Unexpected injected loader/signature/init errors must still produce a
@@ -480,11 +494,12 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
     # returns the complete dual-watch tuple. A ctypes call that raises (not
     # just one returning -1) must not leak the observer descriptor.
     try:
-        wd = lib.inotify_add_watch(fd, os.fsencode(path), MASK)
+        wd = lib.inotify_add_watch(fd, _checked_watch_path_bytes(path), MASK)
         if type(wd) is not int or not 1 <= wd <= MAX_WATCH_DESCRIPTOR:
             error = ctypes.get_errno()
             raise OSError(error or 22, "disposable inotify_add_watch failed")
-        directory_wd = lib.inotify_add_watch(fd, os.fsencode(path.parent), DIRECTORY_MASK)
+        directory_wd = lib.inotify_add_watch(
+            fd, _checked_watch_path_bytes(path.parent), DIRECTORY_MASK)
         if (type(directory_wd) is not int
                 or not 1 <= directory_wd <= MAX_WATCH_DESCRIPTOR
                 or directory_wd == wd):
