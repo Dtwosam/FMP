@@ -5536,6 +5536,60 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual([v[1] for v in native.inotify_add_watch.calls],
                          [b'/tmp/public-fake-only', b'/tmp'])
 
+
+    def test_watch_encoder_cannot_substitute_another_absolute_file_path(self):
+        class NativeCall:
+            def __init__(self, results):
+                self.results = iter(results)
+                self.calls = []
+            def __call__(self, *args):
+                self.calls.append(args)
+                return next(self.results)
+        class FakeLib:
+            def __init__(self):
+                self.inotify_init1 = NativeCall((17,))
+                self.inotify_add_watch = NativeCall((9, 10))
+        native = FakeLib()
+        with patch.object(module.ctypes, 'CDLL', return_value=native):
+            with patch.object(module.os, 'fsencode',
+                              return_value=b'/tmp/a-different-public-file'):
+                with patch.object(module.os, 'close') as close:
+                    with self.assertRaisesRegex(OSError, 'differs from source'):
+                        module._start_watch(Path('/tmp/public-fake-only'))
+                    close.assert_called_once_with(17)
+        self.assertEqual(native.inotify_add_watch.calls, [])
+
+    def test_watch_encoder_cannot_substitute_different_absolute_parent(self):
+        class NativeCall:
+            def __init__(self, results):
+                self.results = iter(results)
+                self.calls = []
+            def __call__(self, *args):
+                self.calls.append(args)
+                return next(self.results)
+        class FakeLib:
+            def __init__(self):
+                self.inotify_init1 = NativeCall((17,))
+                self.inotify_add_watch = NativeCall((9, 10))
+        native = FakeLib()
+        with patch.object(module.ctypes, 'CDLL', return_value=native):
+            with patch.object(module.os, 'fsencode',
+                              side_effect=(b'/tmp/public-fake-only',
+                                           b'/tmp/other-public-parent')):
+                with patch.object(module.os, 'close') as close:
+                    with self.assertRaisesRegex(OSError, 'differs from source'):
+                        module._start_watch(Path('/tmp/public-fake-only'))
+                    close.assert_called_once_with(17)
+        self.assertEqual(len(native.inotify_add_watch.calls), 1)
+
+    def test_watch_native_encoding_preserves_surrogateescaped_linux_name(self):
+        if sys.platform != 'linux':
+            self.skipTest('Linux filesystem surrogateescape')
+        path = Path(os.fsdecode(bytes.fromhex(
+            '2f746d702f7075626c69632dff')))
+        self.assertEqual(module._checked_watch_path_bytes(path),
+                         bytes.fromhex('2f746d702f7075626c69632dff'))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
