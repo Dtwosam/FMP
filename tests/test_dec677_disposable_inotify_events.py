@@ -5229,7 +5229,7 @@ class DisposableInotifyTests(unittest.TestCase):
         path = Path('/tmp/public-sample')
         class EvilBytes(bytes):
             pass
-        for forged in (None, True, '', b'', b'/tmp/public-sample\\x00suffix',
+        for forged in (None, True, '', b'', b'/tmp/public-sample\x00suffix',
                        b'/tmp/other-sample', b'/etc/not-disposable',
                        bytearray(b'/tmp/public-sample'),
                        EvilBytes(b'/tmp/public-sample'), b'x' * 4096):
@@ -5239,7 +5239,7 @@ class DisposableInotifyTests(unittest.TestCase):
                         module._checked_watch_path_bytes(path)
 
     def test_watch_path_encoder_accepts_exact_surrogateescaped_bytes(self):
-        name = os.fsdecode(b'public-\\xff-entry')
+        name = os.fsdecode(b'public-\xff-entry')
         path = Path('/tmp') / name
         self.assertEqual(module._checked_watch_path_bytes(path),
                          os.fsencode(path))
