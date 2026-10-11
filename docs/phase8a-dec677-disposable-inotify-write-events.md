@@ -992,6 +992,13 @@ DEC-814 made the first generated `sample` creation exclusive, and DEC-815 demons
 
 One new source-defined test raises the lineage to **464 distinct test methods**. No runtime changes or independent annual OS-write confinement; only generated public fixtures in private /tmp are touched, with exact-head CI and qualified independent security review still outstanding.
 
+
+## DEC-817 — Bound buffered exclusive-close failures before watcher creation
+
+DEC-814 checks the initial exclusive sample `write` byte count. A complete-looking buffered write may still fail on context manager close/flush, so DEC-817 adds a regression in which the generated sample writer reports exactly `len(BEFORE)` while its `__exit__` raises a synthetic native `OSError`. The runner must produce `BLOCKED` with no watch allocation and false authorization fields. A separate real Linux /tmp control creates the generated sample using `Path.open("xb")`, checks the exact bytes and inode through the bounded no-follow snapshot helper after close, and proves a second exclusive create fails.
+
+Two source-defined tests increase this descendant to **466 unique methods**. Runtime observer code is unchanged; all data are generated public /tmp fixtures, and this is neither parent-directory OS confinement nor annual run385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
