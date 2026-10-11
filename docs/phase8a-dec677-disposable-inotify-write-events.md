@@ -1006,6 +1006,13 @@ The disposable observer guards its snapshot and inotify watcher descriptors agai
 
 Two new source-defined tests increase this descendant to **468 unique methods**. This is a same-process Python-wrapper FD-shape guard, not independent OS confinement, not protection against malicious wrappers closing inherited descriptors, and not annual run385 admission.
 
+
+## DEC-819 — Repair inherited forged-fspath test fixture after a real full CI failure
+
+The exact full historical `tests` run for draft #1011, source head `323205c15120d34aee3920ab97164dd406dd0973`, **FAILED** (workflow 38133609970, unit-tests job 114452830132): 5,357 tests, one failed assertion, 693 skipped. `test_watch_encoding_rejects_forged_fspath_and_encoder_agreement` expected the `fspath disagrees` guard but hit the deliberately patched `os.fsencode` exception instead, returning `disposable watch pathname encoding failed`. The inherited test constructed a Python `Path` and did not materialize its expected text until after replacing the shared `os.fspath` wrapper. This is a test-fixture order dependency around lazy path string materialization, not annual-runner authorization.
+
+DEC-819 is test/docs-only: it eagerly captures the unmodified source `Path` text before installing the synthetic `os.fspath` monkeypatch, and asserts the initial value matches the generated public path. The existing regression still requires early fspath mismatch and zero encoder calls. Source runtime code is **identical** to #1021. Distinct source-defined method count remains **468**. #1011's original failed run is not relabeled; this new child requires its own exact-head Phase 3 and full tests.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
