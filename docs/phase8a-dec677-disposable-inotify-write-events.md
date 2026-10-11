@@ -1119,6 +1119,14 @@ DEC-834 narrowly repairs these **existing test fixtures, without changing their 
 
 Only disposable test/docs paths change. Still **487 distinct source-defined methods**. Parent and historical failed heads remain immutable; exact-head Phase 3 + full CI and qualified independent source/security review are needed. These local /tmp Python tests neither establish race-free OS isolation of 20 annual jobs nor immutable one-shot run385 admission.
 
+## DEC-835 — Reject in-place raw watch Path mutation even with honest returned text/bytes
+
+The DEC-829 source-level CPython raw-path fix independently reconstructs expected watch text before calling a potentially patched `os.fspath` wrapper, and DEC-831 verifies it refuses a wrapper that both changes the Path and returns an *alternate* target. That does not cover an adversarial wrapper which **mutates the actual Path raw constructor segments in-place but returns the previously valid original string**, or an encoder which mutates the Path but returns the correct original bytes. Without an integrity recheck, the generated same-process watch request can accept bytes for a path that has already changed.
+
+DEC-835 snapshots a tuple of exact original ordinary CPython raw-string segments and requires the concrete Path still contain the identical plain segments **after both `os.fspath` and `os.fsencode`**. A changed original Path now fails closed with a specific bounded OSError before any watch installation. A new two-stage matrix checks `/tmp` and outside-`/tmp` substitutions with a deceptively *unchanged* returned text/byte string, including assertions that the encoder is not invoked when the earlier textual wrapper was the mutator.
+
+One source-defined method grows this branch from **487 to 488**. Only disposable observer source/test/docs changed, parent #1046 and all historical failed CI remain immutable. This is CPython-specific same-process input coherence, not verified atomic kernel watch-target identity or independent OS confinement. Exact-head Phase 3 + full historical tests and qualified independent security/source review are still required. No annual admission or trading authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
