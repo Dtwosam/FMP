@@ -874,6 +874,15 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
             # The prewrite lstat is only a diagnostic. Exclusive creation
             # atomically refuses a late-arriving file or symlink at 'sample'.
             with path.open("xb") as sample:
+                # Do not silently allocate a disposable initial source on
+                # an inherited standard descriptor in a closed-stdio host.
+                try:
+                    sample_fd = sample.fileno()
+                except Exception as error:
+                    raise OSError("disposable initial sample fd unreadable") from error
+                if (type(sample_fd) is not int
+                        or not 3 <= sample_fd <= MAX_FILE_DESCRIPTOR):
+                    raise OSError("disposable initial sample used invalid nonstdio fd")
                 written = sample.write(BEFORE)
                 if type(written) is not int or written != len(BEFORE):
                     raise OSError("disposable initial sample was not fully written")

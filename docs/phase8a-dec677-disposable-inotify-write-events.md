@@ -999,6 +999,13 @@ DEC-814 checks the initial exclusive sample `write` byte count. A complete-looki
 
 Two source-defined tests increase this descendant to **466 unique methods**. Runtime observer code is unchanged; all data are generated public /tmp fixtures, and this is neither parent-directory OS confinement nor annual run385 admission.
 
+
+## DEC-818 — Refuse invalid initial exclusive file descriptors before any sample write
+
+The disposable observer guards its snapshot and inotify watcher descriptors against inherited stdio FDs 0–2, but the newly exclusive initial `Path.open("xb")` file was not checked at the same boundary. DEC-818 examines `sample.fileno()` before the first generated write; missing/throwing, forged, oversized, negative or stdio-valued descriptors fail closed without calling `sample.write` or allocating inotify watches. The writer context still performs its own cleanup. A native Linux positive control accepts an ordinary nonstdio FD and writes the exact public fixture. Two inherited mocks for malformed write count and close failure now return a valid nonstdio FD so those tests still reach their actual stated boundaries.
+
+Two new source-defined tests increase this descendant to **468 unique methods**. This is a same-process Python-wrapper FD-shape guard, not independent OS confinement, not protection against malicious wrappers closing inherited descriptors, and not annual run385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

@@ -5874,6 +5874,7 @@ class DisposableInotifyTests(unittest.TestCase):
                       len(module.BEFORE) + 1, 'complete'):
             with self.subTest(value=repr(value)):
                 with patch.object(module.Path, 'open') as opener:
+                    opener.return_value.__enter__.return_value.fileno.return_value = 19
                     opener.return_value.__enter__.return_value.write.return_value = value
                     with patch.object(module, '_start_watch') as watch:
                         receipt = module.run_demo()
@@ -5981,6 +5982,7 @@ class DisposableInotifyTests(unittest.TestCase):
     def test_initial_exclusive_close_failure_never_starts_watch(self):
         with patch.object(module.Path, 'open') as opener:
             stream = opener.return_value.__enter__.return_value
+            stream.fileno.return_value = 19
             stream.write.return_value = len(module.BEFORE)
             opener.return_value.__exit__.side_effect = OSError(
                 28, 'synthetic public file close failure')
@@ -6006,6 +6008,39 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertEqual(content, module.BEFORE)
             with self.assertRaises(FileExistsError):
                 sample.open('xb')
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'initial generated Linux fd boundary')
+    def test_initial_exclusive_open_refuses_stdio_and_forged_fd_before_write(self):
+        class ForgedInt(int):
+            def __eq__(self, _other):
+                return True
+
+        for invalid in (None, True, 0, 1, 2, -1, 1 << 31,
+                        '3', 3.0, ForgedInt(19)):
+            with self.subTest(fd=repr(invalid)):
+                with patch.object(module.Path, 'open') as opener:
+                    stream = opener.return_value.__enter__.return_value
+                    stream.fileno.return_value = invalid
+                    with patch.object(module, '_start_watch') as watch:
+                        receipt = module.run_demo()
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+                stream.write.assert_not_called()
+                watch.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native Linux nonstdio sample fd')
+    def test_native_exclusive_generated_file_uses_nonstdio_fd(self):
+        with tempfile.TemporaryDirectory(prefix='dec818-public-', dir='/tmp') as folder:
+            sample = Path(folder) / 'sample'
+            with sample.open('xb') as stream:
+                fd = stream.fileno()
+                self.assertIs(type(fd), int)
+                self.assertGreaterEqual(fd, 3)
+                self.assertLessEqual(fd, module.MAX_FILE_DESCRIPTOR)
+                self.assertEqual(stream.write(module.BEFORE), len(module.BEFORE))
+            self.assertEqual(sample.read_bytes(), module.BEFORE)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
