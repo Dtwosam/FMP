@@ -907,6 +907,17 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
 
 
 def main(argv: list[str] | None = None) -> int:
+    # argv=None is the normal OS-provided CLI. Explicit Python callers must
+    # supply bounded exact strings; argparse is not a validator of arbitrary
+    # injected object protocols or unbounded argument collections.
+    if argv is not None and (
+        type(argv) is not list or len(argv) > 16
+        or any(type(arg) is not str or len(arg) > 256 for arg in argv)
+    ):
+        print(json.dumps(
+            _outcome(["disposable observer CLI argument shape rejected"]),
+            sort_keys=True, separators=(",", ":")))
+        return 2
     p = argparse.ArgumentParser(add_help=False,
         description="DEC-677 disposable inotify observation, NEVER real runner acceptance")
     choices = p.add_mutually_exclusive_group()
@@ -918,10 +929,9 @@ def main(argv: list[str] | None = None) -> int:
     choices.add_argument("--execute-hardlink-alias-negative", action="store_true")
     try:
         args = p.parse_args(argv)
-    except SystemExit:
-        # argparse normally exits before the receipt is printed for an
-        # unsupported source path or conflicting switches. Keep the parser's
-        # nonzero result, but also emit our standard nonauthorizing JSON.
+    except (SystemExit, Exception):
+        # argparse's intended exit and unexpected ordinary Python wrapper
+        # errors both produce a nonauthorizing receipt, never a dispatch.
         print(json.dumps(
             _outcome(["disposable observer CLI arguments rejected"]),
             sort_keys=True, separators=(",", ":")))
