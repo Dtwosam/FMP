@@ -48,6 +48,8 @@ MAX_WATCH_DESCRIPTOR = (1 << 31) - 1
 MAX_FILE_DESCRIPTOR = (1 << 31) - 1
 # Linux stat st_dev and st_ino are unsigned 64-bit kernel/ABI identities.
 MAX_KERNEL_STAT_ID = (1 << 64) - 1
+# Linux uid_t/gid_t in stat metadata are unsigned 32-bit identity fields.
+MAX_KERNEL_OWNER_ID = (1 << 32) - 1
 # Linux stat mode_t is an unsigned 32-bit value, not an arbitrary Python int.
 MAX_KERNEL_STAT_MODE = (1 << 32) - 1
 # Linux st_mode uses file-type bits 0170000 and access/special bits 0007777.
@@ -605,14 +607,14 @@ def _bounded_inventory_names(folder: Path) -> tuple[str, ...]:
 def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int]:
     """Reject patched fstat metadata before size arithmetic or comparisons."""
     fields = ("st_mode", "st_dev", "st_ino", "st_nlink", "st_size",
-              "st_mtime_ns", "st_ctime_ns")
+              "st_mtime_ns", "st_ctime_ns", "st_uid", "st_gid")
     try:
         values = tuple(getattr(st, field) for field in fields)
     except Exception as error:
         raise OSError("disposable fstat returned unreadable metadata") from error
     if any(type(value) is not int for value in values):
         raise OSError("disposable fstat returned noninteger metadata")
-    mode, dev, ino, nlink, size, mtime_ns, ctime_ns = values
+    mode, dev, ino, nlink, size, mtime_ns, ctime_ns, uid, gid = values
     if (not 0 <= mode <= MAX_KERNEL_STAT_MODE
             or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
             or not stat.S_ISREG(mode)
@@ -623,9 +625,12 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int]:
     if (not MIN_KERNEL_TIMESTAMP_NS <= mtime_ns <= MAX_KERNEL_TIMESTAMP_NS
             or not MIN_KERNEL_TIMESTAMP_NS <= ctime_ns <= MAX_KERNEL_TIMESTAMP_NS):
         raise OSError("disposable fstat has impossible nanosecond timestamps")
+    if not 0 <= uid <= MAX_KERNEL_OWNER_ID or not 0 <= gid <= MAX_KERNEL_OWNER_ID:
+        raise OSError("disposable fstat has impossible owner identity")
     # Keep validated mode in the comparison tuple: a chmod-style mutation
     # cannot be hidden just because inode, size and timestamps appear equal.
-    return mode, dev, ino, size, mtime_ns, ctime_ns
+    # Keep owner/group in the equality tuple to detect synthetic changes.
+    return mode, dev, ino, size, mtime_ns, ctime_ns, uid, gid
 
 
 def _snapshot_regular(path: Path) -> tuple[tuple[int, int], bytes]:
