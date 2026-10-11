@@ -1281,6 +1281,28 @@ Phase 3/full historical tests and qualified independent review remain
 mandatory. DEC-650 annual 20-job OS confinement and DEC-651 exclusive
 immutable server run385 admission are still blocked. **DRAFT / NEVER MERGE**.
 
+
+## DEC-847 — Revalidate generated parent identity after final sample snapshot
+
+DEC-845's extra post-drain file snapshot may itself span a synthetic
+substitution of the generated private parent directory. DEC-847 rechecks
+the original bounded, owner-private `0700` directory metadata and
+`(st_dev, st_ino)` immediately **after** that final snapshot and before
+`_evaluate`, so an observable late parent replacement cannot be credited
+as an unchanged disposable local witness. A Linux regression test injects a
+different parent inode or a stat failure at exactly the third generated
+sample-snapshot boundary, requiring `BLOCKED`, no evaluation, permanent
+false authorization booleans, and FD cleanup. The deliberate generated
+inode-replacement negative-control path remains nonauthorizing.
+**501 uniquely named source-defined test methods** on this strict line.
+
+This extra pathname probe still cannot make concurrent renames atomic,
+authenticate an independent collector, or exclude any modification after
+the last read. It does **not** satisfy DEC-650 independent OS no-write
+confinement for all annual 20 jobs or DEC-651 immutable one-shot server
+run385 admission. Exact-head CI and qualified independent security review
+remain required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

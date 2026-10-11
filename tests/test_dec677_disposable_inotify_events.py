@@ -7199,6 +7199,71 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux final sample snapshot')
+    def test_parent_replacement_during_final_sample_snapshot_blocks_evaluation(self):
+        native_lstat = os.lstat
+        native_snapshot = module._snapshot_regular
+        for tamper in ('inode', 'stat-error'):
+            with self.subTest(tamper=tamper):
+                read_fd, write_fd = os.pipe()
+                state = {'folder': None, 'snapshot_count': 0,
+                         'switch': False, 'injected': False}
+
+                class AlteredParentStat:
+                    def __init__(self, original):
+                        self.original = original
+                        self.st_ino = original.st_ino + 1
+
+                    def __getattr__(self, field):
+                        return getattr(self.original, field)
+
+                def register(path):
+                    state['folder'] = os.fspath(path.parent)
+                    return read_fd, 9, 10
+
+                def snapshot(path):
+                    result = native_snapshot(path)
+                    state['snapshot_count'] += 1
+                    if state['snapshot_count'] == 3:
+                        state['switch'] = True
+                    return result
+
+                def injected_lstat(path, *args, **kwargs):
+                    if (state['switch'] and not state['injected']
+                            and state['folder'] == os.fspath(path)):
+                        state['injected'] = True
+                        if tamper == 'stat-error':
+                            raise OSError('synthetic final parent stat error')
+                        return AlteredParentStat(
+                            native_lstat(path, *args, **kwargs))
+                    return native_lstat(path, *args, **kwargs)
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=injected_lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=register) as watcher:
+                            with patch.object(module, '_snapshot_regular',
+                                              side_effect=snapshot) as snapshots:
+                                with patch.object(module, '_read_pending',
+                                                  return_value=b'') as reader:
+                                    with patch.object(module, '_evaluate') as evaluate:
+                                        receipt = module.run_demo()
+                    self.assertTrue(state['injected'])
+                    self.assertEqual(state['snapshot_count'], 3)
+                    self.assertEqual(snapshots.call_count, 3)
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertFalse(receipt['can_authorize_dispatch'])
+                    self.assertFalse(receipt['independent_os_proof_verified'])
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
