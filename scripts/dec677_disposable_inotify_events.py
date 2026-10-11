@@ -454,6 +454,13 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
     """Ensure a native C-string pathname cannot alias through NUL truncation."""
     try:
         encoded = os.fsencode(path)
+        original = os.fspath(path)
+        if type(original) is not str:
+            raise OSError("disposable inotify original pathname is malformed")
+        # Check the original pathname with the native filesystem encoding
+        # separately from a potentially injected os.fsencode return.
+        expected = original.encode(
+            sys.getfilesystemencoding(), sys.getfilesystemencodeerrors())
     except Exception as error:
         raise OSError("disposable inotify watch pathname encoding failed") from error
     # Linux PATH_MAX includes the terminating NUL; Python's ctypes c_char_p
@@ -461,6 +468,8 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
     if (type(encoded) is not bytes or not 1 <= len(encoded) <= 4095
             or not encoded.startswith(b"/") or b"\x00" in encoded):
         raise OSError("disposable inotify watch pathname is malformed")
+    if encoded != expected:
+        raise OSError("disposable inotify encoded pathname differs from source")
     return encoded
 
 
