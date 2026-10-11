@@ -604,7 +604,7 @@ def _bounded_inventory_names(folder: Path) -> tuple[str, ...]:
 
 def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int]:
     """Reject patched fstat metadata before size arithmetic or comparisons."""
-    fields = ("st_mode", "st_dev", "st_ino", "st_size",
+    fields = ("st_mode", "st_dev", "st_ino", "st_nlink", "st_size",
               "st_mtime_ns", "st_ctime_ns")
     try:
         values = tuple(getattr(st, field) for field in fields)
@@ -612,12 +612,13 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int]:
         raise OSError("disposable fstat returned unreadable metadata") from error
     if any(type(value) is not int for value in values):
         raise OSError("disposable fstat returned noninteger metadata")
-    mode, dev, ino, size, mtime_ns, ctime_ns = values
+    mode, dev, ino, nlink, size, mtime_ns, ctime_ns = values
     if (not 0 <= mode <= MAX_KERNEL_STAT_MODE
             or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
             or not stat.S_ISREG(mode)
             or not 0 <= dev <= MAX_KERNEL_STAT_ID
-            or not 0 <= ino <= MAX_KERNEL_STAT_ID or not 0 <= size <= 4096):
+            or not 0 <= ino <= MAX_KERNEL_STAT_ID or nlink != 1
+            or not 0 <= size <= 4096):
         raise OSError("disposable sample is not a bounded regular inode")
     if (not MIN_KERNEL_TIMESTAMP_NS <= mtime_ns <= MAX_KERNEL_TIMESTAMP_NS
             or not MIN_KERNEL_TIMESTAMP_NS <= ctime_ns <= MAX_KERNEL_TIMESTAMP_NS):
