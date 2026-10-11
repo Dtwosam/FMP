@@ -664,7 +664,12 @@ def _read_pending(fd: int) -> bytes:
         raise OSError("synthetic inotify collector wrapper raised unexpectedly") from error
 
 
-def _read_pending_checked(fd: int) -> bytes:
+def _read_pending_checked(fd: int, initial_timeout_ms: int = 250) -> bytes:
+    # The original sampled-interval collector retains its bounded 250ms
+    # first poll. A distinct final receipt poll uses zero wait, so a
+    # best-effort last boundary check never prolongs a synthetic witness.
+    if type(initial_timeout_ms) is not int or not 0 <= initial_timeout_ms <= 250:
+        raise OSError("synthetic inotify poll timeout is invalid")
     if type(fd) is not int or not 3 <= fd <= MAX_FILE_DESCRIPTOR:
         raise OSError("synthetic inotify collector requires a nonstdio integer fd")
     chunks: list[bytes] = []
@@ -700,7 +705,7 @@ def _read_pending_checked(fd: int) -> bytes:
         return True
 
     for _ in range(16):
-        if not is_readable(250):
+        if not is_readable(initial_timeout_ms):
             break
         try:
             chunk = os.read(fd, 4096)
@@ -720,6 +725,21 @@ def _read_pending_checked(fd: int) -> bytes:
         if is_readable(0):
             raise OSError("synthetic inotify event queue still pending after drain limit")
     return b"".join(chunks)
+
+
+def _read_receipt_pending(fd: int) -> bytes:
+    """Nonblocking final event check after generated receipt metadata probes.
+
+    A second bounded read cannot prove an event-free future or read-only OS
+    confinement. It merely refuses activity already queued during the final
+    source/parent census, including transient create-then-delete entries.
+    """
+    try:
+        return _read_pending_checked(fd, initial_timeout_ms=0)
+    except Exception as error:
+        if isinstance(error, OSError):
+            raise
+        raise OSError("synthetic receipt event collector raised unexpectedly") from error
 
 
 def _plausible_inventory_basename(name: Any) -> bool:
@@ -1354,6 +1374,16 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     if (_checked_generated_sample_change_timestamps(receipt_inventory_sample_record)
                             != drained_change_timestamps):
                         raise OSError("disposable sample timestamps changed during receipt inventory")
+                    # The initial event drain precedes this receipt census.
+                    # A sibling may be created and removed while scanning:
+                    # the final names, parent dev/ino and sample metadata all
+                    # match again, so refuse any queued late events rather
+                    # than treating the first drain as covering the receipt.
+                    # Poll without additional wait; this cannot close the
+                    # inevitable post-poll race or confer dispatch authority.
+                    receipt_pending = _read_receipt_pending(fd)
+                    if type(receipt_pending) is not bytes or receipt_pending:
+                        raise OSError("disposable late receipt event queue not empty")
                 return _checked_disposable_observer_result(
                     _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
