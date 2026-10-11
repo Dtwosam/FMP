@@ -1149,6 +1149,27 @@ Two native generated Linux `/tmp` tests inject a parent inode or privacy change 
 
 These repeated pathname-level `lstat` checks cannot guarantee race-free parent binding or independent OS confinement; only real directory-FD-relative kernel resolution and authenticated host sandboxing could underpin stronger claims, neither implemented here. Exact-head Phase 3 + full historical CI and qualified independent review still required; run385 dispatch remains blocked.
 
+
+## DEC-841 — Validate parent directory once more after event draining
+
+DEC-840 checks the generated parent directory's private mode, owner, and
+`(st_dev, st_ino)` after the final inventory but **before** draining the
+inotify queue. A synthetic pathname substitution inside the drain could
+otherwise reach the evaluator after the last parent identity validation.
+DEC-841 validates the same original parent inode again after `_read_pending`
+and before `_evaluate`, blocking on changed identity or failed metadata
+probes. A new Linux-generated regression method injects either a different
+directory inode or an `OSError` at this exact postdrain boundary. Both require
+`BLOCKED`, no evaluator call, nonauthorization, and watcher FD cleanup.
+The strict line now contains **493 uniquely named source-defined methods**.
+
+Like the earlier path-based checks, this is a **non-atomic observation**, not
+kernel-enforced path confinement. It does not guarantee absence of races after
+the final probe, privileged writes, or protected annual-runner isolation.
+This child requires separate exact-head Phase 3 and historical CI plus
+qualified independent review. DEC-650/651 annual no-write confinement and
+immutable run385 admission remain blocked. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
