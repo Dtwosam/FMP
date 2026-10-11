@@ -861,7 +861,12 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 raise OSError("disposable sample prewrite lstat failed") from error
             else:
                 raise OSError("disposable sample already exists before write")
-            path.write_bytes(BEFORE)
+            # 'xb' creates with O_EXCL: refuse a planted file or symlink
+            # even if the pathname changes after the prewrite lstat.
+            with path.open("xb") as sample:
+                written = sample.write(BEFORE)
+                if type(written) is not int or written != len(BEFORE):
+                    raise OSError("disposable initial sample was not fully written")
             # Start observing both the inode and parent directory *before*
             # taking the baseline. A prewatch snapshot would leave an
             # unobserved gap before kernel watch registration.

@@ -960,6 +960,14 @@ DEC-811 performs a **prewrite no-follow `os.lstat(sample)` probe** after folder 
 
 This is a fail-closed toy pathname preflight, **not atomic `O_EXCL` file creation**, race-free protection, independent OS-enforced isolation or annual-run385 authority. Only generated public /tmp data is manipulated.
 
+## DEC-812 — Atomic exclusive creation for the generated initial sample
+
+DEC-811 adds a no-follow lstat check that the proposed generated `sample` path is absent before calling `Path.write_bytes`. That improves fail-closed handling of pre-planted files and symlinks but leaves a **check-to-write race**: a competing actor could introduce a file or symlink immediately after the check, and ordinary `write_bytes` truncates/follows existing paths.
+
+DEC-812 changes **only the first public `sample` creation** to `with path.open("xb")`, which uses exclusive create semantics (`O_CREAT|O_EXCL` on Linux), rejecting an existing file or symlink at that pathname without overwriting its target. It checks that the buffered `write` returns an exact plain `int == len(BEFORE)` before starting inotify watches. Two new source-defined regressions bring the suite to **459 unique tests**, covering injected short/malformed byte counts with no watch and real Linux refusal of a generated preexisting symlink without touching its public target. Existing synthetic prewrite tests are updated to patch `Path.open` rather than an unused `Path.write_bytes`, ensuring their no-write assertion remains meaningful.
+
+Exclusive creation closes the **sample-name creation race** but does not pin the parent directory identity to an open directory FD, provide independent filesystem sandboxing or authorize annual run385.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
