@@ -5355,6 +5355,54 @@ class DisposableInotifyTests(unittest.TestCase):
             module._checked_snapshot_metadata(FakeStat(1))[2],
             2)
 
+
+    def test_same_cookie_same_basename_rename_stays_invalid_after_many_events(self):
+        cookie = 419
+        old = ev(wd=10, mask=module.IN_MOVED_FROM,
+                 data=named(b'public-entry'), cookie=cookie)
+        middle = b''.join(
+            ev(wd=10, mask=module.IN_MOVED_FROM,
+               data=named(('other-%03d' % i).encode('ascii')),
+               cookie=1000 + i)
+            for i in range(96))
+        new = ev(wd=10, mask=module.IN_MOVED_TO,
+                 data=named(b'public-entry'), cookie=cookie)
+        raw = old + middle + new
+        self.assertLessEqual(len(raw), 65536)
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 98)
+
+    def test_same_basename_move_under_different_cookies_is_plausible(self):
+        name = named(b'public-entry')
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=name, cookie=501)
+               + ev(wd=10, mask=module.IN_MOVED_TO,
+                    data=name, cookie=502))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+        outcome = module._evaluate(
+            module.BEFORE, module.BEFORE, raw, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(outcome['status'], 'BLOCKED')
+        self.assertFalse(outcome['can_authorize_dispatch'])
+
+    def test_same_cookie_different_name_after_interleaving_is_valid_syntax(self):
+        cookie = 503
+        old = ev(wd=10, mask=module.IN_MOVED_FROM,
+                 data=named(b'old-public-entry'), cookie=cookie)
+        middle = b''.join(
+            ev(wd=9, mask=module.IN_ATTRIB)
+            for _ in range(48))
+        new = ev(wd=10, mask=module.IN_MOVED_TO,
+                 data=named(b'new-public-entry'), cookie=cookie)
+        parsed = module._classify_stream(old + middle + new,
+                                         9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+        self.assertEqual(parsed['source_attribute_events'], 48)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
