@@ -863,6 +863,32 @@ def _checked_generated_folder(folder: Any) -> Path:
     return folder_path
 
 
+def _checked_generated_directory_identity(record: Any) -> tuple[int, int]:
+    """Fail closed if the public generated parent loses private inode identity."""
+    try:
+        mode, dev, ino, uid, gid, links = (
+            record.st_mode, record.st_dev, record.st_ino,
+            record.st_uid, record.st_gid, record.st_nlink)
+        euid = os.geteuid()
+    except Exception as error:
+        raise OSError("disposable generated directory identity unreadable") from error
+    if (any(type(item) is not int
+            for item in (mode, dev, ino, uid, gid, links, euid))
+            or not 0 <= mode <= MAX_KERNEL_STAT_MODE
+            or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
+            or not stat.S_ISDIR(mode)
+            or stat.S_IMODE(mode) != 0o700
+            or not 0 <= dev <= MAX_KERNEL_STAT_ID
+            or not 1 <= ino <= MAX_KERNEL_STAT_ID
+            or not 0 <= uid <= MAX_KERNEL_OWNER_ID
+            or not 0 <= gid <= MAX_KERNEL_OWNER_ID
+            or not 0 <= euid <= MAX_KERNEL_OWNER_ID
+            or uid != euid
+            or not 1 <= links <= MAX_KERNEL_STAT_ID):
+        raise OSError("disposable generated directory identity malformed")
+    return dev, ino
+
+
 def _checked_initial_sample_identity(record: Any) -> tuple[int, int]:
     """Bind a generated O_EXCL writer to its later watched pathname."""
     try:
@@ -910,6 +936,11 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
     try:
         with tempfile.TemporaryDirectory(prefix=DISPOSABLE_PREFIX, dir="/tmp") as folder:
             folder_path = _checked_generated_folder(folder)
+            # Keep the original generated private parent inode alongside the
+            # writer FD's identity; later pathname-based snapshots alone
+            # cannot show which directory the watches belong to.
+            initial_folder_inode = _checked_generated_directory_identity(
+                os.lstat(folder_path))
             # Before the first public write, refuse a replaced/context-injected
             # private directory that already contains unrelated entries.
             # Reuse the three-entry bounded scanner; a clean fresh tempdir is
@@ -967,6 +998,12 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         or not 1 <= dir_wd <= MAX_WATCH_DESCRIPTOR
                         or wd == dir_wd):
                     raise OSError("disposable watch registration has invalid watch identities")
+                # Reject a public parent directory replaced after setup,
+                # even if a newly installed child has the expected bytes.
+                watched_folder_inode = _checked_generated_directory_identity(
+                    os.lstat(folder_path))
+                if watched_folder_inode != initial_folder_inode:
+                    raise OSError("disposable parent directory changed before watched baseline")
                 # Registration must not turn a same-content inode swapped
                 # after O_EXCL creation into a locally quiet observation.
                 # This postwatch pathname check is not an atomic directory
@@ -1060,6 +1097,12 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 final_inode, end = _checked_snapshot_result(_snapshot_regular(path))
                 if end != BEFORE:
                     raise OSError("disposable generated source final bytes differ from fixture")
+                # The final inventory must describe the same generated
+                # private parent checked before writing and watching.
+                final_folder_inode = _checked_generated_directory_identity(
+                    os.lstat(folder_path))
+                if final_folder_inode != initial_folder_inode:
+                    raise OSError("disposable parent directory changed before final inventory")
                 inventory_names = _bounded_inventory_names(Path(folder))
                 inventory_ok = inventory_names == ("sample",)
                 sibling_snapshot_stable = None

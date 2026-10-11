@@ -1127,6 +1127,14 @@ DEC-835 also repairs one *preexisting false-positive fixture*: `test_generated_r
 
 One new method raises the strict integrated suite from **487 to 488**. Changes are confined to disposable observer script, tests and docs. The #1048 sibling and #1047 ancestor CI records remain independent. Exact-head Phase 3/full historical CI and qualified source/security review remain required; not independent OS isolation or annual run385 admission.
 
+## DEC-838 — Pin the generated parent directory across watcher setup and final inventory
+
+Even with the DEC-827/830 original exclusive sample FD and watched baseline inode continuity checks, the disposable toy did not separately bind the **generated private parent-directory inode** after watch registration. A substituted `/tmp/dec677-disposable-*` pathname could otherwise cause inventory and child snapshots to refer to a different directory than the one initially validated, while old file/directory watch descriptors remained nominally identified.
+
+DEC-838 captures the generated `0700` owner-private directory's bounded plain integer `(st_dev, st_ino)` via no-follow `lstat` before the initial public write, and repeats an equivalent validated identity check after dual watcher registration and immediately before final directory inventory. Any malformed metadata, lost private permissions/ownership, or changed device/inode emits `BLOCKED` before accepting a local witness. Two new source-defined regressions (now **490** on this strict line) check invalid directory metadata and instrument genuine Linux generated `/tmp` folders with a synthetic single-call inode substitution at each boundary, requiring early block, no event drain, and closed mock watcher FD.
+
+The separate `os.lstat` calls are **not atomic with concurrent renames** or an independent kernel security boundary; no directory FD pin, openat2 resolution, mount-namespace isolation, or authenticated host no-write enforcement is claimed. The fixture does not mutate protected annual inputs or production configuration. Exact-head Phase 3 and full historical CI, and qualified independent security review, remain prerequisites. The immutable annual run385 admission and 20-job confinement gates remain BLOCKED.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
