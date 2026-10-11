@@ -849,6 +849,12 @@ DEC-790 requires `1 <= st_ino <= UINT64_MAX` at the checked fstat boundary and t
 
 This is only a deliberately conservative **local witness** identity contract, not a Linux ABI claim that every mounted filesystem everywhere must provide nonzero inode IDs, and not production OS confinement or dispatch authorization.
 
+## DEC-791 — Require distinct sibling pathnames for generated hard-link identity checks
+
+The disposable negative mode creates `sample` and `public-hardlink-alias` in one private generated /tmp folder. Its alias checker validates two no-follow path stats, two-link counts, matching bounded metadata and the pinned original watched inode. Prior to DEC-791, a direct synthetic caller could ask the helper to stat the **same pathname twice**, or pass filenames in different directories, and receive a true two-entry witness when the mock returned matching `st_nlink=2` metadata. That does not establish the intended distinct sibling directory-entry provenance.
+
+DEC-791 refuses nonnative `Path` arguments, equal source/alias paths and different parent directories *before either stat syscall*. Legitimate distinct generated siblings still proceed to the existing bounded stat checks. Three new source-defined regressions bring the suite to **425 distinct methods**, confirming same-path, different-parent and non-Path impostors are rejected before any stat. This is a conservative same-process local synthetic check, not an atomic directory scan, independent OS kernel-origin authentication, real annual host write prevention or permission to dispatch.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
