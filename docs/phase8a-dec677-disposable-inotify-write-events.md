@@ -2244,6 +2244,30 @@ and this child need their own exact-head CI and qualified independent
 review. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-887 — Real watched-source metadata event after final source probe
+
+DEC-882 tests a native sibling create/delete caught by the final real
+Linux inotify receipt drain. DEC-887 covers the **watched sample itself**
+at a later boundary: use a native Linux dual watch and an actual
+`os.chmod` on the generated public /tmp sample **after** the last
+metadata validator has returned its pre-mutation timestamp tuple.
+The inode remains the original exclusive-created source; the
+earlier native drain is exactly empty. The second zero-wait native
+collector must return real event bytes; strict parsing must find a
+source `IN_ATTRIB` event, and the runner must return `BLOCKED`
+before evaluator invocation. Both authority flags remain false, and
+the observer FD is closed.
+
+One new generated native regression increases the strict tip to
+**558 distinct source-defined test methods**. It does not assert
+independent kernel event attestation, eternal queue quietness, OS
+no-write confinement, or server-side annual admission. The tests
+run only against new public disposable /tmp files. This head needs
+its own Phase 3 and full historical CI and qualified independent
+security review. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
