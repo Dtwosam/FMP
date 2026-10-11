@@ -1135,6 +1135,12 @@ DEC-838 captures the generated `0700` owner-private directory's bounded plain in
 
 The separate `os.lstat` calls are **not atomic with concurrent renames** or an independent kernel security boundary; no directory FD pin, openat2 resolution, mount-namespace isolation, or authenticated host no-write enforcement is claimed. The fixture does not mutate protected annual inputs or production configuration. Exact-head Phase 3 and full historical CI, and qualified independent security review, remain prerequisites. The immutable annual run385 admission and 20-job confinement gates remain BLOCKED.
 
+## DEC-839 — Keep the earliest correct forged-path refusal under historical CI
+
+Full historical [#1050](https://github.com/Dtwosam/FMP/pull/1050) workflow [38140381362](https://github.com/Dtwosam/FMP/actions/runs/38140381362) completed **RED**: 5,389 tests, two failing subtests, 693 skipped. Both failures were in the inherited mutating-fspath wrapper test: the stricter DEC-835 guard correctly detects changes to the source Path's stored segments and raises `raw segments changed during encoding` *before* the old comparison would raise `fspath disagrees`. The tested path remains rejected before byte encoding; only the expected first diagnostic was obsolete.
+
+This test/docs-only immediate descendant of #1052 changes that one expected error phrase without weakening the observer source, early rejection, or no-encoder checks. The original #1050 full CI remains RED; the new exact head needs its own Phase 3 and full historical suite. **490 distinct test methods** remain.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
