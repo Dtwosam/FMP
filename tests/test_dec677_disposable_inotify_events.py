@@ -5787,6 +5787,77 @@ class DisposableInotifyTests(unittest.TestCase):
             finally:
                 os.close(fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux persistent sibling')
+    def test_live_generated_persistent_sibling_creation_is_blocked(self):
+        with tempfile.TemporaryDirectory(prefix='dec801-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            module._write_generated_payload(path, module.BEFORE)
+            fd, file_wd, directory_wd = module._start_watch(path)
+            try:
+                original_inode, before = module._snapshot_regular(path)
+                sibling = Path(folder) / module.PERSISTENT_SIBLING_NAME
+                module._write_generated_payload(sibling, b'PUBLIC-EXTRA')
+                sibling_initial = module._snapshot_regular(sibling)
+                final_inode, after = module._snapshot_regular(path)
+                sibling_final = module._snapshot_regular(sibling)
+                names = module._bounded_inventory_names(Path(folder))
+                raw = module._read_pending(fd)
+                events = module._classify_stream(
+                    raw, file_wd, directory_watch=directory_wd)
+                self.assertTrue(events['well_formed'], events)
+                self.assertTrue(events['expected_sibling_created'])
+                self.assertEqual(
+                    events['pending_new_child_names'],
+                    (module.PERSISTENT_SIBLING_NAME.encode('ascii'),))
+                self.assertEqual(sibling_initial, sibling_final)
+                result = module._evaluate(
+                    before, after, raw, file_wd, True, False,
+                    inode_stable=(original_inode == final_inode),
+                    directory_watch=directory_wd,
+                    directory_inventory_ok=False,
+                    directory_inventory_names=names,
+                    sibling_negative=True,
+                    sibling_snapshot_stable=(sibling_initial == sibling_final))
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertTrue(result['observed_checks']['sibling_creation_control_detected'])
+                self.assertFalse(result['can_authorize_dispatch'])
+                self.assertFalse(result['independent_os_proof_verified'])
+            finally:
+                os.close(fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux inode replacement')
+    def test_live_generated_same_byte_inode_replacement_is_blocked(self):
+        with tempfile.TemporaryDirectory(prefix='dec801-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            replacement = Path(folder) / 'public-replacement'
+            module._write_generated_payload(path, module.BEFORE)
+            fd, file_wd, directory_wd = module._start_watch(path)
+            try:
+                original_inode, before = module._snapshot_regular(path)
+                module._write_generated_payload(replacement, module.BEFORE)
+                self.assertIsNone(os.replace(replacement, path))
+                final_inode, after = module._snapshot_regular(path)
+                self.assertNotEqual(original_inode, final_inode)
+                self.assertEqual(before, after)
+                raw = module._read_pending(fd)
+                events = module._classify_stream(
+                    raw, file_wd, directory_watch=directory_wd)
+                self.assertTrue(events['well_formed'], events)
+                self.assertGreaterEqual(events['directory_changes'], 1)
+                result = module._evaluate(
+                    before, after, raw, file_wd, True, False,
+                    inode_stable=(original_inode == final_inode),
+                    replacement_negative=True,
+                    directory_watch=directory_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['observed_checks']['watched_inode_matches_final_path'])
+                self.assertFalse(result['can_authorize_dispatch'])
+                self.assertFalse(result['independent_os_proof_verified'])
+            finally:
+                os.close(fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
