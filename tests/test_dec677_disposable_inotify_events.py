@@ -4706,6 +4706,62 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertIsNone(os.link(path, alias))
             self.assertTrue(module._plausible_generated_hardlink_pair(path, alias))
 
+
+    def test_link_count_guard_raises_specific_oserror_subtype(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_nlink = 2
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+            st_uid = 1
+            st_gid = 1
+        with self.assertRaises(module._SnapshotHardlinkCountError):
+            module._checked_snapshot_metadata(FakeStat())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux observer')
+    def test_hardlink_control_does_not_credit_generic_snapshot_oserror(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  side_effect=(((1, 2), module.BEFORE),
+                                               OSError('unrelated read failure'))):
+                    with patch.object(module.os, 'link', return_value=None):
+                        with patch.object(module, '_plausible_generated_hardlink_pair',
+                                          return_value=True):
+                            result = module.run_demo(hardlink_negative=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIn('without link-count proof', ' '.join(result['findings']))
+            self.assertNotIn('negative control blocked', ' '.join(result['findings']))
+            self.assertFalse(result['can_authorize_dispatch'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux observer')
+    def test_hardlink_control_credits_only_specific_link_count_oserror(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  side_effect=(((1, 2), module.BEFORE),
+                                               module._SnapshotHardlinkCountError('two links'))):
+                    with patch.object(module.os, 'link', return_value=None):
+                        with patch.object(module, '_plausible_generated_hardlink_pair',
+                                          return_value=True):
+                            result = module.run_demo(hardlink_negative=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIn('negative control blocked', ' '.join(result['findings']))
+            self.assertFalse(result['independent_os_proof_verified'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
