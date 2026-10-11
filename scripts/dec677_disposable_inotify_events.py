@@ -106,6 +106,9 @@ def _classify_stream(data: bytes, watch: int,
     rename_cookie_actions: dict[int, int] = {}
     # A rename cannot change the moved inode from a file to a directory.
     rename_cookie_is_directory: dict[int, bool] = {}
+    # A FROM/TO pair on one watched directory cannot rename an entry
+    # to its own identical pathname; the kernel treats that as a no-op.
+    rename_cookie_from_names: dict[int, bytes] = {}
     matched_transient_pairs = 0
     expected_transient_pairs = 0
     expected_sibling_created = False
@@ -251,6 +254,11 @@ def _classify_stream(data: bytes, watch: int,
                             expected_transient_pairs += 1
                     created_entries.discard(child_name)
                 elif change in (IN_MOVED_FROM, IN_MOVED_TO):
+                    if cookie and change == IN_MOVED_FROM:
+                        rename_cookie_from_names[cookie] = child_name
+                    if (cookie and change == IN_MOVED_TO
+                            and rename_cookie_from_names.get(cookie) == child_name):
+                        okay = False
                     if change == IN_MOVED_TO:
                         # An ordinary rename may replace an existing target
                         # of the SAME kind. A file-to-directory substitution
