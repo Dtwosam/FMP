@@ -5589,6 +5589,63 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertEqual(os.fsencode(name), b'public-\\xff-entry')
             self.assertEqual(module._bounded_inventory_names(Path(folder)), (name,))
 
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'disposable Linux no-follow directory test')
+    def test_generated_folder_refuses_symlink_path_even_with_valid_prefix(self):
+        with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                         dir='/tmp') as real_folder:
+            alias = Path(real_folder + '-alias')
+            alias.symlink_to(real_folder, target_is_directory=True)
+            try:
+                with self.assertRaisesRegex(OSError, 'not a real directory'):
+                    module._checked_generated_folder(str(alias))
+                self.assertEqual(module._checked_generated_folder(real_folder),
+                                 Path(real_folder))
+            finally:
+                alias.unlink()
+
+    def test_generated_folder_rejects_forged_lstat_mode_results(self):
+        class FakeStat:
+            def __init__(self, mode):
+                self.st_mode = mode
+        class ForgedInt(int):
+            def __eq__(self, _other):
+                return True
+        path = '/tmp/' + module.DISPOSABLE_PREFIX + 'public-fixture'
+        for mode in (module.stat.S_IFLNK | 0o777, module.stat.S_IFREG | 0o600,
+                     True, ForgedInt(module.stat.S_IFDIR | 0o700),
+                     (1 << 20) | module.stat.S_IFDIR):
+            with self.subTest(mode=repr(mode)):
+                with patch.object(module.os, 'lstat',
+                                  return_value=FakeStat(mode)):
+                    with self.assertRaisesRegex(OSError, 'not a real directory'):
+                        module._checked_generated_folder(path)
+        with patch.object(module.os, 'lstat',
+                          side_effect=RuntimeError('synthetic lstat wrapper')):
+            with self.assertRaisesRegex(OSError, 'could not be lstat checked'):
+                module._checked_generated_folder(path)
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'disposable Linux prewrite symlink test')
+    def test_runner_rejects_symlinked_generated_tempdir_before_sample_write(self):
+        with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                         dir='/tmp') as real_folder:
+            alias = Path(real_folder + '-alias')
+            alias.symlink_to(real_folder, target_is_directory=True)
+            try:
+                with patch.object(module.tempfile, 'TemporaryDirectory') as tempdir:
+                    tempdir.return_value.__enter__.return_value = str(alias)
+                    with patch.object(module.Path, 'write_bytes') as writer:
+                        with patch.object(module, '_start_watch') as watch:
+                            result = module.run_demo()
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['can_authorize_dispatch'])
+                writer.assert_not_called()
+                watch.assert_not_called()
+            finally:
+                alias.unlink()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
