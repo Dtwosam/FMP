@@ -6247,6 +6247,27 @@ class DisposableInotifyTests(unittest.TestCase):
                 writer.assert_not_called()
                 watch.assert_not_called()
 
+    @unittest.skipUnless(sys.platform == 'linux', 'native Linux public disposable control')
+    def test_native_exclusive_sample_after_empty_prewrite_census_stays_local(self):
+        # Real /tmp private directory, empty-directory census, O_EXCL writer,
+        # baseline/final nofollow snapshots and bounded final inventory.
+        # Only the inotify watcher and empty kernel queue are stubbed.
+        read_fd, write_fd = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(read_fd, 9, 10)):
+                with patch.object(module, '_read_pending', return_value=b'') as drain:
+                    receipt = module.run_demo()
+            self.assertEqual(receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertFalse(receipt['can_authorize_dispatch'])
+            self.assertFalse(receipt['independent_os_proof_verified'])
+            self.assertTrue(receipt['observed_checks']['final_digest_equal'])
+            self.assertTrue(receipt['observed_checks']['watched_inode_matches_final_path'])
+            drain.assert_called_once_with(read_fd)
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
