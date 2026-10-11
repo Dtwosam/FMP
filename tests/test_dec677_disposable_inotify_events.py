@@ -5268,6 +5268,44 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(add.calls, 0)
         self.assertEqual(init.calls, 1)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'live disposable Linux inotify')
+    def test_live_generated_regular_file_and_directory_watches_still_register(self):
+        with tempfile.TemporaryDirectory(prefix='dec793-public-', dir='/tmp') as folder:
+            source = Path(folder) / 'sample'
+            source.write_bytes(module.BEFORE)
+            fd, file_wd, directory_wd = module._start_watch(source)
+            try:
+                self.assertGreaterEqual(fd, 3)
+                self.assertGreater(file_wd, 0)
+                self.assertGreater(directory_wd, 0)
+                self.assertNotEqual(file_wd, directory_wd)
+                identity, content = module._snapshot_regular(source)
+                self.assertEqual(content, module.BEFORE)
+                st = os.stat(source)
+                self.assertEqual(identity, (st.st_dev, st.st_ino))
+            finally:
+                os.close(fd)
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'live disposable Linux inotify symlink')
+    def test_live_symlink_watch_target_cannot_be_regular_snapshot(self):
+        with tempfile.TemporaryDirectory(prefix='dec793-public-', dir='/tmp') as folder:
+            source = Path(folder) / 'sample'
+            alias = Path(folder) / 'public-symlink'
+            source.write_bytes(module.BEFORE)
+            alias.symlink_to(source)
+            # With IN_DONT_FOLLOW, watch registration may watch the symlink
+            # itself. O_NOFOLLOW must still refuse the alias as a sample.
+            fd, file_wd, directory_wd = module._start_watch(alias)
+            try:
+                self.assertGreaterEqual(fd, 3)
+                self.assertNotEqual(file_wd, directory_wd)
+                with self.assertRaises(OSError):
+                    module._snapshot_regular(alias)
+            finally:
+                os.close(fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
