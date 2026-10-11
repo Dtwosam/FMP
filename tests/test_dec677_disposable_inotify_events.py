@@ -7739,6 +7739,41 @@ class DisposableInotifyTests(unittest.TestCase):
                     else 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
                 runner.assert_called_once()
 
+
+    def test_cli_parser_setup_errors_emit_blocked_without_running_observer(self):
+        class BrokenOptions:
+            def add_argument(self, *_args, **_kwargs):
+                raise RuntimeError('synthetic argument registration exception')
+
+        cases = ('constructor', 'group-creation', 'option-registration')
+        for case in cases:
+            with self.subTest(case=case):
+                stdout = io.StringIO()
+                if case == 'constructor':
+                    target = patch.object(
+                        module.argparse, 'ArgumentParser',
+                        side_effect=RuntimeError('synthetic parser constructor failure'))
+                elif case == 'group-creation':
+                    target = patch.object(
+                        module.argparse.ArgumentParser, 'add_mutually_exclusive_group',
+                        side_effect=OSError(5, 'synthetic group creation failure'))
+                else:
+                    target = patch.object(
+                        module.argparse.ArgumentParser, 'add_mutually_exclusive_group',
+                        return_value=BrokenOptions())
+                with target:
+                    with patch.object(module, 'run_demo') as runner:
+                        with contextlib.redirect_stdout(stdout):
+                            code = module.main(['--execute-disposable-control'])
+                self.assertEqual(code, 2)
+                receipt = json.loads(stdout.getvalue())
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertIs(receipt['can_authorize_dispatch'], False)
+                self.assertIs(receipt['independent_os_proof_verified'], False)
+                self.assertIn('parser setup raised unexpectedly',
+                              ' '.join(receipt['findings']))
+                runner.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
