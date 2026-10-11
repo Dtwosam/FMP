@@ -6047,10 +6047,15 @@ class DisposableInotifyTests(unittest.TestCase):
     @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux file close boundary')
     def test_initial_exclusive_close_failure_never_starts_watch(self):
         class RealisticPublicFdStat:
+            # DEC-862 binds the exclusive writer's owner/group too. Supply
+            # plausible native fields so this fixture reaches the distinct
+            # close-error boundary it was designed to test.
             st_mode = module.stat.S_IFREG | 0o600
             st_dev = 12
             st_ino = 99
             st_nlink = 1
+            st_uid = os.geteuid()
+            st_gid = os.getegid()
 
         native_fstat = os.fstat
 

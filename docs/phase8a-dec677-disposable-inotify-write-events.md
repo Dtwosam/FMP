@@ -1757,6 +1757,32 @@ DEC-651 immutable run385 server admission remain BLOCKED.
 Independent exact-head Phase 3/full historical CI and qualified
 security review remain mandatory. **DRAFT / NEVER MERGE**.
 
+
+## DEC-867 — Restore close-error test's native writer metadata fixture
+
+The historical suite at exact draft #1077 head
+`37bf7aa721e6676c732ff8f5d7d4162497e9b3bd`, run
+`38162729263`, **failed** in
+`test_initial_exclusive_close_failure_never_starts_watch`.
+The older mock `RealisticPublicFdStat` supplied only regular mode,
+device, inode and link count. DEC-862 now correctly binds the initial
+exclusive writer's native UID/GID; the missing attributes raised
+`OSError` inside the writer context, whereas that regression expected
+the synthetic file-close error to occur **after** a valid writer fstat.
+
+DEC-867 supplies exact native effective UID and group GID in that
+single synthetic fixture, preserving the test's original intent: a
+valid generated writer reaches its close failure, emits `BLOCKED`,
+and never starts an observer watch. No runtime validation is removed or
+weakened, and no prior failed head is rewritten. **529 source-defined
+test methods** at this strict descendant; independent exact-head
+Phase 3/full historical CI plus qualified independent review required.
+
+Only generated tests and documentation change. This is not OS proof
+for DEC-650 annual no-write confinement, nor server-side DEC-651
+one-shot run385 admission; both remain BLOCKED.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
