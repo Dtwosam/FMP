@@ -7581,6 +7581,32 @@ class DisposableInotifyTests(unittest.TestCase):
                               ' '.join(receipt['findings']))
                 runner.assert_called_once()
 
+
+    def test_cli_parser_exceptions_emit_blocked_json_without_running_observer(self):
+        failures = (
+            OSError(5, 'synthetic parser IO exception'),
+            RuntimeError('synthetic argparse wrapper exception'),
+            TypeError('synthetic parser argument exception'),
+            ValueError('synthetic parser value exception'),
+        )
+        for failure in failures:
+            with self.subTest(failure=type(failure).__name__):
+                stdout = io.StringIO()
+                with patch.object(module.argparse.ArgumentParser, 'parse_args',
+                                  side_effect=failure) as parser:
+                    with patch.object(module, 'run_demo') as runner:
+                        with contextlib.redirect_stdout(stdout):
+                            code = module.main(['--execute-disposable-control'])
+                self.assertEqual(code, 2)
+                receipt = json.loads(stdout.getvalue())
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertIs(receipt['can_authorize_dispatch'], False)
+                self.assertIs(receipt['independent_os_proof_verified'], False)
+                self.assertIn('CLI parser raised unexpectedly',
+                              ' '.join(receipt['findings']))
+                parser.assert_called_once()
+                runner.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
