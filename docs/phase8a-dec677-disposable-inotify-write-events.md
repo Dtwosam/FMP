@@ -885,6 +885,14 @@ DEC-795 is a **test-only** strict child exercising longer bounded event streams,
 
 These are synthetic grammar assertions, not independent kernel provenance or OS-enforced annual host isolation.
 
+## DEC-796 — Compare synthetic rename grammar against a live disposable Linux watch
+
+DEC-792 refuses fabricated same-name FROM/TO pairs with one rename cookie on a single watched parent directory. DEC-795 adds delayed and distinct-cookie synthetic controls. DEC-796 is a **test-and-doc-only** live Linux companion, using exclusively new public generated files in private /tmp folders. Each test starts the existing two-watch observer on a generated `sample`, then performs a kernel rename on a different generated sibling while observing only its local parent directory.
+
+A genuine rename from `old-public-child` to `new-public-child` must produce a syntactically well-formed two-entry directory movement pair, and evaluation remains permanently `BLOCKED` due to the mutation. A pathname-to-itself `rename(entry, entry)` is a Linux no-op and should yield no observed directory entry mutation after draining the same bounded watcher; no claim is made that this licenses writes in any other process. Both tests close their own watcher FD and remove disposable files through `TemporaryDirectory`.
+
+Two source-defined methods bring the suite to **437 unique methods**. No production or observer source modification, annual dispatch, privileged data, workflow, runner or broker access. Kernel-backed local inotify behavior is not independently enforced 20-job annual write prevention or run385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
