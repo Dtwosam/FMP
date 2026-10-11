@@ -7264,6 +7264,70 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux final private-parent metadata')
+    def test_final_parent_metadata_mutation_blocks_after_sample_resnapshot(self):
+        native_lstat = os.lstat
+        native_snapshot = module._snapshot_regular
+        cases = (
+            ('public-mode', 'st_mode', module.stat.S_IFDIR | 0o755),
+            ('foreign-owner', 'st_uid', (os.geteuid() + 1) % (1 << 32)),
+            ('impossible-links', 'st_nlink', 0),
+        )
+        for case, field, value in cases:
+            with self.subTest(case=case):
+                read_fd, write_fd = os.pipe()
+                state = {'folder': None, 'snapshots': 0, 'injected': False}
+
+                class AlteredDirectoryStat:
+                    def __init__(self, original):
+                        self.original = original
+                        setattr(self, field, value)
+
+                    def __getattr__(self, attr):
+                        return getattr(self.original, attr)
+
+                def register(path):
+                    state['folder'] = os.fspath(path.parent)
+                    return read_fd, 9, 10
+
+                def snapshot(path):
+                    result = native_snapshot(path)
+                    state['snapshots'] += 1
+                    return result
+
+                def scoped_lstat(path, *args, **kwargs):
+                    record = native_lstat(path, *args, **kwargs)
+                    if (state['snapshots'] == 3 and not state['injected']
+                            and state['folder'] == os.fspath(path)):
+                        state['injected'] = True
+                        return AlteredDirectoryStat(record)
+                    return record
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=scoped_lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=register) as watcher:
+                            with patch.object(module, '_snapshot_regular',
+                                              side_effect=snapshot):
+                                with patch.object(module, '_read_pending',
+                                                  return_value=b'') as reader:
+                                    with patch.object(module, '_evaluate') as evaluate:
+                                        result = module.run_demo()
+                    self.assertTrue(state['injected'])
+                    self.assertEqual(state['snapshots'], 3)
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertFalse(result['can_authorize_dispatch'])
+                    self.assertFalse(result['independent_os_proof_verified'])
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
