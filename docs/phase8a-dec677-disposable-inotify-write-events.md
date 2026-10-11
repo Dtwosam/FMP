@@ -1141,6 +1141,26 @@ Full historical [#1050](https://github.com/Dtwosam/FMP/pull/1050) workflow [3814
 
 This test/docs-only immediate descendant of #1052 changes that one expected error phrase without weakening the observer source, early rejection, or no-encoder checks. The original #1050 full CI remains RED; the new exact head needs its own Phase 3 and full historical suite. **490 distinct test methods** remain.
 
+
+## DEC-840 — Recheck the disposable parent inode after inventory and event drain
+
+The DEC-838 parent-directory identity check ran **before** final inventory. A
+path substitution during inventory or the subsequent inotify drain was not
+checked again before the disposable witness evaluator. DEC-840 makes one final
+bounded, no-follow `lstat` identity probe after event drain and **before**
+`_evaluate`; a changed, missing, or malformed private parent returns `BLOCKED`
+without an evaluator call. One Linux-generated synthetic regression covers a
+single parent-inode change both during final inventory and during drain,
+asserting no evaluation, nonauthorization, and closed watcher FD. This strict
+child now has **491 uniquely named source-defined test methods**.
+
+The added probe is a best-effort check, **not an atomic lock**, and cannot
+exclude a substitution between checks, name-alias attacks, or changes after
+the last probe. Independent kernel enforcement for annual 20-job no-write
+confinement and immutable run385 admission remain **BLOCKED**. #1053 passed
+exact-head Phase 3 and historical CI; this child requires its own tests and
+qualified independent security review. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

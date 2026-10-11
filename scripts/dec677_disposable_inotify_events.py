@@ -1118,6 +1118,13 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 # events emitted *during* those reads are not silently left
                 # outside the disposable observer's sampled interval.
                 raw = _read_pending(fd)
+                # Inventory and the event drain can run after the prior
+                # pathname-based parent check. Refuse any detectable parent
+                # replacement at the last pre-receipt boundary.
+                receipt_folder_inode = _checked_generated_directory_identity(
+                    os.lstat(folder_path))
+                if receipt_folder_inode != initial_folder_inode:
+                    raise OSError("disposable parent directory changed after observation")
                 return _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
                                  replacement_negative=replace_watched_inode,

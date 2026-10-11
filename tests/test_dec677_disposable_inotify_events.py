@@ -6725,6 +6725,74 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux parent inode')
+    def test_parent_inode_change_during_inventory_or_drain_blocks_before_evaluation(self):
+        native_lstat = os.lstat
+        native_inventory = module._bounded_inventory_names
+
+        for stage in ('inventory', 'drain'):
+            with self.subTest(stage=stage):
+                read_fd, write_fd = os.pipe()
+                observed = {'folder': None, 'switch': False,
+                            'changed': False, 'inventory_calls': 0}
+
+                class AlteredDirectoryStat:
+                    def __init__(self, original):
+                        self.original = original
+                        self.st_ino = original.st_ino + 1
+
+                    def __getattr__(self, field):
+                        return getattr(self.original, field)
+
+                def scoped_lstat(path, *args, **kwargs):
+                    record = native_lstat(path, *args, **kwargs)
+                    if (observed['switch'] and observed['folder'] is not None
+                            and os.fspath(path) == observed['folder']):
+                        observed['switch'] = False
+                        observed['changed'] = True
+                        return AlteredDirectoryStat(record)
+                    return record
+
+                def register_watch(path):
+                    observed['folder'] = os.fspath(path.parent)
+                    return read_fd, 9, 10
+
+                def inventory(path):
+                    result = native_inventory(path)
+                    observed['inventory_calls'] += 1
+                    if stage == 'inventory' and observed['inventory_calls'] == 2:
+                        observed['switch'] = True
+                    return result
+
+                def drain(_fd):
+                    if stage == 'drain':
+                        observed['switch'] = True
+                    return b''
+
+                try:
+                    with patch.object(module.os, 'lstat', side_effect=scoped_lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=register_watch) as watcher:
+                            with patch.object(module, '_bounded_inventory_names',
+                                              side_effect=inventory):
+                                with patch.object(module, '_read_pending',
+                                                  side_effect=drain) as reader:
+                                    with patch.object(module, '_evaluate') as evaluate:
+                                        receipt = module.run_demo()
+                    self.assertTrue(observed['changed'])
+                    self.assertEqual(observed['inventory_calls'], 2)
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertFalse(receipt['can_authorize_dispatch'])
+                    self.assertFalse(receipt['independent_os_proof_verified'])
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
