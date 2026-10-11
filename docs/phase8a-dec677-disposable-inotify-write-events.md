@@ -1043,6 +1043,13 @@ DEC-823 reuses the existing bounded `_bounded_inventory_names` scanner **before 
 
 Only generated Linux disposable observer source, unit tests and documentation change. Phase 3, full historical CI at this exact source head, and qualified independent security/source review remain necessary. No annual dispatcher permission is introduced.
 
+
+## DEC-824 — Preserve positive empty-directory startup and refuse scanner faults
+
+DEC-823 makes the first write contingent on an exact empty prewrite inventory. DEC-824 proves a genuinely generated clean private Linux /tmp directory still passes that check: it performs the normal exclusive `sample` creation and closes its writer, then injects a controlled stop at the inotify-registration helper. The captured public source must contain exactly `BEFORE` bytes, lie directly below the generated `/tmp` prefix, and be cleaned when the blocked local runner returns. A second test injects both native-style `OSError` and unexpected `RuntimeError` from the initial scanner and requires `BLOCKED` with zero file opens and zero watch calls.
+
+Two source-defined methods bring the descendant to **477 distinct tests**. No observer runtime source changes in this child: only tests and docs. This confirms local prewrite regression behavior, not genuine watcher protection against adversarial parent replacement, host OS write confinement or annual one-shot dispatch. Exact-head Phase 3/full historical CI and qualified independent security/source review remain necessary.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
