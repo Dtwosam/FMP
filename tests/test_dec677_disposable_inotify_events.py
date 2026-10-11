@@ -4210,6 +4210,40 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 66)
 
+
+    def test_reserved_linux_stmode_bits_rejected_before_snapshot_read(self):
+        class FakeStat:
+            def __init__(self, mode):
+                self.st_mode = mode
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+        for bit in ((1 << 16), (1 << 20), (1 << 31)):
+            with self.subTest(bit=bit):
+                with patch.object(module.os, 'open', return_value=17):
+                    with patch.object(module.os, 'fstat',
+                                      return_value=FakeStat(module.stat.S_IFREG | 0o600 | bit)):
+                        with patch.object(module.os, 'read') as read:
+                            with patch.object(module.os, 'close') as close:
+                                with self.assertRaisesRegex(OSError, 'bounded regular inode'):
+                                    module._snapshot_regular(Path('/tmp/public-fake-only'))
+                                read.assert_not_called()
+                                close.assert_called_once_with(17)
+
+    def test_valid_special_permission_bits_remain_in_snapshot_metadata(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o7777
+            st_dev = 1
+            st_ino = 2
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        self.assertEqual(
+            module._checked_snapshot_metadata(FakeStat()),
+            (FakeStat.st_mode, 1, 2, 1, 100, 200))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

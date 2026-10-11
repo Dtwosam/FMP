@@ -725,6 +725,12 @@ The previous drafts DEC-759, DEC-761, DEC-769 and DEC-770 added independent rule
 
 Additional methods check that 128 distinct unpaired move-from cookies still fit within the 65,536-byte event bound and parse while yielding a blocked receipt, and that a duplicate cookie direction separated by 64 unrelated cookie records remains malformed. Three source-defined methods bring the suite to **375 uniquely named tests**. The only changed files in this child are the disposable observer test module and documentation. These synthetic cases do not establish independent kernel provenance, OS isolation or annual run385 eligibility.
 
+## DEC-772 — Reject impossible reserved bits in synthetic Linux regular-file modes
+
+DEC-760 bounds synthetic `st_mode` to unsigned 32-bit Linux `mode_t`, and DEC-763 compares both checked modes before/after the snapshot read. However, that width bound still permitted arbitrary *reserved high bits within 32 bits*, because Python's `stat.S_ISREG` tests only masked low file-type bits. A fabricated mode such as `0x10000 | S_IFREG | 0600` could pass as a plausible regular file.
+
+DEC-772 requires `st_mode & ~0o177777 == 0` before the regular-file test. Standard Linux file-type bits (`0o170000`) and all permission/setuid/setgid/sticky bits (`0o7777`) remain available. Two new regression methods bring the suite to **377 uniquely named methods**: several reserved high bits must fail before `os.read` with valid snapshot FD cleanup, and full legal special permission bits remain accepted. This is a conservative synthetic metadata shape check; it neither authenticates kernel snapshots nor proves OS-enforced annual host write prevention.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

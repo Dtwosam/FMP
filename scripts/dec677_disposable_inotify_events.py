@@ -50,6 +50,9 @@ MAX_FILE_DESCRIPTOR = (1 << 31) - 1
 MAX_KERNEL_STAT_ID = (1 << 64) - 1
 # Linux stat mode_t is an unsigned 32-bit value, not an arbitrary Python int.
 MAX_KERNEL_STAT_MODE = (1 << 32) - 1
+# Linux st_mode uses file-type bits 0170000 and access/special bits 0007777.
+# Bits outside this standard 0177777 mask are not credible inode metadata.
+ALLOWED_KERNEL_STAT_MODE_BITS = 0o177777
 # Linux timespec uses signed 64-bit seconds plus 0..999999999 nanoseconds.
 MIN_KERNEL_TIMESTAMP_NS = -(1 << 63) * 1_000_000_000
 MAX_KERNEL_TIMESTAMP_NS = (1 << 63) * 1_000_000_000 - 1
@@ -610,7 +613,9 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int]:
     if any(type(value) is not int for value in values):
         raise OSError("disposable fstat returned noninteger metadata")
     mode, dev, ino, size, mtime_ns, ctime_ns = values
-    if (not 0 <= mode <= MAX_KERNEL_STAT_MODE or not stat.S_ISREG(mode)
+    if (not 0 <= mode <= MAX_KERNEL_STAT_MODE
+            or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
+            or not stat.S_ISREG(mode)
             or not 0 <= dev <= MAX_KERNEL_STAT_ID
             or not 0 <= ino <= MAX_KERNEL_STAT_ID or not 0 <= size <= 4096):
         raise OSError("disposable sample is not a bounded regular inode")
