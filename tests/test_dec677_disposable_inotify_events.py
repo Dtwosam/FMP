@@ -3188,6 +3188,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
+                self.st_uid = 0
+                self.st_gid = 0
                 for key, value in changes.items():
                     setattr(self, key, value)
         invalid = (('st_mode', True), ('st_dev', 1.0),
@@ -3217,6 +3219,8 @@ class DisposableInotifyTests(unittest.TestCase):
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
+            st_uid = 0
+            st_gid = 0
         with patch.object(module.os, 'open', return_value=17):
             with patch.object(module.os, 'fstat', return_value=FakeStat()):
                 with patch.object(module.os, 'read') as read:
@@ -3236,6 +3240,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = ctime
+                self.st_uid = 0
+                self.st_gid = 0
         with patch.object(module.os, 'open', return_value=17):
             with patch.object(module.os, 'fstat',
                               side_effect=(FakeStat(200), FakeStat(object()))) as fstat:
@@ -3535,6 +3541,8 @@ class DisposableInotifyTests(unittest.TestCase):
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
+            st_uid = 0
+            st_gid = 0
         with patch.object(module.os, 'open', return_value=17):
             with patch.object(module.os, 'fstat', return_value=FakeStat()):
                 with patch.object(module.os, 'read',
@@ -3619,6 +3627,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
+                self.st_uid = 0
+                self.st_gid = 0
                 for field, value in changes.items():
                     setattr(self, field, value)
         for field in ('st_dev', 'st_ino'):
@@ -3721,6 +3731,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
+                self.st_uid = 0
+                self.st_gid = 0
         for mode in (-1, (1 << 32) | module.stat.S_IFREG | 0o600):
             with self.subTest(mode=mode):
                 with patch.object(module.os, 'open', return_value=17):
@@ -3741,8 +3753,10 @@ class DisposableInotifyTests(unittest.TestCase):
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
+            st_uid = 0
+            st_gid = 0
         self.assertEqual(module._checked_snapshot_metadata(FakeStat()),
-                         (module.stat.S_IFREG | 0o600, 1, 2, 1, 100, 200))
+                         (module.stat.S_IFREG | 0o600, 1, 2, 1, 100, 200, 0, 0))
 
 
     def test_duplicate_move_from_cookie_direction_is_not_complete(self):
@@ -3839,6 +3853,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
+                self.st_uid = 0
+                self.st_gid = 0
         with patch.object(module.os, 'open', return_value=17):
             with patch.object(module.os, 'fstat',
                               side_effect=(FakeStat(0o600), FakeStat(0o400))):
@@ -3858,6 +3874,8 @@ class DisposableInotifyTests(unittest.TestCase):
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
+            st_uid = 0
+            st_gid = 0
         with patch.object(module.os, 'open', return_value=17):
             with patch.object(module.os, 'fstat', return_value=FakeStat()):
                 with patch.object(module.os, 'read', return_value=b'x') as read:
@@ -3977,6 +3995,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
+                self.st_uid = 0
+                self.st_gid = 0
                 for key, value in change.items():
                     setattr(self, key, value)
         for field in ('st_mtime_ns', 'st_ctime_ns'):
@@ -4002,10 +4022,12 @@ class DisposableInotifyTests(unittest.TestCase):
             st_size = 1
             st_mtime_ns = module.MIN_KERNEL_TIMESTAMP_NS
             st_ctime_ns = module.MAX_KERNEL_TIMESTAMP_NS
+            st_uid = 0
+            st_gid = 0
         self.assertEqual(
             module._checked_snapshot_metadata(FakeStat()),
             (FakeStat.st_mode, 1, 2, 1, module.MIN_KERNEL_TIMESTAMP_NS,
-             module.MAX_KERNEL_TIMESTAMP_NS))
+             module.MAX_KERNEL_TIMESTAMP_NS, 0, 0))
 
     def test_stat_metadata_accepts_negative_pre_epoch_timestamps(self):
         class FakeStat:
@@ -4016,9 +4038,11 @@ class DisposableInotifyTests(unittest.TestCase):
             st_size = 1
             st_mtime_ns = -1_000_000_000
             st_ctime_ns = -1
+            st_uid = 0
+            st_gid = 0
         self.assertEqual(
             module._checked_snapshot_metadata(FakeStat()),
-            (FakeStat.st_mode, 1, 2, 1, -1_000_000_000, -1))
+            (FakeStat.st_mode, 1, 2, 1, -1_000_000_000, -1, 0, 0))
 
 
     def test_inventory_rejects_overlong_name_before_encoding(self):
@@ -4233,6 +4257,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
+                self.st_uid = 0
+                self.st_gid = 0
         for bit in ((1 << 16), (1 << 20), (1 << 31)):
             with self.subTest(bit=bit):
                 with patch.object(module.os, 'open', return_value=17):
@@ -4254,9 +4280,11 @@ class DisposableInotifyTests(unittest.TestCase):
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
+            st_uid = 0
+            st_gid = 0
         self.assertEqual(
             module._checked_snapshot_metadata(FakeStat()),
-            (FakeStat.st_mode, 1, 2, 1, 100, 200))
+            (FakeStat.st_mode, 1, 2, 1, 100, 200, 0, 0))
 
 
     def test_snapshot_refuses_unlinked_or_multiply_linked_inode_before_read(self):
@@ -4269,6 +4297,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
+                self.st_uid = 0
+                self.st_gid = 0
         for count in (0, 2, 3, 1 << 64, -1):
             with self.subTest(count=count):
                 with patch.object(module.os, 'open', return_value=17):
@@ -4292,6 +4322,8 @@ class DisposableInotifyTests(unittest.TestCase):
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
+            st_uid = 0
+            st_gid = 0
         for invalid in (True, 1.0, StrangeInt(1), '1', None):
             with self.subTest(count=repr(invalid)):
                 FakeStat.st_nlink = invalid
@@ -4307,9 +4339,11 @@ class DisposableInotifyTests(unittest.TestCase):
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
+            st_uid = 0
+            st_gid = 0
         self.assertEqual(
             module._checked_snapshot_metadata(FakeStat()),
-            (FakeStat.st_mode, 1, 2, 1, 100, 200))
+            (FakeStat.st_mode, 1, 2, 1, 100, 200, 0, 0))
 
 
     @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'link'),
@@ -4439,6 +4473,71 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertIn('CLI arguments rejected', result['findings'][0])
         self.assertFalse(result['can_authorize_dispatch'])
         self.assertFalse(result['independent_os_proof_verified'])
+
+
+    def test_snapshot_refuses_owner_or_group_change_during_read(self):
+        class FakeStat:
+            def __init__(self, uid, gid):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_nlink = 1
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+                self.st_uid = uid
+                self.st_gid = gid
+        for old, new in ((FakeStat(10, 20), FakeStat(11, 20)),
+                         (FakeStat(10, 20), FakeStat(10, 21))):
+            with self.subTest(old=(old.st_uid, old.st_gid),
+                              new=(new.st_uid, new.st_gid)):
+                with patch.object(module.os, 'open', return_value=17):
+                    with patch.object(module.os, 'fstat', side_effect=(old, new)):
+                        with patch.object(module.os, 'read', return_value=b'x') as read:
+                            with patch.object(module.os, 'close') as close:
+                                with self.assertRaisesRegex(OSError, 'inode changed'):
+                                    module._snapshot_regular(Path('/tmp/public-fake-only'))
+                                read.assert_called_once_with(17, 2)
+                                close.assert_called_once_with(17)
+
+    def test_snapshot_rejects_invalid_linux_owner_group_ids(self):
+        class ForgedInt(int):
+            def __eq__(self, _other):
+                return True
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_nlink = 1
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+            st_uid = 0
+            st_gid = 0
+        for field in ('st_uid', 'st_gid'):
+            for invalid in (-1, 1 << 32, True, 1.0, ForgedInt(0), '0'):
+                with self.subTest(field=field, value=repr(invalid)):
+                    FakeStat.st_uid = 0
+                    FakeStat.st_gid = 0
+                    setattr(FakeStat, field, invalid)
+                    with self.assertRaises(OSError):
+                        module._checked_snapshot_metadata(FakeStat())
+
+    def test_snapshot_accepts_valid_uint32_owner_group_ids(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_nlink = 1
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+            st_uid = module.MAX_KERNEL_OWNER_ID
+            st_gid = module.MAX_KERNEL_OWNER_ID
+        self.assertEqual(
+            module._checked_snapshot_metadata(FakeStat()),
+            (FakeStat.st_mode, 1, 2, 1, 100, 200,
+             module.MAX_KERNEL_OWNER_ID, module.MAX_KERNEL_OWNER_ID))
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
