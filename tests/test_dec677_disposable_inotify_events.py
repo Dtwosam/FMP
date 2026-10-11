@@ -5085,8 +5085,15 @@ class DisposableInotifyTests(unittest.TestCase):
                 with patch.object(module, '_snapshot_regular',
                                   return_value=((1, 2), module.BEFORE)) as snapshot:
                     with patch.object(module.os, 'link', return_value=None):
+                        # os.path.isdir('/tmp') and TemporaryDirectory also
+                        # use os.stat; inject failure ONLY for this alias.
+                        native_stat = os.stat
+                        def fail_alias_only(path, *args, **kwargs):
+                            if os.fspath(path).endswith('/public-hardlink-alias'):
+                                raise FileNotFoundError(2, 'synthetic missing alias')
+                            return native_stat(path, *args, **kwargs)
                         with patch.object(module.os, 'stat',
-                                          side_effect=FileNotFoundError(2, 'synthetic missing alias')):
+                                          side_effect=fail_alias_only):
                             with patch.object(module, '_read_pending') as drain:
                                 outcome = module.run_demo(hardlink_negative=True)
             self.assertEqual(outcome['status'], 'BLOCKED')
@@ -5099,6 +5106,25 @@ class DisposableInotifyTests(unittest.TestCase):
                 os.fstat(rd)
         finally:
             os.close(wr)
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux alias boundary')
+    def test_scoped_alias_stat_mock_preserves_tmp_availability_check(self):
+        native_stat = os.stat
+        calls = []
+        def fail_alias_only(path, *args, **kwargs):
+            name = os.fspath(path)
+            calls.append(name)
+            if name.endswith('/public-hardlink-alias'):
+                raise FileNotFoundError(2, 'synthetic missing alias')
+            return native_stat(path, *args, **kwargs)
+        with patch.object(module.os, 'stat', side_effect=fail_alias_only):
+            self.assertTrue(os.path.isdir('/tmp'))
+            with self.assertRaises(FileNotFoundError):
+                os.stat(Path('/tmp/generated-public-test-only/public-hardlink-alias'),
+                        follow_symlinks=False)
+        self.assertIn('/tmp', calls)
+        self.assertTrue(any(p.endswith('/public-hardlink-alias') for p in calls))
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
