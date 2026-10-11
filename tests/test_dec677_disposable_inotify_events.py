@@ -5260,6 +5260,58 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(outcome['status'], 'BLOCKED')
         self.assertFalse(outcome['can_authorize_dispatch'])
 
+
+    def test_link_guard_subtype_requires_valid_owner_and_timestamp_metadata(self):
+        class FakeStat:
+            def __init__(self, **changes):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_nlink = 2
+                self.st_size = len(module.BEFORE)
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+                self.st_uid = 10
+                self.st_gid = 20
+                for key, value in changes.items():
+                    setattr(self, key, value)
+        invalid_cases = (
+            ('st_mtime_ns', module.MIN_KERNEL_TIMESTAMP_NS - 1),
+            ('st_ctime_ns', module.MAX_KERNEL_TIMESTAMP_NS + 1),
+            ('st_uid', -1),
+            ('st_gid', module.MAX_KERNEL_OWNER_ID + 1),
+        )
+        for field, bad in invalid_cases:
+            with self.subTest(field=field):
+                with self.assertRaises(OSError) as failure:
+                    module._checked_snapshot_metadata(FakeStat(**{field: bad}))
+                self.assertNotIsInstance(
+                    failure.exception, module._SnapshotHardlinkCountError)
+        with self.assertRaises(module._SnapshotHardlinkCountError):
+            module._checked_snapshot_metadata(FakeStat())
+
+    def test_malformed_two_link_snapshot_does_not_enter_credited_guard_path(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_nlink = 2
+            st_size = len(module.BEFORE)
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+            st_uid = -1
+            st_gid = 20
+        with patch.object(module.os, 'open', return_value=17):
+            with patch.object(module.os, 'fstat', return_value=FakeStat()):
+                with patch.object(module.os, 'read') as read:
+                    with patch.object(module.os, 'close') as close:
+                        with self.assertRaises(OSError) as failure:
+                            module._snapshot_regular(Path('/tmp/public-fake-only'))
+                        self.assertNotIsInstance(
+                            failure.exception, module._SnapshotHardlinkCountError)
+                        read.assert_not_called()
+                        close.assert_called_once_with(17)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

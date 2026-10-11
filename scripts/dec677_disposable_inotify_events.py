@@ -634,14 +634,17 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int, i
             or not 1 <= ino <= MAX_KERNEL_STAT_ID
             or not 0 <= size <= 4096):
         raise OSError("disposable sample is not a bounded regular inode")
-    if nlink != 1:
-        raise _SnapshotHardlinkCountError(
-            "disposable sample is not a bounded regular inode: hard-link count")
     if (not MIN_KERNEL_TIMESTAMP_NS <= mtime_ns <= MAX_KERNEL_TIMESTAMP_NS
             or not MIN_KERNEL_TIMESTAMP_NS <= ctime_ns <= MAX_KERNEL_TIMESTAMP_NS):
         raise OSError("disposable fstat has impossible nanosecond timestamps")
     if not 0 <= uid <= MAX_KERNEL_OWNER_ID or not 0 <= gid <= MAX_KERNEL_OWNER_ID:
         raise OSError("disposable fstat has impossible owner identity")
+    # Only well-shaped metadata can produce a credited link-count refusal.
+    # A fabricated stat with both nlink!=1 and impossible UID/time fields
+    # must fail generically rather than masquerade as a guard witness.
+    if nlink != 1:
+        raise _SnapshotHardlinkCountError(
+            "disposable sample is not a bounded regular inode: hard-link count")
     # Keep validated mode in the comparison tuple: a chmod-style mutation
     # cannot be hidden just because inode, size and timestamps appear equal.
     # Keep owner/group in the equality tuple to detect synthetic changes.
