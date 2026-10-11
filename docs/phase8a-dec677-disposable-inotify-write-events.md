@@ -869,6 +869,14 @@ DEC-793 validates **all** bounded ordinary metadata (mode, device, positive inod
 
 Only generated /tmp observer source, synthetic tests and docs change. The ordering is an internal fail-closed attribution guarantee, not proof of independent Linux kernel identity or annual job OS enforcement.
 
+## DEC-794 — Separate impossible Linux link-counter values from credible one-link guard refusals
+
+DEC-781 introduced a specific `_SnapshotHardlinkCountError` so the generated hard-link negative mode credits only the intended link-count guard rather than arbitrary snapshot errors. DEC-793 moved that subtype after bounded ownership and timestamp validation. The helper nevertheless treated *any* exact integer `st_nlink != 1`, including **negative values and arbitrary integers greater than UINT64_MAX**, as an equally credible guard refusal. These values cannot be emitted by Linux's unsigned link-count metadata and should not produce the special credited error.
+
+DEC-794 requires `0 <= st_nlink <= UINT64_MAX` before the specific guard exception. Out-of-range values raise ordinary handled `OSError` with an impossible-count finding, never `_SnapshotHardlinkCountError`. Valid reported counts of 0 (an already-unlinked FD), 2 or larger within the bound still trigger the existing precise subtype; count 1 remains the required disposable single-file snapshot. One older regression now distinguishes impossible-counter messages from valid-but-unexpected counters while retaining its read/close checks. Two new source-defined methods bring the suite to **432 distinct tests**, exercising malformed large and negative counts plus valid boundary counters.
+
+This is conservative local synthetic metadata coherence, not independent kernel provenance or OS-enforced annual confinement.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
