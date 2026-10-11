@@ -1217,6 +1217,26 @@ an independent OS no-write proof or annual-runner authorization. DEC-650
 and DEC-651 remain blocked; exact-head Phase 3 and full historical CI
 plus qualified independent review are required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-844 — Pin exact postdrain size metadata without rejecting valid samples
+
+DEC-843's last pre-evaluator postdrain guard compares the generated sample's
+native `st_size` with the public fixture length. Two additional Linux-native
+regressions ensure the equality cannot be spoofed by boolean, float, string,
+`int` subclass, custom equality object, or a synthetic metadata exception,
+and ensure an unchanged generated file with exact size still reaches a
+**nonauthorizing** witness evaluator. The malformed-metadata cases require
+`BLOCKED` before evaluation; all cases require false authorization flags,
+and both tests check watcher FD cleanup. Observer runtime code is unchanged.
+The strict stack now contains **497 distinct source-defined test methods**.
+
+No path-level check is atomic. Same-length late rewrites, postcheck mutation,
+untrusted event-drain substitution and absence of independent kernel proof
+remain outside the claim. Exact-head Phase 3/full historical CI and
+independent security review are still mandatory. DEC-650 annual 20-job
+independently enforced OS confinement and DEC-651 immutable run385 admission
+remain **BLOCKED**. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
