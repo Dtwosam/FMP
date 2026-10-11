@@ -3937,7 +3937,7 @@ class DisposableInotifyTests(unittest.TestCase):
 
 
     def test_runner_initial_public_file_write_runtime_error_blocks_without_watch(self):
-        with patch.object(module.Path, 'write_bytes',
+        with patch.object(module.Path, 'open',
                           side_effect=RuntimeError('synthetic generated fixture writer')):
             with patch.object(module, '_start_watch') as register:
                 outcome = module.run_demo()
@@ -5521,7 +5521,7 @@ class DisposableInotifyTests(unittest.TestCase):
             with self.subTest(folder=repr(injected)):
                 with patch.object(module.tempfile, 'TemporaryDirectory') as tempdir:
                     tempdir.return_value.__enter__.return_value = injected
-                    with patch.object(module.Path, 'write_bytes') as write:
+                    with patch.object(module.Path, 'open') as write:
                         with patch.object(module, '_start_watch') as register:
                             result = module.run_demo()
                 self.assertEqual(result['status'], 'BLOCKED')
@@ -5636,7 +5636,7 @@ class DisposableInotifyTests(unittest.TestCase):
             try:
                 with patch.object(module.tempfile, 'TemporaryDirectory') as tempdir:
                     tempdir.return_value.__enter__.return_value = str(alias)
-                    with patch.object(module.Path, 'write_bytes') as writer:
+                    with patch.object(module.Path, 'open') as writer:
                         with patch.object(module, '_start_watch') as watch:
                             result = module.run_demo()
                 self.assertEqual(result['status'], 'BLOCKED')
@@ -5726,7 +5726,7 @@ class DisposableInotifyTests(unittest.TestCase):
                     try:
                         with patch.object(module.tempfile, 'TemporaryDirectory') as tempdir:
                             tempdir.return_value.__enter__.return_value = folder
-                            with patch.object(module.Path, 'write_bytes') as write:
+                            with patch.object(module.Path, 'open') as write:
                                 with patch.object(module, '_start_watch') as start:
                                     receipt = module.run_demo()
                         self.assertEqual(receipt['status'], 'BLOCKED')
@@ -5837,7 +5837,7 @@ class DisposableInotifyTests(unittest.TestCase):
                         sample.write_bytes(b'UNCHANGED-PUBLIC')
                     with patch.object(module.tempfile, 'TemporaryDirectory') as provider:
                         provider.return_value.__enter__.return_value = folder
-                        with patch.object(module.Path, 'write_bytes') as writer:
+                        with patch.object(module.Path, 'open') as writer:
                             with patch.object(module, '_start_watch') as watch:
                                 receipt = module.run_demo()
                     self.assertEqual(receipt['status'], 'BLOCKED')
@@ -5858,7 +5858,7 @@ class DisposableInotifyTests(unittest.TestCase):
             return native_lstat(path, *args, **kwargs)
 
         with patch.object(module.os, 'lstat', side_effect=fail_generated_sample):
-            with patch.object(module.Path, 'write_bytes') as write:
+            with patch.object(module.Path, 'open') as write:
                 with patch.object(module, '_start_watch') as watch:
                     receipt = module.run_demo()
         self.assertEqual(receipt['status'], 'BLOCKED')
@@ -5866,6 +5866,36 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(receipt['independent_os_proof_verified'])
         write.assert_not_called()
         watch.assert_not_called()
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux exclusive file create')
+    def test_initial_exclusive_create_rejects_impossible_write_counts(self):
+        for value in (None, True, False, 0, 1, len(module.BEFORE) - 1,
+                      len(module.BEFORE) + 1, 'complete'):
+            with self.subTest(value=repr(value)):
+                with patch.object(module.Path, 'open') as opener:
+                    opener.return_value.__enter__.return_value.write.return_value = value
+                    with patch.object(module, '_start_watch') as watch:
+                        receipt = module.run_demo()
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+                opener.assert_called_once_with('xb')
+                watch.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'native Linux exclusive file creation')
+    def test_native_exclusive_create_refuses_symlink_without_touching_target(self):
+        with tempfile.TemporaryDirectory(prefix='dec814-public-', dir='/tmp') as folder:
+            source = Path(folder) / 'sample'
+            target = Path(folder) / 'existing-public'
+            target.write_bytes(b'UNCHANGED-PUBLIC')
+            source.symlink_to(target)
+            with self.assertRaises(FileExistsError):
+                with source.open('xb') as stream:
+                    stream.write(module.BEFORE)
+            self.assertTrue(source.is_symlink())
+            self.assertEqual(target.read_bytes(), b'UNCHANGED-PUBLIC')
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
