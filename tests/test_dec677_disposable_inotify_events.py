@@ -5085,8 +5085,15 @@ class DisposableInotifyTests(unittest.TestCase):
                 with patch.object(module, '_snapshot_regular',
                                   return_value=((1, 2), module.BEFORE)) as snapshot:
                     with patch.object(module.os, 'link', return_value=None):
+                        # Preserve the real os.stat for /tmp preflight and the
+                        # sample; inject only the intended alias-path error.
+                        native_stat = os.stat
+                        def missing_generated_alias(path, *args, **kwargs):
+                            if Path(path).name == 'public-hardlink-alias':
+                                raise FileNotFoundError(2, 'synthetic missing alias')
+                            return native_stat(path, *args, **kwargs)
                         with patch.object(module.os, 'stat',
-                                          side_effect=FileNotFoundError(2, 'synthetic missing alias')):
+                                          side_effect=missing_generated_alias):
                             with patch.object(module, '_read_pending') as drain:
                                 outcome = module.run_demo(hardlink_negative=True)
             self.assertEqual(outcome['status'], 'BLOCKED')
@@ -5099,6 +5106,30 @@ class DisposableInotifyTests(unittest.TestCase):
                 os.fstat(rd)
         finally:
             os.close(wr)
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux alias stat test')
+    def test_targeted_alias_stat_failure_preserves_tmp_preflight(self):
+        native_stat = os.stat
+        seen = []
+        def fail_generated_alias_only(path, *args, **kwargs):
+            name = os.fspath(path)
+            seen.append(name)
+            if Path(name).name == 'public-hardlink-alias':
+                raise FileNotFoundError(2, 'synthetic missing public alias')
+            return native_stat(path, *args, **kwargs)
+        with patch.object(module.os, 'stat',
+                          side_effect=fail_generated_alias_only):
+            self.assertTrue(os.path.isdir('/tmp'))
+            with tempfile.TemporaryDirectory(prefix='dec789-public-', dir='/tmp') as folder:
+                sample = Path(folder) / 'sample'
+                alias = Path(folder) / 'public-hardlink-alias'
+                sample.write_bytes(module.BEFORE)
+                self.assertFalse(module._plausible_generated_hardlink_pair(sample, alias))
+                self.assertEqual(sample.read_bytes(), module.BEFORE)
+        self.assertIn('/tmp', seen)
+        self.assertTrue(any(Path(name).name == 'public-hardlink-alias'
+                            for name in seen))
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
