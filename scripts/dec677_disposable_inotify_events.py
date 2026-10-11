@@ -457,8 +457,14 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
     """Reject injected C pathname truncation or substituted watch targets."""
     try:
         textual = os.fspath(path)
+        # This internal helper must not silently watch a caller-selected
+        # outside path or /tmp/../ traversal in place of generated /tmp.
+        if (type(textual) is not str
+                or not (textual == "/tmp" or textual.startswith("/tmp/"))
+                or ".." in Path(textual).parts):
+            raise OSError("disposable watch pathname is outside the /tmp scope")
         encoded = os.fsencode(path)
-        if (type(textual) is not str or type(encoded) is not bytes
+        if (type(encoded) is not bytes
                 or not 1 <= len(encoded) <= 4095 or b"\x00" in encoded
                 or encoded != textual.encode(
                     sys.getfilesystemencoding(), "surrogateescape")):
