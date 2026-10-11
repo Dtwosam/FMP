@@ -8827,6 +8827,104 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'generated post-census sample truncation')
+    def test_real_generated_size_change_during_receipt_census_blocks(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'old_inode': None,
+                 'new_inode': None, 'new_size': None}
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                sample = folder / 'sample'
+                before = os.lstat(sample)
+                # Only the generated public file is shortened, after the
+                # original bounded snapshot and simulated event drain.
+                os.truncate(sample, len(module.BEFORE) - 1)
+                after = os.lstat(sample)
+                state['old_inode'] = (before.st_dev, before.st_ino)
+                state['new_inode'] = (after.st_dev, after.st_ino)
+                state['new_size'] = after.st_size
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as inventory:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(inventory.call_count, 3)
+            self.assertIsNotNone(state['old_inode'])
+            self.assertEqual(state['new_inode'], state['old_inode'])
+            self.assertEqual(state['new_size'], len(module.BEFORE) - 1)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluator.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated post-census sample timestamp drift')
+    def test_real_generated_mtime_change_during_receipt_census_blocks(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'old_inode': None, 'new_inode': None,
+                 'old_mtime': None, 'new_mtime': None, 'size': None}
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                sample = folder / 'sample'
+                before = os.lstat(sample)
+                # A real nanosecond timestamp shift can preserve identity,
+                # bounded length, bytes, parent inode, and directory names.
+                os.utime(sample, ns=(before.st_atime_ns,
+                                     before.st_mtime_ns + 5_000_000_000))
+                after = os.lstat(sample)
+                state['old_inode'] = (before.st_dev, before.st_ino)
+                state['new_inode'] = (after.st_dev, after.st_ino)
+                state['old_mtime'] = before.st_mtime_ns
+                state['new_mtime'] = after.st_mtime_ns
+                state['size'] = after.st_size
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as inventory:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(inventory.call_count, 3)
+            self.assertIsNotNone(state['old_inode'])
+            self.assertEqual(state['new_inode'], state['old_inode'])
+            self.assertNotEqual(state['new_mtime'], state['old_mtime'])
+            self.assertEqual(state['size'], len(module.BEFORE))
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluator.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
