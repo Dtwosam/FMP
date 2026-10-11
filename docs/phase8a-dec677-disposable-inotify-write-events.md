@@ -1683,6 +1683,33 @@ immutable exclusive admission remain BLOCKED. Require this head's own
 Phase 3 and full historical CI and qualified independent review.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-864 — Final sample inode, size, and access metadata after last read
+
+DEC-862 validates generated sample mode, owner UID and group GID after
+draining events, but its check precedes the final no-follow byte
+re-snapshot. A pathname replacement, truncation or chmod/chown-like
+change during that last sample read could leave earlier metadata
+observations stale. DEC-864 rechecks the generated sample pathname's
+**original writer inode, exact bounded size, and native mode/owner/group
+tuple** immediately after that final sample snapshot and before the
+already existing last parent-directory identity check and local evaluator.
+Any observed mismatch is `BLOCKED`.
+
+One Linux regression injects five separate synthetic changes — inode,
+size, mode, UID or GID — at the first sample lstat after the third
+snapshot and requires a blocked receipt, no evaluator call and watcher
+FD closure. The prior normal positive metadata test now expects three
+valid access checks (writer, postdrain, post-final-snapshot), and remains
+permanently nonauthorizing. **525 source-defined test methods**.
+
+These sequential observations are not atomic and cannot exclude
+undetected change/revert after the last check. They are not independently
+enforced OS no-write confinement or run385 admission. DEC-650 and
+DEC-651 remain BLOCKED. Exact-head Phase 3, full historical CI and
+qualified independent security review remain mandatory.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

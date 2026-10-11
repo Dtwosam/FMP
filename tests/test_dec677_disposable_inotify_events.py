@@ -7954,9 +7954,10 @@ class DisposableInotifyTests(unittest.TestCase):
                     with patch.object(module, '_read_pending',
                                       return_value=b'') as reader:
                         receipt = module.run_demo()
-            self.assertEqual(check.call_count, 2)
-            self.assertEqual(len(observed), 2)
+            self.assertEqual(check.call_count, 3)
+            self.assertEqual(len(observed), 3)
             self.assertEqual(observed[0], observed[1])
+            self.assertEqual(observed[1], observed[2])
             self.assertEqual(observed[0][1], os.geteuid())
             self.assertEqual(receipt['status'],
                              'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
@@ -8005,6 +8006,71 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(receipt['status'], 'BLOCKED')
                 self.assertIs(receipt['can_authorize_dispatch'], False)
                 self.assertIs(receipt['independent_os_proof_verified'], False)
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux final sample metadata check')
+    def test_sample_replacement_or_access_change_during_last_snapshot_blocks(self):
+        native_snapshot = module._snapshot_regular
+        native_lstat = os.lstat
+        for field in ('st_ino', 'st_size', 'st_mode', 'st_uid', 'st_gid'):
+            with self.subTest(field=field):
+                read_fd, write_fd = os.pipe()
+                state = {'sample': None, 'snapshots': 0, 'injected': False}
+
+                class LateStat:
+                    def __init__(self, original, replacement):
+                        self.original = original
+                        setattr(self, field, replacement)
+
+                    def __getattr__(self, key):
+                        return getattr(self.original, key)
+
+                def start(path):
+                    state['sample'] = os.fspath(path)
+                    return read_fd, 9, 10
+
+                def snapshot(path):
+                    result = native_snapshot(path)
+                    state['snapshots'] += 1
+                    return result
+
+                def scoped_lstat(path, *args, **kwargs):
+                    record = native_lstat(path, *args, **kwargs)
+                    if (state['snapshots'] == 3 and not state['injected']
+                            and os.fspath(path) == state['sample']):
+                        state['injected'] = True
+                        old = getattr(record, field)
+                        if field == 'st_mode':
+                            replacement = old ^ module.stat.S_IXUSR
+                        else:
+                            replacement = old + 1
+                        return LateStat(record, replacement)
+                    return record
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=scoped_lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=start) as watcher:
+                            with patch.object(module, '_snapshot_regular',
+                                              side_effect=snapshot) as snaps:
+                                with patch.object(module, '_read_pending',
+                                                  return_value=b'') as reader:
+                                    with patch.object(module, '_evaluate') as evaluate:
+                                        receipt = module.run_demo()
+                    self.assertTrue(state['injected'])
+                    self.assertEqual(state['snapshots'], 3)
+                    self.assertEqual(snaps.call_count, 3)
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertIs(receipt['can_authorize_dispatch'], False)
+                    self.assertIs(receipt['independent_os_proof_verified'], False)
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
