@@ -5574,6 +5574,37 @@ class DisposableInotifyTests(unittest.TestCase):
         with patch.object(module.os, 'fsencode', return_value=b'public-other-entry'):
             self.assertFalse(module._plausible_inventory_basename(name))
 
+
+    def test_bounded_scandir_rejects_synthetic_encoded_name_substitution(self):
+        class Entry:
+            name = 'sample'
+
+        class Scan:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def __iter__(self):
+                return iter((Entry(),))
+
+        for wrong in (b'other', b'sample-substitution', b'x' * 255):
+            with self.subTest(encoded=wrong):
+                with patch.object(module.os, 'scandir', return_value=Scan()):
+                    with patch.object(module.os, 'fsencode', return_value=wrong):
+                        with self.assertRaisesRegex(OSError, 'malformed entry name'):
+                            module._bounded_inventory_names(Path('/tmp/public-fake-only'))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native Linux /tmp inventory')
+    def test_live_generated_scandir_surrogateescape_roundtrip(self):
+        raw_name = b'public-' + bytes([255]) + b'-entry'
+        name = os.fsdecode(raw_name)
+        with tempfile.TemporaryDirectory(prefix='dec803-public-', dir='/tmp') as folder:
+            (Path(folder) / name).write_bytes(b'PUBLIC')
+            self.assertEqual(os.fsencode(name), raw_name)
+            self.assertEqual(module._bounded_inventory_names(Path(folder)), (name,))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
