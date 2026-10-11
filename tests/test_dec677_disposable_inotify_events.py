@@ -3442,12 +3442,15 @@ class DisposableInotifyTests(unittest.TestCase):
                     ((3, 7), module.BEFORE),
                     ((3, 7), b'UNEXPECTED FINAL'),
                 )) as snapshot:
-                    with patch.object(module, '_bounded_inventory_names') as inventory:
+                    with patch.object(module, '_bounded_inventory_names',
+                                      return_value=()) as inventory:
                         with patch.object(module, '_read_pending') as drain:
                             result = module.run_demo()
             self.assertEqual(result['status'], 'BLOCKED')
             self.assertEqual(snapshot.call_count, 2)
-            inventory.assert_not_called()
+            # One prewrite empty-directory census is expected; the final
+            # inventory remains unreachable after a malformed final snapshot.
+            inventory.assert_called_once()
             drain.assert_not_called()
             self.assertFalse(result['independent_os_proof_verified'])
             with self.assertRaises(OSError):
@@ -5859,7 +5862,11 @@ class DisposableInotifyTests(unittest.TestCase):
                         provider.return_value.__enter__.return_value = folder
                         with patch.object(module.Path, 'open') as writer:
                             with patch.object(module, '_start_watch') as watch:
-                                receipt = module.run_demo()
+                                # Deliberately spoof empty prewrite inventory
+                                # so the specific sample lstat guard is tested.
+                                with patch.object(module, '_bounded_inventory_names',
+                                                  return_value=()):
+                                    receipt = module.run_demo()
                     self.assertEqual(receipt['status'], 'BLOCKED')
                     self.assertFalse(receipt['can_authorize_dispatch'])
                     self.assertFalse(receipt['independent_os_proof_verified'])
@@ -5946,7 +5953,12 @@ class DisposableInotifyTests(unittest.TestCase):
                         with patch.object(module.tempfile, 'TemporaryDirectory') as tempdir:
                             tempdir.return_value.__enter__.return_value = folder
                             with patch.object(module, '_start_watch') as watch:
-                                receipt = module.run_demo()
+                                # Simulate both false empty-inventory evidence
+                                # and false sample absence: O_EXCL must still
+                                # reject the existing public sample object.
+                                with patch.object(module, '_bounded_inventory_names',
+                                                  return_value=()):
+                                    receipt = module.run_demo()
                     self.assertEqual(receipt['status'], 'BLOCKED')
                     self.assertFalse(receipt['can_authorize_dispatch'])
                     self.assertFalse(receipt['independent_os_proof_verified'])
@@ -5984,7 +5996,11 @@ class DisposableInotifyTests(unittest.TestCase):
                         with patch.object(module.tempfile, 'TemporaryDirectory') as context:
                             context.return_value.__enter__.return_value = folder
                             with patch.object(module, '_start_watch') as watch:
-                                receipt = module.run_demo()
+                                # Keep the O_EXCL boundary under test even
+                                # if a synthetic prior inventory lies empty.
+                                with patch.object(module, '_bounded_inventory_names',
+                                                  return_value=()):
+                                    receipt = module.run_demo()
                     self.assertEqual(receipt['status'], 'BLOCKED')
                     self.assertFalse(receipt['can_authorize_dispatch'])
                     self.assertFalse(receipt['independent_os_proof_verified'])
@@ -6190,6 +6206,46 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(opened[0].fd)
         watch.assert_not_called()
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'private disposable /tmp inventory')
+    def test_prewrite_nonempty_generated_folder_blocks_without_sample_write(self):
+        with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                         dir='/tmp') as folder:
+            occupied = Path(folder) / 'public-preexisting-sibling'
+            occupied.write_bytes(b'UNCHANGED-PUBLIC')
+            with patch.object(module.tempfile, 'TemporaryDirectory') as tempdir:
+                tempdir.return_value.__enter__.return_value = folder
+                with patch.object(module.Path, 'open') as writer:
+                    with patch.object(module, '_start_watch') as watch:
+                        receipt = module.run_demo()
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertFalse(receipt['can_authorize_dispatch'])
+            self.assertFalse(receipt['independent_os_proof_verified'])
+            writer.assert_not_called()
+            watch.assert_not_called()
+            self.assertFalse((Path(folder) / 'sample').exists())
+            self.assertEqual(occupied.read_bytes(), b'UNCHANGED-PUBLIC')
+
+    @unittest.skipUnless(sys.platform == 'linux', 'private disposable /tmp inventory')
+    def test_prewrite_inventory_rejects_injected_nonempty_or_malformed_results(self):
+        class FakeTuple(tuple):
+            pass
+
+        for names in (('public-sibling',), ('sample',),
+                      ['not-a-tuple'], None, True, FakeTuple(())):
+            with self.subTest(names=repr(names)):
+                with patch.object(module, '_bounded_inventory_names',
+                                  return_value=names) as scan:
+                    with patch.object(module.Path, 'open') as writer:
+                        with patch.object(module, '_start_watch') as watch:
+                            receipt = module.run_demo()
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+                scan.assert_called_once()
+                writer.assert_not_called()
+                watch.assert_not_called()
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
