@@ -5481,6 +5481,33 @@ class DisposableInotifyTests(unittest.TestCase):
         with patch.object(module.os, 'fsencode', return_value=b'a' * 255):
             self.assertFalse(module._plausible_inventory_basename('sample'))
 
+
+    def test_bounded_inventory_scanner_rejects_substituted_encoder_bytes(self):
+        class Entry:
+            name = 'sample'
+        class Scan:
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def __iter__(self):
+                return iter((Entry(),))
+        for wrong in (b'other', b'sample-substitution', b'x' * 255):
+            with self.subTest(encoded=wrong):
+                with patch.object(module.os, 'scandir', return_value=Scan()):
+                    with patch.object(module.os, 'fsencode', return_value=wrong):
+                        with self.assertRaisesRegex(OSError, 'malformed entry name'):
+                            module._bounded_inventory_names(Path('/tmp/public-fake-only'))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux /tmp inventory')
+    def test_live_generated_inventory_surrogateescape_matches_real_bytes(self):
+        with tempfile.TemporaryDirectory(prefix='dec805-public-', dir='/tmp') as folder:
+            name = os.fsdecode(b'public-\\xff-entry')
+            sample = Path(folder) / name
+            sample.write_bytes(b'PUBLIC')
+            self.assertEqual(os.fsencode(name), b'public-\\xff-entry')
+            self.assertEqual(module._bounded_inventory_names(Path(folder)), (name,))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
