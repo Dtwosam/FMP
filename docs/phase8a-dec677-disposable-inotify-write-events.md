@@ -1662,6 +1662,27 @@ confinement and DEC-651 immutable one-shot run385 admission stay BLOCKED.
 The draft requires independent exact-head Phase 3, full historical CI
 and qualified review. **DRAFT / NEVER MERGE**.
 
+
+## DEC-863 — Confirm writer/post-drain metadata continuity in integrated runner
+
+DEC-862 makes the generated writer's plain native `st_mode`, `st_uid`
+and `st_gid` match the watched sample after event draining, and refuses
+foreign or malformed metadata. DEC-863 adds two Linux-generated
+integration regressions without changing runtime: (1) a normal disposable
+private writer and postdrain sample provide the same owner/mode/group
+tuple and still reach `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` (never
+authorization), with both watches installed and the observer FD closed;
+(2) a synthetically substituted writer `st_uid`, `st_gid` or
+`st_mode` is refused `BLOCKED` **before any watch registration or
+queue read**. The strict tip has **524 source-defined test methods**.
+
+These tests do not establish independent OS no-write confinement, atomic
+metadata continuity, host attestation, or annual run385 admission. DEC-650
+20-job independently enforced annual runner protection and DEC-651
+immutable exclusive admission remain BLOCKED. Require this head's own
+Phase 3 and full historical CI and qualified independent review.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
