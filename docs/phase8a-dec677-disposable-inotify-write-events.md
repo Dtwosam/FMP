@@ -893,6 +893,14 @@ A genuine rename from `old-public-child` to `new-public-child` must produce a sy
 
 Two source-defined methods bring the suite to **437 unique methods**. No production or observer source modification, annual dispatch, privileged data, workflow, runner or broker access. Kernel-backed local inotify behavior is not independently enforced 20-job annual write prevention or run385 admission.
 
+## DEC-797 — Bound explicit Python CLI argv inputs and normalize parser wrapper errors
+
+The generated disposable observer's ordinary shell entry point calls `main(None)`, letting `argparse` process OS-provided string arguments. Earlier DEC-768 converted `argparse.SystemExit` from invalid or incompatible CLI switches into a `BLOCKED` machine-readable JSON receipt. The directly callable Python `main(argv=...)` boundary still accepted arbitrary injected iterables or element objects: malformed Python values could trigger a `TypeError` or other exception inside `argparse` and escape without the nonauthorizing receipt.
+
+DEC-797 requires explicitly supplied `argv` to be an exact plain `list` of at most 16 exact plain `str` entries, each at most 256 characters. Other explicit argument structures are immediately `BLOCKED` exit2 with JSON and cannot launch a demo. It also normalizes ordinary unexpected parser-wrapper exceptions into the same blocked receipt while retaining the existing `SystemExit` behavior. The normal `argv=None` OS CLI path and its supported flags are unchanged.
+
+Three source-defined tests bring the suite to **440 distinct methods**, covering malformed argument containers/elements and forged `str` subclasses, oversized direct arguments, and an injected unexpected parser exception; each asserts no demo execution and permanently false authorization fields. This is defensive local CLI input handling, not an actual annual-runner command surface or permission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
