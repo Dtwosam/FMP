@@ -30,6 +30,9 @@ IN_MOVED_TO = 0x00000080
 IN_CREATE = 0x00000100
 IN_DELETE = 0x00000200
 IN_ISDIR = 0x40000000
+# Registration-only safeguards; never accept these bits as event record masks.
+IN_ONLYDIR = 0x01000000
+IN_DONT_FOLLOW = 0x02000000
 IN_DELETE_SELF = 0x00000400
 IN_MOVE_SELF = 0x00000800
 IN_Q_OVERFLOW = 0x00004000
@@ -480,11 +483,13 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
     # returns the complete dual-watch tuple. A ctypes call that raises (not
     # just one returning -1) must not leak the observer descriptor.
     try:
-        wd = lib.inotify_add_watch(fd, os.fsencode(path), MASK)
+        wd = lib.inotify_add_watch(fd, os.fsencode(path), MASK | IN_DONT_FOLLOW)
         if type(wd) is not int or not 1 <= wd <= MAX_WATCH_DESCRIPTOR:
             error = ctypes.get_errno()
             raise OSError(error or 22, "disposable inotify_add_watch failed")
-        directory_wd = lib.inotify_add_watch(fd, os.fsencode(path.parent), DIRECTORY_MASK)
+        directory_wd = lib.inotify_add_watch(
+            fd, os.fsencode(path.parent),
+            DIRECTORY_MASK | IN_DONT_FOLLOW | IN_ONLYDIR)
         if (type(directory_wd) is not int
                 or not 1 <= directory_wd <= MAX_WATCH_DESCRIPTOR
                 or directory_wd == wd):
