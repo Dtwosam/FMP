@@ -6016,19 +6016,52 @@ class DisposableInotifyTests(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux file close boundary')
     def test_initial_exclusive_close_failure_never_starts_watch(self):
+        class RealisticPublicFdStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 12
+            st_ino = 99
+            st_nlink = 1
+
         with patch.object(module.Path, 'open') as opener:
             stream = opener.return_value.__enter__.return_value
             stream.fileno.return_value = 19
             stream.write.return_value = len(module.BEFORE)
             opener.return_value.__exit__.side_effect = OSError(
                 28, 'synthetic public file close failure')
-            with patch.object(module, '_start_watch') as watch:
-                receipt = module.run_demo()
+            # The new original-inode guard must be satisfied so that this
+            # test still reaches the distinct writer __exit__ close fault.
+            with patch.object(module.os, 'fstat',
+                              return_value=RealisticPublicFdStat()) as fst:
+                with patch.object(module, '_start_watch') as watch:
+                    receipt = module.run_demo()
         self.assertEqual(receipt['status'], 'BLOCKED')
         self.assertFalse(receipt['can_authorize_dispatch'])
         self.assertFalse(receipt['independent_os_proof_verified'])
         stream.write.assert_called_once_with(module.BEFORE)
+        fst.assert_called_once_with(19)
+        opener.return_value.__exit__.assert_called_once_with(None, None, None)
         watch.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'exclusive writer fstat exception')
+    def test_initial_writer_fstat_failure_blocks_and_exits_before_watcher(self):
+        for failure in (OSError(9, 'synthetic unreadable writer inode'),
+                        RuntimeError('synthetic fstat wrapper fault')):
+            with self.subTest(failure=type(failure).__name__):
+                with patch.object(module.Path, 'open') as opener:
+                    stream = opener.return_value.__enter__.return_value
+                    stream.fileno.return_value = 19
+                    stream.write.return_value = len(module.BEFORE)
+                    with patch.object(module.os, 'fstat',
+                                      side_effect=failure) as fst:
+                        with patch.object(module, '_start_watch') as watcher:
+                            receipt = module.run_demo()
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+                stream.write.assert_called_once_with(module.BEFORE)
+                fst.assert_called_once_with(19)
+                opener.return_value.__exit__.assert_called_once()
+                watcher.assert_not_called()
 
     @unittest.skipUnless(sys.platform == 'linux', 'native Linux exclusive baseline')
     def test_native_exclusive_creation_produces_exact_readable_source(self):
