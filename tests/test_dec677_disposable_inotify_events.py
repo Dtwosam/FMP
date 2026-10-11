@@ -4311,6 +4311,38 @@ class DisposableInotifyTests(unittest.TestCase):
             module._checked_snapshot_metadata(FakeStat()),
             (FakeStat.st_mode, 1, 2, 1, 100, 200))
 
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'link'),
+                         'disposable Linux hard-link control')
+    def test_live_generated_hardlink_alias_blocks_then_recovers_after_unlink(self):
+        with tempfile.TemporaryDirectory(prefix='dec774-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            alias = Path(folder) / 'second-public-link'
+            path.write_bytes(module.BEFORE)
+            initial = module._snapshot_regular(path)
+            self.assertEqual(initial[1], module.BEFORE)
+            os.link(path, alias)
+            self.assertEqual(os.stat(path).st_nlink, 2)
+            with self.assertRaisesRegex(OSError, 'bounded regular inode'):
+                module._snapshot_regular(path)
+            alias.unlink()
+            self.assertEqual(os.stat(path).st_nlink, 1)
+            self.assertEqual(module._snapshot_regular(path), initial)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux unlinked FD')
+    def test_live_unlinked_generated_fd_metadata_is_not_accepted(self):
+        with tempfile.TemporaryDirectory(prefix='dec774-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            path.write_bytes(module.BEFORE)
+            fd = os.open(path, os.O_RDONLY)
+            try:
+                path.unlink()
+                self.assertEqual(os.fstat(fd).st_nlink, 0)
+                with self.assertRaisesRegex(OSError, 'bounded regular inode'):
+                    module._checked_snapshot_metadata(os.fstat(fd))
+            finally:
+                os.close(fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
