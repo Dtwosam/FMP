@@ -795,6 +795,12 @@ The generated public hard-link alias verifier already required two no-follow pat
 
 Two new regression methods bring the suite to **406 unique test methods**: inconsistent owner/group/size/time values invalidate an otherwise matching device/inode pair; malformed, impossible or substituted values are rejected before crediting local alias identity. Real generated /tmp hard-link tests remain unchanged. This strengthens only local disposable consistency and does not prove independent kernel-origin evidence or production annual OS confinement.
 
+## DEC-783 — Revalidate the generated two-link alias after the link-count refusal
+
+DEC-781 distinguishes the precise `_SnapshotHardlinkCountError` from unrelated snapshot errors, and DEC-782 checks bounded metadata from both alias path stats. The hard-link negative mode still credited a specific link-count refusal based only on an alias check **before** the second snapshot. If the generated two-link alias disappeared or its identity changed during the probe, the successful local witness claim would be stale, even though the final status remained BLOCKED.
+
+DEC-783 performs the same bounded no-follow generated-path alias check a **second time after catching the precise link-count refusal**. Only two successful verifications bracketing the refusal may receive its local 'negative control blocked' finding. If the post-check fails, the status stays BLOCKED but reports 'alias changed during guard probe'. Two new source-defined regression methods bring the suite to **408 distinct test methods**: alias loss is not credited even with the precise exception and valid watch cleanup, and matching before/after alias checks retain the expected negative-control finding. This does not close an adversarial race between two observations or constitute independent OS enforcement.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
