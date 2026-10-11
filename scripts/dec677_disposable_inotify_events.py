@@ -110,6 +110,23 @@ def _checked_disposable_observer_result(value: Any) -> dict[str, Any]:
         status = value["status"]
         findings = value["findings"]
         checks = value["observed_checks"]
+        # Reject over-limit collections before copying. Once copied, validate
+        # and return only our independent native receipt, not a caller-owned
+        # dict/list/map that could be mutated after the check.
+        if (type(findings) is not list
+                or len(findings) > MAX_RECEIPT_FINDINGS
+                or type(checks) is not dict
+                or len(checks) > MAX_RECEIPT_CHECKS):
+            raise ValueError("invalid disposable receipt collection bounds")
+        receipt = {
+            "status": status,
+            "findings": findings.copy(),
+            "observed_checks": checks.copy(),
+            "can_authorize_dispatch": value["can_authorize_dispatch"],
+            "independent_os_proof_verified": value["independent_os_proof_verified"],
+        }
+        findings = receipt["findings"]
+        checks = receipt["observed_checks"]
         if (type(status) is not str
                 or status not in ("BLOCKED", "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED")
                 or type(findings) is not list
@@ -139,7 +156,7 @@ def _checked_disposable_observer_result(value: Any) -> dict[str, Any]:
             raise ValueError("invalid disposable receipt values")
     except Exception:
         return _outcome(["synthetic evaluator returned an invalid nonauthorizing receipt"])
-    return value
+    return receipt
 
 
 def _classify_stream(data: bytes, watch: int,
