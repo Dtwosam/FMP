@@ -1170,6 +1170,29 @@ This child requires separate exact-head Phase 3 and historical CI plus
 qualified independent review. DEC-650/651 annual no-write confinement and
 immutable run385 admission remain blocked. **DRAFT / NEVER MERGE**.
 
+
+## DEC-842 — Recheck the watched disposable sample inode after event draining
+
+The DEC-841 postdrain probe protects the **parent** identity, but a synthetic
+same-directory replacement can leave that parent inode unchanged while
+changing the basename `sample` after its last snapshot. DEC-842 adds a
+bounded no-follow `lstat` check of the watched sample immediately before the
+disposable evaluator, matching the original exclusive-writer FD's recorded
+inode. An unexpected replacement, malformed sample identity or failed stat
+blocks without evaluator entry. The intentionally generated
+`replace_watched_inode=True` negative control is exempt from this early
+refusal so its original replacement-detection evidence remains exercised and
+non-authorizing. A new Linux fixture-driven regression covers a forged inode
+and a stat failure arising during event drain. It requires `BLOCKED`, zero
+evaluator calls, false authorization booleans and FD cleanup. **494 distinct
+source-defined tests** now appear on the strict integrated line.
+
+This is still **not atomic confinement**, does not detect a same-inode
+write/revert after the final bytes snapshot without trustworthy events,
+and cannot provide DEC-650 independent OS no-write proof or DEC-651 immutable
+run385 admission. Exact-head Phase 3/full historical tests and independent
+security review are still required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
