@@ -1247,6 +1247,9 @@ def main(argv: list[str] | None = None) -> int:
                   or args.execute_transient_directory_negative
                   or args.execute_hardlink_alias_negative)
               else _outcome(["explicit synthetic observer opt-in required"]))
+    # The CLI is another trust boundary: injected or malformed runner receipts
+    # must not be serialized as authorizing results or decide exit status.
+    result = _checked_disposable_observer_result(result)
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 3 if result["status"] == "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED" else 2
 

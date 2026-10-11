@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import random
@@ -7369,6 +7371,48 @@ class DisposableInotifyTests(unittest.TestCase):
                         os.fstat(read_fd)
                 finally:
                     os.close(write_fd)
+
+
+    def test_cli_rejects_injected_runner_authorization_receipts(self):
+        valid = module._outcome(['generated blocked receipt'])
+        invalid = (
+            ('dispatch-promoted', dict(valid, can_authorize_dispatch=True)),
+            ('proof-promoted', dict(valid, independent_os_proof_verified=True)),
+            ('fabricated-authorized', dict(valid, status='AUTHORIZED')),
+            ('missing-fields', {'status': 'BLOCKED'}),
+            ('invalid-check', dict(valid, observed_checks={'quiet': 1})),
+            ('nondict', None),
+        )
+        for case, forged in invalid:
+            with self.subTest(case=case):
+                stdout = io.StringIO()
+                with patch.object(module, 'run_demo',
+                                  return_value=forged) as runner:
+                    with contextlib.redirect_stdout(stdout):
+                        exit_code = module.main(['--execute-disposable-control'])
+                self.assertEqual(exit_code, 2)
+                receipt = json.loads(stdout.getvalue())
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertIs(receipt['can_authorize_dispatch'], False)
+                self.assertIs(receipt['independent_os_proof_verified'], False)
+                self.assertIn('invalid nonauthorizing receipt',
+                              ' '.join(receipt['findings']))
+                runner.assert_called_once()
+
+    def test_cli_preserves_both_nonauthorizing_receipt_exit_codes(self):
+        for findings, expected_status, expected_code in (
+                ([], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED', 3),
+                (['synthetic blocked'], 'BLOCKED', 2)):
+            with self.subTest(expected_status=expected_status):
+                native_receipt = module._outcome(findings, {'synthetic': True})
+                stdout = io.StringIO()
+                with patch.object(module, 'run_demo',
+                                  return_value=native_receipt) as runner:
+                    with contextlib.redirect_stdout(stdout):
+                        code = module.main(['--execute-disposable-control'])
+                self.assertEqual(code, expected_code)
+                self.assertEqual(json.loads(stdout.getvalue()), native_receipt)
+                runner.assert_called_once()
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
