@@ -781,6 +781,14 @@ DEC-779 verifies that the generated public hard-link negative control actually p
 
 DEC-780 validates `linked is None` immediately after the generated-link attempt, returning an explicit `BLOCKED` malformed-status finding if the shape is not exact, before any alias verification or second snapshot. Two new source-defined regression methods raise the suite to **401 distinct test methods**: hostile nonvoid returns are rejected with valid observer FD cleanup and no alias-verifier invocation, while a live disposable Linux `os.link` returns native `None` and the resulting two-link alias remains locally verifiable. This only hardens same-process disposable API contracts; neither syscall return nor local /tmp stat values provide independently authenticated host security proof.
 
+## DEC-781 — Attribute hard-link negative refusal only to its one-link guard
+
+The generated /tmp alias negative mode previously interpreted *any* `OSError` from the second bounded snapshot as proof that the one-link guard rejected a two-linked inode. An injected read error, unrelated open/fstat failure or wrapper exception could therefore be credited as a detected hard-link negative even after locally verifying the alias path. Such a receipt was still `BLOCKED`, but misrepresented the provenance of its detection.
+
+DEC-781 introduces a narrow `_SnapshotHardlinkCountError(OSError)` emitted **only** when valid ordinary snapshot metadata has a link count other than one. The alias negative mode credits only this precise subtype; other snapshot `OSError` exceptions are still `BLOCKED` but carry a separate 'without link-count proof' finding. This preserves every existing fail-closed result and the outward snapshot bytes/identity interface. The internal checked-metadata return annotation is also brought into line with its existing eight-field tuple.
+
+Three source-defined regression methods bring the suite to **404 distinct methods**, testing the specific subtype, refusal to credit a synthetic unrelated OSError and successful classification of the precise one-link guard. No production annual runner or protected data is touched; even a locally credited control is not independent OS confinement proof.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
