@@ -7523,8 +7523,9 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertFalse(blocked['independent_os_proof_verified'])
                 self.assertIn('invalid nonauthorizing receipt',
                               ' '.join(blocked['findings']))
-        self.assertIs(module._checked_disposable_observer_result(baseline),
-                      baseline)
+        checked = module._checked_disposable_observer_result(baseline)
+        self.assertEqual(checked, baseline)
+        self.assertIsNot(checked, baseline)
 
     def test_cli_does_not_serialize_oversized_synthetic_runner_receipt(self):
         oversized = module._outcome(['x' * (module.MAX_RECEIPT_FINDING_CHARS + 1)])
@@ -7547,8 +7548,9 @@ class DisposableInotifyTests(unittest.TestCase):
     def test_receipt_validator_requires_sorted_unique_plain_findings(self):
         canonical = module._outcome(['z-final', 'a-initial', 'z-final'])
         self.assertEqual(canonical['findings'], ['a-initial', 'z-final'])
-        self.assertIs(module._checked_disposable_observer_result(canonical),
-                      canonical)
+        checked = module._checked_disposable_observer_result(canonical)
+        self.assertEqual(checked, canonical)
+        self.assertIsNot(checked, canonical)
 
         class StringAlias(str):
             pass
@@ -7692,7 +7694,9 @@ class DisposableInotifyTests(unittest.TestCase):
             directory_watch=10, directory_inventory_names=('sample',))
         self.assertEqual(clean['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
         self.assertEqual(set(clean['observed_checks']), module.LOCAL_RECEIPT_CHECKS)
-        self.assertIs(module._checked_disposable_observer_result(clean), clean)
+        checked = module._checked_disposable_observer_result(clean)
+        self.assertEqual(checked, clean)
+        self.assertIsNot(checked, clean)
         genuine_checks = clean['observed_checks']
         cases = (
             ('missing-all', {}),
@@ -7773,6 +7777,38 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertIn('parser setup raised unexpectedly',
                               ' '.join(receipt['findings']))
                 runner.assert_not_called()
+
+
+    def test_validated_receipts_do_not_alias_mutable_synthetic_input(self):
+        clean = module._evaluate(
+            module.BEFORE, module.BEFORE, b'', 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        blocked = module._outcome(
+            ['initial synthetic finding'], {'synthetic_check': False})
+        for case, original in (('quiet', clean), ('blocked', blocked)):
+            with self.subTest(case=case):
+                expected = {
+                    'status': original['status'],
+                    'findings': list(original['findings']),
+                    'observed_checks': dict(original['observed_checks']),
+                    'can_authorize_dispatch': False,
+                    'independent_os_proof_verified': False,
+                }
+                validated = module._checked_disposable_observer_result(original)
+                self.assertEqual(validated, expected)
+                self.assertIsNot(validated, original)
+                self.assertIsNot(validated['findings'], original['findings'])
+                self.assertIsNot(validated['observed_checks'],
+                                 original['observed_checks'])
+                # Mutate the formerly trusted input after the check.
+                original['can_authorize_dispatch'] = True
+                original['independent_os_proof_verified'] = True
+                original['status'] = 'AUTHORIZED'
+                original['findings'].append('late injected finding')
+                original['observed_checks']['injected_late_check'] = True
+                self.assertEqual(validated, expected)
+                self.assertIs(validated['can_authorize_dispatch'], False)
+                self.assertIs(validated['independent_os_proof_verified'], False)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
