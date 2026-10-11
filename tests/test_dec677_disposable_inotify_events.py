@@ -10212,6 +10212,31 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(receipt['findings'])
         self.assertIs(type(receipt['observed_checks']), dict)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real native disposable negative CLI matrix')
+    def test_real_subprocess_disposable_cli_all_other_negative_modes_block(self):
+        # Unpatched separate processes execute only the self-created public
+        # Linux /tmp fixture, never any user-supplied or annual source path.
+        modes = (
+            '--execute-inode-replacement-negative',
+            '--execute-sibling-creation-negative',
+            '--execute-transient-directory-negative',
+            '--execute-hardlink-alias-negative',
+        )
+        for option in modes:
+            with self.subTest(option=option):
+                process = subprocess.run(
+                    [sys.executable, '-B', str(SCRIPT), option],
+                    capture_output=True, text=True, timeout=10)
+                self.assertEqual(process.returncode, 2, (option, process.stderr))
+                self.assertEqual(process.stderr, '')
+                self.assertEqual(process.stdout.count('\n'), 1)
+                receipt = json.loads(process.stdout)
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertIs(receipt['can_authorize_dispatch'], False)
+                self.assertIs(receipt['independent_os_proof_verified'], False)
+                self.assertTrue(receipt['findings'])
+                self.assertIs(type(receipt['observed_checks']), dict)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
