@@ -1335,6 +1335,25 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         os.lstat(folder_path))
                     if receipt_inventory_parent_inode != initial_folder_inode:
                         raise OSError("disposable parent changed during receipt inventory")
+                    # The directory census tracks names, not the source inode.
+                    # A same-byte replacement or chmod made while scanning
+                    # preserves the names and original parent dev/ino.
+                    # Recheck the generated sample itself after the census.
+                    # This is still a sequential, non-atomic observation.
+                    receipt_inventory_sample_record = os.lstat(path)
+                    if (_checked_initial_sample_identity(receipt_inventory_sample_record)
+                            != initial_sample_inode):
+                        raise OSError("disposable sample inode changed during receipt inventory")
+                    receipt_inventory_sample_size = receipt_inventory_sample_record.st_size
+                    if (type(receipt_inventory_sample_size) is not int
+                            or receipt_inventory_sample_size != len(BEFORE)):
+                        raise OSError("disposable sample size changed during receipt inventory")
+                    if (_checked_generated_sample_access_identity(receipt_inventory_sample_record)
+                            != initial_sample_access):
+                        raise OSError("disposable sample access changed during receipt inventory")
+                    if (_checked_generated_sample_change_timestamps(receipt_inventory_sample_record)
+                            != drained_change_timestamps):
+                        raise OSError("disposable sample timestamps changed during receipt inventory")
                 return _checked_disposable_observer_result(
                     _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
