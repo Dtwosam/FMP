@@ -1013,6 +1013,13 @@ The exact full historical `tests` run for draft #1011, source head `323205c15120
 
 DEC-819 is test/docs-only: it eagerly captures the unmodified source `Path` text before installing the synthetic `os.fspath` monkeypatch, and asserts the initial value matches the generated public path. The existing regression still requires early fspath mismatch and zero encoder calls. Source runtime code is **identical** to #1021. Distinct source-defined method count remains **468**. #1011's original failed run is not relabeled; this new child requires its own exact-head Phase 3 and full tests.
 
+
+## DEC-820 — Regression tests for exclusive sample descriptor and write exceptions
+
+DEC-818 checks the initial generated sample's nonstdio descriptor before allowing any bytes to be written, but existing tests exercised malformed return values rather than exceptions thrown by `fileno()`. DEC-820 adds fail-closed coverage for an ordinary `OSError` and unexpected `RuntimeError`/`ValueError` at that exact getter. Each must emit `BLOCKED`, skip the initial write, skip inotify registration and retain permanently false authorization fields. A second regression supplies a valid fake nonstdio descriptor, then makes the writer raise an ordinary `OSError` or unexpected `RuntimeError`; neither may advance to inotify registration. All new tests run only in the disposable generated /tmp environment and mock the initial writer without touching annual assets.
+
+This test/documentation-only immediate child adds **two distinct methods** (470 uniquely named source-defined tests). Observer runtime code remains unchanged. The tests do not independently authenticate file descriptors, prevent privileged interference, prove annual 20-job OS confinement, or authorize the annual dispatcher. Both CI workflows and independent qualified security/source review remain required at the exact child head.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
