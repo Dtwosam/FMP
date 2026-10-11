@@ -8545,6 +8545,58 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native generated symlink substitution')
+    def test_real_generated_late_symlink_swap_after_last_snapshot_blocks(self):
+        native_snapshot = module._snapshot_regular
+        read_fd, write_fd = os.pipe()
+        state = {'snapshots': 0, 'swapped': False, 'symlink_target': None}
+
+        def snapshot(path):
+            identity, payload = native_snapshot(path)
+            state['snapshots'] += 1
+            if state['snapshots'] == 3:
+                # Both entries are exclusively generated disposable /tmp
+                # fixtures. The late symlink points only to public bytes;
+                # no protected file is opened or referenced.
+                target = path.with_name('synthetic-public-symlink-target')
+                link = path.with_name('synthetic-late-sample-link')
+                target.write_bytes(payload)
+                os.symlink(target.name, link)
+                os.replace(link, path)
+                record = os.lstat(path)
+                self.assertTrue(module.stat.S_ISLNK(record.st_mode))
+                self.assertEqual(os.readlink(path), target.name)
+                self.assertEqual(path.read_bytes(), payload)
+                state['symlink_target'] = target.name
+                state['swapped'] = True
+            return identity, payload
+
+        try:
+            with patch.object(module, '_snapshot_regular',
+                              side_effect=snapshot) as snapshots:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluate:
+                            receipt = module.run_demo()
+            self.assertTrue(state['swapped'])
+            self.assertEqual(state['symlink_target'],
+                             'synthetic-public-symlink-target')
+            self.assertEqual(state['snapshots'], 3)
+            self.assertEqual(snapshots.call_count, 3)
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluate.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

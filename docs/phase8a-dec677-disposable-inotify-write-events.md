@@ -1896,6 +1896,29 @@ and DEC-651 immutable run385 admission remain BLOCKED; exact-head Phase 3,
 full historical regression and independent security review are required.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-873 — Native post-snapshot symlink substitution of public sample
+
+DEC-872 demonstrates that the generated sample's final pathname inode
+probe rejects a native same-bytes regular-file replacement. DEC-873
+adds a separate late symlink substitution: after the third no-follow
+bounded sample snapshot, a generated symlink to a second **public
+disposable /tmp file containing identical bytes** replaces the source
+pathname. A native `os.lstat` confirms the pathname is now a symlink,
+while dereferenced bytes still match the original sample. The final
+path-type and writer-identity check must yield `BLOCKED`, with no local
+evaluator call, a closed synthetic watcher descriptor and exact false
+dispatch/OS-proof fields. Only generated tests/docs change; **535
+source-defined test methods** at this strict tip.
+
+The symlink targets only generated public data, not protected or annual
+runner files. This is a controlled native path-substitution regression,
+not proof that inotify would be silent or that kernel no-write confinement
+exists. DEC-650 20-job annual independent confinement and DEC-651
+immutable run385 one-shot server admission remain BLOCKED. Exact-head
+Phase 3/full historical CI and qualified independent review mandatory.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
