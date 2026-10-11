@@ -2362,6 +2362,31 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own exact-head
 Phase 3, full historical CI and independent qualified security review
 required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-892 — Real late hardlink alias after final link-count check
+
+DEC-884 tests a genuine generated hardlink alias inserted **during**
+the third parent census, where final sample metadata still detects
+the link-count drift. DEC-892 tests a later boundary: immediately
+**after** the third and last native sample timestamp checker has
+captured the old record, create a hard link to that very inode under
+a different generated public /tmp basename. The original source and
+alias share dev/ino with native `st_nlink == 2`, even though the final
+sample metadata read is already complete.
+
+The first genuine Linux inotify drain must be empty. The immediate
+last native queue check must contain well-formed watched-inode
+`IN_ATTRIB` and parent directory-create events, and the observer
+must return `BLOCKED` before local evaluator invocation. Both
+authority flags remain exactly false, with the observer FD closed.
+One native regression makes **564 distinct source-defined methods**.
+
+Generated Linux observations are not independently enforced no-write
+confinement, atomic exclusion of future alias races, or immutable
+annual admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified independent
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
