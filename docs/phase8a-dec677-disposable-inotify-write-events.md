@@ -901,6 +901,14 @@ DEC-797 requires explicitly supplied `argv` to be an exact plain `list` of at mo
 
 Three source-defined tests bring the suite to **440 distinct methods**, covering malformed argument containers/elements and forged `str` subclasses, oversized direct arguments, and an injected unexpected parser exception; each asserts no demo execution and permanently false authorization fields. This is defensive local CLI input handling, not an actual annual-runner command surface or permission.
 
+## DEC-798 — Require exact opt-in long flags for the disposable observer
+
+The generated Linux /tmp observer deliberately requires an explicit `--execute-...` command-line switch before any demonstration can run. Python `argparse.ArgumentParser` defaults to `allow_abbrev=True`, so an otherwise-unrecognized **prefix** such as `--execute-hardlink-alias-neg` or `--execute-disposable-cont` could be interpreted as the full switch and run the disposable control without the exact documented opt-in. The resulting receipt was never annual authorization, but accepting undocumented prefixes weakens the explicit local operation boundary.
+
+DEC-798 sets `allow_abbrev=False` so only the exact six documented long options can activate a generated local mode. Rejected prefixes still produce `BLOCKED` exit2 JSON under the existing DEC-768 parser-exit handling; supported complete switches retain their prior behavior. Three source-defined regression methods bring the suite to **443 unique tests**, covering all six abbreviated direct-call switches without any observer invocation, the abbreviated hard-link option in a CLI subprocess with blocked JSON, and the complete `--execute-disposable-control` option retaining its deliberately patched nonauthorizing result.
+
+Only disposable inotify source, tests and docs change; no annual run dispatch surface, production workflow, protected evidence or broker changes.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
