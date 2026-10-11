@@ -5913,6 +5913,42 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(module._classify_stream(
             directory_event, 9, directory_watch=10)['well_formed'])
 
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'disposable Linux directory symlink')
+    def test_live_symlink_parent_cannot_satisfy_directory_watch_registration(self):
+        with tempfile.TemporaryDirectory(prefix='dec803-public-', dir='/tmp') as folder:
+            real_parent = Path(folder) / 'real-public-directory'
+            real_parent.mkdir()
+            sample = real_parent / 'sample'
+            module._write_generated_payload(sample, module.BEFORE)
+            parent_alias = Path(folder) / 'parent-directory-alias'
+            parent_alias.symlink_to(real_parent, target_is_directory=True)
+            alias_sample = parent_alias / 'sample'
+            self.assertEqual(alias_sample.read_bytes(), module.BEFORE)
+            self.assertTrue(parent_alias.is_symlink())
+            # The file pathname can traverse an intermediate symlink, but
+            # the directory watch's final symlink cannot satisfy ONLYDIR
+            # when registration also uses DONT_FOLLOW.
+            with self.assertRaises(OSError):
+                module._start_watch(alias_sample)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux ordinary parent')
+    def test_live_real_generated_directory_satisfies_onlydir_watch(self):
+        with tempfile.TemporaryDirectory(prefix='dec803-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            module._write_generated_payload(path, module.BEFORE)
+            fd, file_wd, directory_wd = module._start_watch(path)
+            try:
+                self.assertGreaterEqual(fd, 3)
+                self.assertGreater(file_wd, 0)
+                self.assertGreater(directory_wd, 0)
+                self.assertNotEqual(file_wd, directory_wd)
+                self.assertEqual(module._snapshot_regular(path)[1],
+                                 module.BEFORE)
+            finally:
+                os.close(fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
