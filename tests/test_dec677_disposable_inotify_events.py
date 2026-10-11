@@ -4396,6 +4396,50 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(result['can_authorize_dispatch'])
         self.assertFalse(result['independent_os_proof_verified'])
 
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'link'),
+                         'disposable live Linux hard-link control')
+    def test_live_hardlink_negative_reports_specific_control_refusal(self):
+        result = module.run_demo(hardlink_negative=True)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIn(
+            'deliberate generated hard-link alias negative control blocked',
+            result['findings'])
+        self.assertFalse(result['can_authorize_dispatch'])
+        self.assertFalse(result['independent_os_proof_verified'])
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch test')
+    def test_hardlink_creation_wrapper_failure_blocks_and_closes_watcher(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((1, 2), module.BEFORE)):
+                    with patch.object(module.os, 'link',
+                                      side_effect=RuntimeError('synthetic link syscall wrapper')):
+                        with patch.object(module, '_read_pending') as drain:
+                            result = module.run_demo(hardlink_negative=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertFalse(result['can_authorize_dispatch'])
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    def test_cli_conflicting_hardlink_and_existing_mode_blocked_before_runner(self):
+        p = subprocess.run(
+            [sys.executable, '-B', str(SCRIPT),
+             '--execute-hardlink-alias-negative',
+             '--execute-reverted-write-negative'],
+            capture_output=True, text=True, timeout=4)
+        self.assertEqual(p.returncode, 2)
+        result = json.loads(p.stdout)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIn('CLI arguments rejected', result['findings'][0])
+        self.assertFalse(result['can_authorize_dispatch'])
+        self.assertFalse(result['independent_os_proof_verified'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

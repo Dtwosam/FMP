@@ -749,6 +749,12 @@ DEC-773 checks `st_nlink==1`, and DEC-774 validates refusal on real disposable `
 
 The new mode is mutually exclusive with the other negative controls at both `run_demo` and CLI boundaries, and never feeds a hard-link fixture into the evaluator as purported quiet evidence. Four source-defined regression methods increase the suite to **386 uniquely named methods**: malformed mode type fails before watch allocation, mixing this mode with existing negatives is rejected, an injected snapshot bypass is still blocked with FD cleanup, and explicit CLI usage yields `BLOCKED` exit2 with false authorization flags. This is an untrusted *local* filesystem demonstration, not security proof of protected annual job confinement.
 
+## DEC-776 — Verify the new hard-link CLI control executes and fails closed
+
+DEC-775 adds `--execute-hardlink-alias-negative`, an explicit generated `/tmp` negative mode that always blocks regardless of whether the single-link snapshot guard refuses or an injected helper wrongly accepts the alias. DEC-776 is a **test-and-documentation-only strict child** strengthening control-path verification: a live Linux inotify/watch experiment must reach the specific negative-control refusal finding after creating the generated link alias; a patched `os.link` wrapper that raises unexpectedly must produce `BLOCKED` and close the valid observer FD without draining a fabricated queue; and conflicting CLI opt-ins must return nonauthorizing exit-2 JSON without launching the runner.
+
+Three source-defined methods bring the suite to **389 uniquely named tests**. No production runtime, script source, workflow, runner, permission or protected annual evidence is changed in this child. A correctly observed local refusal remains *toy negative evidence*, not independent OS-enforced isolation or annual 385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
