@@ -1468,6 +1468,28 @@ DEC-650 independent confinement for 20 annual jobs and DEC-651 exclusive
 run385 admission remain BLOCKED. Exact-head Phase 3/full historical CI
 and independent security review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-855 — Reject duplicate or unsorted synthetic findings
+
+The generated observer's native `_outcome` always serializes findings as
+`sorted(set(findings))`, but the injected evaluator/runner receipt validator
+previously accepted duplicated or reordered plain-string finding lists.
+DEC-855 checks that the result actually retains this canonical sorted,
+deduplicated form after the exact type and size gates from DEC-850–854.
+A forged report is downgraded to a fresh `BLOCKED` nonauthorizing receipt.
+
+Two new in-process regression methods confirm native `_outcome` keeps its
+sorted unique list, then reject duplicate, reordered, and string-subclass
+findings both at the validator and CLI JSON boundary. **512 distinct
+source-defined test methods** at this draft tip. No annual or production
+runner path, permission, broker action or protected evidence is touched.
+
+These checks only validate synthetic Python receipt integrity; they do
+not prove independent OS no-write isolation or support run385 admission.
+DEC-650 annual 20-job independent confinement and DEC-651 immutable
+run385 admission remain BLOCKED. Exact-head Phase 3/full historical CI
+and qualified independent review remain required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

@@ -102,6 +102,10 @@ def _checked_disposable_observer_result(value: Any) -> dict[str, Any]:
                 or any(type(item) is not str
                        or not 1 <= len(item) <= MAX_RECEIPT_FINDING_CHARS
                        for item in findings)
+                # _outcome emits exactly sorted, deduplicated findings.
+                # Do not present a synthetic duplicated/reordered report as
+                # the canonical generated observer's own receipt.
+                or findings != sorted(set(findings))
                 or type(checks) is not dict
                 or len(checks) > MAX_RECEIPT_CHECKS
                 or any(type(key) is not str
