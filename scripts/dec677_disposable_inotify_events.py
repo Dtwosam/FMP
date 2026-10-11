@@ -749,8 +749,10 @@ def _rewrite_generated_with_fsync(path: Path, payload: bytes) -> None:
         count = handle.write(payload)
         if type(count) is not int or count != len(payload):
             raise OSError("disposable rewrite returned malformed byte count")
-        handle.flush()
-        os.fsync(handle.fileno())
+        if handle.flush() is not None:
+            raise OSError("disposable rewrite flush returned malformed status")
+        if os.fsync(handle.fileno()) is not None:
+            raise OSError("disposable rewrite fsync returned malformed status")
 
 
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
