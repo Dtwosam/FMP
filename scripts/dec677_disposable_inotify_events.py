@@ -1125,6 +1125,13 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 # events emitted *during* those reads are not silently left
                 # outside the disposable observer's sampled interval.
                 raw = _read_pending(fd)
+                # Keep the directory bound through the event-drain boundary,
+                # not just through the inventory. This remains a non-atomic
+                # pathname observation, never an OS confinement claim.
+                drained_folder_inode = _checked_generated_directory_identity(
+                    os.lstat(folder_path))
+                if drained_folder_inode != initial_folder_inode:
+                    raise OSError("disposable parent directory changed during event drain")
                 return _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
                                  replacement_negative=replace_watched_inode,
