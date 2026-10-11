@@ -692,8 +692,14 @@ def _checked_snapshot_result(value: Any) -> tuple[tuple[int, int], bytes]:
     return identity, data
 
 
-def _plausible_generated_hardlink_pair(source: Path, alias: Path) -> bool:
-    """Validate generated local link identities, never independent host proof."""
+def _plausible_generated_hardlink_pair(
+        source: Path, alias: Path, expected_inode: tuple[int, int] | None = None) -> bool:
+    """Validate generated local links against the baseline inode when supplied."""
+    if expected_inode is not None and (
+        type(expected_inode) is not tuple or len(expected_inode) != 2
+        or any(type(part) is not int or not 0 <= part <= MAX_KERNEL_STAT_ID
+               for part in expected_inode)):
+        return False
     try:
         first = os.stat(source, follow_symlinks=False)
         second = os.stat(alias, follow_symlinks=False)
@@ -720,7 +726,8 @@ def _plausible_generated_hardlink_pair(source: Path, alias: Path) -> bool:
                     or not MIN_KERNEL_TIMESTAMP_NS <= ctime_ns <= MAX_KERNEL_TIMESTAMP_NS):
                 return False
             identities.append(values)
-        return identities[0] == identities[1]
+        return (identities[0] == identities[1]
+                and (expected_inode is None or identities[0][1:3] == expected_inode))
     except Exception:
         return False
 
@@ -776,7 +783,7 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     if linked is not None:
                         return _outcome([
                             "disposable hard-link syscall returned malformed status"])
-                    if not _plausible_generated_hardlink_pair(path, alias):
+                    if not _plausible_generated_hardlink_pair(path, alias, original_inode):
                         return _outcome([
                             "disposable generated hard-link negative alias not verified"])
                     try:
@@ -786,7 +793,7 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         # prove the alias was still present afterward. Avoid
                         # crediting a synthetic alias removed during the
                         # snapshot interval or a malformed post-check.
-                        if not _plausible_generated_hardlink_pair(path, alias):
+                        if not _plausible_generated_hardlink_pair(path, alias, original_inode):
                             return _outcome([
                                 "disposable hard-link alias changed during guard probe"])
                         return _outcome([
