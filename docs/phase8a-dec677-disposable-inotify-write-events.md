@@ -897,6 +897,12 @@ The `run_demo(hardlink_negative=True)` mode already requires a matching baseline
 
 DEC-798 makes both calls accept **only literal `True`** (`is not True`); all other return shapes are treated as unverified and `BLOCKED`. The helper itself remains exact-integer checked; the change protects its separate caller boundary from monkeypatched return objects. Two source-defined regression methods grow the suite to **438 unique test methods** and cover six falsy/truthy/malicious return shapes at each boundary, with expected findings, no drain, and valid watcher cleanup. No annual host isolation or dispatch authority is claimed.
 
+## DEC-804 — Bind inventory encoded basename bytes to the supplied filename
+
+DEC-764/767 already require a plain `str` basename, at most 255 UTF-8/filesystem bytes, and reject malformed `os.fsencode` return types and forbidden bytes. But an injected encoder could return *different* well-formed bytes (for example `b"other"` when asked to encode `"sample"`), and the scanner and direct evaluator would consider the supplied inventory name plausible. This would let a fabricated filesystem-encoding result be mistaken for evidence about the specific observed filename.
+
+DEC-804 cross-checks the returned native-encoded bytes against the original `str` encoded with the Linux filesystem codec and `surrogateescape`. Encoding exceptions and substituted encodings fail closed. Two new source-defined regression methods raise the suite to **440 unique tests**: swapped/forbidden bytes cannot validate the evaluator's quiet-directory claim, while actual ordinary, 255-byte and surrogateescaped names remain accepted. This is local synthetic inventory coherence, not independent kernel-provenance or annual-runner authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
