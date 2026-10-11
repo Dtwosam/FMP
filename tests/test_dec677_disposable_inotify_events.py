@@ -6062,6 +6062,42 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(stream.write(module.BEFORE), len(module.BEFORE))
             self.assertEqual(sample.read_bytes(), module.BEFORE)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'initial public sample fd exceptions')
+    def test_initial_exclusive_fd_getter_exceptions_cannot_write_or_watch(self):
+        for failure in (OSError(9, 'synthetic bad fd'),
+                        RuntimeError('synthetic fileno wrapper failure'),
+                        ValueError('synthetic fileno misuse')):
+            with self.subTest(error=type(failure).__name__):
+                with patch.object(module.Path, 'open') as opener:
+                    stream = opener.return_value.__enter__.return_value
+                    stream.fileno.side_effect = failure
+                    with patch.object(module, '_start_watch') as watch:
+                        receipt = module.run_demo()
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+                stream.fileno.assert_called_once_with()
+                stream.write.assert_not_called()
+                watch.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'initial public sample writer errors')
+    def test_initial_exclusive_writer_exceptions_cannot_start_watch(self):
+        for failure in (OSError(28, 'synthetic disk full'),
+                        RuntimeError('synthetic writer wrapper failure')):
+            with self.subTest(error=type(failure).__name__):
+                with patch.object(module.Path, 'open') as opener:
+                    stream = opener.return_value.__enter__.return_value
+                    stream.fileno.return_value = 19
+                    stream.write.side_effect = failure
+                    with patch.object(module, '_start_watch') as watch:
+                        receipt = module.run_demo()
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+                stream.write.assert_called_once_with(module.BEFORE)
+                watch.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

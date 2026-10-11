@@ -1020,6 +1020,13 @@ DEC-819 stabilized an inherited forged-fspath regression after the real #1011 fu
 
 One cold-Path regression with no prior string-cache warmup verifies three forged text substitutions are rejected **before** calling the encoder. Total **469 distinct source-defined tests**. This is Python-level path input coherence, not host-independent race-free pathname pinning, OS-enforced annual-job confinement, or authorization. The older #1011 full red log and #1022's separate fixture change remain recorded independently; exact-head Phase 3 and full regression must verify this source-changing child.
 
+
+## DEC-821 — Initial exclusive writer exception contracts remain fail-closed
+
+DEC-818 requires a plain nonstdio Linux descriptor before writing the initial exclusive public sample. DEC-821 adds two regression methods proving that `sample.fileno()` raising an ordinary `OSError`, unexpected `RuntimeError` or `ValueError` never calls `write` or starts a watcher. A second method provides a valid mocked nonstdio FD but makes the initial `write(BEFORE)` itself raise OSError or RuntimeError; that too must emit a nonauthorizing `BLOCKED` receipt without starting a watch.
+
+This **test/docs-only** strict child carries the two prior sibling #1023 tests into #1025's independently bound watch-path source lineage, without merging or altering sibling commits. It increases the source-defined suite to **471 unique tests**. All results remain only local generated Linux /tmp witness evidence, not an independently enforced annual runner sandbox or dispatch approval.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
