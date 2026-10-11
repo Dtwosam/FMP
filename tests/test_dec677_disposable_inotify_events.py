@@ -4951,6 +4951,46 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(wr)
 
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'link'),
+                         'disposable Linux hardlink alias')
+    def test_live_replaced_public_path_cannot_match_original_alias_identity(self):
+        with tempfile.TemporaryDirectory(prefix='dec786-public-', dir='/tmp') as folder:
+            original = Path(folder) / 'sample'
+            replacement = Path(folder) / 'replacement-public'
+            alias = Path(folder) / 'public-hardlink-alias'
+            original.write_bytes(module.BEFORE)
+            first = os.stat(original)
+            baseline = (first.st_dev, first.st_ino)
+            replacement.write_bytes(module.BEFORE)
+            self.assertNotEqual((os.stat(replacement).st_dev,
+                                 os.stat(replacement).st_ino), baseline)
+            os.replace(replacement, original)
+            self.assertIsNone(os.link(original, alias))
+            self.assertEqual(alias.read_bytes(), module.BEFORE)
+            # A current pair can be mutually consistent but refer to a
+            # different inode than the one watched at the baseline.
+            self.assertTrue(module._plausible_generated_hardlink_pair(
+                original, alias))
+            self.assertFalse(module._plausible_generated_hardlink_pair(
+                original, alias, expected_inode=baseline))
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'link'),
+                         'disposable Linux original inode')
+    def test_live_original_public_inode_keeps_pinned_alias_identity(self):
+        with tempfile.TemporaryDirectory(prefix='dec786-public-', dir='/tmp') as folder:
+            original = Path(folder) / 'sample'
+            alias = Path(folder) / 'public-hardlink-alias'
+            original.write_bytes(module.BEFORE)
+            first = os.stat(original)
+            baseline = (first.st_dev, first.st_ino)
+            self.assertIsNone(os.link(original, alias))
+            self.assertTrue(module._plausible_generated_hardlink_pair(
+                original, alias, expected_inode=baseline))
+            alias.unlink()
+            self.assertFalse(module._plausible_generated_hardlink_pair(
+                original, alias, expected_inode=baseline))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
