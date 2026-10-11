@@ -461,11 +461,20 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
     if type(path) is not type(Path()):
         raise OSError("disposable watch pathname requires a plain Path object")
     try:
+        # Reconstruct the expected ordinary Linux pathname from concrete
+        # Path components, independent of the os.fspath wrapper. In a cold
+        # lazy Path, relying on str(path) after a patched fspath call can
+        # obscure the original generated path in synthetic test harnesses.
+        components = path.parts
+        if (type(components) is not tuple or not components
+                or components[0] != "/"
+                or any(type(part) is not str for part in components)):
+            raise OSError("disposable watch pathname is outside the /tmp scope")
+        expected_text = "/" + "/".join(components[1:])
         textual = os.fspath(path)
-        # The generated Path object has its own immutable textual form.
-        # A patched fspath wrapper must not substitute another /tmp path,
-        # even if a patched encoder returns bytes matching the substitution.
-        if type(textual) is not str or textual != str(path):
+        # A patched fspath wrapper must never substitute a different target,
+        # even when a patched encoder agrees with the substituted C bytes.
+        if type(textual) is not str or textual != expected_text:
             raise OSError("disposable watch fspath disagrees with generated path")
         # This internal helper must not silently watch a caller-selected
         # outside path or /tmp/../ traversal in place of generated /tmp.
