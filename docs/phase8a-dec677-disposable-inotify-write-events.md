@@ -2292,6 +2292,29 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Exact-head Phase 3/full historical CI and independent qualified
 security review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-889 — Real watched-source deletion after last receipt metadata read
+
+The final receipt event check must also reject loss of the originally
+watched source pathname **after** the final nofollow sample metadata
+probe. DEC-889 uses genuine Linux inotify on a freshly generated
+public /tmp sample and private parent. Immediately after the third
+sample timestamp checker has read its native record, the test
+performs `os.unlink` on that same sample, proves its pathname is
+absent, and requires that the first bounded event drain was empty
+but the last real zero-wait kernel drain contains well-formed watch
+invalidation events (`IN_DELETE_SELF` or `IN_IGNORED`). The runner
+must yield `BLOCKED` with exact false authority/proof flags,
+no evaluator call and closed observer FD.
+
+One new source-defined native test brings the strict tip to **561
+distinct test methods**. This only verifies bounded local generated
+inotify behavior, not complete kernel event coverage, OS-enforced
+no-write confinement, or race-free immutable annual admission.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own exact-head
+Phase 3, full historical suite and qualified independent review
+required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

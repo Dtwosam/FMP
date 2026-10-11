@@ -9711,6 +9711,78 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real late kernel watched-source deletion')
+    def test_real_kernel_sample_deletion_after_final_receipt_stat_caught_by_late_drain(self):
+        # Only the newly created public /tmp sample is unlinked; this tests
+        # real kernel IN_DELETE_SELF / IN_IGNORED after the last pathname stat.
+        native_watch = module._start_watch
+        native_timestamps = module._checked_generated_sample_change_timestamps
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'path': None, 'fd': None, 'wds': None,
+                 'checks': 0, 'removed': False, 'first': None,
+                 'late': None, 'old_inode': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['path'] = path
+            state['fd'] = fd
+            state['wds'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def checked(record):
+            stamps = native_timestamps(record)
+            state['checks'] += 1
+            if state['checks'] == 3:
+                sample = state['path']
+                current = os.lstat(sample)
+                state['old_inode'] = (current.st_dev, current.st_ino)
+                # The final metadata check has already read the original
+                # record; removing that pathname emits real kernel events.
+                os.unlink(sample)
+                state['removed'] = not os.path.lexists(sample)
+            return stamps
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['late'] = native_last(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=checked) as checker:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as late_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['checks'], 3)
+        self.assertEqual(checker.call_count, 3)
+        self.assertIsNotNone(state['old_inode'])
+        self.assertTrue(state['removed'])
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['wds']
+        events = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(events['well_formed'])
+        self.assertTrue(events['invalidated'])
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        late_reader.assert_called_once()
+        evaluator.assert_not_called()
+        self.assertIsNotNone(state['fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
