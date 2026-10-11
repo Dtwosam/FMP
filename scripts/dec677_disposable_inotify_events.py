@@ -780,9 +780,13 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     try:
                         _checked_snapshot_result(_snapshot_regular(path))
                     except _SnapshotHardlinkCountError:
-                        # Credit only the precise one-link guard. A failed
-                        # read, stat wrapper or injected ordinary OSError
-                        # does not establish what refused the alias.
+                        # Even a genuine link-count guard refusal cannot
+                        # prove the alias was still present afterward. Avoid
+                        # crediting a synthetic alias removed during the
+                        # snapshot interval or a malformed post-check.
+                        if not _plausible_generated_hardlink_pair(path, alias):
+                            return _outcome([
+                                "disposable hard-link alias changed during guard probe"])
                         return _outcome([
                             "deliberate generated hard-link alias negative control blocked"])
                     except OSError:

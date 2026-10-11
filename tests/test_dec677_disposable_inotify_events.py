@@ -4822,6 +4822,50 @@ class DisposableInotifyTests(unittest.TestCase):
                     self.assertFalse(module._plausible_generated_hardlink_pair(
                         Path('/tmp/public-a'), Path('/tmp/public-b')))
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux observer')
+    def test_hardlink_guard_refusal_requires_persistent_alias_after_probe(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  side_effect=(((1, 2), module.BEFORE),
+                                               module._SnapshotHardlinkCountError('two links'))):
+                    with patch.object(module.os, 'link', return_value=None):
+                        with patch.object(module, '_plausible_generated_hardlink_pair',
+                                          side_effect=(True, False)) as verify:
+                            outcome = module.run_demo(hardlink_negative=True)
+            self.assertEqual(outcome['status'], 'BLOCKED')
+            self.assertIn('changed during guard probe', ' '.join(outcome['findings']))
+            self.assertNotIn('negative control blocked', ' '.join(outcome['findings']))
+            self.assertEqual(verify.call_count, 2)
+            self.assertFalse(outcome['can_authorize_dispatch'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux observer')
+    def test_hardlink_guard_refusal_rechecks_alias_before_local_credit(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  side_effect=(((1, 2), module.BEFORE),
+                                               module._SnapshotHardlinkCountError('two links'))):
+                    with patch.object(module.os, 'link', return_value=None):
+                        with patch.object(module, '_plausible_generated_hardlink_pair',
+                                          side_effect=(True, True)) as verify:
+                            outcome = module.run_demo(hardlink_negative=True)
+            self.assertEqual(outcome['status'], 'BLOCKED')
+            self.assertIn('negative control blocked', ' '.join(outcome['findings']))
+            self.assertEqual(verify.call_count, 2)
+            self.assertFalse(outcome['independent_os_proof_verified'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
