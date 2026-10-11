@@ -699,17 +699,25 @@ def _plausible_generated_hardlink_pair(source: Path, alias: Path) -> bool:
         second = os.stat(alias, follow_symlinks=False)
         identities = []
         for st in (first, second):
-            mode, dev, ino, nlink = (st.st_mode, st.st_dev, st.st_ino,
-                                     st.st_nlink)
-            if (any(type(value) is not int
-                    for value in (mode, dev, ino, nlink))
-                    or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
+            fields = ("st_mode", "st_dev", "st_ino", "st_nlink",
+                      "st_uid", "st_gid", "st_size",
+                      "st_mtime_ns", "st_ctime_ns")
+            values = tuple(getattr(st, field) for field in fields)
+            if any(type(value) is not int for value in values):
+                return False
+            mode, dev, ino, nlink, uid, gid, size, mtime_ns, ctime_ns = values
+            if (mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
                     or not stat.S_ISREG(mode)
                     or not 0 <= dev <= MAX_KERNEL_STAT_ID
                     or not 0 <= ino <= MAX_KERNEL_STAT_ID
-                    or nlink != 2):
+                    or nlink != 2
+                    or not 0 <= uid <= MAX_KERNEL_OWNER_ID
+                    or not 0 <= gid <= MAX_KERNEL_OWNER_ID
+                    or not 0 <= size <= 4096
+                    or not MIN_KERNEL_TIMESTAMP_NS <= mtime_ns <= MAX_KERNEL_TIMESTAMP_NS
+                    or not MIN_KERNEL_TIMESTAMP_NS <= ctime_ns <= MAX_KERNEL_TIMESTAMP_NS):
                 return False
-            identities.append((mode, dev, ino, nlink))
+            identities.append(values)
         return identities[0] == identities[1]
     except Exception:
         return False
