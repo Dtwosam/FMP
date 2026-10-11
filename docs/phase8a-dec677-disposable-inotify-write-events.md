@@ -978,6 +978,13 @@ DEC-813 rejects a preexisting `sample` file/symlink using `os.lstat` before the 
 
 Two new source-defined tests raise the strict lineage to **462 unique methods**: malformed, boolean, short or oversized synthetic exclusive-write results cannot advance; genuine Linux `xb` creation cannot overwrite a preexisting symlink target in a fresh public /tmp folder. This narrows the file-creation race but **does not** defend against parent-directory replacement, mount aliases or grant annual run385 authorization.
 
+
+## DEC-815 — False-negative prewrite stat still cannot bypass exclusive create
+
+DEC-814 changed the first generated public sample creation to Linux exclusive `Path.open("xb")` after a no-follow absence check. DEC-815 supplies an adversarial real generated /tmp negative: either a planted regular `sample` or a symlink to another public file exists, while a narrowly scoped `os.lstat(sample)` wrapper intentionally lies that the entry is missing. All other metadata probes delegate to the actual native lstat. `run_demo` must still be BLOCKED with no inotify watcher and unchanged bytes, because O_EXCL independently rejects the existing pathname.
+
+This test/docs-only strict child adds one source-defined test (**463 unique methods**) and incorporates the separate #1016 counterexample into #1017's stronger private-directory metadata lineage. No runtime changes; the exclusive basename gate still does not pin the parent directory or provide independently enforced 20-job annual runner security proof.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
