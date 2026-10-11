@@ -2105,6 +2105,27 @@ confinement or immutable annual run admission. DEC-650/#820 and
 DEC-651/#821/#779 remain BLOCKED. Own exact-head Phase 3/full historical
 CI and qualified independent review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-881 — Pin bounded final receipt poll timing
+
+DEC-879 introduces an immediate post-census collector. DEC-881 adds
+two test-only contracts to make its timing and argument boundaries
+inspectable. The earlier `_read_pending` first poll still requests
+**250 milliseconds**, while `_read_receipt_pending` requests
+**zero milliseconds**; neither call changes subscribed event masks.
+A separate parameter-validation control refuses negative, oversized,
+boolean, floating, string, null, and int-subclass timeouts **before**
+polling, so a malformed injected timeout cannot be treated as an
+unbounded or privileged observer operation.
+
+The synthetic poll test does not claim live inotify event delivery.
+Only generated disposable observer tests and docs changed;
+**552 distinct source-defined test methods** at the strict tip.
+Own exact-head Phase 3/full historical CI and qualified independent
+review required; DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+An immediate poll does not close future races or establish OS write
+prevention or immutable annual admission. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
