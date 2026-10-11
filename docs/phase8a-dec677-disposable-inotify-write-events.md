@@ -2150,6 +2150,28 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own exact-head
 Phase 3/full historical CI and independent qualified review required.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-883 — Real native quiet generated dual-watch control
+
+DEC-882 adds a true native Linux inotify late-mutation negative.
+DEC-883 adds its paired **real Linux kernel quiet control** on a newly
+generated public /tmp sample and directory with both native watches.
+Both the bounded first drain and immediate final receipt drain must
+return exact empty bytes in this generated experiment; the observer
+still reports ONLY `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with both
+authority and independent OS-proof fields `false`, and closes its
+owned inotify FD. This is an enabled-by-default Linux unit test,
+rather than the earlier separate manual demonstration.
+
+Only disposable observer tests and docs changed, bringing the
+strict tip to **554 distinct source-defined test methods**.
+Kernel event silence for these generated paths is not independent
+enforced no-write confinement, complete kernel audit or annual runner
+authorization. No protected evidence or actual annual operations are
+performed. DEC-650/#820 and DEC-651/#821/#779 stay BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified independent
+review mandatory. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
