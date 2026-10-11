@@ -3436,12 +3436,17 @@ class DisposableInotifyTests(unittest.TestCase):
         rd, wr = os.pipe()
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                # The first baseline must use the actual generated O_EXCL
+                # inode, so wrong *bytes* remain the tested failure.
+                # A hard-coded (3, 7) would now stop on inode provenance.
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((3, 7), b'UNEXPECTED INITIAL')) as snapshot:
+                                  side_effect=lambda path: native_created_sample_snapshot(
+                                      path, b'UNEXPECTED INITIAL')) as snapshot:
                     with patch.object(module, '_read_pending') as drain:
                         result = module.run_demo()
             self.assertEqual(result['status'], 'BLOCKED')
             self.assertFalse(result['can_authorize_dispatch'])
+            self.assertFalse(result['independent_os_proof_verified'])
             snapshot.assert_called_once()
             drain.assert_not_called()
             with self.assertRaises(OSError):
