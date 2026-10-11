@@ -8345,6 +8345,55 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native generated Linux timestamp drift')
+    def test_real_generated_utime_after_last_snapshot_blocks_local_witness(self):
+        native_snapshot = module._snapshot_regular
+        read_fd, write_fd = os.pipe()
+        state = {'snapshots': 0, 'changed': False, 'original': None,
+                 'changed_mtime': None}
+
+        def snapshot(path):
+            inode, payload = native_snapshot(path)
+            state['snapshots'] += 1
+            if state['snapshots'] == 3:
+                # Make a real, generated /tmp inode metadata change *after*
+                # the final read. Empty synthetic queue alone is not proof
+                # of a clean interval or a reason to credit a local witness.
+                before = os.lstat(path)
+                changed = before.st_mtime_ns - 5_000_000_000
+                os.utime(path, ns=(before.st_atime_ns, changed),
+                         follow_symlinks=False)
+                after = os.lstat(path)
+                state['original'] = before.st_mtime_ns
+                state['changed_mtime'] = after.st_mtime_ns
+                state['changed'] = True
+            return inode, payload
+
+        try:
+            with patch.object(module, '_snapshot_regular',
+                              side_effect=snapshot) as snapshots:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluate:
+                            receipt = module.run_demo()
+            self.assertTrue(state['changed'])
+            self.assertNotEqual(state['original'], state['changed_mtime'])
+            self.assertEqual(state['snapshots'], 3)
+            self.assertEqual(snapshots.call_count, 3)
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluate.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
