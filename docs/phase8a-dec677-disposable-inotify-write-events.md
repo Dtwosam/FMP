@@ -904,6 +904,13 @@ DEC-797 restricted the generated /tmp probes to exact booleans, and DEC-798 rest
 
 DEC-799 accepts only `type(sys.platform) is str` together with `sys.platform == "linux"` before entering any generated-filesystem preflight. Two source-defined tests bring this descendant to **440 distinct test methods**, checking forged comparison objects, a `str` subclass, non-Linux strings and nonstring stand-ins. Each must return the usual permanently nonauthorizing `BLOCKED` receipt, without even calling `os.path.isdir` or starting inotify. All existing real plain Linux observations remain eligible only for local unverified witness status. This is synthetic Python boundary hardening, not OS attestation, actual 20-job annual isolation or run385 admission.
 
+
+## DEC-800 — Bind the disposable temporary directory to its generated /tmp scope before writing
+
+The observer calls `tempfile.TemporaryDirectory(prefix=..., dir="/tmp")` and then writes `sample` into the returned path before opening either inotify watch. Normal Python returns a fresh private /tmp folder, but a patched or defective context-manager result could return a different path, including an outside-/tmp directory, and the earlier runtime would attempt a sample write before any watch-path guard could reject it.
+
+DEC-800 introduces a local pre-write validator: the context manager must return a **plain str**, canonical direct child of `/tmp`, with a nonempty `dec677-disposable-` basename suffix and a bounded valid Linux entry name. Only then can the public `sample` path be constructed and its initial bytes written. Two new source-defined regression methods bring the descendant suite to **442 uniquely named tests**. Injected noncanonical/out-of-scope paths, wrong prefixes and nonstring/subclass values must BLOCK with zero sample writes and zero watch starts; a genuinely generated `TemporaryDirectory` remains admissible to the local toy runner. This is lexical Python-wrapper input validation, NOT race-free path containment, OS write isolation or annual dispatch approval.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

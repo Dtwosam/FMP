@@ -20,6 +20,7 @@ sys.dont_write_bytecode = True
 
 BEFORE = b"DEC677_PUBLIC_SOURCE\n"
 AFTER = b"DEC677_PUBLIC_CHANGED\n"
+DISPOSABLE_PREFIX = "dec677-disposable-"
 PERSISTENT_SIBLING_NAME = "unexpected-public-sibling"
 TRANSIENT_SIBLING_NAME = "temporary-public-sibling"
 IN_MODIFY = 0x00000002
@@ -769,6 +770,21 @@ def _plausible_generated_hardlink_pair(
         return False
 
 
+
+def _checked_generated_folder(folder: Any) -> Path:
+    """Refuse a substituted tempdir value before the first public file write."""
+    if type(folder) is not str or not 1 <= len(folder) <= 4095:
+        raise OSError("disposable tempdir returned a malformed path")
+    folder_path = Path(folder)
+    if (str(folder_path) != folder
+            or folder_path.parent != Path("/tmp")
+            or not folder_path.name.startswith(DISPOSABLE_PREFIX)
+            or len(folder_path.name) <= len(DISPOSABLE_PREFIX)
+            or not _plausible_inventory_basename(folder_path.name)):
+        raise OSError("disposable tempdir escaped generated /tmp scope")
+    return folder_path
+
+
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
              create_sibling: bool = False, transient_sibling: bool = False,
              hardlink_negative: bool = False) -> dict[str, Any]:
@@ -795,8 +811,8 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
     if tmp_is_directory is not True or tmp_is_symlink is not False:
         return _outcome(["Linux disposable kernel event monitor unavailable"])
     try:
-        with tempfile.TemporaryDirectory(prefix="dec677-disposable-", dir="/tmp") as folder:
-            path = Path(folder) / "sample"
+        with tempfile.TemporaryDirectory(prefix=DISPOSABLE_PREFIX, dir="/tmp") as folder:
+            path = _checked_generated_folder(folder) / "sample"
             path.write_bytes(BEFORE)
             # Start observing both the inode and parent directory *before*
             # taking the baseline. A prewatch snapshot would leave an

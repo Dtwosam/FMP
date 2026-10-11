@@ -5500,6 +5500,47 @@ class DisposableInotifyTests(unittest.TestCase):
                 isdir.assert_not_called()
                 register.assert_not_called()
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux /tmp')
+    def test_runner_refuses_substituted_generated_tmp_folder_before_write(self):
+        class TempdirSubclass(str):
+            pass
+
+        candidate = '/tmp/dec677-disposable-public123'
+        bad_values = (
+            '/var/tmp/dec677-disposable-public123',
+            '/tmp/unrelated-public-folder',
+            '/tmp/dec677-disposable-',
+            '/tmp/../tmp/dec677-disposable-public123',
+            '/tmp//dec677-disposable-public123',
+            TempdirSubclass(candidate),
+            b'/tmp/dec677-disposable-public123',
+            None,
+        )
+        for injected in bad_values:
+            with self.subTest(folder=repr(injected)):
+                with patch.object(module.tempfile, 'TemporaryDirectory') as tempdir:
+                    tempdir.return_value.__enter__.return_value = injected
+                    with patch.object(module.Path, 'write_bytes') as write:
+                        with patch.object(module, '_start_watch') as register:
+                            result = module.run_demo()
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['can_authorize_dispatch'])
+                self.assertFalse(result['independent_os_proof_verified'])
+                write.assert_not_called()
+                register.assert_not_called()
+                tempdir.assert_called_once_with(
+                    prefix=module.DISPOSABLE_PREFIX, dir='/tmp')
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux /tmp')
+    def test_genuine_generated_tmp_folder_passes_lexical_prewrite_check(self):
+        with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                         dir='/tmp') as folder:
+            checked = module._checked_generated_folder(folder)
+            self.assertEqual(checked, Path(folder))
+            self.assertEqual(checked.parent, Path('/tmp'))
+            self.assertTrue(checked.name.startswith(module.DISPOSABLE_PREFIX))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
