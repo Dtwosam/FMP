@@ -5403,6 +5403,51 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(parsed['directory_changes'], 2)
         self.assertEqual(parsed['source_attribute_events'], 48)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux inotify rename')
+    def test_live_generated_distinct_basename_rename_emits_valid_directory_pair(self):
+        with tempfile.TemporaryDirectory(prefix='dec796-public-', dir='/tmp') as folder:
+            source = Path(folder) / 'sample'
+            old = Path(folder) / 'old-public-child'
+            new = Path(folder) / 'new-public-child'
+            source.write_bytes(module.BEFORE)
+            old.write_bytes(b'PUBLIC-RENAME-CONTROL')
+            fd, wd, dir_wd = module._start_watch(source)
+            try:
+                self.assertEqual(old.rename(new), new)
+                raw = module._read_pending(fd)
+                self.assertTrue(raw)
+                parsed = module._classify_stream(raw, wd, directory_watch=dir_wd)
+                self.assertTrue(parsed['well_formed'], parsed)
+                self.assertEqual(parsed['directory_changes'], 2)
+                result = module._evaluate(
+                    module.BEFORE, module.BEFORE, raw, wd, True, False,
+                    directory_watch=dir_wd,
+                    directory_inventory_ok=False,
+                    directory_inventory_names=('new-public-child', 'sample'))
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['can_authorize_dispatch'])
+            finally:
+                os.close(fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux no-op rename')
+    def test_live_generated_same_basename_rename_emits_no_directory_transition(self):
+        with tempfile.TemporaryDirectory(prefix='dec796-public-', dir='/tmp') as folder:
+            source = Path(folder) / 'sample'
+            entry = Path(folder) / 'public-child'
+            source.write_bytes(module.BEFORE)
+            entry.write_bytes(b'PUBLIC-NOOP-CONTROL')
+            fd, wd, dir_wd = module._start_watch(source)
+            try:
+                self.assertEqual(entry.rename(entry), entry)
+                raw = module._read_pending(fd)
+                parsed = module._classify_stream(raw, wd, directory_watch=dir_wd)
+                self.assertTrue(parsed['well_formed'], parsed)
+                self.assertEqual(parsed['directory_changes'], 0)
+                self.assertTrue(entry.is_file())
+            finally:
+                os.close(fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
