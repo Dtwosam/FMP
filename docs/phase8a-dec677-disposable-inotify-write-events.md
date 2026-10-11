@@ -950,6 +950,13 @@ DEC-808 checks directory owner and mode in the local generated path validator. T
 
 This is a test/docs-only strict descendant integrating the separate prior #1007 runner proof after #1008's real non-UTF-8 fixtures; the total rises to **454 unique source-defined methods**. No runtime changes, no independently enforced annual OS confinement, no dispatch authorization.
 
+
+## DEC-811 — Require plausible Linux device/inode identity before generated writes
+
+The local tempdir prewrite checks now validate no-follow directory type, exact mode 0700 and effective-user ownership. A synthetic `os.lstat` result could still claim those properties with a malformed or impossible `st_dev` / `st_ino` value. This child requires exact plain integer identifiers bounded by the Linux unsigned 64-bit ABI, with a strictly positive inode, and fails closed if metadata is missing or throws. Two new source-defined regressions raise this lineage to **456 unique test methods**, checking malformed synthetic objects and an actual newly generated Linux /tmp inode. The earlier owner-only positive mock now carries valid dev/ino fields so it still tests its stated property.
+
+This integrates the separate sibling #1009 metadata-identity contract on top of #1010's corrected non-UTF-8 fixtures and shared-directory runner test without altering those recorded commits. Only the generated Linux /tmp observer and associated tests/docs change. This is metadata shape validation, not race-free independent OS isolation or annual run385 authority.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
