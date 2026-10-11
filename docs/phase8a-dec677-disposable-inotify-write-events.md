@@ -1141,6 +1141,14 @@ Full historical [#1050](https://github.com/Dtwosam/FMP/pull/1050) workflow [3814
 
 This test/docs-only immediate descendant of #1052 changes that one expected error phrase without weakening the observer source, early rejection, or no-encoder checks. The original #1050 full CI remains RED; the new exact head needs its own Phase 3 and full historical suite. **490 distinct test methods** remain.
 
+## DEC-840 — Recheck the generated private directory after bounded final inventory
+
+DEC-838 checked the generated `0700`, effective-user-owned `/tmp/dec677-disposable-*` directory's `(st_dev,st_ino)` just **before** final bounded inventory. That left a separate pathname-swap interval *while the final directory entries were read*. DEC-840 rechecks bounded plain directory metadata and matches the initial directory identity immediately **after** the second bounded scan, before event draining or returning a local witness. It refuses missing, malformed, no-longer-private and changed-inode parent directories even if the inventory still lists the ordinary `sample`.
+
+Two native generated Linux `/tmp` tests inject a parent inode or privacy change at precisely the **post-inventory** probe, or an `OSError`/`RuntimeError` when probing at that same point. They require `BLOCKED`, no event draining, both immutable authorization booleans false and closed synthetic watcher FD. No protected annual inputs are touched. This raises the strict #1053 descendant from **490 to 492 distinct source-defined methods**.
+
+These repeated pathname-level `lstat` checks cannot guarantee race-free parent binding or independent OS confinement; only real directory-FD-relative kernel resolution and authenticated host sandboxing could underpin stronger claims, neither implemented here. Exact-head Phase 3 + full historical CI and qualified independent review still required; run385 dispatch remains blocked.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

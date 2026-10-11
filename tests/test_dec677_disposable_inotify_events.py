@@ -6725,6 +6725,113 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux post-inventory identity')
+    def test_post_inventory_parent_substitution_blocks_before_event_drain(self):
+        native_lstat = os.lstat
+        native_inventory = module._bounded_inventory_names
+        for forgery in ('different-inode', 'bad-mode'):
+            with self.subTest(forgery=forgery):
+                read_fd, write_fd = os.pipe()
+                state = {'folder': None, 'scans': 0, 'changed': False}
+
+                class AlteredDirectoryStat:
+                    def __init__(self, source):
+                        self.source = source
+                        if forgery == 'different-inode':
+                            self.st_ino = source.st_ino + 1
+                        else:
+                            self.st_mode = module.stat.S_IFDIR | 0o755
+
+                    def __getattr__(self, field):
+                        return getattr(self.source, field)
+
+                def register(path):
+                    state['folder'] = os.fspath(path.parent)
+                    return read_fd, 9, 10
+
+                def scanned(folder):
+                    names = native_inventory(folder)
+                    state['scans'] += 1
+                    return names
+
+                def modified_lstat(path, *args, **kwargs):
+                    real = native_lstat(path, *args, **kwargs)
+                    if (state['scans'] == 2 and not state['changed']
+                            and state['folder'] == os.fspath(path)):
+                        state['changed'] = True
+                        return AlteredDirectoryStat(real)
+                    return real
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=modified_lstat):
+                        with patch.object(module, '_bounded_inventory_names',
+                                          side_effect=scanned) as census:
+                            with patch.object(module, '_start_watch',
+                                              side_effect=register) as watch:
+                                with patch.object(module, '_read_pending') as drain:
+                                    receipt = module.run_demo()
+                    self.assertEqual(state['scans'], 2)
+                    self.assertTrue(state['changed'])
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertFalse(receipt['can_authorize_dispatch'])
+                    self.assertFalse(receipt['independent_os_proof_verified'])
+                    census.assert_called()
+                    watch.assert_called_once()
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux post-inventory lstat')
+    def test_post_inventory_parent_stat_exception_blocks_without_drain(self):
+        native_lstat = os.lstat
+        native_inventory = module._bounded_inventory_names
+        for error in (OSError(5, 'synthetic directory stat failure'),
+                      RuntimeError('synthetic directory stat wrapper failure')):
+            with self.subTest(error=type(error).__name__):
+                read_fd, write_fd = os.pipe()
+                state = {'folder': None, 'scans': 0, 'failed': False}
+
+                def register(path):
+                    state['folder'] = os.fspath(path.parent)
+                    return read_fd, 9, 10
+
+                def scanned(folder):
+                    value = native_inventory(folder)
+                    state['scans'] += 1
+                    return value
+
+                def modified_lstat(path, *args, **kwargs):
+                    if (state['scans'] == 2 and not state['failed']
+                            and os.fspath(path) == state['folder']):
+                        state['failed'] = True
+                        raise error
+                    return native_lstat(path, *args, **kwargs)
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=modified_lstat):
+                        with patch.object(module, '_bounded_inventory_names',
+                                          side_effect=scanned) as census:
+                            with patch.object(module, '_start_watch',
+                                              side_effect=register) as watch:
+                                with patch.object(module, '_read_pending') as drain:
+                                    receipt = module.run_demo()
+                    self.assertEqual(state['scans'], 2)
+                    self.assertTrue(state['failed'])
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertFalse(receipt['can_authorize_dispatch'])
+                    self.assertFalse(receipt['independent_os_proof_verified'])
+                    self.assertEqual(census.call_count, 2)
+                    watch.assert_called_once()
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

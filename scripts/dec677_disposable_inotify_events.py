@@ -1104,6 +1104,13 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 if final_folder_inode != initial_folder_inode:
                     raise OSError("disposable parent directory changed before final inventory")
                 inventory_names = _bounded_inventory_names(Path(folder))
+                # A directory can be exchanged while the bounded census is
+                # reading it. Revalidate the generated parent *after* that
+                # scan rather than crediting names from another inode.
+                post_inventory_folder_inode = _checked_generated_directory_identity(
+                    os.lstat(folder_path))
+                if post_inventory_folder_inode != initial_folder_inode:
+                    raise OSError("disposable parent directory changed during final inventory")
                 inventory_ok = inventory_names == ("sample",)
                 sibling_snapshot_stable = None
                 if create_sibling:
