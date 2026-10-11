@@ -7489,6 +7489,51 @@ class DisposableInotifyTests(unittest.TestCase):
                               ' '.join(receipt['findings']))
                 runner.assert_called_once()
 
+
+    def test_receipt_validator_refuses_unbounded_synthetic_findings_and_checks(self):
+        baseline = module._outcome(['synthetic blocked'], {'quiet': False})
+        for case, forged in (
+                ('many-findings', dict(
+                    baseline, findings=['finding-' + str(i)
+                                        for i in range(module.MAX_RECEIPT_FINDINGS + 1)])),
+                ('long-finding', dict(
+                    baseline, findings=['x' * (module.MAX_RECEIPT_FINDING_CHARS + 1)])),
+                ('empty-finding', dict(baseline, findings=[''])),
+                ('many-checks', dict(
+                    baseline, observed_checks={'key-' + str(i): True
+                                               for i in range(module.MAX_RECEIPT_CHECKS + 1)})),
+                ('long-key', dict(
+                    baseline, observed_checks={
+                        'x' * (module.MAX_RECEIPT_CHECK_KEY_CHARS + 1): True})),
+                ('empty-key', dict(baseline, observed_checks={'': True}))):
+            with self.subTest(case=case):
+                blocked = module._checked_disposable_observer_result(forged)
+                self.assertIsNot(blocked, forged)
+                self.assertEqual(blocked['status'], 'BLOCKED')
+                self.assertFalse(blocked['can_authorize_dispatch'])
+                self.assertFalse(blocked['independent_os_proof_verified'])
+                self.assertIn('invalid nonauthorizing receipt',
+                              ' '.join(blocked['findings']))
+        self.assertIs(module._checked_disposable_observer_result(baseline),
+                      baseline)
+
+    def test_cli_does_not_serialize_oversized_synthetic_runner_receipt(self):
+        oversized = module._outcome(['x' * (module.MAX_RECEIPT_FINDING_CHARS + 1)])
+        stdout = io.StringIO()
+        with patch.object(module, 'run_demo', return_value=oversized) as runner:
+            with contextlib.redirect_stdout(stdout):
+                exit_code = module.main(['--execute-disposable-control'])
+        self.assertEqual(exit_code, 2)
+        output = stdout.getvalue()
+        receipt = json.loads(output)
+        self.assertLess(len(output), module.MAX_RECEIPT_FINDING_CHARS)
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertFalse(receipt['can_authorize_dispatch'])
+        self.assertFalse(receipt['independent_os_proof_verified'])
+        self.assertIn('invalid nonauthorizing receipt',
+                      ' '.join(receipt['findings']))
+        runner.assert_called_once()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
