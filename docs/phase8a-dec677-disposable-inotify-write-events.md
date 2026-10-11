@@ -1237,6 +1237,31 @@ independent security review are still mandatory. DEC-650 annual 20-job
 independently enforced OS confinement and DEC-651 immutable run385 admission
 remain **BLOCKED**. **DRAFT / NEVER MERGE**.
 
+
+## DEC-845 — Recheck generated sample contents after draining the queue
+
+The DEC-843/844 postdrain checks require the original generated sample inode
+and exact size, but a same-size write during event draining can retain both
+properties while invalidating the earlier final byte snapshot. DEC-845
+adds a second bounded no-follow `_snapshot_regular` read at the final
+pre-evaluation boundary, demanding original exclusive-writer inode,
+original public `BEFORE` bytes, and agreement with the previously recorded
+end snapshot. An injected late rewrite fails closed **before** `_evaluate`.
+The deliberate inode-replacement negative control still runs its original
+nonauthorizing evaluator rather than being preempted by this guard.
+
+One new Linux-generated test writes a same-length but different public payload
+into the same inode during a synthetic event drain. It asserts matching inode
+and length, `BLOCKED`, no evaluation, permanently false dispatch/OS-proof
+booleans, and closed watch FD. **498 uniquely named source-defined tests**.
+
+A postdrain read can detect some late changes but remains a sequential,
+non-atomic observation and cannot prove no writes after its final read,
+nor eliminate a write/revert race. It is NOT DEC-650 annual 20-job independent
+OS no-write confinement or DEC-651 immutable run385 authorization. Separate
+exact-head Phase 3/full historical CI and qualified security review are
+required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

@@ -1149,6 +1149,16 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     if (type(drained_sample_size) is not int
                             or drained_sample_size != len(BEFORE)):
                         raise OSError("disposable sample size changed during event drain")
+                    # A same-size overwrite does not change the sample inode
+                    # or length. Reopen no-follow and recheck the generated
+                    # bytes against the original writer and final snapshot.
+                    # This is still a best-effort, non-atomic observation.
+                    drained_snapshot_inode, drained_snapshot_bytes = (
+                        _checked_snapshot_result(_snapshot_regular(path)))
+                    if (drained_snapshot_inode != initial_sample_inode
+                            or drained_snapshot_bytes != BEFORE
+                            or drained_snapshot_bytes != end):
+                        raise OSError("disposable sample bytes changed during event drain")
                 return _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
                                  replacement_negative=replace_watched_inode,
