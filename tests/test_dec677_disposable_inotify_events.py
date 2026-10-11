@@ -5662,6 +5662,7 @@ class DisposableInotifyTests(unittest.TestCase):
                         os.chmod(folder, 0o700)
             self.assertEqual(module._checked_generated_folder(folder), Path(folder))
 
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux effective UID identity')
     def test_generated_folder_rejects_foreign_or_forged_owner_ids(self):
         class FakeStat:
             st_mode = module.stat.S_IFDIR | 0o700
@@ -5682,6 +5683,7 @@ class DisposableInotifyTests(unittest.TestCase):
         with patch.object(module.os, 'lstat', return_value=FakeStat(euid)):
             self.assertEqual(module._checked_generated_folder(path), Path(path))
 
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux effective UID identity')
     def test_generated_folder_refuses_malformed_effective_owner_probe(self):
         class FakeStat:
             st_mode = module.stat.S_IFDIR | 0o700
@@ -5698,6 +5700,28 @@ class DisposableInotifyTests(unittest.TestCase):
                               side_effect=RuntimeError('synthetic owner API')):
                 with self.assertRaisesRegex(OSError, 'owner probe failed'):
                     module._checked_generated_folder(path)
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux prewrite permissions')
+    def test_runner_refuses_shared_generated_folder_before_any_write(self):
+        with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                         dir='/tmp') as folder:
+            for mode in (0o755, 0o777):
+                with self.subTest(mode=oct(mode)):
+                    os.chmod(folder, mode)
+                    try:
+                        with patch.object(module.tempfile, 'TemporaryDirectory') as provider:
+                            provider.return_value.__enter__.return_value = folder
+                            with patch.object(module.Path, 'write_bytes') as write:
+                                with patch.object(module, '_start_watch') as watch:
+                                    outcome = module.run_demo()
+                        self.assertEqual(outcome['status'], 'BLOCKED')
+                        self.assertFalse(outcome['can_authorize_dispatch'])
+                        self.assertFalse(outcome['independent_os_proof_verified'])
+                        write.assert_not_called()
+                        watch.assert_not_called()
+                    finally:
+                        os.chmod(folder, 0o700)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):

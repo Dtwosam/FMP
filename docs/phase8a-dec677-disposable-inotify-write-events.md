@@ -938,6 +938,12 @@ DEC-807 adds a no-follow `os.lstat` check that the generated `/tmp/dec677-dispos
 
 DEC-808 additionally requires the lstat-verified directory to have exact private permission/special mode bits `0700`, an exact plain `st_uid` within Linux UINT32 bounds equal to the current exact `os.geteuid()`, and fail-closed behavior for malformed owner probe returns. Three new source-defined tests raise the suite to **452 unique test methods**, including real generated Linux chmod transitions (0700 accepted; group/world-accessible or sticky-mode substitutions refused) and forged/foreign UID and euid-wrapper errors. All checks are before the first generated write. They do not remove pathname TOCTOU races or amount to independently enforced annual filesystem sandboxing.
 
+## DEC-809 — Runner-level refusal of shared generated directories before any write
+
+DEC-808 requires a generated disposable `/tmp/dec677-disposable-*` directory to be private mode `0700` and owned by the process effective UID. Its direct helper regressions check normal private mode and forged metadata, but the **runner-level ordering** must also be pinned: the user-facing disposable helper must never open/write `sample` or allocate inotify watches on a generated-looking folder with group/world access.
+
+DEC-809 adds a native Linux runner regression replacing only the `TemporaryDirectory` return path with a newly generated but deliberately chmod-modified `0755`/`0777` private test directory. It asserts `BLOCKED`, permanently false authorization fields, and zero calls to `Path.write_bytes` and `_start_watch` before restoring mode `0700` for automatic cleanup. Existing UID-specific synthetic test methods are marked Linux-only, because `os.geteuid` is a Linux/POSIX-only API. This is a **test/doc-only** strict child with **453 unique tests**, no runtime changes, and no proof of race-free annual OS confinement or immutable run385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
