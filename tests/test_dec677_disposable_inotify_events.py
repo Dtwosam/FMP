@@ -6589,6 +6589,42 @@ class DisposableInotifyTests(unittest.TestCase):
                     fspath.assert_called_once_with(path)
                 self.assertEqual(path._raw_paths, [forged])
 
+    def test_watch_path_mutation_with_honest_fspath_text_is_rejected(self):
+        # The adversarial wrapper *returns the old correct target*, but
+        # changes the original Path during the call. A textual match alone
+        # is not proof that the supplied target stayed the same.
+        for forged in ('/tmp/other-public', '/etc/passwd'):
+            with self.subTest(forged=forged, stage='fspath'):
+                path = Path('/tmp/dec677-disposable-public') / 'sample'
+                genuine = str(path)
+
+                def mutate_fspath(_path):
+                    path._raw_paths[:] = [forged]
+                    return genuine
+
+                with patch.object(module.os, 'fspath',
+                                  side_effect=mutate_fspath) as fspath:
+                    with patch.object(module.os, 'fsencode',
+                                      side_effect=AssertionError('must not encode')) as encode:
+                        with self.assertRaisesRegex(OSError, 'raw segments changed'):
+                            module._checked_watch_path_bytes(path)
+                        encode.assert_not_called()
+                    fspath.assert_called_once_with(path)
+
+            with self.subTest(forged=forged, stage='fsencode'):
+                path = Path('/tmp/dec677-disposable-public') / 'sample'
+                genuine = os.fsencode(path)
+
+                def mutate_encoder(_path):
+                    path._raw_paths[:] = [forged]
+                    return genuine
+
+                with patch.object(module.os, 'fsencode',
+                                  side_effect=mutate_encoder) as encoder:
+                    with self.assertRaisesRegex(OSError, 'raw segments changed'):
+                        module._checked_watch_path_bytes(path)
+                    encoder.assert_called_once_with(path)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
