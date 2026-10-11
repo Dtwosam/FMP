@@ -918,6 +918,12 @@ The scanner and direct evaluator already require exact `str` inventory basenames
 
 Two source-defined regressions grow this strict child to **444 distinct test methods**. An evaluator with substituted inventory-name bytes must report `BLOCKED` instead of endorsing no directory mutations; actual ordinary, 255-byte and surrogateescaped native Linux basenames still pass the helper. The same issue was separately proposed in sibling draft #998 from #995; this strict descendant of #999 carries the fix forward without rewriting that sibling. Only disposable generated /tmp observer source, tests and docs change. This cannot attest independent kernel provenance, race-free confinement or annual authorization.
 
+## DEC-806 — Integrate native encoded inventory scanner regressions on the expanded stack
+
+The expanded parent #1000 already includes DEC-799's plain-Linux platform gate, DEC-800's generated disposable `/tmp` directory confinement, and DEC-801's exact encoding check for each plain inventory basename. A separate test branch #1001 previously added bounded `os.scandir` tests that were not yet part of this expanded parent chain. DEC-806 ports **only those two test methods** into the stronger parent: a patched encoder returning plausible but substituted bytes for `"sample"` must trigger `OSError` at the actual scanner boundary; and a generated Linux `/tmp` file whose name contains native non-UTF-8 bytes must still be returned losslessly using surrogateescape.
+
+The resulting test inventory contains **446 uniquely named methods**. Only the disposable test module and documentation change; the observer implementation on this parent is unchanged, and no runtime authorization is implied. This test consolidation does not merge any PR, alter protected annual inputs, or turn local observations into independent OS write-prevention evidence.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
