@@ -6098,6 +6098,99 @@ class DisposableInotifyTests(unittest.TestCase):
                 stream.write.assert_called_once_with(module.BEFORE)
                 watch.assert_not_called()
 
+    @unittest.skipUnless(sys.platform == 'linux', 'native disposable Linux file cleanup')
+    def test_initial_native_sample_fd_closes_after_fileno_or_write_exception(self):
+        native_open = Path.open
+        for fault in ('fileno', 'write'):
+            with self.subTest(fault=fault):
+                opened = []
+
+                class FaultyPublicWriter:
+                    def __init__(self, file):
+                        self.file = file
+                        self.fd = file.fileno()
+
+                    def __enter__(self):
+                        return self
+
+                    def __exit__(self, exc_type, exc_value, traceback):
+                        return self.file.__exit__(exc_type, exc_value, traceback)
+
+                    def fileno(self):
+                        if fault == 'fileno':
+                            raise RuntimeError('synthetic unreadable initial fd')
+                        return self.file.fileno()
+
+                    def write(self, data):
+                        if fault == 'write':
+                            raise OSError(28, 'synthetic initial write failure')
+                        return self.file.write(data)
+
+                def controlled_open(path, mode='r', *args, **kwargs):
+                    file = native_open(path, mode, *args, **kwargs)
+                    if mode == 'xb':
+                        writer = FaultyPublicWriter(file)
+                        opened.append(writer)
+                        return writer
+                    return file
+
+                with patch.object(module.Path, 'open', autospec=True,
+                                  side_effect=controlled_open):
+                    with patch.object(module, '_start_watch') as watch:
+                        outcome = module.run_demo()
+                self.assertEqual(outcome['status'], 'BLOCKED')
+                self.assertFalse(outcome['can_authorize_dispatch'])
+                self.assertFalse(outcome['independent_os_proof_verified'])
+                self.assertEqual(len(opened), 1)
+                self.assertTrue(opened[0].file.closed)
+                with self.assertRaises(OSError):
+                    os.fstat(opened[0].fd)
+                watch.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native disposable Linux close')
+    def test_initial_native_sample_fd_closes_before_postclose_error_blocks(self):
+        native_open = Path.open
+        opened = []
+
+        class PostcloseFailure:
+            def __init__(self, file):
+                self.file = file
+                self.fd = file.fileno()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc_value, traceback):
+                self.file.__exit__(exc_type, exc_value, traceback)
+                raise OSError(5, 'synthetic postclose failure')
+
+            def fileno(self):
+                return self.file.fileno()
+
+            def write(self, data):
+                return self.file.write(data)
+
+        def controlled_open(path, mode='r', *args, **kwargs):
+            file = native_open(path, mode, *args, **kwargs)
+            if mode == 'xb':
+                writer = PostcloseFailure(file)
+                opened.append(writer)
+                return writer
+            return file
+
+        with patch.object(module.Path, 'open', autospec=True,
+                          side_effect=controlled_open):
+            with patch.object(module, '_start_watch') as watch:
+                outcome = module.run_demo()
+        self.assertEqual(outcome['status'], 'BLOCKED')
+        self.assertFalse(outcome['can_authorize_dispatch'])
+        self.assertFalse(outcome['independent_os_proof_verified'])
+        self.assertEqual(len(opened), 1)
+        self.assertTrue(opened[0].file.closed)
+        with self.assertRaises(OSError):
+            os.fstat(opened[0].fd)
+        watch.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
