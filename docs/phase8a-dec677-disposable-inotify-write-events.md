@@ -2462,6 +2462,30 @@ and DEC-651/#821/#779 remain BLOCKED. Exact-head Phase 3/full
 historical CI and qualified independent review required.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-896 — Full native CLI negative-control mode matrix
+
+DEC-895 adds true separate-process native Linux positive-local and
+write-revert CLI controls. DEC-896 exercises the other four explicit
+generated negative-control switches as **unpatched subprocesses**:
+watched inode replacement, persistent sibling creation, transient
+sibling creation/deletion, and hardlink alias creation. Each
+subprocess must produce precisely one parseable JSON receipt with
+exit code 2, `BLOCKED`, nonempty findings, and both independent
+OS-proof and authorization flags strictly false. It may operate
+only on freshly generated disposable public /tmp paths. Combined
+with the DEC-895 tests and the preexisting default-inert parser
+test, this covers every user-facing switch without ever taking a
+caller-supplied source path or running a protected annual workflow.
+
+One new source-defined test method covers four genuine Linux modes,
+bringing the strict tip to **569 methods**. No runtime logic was
+modified. These outputs do not evidence OS-enforced no-write
+confinement, continuous kernel auditing or immutable annual
+admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified independent
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
