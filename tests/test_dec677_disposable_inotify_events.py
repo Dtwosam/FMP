@@ -5672,6 +5672,51 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(module._checked_watch_path_bytes(path),
                                  os.fsencode(path))
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux inotify watch')
+    def test_live_generated_tmp_registers_two_distinct_kernel_watches(self):
+        with tempfile.TemporaryDirectory(prefix='dec799-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            module._write_generated_payload(path, module.BEFORE)
+            self.assertEqual(module._checked_watch_path_bytes(path),
+                             os.fsencode(path))
+            self.assertEqual(module._checked_watch_path_bytes(path.parent),
+                             os.fsencode(path.parent))
+            fd, file_wd, directory_wd = module._start_watch(path)
+            try:
+                self.assertIs(type(fd), int)
+                self.assertGreaterEqual(fd, 3)
+                self.assertIs(type(file_wd), int)
+                self.assertIs(type(directory_wd), int)
+                self.assertGreater(file_wd, 0)
+                self.assertGreater(directory_wd, 0)
+                self.assertNotEqual(file_wd, directory_wd)
+            finally:
+                os.close(fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux inotify events')
+    def test_live_generated_tmp_write_event_never_authorizes(self):
+        with tempfile.TemporaryDirectory(prefix='dec799-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            module._write_generated_payload(path, module.BEFORE)
+            fd, file_wd, directory_wd = module._start_watch(path)
+            try:
+                module._write_generated_payload(path, module.AFTER)
+                raw = module._read_pending(fd)
+                events = module._classify_stream(
+                    raw, file_wd, directory_watch=directory_wd)
+                self.assertTrue(events['well_formed'], events)
+                self.assertGreaterEqual(events['source_content_write_events'], 1)
+                result = module._evaluate(
+                    module.BEFORE, module.AFTER, raw, file_wd, True, False,
+                    directory_watch=directory_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['can_authorize_dispatch'])
+                self.assertFalse(result['independent_os_proof_verified'])
+            finally:
+                os.close(fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
