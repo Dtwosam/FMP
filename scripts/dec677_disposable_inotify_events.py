@@ -865,7 +865,12 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         and len(transient_inode) == 2
                         and transient_payload == b"PUBLIC-TEMPORARY"
                     )
-                    transient.unlink()
+                    removed = transient.unlink()
+                    # pathlib.Path.unlink() returns None on success. Do not
+                    # treat a forged nonvoid wrapper return as a completed
+                    # transient create/remove negative control.
+                    if removed is not None:
+                        raise OSError("disposable transient unlink returned malformed status")
                 final_inode, end = _checked_snapshot_result(_snapshot_regular(path))
                 if end != BEFORE:
                     raise OSError("disposable generated source final bytes differ from fixture")
