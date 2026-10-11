@@ -752,7 +752,13 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     # public /tmp inode. The snapshot link-count guard must
                     # refuse it; even an injected bypass never authorizes.
                     alias = Path(folder) / "public-hardlink-alias"
-                    os.link(path, alias)
+                    linked = os.link(path, alias)
+                    # Python os.link() mutates the filesystem and returns
+                    # None, not a success code. A patched nonvoid status is
+                    # not evidence that an alias was actually installed.
+                    if linked is not None:
+                        return _outcome([
+                            "disposable hard-link syscall returned malformed status"])
                     if not _plausible_generated_hardlink_pair(path, alias):
                         return _outcome([
                             "disposable generated hard-link negative alias not verified"])
