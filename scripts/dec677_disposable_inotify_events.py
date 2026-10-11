@@ -1276,6 +1276,21 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                             or drained_snapshot_bytes != BEFORE
                             or drained_snapshot_bytes != end):
                         raise OSError("disposable sample bytes changed during event drain")
+                    # The last no-follow sample snapshot can itself span a
+                    # pathname replacement or metadata mutation. Check the
+                    # generated sample pathname once more before admitting
+                    # even a local-only observation. Still non-atomic.
+                    receipt_sample_record = os.lstat(path)
+                    if (_checked_initial_sample_identity(receipt_sample_record)
+                            != initial_sample_inode):
+                        raise OSError("disposable sample inode changed during final snapshot")
+                    receipt_sample_size = receipt_sample_record.st_size
+                    if (type(receipt_sample_size) is not int
+                            or receipt_sample_size != len(BEFORE)):
+                        raise OSError("disposable sample size changed during final snapshot")
+                    if (_checked_generated_sample_access_identity(receipt_sample_record)
+                            != initial_sample_access):
+                        raise OSError("disposable sample access changed during final snapshot")
                     # Reopening the sample can itself cross a parent rename.
                     # Keep the generated parent identity check after that last
                     # sample snapshot, before forming even a local witness.
