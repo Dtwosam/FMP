@@ -9018,6 +9018,102 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'generated late transient after first event drain')
+    def test_real_generated_transient_during_receipt_census_late_event_blocks(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'created': False, 'removed': False}
+        late_name = b'late-receipt-public'
+        native_late_events = (ev(10, module.IN_CREATE, named(late_name)) +
+                              ev(10, module.IN_DELETE, named(late_name)))
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                sibling = folder / late_name.decode('ascii')
+                sibling.write_bytes(b'PUBLIC-TRANSIENT-LATE')
+                state['created'] = sibling.is_file()
+                os.unlink(sibling)
+                state['removed'] = not os.path.lexists(sibling)
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as scanner:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as early_reader:
+                        with patch.object(module, '_read_receipt_pending',
+                                          return_value=native_late_events) as late_reader:
+                            with patch.object(module, '_evaluate') as evaluator:
+                                result = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(scanner.call_count, 3)
+            self.assertTrue(state['created'])
+            self.assertTrue(state['removed'])
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            early_reader.assert_called_once_with(read_fd)
+            late_reader.assert_called_once_with(read_fd)
+            evaluator.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated clean late receipt poll')
+    def test_real_generated_clean_second_receipt_event_drain_stays_local_only(self):
+        read_fd, write_fd = os.pipe()
+        try:
+            with patch.object(module, '_start_watch',
+                              return_value=(read_fd, 9, 10)) as watcher:
+                with patch.object(module, '_read_pending',
+                                  return_value=b'') as early_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      return_value=b'') as late_reader:
+                        result = module.run_demo()
+            self.assertEqual(result['status'],
+                             'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            early_reader.assert_called_once_with(read_fd)
+            late_reader.assert_called_once_with(read_fd)
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'malformed late receipt event buffer')
+    def test_malformed_late_receipt_event_buffer_fails_closed(self):
+        for malformed in (None, 'empty', [], True, bytearray(),
+                          type('BytesChild', (bytes,), {})(b'')):
+            with self.subTest(value_type=type(malformed).__name__):
+                read_fd, write_fd = os.pipe()
+                try:
+                    with patch.object(module, '_start_watch',
+                                      return_value=(read_fd, 9, 10)):
+                        with patch.object(module, '_read_pending',
+                                          return_value=b'') as early_reader:
+                            with patch.object(module, '_read_receipt_pending',
+                                              return_value=malformed) as late_reader:
+                                with patch.object(module, '_evaluate') as evaluator:
+                                    result = module.run_demo()
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIs(result['can_authorize_dispatch'], False)
+                    self.assertIs(result['independent_os_proof_verified'], False)
+                    early_reader.assert_called_once_with(read_fd)
+                    late_reader.assert_called_once_with(read_fd)
+                    evaluator.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

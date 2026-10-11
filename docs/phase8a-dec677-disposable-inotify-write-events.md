@@ -2053,6 +2053,34 @@ confinement/server admission. DEC-650/#820 and DEC-651/#821/#779 remain
 BLOCKED; own exact-head Phase 3/full historical CI and independent
 qualified review mandatory. **DRAFT / NEVER MERGE**.
 
+
+## DEC-879 — Best-effort final receipt event drain
+
+DEC-875–878 inventory and revalidate generated /tmp paths after the
+first inotify event drain. That first drain cannot include directory
+activity performed **during** the later receipt census. A temporary
+public sibling created and unlinked while the census runs can leave the
+exact earlier names, sample inode, bytes, timestamps and parent inode
+unchanged. DEC-879 performs a **second bounded immediate nonblocking**
+read of already-queued inotify events after the last receipt sample
+metadata probe. Any nonempty, malformed, or unreadable result yields
+`BLOCKED` before local evaluation. The special deliberate watched
+inode replacement negative remains nonauthorizing on its original
+branch. The original first drain retains its 250-ms initial poll.
+
+Three added regression methods cover: native generated public sibling
+create/unlink with a *synthetically supplied* late event pair; a quiet
+empty first and second simulated drain, which remains ONLY
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`; and malformed late drain buffers
+that must fail closed. **547 source-defined test methods** on this
+strict tip. All generated native mutation is confined to /tmp public
+fixtures. Neither the injected event buffer nor an immediate last poll
+proves authenticated kernel silence, OS-enforced no-write, continuous
+race exclusion or immutable server admission. DEC-650/#820 and
+DEC-651/#821/#779 remain BLOCKED. Exact-head Phase 3/full historical CI
+plus qualified independent security review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
