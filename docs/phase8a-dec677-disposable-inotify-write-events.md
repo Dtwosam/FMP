@@ -944,6 +944,14 @@ DEC-808 requires a generated disposable `/tmp/dec677-disposable-*` directory to 
 
 DEC-809 adds a native Linux runner regression replacing only the `TemporaryDirectory` return path with a newly generated but deliberately chmod-modified `0755`/`0777` private test directory. It asserts `BLOCKED`, permanently false authorization fields, and zero calls to `Path.write_bytes` and `_start_watch` before restoring mode `0700` for automatic cleanup. Existing UID-specific synthetic test methods are marked Linux-only, because `os.geteuid` is a Linux/POSIX-only API. This is a **test/doc-only** strict child with **453 unique tests**, no runtime changes, and no proof of race-free annual OS confinement or immutable run385 admission.
 
+## DEC-810 — Bound no-follow generated-folder device and inode identities
+
+DEC-807–809 reject substituted symlinks, non-directories, shared directories and foreign-owned generated `/tmp` folders **before** the first generated sample write. The corresponding `os.lstat` result also supplies Linux device and inode identities; a patched synthetic metadata object could report a valid private-directory mode and UID but impossible or custom dev/ino values, still passing that partial metadata check.
+
+DEC-810 requires the lstat-reported `st_dev` and `st_ino` fields to be exact plain Python integers in Linux's unsigned 64-bit identity range, with a positive inode number; missing/throwing fields and forged bool/int-subclass values fail closed. Two new source-defined regressions increase the suite to **455 uniquely named methods**: invalid synthetic device/inode values refuse the folder; a live generated private Linux `/tmp` directory retains its positive native inode and is accepted. An existing positive mocked-owner fixture now provides valid dev/ino fields so it continues to exercise ownership rather than failing early for missing metadata.
+
+This bounds local injected metadata shape. It does not independently attest host inode origin, eliminate TOCTOU between check and write, enforce annual OS confinement, or authorize run385.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
