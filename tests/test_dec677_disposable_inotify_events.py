@@ -5666,6 +5666,8 @@ class DisposableInotifyTests(unittest.TestCase):
     def test_generated_folder_rejects_foreign_or_forged_owner_ids(self):
         class FakeStat:
             st_mode = module.stat.S_IFDIR | 0o700
+            st_dev = 1
+            st_ino = 2
             def __init__(self, uid):
                 self.st_uid = uid
         class ForgedInt(int):
@@ -5732,6 +5734,46 @@ class DisposableInotifyTests(unittest.TestCase):
                         start.assert_not_called()
                     finally:
                         os.chmod(folder, 0o700)
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux generated folder metadata')
+    def test_generated_folder_rejects_impossible_device_inode_identity(self):
+        class FakeStat:
+            def __init__(self, **changes):
+                self.st_mode = module.stat.S_IFDIR | 0o700
+                self.st_uid = os.geteuid()
+                self.st_dev = 1
+                self.st_ino = 2
+                for field, value in changes.items():
+                    setattr(self, field, value)
+
+        class ForgedInt(int):
+            def __eq__(self, _other):
+                return True
+
+        folder = '/tmp/' + module.DISPOSABLE_PREFIX + 'public-test'
+        invalid = (
+            ('st_dev', -1), ('st_dev', True), ('st_dev', 1 << 64),
+            ('st_dev', ForgedInt(1)), ('st_ino', 0), ('st_ino', -1),
+            ('st_ino', True), ('st_ino', 1 << 64), ('st_ino', ForgedInt(2))
+        )
+        for field, value in invalid:
+            with self.subTest(field=field, value=repr(value)):
+                with patch.object(module.os, 'lstat',
+                                  return_value=FakeStat(**{field: value})):
+                    with self.assertRaisesRegex(OSError, 'identity malformed'):
+                        module._checked_generated_folder(folder)
+        with patch.object(module.os, 'lstat', return_value=FakeStat()):
+            self.assertEqual(module._checked_generated_folder(folder), Path(folder))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native Linux /tmp inode')
+    def test_native_private_tempdir_has_bounded_device_inode_identity(self):
+        with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                         dir='/tmp') as folder:
+            st = os.lstat(folder)
+            self.assertGreater(st.st_ino, 0)
+            self.assertTrue(module.stat.S_ISDIR(st.st_mode))
+            self.assertEqual(module._checked_generated_folder(folder), Path(folder))
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):

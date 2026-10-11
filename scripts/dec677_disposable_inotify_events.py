@@ -809,6 +809,16 @@ def _checked_generated_folder(folder: Any) -> Path:
             or not 0 <= euid <= MAX_KERNEL_OWNER_ID
             or uid != euid or stat.S_IMODE(mode) != 0o700):
         raise OSError("disposable generated tempdir is not private")
+    # A mocked lstat claiming private ownership still needs a plausible
+    # native Linux device/inode identity before any public bytes are written.
+    try:
+        dev, ino = metadata.st_dev, metadata.st_ino
+    except Exception as error:
+        raise OSError("disposable generated tempdir identity unreadable") from error
+    if (type(dev) is not int or type(ino) is not int
+            or not 0 <= dev <= MAX_KERNEL_STAT_ID
+            or not 1 <= ino <= MAX_KERNEL_STAT_ID):
+        raise OSError("disposable generated tempdir identity malformed")
     return folder_path
 
 
