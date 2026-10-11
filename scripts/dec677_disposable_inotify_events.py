@@ -732,6 +732,15 @@ def _plausible_generated_hardlink_pair(
         return False
 
 
+def _write_generated_payload(path: Path, payload: bytes) -> None:
+    """Write only supplied bounded public bytes with an exact native count."""
+    if type(payload) is not bytes or not 0 < len(payload) <= 4096:
+        raise OSError("disposable generated payload is malformed")
+    written = path.write_bytes(payload)
+    if type(written) is not int or written != len(payload):
+        raise OSError("disposable generated write returned malformed byte count")
+
+
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
              create_sibling: bool = False, transient_sibling: bool = False,
              hardlink_negative: bool = False) -> dict[str, Any]:
@@ -749,7 +758,7 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
     try:
         with tempfile.TemporaryDirectory(prefix="dec677-disposable-", dir="/tmp") as folder:
             path = Path(folder) / "sample"
-            path.write_bytes(BEFORE)
+            _write_generated_payload(path, BEFORE)
             # Start observing both the inode and parent directory *before*
             # taking the baseline. A prewatch snapshot would leave an
             # unobserved gap before kernel watch registration.
@@ -824,18 +833,18 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     # An inode-targeted watch is not an identity proof for a
                     # mutable pathname. Substitute a precreated identical file.
                     replacement = Path(folder) / "public-replacement"
-                    replacement.write_bytes(BEFORE)
+                    _write_generated_payload(replacement, BEFORE)
                     os.replace(replacement, path)
                 sibling_path = Path(folder) / PERSISTENT_SIBLING_NAME
                 sibling_initial_inode = None
                 sibling_initial_bytes = None
                 if create_sibling:
-                    sibling_path.write_bytes(b"PUBLIC-EXTRA")
+                    _write_generated_payload(sibling_path, b"PUBLIC-EXTRA")
                     sibling_initial_inode, sibling_initial_bytes = _checked_snapshot_result(_snapshot_regular(sibling_path))
                 transient_midpoint_verified = None
                 if transient_sibling:
                     transient = Path(folder) / TRANSIENT_SIBLING_NAME
-                    transient.write_bytes(b"PUBLIC-TEMPORARY")
+                    _write_generated_payload(transient, b"PUBLIC-TEMPORARY")
                     # Prove this toy control really had the expected bounded
                     # regular file on disk before removing its directory entry.
                     transient_inode, transient_payload = _checked_snapshot_result(_snapshot_regular(transient))
