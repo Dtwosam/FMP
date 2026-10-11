@@ -1320,6 +1320,21 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         os.lstat(folder_path))
                     if receipt_folder_inode != initial_folder_inode:
                         raise OSError("disposable parent directory changed during final sample snapshot")
+                    # The third bounded sample read occurs after the earlier
+                    # directory census and event drain. A newly created entry
+                    # during that final read can preserve parent dev/ino, so
+                    # reread the small generated directory before claiming
+                    # even a local unverified witness. This remains non-atomic.
+                    receipt_inventory_names = _bounded_inventory_names(folder_path)
+                    if (type(receipt_inventory_names) is not tuple
+                            or receipt_inventory_names != inventory_names):
+                        raise OSError("disposable directory entries changed during final sample snapshot")
+                    # Directory replacement while scanning must not lend its
+                    # entries to the original watched parent inode.
+                    receipt_inventory_parent_inode = _checked_generated_directory_identity(
+                        os.lstat(folder_path))
+                    if receipt_inventory_parent_inode != initial_folder_inode:
+                        raise OSError("disposable parent changed during receipt inventory")
                 return _checked_disposable_observer_result(
                     _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),

@@ -8644,6 +8644,84 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux late sibling inventory')
+    def test_real_generated_late_sibling_after_last_sample_snapshot_blocks(self):
+        native_snapshot = module._snapshot_regular
+        read_fd, write_fd = os.pipe()
+        state = {'snapshots': 0, 'sibling_created': False,
+                 'sibling_bytes': None}
+
+        def snapshot(path):
+            identity, payload = native_snapshot(path)
+            state['snapshots'] += 1
+            if state['snapshots'] == 3:
+                # Create only a generated public sibling, *after* the last
+                # file read and after the earlier directory census/drain.
+                # Parent dev/ino and source bytes stay unchanged, so only
+                # the final bounded receipt inventory exposes this entry.
+                sibling = path.with_name('late-public-receipt-sibling')
+                sibling.write_bytes(b'PUBLIC-LATE-ENTRY')
+                state['sibling_created'] = sibling.is_file()
+                state['sibling_bytes'] = sibling.read_bytes()
+            return identity, payload
+
+        try:
+            with patch.object(module, '_snapshot_regular',
+                              side_effect=snapshot) as snapshots:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+            self.assertTrue(state['sibling_created'])
+            self.assertEqual(state['sibling_bytes'], b'PUBLIC-LATE-ENTRY')
+            self.assertEqual(state['snapshots'], 3)
+            self.assertEqual(snapshots.call_count, 3)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluator.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux stable receipt inventory')
+    def test_real_generated_clean_directory_census_rechecked_after_last_read(self):
+        native_scan = module._bounded_inventory_names
+        scanned = []
+        read_fd, write_fd = os.pipe()
+
+        def census(folder):
+            names = native_scan(folder)
+            scanned.append(names)
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as inventory:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        result = module.run_demo()
+            self.assertEqual(scanned, [(), ('sample',), ('sample',)])
+            self.assertEqual(inventory.call_count, 3)
+            self.assertEqual(result['status'],
+                             'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
