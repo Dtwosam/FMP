@@ -788,13 +788,27 @@ def _checked_generated_folder(folder: Any) -> Path:
     # symlink to a different location. Verify the actual directory inode
     # without following it before the very first generated file write.
     try:
-        mode = os.lstat(folder_path).st_mode
+        metadata = os.lstat(folder_path)
+        mode = metadata.st_mode
     except Exception as error:
         raise OSError("disposable generated tempdir could not be lstat checked") from error
     if (type(mode) is not int
             or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
             or not stat.S_ISDIR(mode)):
         raise OSError("disposable generated tempdir is not a real directory")
+    # tempfile.TemporaryDirectory creates a private 0700 directory owned by
+    # this effective user. A substituted shared or foreign-owned directory
+    # is not a plausible safe destination for even generated public bytes.
+    try:
+        uid = metadata.st_uid
+        euid = os.geteuid()
+    except Exception as error:
+        raise OSError("disposable generated tempdir owner probe failed") from error
+    if (type(uid) is not int or type(euid) is not int
+            or not 0 <= uid <= MAX_KERNEL_OWNER_ID
+            or not 0 <= euid <= MAX_KERNEL_OWNER_ID
+            or uid != euid or stat.S_IMODE(mode) != 0o700):
+        raise OSError("disposable generated tempdir is not private")
     return folder_path
 
 

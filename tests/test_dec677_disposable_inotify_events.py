@@ -5646,6 +5646,59 @@ class DisposableInotifyTests(unittest.TestCase):
             finally:
                 alias.unlink()
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux directory permissions')
+    def test_generated_folder_rejects_nonprivate_mode_then_accepts_0700(self):
+        with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                         dir='/tmp') as folder:
+            self.assertEqual(module._checked_generated_folder(folder), Path(folder))
+            for unsafe in (0o755, 0o770, 0o777, 0o1700):
+                with self.subTest(mode=oct(unsafe)):
+                    os.chmod(folder, unsafe)
+                    try:
+                        with self.assertRaisesRegex(OSError, 'not private'):
+                            module._checked_generated_folder(folder)
+                    finally:
+                        os.chmod(folder, 0o700)
+            self.assertEqual(module._checked_generated_folder(folder), Path(folder))
+
+    def test_generated_folder_rejects_foreign_or_forged_owner_ids(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFDIR | 0o700
+            def __init__(self, uid):
+                self.st_uid = uid
+        class ForgedInt(int):
+            def __eq__(self, _other):
+                return True
+        path = '/tmp/' + module.DISPOSABLE_PREFIX + 'public-test'
+        euid = os.geteuid()
+        invalid = ((euid + 1) % (1 << 32), True, -1, 1 << 32,
+                   str(euid), ForgedInt(euid))
+        for owner in invalid:
+            with self.subTest(owner=repr(owner)):
+                with patch.object(module.os, 'lstat', return_value=FakeStat(owner)):
+                    with self.assertRaisesRegex(OSError, 'not private'):
+                        module._checked_generated_folder(path)
+        with patch.object(module.os, 'lstat', return_value=FakeStat(euid)):
+            self.assertEqual(module._checked_generated_folder(path), Path(path))
+
+    def test_generated_folder_refuses_malformed_effective_owner_probe(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFDIR | 0o700
+            st_uid = 0
+        path = '/tmp/' + module.DISPOSABLE_PREFIX + 'public-test'
+        for forged in (True, 1.0, '0', -1, 1 << 32):
+            with self.subTest(value=repr(forged)):
+                with patch.object(module.os, 'lstat', return_value=FakeStat()):
+                    with patch.object(module.os, 'geteuid', return_value=forged):
+                        with self.assertRaisesRegex(OSError, 'not private'):
+                            module._checked_generated_folder(path)
+        with patch.object(module.os, 'lstat', return_value=FakeStat()):
+            with patch.object(module.os, 'geteuid',
+                              side_effect=RuntimeError('synthetic owner API')):
+                with self.assertRaisesRegex(OSError, 'owner probe failed'):
+                    module._checked_generated_folder(path)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

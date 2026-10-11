@@ -932,6 +932,12 @@ DEC-807 adds a no-follow `os.lstat` on the exact returned generated folder and r
 
 This guards a **prewrite local pathname boundary**, not a race-free FD-relative filesystem sandbox, independent annual OS enforcement or permission to dispatch run385.
 
+## DEC-808 — Require owner-matched private generated /tmp directory permissions
+
+DEC-807 adds a no-follow `os.lstat` check that the generated `/tmp/dec677-disposable-*` path is a real directory rather than a symlink, before the first public sample write. That still allowed a substituted *existing but shared directory* to pass, even though Python's `tempfile.TemporaryDirectory` creates a private mode-`0700` directory owned by the effective user.
+
+DEC-808 additionally requires the lstat-verified directory to have exact private permission/special mode bits `0700`, an exact plain `st_uid` within Linux UINT32 bounds equal to the current exact `os.geteuid()`, and fail-closed behavior for malformed owner probe returns. Three new source-defined tests raise the suite to **452 unique test methods**, including real generated Linux chmod transitions (0700 accepted; group/world-accessible or sticky-mode substitutions refused) and forged/foreign UID and euid-wrapper errors. All checks are before the first generated write. They do not remove pathname TOCTOU races or amount to independently enforced annual filesystem sandboxing.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
