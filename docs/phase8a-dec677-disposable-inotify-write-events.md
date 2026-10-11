@@ -1919,6 +1919,27 @@ immutable run385 one-shot server admission remain BLOCKED. Exact-head
 Phase 3/full historical CI and qualified independent review mandatory.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-874 — Native source deletion after the last sample snapshot
+
+DEC-872/873 cover same-byte inode replacement and symlink substitution
+after the final generated no-follow read. DEC-874 covers **pathname
+loss**: the native Linux test unlinks only the generated disposable
+`/tmp` sample immediately after its third snapshot. The previously
+captured inode and byte payload remain intact as Python values, and
+the synthetic queue is empty, but the final sample `os.lstat` must
+fail closed, producing `BLOCKED`, never invoking the local evaluator,
+keeping both authority fields exactly false and closing the watcher FD.
+Only generated tests/docs change; **536 source-defined test methods**.
+
+An empty synthetic event queue is not proof of a real kernel queue's
+contents. The sample deletion operates solely on generated public data,
+not protected evidence or annual jobs. These sequential checks do not
+prove independent no-write OS confinement or immutable annual admission.
+DEC-650 annual 20-job proof and DEC-651 one-shot run385 admission remain
+BLOCKED. The new exact-head Phase 3/full historical CI and qualified
+independent review are required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
