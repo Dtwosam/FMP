@@ -38,6 +38,18 @@ def native_created_sample_snapshot(path, data=module.BEFORE):
     return ((record.st_dev, record.st_ino), data)
 
 
+def native_initial_then_snapshot_error(error):
+    """Bind synthetic first baseline to real O_EXCL inode; fail second."""
+    attempts = []
+
+    def snapshot(path):
+        attempts.append(1)
+        if len(attempts) > 1:
+            raise error
+        return native_created_sample_snapshot(path)
+    return snapshot
+
+
 class DisposableInotifyTests(unittest.TestCase):
     def test_empty_stream_has_no_events_but_never_authorizes(self):
         r = module._evaluate(b'same', b'same', b'', 9, True, False,
@@ -4739,8 +4751,8 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  side_effect=(((1, 2), module.BEFORE),
-                                               OSError('unrelated read failure'))):
+                                  side_effect=native_initial_then_snapshot_error(
+                                      OSError('unrelated read failure'))):
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module, '_plausible_generated_hardlink_pair',
                                           return_value=True):
@@ -4760,8 +4772,8 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  side_effect=(((1, 2), module.BEFORE),
-                                               module._SnapshotHardlinkCountError('two links'))):
+                                  side_effect=native_initial_then_snapshot_error(
+                                      module._SnapshotHardlinkCountError('two links'))):
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module, '_plausible_generated_hardlink_pair',
                                           return_value=True):
@@ -4836,8 +4848,8 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  side_effect=(((1, 2), module.BEFORE),
-                                               module._SnapshotHardlinkCountError('two links'))):
+                                  side_effect=native_initial_then_snapshot_error(
+                                      module._SnapshotHardlinkCountError('two links'))):
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module, '_plausible_generated_hardlink_pair',
                                           side_effect=(True, False)) as verify:
@@ -4858,8 +4870,8 @@ class DisposableInotifyTests(unittest.TestCase):
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
-                                  side_effect=(((1, 2), module.BEFORE),
-                                               module._SnapshotHardlinkCountError('two links'))):
+                                  side_effect=native_initial_then_snapshot_error(
+                                      module._SnapshotHardlinkCountError('two links'))):
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module, '_plausible_generated_hardlink_pair',
                                           side_effect=(True, True)) as verify:
@@ -4942,14 +4954,17 @@ class DisposableInotifyTests(unittest.TestCase):
         rd, wr = os.pipe()
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
-                # A synthetic baseline identity unrelated to the actual
-                # generated temporary inode must not credit the alias.
+                # An injected baseline identity unrelated to the actual O_EXCL
+                # inode must now be rejected *before* any hard-link creation.
                 with patch.object(module, '_snapshot_regular',
                                   return_value=((0, 0), module.BEFORE)) as snapshot:
-                    result = module.run_demo(hardlink_negative=True)
+                    with patch.object(module.os, 'link') as link:
+                        result = module.run_demo(hardlink_negative=True)
             self.assertEqual(result['status'], 'BLOCKED')
-            self.assertIn('negative alias not verified', ' '.join(result['findings']))
+            self.assertIn('baseline inode differs', ' '.join(result['findings']))
+            self.assertNotIn('negative alias not verified', ' '.join(result['findings']))
             self.assertEqual(snapshot.call_count, 1)
+            link.assert_not_called()
             self.assertFalse(result['independent_os_proof_verified'])
             with self.assertRaises(OSError):
                 os.fstat(rd)
@@ -5466,8 +5481,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 try:
                     with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                         with patch.object(module, '_snapshot_regular',
-                                          side_effect=(((1, 2), module.BEFORE),
-                                                       module._SnapshotHardlinkCountError('two links'))) as snap:
+                                          side_effect=native_initial_then_snapshot_error(
+                                      module._SnapshotHardlinkCountError('two links'))) as snap:
                             with patch.object(module.os, 'link', return_value=None):
                                 with patch.object(module, '_plausible_generated_hardlink_pair',
                                                   side_effect=(True, injected)) as verify:
