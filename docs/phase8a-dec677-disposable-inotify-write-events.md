@@ -2126,6 +2126,30 @@ review required; DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 An immediate poll does not close future races or establish OS write
 prevention or immutable annual admission. **DRAFT / NEVER MERGE**.
 
+
+## DEC-882 — Actual generated inotify events after first drain
+
+DEC-879's immediate final receipt drain refuses activity queued while
+later generated parent and sample checks run. DEC-882 strengthens that
+boundary with **one genuine native Linux inotify regression**, rather
+than injecting event-shaped bytes. It registers actual watches on a
+newly generated private /tmp parent and sample, confirms the first
+kernel event drain is empty, then performs a native public sibling
+create and unlink during the third bounded directory census. The
+late zero-wait kernel drain must return real bytes; the native event
+decoder must recognize at least two directory changes. The observer
+must return `BLOCKED` before evaluation, with both authority fields
+exactly false. The disposable watcher is owned and closed by the
+normal runner. **553 source-defined test methods** at this tip.
+
+Even real inotify event detection in a generated /tmp experiment does
+not prove authenticated independent OS-enforced no-write confinement,
+completeness across all namespace/race windows, or immutable annual
+server admission. No protected annual files or runner were accessed.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own exact-head
+Phase 3/full historical CI and independent qualified review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
