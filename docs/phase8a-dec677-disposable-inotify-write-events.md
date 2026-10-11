@@ -2193,6 +2193,30 @@ annual admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Own exact-head Phase 3/full historical CI and qualified independent
 security review are mandatory. **DRAFT / NEVER MERGE**.
 
+
+## DEC-885 — Repair inherited full-suite metadata count assertions
+
+The full historical CI results for #1091 and #1092 were **FAILURES**,
+despite their exact-head Phase 3 passes. Both failed only in the
+disposable observer unit module: the previous clean writer/access
+metadata test asserted **three** checker calls but DEC-876 adds a
+legitimate **fourth** checker call after the receipt census; the clean
+timestamp test asserted **two** checker calls but the same guard adds
+a legitimate **third** native timestamp check.
+
+DEC-885 updates only those two inherited regression expectations and
+**strengthens the equality checks** to require all four access identity
+tuples and all three timestamp pairs to match. The new late metadata
+guard and second event collector remain unchanged. No failures are
+retroactively reclassified as passing: exact-head CI for this repair,
+full historical regression and qualified independent review are
+still mandatory. **555 distinct source-defined methods**, unchanged.
+
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Changes are
+restricted to disposable observer tests and documentation; no annual
+protected evidence, broker, production runner or authorization surface.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

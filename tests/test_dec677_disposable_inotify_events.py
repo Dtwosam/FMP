@@ -7959,10 +7959,15 @@ class DisposableInotifyTests(unittest.TestCase):
                     with patch.object(module, '_read_pending',
                                       return_value=b'') as reader:
                         receipt = module.run_demo()
-            self.assertEqual(check.call_count, 3)
-            self.assertEqual(len(observed), 3)
+            # DEC-876 adds a fourth post-census source metadata check.
+            # Require continuity across all four native writer/receipt
+            # observations, rather than dropping the new guard to retain
+            # this inherited count assertion.
+            self.assertEqual(check.call_count, 4)
+            self.assertEqual(len(observed), 4)
             self.assertEqual(observed[0], observed[1])
             self.assertEqual(observed[1], observed[2])
+            self.assertEqual(observed[2], observed[3])
             self.assertEqual(observed[0][1], os.geteuid())
             self.assertEqual(receipt['status'],
                              'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
@@ -8180,8 +8185,12 @@ class DisposableInotifyTests(unittest.TestCase):
                     with patch.object(module, '_read_pending',
                                       return_value=b'') as drain:
                         outcome = module.run_demo()
-            self.assertEqual(timestamps.call_count, 2)
+            # DEC-876 checks the same drained timestamp pair again after
+            # the final parent census. All three native pairs must agree.
+            self.assertEqual(timestamps.call_count, 3)
+            self.assertEqual(len(seen), 3)
             self.assertEqual(seen[0], seen[1])
+            self.assertEqual(seen[1], seen[2])
             self.assertEqual(outcome['status'],
                              'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
             self.assertIs(outcome['can_authorize_dispatch'], False)
