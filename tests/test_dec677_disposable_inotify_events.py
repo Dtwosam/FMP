@@ -5131,6 +5131,66 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(any(Path(name).name == 'public-hardlink-alias'
                             for name in seen))
 
+
+    def test_generated_payload_writer_rejects_bad_native_return_shape(self):
+        class ForgedInt(int):
+            def __eq__(self, other):
+                return True
+        for status in (True, None, 0, 1, len(module.BEFORE) - 1,
+                       len(module.BEFORE) + 1, 'complete',
+                       ForgedInt(len(module.BEFORE))):
+            with self.subTest(status=repr(status)):
+                with patch.object(module.Path, 'write_bytes',
+                                  return_value=status) as writer:
+                    with self.assertRaisesRegex(OSError, 'malformed byte count'):
+                        module._write_generated_payload(
+                            Path('/tmp/public-synthetic-no-file'), module.BEFORE)
+                    writer.assert_called_once()
+
+    def test_generated_payload_write_rejects_bad_data_before_file_open(self):
+        for payload in (None, True, 'PUBLIC', b'', b'X' * 4097, bytearray(b'x')):
+            with self.subTest(payload=repr(payload)[:65]):
+                with patch.object(module.Path, 'write_bytes') as writer:
+                    with self.assertRaisesRegex(OSError, 'payload is malformed'):
+                        module._write_generated_payload(
+                            Path('/tmp/public-synthetic-no-file'), payload)
+                    writer.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux generated writer')
+    def test_generated_negative_control_write_count_failures_close_watch(self):
+        native_write = module.Path.write_bytes
+        cases = (
+            ('public-replacement', {'replace_watched_inode': True}),
+            (module.PERSISTENT_SIBLING_NAME, {'create_sibling': True}),
+            (module.TRANSIENT_SIBLING_NAME, {'transient_sibling': True}),
+        )
+        for basename, mode in cases:
+            with self.subTest(basename=basename):
+                rd, wr = os.pipe()
+                try:
+                    def malformed_write(path, content):
+                        native_count = native_write(path, content)
+                        if path.name == basename:
+                            return True
+                        return native_count
+                    with patch.object(module, '_start_watch',
+                                      return_value=(rd, 9, 10)):
+                        with patch.object(module, '_snapshot_regular',
+                                          return_value=((1, 2), module.BEFORE)):
+                            with patch.object(module.Path, 'write_bytes',
+                                              autospec=True,
+                                              side_effect=malformed_write):
+                                with patch.object(module, '_read_pending') as drain:
+                                    result = module.run_demo(**mode)
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertFalse(result['can_authorize_dispatch'])
+                    self.assertFalse(result['independent_os_proof_verified'])
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(rd)
+                finally:
+                    os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
