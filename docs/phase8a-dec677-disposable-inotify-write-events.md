@@ -1736,6 +1736,27 @@ proof and DEC-651 immutable one-shot run385 admission remain BLOCKED.
 Independent exact-head Phase 3/full historical CI and qualified
 security review remain required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-866 — Reject malformed timestamps at either last-sample boundary
+
+DEC-865 introduced a bounded mtime/ctime comparison across the last
+generated no-follow sample snapshot. DEC-866 adds an integration
+regression exercising that validator at both its pre-snapshot
+(postdrain) and post-snapshot pathname observations. A synthetic Boolean,
+missing value or out-of-range signed-Linux nanosecond timestamp must
+produce `BLOCKED` with no local witness evaluator call. It also
+asserts that the third snapshot does not execute after a malformed
+pre-snapshot stamp, that an invalid last stamp is detected only after
+the third snapshot, and that the observer FD is closed in all cases.
+
+Only synthetic tests and disposable observer documentation change;
+runtime remains exactly DEC-865. **529 distinct source-defined test
+methods** on this strict line. These checks are not race-free or
+independent OS no-write evidence. DEC-650 annual confinement and
+DEC-651 immutable run385 server admission remain BLOCKED.
+Independent exact-head Phase 3/full historical CI and qualified
+security review remain mandatory. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

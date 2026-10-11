@@ -8188,6 +8188,83 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux bounded time metadata')
+    def test_malformed_postdrain_or_last_sample_timestamps_block(self):
+        native_lstat = os.lstat
+        native_snapshot = module._snapshot_regular
+        cases = (
+            ('postdrain-bool', 'postdrain', 'st_mtime_ns', True),
+            ('postdrain-overflow', 'postdrain', 'st_ctime_ns',
+             module.MAX_KERNEL_TIMESTAMP_NS + 1),
+            ('last-missing', 'last', 'st_mtime_ns', None),
+            ('last-underflow', 'last', 'st_ctime_ns',
+             module.MIN_KERNEL_TIMESTAMP_NS - 1),
+        )
+        for case, phase, field, forged in cases:
+            with self.subTest(case=case):
+                read_fd, write_fd = os.pipe()
+                state = {'sample': None, 'snapshots': 0,
+                         'drained': False, 'injected': False}
+
+                class ForgedStat:
+                    def __init__(self, native):
+                        self.native = native
+
+                    def __getattr__(self, name):
+                        if name == field:
+                            return forged
+                        return getattr(self.native, name)
+
+                def register(path):
+                    state['sample'] = os.fspath(path)
+                    return read_fd, 9, 10
+
+                def snapshot(path):
+                    result = native_snapshot(path)
+                    state['snapshots'] += 1
+                    return result
+
+                def drain(_fd):
+                    state['drained'] = True
+                    return b''
+
+                def lstat(path, *args, **kwargs):
+                    native = native_lstat(path, *args, **kwargs)
+                    correct_phase = (state['drained']
+                                     and state['snapshots'] == (
+                                         2 if phase == 'postdrain' else 3))
+                    if (correct_phase and not state['injected']
+                            and os.fspath(path) == state['sample']):
+                        state['injected'] = True
+                        return ForgedStat(native)
+                    return native
+
+                try:
+                    with patch.object(module.os, 'lstat', side_effect=lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=register) as watch:
+                            with patch.object(module, '_snapshot_regular',
+                                              side_effect=snapshot) as snap:
+                                with patch.object(module, '_read_pending',
+                                                  side_effect=drain) as reader:
+                                    with patch.object(module, '_evaluate') as evaluate:
+                                        receipt = module.run_demo()
+                    self.assertTrue(state['injected'])
+                    self.assertEqual(state['snapshots'],
+                                     2 if phase == 'postdrain' else 3)
+                    self.assertEqual(snap.call_count, state['snapshots'])
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertIs(receipt['can_authorize_dispatch'], False)
+                    self.assertIs(receipt['independent_os_proof_verified'], False)
+                    watch.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
