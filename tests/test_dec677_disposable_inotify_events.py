@@ -5191,6 +5191,44 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(wr)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux replacement')
+    def test_replacement_negative_rejects_nonvoid_replace_status_and_closes_watch(self):
+        for invalid in (True, False, 0, 1, 'moved', object()):
+            with self.subTest(replace_status=repr(invalid)):
+                rd, wr = os.pipe()
+                try:
+                    with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                        with patch.object(module, '_snapshot_regular',
+                                          return_value=((1, 2), module.BEFORE)):
+                            with patch.object(module.os, 'replace',
+                                              return_value=invalid):
+                                with patch.object(module, '_read_pending') as drain:
+                                    outcome = module.run_demo(replace_watched_inode=True)
+                    self.assertEqual(outcome['status'], 'BLOCKED')
+                    self.assertFalse(outcome['can_authorize_dispatch'])
+                    self.assertFalse(outcome['independent_os_proof_verified'])
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(rd)
+                finally:
+                    os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux native replace')
+    def test_native_generated_inode_replacement_returns_none(self):
+        with tempfile.TemporaryDirectory(prefix='dec791-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            replacement = Path(folder) / 'public-replacement'
+            path.write_bytes(module.BEFORE)
+            initial = os.stat(path)
+            replacement.write_bytes(module.BEFORE)
+            replacement_ino = os.stat(replacement).st_ino
+            self.assertNotEqual(replacement_ino, initial.st_ino)
+            self.assertIsNone(os.replace(replacement, path))
+            self.assertFalse(replacement.exists())
+            self.assertEqual(path.read_bytes(), module.BEFORE)
+            self.assertEqual(os.stat(path).st_ino, replacement_ino)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
