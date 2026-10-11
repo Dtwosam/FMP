@@ -8722,6 +8722,111 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'native generated receipt census inode swap')
+    def test_real_generated_same_bytes_sample_swap_during_receipt_census_blocks(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'changed': False,
+                 'old_inode': None, 'new_inode': None, 'bytes': None}
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                # Scan has finished but its names have not yet been returned.
+                # Replace only generated public data in the same /tmp parent.
+                sample = folder / 'sample'
+                original = os.lstat(sample)
+                replacement = folder / 'receipt-public-swap'
+                replacement.write_bytes(module.BEFORE)
+                candidate = os.lstat(replacement)
+                os.replace(replacement, sample)
+                current = os.lstat(sample)
+                state['old_inode'] = (original.st_dev, original.st_ino)
+                state['new_inode'] = (current.st_dev, current.st_ino)
+                state['changed'] = (
+                    state['old_inode'] != state['new_inode']
+                    and state['new_inode'] == (candidate.st_dev, candidate.st_ino)
+                )
+                state['bytes'] = sample.read_bytes()
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as inventory:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluate:
+                            receipt = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(inventory.call_count, 3)
+            self.assertTrue(state['changed'])
+            self.assertEqual(state['bytes'], module.BEFORE)
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluate.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native generated receipt census chmod')
+    def test_real_generated_sample_chmod_during_receipt_census_blocks(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'old_mode': None, 'new_mode': None,
+                 'inode_stable': False}
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                sample = folder / 'sample'
+                before = os.lstat(sample)
+                original_mode = before.st_mode & 0o7777
+                # Preserve the native inode and source bytes. Change only
+                # the generated sample's owner-write permission at the
+                # post-read, post-event-drain census boundary.
+                os.chmod(sample, original_mode ^ 0o200)
+                after = os.lstat(sample)
+                state['old_mode'] = original_mode
+                state['new_mode'] = after.st_mode & 0o7777
+                state['inode_stable'] = (
+                    (before.st_dev, before.st_ino) ==
+                    (after.st_dev, after.st_ino)
+                )
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as inventory:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluate:
+                            receipt = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(inventory.call_count, 3)
+            self.assertTrue(state['inode_stable'])
+            self.assertIsNotNone(state['old_mode'])
+            self.assertEqual(state['new_mode'], state['old_mode'] ^ 0o200)
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluate.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

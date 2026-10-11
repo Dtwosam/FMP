@@ -1973,6 +1973,37 @@ independent confinement and DEC-651 immutable run385 server admission
 remain BLOCKED. Exact-head Phase 3/full historical CI and independent
 security review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-876 — Revalidate generated sample after receipt directory census
+
+DEC-875 rereads the small generated parent directory after the final
+no-follow sample snapshot and checks that the parent's inode is stable.
+That census checks **entry names**, not the sample entry's inode or
+metadata. An attacker can substitute a new regular inode with the same
+public fixture bytes, or chmod the same inode, **during** that scan.
+Both changes preserve the earlier census names and parent device/inode
+and occur after the already-drained synthetic event queue.
+
+DEC-876 revalidates the generated sample pathname immediately after
+the receipt census and parent inode recheck: original exclusive-writer
+dev/ino and regular-file identity, exact bounded length, native
+mode/owner/group and nanosecond mtime/ctime. A mismatch or unreadable
+metadata returns `BLOCKED` before the evaluator, even if the injected
+inotify drain is empty. Two Linux-native controls replace the generated
+public sample with a different inode containing identical bytes and
+toggle owner-write permission on the original generated inode during
+the third directory census. Both assert no evaluator call, exact false
+authority flags and a closed observer FD. **540 distinct source-defined
+test methods** at this strict tip.
+
+This is not an atomic proof. Mutations after the last pathname probe
+can still escape these Python observations; no genuine independent
+OS-enforced no-write control or server-side admission is established.
+DEC-650 annual 20-job independent confinement and DEC-651 immutable
+one-shot run385 admission remain BLOCKED. Exact-head Phase 3 and
+historical regression and independent security review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
