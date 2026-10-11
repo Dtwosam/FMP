@@ -8925,6 +8925,99 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'generated receipt census sample unlink')
+    def test_real_generated_sample_unlink_during_receipt_census_blocks(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'removed': False,
+                 'old_inode': None}
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                sample = folder / 'sample'
+                record = os.lstat(sample)
+                state['old_inode'] = (record.st_dev, record.st_ino)
+                # Remove only the original generated /tmp sample after the
+                # final names have been collected, before final source lstat.
+                os.unlink(sample)
+                state['removed'] = not os.path.lexists(sample)
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as inventory:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(inventory.call_count, 3)
+            self.assertIsNotNone(state['old_inode'])
+            self.assertTrue(state['removed'])
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluator.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated receipt census sample symlink')
+    def test_real_generated_symlink_swap_during_receipt_census_blocks(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'is_link': False, 'target': None,
+                 'resolved_bytes': None}
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                sample = folder / 'sample'
+                # The symlink points ONLY to another generated public file.
+                # Equal dereferenced bytes must not bypass lstat's type check.
+                target = folder / 'receipt-public-target'
+                target.write_bytes(module.BEFORE)
+                replacement = folder / 'receipt-public-link'
+                replacement.symlink_to(target.name)
+                os.replace(replacement, sample)
+                state['is_link'] = sample.is_symlink()
+                state['target'] = os.readlink(sample)
+                state['resolved_bytes'] = sample.read_bytes()
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as inventory:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(inventory.call_count, 3)
+            self.assertTrue(state['is_link'])
+            self.assertEqual(state['target'], 'receipt-public-target')
+            self.assertEqual(state['resolved_bytes'], module.BEFORE)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluator.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
