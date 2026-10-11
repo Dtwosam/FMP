@@ -789,6 +789,12 @@ DEC-781 introduces a narrow `_SnapshotHardlinkCountError(OSError)` emitted **onl
 
 Three source-defined regression methods bring the suite to **404 distinct methods**, testing the specific subtype, refusal to credit a synthetic unrelated OSError and successful classification of the precise one-link guard. No production annual runner or protected data is touched; even a locally credited control is not independent OS confinement proof.
 
+## DEC-782 — Compare bounded alias metadata beyond the inode number
+
+The generated public hard-link alias verifier already required two no-follow path stats to match on regular-file type, mode, device, inode and a two-link count. It did not compare bounded UID/GID, file size or nanosecond timestamps. Two stat records for the *same inode* that disagree on these fields signal an inconsistent or racing observation, not a stable local two-link witness. DEC-782 validates those fields as exact native-width plain integers, enforces the existing snapshot UID/GID, size and timestamp ranges, and requires equality across both paths, while keeping the alias negative mode permanently BLOCKED. Existing synthetic stat fixtures are expanded with valid fields.
+
+Two new regression methods bring the suite to **406 unique test methods**: inconsistent owner/group/size/time values invalidate an otherwise matching device/inode pair; malformed, impossible or substituted values are rejected before crediting local alias identity. Real generated /tmp hard-link tests remain unchanged. This strengthens only local disposable consistency and does not prove independent kernel-origin evidence or production annual OS confinement.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

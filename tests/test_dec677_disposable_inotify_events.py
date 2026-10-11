@@ -4617,6 +4617,11 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_dev = dev
                 self.st_ino = ino
                 self.st_nlink = nlink
+                self.st_uid = 10
+                self.st_gid = 20
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
         normal = FakeStat(module.stat.S_IFREG | 0o600, 1, 2, 2)
         invalid = (
             FakeStat(module.stat.S_IFREG | 0o600, 1, 3, 2),
@@ -4761,6 +4766,61 @@ class DisposableInotifyTests(unittest.TestCase):
                 os.fstat(rd)
         finally:
             os.close(wr)
+
+
+    def test_generated_hardlink_alias_rejects_inconsistent_owner_or_size(self):
+        class FakeStat:
+            def __init__(self, **changes):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_nlink = 2
+                self.st_uid = 100
+                self.st_gid = 200
+                self.st_size = 25
+                self.st_mtime_ns = 1000
+                self.st_ctime_ns = 2000
+                for key, value in changes.items():
+                    setattr(self, key, value)
+        baseline = FakeStat()
+        for field, value in (
+            ('st_uid', 101), ('st_gid', 201), ('st_size', 26),
+            ('st_mtime_ns', 1001), ('st_ctime_ns', 2001)):
+            with self.subTest(field=field):
+                with patch.object(module.os, 'stat',
+                                  side_effect=(baseline, FakeStat(**{field: value}))):
+                    self.assertFalse(module._plausible_generated_hardlink_pair(
+                        Path('/tmp/public-a'), Path('/tmp/public-b')))
+        with patch.object(module.os, 'stat', side_effect=(baseline, FakeStat())):
+            self.assertTrue(module._plausible_generated_hardlink_pair(
+                Path('/tmp/public-a'), Path('/tmp/public-b')))
+
+    def test_generated_hardlink_alias_rejects_malformed_extended_metadata(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_nlink = 2
+            st_uid = 10
+            st_gid = 20
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        original = {k: getattr(FakeStat, k) for k in
+                    ('st_uid', 'st_gid', 'st_size', 'st_mtime_ns', 'st_ctime_ns')}
+        for field, bad in (
+            ('st_uid', -1), ('st_gid', 1 << 32), ('st_size', 4097),
+            ('st_mtime_ns', module.MIN_KERNEL_TIMESTAMP_NS - 1),
+            ('st_ctime_ns', module.MAX_KERNEL_TIMESTAMP_NS + 1),
+            ('st_uid', True), ('st_size', 1.0)):
+            with self.subTest(field=field, bad=repr(bad)):
+                for name, value in original.items():
+                    setattr(FakeStat, name, value)
+                with patch.object(module.os, 'stat',
+                                  side_effect=(FakeStat(), FakeStat())):
+                    setattr(FakeStat, field, bad)
+                    self.assertFalse(module._plausible_generated_hardlink_pair(
+                        Path('/tmp/public-a'), Path('/tmp/public-b')))
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
