@@ -1020,6 +1020,13 @@ DEC-818 checks the initial generated sample's nonstdio descriptor before allowin
 
 This test/documentation-only immediate child adds **two distinct methods** (470 uniquely named source-defined tests). Observer runtime code remains unchanged. The tests do not independently authenticate file descriptors, prevent privileged interference, prove annual 20-job OS confinement, or authorize the annual dispatcher. Both CI workflows and independent qualified security/source review remain required at the exact child head.
 
+
+## DEC-821 — Native descriptor cleanup controls on exclusive initial writer errors
+
+DEC-820 checks injected `fileno()` and `write()` failures cannot advance to a disposable inotify watch, but a pure mock does not prove a real descriptor is released. DEC-821 adds two Linux-native generated public /tmp regression methods. The first wraps a genuine exclusively opened file descriptor and injects either an unreadable `fileno()` or a failed write; it asserts the actual underlying file is closed (including a failed `os.fstat` on the captured descriptor), the local result is `BLOCKED`, and no watcher is installed. The second delegates a successful native write and actual close before throwing a synthetic post-close error; it likewise requires the closed descriptor and no watch. The suite reaches **472 unique source-defined methods**.
+
+Only the existing disposable tests and documentation are changed, not the observer implementation or production annual runner. A same-process Python context manager releasing generated public file handles is not independently trusted OS isolation. Exact-head Phase 3 and full historical regression and qualified independent security/source review remain necessary.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
