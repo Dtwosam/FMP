@@ -2387,6 +2387,33 @@ annual admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Own exact-head Phase 3/full historical CI and qualified independent
 security review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-893 — Real late sample symlink substitution after final stat
+
+DEC-873 checks a native generated symlink replacement immediately
+after the third sample byte snapshot, before the remaining pathname
+checks. DEC-893 instead substitutes the generated watched sample
+**after its very last native metadata validation**. The test creates
+a second generated public target with identical fixture bytes and
+atomically replaces the original watched sample pathname with a
+relative symlink to that target using native `os.replace`. The
+old watched inode's name is lost; the new pathname dereferences to
+the same public bytes but is now a symlink.
+
+The original native inotify drain must be empty. The final zero-wait
+kernel collector must capture real well-formed watch invalidation and
+directory-entry events, returning `BLOCKED` before local evaluation
+with exact false authority/proof fields and a closed observer FD.
+One new generated Linux regression makes **565 distinct source-defined
+test methods** on this strict tip.
+
+This demonstrates local event detection only, not guaranteed
+continuous authenticated monitoring, independently enforced OS
+no-write confinement, atomic race exclusion or immutable annual
+admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified independent
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
