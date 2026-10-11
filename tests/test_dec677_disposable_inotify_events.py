@@ -7332,6 +7332,44 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux receipt boundary')
+    def test_injected_evaluator_cannot_promote_disposable_receipt_to_authorization(self):
+        valid = module._outcome(['synthetic expected blocked result'])
+        promoted = dict(valid, can_authorize_dispatch=True)
+        verified = dict(valid, independent_os_proof_verified=True)
+        wrong_status = dict(valid, status='AUTHORIZED')
+        bad_checks = dict(valid, observed_checks={'quiet': 1})
+        mismatch = dict(valid, status='LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        cases = (('dispatch', promoted), ('os-proof', verified),
+                 ('status', wrong_status), ('checks', bad_checks),
+                 ('status-findings-mismatch', mismatch),
+                 ('missing-fields', {'status': 'BLOCKED'}),
+                 ('nondict', True))
+        for case, forged in cases:
+            with self.subTest(case=case):
+                read_fd, write_fd = os.pipe()
+                try:
+                    with patch.object(module, '_start_watch',
+                                      return_value=(read_fd, 9, 10)) as watcher:
+                        with patch.object(module, '_read_pending',
+                                          return_value=b'') as reader:
+                            with patch.object(module, '_evaluate',
+                                              return_value=forged) as evaluate:
+                                result = module.run_demo()
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertFalse(result['can_authorize_dispatch'])
+                    self.assertFalse(result['independent_os_proof_verified'])
+                    self.assertIn('invalid nonauthorizing receipt',
+                                  ' '.join(result['findings']))
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_called_once()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

@@ -72,6 +72,35 @@ def _outcome(findings: list[str], checks: dict[str, bool] | None = None) -> dict
             "can_authorize_dispatch": False, "independent_os_proof_verified": False}
 
 
+def _checked_disposable_observer_result(value: Any) -> dict[str, Any]:
+    """Never accept an injected evaluator result as dispatch or OS proof."""
+    # Synthetic tests may patch _evaluate. The real evaluator uses _outcome
+    # and can never authorize. Pin that public receipt contract again at the
+    # runner boundary without treating these Python checks as OS isolation.
+    try:
+        if type(value) is not dict or set(value) != {
+                "status", "findings", "observed_checks",
+                "can_authorize_dispatch", "independent_os_proof_verified"}:
+            raise ValueError("invalid disposable receipt fields")
+        status = value["status"]
+        findings = value["findings"]
+        checks = value["observed_checks"]
+        if (type(status) is not str
+                or status not in ("BLOCKED", "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED")
+                or type(findings) is not list
+                or any(type(item) is not str for item in findings)
+                or type(checks) is not dict
+                or any(type(key) is not str or type(val) is not bool
+                       for key, val in checks.items())
+                or value["can_authorize_dispatch"] is not False
+                or value["independent_os_proof_verified"] is not False
+                or (status == "BLOCKED") is not bool(findings)):
+            raise ValueError("invalid disposable receipt values")
+    except Exception:
+        return _outcome(["synthetic evaluator returned an invalid nonauthorizing receipt"])
+    return value
+
+
 def _classify_stream(data: bytes, watch: int,
                      directory_watch: int | None = None) -> dict[str, Any]:
     """Parse a bounded kernel event buffer, fail closed on bad identity/overflow."""
@@ -1166,7 +1195,8 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         os.lstat(folder_path))
                     if receipt_folder_inode != initial_folder_inode:
                         raise OSError("disposable parent directory changed during final sample snapshot")
-                return _evaluate(original_bytes, end, raw, wd, True, negative,
+                return _checked_disposable_observer_result(
+                    _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
                                  replacement_negative=replace_watched_inode,
                                  directory_watch=dir_wd,
@@ -1176,7 +1206,7 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                                  sibling_negative=create_sibling,
                                  transient_sibling_negative=transient_sibling,
                                  midpoint_snapshot_matches_expected=midpoint_matches_expected,
-                                 transient_midpoint_verified=transient_midpoint_verified)
+                                 transient_midpoint_verified=transient_midpoint_verified))
             finally:
                 os.close(fd)
     except Exception:
