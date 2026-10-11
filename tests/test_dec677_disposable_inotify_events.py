@@ -6366,6 +6366,72 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'native generated Linux inode swap')
+    def test_postcreate_prewatch_identical_regular_inode_swap_is_blocked(self):
+        read_fd, write_fd = os.pipe()
+        observed = []
+        try:
+            def substitute_identical_before_watch(path):
+                original = os.stat(path, follow_symlinks=False)
+                replacement = path.parent / 'public-replacement'
+                replacement.write_bytes(module.BEFORE)
+                changed = os.stat(replacement, follow_symlinks=False)
+                self.assertNotEqual((original.st_dev, original.st_ino),
+                                    (changed.st_dev, changed.st_ino))
+                os.replace(replacement, path)
+                observed.append((path.read_bytes(), original.st_ino,
+                                 os.stat(path, follow_symlinks=False).st_ino))
+                return read_fd, 9, 10
+
+            with patch.object(module, '_start_watch',
+                              side_effect=substitute_identical_before_watch) as watch:
+                with patch.object(module, '_read_pending') as drain:
+                    receipt = module.run_demo()
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertFalse(receipt['can_authorize_dispatch'])
+            self.assertFalse(receipt['independent_os_proof_verified'])
+            watch.assert_called_once()
+            drain.assert_not_called()
+            self.assertEqual(len(observed), 1)
+            self.assertEqual(observed[0][0], module.BEFORE)
+            self.assertNotEqual(observed[0][1], observed[0][2])
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    def test_initial_created_inode_identity_rejects_forged_stat_fields(self):
+        class FakeStat:
+            def __init__(self, **changes):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 12
+                self.st_ino = 99
+                self.st_nlink = 1
+                for field, value in changes.items():
+                    setattr(self, field, value)
+
+        self.assertEqual(module._checked_initial_sample_identity(FakeStat()),
+                         (12, 99))
+        malformed = (
+            ('st_mode', True),
+            ('st_mode', module.stat.S_IFLNK | 0o777),
+            ('st_mode', 1 << 32),
+            ('st_dev', -1),
+            ('st_dev', 1 << 64),
+            ('st_ino', 0),
+            ('st_ino', 1 << 64),
+            ('st_ino', False),
+            ('st_nlink', 0),
+            ('st_nlink', 2),
+            ('st_nlink', 1.0),
+        )
+        for field, value in malformed:
+            with self.subTest(field=field, value=repr(value)):
+                with self.assertRaisesRegex(OSError, 'identity malformed'):
+                    module._checked_initial_sample_identity(FakeStat(**{field: value}))
+        with self.assertRaisesRegex(OSError, 'metadata unreadable'):
+            module._checked_initial_sample_identity(object())
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
