@@ -8394,6 +8394,54 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native generated Linux permission drift')
+    def test_real_generated_chmod_after_last_snapshot_blocks_local_witness(self):
+        native_snapshot = module._snapshot_regular
+        read_fd, write_fd = os.pipe()
+        state = {'snapshots': 0, 'changed': False,
+                 'original_mode': None, 'changed_mode': None}
+
+        def snapshot(path):
+            identity, payload = native_snapshot(path)
+            state['snapshots'] += 1
+            if state['snapshots'] == 3:
+                # Change only the mode of the generated disposable sample
+                # *after* its third bounded no-follow read. A native last
+                # lstat must reject the metadata drift even with fixed bytes.
+                before = os.lstat(path)
+                original_mode = module.stat.S_IMODE(before.st_mode)
+                os.chmod(path, original_mode ^ module.stat.S_IXUSR)
+                after = os.lstat(path)
+                state['original_mode'] = before.st_mode
+                state['changed_mode'] = after.st_mode
+                state['changed'] = True
+            return identity, payload
+
+        try:
+            with patch.object(module, '_snapshot_regular',
+                              side_effect=snapshot) as snapshots:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        with patch.object(module, '_evaluate') as evaluate:
+                            result = module.run_demo()
+            self.assertTrue(state['changed'])
+            self.assertNotEqual(state['original_mode'], state['changed_mode'])
+            self.assertEqual(state['snapshots'], 3)
+            self.assertEqual(snapshots.call_count, 3)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluate.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
