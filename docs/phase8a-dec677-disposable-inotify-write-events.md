@@ -1303,6 +1303,26 @@ confinement for all annual 20 jobs or DEC-651 immutable one-shot server
 run385 admission. Exact-head CI and qualified independent security review
 remain required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-848 — Final parent metadata cannot degrade after last sample read
+
+DEC-847 revalidates the generated private parent directory after the final
+sample snapshot. A new Linux-generated, source-defined regression exercises
+that **last** parent probe with three independent synthetic metadata
+substitutions: mode changed to world-readable `0755`, owner changed away
+from effective UID, or zero directory hard-link count. In every case,
+the parent inode and generated sample content can otherwise appear
+unchanged. The fixture requires `BLOCKED` before local witness evaluation,
+both immutable authorization fields false, and the mock watch FD closed.
+Only disposable tests and documentation change; **502 distinct
+source-defined methods** now belong to the integrated tip.
+
+This is test coverage for a best-effort pathname metadata check, not proof
+that no concurrent swap can occur between calls. DEC-650 real annual 20-job
+OS-enforced no-write confinement and DEC-651 immutable exclusive run385
+server admission remain **BLOCKED**. New exact-head Phase 3/full historical
+CI and qualified security review are required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
