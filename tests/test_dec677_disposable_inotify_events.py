@@ -5367,6 +5367,39 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(module._checked_watch_path_bytes(Path('/tmp/public-sample')),
                          b'/tmp/public-sample')
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux disposable preflight')
+    def test_runner_tmp_probe_exceptions_return_blocked_before_watch(self):
+        for probe in ('isdir', 'islink'):
+            with self.subTest(probe=probe):
+                with patch.object(module.os.path, probe,
+                                  side_effect=RuntimeError('synthetic tmp probe')):
+                    with patch.object(module, '_start_watch') as register:
+                        result = module.run_demo()
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertIn('monitor unavailable', ' '.join(result['findings']))
+                self.assertFalse(result['can_authorize_dispatch'])
+                self.assertFalse(result['independent_os_proof_verified'])
+                register.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux disposable preflight')
+    def test_runner_tmp_probe_forged_truthiness_never_starts_watch(self):
+        for probe, returned in (('isdir', 1), ('isdir', 'yes'),
+                                ('islink', None), ('islink', 0),
+                                ('islink', ''), ('islink', False)):
+            if probe == 'islink' and returned is False:
+                continue
+            with self.subTest(probe=probe, returned=repr(returned)):
+                with patch.object(module.os.path, 'isdir',
+                                  return_value=returned if probe == 'isdir' else True):
+                    with patch.object(module.os.path, 'islink',
+                                      return_value=returned if probe == 'islink' else False):
+                        with patch.object(module, '_start_watch') as register:
+                            result = module.run_demo()
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['can_authorize_dispatch'])
+                register.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

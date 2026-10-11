@@ -781,7 +781,16 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
         return _outcome(["disposable negative-control modes must be booleans"])
     if sum(modes) > 1:
         return _outcome(["conflicting synthetic negative-control modes"])
-    if sys.platform != "linux" or not os.path.isdir("/tmp") or os.path.islink("/tmp"):
+    if sys.platform != "linux":
+        return _outcome(["Linux disposable kernel event monitor unavailable"])
+    # These environment probes previously ran outside the runner's exception
+    # boundary. Even a broken synthetic os.path wrapper must emit BLOCKED.
+    try:
+        tmp_is_directory = os.path.isdir("/tmp")
+        tmp_is_symlink = os.path.islink("/tmp")
+    except Exception:
+        return _outcome(["Linux disposable kernel event monitor unavailable"])
+    if tmp_is_directory is not True or tmp_is_symlink is not False:
         return _outcome(["Linux disposable kernel event monitor unavailable"])
     try:
         with tempfile.TemporaryDirectory(prefix="dec677-disposable-", dir="/tmp") as folder:
