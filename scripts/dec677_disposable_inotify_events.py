@@ -1258,15 +1258,23 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(add_help=False,
-        description="DEC-677 disposable inotify observation, NEVER real runner acceptance")
-    choices = p.add_mutually_exclusive_group()
-    choices.add_argument("--execute-disposable-control", action="store_true")
-    choices.add_argument("--execute-reverted-write-negative", action="store_true")
-    choices.add_argument("--execute-inode-replacement-negative", action="store_true")
-    choices.add_argument("--execute-sibling-creation-negative", action="store_true")
-    choices.add_argument("--execute-transient-directory-negative", action="store_true")
-    choices.add_argument("--execute-hardlink-alias-negative", action="store_true")
+    try:
+        p = argparse.ArgumentParser(add_help=False,
+            description="DEC-677 disposable inotify observation, NEVER real runner acceptance")
+        choices = p.add_mutually_exclusive_group()
+        choices.add_argument("--execute-disposable-control", action="store_true")
+        choices.add_argument("--execute-reverted-write-negative", action="store_true")
+        choices.add_argument("--execute-inode-replacement-negative", action="store_true")
+        choices.add_argument("--execute-sibling-creation-negative", action="store_true")
+        choices.add_argument("--execute-transient-directory-negative", action="store_true")
+        choices.add_argument("--execute-hardlink-alias-negative", action="store_true")
+    except Exception:
+        # Even a patched parser constructor or option-registration wrapper
+        # cannot terminate this local-only CLI without BLOCKED JSON.
+        print(json.dumps(
+            _outcome(["disposable observer CLI parser setup raised unexpectedly"]),
+            sort_keys=True, separators=(",", ":")))
+        return 2
     try:
         args = p.parse_args(argv)
     except SystemExit:
