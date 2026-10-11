@@ -1851,6 +1851,27 @@ DEC-650 and DEC-651 remain BLOCKED; this exact draft requires
 Phase 3/full historical CI and independent security review.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-871 — Native generated truncation after the last sample snapshot
+
+DEC-864 checks generated sample size again after the third bounded
+no-follow byte snapshot. DEC-871 adds a native Linux regression, not
+runtime logic: immediately after the third sample read, the test uses
+`os.truncate` to lengthen **only the generated disposable /tmp fixture**
+by one byte. Although the captured snapshot still contains the expected
+original bytes and the synthetic inotify queue is quiet, the final
+pathname-size check must return `BLOCKED`, with neither authority flag
+set, no evaluator call, and a closed watcher descriptor. The test also
+checks the real before/after file lengths. **533 source-defined methods**
+on this strict tip, including the independent native mtime and mode
+mutation controls in #1084/#1085.
+
+This is a deterministic native negative control, not independently
+enforced OS confinement or atomic write exclusion. DEC-650 20-job annual
+no-write protection and DEC-651 immutable run385 admission remain
+BLOCKED. Exact-head Phase 3/full historical CI and independent source
+review remain mandatory. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
