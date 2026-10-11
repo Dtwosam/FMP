@@ -1133,6 +1133,14 @@ The earlier test-only hard-link fixture repair in #1046 updated the intentionall
 
 This is **test/docs only**, immediate strict child of #1048, with the same **488 distinct source-defined tests**. Original #1046 and #1048 commits and CI results remain intact. Exact-head Phase 3 + full historical tests and qualified review remain required, with no annual OS confinement or one-shot run385 admission authorized.
 
+## DEC-837 — Preserve the wrong-baseline-content negative test after inode pinning
+
+Separate sibling [#1050](https://github.com/Dtwosam/FMP/pull/1050), based on #1047, identified an inherited false-positive regression in `test_generated_runner_rejects_wrong_baseline_fixture_before_mutation`. The original fake snapshot supplied both invented device/inode `(3,7)` and deliberately incorrect bytes `UNEXPECTED INITIAL`. The newer DEC-830 source guard rightly rejects a mismatch with the original exclusive writer inode **before reaching the intended baseline-content comparison**, so a bare `BLOCKED` assertion can be green for the wrong reason.
+
+DEC-837 ports only that exact test-contract repair onto strict integrated parent #1049: the mock snapshot reports the **real generated private /tmp sample's native device/inode** using the shared test helper, but retains the deliberately incorrect bytes. It must return `BLOCKED`, never drain events, close the mock watcher FD, and keep both authorization fields false. Observer runtime code is unchanged. **488 unique source-defined tests**, no new methods, no production or protected annual inputs.
+
+This does not prove OS isolation or admission; all historical CI heads remain untouched, and new exact-head Phase 3/full regression plus independent qualified security/source review are still required.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
