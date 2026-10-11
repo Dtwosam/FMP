@@ -1083,6 +1083,12 @@ DEC-829 fixes the **actual watch-path input guard** on a separate strict child o
 
 Two new source-defined regressions increase the lineage from **483 to 485**: cold forged wrappers must be refused before the byte encoder, and malformed raw segment storage cannot be credited as an admissible watch path. The original #1033 full historical CI remains **RED** and is not rewritten or relabeled; this new head needs its own Phase 3 and full tests. No protected annual paths or runner settings changed, and the observer still cannot grant annual run385 authorization.
 
+## DEC-830 — Regression for in-call mutation of original Path segments
+
+A forged `os.fspath` wrapper is not limited to returning an alternate string; synthetic wrappers can also mutate an otherwise plain CPython `Path` object's internal raw string list during the call. DEC-829's source repair reconstructs the expected watch text **before** invoking the wrapper. DEC-830 adds one method that mutates the stored raw segments inside a deliberately forged `os.fspath` callback, for both a different `/tmp` basename and an outside `/etc` destination. Both must raise the early `fspath disagrees` error, never call `os.fsencode`, and leave the source's original expected string uncompromised. This focused control also confirms the scope of the CPython 3.12 implementation documented in `Lib/pathlib.py`.
+
+**One test/docs-only strict child** takes the source-defined suite from **485 to 486**. The underlying observer source remains byte-identical to #1039; no production or protected annual data are touched. Like its parent, this is synthetic same-process input coherence only, *not* independent OS path confinement or annual dispatch authority. It requires separate exact-head Phase 3 and full historical CI and independent qualified review.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
