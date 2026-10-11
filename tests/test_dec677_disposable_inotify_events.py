@@ -5495,6 +5495,50 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertFalse(receipt['can_authorize_dispatch'])
         self.assertFalse(receipt['independent_os_proof_verified'])
 
+
+    def test_direct_main_rejects_abbreviated_disposable_switches_before_demo(self):
+        short_options = ('--execute-disposable-cont',
+                         '--execute-reverted-write-neg',
+                         '--execute-inode-replacement-neg',
+                         '--execute-sibling-creation-neg',
+                         '--execute-transient-directory-neg',
+                         '--execute-hardlink-alias-neg')
+        for option in short_options:
+            with self.subTest(option=option):
+                with patch.object(module, 'run_demo') as runner:
+                    with patch('builtins.print') as output:
+                        status = module.main([option])
+                self.assertEqual(status, 2)
+                runner.assert_not_called()
+                receipt = json.loads(output.call_args.args[0])
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertIn('CLI arguments rejected', receipt['findings'][0])
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+
+    def test_cli_abbreviated_hardlink_switch_emits_blocked_json(self):
+        p = subprocess.run(
+            [sys.executable, '-B', str(SCRIPT), '--execute-hardlink-alias-neg'],
+            capture_output=True, text=True, timeout=4)
+        self.assertEqual(p.returncode, 2)
+        receipt = json.loads(p.stdout)
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertIn('CLI arguments rejected', receipt['findings'][0])
+        self.assertFalse(receipt['can_authorize_dispatch'])
+        self.assertFalse(receipt['independent_os_proof_verified'])
+
+    def test_direct_main_accepts_exact_switch_without_abbreviation(self):
+        with patch.object(module, 'run_demo',
+                          return_value=module._outcome(['synthetic direct CLI control'])) as runner:
+            with patch('builtins.print') as output:
+                status = module.main(['--execute-disposable-control'])
+        self.assertEqual(status, 2)
+        runner.assert_called_once()
+        receipt = json.loads(output.call_args.args[0])
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertFalse(receipt['can_authorize_dispatch'])
+        self.assertFalse(receipt['independent_os_proof_verified'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

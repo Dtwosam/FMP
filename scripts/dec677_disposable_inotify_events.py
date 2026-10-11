@@ -918,7 +918,7 @@ def main(argv: list[str] | None = None) -> int:
             _outcome(["disposable observer CLI argument shape rejected"]),
             sort_keys=True, separators=(",", ":")))
         return 2
-    p = argparse.ArgumentParser(add_help=False,
+    p = argparse.ArgumentParser(add_help=False, allow_abbrev=False,
         description="DEC-677 disposable inotify observation, NEVER real runner acceptance")
     choices = p.add_mutually_exclusive_group()
     choices.add_argument("--execute-disposable-control", action="store_true")
