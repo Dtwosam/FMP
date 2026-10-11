@@ -4959,12 +4959,18 @@ class DisposableInotifyTests(unittest.TestCase):
                 with patch.object(module, '_snapshot_regular',
                                   return_value=((0, 0), module.BEFORE)) as snapshot:
                     with patch.object(module.os, 'link') as link:
-                        result = module.run_demo(hardlink_negative=True)
+                        with patch.object(module, '_plausible_generated_hardlink_pair') as verify:
+                            result = module.run_demo(hardlink_negative=True)
             self.assertEqual(result['status'], 'BLOCKED')
-            self.assertIn('baseline inode differs', ' '.join(result['findings']))
+            # run_demo intentionally wraps setup/snapshot OSError into one
+            # nonauthorizing finding; its internal diagnostic is not exposed.
+            self.assertIn('disposable inotify setup, read or cleanup failed',
+                          result['findings'])
             self.assertNotIn('negative alias not verified', ' '.join(result['findings']))
             self.assertEqual(snapshot.call_count, 1)
             link.assert_not_called()
+            verify.assert_not_called()
+            self.assertFalse(result['can_authorize_dispatch'])
             self.assertFalse(result['independent_os_proof_verified'])
             with self.assertRaises(OSError):
                 os.fstat(rd)

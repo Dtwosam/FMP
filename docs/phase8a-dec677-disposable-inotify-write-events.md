@@ -1127,6 +1127,12 @@ DEC-835 snapshots a tuple of exact original ordinary CPython raw-string segments
 
 One source-defined method grows this branch from **487 to 488**. Only disposable observer source/test/docs changed, parent #1046 and all historical failed CI remain immutable. This is CPython-specific same-process input coherence, not verified atomic kernel watch-target identity or independent OS confinement. Exact-head Phase 3 + full historical tests and qualified independent security/source review are still required. No annual admission or trading authorization.
 
+## DEC-836 — Honor runner's intentionally generic blocked diagnostic for forged original inode
+
+The earlier test-only hard-link fixture repair in #1046 updated the intentionally mismatched baseline inode test to assert `baseline inode differs` in the **public** runner findings. The actual `run_demo` contract catches that internal OSError and emits its intentionally generic `disposable inotify setup, read or cleanup failed` nonauthorizing finding. The parallel sibling [#1047](https://github.com/Dtwosam/FMP/pull/1047) correctly recognized this distinction. DEC-836 repairs the expectation without loosening the source guard: it still requires the first mismatched snapshot to be reached exactly once, `BLOCKED`, both authorization booleans false, no `os.link`, **no alias-verification helper**, and proper watcher FD closure. A strong early-boundary test does not require leaking its internal exception message through the public receipt.
+
+This is **test/docs only**, immediate strict child of #1048, with the same **488 distinct source-defined tests**. Original #1046 and #1048 commits and CI results remain intact. Exact-head Phase 3 + full historical tests and qualified review remain required, with no annual OS confinement or one-shot run385 admission authorized.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
