@@ -1083,6 +1083,14 @@ DEC-829 fixes the **actual watch-path input guard** on a separate strict child o
 
 Two new source-defined regressions increase the lineage from **483 to 485**: cold forged wrappers must be refused before the byte encoder, and malformed raw segment storage cannot be credited as an admissible watch path. The original #1033 full historical CI remains **RED** and is not rewritten or relabeled; this new head needs its own Phase 3 and full tests. No protected annual paths or runner settings changed, and the observer still cannot grant annual run385 authorization.
 
+## DEC-830 — Compare the first watched baseline against the original exclusive writer inode
+
+DEC-827 pinned an exact original writer `(st_dev, st_ino)` via native `fstat`, then validated a post-registration `lstat(path)`. There remains a separate same-content **regular inode substitution window between that lstat and the first nofollow source snapshot**. Because the local evaluator compares its first snapshot only to later snapshots, it could otherwise still call this a quiet local witness of an inode that was not exclusively created by this run.
+
+DEC-830 checks the **already validated first nofollow snapshot device/inode** matches the original O_EXCL writer inode as well as the postwatch lstat. A genuinely different regular inode with byte-for-byte matching public `BEFORE` content is now blocked before negative controls, later snapshots or event draining. A native generated Linux regression explicitly swaps the public file only as `_snapshot_regular` begins, preserving its original content bytes, and requires a blocked verdict, one attempted first snapshot, no event drain and a closed mock watcher FD.
+
+One distinct source-defined test raises the strict suite **485→486**. Only the generated disposable observer runtime, its tests and its documentation change. This improves best-effort local provenance but **cannot** prevent a real adversarial rename race, file replacement after the snapshot, mount-namespace substitution, or arbitrary alias writes, and is not authenticated independent OS isolation of all annual jobs or immutable run385 admission. Exact-head Phase 3 + full historical regression and qualified independent security review are still mandatory.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

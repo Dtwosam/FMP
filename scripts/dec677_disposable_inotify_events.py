@@ -961,6 +961,11 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 if watched_sample_inode != initial_sample_inode:
                     raise OSError("disposable source inode changed before watched baseline")
                 original_inode, original_bytes = _checked_snapshot_result(_snapshot_regular(path))
+                # The pathname can be swapped even between the postwatch
+                # lstat and the first nofollow snapshot. Both must still
+                # name the originally created O_EXCL writer inode.
+                if original_inode != initial_sample_inode:
+                    raise OSError("disposable baseline inode differs from original exclusive writer")
                 if original_bytes != BEFORE:
                     raise OSError("disposable generated source baseline differs from fixture")
                 if hardlink_negative:
