@@ -5145,6 +5145,47 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(wr)
 
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'disposable Linux generated symlink')
+    def test_live_generated_symlink_is_not_hardlink_alias(self):
+        with tempfile.TemporaryDirectory(prefix='dec790-public-', dir='/tmp') as folder:
+            source = Path(folder) / 'sample'
+            alias = Path(folder) / 'public-hardlink-alias'
+            source.write_bytes(module.BEFORE)
+            original_stat = os.stat(source)
+            baseline = (original_stat.st_dev, original_stat.st_ino)
+            alias.symlink_to(source)
+            self.assertTrue(alias.is_symlink())
+            self.assertFalse(module._plausible_generated_hardlink_pair(
+                source, alias, expected_inode=baseline))
+            alias.unlink()
+            self.assertIsNone(os.link(source, alias))
+            self.assertTrue(module._plausible_generated_hardlink_pair(
+                source, alias, expected_inode=baseline))
+
+    def test_hardlink_pair_stat_requests_nofollow_for_both_paths(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_nlink = 2
+            st_uid = 10
+            st_gid = 20
+            st_size = len(module.BEFORE)
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        source = Path('/tmp/public-a')
+        alias = Path('/tmp/public-b')
+        with patch.object(module.os, 'stat', return_value=FakeStat()) as stat_call:
+            self.assertTrue(module._plausible_generated_hardlink_pair(
+                source, alias, expected_inode=(1, 2)))
+        self.assertEqual(stat_call.call_count, 2)
+        self.assertEqual(stat_call.call_args_list[0].args, (source,))
+        self.assertEqual(stat_call.call_args_list[1].args, (alias,))
+        for call in stat_call.call_args_list:
+            self.assertEqual(call.kwargs, {'follow_symlinks': False})
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
