@@ -10237,6 +10237,33 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertTrue(receipt['findings'])
                 self.assertIs(type(receipt['observed_checks']), dict)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'late receipt collector failure closes watch')
+    def test_final_receipt_collector_exception_blocks_and_closes_watch(self):
+        for exception in (OSError('synthetic late poll unreadable'),
+                          RuntimeError('synthetic unexpected late collector error')):
+            with self.subTest(exception_type=type(exception).__name__):
+                read_fd, write_fd = os.pipe()
+                try:
+                    with patch.object(module, '_start_watch',
+                                      return_value=(read_fd, 9, 10)) as watcher:
+                        with patch.object(module, '_read_pending',
+                                          return_value=b'') as first:
+                            with patch.object(module, '_read_receipt_pending',
+                                              side_effect=exception) as last:
+                                with patch.object(module, '_evaluate') as evaluator:
+                                    result = module.run_demo()
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIs(result['can_authorize_dispatch'], False)
+                    self.assertIs(result['independent_os_proof_verified'], False)
+                    watcher.assert_called_once()
+                    first.assert_called_once_with(read_fd)
+                    last.assert_called_once_with(read_fd)
+                    evaluator.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
