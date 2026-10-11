@@ -784,6 +784,17 @@ def _checked_generated_folder(folder: Any) -> Path:
             or len(folder_path.name) <= len(DISPOSABLE_PREFIX)
             or not _plausible_inventory_basename(folder_path.name)):
         raise OSError("disposable tempdir escaped generated /tmp scope")
+    # A lexically safe /tmp/dec677-disposable-* pathname can still be a
+    # symlink to a different location. Verify the actual directory inode
+    # without following it before the very first generated file write.
+    try:
+        mode = os.lstat(folder_path).st_mode
+    except Exception as error:
+        raise OSError("disposable generated tempdir could not be lstat checked") from error
+    if (type(mode) is not int
+            or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
+            or not stat.S_ISDIR(mode)):
+        raise OSError("disposable generated tempdir is not a real directory")
     return folder_path
 
 

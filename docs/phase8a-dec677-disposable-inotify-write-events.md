@@ -924,6 +924,14 @@ The expanded parent #1000 already includes DEC-799's plain-Linux platform gate, 
 
 The resulting test inventory contains **446 uniquely named methods**. Only the disposable test module and documentation change; the observer implementation on this parent is unchanged, and no runtime authorization is implied. This test consolidation does not merge any PR, alter protected annual inputs, or turn local observations into independent OS write-prevention evidence.
 
+## DEC-807 — No-follow directory inode check before first generated /tmp file write
+
+DEC-800 validates the lexical `/tmp/dec677-disposable-*` shape returned by `TemporaryDirectory`, rejecting path traversal and substituted out-of-scope text **before** writing the sample. Lexical validation alone does not establish that a returned pathname is a *directory inode*: a monkeypatched temporary-directory context could supply a correctly shaped **symlink to another folder**, redirecting the generated first `sample` write through the link.
+
+DEC-807 adds a no-follow `os.lstat` on the exact returned generated folder and requires an exact native integer Linux `S_IFDIR` mode with no reserved high bits. Missing folders, injected lstat exceptions, noninteger/custom mode values, regular files and symlinks return a controlled `BLOCKED` receipt before `Path.write_bytes` or inotify setup. Three new source-defined regression methods raise the suite to **449 distinct tests**: a real disposable Linux symlink sharing the valid generated prefix is rejected while the real generated directory is accepted, malformed/mocked lstat records are rejected, and a runner-level substituted symlink cannot cause a first sample write or watch registration.
+
+This guards a **prewrite local pathname boundary**, not a race-free FD-relative filesystem sandbox, independent annual OS enforcement or permission to dispatch run385.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
