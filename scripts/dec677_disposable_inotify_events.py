@@ -741,6 +741,18 @@ def _write_generated_payload(path: Path, payload: bytes) -> None:
         raise OSError("disposable generated write returned malformed byte count")
 
 
+def _rewrite_generated_with_fsync(path: Path, payload: bytes) -> None:
+    """Bound a public fixture rewrite and check the buffered write count."""
+    if type(payload) is not bytes or not 0 < len(payload) <= 4096:
+        raise OSError("disposable rewrite payload is malformed")
+    with open(path, "wb") as handle:
+        count = handle.write(payload)
+        if type(count) is not int or count != len(payload):
+            raise OSError("disposable rewrite returned malformed byte count")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
              create_sibling: bool = False, transient_sibling: bool = False,
              hardlink_negative: bool = False) -> dict[str, Any]:
@@ -817,18 +829,12 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     # This is generated public data; observe the intermediate
                     # changed inode/bytes rather than inferring a revert from
                     # a matching final digest plus event counts alone.
-                    with open(path, "wb") as f:
-                        f.write(AFTER)
-                        f.flush()
-                        os.fsync(f.fileno())
+                    _rewrite_generated_with_fsync(path, AFTER)
                     midpoint_inode, midpoint_bytes = _checked_snapshot_result(_snapshot_regular(path))
                     midpoint_matches_expected = (
                         midpoint_inode == original_inode and midpoint_bytes == AFTER
                     )
-                    with open(path, "wb") as f:
-                        f.write(BEFORE)
-                        f.flush()
-                        os.fsync(f.fileno())
+                    _rewrite_generated_with_fsync(path, BEFORE)
                 if replace_watched_inode:
                     # An inode-targeted watch is not an identity proof for a
                     # mutable pathname. Substitute a precreated identical file.
