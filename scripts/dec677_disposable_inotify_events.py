@@ -834,7 +834,11 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     # mutable pathname. Substitute a precreated identical file.
                     replacement = Path(folder) / "public-replacement"
                     _write_generated_payload(replacement, BEFORE)
-                    os.replace(replacement, path)
+                    swapped = os.replace(replacement, path)
+                    # Python os.replace is a void API. An injected non-None
+                    # status must not be treated as completed replacement.
+                    if swapped is not None:
+                        raise OSError("disposable inode replacement returned malformed status")
                 sibling_path = Path(folder) / PERSISTENT_SIBLING_NAME
                 sibling_initial_inode = None
                 sibling_initial_bytes = None
