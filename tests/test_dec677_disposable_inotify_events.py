@@ -3184,6 +3184,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_mode = module.stat.S_IFREG | 0o600
                 self.st_dev = 1
                 self.st_ino = 2
+                self.st_nlink = 1
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
@@ -3212,6 +3213,7 @@ class DisposableInotifyTests(unittest.TestCase):
             st_mode = module.stat.S_IFREG | 0o600
             st_dev = 1
             st_ino = AlwaysEqual()
+            st_nlink = 1
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
@@ -3230,6 +3232,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_mode = module.stat.S_IFREG | 0o600
                 self.st_dev = 1
                 self.st_ino = 2
+                self.st_nlink = 1
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = ctime
@@ -3528,6 +3531,7 @@ class DisposableInotifyTests(unittest.TestCase):
             st_mode = module.stat.S_IFREG | 0o600
             st_dev = 1
             st_ino = 2
+            st_nlink = 1
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
@@ -3611,6 +3615,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_mode = module.stat.S_IFREG | 0o600
                 self.st_dev = 1
                 self.st_ino = 2
+                self.st_nlink = 1
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
@@ -3712,6 +3717,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_mode = mode
                 self.st_dev = 1
                 self.st_ino = 2
+                self.st_nlink = 1
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
@@ -3731,6 +3737,7 @@ class DisposableInotifyTests(unittest.TestCase):
             st_mode = module.stat.S_IFREG | 0o600
             st_dev = 1
             st_ino = 2
+            st_nlink = 1
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
@@ -3828,6 +3835,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_mode = module.stat.S_IFREG | mode
                 self.st_dev = 1
                 self.st_ino = 2
+                self.st_nlink = 1
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
@@ -3846,6 +3854,7 @@ class DisposableInotifyTests(unittest.TestCase):
             st_mode = module.stat.S_IFREG | 0o600
             st_dev = 1
             st_ino = 2
+            st_nlink = 1
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
@@ -3964,6 +3973,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_mode = module.stat.S_IFREG | 0o600
                 self.st_dev = 1
                 self.st_ino = 2
+                self.st_nlink = 1
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
@@ -3988,6 +3998,7 @@ class DisposableInotifyTests(unittest.TestCase):
             st_mode = module.stat.S_IFREG | 0o600
             st_dev = 1
             st_ino = 2
+            st_nlink = 1
             st_size = 1
             st_mtime_ns = module.MIN_KERNEL_TIMESTAMP_NS
             st_ctime_ns = module.MAX_KERNEL_TIMESTAMP_NS
@@ -4001,6 +4012,7 @@ class DisposableInotifyTests(unittest.TestCase):
             st_mode = module.stat.S_IFREG | 0o600
             st_dev = 1
             st_ino = 2
+            st_nlink = 1
             st_size = 1
             st_mtime_ns = -1_000_000_000
             st_ctime_ns = -1
@@ -4217,6 +4229,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_mode = mode
                 self.st_dev = 1
                 self.st_ino = 2
+                self.st_nlink = 1
                 self.st_size = 1
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
@@ -4237,6 +4250,60 @@ class DisposableInotifyTests(unittest.TestCase):
             st_mode = module.stat.S_IFREG | 0o7777
             st_dev = 1
             st_ino = 2
+            st_nlink = 1
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        self.assertEqual(
+            module._checked_snapshot_metadata(FakeStat()),
+            (FakeStat.st_mode, 1, 2, 1, 100, 200))
+
+
+    def test_snapshot_refuses_unlinked_or_multiply_linked_inode_before_read(self):
+        class FakeStat:
+            def __init__(self, nlink):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_nlink = nlink
+                self.st_size = 1
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+        for count in (0, 2, 3, 1 << 64, -1):
+            with self.subTest(count=count):
+                with patch.object(module.os, 'open', return_value=17):
+                    with patch.object(module.os, 'fstat', return_value=FakeStat(count)):
+                        with patch.object(module.os, 'read') as read:
+                            with patch.object(module.os, 'close') as close:
+                                with self.assertRaisesRegex(OSError, 'bounded regular inode'):
+                                    module._snapshot_regular(Path('/tmp/public-fake-only'))
+                                read.assert_not_called()
+                                close.assert_called_once_with(17)
+
+    def test_snapshot_refuses_forged_noninteger_hardlink_counts(self):
+        class StrangeInt(int):
+            def __eq__(self, other):
+                return True
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_nlink = 1
+            st_size = 1
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        for invalid in (True, 1.0, StrangeInt(1), '1', None):
+            with self.subTest(count=repr(invalid)):
+                FakeStat.st_nlink = invalid
+                with self.assertRaisesRegex(OSError, 'noninteger metadata'):
+                    module._checked_snapshot_metadata(FakeStat())
+
+    def test_single_link_metadata_retains_existing_snapshot_tuple(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 1
+            st_ino = 2
+            st_nlink = 1
             st_size = 1
             st_mtime_ns = 100
             st_ctime_ns = 200
