@@ -6631,6 +6631,100 @@ class DisposableInotifyTests(unittest.TestCase):
                         module._checked_watch_path_bytes(path)
                     encoder.assert_called_once_with(path)
 
+    def test_generated_directory_inode_helper_refuses_malformed_metadata(self):
+        class FakeStat:
+            def __init__(self, **changes):
+                self.st_mode = module.stat.S_IFDIR | 0o700
+                self.st_dev = 12
+                self.st_ino = 97
+                self.st_uid = os.geteuid()
+                self.st_gid = os.getegid()
+                self.st_nlink = 2
+                for key, value in changes.items():
+                    setattr(self, key, value)
+
+        self.assertEqual(
+            module._checked_generated_directory_identity(FakeStat()), (12, 97))
+        failures = (
+            ('st_mode', True), ('st_mode', module.stat.S_IFREG | 0o600),
+            ('st_mode', module.stat.S_IFDIR | 0o755),
+            ('st_dev', False), ('st_dev', -1), ('st_dev', 1 << 64),
+            ('st_ino', 0), ('st_ino', None),
+            ('st_uid', (os.geteuid() + 1) % (1 << 32)),
+            ('st_gid', -1), ('st_gid', True), ('st_nlink', 0),
+            ('st_nlink', 1.0),
+        )
+        for field, value in failures:
+            with self.subTest(field=field, value=repr(value)):
+                with self.assertRaisesRegex(OSError, 'identity malformed'):
+                    module._checked_generated_directory_identity(
+                        FakeStat(**{field: value}))
+        with self.assertRaisesRegex(OSError, 'identity unreadable'):
+            module._checked_generated_directory_identity(object())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated native Linux parent inode')
+    def test_private_parent_inode_switch_blocks_before_baseline_or_inventory(self):
+        native_lstat = os.lstat
+        native_snapshot = module._snapshot_regular
+
+        for stage in ('after-watch', 'before-inventory'):
+            with self.subTest(stage=stage):
+                read_fd, write_fd = os.pipe()
+                observed = {'folder': None, 'switch': False, 'changed': False}
+                snap_calls = []
+
+                class AlteredDirectoryStat:
+                    def __init__(self, original):
+                        self.original = original
+                        self.st_ino = original.st_ino + 1
+
+                    def __getattr__(self, field):
+                        return getattr(self.original, field)
+
+                def scoped_lstat(path, *args, **kwargs):
+                    record = native_lstat(path, *args, **kwargs)
+                    if (observed['switch'] and not observed['changed']
+                            and observed['folder'] is not None
+                            and os.fspath(path) == observed['folder']):
+                        observed['changed'] = True
+                        observed['switch'] = False
+                        return AlteredDirectoryStat(record)
+                    return record
+
+                def register_watch(path):
+                    observed['folder'] = os.fspath(path.parent)
+                    if stage == 'after-watch':
+                        observed['switch'] = True
+                    return read_fd, 9, 10
+
+                def real_snapshot_with_final_boundary(path):
+                    result = native_snapshot(path)
+                    snap_calls.append(result)
+                    if stage == 'before-inventory' and len(snap_calls) == 2:
+                        observed['switch'] = True
+                    return result
+
+                try:
+                    with patch.object(module.os, 'lstat', side_effect=scoped_lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=register_watch) as watcher:
+                            with patch.object(module, '_snapshot_regular',
+                                              side_effect=real_snapshot_with_final_boundary) as snapshot:
+                                with patch.object(module, '_read_pending') as drain:
+                                    receipt = module.run_demo()
+                    self.assertTrue(observed['changed'])
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertFalse(receipt['can_authorize_dispatch'])
+                    self.assertFalse(receipt['independent_os_proof_verified'])
+                    watcher.assert_called_once()
+                    self.assertEqual(snapshot.call_count,
+                                     0 if stage == 'after-watch' else 2)
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
