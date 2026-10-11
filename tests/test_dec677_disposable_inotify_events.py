@@ -6536,6 +6536,31 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+    def test_watch_fspath_mutation_cannot_rewrite_original_expected_path(self):
+        # Preserve sibling #1040's regression on the native-baseline branch.
+        # Under CPython the Path's original constructor segments are stored;
+        # an injected wrapper must not rewrite the precomputed expectation.
+        for forged in ('/tmp/unrelated-public', '/etc/passwd'):
+            with self.subTest(forged=forged):
+                path = Path('/tmp/dec677-disposable-public') / 'sample'
+                original_parts = tuple(path._raw_paths)
+                self.assertEqual(original_parts,
+                                 ('/tmp/dec677-disposable-public', 'sample'))
+
+                def mutate_and_forge(_path):
+                    path._raw_paths[:] = [forged]
+                    return forged
+
+                with patch.object(module.os, 'fspath',
+                                  side_effect=mutate_and_forge) as fspath:
+                    with patch.object(module.os, 'fsencode',
+                                      side_effect=AssertionError('encoder must not run')) as encode:
+                        with self.assertRaisesRegex(OSError, 'fspath disagrees'):
+                            module._checked_watch_path_bytes(path)
+                        encode.assert_not_called()
+                    fspath.assert_called_once_with(path)
+                self.assertEqual(path._raw_paths, [forged])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
