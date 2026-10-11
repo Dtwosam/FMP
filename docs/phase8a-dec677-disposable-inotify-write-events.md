@@ -1051,6 +1051,12 @@ DEC-824 ports **one genuine Linux private /tmp positive control** onto #1030 as 
 
 This **test/docs-only** child increases source-defined distinct tests from **475 to 476**, leaving the runtime script and all sibling heads unchanged. All exact-head Phase 3/full historical CI and qualified independent source/security review are mandatory. The old #1003 and #1011 full CI failures remain historically red. Real annual 20-job OS isolation and immutable run385 server dispatch admission remain blocked.
 
+## DEC-825 — Native prewrite success boundary and scanner exception controls
+
+The separate sibling [#1032](https://github.com/Dtwosam/FMP/pull/1032) tests that a truly clean generated Linux private /tmp folder survives the empty-directory check and exclusive initial write before a deliberately stopped watch installation. It also proves that both `OSError` and an unexpected `RuntimeError` from the bounded initial directory census block **before any writer or watcher allocation**. DEC-825 carries these two additional and distinct negative/positive boundary tests onto [#1033](https://github.com/Dtwosam/FMP/pull/1033), which has the full local positive path with a synthetic watcher. No previously created sibling or failed ancestor commits are modified.
+
+With two new source-defined tests, this branch contains **478 uniquely named methods**. The native control asserts actual public sample bytes, pathname scope and cleanup; scanner faults require `BLOCKED`, no sample open and no watch. **Test/docs only**. This does not authenticate kernel events, independently sandbox the protected annual 20 jobs, or authorize annual run385. Exact-head Phase 3, full historical suite and independent security/source review remain mandatory.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
