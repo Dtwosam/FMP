@@ -6986,6 +6986,101 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux postdrain size metadata')
+    def test_postdrain_sample_size_metadata_must_be_plain_exact_integer(self):
+        native_lstat = os.lstat
+        expected = len(module.BEFORE)
+
+        class EqualLength:
+            def __eq__(self, other):
+                raise AssertionError('must never consult forged equality')
+
+        class IntSubclass(int):
+            pass
+
+        cases = (True, float(expected), str(expected),
+                 IntSubclass(expected), EqualLength(),
+                 RuntimeError('synthetic size metadata exception'))
+        for forged in cases:
+            with self.subTest(forged=type(forged).__name__):
+                read_fd, write_fd = os.pipe()
+                state = {'sample': None, 'drained': False, 'injected': False}
+
+                class ForgedSizeRecord:
+                    def __init__(self, original):
+                        self.original = original
+
+                    @property
+                    def st_size(self):
+                        if isinstance(forged, RuntimeError):
+                            raise forged
+                        return forged
+
+                    def __getattr__(self, field):
+                        return getattr(self.original, field)
+
+                def register(path):
+                    state['sample'] = os.fspath(path)
+                    return read_fd, 9, 10
+
+                def drain(_fd):
+                    state['drained'] = True
+                    return b''
+
+                def scoped_lstat(path, *args, **kwargs):
+                    record = native_lstat(path, *args, **kwargs)
+                    if (state['drained'] and not state['injected']
+                            and state['sample'] == os.fspath(path)):
+                        state['injected'] = True
+                        return ForgedSizeRecord(record)
+                    return record
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=scoped_lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=register) as watch:
+                            with patch.object(module, '_read_pending',
+                                              side_effect=drain) as reader:
+                                with patch.object(module, '_evaluate') as evaluate:
+                                    receipt = module.run_demo()
+                    self.assertTrue(state['injected'])
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertFalse(receipt['can_authorize_dispatch'])
+                    self.assertFalse(receipt['independent_os_proof_verified'])
+                    watch.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux postdrain size control')
+    def test_postdrain_unmodified_sample_can_reach_nonauthorizing_evaluator(self):
+        read_fd, write_fd = os.pipe()
+        try:
+            outcome = module._outcome(['synthetic downstream evaluation'])
+            with patch.object(module, '_start_watch',
+                              return_value=(read_fd, 9, 10)) as watch:
+                with patch.object(module, '_read_pending',
+                                  return_value=b'') as drain:
+                    with patch.object(module, '_evaluate',
+                                      return_value=outcome) as evaluate:
+                        receipt = module.run_demo()
+            self.assertEqual(receipt, outcome)
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertFalse(receipt['can_authorize_dispatch'])
+            self.assertFalse(receipt['independent_os_proof_verified'])
+            watch.assert_called_once()
+            drain.assert_called_once_with(read_fd)
+            evaluate.assert_called_once()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
