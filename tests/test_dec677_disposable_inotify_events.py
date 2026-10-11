@@ -5460,6 +5460,27 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(wr)
 
+
+    def test_inventory_encoder_must_match_supplied_name_bytes(self):
+        for invalid in (b'other', b'sample-extra', b'.', b'..', b'', b'a/b'):
+            with self.subTest(encoded=invalid):
+                with patch.object(module.os, 'fsencode', return_value=invalid):
+                    self.assertFalse(module._plausible_inventory_basename('sample'))
+                    result = module._evaluate(
+                        b'public', b'public', b'', 9, True, False,
+                        directory_watch=10, directory_inventory_names=('sample',))
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertFalse(result['observed_checks']['no_directory_entry_mutations'])
+                    self.assertFalse(result['can_authorize_dispatch'])
+
+    def test_inventory_native_encoded_basename_and_surrogateescape_still_work(self):
+        names = ('sample', 'a' * 255, os.fsdecode(b'public-\\xff-entry'))
+        for name in names:
+            with self.subTest(name=repr(name)):
+                self.assertTrue(module._plausible_inventory_basename(name))
+        with patch.object(module.os, 'fsencode', return_value=b'a' * 255):
+            self.assertFalse(module._plausible_inventory_basename('sample'))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
