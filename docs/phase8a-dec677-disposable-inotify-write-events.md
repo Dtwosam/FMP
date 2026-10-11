@@ -918,6 +918,13 @@ The scanner and direct evaluator already require exact `str` inventory basenames
 
 Two source-defined regressions grow this strict child to **444 distinct test methods**. An evaluator with substituted inventory-name bytes must report `BLOCKED` instead of endorsing no directory mutations; actual ordinary, 255-byte and surrogateescaped native Linux basenames still pass the helper. The same issue was separately proposed in sibling draft #998 from #995; this strict descendant of #999 carries the fix forward without rewriting that sibling. Only disposable generated /tmp observer source, tests and docs change. This cannot attest independent kernel provenance, race-free confinement or annual authorization.
 
+
+## DEC-802 — Repair the non-UTF-8 inventory fixture and prove byte roundtrip
+
+DEC-801 added surrogateescape acceptance coverage, but its intended byte fixture was accidentally written with a doubled Python backslash escape: the test represented printable `\\xff` characters rather than one raw `0xff` filename byte. That still passed the helper, but did not actually prove the advertised surrogateescaped path. This test/docs-only child corrects that single test case using `bytes([255])` and adds an independent explicit `os.fsdecode` → `os.fsencode` roundtrip assertion over a genuinely non-UTF-8 byte sequence. A mismatched injected encoder must still be rejected.
+
+One new source-defined regression increases the suite to **445 uniquely named methods**. The generated observer runtime source is unchanged, and #1000's original exact-head CI remains historical; this child requires independent Phase 3 and full regression. Local fixture proof is not OS provenance, protected annual confinement or run385 authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

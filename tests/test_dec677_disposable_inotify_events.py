@@ -5557,11 +5557,22 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertFalse(result['independent_os_proof_verified'])
 
     def test_inventory_exact_native_and_surrogateescaped_names_still_validate(self):
-        for name in ('sample', 'a' * 255, os.fsdecode(b'public-\\xff-entry')):
+        for name in ('sample', 'a' * 255, os.fsdecode(b'public-' + bytes([255]) + b'-entry')):
             with self.subTest(name=repr(name)):
                 self.assertTrue(module._plausible_inventory_basename(name))
         with patch.object(module.os, 'fsencode', return_value=b'a' * 255):
             self.assertFalse(module._plausible_inventory_basename('sample'))
+
+
+    def test_inventory_real_surrogateescape_byte_roundtrip_not_text_escape(self):
+        # bytes([255]) is one genuinely non-UTF-8 native filename byte,
+        # unlike a literal backslash followed by 'xff' in a bytes string.
+        raw_name = b'public-' + bytes([255]) + b'-entry'
+        name = os.fsdecode(raw_name)
+        self.assertEqual(os.fsencode(name), raw_name)
+        self.assertTrue(module._plausible_inventory_basename(name))
+        with patch.object(module.os, 'fsencode', return_value=b'public-other-entry'):
+            self.assertFalse(module._plausible_inventory_basename(name))
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
