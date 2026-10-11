@@ -5858,6 +5858,61 @@ class DisposableInotifyTests(unittest.TestCase):
             finally:
                 os.close(fd)
 
+
+    def test_inotify_registration_pins_nofollow_and_directory_only_flags(self):
+        class NativeCall:
+            def __init__(self, values):
+                self.values = iter(values)
+                self.calls = []
+            def __call__(self, *args):
+                self.calls.append(args)
+                return next(self.values)
+        class FakeLib:
+            def __init__(self):
+                self.inotify_init1 = NativeCall((17,))
+                self.inotify_add_watch = NativeCall((9, 10))
+        native = FakeLib()
+        with patch.object(module.ctypes, 'CDLL', return_value=native):
+            with patch.object(module.os, 'close') as close:
+                self.assertEqual(module._start_watch(Path('/tmp/public-fake-only')),
+                                 (17, 9, 10))
+                close.assert_not_called()
+        calls = native.inotify_add_watch.calls
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[0], (17, b'/tmp/public-fake-only',
+                                    module.MASK | module.IN_DONT_FOLLOW))
+        self.assertEqual(calls[1], (17, b'/tmp',
+                                    module.DIRECTORY_MASK | module.IN_DONT_FOLLOW |
+                                    module.IN_ONLYDIR))
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'disposable Linux symlink control')
+    def test_live_generated_symlink_cannot_be_source_snapshot(self):
+        with tempfile.TemporaryDirectory(prefix='dec802-public-', dir='/tmp') as folder:
+            target = Path(folder) / 'public-target'
+            source = Path(folder) / 'sample'
+            module._write_generated_payload(target, module.BEFORE)
+            source.symlink_to(target)
+            fd, file_wd, directory_wd = module._start_watch(source)
+            try:
+                self.assertGreater(file_wd, 0)
+                self.assertGreater(directory_wd, 0)
+                self.assertNotEqual(file_wd, directory_wd)
+                with self.assertRaises(OSError):
+                    module._snapshot_regular(source)
+            finally:
+                os.close(fd)
+
+    def test_inotify_registration_flags_are_not_accepted_as_event_actions(self):
+        file_event = ev(wd=9, mask=module.IN_MODIFY | module.IN_DONT_FOLLOW)
+        directory_event = ev(
+            wd=10, mask=module.IN_CREATE | module.IN_ONLYDIR,
+            data=named(b'public-child'))
+        self.assertFalse(module._classify_stream(
+            file_event, 9, directory_watch=10)['well_formed'])
+        self.assertFalse(module._classify_stream(
+            directory_event, 9, directory_watch=10)['well_formed'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
