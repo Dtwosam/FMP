@@ -2338,6 +2338,30 @@ DEC-651/#821/#779 remain BLOCKED. Own exact-head Phase 3/full
 historical CI and qualified independent review required.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-891 — Real late directory rename kernel events
+
+DEC-887, DEC-889 and DEC-890 exercise native watched-source attribute,
+unlink and same-byte write events after the last generated sample
+metadata observation. DEC-891 covers actual Linux **directory moves**:
+after the third timestamp validator has captured the original sample
+record, create a new public sibling inside the generated private /tmp
+directory and rename that sibling to another generated public basename.
+The original watched sample and parent directory inode remain unchanged.
+The first native inotify drain must be empty; the last immediate
+kernel drain must return well-formed directory events including both
+`IN_MOVED_FROM` and `IN_MOVED_TO`. The runner must reject them as
+`BLOCKED`, with no local evaluator invocation, both authority flags
+false, and closed observer FD.
+
+One new Linux native regression brings the strict tip to **563
+distinct source-defined test methods**. Generated event collection
+does not establish independently enforced OS no-write confinement,
+unbroken race exclusion or immutable one-shot annual admission.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own exact-head
+Phase 3, full historical CI and independent qualified security review
+required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
