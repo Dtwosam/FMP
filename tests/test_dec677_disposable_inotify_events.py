@@ -9579,6 +9579,138 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'malformed post-census sample pathname stat')
+    def test_post_receipt_census_sample_metadata_forgery_blocks_before_late_drain(self):
+        native_scan = module._bounded_inventory_names
+        native_lstat = os.lstat
+        cases = (
+            ('st_ino', 'forged-inode'),
+            ('st_nlink', 2),
+            ('st_size', True),
+            ('st_uid', True),
+            ('st_mtime_ns', None),
+            ('st_mode', module.stat.S_IFLNK | 0o777),
+        )
+        for field, invalid in cases:
+            with self.subTest(field=field):
+                read_fd, write_fd = os.pipe()
+                state = {'scans': 0, 'injected': False}
+
+                class ForgedStat:
+                    def __init__(self, original):
+                        self.original = original
+
+                    def __getattr__(self, key):
+                        if key == field:
+                            return invalid
+                        return getattr(self.original, key)
+
+                def census(folder):
+                    names = native_scan(folder)
+                    state['scans'] += 1
+                    return names
+
+                def scoped_lstat(path, *args, **kwargs):
+                    record = native_lstat(path, *args, **kwargs)
+                    if (state['scans'] == 3 and not state['injected']
+                            and os.fspath(path).endswith('/sample')):
+                        state['injected'] = True
+                        return ForgedStat(record)
+                    return record
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=scoped_lstat):
+                        with patch.object(module, '_bounded_inventory_names',
+                                          side_effect=census) as scanner:
+                            with patch.object(module, '_start_watch',
+                                              return_value=(read_fd, 9, 10)) as watcher:
+                                with patch.object(module, '_read_pending',
+                                                  return_value=b'') as first:
+                                    with patch.object(module, '_read_receipt_pending') as last:
+                                        with patch.object(module, '_evaluate') as evaluator:
+                                            receipt = module.run_demo()
+                    self.assertTrue(state['injected'])
+                    self.assertEqual(state['scans'], 3)
+                    self.assertEqual(scanner.call_count, 3)
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertIs(receipt['can_authorize_dispatch'], False)
+                    self.assertIs(receipt['independent_os_proof_verified'], False)
+                    watcher.assert_called_once()
+                    first.assert_called_once_with(read_fd)
+                    last.assert_not_called()
+                    evaluator.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'malformed post-census parent pathname stat')
+    def test_post_receipt_census_parent_identity_forgery_blocks_before_late_drain(self):
+        native_scan = module._bounded_inventory_names
+        native_lstat = os.lstat
+        cases = (
+            ('st_ino', 'forged-parent'),
+            ('st_uid', True),
+            ('st_mode', module.stat.S_IFLNK | 0o700),
+        )
+        for field, invalid in cases:
+            with self.subTest(field=field):
+                read_fd, write_fd = os.pipe()
+                state = {'scans': 0, 'injected': False}
+
+                class ForgedStat:
+                    def __init__(self, original):
+                        self.original = original
+
+                    def __getattr__(self, key):
+                        if key == field:
+                            return invalid
+                        return getattr(self.original, key)
+
+                def census(folder):
+                    names = native_scan(folder)
+                    state['scans'] += 1
+                    return names
+
+                def scoped_lstat(path, *args, **kwargs):
+                    record = native_lstat(path, *args, **kwargs)
+                    value = os.fspath(path)
+                    if (state['scans'] == 3 and not state['injected']
+                            and os.path.dirname(value) == '/tmp'
+                            and os.path.basename(value).startswith(
+                                module.DISPOSABLE_PREFIX)):
+                        state['injected'] = True
+                        return ForgedStat(record)
+                    return record
+
+                try:
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=scoped_lstat):
+                        with patch.object(module, '_bounded_inventory_names',
+                                          side_effect=census) as scanner:
+                            with patch.object(module, '_start_watch',
+                                              return_value=(read_fd, 9, 10)) as watcher:
+                                with patch.object(module, '_read_pending',
+                                                  return_value=b'') as first:
+                                    with patch.object(module, '_read_receipt_pending') as last:
+                                        with patch.object(module, '_evaluate') as evaluator:
+                                            receipt = module.run_demo()
+                    self.assertTrue(state['injected'])
+                    self.assertEqual(state['scans'], 3)
+                    self.assertEqual(scanner.call_count, 3)
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertIs(receipt['can_authorize_dispatch'], False)
+                    self.assertIs(receipt['independent_os_proof_verified'], False)
+                    watcher.assert_called_once()
+                    first.assert_called_once_with(read_fd)
+                    last.assert_not_called()
+                    evaluator.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
