@@ -5306,6 +5306,26 @@ class DisposableInotifyTests(unittest.TestCase):
             finally:
                 os.close(fd)
 
+
+    def test_watch_path_encoder_rejects_outside_tmp_or_traversal(self):
+        rejected = ('relative/sample', '/etc/passwd', '/tmp2/sample',
+                    '/tmp/../etc/passwd', '/tmp/private/../../etc',
+                    '//tmp/public-sample', '/var/tmp/public-sample')
+        for path in rejected:
+            with self.subTest(path=path):
+                with patch.object(module.os, 'fsencode',
+                                  side_effect=AssertionError('must reject before encoding')) as encode:
+                    with self.assertRaisesRegex(OSError, 'outside the /tmp scope'):
+                        module._checked_watch_path_bytes(Path(path))
+                    encode.assert_not_called()
+
+    def test_watch_path_encoder_preserves_generated_tmp_root_and_children(self):
+        for path in (Path('/tmp'), Path('/tmp/public-sample'),
+                     Path('/tmp/dec677-disposable-public/sample')):
+            with self.subTest(path=str(path)):
+                self.assertEqual(module._checked_watch_path_bytes(path),
+                                 os.fsencode(path))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

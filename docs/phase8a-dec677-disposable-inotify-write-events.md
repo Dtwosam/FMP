@@ -867,6 +867,12 @@ DEC-791 adds `IN_DONT_FOLLOW` on both registrations and `IN_ONLYDIR` on the gene
 
 These checks add **two source-defined test methods (428 total unique methods)** and do not modify the observer runtime or production runner. They are not independently authenticated kernel provenance, race-free watch registration or annual OS confinement proof.
 
+## DEC-794 — Enforce lexical /tmp scope before encoding generated watch paths
+
+DEC-792 checks that `inotify_add_watch` receives the same exact bounded NUL-free bytes as its Python pathname. Correctly encoded bytes can nevertheless designate an unintended path such as `/etc/passwd`, a relative pathname resolving against an unrelated current directory, or a `/tmp/../` traversal. The disposable helper should never opt in to watch those explicit caller-selected targets. DEC-794 requires its pathname be exactly `/tmp` (for direct synthetic one-child cases) or begin with `/tmp/`, rejects any `..` path component, and refuses non-string path representations **before invoking `os.fsencode`**. Both generated file and directory registrations already use this shared helper; no new run mode or arbitrary source input is added.
+
+Two added source-defined tests bring the suite to **430 uniquely named methods**: invalid outside/relative/traversal paths fail *before* encoding, while the generated public /tmp root and representative private children still yield unchanged bytes. This is a **lexical scope boundary**, not a proof against malicious intermediate symlink substitution, a race-free directory-fd confinement mechanism or annual host OS write-denial. Only generated observer source, tests and docs change; all authorization flags remain false.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
