@@ -2172,6 +2172,27 @@ performed. DEC-650/#820 and DEC-651/#821/#779 stay BLOCKED.
 Own exact-head Phase 3/full historical CI and qualified independent
 review mandatory. **DRAFT / NEVER MERGE**.
 
+
+## DEC-884 — Real late hardlink alias at the receipt census boundary
+
+The post-census source identity check introduced in DEC-876 also
+requires the originally exclusive-created public inode's link count
+to remain exactly one. DEC-884 exercises that contract with an actual
+Linux `os.link` after the third directory scan captures its previous
+names. A second name is created **only** within the new generated
+private /tmp directory and points to the original public sample inode.
+The test verifies both inodes match, native `st_nlink == 2`, fixture
+bytes remain identical, the earlier synthetic drain is empty, and the
+observer returns `BLOCKED` without invoking the local evaluator.
+Both authority fields remain false and the watcher FD closes.
+
+One disposable regression; **555 distinct source-defined test
+methods**. This does not prove real inotify silence, continuous alias
+exclusion, independently enforced OS no-write confinement or immutable
+annual admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified independent
+security review are mandatory. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

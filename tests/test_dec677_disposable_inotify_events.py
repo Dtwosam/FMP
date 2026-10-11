@@ -9359,6 +9359,58 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'native generated post-census hardlink alias')
+    def test_real_generated_hardlink_during_receipt_census_blocks(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'alias_created': False,
+                 'same_inode': False, 'link_count': None,
+                 'bytes': None}
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                source = folder / 'sample'
+                alias = folder / 'late-public-receipt-hardlink'
+                os.link(source, alias)
+                original = os.lstat(source)
+                added = os.lstat(alias)
+                state['alias_created'] = alias.is_file()
+                state['same_inode'] = (
+                    (original.st_dev, original.st_ino) ==
+                    (added.st_dev, added.st_ino)
+                )
+                state['link_count'] = original.st_nlink
+                state['bytes'] = alias.read_bytes()
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as scanner:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as early_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(scanner.call_count, 3)
+            self.assertTrue(state['alias_created'])
+            self.assertTrue(state['same_inode'])
+            self.assertEqual(state['link_count'], 2)
+            self.assertEqual(state['bytes'], module.BEFORE)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            early_reader.assert_called_once_with(read_fd)
+            evaluator.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
