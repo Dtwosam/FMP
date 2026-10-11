@@ -5456,6 +5456,86 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertIsNone(path.unlink())
             self.assertFalse(path.exists())
 
+
+    def test_inotify_registration_rejects_malformed_file_watch_path_bytes(self):
+        class NativeCall:
+            def __init__(self, values):
+                self.values = iter(values)
+                self.calls = []
+            def __call__(self, *args):
+                self.calls.append(args)
+                return next(self.values)
+        class FakeLib:
+            def __init__(self):
+                self.inotify_init1 = NativeCall((17,))
+                self.inotify_add_watch = NativeCall((9, 10))
+        class ForgedBytes(bytes):
+            pass
+        invalid = (None, True, 'path', bytearray(b'/tmp/file'),
+                   ForgedBytes(b'/tmp/file'), b'', b'relative/file',
+                   b'/tmp/file\\x00other', b'/' + b'x' * 4096)
+        for value in invalid:
+            with self.subTest(path_bytes=repr(value)[:80]):
+                native = FakeLib()
+                with patch.object(module.ctypes, 'CDLL', return_value=native):
+                    with patch.object(module.os, 'fsencode', return_value=value):
+                        with patch.object(module.os, 'close') as close:
+                            with self.assertRaises(OSError):
+                                module._start_watch(Path('/tmp/public-fake-only'))
+                            close.assert_called_once_with(17)
+                self.assertEqual(len(native.inotify_add_watch.calls), 0)
+
+    def test_inotify_registration_rejects_malformed_parent_watch_bytes(self):
+        class NativeCall:
+            def __init__(self, values):
+                self.values = iter(values)
+                self.calls = []
+            def __call__(self, *args):
+                self.calls.append(args)
+                return next(self.values)
+        class FakeLib:
+            def __init__(self):
+                self.inotify_init1 = NativeCall((17,))
+                self.inotify_add_watch = NativeCall((9, 10))
+        for invalid in (None, True, b'', b'tmp', b'/tmp\\x00wrong',
+                        b'/' + b'x' * 4096):
+            with self.subTest(parent=repr(invalid)[:80]):
+                native = FakeLib()
+                with patch.object(module.ctypes, 'CDLL', return_value=native):
+                    with patch.object(module.os, 'fsencode',
+                                      side_effect=(b'/tmp/public-fake-only', invalid)):
+                        with patch.object(module.os, 'close') as close:
+                            with self.assertRaises(OSError):
+                                module._start_watch(Path('/tmp/public-fake-only'))
+                            close.assert_called_once_with(17)
+                self.assertEqual(len(native.inotify_add_watch.calls), 1)
+                self.assertEqual(native.inotify_add_watch.calls[0][1],
+                                 b'/tmp/public-fake-only')
+
+    def test_native_watch_path_bytes_are_absolute_and_unchanged(self):
+        self.assertEqual(module._checked_watch_path_bytes(
+            Path('/tmp/public-fake-only')), os.fsencode('/tmp/public-fake-only'))
+        self.assertEqual(module._checked_watch_path_bytes(Path('/tmp')), b'/tmp')
+        class NativeCall:
+            def __init__(self, values):
+                self.values = iter(values)
+                self.calls = []
+            def __call__(self, *args):
+                self.calls.append(args)
+                return next(self.values)
+        class FakeLib:
+            def __init__(self):
+                self.inotify_init1 = NativeCall((17,))
+                self.inotify_add_watch = NativeCall((9, 10))
+        native = FakeLib()
+        with patch.object(module.ctypes, 'CDLL', return_value=native):
+            with patch.object(module.os, 'close') as close:
+                self.assertEqual(module._start_watch(Path('/tmp/public-fake-only')),
+                                 (17, 9, 10))
+                close.assert_not_called()
+        self.assertEqual([v[1] for v in native.inotify_add_watch.calls],
+                         [b'/tmp/public-fake-only', b'/tmp'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
