@@ -3437,8 +3437,11 @@ class DisposableInotifyTests(unittest.TestCase):
         rd, wr = os.pipe()
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                # Keep the native O_EXCL inode so this exercise reaches the
+                # *content* baseline mismatch, not DEC-830's earlier identity check.
                 with patch.object(module, '_snapshot_regular',
-                                  return_value=((3, 7), b'UNEXPECTED INITIAL')) as snapshot:
+                                  side_effect=lambda path: native_created_sample_snapshot(
+                                      path, b'UNEXPECTED INITIAL')) as snapshot:
                     with patch.object(module, '_read_pending') as drain:
                         result = module.run_demo()
             self.assertEqual(result['status'], 'BLOCKED')
@@ -6592,6 +6595,41 @@ class DisposableInotifyTests(unittest.TestCase):
                         encode.assert_not_called()
                     fspath.assert_called_once_with(path)
                 self.assertEqual(path._raw_paths, [forged])
+
+    def test_watch_path_mutation_with_honest_fspath_text_is_rejected(self):
+        # The wrapper mutates the source Path but returns its old correct
+        # spelling. Equality of returned bytes/text alone is insufficient.
+        for forged in ('/tmp/other-public', '/etc/passwd'):
+            with self.subTest(forged=forged, stage='fspath'):
+                path = Path('/tmp/dec677-disposable-public') / 'sample'
+                genuine = str(path)
+
+                def mutate_fspath(_path):
+                    path._raw_paths[:] = [forged]
+                    return genuine
+
+                with patch.object(module.os, 'fspath',
+                                  side_effect=mutate_fspath) as fspath:
+                    with patch.object(module.os, 'fsencode',
+                                      side_effect=AssertionError('must not encode')) as encode:
+                        with self.assertRaisesRegex(OSError, 'raw segments changed'):
+                            module._checked_watch_path_bytes(path)
+                        encode.assert_not_called()
+                    fspath.assert_called_once_with(path)
+
+            with self.subTest(forged=forged, stage='fsencode'):
+                path = Path('/tmp/dec677-disposable-public') / 'sample'
+                genuine = os.fsencode(path)
+
+                def mutate_encoder(_path):
+                    path._raw_paths[:] = [forged]
+                    return genuine
+
+                with patch.object(module.os, 'fsencode',
+                                  side_effect=mutate_encoder) as encoder:
+                    with self.assertRaisesRegex(OSError, 'raw segments changed'):
+                        module._checked_watch_path_bytes(path)
+                    encoder.assert_called_once_with(path)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):

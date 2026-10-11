@@ -474,11 +474,24 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
             raise OSError("disposable watch pathname has invalid raw segments")
         # The generated /tmp source is only formed from an absolute folder
         # followed by one plain basename; avoid os.path.join's fspath calls.
+        original_segments = tuple(raw_paths)
         expected_text = raw_paths[0] + "".join(
             "/" + segment for segment in raw_paths[1:])
         if not expected_text.startswith("/"):
             raise OSError("disposable watch pathname is outside the /tmp scope")
+
+        def original_path_still_intact() -> bool:
+            # A substituted wrapper can mutate Path's original stored
+            # segments while returning the old, apparently correct spelling.
+            current = path._raw_paths
+            return (type(current) is list
+                    and len(current) == len(original_segments)
+                    and all(type(part) is str and part == original
+                            for part, original in zip(current, original_segments)))
+
         textual = os.fspath(path)
+        if not original_path_still_intact():
+            raise OSError("disposable watch raw segments changed during encoding")
         # A patched fspath wrapper must never substitute a different target,
         # even when a patched encoder agrees with the substituted C bytes.
         if type(textual) is not str or textual != expected_text:
@@ -490,6 +503,8 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
                 or ".." in Path(textual).parts):
             raise OSError("disposable watch pathname is outside the /tmp scope")
         encoded = os.fsencode(path)
+        if not original_path_still_intact():
+            raise OSError("disposable watch raw segments changed during encoding")
         if (type(encoded) is not bytes
                 or not 1 <= len(encoded) <= 4095 or b"\x00" in encoded
                 or encoded != textual.encode(
