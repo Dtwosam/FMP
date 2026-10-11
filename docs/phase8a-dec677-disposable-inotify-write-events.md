@@ -2438,6 +2438,30 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Own exact-head Phase 3/full historical CI and qualified independent
 security review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-895 — Independent-process real Linux CLI end-to-end controls
+
+Earlier native Linux tests exercise the generated observer in the unit
+test process (sometimes with selected instrumented call sites). DEC-895
+adds two **separate real subprocess** integration controls through
+the actual public CLI and native Linux inotify. The clean explicit
+`--execute-disposable-control` must exit code 3 and print one
+canonical `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` JSON receipt with
+exact false authority/proof flags and all required checks. The real
+`--execute-reverted-write-negative` changes and restores **only**
+its own newly generated /tmp public sample, must exit code 2 and
+report `BLOCKED` with both flags false. No test-supplied watcher
+or mocked kernel data enters these child processes.
+
+These are generated disposable public Linux controls, not permitted
+annual-runner operations. Only tests and docs change. The strict tip
+now contains **568 source-defined test methods**. Executable local
+CLI receipts and return codes do not prove OS-enforced no-write,
+atomic path identity, or immutable annual admission. DEC-650/#820
+and DEC-651/#821/#779 remain BLOCKED. Exact-head Phase 3/full
+historical CI and qualified independent review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
