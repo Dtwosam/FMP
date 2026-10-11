@@ -1828,6 +1828,29 @@ immutable server-side one-shot run385 admission remain BLOCKED.
 Require this exact head's own Phase 3/full historical regression and
 qualified independent security review. **DRAFT / NEVER MERGE**.
 
+
+## DEC-870 — Native generated permission change after final sample read
+
+DEC-862/864 checks the original exclusive writer mode and the late
+sample mode, and DEC-869 exercises the native final mtime check.
+DEC-870 independently exercises the native **access-mode** continuity
+check without synthetic `os.lstat` tampering. A generated Linux /tmp
+sample is actually `os.chmod`-modified to toggle owner-execute
+immediately after the third bounded no-follow snapshot. The test
+asserts that the kernel-reported mode changed and that `run_demo`
+blocks before local witness evaluation, leaving both authority fields
+false and the watcher FD closed, even though the mocked queue is empty.
+
+This is one more regression method (**532 source-defined methods**)
+and only synthetic observer tests and documentation change. The file
+mutation is strictly confined to a fresh generated disposable /tmp
+sample, not production inputs or protected annual evidence.
+A later chmod revert or concurrent races may evade these sequential
+checks; this is not OS-enforced confinement or annual admission.
+DEC-650 and DEC-651 remain BLOCKED; this exact draft requires
+Phase 3/full historical CI and independent security review.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
