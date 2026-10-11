@@ -815,6 +815,12 @@ DEC-785 adds an optional `expected_inode=(dev, ino)` comparison to the reusable 
 
 This remains a same-process disposable /tmp consistency check with no independent trusted kernel provenance, race freedom or annual run385 host confinement proof.
 
+## DEC-786 — Live generated pathname replacement negative test for baseline inode pinning
+
+DEC-785 binds both generated hard-link alias checks to the exact `(st_dev, st_ino)` from the initial watched public-file snapshot. DEC-786 is a **test-and-doc-only** child validating this with real disposable Linux inode changes. It creates an original public `/tmp` sample, stores its device/inode pair, separately creates a same-byte replacement inode, replaces the sample pathname, then creates a second link to the replacement. The two new paths correctly agree with each other but the pinned baseline verifier must reject them. A matching control keeps the original generated inode, proves the pinned alias check works with a real two-link pair, then removes the alias and verifies refusal. Both tests create and remove only new public private `/tmp` files.
+
+Two source-defined live methods raise the suite to **414 uniquely named tests**. No runtime observer source, protected data or production workflow changes. Correct behavior remains local negative evidence, not a trusted observer, OS confinement or annual run authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
