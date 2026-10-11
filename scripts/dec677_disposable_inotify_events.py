@@ -1014,6 +1014,19 @@ def _checked_generated_sample_access_identity(record: Any) -> tuple[int, int, in
         raise OSError("disposable generated sample access metadata malformed")
     return mode, uid, gid
 
+
+def _checked_generated_sample_change_timestamps(record: Any) -> tuple[int, int]:
+    """Reject malformed native mtime/ctime metadata before a late comparison."""
+    try:
+        mtime_ns, ctime_ns = record.st_mtime_ns, record.st_ctime_ns
+    except Exception as error:
+        raise OSError("disposable sample change timestamps unreadable") from error
+    if (type(mtime_ns) is not int or type(ctime_ns) is not int
+            or not MIN_KERNEL_TIMESTAMP_NS <= mtime_ns <= MAX_KERNEL_TIMESTAMP_NS
+            or not MIN_KERNEL_TIMESTAMP_NS <= ctime_ns <= MAX_KERNEL_TIMESTAMP_NS):
+        raise OSError("disposable sample change timestamps malformed")
+    return mtime_ns, ctime_ns
+
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
              create_sibling: bool = False, transient_sibling: bool = False,
              hardlink_negative: bool = False) -> dict[str, Any]:
@@ -1259,6 +1272,12 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         drained_sample_record)
                     if drained_sample_access != initial_sample_access:
                         raise OSError("disposable sample mode or ownership changed during event drain")
+                    # Only compare mtime/ctime across the final bounded
+                    # re-snapshot, not against the buffered initial writer.
+                    # Observable same-byte writes can update these fields
+                    # even when inode, length and final bytes still agree.
+                    drained_change_timestamps = _checked_generated_sample_change_timestamps(
+                        drained_sample_record)
                     # Even without an inode substitution, the sample can be
                     # truncated or extended while draining. Check its bounded
                     # size without treating this as a postdrain byte proof.
@@ -1291,6 +1310,9 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     if (_checked_generated_sample_access_identity(receipt_sample_record)
                             != initial_sample_access):
                         raise OSError("disposable sample access changed during final snapshot")
+                    if (_checked_generated_sample_change_timestamps(receipt_sample_record)
+                            != drained_change_timestamps):
+                        raise OSError("disposable sample timestamps changed during final snapshot")
                     # Reopening the sample can itself cross a parent rename.
                     # Keep the generated parent identity check after that last
                     # sample snapshot, before forming even a local witness.
