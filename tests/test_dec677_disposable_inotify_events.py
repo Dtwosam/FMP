@@ -5460,6 +5460,46 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(wr)
 
+
+    def test_runner_rejects_forged_linux_platform_without_tmp_probes(self):
+        class EqualLinux:
+            def __eq__(self, other):
+                return other == 'linux'
+
+            def __ne__(self, other):
+                return other != 'linux'
+
+        class LinuxSubclass(str):
+            pass
+
+        for injected in (EqualLinux(), LinuxSubclass('linux')):
+            with self.subTest(kind=type(injected).__name__):
+                with patch.object(module.sys, 'platform', injected):
+                    with patch.object(module.os.path, 'isdir') as isdir:
+                        with patch.object(module.os.path, 'islink') as islink:
+                            with patch.object(module, '_start_watch') as register:
+                                result = module.run_demo()
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertIn('monitor unavailable', ' '.join(result['findings']))
+                self.assertFalse(result['can_authorize_dispatch'])
+                self.assertFalse(result['independent_os_proof_verified'])
+                isdir.assert_not_called()
+                islink.assert_not_called()
+                register.assert_not_called()
+
+    def test_runner_rejects_nonstr_and_nonlinux_platform_without_tmp_io(self):
+        for injected in ('darwin', 'win32', None, 3, True):
+            with self.subTest(platform=repr(injected)):
+                with patch.object(module.sys, 'platform', injected):
+                    with patch.object(module.os.path, 'isdir') as isdir:
+                        with patch.object(module, '_start_watch') as register:
+                            result = module.run_demo()
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['can_authorize_dispatch'])
+                self.assertFalse(result['independent_os_proof_verified'])
+                isdir.assert_not_called()
+                register.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

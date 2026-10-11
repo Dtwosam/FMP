@@ -897,6 +897,13 @@ The `run_demo(hardlink_negative=True)` mode already requires a matching baseline
 
 DEC-798 makes both calls accept **only literal `True`** (`is not True`); all other return shapes are treated as unverified and `BLOCKED`. The helper itself remains exact-integer checked; the change protects its separate caller boundary from monkeypatched return objects. Two source-defined regression methods grow the suite to **438 unique test methods** and cover six falsy/truthy/malicious return shapes at each boundary, with expected findings, no drain, and valid watcher cleanup. No annual host isolation or dispatch authority is claimed.
 
+
+## DEC-799 — Refuse synthetic platform spoofing before generated /tmp preflight
+
+DEC-797 restricted the generated /tmp probes to exact booleans, and DEC-798 restricted the two hard-link alias-verifier gates to exact `True`. The Linux platform gate still used `sys.platform != "linux"`; a monkeypatched object with a hostile `__ne__` method could pretend to be Linux and reach those /tmp probes without being a real platform string.
+
+DEC-799 accepts only `type(sys.platform) is str` together with `sys.platform == "linux"` before entering any generated-filesystem preflight. Two source-defined tests bring this descendant to **440 distinct test methods**, checking forged comparison objects, a `str` subclass, non-Linux strings and nonstring stand-ins. Each must return the usual permanently nonauthorizing `BLOCKED` receipt, without even calling `os.path.isdir` or starting inotify. All existing real plain Linux observations remain eligible only for local unverified witness status. This is synthetic Python boundary hardening, not OS attestation, actual 20-job annual isolation or run385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
