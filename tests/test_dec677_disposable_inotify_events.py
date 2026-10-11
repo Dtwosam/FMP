@@ -5448,6 +5448,53 @@ class DisposableInotifyTests(unittest.TestCase):
             finally:
                 os.close(fd)
 
+
+    def test_direct_main_rejects_nonstring_and_nonlist_argv_with_json(self):
+        class StringSubclass(str):
+            pass
+        bad_inputs = (
+            ('--execute-disposable-control',), 'bad',
+            [None], [False], [1], [StringSubclass('--execute-disposable-control')],
+            {'arg': 'ignored'})
+        for argv in bad_inputs:
+            with self.subTest(argv=repr(argv)):
+                with patch.object(module, 'run_demo') as runner:
+                    with patch('builtins.print') as output:
+                        status = module.main(argv)
+                self.assertEqual(status, 2)
+                runner.assert_not_called()
+                receipt = json.loads(output.call_args.args[0])
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertIn('argument shape rejected', receipt['findings'][0])
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+
+    def test_direct_main_rejects_oversize_argv_before_any_demo(self):
+        for argv in ([str(i) for i in range(17)],
+                     ['--execute-disposable-control', 'X' * 257]):
+            with self.subTest(count=len(argv)):
+                with patch.object(module, 'run_demo') as runner:
+                    with patch('builtins.print') as output:
+                        status = module.main(argv)
+                self.assertEqual(status, 2)
+                runner.assert_not_called()
+                receipt = json.loads(output.call_args.args[0])
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertFalse(receipt['can_authorize_dispatch'])
+
+    def test_direct_main_unexpected_argparse_exception_emits_blocked_json(self):
+        with patch.object(module.argparse.ArgumentParser, 'parse_args',
+                          side_effect=RuntimeError('synthetic parse wrapper')):
+            with patch.object(module, 'run_demo') as runner:
+                with patch('builtins.print') as output:
+                    status = module.main(['--execute-disposable-control'])
+        self.assertEqual(status, 2)
+        runner.assert_not_called()
+        receipt = json.loads(output.call_args.args[0])
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertFalse(receipt['can_authorize_dispatch'])
+        self.assertFalse(receipt['independent_os_proof_verified'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
