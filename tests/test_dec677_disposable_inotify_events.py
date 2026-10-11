@@ -5635,6 +5635,43 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(module._checked_watch_path_bytes(path),
                                  os.fsencode(path))
 
+
+    def test_disposable_watch_path_refuses_non_tmp_host_locations(self):
+        for path in (Path('/'), Path('/etc/passwd'), Path('/var/tmp/fixture'),
+                     Path('/tmp-escape'), Path('/tmp2/fixture'),
+                     Path('/home/public-sample')):
+            with self.subTest(path=os.fspath(path)):
+                with self.assertRaisesRegex(OSError, 'outside /tmp'):
+                    module._checked_watch_path_bytes(path)
+
+    def test_disposable_watch_registration_refuses_non_tmp_path_before_libc(self):
+        class NativeCall:
+            def __init__(self, values):
+                self.values = iter(values)
+                self.calls = []
+            def __call__(self, *args):
+                self.calls.append(args)
+                return next(self.values)
+        class FakeLib:
+            def __init__(self):
+                self.inotify_init1 = NativeCall((17,))
+                self.inotify_add_watch = NativeCall((9, 10))
+        native = FakeLib()
+        with patch.object(module.ctypes, 'CDLL', return_value=native):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaisesRegex(OSError, 'outside /tmp'):
+                    module._start_watch(Path('/etc/public-fake-only'))
+                close.assert_called_once_with(17)
+        self.assertEqual(native.inotify_add_watch.calls, [])
+
+    def test_disposable_watch_path_accepts_only_tmp_component_boundary(self):
+        for path in (Path('/tmp'), Path('/tmp/sample'),
+                     Path('/tmp/dec677-disposable-public/sample'),
+                     Path('/tmp/.public-file')):
+            with self.subTest(path=os.fspath(path)):
+                self.assertEqual(module._checked_watch_path_bytes(path),
+                                 os.fsencode(path))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
