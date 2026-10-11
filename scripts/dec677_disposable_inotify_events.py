@@ -475,6 +475,10 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
     # watcher resolve a different target than the claimed generated child.
     if any(part in (b".", b"..") for part in encoded.split(b"/")):
         raise OSError("disposable inotify watch pathname contains traversal component")
+    # These are disposable local witnesses. Even a direct synthetic call to
+    # the watch helper must not register on arbitrary absolute host paths.
+    if encoded != b"/tmp" and not encoded.startswith(b"/tmp/"):
+        raise OSError("disposable inotify watch pathname is outside /tmp")
     return encoded
 
 
