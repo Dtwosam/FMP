@@ -4307,7 +4307,10 @@ class DisposableInotifyTests(unittest.TestCase):
                     with patch.object(module.os, 'fstat', return_value=FakeStat(count)):
                         with patch.object(module.os, 'read') as read:
                             with patch.object(module.os, 'close') as close:
-                                with self.assertRaisesRegex(OSError, 'bounded regular inode'):
+                                expected = ('bounded regular inode'
+                                            if 0 <= count <= module.MAX_KERNEL_STAT_ID
+                                            else 'impossible hard-link count')
+                                with self.assertRaisesRegex(OSError, expected):
                                     module._snapshot_regular(Path('/tmp/public-fake-only'))
                                 read.assert_not_called()
                                 close.assert_called_once_with(17)
@@ -5311,6 +5314,46 @@ class DisposableInotifyTests(unittest.TestCase):
                             failure.exception, module._SnapshotHardlinkCountError)
                         read.assert_not_called()
                         close.assert_called_once_with(17)
+
+
+    def test_impossible_hardlink_counts_are_generic_failures_not_guard_credit(self):
+        class FakeStat:
+            def __init__(self, count):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_nlink = count
+                self.st_size = len(module.BEFORE)
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+                self.st_uid = 10
+                self.st_gid = 20
+        for invalid in (-1, -(1 << 64), (1 << 64), (1 << 128)):
+            with self.subTest(nlink=invalid):
+                with self.assertRaisesRegex(OSError, 'impossible hard-link count') as issue:
+                    module._checked_snapshot_metadata(FakeStat(invalid))
+                self.assertNotIsInstance(
+                    issue.exception, module._SnapshotHardlinkCountError)
+
+    def test_valid_kernel_link_count_boundaries_keep_precise_guard_semantics(self):
+        class FakeStat:
+            def __init__(self, count):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_nlink = count
+                self.st_size = len(module.BEFORE)
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+                self.st_uid = 10
+                self.st_gid = 20
+        for count in (0, 2, module.MAX_KERNEL_STAT_ID):
+            with self.subTest(nlink=count):
+                with self.assertRaises(module._SnapshotHardlinkCountError):
+                    module._checked_snapshot_metadata(FakeStat(count))
+        self.assertEqual(
+            module._checked_snapshot_metadata(FakeStat(1))[2],
+            2)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
