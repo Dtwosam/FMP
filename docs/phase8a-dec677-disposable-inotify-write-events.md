@@ -853,6 +853,14 @@ Linux `inotify_add_watch` normally follows a symlink pathname when installing a 
 
 Both bits are **registration options only** and are intentionally excluded from `EVENT_ALLOWED` in the inotify event decoder. The preexisting `MASK` and `DIRECTORY_MASK` event action sets are unchanged. Two added source-defined methods increase the test suite to **423 uniquely named methods**: an injected libc wrapper verifies exact safe registration masks for both generated pathnames, and synthetic event records bearing either registration-only bit are rejected. Linux reference: https://man7.org/linux/man-pages/man7/inotify.7.html . Runtime still always refuses annual authorization and only accesses generated /tmp fixtures in tests.
 
+## DEC-792 — Validate exact bounded C pathnames before generated watch registration
+
+The disposable observer registers both watches using `ctypes` `inotify_add_watch` with a `char *` pathname. Although actual public sample names come from `TemporaryDirectory`, an injected or patched `os.fsencode` result could substitute unrelated pathname bytes or contain an embedded NUL. A C pathname truncates at NUL, so merely assuming the wrapper returned the intended path is not fail-closed.
+
+DEC-792 introduces `_checked_watch_path_bytes` for both generated file and parent-directory registrations, requiring an exact plain Python `str` path, exact immutable `bytes` encoding equal to the path encoded with the active Python filesystem encoding and surrogateescape error handler, a nonempty path of at most 4095 bytes, and no NUL. An unexpected encoder exception becomes a controlled `OSError`; after the watcher fd has been created, existing setup cleanup closes it on rejection. Existing `IN_DONT_FOLLOW` and `IN_ONLYDIR` registration flags remain intact. Three new source-defined tests increase the suite to **426 uniquely named methods**, including forged bytes, a correct surrogateescaped Linux filename, and allocated watch FD cleanup before libc registration on a substituted path.
+
+This is input-contract hardening of the generated toy observer, not independent pathname race exclusion, real annual OS write denial or permission to dispatch run385.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

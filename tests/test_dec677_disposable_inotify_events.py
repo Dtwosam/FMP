@@ -5224,6 +5224,50 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(outcome['status'], 'BLOCKED')
                 self.assertFalse(outcome['can_authorize_dispatch'])
 
+
+    def test_watch_path_encoder_rejects_forged_c_path_bytes(self):
+        path = Path('/tmp/public-sample')
+        class EvilBytes(bytes):
+            pass
+        for forged in (None, True, '', b'', b'/tmp/public-sample\x00suffix',
+                       b'/tmp/other-sample', b'/etc/not-disposable',
+                       bytearray(b'/tmp/public-sample'),
+                       EvilBytes(b'/tmp/public-sample'), b'x' * 4096):
+            with self.subTest(forged=repr(forged)):
+                with patch.object(module.os, 'fsencode', return_value=forged):
+                    with self.assertRaisesRegex(OSError, 'pathname'):
+                        module._checked_watch_path_bytes(path)
+
+    def test_watch_path_encoder_accepts_exact_surrogateescaped_bytes(self):
+        name = os.fsdecode(b'public-\xff-entry')
+        path = Path('/tmp') / name
+        self.assertEqual(module._checked_watch_path_bytes(path),
+                         os.fsencode(path))
+        self.assertEqual(module._checked_watch_path_bytes(Path('/tmp/sample')),
+                         b'/tmp/sample')
+
+    def test_forged_watch_path_encoding_closes_owned_nonstdio_fd(self):
+        class Callable:
+            def __init__(self, result):
+                self.result = result
+                self.calls = 0
+            def __call__(self, *_args):
+                self.calls += 1
+                return self.result
+        init = Callable(17)
+        add = Callable(9)
+        class FakeLib:
+            inotify_init1 = init
+            inotify_add_watch = add
+        with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+            with patch.object(module.os, 'fsencode', return_value=b'/etc/forged-path'):
+                with patch.object(module.os, 'close') as close:
+                    with self.assertRaisesRegex(OSError, 'pathname'):
+                        module._start_watch(Path('/tmp/public-sample'))
+                    close.assert_called_once_with(17)
+        self.assertEqual(add.calls, 0)
+        self.assertEqual(init.calls, 1)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

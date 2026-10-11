@@ -453,6 +453,23 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
     return _outcome(findings, checks)
 
 
+def _checked_watch_path_bytes(path: Path) -> bytes:
+    """Reject injected C pathname truncation or substituted watch targets."""
+    try:
+        textual = os.fspath(path)
+        encoded = os.fsencode(path)
+        if (type(textual) is not str or type(encoded) is not bytes
+                or not 1 <= len(encoded) <= 4095 or b"\x00" in encoded
+                or encoded != textual.encode(
+                    sys.getfilesystemencoding(), "surrogateescape")):
+            raise OSError("disposable watch pathname is not exact bounded bytes")
+        return encoded
+    except Exception as error:
+        if isinstance(error, OSError):
+            raise
+        raise OSError("disposable watch pathname encoding failed") from error
+
+
 def _start_watch(path: Path) -> tuple[int, int, int]:
     # Until inotify_init1 yields an integer FD, no descriptor is owned here.
     # Unexpected injected loader/signature/init errors must still produce a
@@ -483,12 +500,12 @@ def _start_watch(path: Path) -> tuple[int, int, int]:
     # returns the complete dual-watch tuple. A ctypes call that raises (not
     # just one returning -1) must not leak the observer descriptor.
     try:
-        wd = lib.inotify_add_watch(fd, os.fsencode(path), MASK | IN_DONT_FOLLOW)
+        wd = lib.inotify_add_watch(fd, _checked_watch_path_bytes(path), MASK | IN_DONT_FOLLOW)
         if type(wd) is not int or not 1 <= wd <= MAX_WATCH_DESCRIPTOR:
             error = ctypes.get_errno()
             raise OSError(error or 22, "disposable inotify_add_watch failed")
         directory_wd = lib.inotify_add_watch(
-            fd, os.fsencode(path.parent),
+            fd, _checked_watch_path_bytes(path.parent),
             DIRECTORY_MASK | IN_DONT_FOLLOW | IN_ONLYDIR)
         if (type(directory_wd) is not int
                 or not 1 <= directory_wd <= MAX_WATCH_DESCRIPTOR
