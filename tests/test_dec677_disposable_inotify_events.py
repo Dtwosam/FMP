@@ -5399,6 +5399,63 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(wr)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux transient control')
+    def test_transient_unlink_nonvoid_status_blocks_and_closes_watch(self):
+        for invalid in (True, False, 0, 1, 'removed', object()):
+            with self.subTest(unlink_status=repr(invalid)):
+                rd, wr = os.pipe()
+                try:
+                    snapshots = (((1, 2), module.BEFORE),
+                                 ((3, 4), b'PUBLIC-TEMPORARY'))
+                    with patch.object(module, '_start_watch',
+                                      return_value=(rd, 9, 10)):
+                        with patch.object(module, '_snapshot_regular',
+                                          side_effect=snapshots) as snapshot:
+                            with patch.object(module.Path, 'unlink',
+                                              return_value=invalid) as unlink:
+                                with patch.object(module, '_read_pending') as drain:
+                                    result = module.run_demo(transient_sibling=True)
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertFalse(result['can_authorize_dispatch'])
+                    self.assertFalse(result['independent_os_proof_verified'])
+                    self.assertEqual(snapshot.call_count, 2)
+                    unlink.assert_called_once()
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(rd)
+                finally:
+                    os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux transient control')
+    def test_transient_unlink_unexpected_exception_blocks_and_closes_watch(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  side_effect=(((1, 2), module.BEFORE),
+                                               ((3, 4), b'PUBLIC-TEMPORARY'))):
+                    with patch.object(module.Path, 'unlink',
+                                      side_effect=RuntimeError('synthetic unlink wrapper')):
+                        with patch.object(module, '_read_pending') as drain:
+                            result = module.run_demo(transient_sibling=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertFalse(result['can_authorize_dispatch'])
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux native unlink')
+    def test_native_generated_transient_unlink_returns_none(self):
+        with tempfile.TemporaryDirectory(prefix='dec794-public-', dir='/tmp') as folder:
+            path = Path(folder) / module.TRANSIENT_SIBLING_NAME
+            self.assertEqual(path.write_bytes(b'PUBLIC-TEMPORARY'),
+                             len(b'PUBLIC-TEMPORARY'))
+            self.assertIsNone(path.unlink())
+            self.assertFalse(path.exists())
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
