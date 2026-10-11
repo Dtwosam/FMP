@@ -7414,6 +7414,59 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(json.loads(stdout.getvalue()), native_receipt)
                 runner.assert_called_once()
 
+
+    def test_receipt_validator_rejects_nonplain_top_level_field_keys(self):
+        class StringAlias(str):
+            pass
+
+        class MatchingObject:
+            def __hash__(self):
+                return hash('status')
+
+            def __eq__(self, other):
+                return other == 'status'
+
+        for case, fake_key in (
+                ('str-subclass', StringAlias('status')),
+                ('equality-object', MatchingObject())):
+            with self.subTest(case=case):
+                valid = module._outcome(['generated blocked receipt'])
+                forged = dict(valid)
+                status = forged.pop('status')
+                forged[fake_key] = status
+                blocked = module._checked_disposable_observer_result(forged)
+                self.assertIsNot(blocked, forged)
+                self.assertEqual(blocked['status'], 'BLOCKED')
+                self.assertFalse(blocked['can_authorize_dispatch'])
+                self.assertFalse(blocked['independent_os_proof_verified'])
+                self.assertIn('invalid nonauthorizing receipt',
+                              ' '.join(blocked['findings']))
+
+    def test_cli_rejects_equal_hash_nonstring_field_before_serialization(self):
+        class MatchingObject:
+            def __hash__(self):
+                return hash('status')
+
+            def __eq__(self, other):
+                return other == 'status'
+
+        valid = module._outcome(['synthetic blocked receipt'])
+        forged = dict(valid)
+        status = forged.pop('status')
+        forged[MatchingObject()] = status
+        stdout = io.StringIO()
+        with patch.object(module, 'run_demo', return_value=forged) as runner:
+            with contextlib.redirect_stdout(stdout):
+                exit_code = module.main(['--execute-disposable-control'])
+        self.assertEqual(exit_code, 2)
+        receipt = json.loads(stdout.getvalue())
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        self.assertIn('invalid nonauthorizing receipt',
+                      ' '.join(receipt['findings']))
+        runner.assert_called_once()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

@@ -78,9 +78,13 @@ def _checked_disposable_observer_result(value: Any) -> dict[str, Any]:
     # and can never authorize. Pin that public receipt contract again at the
     # runner boundary without treating these Python checks as OS isolation.
     try:
-        if type(value) is not dict or set(value) != {
-                "status", "findings", "observed_checks",
-                "can_authorize_dispatch", "independent_os_proof_verified"}:
+        if (type(value) is not dict
+                # Equality and hashing cannot turn an arbitrary object or
+                # str subclass into a native JSON receipt field name.
+                or any(type(key) is not str for key in value)
+                or set(value) != {
+                    "status", "findings", "observed_checks",
+                    "can_authorize_dispatch", "independent_os_proof_verified"}):
             raise ValueError("invalid disposable receipt fields")
         status = value["status"]
         findings = value["findings"]

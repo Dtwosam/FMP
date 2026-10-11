@@ -1397,6 +1397,30 @@ filesystem confinement, and not an authorization surface. Annual DEC-650
 run385 server admission remain BLOCKED. Both exact-head CI suites and
 qualified security review are required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-852 — Require native string keys at every receipt boundary
+
+DEC-850/851 prevent an injected evaluator or runner result from promoting
+dispatch/OS-proof fields. Their exact-field check first converted `dict`
+keys to a set. However a `str` subclass or custom object with spoofed
+`__hash__`/`__eq__` can compare equal to a required native key while
+not being a plain JSON receipt field name. The CLI could try to serialize
+such a forged key, or a boundary could accept it as genuine.
+
+DEC-852 requires **every top-level field key to have exact `str` type**
+before any equality/set comparison. Two generated in-process regressions
+exercise a `str` subclass and equal-hash custom key at the validator,
+then the CLI's JSON print boundary. All forged cases must yield fresh
+`BLOCKED`, never authorization and never an uncaught serialization error.
+Native `_outcome` receipts retain their existing status and exit behavior.
+**507 uniquely named source-defined methods** in the strict stack.
+
+These checks address synthetic Python substitution, not arbitrary hostile
+code execution or kernel-level no-write proof. Exact-head Phase 3 and
+historical regression CI plus qualified independent review are still
+required. DEC-650 20-job annual OS confinement and DEC-651 immutable
+one-shot run385 admission remain BLOCKED. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
