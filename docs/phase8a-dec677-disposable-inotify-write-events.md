@@ -873,6 +873,12 @@ DEC-792 checks that `inotify_add_watch` receives the same exact bounded NUL-free
 
 Two added source-defined tests bring the suite to **430 uniquely named methods**: invalid outside/relative/traversal paths fail *before* encoding, while the generated public /tmp root and representative private children still yield unchanged bytes. This is a **lexical scope boundary**, not a proof against malicious intermediate symlink substitution, a race-free directory-fd confinement mechanism or annual host OS write-denial. Only generated observer source, tests and docs change; all authorization flags remain false.
 
+## DEC-795 — Bind path-like text to the generated Path object itself
+
+DEC-792 rejects C watch pathname bytes that differ from `os.fspath(path)`; DEC-794 enforces a lexical absolute /tmp scope. An injected pair of Python wrappers could nevertheless return a **different** /tmp path from `os.fspath(path)` and matching forged bytes from `os.fsencode(path)`. That would appear internally coherent even though the original generated Path object still identifies another file.
+
+DEC-795 checks that the exact plain string from `os.fspath(path)` equals `str(path)`, the generated `Path` object's own textual representation, **before** encoding. A substitution becomes a handled `OSError` and watch setup closes any already allocated nonstdio inotify FD. This is not a kernel race-free pathname guarantee; it only prevents the tested Python-wrapper mismatch. Two new source-defined tests increase the suite to **432 uniquely named methods**, covering substituted in-scope and out-of-scope `fspath` strings without calling the encoder, and a normal absolute generated public Path. Only disposable observer source, tests and docs change.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

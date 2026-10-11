@@ -5326,6 +5326,24 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(module._checked_watch_path_bytes(path),
                                  os.fsencode(path))
 
+
+    def test_watch_encoding_rejects_forged_fspath_and_encoder_agreement(self):
+        path = Path('/tmp/actual-public-sample')
+        for forged in ('/tmp/another-public-sample', '/tmp',
+                       '/etc/passwd', 'relative/public-sample'):
+            with self.subTest(forged=forged):
+                with patch.object(module.os, 'fspath', return_value=forged):
+                    with patch.object(module.os, 'fsencode',
+                                      side_effect=AssertionError('no encoding allowed')) as encode:
+                        with self.assertRaisesRegex(OSError, 'fspath disagrees'):
+                            module._checked_watch_path_bytes(path)
+                        encode.assert_not_called()
+
+    def test_watch_encoding_plain_path_object_matches_native_fspath(self):
+        path = Path('/tmp/dec677-disposable-public/sample')
+        self.assertEqual(os.fspath(path), str(path))
+        self.assertEqual(module._checked_watch_path_bytes(path), os.fsencode(path))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

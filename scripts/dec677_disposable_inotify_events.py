@@ -457,6 +457,11 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
     """Reject injected C pathname truncation or substituted watch targets."""
     try:
         textual = os.fspath(path)
+        # The generated Path object has its own immutable textual form.
+        # A patched fspath wrapper must not substitute another /tmp path,
+        # even if a patched encoder returns bytes matching the substitution.
+        if type(textual) is not str or textual != str(path):
+            raise OSError("disposable watch fspath disagrees with generated path")
         # This internal helper must not silently watch a caller-selected
         # outside path or /tmp/../ traversal in place of generated /tmp.
         if (type(textual) is not str
