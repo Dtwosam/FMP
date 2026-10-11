@@ -9420,6 +9420,87 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'final receipt malformed native readiness')
+    def test_final_receipt_poll_rejects_malformed_readiness_before_evaluation(self):
+        # The first drain is injected quiet; exercise the actual second
+        # collector's native-shape validation on a generated pipe FD.
+        cases = ('pollerr', 'pollhup', 'pollnval', 'wrongfd',
+                 'duplicates', 'nonlist', 'boolmask')
+        for kind in cases:
+            with self.subTest(kind=kind):
+                read_fd, write_fd = os.pipe()
+                try:
+                    if kind == 'pollerr':
+                        readiness = [(read_fd, module.select.POLLERR)]
+                    elif kind == 'pollhup':
+                        readiness = [(read_fd, module.select.POLLHUP)]
+                    elif kind == 'pollnval':
+                        readiness = [(read_fd, module.select.POLLNVAL)]
+                    elif kind == 'wrongfd':
+                        readiness = [(read_fd + 1, module.select.POLLIN)]
+                    elif kind == 'duplicates':
+                        readiness = [(read_fd, module.select.POLLIN)] * 2
+                    elif kind == 'nonlist':
+                        readiness = (read_fd, module.select.POLLIN)
+                    else:
+                        readiness = [(read_fd, True)]
+
+                    with patch.object(module.select, 'poll') as make_poller:
+                        poller = make_poller.return_value
+                        poller.register.return_value = None
+                        poller.poll.return_value = readiness
+                        with patch.object(module, '_start_watch',
+                                          return_value=(read_fd, 9, 10)) as watcher:
+                            with patch.object(module, '_read_pending',
+                                              return_value=b'') as first:
+                                with patch.object(module, '_evaluate') as evaluator:
+                                    result = module.run_demo()
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIs(result['can_authorize_dispatch'], False)
+                    self.assertIs(result['independent_os_proof_verified'], False)
+                    watcher.assert_called_once()
+                    first.assert_called_once_with(read_fd)
+                    evaluator.assert_not_called()
+                    make_poller.assert_called_once_with()
+                    poller.register.assert_called_once_with(
+                        read_fd,
+                        module.select.POLLIN | module.select.POLLERR |
+                        module.select.POLLHUP | module.select.POLLNVAL)
+                    poller.poll.assert_called_once_with(0)
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'final receipt poll registration return')
+    def test_final_receipt_poll_rejects_nonvoid_registration_before_evaluation(self):
+        for status in (0, False, True, 'registered'):
+            with self.subTest(status=repr(status)):
+                read_fd, write_fd = os.pipe()
+                try:
+                    with patch.object(module.select, 'poll') as make_poller:
+                        poller = make_poller.return_value
+                        poller.register.return_value = status
+                        with patch.object(module, '_start_watch',
+                                          return_value=(read_fd, 9, 10)) as watcher:
+                            with patch.object(module, '_read_pending',
+                                              return_value=b'') as first:
+                                with patch.object(module, '_evaluate') as evaluator:
+                                    result = module.run_demo()
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertIs(result['can_authorize_dispatch'], False)
+                    self.assertIs(result['independent_os_proof_verified'], False)
+                    watcher.assert_called_once()
+                    first.assert_called_once_with(read_fd)
+                    evaluator.assert_not_called()
+                    make_poller.assert_called_once_with()
+                    poller.register.assert_called_once()
+                    poller.poll.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
