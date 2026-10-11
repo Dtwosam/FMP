@@ -5590,6 +5590,51 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(module._checked_watch_path_bytes(path),
                          bytes.fromhex('2f746d702f7075626c69632dff'))
 
+
+    def test_watch_path_rejects_dot_or_parent_traversal_components(self):
+        class RawPath:
+            def __init__(self, text):
+                self.text = text
+            def __fspath__(self):
+                return self.text
+        invalid = (Path('/tmp/../etc/passwd'),
+                   Path('/tmp/fixture/../../elsewhere'),
+                   RawPath('/tmp/./public'),
+                   RawPath('/tmp/../public'),
+                   RawPath('/tmp/a/./b'))
+        for path in invalid:
+            with self.subTest(path=os.fspath(path)):
+                with self.assertRaisesRegex(OSError, 'traversal component'):
+                    module._checked_watch_path_bytes(path)
+
+    def test_watch_registration_rejects_parent_traversal_before_libc(self):
+        class NativeCall:
+            def __init__(self, values):
+                self.values = iter(values)
+                self.calls = []
+            def __call__(self, *args):
+                self.calls.append(args)
+                return next(self.values)
+        class FakeLib:
+            def __init__(self):
+                self.inotify_init1 = NativeCall((17,))
+                self.inotify_add_watch = NativeCall((9, 10))
+        lib = FakeLib()
+        with patch.object(module.ctypes, 'CDLL', return_value=lib):
+            with patch.object(module.os, 'close') as close:
+                with self.assertRaisesRegex(OSError, 'traversal component'):
+                    module._start_watch(Path('/tmp/../public-escaped'))
+                close.assert_called_once_with(17)
+        self.assertEqual(lib.inotify_add_watch.calls, [])
+
+    def test_watch_path_keeps_literal_dot_names_not_dot_components(self):
+        for path in (Path('/tmp'), Path('/tmp/dec677-disposable-file'),
+                     Path('/tmp/.public'), Path('/tmp/public..name'),
+                     Path('/tmp/public...name')):
+            with self.subTest(path=os.fspath(path)):
+                self.assertEqual(module._checked_watch_path_bytes(path),
+                                 os.fsencode(path))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
