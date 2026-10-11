@@ -9317,6 +9317,48 @@ class DisposableInotifyTests(unittest.TestCase):
         late_reader.assert_called_once()
         evaluator.assert_not_called()
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real generated native inotify clean control')
+    def test_real_kernel_inotify_clean_receipt_stays_local_unverified(self):
+        # Execute the true native dual-watch Linux collector on a new
+        # generated /tmp fixture; no protected data or annual runner.
+        # In particular, an event-free queue is not dispatch authority.
+        native_watch = module._start_watch
+        native_early = module._read_pending
+        native_late = module._read_receipt_pending
+        state = {'watch_fd': None, 'first': None, 'late': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['watch_fd'] = fd
+            return fd, wd, dir_wd
+
+        def early(fd):
+            state['first'] = native_early(fd)
+            return state['first']
+
+        def late(fd):
+            state['late'] = native_late(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_pending',
+                              side_effect=early) as early_reader:
+                with patch.object(module, '_read_receipt_pending',
+                                  side_effect=late) as late_reader:
+                    result = module.run_demo()
+        self.assertEqual(state['first'], b'')
+        self.assertEqual(state['late'], b'')
+        self.assertEqual(result['status'],
+                         'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        early_reader.assert_called_once()
+        late_reader.assert_called_once()
+        self.assertIsNotNone(state['watch_fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['watch_fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
