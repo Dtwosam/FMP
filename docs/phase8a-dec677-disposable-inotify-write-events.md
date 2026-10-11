@@ -925,6 +925,13 @@ DEC-801 added surrogateescape acceptance coverage, but its intended byte fixture
 
 One new source-defined regression increases the suite to **445 uniquely named methods**. The generated observer runtime source is unchanged, and #1000's original exact-head CI remains historical; this child requires independent Phase 3 and full regression. Local fixture proof is not OS provenance, protected annual confinement or run385 authorization.
 
+
+## DEC-803 — Test exact inventory encoding at the bounded scandir boundary
+
+DEC-801 checks the exact bytes used to validate a plain inventory filename. DEC-802 repaired a doubled-escape fixture so a genuinely non-UTF-8 `0xff` byte is covered. DEC-803 tests both the synthetic and real scanner boundary: a fake single-entry `os.scandir` result naming `"sample"` must refuse three substituted but otherwise valid encoded names, while a freshly created public Linux /tmp file whose basename includes raw `0xff` must round-trip through `surrogateescape` and remain visible under the original name.
+
+Two test-only methods increase the strict branch to **447 uniquely named tests**. This also carries forward scanner-coverage intent from separate sibling #1001 without adopting its doubled-backslash faux non-UTF-8 fixture. No observer runtime, installed annual workflow, protected evidence, or trading component is changed. Exact-head CI and independent qualified security review remain necessary; local generated scanner tests are not actual runner OS isolation proof.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
