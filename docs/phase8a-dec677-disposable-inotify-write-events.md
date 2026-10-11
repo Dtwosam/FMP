@@ -957,6 +957,13 @@ The local tempdir prewrite checks now validate no-follow directory type, exact m
 
 This integrates the separate sibling #1009 metadata-identity contract on top of #1010's corrected non-UTF-8 fixtures and shared-directory runner test without altering those recorded commits. Only the generated Linux /tmp observer and associated tests/docs change. This is metadata shape validation, not race-free independent OS isolation or annual run385 authority.
 
+
+## DEC-812 — Bound remaining generated directory group/link metadata
+
+The disposable prewrite directory checks already require no-follow private owner-matched inode metadata with sane device and inode identifiers. The bounded lstat record's group ID and link count were still ignored. DEC-812 rejects malformed or inaccessible `st_gid` and `st_nlink` values before constructing the public source file: group IDs must be exact plain uint32 integers, and link count must be an exact plain positive uint64 integer. A generated Linux directory is accepted with its native values. Two source-defined regressions bring the strict suite to **458 unique test methods**, while prior synthetic positive metadata records receive sane group/link values.
+
+This is synthetic metadata contract hardening, not a separately trusted kernel proof or an OS-enforced annual runner sandbox; all 20 annual jobs and immutable run385 admission still require independent review.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

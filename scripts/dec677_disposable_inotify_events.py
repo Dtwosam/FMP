@@ -819,6 +819,16 @@ def _checked_generated_folder(folder: Any) -> Path:
             or not 0 <= dev <= MAX_KERNEL_STAT_ID
             or not 1 <= ino <= MAX_KERNEL_STAT_ID):
         raise OSError("disposable generated tempdir identity malformed")
+    # The bounded Linux directory record must not contain forged ownership
+    # group or impossible link-count fields, even with valid dev/ino.
+    try:
+        gid, nlink = metadata.st_gid, metadata.st_nlink
+    except Exception as error:
+        raise OSError("disposable generated tempdir remaining metadata unreadable") from error
+    if (type(gid) is not int or type(nlink) is not int
+            or not 0 <= gid <= MAX_KERNEL_OWNER_ID
+            or not 1 <= nlink <= MAX_KERNEL_STAT_ID):
+        raise OSError("disposable generated tempdir remaining metadata malformed")
     return folder_path
 
 

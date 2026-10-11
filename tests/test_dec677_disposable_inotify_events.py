@@ -5668,6 +5668,8 @@ class DisposableInotifyTests(unittest.TestCase):
             st_mode = module.stat.S_IFDIR | 0o700
             st_dev = 1
             st_ino = 2
+            st_gid = 0
+            st_nlink = 2
             def __init__(self, uid):
                 self.st_uid = uid
         class ForgedInt(int):
@@ -5744,6 +5746,8 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_uid = os.geteuid()
                 self.st_dev = 1
                 self.st_ino = 2
+                self.st_gid = 0
+                self.st_nlink = 2
                 for field, value in changes.items():
                     setattr(self, field, value)
 
@@ -5773,6 +5777,47 @@ class DisposableInotifyTests(unittest.TestCase):
             st = os.lstat(folder)
             self.assertGreater(st.st_ino, 0)
             self.assertTrue(module.stat.S_ISDIR(st.st_mode))
+            self.assertEqual(module._checked_generated_folder(folder), Path(folder))
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'Linux generated tempdir stat')
+    def test_generated_folder_refuses_malformed_gid_and_nlink_metadata(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFDIR | 0o700
+            st_dev = 1
+            st_ino = 2
+            st_uid = os.geteuid()
+            st_gid = 0
+            st_nlink = 2
+
+        class ForgedInt(int):
+            def __eq__(self, _other):
+                return True
+
+        folder = '/tmp/' + module.DISPOSABLE_PREFIX + 'public-test'
+        for field, value in (
+            ('st_gid', -1), ('st_gid', True), ('st_gid', 1 << 32),
+            ('st_gid', ForgedInt(0)), ('st_nlink', 0),
+            ('st_nlink', -1), ('st_nlink', True),
+            ('st_nlink', 1 << 64), ('st_nlink', ForgedInt(2))
+        ):
+            with self.subTest(field=field, value=repr(value)):
+                record = FakeStat()
+                setattr(record, field, value)
+                with patch.object(module.os, 'lstat', return_value=record):
+                    with self.assertRaisesRegex(OSError, 'remaining metadata malformed'):
+                        module._checked_generated_folder(folder)
+        with patch.object(module.os, 'lstat', return_value=FakeStat()):
+            self.assertEqual(module._checked_generated_folder(folder), Path(folder))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native Linux generated directory')
+    def test_native_generated_folder_gid_nlink_are_bounded(self):
+        with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                         dir='/tmp') as folder:
+            st = os.lstat(folder)
+            self.assertIs(type(st.st_gid), int)
+            self.assertIs(type(st.st_nlink), int)
+            self.assertGreaterEqual(st.st_nlink, 1)
             self.assertEqual(module._checked_generated_folder(folder), Path(folder))
 
     def test_nonlinux_blocks(self):
