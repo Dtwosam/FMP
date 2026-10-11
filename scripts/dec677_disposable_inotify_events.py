@@ -461,16 +461,23 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
     if type(path) is not type(Path()):
         raise OSError("disposable watch pathname requires a plain Path object")
     try:
-        # Reconstruct the expected ordinary Linux pathname from concrete
-        # Path components, independent of the os.fspath wrapper. In a cold
-        # lazy Path, relying on str(path) after a patched fspath call can
-        # obscure the original generated path in synthetic test harnesses.
-        components = path.parts
-        if (type(components) is not tuple or not components
-                or components[0] != "/"
-                or any(type(part) is not str for part in components)):
+        # CPython's plain Path keeps original constructor arguments as
+        # strings in _raw_paths. On Python 3.12, path.parts itself lazily
+        # normalizes via os.path.join / os.fspath: a patched os.fspath can
+        # poison that "independent" expectation before comparison. Do not
+        # access parts or str(path) until the genuine raw text is recovered.
+        # This is deliberately a fail-closed, CPython-specific toy guard.
+        raw_paths = path._raw_paths
+        if (type(raw_paths) is not list or not raw_paths
+                or any(type(segment) is not str or not segment
+                       for segment in raw_paths)):
+            raise OSError("disposable watch pathname has invalid raw segments")
+        # The generated /tmp source is only formed from an absolute folder
+        # followed by one plain basename; avoid os.path.join's fspath calls.
+        expected_text = raw_paths[0] + "".join(
+            "/" + segment for segment in raw_paths[1:])
+        if not expected_text.startswith("/"):
             raise OSError("disposable watch pathname is outside the /tmp scope")
-        expected_text = "/" + "/".join(components[1:])
         textual = os.fspath(path)
         # A patched fspath wrapper must never substitute a different target,
         # even when a patched encoder agrees with the substituted C bytes.

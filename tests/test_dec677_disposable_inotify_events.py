@@ -6465,6 +6465,40 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaisesRegex(OSError, 'metadata unreadable'):
             module._checked_initial_sample_identity(object())
 
+    def test_watch_path_raw_segments_avoid_lazy_os_fspath_normalization(self):
+        # Real Path joining keeps constructor strings; os.fspath monkeypatch
+        # must not also be allowed to forge the supposedly original target.
+        for path in (Path('/tmp') / 'public-generated',
+                     Path('/tmp/dec677-disposable-public') / 'sample'):
+            with self.subTest(path=str(path)):
+                self.assertEqual(module._checked_watch_path_bytes(path),
+                                 os.fsencode(path))
+
+        for forged in ('/tmp/public-substitute', '/etc/passwd'):
+            with self.subTest(forged=forged):
+                # Fresh, unmaterialized Path. Even the formerly vulnerable
+                # Python 3.12 lazy parts computation cannot bless a forgery.
+                cold = Path('/tmp/dec677-disposable-public') / 'sample'
+                with patch.object(module.os, 'fspath', return_value=forged):
+                    with patch.object(module.os, 'fsencode',
+                                      side_effect=AssertionError('must not encode')) as encode:
+                        with self.assertRaisesRegex(OSError, 'fspath disagrees'):
+                            module._checked_watch_path_bytes(cold)
+                        encode.assert_not_called()
+
+    def test_watch_path_rejects_missing_or_malformed_original_raw_segments(self):
+        for invalid in ([], [123], [True], [None], ['/tmp', ''],
+                        ['relative', 'sample']):
+            with self.subTest(parts=repr(invalid)):
+                path = Path('/tmp/original-public-sample')
+                path._raw_paths = invalid
+                with patch.object(module.os, 'fsencode',
+                                  side_effect=AssertionError('must not encode')) as encode:
+                    with self.assertRaisesRegex(
+                            OSError, 'raw segments|outside the /tmp scope'):
+                        module._checked_watch_path_bytes(path)
+                    encode.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
