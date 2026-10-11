@@ -455,6 +455,10 @@ def _evaluate(before: bytes, after: bytes, data: bytes,
 
 def _checked_watch_path_bytes(path: Path) -> bytes:
     """Reject injected C pathname truncation or substituted watch targets."""
+    # The generated runner creates ordinary pathlib.Path objects. A hostile
+    # subclass can override __fspath__ and must never supply a watch path.
+    if type(path) is not type(Path()):
+        raise OSError("disposable watch pathname requires a plain Path object")
     try:
         textual = os.fspath(path)
         # The generated Path object has its own immutable textual form.
