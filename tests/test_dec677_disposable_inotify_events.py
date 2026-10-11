@@ -5229,6 +5229,95 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertEqual(path.read_bytes(), module.BEFORE)
             self.assertEqual(os.stat(path).st_ino, replacement_ino)
 
+
+    def test_rewrite_generated_rejects_bad_buffered_counts_before_fsync(self):
+        class FakeWriter:
+            def __init__(self, count):
+                self.count = count
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def write(self, _payload):
+                return self.count
+            def flush(self):
+                raise AssertionError('must not flush a malformed write')
+            def fileno(self):
+                return 17
+        for count in (None, True, False, -1, 0, 1,
+                      len(module.AFTER) - 1, len(module.AFTER) + 1,
+                      'written', 1.0):
+            with self.subTest(count=repr(count)):
+                with patch.object(module, 'open', create=True,
+                                  return_value=FakeWriter(count)):
+                    with patch.object(module.os, 'fsync') as fsync:
+                        with self.assertRaisesRegex(OSError, 'malformed byte count'):
+                            module._rewrite_generated_with_fsync(
+                                Path('/tmp/public-synthetic-no-file'), module.AFTER)
+                        fsync.assert_not_called()
+
+    def test_rewrite_generated_rejects_invalid_payload_before_open(self):
+        for value in (None, True, 'invalid', b'', b'X' * 4097, bytearray(b'x')):
+            with self.subTest(value=repr(value)[:64]):
+                with patch.object(module, 'open', create=True) as native_open:
+                    with self.assertRaisesRegex(OSError, 'payload is malformed'):
+                        module._rewrite_generated_with_fsync(
+                            Path('/tmp/public-synthetic-no-file'), value)
+                    native_open.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux reverted-write mode')
+    def test_reverted_write_bad_count_on_either_pass_closes_watch(self):
+        class FakeWriter:
+            def __init__(self, count):
+                self.count = count
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def write(self, _payload):
+                return self.count
+            def flush(self):
+                return None
+            def fileno(self):
+                return 17
+        for fail_first in (True, False):
+            with self.subTest(fail_first=fail_first):
+                rd, wr = os.pipe()
+                try:
+                    counts = ([True] if fail_first
+                              else [len(module.AFTER), True])
+                    snapshots = [((1, 2), module.BEFORE),
+                                 ((1, 2), module.AFTER)]
+                    with patch.object(module, '_start_watch',
+                                      return_value=(rd, 9, 10)):
+                        with patch.object(module, '_snapshot_regular',
+                                          side_effect=snapshots) as snapshot:
+                            with patch.object(module, 'open', create=True,
+                                              side_effect=lambda *_a, **_k: FakeWriter(counts.pop(0))):
+                                with patch.object(module.os, 'fsync', return_value=None) as sync:
+                                    with patch.object(module, '_read_pending') as drain:
+                                        result = module.run_demo(negative=True)
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertFalse(result['can_authorize_dispatch'])
+                    self.assertFalse(result['independent_os_proof_verified'])
+                    self.assertEqual(snapshot.call_count, 1 if fail_first else 2)
+                    self.assertEqual(sync.call_count, 0 if fail_first else 1)
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(rd)
+                finally:
+                    os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable generated Linux rewrite')
+    def test_native_generated_rewrite_fsync_retains_exact_payload(self):
+        with tempfile.TemporaryDirectory(prefix='dec792-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            module._write_generated_payload(path, module.BEFORE)
+            module._rewrite_generated_with_fsync(path, module.AFTER)
+            self.assertEqual(path.read_bytes(), module.AFTER)
+            module._rewrite_generated_with_fsync(path, module.BEFORE)
+            self.assertEqual(path.read_bytes(), module.BEFORE)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
