@@ -803,8 +803,10 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertFalse(module._classify_stream(raw, 9, directory_watch=10)['well_formed'])
 
     def test_move_from_and_to_cookie_is_retained_without_claiming_pairing(self):
-        raw = (ev(wd=10, mask=module.IN_MOVED_FROM, cookie=1234)
-               + ev(wd=10, mask=module.IN_MOVED_TO, cookie=1234))
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=named(b'old-public-child'), cookie=1234)
+               + ev(wd=10, mask=module.IN_MOVED_TO,
+                    data=named(b'new-public-child'), cookie=1234))
         parsed = module._classify_stream(raw, 9, directory_watch=10)
         self.assertTrue(parsed['well_formed'])
         self.assertEqual(parsed['directory_changes'], 2)
@@ -5214,6 +5216,49 @@ class DisposableInotifyTests(unittest.TestCase):
                     self.assertFalse(module._plausible_generated_hardlink_pair(
                         first, second, expected_inode=(1, 2)))
                     observed.assert_not_called()
+
+
+    def test_matching_cookie_same_basename_rename_is_malformed(self):
+        for is_dir in (False, True):
+            with self.subTest(is_directory=is_dir):
+                marker = module.IN_ISDIR if is_dir else 0
+                name = named(b'same-public-child')
+                raw = (ev(wd=10, mask=module.IN_MOVED_FROM | marker,
+                          data=name, cookie=77)
+                       + ev(wd=10, mask=module.IN_MOVED_TO | marker,
+                            data=name, cookie=77))
+                result = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertFalse(result['well_formed'])
+                self.assertEqual(result['directory_changes'], 2)
+
+    def test_matching_cookie_same_basename_delayed_pair_is_malformed(self):
+        name = named(b'same-public-child')
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=name, cookie=78)
+               + ev(wd=9, mask=module.IN_ATTRIB)
+               + ev(wd=10, mask=module.IN_MOVED_TO,
+                    data=name, cookie=78))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertFalse(parsed['well_formed'])
+        outcome = module._evaluate(
+            module.BEFORE, module.BEFORE, raw, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(outcome['status'], 'BLOCKED')
+        self.assertFalse(outcome['observed_checks']['event_stream_complete'])
+
+    def test_matching_cookie_different_basename_remains_valid_syntax(self):
+        raw = (ev(wd=10, mask=module.IN_MOVED_FROM,
+                  data=named(b'old-public-child'), cookie=79)
+               + ev(wd=10, mask=module.IN_MOVED_TO,
+                    data=named(b'new-public-child'), cookie=79))
+        parsed = module._classify_stream(raw, 9, directory_watch=10)
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 2)
+        outcome = module._evaluate(
+            module.BEFORE, module.BEFORE, raw, 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(outcome['status'], 'BLOCKED')
+        self.assertFalse(outcome['can_authorize_dispatch'])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
