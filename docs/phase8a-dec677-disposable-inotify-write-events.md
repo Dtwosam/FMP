@@ -2268,6 +2268,30 @@ its own Phase 3 and full historical CI and qualified independent
 security review. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-888 — Malformed final census source and parent metadata
+
+The last receipt census must not accept forged native `lstat`
+metadata after recording the original directory names. DEC-888
+adds two Linux-only negative-control methods with deliberate
+one-time substitutions **only at the final post-census boundary**.
+The first varies the generated sample's inode, hardlink count,
+size, owner, timestamps and file type; the second varies the
+generated parent directory's inode, owner and type. Both use the
+native generated disposable /tmp directory and an otherwise quiet
+synthetic first drain. Invalid records must be rejected before
+the second receipt event collector or evaluator is invoked.
+Assertions require `BLOCKED`, exact false authority/proof fields,
+and closure of the owned synthetic watcher FD.
+
+The new tip has **560 distinct source-defined test methods**.
+Only disposable observer tests and documentation changed; the
+identity, metadata and final event-queue runtime guards are untouched.
+No injected stat is OS proof or a test of protected annual evidence.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+Exact-head Phase 3/full historical CI and independent qualified
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
