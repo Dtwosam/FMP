@@ -7850,6 +7850,90 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertIs(observed['independent_os_proof_verified'], False)
                 runner.assert_called_once()
 
+
+    def test_generated_sample_access_identity_rejects_foreign_or_malformed_owner(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_uid = os.geteuid()
+            st_gid = os.getegid()
+
+            def __init__(self, **changes):
+                for field, value in changes.items():
+                    setattr(self, field, value)
+
+        self.assertEqual(
+            module._checked_generated_sample_access_identity(FakeStat()),
+            (module.stat.S_IFREG | 0o600, os.geteuid(), os.getegid()))
+        for case, field, value in (
+                ('bad-mode', 'st_mode', module.stat.S_IFLNK | 0o777),
+                ('mode-subclass', 'st_mode', True),
+                ('foreign-owner', 'st_uid', (os.geteuid() + 1) % (1 << 32)),
+                ('owner-string', 'st_uid', str(os.geteuid())),
+                ('group-overflow', 'st_gid', 1 << 32),
+                ('group-subclass', 'st_gid', False)):
+            with self.subTest(case=case):
+                with self.assertRaisesRegex(OSError, 'access metadata malformed'):
+                    module._checked_generated_sample_access_identity(
+                        FakeStat(**{field: value}))
+        with self.assertRaisesRegex(OSError, 'access metadata unreadable'):
+            module._checked_generated_sample_access_identity(object())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux postdrain metadata')
+    def test_postdrain_sample_mode_owner_or_group_change_blocks_evaluation(self):
+        native_lstat = os.lstat
+        for field in ('st_mode', 'st_uid', 'st_gid'):
+            with self.subTest(field=field):
+                read_fd, write_fd = os.pipe()
+                state = {'sample': None, 'drained': False, 'tampered': False}
+
+                class ChangedStat:
+                    def __init__(self, original, altered):
+                        self.original = original
+                        setattr(self, field, altered)
+
+                    def __getattr__(self, key):
+                        return getattr(self.original, key)
+
+                def register(path):
+                    state['sample'] = os.fspath(path)
+                    return read_fd, 9, 10
+
+                def drain(_fd):
+                    state['drained'] = True
+                    return b''
+
+                def scoped_lstat(path, *args, **kwargs):
+                    record = native_lstat(path, *args, **kwargs)
+                    if (state['drained'] and not state['tampered']
+                            and os.fspath(path) == state['sample']):
+                        state['tampered'] = True
+                        if field == 'st_mode':
+                            changed = record.st_mode ^ module.stat.S_IXUSR
+                        else:
+                            changed = (getattr(record, field) + 1) % (1 << 32)
+                        return ChangedStat(record, changed)
+                    return record
+
+                try:
+                    with patch.object(module.os, 'lstat', side_effect=scoped_lstat):
+                        with patch.object(module, '_start_watch',
+                                          side_effect=register) as watcher:
+                            with patch.object(module, '_read_pending',
+                                              side_effect=drain) as reader:
+                                with patch.object(module, '_evaluate') as evaluate:
+                                    receipt = module.run_demo()
+                    self.assertTrue(state['tampered'])
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertIs(receipt['can_authorize_dispatch'], False)
+                    self.assertIs(receipt['independent_os_proof_verified'], False)
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

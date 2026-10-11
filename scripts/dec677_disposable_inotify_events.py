@@ -995,6 +995,25 @@ def _checked_initial_sample_identity(record: Any) -> tuple[int, int]:
     return dev, ino
 
 
+
+def _checked_generated_sample_access_identity(record: Any) -> tuple[int, int, int]:
+    """Validate the generated sample's native mode and owner/group metadata."""
+    try:
+        mode, uid, gid = record.st_mode, record.st_uid, record.st_gid
+        euid = os.geteuid()
+    except Exception as error:
+        raise OSError("disposable generated sample access metadata unreadable") from error
+    if (any(type(field) is not int for field in (mode, uid, gid, euid))
+            or not 0 <= mode <= MAX_KERNEL_STAT_MODE
+            or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
+            or not stat.S_ISREG(mode)
+            or not 0 <= uid <= MAX_KERNEL_OWNER_ID
+            or not 0 <= gid <= MAX_KERNEL_OWNER_ID
+            or not 0 <= euid <= MAX_KERNEL_OWNER_ID
+            or uid != euid):
+        raise OSError("disposable generated sample access metadata malformed")
+    return mode, uid, gid
+
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
              create_sibling: bool = False, transient_sibling: bool = False,
              hardlink_negative: bool = False) -> dict[str, Any]:
@@ -1065,8 +1084,11 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 # Save inode identity from the actual exclusive writer FD,
                 # not a later pathname that may already have been replaced.
                 # Buffered bytes need not be flushed yet: dev/ino are stable.
+                writer_record = os.fstat(sample_fd)
                 initial_sample_inode = _checked_initial_sample_identity(
-                    os.fstat(sample_fd))
+                    writer_record)
+                initial_sample_access = _checked_generated_sample_access_identity(
+                    writer_record)
             # Start observing both the inode and parent directory *before*
             # taking the baseline. A prewatch snapshot would leave an
             # unobserved gap before kernel watch registration.
@@ -1229,6 +1251,14 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         drained_sample_record)
                     if drained_sample_inode != initial_sample_inode:
                         raise OSError("disposable sample inode changed during event drain")
+                    # Matching inode and size alone cannot reveal a late
+                    # chmod/chown/chgrp on these generated public bytes.
+                    # Compare the exact native owner, group and mode to the
+                    # initial O_EXCL writer rather than trusting a last read.
+                    drained_sample_access = _checked_generated_sample_access_identity(
+                        drained_sample_record)
+                    if drained_sample_access != initial_sample_access:
+                        raise OSError("disposable sample mode or ownership changed during event drain")
                     # Even without an inode substitution, the sample can be
                     # truncated or extended while draining. Check its bounded
                     # size without treating this as a postdrain byte proof.

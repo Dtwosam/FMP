@@ -1636,6 +1636,32 @@ exclusive admission remain BLOCKED. Exact-head Phase 3/full historical
 CI and qualified independent security review remain required.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-862 — Match generated source mode and owner/group after event drain
+
+The disposable post-drain observer revalidates the generated sample's
+inode, size and bounded byte snapshot, but a late mode or owner/group
+mutation can preserve all of those values. DEC-862 records the plain
+native mode, effective-owner UID and bounded group GID of the original
+exclusive-create writer FD, then compares that metadata to the watched
+sample pathname after the event drain. Changed or unreadable access
+metadata yields `BLOCKED` before even a local witness can be evaluated.
+The deliberate inode replacement negative-control branch remains
+permanently nonauthorizing and is not mistaken for the normal path.
+
+Two source-defined regressions exercise malformed/foreign writer-access
+metadata and synthetic same-inode post-drain mode, owner and group changes,
+with both immutable authority booleans false, no evaluator call and
+watcher FD cleanup. **522 source-defined test methods** on the integrated
+strict tip.
+
+This sequential pathname check detects only observable substitutions,
+not every concurrent change and not an authenticated or atomic OS-level
+no-write guarantee. DEC-650 independently enforced 20-job annual
+confinement and DEC-651 immutable one-shot run385 admission stay BLOCKED.
+The draft requires independent exact-head Phase 3, full historical CI
+and qualified review. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
