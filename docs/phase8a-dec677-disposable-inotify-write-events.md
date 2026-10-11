@@ -968,6 +968,14 @@ DEC-812 changes **only the first public `sample` creation** to `with path.open("
 
 Exclusive creation closes the **sample-name creation race** but does not pin the parent directory identity to an open directory FD, provide independent filesystem sandboxing or authorize annual run385.
 
+## DEC-813 — False-negative prewrite lstat cannot bypass exclusive file creation
+
+DEC-812 replaces ordinary initial sample truncation with native Linux `Path.open("xb")` exclusive creation after DEC-811's prewrite no-follow absence check. A synthetic wrong `os.lstat` result (or a real race) could falsely claim the sample is absent even though a regular file or symlink was planted before the final open. DEC-813 is a **test-and-doc-only strict child** proving that the separate **atomic `O_EXCL` open** still refuses those existing pathnames.
+
+The new native generated /tmp regression creates either a real preexisting `sample` file or a symlink to another generated public file, injects `FileNotFoundError` *only* when the prewrite lstat examines the `sample` path, and verifies `run_demo` remains BLOCKED, both public files' bytes are unchanged, and no inotify watch is installed. The mock delegates all other stat calls to the real OS to avoid the historical overbroad stat mock failure of #959. The suite grows to **460 unique source-defined test methods**, with no runtime implementation edits in this child.
+
+This demonstrates Linux exclusive-open behavior, not parent-directory-FD pinning, independent OS write confinement or authorization to dispatch annual run385.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
