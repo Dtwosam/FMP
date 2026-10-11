@@ -1537,6 +1537,35 @@ in-process code patching, or authorize annual operations. DEC-650 annual
 admission remain blocked. Require exact-head Phase 3, full historical
 regression, and independent security review. **DRAFT / NEVER MERGE**.
 
+
+## DEC-858 — A synthetic "quiet" local witness needs complete check evidence
+
+DEC-850–857 validate native receipt shapes, names, size, Boolean values,
+CLI argument parsing, and immutable false dispatch/OS-proof flags. A
+patched evaluator or runner could nevertheless return the special
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` status with empty findings but a
+missing, invented, or false check map; it would appear to have observed a
+quiet sample without actually reporting the genuine evaluator's evidence.
+
+DEC-858 restricts **only** that local-unverified status to the exact
+eleven native evaluator check names, with all six core dual-watch,
+snapshot, inode, inventory, event-integrity and no-observed-write checks
+exactly `True`, and five inactive negative-control checks exactly
+`False`. Any mismatch becomes `BLOCKED`, permanently nonauthorizing.
+`BLOCKED` receipts retain their prior bounded semantics. The existing
+CLI regression using a fabricated clean one-key check map is updated to
+use a genuine `_evaluate` local witness instead, preserving the legitimate
+exit-3 behavior. Two new regression methods verify complete genuine
+checks, missing/forged/false check maps, and the CLI's fail-closed behavior.
+The strict line now contains **517 source-defined tests**.
+
+This is an in-process synthetic witness format check, not an independent
+kernel no-write proof, race-free confinement, or annual admission.
+DEC-650 annual 20-job OS no-write confinement and DEC-651 immutable
+one-shot run385 admission remain blocked. Separate exact-head Phase 3
+and full historical CI and qualified independent security review remain
+mandatory. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

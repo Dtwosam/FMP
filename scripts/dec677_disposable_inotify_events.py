@@ -71,6 +71,21 @@ MAX_RECEIPT_FINDING_CHARS = 512
 MAX_RECEIPT_CHECKS = 64
 MAX_RECEIPT_CHECK_KEY_CHARS = 128
 
+# A genuine clean disposable observer supplies the whole evaluated check map.
+# A patched evaluator/runner cannot invent a sparse "quiet" receipt.
+LOCAL_RECEIPT_CHECKS = frozenset((
+    "both_watches_identified", "final_digest_equal",
+    "watched_inode_matches_final_path", "no_directory_entry_mutations",
+    "sibling_creation_control_detected",
+    "transient_midpoint_regular_file_verified",
+    "transient_directory_control_detected", "event_stream_complete",
+    "no_observed_writes", "midpoint_source_snapshot_matches_expected",
+    "negative_control_detected"))
+LOCAL_REQUIRED_TRUE = frozenset((
+    "both_watches_identified", "final_digest_equal",
+    "watched_inode_matches_final_path", "no_directory_entry_mutations",
+    "event_stream_complete", "no_observed_writes"))
+
 
 def _outcome(findings: list[str], checks: dict[str, bool] | None = None) -> dict[str, Any]:
     return {"status": "BLOCKED" if findings else "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED",
@@ -114,7 +129,13 @@ def _checked_disposable_observer_result(value: Any) -> dict[str, Any]:
                        for key, val in checks.items())
                 or value["can_authorize_dispatch"] is not False
                 or value["independent_os_proof_verified"] is not False
-                or (status == "BLOCKED") is not bool(findings)):
+                or (status == "BLOCKED") is not bool(findings)
+                or (status == "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED"
+                    and (set(checks) != LOCAL_RECEIPT_CHECKS
+                         or any(checks[key] is not True
+                                for key in LOCAL_REQUIRED_TRUE)
+                         or any(checks[key] is not False
+                                for key in LOCAL_RECEIPT_CHECKS - LOCAL_REQUIRED_TRUE)))):
             raise ValueError("invalid disposable receipt values")
     except Exception:
         return _outcome(["synthetic evaluator returned an invalid nonauthorizing receipt"])
