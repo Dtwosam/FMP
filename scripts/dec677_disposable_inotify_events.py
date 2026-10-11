@@ -470,6 +470,11 @@ def _checked_watch_path_bytes(path: Path) -> bytes:
         raise OSError("disposable inotify watch pathname is malformed")
     if encoded != expected:
         raise OSError("disposable inotify encoded pathname differs from source")
+    # The generated pathname and its parent are plain absolute /tmp paths.
+    # A spelled-out ".." or "." component can make an apparently rooted
+    # watcher resolve a different target than the claimed generated child.
+    if any(part in (b".", b"..") for part in encoded.split(b"/")):
+        raise OSError("disposable inotify watch pathname contains traversal component")
     return encoded
 
 
