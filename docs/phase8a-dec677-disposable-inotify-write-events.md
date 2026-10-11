@@ -1013,6 +1013,13 @@ The exact full historical `tests` run for draft #1011, source head `323205c15120
 
 DEC-819 is test/docs-only: it eagerly captures the unmodified source `Path` text before installing the synthetic `os.fspath` monkeypatch, and asserts the initial value matches the generated public path. The existing regression still requires early fspath mismatch and zero encoder calls. Source runtime code is **identical** to #1021. Distinct source-defined method count remains **468**. #1011's original failed run is not relabeled; this new child requires its own exact-head Phase 3 and full tests.
 
+
+## DEC-820 — Bind watch-path text to concrete Path parts before synthetic fspath
+
+DEC-819 stabilized an inherited forged-fspath regression after the real #1011 full-history RED result, but the file-watch input validator itself still compared a potentially patched `os.fspath(path)` with `str(path)` after invoking that wrapper. For the generated toy observer, only exact concrete Linux `Path` objects are accepted and every watch must be within `/tmp`. DEC-820 reconstructs an independently expected absolute pathname from the actual concrete `path.parts` tuple **before** invoking `os.fspath`; a different wrapped `fspath` can never supply the watched C string even if an encoder is patched to agree with it. Ordinary `/tmp` paths and their native bytes remain accepted.
+
+One cold-Path regression with no prior string-cache warmup verifies three forged text substitutions are rejected **before** calling the encoder. Total **469 distinct source-defined tests**. This is Python-level path input coherence, not host-independent race-free pathname pinning, OS-enforced annual-job confinement, or authorization. The older #1011 full red log and #1022's separate fixture change remain recorded independently; exact-head Phase 3 and full regression must verify this source-changing child.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

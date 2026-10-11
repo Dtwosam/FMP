@@ -5344,6 +5344,21 @@ class DisposableInotifyTests(unittest.TestCase):
                             module._checked_watch_path_bytes(path)
                         encode.assert_not_called()
 
+
+    def test_watch_cold_path_refuses_forged_fspath_before_encoding(self):
+        for forged in ('/tmp/unrelated-public', '/etc/passwd',
+                       '/tmp/../public-substitute'):
+            with self.subTest(forged=forged):
+                # Do NOT warm str(path): the guard must work using the
+                # actual source components despite a forged wrapper.
+                path = Path('/tmp/dec677-disposable-public/sample')
+                with patch.object(module.os, 'fspath', return_value=forged):
+                    with patch.object(module.os, 'fsencode',
+                                      side_effect=AssertionError('encoder must not run')) as encode:
+                        with self.assertRaisesRegex(OSError, 'fspath disagrees'):
+                            module._checked_watch_path_bytes(path)
+                        encode.assert_not_called()
+
     def test_watch_encoding_plain_path_object_matches_native_fspath(self):
         path = Path('/tmp/dec677-disposable-public/sample')
         self.assertEqual(os.fspath(path), str(path))
