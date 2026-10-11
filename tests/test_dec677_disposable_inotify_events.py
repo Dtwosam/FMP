@@ -7124,6 +7124,81 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux postdrain snapshot')
+    def test_postdrain_sample_snapshot_mismatch_blocks_without_evaluation(self):
+        native_snapshot = module._snapshot_regular
+        for forged in ('inode', 'bytes', 'malformed'):
+            with self.subTest(forged=forged):
+                read_fd, write_fd = os.pipe()
+                state = {'drained': False, 'postdrain': 0}
+
+                def register(_path):
+                    return read_fd, 9, 10
+
+                def drain(_fd):
+                    state['drained'] = True
+                    return b''
+
+                def snapshot(path):
+                    original = native_snapshot(path)
+                    if not state['drained']:
+                        return original
+                    state['postdrain'] += 1
+                    if forged == 'inode':
+                        return ((original[0][0], original[0][1] + 1),
+                                original[1])
+                    if forged == 'bytes':
+                        return (original[0], module.BEFORE[::-1])
+                    return (original[0], 'not bytes')
+
+                try:
+                    with patch.object(module, '_start_watch',
+                                      side_effect=register) as watcher:
+                        with patch.object(module, '_snapshot_regular',
+                                          side_effect=snapshot) as snapshots:
+                            with patch.object(module, '_read_pending',
+                                              side_effect=drain) as reader:
+                                with patch.object(module, '_evaluate') as evaluate:
+                                    receipt = module.run_demo()
+                    self.assertEqual(state['postdrain'], 1)
+                    self.assertEqual(snapshots.call_count, 3)
+                    self.assertEqual(receipt['status'], 'BLOCKED')
+                    self.assertFalse(receipt['can_authorize_dispatch'])
+                    self.assertFalse(receipt['independent_os_proof_verified'])
+                    watcher.assert_called_once()
+                    reader.assert_called_once_with(read_fd)
+                    evaluate.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(read_fd)
+                finally:
+                    os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated inode replacement control')
+    def test_deliberate_replacement_still_reaches_nonauthorizing_evaluator(self):
+        read_fd, write_fd = os.pipe()
+        outcome = module._outcome(['generated replacement remains blocked'])
+        try:
+            with patch.object(module, '_start_watch',
+                              return_value=(read_fd, 9, 10)) as watcher:
+                with patch.object(module, '_read_pending',
+                                  return_value=b'') as reader:
+                    with patch.object(module, '_evaluate',
+                                      return_value=outcome) as evaluate:
+                        receipt = module.run_demo(replace_watched_inode=True)
+            self.assertEqual(receipt, outcome)
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertFalse(receipt['can_authorize_dispatch'])
+            self.assertFalse(receipt['independent_os_proof_verified'])
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluate.assert_called_once()
+            self.assertTrue(evaluate.call_args.kwargs['replacement_negative'])
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

@@ -1262,6 +1262,25 @@ OS no-write confinement or DEC-651 immutable run385 authorization. Separate
 exact-head Phase 3/full historical CI and qualified security review are
 required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-846 — Verify the last byte snapshot and preserve the replacement control
+
+DEC-845 introduced a final no-follow sample snapshot. Two Linux-generated
+regressions now ensure the postdrain sample snapshot cannot supply a forged
+inode, different same-length bytes, or a malformed non-bytes payload without
+returning `BLOCKED` before evaluation, and confirm that the deliberate
+generated inode-replacement negative control still reaches its own
+**permanently nonauthorizing** evaluator path. Tests also assert watcher FD
+closure, exact postdrain snapshot count, and unchanged false dispatch/OS-proof
+fields. Observer runtime source is unchanged in this test/docs-only child.
+**500 distinct source-defined methods** on this integrated line.
+
+These are local generated `/tmp` witness tests, not independent kernel
+enforcement, a write/revert exclusion proof, or a run385 admission. Exact-head
+Phase 3/full historical tests and qualified independent review remain
+mandatory. DEC-650 annual 20-job OS confinement and DEC-651 exclusive
+immutable server run385 admission are still blocked. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
