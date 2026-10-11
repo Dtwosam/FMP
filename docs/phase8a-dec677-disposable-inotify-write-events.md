@@ -1940,6 +1940,39 @@ DEC-650 annual 20-job proof and DEC-651 one-shot run385 admission remain
 BLOCKED. The new exact-head Phase 3/full historical CI and qualified
 independent review are required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-875 — Re-census generated parent after last sample re-snapshot
+
+After the first final generated directory inventory, DEC-845 drains the
+event queue and rereads the sample. DEC-864–865 check sample pathname
+metadata after that last read and revalidate the generated parent's
+device/inode. A sibling **created during the last sample snapshot** can,
+however, preserve the parent's device/inode and leave both the earlier
+inventory and already-drained event buffer stale. A substituted empty
+queue must not permit a fabricated clean local witness.
+
+DEC-875 rereads at most three generated parent directory entries
+after the third bounded sample snapshot and the existing post-snapshot
+parent identity check. The result must match the earlier final bounded
+inventory exactly; then another native parent metadata identity probe
+binds the latest census to the same generated inode. Any mismatch,
+malformed scan or changed parent is `BLOCKED` before the local
+evaluator. The deliberate inode-replacement negative control, already
+permanently `BLOCKED`, retains its previous mode handling.
+
+Two regression methods (one real native sibling created after the last
+sample read, one clean three-census positive control) verify a late
+entry cannot be credited as quiet, and that a stable generated experiment
+still returns only `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never
+authorization. **538 source-defined test methods** on the strict tip.
+
+This is **still a sequential, non-atomic** synthetic /tmp observation,
+not a kernel-enforced OS no-write guarantee. Mutations may occur after
+the last scan or escape sampled intervals. DEC-650 annual 20-job
+independent confinement and DEC-651 immutable run385 server admission
+remain BLOCKED. Exact-head Phase 3/full historical CI and independent
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
