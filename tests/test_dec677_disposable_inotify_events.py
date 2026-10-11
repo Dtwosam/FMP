@@ -7607,6 +7607,75 @@ class DisposableInotifyTests(unittest.TestCase):
                 parser.assert_called_once()
                 runner.assert_not_called()
 
+
+    def test_cli_rejects_forged_parser_option_shape_before_runner(self):
+        native = dict.fromkeys((
+            'execute_disposable_control', 'execute_reverted_write_negative',
+            'execute_inode_replacement_negative', 'execute_sibling_creation_negative',
+            'execute_transient_directory_negative', 'execute_hardlink_alias_negative'), False)
+        variants = (
+            ('truthy-integer', dict(native, execute_disposable_control=1)),
+            ('truthy-string', dict(native, execute_disposable_control='yes')),
+            ('truthy-object', dict(native, execute_disposable_control=object())),
+            ('missing-switch', {k: v for k, v in native.items()
+                                if k != 'execute_disposable_control'}),
+            ('extra-switch', dict(native, unsupported_opt_in=True)),
+            ('conflicting-switches', dict(native, execute_disposable_control=True,
+                                          execute_reverted_write_negative=True)),
+        )
+        for case, data in variants:
+            with self.subTest(case=case):
+                stdout = io.StringIO()
+                forged = module.argparse.Namespace(**data)
+                with patch.object(module.argparse.ArgumentParser, 'parse_args',
+                                  return_value=forged) as parser:
+                    with patch.object(module, 'run_demo') as runner:
+                        with contextlib.redirect_stdout(stdout):
+                            exit_code = module.main(['--execute-disposable-control'])
+                self.assertEqual(exit_code, 2)
+                result = json.loads(stdout.getvalue())
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertIs(result['can_authorize_dispatch'], False)
+                self.assertIs(result['independent_os_proof_verified'], False)
+                self.assertIn('parser returned invalid options',
+                              ' '.join(result['findings']))
+                parser.assert_called_once()
+                runner.assert_not_called()
+
+        class FakeNamespace:
+            pass
+
+        stdout = io.StringIO()
+        with patch.object(module.argparse.ArgumentParser, 'parse_args',
+                          return_value=FakeNamespace()):
+            with patch.object(module, 'run_demo') as runner:
+                with contextlib.redirect_stdout(stdout):
+                    result_code = module.main(['--execute-disposable-control'])
+        self.assertEqual(result_code, 2)
+        self.assertFalse(json.loads(stdout.getvalue())['can_authorize_dispatch'])
+        runner.assert_not_called()
+
+    def test_cli_native_parser_switches_preserve_only_local_receipts(self):
+        for args, expect_call, expected_code in (
+                ([], False, 2),
+                (['--execute-disposable-control'], True, 2),
+                (['--execute-reverted-write-negative'], True, 2)):
+            with self.subTest(args=args):
+                receipt = module._outcome(['synthetic nonauthorizing'])
+                stdout = io.StringIO()
+                with patch.object(module, 'run_demo', return_value=receipt) as runner:
+                    with contextlib.redirect_stdout(stdout):
+                        code = module.main(args)
+                self.assertEqual(code, expected_code)
+                observed = json.loads(stdout.getvalue())
+                self.assertEqual(observed['status'], 'BLOCKED')
+                self.assertIs(observed['can_authorize_dispatch'], False)
+                self.assertIs(observed['independent_os_proof_verified'], False)
+                if expect_call:
+                    runner.assert_called_once()
+                else:
+                    runner.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

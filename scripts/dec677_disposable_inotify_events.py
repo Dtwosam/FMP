@@ -1263,17 +1263,36 @@ def main(argv: list[str] | None = None) -> int:
             _outcome(["disposable observer CLI parser raised unexpectedly"]),
             sort_keys=True, separators=(",", ":")))
         return 2
+    # A synthetic parser can return a Namespace with truthy integers, strange
+    # option objects, omitted/extra fields, or conflicting opt-ins. Check the
+    # exact native parser shape and read its plain attribute dictionary once;
+    # no untrusted truthiness may start the disposable observer.
+    option_names = (
+        "execute_disposable_control", "execute_reverted_write_negative",
+        "execute_inode_replacement_negative", "execute_sibling_creation_negative",
+        "execute_transient_directory_negative", "execute_hardlink_alias_negative")
     try:
-        result = (run_demo(negative=args.execute_reverted_write_negative,
-                           replace_watched_inode=args.execute_inode_replacement_negative,
-                           create_sibling=args.execute_sibling_creation_negative,
-                           transient_sibling=args.execute_transient_directory_negative,
-                           hardlink_negative=args.execute_hardlink_alias_negative)
-                  if (args.execute_disposable_control or args.execute_reverted_write_negative
-                      or args.execute_inode_replacement_negative
-                      or args.execute_sibling_creation_negative
-                      or args.execute_transient_directory_negative
-                      or args.execute_hardlink_alias_negative)
+        if type(args) is not argparse.Namespace:
+            raise ValueError("disposable CLI options are not a plain Namespace")
+        options = vars(args)
+        if (type(options) is not dict
+                or set(options) != set(option_names)
+                or any(type(key) is not str for key in options)
+                or any(type(options[key]) is not bool for key in option_names)
+                or sum(options.values()) > 1):
+            raise ValueError("disposable CLI options are malformed or conflicting")
+    except Exception:
+        print(json.dumps(
+            _outcome(["disposable observer CLI parser returned invalid options"]),
+            sort_keys=True, separators=(",", ":")))
+        return 2
+    try:
+        result = (run_demo(negative=options["execute_reverted_write_negative"],
+                           replace_watched_inode=options["execute_inode_replacement_negative"],
+                           create_sibling=options["execute_sibling_creation_negative"],
+                           transient_sibling=options["execute_transient_directory_negative"],
+                           hardlink_negative=options["execute_hardlink_alias_negative"])
+                  if any(options.values())
                   else _outcome(["explicit synthetic observer opt-in required"]))
     except Exception:
         # A substituted or broken synthetic runner must still yield one

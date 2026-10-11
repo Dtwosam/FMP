@@ -1512,6 +1512,31 @@ not independent host OS confinement or annual run385 admission. DEC-650
 and DEC-651 remain BLOCKED. Exact-head Phase 3/full historical CI and
 qualified independent security review are required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-857 — Validate synthetic argparse option shapes before any observer call
+
+The CLI's argparse layer correctly creates six native Boolean option values,
+but injected parser wrappers could instead return a truthy integer, string,
+object, incomplete Namespace, extra switch, or conflicting options. The
+existing `if any(...)` opt-in decision would interpret these untrusted
+objects before the observer's own negative-control checks.
+
+DEC-857 requires an exact plain `argparse.Namespace` with the **six
+expected plain-string keys**, **exact Boolean values**, and at most one
+selected option. The CLI reads this native option dictionary once, checks
+it before any observer execution, and produces a `BLOCKED` exit-2 JSON
+receipt on malformed/mutually selected values. Legitimate default no-opt-in,
+explicit disposable, and deliberate negative-control modes preserve their
+nonauthorizing output. Two source-defined tests cover all malformed cases
+and real argparse parsing without activating live observer work. The stack
+now contains **515 source-defined test methods**.
+
+This does not constitute OS-enforced no-write isolation, prevent arbitrary
+in-process code patching, or authorize annual operations. DEC-650 annual
+20-job independent OS proof and DEC-651 immutable one-shot run385
+admission remain blocked. Require exact-head Phase 3, full historical
+regression, and independent security review. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
