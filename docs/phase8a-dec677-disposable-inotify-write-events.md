@@ -2,6 +2,45 @@
 
 **DRAFT / NEVER MERGE · SOURCE ONLY · No annual authorization.**
 
+## DEC-898 — Current review map and hard proof boundaries
+
+This document is an append-only sequence of generated Linux controls. Its
+source-defined regression count is **570 methods as of DEC-897**; that is a
+count of test definitions, NOT an annual acceptance score. This short
+index makes the recent receipt-boundary work and the remaining independent
+security requirements easier to audit without equating the two.
+
+| Review topic | Relevant development | What it can show | What it cannot show |
+| --- | --- | --- | --- |
+| Early source and parent identity | DEC-677–878 | Small generated public `/tmp` before/after snapshots, bounded directory inventory, parent/source metadata checks | OS-denied writes or stable identity for every instant |
+| Late event check | DEC-879–881 | A second, bounded immediate inotify poll after final generated receipt checks and its strict readiness contract | A promise that no event can arrive after the last poll |
+| Genuine generated kernel events | DEC-882–884, DEC-887–894 | In-process real Linux watches and late public sample/directory mutations | Independently authenticated monitoring of privileged or protected workloads |
+| Native CLI contract | DEC-895–896 | Separate-process clean and negative-mode exits/JSON, with authority flags always false | Access to or permission for the annual 20-job runner |
+| Fail-closed faults | DEC-885–886, DEC-888, DEC-897 | Repaired inherited test expectations, malformed post-census metadata/poll results, collector errors | Verification of an external security policy |
+| External annual admission | DEC-650/#820 and DEC-651/#821/#779 | **Nothing established by this observer** | Protected OS no-write proof and immutable one-shot run385 admission are still **BLOCKED** |
+
+### Exact-head CI is a separate gate
+
+A green Phase 3 run does not imply the complete historical regression
+passed. Every DRAFT child needs independent success for **both** suites
+against its own exact commit SHA, even if the parent is green. Failure
+logs and a forward repair never rewrite the earlier failed commits.
+Neither green CI nor a larger test count confers annual authority or
+satisfies the qualified independent security-review requirement.
+
+### No automatic elevation or hidden side effects
+
+The only observable local statuses are `BLOCKED` and
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`. Both
+`can_authorize_dispatch` and `independent_os_proof_verified` are
+always exactly `false`. Tests may generate their own small public
+Linux files in a new private `/tmp` directory; they must never touch
+protected annual evidence, send broker orders, change production
+branches/runners/permissions or execute/test/rerun annual run385.
+Inotify is an observer, **not** a preventative kernel security policy,
+continuous provenance attestation, or immutable server admission gate.
+
+
 This prototype complements DEC-674 draft #845's digest-blindness counterexample. It uses a real Linux inotify watch on **one newly generated public synthetic file under fixed /tmp**. No protected annual checkout, historical artifact, GitHub workflow or broker input is accepted.
 
 ## What it demonstrates
