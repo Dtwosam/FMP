@@ -5834,6 +5834,40 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertTrue(path.is_symlink())
             self.assertEqual(target.read_bytes(), b'UNCHANGED-PUBLIC')
 
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'disposable Linux exclusive prewrite control')
+    def test_false_negative_sample_lstat_cannot_bypass_exclusive_creation(self):
+        for planted_symlink in (False, True):
+            with self.subTest(planted_symlink=planted_symlink):
+                with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                                 dir='/tmp') as folder:
+                    sample = Path(folder) / 'sample'
+                    target = Path(folder) / 'public-existing'
+                    target.write_bytes(b'UNCHANGED-PUBLIC')
+                    if planted_symlink:
+                        sample.symlink_to(target)
+                    else:
+                        sample.write_bytes(b'UNCHANGED-PUBLIC')
+                    native_lstat = os.lstat
+                    def lie_sample_absent(path, *args, **kwargs):
+                        if os.fspath(path) == str(sample):
+                            raise FileNotFoundError(2, 'synthetic false-negative sample')
+                        return native_lstat(path, *args, **kwargs)
+                    with patch.object(module.os, 'lstat',
+                                      side_effect=lie_sample_absent):
+                        with patch.object(module.tempfile, 'TemporaryDirectory') as provider:
+                            provider.return_value.__enter__.return_value = folder
+                            with patch.object(module, '_start_watch') as watch:
+                                outcome = module.run_demo()
+                    self.assertEqual(outcome['status'], 'BLOCKED')
+                    self.assertFalse(outcome['can_authorize_dispatch'])
+                    self.assertFalse(outcome['independent_os_proof_verified'])
+                    watch.assert_not_called()
+                    self.assertEqual(sample.read_bytes(), b'UNCHANGED-PUBLIC')
+                    self.assertEqual(target.read_bytes(), b'UNCHANGED-PUBLIC')
+                    self.assertIs(sample.is_symlink(), planted_symlink)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
