@@ -2486,6 +2486,29 @@ admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Own exact-head Phase 3/full historical CI and qualified independent
 security review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-897 — Final receipt collector exceptions fail closed
+
+The immediate late event collector from DEC-879 can fail independently
+of the earlier successful event drain, including from genuine
+`OSError` readiness/read failures or an unexpected injected wrapper
+exception. DEC-897 adds a generated native Linux negative-control
+method covering **both exception classes** at the exact final
+collector boundary. The first event drain is clean and the post-census
+source/path metadata checks complete, but the last collector raises.
+The runner must return `BLOCKED`, never call the local evaluator,
+keep both authority and independent OS-proof fields exactly false,
+and close its owned synthetic watcher descriptor.
+
+Only disposable observer tests and documentation changed; the
+runtime event collector and all hardening guards are untouched.
+**570 distinct source-defined test methods** at this strict tip.
+Exception handling is not independent OS no-write confinement,
+continuous kernel auditing or immutable annual admission.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified independent
+review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
