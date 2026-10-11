@@ -623,7 +623,7 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int, i
             or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
             or not stat.S_ISREG(mode)
             or not 0 <= dev <= MAX_KERNEL_STAT_ID
-            or not 0 <= ino <= MAX_KERNEL_STAT_ID
+            or not 1 <= ino <= MAX_KERNEL_STAT_ID
             or not 0 <= size <= 4096):
         raise OSError("disposable sample is not a bounded regular inode")
     if nlink != 1:
@@ -687,6 +687,7 @@ def _checked_snapshot_result(value: Any) -> tuple[tuple[int, int], bytes]:
     if (type(identity) is not tuple or len(identity) != 2
             or any(type(part) is not int or not 0 <= part <= MAX_KERNEL_STAT_ID
                    for part in identity)
+            or identity[1] == 0
             or type(data) is not bytes or len(data) > 4096):
         raise OSError("disposable snapshot result has invalid identity or bytes")
     return identity, data
@@ -698,7 +699,8 @@ def _plausible_generated_hardlink_pair(
     if expected_inode is not None and (
         type(expected_inode) is not tuple or len(expected_inode) != 2
         or any(type(part) is not int or not 0 <= part <= MAX_KERNEL_STAT_ID
-               for part in expected_inode)):
+               for part in expected_inode)
+        or expected_inode[1] == 0):
         return False
     try:
         first = os.stat(source, follow_symlinks=False)
@@ -715,7 +717,7 @@ def _plausible_generated_hardlink_pair(
             if (mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
                     or not stat.S_ISREG(mode)
                     or not 0 <= dev <= MAX_KERNEL_STAT_ID
-                    or not 0 <= ino <= MAX_KERNEL_STAT_ID
+                    or not 1 <= ino <= MAX_KERNEL_STAT_ID
                     or nlink != 2
                     or not 0 <= uid <= MAX_KERNEL_OWNER_ID
                     or not 0 <= gid <= MAX_KERNEL_OWNER_ID
