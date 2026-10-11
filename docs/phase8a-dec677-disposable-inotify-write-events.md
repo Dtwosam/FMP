@@ -1490,6 +1490,28 @@ DEC-650 annual 20-job independent confinement and DEC-651 immutable
 run385 admission remain BLOCKED. Exact-head Phase 3/full historical CI
 and qualified independent review remain required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-856 — Fail closed on synthetic CLI argument-parser exceptions
+
+The explicit CLI already turns ordinary `argparse` `SystemExit`
+rejections into one `BLOCKED` JSON receipt with exit 2. However an injected
+or broken parser wrapper could raise `OSError`, `RuntimeError`,
+`TypeError`, or `ValueError` instead, terminating the CLI without its
+nonauthorizing JSON record. DEC-856 catches ordinary parser exceptions
+only at the `parse_args` boundary, emits `BLOCKED` exit 2, and does not
+invoke the disposable observer. The existing SystemExit behavior and
+valid argument/negative-control behavior remain unchanged.
+
+One new synthetic in-process CLI test covers all four exception forms,
+verifies the single JSON record with both immutable false authority flags,
+and asserts the runner was never invoked. **513 source-defined test
+methods** on the strict line; no protected annual work is enabled.
+
+This is Python fail-closed UX for a generated local-only demonstration,
+not independent host OS confinement or annual run385 admission. DEC-650
+and DEC-651 remain BLOCKED. Exact-head Phase 3/full historical CI and
+qualified independent security review are required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

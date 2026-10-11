@@ -1256,6 +1256,13 @@ def main(argv: list[str] | None = None) -> int:
             _outcome(["disposable observer CLI arguments rejected"]),
             sort_keys=True, separators=(",", ":")))
         return 2
+    except Exception:
+        # A synthetic parser exception is not a successful opt-in and must
+        # still emit the same permanently nonauthorizing JSON contract.
+        print(json.dumps(
+            _outcome(["disposable observer CLI parser raised unexpectedly"]),
+            sort_keys=True, separators=(",", ":")))
+        return 2
     try:
         result = (run_demo(negative=args.execute_reverted_write_negative,
                            replace_watched_inode=args.execute_inode_replacement_negative,
