@@ -7534,6 +7534,53 @@ class DisposableInotifyTests(unittest.TestCase):
                       ' '.join(receipt['findings']))
         runner.assert_called_once()
 
+
+    def test_receipt_validator_requires_sorted_unique_plain_findings(self):
+        canonical = module._outcome(['z-final', 'a-initial', 'z-final'])
+        self.assertEqual(canonical['findings'], ['a-initial', 'z-final'])
+        self.assertIs(module._checked_disposable_observer_result(canonical),
+                      canonical)
+
+        class StringAlias(str):
+            pass
+
+        variants = (
+            ('duplicate', ['a-initial', 'a-initial']),
+            ('unsorted', ['z-final', 'a-initial']),
+            ('subclass', [StringAlias('a-initial')]),
+        )
+        for case, findings in variants:
+            with self.subTest(case=case):
+                forged = dict(canonical, findings=findings)
+                blocked = module._checked_disposable_observer_result(forged)
+                self.assertIsNot(blocked, forged)
+                self.assertEqual(blocked['status'], 'BLOCKED')
+                self.assertIs(blocked['can_authorize_dispatch'], False)
+                self.assertIs(blocked['independent_os_proof_verified'], False)
+                self.assertIn('invalid nonauthorizing receipt',
+                              ' '.join(blocked['findings']))
+
+    def test_cli_blocks_noncanonical_synthetic_finding_order(self):
+        normal = module._outcome(['alpha', 'beta'])
+        for case, findings in (
+                ('duplicate', ['alpha', 'alpha']),
+                ('reversed', ['beta', 'alpha'])):
+            with self.subTest(case=case):
+                forged = dict(normal, findings=findings)
+                stdout = io.StringIO()
+                with patch.object(module, 'run_demo',
+                                  return_value=forged) as runner:
+                    with contextlib.redirect_stdout(stdout):
+                        exit_code = module.main(['--execute-disposable-control'])
+                receipt = json.loads(stdout.getvalue())
+                self.assertEqual(exit_code, 2)
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+                self.assertIn('invalid nonauthorizing receipt',
+                              ' '.join(receipt['findings']))
+                runner.assert_called_once()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
