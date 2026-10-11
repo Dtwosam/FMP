@@ -5344,6 +5344,29 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertEqual(os.fspath(path), str(path))
         self.assertEqual(module._checked_watch_path_bytes(path), os.fsencode(path))
 
+
+    def test_watch_encoder_refuses_custom_path_subclass_before_fspath(self):
+        class ForgedPath(type(Path())):
+            def __fspath__(self):
+                raise AssertionError('injected path method must not run')
+        path = ForgedPath('/tmp/public-sample')
+        with patch.object(module.os, 'fsencode',
+                          side_effect=AssertionError('injected encoder must not run')) as encode:
+            with self.assertRaisesRegex(OSError, 'plain Path object'):
+                module._checked_watch_path_bytes(path)
+            encode.assert_not_called()
+
+    def test_watch_encoder_refuses_string_bytes_and_keeps_plain_path(self):
+        for wrong in ('/tmp/public-sample', b'/tmp/public-sample', None, True):
+            with self.subTest(value=repr(wrong)):
+                with patch.object(module.os, 'fsencode',
+                                  side_effect=AssertionError('no encoding')) as encode:
+                    with self.assertRaisesRegex(OSError, 'plain Path object'):
+                        module._checked_watch_path_bytes(wrong)
+                    encode.assert_not_called()
+        self.assertEqual(module._checked_watch_path_bytes(Path('/tmp/public-sample')),
+                         b'/tmp/public-sample')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
