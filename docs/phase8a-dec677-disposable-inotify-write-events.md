@@ -1421,6 +1421,28 @@ historical regression CI plus qualified independent review are still
 required. DEC-650 20-job annual OS confinement and DEC-651 immutable
 one-shot run385 admission remain BLOCKED. **DRAFT / NEVER MERGE**.
 
+
+## DEC-853 — The CLI emits BLOCKED on synthetic runner exceptions
+
+DEC-851/852 validate the result of a mock-patched `run_demo`, but
+`main()` still called the generated runner outside an exception handler.
+A synthetic `OSError`, `RuntimeError`, `TypeError`, or `ValueError`
+from a replaced/broken runner could abort without printing the expected
+nonauthorizing JSON receipt. DEC-853 catches ordinary `Exception` at
+**only** the CLI's explicit generated-runner invocation, emits a fresh
+`BLOCKED` receipt with exit 2, and then applies the same final receipt
+validator. It does not intercept `KeyboardInterrupt`/`SystemExit`
+or alter argument-parse rejection, native run_demo behavior or valid
+local-only outcomes.
+
+One new regression method mocks four such exceptions and asserts an
+exact single JSON BLOCKED result, permanent false dispatch/OS-proof flags
+and exit code 2. **508 source-defined test methods** in the stack.
+This is a synthetic CLI fail-closed safeguard, not a filesystem sandbox,
+an independently enforced OS no-write guarantee, or run385 authority.
+DEC-650/651 remain BLOCKED. Require exact-head Phase 3/full historical
+CI and independent review. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
