@@ -1091,6 +1091,12 @@ DEC-830 checks the **already validated first nofollow snapshot device/inode** ma
 
 One distinct source-defined test raises the strict suite **485→486**. Only the generated disposable observer runtime, its tests and its documentation change. This improves best-effort local provenance but **cannot** prevent a real adversarial rename race, file replacement after the snapshot, mount-namespace substitution, or arbitrary alias writes, and is not authenticated independent OS isolation of all annual jobs or immutable run385 admission. Exact-head Phase 3 + full historical regression and qualified independent security review are still mandatory.
 
+## DEC-831 — Integrate mutating pathname wrapper regression with initial inode baseline pin
+
+A parallel [#1040](https://github.com/Dtwosam/FMP/pull/1040) (strict sibling of #1041, both children of #1039) introduced one useful test of a synthetic `os.fspath` wrapper that not only returns a substituted path but also **mutates the concrete Python Path's underlying constructor segments while being invoked**. The DEC-829 guard must have captured expected watch text before calling that wrapper, and must refuse the substituted target without invoking the byte encoder. DEC-831 ports that exact focused regression into the #1041 strict descendant, which also pins the first watched no-follow inode to the original exclusive writer.
+
+One new source-defined method increases the integrated branch from **486 to 487**. **Test/docs-only**, generated observer runtime unchanged from #1041; #1040's independent sibling head, comments and CI remain intact. The mutation test demonstrates a same-process CPython input-integrity assertion only, not independent kernel/OS filesystem confinement or run385 dispatch authority. This child needs its own Phase 3, full historical tests and qualified review.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
