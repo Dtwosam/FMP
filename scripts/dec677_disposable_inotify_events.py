@@ -713,7 +713,9 @@ def _plausible_generated_hardlink_pair(source: Path, alias: Path) -> bool:
                     or nlink != 2
                     or not 0 <= uid <= MAX_KERNEL_OWNER_ID
                     or not 0 <= gid <= MAX_KERNEL_OWNER_ID
-                    or not 0 <= size <= 4096
+                    # This is a generated, fixed-size public BEFORE inode,
+                    # not merely any bounded regular file.
+                    or size != len(BEFORE)
                     or not MIN_KERNEL_TIMESTAMP_NS <= mtime_ns <= MAX_KERNEL_TIMESTAMP_NS
                     or not MIN_KERNEL_TIMESTAMP_NS <= ctime_ns <= MAX_KERNEL_TIMESTAMP_NS):
                 return False
