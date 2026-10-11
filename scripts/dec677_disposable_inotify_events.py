@@ -639,8 +639,13 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int, i
         raise OSError("disposable fstat has impossible nanosecond timestamps")
     if not 0 <= uid <= MAX_KERNEL_OWNER_ID or not 0 <= gid <= MAX_KERNEL_OWNER_ID:
         raise OSError("disposable fstat has impossible owner identity")
+    # Linux hard-link counts are unsigned integer kernel metadata. An
+    # injected negative or over-uint64 counter cannot prove the one-link
+    # guard fired on a plausible kernel record.
+    if not 0 <= nlink <= MAX_KERNEL_STAT_ID:
+        raise OSError("disposable fstat has impossible hard-link count")
     # Only well-shaped metadata can produce a credited link-count refusal.
-    # A fabricated stat with both nlink!=1 and impossible UID/time fields
+    # A fabricated stat with nlink!=1 and impossible UID/time/count fields
     # must fail generically rather than masquerade as a guard witness.
     if nlink != 1:
         raise _SnapshotHardlinkCountError(
