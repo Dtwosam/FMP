@@ -879,6 +879,12 @@ DEC-792 rejects C watch pathname bytes that differ from `os.fspath(path)`; DEC-7
 
 DEC-795 checks that the exact plain string from `os.fspath(path)` equals `str(path)`, the generated `Path` object's own textual representation, **before** encoding. A substitution becomes a handled `OSError` and watch setup closes any already allocated nonstdio inotify FD. This is not a kernel race-free pathname guarantee; it only prevents the tested Python-wrapper mismatch. Two new source-defined tests increase the suite to **432 uniquely named methods**, covering substituted in-scope and out-of-scope `fspath` strings without calling the encoder, and a normal absolute generated public Path. Only disposable observer source, tests and docs change.
 
+## DEC-796 — Refuse custom pathname objects at generated watch registration
+
+The disposable runner constructs an ordinary `pathlib.Path` for its newly generated public `/tmp` sample, while the watch setup helper accepts a Python Path argument. DEC-792–795 check its encoded C bytes, lexical scope, and `os.fspath` consistency, but a synthetic caller can supply a custom `Path` subclass with attacker-defined `__fspath__` behavior instead of the expected generated object.
+
+DEC-796 adds an early exact concrete `Path` type check (`type(path) is type(Path())`) **before invoking any filesystem encoder or path-like method**. Malformed subclasses, raw strings, raw bytes and other Python objects fail with handled OSError, while the normal generated Path still encodes unchanged. Two new source-defined tests bring the suite to **434 unique test methods**. This is generated observer API shape validation, not host-independent security isolation, protection against mutable intermediate symlinks or annual runner authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
