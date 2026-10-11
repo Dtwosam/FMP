@@ -2081,6 +2081,30 @@ DEC-651/#821/#779 remain BLOCKED. Exact-head Phase 3/full historical CI
 plus qualified independent security review required.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-880 — Native poll readiness at the final receipt boundary
+
+DEC-879 introduced a bounded immediate final queue check to reject
+late events occurring during final generated pathname observations.
+DEC-880 adds three Linux-native **pipe-backed**, generated controls
+that exercise that collector without patching `_read_receipt_pending`:
+(1) valid inotify-*shaped public test bytes* staged into the pipe only
+during the third directory census are detected by real `select.poll`
+and `os.read` and yield `BLOCKED` before evaluation;
+(2) an open, empty pipe yields only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never authorization;
+(3) a native poll `POLLHUP` after closing the writer is not treated as
+queue quietness and yields `BLOCKED` before evaluation.
+
+The synthetic first drain remains isolated; these pipe bytes are not
+an authenticated inotify queue. All resources are disposable public
+data, and the watcher FD is closed on every path. Only tests and docs
+changed; **550 distinct source-defined test methods** at this tip.
+No finite polling interval can establish continuous nonwrite OS
+confinement or immutable annual run admission. DEC-650/#820 and
+DEC-651/#821/#779 remain BLOCKED. Own exact-head Phase 3/full historical
+CI and qualified independent review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

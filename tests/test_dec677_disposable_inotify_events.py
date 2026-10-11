@@ -9114,6 +9114,106 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'native poll sees generated late receipt event bytes')
+    def test_native_pipe_poll_detects_late_receipt_event_bytes(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'staged': False}
+        late_event = ev(10, module.IN_CREATE, named(b'public-receipt-queue'))
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                # Feed valid inotify-shaped *public test bytes* to a native
+                # Linux pipe only after the first synthetic event drain.
+                # This exercises actual poll/read readiness, NOT proof of
+                # an authenticated inotify kernel event stream.
+                state['staged'] = os.write(write_fd, late_event) == len(late_event)
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as scanner:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as early_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(scanner.call_count, 3)
+            self.assertTrue(state['staged'])
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            early_reader.assert_called_once_with(read_fd)
+            evaluator.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native quiet receipt poll')
+    def test_native_pipe_immediate_receipt_poll_quiet_is_local_only(self):
+        read_fd, write_fd = os.pipe()
+        try:
+            with patch.object(module, '_start_watch',
+                              return_value=(read_fd, 9, 10)) as watcher:
+                with patch.object(module, '_read_pending',
+                                  return_value=b'') as early_reader:
+                    result = module.run_demo()
+            self.assertEqual(result['status'],
+                             'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            early_reader.assert_called_once_with(read_fd)
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native receipt poll HUP fail closed')
+    def test_native_pipe_receipt_poll_hup_blocks_before_evaluation(self):
+        native_scan = module._bounded_inventory_names
+        read_fd, write_fd = os.pipe()
+        state = {'scans': 0, 'writer_closed': False}
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                # HUP is not equivalent to an empty observed event queue.
+                os.close(write_fd)
+                state['writer_closed'] = True
+            return names
+
+        try:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as scanner:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as early_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+            self.assertEqual(state['scans'], 3)
+            self.assertEqual(scanner.call_count, 3)
+            self.assertTrue(state['writer_closed'])
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIs(result['can_authorize_dispatch'], False)
+            self.assertIs(result['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            early_reader.assert_called_once_with(read_fd)
+            evaluator.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            if not state['writer_closed']:
+                os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
