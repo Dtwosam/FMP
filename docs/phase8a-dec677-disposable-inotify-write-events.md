@@ -877,6 +877,14 @@ DEC-794 requires `0 <= st_nlink <= UINT64_MAX` before the specific guard excepti
 
 This is conservative local synthetic metadata coherence, not independent kernel provenance or OS-enforced annual confinement.
 
+## DEC-795 — Bounded rename-cookie basename-history regression coverage
+
+DEC-792 marks as malformed a synthetic rename-cookie `IN_MOVED_FROM` / `IN_MOVED_TO` pair on the same directory watch when both name fields identify exactly the same child. A rename to the identical pathname is a no-op and cannot explain two entry-transition records for one matching cookie. The new rule retains prior rejection of zero, repeated and reversed cookies and inconsistent file/directory kinds.
+
+DEC-795 is a **test-only** strict child exercising longer bounded event streams, so decoder refactoring cannot inadvertently accept a delayed same-cookie same-basename no-op or reject legal different-cookie or differently named transitions. It checks 96 unrelated intervening move records before the impossible same-cookie TO, the plausibility of the same basename leaving and returning through **two different cookies**, and a correctly ordered same-cookie different-name pair with 48 intervening source attribute events. The latter two remain syntactically well-formed while a directory mutation never authorizes a clean evaluator. Three source-defined methods raise the suite to **435 uniquely named tests**. Only disposable tests and documentation change; no runtime parser logic or annual runner touched.
+
+These are synthetic grammar assertions, not independent kernel provenance or OS-enforced annual host isolation.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
