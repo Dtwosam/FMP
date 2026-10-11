@@ -5976,6 +5976,37 @@ class DisposableInotifyTests(unittest.TestCase):
                         self.assertTrue(sample.is_dir())
                         self.assertEqual(child.read_bytes(), b'PUBLIC-UNCHANGED')
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux file close boundary')
+    def test_initial_exclusive_close_failure_never_starts_watch(self):
+        with patch.object(module.Path, 'open') as opener:
+            stream = opener.return_value.__enter__.return_value
+            stream.write.return_value = len(module.BEFORE)
+            opener.return_value.__exit__.side_effect = OSError(
+                28, 'synthetic public file close failure')
+            with patch.object(module, '_start_watch') as watch:
+                receipt = module.run_demo()
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertFalse(receipt['can_authorize_dispatch'])
+        self.assertFalse(receipt['independent_os_proof_verified'])
+        stream.write.assert_called_once_with(module.BEFORE)
+        watch.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native Linux exclusive baseline')
+    def test_native_exclusive_creation_produces_exact_readable_source(self):
+        with tempfile.TemporaryDirectory(prefix='dec817-public-', dir='/tmp') as folder:
+            sample = Path(folder) / 'sample'
+            with sample.open('xb') as writer:
+                nbytes = writer.write(module.BEFORE)
+                self.assertIs(type(nbytes), int)
+                self.assertEqual(nbytes, len(module.BEFORE))
+            identity, content = module._snapshot_regular(sample)
+            stat_record = os.stat(sample)
+            self.assertEqual(identity, (stat_record.st_dev, stat_record.st_ino))
+            self.assertEqual(content, module.BEFORE)
+            with self.assertRaises(FileExistsError):
+                sample.open('xb')
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
