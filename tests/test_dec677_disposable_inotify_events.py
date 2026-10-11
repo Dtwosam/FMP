@@ -7081,6 +7081,49 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux late same-length write')
+    def test_same_length_write_during_event_drain_refuses_stale_snapshot(self):
+        read_fd, write_fd = os.pipe()
+        state = {'sample': None, 'initial_inode': None,
+                 'late_inode': None, 'late_size': None, 'drained': False}
+
+        def register(path):
+            state['sample'] = path
+            record = os.lstat(path)
+            state['initial_inode'] = record.st_ino
+            return read_fd, 9, 10
+
+        def drain(_fd):
+            path = state['sample']
+            path.write_bytes(module.BEFORE[::-1])
+            record = os.lstat(path)
+            state['late_inode'] = record.st_ino
+            state['late_size'] = record.st_size
+            state['drained'] = True
+            return b''
+
+        try:
+            with patch.object(module, '_start_watch',
+                              side_effect=register) as watcher:
+                with patch.object(module, '_read_pending',
+                                  side_effect=drain) as reader:
+                    with patch.object(module, '_evaluate') as evaluate:
+                        receipt = module.run_demo()
+            self.assertTrue(state['drained'])
+            self.assertEqual(state['initial_inode'], state['late_inode'])
+            self.assertEqual(state['late_size'], len(module.BEFORE))
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertFalse(receipt['can_authorize_dispatch'])
+            self.assertFalse(receipt['independent_os_proof_verified'])
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            evaluate.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
