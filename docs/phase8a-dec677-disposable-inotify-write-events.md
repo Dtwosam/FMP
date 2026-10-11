@@ -1805,6 +1805,29 @@ security review. No independent OS no-write evidence or run385
 admission is established. DEC-650 and DEC-651 remain BLOCKED.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-869 — Native generated filesystem timestamp mutation negative control
+
+DEC-865–868 tests timestamp drift and malformed metadata with synthetic
+stat wrappers. DEC-869 additionally exercises a **real generated Linux
+/tmp file metadata change** immediately after the third bounded nofollow
+snapshot. The regression uses `os.utime(..., follow_symlinks=False)`
+on only the fresh disposable sample, changes mtime by five seconds,
+verifies that the native kernel-reported mtime actually changed, and
+requires `run_demo` to refuse a local witness with `BLOCKED`, exact
+false dispatch and OS-proof fields, no evaluator call, and closed watcher
+FD. The inotify watcher and event queue remain synthetic; there is
+no protected or annual filesystem path.
+
+One new source-defined Linux test, **531 test methods** in the strict
+stack. No runtime changes; this verifies the real native timestamp
+boundary rather than only injected Python metadata values. Still not
+atomic confinement: a change/revert after the last probe is possible.
+DEC-650 annual independent 20-job OS no-write confinement and DEC-651
+immutable server-side one-shot run385 admission remain BLOCKED.
+Require this exact head's own Phase 3/full historical regression and
+qualified independent security review. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
