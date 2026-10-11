@@ -841,6 +841,25 @@ def _checked_generated_folder(folder: Any) -> Path:
     return folder_path
 
 
+def _checked_initial_sample_identity(record: Any) -> tuple[int, int]:
+    """Bind a generated O_EXCL writer to its later watched pathname."""
+    try:
+        mode, dev, ino, links = (
+            record.st_mode, record.st_dev, record.st_ino, record.st_nlink)
+    except Exception as error:
+        raise OSError("disposable initial sample inode metadata unreadable") from error
+    if (any(type(value) is not int
+            for value in (mode, dev, ino, links))
+            or not 0 <= mode <= MAX_KERNEL_STAT_MODE
+            or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
+            or not stat.S_ISREG(mode)
+            or not 0 <= dev <= MAX_KERNEL_STAT_ID
+            or not 1 <= ino <= MAX_KERNEL_STAT_ID
+            or links != 1):
+        raise OSError("disposable initial sample inode identity malformed")
+    return dev, ino
+
+
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
              create_sibling: bool = False, transient_sibling: bool = False,
              hardlink_negative: bool = False) -> dict[str, Any]:
@@ -903,6 +922,11 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 written = sample.write(BEFORE)
                 if type(written) is not int or written != len(BEFORE):
                     raise OSError("disposable initial sample was not fully written")
+                # Save inode identity from the actual exclusive writer FD,
+                # not a later pathname that may already have been replaced.
+                # Buffered bytes need not be flushed yet: dev/ino are stable.
+                initial_sample_inode = _checked_initial_sample_identity(
+                    os.fstat(sample_fd))
             # Start observing both the inode and parent directory *before*
             # taking the baseline. A prewatch snapshot would leave an
             # unobserved gap before kernel watch registration.
@@ -921,6 +945,14 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         or not 1 <= dir_wd <= MAX_WATCH_DESCRIPTOR
                         or wd == dir_wd):
                     raise OSError("disposable watch registration has invalid watch identities")
+                # Registration must not turn a same-content inode swapped
+                # after O_EXCL creation into a locally quiet observation.
+                # This postwatch pathname check is not an atomic directory
+                # pin or proof against substitutions immediately afterward.
+                watched_sample_inode = _checked_initial_sample_identity(
+                    os.lstat(path))
+                if watched_sample_inode != initial_sample_inode:
+                    raise OSError("disposable source inode changed before watched baseline")
                 original_inode, original_bytes = _checked_snapshot_result(_snapshot_regular(path))
                 if original_bytes != BEFORE:
                     raise OSError("disposable generated source baseline differs from fixture")
