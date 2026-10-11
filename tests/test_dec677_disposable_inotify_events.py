@@ -6268,6 +6268,46 @@ class DisposableInotifyTests(unittest.TestCase):
         finally:
             os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'native empty generated directory control')
+    def test_native_empty_generated_folder_writes_then_stops_before_watch(self):
+        observed = []
+
+        def halt_before_watch(path):
+            observed.append((path, path.read_bytes()))
+            raise OSError(5, 'synthetic stop before watch registration')
+
+        with patch.object(module, '_start_watch', side_effect=halt_before_watch) as watch:
+            receipt = module.run_demo()
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertFalse(receipt['can_authorize_dispatch'])
+        self.assertFalse(receipt['independent_os_proof_verified'])
+        watch.assert_called_once()
+        self.assertEqual(len(observed), 1)
+        source, data = observed[0]
+        self.assertEqual(type(source), type(Path()))
+        self.assertEqual(source.name, 'sample')
+        self.assertEqual(source.parent.parent, Path('/tmp'))
+        self.assertTrue(source.parent.name.startswith(module.DISPOSABLE_PREFIX))
+        self.assertEqual(data, module.BEFORE)
+        self.assertFalse(source.parent.exists())
+
+    @unittest.skipUnless(sys.platform == 'linux', 'prewrite bounded empty scanner errors')
+    def test_prewrite_bounded_inventory_scanner_exceptions_block_before_writer(self):
+        for failure in (OSError(5, 'synthetic scanner I/O failure'),
+                        RuntimeError('synthetic scanner wrapper failure')):
+            with self.subTest(error=type(failure).__name__):
+                with patch.object(module, '_bounded_inventory_names',
+                                  side_effect=failure) as scanner:
+                    with patch.object(module.Path, 'open') as writer:
+                        with patch.object(module, '_start_watch') as watcher:
+                            receipt = module.run_demo()
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertFalse(receipt['can_authorize_dispatch'])
+                self.assertFalse(receipt['independent_os_proof_verified'])
+                scanner.assert_called_once()
+                writer.assert_not_called()
+                watcher.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
