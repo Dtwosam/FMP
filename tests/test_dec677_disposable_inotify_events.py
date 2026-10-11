@@ -4619,7 +4619,7 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_nlink = nlink
                 self.st_uid = 10
                 self.st_gid = 20
-                self.st_size = 1
+                self.st_size = len(module.BEFORE)
                 self.st_mtime_ns = 100
                 self.st_ctime_ns = 200
         normal = FakeStat(module.stat.S_IFREG | 0o600, 1, 2, 2)
@@ -4777,14 +4777,14 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.st_nlink = 2
                 self.st_uid = 100
                 self.st_gid = 200
-                self.st_size = 25
+                self.st_size = len(module.BEFORE)
                 self.st_mtime_ns = 1000
                 self.st_ctime_ns = 2000
                 for key, value in changes.items():
                     setattr(self, key, value)
         baseline = FakeStat()
         for field, value in (
-            ('st_uid', 101), ('st_gid', 201), ('st_size', 26),
+            ('st_uid', 101), ('st_gid', 201), ('st_size', len(module.BEFORE) + 1),
             ('st_mtime_ns', 1001), ('st_ctime_ns', 2001)):
             with self.subTest(field=field):
                 with patch.object(module.os, 'stat',
@@ -4803,7 +4803,7 @@ class DisposableInotifyTests(unittest.TestCase):
             st_nlink = 2
             st_uid = 10
             st_gid = 20
-            st_size = 1
+            st_size = len(module.BEFORE)
             st_mtime_ns = 100
             st_ctime_ns = 200
         original = {k: getattr(FakeStat, k) for k in
@@ -4865,6 +4865,46 @@ class DisposableInotifyTests(unittest.TestCase):
                 os.fstat(rd)
         finally:
             os.close(wr)
+
+
+    def test_generated_link_alias_requires_exact_public_fixture_size(self):
+        class FakeStat:
+            def __init__(self, size):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 1
+                self.st_ino = 2
+                self.st_nlink = 2
+                self.st_uid = 10
+                self.st_gid = 20
+                self.st_size = size
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+        expected = len(module.BEFORE)
+        for size in (0, expected - 1, expected + 1, 4096):
+            with self.subTest(size=size):
+                with patch.object(module.os, 'stat',
+                                  side_effect=(FakeStat(size), FakeStat(size))):
+                    self.assertFalse(module._plausible_generated_hardlink_pair(
+                        Path('/tmp/public-a'), Path('/tmp/public-b')))
+        with patch.object(module.os, 'stat',
+                          side_effect=(FakeStat(expected), FakeStat(expected))):
+            self.assertTrue(module._plausible_generated_hardlink_pair(
+                Path('/tmp/public-a'), Path('/tmp/public-b')))
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'link'),
+                         'disposable generated Linux fixture')
+    def test_live_hardlink_alias_has_exact_public_fixture_length(self):
+        with tempfile.TemporaryDirectory(prefix='dec784-public-', dir='/tmp') as folder:
+            source = Path(folder) / 'sample'
+            alias = Path(folder) / 'public-hardlink-alias'
+            source.write_bytes(module.BEFORE)
+            self.assertIsNone(os.link(source, alias))
+            self.assertEqual(os.stat(source).st_size, len(module.BEFORE))
+            self.assertEqual(os.stat(alias).st_size, len(module.BEFORE))
+            self.assertTrue(module._plausible_generated_hardlink_pair(source, alias))
+            with alias.open('ab') as handle:
+                handle.write(b'EXTRA')
+            self.assertFalse(module._plausible_generated_hardlink_pair(source, alias))
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
