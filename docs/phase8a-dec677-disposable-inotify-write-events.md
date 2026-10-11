@@ -985,6 +985,13 @@ DEC-814 changed the first generated public sample creation to Linux exclusive `P
 
 This test/docs-only strict child adds one source-defined test (**463 unique methods**) and incorporates the separate #1016 counterexample into #1017's stronger private-directory metadata lineage. No runtime changes; the exclusive basename gate still does not pin the parent directory or provide independently enforced 20-job annual runner security proof.
 
+
+## DEC-816 — Exclusive creation also refuses hard links and directories
+
+DEC-814 made the first generated `sample` creation exclusive, and DEC-815 demonstrated that a falsely missing prewrite lstat cannot bypass it for regular-file and symlink sample entries. This test-only child extends the native /tmp collision matrix to **an existing hard link** to a separately generated public file and an **existing directory** containing a generated public child. It injects a false `FileNotFoundError` only for the `sample` lstat preflight, then requires a permanent BLOCKED receipt, no watch registration, stable existing target bytes and original hard-link inode / nested child. Linux O_EXCL refuses any occupied basename regardless of its inode type.
+
+One new source-defined test raises the lineage to **464 distinct test methods**. No runtime changes or independent annual OS-write confinement; only generated public fixtures in private /tmp are touched, with exact-head CI and qualified independent security review still outstanding.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
