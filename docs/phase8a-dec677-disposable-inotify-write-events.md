@@ -903,6 +903,12 @@ DEC-764/767 already require a plain `str` basename, at most 255 UTF-8/filesystem
 
 DEC-804 cross-checks the returned native-encoded bytes against the original `str` encoded with the Linux filesystem codec and `surrogateescape`. Encoding exceptions and substituted encodings fail closed. Two new source-defined regression methods raise the suite to **440 unique tests**: swapped/forbidden bytes cannot validate the evaluator's quiet-directory claim, while actual ordinary, 255-byte and surrogateescaped names remain accepted. This is local synthetic inventory coherence, not independent kernel-provenance or annual-runner authorization.
 
+## DEC-805 — Test scanner rejection of forged encoded names and native surrogateescape
+
+DEC-804 requires a scanner/evaluator inventory string's encoded bytes to equal that exact string's native filesystem encoding, rather than accepting any valid but substituted `os.fsencode` return. DEC-805 is a **test-and-doc-only strict child** proving the check is applied at the actual bounded `os.scandir` boundary as well as the evaluator. A synthetic one-entry scanner returns `"sample"`; three patched encoder responses that are valid Linux basenames but do not encode `"sample"` must raise `OSError` before inventory sorting. A separate live generated public Linux `/tmp` file uses a native surrogateescaped non-UTF-8 basename, confirming the scanner still returns the exact real name and accepts arbitrary Linux basename bytes without lossy replacement.
+
+Two source-defined tests increase the suite to **442 uniquely named test methods**. No source implementation changes in this child, no protected annual inputs, no production runner or authorization. These are local synthetic/native tests only, not proof of independently enforced OS write denial or exclusive run385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
