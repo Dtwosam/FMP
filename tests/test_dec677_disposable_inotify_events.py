@@ -5186,6 +5186,44 @@ class DisposableInotifyTests(unittest.TestCase):
         for call in stat_call.call_args_list:
             self.assertEqual(call.kwargs, {'follow_symlinks': False})
 
+
+    def test_registers_both_generated_watches_without_following_symlinks(self):
+        class Callable:
+            def __init__(self, values):
+                self.values = iter(values)
+                self.calls = []
+            def __call__(self, *args):
+                self.calls.append(args)
+                return next(self.values)
+        init = Callable([17])
+        add = Callable([9, 10])
+        class FakeLib:
+            inotify_init1 = init
+            inotify_add_watch = add
+        sample = Path('/tmp/disposable-public-only/sample')
+        with patch.object(module.ctypes, 'CDLL', return_value=FakeLib()):
+            self.assertEqual(module._start_watch(sample), (17, 9, 10))
+        self.assertEqual(add.calls, [
+            (17, os.fsencode(sample), module.MASK | module.IN_DONT_FOLLOW),
+            (17, os.fsencode(sample.parent),
+             module.DIRECTORY_MASK | module.IN_DONT_FOLLOW | module.IN_ONLYDIR),
+        ])
+        self.assertEqual(module.EVENT_ALLOWED & module.IN_DONT_FOLLOW, 0)
+        self.assertEqual(module.EVENT_ALLOWED & module.IN_ONLYDIR, 0)
+
+    def test_registration_option_bits_are_rejected_as_synthetic_event_flags(self):
+        for flag in (module.IN_DONT_FOLLOW, module.IN_ONLYDIR):
+            with self.subTest(flag=hex(flag)):
+                raw = ev(wd=10, mask=module.IN_CREATE | flag,
+                         data=named(b'public-child'))
+                parsed = module._classify_stream(raw, 9, directory_watch=10)
+                self.assertFalse(parsed['well_formed'])
+                outcome = module._evaluate(
+                    b'public', b'public', raw, 9, True, False,
+                    directory_watch=10, directory_inventory_names=('sample',))
+                self.assertEqual(outcome['status'], 'BLOCKED')
+                self.assertFalse(outcome['can_authorize_dispatch'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
