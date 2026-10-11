@@ -1034,6 +1034,15 @@ DEC-820 source hardening [#1025](https://github.com/Dtwosam/FMP/pull/1025) indep
 
 The new head has **473 source-defined uniquely named test methods**; only test and docs paths change. The previous sibling PR heads and CI history stay untouched and unmerged. These tests demonstrate local Python context-manager cleanup over public generated data, **not** independently protected annual runner files or immutable server-side annual dispatch. Exact-head Phase 3, full historical regression and qualified independent security review are still required.
 
+
+## DEC-823 — Verify a newly returned generated private tempdir is empty before first write
+
+Even a correctly shaped owner-matched `0700` generated `/tmp/dec677-disposable-*` directory can be substituted by a defective or adversarial Python `TemporaryDirectory` wrapper after its metadata checks. The runner previously refused an existing `sample` basename through `lstat` plus exclusive `xb` creation, but would still begin writing into an already-populated private folder containing *other* public entries. It detected those extras only at its final inventory.
+
+DEC-823 reuses the existing bounded `_bounded_inventory_names` scanner **before writing any sample bytes**, requiring an exact empty plain tuple and rejecting any existing entry or injected non-tuple/tuple-subclass evidence. This is a bounded, early fail-closed check, not race-free parent pathname pinning or independently enforced filesystem isolation. Two new source-defined tests increase the strict lineage to **475 uniquely named tests**, checking a real generated public sibling remains unchanged with no writer/watch and that forged inventory return types cannot advance. Three inherited negative controls are deliberately preserved: their synthetic inventories are set falsely empty to keep testing the later independent `lstat` and `O_EXCL` collision protections, without renaming historical CI.
+
+Only generated Linux disposable observer source, unit tests and documentation change. Phase 3, full historical CI at this exact source head, and qualified independent security/source review remain necessary. No annual dispatcher permission is introduced.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

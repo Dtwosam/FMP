@@ -868,7 +868,15 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
         return _outcome(["Linux disposable kernel event monitor unavailable"])
     try:
         with tempfile.TemporaryDirectory(prefix=DISPOSABLE_PREFIX, dir="/tmp") as folder:
-            path = _checked_generated_folder(folder) / "sample"
+            folder_path = _checked_generated_folder(folder)
+            # Before the first public write, refuse a replaced/context-injected
+            # private directory that already contains unrelated entries.
+            # Reuse the three-entry bounded scanner; a clean fresh tempdir is
+            # exactly empty, not just missing the specific sample basename.
+            prewrite_names = _bounded_inventory_names(folder_path)
+            if type(prewrite_names) is not tuple or prewrite_names != ():
+                raise OSError("disposable generated tempdir was not initially empty")
+            path = folder_path / "sample"
             # An injected context-manager folder can already contain a
             # sample or a symlink redirecting the very first public write.
             # Only an absent basename may proceed to generated creation.
