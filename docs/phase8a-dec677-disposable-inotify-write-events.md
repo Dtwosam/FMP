@@ -1193,6 +1193,30 @@ and cannot provide DEC-650 independent OS no-write proof or DEC-651 immutable
 run385 admission. Exact-head Phase 3/full historical tests and independent
 security review are still required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-843 — Detect late sample truncation or growth while draining events
+
+DEC-842 rechecks the watched sample inode after event draining but, for a
+same-inode late truncate or append, the existing inode check can still pass
+although the previously captured final bytes are stale. DEC-843 checks the
+original generated `sample`'s exact bounded plain integer `st_size` in
+the same postdrain no-follow `lstat` record before entering the evaluator.
+A length other than the fixed public `BEFORE` fixture, or malformed size
+metadata, returns `BLOCKED`. The intentional inode-replacement negative
+control retains its own evaluator path and never authorizes.
+
+One Linux regression method changes **only** the generated public sample
+bytes during the synthetic event drain, once by truncation and once by
+appending, while preserving the original inode. Both cases require no
+evaluator call, false authorization booleans and closed mock watcher FD.
+**495 distinct source-defined tests** on the strict line.
+
+Size alone cannot detect a same-length late overwrite, nor can sequential
+pathname probes close kernel races. This is local witness hardening, not
+an independent OS no-write proof or annual-runner authorization. DEC-650
+and DEC-651 remain blocked; exact-head Phase 3 and full historical CI
+plus qualified independent review are required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
