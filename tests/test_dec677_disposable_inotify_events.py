@@ -5080,20 +5080,65 @@ class DisposableInotifyTests(unittest.TestCase):
     @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch')
     def test_hardlink_alias_stat_failure_cannot_credit_detection_or_leak_fd(self):
         rd, wr = os.pipe()
+        native_stat = os.stat
+
+        def missing_only_generated_alias(path, *args, **kwargs):
+            # os.path.isdir('/tmp') also invokes os.stat. An unscoped stat
+            # mock would short-circuit the runner before alias verification.
+            if Path(path).name == 'public-hardlink-alias':
+                raise FileNotFoundError(2, 'synthetic missing alias')
+            return native_stat(path, *args, **kwargs)
+
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
                                   return_value=((1, 2), module.BEFORE)) as snapshot:
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module.os, 'stat',
-                                          side_effect=FileNotFoundError(2, 'synthetic missing alias')):
+                                          side_effect=missing_only_generated_alias) as stat:
                             with patch.object(module, '_read_pending') as drain:
                                 outcome = module.run_demo(hardlink_negative=True)
+            self.assertTrue(any(
+                call.args and Path(call.args[0]).name == 'public-hardlink-alias'
+                for call in stat.call_args_list))
             self.assertEqual(outcome['status'], 'BLOCKED')
             self.assertIn('negative alias not verified', ' '.join(outcome['findings']))
             self.assertNotIn('negative control blocked', ' '.join(outcome['findings']))
             self.assertEqual(snapshot.call_count, 1)
             drain.assert_not_called()
+            self.assertFalse(outcome['independent_os_proof_verified'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch')
+    def test_hardlink_scoped_missing_alias_stat_preserves_tmp_preflight(self):
+        native_stat = os.stat
+        probes = []
+
+        def stat_only_missing_alias(path, *args, **kwargs):
+            probes.append(Path(path).name)
+            if Path(path).name == 'public-hardlink-alias':
+                raise FileNotFoundError(2, 'synthetic alias missing')
+            return native_stat(path, *args, **kwargs)
+
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((1, 2), module.BEFORE)) as snapshot:
+                    with patch.object(module.os, 'link', return_value=None):
+                        with patch.object(module.os, 'stat',
+                                          side_effect=stat_only_missing_alias):
+                            outcome = module.run_demo(hardlink_negative=True)
+            self.assertIn('tmp', probes)
+            self.assertIn('public-hardlink-alias', probes)
+            self.assertEqual(outcome['status'], 'BLOCKED')
+            self.assertIn('negative alias not verified', ' '.join(outcome['findings']))
+            self.assertEqual(snapshot.call_count, 1)
+            self.assertFalse(outcome['can_authorize_dispatch'])
             self.assertFalse(outcome['independent_os_proof_verified'])
             with self.assertRaises(OSError):
                 os.fstat(rd)
