@@ -5079,6 +5079,15 @@ class DisposableInotifyTests(unittest.TestCase):
 
     @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch')
     def test_hardlink_alias_stat_failure_cannot_credit_detection_or_leak_fd(self):
+        native_stat = os.stat
+        missing_alias_calls = []
+
+        def fail_only_generated_alias(path, *args, **kwargs):
+            if str(path).endswith('/public-hardlink-alias'):
+                missing_alias_calls.append(str(path))
+                raise FileNotFoundError(2, 'synthetic missing alias')
+            return native_stat(path, *args, **kwargs)
+
         rd, wr = os.pipe()
         try:
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
@@ -5086,9 +5095,11 @@ class DisposableInotifyTests(unittest.TestCase):
                                   return_value=((1, 2), module.BEFORE)) as snapshot:
                     with patch.object(module.os, 'link', return_value=None):
                         with patch.object(module.os, 'stat',
-                                          side_effect=FileNotFoundError(2, 'synthetic missing alias')):
+                                          side_effect=fail_only_generated_alias):
+                            self.assertTrue(os.path.isdir('/tmp'))
                             with patch.object(module, '_read_pending') as drain:
                                 outcome = module.run_demo(hardlink_negative=True)
+            self.assertEqual(len(missing_alias_calls), 1)
             self.assertEqual(outcome['status'], 'BLOCKED')
             self.assertIn('negative alias not verified', ' '.join(outcome['findings']))
             self.assertNotIn('negative control blocked', ' '.join(outcome['findings']))
@@ -5099,6 +5110,30 @@ class DisposableInotifyTests(unittest.TestCase):
                 os.fstat(rd)
         finally:
             os.close(wr)
+
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux scoped stat')
+    def test_scoped_missing_alias_stat_fault_does_not_hide_tmp_directory(self):
+        native_stat = os.stat
+        observed = []
+
+        def fail_only_alias(path, *args, **kwargs):
+            if str(path).endswith('/public-hardlink-alias'):
+                observed.append(str(path))
+                raise FileNotFoundError(2, 'synthetic generated missing alias')
+            return native_stat(path, *args, **kwargs)
+
+        with tempfile.TemporaryDirectory(prefix='dec789-public-', dir='/tmp') as folder:
+            source = Path(folder) / 'sample'
+            alias = Path(folder) / 'public-hardlink-alias'
+            source.write_bytes(module.BEFORE)
+            with patch.object(module.os, 'stat', side_effect=fail_only_alias):
+                self.assertTrue(os.path.isdir('/tmp'))
+                self.assertEqual(source.read_bytes(), module.BEFORE)
+                self.assertFalse(module._plausible_generated_hardlink_pair(
+                    source, alias))
+                self.assertTrue(os.path.isdir(folder))
+            self.assertEqual(observed, [str(alias)])
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
