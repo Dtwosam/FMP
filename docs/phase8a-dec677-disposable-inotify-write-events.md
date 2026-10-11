@@ -1373,6 +1373,30 @@ head; DEC-849 (#1064) repairs it in a strict descendant, and this child
 requires separate exact-head Phase 3/full historical CI. DEC-650 and
 DEC-651 annual-runner gates remain **BLOCKED**. **DRAFT / NEVER MERGE**.
 
+
+## DEC-851 — CLI receipt boundary rechecks immutable nonauthorization
+
+DEC-850 validates a synthetic `_evaluate` result at the generated runner
+boundary. But the CLI still serialized the direct result of `run_demo`
+without repeating that contract. A substituted runner could therefore
+print `can_authorize_dispatch=true`, print fake independently verified
+OS proof, or select its exit status from an invalid receipt.
+
+DEC-851 applies the same exact native receipt validator immediately before
+CLI JSON serialization and exit-code selection. Hostile injected runner
+returns are converted to a fresh `BLOCKED` receipt with exit code 2;
+valid native `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` remains exit 3, and
+valid `BLOCKED` remains exit 2. Two tests mock the synthetic runner and
+capture the in-process CLI output, covering six malformed/promoted returns
+and both valid nonauthorizing outcomes. **505 uniquely named test methods**
+on this line; no protected files or annual-runner modes are invoked.
+
+This redundant Python validation is **not** a new OS sandbox, not atomic
+filesystem confinement, and not an authorization surface. Annual DEC-650
+20-job independently enforced OS no-write proof and DEC-651 immutable
+run385 server admission remain BLOCKED. Both exact-head CI suites and
+qualified security review are required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
