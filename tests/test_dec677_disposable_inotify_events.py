@@ -10172,6 +10172,46 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real native disposable CLI smoke')
+    def test_real_subprocess_disposable_cli_clean_never_authorizes(self):
+        # End-to-end process with genuine Linux inotify on *generated /tmp*
+        # files. The subprocess cannot import the patched unit-test module.
+        process = subprocess.run(
+            [sys.executable, '-B', str(SCRIPT),
+             '--execute-disposable-control'],
+            capture_output=True, text=True, timeout=10)
+        self.assertEqual(process.returncode, 3, process.stderr)
+        self.assertEqual(process.stderr, '')
+        self.assertTrue(process.stdout.strip())
+        receipt = json.loads(process.stdout)
+        self.assertEqual(receipt['status'],
+                         'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        self.assertEqual(receipt['findings'], [])
+        self.assertEqual(set(receipt['observed_checks']),
+                         module.LOCAL_RECEIPT_CHECKS)
+        self.assertTrue(all(
+            receipt['observed_checks'][name]
+            for name in module.LOCAL_REQUIRED_TRUE))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'real native negative CLI smoke')
+    def test_real_subprocess_disposable_cli_write_revert_stays_blocked(self):
+        # Real generated public sample is changed and restored. The CLI's
+        # separate process must still yield only a nonauthorizing receipt.
+        process = subprocess.run(
+            [sys.executable, '-B', str(SCRIPT),
+             '--execute-reverted-write-negative'],
+            capture_output=True, text=True, timeout=10)
+        self.assertEqual(process.returncode, 2, process.stderr)
+        self.assertEqual(process.stderr, '')
+        receipt = json.loads(process.stdout)
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        self.assertTrue(receipt['findings'])
+        self.assertIs(type(receipt['observed_checks']), dict)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
