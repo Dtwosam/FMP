@@ -7934,6 +7934,78 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux writer metadata control')
+    def test_genuine_writer_and_postdrain_sample_access_metadata_match(self):
+        native_checker = module._checked_generated_sample_access_identity
+        observed = []
+        read_fd, write_fd = os.pipe()
+
+        def checked(record):
+            actual = native_checker(record)
+            observed.append(actual)
+            return actual
+
+        try:
+            with patch.object(module, '_checked_generated_sample_access_identity',
+                              side_effect=checked) as check:
+                with patch.object(module, '_start_watch',
+                                  return_value=(read_fd, 9, 10)) as watcher:
+                    with patch.object(module, '_read_pending',
+                                      return_value=b'') as reader:
+                        receipt = module.run_demo()
+            self.assertEqual(check.call_count, 2)
+            self.assertEqual(len(observed), 2)
+            self.assertEqual(observed[0], observed[1])
+            self.assertEqual(observed[0][1], os.geteuid())
+            self.assertEqual(receipt['status'],
+                             'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            reader.assert_called_once_with(read_fd)
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'generated Linux writer metadata guard')
+    def test_writer_access_metadata_forgery_blocks_before_installing_watch(self):
+        native_checker = module._checked_generated_sample_access_identity
+        for field, forged_value in (
+                ('st_uid', (os.geteuid() + 1) % (1 << 32)),
+                ('st_uid', True),
+                ('st_gid', 'synthetic'),
+                ('st_mode', module.stat.S_IFLNK | 0o777)):
+            with self.subTest(field=field, value=repr(forged_value)):
+                state = {'injected': False}
+
+                class SubstitutedRecord:
+                    def __init__(self, record):
+                        self.original = record
+
+                    def __getattr__(self, key):
+                        if key == field:
+                            return forged_value
+                        return getattr(self.original, key)
+
+                def check(record):
+                    state['injected'] = True
+                    return native_checker(SubstitutedRecord(record))
+
+                with patch.object(module, '_checked_generated_sample_access_identity',
+                                  side_effect=check) as validator:
+                    with patch.object(module, '_start_watch') as watcher:
+                        with patch.object(module, '_read_pending') as reader:
+                            receipt = module.run_demo()
+                self.assertTrue(state['injected'])
+                validator.assert_called_once()
+                watcher.assert_not_called()
+                reader.assert_not_called()
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertIs(receipt['can_authorize_dispatch'], False)
+                self.assertIs(receipt['independent_os_proof_verified'], False)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
