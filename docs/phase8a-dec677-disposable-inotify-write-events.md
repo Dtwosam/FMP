@@ -761,6 +761,12 @@ DEC-773 requires a singly linked disposable sample, but previous fstat snapshot 
 
 All synthetic fstat fixtures supply valid `st_uid=0`, `st_gid=0` fields rather than failing for missing attributes; their direct metadata return assertions are adjusted to the new eight-field tuple. Three new source-defined regression methods increase the suite to **392 uniquely named tests**: owner/group drift with otherwise constant metadata is rejected with FD cleanup, malformed/oversized/hostile owner IDs fail closed, and legitimate UINT32 boundary IDs remain supported. This does not prove independent Linux host identity attestation or annual OS write-prevention.
 
+## DEC-778 — Bounded snapshot metadata drift matrix and live Linux owner IDs
+
+DEC-747–777 now check the disposable snapshot's stat mode, device, inode, one-link count, size, timestamps, UID and GID. DEC-778 is a **test-only** regression child that verifies these checks continue to work together and preserve the stable outward snapshot identity. An eight-case fstat before/after matrix changes **exactly one admissible field** at a time (mode, dev, inode, size, mtime_ns, ctime_ns, uid or gid), leaving the remaining metadata and file content constant, and requires each drift to become an `OSError` with exactly one FD close. A matching eight-field control still returns the original `((dev, ino), bytes)` snapshot. A live generated `/tmp` file test confirms kernel-provided `st_uid`/`st_gid` appear in the checked tuple and that a one-linked public file can still be read.
+
+Three new source-defined methods increase the suite to **395 uniquely named methods**. Only synthetic test code and documentation change; no watcher source logic or annual permissions. These adversarial local regression cases do not authenticate kernel origin independently or establish host OS write denial.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
