@@ -7404,7 +7404,16 @@ class DisposableInotifyTests(unittest.TestCase):
                 ([], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED', 3),
                 (['synthetic blocked'], 'BLOCKED', 2)):
             with self.subTest(expected_status=expected_status):
-                native_receipt = module._outcome(findings, {'synthetic': True})
+                # A clean local witness needs the actual evaluator's complete
+                # check set, never an invented one-key "quiet" report.
+                native_receipt = (
+                    module._evaluate(
+                        module.BEFORE, module.BEFORE, b'', 9, True, False,
+                        directory_watch=10,
+                        directory_inventory_names=('sample',))
+                    if not findings else module._outcome(
+                        findings, {'synthetic': True}))
+                self.assertEqual(native_receipt['status'], expected_status)
                 stdout = io.StringIO()
                 with patch.object(module, 'run_demo',
                                   return_value=native_receipt) as runner:
@@ -7675,6 +7684,60 @@ class DisposableInotifyTests(unittest.TestCase):
                     runner.assert_called_once()
                 else:
                     runner.assert_not_called()
+
+
+    def test_unverified_receipt_requires_complete_real_observer_checks(self):
+        clean = module._evaluate(
+            module.BEFORE, module.BEFORE, b'', 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        self.assertEqual(clean['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertEqual(set(clean['observed_checks']), module.LOCAL_RECEIPT_CHECKS)
+        self.assertIs(module._checked_disposable_observer_result(clean), clean)
+        genuine_checks = clean['observed_checks']
+        cases = (
+            ('missing-all', {}),
+            ('missing-write-evidence', {
+                key: value for key, value in genuine_checks.items()
+                if key != 'no_observed_writes'}),
+            ('invented-key', dict(genuine_checks, synthetic_quiet=True)),
+            ('false-write-check', dict(genuine_checks, no_observed_writes=False)),
+            ('fake-negative-control', dict(genuine_checks,
+                                           negative_control_detected=True)),
+        )
+        for case, checks in cases:
+            with self.subTest(case=case):
+                forged = dict(clean, observed_checks=checks)
+                refused = module._checked_disposable_observer_result(forged)
+                self.assertIsNot(refused, forged)
+                self.assertEqual(refused['status'], 'BLOCKED')
+                self.assertFalse(refused['can_authorize_dispatch'])
+                self.assertFalse(refused['independent_os_proof_verified'])
+                self.assertIn('invalid nonauthorizing receipt',
+                              ' '.join(refused['findings']))
+
+    def test_cli_refuses_fabricated_quiet_report_but_keeps_true_local_exit(self):
+        native = module._evaluate(
+            module.BEFORE, module.BEFORE, b'', 9, True, False,
+            directory_watch=10, directory_inventory_names=('sample',))
+        invented = dict(native, observed_checks={'synthetic_quiet': True})
+        for case, receipt, code_expected in (
+                ('forged-quiet', invented, 2),
+                ('native-local', native, 3)):
+            with self.subTest(case=case):
+                stdout = io.StringIO()
+                with patch.object(module, 'run_demo',
+                                  return_value=receipt) as runner:
+                    with contextlib.redirect_stdout(stdout):
+                        code = module.main(['--execute-disposable-control'])
+                value = json.loads(stdout.getvalue())
+                self.assertEqual(code, code_expected)
+                self.assertIs(value['can_authorize_dispatch'], False)
+                self.assertIs(value['independent_os_proof_verified'], False)
+                self.assertEqual(
+                    value['status'],
+                    'BLOCKED' if case == 'forged-quiet'
+                    else 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+                runner.assert_called_once()
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
