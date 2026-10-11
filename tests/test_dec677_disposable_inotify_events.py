@@ -4991,6 +4991,62 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertFalse(module._plausible_generated_hardlink_pair(
                 original, alias, expected_inode=baseline))
 
+
+    def test_hardlink_alias_single_field_drift_matrix_never_accepts(self):
+        class FakeStat:
+            def __init__(self, **changes):
+                self.st_mode = module.stat.S_IFREG | 0o600
+                self.st_dev = 11
+                self.st_ino = 22
+                self.st_nlink = 2
+                self.st_uid = 10
+                self.st_gid = 20
+                self.st_size = len(module.BEFORE)
+                self.st_mtime_ns = 100
+                self.st_ctime_ns = 200
+                for field, value in changes.items():
+                    setattr(self, field, value)
+        changes = {
+            'st_mode': module.stat.S_IFREG | 0o400,
+            'st_dev': 12,
+            'st_ino': 23,
+            'st_nlink': 1,
+            'st_uid': 11,
+            'st_gid': 21,
+            'st_size': len(module.BEFORE) + 1,
+            'st_mtime_ns': 101,
+            'st_ctime_ns': 201,
+        }
+        for field, value in changes.items():
+            for side in (0, 1):
+                with self.subTest(field=field, side=side):
+                    records = [FakeStat(), FakeStat()]
+                    records[side] = FakeStat(**{field: value})
+                    with patch.object(module.os, 'stat', side_effect=records) as observed:
+                        self.assertFalse(module._plausible_generated_hardlink_pair(
+                            Path('/tmp/public-a'), Path('/tmp/public-b'),
+                            expected_inode=(11, 22)))
+                        self.assertEqual(observed.call_count, 2)
+        with patch.object(module.os, 'stat', side_effect=(FakeStat(), FakeStat())):
+            self.assertTrue(module._plausible_generated_hardlink_pair(
+                Path('/tmp/public-a'), Path('/tmp/public-b'),
+                expected_inode=(11, 22)))
+
+    def test_invalid_baseline_link_identity_never_reaches_path_stat(self):
+        class FakeTuple(tuple):
+            pass
+        invalid = (True, (), (1,), (1, 2, 3), [1, 2],
+                   (True, 2), (1, 1 << 64), FakeTuple((1, 2)),
+                   (1.0, 2), ('1', 2))
+        for value in invalid:
+            with self.subTest(baseline=repr(value)):
+                with patch.object(module.os, 'stat',
+                                  side_effect=AssertionError('no stat allowed')) as observed:
+                    self.assertFalse(module._plausible_generated_hardlink_pair(
+                        Path('/tmp/public-a'), Path('/tmp/public-b'),
+                        expected_inode=value))
+                    observed.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
