@@ -5762,6 +5762,49 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertGreater(st.st_ino, 0)
             self.assertEqual(module._checked_generated_folder(folder), Path(folder))
 
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'disposable Linux generated sample prewrite')
+    def test_runner_refuses_preexisting_file_or_symlink_before_sample_write(self):
+        for planted_symlink in (False, True):
+            with self.subTest(planted_symlink=planted_symlink):
+                with tempfile.TemporaryDirectory(prefix=module.DISPOSABLE_PREFIX,
+                                                 dir='/tmp') as folder:
+                    source = Path(folder) / 'sample'
+                    target = Path(folder) / 'public-target'
+                    target.write_bytes(b'UNCHANGED-PUBLIC')
+                    if planted_symlink:
+                        source.symlink_to(target)
+                    else:
+                        source.write_bytes(b'UNCHANGED-PUBLIC')
+                    with patch.object(module.tempfile, 'TemporaryDirectory') as provider:
+                        provider.return_value.__enter__.return_value = folder
+                        with patch.object(module, '_start_watch') as watch:
+                            result = module.run_demo()
+                    self.assertEqual(result['status'], 'BLOCKED')
+                    self.assertFalse(result['can_authorize_dispatch'])
+                    self.assertFalse(result['independent_os_proof_verified'])
+                    self.assertTrue(source.is_symlink() if planted_symlink else source.is_file())
+                    self.assertEqual(target.read_bytes(), b'UNCHANGED-PUBLIC')
+                    self.assertEqual(source.read_bytes(), b'UNCHANGED-PUBLIC')
+                    watch.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux generated sample')
+    def test_runner_prewrite_sample_stat_wrapper_failure_does_not_write(self):
+        native_lstat = os.lstat
+        def fail_sample_only(path, *args, **kwargs):
+            if os.fspath(path).endswith('/sample'):
+                raise RuntimeError('synthetic sample lstat failure')
+            return native_lstat(path, *args, **kwargs)
+        with patch.object(module.os, 'lstat', side_effect=fail_sample_only):
+            with patch.object(module.Path, 'write_bytes') as write:
+                with patch.object(module, '_start_watch') as watch:
+                    result = module.run_demo()
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+        write.assert_not_called()
+        watch.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

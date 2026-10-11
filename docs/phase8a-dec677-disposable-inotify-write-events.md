@@ -952,6 +952,14 @@ DEC-810 requires the lstat-reported `st_dev` and `st_ino` fields to be exact pla
 
 This bounds local injected metadata shape. It does not independently attest host inode origin, eliminate TOCTOU between check and write, enforce annual OS confinement, or authorize run385.
 
+## DEC-811 — Refuse preexisting sample file or symlink before first public write
+
+DEC-800/807–810 check the generated disposable /tmp directory's lexical scope, actual no-follow directory type, private permissions, effective owner and bounded inode identity before writing the toy `sample`. A substituted yet otherwise valid private directory may **already contain `sample`**, including a symlink to another file. The runner's original `Path.write_bytes(BEFORE)` would follow or overwrite that entry.
+
+DEC-811 performs a **prewrite no-follow `os.lstat(sample)` probe** after folder validation but before the first `write_bytes`. Only the expected `FileNotFoundError` allows creation; an existing regular file, symlink or unexpected lstat failure returns a controlled `BLOCKED` receipt without starting either watch. Two source-defined tests increase the suite to **457 unique methods**: a live generated private Linux folder with an existing file or planted symlink cannot overwrite generated public sentinel bytes, and a scoped synthetic sample-lstat wrapper failure blocks before any file write or watch.
+
+This is a fail-closed toy pathname preflight, **not atomic `O_EXCL` file creation**, race-free protection, independent OS-enforced isolation or annual-run385 authority. Only generated public /tmp data is manipulated.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
