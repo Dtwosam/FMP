@@ -829,7 +829,7 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     if linked is not None:
                         return _outcome([
                             "disposable hard-link syscall returned malformed status"])
-                    if not _plausible_generated_hardlink_pair(path, alias, original_inode):
+                    if _plausible_generated_hardlink_pair(path, alias, original_inode) is not True:
                         return _outcome([
                             "disposable generated hard-link negative alias not verified"])
                     try:
@@ -839,7 +839,7 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                         # prove the alias was still present afterward. Avoid
                         # crediting a synthetic alias removed during the
                         # snapshot interval or a malformed post-check.
-                        if not _plausible_generated_hardlink_pair(path, alias, original_inode):
+                        if _plausible_generated_hardlink_pair(path, alias, original_inode) is not True:
                             return _outcome([
                                 "disposable hard-link alias changed during guard probe"])
                         return _outcome([
