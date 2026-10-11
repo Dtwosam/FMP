@@ -1027,6 +1027,13 @@ DEC-818 requires a plain nonstdio Linux descriptor before writing the initial ex
 
 This **test/docs-only** strict child carries the two prior sibling #1023 tests into #1025's independently bound watch-path source lineage, without merging or altering sibling commits. It increases the source-defined suite to **471 unique tests**. All results remain only local generated Linux /tmp witness evidence, not an independently enforced annual runner sandbox or dispatch approval.
 
+
+## DEC-822 — Positive native exclusive sample compatibility with stubbed inotify
+
+The disposable runner now checks a private owner-matched generated /tmp directory, exact bounded metadata, absent initial sample, exclusive file creation, nonstdio writer FD, complete bytes, and the later bounded no-follow snapshots. The many negative mocks must not accidentally make the ordinary local public fixture unusable. DEC-822 adds a **positive mixed native/synthetic** Linux regression: a real generated folder/file is created exclusively and snapshotted/inventoried with actual host syscalls, while only inotify watch registration and queue draining are stubbed. The evaluator must return `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` (never authorized), preserve final digest/inode agreement, and close its synthetic nonstdio observer FD.
+
+This test/docs-only child raises the suite to **472 distinct source-defined methods**. Because the watcher is patched and the queue is synthetic, the test is explicitly **not** kernel-provenance evidence, write-prevention proof, annual 20-job runner isolation or run385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

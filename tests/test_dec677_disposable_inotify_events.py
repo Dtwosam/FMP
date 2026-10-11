@@ -6098,6 +6098,27 @@ class DisposableInotifyTests(unittest.TestCase):
                 stream.write.assert_called_once_with(module.BEFORE)
                 watch.assert_not_called()
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'native Linux generated source')
+    def test_native_exclusive_initial_sample_with_stubbed_watches_stays_local(self):
+        # Real generated folder, exclusive write, nofollow inode snapshots
+        # and final inventory; only inotify registration/drain are synthetic.
+        read_fd, write_fd = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(read_fd, 9, 10)):
+                with patch.object(module, '_read_pending', return_value=b'') as drain:
+                    result = module.run_demo()
+            self.assertEqual(result['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertFalse(result['can_authorize_dispatch'])
+            self.assertFalse(result['independent_os_proof_verified'])
+            self.assertTrue(result['observed_checks']['final_digest_equal'])
+            self.assertTrue(result['observed_checks']['watched_inode_matches_final_path'])
+            drain.assert_called_once_with(read_fd)
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
