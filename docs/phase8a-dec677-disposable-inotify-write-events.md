@@ -861,6 +861,12 @@ DEC-792 introduces `_checked_watch_path_bytes` for both generated file and paren
 
 This is input-contract hardening of the generated toy observer, not independent pathname race exclusion, real annual OS write denial or permission to dispatch run385.
 
+## DEC-793 — Live generated Linux controls for no-follow watch registration
+
+DEC-791 adds `IN_DONT_FOLLOW` on both registrations and `IN_ONLYDIR` on the generated parent directory. DEC-792 checks the exact pathname bytes before handing them to `ctypes`. DEC-793 is a **test-and-doc-only strict child** exercising these safeguards on genuine Linux kernel watch registrations using newly generated public files inside a private `/tmp` folder. A positive control creates a regular sample, registers both watches and confirms distinct positive WDs and the unchanged regular-file snapshot. A negative control creates a symbolic-link pathname inside the same generated folder, registers it with no-follow semantics, and checks that a bounded regular-file snapshot of the symlink fails via `O_NOFOLLOW`. Both controls close their inotify FDs and remove only their own generated fixtures. The tests are skipped on non-Linux systems.
+
+These checks add **two source-defined test methods (428 total unique methods)** and do not modify the observer runtime or production runner. They are not independently authenticated kernel provenance, race-free watch registration or annual OS confinement proof.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
