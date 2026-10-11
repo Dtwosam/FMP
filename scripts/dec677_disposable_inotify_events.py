@@ -604,7 +604,11 @@ def _bounded_inventory_names(folder: Path) -> tuple[str, ...]:
     return tuple(sorted(names))
 
 
-def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int]:
+class _SnapshotHardlinkCountError(OSError):
+    """Specific synthetic snapshot refusal of a non-single-linked inode."""
+
+
+def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int, int, int]:
     """Reject patched fstat metadata before size arithmetic or comparisons."""
     fields = ("st_mode", "st_dev", "st_ino", "st_nlink", "st_size",
               "st_mtime_ns", "st_ctime_ns", "st_uid", "st_gid")
@@ -619,9 +623,12 @@ def _checked_snapshot_metadata(st: Any) -> tuple[int, int, int, int, int, int]:
             or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
             or not stat.S_ISREG(mode)
             or not 0 <= dev <= MAX_KERNEL_STAT_ID
-            or not 0 <= ino <= MAX_KERNEL_STAT_ID or nlink != 1
+            or not 0 <= ino <= MAX_KERNEL_STAT_ID
             or not 0 <= size <= 4096):
         raise OSError("disposable sample is not a bounded regular inode")
+    if nlink != 1:
+        raise _SnapshotHardlinkCountError(
+            "disposable sample is not a bounded regular inode: hard-link count")
     if (not MIN_KERNEL_TIMESTAMP_NS <= mtime_ns <= MAX_KERNEL_TIMESTAMP_NS
             or not MIN_KERNEL_TIMESTAMP_NS <= ctime_ns <= MAX_KERNEL_TIMESTAMP_NS):
         raise OSError("disposable fstat has impossible nanosecond timestamps")
@@ -764,9 +771,15 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                             "disposable generated hard-link negative alias not verified"])
                     try:
                         _checked_snapshot_result(_snapshot_regular(path))
-                    except OSError:
+                    except _SnapshotHardlinkCountError:
+                        # Credit only the precise one-link guard. A failed
+                        # read, stat wrapper or injected ordinary OSError
+                        # does not establish what refused the alias.
                         return _outcome([
                             "deliberate generated hard-link alias negative control blocked"])
+                    except OSError:
+                        return _outcome([
+                            "disposable hard-link alias snapshot failed without link-count proof"])
                     return _outcome([
                         "disposable snapshot failed to refuse a hard-link alias"])
                 midpoint_matches_expected = None
