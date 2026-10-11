@@ -5318,6 +5318,87 @@ class DisposableInotifyTests(unittest.TestCase):
             module._rewrite_generated_with_fsync(path, module.BEFORE)
             self.assertEqual(path.read_bytes(), module.BEFORE)
 
+
+    def test_generated_rewrite_rejects_nonvoid_flush_before_fsync(self):
+        class FakeWriter:
+            def __init__(self, returned):
+                self.returned = returned
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def write(self, payload):
+                return len(payload)
+            def flush(self):
+                return self.returned
+            def fileno(self):
+                return 17
+        for invalid in (True, False, 0, 1, 'flushed', object()):
+            with self.subTest(flush_status=repr(invalid)):
+                with patch.object(module, 'open', create=True,
+                                  return_value=FakeWriter(invalid)):
+                    with patch.object(module.os, 'fsync') as sync:
+                        with self.assertRaisesRegex(OSError, 'flush returned malformed'):
+                            module._rewrite_generated_with_fsync(
+                                Path('/tmp/public-synthetic-no-file'), module.AFTER)
+                        sync.assert_not_called()
+
+    def test_generated_rewrite_rejects_nonvoid_fsync_status(self):
+        class FakeWriter:
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def write(self, payload):
+                return len(payload)
+            def flush(self):
+                return None
+            def fileno(self):
+                return 17
+        for invalid in (True, False, 0, 1, 'synced', object()):
+            with self.subTest(fsync_status=repr(invalid)):
+                with patch.object(module, 'open', create=True,
+                                  return_value=FakeWriter()):
+                    with patch.object(module.os, 'fsync', return_value=invalid) as sync:
+                        with self.assertRaisesRegex(OSError, 'fsync returned malformed'):
+                            module._rewrite_generated_with_fsync(
+                                Path('/tmp/public-synthetic-no-file'), module.AFTER)
+                        sync.assert_called_once_with(17)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux reverted write')
+    def test_reverted_write_nonvoid_fsync_blocks_and_closes_observer(self):
+        class FakeWriter:
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def write(self, payload):
+                return len(payload)
+            def flush(self):
+                return None
+            def fileno(self):
+                return 17
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((1, 2), module.BEFORE)) as snapshot:
+                    with patch.object(module, 'open', create=True,
+                                      return_value=FakeWriter()):
+                        with patch.object(module.os, 'fsync', return_value=True) as sync:
+                            with patch.object(module, '_read_pending') as drain:
+                                result = module.run_demo(negative=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertFalse(result['can_authorize_dispatch'])
+            self.assertFalse(result['independent_os_proof_verified'])
+            snapshot.assert_called_once()
+            sync.assert_called_once_with(17)
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
