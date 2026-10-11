@@ -943,6 +943,13 @@ DEC-808 additionally requires the lstat-verified directory to have exact private
 
 The generated public inventory tests on DEC-806 tested what they called surrogateescaped names using a **doubled backslash** bytes literal, `b'public-\\\\xff-entry'`. That evaluates to printable backslash/x/f/f text rather than a Linux filename containing the raw byte 255. DEC-809 corrects all three affected references in the existing two methods to use `b'public-' + bytes([255]) + b'-entry'`, preserving both the scanner comparison and its native-byte expectation. An additional method proves the byte-for-byte `fsdecode` → `fsencode` roundtrip and rejects a substituted encoding. This is a **test/docs-only** strict child: source runtime unchanged, **453 unique test methods**, and no promotion of local observer evidence.
 
+
+## DEC-810 — Prove nonprivate tempdirs stop runner before all writes
+
+DEC-808 checks directory owner and mode in the local generated path validator. This child adds a Linux-native runner-level regression: after safely creating a generated `/tmp/dec677-disposable-*` folder, intentionally chmod it to `0755` or `0777`, inject only its return from the context manager, and require the disposable runner to emit `BLOCKED` without either `Path.write_bytes` or `_start_watch`. The test restores `0700` before the original temporary-folder cleanup. Two unrelated synthetic UID tests also gain explicit non-Linux skip guards so they do not rely on `os.geteuid` on unsupported hosts.
+
+This is a test/docs-only strict descendant integrating the separate prior #1007 runner proof after #1008's real non-UTF-8 fixtures; the total rises to **454 unique source-defined methods**. No runtime changes, no independently enforced annual OS confinement, no dispatch authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
