@@ -7467,6 +7467,28 @@ class DisposableInotifyTests(unittest.TestCase):
                       ' '.join(receipt['findings']))
         runner.assert_called_once()
 
+
+    def test_cli_runner_exception_emits_blocked_receipt_not_traceback(self):
+        errors = (OSError(5, 'synthetic observer IO failure'),
+                  RuntimeError('synthetic runner wrapper failure'),
+                  TypeError('synthetic runner argument wrapper failure'),
+                  ValueError('synthetic observer result failure'))
+        for error in errors:
+            with self.subTest(exception_type=type(error).__name__):
+                stdout = io.StringIO()
+                with patch.object(module, 'run_demo',
+                                  side_effect=error) as runner:
+                    with contextlib.redirect_stdout(stdout):
+                        exit_code = module.main(['--execute-disposable-control'])
+                self.assertEqual(exit_code, 2)
+                receipt = json.loads(stdout.getvalue())
+                self.assertEqual(receipt['status'], 'BLOCKED')
+                self.assertIs(receipt['can_authorize_dispatch'], False)
+                self.assertIs(receipt['independent_os_proof_verified'], False)
+                self.assertIn('CLI runner raised unexpectedly',
+                              ' '.join(receipt['findings']))
+                runner.assert_called_once()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

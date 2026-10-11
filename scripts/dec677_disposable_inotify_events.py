@@ -1240,17 +1240,22 @@ def main(argv: list[str] | None = None) -> int:
             _outcome(["disposable observer CLI arguments rejected"]),
             sort_keys=True, separators=(",", ":")))
         return 2
-    result = (run_demo(negative=args.execute_reverted_write_negative,
-                       replace_watched_inode=args.execute_inode_replacement_negative,
-                       create_sibling=args.execute_sibling_creation_negative,
-                       transient_sibling=args.execute_transient_directory_negative,
-                       hardlink_negative=args.execute_hardlink_alias_negative)
-              if (args.execute_disposable_control or args.execute_reverted_write_negative
-                  or args.execute_inode_replacement_negative
-                  or args.execute_sibling_creation_negative
-                  or args.execute_transient_directory_negative
-                  or args.execute_hardlink_alias_negative)
-              else _outcome(["explicit synthetic observer opt-in required"]))
+    try:
+        result = (run_demo(negative=args.execute_reverted_write_negative,
+                           replace_watched_inode=args.execute_inode_replacement_negative,
+                           create_sibling=args.execute_sibling_creation_negative,
+                           transient_sibling=args.execute_transient_directory_negative,
+                           hardlink_negative=args.execute_hardlink_alias_negative)
+                  if (args.execute_disposable_control or args.execute_reverted_write_negative
+                      or args.execute_inode_replacement_negative
+                      or args.execute_sibling_creation_negative
+                      or args.execute_transient_directory_negative
+                      or args.execute_hardlink_alias_negative)
+                  else _outcome(["explicit synthetic observer opt-in required"]))
+    except Exception:
+        # A substituted or broken synthetic runner must still yield one
+        # parseable, permanently nonauthorizing BLOCKED CLI receipt.
+        result = _outcome(["disposable CLI runner raised unexpectedly"])
     # The CLI is another trust boundary: injected or malformed runner receipts
     # must not be serialized as authorizing results or decide exit status.
     result = _checked_disposable_observer_result(result)
