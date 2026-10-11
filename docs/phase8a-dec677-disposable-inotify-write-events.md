@@ -841,6 +841,12 @@ DEC-789 **does not alter runtime source**. It captures the native `os.stat` befo
 
 The child remains an unmerged, nonauthorizing local generated /tmp witness; a full historical CI success and independent qualified source/security review are still needed at its own exact head. DEC-650 real OS confinement and DEC-651 immutable one-shot annual admission remain BLOCKED.
 
+## DEC-790 — Verify no-follow alias lookup rejects a generated symlink
+
+The generated public hard-link negative control is meant to prove two directory entries identify the same watched inode and that a bounded snapshot refuses a link count greater than one. The alias verifier uses `os.stat(..., follow_symlinks=False)` for both paths. A symbolic link to the sample is **not** a second hard link, and must not be mistaken for one even though it resolves to the same content if followed.
+
+DEC-790 adds a test-and-documentation-only child: a live generated /tmp symlink to the sample must be refused by the pinned alias verifier, while replacing it with a genuine second hard link must be accepted as **only a local same-process identity check**. A synthetic two-path test asserts the verifier passes `follow_symlinks=False` for both stat calls, preventing accidental relaxation. This adds **two source-defined regression methods (421 total distinct tests)**. The observer source itself and annual runner remain unchanged; local tests do not prove independent OS enforcement or permit run385 admission.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
