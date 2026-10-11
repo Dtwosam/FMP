@@ -1443,6 +1443,31 @@ an independently enforced OS no-write guarantee, or run385 authority.
 DEC-650/651 remain BLOCKED. Require exact-head Phase 3/full historical
 CI and independent review. **DRAFT / NEVER MERGE**.
 
+
+## DEC-854 — Bound synthetic receipt size before CLI serialization
+
+The DEC-850–853 receipt boundaries validate field type, exact native names,
+status and never-authorize flags, but a synthetic injected evaluator or
+runner could still supply a correctly typed, arbitrarily large finding
+list or observed-check map. DEC-854 bounds the result to at most 64
+findings of 1–512 characters each and at most 64 observed checks with
+native 1–128-character keys and exact Boolean values. It keeps the existing
+strict top-level shape, status consistency and immutable false authority
+fields. A malformed or oversized injected receipt is replaced with one
+small `BLOCKED` result before JSON serialization.
+
+Two test methods exercise oversized and empty finding strings/check names,
+too many findings/checks, the valid path, and in-process CLI capture for
+oversized runner output. **510 source-defined test methods** on this strict
+parent-pinned tip. There is no new annual or production code, and no
+relaxation of the observer's refusal checks.
+
+Receipt bounds are defense in depth for synthetic Python return values,
+not a kernel no-write proof, sandbox, atomic race guarantee or admission.
+DEC-650 independent confinement for 20 annual jobs and DEC-651 exclusive
+run385 admission remain BLOCKED. Exact-head Phase 3/full historical CI
+and independent security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

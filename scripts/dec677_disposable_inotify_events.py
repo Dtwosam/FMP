@@ -64,6 +64,12 @@ MIN_KERNEL_TIMESTAMP_NS = -(1 << 63) * 1_000_000_000
 MAX_KERNEL_TIMESTAMP_NS = (1 << 63) * 1_000_000_000 - 1
 # Linux UAPI limits.h NAME_MAX for a single directory-entry component.
 MAX_EVENT_BASENAME = 255
+# A generated local witness has a small fixed set of checks and findings.
+# Reject injected oversized receipts before copying/serializing them.
+MAX_RECEIPT_FINDINGS = 64
+MAX_RECEIPT_FINDING_CHARS = 512
+MAX_RECEIPT_CHECKS = 64
+MAX_RECEIPT_CHECK_KEY_CHARS = 128
 
 
 def _outcome(findings: list[str], checks: dict[str, bool] | None = None) -> dict[str, Any]:
@@ -92,9 +98,15 @@ def _checked_disposable_observer_result(value: Any) -> dict[str, Any]:
         if (type(status) is not str
                 or status not in ("BLOCKED", "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED")
                 or type(findings) is not list
-                or any(type(item) is not str for item in findings)
+                or len(findings) > MAX_RECEIPT_FINDINGS
+                or any(type(item) is not str
+                       or not 1 <= len(item) <= MAX_RECEIPT_FINDING_CHARS
+                       for item in findings)
                 or type(checks) is not dict
-                or any(type(key) is not str or type(val) is not bool
+                or len(checks) > MAX_RECEIPT_CHECKS
+                or any(type(key) is not str
+                       or not 1 <= len(key) <= MAX_RECEIPT_CHECK_KEY_CHARS
+                       or type(val) is not bool
                        for key, val in checks.items())
                 or value["can_authorize_dispatch"] is not False
                 or value["independent_os_proof_verified"] is not False
