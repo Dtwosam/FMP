@@ -4673,6 +4673,39 @@ class DisposableInotifyTests(unittest.TestCase):
             alias.unlink()
             self.assertFalse(module._plausible_generated_hardlink_pair(path, alias))
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch')
+    def test_hardlink_negative_rejects_nonvoid_link_wrapper_return(self):
+        for invalid in (True, False, 0, 1, 'linked', object()):
+            with self.subTest(link_status=repr(invalid)):
+                rd, wr = os.pipe()
+                try:
+                    with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                        with patch.object(module, '_snapshot_regular',
+                                          return_value=((1, 2), module.BEFORE)) as snapshot:
+                            with patch.object(module.os, 'link', return_value=invalid):
+                                with patch.object(module, '_plausible_generated_hardlink_pair') as verify:
+                                    outcome = module.run_demo(hardlink_negative=True)
+                    self.assertEqual(outcome['status'], 'BLOCKED')
+                    self.assertIn('malformed status', ' '.join(outcome['findings']))
+                    self.assertFalse(outcome['can_authorize_dispatch'])
+                    self.assertEqual(snapshot.call_count, 1)
+                    verify.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(rd)
+                finally:
+                    os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'link'),
+                         'disposable Linux link syscall')
+    def test_native_link_syscall_returns_none_for_generated_alias(self):
+        with tempfile.TemporaryDirectory(prefix='dec780-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            alias = Path(folder) / 'public-hardlink-alias'
+            path.write_bytes(module.BEFORE)
+            self.assertIsNone(os.link(path, alias))
+            self.assertTrue(module._plausible_generated_hardlink_pair(path, alias))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

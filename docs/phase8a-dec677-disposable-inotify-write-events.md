@@ -775,6 +775,12 @@ DEC-779 adds `_plausible_generated_hardlink_pair`, a fail-closed **same-process 
 
 Four source-defined tests increase the suite to **399 uniquely named methods**, covering mismatched/injected stat identities, missing aliases, an inert mocked link syscall that returns normally without creating an alias (while still cleaning up the watcher FD), and a live disposable Linux link/unlink identity cycle. Only the generated /tmp observer source, synthetic tests, and documentation change.
 
+## DEC-780 — Require the native nonvoid-status contract for generated os.link
+
+DEC-779 verifies that the generated public hard-link negative control actually produced two paths referring to one inode with kernel-reported link counts of two. The control still ignored the direct `os.link` return, however. Python's successful `os.link` has a **void (`None`) result**; a patched wrapper returning a truthy or other nonvoid value is not a reliable successful syscall result and must not reach the later control-verification boundary.
+
+DEC-780 validates `linked is None` immediately after the generated-link attempt, returning an explicit `BLOCKED` malformed-status finding if the shape is not exact, before any alias verification or second snapshot. Two new source-defined regression methods raise the suite to **401 distinct test methods**: hostile nonvoid returns are rejected with valid observer FD cleanup and no alias-verifier invocation, while a live disposable Linux `os.link` returns native `None` and the resulting two-link alias remains locally verifiable. This only hardens same-process disposable API contracts; neither syscall return nor local /tmp stat values provide independently authenticated host security proof.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
