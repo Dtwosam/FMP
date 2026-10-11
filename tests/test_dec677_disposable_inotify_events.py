@@ -4609,6 +4609,70 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertEqual(st.st_nlink, 1)
             self.assertEqual(module._snapshot_regular(path)[1], module.BEFORE)
 
+
+    def test_generated_hardlink_pair_verifier_requires_matching_exact_ids(self):
+        class FakeStat:
+            def __init__(self, mode, dev, ino, nlink):
+                self.st_mode = mode
+                self.st_dev = dev
+                self.st_ino = ino
+                self.st_nlink = nlink
+        normal = FakeStat(module.stat.S_IFREG | 0o600, 1, 2, 2)
+        invalid = (
+            FakeStat(module.stat.S_IFREG | 0o600, 1, 3, 2),
+            FakeStat(module.stat.S_IFREG | 0o600, 4, 2, 2),
+            FakeStat(module.stat.S_IFREG | 0o600, 1, 2, 1),
+            FakeStat(module.stat.S_IFDIR | 0o700, 1, 2, 2),
+            FakeStat((1 << 24) | module.stat.S_IFREG, 1, 2, 2),
+            FakeStat(module.stat.S_IFREG | 0o600, 1, True, 2),
+        )
+        with patch.object(module.os, 'stat', side_effect=(normal, normal)):
+            self.assertTrue(module._plausible_generated_hardlink_pair(
+                Path('/tmp/public-one'), Path('/tmp/public-two')))
+        for bad in invalid:
+            with self.subTest(invalid=vars(bad)):
+                with patch.object(module.os, 'stat',
+                                  side_effect=(normal, bad)):
+                    self.assertFalse(module._plausible_generated_hardlink_pair(
+                        Path('/tmp/public-one'), Path('/tmp/public-two')))
+
+    def test_generated_hardlink_pair_verifier_handles_missing_alias(self):
+        with patch.object(module.os, 'stat',
+                          side_effect=FileNotFoundError('synthetic missing alias')):
+            self.assertFalse(module._plausible_generated_hardlink_pair(
+                Path('/tmp/public-one'), Path('/tmp/public-two')))
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux observer')
+    def test_hardlink_mode_inert_link_wrapper_does_not_claim_guard_detection(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((1, 2), module.BEFORE)) as snapshot:
+                    with patch.object(module.os, 'link', return_value=None):
+                        result = module.run_demo(hardlink_negative=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIn('negative alias not verified', ' '.join(result['findings']))
+            self.assertEqual(snapshot.call_count, 1)
+            self.assertFalse(result['can_authorize_dispatch'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'link'),
+                         'disposable Linux hardlink pair')
+    def test_live_generated_hardlink_pair_verifier_checks_kernel_alias(self):
+        with tempfile.TemporaryDirectory(prefix='dec779-public-', dir='/tmp') as folder:
+            path = Path(folder) / 'sample'
+            alias = Path(folder) / 'second-public-link'
+            path.write_bytes(module.BEFORE)
+            self.assertFalse(module._plausible_generated_hardlink_pair(path, alias))
+            os.link(path, alias)
+            self.assertTrue(module._plausible_generated_hardlink_pair(path, alias))
+            alias.unlink()
+            self.assertFalse(module._plausible_generated_hardlink_pair(path, alias))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

@@ -685,6 +685,29 @@ def _checked_snapshot_result(value: Any) -> tuple[tuple[int, int], bytes]:
     return identity, data
 
 
+def _plausible_generated_hardlink_pair(source: Path, alias: Path) -> bool:
+    """Validate generated local link identities, never independent host proof."""
+    try:
+        first = os.stat(source, follow_symlinks=False)
+        second = os.stat(alias, follow_symlinks=False)
+        identities = []
+        for st in (first, second):
+            mode, dev, ino, nlink = (st.st_mode, st.st_dev, st.st_ino,
+                                     st.st_nlink)
+            if (any(type(value) is not int
+                    for value in (mode, dev, ino, nlink))
+                    or mode & ~ALLOWED_KERNEL_STAT_MODE_BITS
+                    or not stat.S_ISREG(mode)
+                    or not 0 <= dev <= MAX_KERNEL_STAT_ID
+                    or not 0 <= ino <= MAX_KERNEL_STAT_ID
+                    or nlink != 2):
+                return False
+            identities.append((mode, dev, ino, nlink))
+        return identities[0] == identities[1]
+    except Exception:
+        return False
+
+
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
              create_sibling: bool = False, transient_sibling: bool = False,
              hardlink_negative: bool = False) -> dict[str, Any]:
@@ -730,6 +753,9 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     # refuse it; even an injected bypass never authorizes.
                     alias = Path(folder) / "public-hardlink-alias"
                     os.link(path, alias)
+                    if not _plausible_generated_hardlink_pair(path, alias):
+                        return _outcome([
+                            "disposable generated hard-link negative alias not verified"])
                     try:
                         _checked_snapshot_result(_snapshot_regular(path))
                     except OSError:
