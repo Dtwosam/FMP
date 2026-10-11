@@ -827,6 +827,12 @@ DEC-782–786 require the two generated alias path stats to match on mode, devic
 
 Two new source-defined methods bring the suite to **416 unique tests**. Only disposable observer tests and documentation are changed. The synthetic matrix is not host OS-enforced write denial, independently authenticated kernel provenance or annual run385 authorization.
 
+## DEC-788 — Native link and alias-stat failure cleanup regression coverage
+
+The explicit generated hard-link negative control now checks the void `os.link` return, verifies both bounded alias records match the watched baseline, credits only the precise link-count refusal and rechecks the alias afterward. DEC-788 is a **test-and-doc-only** child proving native-style syscall failures never get miscredited as a successful local link guard and never leak the allocated watcher.
+
+Three native `OSError` subclasses (`PermissionError`, `FileExistsError` and another link failure) must stop before the alias verifier or second snapshot, return a nonauthorizing `BLOCKED` receipt, and close the observer FD. A separate injected `FileNotFoundError` when statting an allegedly linked alias must return a specific `BLOCKED` alias-unverified result with the FD closed and no credited link-count detection. Two new source-defined methods raise the suite to **418 unique tests**. No runtime observer script is modified by this child, and no generated local proof is annual OS isolation authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

@@ -5047,6 +5047,59 @@ class DisposableInotifyTests(unittest.TestCase):
                         expected_inode=value))
                     observed.assert_not_called()
 
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch')
+    def test_hardlink_native_oserrors_block_before_alias_proof_and_close_fd(self):
+        for native_error in (PermissionError(13, 'synthetic denied link'),
+                             FileExistsError(17, 'synthetic existing link'),
+                             OSError(31, 'synthetic too many links')):
+            with self.subTest(errno=native_error.errno):
+                rd, wr = os.pipe()
+                try:
+                    with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                        with patch.object(module, '_snapshot_regular',
+                                          return_value=((1, 2), module.BEFORE)) as snapshot:
+                            with patch.object(module.os, 'link',
+                                              side_effect=native_error):
+                                with patch.object(module, '_plausible_generated_hardlink_pair') as verify:
+                                    with patch.object(module, '_read_pending') as drain:
+                                        outcome = module.run_demo(hardlink_negative=True)
+                    self.assertEqual(outcome['status'], 'BLOCKED')
+                    self.assertFalse(outcome['can_authorize_dispatch'])
+                    self.assertFalse(outcome['independent_os_proof_verified'])
+                    self.assertNotIn('negative control blocked',
+                                     ' '.join(outcome['findings']))
+                    self.assertEqual(snapshot.call_count, 1)
+                    verify.assert_not_called()
+                    drain.assert_not_called()
+                    with self.assertRaises(OSError):
+                        os.fstat(rd)
+                finally:
+                    os.close(wr)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux watch')
+    def test_hardlink_alias_stat_failure_cannot_credit_detection_or_leak_fd(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((1, 2), module.BEFORE)) as snapshot:
+                    with patch.object(module.os, 'link', return_value=None):
+                        with patch.object(module.os, 'stat',
+                                          side_effect=FileNotFoundError(2, 'synthetic missing alias')):
+                            with patch.object(module, '_read_pending') as drain:
+                                outcome = module.run_demo(hardlink_negative=True)
+            self.assertEqual(outcome['status'], 'BLOCKED')
+            self.assertIn('negative alias not verified', ' '.join(outcome['findings']))
+            self.assertNotIn('negative control blocked', ' '.join(outcome['findings']))
+            self.assertEqual(snapshot.call_count, 1)
+            drain.assert_not_called()
+            self.assertFalse(outcome['independent_os_proof_verified'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
