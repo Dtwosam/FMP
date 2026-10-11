@@ -755,6 +755,12 @@ DEC-775 adds `--execute-hardlink-alias-negative`, an explicit generated `/tmp` n
 
 Three source-defined methods bring the suite to **389 uniquely named tests**. No production runtime, script source, workflow, runner, permission or protected annual evidence is changed in this child. A correctly observed local refusal remains *toy negative evidence*, not independent OS-enforced isolation or annual 385 admission.
 
+## DEC-777 — Check and retain Linux snapshot ownership metadata
+
+DEC-773 requires a singly linked disposable sample, but previous fstat snapshot equality omitted `st_uid` and `st_gid`. This could let an injected metadata pair with changed owner/group IDs but forged identical timestamps pass as stable. DEC-777 requires exact plain integers within Linux's unsigned 32-bit uid_t/gid_t range and appends both to the compared metadata tuple, without shifting the existing mode, dev, ino, size or timestamp positions or changing the public `((dev, ino), bytes)` snapshot result.
+
+All synthetic fstat fixtures supply valid `st_uid=0`, `st_gid=0` fields rather than failing for missing attributes; their direct metadata return assertions are adjusted to the new eight-field tuple. Three new source-defined regression methods increase the suite to **392 uniquely named tests**: owner/group drift with otherwise constant metadata is rejected with FD cleanup, malformed/oversized/hostile owner IDs fail closed, and legitimate UINT32 boundary IDs remain supported. This does not prove independent Linux host identity attestation or annual OS write-prevention.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
