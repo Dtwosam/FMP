@@ -9214,6 +9214,42 @@ class DisposableInotifyTests(unittest.TestCase):
             if not state['writer_closed']:
                 os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'bounded receipt poll timeout contract')
+    def test_final_receipt_poll_uses_zero_wait_without_changing_first_drain(self):
+        watched_fd = 17  # synthetic collector contract, not a live watch
+        with patch.object(module.select, 'poll') as make_poller:
+            poller = make_poller.return_value
+            poller.register.return_value = None
+            poller.poll.return_value = []
+            self.assertEqual(module._read_pending(watched_fd), b'')
+            poller.poll.assert_called_once_with(250)
+            poller.register.assert_called_once_with(
+                watched_fd,
+                module.select.POLLIN | module.select.POLLERR |
+                module.select.POLLHUP | module.select.POLLNVAL)
+
+        with patch.object(module.select, 'poll') as make_poller:
+            poller = make_poller.return_value
+            poller.register.return_value = None
+            poller.poll.return_value = []
+            self.assertEqual(module._read_receipt_pending(watched_fd), b'')
+            poller.poll.assert_called_once_with(0)
+            poller.register.assert_called_once_with(
+                watched_fd,
+                module.select.POLLIN | module.select.POLLERR |
+                module.select.POLLHUP | module.select.POLLNVAL)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'malformed receipt poll timeout contract')
+    def test_receipt_collector_rejects_out_of_bounds_poll_timeouts_before_polling(self):
+        invalid = (-1, 251, True, False, 0.0, '0', None,
+                   type('IntChild', (int,), {})(0))
+        for value in invalid:
+            with self.subTest(type_name=type(value).__name__, value=str(value)):
+                with patch.object(module.select, 'poll') as make_poller:
+                    with self.assertRaises(OSError):
+                        module._read_pending_checked(17, initial_timeout_ms=value)
+                    make_poller.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
