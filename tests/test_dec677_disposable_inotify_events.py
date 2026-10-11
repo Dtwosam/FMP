@@ -6022,44 +6022,58 @@ class DisposableInotifyTests(unittest.TestCase):
             st_ino = 99
             st_nlink = 1
 
+        native_fstat = os.fstat
+
+        def scoped_writer_fstat(fd):
+            if fd == 19:
+                return RealisticPublicFdStat()
+            # tempfile cleanup legitimately stats its own directory FD.
+            return native_fstat(fd)
+
         with patch.object(module.Path, 'open') as opener:
             stream = opener.return_value.__enter__.return_value
             stream.fileno.return_value = 19
             stream.write.return_value = len(module.BEFORE)
             opener.return_value.__exit__.side_effect = OSError(
                 28, 'synthetic public file close failure')
-            # The new original-inode guard must be satisfied so that this
-            # test still reaches the distinct writer __exit__ close fault.
+            # Scope the fake metadata ONLY to the synthetic writer FD:
+            # the generated tempdir's separate fstat must still be native.
             with patch.object(module.os, 'fstat',
-                              return_value=RealisticPublicFdStat()) as fst:
+                              side_effect=scoped_writer_fstat) as fst:
                 with patch.object(module, '_start_watch') as watch:
                     receipt = module.run_demo()
         self.assertEqual(receipt['status'], 'BLOCKED')
         self.assertFalse(receipt['can_authorize_dispatch'])
         self.assertFalse(receipt['independent_os_proof_verified'])
         stream.write.assert_called_once_with(module.BEFORE)
-        fst.assert_called_once_with(19)
+        self.assertEqual(sum(call.args == (19,) for call in fst.call_args_list), 1)
         opener.return_value.__exit__.assert_called_once_with(None, None, None)
         watch.assert_not_called()
 
     @unittest.skipUnless(sys.platform == 'linux', 'exclusive writer fstat exception')
     def test_initial_writer_fstat_failure_blocks_and_exits_before_watcher(self):
+        native_fstat = os.fstat
         for failure in (OSError(9, 'synthetic unreadable writer inode'),
                         RuntimeError('synthetic fstat wrapper fault')):
             with self.subTest(failure=type(failure).__name__):
+                def scoped_writer_failure(fd):
+                    if fd == 19:
+                        raise failure
+                    return native_fstat(fd)
+
                 with patch.object(module.Path, 'open') as opener:
                     stream = opener.return_value.__enter__.return_value
                     stream.fileno.return_value = 19
                     stream.write.return_value = len(module.BEFORE)
                     with patch.object(module.os, 'fstat',
-                                      side_effect=failure) as fst:
+                                      side_effect=scoped_writer_failure) as fst:
                         with patch.object(module, '_start_watch') as watcher:
                             receipt = module.run_demo()
                 self.assertEqual(receipt['status'], 'BLOCKED')
                 self.assertFalse(receipt['can_authorize_dispatch'])
                 self.assertFalse(receipt['independent_os_proof_verified'])
                 stream.write.assert_called_once_with(module.BEFORE)
-                fst.assert_called_once_with(19)
+                self.assertEqual(sum(call.args == (19,) for call in fst.call_args_list), 1)
                 opener.return_value.__exit__.assert_called_once()
                 watcher.assert_not_called()
 
