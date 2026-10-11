@@ -891,6 +891,13 @@ The generated Linux /tmp observer previously checked `os.path.isdir("/tmp")` and
 
 DEC-797 isolates the Linux platform gate, wraps both /tmp probes in a narrow ordinary `Exception` handler, and requires exact identity `is True` for directory status and `is False` for symlink status. Any exception or malformed injected result returns the same `BLOCKED` monitor-unavailable finding **before creating any public files or starting any watches**. The existing disposable setup, cleanup and no-authorization semantics remain unchanged. Two source-defined tests bring the suite to **436 uniquely named methods**, covering exceptions from each probe and several non-boolean forged values. This is local preflight fault tolerance, not independent host OS enforcement or annual run385 authority.
 
+
+## DEC-798 — Require a plain Linux platform identity before /tmp preflight
+
+DEC-797 constrained the disposable `/tmp` environment probes. The preceding platform comparison could still invoke arbitrary Python comparison methods if a synthetic caller patched `sys.platform` with a custom object. For example, a fake `__ne__` operator that reports equality with `"linux"` would allow the earlier `sys.platform != "linux"` check to pass and reach filesystem preflight despite the forged platform identity.
+
+DEC-798 now requires `type(sys.platform) is str` and an exact `"linux"` match before any `/tmp` probe or observer startup. Two added source-defined regressions bring the suite to **438 uniquely named methods**. Forged comparison objects, a `str` subclass, non-Linux strings, and nonstring injected values return the standard nonauthorizing `BLOCKED` outcome without reaching `os.path.isdir` or starting a watch. This is Python-level synthetic input hardening, not genuine OS platform attestation, host runner confinement, or immutable annual dispatch.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

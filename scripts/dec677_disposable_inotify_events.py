@@ -781,7 +781,9 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
         return _outcome(["disposable negative-control modes must be booleans"])
     if sum(modes) > 1:
         return _outcome(["conflicting synthetic negative-control modes"])
-    if sys.platform != "linux":
+    # Forged comparison operators must not claim a synthetic Linux platform.
+    # A real sys.platform is a plain string: validate it before any /tmp IO.
+    if type(sys.platform) is not str or sys.platform != "linux":
         return _outcome(["Linux disposable kernel event monitor unavailable"])
     # These environment probes previously ran outside the runner's exception
     # boundary. Even a broken synthetic os.path wrapper must emit BLOCKED.
