@@ -5329,6 +5329,10 @@ class DisposableInotifyTests(unittest.TestCase):
 
     def test_watch_encoding_rejects_forged_fspath_and_encoder_agreement(self):
         path = Path('/tmp/actual-public-sample')
+        # Python may lazily materialize Path text. Capture it before
+        # monkeypatching shared os.fspath so the expected value is trusted.
+        expected_path = str(path)
+        self.assertEqual(expected_path, '/tmp/actual-public-sample')
         for forged in ('/tmp/another-public-sample', '/tmp',
                        '/etc/passwd', 'relative/public-sample'):
             with self.subTest(forged=forged):

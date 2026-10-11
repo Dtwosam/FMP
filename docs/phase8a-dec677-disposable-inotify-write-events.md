@@ -932,6 +932,13 @@ DEC-801 checks the exact bytes used to validate a plain inventory filename. DEC-
 
 Two test-only methods increase the strict branch to **447 uniquely named tests**. This also carries forward scanner-coverage intent from separate sibling #1001 without adopting its doubled-backslash faux non-UTF-8 fixture. No observer runtime, installed annual workflow, protected evidence, or trading component is changed. Exact-head CI and independent qualified security review remain necessary; local generated scanner tests are not actual runner OS isolation proof.
 
+
+## DEC-804 — Repair inherited lazy-Path mocked-fspath regression at exact red #1003
+
+Full historical GitHub workflow **38132855866** at #1003 source `3b123ebd47cc9ca385c68564a96f5d9f38e6ae45` completed **FAILURE**: 5,348 tests, one failure, 693 skipped. The inherited `test_watch_encoding_rejects_forged_fspath_and_encoder_agreement` expected the earlier `fspath disagrees` guard, but a nonmaterialized `Path` and a shared `os.fspath` monkeypatch allowed the mocked encoder exception to surface as `disposable watch pathname encoding failed`. The observed exception did not prove the asserted early-check contract.
+
+DEC-804 **only repairs the test fixture and documentation**: materialize and assert the original generated public pathname before patching `os.fspath`. The test still proves a forged path is rejected **before** `os.fsencode` is called. The source-defined method count stays **447**; observer runtime unchanged. An independent parallel fix exists in #1022 for its different descendant. Neither that fix nor this child rewrites #1003's historical RED head; both require separate exact-head Phase 3 and full regression verification. Neither is annual OS-confinement proof or runner authorization.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
