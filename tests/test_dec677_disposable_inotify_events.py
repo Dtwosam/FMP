@@ -4405,8 +4405,10 @@ class DisposableInotifyTests(unittest.TestCase):
             with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
                 with patch.object(module, '_snapshot_regular',
                                   return_value=((1, 2), module.BEFORE)) as snapshot:
-                    with patch.object(module, '_read_pending') as drain:
-                        result = module.run_demo(hardlink_negative=True)
+                    with patch.object(module, '_plausible_generated_hardlink_pair',
+                                      return_value=True):
+                        with patch.object(module, '_read_pending') as drain:
+                            result = module.run_demo(hardlink_negative=True)
             self.assertEqual(result['status'], 'BLOCKED')
             self.assertIn('failed to refuse a hard-link alias',
                           ' '.join(result['findings']))
@@ -4905,6 +4907,49 @@ class DisposableInotifyTests(unittest.TestCase):
             with alias.open('ab') as handle:
                 handle.write(b'EXTRA')
             self.assertFalse(module._plausible_generated_hardlink_pair(source, alias))
+
+
+    def test_generated_alias_must_match_baseline_snapshot_inode(self):
+        class FakeStat:
+            st_mode = module.stat.S_IFREG | 0o600
+            st_dev = 11
+            st_ino = 22
+            st_nlink = 2
+            st_uid = 10
+            st_gid = 20
+            st_size = len(module.BEFORE)
+            st_mtime_ns = 100
+            st_ctime_ns = 200
+        for expected, valid in (((11, 22), True), ((11, 23), False),
+                                ((12, 22), False), ((), False),
+                                ((True, 22), False),
+                                ((11, (1 << 64)), False)):
+            with self.subTest(expected=expected):
+                with patch.object(module.os, 'stat', return_value=FakeStat()):
+                    self.assertIs(
+                        module._plausible_generated_hardlink_pair(
+                            Path('/tmp/public-one'), Path('/tmp/public-two'),
+                            expected_inode=expected),
+                        valid)
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux observer')
+    def test_hardlink_mode_rejects_alias_of_replaced_baseline_inode(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                # A synthetic baseline identity unrelated to the actual
+                # generated temporary inode must not credit the alias.
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((0, 0), module.BEFORE)) as snapshot:
+                    result = module.run_demo(hardlink_negative=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIn('negative alias not verified', ' '.join(result['findings']))
+            self.assertEqual(snapshot.call_count, 1)
+            self.assertFalse(result['independent_os_proof_verified'])
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
 
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
