@@ -6308,6 +6308,64 @@ class DisposableInotifyTests(unittest.TestCase):
                 writer.assert_not_called()
                 watcher.assert_not_called()
 
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'symlink'),
+                         'native generated Linux prewatch symlink')
+    def test_pre_watcher_native_symlink_swap_refuses_identical_public_bytes(self):
+        read_fd, write_fd = os.pipe()
+        observed = []
+        try:
+            def substitute_before_watch(path):
+                original = path.read_bytes()
+                target = path.parent / 'public-reference'
+                target.write_bytes(original)
+                path.unlink()
+                path.symlink_to(target)
+                observed.append((original, target.read_bytes(), path.is_symlink()))
+                return read_fd, 9, 10
+
+            with patch.object(module, '_start_watch',
+                              side_effect=substitute_before_watch) as watch:
+                with patch.object(module, '_read_pending') as drain:
+                    receipt = module.run_demo()
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertFalse(receipt['can_authorize_dispatch'])
+            self.assertFalse(receipt['independent_os_proof_verified'])
+            watch.assert_called_once()
+            drain.assert_not_called()
+            self.assertEqual(observed, [(module.BEFORE, module.BEFORE, True)])
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'link'),
+                         'native generated Linux prewatch hardlink')
+    def test_pre_watcher_native_hardlink_alias_refuses_identical_public_inode(self):
+        read_fd, write_fd = os.pipe()
+        observed = []
+        try:
+            def link_before_watch(path):
+                alias = path.parent / 'public-alias'
+                os.link(path, alias)
+                st = os.stat(path, follow_symlinks=False)
+                observed.append((path.read_bytes(), alias.read_bytes(), st.st_nlink))
+                return read_fd, 9, 10
+
+            with patch.object(module, '_start_watch',
+                              side_effect=link_before_watch) as watch:
+                with patch.object(module, '_read_pending') as drain:
+                    receipt = module.run_demo()
+            self.assertEqual(receipt['status'], 'BLOCKED')
+            self.assertFalse(receipt['can_authorize_dispatch'])
+            self.assertFalse(receipt['independent_os_proof_verified'])
+            watch.assert_called_once()
+            drain.assert_not_called()
+            self.assertEqual(observed, [(module.BEFORE, module.BEFORE, 2)])
+            with self.assertRaises(OSError):
+                os.fstat(read_fd)
+        finally:
+            os.close(write_fd)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
