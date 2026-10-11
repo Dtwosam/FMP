@@ -1872,6 +1872,30 @@ no-write protection and DEC-651 immutable run385 admission remain
 BLOCKED. Exact-head Phase 3/full historical CI and independent source
 review remain mandatory. **DRAFT / NEVER MERGE**.
 
+
+## DEC-872 — Native late same-byte inode swap after final generated snapshot
+
+DEC-864 checks that the generated sample pathname still refers to the
+original exclusive-create inode after the last no-follow byte snapshot.
+DEC-872 adds a native Linux negative-control test that creates another
+regular inode containing **identical public fixture bytes** in the
+generated disposable /tmp parent and calls `os.replace` *after* the
+third bounded sample snapshot. It verifies the actual device/inode
+identity changed, while the bytes did not. An intentionally stubbed
+empty inotify queue cannot override the final pathname identity check:
+the result must be `BLOCKED`, both authority booleans exactly false,
+no local evaluator call, and the watcher descriptor closed.
+
+This child changes **only synthetic tests and documentation**; runtime
+guards are unchanged. **534 source-defined test methods**. The test is
+a controlled generated /tmp inode substitution, not proof that a live
+kernel watch would miss the corresponding directory event. It does
+not establish OS-enforced no-write confinement, atomic race exclusion,
+or annual runner authorization. DEC-650 20-job independent confinement
+and DEC-651 immutable run385 admission remain BLOCKED; exact-head Phase 3,
+full historical regression and independent security review are required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
