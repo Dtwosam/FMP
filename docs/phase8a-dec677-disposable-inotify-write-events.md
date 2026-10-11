@@ -2028,6 +2028,31 @@ or immutable server admission. DEC-650/#820 and DEC-651/#821/#779
 remain BLOCKED. Own exact-head Phase 3/full historical CI and qualified
 independent review mandatory. **DRAFT / NEVER MERGE**.
 
+
+## DEC-878 — Native pathname loss and symlink at receipt census
+
+DEC-876 makes a final nofollow sample pathname check after the receipt
+parent inventory. DEC-878 adds two **native Linux** late path-mutation
+regressions that operate only on the generated public /tmp sample after
+the third bounded directory scan (and after the synthetic queue drain).
+
+One removes the exact generated sample entry with `os.unlink` while
+the prior source bytes and directory names are already captured; final
+`os.lstat` must refuse its absence. The other replaces the generated
+sample with a symlink pointing **only** to a new generated public file
+containing identical fixture bytes. A native check verifies that the
+pathname is now a symlink despite matching dereferenced bytes. Both
+must return `BLOCKED`, never call the local evaluator, keep both
+authority/proof fields exactly false and close the watcher FD.
+
+Only disposable tests/documentation changed; **544 distinct
+source-defined test methods** at the strict tip. A test-stubbed empty
+queue is not kernel silence, and no Python final lstat can close all
+postcheck races or establish independently enforced no-write OS
+confinement/server admission. DEC-650/#820 and DEC-651/#821/#779 remain
+BLOCKED; own exact-head Phase 3/full historical CI and independent
+qualified review mandatory. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
