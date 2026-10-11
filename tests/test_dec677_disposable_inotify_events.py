@@ -9861,6 +9861,88 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real late kernel directory rename events')
+    def test_real_kernel_directory_rename_after_last_sample_stat_caught_by_late_drain(self):
+        # Entirely generated public /tmp data: the watched sample itself
+        # stays untouched while a new sibling is created and renamed after
+        # the final source metadata probe and the earlier event drain.
+        native_watch = module._start_watch
+        native_timestamps = module._checked_generated_sample_change_timestamps
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'sample': None, 'fd': None, 'wds': None,
+                 'checks': 0, 'moved': False, 'payload': None,
+                 'first': None, 'late': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['fd'] = fd
+            state['wds'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def checked(record):
+            stamps = native_timestamps(record)
+            state['checks'] += 1
+            if state['checks'] == 3:
+                folder = state['sample'].parent
+                before = folder / 'public-rename-before'
+                after = folder / 'public-rename-after'
+                before.write_bytes(b'PUBLIC-LATE-RENAME')
+                os.rename(before, after)
+                state['moved'] = (not before.exists() and after.is_file())
+                state['payload'] = after.read_bytes()
+            return stamps
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['late'] = native_last(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=checked) as checker:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as late_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['checks'], 3)
+        self.assertEqual(checker.call_count, 3)
+        self.assertTrue(state['moved'])
+        self.assertEqual(state['payload'], b'PUBLIC-LATE-RENAME')
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['wds']
+        parsed = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(parsed['well_formed'])
+        self.assertGreaterEqual(parsed['directory_changes'], 3)
+        masks = []
+        offset = 0
+        while offset < len(state['late']):
+            _, mask, _, name_length = module.EVENT.unpack_from(state['late'], offset)
+            masks.append(mask)
+            offset += module.EVENT.size + name_length
+        self.assertEqual(offset, len(state['late']))
+        self.assertTrue(any(mask & module.IN_MOVED_FROM for mask in masks))
+        self.assertTrue(any(mask & module.IN_MOVED_TO for mask in masks))
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        late_reader.assert_called_once()
+        evaluator.assert_not_called()
+        self.assertIsNotNone(state['fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
