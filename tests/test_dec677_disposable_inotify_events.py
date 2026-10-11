@@ -5185,6 +5185,36 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertFalse(module._plausible_generated_hardlink_pair(
                 Path('/tmp/public-a'), Path('/tmp/public-b')))
 
+
+    def test_generated_link_alias_refuses_identical_source_and_alias_path(self):
+        source = Path('/tmp/generated-sample')
+        with patch.object(module.os, 'stat',
+                          side_effect=AssertionError('must not stat same pathname')) as observed:
+            self.assertFalse(module._plausible_generated_hardlink_pair(
+                source, source, expected_inode=(1, 2)))
+            observed.assert_not_called()
+
+    def test_generated_link_alias_refuses_different_parent_directories(self):
+        source = Path('/tmp/generated-a/sample')
+        alias = Path('/tmp/generated-b/public-hardlink-alias')
+        with patch.object(module.os, 'stat',
+                          side_effect=AssertionError('must not stat outside sibling folder')) as observed:
+            self.assertFalse(module._plausible_generated_hardlink_pair(
+                source, alias, expected_inode=(1, 2)))
+            observed.assert_not_called()
+
+    def test_generated_link_alias_refuses_path_like_impostors_before_stat(self):
+        source = Path('/tmp/generated-sample')
+        alias = Path('/tmp/public-hardlink-alias')
+        for first, second in ((str(source), alias), (source, str(alias)),
+                              (None, alias), (source, None)):
+            with self.subTest(first=repr(first), second=repr(second)):
+                with patch.object(module.os, 'stat',
+                                  side_effect=AssertionError('must not stat bad path')) as observed:
+                    self.assertFalse(module._plausible_generated_hardlink_pair(
+                        first, second, expected_inode=(1, 2)))
+                    observed.assert_not_called()
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

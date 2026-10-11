@@ -695,7 +695,12 @@ def _checked_snapshot_result(value: Any) -> tuple[tuple[int, int], bytes]:
 
 def _plausible_generated_hardlink_pair(
         source: Path, alias: Path, expected_inode: tuple[int, int] | None = None) -> bool:
-    """Validate generated local links against the baseline inode when supplied."""
+    """Validate two distinct generated sibling links against the baseline."""
+    # Two stats on one pathname do not establish two entry identities.
+    # Refuse path impostors and cross-directory aliases before any syscall.
+    if (type(source) is not type(Path()) or type(alias) is not type(Path())
+            or source == alias or source.parent != alias.parent):
+        return False
     if expected_inode is not None and (
         type(expected_inode) is not tuple or len(expected_inode) != 2
         or any(type(part) is not int or not 0 <= part <= MAX_KERNEL_STAT_ID
