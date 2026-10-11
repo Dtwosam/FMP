@@ -1159,6 +1159,13 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                             or drained_snapshot_bytes != BEFORE
                             or drained_snapshot_bytes != end):
                         raise OSError("disposable sample bytes changed during event drain")
+                    # Reopening the sample can itself cross a parent rename.
+                    # Keep the generated parent identity check after that last
+                    # sample snapshot, before forming even a local witness.
+                    receipt_folder_inode = _checked_generated_directory_identity(
+                        os.lstat(folder_path))
+                    if receipt_folder_inode != initial_folder_inode:
+                        raise OSError("disposable parent directory changed during final sample snapshot")
                 return _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
                                  replacement_negative=replace_watched_inode,
