@@ -893,6 +893,12 @@ DEC-795–797 validate exact encoded watch path bytes, C-string safety, original
 
 Three new source-defined tests bring the suite to **446 distinctly named methods**: reject non-/tmp host locations, prove synthetic registration of one closes its FD without calling libc, and preserve native generated-style `/tmp` paths and their parent. Only disposable observer script, test module and documentation change; production annual paths, workflows, rulesets and runners are untouched.
 
+## DEC-799 — Live disposable dual-watch registration and write-event tests
+
+DEC-795–798 strictly check that encoded file and parent watch paths are exact, absolute, NUL-free, traversal-free and scoped to Linux `/tmp`. Those fail-closed guards must still permit the legitimate generated public observation path. DEC-799 is a **test-and-doc-only strict child** that checks actual kernel behavior without ever using a protected annual file, workflow or runner. The first new test creates a fresh private generated `/tmp` sample, verifies its file and parent encoded watch paths, registers both native Linux inotify watches and checks that the returned nonstdio FD and watch descriptor identities are plain distinct valid integers, closing the FD in `finally`.
+
+The second new test registers both watches on a generated public sample, rewrites only that sample to the public `AFTER` bytes, drains bounded kernel events, checks the stream parses as well-formed and contains at least one source content-write event, then asserts that the direct local evaluator returns `BLOCKED` with both authorization booleans false. Two source-defined methods bring the suite to **448 unique test methods**. If a Linux runner cannot provide a native inotify watch, that is a regression failure to investigate, **not** independent kernel-security proof. The local demonstration never authorizes the annual run385.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
