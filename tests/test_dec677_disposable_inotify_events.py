@@ -9501,6 +9501,84 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real kernel late source metadata event')
+    def test_real_kernel_source_chmod_after_last_metadata_probe_is_caught_by_late_drain(self):
+        # This is only a generated public /tmp inode and real native Linux
+        # inotify. The source is changed *after* the final receipt stat
+        # records its original metadata, not during an earlier snapshot.
+        native_watch = module._start_watch
+        native_timestamps = module._checked_generated_sample_change_timestamps
+        native_early = module._read_pending
+        native_late = module._read_receipt_pending
+        state = {'path': None, 'fd': None, 'wds': None, 'checks': 0,
+                 'before_mode': None, 'after_mode': None,
+                 'first': None, 'late': None}
+
+        def watched(path):
+            state['path'] = path
+            fd, wd, dir_wd = native_watch(path)
+            state['fd'] = fd
+            state['wds'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def checked(record):
+            stamps = native_timestamps(record)
+            state['checks'] += 1
+            if state['checks'] == 3:
+                # All previous post-drain source checks are complete. This
+                # real chmod emits an IN_ATTRIB on the original watched inode.
+                path = state['path']
+                before = os.lstat(path)
+                mode = module.stat.S_IMODE(before.st_mode)
+                os.chmod(path, mode ^ module.stat.S_IXUSR)
+                after = os.lstat(path)
+                state['before_mode'] = mode
+                state['after_mode'] = module.stat.S_IMODE(after.st_mode)
+                self.assertEqual((before.st_dev, before.st_ino),
+                                 (after.st_dev, after.st_ino))
+            return stamps
+
+        def early(fd):
+            state['first'] = native_early(fd)
+            return state['first']
+
+        def late(fd):
+            state['late'] = native_late(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=checked) as validator:
+                with patch.object(module, '_read_pending',
+                                  side_effect=early) as first:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=late) as last:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['checks'], 3)
+        self.assertEqual(validator.call_count, 3)
+        self.assertIsNotNone(state['before_mode'])
+        self.assertEqual(state['after_mode'],
+                         state['before_mode'] ^ module.stat.S_IXUSR)
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['wds']
+        events = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(events['well_formed'])
+        self.assertGreaterEqual(events['source_attribute_events'], 1)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first.assert_called_once()
+        last.assert_called_once()
+        evaluator.assert_not_called()
+        self.assertIsNotNone(state['fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
