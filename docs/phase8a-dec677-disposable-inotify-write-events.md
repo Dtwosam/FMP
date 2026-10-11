@@ -1345,6 +1345,34 @@ Phase 3/full historical CI green result and independent review. Non-atomic
 synthetic observations never satisfy DEC-650 confinement or DEC-651 run385
 admission. **DRAFT / NEVER MERGE**.
 
+
+## DEC-850 — Keep evaluator-returned receipts permanently nonauthorizing
+
+The source-defined `_evaluate` always returns `_outcome` with immutable
+`can_authorize_dispatch=false` and `independent_os_proof_verified=false`.
+However the generated runner returned `_evaluate` directly; a synthetic
+patched evaluator could fabricate a dispatch-authorizing or OS-proof result.
+DEC-850 checks the exact result shape, allowed local-only status, native
+string findings, native Boolean observed checks, consistency between the
+BLOCKED state and findings, and exact False authorization flags at the
+runner boundary. Any malformed or promoted evaluator return is replaced
+with a fresh `BLOCKED` nonauthorizing result.
+
+One Linux-generated regression method exercises seven hostile `_evaluate`
+returns including forged dispatch authority, forged independent OS proof,
+unsupported status, wrong check type, inconsistent findings, missing keys,
+and nondictionary values. Every case demands a `BLOCKED` result, false
+authorization and OS-proof booleans, and closed watcher FD. Normal native
+receipts retain their original shape. **503 distinct source-defined test
+methods** on this branch.
+
+The Python wrapper itself is not a security boundary against arbitrary
+process-level monkeypatching and does not prove independent OS confinement.
+The historical two-assertion failure at #1061 remains red on that exact
+head; DEC-849 (#1064) repairs it in a strict descendant, and this child
+requires separate exact-head Phase 3/full historical CI. DEC-650 and
+DEC-651 annual-runner gates remain **BLOCKED**. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
