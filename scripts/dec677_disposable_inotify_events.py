@@ -681,11 +681,13 @@ def _checked_snapshot_result(value: Any) -> tuple[tuple[int, int], bytes]:
 
 
 def run_demo(negative: bool = False, replace_watched_inode: bool = False,
-             create_sibling: bool = False, transient_sibling: bool = False) -> dict[str, Any]:
+             create_sibling: bool = False, transient_sibling: bool = False,
+             hardlink_negative: bool = False) -> dict[str, Any]:
     # The direct helper is also exercised by synthetic callers, not only the
     # argparse Boolean switches. Reject injected truthy/non-numeric values
     # before arithmetic or any generated filesystem operation.
-    modes = (negative, replace_watched_inode, create_sibling, transient_sibling)
+    modes = (negative, replace_watched_inode, create_sibling,
+             transient_sibling, hardlink_negative)
     if any(type(mode) is not bool for mode in modes):
         return _outcome(["disposable negative-control modes must be booleans"])
     if sum(modes) > 1:
@@ -717,6 +719,19 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                 original_inode, original_bytes = _checked_snapshot_result(_snapshot_regular(path))
                 if original_bytes != BEFORE:
                     raise OSError("disposable generated source baseline differs from fixture")
+                if hardlink_negative:
+                    # Deliberately create a second link ONLY to this generated
+                    # public /tmp inode. The snapshot link-count guard must
+                    # refuse it; even an injected bypass never authorizes.
+                    alias = Path(folder) / "public-hardlink-alias"
+                    os.link(path, alias)
+                    try:
+                        _checked_snapshot_result(_snapshot_regular(path))
+                    except OSError:
+                        return _outcome([
+                            "deliberate generated hard-link alias negative control blocked"])
+                    return _outcome([
+                        "disposable snapshot failed to refuse a hard-link alias"])
                 midpoint_matches_expected = None
                 if negative:
                     # This is generated public data; observe the intermediate
@@ -806,6 +821,7 @@ def main(argv: list[str] | None = None) -> int:
     choices.add_argument("--execute-inode-replacement-negative", action="store_true")
     choices.add_argument("--execute-sibling-creation-negative", action="store_true")
     choices.add_argument("--execute-transient-directory-negative", action="store_true")
+    choices.add_argument("--execute-hardlink-alias-negative", action="store_true")
     try:
         args = p.parse_args(argv)
     except SystemExit:
@@ -819,11 +835,13 @@ def main(argv: list[str] | None = None) -> int:
     result = (run_demo(negative=args.execute_reverted_write_negative,
                        replace_watched_inode=args.execute_inode_replacement_negative,
                        create_sibling=args.execute_sibling_creation_negative,
-                       transient_sibling=args.execute_transient_directory_negative)
+                       transient_sibling=args.execute_transient_directory_negative,
+                       hardlink_negative=args.execute_hardlink_alias_negative)
               if (args.execute_disposable_control or args.execute_reverted_write_negative
                   or args.execute_inode_replacement_negative
                   or args.execute_sibling_creation_negative
-                  or args.execute_transient_directory_negative)
+                  or args.execute_transient_directory_negative
+                  or args.execute_hardlink_alias_negative)
               else _outcome(["explicit synthetic observer opt-in required"]))
     print(json.dumps(result, sort_keys=True, separators=(",", ":")))
     return 3 if result["status"] == "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED" else 2

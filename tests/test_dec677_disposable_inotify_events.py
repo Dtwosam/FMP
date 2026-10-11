@@ -4343,6 +4343,59 @@ class DisposableInotifyTests(unittest.TestCase):
             finally:
                 os.close(fd)
 
+
+    def test_hardlink_alias_negative_mode_rejects_nonboolean_input_before_watch(self):
+        for invalid in ('yes', 1, None, ()):
+            with self.subTest(invalid=repr(invalid)):
+                with patch.object(module, '_start_watch') as register:
+                    result = module.run_demo(hardlink_negative=invalid)
+                self.assertEqual(result['status'], 'BLOCKED')
+                self.assertFalse(result['can_authorize_dispatch'])
+                register.assert_not_called()
+
+    def test_hardlink_alias_negative_conflicts_with_other_modes(self):
+        for kwargs in ({'negative': True},
+                       {'create_sibling': True},
+                       {'replace_watched_inode': True},
+                       {'transient_sibling': True}):
+            with self.subTest(kwargs=kwargs):
+                with patch.object(module, '_start_watch') as register:
+                    result = module.run_demo(hardlink_negative=True, **kwargs)
+                self.assertEqual(result['status'], 'BLOCKED')
+                register.assert_not_called()
+
+    @unittest.skipUnless(sys.platform == 'linux', 'disposable Linux hard-link mode')
+    def test_hardlink_alias_negative_never_promotes_injected_snapshot(self):
+        rd, wr = os.pipe()
+        try:
+            with patch.object(module, '_start_watch', return_value=(rd, 9, 10)):
+                with patch.object(module, '_snapshot_regular',
+                                  return_value=((1, 2), module.BEFORE)) as snapshot:
+                    with patch.object(module, '_read_pending') as drain:
+                        result = module.run_demo(hardlink_negative=True)
+            self.assertEqual(result['status'], 'BLOCKED')
+            self.assertIn('failed to refuse a hard-link alias',
+                          ' '.join(result['findings']))
+            self.assertFalse(result['can_authorize_dispatch'])
+            self.assertFalse(result['independent_os_proof_verified'])
+            self.assertEqual(snapshot.call_count, 2)
+            drain.assert_not_called()
+            with self.assertRaises(OSError):
+                os.fstat(rd)
+        finally:
+            os.close(wr)
+
+    def test_cli_explicit_hardlink_alias_negative_always_blocked(self):
+        p = subprocess.run(
+            [sys.executable, '-B', str(SCRIPT),
+             '--execute-hardlink-alias-negative'],
+            capture_output=True, text=True, timeout=6)
+        self.assertEqual(p.returncode, 2)
+        result = json.loads(p.stdout)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertFalse(result['can_authorize_dispatch'])
+        self.assertFalse(result['independent_os_proof_verified'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
