@@ -1132,6 +1132,15 @@ def run_demo(negative: bool = False, replace_watched_inode: bool = False,
                     os.lstat(folder_path))
                 if drained_folder_inode != initial_folder_inode:
                     raise OSError("disposable parent directory changed during event drain")
+                # A sample pathname can be replaced during queue collection
+                # without replacing its parent directory. The deliberate
+                # generated replacement negative control must still reach
+                # its own evaluator instead of preempting its proof.
+                if not replace_watched_inode:
+                    drained_sample_inode = _checked_initial_sample_identity(
+                        os.lstat(path))
+                    if drained_sample_inode != initial_sample_inode:
+                        raise OSError("disposable sample inode changed during event drain")
                 return _evaluate(original_bytes, end, raw, wd, True, negative,
                                  inode_stable=(original_inode == final_inode),
                                  replacement_negative=replace_watched_inode,
