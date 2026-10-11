@@ -6590,7 +6590,7 @@ class DisposableInotifyTests(unittest.TestCase):
                                   side_effect=mutate_and_forge) as fspath:
                     with patch.object(module.os, 'fsencode',
                                       side_effect=AssertionError('encoder must not run')) as encode:
-                        with self.assertRaisesRegex(OSError, 'fspath disagrees'):
+                        with self.assertRaisesRegex(OSError, 'raw segments changed during encoding'):
                             module._checked_watch_path_bytes(path)
                         encode.assert_not_called()
                     fspath.assert_called_once_with(path)
