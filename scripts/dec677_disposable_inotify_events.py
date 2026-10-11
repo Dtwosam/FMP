@@ -612,11 +612,13 @@ def _plausible_inventory_basename(name: Any) -> bool:
         return False
     try:
         encoded = os.fsencode(name)
+        # A monkeypatched encoder must not validate a DIFFERENT name.
+        expected = name.encode(sys.getfilesystemencoding(), "surrogateescape")
     except Exception:
         return False
-    # A patched encoder result may forge comparison or truthiness. The real
-    # os.fsencode result is an exact immutable bytes object.
-    return (type(encoded) is bytes and 0 < len(encoded) <= MAX_EVENT_BASENAME
+    # Require exact native bytes for this bounded plain str basename.
+    return (type(encoded) is bytes and encoded == expected
+            and 0 < len(encoded) <= MAX_EVENT_BASENAME
             and encoded not in (b".", b"..")
             and b"/" not in encoded and b"\x00" not in encoded)
 
