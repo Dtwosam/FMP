@@ -15517,6 +15517,115 @@ class DisposableInotifyTests(unittest.TestCase):
                         watcher_closed = True
         self.assertTrue(watcher_closed)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'real native parent watch removal is Linux-only')
+    def test_real_native_parent_rm_watch_invalidates_but_source_remains_live(self):
+        # Remove ONLY the generated private parent directory watch while
+        # the original source watch and inotify instance stay open.
+        # Subsequent new/deleted sibling entries are absent from this
+        # instance, but actual source writes still produce native events.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        fd = None
+        watcher_closed = False
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec960-native-rm-parent-watch-', dir='/tmp') as tmp:
+            source = Path(tmp) / 'sample'
+            self.assertEqual(source.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            before = os.lstat(source)
+            parent_before = os.lstat(source.parent)
+            self.assertEqual(module._bounded_inventory_names(
+                source.parent), ('sample',))
+            try:
+                fd, source_wd, parent_wd = native_watch(source)
+                self.assertNotEqual(source_wd, parent_wd)
+                self.assertEqual(native_poll(fd), b'')
+                lib = module.ctypes.CDLL(None, use_errno=True)
+                lib.inotify_rm_watch.argtypes = [
+                    module.ctypes.c_int, module.ctypes.c_int]
+                lib.inotify_rm_watch.restype = module.ctypes.c_int
+                self.assertEqual(lib.inotify_rm_watch(fd, parent_wd), 0)
+                removed = native_poll(fd)
+                self.assertEqual(
+                    removed,
+                    module.EVENT.pack(parent_wd, module.IN_IGNORED, 0, 0))
+                invalidated = module._classify_stream(
+                    removed, source_wd, parent_wd)
+                self.assertTrue(invalidated['well_formed'])
+                self.assertTrue(invalidated['invalidated'])
+                self.assertEqual(native_poll(fd), b'')
+
+                # This genuine namespace change is not observed after the
+                # parent WD has been removed, although the source FD lives.
+                sibling = source.parent / 'public-post-rm-parent-sibling'
+                self.assertEqual(sibling.write_bytes(b'PUBLIC-SIBLING'),
+                                 len(b'PUBLIC-SIBLING'))
+                self.assertEqual(module._bounded_inventory_names(
+                    source.parent),
+                    ('public-post-rm-parent-sibling', 'sample'))
+                self.assertEqual(native_poll(fd), b'')
+                os.unlink(sibling)
+                self.assertEqual(module._bounded_inventory_names(
+                    source.parent), ('sample',))
+                self.assertEqual(native_poll(fd), b'')
+
+                # The still-registered source WD independently reports its
+                # own write; the removed parent WD reports nothing new.
+                with source.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertNotEqual(module.AFTER, module.BEFORE)
+                self.assertEqual(source.read_bytes(), module.AFTER)
+                after = os.lstat(source)
+                parent_after = os.lstat(source.parent)
+                self.assertEqual(
+                    (before.st_dev, before.st_ino, before.st_mode),
+                    (after.st_dev, after.st_ino, after.st_mode))
+                self.assertEqual(
+                    (parent_before.st_dev, parent_before.st_ino,
+                     parent_before.st_mode),
+                    (parent_after.st_dev, parent_after.st_ino,
+                     parent_after.st_mode))
+                self.assertEqual(module._bounded_inventory_names(
+                    source.parent), ('sample',))
+                stream = native_poll(fd)
+                self.assertIs(type(stream), bytes)
+                self.assertTrue(stream)
+                parsed = module._classify_stream(
+                    stream, source_wd, parent_wd)
+                self.assertTrue(parsed['well_formed'])
+                self.assertFalse(parsed['invalidated'])
+                self.assertGreaterEqual(parsed['source_modify_events'], 1)
+                self.assertGreaterEqual(
+                    parsed['source_content_write_events'], 1)
+                self.assertEqual(parsed['directory_changes'], 0)
+                self.assertEqual(native_poll(fd), b'')
+
+                # Missing directory records cannot authenticate a complete
+                # namespace history or authorize an annual workflow.
+                local = module._evaluate(
+                    module.BEFORE, module.BEFORE, b'',
+                    source_wd, True, False, directory_watch=parent_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(
+                    local['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+                self.assertIs(local['can_authorize_dispatch'], False)
+                self.assertIs(local['independent_os_proof_verified'], False)
+            finally:
+                if fd is not None:
+                    native_close(fd)
+                    try:
+                        os.fstat(fd)
+                    except OSError:
+                        watcher_closed = True
+        self.assertTrue(watcher_closed)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
