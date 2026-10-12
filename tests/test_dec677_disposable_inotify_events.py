@@ -12082,6 +12082,116 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real external alias write after final poll cannot authorize')
+    def test_real_kernel_post_final_poll_external_hardlink_write_cannot_authorize(self):
+        # A real write THROUGH an alias outside the monitored directory,
+        # after the true final empty poll. Both paths name the same inode;
+        # the watched parent never sees a directory mutation.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_evaluator = module._evaluate
+        state = {'sample': None, 'fd': None, 'wd': None, 'dir_wd': None,
+                 'final_poll_complete': False, 'first_final': None,
+                 'post_poll_event': None, 'same_alias_inode': False,
+                 'temporary_nlink': None, 'restored_nlink': None,
+                 'alias_write_completed': False, 'original_bytes_restored': False,
+                 'original_inode_restored': False, 'parent_identity_restored': False,
+                 'parent_inventory_restored': False, 'alias_removed': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(sample=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['final_poll_complete'] = True
+            return pending
+
+        def evaluated(*args, **kwargs):
+            self.assertTrue(state['final_poll_complete'])
+            sample = state['sample']
+            original = os.lstat(sample)
+            parent = os.lstat(sample.parent)
+            original_bytes = sample.read_bytes()
+            self.assertEqual(original_bytes, module.BEFORE)
+            self.assertEqual(original.st_nlink, 1)
+            with tempfile.TemporaryDirectory(
+                    prefix='dec677-public-external-write-', dir='/tmp') as ext:
+                alias = Path(ext) / 'temporary-public-write-alias'
+                os.link(sample, alias)
+                try:
+                    alias_metadata = os.lstat(alias)
+                    state['same_alias_inode'] = (
+                        (alias_metadata.st_dev, alias_metadata.st_ino) ==
+                        (original.st_dev, original.st_ino))
+                    state['temporary_nlink'] = os.lstat(sample).st_nlink
+                    with alias.open('r+b') as writer:
+                        writer.seek(0)
+                        count = writer.write(original_bytes)
+                        writer.flush()
+                        os.fsync(writer.fileno())
+                        state['alias_write_completed'] = (
+                            count == len(original_bytes))
+                finally:
+                    os.unlink(alias)
+                state['alias_removed'] = not os.path.lexists(alias)
+            restored = os.lstat(sample)
+            parent_restored = os.lstat(sample.parent)
+            state['restored_nlink'] = restored.st_nlink
+            state['original_inode_restored'] = (
+                (original.st_dev, original.st_ino, original.st_mode,
+                 original.st_size) ==
+                (restored.st_dev, restored.st_ino, restored.st_mode,
+                 restored.st_size))
+            state['original_bytes_restored'] = (
+                original_bytes == sample.read_bytes() == module.BEFORE)
+            state['parent_identity_restored'] = (
+                (parent.st_dev, parent.st_ino, parent.st_mode) ==
+                (parent_restored.st_dev, parent_restored.st_ino,
+                 parent_restored.st_mode))
+            state['parent_inventory_restored'] = (
+                module._bounded_inventory_names(sample.parent) == ('sample',))
+            state['post_poll_event'] = native_final_poll(state['fd'])
+            return native_evaluator(*args, **kwargs)
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module, '_evaluate',
+                                  side_effect=evaluated) as evaluator:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['final_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['same_alias_inode'])
+        self.assertEqual(state['temporary_nlink'], 2)
+        self.assertTrue(state['alias_write_completed'])
+        self.assertTrue(state['alias_removed'])
+        self.assertEqual(state['restored_nlink'], 1)
+        self.assertTrue(state['original_inode_restored'])
+        self.assertTrue(state['original_bytes_restored'])
+        self.assertTrue(state['parent_identity_restored'])
+        self.assertTrue(state['parent_inventory_restored'])
+        self.assertIs(type(state['post_poll_event']), bytes)
+        self.assertTrue(state['post_poll_event'])
+        parsed = module._classify_stream(
+            state['post_poll_event'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 0)
+        self.assertGreaterEqual(parsed['source_modify_events'], 1)
+        self.assertGreaterEqual(parsed['source_content_write_events'], 1)
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        evaluator.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
