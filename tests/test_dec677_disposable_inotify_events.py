@@ -10414,8 +10414,12 @@ class DisposableInotifyTests(unittest.TestCase):
         wd, dir_wd = state['wds']
         events = module._classify_stream(state['late'], wd, dir_wd)
         self.assertTrue(events['well_formed'])
+        # Native Linux sets IN_ISDIR for a watched directory chmod event.
+        # Require this genuine kernel record rather than weakening the
+        # event mask assertion or the runtime inotify decoder.
         self.assertIn(
-            module.EVENT.pack(dir_wd, module.IN_ATTRIB, 0, 0),
+            module.EVENT.pack(
+                dir_wd, module.IN_ATTRIB | module.IN_ISDIR, 0, 0),
             state['late'])
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertIs(result['can_authorize_dispatch'], False)
