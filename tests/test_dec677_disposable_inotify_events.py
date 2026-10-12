@@ -16154,6 +16154,159 @@ class DisposableInotifyTests(unittest.TestCase):
                         closed = True
         self.assertTrue(closed)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'native parent mask replacement is Linux-only')
+    def test_real_native_same_parent_watch_descriptor_narrow_mask(self):
+        # Re-registering the same private parent with no IN_MASK_ADD
+        # preserves its numeric WD but REPLACES the mask. It then loses
+        # sibling namespace events, while the source WD remains intact.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        fd = None
+        closed = False
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec966-public-parent-mask-replace-', dir='/tmp') as tmp:
+            sample = Path(tmp) / 'sample'
+            self.assertEqual(sample.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            original = os.lstat(sample)
+            original_parent = os.lstat(sample.parent)
+            self.assertEqual(module._bounded_inventory_names(
+                sample.parent), ('sample',))
+            try:
+                fd, source_wd, parent_wd = native_watch(sample)
+                self.assertNotEqual(source_wd, parent_wd)
+                self.assertEqual(native_poll(fd), b'')
+                lib = module.ctypes.CDLL(None, use_errno=True)
+                lib.inotify_add_watch.argtypes = [
+                    module.ctypes.c_int, module.ctypes.c_char_p,
+                    module.ctypes.c_uint32]
+                lib.inotify_add_watch.restype = module.ctypes.c_int
+
+                # No IN_MASK_ADD: silently drop the old parent
+                # IN_CREATE/IN_DELETE/IN_MODIFY/IN_CLOSE_WRITE coverage.
+                same_parent_wd = lib.inotify_add_watch(
+                    fd, module._checked_watch_path_bytes(sample.parent),
+                    module.IN_ATTRIB | module.IN_DONT_FOLLOW |
+                    module.IN_ONLYDIR)
+                self.assertEqual(same_parent_wd, parent_wd)
+                self.assertIsNotNone(os.fstat(fd))
+                self.assertEqual(native_poll(fd), b'')
+
+                sibling = sample.parent / 'public-narrow-parent-sibling'
+                self.assertEqual(sibling.write_bytes(b'PUBLIC-SIBLING'),
+                                 len(b'PUBLIC-SIBLING'))
+                self.assertEqual(module._bounded_inventory_names(
+                    sample.parent),
+                    ('public-narrow-parent-sibling', 'sample'))
+                self.assertEqual(native_poll(fd), b'')
+                os.unlink(sibling)
+                self.assertEqual(module._bounded_inventory_names(
+                    sample.parent), ('sample',))
+                self.assertEqual(native_poll(fd), b'')
+
+                # Parent WD really remains installed for IN_ATTRIB.
+                parent_mode = module.stat.S_IMODE(
+                    os.lstat(sample.parent).st_mode)
+                self.assertEqual(parent_mode, 0o700)
+                os.chmod(sample.parent, parent_mode | module.stat.S_ISVTX)
+                try:
+                    attr = native_poll(fd)
+                    self.assertEqual(
+                        attr,
+                        module.EVENT.pack(
+                            parent_wd,
+                            module.IN_ATTRIB | module.IN_ISDIR, 0, 0))
+                    parsed_attr = module._classify_stream(
+                        attr, source_wd, parent_wd)
+                    self.assertTrue(parsed_attr['well_formed'])
+                    self.assertFalse(parsed_attr['invalidated'])
+                finally:
+                    os.chmod(sample.parent, parent_mode)
+                restored_attr = native_poll(fd)
+                self.assertEqual(
+                    restored_attr,
+                    module.EVENT.pack(
+                        parent_wd,
+                        module.IN_ATTRIB | module.IN_ISDIR, 0, 0))
+                self.assertEqual(native_poll(fd), b'')
+
+                # Still-live source WD reports actual file content writes.
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertEqual(sample.read_bytes(), module.AFTER)
+                stream = native_poll(fd)
+                self.assertTrue(stream)
+                parsed = module._classify_stream(
+                    stream, source_wd, parent_wd)
+                self.assertTrue(parsed['well_formed'])
+                self.assertFalse(parsed['invalidated'])
+                self.assertGreaterEqual(parsed['source_modify_events'], 1)
+                self.assertGreaterEqual(
+                    parsed['source_content_write_events'], 1)
+                self.assertEqual(parsed['directory_changes'], 0)
+                # Parent-WD file write events are no longer subscribed.
+                off = 0
+                while off < len(stream):
+                    wd, mask, cookie, length = module.EVENT.unpack_from(
+                        stream, off)
+                    off += module.EVENT.size + length
+                    self.assertEqual(wd, source_wd)
+                    self.assertTrue(mask & (
+                        module.IN_MODIFY | module.IN_CLOSE_WRITE))
+                self.assertEqual(off, len(stream))
+                self.assertEqual(native_poll(fd), b'')
+
+                # Restore public fixture content and final mode.
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.BEFORE),
+                                     len(module.BEFORE))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                restore_events = native_poll(fd)
+                self.assertTrue(restore_events)
+                self.assertTrue(module._classify_stream(
+                    restore_events, source_wd, parent_wd)['well_formed'])
+                self.assertEqual(native_poll(fd), b'')
+                final = os.lstat(sample)
+                final_parent = os.lstat(sample.parent)
+                self.assertEqual(sample.read_bytes(), module.BEFORE)
+                self.assertEqual(
+                    (original.st_dev, original.st_ino, original.st_mode),
+                    (final.st_dev, final.st_ino, final.st_mode))
+                self.assertEqual(
+                    (original_parent.st_dev, original_parent.st_ino,
+                     original_parent.st_mode),
+                    (final_parent.st_dev, final_parent.st_ino,
+                     final_parent.st_mode))
+                self.assertEqual(module._bounded_inventory_names(
+                    sample.parent), ('sample',))
+
+                # Actual source write evidence is never authorization.
+                verdict = module._evaluate(
+                    module.BEFORE, module.AFTER, stream, source_wd,
+                    True, False, directory_watch=parent_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(verdict['status'], 'BLOCKED')
+                self.assertIs(verdict['can_authorize_dispatch'], False)
+                self.assertIs(
+                    verdict['independent_os_proof_verified'], False)
+            finally:
+                if fd is not None:
+                    native_close(fd)
+                    try:
+                        os.fstat(fd)
+                    except OSError:
+                        closed = True
+        self.assertTrue(closed)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
