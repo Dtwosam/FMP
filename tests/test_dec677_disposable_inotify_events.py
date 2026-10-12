@@ -14624,6 +14624,114 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'real independent FD surviving sample cleanup is Linux-only')
+    def test_real_kernel_preexisting_subprocess_fd_survives_cleanup_and_mutates(self):
+        # The independent subprocess opens its OWN O_RDWR source FD after
+        # native watch registration, before the final poll. It performs
+        # NO writes until run_demo has closed its watched FD and cleaned
+        # the original private directory. The unlinked inode persists
+        # only through the child's FD, not a hardlink or parent FD.
+        import select
+
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        state = {'sample': None, 'watch_fd': None, 'child': None,
+                 'last_poll': None, 'ready': False,
+                 'before_inode': None, 'inventory_one': False}
+
+        child_code = (
+            'import os,sys\n'
+            'path, before_hex, after_hex = sys.argv[1:]\n'
+            'before, after = bytes.fromhex(before_hex), bytes.fromhex(after_hex)\n'
+            'fd = os.open(path, os.O_RDWR | os.O_CLOEXEC | os.O_NOFOLLOW)\n'
+            'try:\n'
+            '    if os.pread(fd, len(before), 0) != before: sys.exit(31)\n'
+            '    print("READY", flush=True)\n'
+            '    if sys.stdin.buffer.readline() != b"GO\\n": sys.exit(32)\n'
+            '    st = os.fstat(fd)\n'
+            '    if st.st_nlink != 0: sys.exit(33)\n'
+            '    if os.pwrite(fd, after, 0) != len(after): sys.exit(34)\n'
+            '    os.ftruncate(fd, len(after))\n'
+            '    os.fsync(fd)\n'
+            '    if os.pread(fd, len(after), 0) != after: sys.exit(35)\n'
+            '    print("DONE %d %d %d" % (st.st_dev, st.st_ino, st.st_nlink), flush=True)\n'
+            'finally:\n'
+            '    os.close(fd)\n'
+        )
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            before = os.lstat(path)
+            state['before_inode'] = (before.st_dev, before.st_ino)
+            self.assertEqual(before.st_nlink, 1)
+            self.assertEqual(path.read_bytes(), module.BEFORE)
+            state['inventory_one'] = (
+                module._bounded_inventory_names(path.parent) == ('sample',))
+            process = subprocess.Popen(
+                [sys.executable, '-B', '-c', child_code,
+                 str(path), module.BEFORE.hex(), module.AFTER.hex()],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+            state['child'] = process
+            # Bound readiness; never allow the test to stall indefinitely
+            # if the independent process exits or does not open its FD.
+            readable, _, _ = select.select(
+                [process.stdout], [], [], 8)
+            self.assertTrue(readable, 'child did not signal ready')
+            self.assertEqual(process.stdout.readline(), b'READY\n')
+            state['ready'] = True
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            state['last_poll'] = native_final_poll(fd)
+            return state['last_poll']
+
+        try:
+            with patch.object(module, '_start_watch',
+                              side_effect=watched) as watcher:
+                with patch.object(module, '_read_receipt_pending',
+                                  side_effect=final_poll) as final:
+                    receipt = module.run_demo()
+
+            self.assertIs(state['ready'], True)
+            self.assertIs(state['inventory_one'], True)
+            self.assertEqual(state['last_poll'], b'')
+            with self.assertRaises(OSError):
+                os.fstat(state['watch_fd'])
+            # After the real runner returned, its normal tempdir cleanup
+            # removed the original name. Only the subprocess FD retains
+            # the inode; this is no longer a pathname-based alias.
+            self.assertFalse(os.path.lexists(state['sample']))
+            self.assertFalse(os.path.lexists(state['sample'].parent))
+            process = state['child']
+            out, err = process.communicate(input=b'GO\n', timeout=8)
+            self.assertEqual(process.returncode, 0, err)
+            self.assertEqual(err, b'')
+            self.assertTrue(out.startswith(b'DONE '))
+            pieces = out.strip().split()
+            self.assertEqual(len(pieces), 4)
+            self.assertEqual(tuple(map(int, pieces[1:3])),
+                             state['before_inode'])
+            self.assertEqual(int(pieces[3]), 0)
+            self.assertEqual(
+                receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            final.assert_called_once_with(state['watch_fd'])
+        finally:
+            process = state['child']
+            if process is not None:
+                if process.poll() is None:
+                    process.kill()
+                for pipe in (process.stdin, process.stdout, process.stderr):
+                    if pipe is not None and not pipe.closed:
+                        pipe.close()
+                process.wait(timeout=8)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
