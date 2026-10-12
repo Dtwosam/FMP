@@ -2548,6 +2548,30 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Own exact-head Phase 3/full historical CI and qualified independent
 review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-899 — Transient native parent-directory rename and restoration
+
+An inotify watch on a private parent directory is associated with its
+inode, not the original pathname. DEC-899 adds a genuine Linux kernel
+negative test that moves the newly generated private `/tmp` directory
+to a different public `/tmp` basename and immediately restores the
+original name **during the third receipt census**, after the first
+bounded inotify drain. The final directory contents, parent device,
+inode and private mode remain identical. The watched directory's
+real kernel `IN_MOVE_SELF` event must nevertheless be visible at the
+second immediate event drain and cause `BLOCKED` before evaluation,
+with both authority/proof fields false and the native watcher closed.
+
+One new native test brings the strict tip to **571 distinct
+source-defined test methods**. All filesystem operations remain inside
+the original generated public `/tmp` area; the protected annual
+runner is never accessed. This is a generated negative observation,
+not continuous independent event attestation, OS-enforced no-write
+confinement or immutable annual admission. DEC-650/#820 and
+DEC-651/#821/#779 remain BLOCKED. Exact-head Phase 3/full
+historical CI and qualified independent review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
