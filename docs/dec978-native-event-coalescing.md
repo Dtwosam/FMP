@@ -1,0 +1,9 @@
+# DEC-978 — Real native write-event coalescing conceals write-call counts
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test-and-documentation child of DEC-977/#1198.
+
+Linux inotify coalesces **successive unread identical event records**, so an event count cannot establish the exact number of completed writes. In this generated-public control, one native source-only inotify instance subscribes to `IN_MODIFY | IN_CLOSE_WRITE` on a private `/tmp/sample`. Its file receives **two separate genuine unbuffered write syscalls** without an intervening inotify read. After the FD closes, the native source-only queue contains exactly **one `IN_MODIFY` record and one `IN_CLOSE_WRITE` record**, not one `IN_MODIFY` per write. The test asserts the actual kernel bytes rather than fabricated events.
+
+A second independent original dual source+parent watcher also sees genuine content-write events. Both streams must be rejected for authorization under the unchanged evaluator: `BLOCKED`, `can_authorize_dispatch=false`, `independent_os_proof_verified=false`. A separate public write later restores the starting fixture; the test drains new events and verifies source/parent device, inode, mode, one-entry inventory and both FD closures.
+
+This does not mean a single `IN_MODIFY` *always* represents two writes. It demonstrates why neither a single event nor an event count is a trustworthy OS audit trail for exact writes. One new Linux source-defined method brings the strict draft stack to **639**. Exact-head Phase 3 and full historical regression plus qualified independent security review remain required. DEC-650/#820 independently OS-enforced protected no-write and DEC-651/#821/#779 immutable annual run385 admission remain **BLOCKED**. No protected evidence/sources, annual dispatch/test/retry/rerun, production refs/workflows/runners/rulesets/permissions, broker/trading, merge or promotion.
