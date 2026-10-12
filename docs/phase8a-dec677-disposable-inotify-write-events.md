@@ -4704,6 +4704,47 @@ Own exact-head Phase 3 and full historical CI plus qualified
 independent security review required.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-964 — Both new watches cannot reconstruct a genuine watchless write/revert
+
+DEC-961/#1182 proves a still-open inotify instance with both
+registrations removed observes no later source writes or parent
+changes. DEC-963/#1184 re-registers only the sample watch after
+both removals, showing new source writes are observed again,
+unrelated sibling changes are not, and a missing parent watch
+still causes the normal evaluator to return `BLOCKED`.
+
+DEC-964 instead starts with real dual native watches on a
+generated public `/tmp/sample`, removes both registrations
+using `inotify_rm_watch`, confirms separate exact
+`IN_IGNORED` events, and then makes a **genuine
+different-byte source write and restore** while neither
+registration exists. The generated file visibly contains
+`AFTER` bytes midway and exact `BEFORE` bytes at the end,
+but both real native zero-wait drains are empty. Only after
+this unobserved interval, re-register the source and private
+parent on the existing inotify instance and verify both new
+watch identities. Do not presume numerical WD values are
+never reused. Real subsequent public writes generate valid
+source events under the new dual registrations. Final source
+and parent dev/ino/mode and one-name inventory match.
+
+A counterfactual empty stream with the **current** two WDs
+and identical final bytes may be reported locally as
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`. It cannot prove the
+missed interval was write-free, and both
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false` remain exact. The test
+explicitly does not claim unmodified `run_demo` removed or
+re-added watches. This adds one native Linux method for
+**628 distinct source-defined tests**; it documents a real
+time-of-observation limit, not OS confinement.
+
+Independent OS-enforced protected no-write DEC-650/#820 and
+exclusive immutable one-shot run385 server admission
+DEC-651/#821/#779 remain BLOCKED. Requires own exact-head
+Phase 3/full historical CI and qualified independent review.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

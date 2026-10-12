@@ -15858,6 +15858,161 @@ class DisposableInotifyTests(unittest.TestCase):
                         closed = True
         self.assertTrue(closed)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'native watchless write/revert and re-registration is Linux-only')
+    def test_real_native_reregister_both_after_unobserved_write_revert(self):
+        # A two-watch instance can lose BOTH watch registrations, miss
+        # real write/revert activity entirely, and later have both
+        # registrations installed again. Reinstallation never recovers
+        # the kernel events that were not queued during the blind gap.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        fd = None
+        watcher_closed = False
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec964-public-reregister-both-', dir='/tmp') as tmp:
+            sample = Path(tmp) / 'sample'
+            self.assertEqual(sample.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            original = os.lstat(sample)
+            original_parent = os.lstat(sample.parent)
+            self.assertEqual(module._bounded_inventory_names(
+                sample.parent), ('sample',))
+            try:
+                fd, old_file_wd, old_parent_wd = native_watch(sample)
+                self.assertNotEqual(old_file_wd, old_parent_wd)
+                self.assertEqual(native_poll(fd), b'')
+                lib = module.ctypes.CDLL(None, use_errno=True)
+                lib.inotify_rm_watch.argtypes = [
+                    module.ctypes.c_int, module.ctypes.c_int]
+                lib.inotify_rm_watch.restype = module.ctypes.c_int
+                lib.inotify_add_watch.argtypes = [
+                    module.ctypes.c_int, module.ctypes.c_char_p,
+                    module.ctypes.c_uint32]
+                lib.inotify_add_watch.restype = module.ctypes.c_int
+
+                for old_wd in (old_file_wd, old_parent_wd):
+                    self.assertEqual(lib.inotify_rm_watch(fd, old_wd), 0)
+                    invalidation = native_poll(fd)
+                    self.assertEqual(
+                        invalidation,
+                        module.EVENT.pack(
+                            old_wd, module.IN_IGNORED, 0, 0))
+                    classified = module._classify_stream(
+                        invalidation, old_file_wd, old_parent_wd)
+                    self.assertTrue(classified['well_formed'])
+                    self.assertTrue(classified['invalidated'])
+                    self.assertEqual(native_poll(fd), b'')
+
+                # Distinct public bytes are real and visible midway, but
+                # neither file nor parent watch is currently installed.
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertEqual(sample.read_bytes(), module.AFTER)
+                self.assertNotEqual(module.BEFORE, module.AFTER)
+                self.assertEqual(native_poll(fd), b'')
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.BEFORE),
+                                     len(module.BEFORE))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertEqual(sample.read_bytes(), module.BEFORE)
+                self.assertEqual(native_poll(fd), b'')
+
+                # Both are installed anew only AFTER the blind gap.
+                # Never assume old numeric WDs cannot be reused.
+                file_wd = lib.inotify_add_watch(
+                    fd, module._checked_watch_path_bytes(sample),
+                    module.MASK | module.IN_DONT_FOLLOW)
+                parent_wd = lib.inotify_add_watch(
+                    fd, module._checked_watch_path_bytes(sample.parent),
+                    module.DIRECTORY_MASK | module.IN_DONT_FOLLOW |
+                    module.IN_ONLYDIR)
+                self.assertIs(type(file_wd), int)
+                self.assertIs(type(parent_wd), int)
+                self.assertGreater(file_wd, 0)
+                self.assertGreater(parent_wd, 0)
+                self.assertLessEqual(
+                    file_wd, module.MAX_WATCH_DESCRIPTOR)
+                self.assertLessEqual(
+                    parent_wd, module.MAX_WATCH_DESCRIPTOR)
+                self.assertNotEqual(file_wd, parent_wd)
+                self.assertEqual(native_poll(fd), b'')
+
+                # New actual modifications ARE observed under the new WDs.
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                observed = native_poll(fd)
+                self.assertTrue(observed)
+                parsed = module._classify_stream(
+                    observed, file_wd, parent_wd)
+                self.assertTrue(parsed['well_formed'])
+                self.assertFalse(parsed['invalidated'])
+                self.assertGreaterEqual(parsed['source_modify_events'], 1)
+                self.assertGreaterEqual(
+                    parsed['source_content_write_events'], 1)
+                self.assertEqual(native_poll(fd), b'')
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.BEFORE),
+                                     len(module.BEFORE))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                observed_return = native_poll(fd)
+                self.assertTrue(observed_return)
+                parsed_return = module._classify_stream(
+                    observed_return, file_wd, parent_wd)
+                self.assertTrue(parsed_return['well_formed'])
+                self.assertFalse(parsed_return['invalidated'])
+                self.assertGreaterEqual(
+                    parsed_return['source_modify_events'], 1)
+                self.assertEqual(native_poll(fd), b'')
+
+                self.assertEqual(sample.read_bytes(), module.BEFORE)
+                final = os.lstat(sample)
+                final_parent = os.lstat(sample.parent)
+                self.assertEqual(
+                    (original.st_dev, original.st_ino, original.st_mode),
+                    (final.st_dev, final.st_ino, final.st_mode))
+                self.assertEqual(
+                    (original_parent.st_dev, original_parent.st_ino,
+                     original_parent.st_mode),
+                    (final_parent.st_dev, final_parent.st_ino,
+                     final_parent.st_mode))
+                self.assertEqual(module._bounded_inventory_names(
+                    sample.parent), ('sample',))
+
+                # This counterfactual input is quiet, has two CURRENT
+                # watches and final equal bytes, but did not encode the
+                # real missing watchless interval. LOCAL ONLY, never PASS.
+                local = module._evaluate(
+                    module.BEFORE, module.BEFORE, b'', file_wd,
+                    True, False, directory_watch=parent_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(local['status'],
+                                 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+                self.assertIs(local['can_authorize_dispatch'], False)
+                self.assertIs(local['independent_os_proof_verified'], False)
+            finally:
+                if fd is not None:
+                    native_close(fd)
+                    try:
+                        os.fstat(fd)
+                    except OSError:
+                        watcher_closed = True
+        self.assertTrue(watcher_closed)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
