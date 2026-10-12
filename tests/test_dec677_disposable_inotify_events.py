@@ -13210,7 +13210,8 @@ class DisposableInotifyTests(unittest.TestCase):
                  'last_poll_complete': False, 'close_seen': False,
                  'fd_really_closed': False, 'source_was_regular': False,
                  'sample_is_symlink': False, 'linked_public_bytes': False,
-                 'different_inode': False, 'inventory_unchanged': False,
+                 'different_inode': False, 'old_inode_pinned': False,
+                 'inventory_unchanged': False,
                  'parent_identity_preserved': False,
                  'symlink_target_matches_public': False}
 
@@ -13253,9 +13254,21 @@ class DisposableInotifyTests(unittest.TestCase):
                 self.assertEqual(sample.read_bytes(), module.BEFORE)
                 self.assertEqual(module._bounded_inventory_names(folder),
                                  ('sample',))
-                os.unlink(sample)
-                os.symlink(str(public_target), sample)
-                after = os.lstat(sample)
+                # Retain a real descriptor to the original inode until
+                # the new symlink inode has been allocated. Without this
+                # pin Linux is free to reuse the just-unlinked inode number.
+                with sample.open('rb') as held_original:
+                    held_before = os.fstat(held_original.fileno())
+                    self.assertEqual(
+                        (held_before.st_dev, held_before.st_ino),
+                        (before.st_dev, before.st_ino))
+                    os.unlink(sample)
+                    os.symlink(str(public_target), sample)
+                    after = os.lstat(sample)
+                    held_after = os.fstat(held_original.fileno())
+                    state['old_inode_pinned'] = (
+                        (held_after.st_dev, held_after.st_ino) ==
+                        (before.st_dev, before.st_ino))
                 folder_after = os.lstat(folder)
                 state['sample_is_symlink'] = module.stat.S_ISLNK(
                     after.st_mode)
@@ -13291,6 +13304,7 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertTrue(state['symlink_target_matches_public'])
             self.assertTrue(state['linked_public_bytes'])
             self.assertTrue(state['different_inode'])
+            self.assertTrue(state['old_inode_pinned'])
             self.assertTrue(state['inventory_unchanged'])
             self.assertTrue(state['parent_identity_preserved'])
             self.assertEqual(

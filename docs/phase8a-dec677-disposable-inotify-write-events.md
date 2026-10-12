@@ -3714,6 +3714,39 @@ exclusive annual run385 admission DEC-651/#821/#779 remain
 BLOCKED. Own exact-head Phase 3/full historical CI and qualified
 security review required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-938 — Pin the original inode during DEC-933 symlink substitution
+
+The original exact-head full historical regression at #1154/#1155
+exposed a **test-only Linux inode-number reuse race**. The
+postclose symlink test unlinked the old sample and immediately
+allocated a symlink, then incorrectly presumed its inode number
+must differ. A free inode number can be reused immediately:
+the new symlink has a different type and target but need not
+have a different numerical `st_ino`. This was not evidence
+that the observer granted authorization or accepted a protected
+write; the test's identity expectation was overstrong.
+
+DEC-938 preserves the stronger identity assertion while making
+the native control deterministic: hold a real read-only FD to
+the original generated regular source inode through the unlink
+and symlink creation, confirm `fstat` still identifies the
+original pinned dev/ino, and only close the held FD after the
+new symlink inode is allocated and `lstat` captured. The
+original and new live inodes must then differ. Existing actual
+symlink type, external public target, byte-equality, unchanged
+private-parent inventory/identity, true watched-FD close,
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, and both exact false
+authorization/proof assertions remain intact. No observer
+runtime or guards are weakened.
+
+**607 distinct source-defined tests** remain; this child adds
+no new test methods. #1154 and #1155 failed historical
+heads remain RED; every later exact head must pass its own
+Phase 3 and complete historical CI. Independent qualified
+security review remains required. DEC-650/#820 protected
+OS confinement and DEC-651/#821/#779 immutable annual admission
+stay BLOCKED. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
