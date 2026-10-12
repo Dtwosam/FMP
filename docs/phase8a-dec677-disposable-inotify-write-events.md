@@ -3747,6 +3747,39 @@ security review remains required. DEC-650/#820 protected
 OS confinement and DEC-651/#821/#779 immutable annual admission
 stay BLOCKED. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-939 — Real watched sample replaced by directory after watcher closure
+
+DEC-933/#1154 tests an external-public symlink at the sample
+basename after the real inotify watcher has closed; DEC-938/#1159
+pins its original inode to prevent a false numeric identity
+assertion. DEC-939 tests a separate and more obvious final-file-
+type break with an unchanged one-entry inventory: after the actual
+last empty zero-wait queue read and local-only evaluator, the
+runner's original `finally` closes the watched FD. A test callback
+delegates to native `os.close`, verifies `fstat` fails, and only
+then deletes the generated public regular `sample` entry and
+creates a private `0700` directory named `sample` in its place.
+The original generated parent dev/ino/mode remain stable and
+`_bounded_inventory_names` still reads exactly `('sample',)`,
+but its only child is no longer a regular readable source inode.
+Ordinary disposable temporary-directory cleanup removes the
+generated nested directory; no user or protected path is touched.
+No postclose inotify stream is asserted.
+
+The runner's frozen result may remain only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never an independent OS
+security proof or protected annual dispatch authority. Assert
+both `can_authorize_dispatch=false` and
+`independent_os_proof_verified=false` exactly, plus genuine FD
+closure. This adds one native Linux method, raising the strict
+tip to **608 unique source-defined tests**. This proves no
+future file-type immutability; it is not an enforcement guard.
+
+Protected OS no-write DEC-650/#820 and immutable exclusive
+run385 admission DEC-651/#821/#779 remain BLOCKED. Own exact-head
+Phase 3/full historical CI and independent qualified security
+review required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
