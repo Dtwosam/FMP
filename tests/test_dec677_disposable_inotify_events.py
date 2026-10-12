@@ -11164,6 +11164,95 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real post-poll transient hardlink cannot authorize')
+    def test_real_kernel_post_final_poll_transient_hardlink_cannot_authorize(self):
+        # This distinct race is a native alias to the already-watched
+        # generated public /tmp source inode: link count rises and falls
+        # only AFTER run_demo's final zero-wait receipt poll returned empty.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_evaluator = module._evaluate
+        state = {'sample': None, 'fd': None, 'wd': None, 'dir_wd': None,
+                 'final_poll_complete': False, 'first_final': None,
+                 'post_poll_event': None, 'alias_created': False,
+                 'alias_removed': False, 'inode_equal': False,
+                 'temporary_links': None, 'final_links': None,
+                 'names_restored': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(sample=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['final_poll_complete'] = True
+            return pending
+
+        def evaluated(*args, **kwargs):
+            self.assertTrue(state['final_poll_complete'])
+            source = state['sample']
+            alias = source.parent / 'public-postpoll-brief-hardlink'
+            self.assertEqual(module._bounded_inventory_names(source.parent),
+                             ('sample',))
+            initial = os.lstat(source)
+            self.assertEqual(initial.st_nlink, 1)
+            os.link(source, alias)
+            try:
+                linked = os.lstat(alias)
+                during = os.lstat(source)
+                state['alias_created'] = alias.is_file()
+                state['inode_equal'] = (
+                    (initial.st_dev, initial.st_ino) ==
+                    (linked.st_dev, linked.st_ino) ==
+                    (during.st_dev, during.st_ino))
+                state['temporary_links'] = during.st_nlink
+            finally:
+                os.unlink(alias)
+            state['alias_removed'] = not os.path.lexists(alias)
+            restored = os.lstat(source)
+            state['final_links'] = restored.st_nlink
+            state['names_restored'] = (
+                module._bounded_inventory_names(source.parent) == ('sample',))
+            state['post_poll_event'] = native_final_poll(state['fd'])
+            return native_evaluator(*args, **kwargs)
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module, '_evaluate',
+                                  side_effect=evaluated) as evaluator:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['final_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['alias_created'])
+        self.assertTrue(state['alias_removed'])
+        self.assertTrue(state['inode_equal'])
+        self.assertEqual(state['temporary_links'], 2)
+        self.assertEqual(state['final_links'], 1)
+        self.assertTrue(state['names_restored'])
+        self.assertIs(type(state['post_poll_event']), bytes)
+        self.assertTrue(state['post_poll_event'])
+        parsed = module._classify_stream(
+            state['post_poll_event'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertGreaterEqual(parsed['directory_changes'], 2)
+        self.assertGreaterEqual(parsed['transient_create_delete_pairs'], 1)
+        self.assertGreaterEqual(parsed['source_attribute_events'], 1)
+        # The runner did not sample these later events; even this apparent
+        # quiet result is LOCAL-only and can never authorize protected work.
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        evaluator.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
