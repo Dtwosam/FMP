@@ -4213,6 +4213,46 @@ Own exact-head Phase 3, full historical CI and qualified
 independent security review required.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-951 — Reviewer extension: child-owned resources after original cleanup
+
+The DEC-948 postclose matrix above captures the initial observer
+lifetime and process boundaries; the native tests in DEC-949/#1170
+and DEC-950/#1171 add the **after-cleanup process-owned resource**
+boundary. Neither test creates an external hardlink or restores a
+pathname. The original generated `sample` and its private parent
+are both removed by the real runner before a separate process
+changes any bytes.
+
+| Independent lifetime control | DEC-949/#1170: child-owned writable FD | DEC-950/#1171: child-owned shared mapping |
+| --- | --- | --- |
+| Handle acquired before final poll | Subprocess opens `O_RDWR|O_NOFOLLOW` to the generated public inode; performs only a read and READY signal | Subprocess opens `O_RDWR|O_NOFOLLOW`, creates `mmap.ACCESS_WRITE`, and **closes** the original file FD before READY |
+| Full observer/runner boundary | Genuine final poll is empty; original inotify watcher closes; runner tempdir cleanup removes `sample` **and parent** | Same genuine empty poll, watcher closure and full removal of sample and parent |
+| Resource keeping inode alive afterward | Independent child still holds its open writable FD; a later `fstat` reports `st_nlink=0` | Independent child still holds the writable shared mapping, with **no source FD open** |
+| Write performed only after cleanup | After parent signal, child `pwrite/ftruncate/fsync` mutates public bytes and confirms via `pread` | After parent signal, child edits one public byte via the mapping, flushes and verifies mapped contents |
+| Bounded test cleanup | Bounded READY/GO and child completion, close child FD, close pipes, kill/reap on failure | Bounded READY/GO and child completion, close mapping, close pipes, kill/reap on failure |
+| Nonauthorizing outcome | `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with both authority and independent-proof fields **exactly false** | The same exact nonauthorizing receipt; no postclose native event poll claimed |
+
+A clean observer receipt is a statement about **finite local
+observations**, not a lease or lock on the future, and does
+not revoke file descriptors, mappings, or child process
+permissions. These tests use only newly generated disposable
+public bytes, no protected annual files, no external network,
+no production runner modifications and no broker/trading path.
+A qualified reviewer must keep the native observer tests,
+independently OS-enforced annual no-write confinement and
+immutable one-shot server admission as three different
+questions. Passing tests or a local receipt cannot substitute
+for the latter two.
+
+This documentation-only strict child leaves the source-defined
+test count at **617**, adds no runtime code or new authorization
+path, and needs **its own exact-head Phase 3 and full historical
+CI**, plus independent qualified review. The protected annual
+DEC-650/#820 and DEC-651/#821/#779 requirements remain
+**BLOCKED**, with no run385 dispatch/test/retry/rerun or
+permission to merge or promote.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
