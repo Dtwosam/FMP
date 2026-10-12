@@ -3780,6 +3780,46 @@ run385 admission DEC-651/#821/#779 remain BLOCKED. Own exact-head
 Phase 3/full historical CI and independent qualified security
 review required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-940 — Transient parent inode substitution after observer closure
+
+DEC-937/#1158 moves and returns the actual watched private
+parent **inode** after its native watcher FD has closed;
+the old inode is restored without any competing directory at
+its original path. DEC-940 demonstrates the different case of a
+*replacement private directory inode occupying the same path*:
+after the real final receipt poll returns exactly empty and
+the runner closes its inotify FD, a test-only callback first
+delegates to native `os.close` and confirms `fstat` failure.
+The original generated private `/tmp` folder (including
+`sample`) is moved to a temporary generated sibling basename,
+remaining allocated; a **different** private `0700` directory
+is created at the original watched pathname and a new regular
+`sample` inode with precisely the same public fixture bytes
+and file mode is written inside it.
+
+While both parents actually coexist, the original path now
+refers to different parent and sample dev/ino identities despite
+identical private mode, readable sample bytes and one-entry
+directory inventory. The test then removes only its generated
+replacement directory and restores the original parent *before*
+the runner's normal temporary-directory cleanup. No protected
+data or path is used. Because the watcher already closed,
+no kernel event queue read or continuous monitoring is claimed.
+
+Even when the old frozen result appears quiet, it remains only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`. Assert exact
+`can_authorize_dispatch=false`,
+`independent_os_proof_verified=false` and true FD closure.
+One real native Linux test takes the strict tip to
+**609 source-defined methods**. It documents a parent pathname
+identity gap, **not** independently OS-enforced no-write.
+
+DEC-650/#820 protected no-write and DEC-651/#821/#779
+immutable exclusive annual admission remain BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified
+external security review required.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
