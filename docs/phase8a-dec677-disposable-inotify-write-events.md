@@ -3310,6 +3310,35 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own exact-head
 Phase 3/full historical CI and external qualified security review
 required. **DRAFT / NEVER MERGE**.
 
+## DEC-926 — Persistent unexpected sibling after last inotify poll
+
+DEC-910/#1126 shows a genuine post-poll create/remove event whose
+final observed directory inventory looks unchanged. DEC-925 tests
+a different persistent mutation: after the runner's final
+zero-wait native poll has returned exact `b''`, create a second
+real public regular file in the same fresh private `/tmp`
+directory and **leave it there** through evaluation. The
+unchanged original watched source retains its inode, mode, size
+and public bytes; the directory's dev/ino/mode is also unchanged,
+but its actual inventory is now
+`('postpoll-public-sibling', 'sample')` rather than the frozen
+`('sample',)` captured by the runner. A strictly **test-only
+later native event drain** must find a well-formed real
+`IN_CREATE` for the second disposable public entry, after the
+original final kernel check.
+
+The stale local evaluator may still yield only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`: authorization and
+independent OS-proof flags stay exactly false, observer FD
+closed. One new genuine Linux method raises the strict tip to
+**597 distinct source-defined test methods**. This demonstrates
+why the final directory census is not a continuous inode-
+namespace restriction. Protected no-write OS confinement
+DEC-650/#820 and immutable server admission DEC-651/#821/#779
+remain BLOCKED. Own exact-head Phase 3/full historical CI and
+qualified external security review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
