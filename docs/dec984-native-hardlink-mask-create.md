@@ -1,0 +1,9 @@
+# DEC-984 — Create-only watch collisions are inode-based across public hardlink aliases
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit generated-public Linux regression/documentation child of DEC-983/#1204.
+
+Register real source and parent watches on one newly created public regular sample under private /tmp. A genuine second hardlink entry is created to exactly the same sample inode. The kernel emits a parent IN_CREATE for the new name and source IN_ATTRIB for the increased link count. A create-only inotify_add_watch on the alias with IN_MASK_CREATE is rejected natively with -1/EEXIST because the original source inode is already watched in that same instance; pathname inequality does not create new inode identity.
+
+A later real write through the alias is seen on the *original* source WD as IN_MODIFY, while the parent reports named alias modifications. Removing the alias produces parent IN_DELETE and source IN_ATTRIB, restores link count to one, and retains the original source watch. The sample is restored to its first public bytes; source/parent dev, inode, mode, one-entry inventory and FD closure are verified. The unchanged evaluator remains BLOCKED on actual writes and can_authorize_dispatch=false / independent_os_proof_verified=false exactly.
+
+One new Linux source-defined method brings the strict stack to **643**. This is a watch-registration identity limit and real event coverage example, not independent no-write enforcement or continuously authenticated provenance. Own exact-head Phase 3, full historical regression and qualified independent review required. Protected no-write DEC-650/#820 and immutable annual run385 admission DEC-651/#821/#779 remain BLOCKED. No annual protected run, test, dispatch, retry, rerun, protected evidence/sources, production refs/workflows/runners/rulesets/permissions, broker/trading, merge or promotion.
