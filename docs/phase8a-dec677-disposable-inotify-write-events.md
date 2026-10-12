@@ -2644,6 +2644,31 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Exact-head Phase 3/full historical suite and independent qualified
 security review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-903 — Real original source move and return after final receipt stat
+
+DEC-894 tests an original watched sample permanently moved to another
+generated basename after the final source metadata check. DEC-903
+tests an even less visible restored-state negative: rename the
+**original generated watched file** to a second public basename and
+immediately back **after** the final timestamp validator has read
+its native record. Original pathname, dev/ino, size, bytes, parent
+inode and directory names all match the starting fixture when
+the mutation finishes. The first real kernel event drain was empty;
+the final immediate inotify collector must still report well-formed
+file-watch `IN_MOVE_SELF` invalidation and directory move events,
+forcing `BLOCKED` before evaluator, with both authority/proof
+flags false and watcher FD closed.
+
+One Linux-native test brings the strict tip to **575 distinct
+source-defined methods**. Only generated public `/tmp` files are
+mutated; no annual data or protected runner is touched. This
+demonstration is not independent OS-enforced no-write confinement,
+uninterrupted authenticated kernel observation or immutable annual
+server admission. DEC-650/#820 and DEC-651/#821/#779 stay BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified independent
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
