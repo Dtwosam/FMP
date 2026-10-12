@@ -3418,6 +3418,36 @@ This documentation-only child adds **no test methods**; the aligned
 source-defined count remains **598**. Its own Phase 3 and historical
 CI are still required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-929 — Persistent public sibling created after watcher closure
+
+DEC-927/#1145 tests a genuine generated source **byte write**
+after the runner has closed its inotify FD. DEC-928 addresses the
+distinct **directory namespace** gap: the actual runner completes
+its final zero-wait poll and local-only evaluation, then its own
+`finally` clause closes the watched FD. A test callback delegates
+to the real `os.close` first, proves `fstat` on the watcher now
+fails, and **only then** creates a second generated public regular
+file `postclose-public-sibling` inside the same disposable private
+`/tmp` parent. The original sample dev/ino/mode/size and public
+bytes, parent dev/ino/mode, and preclose single-entry inventory
+remain stable, but the postclose current parent inventory now has
+two entries. That extra entry persists through the runner result
+and is removed only by normal generated TemporaryDirectory cleanup.
+There is deliberately **no postclose event-stream assertion**:
+the observer is already closed, and no detached OS service is
+watching continuously.
+
+The frozen local result can still be only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never protected approval.
+Require exact `can_authorize_dispatch=false`,
+`independent_os_proof_verified=false`, and FD closure.
+One native generated Linux regression raises the strict draft
+to **599 distinct source-defined test methods**. These local tests
+do not establish OS write prevention or immutable annual admission;
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own exact-head
+Phase 3/full historical CI and qualified independent security
+review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
