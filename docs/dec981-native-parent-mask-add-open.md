@@ -1,0 +1,9 @@
+# DEC-981 — Additive parent IN_OPEN keeps existing subscriptions but blocks the narrow parser
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit child of DEC-980/#1201, a native Linux test and documentation only.
+
+DEC-970/#1191 showed an additional IN_OPEN subscription on an existing **source** WD, without replacing its content-write mask. DEC-981 exercises the native complement on the original **parent** WD: IN_OPEN | IN_MASK_ADD | IN_DONT_FOLLOW | IN_ONLYDIR returns the same parent descriptor while retaining the original parent namespace and named-write subscriptions. A real OS directory-open operation emits parent IN_OPEN | IN_ISDIR, and later child file opens emit named parent IN_OPEN records. Both are outside the unchanged observer's narrow event-action parser and must never be dropped to manufacture an apparently quiet queue.
+
+The test also verifies retained parent CREATE and DELETE events for a disposable sibling, unchanged source IN_MODIFY/CLOSE_WRITE observations, and actual parent named source modifications during public write and restore. The evaluator stays BLOCKED for unfamiliar native open records and real write streams with exactly can_authorize_dispatch=false and independent_os_proof_verified=false. Final public source/parent dev, inode, mode, original bytes and one-name inventory match; the genuine inotify FD is closed.
+
+This is one new source-defined Linux regression, for **641** across the strict draft stack. No runtime, workflow, production or protected annual changes. Each exact head still needs Phase 3, full historical regression and qualified independent security review. DEC-650/#820 independently OS-enforced protected no-write and DEC-651/#821/#779 immutable exclusive annual run385 admission remain BLOCKED. No annual dispatch/test/retry/rerun, protected files, production workflow/runners/refs/rulesets/permissions, broker/trading, merge or promotion.
