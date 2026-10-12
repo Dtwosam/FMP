@@ -3319,6 +3319,46 @@ Requires its own exact-head Phase 3/full historical CI
 and qualified independent security review.
 **DRAFT / NEVER MERGE**.
 
+## DEC-926 — Persistent source and directory state drift after last poll
+
+DEC-925/#1144 exercises mutation after the watched FD is **closed**.
+This child instead demonstrates two distinct persistent states after
+the actual final zero-wait inotify collector returns exactly empty
+**while its original watcher remains installed**. Both tests use
+only new disposable public files in a private `/tmp` directory,
+then deliberately perform an additional **test-only native read**
+after the runner's completed final poll.
+
+**Persistent source-content drift:** write the different generated
+public `AFTER` fixture to the original `sample` inode after the
+last poll and retain those different bytes through evaluation. The
+sample inode/mode and parent identity/inventory remain stable, but
+the old runner's snapshotted `BEFORE` bytes are stale. A test-only
+later drain must find native watched-file `IN_MODIFY` and
+content-write events.
+
+**Persistent directory-inventory drift:** create a second genuine
+public regular file `postpoll-public-sibling` in the watched
+generated parent after the last poll and leave it present through
+evaluation. The original source's identity, mode, size and bytes
+remain stable, but the actual inventory now has two names rather
+than the runner's earlier frozen `('sample',)`. A test-only later
+native drain must find the well-formed matching directory
+`IN_CREATE` record for that new disposable entry.
+
+Both authentic local evaluations may still return only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, **never PASS**. Exact
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false` and watcher FD closure
+remain required in both. These two genuine Linux native regression
+methods raise the draft stack to **598 distinct source-defined
+test methods**. This documents stale observations after final
+receipt, not continuous monitoring or OS-enforced no-write.
+Independent DEC-650/#820 and immutable server admission
+DEC-651/#821/#779 remain BLOCKED. Each exact head requires its
+own Phase 3/full historical CI plus qualified external security
+review. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
