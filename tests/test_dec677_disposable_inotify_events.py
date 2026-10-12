@@ -16013,6 +16013,147 @@ class DisposableInotifyTests(unittest.TestCase):
                         watcher_closed = True
         self.assertTrue(watcher_closed)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'native source mask replacement is Linux-only')
+    def test_real_native_same_source_watch_descriptor_narrow_mask(self):
+        # Linux inotify_add_watch without IN_MASK_ADD REPLACES the
+        # existing mask on the same source inode and preserves its WD.
+        # The parent watch remains intact and reports named file writes.
+        # Thus a live, numerically unchanged source WD is not proof of
+        # the originally requested source write-event coverage.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        fd = None
+        closed = False
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec965-public-source-mask-replace-', dir='/tmp') as tmp:
+            sample = Path(tmp) / 'sample'
+            self.assertEqual(sample.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            original = os.lstat(sample)
+            parent_original = os.lstat(sample.parent)
+            self.assertEqual(module._bounded_inventory_names(
+                sample.parent), ('sample',))
+            try:
+                fd, source_wd, parent_wd = native_watch(sample)
+                self.assertNotEqual(source_wd, parent_wd)
+                self.assertEqual(native_poll(fd), b'')
+                lib = module.ctypes.CDLL(None, use_errno=True)
+                lib.inotify_add_watch.argtypes = [
+                    module.ctypes.c_int, module.ctypes.c_char_p,
+                    module.ctypes.c_uint32]
+                lib.inotify_add_watch.restype = module.ctypes.c_int
+
+                # No IN_MASK_ADD: a new IN_ATTRIB-only source mask
+                # replaces all previous source IN_MODIFY/IN_CLOSE_WRITE.
+                narrowed_wd = lib.inotify_add_watch(
+                    fd, module._checked_watch_path_bytes(sample),
+                    module.IN_ATTRIB | module.IN_DONT_FOLLOW)
+                self.assertEqual(narrowed_wd, source_wd)
+                self.assertIsNotNone(os.fstat(fd))
+                self.assertEqual(native_poll(fd), b'')
+
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertEqual(sample.read_bytes(), module.AFTER)
+                write_stream = native_poll(fd)
+                self.assertTrue(write_stream)
+                parsed = module._classify_stream(
+                    write_stream, source_wd, parent_wd)
+                self.assertTrue(parsed['well_formed'])
+                self.assertFalse(parsed['invalidated'])
+                self.assertEqual(parsed['source_modify_events'], 0)
+                self.assertEqual(parsed['source_content_write_events'], 0)
+                # Decode real variable-length inotify records. All data
+                # write events must be named child events on parent WD.
+                offset = 0
+                named_parent_writes = 0
+                while offset < len(write_stream):
+                    wd, mask, cookie, length = module.EVENT.unpack_from(
+                        write_stream, offset)
+                    offset += module.EVENT.size
+                    name = write_stream[offset:offset + length]
+                    offset += length
+                    self.assertIn(wd, (source_wd, parent_wd))
+                    if mask & (module.IN_MODIFY | module.IN_CLOSE_WRITE):
+                        self.assertEqual(wd, parent_wd)
+                        self.assertEqual(
+                            name.split(bytes((0,)), 1)[0], b'sample')
+                        named_parent_writes += 1
+                self.assertEqual(offset, len(write_stream))
+                self.assertGreaterEqual(named_parent_writes, 1)
+                self.assertEqual(native_poll(fd), b'')
+
+                # The source registration is real, but now only reports
+                # source metadata changes rather than content writes.
+                initial_mode = module.stat.S_IMODE(os.lstat(sample).st_mode)
+                os.chmod(sample, initial_mode ^ 0o200)
+                try:
+                    attr_stream = native_poll(fd)
+                    self.assertTrue(attr_stream)
+                    attr_parsed = module._classify_stream(
+                        attr_stream, source_wd, parent_wd)
+                    self.assertTrue(attr_parsed['well_formed'])
+                    self.assertFalse(attr_parsed['invalidated'])
+                    self.assertGreaterEqual(
+                        attr_parsed['source_attribute_events'], 1)
+                finally:
+                    os.chmod(sample, initial_mode)
+                self.assertTrue(native_poll(fd))
+
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.BEFORE),
+                                     len(module.BEFORE))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertEqual(sample.read_bytes(), module.BEFORE)
+                restored_events = native_poll(fd)
+                self.assertTrue(restored_events)
+                restored = module._classify_stream(
+                    restored_events, source_wd, parent_wd)
+                self.assertTrue(restored['well_formed'])
+                self.assertEqual(restored['source_modify_events'], 0)
+                self.assertEqual(native_poll(fd), b'')
+
+                final = os.lstat(sample)
+                parent_final = os.lstat(sample.parent)
+                self.assertEqual(
+                    (original.st_dev, original.st_ino, original.st_mode),
+                    (final.st_dev, final.st_ino, final.st_mode))
+                self.assertEqual(
+                    (parent_original.st_dev, parent_original.st_ino,
+                     parent_original.st_mode),
+                    (parent_final.st_dev, parent_final.st_ino,
+                     parent_final.st_mode))
+                self.assertEqual(module._bounded_inventory_names(
+                    sample.parent), ('sample',))
+
+                # When handed true write evidence and changed bytes,
+                # even a narrowed source mask cannot authorize activity.
+                verdict = module._evaluate(
+                    module.BEFORE, module.AFTER, write_stream, source_wd,
+                    True, False, directory_watch=parent_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(verdict['status'], 'BLOCKED')
+                self.assertIs(verdict['can_authorize_dispatch'], False)
+                self.assertIs(
+                    verdict['independent_os_proof_verified'], False)
+            finally:
+                if fd is not None:
+                    native_close(fd)
+                    try:
+                        os.fstat(fd)
+                    except OSError:
+                        closed = True
+        self.assertTrue(closed)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
