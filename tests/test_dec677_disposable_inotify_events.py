@@ -13197,6 +13197,112 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real postclose public symlink redirect cannot authorize')
+    def test_real_kernel_after_observer_close_external_public_symlink_cannot_authorize(self):
+        # The watched public sample pathname becomes a SYMLINK to a
+        # separately generated public /tmp fixture ONLY AFTER the real
+        # runner closes its inotify FD. The final filename and readable
+        # bytes are the same, but path type/target identity have changed.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'first_final': None,
+                 'last_poll_complete': False, 'close_seen': False,
+                 'fd_really_closed': False, 'source_was_regular': False,
+                 'sample_is_symlink': False, 'linked_public_bytes': False,
+                 'different_inode': False, 'inventory_unchanged': False,
+                 'parent_identity_preserved': False,
+                 'symlink_target_matches_public': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['last_poll_complete'] = True
+            return pending
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec933-public-only-', dir='/tmp') as target_dir:
+            public_target = Path(target_dir) / 'public-unchanged-source'
+            self.assertEqual(public_target.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            self.assertTrue(module.stat.S_ISREG(
+                os.lstat(public_target).st_mode))
+
+            def closing(fd):
+                if fd != state['watch_fd'] or state['close_seen']:
+                    return native_close(fd)
+                self.assertTrue(state['last_poll_complete'])
+                native_close(fd)
+                state['close_seen'] = True
+                try:
+                    os.fstat(fd)
+                except OSError:
+                    state['fd_really_closed'] = True
+                sample = state['sample']
+                folder = sample.parent
+                before = os.lstat(sample)
+                folder_before = os.lstat(folder)
+                state['source_was_regular'] = module.stat.S_ISREG(
+                    before.st_mode)
+                self.assertEqual(sample.read_bytes(), module.BEFORE)
+                self.assertEqual(module._bounded_inventory_names(folder),
+                                 ('sample',))
+                os.unlink(sample)
+                os.symlink(str(public_target), sample)
+                after = os.lstat(sample)
+                folder_after = os.lstat(folder)
+                state['sample_is_symlink'] = module.stat.S_ISLNK(
+                    after.st_mode)
+                state['symlink_target_matches_public'] = (
+                    os.readlink(sample) == str(public_target))
+                state['linked_public_bytes'] = (
+                    sample.read_bytes() == module.BEFORE)
+                state['different_inode'] = (
+                    (before.st_dev, before.st_ino) !=
+                    (after.st_dev, after.st_ino))
+                state['inventory_unchanged'] = (
+                    module._bounded_inventory_names(folder) == ('sample',))
+                state['parent_identity_preserved'] = (
+                    (folder_before.st_dev, folder_before.st_ino,
+                     folder_before.st_mode) ==
+                    (folder_after.st_dev, folder_after.st_ino,
+                     folder_after.st_mode))
+
+            with patch.object(module, '_start_watch',
+                              side_effect=watched) as watcher:
+                with patch.object(module, '_read_receipt_pending',
+                                  side_effect=final_poll) as final:
+                    with patch.object(module.os, 'close',
+                                      side_effect=closing) as close:
+                        receipt = module.run_demo()
+
+            self.assertTrue(state['last_poll_complete'])
+            self.assertEqual(state['first_final'], b'')
+            self.assertTrue(state['close_seen'])
+            self.assertTrue(state['fd_really_closed'])
+            self.assertTrue(state['source_was_regular'])
+            self.assertTrue(state['sample_is_symlink'])
+            self.assertTrue(state['symlink_target_matches_public'])
+            self.assertTrue(state['linked_public_bytes'])
+            self.assertTrue(state['different_inode'])
+            self.assertTrue(state['inventory_unchanged'])
+            self.assertTrue(state['parent_identity_preserved'])
+            self.assertEqual(
+                receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            final.assert_called_once_with(state['watch_fd'])
+            self.assertGreaterEqual(close.call_count, 1)
+            with self.assertRaises(OSError):
+                os.fstat(state['watch_fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
