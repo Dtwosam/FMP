@@ -2873,6 +2873,30 @@ immutable server admission DEC-651/#821/#779 stay BLOCKED.
 Own exact-head Phase 3/full historical CI and independent review
 required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-911 — Real post-final-poll transient watched-inode hardlink
+
+The final zero-wait receipt poll is an observational cut-off, not a
+lock on further inode aliases. DEC-911 adds a genuine Linux test
+that creates and removes a **hard link to the watched sample inode**
+after that last poll but before the local evaluator. The original
+source dev/ino is stable, the temporary link count rises from one
+to two and returns to one, and the parent inventory returns to
+exactly `sample`. A separate **test-only** native inotify drain
+must see real well-formed directory create/delete events and source
+`IN_ATTRIB`. They were *not* present in the runner's earlier drained
+buffer, so the original local result may still be
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`; both authority/proof flags
+must remain exactly `false`, with the observer FD closed.
+
+Only disposable generated /tmp test and docs change. This is a
+counterexample to continuous no-write inference, not an observer
+enforcement improvement. **582 source-defined methods** at this tip.
+Each exact head needs independent Phase 3/full historical CI plus
+qualified external security review. DEC-650/#820 independent OS
+confinement and DEC-651/#821/#779 immutable annual admission remain
+**BLOCKED**. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
