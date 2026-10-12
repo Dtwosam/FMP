@@ -3116,6 +3116,38 @@ DEC-651/#821/#779 remain BLOCKED. Independent exact-head
 Phase 3/full historical CI and qualified external review required.
 **DRAFT / NEVER MERGE**.
 
+## DEC-920 — Real post-final-poll hardlink alias OUTSIDE the watched parent
+
+DEC-911/#1128 creates and removes a real hardlink inside the
+generated watched parent, producing both source `IN_ATTRIB` and
+parent-directory entry events. DEC-920 demonstrates a distinct
+native Linux blind spot: after the genuine final inotify queue
+drain returned `b''`, create then remove a hardlink to the
+watched original `sample` inode **in a separate generated private
+`/tmp` directory**. The link count rises from 1 to 2 and
+returns to 1 while source dev/ino, file mode, bytes, parent
+dev/ino/mode and its one-entry directory inventory are unchanged.
+The watched parent emits **zero directory-entry events** because
+the alias was never inside it. A separate strictly test-only
+later native drain instead detects a well-formed source
+`IN_ATTRIB` event outside the runner's completed final poll.
+
+This is a genuine counterexample to using one watched parent
+as namespace or inode-alias confinement. The local evaluator
+may still give only `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`,
+never annual permission. Both
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false` remain exact, and the
+watcher FD closes. One disposable Linux regression increases
+the strict stack to **591 distinct source-defined test methods**.
+
+inotify cannot enforce no-write or track every other writable
+alias namespace. Independent OS confinement DEC-650/#820 and
+immutable exclusive annual admission DEC-651/#821/#779 remain
+BLOCKED. Own exact-head Phase 3/full historical CI and
+qualified independent security review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

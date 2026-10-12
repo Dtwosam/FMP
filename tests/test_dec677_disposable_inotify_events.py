@@ -11976,6 +11976,112 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real external hardlink after final poll cannot authorize')
+    def test_real_kernel_post_final_poll_external_hardlink_cannot_authorize(self):
+        # Create/remove a genuine alias in a SECOND generated private /tmp
+        # directory, outside the watched parent. This must produce real
+        # source IN_ATTRIB without any watched-parent directory mutation.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_evaluator = module._evaluate
+        state = {'sample': None, 'fd': None, 'wd': None, 'dir_wd': None,
+                 'final_poll_complete': False, 'first_final': None,
+                 'post_poll_event': None, 'alias_inode_matches': False,
+                 'temporary_nlink': None, 'final_nlink': None,
+                 'external_alias_removed': False, 'source_unchanged': False,
+                 'parent_unchanged': False, 'inventory_unchanged': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(sample=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['final_poll_complete'] = True
+            return pending
+
+        def evaluated(*args, **kwargs):
+            self.assertTrue(state['final_poll_complete'])
+            sample = state['sample']
+            parent_before = os.lstat(sample.parent)
+            source_before = os.lstat(sample)
+            bytes_before = sample.read_bytes()
+            self.assertEqual(source_before.st_nlink, 1)
+            self.assertEqual(bytes_before, module.BEFORE)
+            self.assertEqual(module._bounded_inventory_names(sample.parent),
+                             ('sample',))
+            # No alias pathname is created inside the watched parent.
+            with tempfile.TemporaryDirectory(
+                    prefix='dec677-public-external-alias-', dir='/tmp') as ext:
+                alias = Path(ext) / 'temporary-public-alias'
+                os.link(sample, alias)
+                try:
+                    linked = os.lstat(alias)
+                    source_linked = os.lstat(sample)
+                    state['alias_inode_matches'] = (
+                        (linked.st_dev, linked.st_ino) ==
+                        (source_before.st_dev, source_before.st_ino))
+                    state['temporary_nlink'] = source_linked.st_nlink
+                    self.assertEqual(alias.read_bytes(), module.BEFORE)
+                finally:
+                    os.unlink(alias)
+                state['external_alias_removed'] = not os.path.lexists(alias)
+            source_after = os.lstat(sample)
+            parent_after = os.lstat(sample.parent)
+            state['final_nlink'] = source_after.st_nlink
+            state['source_unchanged'] = (
+                (source_before.st_dev, source_before.st_ino,
+                 source_before.st_mode, source_before.st_size) ==
+                (source_after.st_dev, source_after.st_ino,
+                 source_after.st_mode, source_after.st_size) and
+                sample.read_bytes() == bytes_before)
+            state['parent_unchanged'] = (
+                (parent_before.st_dev, parent_before.st_ino,
+                 parent_before.st_mode) ==
+                (parent_after.st_dev, parent_after.st_ino,
+                 parent_after.st_mode))
+            state['inventory_unchanged'] = (
+                module._bounded_inventory_names(sample.parent) == ('sample',))
+            state['post_poll_event'] = native_final_poll(state['fd'])
+            return native_evaluator(*args, **kwargs)
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module, '_evaluate',
+                                  side_effect=evaluated) as evaluator:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['final_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['alias_inode_matches'])
+        self.assertEqual(state['temporary_nlink'], 2)
+        self.assertEqual(state['final_nlink'], 1)
+        self.assertTrue(state['external_alias_removed'])
+        self.assertTrue(state['source_unchanged'])
+        self.assertTrue(state['parent_unchanged'])
+        self.assertTrue(state['inventory_unchanged'])
+        self.assertIs(type(state['post_poll_event']), bytes)
+        self.assertTrue(state['post_poll_event'])
+        parsed = module._classify_stream(
+            state['post_poll_event'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 0)
+        self.assertIn(
+            module.EVENT.pack(state['wd'], module.IN_ATTRIB, 0, 0),
+            state['post_poll_event'])
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        evaluator.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
