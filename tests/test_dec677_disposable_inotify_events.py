@@ -12421,6 +12421,118 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'preexisting writable source fd can write after final poll')
+    def test_real_kernel_preexisting_writer_fd_post_final_poll_cannot_authorize(self):
+        # Open a writer descriptor BEFORE installing the real inotify
+        # watches, hold it throughout the bounded observation and use it
+        # ONLY AFTER the genuine final zero-wait queue read.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_evaluator = module._evaluate
+        state = {'sample': None, 'fd': None, 'wd': None, 'dir_wd': None,
+                 'writer_fd': None, 'final_poll_complete': False,
+                 'first_final': None, 'post_poll_event': None,
+                 'writer_open_before_watch': False, 'write_completed': False,
+                 'inode_restored': False, 'mode_restored': False,
+                 'bytes_restored': False, 'inventory_restored': False,
+                 'parent_restored': False}
+
+        def watched(path):
+            writer_fd = os.open(
+                path, os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC)
+            state['writer_fd'] = writer_fd
+            state['writer_open_before_watch'] = True
+            try:
+                fd, wd, dir_wd = native_watch(path)
+            except BaseException:
+                os.close(writer_fd)
+                state['writer_fd'] = None
+                raise
+            state.update(sample=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['final_poll_complete'] = True
+            return pending
+
+        def evaluated(*args, **kwargs):
+            self.assertTrue(state['final_poll_complete'])
+            sample = state['sample']
+            original = os.lstat(sample)
+            parent_before = os.lstat(sample.parent)
+            initial_bytes = sample.read_bytes()
+            self.assertEqual(initial_bytes, module.BEFORE)
+            held = state['writer_fd']
+            self.assertIs(type(held), int)
+            try:
+                os.lseek(held, 0, os.SEEK_SET)
+                count = os.write(held, initial_bytes)
+                os.fsync(held)
+                state['write_completed'] = count == len(initial_bytes)
+            finally:
+                os.close(held)
+                state['writer_fd'] = None
+            after = os.lstat(sample)
+            parent_after = os.lstat(sample.parent)
+            state['inode_restored'] = (
+                (original.st_dev, original.st_ino, original.st_size) ==
+                (after.st_dev, after.st_ino, after.st_size))
+            state['mode_restored'] = (original.st_mode == after.st_mode)
+            state['bytes_restored'] = (
+                sample.read_bytes() == initial_bytes == module.BEFORE)
+            state['inventory_restored'] = (
+                module._bounded_inventory_names(sample.parent) == ('sample',))
+            state['parent_restored'] = (
+                (parent_before.st_dev, parent_before.st_ino,
+                 parent_before.st_mode) ==
+                (parent_after.st_dev, parent_after.st_ino,
+                 parent_after.st_mode))
+            state['post_poll_event'] = native_final_poll(state['fd'])
+            return native_evaluator(*args, **kwargs)
+
+        try:
+            with patch.object(module, '_start_watch',
+                              side_effect=watched) as watcher:
+                with patch.object(module, '_read_receipt_pending',
+                                  side_effect=final_poll) as final:
+                    with patch.object(module, '_evaluate',
+                                      side_effect=evaluated) as evaluator:
+                        receipt = module.run_demo()
+        finally:
+            # Never leak an extra test-only writable fd on unexpected paths.
+            if state['writer_fd'] is not None:
+                os.close(state['writer_fd'])
+                state['writer_fd'] = None
+
+        self.assertTrue(state['writer_open_before_watch'])
+        self.assertTrue(state['final_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['write_completed'])
+        self.assertTrue(state['inode_restored'])
+        self.assertTrue(state['mode_restored'])
+        self.assertTrue(state['bytes_restored'])
+        self.assertTrue(state['inventory_restored'])
+        self.assertTrue(state['parent_restored'])
+        self.assertIs(type(state['post_poll_event']), bytes)
+        self.assertTrue(state['post_poll_event'])
+        parsed = module._classify_stream(
+            state['post_poll_event'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 0)
+        self.assertGreaterEqual(parsed['source_modify_events'], 1)
+        self.assertGreaterEqual(parsed['source_content_write_events'], 1)
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        evaluator.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
