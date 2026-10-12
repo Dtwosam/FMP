@@ -12533,6 +12533,94 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real post-poll persistent content change cannot authorize')
+    def test_real_kernel_post_final_poll_persistent_content_change_cannot_authorize(self):
+        # This time the sample remains DIFFERENT after the true final
+        # inotify poll. The local evaluator sees stale snapshot arguments,
+        # not the current inode bytes. Only generated public /tmp data.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_evaluator = module._evaluate
+        state = {'sample': None, 'fd': None, 'wd': None, 'dir_wd': None,
+                 'final_poll_complete': False, 'first_final': None,
+                 'post_poll_event': None, 'source_inode_same': False,
+                 'source_bytes_changed': False, 'parent_same': False,
+                 'inventory_same': False, 'final_bytes': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(sample=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['final_poll_complete'] = True
+            return pending
+
+        def evaluated(*args, **kwargs):
+            self.assertTrue(state['final_poll_complete'])
+            sample = state['sample']
+            before = os.lstat(sample)
+            parent_before = os.lstat(sample.parent)
+            self.assertEqual(sample.read_bytes(), module.BEFORE)
+            with sample.open('r+b') as writer:
+                writer.seek(0)
+                writer.truncate(0)
+                count = writer.write(module.AFTER)
+                self.assertEqual(count, len(module.AFTER))
+                writer.flush()
+                os.fsync(writer.fileno())
+            after = os.lstat(sample)
+            parent_after = os.lstat(sample.parent)
+            state['final_bytes'] = sample.read_bytes()
+            state['source_inode_same'] = (
+                (before.st_dev, before.st_ino, before.st_mode) ==
+                (after.st_dev, after.st_ino, after.st_mode))
+            state['source_bytes_changed'] = (
+                state['final_bytes'] == module.AFTER != module.BEFORE)
+            state['parent_same'] = (
+                (parent_before.st_dev, parent_before.st_ino,
+                 parent_before.st_mode) ==
+                (parent_after.st_dev, parent_after.st_ino,
+                 parent_after.st_mode))
+            state['inventory_same'] = (
+                module._bounded_inventory_names(sample.parent) == ('sample',))
+            state['post_poll_event'] = native_final_poll(state['fd'])
+            return native_evaluator(*args, **kwargs)
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module, '_evaluate',
+                                  side_effect=evaluated) as evaluator:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['final_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['source_inode_same'])
+        self.assertTrue(state['source_bytes_changed'])
+        self.assertEqual(state['final_bytes'], module.AFTER)
+        self.assertTrue(state['parent_same'])
+        self.assertTrue(state['inventory_same'])
+        self.assertIs(type(state['post_poll_event']), bytes)
+        self.assertTrue(state['post_poll_event'])
+        parsed = module._classify_stream(
+            state['post_poll_event'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertEqual(parsed['directory_changes'], 0)
+        self.assertGreaterEqual(parsed['source_modify_events'], 1)
+        self.assertGreaterEqual(parsed['source_content_write_events'], 1)
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        evaluator.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

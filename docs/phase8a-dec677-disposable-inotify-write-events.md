@@ -3283,6 +3283,33 @@ Requires own exact-head Phase 3/full historical CI and
 independent qualified security review.
 **DRAFT / NEVER MERGE**.
 
+## DEC-925 — Persistent source corruption after the observer's last poll
+
+Prior post-poll cases restored their watched source's original bytes
+(or briefly rewrote the same bytes). This native counterexample uses
+a **persisting different final payload** inside a freshly generated
+public `/tmp` sample after the runner's true final zero-wait kernel
+read returned exact `b''`. The original sample dev/ino, mode and
+the original parent identity and one-entry inventory are retained;
+its final bytes now equal the different public `AFTER` fixture,
+not the original `BEFORE` fixture. A second **test-only later real
+kernel drain** must confirm well-formed `IN_MODIFY` and
+`IN_CLOSE_WRITE` events that were absent from the already frozen
+observer buffer. The runner's earlier byte snapshot can thus still
+appear quiet even though the generated file is now different.
+
+The local evaluator may return only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never authority. Require
+`can_authorize_dispatch=false`,
+`independent_os_proof_verified=false`, closed watcher FD.
+One genuine Linux test raises the draft stack to
+**596 distinct source-defined test methods**. This shows why a
+successful bounded poll/byte census is not a continuous content
+guarantee; it does not establish OS no-write enforcement.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own exact-head
+Phase 3/full historical CI and external qualified security review
+required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
