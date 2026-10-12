@@ -10345,6 +10345,89 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real parent attributes restored before receipt')
+    def test_real_kernel_parent_chmod_and_restore_during_receipt_census_blocks(self):
+        # A transient permissions change on this generated private /tmp
+        # directory leaves the inode, final mode and directory names intact.
+        # The real parent inotify IN_ATTRIB event must still cause BLOCKED.
+        native_scan = module._bounded_inventory_names
+        native_watch = module._start_watch
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'scans': 0, 'before_mode': None,
+                 'temporary_mode': None, 'restored_mode': None,
+                 'fd': None, 'wds': None, 'first': None, 'late': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['fd'] = fd
+            state['wds'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                initial = os.lstat(folder)
+                state['before_mode'] = module.stat.S_IMODE(initial.st_mode)
+                os.chmod(folder, 0o500)
+                try:
+                    state['temporary_mode'] = module.stat.S_IMODE(
+                        os.lstat(folder).st_mode)
+                finally:
+                    os.chmod(folder, 0o700)
+                restored = os.lstat(folder)
+                state['restored_mode'] = module.stat.S_IMODE(
+                    restored.st_mode)
+                self.assertEqual(
+                    (initial.st_dev, initial.st_ino),
+                    (restored.st_dev, restored.st_ino))
+                self.assertEqual(native_scan(folder), names)
+            return names
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['late'] = native_last(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as scanner:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as last_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['scans'], 3)
+        self.assertEqual(scanner.call_count, 3)
+        self.assertEqual(state['before_mode'], 0o700)
+        self.assertEqual(state['temporary_mode'], 0o500)
+        self.assertEqual(state['restored_mode'], 0o700)
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['wds']
+        events = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(events['well_formed'])
+        self.assertIn(
+            module.EVENT.pack(dir_wd, module.IN_ATTRIB, 0, 0),
+            state['late'])
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        last_reader.assert_called_once()
+        evaluator.assert_not_called()
+        self.assertIsNotNone(state['fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
