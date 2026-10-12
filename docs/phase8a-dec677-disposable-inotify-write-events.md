@@ -2595,6 +2595,30 @@ admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Exact-head Phase 3/full historical regression and qualified
 independent review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-901 — Repair native directory IN_ATTRIB kernel modifier assertion
+
+The historical suite at #1115 **failed exactly one new regression**:
+`test_real_kernel_parent_chmod_and_restore_during_receipt_census_blocks`.
+Its genuine Linux directory watch delivered the well-formed 16-byte
+event with mask `IN_ATTRIB | IN_ISDIR` (`0x40000004`) rather than
+bare `IN_ATTRIB` (`0x00000004`). Linux sets `IN_ISDIR` on an
+attribute event whose watched inode is a directory. The observer's
+actual final event drain returned `BLOCKED`, as intended.
+
+DEC-901 fixes only the test's exact required kernel event mask and
+retains the strict identity, native byte-buffer, post-census mode
+restoration, `BLOCKED`, nonauthorization, evaluator-bypass and
+watcher-FD closure assertions. This neither relaxes the event parser
+nor reclassifies #1115's failed historical suite as green.
+**572 distinct source-defined test methods, unchanged.**
+
+This is generated public /tmp observation only, not independent OS
+no-write confinement or immutable annual admission. DEC-650/#820
+and DEC-651/#821/#779 remain BLOCKED. New exact-head Phase 3/full
+historical CI plus independent qualified security review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

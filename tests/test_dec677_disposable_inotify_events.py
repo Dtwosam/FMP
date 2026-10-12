@@ -10414,8 +10414,12 @@ class DisposableInotifyTests(unittest.TestCase):
         wd, dir_wd = state['wds']
         events = module._classify_stream(state['late'], wd, dir_wd)
         self.assertTrue(events['well_formed'])
+        # On Linux, directory inode attribute events carry IN_ISDIR.
+        # Require the exact real kernel record, not a fabricated bare
+        # IN_ATTRIB that belongs to a regular-file event.
         self.assertIn(
-            module.EVENT.pack(dir_wd, module.IN_ATTRIB, 0, 0),
+            module.EVENT.pack(
+                dir_wd, module.IN_ATTRIB | module.IN_ISDIR, 0, 0),
             state['late'])
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertIs(result['can_authorize_dispatch'], False)
