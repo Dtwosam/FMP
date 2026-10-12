@@ -15239,6 +15239,92 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(closed1)
         self.assertTrue(closed2)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'inherited native inotify queue requires Linux')
+    def test_real_native_subprocess_inherited_fd_consumes_original_event_queue(self):
+        # The child is a separate process but inherits the ORIGINAL
+        # inotify file description through pass_fds, NOT a new watcher.
+        # Its real kernel read consumes events from the parent's queue.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        parent_fd = None
+        closed = False
+        with tempfile.TemporaryDirectory(
+                prefix='dec957-shared-inotify-child-', dir='/tmp') as tmp:
+            source = Path(tmp) / 'sample'
+            self.assertEqual(source.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            before = os.lstat(source)
+            self.assertEqual(module._bounded_inventory_names(source.parent),
+                             ('sample',))
+            try:
+                parent_fd, wd, dir_wd = native_watch(source)
+                with source.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                    writer.seek(0)
+                    self.assertEqual(writer.write(module.BEFORE),
+                                     len(module.BEFORE))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                after = os.lstat(source)
+                self.assertNotEqual(module.AFTER, module.BEFORE)
+                self.assertEqual(
+                    (before.st_dev, before.st_ino, before.st_mode),
+                    (after.st_dev, after.st_ino, after.st_mode))
+                self.assertEqual(source.read_bytes(), module.BEFORE)
+                self.assertEqual(module._bounded_inventory_names(
+                    source.parent), ('sample',))
+                # Pass precisely this disposable inotify FD to a bounded
+                # separate Python interpreter. No shell, broker or network.
+                # The descriptor itself is nonblocking; queued events
+                # are already present before the child begins reading.
+                child_code = (
+                    'import os,sys; '
+                    'b=os.read(int(sys.argv[1]),65536); '
+                    'sys.stdout.write(b.hex())')
+                result = subprocess.run(
+                    [sys.executable, '-B', '-c', child_code,
+                     str(parent_fd)],
+                    pass_fds=(parent_fd,), capture_output=True,
+                    timeout=8)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stderr, b'')
+                self.assertTrue(result.stdout)
+                stolen = bytes.fromhex(result.stdout.decode('ascii'))
+                self.assertTrue(stolen)
+                parsed = module._classify_stream(stolen, wd, dir_wd)
+                self.assertTrue(parsed['well_formed'])
+                self.assertGreaterEqual(parsed['source_modify_events'], 1)
+                self.assertGreaterEqual(
+                    parsed['source_content_write_events'], 1)
+                self.assertEqual(native_poll(parent_fd), b'')
+
+                # A counterfactual event-only local input is NOT proof
+                # of a write-free interval. Other runner metadata gates
+                # could separately block a real live run.
+                local = module._evaluate(
+                    module.BEFORE, module.BEFORE, b'', wd,
+                    True, False, directory_watch=dir_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(
+                    local['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+                self.assertIs(local['can_authorize_dispatch'], False)
+                self.assertIs(local['independent_os_proof_verified'], False)
+            finally:
+                if parent_fd is not None:
+                    native_close(parent_fd)
+                    try:
+                        os.fstat(parent_fd)
+                    except OSError:
+                        closed = True
+        self.assertTrue(closed)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
