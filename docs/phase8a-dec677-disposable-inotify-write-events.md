@@ -2949,6 +2949,31 @@ remain BLOCKED. Own exact-head Phase 3/full historical CI and
 independent qualified security review are mandatory.
 **DRAFT / NEVER MERGE**.
 
+
+## DEC-914 — Genuine post-final-poll same-inode identical-byte write
+
+DEC-890 tests native same-byte writes **before** the final receipt
+poll, where the bounded final collector must return `BLOCKED`.
+DEC-914 demonstrates the inverse timing: a real Linux `r+b`
+rewrite of the same public bytes, flushed and fsynced **after**
+the last empty queue poll and immediately before the genuine local
+evaluator. The watched source device/inode, final byte count, exact
+bytes and private directory inventory remain unchanged. Only a
+**test-only additional native drain** sees the kernel-generated
+source `IN_MODIFY`/`IN_CLOSE_WRITE` records. Those late records
+cannot retroactively be part of the runner's frozen observation,
+so `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` must remain explicitly
+nonauthorizing, with both authority/proof flags exactly false and
+the watcher FD closed.
+
+One generated native counterexample brings the strict tip to
+**585 distinct source-defined test methods**. This establishes a
+specific temporal limit of local inotify evidence, not independent
+write-prevention or continuous kernel attestation. DEC-650/#820
+and DEC-651/#821/#779 remain BLOCKED. Requires own exact-head
+Phase 3 and full historical CI plus qualified external review.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
