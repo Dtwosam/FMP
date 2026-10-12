@@ -3897,6 +3897,41 @@ admission stay BLOCKED. Own exact-head Phase 3/full
 historical CI and independent qualified security review
 required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-943 — Watched sample becomes a FIFO only after observer closes
+
+DEC-939/#1160 tests replacing the original generated regular
+sample with a private directory after the watcher has closed.
+DEC-943 exercises a different Linux file type with materially
+different behavior: a named pipe at the identical basename.
+After the actual zero-wait final poll returned exactly empty,
+the original runner completed its local-only evaluation and
+closed its watched inotify descriptor via `finally`. Only after
+the test delegates to the real `os.close` and confirms failed
+`fstat` does it remove the generated public regular sample and
+create a genuine FIFO using `os.mkfifo` at the same pathname.
+The parent dev/ino/mode and exact one-entry inventory remain
+the same, but `lstat` now identifies a FIFO, not a regular file.
+The test intentionally does not attempt to open or read the
+named pipe, as an ordinary blocking read could hang. Inode
+numbers are not compared across unlink and allocation because
+Linux can reuse them. Normal generated TemporaryDirectory
+cleanup safely unlinks the FIFO.
+
+The frozen local return can still only be
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never authorized annual
+execution. The test asserts exact
+`can_authorize_dispatch=false`,
+`independent_os_proof_verified=false`, and actual observer FD
+closure. One genuine Linux native test brings the draft tip
+to **611 distinct source-defined methods**. This is a
+future-file-type counterexample, not OS-enforced prevention.
+
+Protected DEC-650/#820 OS no-write and DEC-651/#821/#779
+exclusive immutable annual dispatch admission remain BLOCKED.
+Requires own exact-head Phase 3/full historical CI plus
+independent qualified security review.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

@@ -14100,6 +14100,99 @@ class DisposableInotifyTests(unittest.TestCase):
         final.assert_called_once_with(state['watch_fd'])
         self.assertGreaterEqual(close.call_count, 1)
 
+    @unittest.skipUnless(sys.platform == 'linux' and hasattr(os, 'mkfifo'),
+                         'real FIFO substitution after observer close is Linux-only')
+    def test_real_kernel_after_observer_close_fifo_substitution_cannot_authorize(self):
+        # Once the runner's genuine watcher is CLOSED, replace the public
+        # regular sample at the same pathname with a named pipe. Directory
+        # inventory alone cannot distinguish file types. Never open/read
+        # the FIFO: doing so could block indefinitely.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'final': None,
+                 'polled': False, 'closed': False, 'fd_invalid': False,
+                 'original_regular': False, 'replacement_fifo': False,
+                 'replacement_not_regular': False, 'leaf_still_exists': False,
+                 'inventory_equal': False, 'parent_identity_equal': False,
+                 'original_public_bytes': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            result = native_final_poll(fd)
+            state['final'] = result
+            state['polled'] = True
+            return result
+
+        def closing(fd):
+            if fd != state['watch_fd'] or state['closed']:
+                return native_close(fd)
+            self.assertTrue(state['polled'])
+            native_close(fd)
+            state['closed'] = True
+            try:
+                os.fstat(fd)
+            except OSError:
+                state['fd_invalid'] = True
+            sample = state['sample']
+            folder = sample.parent
+            before = os.lstat(sample)
+            parent_before = os.lstat(folder)
+            state['original_regular'] = module.stat.S_ISREG(before.st_mode)
+            state['original_public_bytes'] = sample.read_bytes() == module.BEFORE
+            self.assertEqual(module._bounded_inventory_names(folder),
+                             ('sample',))
+            os.unlink(sample)
+            os.mkfifo(sample, 0o600)
+            after = os.lstat(sample)
+            parent_after = os.lstat(folder)
+            state['replacement_fifo'] = module.stat.S_ISFIFO(after.st_mode)
+            state['replacement_not_regular'] = not module.stat.S_ISREG(
+                after.st_mode)
+            state['leaf_still_exists'] = os.path.lexists(sample)
+            state['inventory_equal'] = (
+                module._bounded_inventory_names(folder) == ('sample',))
+            state['parent_identity_equal'] = (
+                (parent_before.st_dev, parent_before.st_ino,
+                 parent_before.st_mode) ==
+                (parent_after.st_dev, parent_after.st_ino,
+                 parent_after.st_mode))
+            # Do NOT compare the unlinked file's inode number: Linux may
+            # reuse it immediately for the new FIFO. File type is decisive.
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module.os, 'close',
+                                  side_effect=closing) as close:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['polled'])
+        self.assertEqual(state['final'], b'')
+        self.assertTrue(state['closed'])
+        self.assertTrue(state['fd_invalid'])
+        self.assertTrue(state['original_regular'])
+        self.assertTrue(state['original_public_bytes'])
+        self.assertTrue(state['replacement_fifo'])
+        self.assertTrue(state['replacement_not_regular'])
+        self.assertTrue(state['leaf_still_exists'])
+        self.assertTrue(state['inventory_equal'])
+        self.assertTrue(state['parent_identity_equal'])
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['watch_fd'])
+        self.assertGreaterEqual(close.call_count, 1)
+        with self.assertRaises(OSError):
+            os.fstat(state['watch_fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
