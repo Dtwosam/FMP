@@ -3509,6 +3509,40 @@ admission DEC-651/#821/#779 remain BLOCKED. Exact-head Phase 3,
 full historical CI and independent qualified security review
 required. **DRAFT / NEVER MERGE**.
 
+## DEC-932 — Real same-byte source inode replacement AFTER watcher close
+
+DEC-913/#1130 showed a different regular sample inode replacing
+the original after the final poll while the inotify watches were
+still installed. DEC-927/#1145 showed a changed-byte write after
+the watcher FD had been closed by the runner. DEC-932 combines a
+different pathname/inode condition and the later lifetime boundary:
+the genuine final poll returned exactly empty, the local-only
+evaluator returned, and the runner's own `finally` closed its
+watcher FD. The test callback delegates to native `os.close`
+first and confirms `fstat` fails before any mutation. It then
+creates a second new **regular** inode holding exact generated
+public `BEFORE` bytes inside the same private `/tmp` directory,
+pins its mode to the original source and atomically replaces the
+original `sample` pathname. The sample's device/inode now differs,
+while final file contents, mode, bounded one-name parent inventory
+and parent dev/ino/mode still appear unchanged. No event-stream
+read is claimed after the watch is closed.
+
+The frozen genuine local result can still only be
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never protected
+authorization. Both `can_authorize_dispatch=false` and
+`independent_os_proof_verified=false` are asserted exactly;
+watcher descriptor closure is independently checked. One new
+generated Linux test raises the strict stack to **602 distinct
+source-defined methods**. This demonstrates why finite inotify
+monitoring cannot authenticate future filesystem state or enforce
+no-write isolation.
+
+Independent OS-enforced no-write DEC-650/#820 and immutable
+one-shot annual server admission DEC-651/#821/#779 remain
+BLOCKED. Own exact-head Phase 3/full historical CI and qualified
+external security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
