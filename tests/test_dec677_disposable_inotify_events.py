@@ -14384,6 +14384,140 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'real postclose external-process hardlink is Linux-only')
+    def test_real_kernel_postclose_subprocess_alias_survives_cleanup_and_write(self):
+        # A separate bounded Python process creates a hardlink to the
+        # original watched sample after the kernel observer has CLOSED.
+        # After run_demo returns and cleans its own directory, a second
+        # process rewrites only that surviving independent public alias.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'last_poll': None,
+                 'watch_closed': False, 'fd_invalid': False,
+                 'created_by_child': False, 'child_output_empty': False,
+                 'alias_inode_matches': False, 'link_count_two': False,
+                 'parent_same': False, 'inventory_same': False,
+                 'fixture_bytes_same': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            state['last_poll'] = native_final_poll(fd)
+            return state['last_poll']
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec946-public-crossprocess-', dir='/tmp') as ext:
+            alias = Path(ext) / 'public-external-alias'
+            self.assertFalse(os.path.lexists(alias))
+
+            def closing(fd):
+                if fd != state['watch_fd'] or state['watch_closed']:
+                    return native_close(fd)
+                self.assertEqual(state['last_poll'], b'')
+                native_close(fd)
+                state['watch_closed'] = True
+                try:
+                    os.fstat(fd)
+                except OSError:
+                    state['fd_invalid'] = True
+                sample = state['sample']
+                before = os.lstat(sample)
+                parent_before = os.lstat(sample.parent)
+                self.assertEqual(before.st_nlink, 1)
+                self.assertEqual(sample.read_bytes(), module.BEFORE)
+                self.assertEqual(module._bounded_inventory_names(
+                    sample.parent), ('sample',))
+                # No shell/network, and both argv paths are only freshly
+                # generated public files inside disposable /tmp folders.
+                create_code = (
+                    'import os,sys; os.link(sys.argv[1],sys.argv[2])')
+                created = subprocess.run(
+                    [sys.executable, '-B', '-c', create_code,
+                     str(sample), str(alias)],
+                    capture_output=True, timeout=8)
+                state['created_by_child'] = created.returncode == 0
+                state['child_output_empty'] = (
+                    created.stdout == b'' and created.stderr == b'')
+                linked = os.lstat(alias)
+                after = os.lstat(sample)
+                parent_after = os.lstat(sample.parent)
+                state['alias_inode_matches'] = (
+                    (linked.st_dev, linked.st_ino) ==
+                    (before.st_dev, before.st_ino) ==
+                    (after.st_dev, after.st_ino))
+                state['link_count_two'] = (
+                    linked.st_nlink == after.st_nlink == 2)
+                state['parent_same'] = (
+                    (parent_before.st_dev, parent_before.st_ino,
+                     parent_before.st_mode) ==
+                    (parent_after.st_dev, parent_after.st_ino,
+                     parent_after.st_mode))
+                state['inventory_same'] = (
+                    module._bounded_inventory_names(
+                        sample.parent) == ('sample',))
+                state['fixture_bytes_same'] = (
+                    alias.read_bytes() == sample.read_bytes() ==
+                    module.BEFORE)
+
+            with patch.object(module, '_start_watch',
+                              side_effect=watched) as watcher:
+                with patch.object(module, '_read_receipt_pending',
+                                  side_effect=final_poll) as final:
+                    with patch.object(module.os, 'close',
+                                      side_effect=closing) as close:
+                        receipt = module.run_demo()
+
+            self.assertEqual(state['last_poll'], b'')
+            for field in ('watch_closed', 'fd_invalid',
+                          'created_by_child', 'child_output_empty',
+                          'alias_inode_matches', 'link_count_two',
+                          'parent_same', 'inventory_same',
+                          'fixture_bytes_same'):
+                with self.subTest(field=field):
+                    self.assertIs(state[field], True)
+            # Normal runner cleanup removed the source pathname. The
+            # cross-process-created hardlink still holds public bytes.
+            self.assertFalse(os.path.lexists(state['sample']))
+            surviving = os.lstat(alias)
+            self.assertTrue(module.stat.S_ISREG(surviving.st_mode))
+            self.assertEqual(surviving.st_nlink, 1)
+            self.assertEqual(alias.read_bytes(), module.BEFORE)
+            # A second independent process mutates the surviving inode.
+            write_code = (
+                'from pathlib import Path; import sys; '
+                'Path(sys.argv[1]).write_bytes(bytes.fromhex(sys.argv[2]))')
+            written = subprocess.run(
+                [sys.executable, '-B', '-c', write_code, str(alias),
+                 module.AFTER.hex()],
+                capture_output=True, timeout=8)
+            self.assertEqual(written.returncode, 0, written.stderr)
+            self.assertEqual(written.stdout, b'')
+            self.assertEqual(written.stderr, b'')
+            changed = os.lstat(alias)
+            self.assertEqual(
+                (surviving.st_dev, surviving.st_ino),
+                (changed.st_dev, changed.st_ino))
+            self.assertEqual(changed.st_nlink, 1)
+            self.assertEqual(alias.read_bytes(), module.AFTER)
+            self.assertNotEqual(module.BEFORE, module.AFTER)
+            self.assertFalse(os.path.lexists(state['sample']))
+            self.assertEqual(
+                receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            final.assert_called_once_with(state['watch_fd'])
+            self.assertGreaterEqual(close.call_count, 1)
+            with self.assertRaises(OSError):
+                os.fstat(state['watch_fd'])
+        self.assertFalse(os.path.lexists(alias))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
