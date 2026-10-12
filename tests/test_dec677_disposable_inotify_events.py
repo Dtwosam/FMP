@@ -10414,8 +10414,12 @@ class DisposableInotifyTests(unittest.TestCase):
         wd, dir_wd = state['wds']
         events = module._classify_stream(state['late'], wd, dir_wd)
         self.assertTrue(events['well_formed'])
+        # Linux attaches IN_ISDIR to a directory inode's IN_ATTRIB.
+        # Requiring bare IN_ATTRIB falsely rejected a real kernel record
+        # even though the final collector correctly returned BLOCKED.
         self.assertIn(
-            module.EVENT.pack(dir_wd, module.IN_ATTRIB, 0, 0),
+            module.EVENT.pack(
+                dir_wd, module.IN_ATTRIB | module.IN_ISDIR, 0, 0),
             state['late'])
         self.assertEqual(result['status'], 'BLOCKED')
         self.assertIs(result['can_authorize_dispatch'], False)

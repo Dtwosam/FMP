@@ -2595,6 +2595,28 @@ admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Exact-head Phase 3/full historical regression and qualified
 independent review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-901 — Repair the native parent IN_ISDIR event expectation
+
+#1115 DEC-900's exact-head Phase 3 succeeded, but its historical
+regression failed at one assertion in the new generated parent
+permission-toggle test. The real Linux kernel produced the
+directory-watch event `IN_ATTRIB | IN_ISDIR`, not the file-like
+bare `IN_ATTRIB` encoding expected by the test. Its preceding
+checks established a real 0700 → 0500 → 0700 restoration; the
+collector returned a well-formed, nonempty kernel event buffer and
+the local observer already returned `BLOCKED`.
+
+DEC-901 changes **only that assertion** to require the correctly
+tagged native directory metadata event. No runtime watch, mask
+allowlist, parser, source check, final receipt drain, or safety
+boundary is relaxed. All previous failed historical results stay
+failed; this child requires its own exact-head Phase 3 and full
+historical CI. **572 source-defined methods, unchanged.**
+No annual data, protected runner, broker or production authority
+is involved; DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
