@@ -3056,6 +3056,36 @@ remain BLOCKED. Own exact-head Phase 3/full historical CI and
 qualified independent security review required.
 **DRAFT / NEVER MERGE**.
 
+## DEC-918 — Native post-final-poll source truncate and byte restoration
+
+DEC-909 rejects an actual watched-source truncate-and-restore
+occurring before the final receipt queue read; DEC-914/#1131
+demonstrates post-poll writing of **identical bytes** with no
+intermediate content difference. DEC-918 tests the distinct
+genuine Linux temporal blind spot of an intermediate **zero-byte
+source state** that is later repaired. Only after the runner's
+real final zero-wait poll returned exactly empty, truncate the
+generated watched public `sample` to zero using `r+b`, assert the
+zero size, and write back the precise original public fixture.
+Flush/fsync and close before the original local evaluator.
+Final dev/ino, mode, length, bytes, private parent identity and
+single-entry directory inventory match. An extra **test-only
+native kernel drain** must see well-formed `IN_MODIFY` and
+content-write events that were absent from the older frozen
+observer event buffer.
+
+An apparently clean local result can be only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never authority:
+`can_authorize_dispatch=false`,
+`independent_os_proof_verified=false`, watcher FD closed.
+One native generated-file test extends the strict draft to
+**589 distinct source-defined methods**. The test proves a
+specific last-poll race, NOT immutable no-write enforcement.
+Independent annual OS confinement DEC-650/#820 and immutable
+one-shot server admission DEC-651/#821/#779 remain BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified external
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
