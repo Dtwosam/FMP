@@ -13603,6 +13603,25 @@ class DisposableInotifyTests(unittest.TestCase):
             self.assertTrue(module.stat.S_ISREG(surviving.st_mode))
             self.assertEqual(surviving.st_nlink, 1)
             self.assertEqual(alias.read_bytes(), module.BEFORE)
+            # After the ORIGINAL runner has returned and cleaned its
+            # generated directory, mutate only the surviving public
+            # hardlink in the independent disposable alias folder.
+            # No observer or source pathname still exists at this point.
+            with alias.open('r+b') as writer:
+                self.assertEqual(writer.write(module.AFTER),
+                                 len(module.AFTER))
+                writer.truncate()
+                writer.flush()
+                os.fsync(writer.fileno())
+            mutated = os.lstat(alias)
+            self.assertTrue(module.stat.S_ISREG(mutated.st_mode))
+            self.assertEqual(
+                (mutated.st_dev, mutated.st_ino),
+                (surviving.st_dev, surviving.st_ino))
+            self.assertEqual(mutated.st_nlink, 1)
+            self.assertEqual(alias.read_bytes(), module.AFTER)
+            self.assertNotEqual(alias.read_bytes(), module.BEFORE)
+            self.assertFalse(os.path.lexists(state['sample']))
             self.assertEqual(
                 receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
             self.assertIs(receipt['can_authorize_dispatch'], False)
