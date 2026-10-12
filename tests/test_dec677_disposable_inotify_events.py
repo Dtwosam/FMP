@@ -14830,6 +14830,119 @@ class DisposableInotifyTests(unittest.TestCase):
                         pipe.close()
                 process.wait(timeout=8)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'child-owned readonly FD fchmod after cleanup is Linux-only')
+    def test_real_kernel_child_readonly_fd_fchmod_after_original_cleanup(self):
+        # A different process holds O_RDONLY, not a writable FD, on the
+        # generated sample before the final poll. It performs no mutation
+        # until the real runner has closed its watch AND cleaned /tmp.
+        # Owner fchmod remains possible on an unlinked file via that FD.
+        import select
+
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        state = {'sample': None, 'watch_fd': None, 'child': None,
+                 'last_poll': None, 'child_ready': False,
+                 'source_identity': None, 'original_mode': None,
+                 'inventory_one': False}
+
+        child_code = (
+            'import os,stat,sys\n'
+            'path, before_hex = sys.argv[1:]\n'
+            'before = bytes.fromhex(before_hex)\n'
+            'fd = os.open(path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)\n'
+            'try:\n'
+            '    original = os.fstat(fd)\n'
+            '    if not stat.S_ISREG(original.st_mode): sys.exit(51)\n'
+            '    if os.pread(fd, len(before), 0) != before: sys.exit(52)\n'
+            '    print("READY", flush=True)\n'
+            '    if sys.stdin.buffer.readline() != b"GO\\n": sys.exit(53)\n'
+            '    unlinked = os.fstat(fd)\n'
+            '    if unlinked.st_nlink != 0: sys.exit(54)\n'
+            '    old_mode = stat.S_IMODE(unlinked.st_mode)\n'
+            '    os.fchmod(fd, old_mode ^ 0o200)\n'
+            '    changed = os.fstat(fd)\n'
+            '    if stat.S_IMODE(changed.st_mode) != old_mode ^ 0o200: sys.exit(55)\n'
+            '    if os.pread(fd, len(before), 0) != before: sys.exit(56)\n'
+            '    print("DONE %d %d %d %d %d" % (\n'
+            '        changed.st_dev, changed.st_ino, changed.st_nlink,\n'
+            '        old_mode, stat.S_IMODE(changed.st_mode)), flush=True)\n'
+            'finally:\n'
+            '    os.close(fd)\n'
+        )
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            initial = os.lstat(path)
+            state['source_identity'] = (initial.st_dev, initial.st_ino)
+            state['original_mode'] = module.stat.S_IMODE(initial.st_mode)
+            self.assertEqual(initial.st_nlink, 1)
+            self.assertEqual(path.read_bytes(), module.BEFORE)
+            state['inventory_one'] = (
+                module._bounded_inventory_names(path.parent) == ('sample',))
+            child = subprocess.Popen(
+                [sys.executable, '-B', '-c', child_code,
+                 str(path), module.BEFORE.hex()],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+            state['child'] = child
+            readable, _, _ = select.select([child.stdout], [], [], 8)
+            self.assertTrue(readable, 'readonly-FD child did not signal READY')
+            self.assertEqual(child.stdout.readline(), b'READY\n')
+            state['child_ready'] = True
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            state['last_poll'] = native_final_poll(fd)
+            return state['last_poll']
+
+        try:
+            with patch.object(module, '_start_watch',
+                              side_effect=watched) as watcher:
+                with patch.object(module, '_read_receipt_pending',
+                                  side_effect=final_poll) as final:
+                    receipt = module.run_demo()
+
+            self.assertTrue(state['child_ready'])
+            self.assertTrue(state['inventory_one'])
+            self.assertEqual(state['last_poll'], b'')
+            with self.assertRaises(OSError):
+                os.fstat(state['watch_fd'])
+            self.assertFalse(os.path.lexists(state['sample']))
+            self.assertFalse(os.path.lexists(state['sample'].parent))
+
+            child = state['child']
+            out, err = child.communicate(input=b'GO\n', timeout=8)
+            self.assertEqual(child.returncode, 0, err)
+            self.assertEqual(err, b'')
+            pieces = out.strip().split()
+            self.assertEqual(pieces[0], b'DONE')
+            self.assertEqual(len(pieces), 6)
+            self.assertEqual(tuple(map(int, pieces[1:3])),
+                             state['source_identity'])
+            self.assertEqual(int(pieces[3]), 0)
+            self.assertEqual(int(pieces[4]), state['original_mode'])
+            self.assertEqual(int(pieces[5]),
+                             state['original_mode'] ^ 0o200)
+            self.assertFalse(os.path.lexists(state['sample']))
+            self.assertEqual(
+                receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            final.assert_called_once_with(state['watch_fd'])
+        finally:
+            child = state['child']
+            if child is not None:
+                if child.poll() is None:
+                    child.kill()
+                for pipe in (child.stdin, child.stdout, child.stderr):
+                    if pipe is not None and not pipe.closed:
+                        pipe.close()
+                child.wait(timeout=8)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
