@@ -2897,6 +2897,31 @@ qualified external security review. DEC-650/#820 independent OS
 confinement and DEC-651/#821/#779 immutable annual admission remain
 **BLOCKED**. **DRAFT / NEVER MERGE**.
 
+
+## DEC-912 — Genuine post-final-poll watched-parent move-and-restore
+
+DEC-907 checked parent move/restore events **before** the last
+nonblocking receipt drain. DEC-912 demonstrates the opposite timing:
+the final genuine Linux inotify drain is already empty, *then*
+the original generated private /tmp parent is renamed away and
+back while the watches are still installed. Its final dev/ino,
+private mode, original watched sample inode and bounded one-entry
+inventory all match the original observations. The native watched
+directory emits `IN_MOVE_SELF`, verified with a **test-only extra**
+kernel drain that runs only after the runner's recorded final poll.
+That later event cannot retroactively change the earlier local
+receipt, so even an apparent `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`
+must preserve `can_authorize_dispatch=false` and
+`independent_os_proof_verified=false` and close the watcher.
+
+One new genuine generated Linux counterexample brings the strict
+tip to **583 distinct source-defined test methods**. This is not a
+new enforcement guard or proof of full coverage. Protected annual
+OS confinement DEC-650/#820 and immutable run385 one-shot admission
+DEC-651/#821/#779 remain **BLOCKED**. Every exact head needs its own
+Phase 3 / historical CI and independent qualified review.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

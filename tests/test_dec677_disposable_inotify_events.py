@@ -11253,6 +11253,96 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real post-poll parent move restores without authority')
+    def test_real_kernel_post_final_poll_parent_move_and_restore_cannot_authorize(self):
+        # A real watched private /tmp parent inode is relocated and then
+        # returned AFTER the runner's final empty kernel event drain.
+        # A test-only later drain sees IN_MOVE_SELF; the earlier local
+        # receipt cannot establish continuous pathname or OS no-write.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_evaluator = module._evaluate
+        state = {'sample': None, 'fd': None, 'wd': None, 'dir_wd': None,
+                 'final_poll_complete': False, 'first_final': None,
+                 'post_poll_event': None, 'moved_away': False,
+                 'restored': False, 'names_restored': False,
+                 'sample_inode_preserved': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(sample=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['final_poll_complete'] = True
+            return pending
+
+        def evaluated(*args, **kwargs):
+            self.assertTrue(state['final_poll_complete'])
+            sample = state['sample']
+            original_parent = sample.parent
+            moved = original_parent.with_name(
+                original_parent.name + '-brief-postpoll-move')
+            folder_record = os.lstat(original_parent)
+            sample_record = os.lstat(sample)
+            self.assertEqual(module._bounded_inventory_names(original_parent),
+                             ('sample',))
+            os.rename(original_parent, moved)
+            try:
+                state['moved_away'] = (
+                    not os.path.lexists(original_parent) and moved.is_dir())
+            finally:
+                os.rename(moved, original_parent)
+            restored_parent = os.lstat(original_parent)
+            restored_sample = os.lstat(sample)
+            state['restored'] = (
+                (folder_record.st_dev, folder_record.st_ino,
+                 folder_record.st_mode) ==
+                (restored_parent.st_dev, restored_parent.st_ino,
+                 restored_parent.st_mode))
+            state['sample_inode_preserved'] = (
+                (sample_record.st_dev, sample_record.st_ino) ==
+                (restored_sample.st_dev, restored_sample.st_ino))
+            state['names_restored'] = (
+                module._bounded_inventory_names(original_parent) ==
+                ('sample',))
+            state['post_poll_event'] = native_final_poll(state['fd'])
+            return native_evaluator(*args, **kwargs)
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module, '_evaluate',
+                                  side_effect=evaluated) as evaluator:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['final_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['moved_away'])
+        self.assertTrue(state['restored'])
+        self.assertTrue(state['sample_inode_preserved'])
+        self.assertTrue(state['names_restored'])
+        self.assertIs(type(state['post_poll_event']), bytes)
+        self.assertTrue(state['post_poll_event'])
+        parsed = module._classify_stream(
+            state['post_poll_event'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertTrue(parsed['invalidated'])
+        self.assertIn(
+            module.EVENT.pack(state['dir_wd'], module.IN_MOVE_SELF, 0, 0),
+            state['post_poll_event'])
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        evaluator.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
