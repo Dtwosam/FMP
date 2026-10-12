@@ -3116,6 +3116,41 @@ DEC-651/#821/#779 remain BLOCKED. Independent exact-head
 Phase 3/full historical CI and qualified external review required.
 **DRAFT / NEVER MERGE**.
 
+## DEC-920 — Post-final-poll actual source mutation through a hardlink alias
+
+DEC-911/#1128 verified that a transient hardlink to the watched
+source inode after the runner's final queue poll can escape that
+already completed observation. DEC-914/#1131 showed same-inode
+identical-byte rewriting via the original watched pathname;
+DEC-918/#1135 tested truncation via the original pathname.
+DEC-920 tests a different real writer path: once the last genuine
+native poll returns exact empty bytes, create a hardlink alias to
+the watched generated public source **inside the same disposable
+private `/tmp` folder**, then write distinct public fixture bytes
+through the alias, confirm the content changed at `sample`, and
+restore the exact original bytes through that alias. Flush/fsync
+and close the writer, remove the alias, and retain the original
+watched inode, file mode, original bytes, link count one, parent
+inode/mode and one-entry inventory. A strictly test-only later
+native drain must observe genuine well-formed watched-file
+`IN_MODIFY`/content-write records and directory create/delete
+activity **after** the runner's final event read.
+
+This is not a claim that the real observer detected or prevented
+the late alias write; it explicitly cannot retroactively do so.
+The local result may remain only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never protected PASS,
+with both `can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`, and watcher FD closed.
+One new test brings the strict stack to **591 distinct
+source-defined test methods**.
+
+DEC-650/#820 independent OS no-write and DEC-651/#821/#779
+immutable one-shot annual admission remain BLOCKED; neither is
+established by these local inotify observations. Each exact
+head needs Phase 3/full historical CI and qualified external
+security review. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
