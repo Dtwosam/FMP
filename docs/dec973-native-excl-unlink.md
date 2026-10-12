@@ -1,0 +1,9 @@
+# DEC-973 — IN_EXCL_UNLINK hides writes via an unlinked open child
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict test-and-documentation child of DEC-972/#1193.
+
+Two distinct real Linux inotify instances observe a new private public `/tmp` parent directory. The ordinary dual-source/parent observer is compared with an independent parent watch registered using native `IN_EXCL_UNLINK`. Both initially observe a disposable sibling create and unlink. Crucially, a writable FD opened **before unlink** stays live and receives a real later write plus close. The unfiltered parent instance records named `IN_MODIFY` and `IN_CLOSE_WRITE`; the `IN_EXCL_UNLINK` instance receives none for that now-unlinked child.
+
+This is deliberate native subscription filtering, not evidence that no write happened or that the filtered watch disappeared. To prove it remains live, a different still-linked original public sample is written with distinct bytes and then restored. The filtered instance reports named sample modifications; the ordinary source and parent watches report the true writes, and the unchanged evaluator returns `BLOCKED`. Final sample and parent dev/inode/mode and single-entry directory inventory match; all FDs are closed.
+
+One new Linux source-defined method brings the stacked draft to **635**. These controls are not independent protected no-write isolation or continuous provenance proof; exact `can_authorize_dispatch=false` and `independent_os_proof_verified=false` remain mandatory. Own exact-head Phase 3 and historical regression and qualified independent review required. Protected no-write DEC-650/#820 and exclusive immutable annual run385 admission DEC-651/#821/#779 remain BLOCKED. No protected source/evidence, annual run, production refs/workflows/permissions, broker/trading, merges, or promotions.
