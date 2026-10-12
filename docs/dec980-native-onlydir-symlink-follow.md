@@ -1,0 +1,9 @@
+# DEC-980 — Native IN_ONLYDIR follows a directory symlink without IN_DONT_FOLLOW
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit, generated-public Linux test/documentation child of DEC-979/#1200.
+
+Complements DEC-976/#1197's native ENOTDIR negative control: on a fresh independent inotify instance, registering a temporary symlink to the private parent directory with IN_ONLYDIR, IN_CREATE and IN_DELETE succeeds because Linux follows its directory target. Trying to register the same symlink with IN_DONT_FOLLOW additionally set fails natively with -1/ENOTDIR. That refused registration does not interrupt the successful followed-parent watch, which still reports genuine creation/deletion of a disposable sibling under the target parent.
+
+A separate original source+parent instance sees true public sample write/restore events; the followed-parent-only instance's quiet write stream means it subscribed only to entry mutations, **not** that no write took place. The evaluator stays BLOCKED on actual write records with exactly can_authorize_dispatch=false and independent_os_proof_verified=false. Original file/parent device, inode, mode and one-leaf inventory are restored; both native FDs are closed.
+
+One additional source-defined test gives **640** on this strict stack. Neither a directory-symlink-followed watch nor an IN_ONLYDIR error is independent OS no-write enforcement, continuous history proof or annual authorization. Own exact-head Phase 3 and complete historical regression plus qualified independent security review required. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Never run/test/retry/dispatch annual run385, touch protected evidence/source, alter production refs/workflows/runners/rulesets/permissions, trade, merge or promote.
