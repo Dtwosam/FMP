@@ -2620,6 +2620,30 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own
 exact-head Phase 3/full historical CI and qualified independent
 security review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-902 — Real transient hardlink alias after final sample metadata
+
+DEC-892 tests an alias still present after the last sample link-count
+check, while DEC-902 covers a temporary alias introduced and removed
+**after** the last generated sample metadata record has been read.
+The original exclusive-created public `/tmp` source retains its
+device/inode, exact data, and final native `st_nlink == 1`.
+The created public sibling alias is gone before evaluation, and the
+directory inventory is restored. The first native Linux inotify drain
+was empty, but the immediate final collector must observe genuine
+source `IN_ATTRIB` and parent directory create/delete notifications.
+Any such activity yields `BLOCKED`, no local evaluator, both
+authority/proof fields false and a closed watcher FD.
+
+One new genuine Linux regression brings the strict tip to **574
+distinct source-defined test methods**. All file operations use
+only fresh generated public `/tmp` data. This negative observation
+cannot prove an independently enforced OS no-write policy, complete
+future kernel event coverage, or immutable annual admission.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+Exact-head Phase 3/full historical suite and independent qualified
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

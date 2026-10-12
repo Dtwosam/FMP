@@ -10511,6 +10511,90 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'native late hardlink create and unlink')
+    def test_real_kernel_transient_hardlink_after_final_source_stat_blocks(self):
+        # Link count and directory inventory are restored after a brief
+        # alias of ONLY the generated watched public /tmp source. True
+        # kernel file IN_ATTRIB and parent create/delete must still block.
+        native_watch = module._start_watch
+        native_timestamps = module._checked_generated_sample_change_timestamps
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'source': None, 'fd': None, 'wds': None, 'checks': 0,
+                 'created_links': None, 'final_links': None,
+                 'same_inode': False, 'alias_absent': False,
+                 'first': None, 'late': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['source'] = path
+            state['fd'] = fd
+            state['wds'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def checked(record):
+            stamps = native_timestamps(record)
+            state['checks'] += 1
+            if state['checks'] == 3:
+                source = state['source']
+                alias = source.parent / 'public-brief-hardlink'
+                baseline = os.lstat(source)
+                os.link(source, alias)
+                try:
+                    state['created_links'] = os.lstat(source).st_nlink
+                finally:
+                    os.unlink(alias)
+                restored = os.lstat(source)
+                state['final_links'] = restored.st_nlink
+                state['same_inode'] = (
+                    (baseline.st_dev, baseline.st_ino) ==
+                    (restored.st_dev, restored.st_ino))
+                state['alias_absent'] = not os.path.lexists(alias)
+            return stamps
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['late'] = native_last(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=checked) as checker:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as last_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['checks'], 3)
+        self.assertEqual(checker.call_count, 3)
+        self.assertEqual(state['created_links'], 2)
+        self.assertEqual(state['final_links'], 1)
+        self.assertTrue(state['same_inode'])
+        self.assertTrue(state['alias_absent'])
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['wds']
+        events = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(events['well_formed'])
+        self.assertGreaterEqual(events['directory_changes'], 2)
+        self.assertGreaterEqual(events['source_attribute_events'], 1)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        last_reader.assert_called_once()
+        evaluator.assert_not_called()
+        self.assertIsNotNone(state['fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
