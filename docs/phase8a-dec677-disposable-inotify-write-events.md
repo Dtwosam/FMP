@@ -2595,6 +2595,31 @@ admission. DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
 Exact-head Phase 3/full historical regression and qualified
 independent review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-901 — Real late truncation and exact source restoration
+
+A source-file identity, final-byte and final-size comparison can
+miss a transient truncate-and-restore operation. DEC-901 adds a
+genuine native Linux control after the third/last sample timestamp
+validator has captured its old record. On the same generated
+public `/tmp` watched source, a native writer truncates to zero,
+verifies size zero, then writes the original exact fixture and
+flushes/fsyncs it. The final sample inode, size and contents match,
+and the earlier first inotify queue drain is empty. The final
+zero-wait true kernel collector must still return well-formed
+`IN_MODIFY` content-write events and return `BLOCKED` before the
+local evaluator, keeping both authority/proof flags false and closing
+the watcher FD.
+
+One native regression increases the strict tip to **573 distinct
+source-defined test methods**. The change affects tests and
+documentation only. Detecting an event in a generated disposable
+sample does not establish independent OS-enforced no-write confinement,
+complete kernel visibility, or immutable annual run admission.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Own
+exact-head Phase 3/full historical CI and qualified independent
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
