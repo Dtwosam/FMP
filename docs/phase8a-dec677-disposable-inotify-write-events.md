@@ -4781,6 +4781,47 @@ remain BLOCKED. Requires own exact-head Phase 3/full historical
 CI and qualified independent security review.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-966 — Same parent WD survives narrowed native mask but loses sibling events
+
+DEC-965/#1186 narrows the source watch mask on the same real
+Linux watch descriptor. Direct source write-event coverage
+vanishes, but parent-WD named write events remain visible.
+DEC-966 is the complementary genuine native case: re-register
+the existing generated **private parent directory** with
+`IN_ATTRIB | IN_DONT_FOLLOW | IN_ONLYDIR`, deliberately
+without `IN_MASK_ADD`. Linux retains its **same numeric WD**
+but replaces its original mask, removing the source-child
+namespace create/delete and named write-event subscriptions.
+
+A real generated public sibling is created and unlinked, but
+both subsequent kernel zero-wait polls are empty. Then a
+chmod-only sticky-bit change on that private `0700` parent
+produces the exact genuine `IN_ATTRIB | IN_ISDIR` native
+record on the **same parent WD**, proving the registration
+still lives with narrower coverage; restore the original
+mode safely. The original sample's untouched source WD
+continues to emit genuine `IN_MODIFY`/content-write events
+for distinct public fixture bytes, and a later write restores
+the original fixture. Final source and parent dev/ino/mode
+and one-entry inventory match. No production or protected
+path is accessed.
+
+An evaluator given the **actual** source write stream and
+changed public bytes must return `BLOCKED` with exact
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`. Same numeric WD
+never proves unchanged watch mask, continuous history or
+independently OS-enforced no-write. The test does not claim
+the unmodified `run_demo` narrows its masks.
+
+One native Linux method extends the strict draft to
+**630 distinct source-defined tests**. DEC-650/#820
+independent protected no-write and DEC-651/#821/#779
+immutable exclusive annual admission remain BLOCKED.
+Requires own exact-head Phase 3/full historical CI plus
+qualified independent security review.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
