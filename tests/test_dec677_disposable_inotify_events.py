@@ -13397,6 +13397,103 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real private-parent sticky-bit drift after watcher close cannot authorize')
+    def test_real_kernel_after_observer_close_parent_sticky_mode_drift_cannot_authorize(self):
+        # The watched private parent acquires a STICKY bit after the
+        # actual watcher close: this changes inode mode metadata while
+        # preserving the original owner-only 0700 access permissions.
+        # No event-stream read exists after native os.close.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'first_final': None,
+                 'last_poll_complete': False, 'close_seen': False,
+                 'fd_really_closed': False, 'initial_parent_mode': None,
+                 'postclose_parent_mode': None, 'parent_inode_same': False,
+                 'source_inode_mode_bytes_same': False,
+                 'inventory_same': False, 'sticky_bit_persisted': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['last_poll_complete'] = True
+            return pending
+
+        def closing(fd):
+            if fd != state['watch_fd'] or state['close_seen']:
+                return native_close(fd)
+            self.assertTrue(state['last_poll_complete'])
+            native_close(fd)
+            state['close_seen'] = True
+            try:
+                os.fstat(fd)
+            except OSError:
+                state['fd_really_closed'] = True
+            source = state['sample']
+            folder = source.parent
+            initial_folder = os.lstat(folder)
+            initial_source = os.lstat(source)
+            initial_mode = module.stat.S_IMODE(initial_folder.st_mode)
+            state['initial_parent_mode'] = initial_mode
+            self.assertEqual(initial_mode, 0o700)
+            self.assertEqual(module._bounded_inventory_names(folder),
+                             ('sample',))
+            self.assertEqual(source.read_bytes(), module.BEFORE)
+            # Keep owner 0700 access unchanged: adding sticky changes
+            # metadata but grants no read/write/execute permission.
+            os.chmod(folder, initial_mode | module.stat.S_ISVTX)
+            final_folder = os.lstat(folder)
+            final_source = os.lstat(source)
+            state['postclose_parent_mode'] = module.stat.S_IMODE(
+                final_folder.st_mode)
+            state['sticky_bit_persisted'] = (
+                bool(final_folder.st_mode & module.stat.S_ISVTX)
+                and initial_folder.st_mode != final_folder.st_mode)
+            state['parent_inode_same'] = (
+                (initial_folder.st_dev, initial_folder.st_ino) ==
+                (final_folder.st_dev, final_folder.st_ino))
+            state['source_inode_mode_bytes_same'] = (
+                (initial_source.st_dev, initial_source.st_ino,
+                 initial_source.st_mode, initial_source.st_size) ==
+                (final_source.st_dev, final_source.st_ino,
+                 final_source.st_mode, final_source.st_size)
+                and source.read_bytes() == module.BEFORE)
+            state['inventory_same'] = (
+                module._bounded_inventory_names(folder) == ('sample',))
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module.os, 'close',
+                                  side_effect=closing) as close:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['last_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['close_seen'])
+        self.assertTrue(state['fd_really_closed'])
+        self.assertEqual(state['initial_parent_mode'], 0o700)
+        self.assertEqual(state['postclose_parent_mode'], 0o1700)
+        self.assertTrue(state['sticky_bit_persisted'])
+        self.assertTrue(state['parent_inode_same'])
+        self.assertTrue(state['source_inode_mode_bytes_same'])
+        self.assertTrue(state['inventory_same'])
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['watch_fd'])
+        self.assertGreaterEqual(close.call_count, 1)
+        with self.assertRaises(OSError):
+            os.fstat(state['watch_fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
