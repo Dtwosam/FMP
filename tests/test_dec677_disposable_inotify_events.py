@@ -10850,6 +10850,165 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real late parent move after final source record')
+    def test_real_kernel_parent_move_restore_after_last_sample_stat_blocks(self):
+        # All filesystem activity is inside the newly generated /tmp parent.
+        # Rename the *watched directory inode* away and back after its last
+        # sample metadata read: contents, inode and original path are restored.
+        native_watch = module._start_watch
+        native_stamps = module._checked_generated_sample_change_timestamps
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'checks': 0, 'path': None, 'wd': None, 'dir_wd': None,
+                 'fd': None, 'moved': False, 'restored': False,
+                 'first': None, 'last': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(path=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def validated(record):
+            timestamps = native_stamps(record)
+            state['checks'] += 1
+            if state['checks'] == 3:
+                folder = state['path'].parent
+                moved = folder.with_name(folder.name + '-poststat-move')
+                before = os.lstat(folder)
+                os.rename(folder, moved)
+                try:
+                    state['moved'] = (not os.path.lexists(folder)
+                                      and moved.is_dir())
+                finally:
+                    os.rename(moved, folder)
+                after = os.lstat(folder)
+                state['restored'] = (
+                    (before.st_dev, before.st_ino, before.st_mode) ==
+                    (after.st_dev, after.st_ino, after.st_mode)
+                )
+            return timestamps
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['last'] = native_last(fd)
+            return state['last']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=validated) as checker:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as last_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            receipt = module.run_demo()
+
+        self.assertEqual(state['checks'], 3)
+        self.assertEqual(checker.call_count, 3)
+        self.assertTrue(state['moved'])
+        self.assertTrue(state['restored'])
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['last']), bytes)
+        self.assertTrue(state['last'])
+        decoded = module._classify_stream(
+            state['last'], state['wd'], state['dir_wd'])
+        self.assertTrue(decoded['well_formed'])
+        self.assertTrue(decoded['invalidated'])
+        self.assertIn(
+            module.EVENT.pack(state['dir_wd'], module.IN_MOVE_SELF, 0, 0),
+            state['last'])
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        last_reader.assert_called_once()
+        evaluator.assert_not_called()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
+    @unittest.skipUnless(sys.platform == 'linux', 'real late parent metadata after final source record')
+    def test_real_kernel_parent_mode_restore_after_last_sample_stat_blocks(self):
+        # A real 0700 -> 0500 -> 0700 event after the final sample
+        # observation leaves the generated source bytes and parent identity
+        # unchanged. Linux tags parent IN_ATTRIB with IN_ISDIR.
+        native_watch = module._start_watch
+        native_stamps = module._checked_generated_sample_change_timestamps
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'checks': 0, 'path': None, 'wd': None, 'dir_wd': None,
+                 'fd': None, 'before': None, 'temporary': None,
+                 'restored': None, 'first': None, 'last': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(path=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def validated(record):
+            timestamps = native_stamps(record)
+            state['checks'] += 1
+            if state['checks'] == 3:
+                folder = state['path'].parent
+                initial = os.lstat(folder)
+                state['before'] = module.stat.S_IMODE(initial.st_mode)
+                os.chmod(folder, 0o500)
+                try:
+                    state['temporary'] = module.stat.S_IMODE(
+                        os.lstat(folder).st_mode)
+                finally:
+                    os.chmod(folder, 0o700)
+                final = os.lstat(folder)
+                state['restored'] = module.stat.S_IMODE(final.st_mode)
+                self.assertEqual((initial.st_dev, initial.st_ino),
+                                 (final.st_dev, final.st_ino))
+            return timestamps
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['last'] = native_last(fd)
+            return state['last']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=validated) as checker:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as last_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            receipt = module.run_demo()
+
+        self.assertEqual(state['checks'], 3)
+        self.assertEqual(checker.call_count, 3)
+        self.assertEqual((state['before'], state['temporary'], state['restored']),
+                         (0o700, 0o500, 0o700))
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['last']), bytes)
+        self.assertTrue(state['last'])
+        decoded = module._classify_stream(
+            state['last'], state['wd'], state['dir_wd'])
+        self.assertTrue(decoded['well_formed'])
+        self.assertIn(
+            module.EVENT.pack(
+                state['dir_wd'], module.IN_ATTRIB | module.IN_ISDIR, 0, 0),
+            state['last'])
+        self.assertEqual(receipt['status'], 'BLOCKED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        last_reader.assert_called_once()
+        evaluator.assert_not_called()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
