@@ -15728,6 +15728,136 @@ class DisposableInotifyTests(unittest.TestCase):
                         watcher_closed = True
         self.assertTrue(watcher_closed)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'native source re-registration after both removals is Linux-only')
+    def test_real_native_readd_only_source_after_both_watches_removed(self):
+        # Recover ONLY a source registration after real kernel removals.
+        # The prior IN_IGNORED records remain genuine invalidation
+        # evidence, regardless of whether Linux reuses a numeric WD.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        watcher_fd = None
+        closed = False
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec963-public-readd-source-', dir='/tmp') as tmp:
+            sample = Path(tmp) / 'sample'
+            self.assertEqual(sample.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            original = os.lstat(sample)
+            original_parent = os.lstat(sample.parent)
+            self.assertEqual(module._bounded_inventory_names(
+                sample.parent), ('sample',))
+            try:
+                watcher_fd, old_source_wd, old_parent_wd = native_watch(
+                    sample)
+                self.assertNotEqual(old_source_wd, old_parent_wd)
+                self.assertEqual(native_poll(watcher_fd), b'')
+                lib = module.ctypes.CDLL(None, use_errno=True)
+                lib.inotify_rm_watch.argtypes = [
+                    module.ctypes.c_int, module.ctypes.c_int]
+                lib.inotify_rm_watch.restype = module.ctypes.c_int
+                lib.inotify_add_watch.argtypes = [
+                    module.ctypes.c_int, module.ctypes.c_char_p,
+                    module.ctypes.c_uint32]
+                lib.inotify_add_watch.restype = module.ctypes.c_int
+                for old_wd in (old_source_wd, old_parent_wd):
+                    self.assertEqual(
+                        lib.inotify_rm_watch(watcher_fd, old_wd), 0)
+                    ignored = native_poll(watcher_fd)
+                    self.assertEqual(
+                        ignored,
+                        module.EVENT.pack(
+                            old_wd, module.IN_IGNORED, 0, 0))
+                    parsed = module._classify_stream(
+                        ignored, old_source_wd, old_parent_wd)
+                    self.assertTrue(parsed['well_formed'])
+                    self.assertTrue(parsed['invalidated'])
+                    self.assertEqual(native_poll(watcher_fd), b'')
+
+                # Only the source is reinstalled. Accept whatever WD the
+                # live kernel returns: numeric equality with a removed WD
+                # is NOT evidence that its old registration survived.
+                new_source_wd = lib.inotify_add_watch(
+                    watcher_fd,
+                    module._checked_watch_path_bytes(sample),
+                    module.MASK | module.IN_DONT_FOLLOW)
+                self.assertIs(type(new_source_wd), int)
+                self.assertGreater(new_source_wd, 0)
+                self.assertLessEqual(
+                    new_source_wd, module.MAX_WATCH_DESCRIPTOR)
+                self.assertIsNotNone(os.fstat(watcher_fd))
+                self.assertEqual(native_poll(watcher_fd), b'')
+
+                # No parent watch: sibling namespace mutations are
+                # genuinely invisible to this single-source instance.
+                sibling = sample.parent / 'public-after-readd-sibling'
+                self.assertEqual(sibling.write_bytes(b'PUBLIC-EXTRA'),
+                                 len(b'PUBLIC-EXTRA'))
+                self.assertEqual(module._bounded_inventory_names(
+                    sample.parent),
+                    ('public-after-readd-sibling', 'sample'))
+                self.assertEqual(native_poll(watcher_fd), b'')
+                os.unlink(sibling)
+                self.assertEqual(module._bounded_inventory_names(
+                    sample.parent), ('sample',))
+                self.assertEqual(native_poll(watcher_fd), b'')
+
+                # New source registration sees a genuine write to the
+                # original inode. This is not retrospective observation
+                # of the interval when both watches were removed.
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertEqual(sample.read_bytes(), module.AFTER)
+                stream = native_poll(watcher_fd)
+                self.assertIs(type(stream), bytes)
+                self.assertTrue(stream)
+                parsed = module._classify_stream(stream, new_source_wd)
+                self.assertTrue(parsed['well_formed'])
+                self.assertFalse(parsed['invalidated'])
+                self.assertGreaterEqual(parsed['source_modify_events'], 1)
+                self.assertGreaterEqual(
+                    parsed['source_content_write_events'], 1)
+                self.assertEqual(parsed['directory_changes'], 0)
+                self.assertEqual(native_poll(watcher_fd), b'')
+
+                final = os.lstat(sample)
+                final_parent = os.lstat(sample.parent)
+                self.assertEqual(
+                    (original.st_dev, original.st_ino, original.st_mode),
+                    (final.st_dev, final.st_ino, final.st_mode))
+                self.assertEqual(
+                    (original_parent.st_dev, original_parent.st_ino,
+                     original_parent.st_mode),
+                    (final_parent.st_dev, final_parent.st_ino,
+                     final_parent.st_mode))
+                self.assertEqual(module._bounded_inventory_names(
+                    sample.parent), ('sample',))
+                local = module._evaluate(
+                    module.BEFORE, module.BEFORE, b'', new_source_wd,
+                    True, False, directory_inventory_names=('sample',))
+                # The runtime evaluator refuses single-watch coverage,
+                # even if a hypothetical final stream appears empty.
+                self.assertEqual(local['status'], 'BLOCKED')
+                self.assertIn(
+                    'synthetic inotify property missing: both_watches_identified',
+                    local['findings'])
+                self.assertIs(local['can_authorize_dispatch'], False)
+                self.assertIs(local['independent_os_proof_verified'], False)
+            finally:
+                if watcher_fd is not None:
+                    native_close(watcher_fd)
+                    try:
+                        os.fstat(watcher_fd)
+                    except OSError:
+                        closed = True
+        self.assertTrue(closed)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

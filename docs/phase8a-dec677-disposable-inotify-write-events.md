@@ -4662,6 +4662,48 @@ remain **BLOCKED**. No merges, annual execution, protected
 evidence access, production change, broker or trading action.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-963 — Re-register only source watch after genuine native removal
+
+DEC-959/#1180, DEC-960/#1181 and DEC-961/#1182 show what
+is lost when the source, parent or both inotify registrations
+are removed. DEC-963 tests a separate native **re-registration**
+boundary, without changing the disposable observer runtime.
+Create exactly one generated public regular `sample` inside a
+private `/tmp` parent and register its genuine original dual
+watches. Remove **both** with actual `inotify_rm_watch`,
+confirm each exact `IN_IGNORED` record and an empty queue,
+then call native `inotify_add_watch` to register **only the
+source inode** again on the still-open instance FD. Accept the
+positive kernel-returned watch descriptor without assuming
+its number differs from any removed WD: numeric descriptor reuse
+would not restore the original observation history.
+
+Once re-registered, unrelated sibling create/delete mutations
+in the parent yield a genuinely empty queue, since the parent
+registration remains absent. A real write to the existing
+watched source inode produces well-formed `IN_MODIFY` and
+content-write records under the **new source registration**.
+Final source dev/ino/mode and parent dev/ino/mode plus one-leaf
+inventory remain unchanged. The FD is closed and closure
+checked. This test does **not** claim the unmodified `run_demo`
+removed or reinstalled watches, or that missing history can be
+recovered by watch re-registration.
+
+A hypothetical clean file-only evaluation correctly returns
+`BLOCKED` because `both_watches_identified` is false, even
+with an empty event stream. It retains exact
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`. One real native Linux
+test brings the strict stack to **627 unique source-defined
+methods**. This is a counterexample to inferring continuous
+OS-enforced protection from a current watch registration.
+
+Independent protected no-write DEC-650/#820 and exclusive
+immutable annual admission DEC-651/#821/#779 remain BLOCKED.
+Own exact-head Phase 3 and full historical CI plus qualified
+independent security review required.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
