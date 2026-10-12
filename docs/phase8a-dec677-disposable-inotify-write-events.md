@@ -4613,6 +4613,55 @@ BLOCKED. Own exact-head Phase 3/full historical CI and
 qualified independent security review are mandatory.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-962 — Reviewer matrix for real native inotify watch-registration removal
+
+DEC-959/#1180, DEC-960/#1181 and DEC-961/#1182 are complementary
+**native Linux** controls against assuming that an open inotify
+file descriptor itself proves continuing coverage. They are
+separate strict one-commit draft children with their own exact-head
+Phase 3/full historical CI obligations, not approved annual
+security evidence.
+
+| Native generated public test | Removed registration(s) | Actual `IN_IGNORED` evidence | Later native queue observation | What is **not** established |
+| --- | --- | --- | --- | --- |
+| **DEC-959 / #1180** | Source file WD only | Exact source-WD `IN_IGNORED` | Parent WD still sees named `sample` child modify/close-write events; no direct source-WD event | Not evidence of total write blindness, nor of a secure `run_demo` pass |
+| **DEC-960 / #1181** | Private parent directory WD only | Exact parent-WD `IN_IGNORED` | Unrelated sibling create/delete events are absent; source WD still sees its real source modify/write records | Not evidence that writes to the watched source are invisible |
+| **DEC-961 / #1182** | Source WD **and** parent WD | Two individually drained true `IN_IGNORED` records | The still-open inotify instance FD has no registrations; generated sibling changes and source byte mutations yield an empty later queue | Not evidence that a quiet FD means unchanged filesystem state or protected no-write enforcement |
+
+**Non-negotiable reading rules:**
+
+- `IN_IGNORED` means the observed watch was invalidated.
+  It is **not** an event-free interval, independent
+  authentication, or permission to continue a protected workflow.
+- These tests explicitly operate on newly generated public
+  regular files and private `/tmp` directories only. They do
+  not call unmodified `run_demo` with removed watches, and
+  they do not examine protected annual data or runner identity.
+- Counterfactual empty-stream `_evaluate` calls are *only
+  local diagnostics*. Their most favorable outcome stays
+  `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with exact
+  `can_authorize_dispatch=false` and
+  `independent_os_proof_verified=false`.
+- A live FD and successful `fstat(fd)` prove only descriptor
+  existence; they do **not** prove that any WD is registered.
+  A closed/removed WD and an independent watcher process are
+  different conditions and must not be conflated.
+- The original DEC-933 symlink identity regression failed at
+  its exact heads #1154–#1158; the dedicated DEC-938 repair
+  #1159 passed both suites, but never retrospectively makes
+  older heads green. Apply this same exact-head discipline
+  to DEC-959–DEC-962.
+
+This documentation-only child retains **626 distinct
+source-defined test methods**, changing neither observer runtime
+nor tests. Its own exact-head Phase 3 and full historical CI,
+plus qualified independent security review, remain required.
+DEC-650/#820 independent protected OS-enforced no-write and
+DEC-651/#821/#779 immutable exclusive annual run385 admission
+remain **BLOCKED**. No merges, annual execution, protected
+evidence access, production change, broker or trading action.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
