@@ -11009,6 +11009,82 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real native post-poll observation limit')
+    def test_real_kernel_post_final_poll_source_chmod_cannot_authorize(self):
+        # A real generated public /tmp sample can change after the final
+        # zero-wait poll. The observer is NOT an enforced no-write policy;
+        # a local quiet status must never be upgraded to annual authority.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_evaluator = module._evaluate
+        state = {'sample': None, 'fd': None, 'wd': None, 'dir_wd': None,
+                 'final_poll_complete': False, 'first_final': None,
+                 'post_poll_event': None, 'restored': False,
+                 'mutation_performed': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(sample=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['final_poll_complete'] = True
+            return pending
+
+        def evaluated(*args, **kwargs):
+            self.assertTrue(state['final_poll_complete'])
+            sample = state['sample']
+            original = os.lstat(sample)
+            original_mode = module.stat.S_IMODE(original.st_mode)
+            os.chmod(sample, original_mode ^ module.stat.S_IXUSR)
+            try:
+                state['mutation_performed'] = (
+                    module.stat.S_IMODE(os.lstat(sample).st_mode)
+                    == original_mode ^ module.stat.S_IXUSR)
+            finally:
+                os.chmod(sample, original_mode)
+            restored = os.lstat(sample)
+            state['restored'] = (
+                (original.st_dev, original.st_ino, original.st_mode)
+                == (restored.st_dev, restored.st_ino, restored.st_mode)
+            )
+            # The genuine queue now has source metadata events, which the
+            # runner cannot have seen at its earlier receipt poll. A test-
+            # only late drain proves that events truly reached the kernel.
+            state['post_poll_event'] = native_final_poll(state['fd'])
+            return native_evaluator(*args, **kwargs)
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module, '_evaluate',
+                                  side_effect=evaluated) as evaluator:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['final_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['mutation_performed'])
+        self.assertTrue(state['restored'])
+        self.assertIs(type(state['post_poll_event']), bytes)
+        self.assertTrue(state['post_poll_event'])
+        parsed = module._classify_stream(
+            state['post_poll_event'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertGreaterEqual(parsed['source_attribute_events'], 1)
+        # Expected counterexample: a bounded point-in-time local result
+        # does not imply the source could not be changed immediately later.
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        evaluator.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
