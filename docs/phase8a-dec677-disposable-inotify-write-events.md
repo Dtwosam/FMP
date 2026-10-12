@@ -4573,6 +4573,46 @@ Own exact-head Phase 3/full historical CI and qualified
 external security review required.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-961 — An open inotify instance FD can have zero registered watches
+
+DEC-959/#1180 removes only the source watch and verifies
+native `IN_IGNORED`, while the parent watch continues to
+observe named source child writes. DEC-960/#1181 removes
+only the private parent watch; it sees that removal as
+`IN_IGNORED`, after which unrelated sibling-entry mutations
+are no longer observed but source-file writes still are.
+
+DEC-961 uses a different genuine kernel control: create the
+same two native watches on one newly generated public
+`/tmp/sample`, verify initial queue silence, and explicitly
+remove **both** registrations via libc `inotify_rm_watch`.
+Each removal must return its own exact, well-formed
+`IN_IGNORED` event which is classified as INVALIDATED and
+drained. The underlying inotify **instance FD remains open**
+and `fstat` succeeds. Then create and unlink a generated
+public sibling and write distinct generated public bytes to
+the original source inode. With neither watch registered,
+the real native zero-wait event queue stays empty despite
+these real changes. The source and parent dev/ino/mode and
+final exact single-leaf inventory remain unchanged.
+Close and verify the instance FD invalid.
+
+A constructed counterfactual empty-stream evaluator remains
+only `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` with
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`. The **actual native
+IN_IGNORED events are the invalidation evidence**. The test
+does not claim unmodified `run_demo` ever removed watches,
+nor that an open descriptor without registrations constitutes
+independent OS-enforced no-write protection. One native
+method raises the stack to **626 source-defined tests**.
+
+Independent protected OS no-write DEC-650/#820 and immutable
+exclusive one-shot annual admission DEC-651/#821/#779 remain
+BLOCKED. Own exact-head Phase 3/full historical CI and
+qualified independent security review are mandatory.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
