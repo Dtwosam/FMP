@@ -3543,6 +3543,42 @@ one-shot annual server admission DEC-651/#821/#779 remain
 BLOCKED. Own exact-head Phase 3/full historical CI and qualified
 external security review required. **DRAFT / NEVER MERGE**.
 
+## DEC-933 — External disposable symlink redirect AFTER watcher close
+
+DEC-922/#1139 covers a temporary redirection at the watched sample
+pathname while the inotify FD is installed but after the last poll.
+DEC-932/#1153 demonstrates a *new regular inode with identical bytes*
+replacing that pathname after the runner has truly closed its watch.
+DEC-933 isolates a different **postclose path-type** failure: an
+independent second public fixture is generated in a separate private
+`/tmp` test directory, before the watcher runs. The last native
+receipt poll returns exactly empty; the runner completes its
+local-only result and closes its inotify FD in its own `finally`.
+The test wrapper calls actual `os.close` and verifies the watch
+FD is unusable via `fstat`, **then** unlinks the watched regular
+sample and places a symlink at the same name pointing solely at
+the independently generated public fixture. Final readable bytes
+and the original one-entry directory inventory are identical, and
+the watched parent inode/mode is stable; actual sample path type,
+inode and target identity are now different.
+
+The external target and original parent are both disposable
+generated test folders; normal context-manager cleanup removes
+them. There is deliberately **no after-close inotify event read**:
+the collector is not alive. The returned local result must never
+authorize protected execution. Assert exact
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`,
+`can_authorize_dispatch=false`,
+`independent_os_proof_verified=false`, and real watcher FD
+closure. One native Linux test brings the strict stack to
+**603 distinct source-defined methods**. The test documents a
+future state blind spot, not a preventative sandbox.
+
+DEC-650/#820 independent OS-enforced no-write and DEC-651/#821/#779
+exclusive immutable annual admission remain BLOCKED. Own exact-head
+Phase 3/full historical CI and qualified external security review
+required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
