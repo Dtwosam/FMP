@@ -3997,6 +3997,48 @@ Own exact-head Phase 3/full historical CI and independent
 qualified security review required.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-946 — Separate processes preserve and rewrite a public inode beyond runner cleanup
+
+DEC-936/#1157 established that a test-local hardlink may preserve
+a generated public source inode after the runner's watcher and
+temporary-directory cleanup. DEC-942/#1163 verifies a later
+test-local write through that surviving alias. DEC-945/#1166
+demonstrates a separate Python process writing the generated
+public sample after observer closure but **before** its normal
+temporary-directory cleanup. DEC-946 checks the combined,
+distinct cross-process and after-cleanup lifetime boundary.
+
+After the real final zero-wait kernel poll returns empty, the
+original runner's `finally` closes its inotify FD. A test
+wrapper delegates to native `os.close`, verifies failed
+`fstat`, and then invokes a bounded separate Python process
+(no shell or external network) to create a real hardlink from
+the generated public `sample` to an independent second
+generated private `/tmp` directory. The original source inode
+is then proven to have two links, while the watched parent's
+identity, inventory and source bytes remain unchanged.
+The runner returns and deletes its entire original disposable
+folder. The alias remains, now with link count one. **Another
+bounded separate process** writes distinct public `AFTER` bytes
+to that alias, which is confirmed to retain its device/inode;
+the original source path stays absent. Finally the external
+test context cleans its own generated alias.
+
+The original frozen receipt is still only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with exact
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`. No watcher is present
+during either later process action, and no protected evidence,
+network, broker or annual runner path is touched. One new
+native method extends the strict tip to **614 distinct
+source-defined tests**. This documents inode lifetime and
+cross-process event-coverage limits, not OS no-write enforcement.
+
+DEC-650/#820 protected OS confinement and DEC-651/#821/#779
+immutable exclusive run385 admission remain BLOCKED. Own
+exact-head Phase 3/full historical CI and qualified independent
+security review required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
