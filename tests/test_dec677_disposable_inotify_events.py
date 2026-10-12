@@ -10264,6 +10264,87 @@ class DisposableInotifyTests(unittest.TestCase):
                 finally:
                     os.close(write_fd)
 
+    @unittest.skipUnless(sys.platform == 'linux', 'native late parent move and restore')
+    def test_real_kernel_parent_rename_and_restore_during_receipt_census_blocks(self):
+        # The watched private /tmp folder is renamed and restored AFTER
+        # the first true Linux event drain. Final names and parent inode
+        # match, but native IN_MOVE_SELF cannot be treated as silence.
+        native_scan = module._bounded_inventory_names
+        native_watch = module._start_watch
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'scans': 0, 'moved_away': False, 'restored': False,
+                 'fd': None, 'wds': None, 'first': None, 'late': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['fd'] = fd
+            state['wds'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def census(folder):
+            names = native_scan(folder)
+            state['scans'] += 1
+            if state['scans'] == 3:
+                moved = folder.with_name(folder.name + '-brief-parent-move')
+                initial = os.lstat(folder)
+                os.rename(folder, moved)
+                try:
+                    state['moved_away'] = (not os.path.lexists(folder)
+                                          and moved.is_dir())
+                finally:
+                    os.rename(moved, folder)
+                restored = os.lstat(folder)
+                state['restored'] = (
+                    (initial.st_dev, initial.st_ino) ==
+                    (restored.st_dev, restored.st_ino)
+                )
+                self.assertEqual(native_scan(folder), names)
+            return names
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['late'] = native_last(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_bounded_inventory_names',
+                              side_effect=census) as scanner:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as last_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['scans'], 3)
+        self.assertEqual(scanner.call_count, 3)
+        self.assertTrue(state['moved_away'])
+        self.assertTrue(state['restored'])
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['wds']
+        events = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(events['well_formed'])
+        self.assertTrue(events['invalidated'])
+        self.assertIn(
+            module.EVENT.pack(dir_wd, module.IN_MOVE_SELF, 0, 0),
+            state['late'])
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        last_reader.assert_called_once()
+        evaluator.assert_not_called()
+        self.assertIsNotNone(state['fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
