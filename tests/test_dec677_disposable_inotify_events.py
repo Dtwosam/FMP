@@ -13303,6 +13303,100 @@ class DisposableInotifyTests(unittest.TestCase):
             with self.assertRaises(OSError):
                 os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real postclose persistent source mode drift cannot authorize')
+    def test_real_kernel_after_observer_close_source_mode_drift_cannot_authorize(self):
+        # The sample's owner-write permission remains CHANGED after
+        # the real watcher has closed, even though its inode, contents
+        # and one-name parent inventory remain exactly the same.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'first_final': None,
+                 'last_poll_complete': False, 'close_seen': False,
+                 'fd_really_closed': False, 'original_mode': None,
+                 'new_mode': None, 'mode_changed': False,
+                 'inode_preserved': False, 'bytes_preserved': False,
+                 'names_preserved': False, 'parent_identity_preserved': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['last_poll_complete'] = True
+            return pending
+
+        def closing(fd):
+            if fd != state['watch_fd'] or state['close_seen']:
+                return native_close(fd)
+            self.assertTrue(state['last_poll_complete'])
+            native_close(fd)
+            state['close_seen'] = True
+            try:
+                os.fstat(fd)
+            except OSError:
+                state['fd_really_closed'] = True
+            sample = state['sample']
+            folder = sample.parent
+            before = os.lstat(sample)
+            folder_before = os.lstat(folder)
+            mode = module.stat.S_IMODE(before.st_mode)
+            state['original_mode'] = mode
+            self.assertEqual(sample.read_bytes(), module.BEFORE)
+            self.assertEqual(module._bounded_inventory_names(folder),
+                             ('sample',))
+            new_mode = mode ^ 0o200
+            os.chmod(sample, new_mode)
+            after = os.lstat(sample)
+            folder_after = os.lstat(folder)
+            state['new_mode'] = module.stat.S_IMODE(after.st_mode)
+            state['mode_changed'] = (
+                before.st_mode != after.st_mode and
+                state['new_mode'] == new_mode)
+            state['inode_preserved'] = (
+                (before.st_dev, before.st_ino) ==
+                (after.st_dev, after.st_ino))
+            state['bytes_preserved'] = sample.read_bytes() == module.BEFORE
+            state['names_preserved'] = (
+                module._bounded_inventory_names(folder) == ('sample',))
+            state['parent_identity_preserved'] = (
+                (folder_before.st_dev, folder_before.st_ino,
+                 folder_before.st_mode) ==
+                (folder_after.st_dev, folder_after.st_ino,
+                 folder_after.st_mode))
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module.os, 'close',
+                                  side_effect=closing) as close:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['last_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['close_seen'])
+        self.assertTrue(state['fd_really_closed'])
+        self.assertIs(type(state['original_mode']), int)
+        self.assertEqual(state['new_mode'], state['original_mode'] ^ 0o200)
+        self.assertTrue(state['mode_changed'])
+        self.assertTrue(state['inode_preserved'])
+        self.assertTrue(state['bytes_preserved'])
+        self.assertTrue(state['names_preserved'])
+        self.assertTrue(state['parent_identity_preserved'])
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['watch_fd'])
+        self.assertGreaterEqual(close.call_count, 1)
+        with self.assertRaises(OSError):
+            os.fstat(state['watch_fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

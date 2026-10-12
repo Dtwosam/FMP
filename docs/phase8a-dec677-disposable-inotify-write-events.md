@@ -3579,6 +3579,39 @@ exclusive immutable annual admission remain BLOCKED. Own exact-head
 Phase 3/full historical CI and qualified external security review
 required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-934 — Persistent source mode drift AFTER watcher FD close
+
+DEC-908 and DEC-916/#1133 respectively demonstrate native
+watched-file attribute changes before the final poll (BLOCKED)
+and after it (locally unverified). DEC-933/#1154 shows a
+postclose source pathname type/target replacement. DEC-934
+isolates a different **persistent metadata state change**:
+the runner's real last zero-wait kernel poll returned empty,
+the local-only result was produced, and the runner closed its
+inotify FD. A test wrapper first delegates to native `os.close`
+and confirms the FD is invalid; only then does it toggle the
+original watched regular public sample inode's owner-write bit,
+leaving its mode genuinely changed until normal temporary-directory
+cleanup. Original source dev/ino and fixture bytes and the
+private parent's dev/ino/mode and one-entry inventory are stable.
+There is intentionally no after-close event drain or assertion
+of continuous observation.
+
+The true frozen local result may remain
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never protected
+approval. The source-defined test asserts exact
+`can_authorize_dispatch=false`,
+`independent_os_proof_verified=false`, and actual watcher FD
+closure. One native disposable Linux method increases the
+strict draft to **604 distinct source-defined tests**.
+This demonstrates a missing *future state lock*, not prevention.
+
+DEC-650/#820 independent protected OS-enforced no-write and
+DEC-651/#821/#779 immutable server-side annual admission remain
+BLOCKED. Each exact commit requires Phase 3/full historical CI
+and qualified independent security review.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
