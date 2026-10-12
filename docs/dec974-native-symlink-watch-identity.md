@@ -1,0 +1,9 @@
+# DEC-974 — Native symlink IN_DONT_FOLLOW selects the link inode, not its target
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict child of DEC-973/#1194, one native Linux regression plus this document.
+
+Create a disposable public source sample and temporary symlink alias in a private `/tmp` directory, with separate real Linux inotify instances watching the alias **with and without** native `IN_DONT_FOLLOW`. The default call follows the symlink and watches the target regular-file inode: a real write to the original sample produces source `IN_MODIFY` and `IN_CLOSE_WRITE`. The `IN_DONT_FOLLOW` instance watches the symlink inode and observes no target content-write events.
+
+When the alias itself is unlinked, its native no-follow watch yields `IN_DELETE_SELF` and `IN_IGNORED`. The default-follow watch is **not** invalidated because the target inode still exists; it continues to report actual writes when the sample is restored. A separate original dual source/parent watcher supplies real named parent namespace and source content-write events; the unchanged evaluator must return `BLOCKED`, with `can_authorize_dispatch=false` and `independent_os_proof_verified=false` exactly.
+
+The test checks final public sample/parent device, inode and mode, original bytes, single-entry directory inventory and descriptor closure. It does **not** change observer runtime or imply that a symlink watch attests to its target identity continuously, much less enforces OS no-write. One new method yields **636 distinct source-defined tests** across this strict draft stack. Own exact-head Phase 3 and historical regression plus qualified independent review remain required. DEC-650/#820 independently enforced protected no-write and DEC-651/#821/#779 immutable annual run385 admission remain BLOCKED. No protected evidence/sources, annual activity, production refs/workflows/permissions, broker/trading, merges, promotions or authorization.
