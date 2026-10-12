@@ -3375,6 +3375,49 @@ Requires its own exact-head Phase 3/full historical CI
 and qualified independent security review.
 **DRAFT / NEVER MERGE**.
 
+## DEC-928 — Reviewer matrix for native temporal counterexamples
+
+This matrix distinguishes **three different trust boundaries** in the
+disposable Linux `inotify` witness. It is not an acceptance test for
+annual execution, not a complete list of kernel blind spots, and not
+a substitute for qualified independent security review. Every test
+uses generated unprotected data and exercises a bounded observer
+whose result is always nonauthorizing.
+
+| Boundary | Representative real Linux regressions | What they demonstrate | Permitted local outcome |
+| --- | --- | --- | --- |
+| Mutation **before** the final zero-wait queue drain | Source mode/timestamp, same-byte write, rename or inode substitution (DEC-890/893/906/908/909; #1121 corrects genuine directory `IN_ATTRIB` plus `IN_ISDIR` expectations) | The final collector receives already-queued native events and must refuse the changed receipt | `BLOCKED` only |
+| Mutation **after** the final drain but **before** local evaluation | Transient sibling #1126; watched-inode hardlink #1128; parent move #1129; same-byte inode swap #1130; same-byte write #1131; parent chmod #1132; source chmod #1133; source move #1134; truncate/restore #1135 | The original frozen event buffer and byte/metadata snapshots cannot retroactively include later real kernel changes, even when final path and bytes are restored | `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` may appear; never authorize |
+| Alias or path substitution **after** the last drain | Temporary sample symlink #1136; hardlink outside watched parent #1137; actual write via that alias #1138; redirect to different public sample #1139; parent path symlink #1140 | The watched directory's final names do not prove permanent path or external inode-alias isolation | Local-only or `BLOCKED`; neither authorizes |
+| Persistent change **after** the last drain | Different source payload #1141 and persistent unexpected sibling #1143 | Snapshot and inventory can become stale even when mutation is **not** undone | Local-only or `BLOCKED`; never authorize |
+| Writer capability survives watcher setup | Preexisting writable source FD used after last poll #1142 | Watching a pathname/inode never revokes an already-open writable file handle | Local-only or `BLOCKED`; never authorize |
+| Mutation **after watcher FD close** | Source byte change during generated fixture cleanup window #1145 | No event collector exists after the genuine inotify descriptor closes, even though generated data remains briefly writable | Previously computed local-only result remains nonauthorizing |
+
+**Interpretation controls for every row:**
+
+- A native post-poll **test-only** read is evidence of a specific kernel
+  event arriving too late; it is **not** part of the earlier runner
+  receipt and cannot be promoted to continuous audit evidence.
+- Preserving dev/ino, mode, bytes, link count or directory inventory
+  at the **end** of a test never establishes that no intervening
+  write, alias or pathname substitution happened.
+- Check `can_authorize_dispatch is False` and
+  `independent_os_proof_verified is False` on all local receipts.
+  `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` is not `PASS`.
+- Phase 3 and full historical CI must pass **at each exact head**.
+  Parent green does not verify a child, and passing both CI suites
+  alone does not replace independent qualified review.
+- The protected 20-job annual OS-enforced no-write evidence
+  DEC-650/#820 and immutable exclusive one-shot run385 admission
+  DEC-651/#821/#779 remain **BLOCKED**. Do not execute, retry,
+  rerun, test or dispatch run385; do not touch protected annual data,
+  production refs/workflows/runners/rulesets/permissions, brokers
+  or trading.
+
+This documentation-only child adds **no test methods**; the aligned
+source-defined count remains **598**. Its own Phase 3 and historical
+CI are still required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
