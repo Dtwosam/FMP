@@ -1,0 +1,9 @@
+# DEC-977 — IN_MASK_CREATE succeeds only on a fresh native instance registration
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict test-and-documentation child of DEC-976/#1197.
+
+DEC-972/#1193 verifies genuine `-1/EEXIST` when Linux `IN_MASK_CREATE` is applied to **already watched** source or parent inodes. DEC-977 adds the complementary positive native case: a second independent real inotify FD starts with **no watch registrations**, and its first `inotify_add_watch(IN_MASK_CREATE | IN_MODIFY | IN_CLOSE_WRITE | IN_DONT_FOLLOW)` of a disposable public regular sample succeeds. Immediately trying to create-only a second subscription for that inode with `IN_ATTRIB` instead yields real `-1/EEXIST` and leaves the original write mask intact.
+
+Both the source-only new instance and a separate pre-existing original source/parent instance record genuine distinct-byte writes and their later restoration. The test parses their separate native buffers, checks well-formed file modifications, verifies that both streams remain nonauthorizing `BLOCKED` under the unchanged evaluator, and requires exact `can_authorize_dispatch=false` and `independent_os_proof_verified=false`. The original public fixture and parent dev/inode/mode and one-entry inventory are unchanged at the end; both inotify FDs are closed.
+
+One new source-defined Linux method raises the draft stack to **638**. A successfully created registration does not authenticate history before creation or prove independently OS-enforced no-write. Own exact-head Phase 3 and full historical regression plus qualified independent security review required. Protected no-write DEC-650/#820 and immutable exclusive annual run385 admission DEC-651/#821/#779 remain BLOCKED. No annual dispatch/test/retry/rerun, protected evidence/sources, production refs/workflows/runners/rulesets/permissions, broker/trading, merge or promotion.
