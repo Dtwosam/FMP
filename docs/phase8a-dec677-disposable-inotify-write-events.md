@@ -2669,6 +2669,31 @@ server admission. DEC-650/#820 and DEC-651/#821/#779 stay BLOCKED.
 Own exact-head Phase 3/full historical CI and qualified independent
 security review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-904 — Real source permission change and restore after last stat
+
+DEC-887 observes a permanently changed generated source mode after
+the last sample metadata probe; DEC-900 tests transient **parent**
+directory permissions. DEC-904 instead toggles the owner-execute bit
+on the original watched public `/tmp` sample after the third/last
+timestamp validator, then immediately restores its exact original
+mode. The same inode, bytes, mode, parent inventory and timestamps
+already captured by the validator can all appear unchanged in a
+sequential local receipt. The first true Linux inotify drain was
+empty, but the final immediate native collector must capture the
+source-watch `IN_ATTRIB` event and cause `BLOCKED` before the
+local evaluator. Both authority/proof flags remain false and the
+watcher FD closes.
+
+One genuine Linux regression raises the strict tip to **576
+distinct source-defined test methods**. All mutations are to new
+generated public `/tmp` fixtures. Local kernel event detection
+does not provide independently enforced OS no-write confinement,
+complete future event coverage or immutable annual-runner admission.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Exact-head
+Phase 3/full historical suite and qualified independent security
+review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
