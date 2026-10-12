@@ -1,0 +1,9 @@
+# DEC-982 — IN_MASK_CREATE is exclusive per inotify instance, not per inode globally
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict test-and-documentation child of DEC-981/#1202.
+
+The generated-public Linux test creates two independent, empty native inotify FDs and calls create-only inotify_add_watch on exactly the same disposable public source inode. Both first IN_MASK_CREATE | IN_MODIFY | IN_CLOSE_WRITE registrations succeed because the create-only constraint is **per instance**; neither prevents another observer from registering a watch on that inode. Each instance then tries to create-only a second subscription and receives native -1/EEXIST without losing its original write masks.
+
+The real file is written with different public bytes and restored. The first native queue is drained completely while the second still independently holds its events, then the second is read and validated. Both observe source modify and close-write records. An evaluator handed either file-only stream remains BLOCKED for missing the required parent watch, in addition to actual write evidence; can_authorize_dispatch=false and independent_os_proof_verified=false exactly. Final source/parent dev, inode, mode, original bytes and directory inventory match; both FDs are closed.
+
+One new Linux source-defined method yields **642** in this draft stack. Registration exclusivity is neither OS-enforced no-write nor a global watcher authority mechanism; no observer runtime changes. Exact-head Phase 3, full historical regression and qualified independent review required. DEC-650/#820 protected no-write and DEC-651/#821/#779 immutable annual admission remain BLOCKED. No protected annual evidence/sources or run385 execution, production refs/workflows/runners/rulesets/permissions, broker/trading, merge or promotion.
