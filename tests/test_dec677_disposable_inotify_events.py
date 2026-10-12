@@ -14732,6 +14732,104 @@ class DisposableInotifyTests(unittest.TestCase):
                         pipe.close()
                 process.wait(timeout=8)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'independent shared mmap after sample cleanup is Linux-only')
+    def test_real_kernel_preexisting_child_mmap_survives_observer_cleanup(self):
+        # A distinct subprocess opens a writable shared mmap before the
+        # runner's final poll, then CLOSES its original file descriptor.
+        # No bytes change until after the real inotify watcher closes and
+        # the runner removes its own generated sample AND parent paths.
+        import select
+
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        changed = b'X' + module.BEFORE[1:]
+        self.assertEqual(len(changed), len(module.BEFORE))
+        self.assertNotEqual(changed, module.BEFORE)
+        state = {'sample': None, 'watch_fd': None, 'process': None,
+                 'last_poll': None, 'child_ready': False,
+                 'original_identity': None}
+
+        child_code = (
+            'import mmap,os,sys\n'
+            'path, before_hex, changed_hex = sys.argv[1:]\n'
+            'before, changed = bytes.fromhex(before_hex), bytes.fromhex(changed_hex)\n'
+            'fd = os.open(path, os.O_RDWR | os.O_CLOEXEC | os.O_NOFOLLOW)\n'
+            'mapping = mmap.mmap(fd, len(before), access=mmap.ACCESS_WRITE)\n'
+            'os.close(fd)\n'
+            'try:\n'
+            '    if mapping[:] != before: sys.exit(41)\n'
+            '    print("READY", flush=True)\n'
+            '    if sys.stdin.buffer.readline() != b"GO\\n": sys.exit(42)\n'
+            '    mapping[:] = changed\n'
+            '    mapping.flush()\n'
+            '    if mapping[:] != changed: sys.exit(43)\n'
+            '    print("DONE", flush=True)\n'
+            'finally:\n'
+            '    mapping.close()\n'
+        )
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            initial = os.lstat(path)
+            state['original_identity'] = (initial.st_dev, initial.st_ino)
+            self.assertEqual(initial.st_nlink, 1)
+            self.assertEqual(path.read_bytes(), module.BEFORE)
+            self.assertEqual(module._bounded_inventory_names(path.parent),
+                             ('sample',))
+            process = subprocess.Popen(
+                [sys.executable, '-B', '-c', child_code, str(path),
+                 module.BEFORE.hex(), changed.hex()],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+            state['process'] = process
+            readable, _, _ = select.select([process.stdout], [], [], 8)
+            self.assertTrue(readable, 'shared mapping child not ready')
+            self.assertEqual(process.stdout.readline(), b'READY\n')
+            state['child_ready'] = True
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            state['last_poll'] = native_final_poll(fd)
+            return state['last_poll']
+
+        try:
+            with patch.object(module, '_start_watch',
+                              side_effect=watched) as watcher:
+                with patch.object(module, '_read_receipt_pending',
+                                  side_effect=final_poll) as final:
+                    receipt = module.run_demo()
+
+            self.assertTrue(state['child_ready'])
+            self.assertEqual(state['last_poll'], b'')
+            with self.assertRaises(OSError):
+                os.fstat(state['watch_fd'])
+            self.assertFalse(os.path.lexists(state['sample']))
+            self.assertFalse(os.path.lexists(state['sample'].parent))
+            process = state['process']
+            out, err = process.communicate(input=b'GO\n', timeout=8)
+            self.assertEqual(process.returncode, 0, err)
+            self.assertEqual(out, b'DONE\n')
+            self.assertEqual(err, b'')
+            self.assertFalse(os.path.lexists(state['sample']))
+            self.assertEqual(
+                receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            final.assert_called_once_with(state['watch_fd'])
+        finally:
+            process = state['process']
+            if process is not None:
+                if process.poll() is None:
+                    process.kill()
+                for pipe in (process.stdin, process.stdout, process.stderr):
+                    if pipe is not None and not pipe.closed:
+                        pipe.close()
+                process.wait(timeout=8)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

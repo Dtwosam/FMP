@@ -4172,6 +4172,47 @@ remain BLOCKED. Own exact-head Phase 3/full historical CI and
 qualified external security review required.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-950 — Independent process-owned writable mmap outlives original cleanup
+
+DEC-944/#1165 proves an in-process writable shared mmap can
+mutate a detached generated inode after observer closure, but
+before its own generated parent directory is cleaned. DEC-949/
+#1170 demonstrates a separate process with an open writable
+FD holding the source inode across the runner's complete cleanup.
+DEC-950 tests the different Linux lifetime of an **independent
+process-owned writable shared mmap with its original file
+descriptor already closed**.
+
+After genuine inotify registration the child process opens the
+generated public sample, creates an `mmap.ACCESS_WRITE` mapping,
+closes its file descriptor, checks exact `BEFORE` bytes and
+signals READY. It does not mutate a byte before the runner's
+final empty native poll, nonauthorizing local receipt, original
+watch FD close and `TemporaryDirectory` cleanup. The parent
+test verifies that the original sample and private folder
+pathnames are gone, then signals the child to write. The child
+changes a single public fixture byte through its surviving
+mapping, flushes it, verifies the mapped bytes changed and
+closes the mapping before exiting normally. Readiness and
+completion have bounded waits; all child pipes are closed
+and a surviving subprocess is killed and reaped on failure.
+No postclose inotify read or surviving external hardlink is
+claimed.
+
+The frozen local result must remain exactly
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with exact
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`. One new genuine Linux
+regression raises the strict draft to **617 unique source-defined
+tests**. This is an outliving-mapping counterexample, not
+independently OS-enforced write prevention.
+
+Protected DEC-650/#820 no-write and DEC-651/#821/#779
+immutable exclusive annual run385 admission remain BLOCKED.
+Own exact-head Phase 3, full historical CI and qualified
+independent security review required.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
