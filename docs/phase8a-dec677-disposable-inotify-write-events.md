@@ -4263,16 +4263,16 @@ file descriptor already closed. DEC-952 separates a distinct
 Linux metadata permission from content-writing permission.
 
 A bounded, shell-free independent subprocess opens the generated
-public sample with \`O_RDONLY|O_NOFOLLOW\` after the real native
+public sample with `O_RDONLY|O_NOFOLLOW` after the real native
 watch is registered, checks its fixture bytes, and signals READY.
 It performs **no change** until the genuine runner's final
 zero-wait poll returned exact empty bytes, its local-only verdict
 was produced, its inotify FD closed, and its original disposable
-\`sample\` and private parent paths were removed by normal cleanup.
-Only then does the child receive GO. Its \`fstat\` confirms the
-original inode now has link count zero, and real \`fchmod\` toggles
+`sample` and private parent paths were removed by normal cleanup.
+Only then does the child receive GO. Its `fstat` confirms the
+original inode now has link count zero, and real `fchmod` toggles
 only the owner-write mode bit through the **read-only** FD.
-The child checks changed \`st_mode\`, unchanged dev/ino,
+The child checks changed `st_mode`, unchanged dev/ino,
 link count zero and exact original public bytes, then closes
 the held descriptor and exits. The parent asserts all reported
 values and bounds child readiness/completion with cleanup and
@@ -4280,9 +4280,9 @@ reaping on failure. No external alias, network, or postclose
 inotify event drain is involved.
 
 The frozen original result stays exactly
-\`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED\`, with
-\`can_authorize_dispatch=false\` and
-\`independent_os_proof_verified=false\`. One new genuine Linux
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`. One new genuine Linux
 regression raises the strict draft count to **618 unique
 source-defined test methods**. This shows that an apparently
 read-only source descriptor still permits owner metadata changes
