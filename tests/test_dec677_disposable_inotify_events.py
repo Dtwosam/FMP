@@ -14943,6 +14943,115 @@ class DisposableInotifyTests(unittest.TestCase):
                         pipe.close()
                 child.wait(timeout=8)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'duplicated native inotify descriptor requires Linux')
+    def test_real_native_duplicate_watch_fd_survives_runner_original_close(self):
+        # The runner's original inotify descriptor closes after its final
+        # empty poll. A TEST-ONLY os.dup reference keeps the SAME Linux
+        # watch alive, allowing an independent later kernel drain.
+        # This does NOT imply an independent OS-enforced security monitor.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'dup_fd': None,
+                 'wd': None, 'dir_wd': None, 'last_poll': None,
+                 'runner_fd_closed': False, 'runner_fd_invalid': False,
+                 'duplicate_alive_after_close': False,
+                 'postclose_changed_bytes': False,
+                 'later_kernel_stream': None,
+                 'duplicate_closed': False, 'parent_same': False,
+                 'inventory_same': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            duplicate = os.dup(fd)
+            state.update(sample=path, watch_fd=fd, dup_fd=duplicate,
+                         wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            state['last_poll'] = native_poll(fd)
+            return state['last_poll']
+
+        def closing(fd):
+            if fd != state['watch_fd'] or state['runner_fd_closed']:
+                return native_close(fd)
+            self.assertEqual(state['last_poll'], b'')
+            native_close(fd)
+            state['runner_fd_closed'] = True
+            try:
+                os.fstat(fd)
+            except OSError:
+                state['runner_fd_invalid'] = True
+            duplicate = state['dup_fd']
+            try:
+                state['duplicate_alive_after_close'] = (
+                    os.fstat(duplicate).st_mode != 0)
+                sample = state['sample']
+                folder = sample.parent
+                parent_before = os.lstat(folder)
+                self.assertEqual(sample.read_bytes(), module.BEFORE)
+                self.assertEqual(module._bounded_inventory_names(folder),
+                                 ('sample',))
+                # Genuine post-original-close inode write on public data,
+                # before ordinary run_demo temporary-directory cleanup.
+                with sample.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                state['postclose_changed_bytes'] = (
+                    sample.read_bytes() == module.AFTER and
+                    module.AFTER != module.BEFORE)
+                parent_after = os.lstat(folder)
+                state['parent_same'] = (
+                    (parent_before.st_dev, parent_before.st_ino,
+                     parent_before.st_mode) ==
+                    (parent_after.st_dev, parent_after.st_ino,
+                     parent_after.st_mode))
+                state['inventory_same'] = (
+                    module._bounded_inventory_names(folder) == ('sample',))
+                state['later_kernel_stream'] = native_poll(duplicate)
+            finally:
+                native_close(duplicate)
+                try:
+                    os.fstat(duplicate)
+                except OSError:
+                    state['duplicate_closed'] = True
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module.os, 'close',
+                                  side_effect=closing) as close:
+                    receipt = module.run_demo()
+
+        self.assertEqual(state['last_poll'], b'')
+        self.assertTrue(state['runner_fd_closed'])
+        self.assertTrue(state['runner_fd_invalid'])
+        self.assertTrue(state['duplicate_alive_after_close'])
+        self.assertTrue(state['duplicate_closed'])
+        self.assertTrue(state['postclose_changed_bytes'])
+        self.assertTrue(state['parent_same'])
+        self.assertTrue(state['inventory_same'])
+        self.assertIs(type(state['later_kernel_stream']), bytes)
+        self.assertTrue(state['later_kernel_stream'])
+        parsed = module._classify_stream(
+            state['later_kernel_stream'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertGreaterEqual(parsed['source_modify_events'], 1)
+        self.assertGreaterEqual(parsed['source_content_write_events'], 1)
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['watch_fd'])
+        self.assertGreaterEqual(close.call_count, 1)
+        with self.assertRaises(OSError):
+            os.fstat(state['watch_fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
