@@ -3820,6 +3820,48 @@ Own exact-head Phase 3/full historical CI and qualified
 external security review required.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-941 — A detached original writer FD remains usable after observer close
+
+DEC-924/#1142 tests a writable FD opened before the final queue
+poll, with its write occurring after that poll while the watcher
+is still installed. DEC-932/#1153 tests a different same-byte
+regular inode at `sample` after the watcher FD has closed. DEC-941
+joins a distinct postclose `open(2)` lifecycle and **detached
+original inode**, not merely a pathname replacement. The
+test opens a genuine writable FD to the generated public source
+after registration (without changing its bytes). The real runner
+then makes its normal observations, completes a final zero-wait
+poll with exactly `b''`, builds its local-only result, and
+closes its watched inotify FD.
+
+After verifying that real closure, a test callback creates an
+independent regular fixture inode with the same original public
+bytes and mode, and atomically replaces the original sample path.
+The old public source inode remains allocated ONLY through its
+separate test-held writable FD, with link count zero. A genuine
+`pwrite`, `ftruncate` and `fsync` change that **detached** inode
+to the different public `AFTER` bytes. A test-only `pread`
+verifies the change; the replacement `sample` pathname still
+contains exact original `BEFORE` bytes and the parent identity
+and single-leaf inventory appear unchanged. The test closes
+its extra writer FD; ordinary private-directory cleanup removes
+the replacement source. No native inotify drain after closure is
+claimed and no protected file is touched.
+
+The frozen original local result remains
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` and must retain exact
+`can_authorize_dispatch=false`,
+`independent_os_proof_verified=false`, and real watched FD
+closure. This adds one native Linux case for **610 distinct
+source-defined test methods**. It is a temporal lifetime
+counterexample, not an OS-enforced no-write mechanism.
+
+DEC-650/#820 independent protected confinement and DEC-651/#821/
+#779 immutable exclusive run385 admission remain BLOCKED.
+Own exact-head Phase 3/full historical CI and independent
+qualified security review required.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
