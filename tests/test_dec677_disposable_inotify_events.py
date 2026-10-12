@@ -15325,6 +15325,101 @@ class DisposableInotifyTests(unittest.TestCase):
                         closed = True
         self.assertTrue(closed)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'independent native inotify lifecycle requires Linux')
+    def test_real_native_second_instance_observes_after_first_instance_close(self):
+        # Independent instances have separate kernel watch lifetimes.
+        # Close the FIRST completely, then write the same generated public
+        # sample: the other instance still receives real kernel records.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        first_fd = None
+        second_fd = None
+        first_closed = False
+        second_closed = False
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec958-peer-inotify-close-', dir='/tmp') as tmp:
+            source = Path(tmp) / 'sample'
+            self.assertEqual(source.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            before = os.lstat(source)
+            self.assertEqual(module._bounded_inventory_names(
+                source.parent), ('sample',))
+            try:
+                first_fd, first_wd, first_dir_wd = native_watch(source)
+                second_fd, second_wd, second_dir_wd = native_watch(source)
+                self.assertNotEqual(first_fd, second_fd)
+                self.assertEqual(native_poll(first_fd), b'')
+                self.assertEqual(native_poll(second_fd), b'')
+
+                native_close(first_fd)
+                try:
+                    os.fstat(first_fd)
+                except OSError:
+                    first_closed = True
+                self.assertTrue(first_closed)
+                first_fd = None
+                self.assertIsNotNone(os.fstat(second_fd))
+                # The second independent watch remains installed after
+                # every reference to the first instance is gone.
+                with source.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                after = os.lstat(source)
+                self.assertNotEqual(module.AFTER, module.BEFORE)
+                self.assertEqual(source.read_bytes(), module.AFTER)
+                self.assertEqual(
+                    (before.st_dev, before.st_ino, before.st_mode),
+                    (after.st_dev, after.st_ino, after.st_mode))
+                self.assertEqual(module._bounded_inventory_names(
+                    source.parent), ('sample',))
+
+                events = native_poll(second_fd)
+                self.assertIs(type(events), bytes)
+                self.assertTrue(events)
+                parsed = module._classify_stream(
+                    events, second_wd, second_dir_wd)
+                self.assertTrue(parsed['well_formed'])
+                self.assertGreaterEqual(
+                    parsed['source_modify_events'], 1)
+                self.assertGreaterEqual(
+                    parsed['source_content_write_events'], 1)
+                self.assertEqual(native_poll(second_fd), b'')
+
+                # The second process-local instance is observational;
+                # even a clean counterfactual does NOT approve annual
+                # dispatch or prove immutable OS write confinement.
+                local = module._evaluate(
+                    module.BEFORE, module.BEFORE, b'',
+                    second_wd, True, False,
+                    directory_watch=second_dir_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(
+                    local['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+                self.assertIs(local['can_authorize_dispatch'], False)
+                self.assertIs(local['independent_os_proof_verified'], False)
+            finally:
+                if second_fd is not None:
+                    native_close(second_fd)
+                    try:
+                        os.fstat(second_fd)
+                    except OSError:
+                        second_closed = True
+                if first_fd is not None:
+                    native_close(first_fd)
+                    try:
+                        os.fstat(first_fd)
+                    except OSError:
+                        first_closed = True
+
+        self.assertTrue(first_closed)
+        self.assertTrue(second_closed)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
