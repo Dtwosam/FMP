@@ -2694,6 +2694,31 @@ DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. Exact-head
 Phase 3/full historical suite and qualified independent security
 review required. **DRAFT / NEVER MERGE**.
 
+
+## DEC-905 — True transient sibling after the last receipt sample stat
+
+DEC-882 injects a genuine public sibling create/unlink during the
+third bounded parent inventory; DEC-905 covers the **later** interval
+after the third and last sample timestamp validator has already read
+its final native metadata record. A new small public `/tmp` sibling
+is created and removed before evaluation, so directory names again
+contain only the original sample, while its watched inode and bytes
+remain unchanged. The first native inotify drain is empty. The final
+immediate zero-wait kernel collector must still deliver well-formed
+directory `IN_CREATE`/`IN_DELETE` events constituting a matching
+create/delete pair, and the observer must return `BLOCKED`, keep
+both authority/proof flags false, skip the evaluator and close its
+owned watcher FD.
+
+One native regression makes **577 distinct source-defined test
+methods** at the strict tip. Only generated public disposable `/tmp`
+data is touched. A genuine bounded kernel observation still cannot
+prove independently enforced OS no-write confinement, complete
+post-poll event coverage, or immutable annual server admission.
+DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified independent
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
