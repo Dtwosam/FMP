@@ -15052,6 +15052,90 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'shared native inotify queue requires Linux')
+    def test_real_native_duplicate_descriptor_consumes_shared_queue(self):
+        # Direct negative control on a freshly generated public source,
+        # with no protected runner. The duplicate and original are NOT
+        # independent observers: reads compete for one kernel event queue.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'original_fd': None, 'duplicate_fd': None,
+                 'original_closed': False, 'duplicate_closed': False}
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec955-shared-native-inotify-', dir='/tmp') as tmp:
+            source = Path(tmp) / 'sample'
+            self.assertEqual(source.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            initial = os.lstat(source)
+            self.assertEqual(module._bounded_inventory_names(source.parent),
+                             ('sample',))
+            fd, wd, dir_wd = native_watch(source)
+            state['original_fd'] = fd
+            duplicate = os.dup(fd)
+            state['duplicate_fd'] = duplicate
+            try:
+                # Two genuine writes, including restoration, generate
+                # modify/close events; the final bytes alone are identical.
+                with source.open('r+b') as writer:
+                    writer.write(module.AFTER)
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                    writer.seek(0)
+                    writer.write(module.BEFORE)
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertNotEqual(module.AFTER, module.BEFORE)
+                self.assertEqual(source.read_bytes(), module.BEFORE)
+                after = os.lstat(source)
+                self.assertEqual((initial.st_dev, initial.st_ino),
+                                 (after.st_dev, after.st_ino))
+                self.assertEqual(module._bounded_inventory_names(
+                    source.parent), ('sample',))
+
+                # First reader drains the genuine shared inotify queue.
+                # The other descriptor then reads exact empty bytes.
+                stolen = native_poll(duplicate)
+                self.assertIs(type(stolen), bytes)
+                self.assertTrue(stolen)
+                parsed = module._classify_stream(stolen, wd, dir_wd)
+                self.assertTrue(parsed['well_formed'])
+                self.assertGreaterEqual(parsed['source_modify_events'], 1)
+                self.assertGreaterEqual(
+                    parsed['source_content_write_events'], 1)
+                original_stream = native_poll(fd)
+                self.assertEqual(original_stream, b'')
+
+                # A counterfactual evaluator with only the drained-empty
+                # view must never be treated as authorization. This is NOT
+                # a claim that unmodified run_demo missed real events.
+                local = module._evaluate(
+                    module.BEFORE, module.BEFORE, original_stream, wd,
+                    True, False, directory_watch=dir_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(
+                    local['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+                self.assertIs(local['can_authorize_dispatch'], False)
+                self.assertIs(local['independent_os_proof_verified'], False)
+            finally:
+                native_close(duplicate)
+                try:
+                    os.fstat(duplicate)
+                except OSError:
+                    state['duplicate_closed'] = True
+                native_close(fd)
+                try:
+                    os.fstat(fd)
+                except OSError:
+                    state['original_closed'] = True
+
+        self.assertTrue(state['duplicate_closed'])
+        self.assertTrue(state['original_closed'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
