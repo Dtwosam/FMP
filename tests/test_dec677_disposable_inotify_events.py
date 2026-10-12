@@ -10770,6 +10770,82 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'late kernel sibling create and delete')
+    def test_real_kernel_transient_sibling_after_last_sample_stat_blocks(self):
+        # A public /tmp sibling can be created and removed immediately
+        # after all sample metadata probes, restoring the exact directory
+        # names. The real final kernel queue must still reject the event.
+        native_watch = module._start_watch
+        native_timestamps = module._checked_generated_sample_change_timestamps
+        native_first = module._read_pending
+        native_last = module._read_receipt_pending
+        state = {'source': None, 'fd': None, 'wds': None, 'checks': 0,
+                 'created': False, 'removed': False, 'inventory_clean': False,
+                 'first': None, 'late': None}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['source'] = path
+            state['fd'] = fd
+            state['wds'] = (wd, dir_wd)
+            return fd, wd, dir_wd
+
+        def checked(record):
+            stamps = native_timestamps(record)
+            state['checks'] += 1
+            if state['checks'] == 3:
+                folder = state['source'].parent
+                transient = folder / 'public-late-brief-sibling'
+                transient.write_bytes(b'PUBLIC-LATE-SIBLING')
+                state['created'] = transient.is_file()
+                os.unlink(transient)
+                state['removed'] = not os.path.lexists(transient)
+                state['inventory_clean'] = (
+                    module._bounded_inventory_names(folder) == ('sample',))
+            return stamps
+
+        def first(fd):
+            state['first'] = native_first(fd)
+            return state['first']
+
+        def last(fd):
+            state['late'] = native_last(fd)
+            return state['late']
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_checked_generated_sample_change_timestamps',
+                              side_effect=checked) as checker:
+                with patch.object(module, '_read_pending',
+                                  side_effect=first) as first_reader:
+                    with patch.object(module, '_read_receipt_pending',
+                                      side_effect=last) as last_reader:
+                        with patch.object(module, '_evaluate') as evaluator:
+                            result = module.run_demo()
+
+        self.assertEqual(state['checks'], 3)
+        self.assertEqual(checker.call_count, 3)
+        self.assertTrue(state['created'])
+        self.assertTrue(state['removed'])
+        self.assertTrue(state['inventory_clean'])
+        self.assertEqual(state['first'], b'')
+        self.assertIs(type(state['late']), bytes)
+        self.assertTrue(state['late'])
+        wd, dir_wd = state['wds']
+        events = module._classify_stream(state['late'], wd, dir_wd)
+        self.assertTrue(events['well_formed'])
+        self.assertGreaterEqual(events['directory_changes'], 2)
+        self.assertGreaterEqual(events['transient_create_delete_pairs'], 1)
+        self.assertEqual(result['status'], 'BLOCKED')
+        self.assertIs(result['can_authorize_dispatch'], False)
+        self.assertIs(result['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        first_reader.assert_called_once()
+        last_reader.assert_called_once()
+        evaluator.assert_not_called()
+        self.assertIsNotNone(state['fd'])
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
