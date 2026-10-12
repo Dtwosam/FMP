@@ -1,0 +1,9 @@
+# DEC-969 — Native parent inotify IN_ONESHOT auto-removal
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit child of DEC-968/#1189, tests and documentation only.
+
+The companion to DEC-968 demonstrates automatic, not explicit, removal of the **parent** watch while the source watch remains installed. A generated public \`/tmp/sample\` receives real source and parent inotify registrations; the parent is re-registered using \`IN_CREATE | IN_ONESHOT | IN_DONT_FOLLOW | IN_ONLYDIR\` on the same numeric watch descriptor. Creating a generated public sibling produces an actual named parent \`IN_CREATE\` followed by \`IN_IGNORED\`; the parent registration is automatically removed. Deleting the sibling generates no parent-WD record. The still-active source registration reports real distinct-byte writes and a later restore of the original fixture.
+
+The native event streams are parsed; there is no mocked kernel record. Final sample and parent dev/inode/mode match the beginning; bounded inventory returns to \`("sample",)\`, and the native FD is closed. The evaluator must \`BLOCKED\` both the parent invalidation and the true source write even when the final bytes are restored. Both \`can_authorize_dispatch=false\` and \`independent_os_proof_verified=false\` remain exact.
+
+Adds one source-defined Linux regression, bringing the strict stack to **632 methods**. This control does not claim that unmodified observer runtime uses \`IN_ONESHOT\` or that watch presence proves continuous OS enforcement. Exact-head Phase 3 and full historical CI plus independent qualified security review are still required. Independent protected no-write DEC-650/#820 and exclusive immutable run385 admission DEC-651/#821/#779 remain BLOCKED. No protected annual execution, production workflow/ref/runner/ruleset/permission, broker/trading, merge or promotion.
