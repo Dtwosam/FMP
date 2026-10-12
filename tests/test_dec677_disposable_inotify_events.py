@@ -14193,6 +14193,106 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real detached mmap can write after watcher close')
+    def test_real_kernel_postclose_detached_shared_mmap_cannot_authorize(self):
+        import mmap
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        altered = b'X' + module.BEFORE[1:]
+        self.assertEqual(len(altered), len(module.BEFORE))
+        self.assertNotEqual(altered, module.BEFORE)
+        state = {'sample': None, 'fd': None, 'mapping': None,
+                 'writer_closed': False, 'last_poll': None,
+                 'watch_closed': False, 'watch_invalid': False,
+                 'replacement_distinct': False, 'new_bytes_unchanged': False,
+                 'old_mapping_changed': False, 'parent_unchanged': False,
+                 'inventory_unchanged': False, 'mapping_closed': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            writer = os.open(path, os.O_RDWR | os.O_CLOEXEC | os.O_NOFOLLOW)
+            try:
+                mapping = mmap.mmap(writer, len(module.BEFORE),
+                                    access=mmap.ACCESS_WRITE)
+            finally:
+                native_close(writer)
+                state['writer_closed'] = True
+            state.update(sample=path, fd=fd, mapping=mapping)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            state['last_poll'] = native_poll(fd)
+            return state['last_poll']
+
+        def closing(fd):
+            if fd != state['fd'] or state['watch_closed']:
+                return native_close(fd)
+            self.assertEqual(state['last_poll'], b'')
+            native_close(fd)
+            state['watch_closed'] = True
+            try:
+                os.fstat(fd)
+            except OSError:
+                state['watch_invalid'] = True
+            sample = state['sample']
+            folder = sample.parent
+            initial = os.lstat(sample)
+            old_parent = os.lstat(folder)
+            self.assertEqual(sample.read_bytes(), module.BEFORE)
+            self.assertEqual(module._bounded_inventory_names(folder),
+                             ('sample',))
+            candidate = folder / 'postclose-mmap-new-public'
+            try:
+                with candidate.open('xb') as writer:
+                    self.assertEqual(writer.write(module.BEFORE),
+                                     len(module.BEFORE))
+                os.chmod(candidate, module.stat.S_IMODE(initial.st_mode))
+                new_inode = os.lstat(candidate)
+                state['replacement_distinct'] = (
+                    (new_inode.st_dev, new_inode.st_ino) !=
+                    (initial.st_dev, initial.st_ino))
+                os.replace(candidate, sample)
+                state['mapping'][:] = altered
+                state['mapping'].flush()
+                state['old_mapping_changed'] = state['mapping'][:] == altered
+                state['new_bytes_unchanged'] = (
+                    sample.read_bytes() == module.BEFORE and
+                    os.lstat(sample).st_mode == initial.st_mode)
+                state['inventory_unchanged'] = (
+                    module._bounded_inventory_names(folder) == ('sample',))
+                latest = os.lstat(folder)
+                state['parent_unchanged'] = (
+                    (old_parent.st_dev, old_parent.st_ino, old_parent.st_mode)
+                    == (latest.st_dev, latest.st_ino, latest.st_mode))
+            finally:
+                state['mapping'].close()
+                state['mapping_closed'] = state['mapping'].closed
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module.os, 'close',
+                                  side_effect=closing) as close:
+                    receipt = module.run_demo()
+
+        self.assertEqual(state['last_poll'], b'')
+        for field in ('writer_closed', 'watch_closed', 'watch_invalid',
+                      'replacement_distinct', 'new_bytes_unchanged',
+                      'old_mapping_changed', 'parent_unchanged',
+                      'inventory_unchanged', 'mapping_closed'):
+            with self.subTest(field=field):
+                self.assertIs(state[field], True)
+        self.assertEqual(receipt['status'],
+                         'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        self.assertGreaterEqual(close.call_count, 1)
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

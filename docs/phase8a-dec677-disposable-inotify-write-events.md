@@ -3932,6 +3932,36 @@ Requires own exact-head Phase 3/full historical CI plus
 independent qualified security review.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-944 — Detached shared mmap mutation after both source FD and watcher close
+
+DEC-941/#1162 covers a writable FD kept open through observer close
+and an identical-byte source pathname replacement. DEC-944 tests a
+distinct underlying Linux handle: create an actual writable shared
+`mmap` of the generated public sample after watch registration
+and **close its original writer FD before any final observation**.
+When the real zero-wait final poll returns exact empty bytes, the
+runner creates only its local-only receipt and closes its own
+inotify FD. A test callback confirms watcher FD closure and then
+replaces the watched pathname with a different same-byte regular
+public inode; while that replacement remains unchanged, the old
+unlinked inode can still be modified using the surviving shared
+memory mapping. Flush and verify the modified mapping, then
+close it before the disposable folder is cleaned.
+
+The parent inode/mode and exact `('sample',)` inventory remain
+stable. No events are read after the watcher closes. The local
+receipt remains exactly
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with false dispatch
+authorization and independent OS-proof flags. One new native
+test raises the strict tip to **612 distinct source-defined
+methods**. This demonstrates finite observer coverage, not
+OS-enforced no-write isolation.
+
+DEC-650/#820 protected OS no-write and DEC-651/#821/#779
+immutable annual admission remain BLOCKED. Own exact-head
+Phase 3, full historical regression and independent review
+required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
