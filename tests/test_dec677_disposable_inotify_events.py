@@ -15136,6 +15136,109 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(state['duplicate_closed'])
         self.assertTrue(state['original_closed'])
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'independent native inotify queues require Linux')
+    def test_real_native_independent_inotify_instances_have_separate_queues(self):
+        # A new _start_watch call makes a SECOND kernel inotify instance.
+        # Unlike os.dup (DEC-955), draining first must not consume any
+        # queued source events in the separate watched instance.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        fd1 = None
+        fd2 = None
+        closed1 = False
+        closed2 = False
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec956-independent-inotify-', dir='/tmp') as tmp:
+            source = Path(tmp) / 'sample'
+            self.assertEqual(source.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            before = os.lstat(source)
+            self.assertEqual(module._bounded_inventory_names(source.parent),
+                             ('sample',))
+            try:
+                fd1, wd1, dir_wd1 = native_watch(source)
+                fd2, wd2, dir_wd2 = native_watch(source)
+                self.assertNotEqual(fd1, fd2)
+                self.assertIsNotNone(os.fstat(fd1))
+                self.assertIsNotNone(os.fstat(fd2))
+                # Both instances are ready before either public write.
+                with source.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                    writer.seek(0)
+                    self.assertEqual(writer.write(module.BEFORE),
+                                     len(module.BEFORE))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertNotEqual(module.AFTER, module.BEFORE)
+                after = os.lstat(source)
+                self.assertEqual(
+                    (before.st_dev, before.st_ino, before.st_mode),
+                    (after.st_dev, after.st_ino, after.st_mode))
+                self.assertEqual(source.read_bytes(), module.BEFORE)
+                self.assertEqual(module._bounded_inventory_names(
+                    source.parent), ('sample',))
+
+                first = native_poll(fd1)
+                self.assertIs(type(first), bytes)
+                self.assertTrue(first)
+                first_parsed = module._classify_stream(
+                    first, wd1, dir_wd1)
+                self.assertTrue(first_parsed['well_formed'])
+                self.assertGreaterEqual(
+                    first_parsed['source_modify_events'], 1)
+                self.assertGreaterEqual(
+                    first_parsed['source_content_write_events'], 1)
+                self.assertEqual(native_poll(fd1), b'')
+
+                # Unlike a duplicated FD, the second independent kernel
+                # instance still has its own genuine queued source events.
+                second = native_poll(fd2)
+                self.assertIs(type(second), bytes)
+                self.assertTrue(second)
+                second_parsed = module._classify_stream(
+                    second, wd2, dir_wd2)
+                self.assertTrue(second_parsed['well_formed'])
+                self.assertGreaterEqual(
+                    second_parsed['source_modify_events'], 1)
+                self.assertGreaterEqual(
+                    second_parsed['source_content_write_events'], 1)
+                self.assertEqual(native_poll(fd2), b'')
+
+                # Two test-local queues do NOT create independently
+                # enforced no-write proof or protected dispatch authority.
+                local = module._evaluate(
+                    module.BEFORE, module.BEFORE, b'', wd1,
+                    True, False, directory_watch=dir_wd1,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(
+                    local['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+                self.assertIs(local['can_authorize_dispatch'], False)
+                self.assertIs(local['independent_os_proof_verified'], False)
+            finally:
+                if fd2 is not None:
+                    native_close(fd2)
+                    try:
+                        os.fstat(fd2)
+                    except OSError:
+                        closed2 = True
+                if fd1 is not None:
+                    native_close(fd1)
+                    try:
+                        os.fstat(fd1)
+                    except OSError:
+                        closed1 = True
+
+        self.assertTrue(closed1)
+        self.assertTrue(closed2)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
