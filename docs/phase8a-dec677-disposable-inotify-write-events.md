@@ -4073,6 +4073,60 @@ BLOCKED. Own exact-head Phase 3/full historical CI and
 qualified external security review required.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-948 — Reviewer matrix for postclose writer and identity lifetimes
+
+The DEC-928 matrix above captures the earlier last-poll boundaries;
+it is **not** the full postclose coverage list. This supplemental
+review matrix ties the later generated Linux counterexamples to
+their exact draft lineage and separates byte state, inode/pathname
+identity, file type, outside aliases, and independent writer
+processes. It is evidence **against** treating local inotify
+silence as continuous write prevention, not authorization.
+
+| After final poll/observer closure: independent dimension | Native generated-fixture counterexamples | What remains invisible to the frozen local receipt |
+| --- | --- | --- |
+| **Original sample bytes or mode change** | Persistent bytes #1145; source chmod #1155; private-parent sticky bit #1156 | A later write or metadata alteration may be real even if the earlier watched state was clean |
+| **Directory namespace drift** | Persistent sibling #1148; parent move-return #1158; source replaced by directory #1160; parent inode substitution #1161; sample replaced by FIFO #1164 | Snapshot names, original watched descriptor and a clean preclose inventory do not lock later parent or leaf type/identity |
+| **Same-content different inode or symlink** | New regular sample inode #1153; external-public symlink #1154; different inode from separate process #1168 | A byte-equal `sample` path can refer to a different regular inode, target or file type |
+| **Kernel resource lifetime after watcher close** | External hardlink survives original sample cleanup #1157; held writable original FD #1162; detached shared writable mmap #1165 | Closed inotify watchers do not revoke existing aliases, open writable FDs, or shared mappings |
+| **After runner cleanup** | Alias bytes changed after original tempdir cleanup #1163; cross-process alias created and later changed after cleanup #1167 | Removing the watched directory does not prove that no live inode aliases remain elsewhere |
+| **Independent process writer** | Separate process changes sample #1166; separate processes create and mutate outside alias #1167; subprocess atomically replaces inode #1168 | A test-local same-process observation is not an OS-enforced policy that denies other processes |
+
+**Required outcome invariants, for every case:**
+
+- Use only generated public disposable data and bounded temporary
+  paths under `/tmp`. Never read protected annual files or probe
+  protected runner state.
+- A test may instrument the real final poll or observe native events
+  **only within its own test**. A hypothetical postclose drain must
+  never be described as a continuing independent OS watcher.
+- Accept at most `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` after a
+  clean frozen local receipt; `BLOCKED` is also nonauthorizing.
+  `can_authorize_dispatch` and
+  `independent_os_proof_verified` must be **exactly false**.
+- Verify actual watcher descriptor closure before postclose
+  mutation. Test-only external aliases, child processes, mappings
+  and FDs must be bounded and closed/cleaned as asserted.
+- Preserve each draft's exact-head Phase 3 and complete historical
+  regression as **separate CI obligations**. The postclose symlink
+  identity assertion originally failed full historical CI for
+  #1154–#1158 because Linux reused a freed inode number; the
+  strict child #1159 pinned the old inode and passed both suites.
+  The original red heads remain red. Never reinterpret old CI.
+- This matrix is a mapping of local evidence **limitations**, not a
+  security design review or a substitute for independently qualified
+  OS isolation and immutable server-side annual admission.
+
+This documentation-only strict child retains **615 distinct
+source-defined test methods**. No observer runtime code or
+protected execution surface changes. Its own exact-head
+CI and qualified security review are still required.
+DEC-650/#820 independent protected OS no-write and
+DEC-651/#821/#779 immutable annual run385 admission remain
+**BLOCKED**. No annual dispatch/test/retry/rerun, protected
+evidence access, broker actions, trading, merging or promotion.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
