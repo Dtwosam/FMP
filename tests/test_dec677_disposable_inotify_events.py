@@ -14518,6 +14518,112 @@ class DisposableInotifyTests(unittest.TestCase):
                 os.fstat(state['watch_fd'])
         self.assertFalse(os.path.lexists(alias))
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'real postclose separate-process same-byte inode swap is Linux-only')
+    def test_real_kernel_postclose_subprocess_same_byte_inode_swap_cannot_authorize(self):
+        # A bounded child process atomically substitutes a freshly
+        # allocated, byte-identical regular file at the watched sample
+        # name AFTER the original runner's kernel watch has closed.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'last_poll': None,
+                 'watch_closed': False, 'fd_invalid': False,
+                 'subprocess_ok': False, 'subprocess_quiet': False,
+                 'new_regular': False, 'source_inode_different': False,
+                 'same_public_bytes': False, 'source_mode_equal': False,
+                 'parent_same': False, 'inventory_same': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            state['last_poll'] = native_final_poll(fd)
+            return state['last_poll']
+
+        def closing(fd):
+            if fd != state['watch_fd'] or state['watch_closed']:
+                return native_close(fd)
+            self.assertEqual(state['last_poll'], b'')
+            native_close(fd)
+            state['watch_closed'] = True
+            try:
+                os.fstat(fd)
+            except OSError:
+                state['fd_invalid'] = True
+            sample = state['sample']
+            folder = sample.parent
+            before = os.lstat(sample)
+            parent_before = os.lstat(folder)
+            self.assertEqual(sample.read_bytes(), module.BEFORE)
+            self.assertEqual(module._bounded_inventory_names(folder),
+                             ('sample',))
+            self.assertTrue(module.stat.S_ISREG(before.st_mode))
+            self.assertEqual(before.st_nlink, 1)
+            # The child uses only a fresh source pathname supplied by
+            # this disposable observer and a fixed generated sibling.
+            # It creates the new inode before replacing the original,
+            # so inode-number reuse cannot obscure its new identity.
+            child_code = (
+                'from pathlib import Path; import os,sys; '
+                'p=Path(sys.argv[1]); '
+                'q=p.with_name("dec947-generated-swap"); '
+                'q.write_bytes(bytes.fromhex(sys.argv[2])); '
+                'os.chmod(q,int(sys.argv[3],8)); '
+                'os.replace(q,p)')
+            result = subprocess.run(
+                [sys.executable, '-B', '-c', child_code, str(sample),
+                 module.BEFORE.hex(), oct(module.stat.S_IMODE(before.st_mode))],
+                capture_output=True, timeout=8)
+            state['subprocess_ok'] = result.returncode == 0
+            state['subprocess_quiet'] = (
+                result.stdout == b'' and result.stderr == b'')
+            after = os.lstat(sample)
+            parent_after = os.lstat(folder)
+            state['new_regular'] = module.stat.S_ISREG(after.st_mode)
+            state['source_inode_different'] = (
+                (before.st_dev, before.st_ino) !=
+                (after.st_dev, after.st_ino))
+            state['same_public_bytes'] = (
+                sample.read_bytes() == module.BEFORE and
+                after.st_size == before.st_size)
+            state['source_mode_equal'] = before.st_mode == after.st_mode
+            state['parent_same'] = (
+                (parent_before.st_dev, parent_before.st_ino,
+                 parent_before.st_mode) ==
+                (parent_after.st_dev, parent_after.st_ino,
+                 parent_after.st_mode))
+            state['inventory_same'] = (
+                module._bounded_inventory_names(folder) == ('sample',))
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module.os, 'close',
+                                  side_effect=closing) as close:
+                    receipt = module.run_demo()
+
+        self.assertEqual(state['last_poll'], b'')
+        for field in ('watch_closed', 'fd_invalid', 'subprocess_ok',
+                      'subprocess_quiet', 'new_regular',
+                      'source_inode_different', 'same_public_bytes',
+                      'source_mode_equal', 'parent_same', 'inventory_same'):
+            with self.subTest(field=field):
+                self.assertIs(state[field], True)
+        self.assertFalse(os.path.lexists(state['sample']))
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['watch_fd'])
+        self.assertGreaterEqual(close.call_count, 1)
+        with self.assertRaises(OSError):
+            os.fstat(state['watch_fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

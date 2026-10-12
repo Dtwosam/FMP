@@ -4039,6 +4039,40 @@ immutable exclusive run385 admission remain BLOCKED. Own
 exact-head Phase 3/full historical CI and qualified independent
 security review required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-947 — Independent process atomically substitutes a byte-identical inode after watcher close
+
+DEC-932/#1153 demonstrated in-process same-byte replacement of
+a generated watched sample after the inotify watcher closed,
+and DEC-945/#1166 demonstrated a separate process changing that
+sample's public bytes. DEC-947 isolates the combined, distinct
+cross-process namespace identity failure: the true runner's
+final native queue poll returns exactly empty; its local-only
+receipt is formed and its own `finally` closes the watcher.
+A test-only close callback first delegates to real `os.close`
+and confirms the watcher FD no longer exists. A bounded,
+no-shell/no-network Python child then creates a new generated
+regular public fixture inode *before* replacing the existing
+`sample` via real `os.replace`. The new inode has the same
+`BEFORE` bytes and mode but a different device/inode identity.
+The watched parent's dev/ino/mode and the exact one-name
+inventory remain unchanged. The child exits successfully with
+empty stdout/stderr. Ordinary original TemporaryDirectory
+cleanup removes the replacement when the runner returns.
+
+The frozen result cannot exceed
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with exact
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`. No postclose kernel
+event drain, continuous watcher or independent OS no-write
+policy is claimed. One real native Linux method extends the
+strict stack to **615 source-defined tests**.
+
+DEC-650/#820 independently OS-enforced protected no-write and
+DEC-651/#821/#779 immutable exclusive run385 admission remain
+BLOCKED. Own exact-head Phase 3/full historical CI and
+qualified external security review required.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
