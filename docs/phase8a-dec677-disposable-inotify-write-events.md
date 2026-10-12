@@ -3148,6 +3148,40 @@ BLOCKED. Own exact-head Phase 3/full historical CI and
 qualified independent security review required.
 **DRAFT / NEVER MERGE**.
 
+## DEC-921 — Genuine post-final-poll write THROUGH an external inode alias
+
+DEC-920/#1137 covers a transient hardlink created beyond the
+watched parent directory and proves that the watched *inode*
+still gets an `IN_ATTRIB` record after the runner's final poll,
+without a directory-entry event in the watched parent.
+DEC-921 extends that real Linux counterexample to a content
+operation through this **outside hardlink pathname**. Only after
+the final genuine empty inotify drain, create an alias in a
+second separate generated private `/tmp` folder, open the alias
+`r+b`, write the identical original public bytes, flush/fsync,
+close the writer, and unlink the alias. The watched file
+link count goes 1→2→1 and its dev/ino, file mode, size,
+original bytes, parent identity and sole child inventory
+are restored. The watched parent emits **no** entry events;
+a separate strictly test-only later native read must catch
+well-formed watched-file `IN_MODIFY` and content-write events.
+
+The earlier completed runner observation cannot learn of
+these later real kernel events. Its local receipt may still
+report only `LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never
+protected dispatch authorization. Require exact
+`can_authorize_dispatch=false`,
+`independent_os_proof_verified=false`, and closed watcher FD.
+One new generated Linux negative counterexample raises this
+strict stack to **592 distinct source-defined methods**.
+
+No claim of source timestamp preservation, independently
+enforced write prohibition, authenticated monitoring or
+immutable annual admission. DEC-650/#820 OS confinement and
+DEC-651/#821/#779 one-shot server admission remain BLOCKED.
+Own exact-head Phase 3/full historical CI and qualified
+independent security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
