@@ -3962,6 +3962,41 @@ immutable annual admission remain BLOCKED. Own exact-head
 Phase 3, full historical regression and independent review
 required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-945 — Separate-process public file mutation AFTER observer close
+
+DEC-927/#1145 demonstrates a test-local same-inode source write
+after watcher closure. DEC-945 checks a distinct **writer process**
+boundary rather than another in-process callback: the genuine
+runner's last zero-wait poll is exact empty and its local-only
+result is formed. A test wrapper first delegates to native
+`os.close`, checks the watched inotify FD is invalid via
+`fstat`, and only then executes a short bounded subprocess
+of the current Python interpreter (no shell, no external network)
+with the exact newly generated disposable `/tmp/sample`
+pathname and the hex-coded generated public `AFTER` bytes.
+The child uses ordinary `Path.write_bytes` to change the
+sample content and exits. The parent verifies zero return
+status, empty stdout/stderr, different public bytes, original
+source dev/ino/mode and parent dev/ino/mode, plus exact
+one-entry inventory. No postclose queue read or independent
+observer is claimed, and normal TemporaryDirectory cleanup
+removes all temporary data.
+
+The already frozen result can remain only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with exactly false
+`can_authorize_dispatch` and
+`independent_os_proof_verified`, and the actual watcher
+descriptor closed. One native Linux regression brings the
+strict tip to **613 distinct source-defined methods**.
+Cross-process writes after collection are a temporal limit,
+not evidence of OS-enforced write prevention.
+
+Protected DEC-650/#820 no-write and DEC-651/#821/#779
+exclusive immutable annual admission remain BLOCKED.
+Own exact-head Phase 3/full historical CI and independent
+qualified security review required.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
