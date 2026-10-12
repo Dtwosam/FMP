@@ -4253,6 +4253,48 @@ DEC-650/#820 and DEC-651/#821/#779 requirements remain
 permission to merge or promote.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-952 — Child-owned read-only FD changes detached inode mode after cleanup
+
+DEC-949/#1170 tested a child-owned writable FD that survives
+watcher closure and the original generated parent-directory
+cleanup, then rewrites detached public bytes. DEC-950/#1171
+used a child-owned shared writable mapping with its original
+file descriptor already closed. DEC-952 separates a distinct
+Linux metadata permission from content-writing permission.
+
+A bounded, shell-free independent subprocess opens the generated
+public sample with \`O_RDONLY|O_NOFOLLOW\` after the real native
+watch is registered, checks its fixture bytes, and signals READY.
+It performs **no change** until the genuine runner's final
+zero-wait poll returned exact empty bytes, its local-only verdict
+was produced, its inotify FD closed, and its original disposable
+\`sample\` and private parent paths were removed by normal cleanup.
+Only then does the child receive GO. Its \`fstat\` confirms the
+original inode now has link count zero, and real \`fchmod\` toggles
+only the owner-write mode bit through the **read-only** FD.
+The child checks changed \`st_mode\`, unchanged dev/ino,
+link count zero and exact original public bytes, then closes
+the held descriptor and exits. The parent asserts all reported
+values and bounds child readiness/completion with cleanup and
+reaping on failure. No external alias, network, or postclose
+inotify event drain is involved.
+
+The frozen original result stays exactly
+\`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED\`, with
+\`can_authorize_dispatch=false\` and
+\`independent_os_proof_verified=false\`. One new genuine Linux
+regression raises the strict draft count to **618 unique
+source-defined test methods**. This shows that an apparently
+read-only source descriptor still permits owner metadata changes
+and that a closed local watcher does not revoke old handles;
+it does not establish protected OS no-write confinement.
+
+DEC-650/#820 independent annual no-write and DEC-651/#821/#779
+exclusive immutable run385 admission remain BLOCKED.
+Own exact-head Phase 3/full historical CI and independent
+qualified security review required.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
