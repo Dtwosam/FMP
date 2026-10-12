@@ -13094,6 +13094,109 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real postclose same-byte inode replacement cannot authorize')
+    def test_real_kernel_after_observer_close_same_byte_inode_replacement_cannot_authorize(self):
+        # The runner has FINISHED its last inotify poll, produced its
+        # local result, and really closed its watch FD. Only then replace
+        # the public sample pathname with a new regular inode carrying
+        # byte-for-byte identical public data. No later event read exists.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'first_final': None,
+                 'last_poll_complete': False, 'close_seen': False,
+                 'fd_really_closed': False, 'replacement_is_regular': False,
+                 'same_bytes': False, 'different_inode': False,
+                 'mode_equal': False, 'names_same': False,
+                 'parent_identity_preserved': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['last_poll_complete'] = True
+            return pending
+
+        def closing(fd):
+            # Only the native watched FD closes through this one callback.
+            # Delegate all unrelated descriptor closes without mutation.
+            if fd != state['watch_fd'] or state['close_seen']:
+                return native_close(fd)
+            self.assertTrue(state['last_poll_complete'])
+            native_close(fd)
+            state['close_seen'] = True
+            try:
+                os.fstat(fd)
+            except OSError:
+                state['fd_really_closed'] = True
+            sample = state['sample']
+            folder = sample.parent
+            before = os.lstat(sample)
+            parent_before = os.lstat(folder)
+            self.assertEqual(module._bounded_inventory_names(folder),
+                             ('sample',))
+            self.assertEqual(sample.read_bytes(), module.BEFORE)
+            replacement = folder / 'postclose-new-public-inode'
+            # The replacement is freshly generated inside this same
+            # private /tmp directory, never a caller-supplied pathname.
+            with replacement.open('xb') as writer:
+                self.assertEqual(writer.write(module.BEFORE),
+                                 len(module.BEFORE))
+                writer.flush()
+                os.fsync(writer.fileno())
+            os.chmod(replacement, module.stat.S_IMODE(before.st_mode))
+            candidate = os.lstat(replacement)
+            self.assertNotEqual((before.st_dev, before.st_ino),
+                                (candidate.st_dev, candidate.st_ino))
+            os.replace(replacement, sample)
+            after = os.lstat(sample)
+            parent_after = os.lstat(folder)
+            state['replacement_is_regular'] = module.stat.S_ISREG(after.st_mode)
+            state['different_inode'] = (
+                (before.st_dev, before.st_ino) !=
+                (after.st_dev, after.st_ino))
+            state['same_bytes'] = sample.read_bytes() == module.BEFORE
+            state['mode_equal'] = before.st_mode == after.st_mode
+            state['names_same'] = (
+                module._bounded_inventory_names(folder) == ('sample',))
+            state['parent_identity_preserved'] = (
+                (parent_before.st_dev, parent_before.st_ino,
+                 parent_before.st_mode) ==
+                (parent_after.st_dev, parent_after.st_ino,
+                 parent_after.st_mode))
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module.os, 'close',
+                                  side_effect=closing) as close:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['last_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['close_seen'])
+        self.assertTrue(state['fd_really_closed'])
+        self.assertTrue(state['replacement_is_regular'])
+        self.assertTrue(state['different_inode'])
+        self.assertTrue(state['same_bytes'])
+        self.assertTrue(state['mode_equal'])
+        self.assertTrue(state['names_same'])
+        self.assertTrue(state['parent_identity_preserved'])
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['watch_fd'])
+        self.assertGreaterEqual(close.call_count, 1)
+        with self.assertRaises(OSError):
+            os.fstat(state['watch_fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
