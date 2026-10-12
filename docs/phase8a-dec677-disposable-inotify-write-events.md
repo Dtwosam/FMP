@@ -3086,6 +3086,36 @@ one-shot server admission DEC-651/#821/#779 remain BLOCKED.
 Own exact-head Phase 3/full historical CI and qualified external
 security review required. **DRAFT / NEVER MERGE**.
 
+## DEC-919 — True post-final-poll transient sample symlink restoration
+
+DEC-893 verifies a real symlink replacing the sample before the
+last queue poll must BLOCK; DEC-913/#1130 creates a new regular
+sample inode **after** that poll. DEC-919 covers a distinct
+post-poll path-type race with **the original watched inode
+restored**. After the actual final native receipt collector
+returns exact empty bytes, temporarily rename the generated
+public sample within its own newly created private `/tmp` folder,
+install a relative symlink at `sample` to that same disposable
+public original inode, confirm the transient symlink and its
+public target bytes, then unlink it and rename the original
+regular inode back. Original dev/ino, mode, bytes, parent
+dev/ino/mode and exact one-name inventory are restored.
+A separate **test-only later kernel drain** must see real
+well-formed source `IN_MOVE_SELF` and at least six directory
+move/create/delete events. These cannot be part of the runner's
+earlier frozen empty final read.
+
+The genuine local evaluator may still yield only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with authority and
+independent OS-proof flags exactly false and watcher FD closed.
+One native generated-fixture case increases the strict draft to
+**590 distinct source-defined tests**. This is a counterexample
+to continuous path authentication, NOT actual OS no-write
+enforcement. Protected DEC-650/#820 and immutable server admission
+DEC-651/#821/#779 remain BLOCKED. Independent exact-head
+Phase 3/full historical CI and qualified external review required.
+**DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.

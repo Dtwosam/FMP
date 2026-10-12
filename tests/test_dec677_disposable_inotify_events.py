@@ -11872,6 +11872,110 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real post-poll transient symlink cannot authorize')
+    def test_real_kernel_post_final_poll_transient_sample_symlink_cannot_authorize(self):
+        # The generated sample pathname briefly resolves through a symlink
+        # AFTER the genuine final zero-wait kernel event read. Restore the
+        # exact original watched regular inode before the evaluator.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_evaluator = module._evaluate
+        state = {'sample': None, 'fd': None, 'wd': None, 'dir_wd': None,
+                 'final_poll_complete': False, 'first_final': None,
+                 'post_poll_event': None, 'temporary_link': False,
+                 'linked_public_bytes': False, 'inode_restored': False,
+                 'mode_restored': False, 'bytes_restored': False,
+                 'names_restored': False, 'parent_identity_restored': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(sample=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['final_poll_complete'] = True
+            return pending
+
+        def evaluated(*args, **kwargs):
+            self.assertTrue(state['final_poll_complete'])
+            sample = state['sample']
+            folder = sample.parent
+            backup = folder / 'brief-postpoll-public-original'
+            source_before = os.lstat(sample)
+            folder_before = os.lstat(folder)
+            bytes_before = sample.read_bytes()
+            self.assertEqual(bytes_before, module.BEFORE)
+            self.assertEqual(module._bounded_inventory_names(folder),
+                             ('sample',))
+            os.rename(sample, backup)
+            try:
+                os.symlink(backup.name, sample)
+                try:
+                    state['temporary_link'] = module.stat.S_ISLNK(
+                        os.lstat(sample).st_mode)
+                    state['linked_public_bytes'] = (
+                        sample.read_bytes() == module.BEFORE)
+                finally:
+                    os.unlink(sample)
+            finally:
+                os.rename(backup, sample)
+            source_after = os.lstat(sample)
+            folder_after = os.lstat(folder)
+            state['inode_restored'] = (
+                (source_before.st_dev, source_before.st_ino) ==
+                (source_after.st_dev, source_after.st_ino))
+            state['mode_restored'] = (
+                source_before.st_mode == source_after.st_mode)
+            state['bytes_restored'] = (
+                sample.read_bytes() == bytes_before == module.BEFORE)
+            state['names_restored'] = (
+                module._bounded_inventory_names(folder) == ('sample',))
+            state['parent_identity_restored'] = (
+                (folder_before.st_dev, folder_before.st_ino,
+                 folder_before.st_mode) ==
+                (folder_after.st_dev, folder_after.st_ino,
+                 folder_after.st_mode))
+            state['post_poll_event'] = native_final_poll(state['fd'])
+            return native_evaluator(*args, **kwargs)
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module, '_evaluate',
+                                  side_effect=evaluated) as evaluator:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['final_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['temporary_link'])
+        self.assertTrue(state['linked_public_bytes'])
+        self.assertTrue(state['inode_restored'])
+        self.assertTrue(state['mode_restored'])
+        self.assertTrue(state['bytes_restored'])
+        self.assertTrue(state['names_restored'])
+        self.assertTrue(state['parent_identity_restored'])
+        self.assertIs(type(state['post_poll_event']), bytes)
+        self.assertTrue(state['post_poll_event'])
+        parsed = module._classify_stream(
+            state['post_poll_event'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertTrue(parsed['invalidated'])
+        self.assertGreaterEqual(parsed['directory_changes'], 6)
+        self.assertIn(
+            module.EVENT.pack(state['wd'], module.IN_MOVE_SELF, 0, 0),
+            state['post_poll_event'])
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        evaluator.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
