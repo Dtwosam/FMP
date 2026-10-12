@@ -3182,6 +3182,38 @@ DEC-651/#821/#779 one-shot server admission remain BLOCKED.
 Own exact-head Phase 3/full historical CI and qualified
 independent security review required. **DRAFT / NEVER MERGE**.
 
+## DEC-922 — Real post-final-poll redirect to an INDEPENDENT public inode
+
+DEC-919/#1136 demonstrates a transient symlink at `sample`
+that points back to the original watched public inode. DEC-922
+adds a different post-poll redirect: create a separate new
+public fixture inode in a second generated private `/tmp`
+folder only **after the genuine final empty queue read**.
+Move the originally watched `sample` aside inside its own
+private parent, install a temporary symlink pointing outside
+that parent at the distinct generated public inode, confirm
+the path is a genuine symlink to byte-identical but
+**different** data, then remove the link and restore the
+original source pathname and inode. Original final source
+dev/ino, file mode and bytes, watched parent's identity,
+and exact one-leaf inventory all match the earlier state.
+The disposable external target folder is cleaned up.
+Only a **test-only later native inotify drain** observes
+source `IN_MOVE_SELF` and watched-parent
+rename/create/delete records after the original last poll.
+
+The existing genuine local evaluator can still report
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, which is never
+authorization: assert exact false authorization and
+independent OS-proof fields plus closed watcher FD.
+One native generated fixture increases the strict stack
+to **593 distinct source-defined tests**. The test cannot
+prove perpetual path identity, independent write-prevention,
+or protected annual confinement. DEC-650/#820 and
+DEC-651/#821/#779 remain BLOCKED. Own exact-head
+Phase 3/full historical CI and qualified independent
+security review required. **DRAFT / NEVER MERGE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
