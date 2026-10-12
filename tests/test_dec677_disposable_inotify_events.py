@@ -13494,6 +13494,114 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real postclose external hardlink can outlive sample cleanup')
+    def test_real_kernel_after_observer_close_external_alias_survives_sample_cleanup(self):
+        # A second /tmp public test directory holds the alias. Create it
+        # only AFTER native os.close has completed on the watched FD.
+        # The original generated sample directory then cleans normally,
+        # yet the same original public inode remains readable at alias.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'first_final': None,
+                 'last_poll_complete': False, 'close_seen': False,
+                 'fd_really_closed': False, 'alias_same_inode': False,
+                 'links_during': None, 'parent_identity_preserved': False,
+                 'inventory_preserved': False,
+                 'source_bytes_preserved': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state['sample'] = path
+            state['watch_fd'] = fd
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['last_poll_complete'] = True
+            return pending
+
+        with tempfile.TemporaryDirectory(
+                prefix='dec936-public-alias-', dir='/tmp') as outside:
+            alias = Path(outside) / 'public-afterclose-alias'
+            self.assertFalse(os.path.lexists(alias))
+
+            def closing(fd):
+                if fd != state['watch_fd'] or state['close_seen']:
+                    return native_close(fd)
+                self.assertTrue(state['last_poll_complete'])
+                native_close(fd)
+                state['close_seen'] = True
+                try:
+                    os.fstat(fd)
+                except OSError:
+                    state['fd_really_closed'] = True
+                source = state['sample']
+                original = os.lstat(source)
+                parent_before = os.lstat(source.parent)
+                self.assertEqual(original.st_nlink, 1)
+                self.assertEqual(source.read_bytes(), module.BEFORE)
+                self.assertEqual(module._bounded_inventory_names(
+                    source.parent), ('sample',))
+                os.link(source, alias)
+                during = os.lstat(source)
+                alias_during = os.lstat(alias)
+                parent_after = os.lstat(source.parent)
+                state['alias_same_inode'] = (
+                    (original.st_dev, original.st_ino) ==
+                    (during.st_dev, during.st_ino) ==
+                    (alias_during.st_dev, alias_during.st_ino))
+                state['links_during'] = during.st_nlink
+                state['parent_identity_preserved'] = (
+                    (parent_before.st_dev, parent_before.st_ino,
+                     parent_before.st_mode) ==
+                    (parent_after.st_dev, parent_after.st_ino,
+                     parent_after.st_mode))
+                state['inventory_preserved'] = (
+                    module._bounded_inventory_names(
+                        source.parent) == ('sample',))
+                state['source_bytes_preserved'] = (
+                    source.read_bytes() == alias.read_bytes() ==
+                    module.BEFORE)
+
+            with patch.object(module, '_start_watch',
+                              side_effect=watched) as watcher:
+                with patch.object(module, '_read_receipt_pending',
+                                  side_effect=final_poll) as final:
+                    with patch.object(module.os, 'close',
+                                      side_effect=closing) as close:
+                        receipt = module.run_demo()
+
+            self.assertTrue(state['last_poll_complete'])
+            self.assertEqual(state['first_final'], b'')
+            self.assertTrue(state['close_seen'])
+            self.assertTrue(state['fd_really_closed'])
+            self.assertTrue(state['alias_same_inode'])
+            self.assertEqual(state['links_during'], 2)
+            self.assertTrue(state['parent_identity_preserved'])
+            self.assertTrue(state['inventory_preserved'])
+            self.assertTrue(state['source_bytes_preserved'])
+            # The original disposable runner tempdir has already exited;
+            # the separately generated public alias still has its inode.
+            self.assertFalse(os.path.lexists(state['sample']))
+            surviving = os.lstat(alias)
+            self.assertTrue(module.stat.S_ISREG(surviving.st_mode))
+            self.assertEqual(surviving.st_nlink, 1)
+            self.assertEqual(alias.read_bytes(), module.BEFORE)
+            self.assertEqual(
+                receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+            self.assertIs(receipt['can_authorize_dispatch'], False)
+            self.assertIs(receipt['independent_os_proof_verified'], False)
+            watcher.assert_called_once()
+            final.assert_called_once_with(state['watch_fd'])
+            self.assertGreaterEqual(close.call_count, 1)
+            with self.assertRaises(OSError):
+                os.fstat(state['watch_fd'])
+        # The external public test directory is cleaned by its own
+        # context manager; no protected artifact survives.
+        self.assertFalse(os.path.lexists(alias))
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')

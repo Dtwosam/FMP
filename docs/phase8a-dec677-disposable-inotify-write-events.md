@@ -3645,6 +3645,43 @@ admission DEC-651/#821/#779 remain BLOCKED. Own exact-head
 Phase 3/full historical CI and independent qualified security
 review are required. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-936 — Genuine external hardlink after watcher close outlives local sample cleanup
+
+DEC-920/#1137 creates a temporary external hardlink to the
+watched sample **after the final poll but before the watcher
+closes**. DEC-929/#1148 shows that a new unrelated sibling may
+be created after the watch closes; DEC-931/#1152 modifies sample
+content via a brief alias inside its watched parent. DEC-936
+exercises a distinct true native boundary: a second all-public
+private test directory is generated separately in `/tmp`.
+After the runner's genuine last empty queue read and its real
+`finally` close of the inotify FD (verified via failed `fstat`),
+a test callback creates a hardlink from the watched generated
+public sample to that separate disposable folder. It proves both
+names refer to the same source dev/ino, link count rises from one
+to two, original parent identity/inventory and bytes stay
+unchanged. **No postclose inotify drain is claimed.**
+
+The normal runner temporary-directory cleanup then removes its
+original sample name. The generated alias still has link count
+one and the exact original public fixture bytes inside the
+external test directory, until that separate context cleans it
+as well. This demonstrates that an apparently quiet local
+receipt neither prevents later inode aliases nor guarantees
+control of bytes after its own cleanup. No protected source
+or persistent artifact is involved.
+
+The frozen result may remain only
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, never annual authority;
+the test checks exact `can_authorize_dispatch=false`,
+`independent_os_proof_verified=false` and watch FD closure.
+One distinct native method raises the strict draft tip to
+**606 source-defined tests**. Independent OS confinement
+DEC-650/#820 and immutable one-shot run385 admission
+DEC-651/#821/#779 remain BLOCKED. Own exact-head Phase 3,
+historical CI and independent qualified review are required.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
