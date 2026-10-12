@@ -2,6 +2,55 @@
 
 **DRAFT / NEVER MERGE · SOURCE ONLY · No annual authorization.**
 
+## DEC-909 — Verification handoff: actual CI and unavoidable post-poll boundary
+
+**Review snapshot: October 12, 2026.** This section is a dated
+source-only handoff, not a live claim that any later head is green.
+The observer tip here has **580 distinct source-defined test
+methods** and no modification to the executable observer since the
+original post-census receipt collector. Tests and documentation
+must not be confused with a production control.
+
+### Exact-head result provenance
+
+| Exact head | Phase 3 | Full historical | Finding |
+| --- | --- | --- | --- |
+| #1114 (DEC-899) | Success | Success | Last fully verified parent before the mask regression |
+| #1115 (DEC-900) | Success | **Failure** | Native parent `IN_ATTRIB | IN_ISDIR` did not match a stale bare `IN_ATTRIB` test assertion |
+| #1116–#1120 (DEC-901–905) | Success | **Failure** | Strict descendants inherited that assertion until the forward repair |
+| #1121 (DEC-906) | Success, [run 38230757953](https://github.com/Dtwosam/FMP/actions/runs/38230757953) | Success, [run 38230757946](https://github.com/Dtwosam/FMP/actions/runs/38230757946) | Forward repair preserves the native directory modifier and runtime guards |
+| #1123 (DEC-907) | Success | Pending at drafting | Real generated parent move/mode events after the last source metadata record |
+| #1124 (DEC-908) | Success | Pending at drafting | Native post-final-poll change can evade bounded observation but never grant authority |
+
+The same directory mask repair was independently drafted as #1122
+before the existing #1121 forward repair was discovered; #1122 was
+**closed, unmerged, as a duplicate**, leaving #1121 on the strict
+linear lineage. A failing head is NEVER reclassified as green.
+Every descendant requires its own success for both exact-head suites
+and qualified independent review.
+
+### Why clean local results can never authorize
+
+DEC-908 deliberately demonstrates a real kernel event **after**
+the last immediate inotify receipt poll. A point-in-time empty event
+queue can coexist with a later chmod-and-restore of the very same
+generated public sample. The genuine kernel records the late mutation
+but the earlier sampling cannot retroactively detect it. Therefore
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` is never evidence of full
+runtime coverage or OS-denied writes; both
+`can_authorize_dispatch` and `independent_os_proof_verified` must
+stay exactly `false`. There is no honest upgrade from this
+disposable observer to a continuous independent kernel safeguard.
+
+Independent proof of OS-enforced, no-write confinement for the
+actual protected 20-job annual suite (DEC-650/#820), plus immutable,
+server-enforced one-shot annual run385 admission (DEC-651/#821/#779),
+remain separate **BLOCKED** requirements. No protected data,
+production runner, real annual operations, broker, trading system,
+permission, branch, workflow or ruleset is touched in this lineage.
+**DRAFT / NEVER MERGE**.
+
+
 ## DEC-898 — Current review map and hard proof boundaries
 
 This document is an append-only sequence of generated Linux controls. Its
