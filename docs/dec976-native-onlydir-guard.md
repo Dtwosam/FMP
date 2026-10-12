@@ -1,0 +1,9 @@
+# DEC-976 — IN_ONLYDIR rejects non-directory inotify registration targets
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test-and-documentation child of DEC-975/#1196.
+
+This generated-public Linux regression proves two native `inotify_add_watch` rejection cases while a real original source/parent watch pair stays installed. Registering a **regular source file** with `IN_ONLYDIR | IN_DONT_FOLLOW` fails `-1 / ENOTDIR`. So does registering a temporary **symlink whose target is the parent directory** with the same flags: `IN_DONT_FOLLOW` constrains the checked inode to the symlink itself. The experiment creates and deletes that public alias within the private `/tmp` directory and verifies genuine parent namespace events.
+
+Neither rejected registration silently replaces the original watch masks. Native writes of distinct public bytes and a restore remain visible as source `IN_MODIFY` plus named parent write events. The original and final file and parent dev/inode/mode and one-entry inventory match; native FD closure is explicit. The existing evaluator blocks actual event streams with exact `can_authorize_dispatch=false` and `independent_os_proof_verified=false`.
+
+One new source-defined Linux method brings the strict draft stack to **637**. These errno checks are kernel registration semantics, *not* a no-write security policy, independently authenticated provenance, or annual authorization. Own exact-head Phase 3 and complete historical regression plus qualified independent security review required. DEC-650/#820 protected OS-enforced no-write and DEC-651/#821/#779 immutable exclusive annual run385 admission remain BLOCKED. No protected annual run/evidence/sources, production refs/workflows/runners/rulesets/permissions, broker or trading action, merge or promotion.
