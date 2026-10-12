@@ -4127,6 +4127,51 @@ DEC-651/#821/#779 immutable annual run385 admission remain
 evidence access, broker actions, trading, merging or promotion.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-949 — Independent process-held writable inode survives original cleanup
+
+DEC-941/#1162 shows a test-process `O_RDWR` FD continuing to
+mutate an unlinked original sample inode after the watched
+pathname has been replaced, while the original private parent
+still exists. DEC-945/#1166 uses a bounded independent process
+that opens and writes a public path after watcher close.
+DEC-946/#1167 creates a separate-process hardlink alias after
+watcher close and modifies it after the original directory
+cleanup. DEC-949 instead tests a **child-owned writable FD**
+opened *before* the last observer poll, with no hardlink or
+surviving parent pathname after the original runner returns.
+
+After the native watcher is registered, a bounded, shell-free
+Python subprocess opens its own `O_RDWR|O_NOFOLLOW` FD to the
+newly generated public sample, confirms its original fixture
+bytes, signals READY, and does no writing. The genuine runner
+then obtains an exact empty final zero-wait inotify poll, closes
+its watcher FD and removes its own disposable temporary
+directory. The test verifies neither `sample` nor its parent
+exists and the watcher descriptor fails `fstat`. Only then is
+the child told to write. It confirms the still-open original
+inode has link count **zero**, writes different generated
+public `AFTER` bytes through `pwrite/ftruncate/fsync`,
+reads back the mutated bytes via the same child-owned FD,
+reports original dev/ino and zero link count, and closes the
+FD before exiting. The test uses bounded readiness and child
+completion, closes pipes and kills/reaps any surviving child
+on test failure. No postclose inotify read or external network
+exists, and no file is preserved beyond the child lifecycle.
+
+The frozen original local result remains at most
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED` with exact
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`. This adds one
+native Linux method for **616 unique source-defined tests**.
+It documents an independent-process inode lifetime boundary,
+not OS-enforced no-write confinement.
+
+DEC-650/#820 protected independently enforced OS no-write and
+DEC-651/#821/#779 immutable exclusive annual run385 admission
+remain BLOCKED. Own exact-head Phase 3/full historical CI and
+qualified external security review required.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
