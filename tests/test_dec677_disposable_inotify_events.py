@@ -11583,6 +11583,104 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real watched-file chmod after final poll cannot authorize')
+    def test_real_kernel_post_final_poll_source_chmod_restore_cannot_authorize(self):
+        # After the genuine last empty poll, mutate and restore permissions
+        # on the WATCHED FILE inode (not its parent). Only a test-only later
+        # native drain may see the real IN_ATTRIB record.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_evaluator = module._evaluate
+        state = {'sample': None, 'fd': None, 'wd': None, 'dir_wd': None,
+                 'final_poll_complete': False, 'first_final': None,
+                 'post_poll_event': None, 'original_mode': None,
+                 'temporary_mode': None, 'mode_restored': False,
+                 'inode_preserved': False, 'bytes_preserved': False,
+                 'names_restored': False, 'parent_mode_preserved': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            state.update(sample=path, fd=fd, wd=wd, dir_wd=dir_wd)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['final_poll_complete'] = True
+            return pending
+
+        def evaluated(*args, **kwargs):
+            self.assertTrue(state['final_poll_complete'])
+            sample = state['sample']
+            folder = sample.parent
+            original = os.lstat(sample)
+            original_parent = os.lstat(folder)
+            initial_bytes = sample.read_bytes()
+            mode = module.stat.S_IMODE(original.st_mode)
+            state['original_mode'] = mode
+            # XOR guarantees a real bit change for any legitimate umask,
+            # without relying on a specific default fixture file mode.
+            temporary = mode ^ 0o200
+            os.chmod(sample, temporary)
+            try:
+                state['temporary_mode'] = module.stat.S_IMODE(
+                    os.lstat(sample).st_mode)
+            finally:
+                os.chmod(sample, mode)
+            restored = os.lstat(sample)
+            state['mode_restored'] = (
+                original.st_mode == restored.st_mode)
+            state['inode_preserved'] = (
+                (original.st_dev, original.st_ino) ==
+                (restored.st_dev, restored.st_ino))
+            state['bytes_preserved'] = (
+                initial_bytes == module.BEFORE == sample.read_bytes())
+            state['names_restored'] = (
+                module._bounded_inventory_names(folder) == ('sample',))
+            final_parent = os.lstat(folder)
+            state['parent_mode_preserved'] = (
+                (original_parent.st_dev, original_parent.st_ino,
+                 original_parent.st_mode) ==
+                (final_parent.st_dev, final_parent.st_ino,
+                 final_parent.st_mode))
+            state['post_poll_event'] = native_final_poll(state['fd'])
+            return native_evaluator(*args, **kwargs)
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module, '_evaluate',
+                                  side_effect=evaluated) as evaluator:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['final_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertIs(type(state['original_mode']), int)
+        self.assertEqual(state['temporary_mode'],
+                         state['original_mode'] ^ 0o200)
+        self.assertTrue(state['mode_restored'])
+        self.assertTrue(state['inode_preserved'])
+        self.assertTrue(state['bytes_preserved'])
+        self.assertTrue(state['names_restored'])
+        self.assertTrue(state['parent_mode_preserved'])
+        self.assertIs(type(state['post_poll_event']), bytes)
+        self.assertTrue(state['post_poll_event'])
+        parsed = module._classify_stream(
+            state['post_poll_event'], state['wd'], state['dir_wd'])
+        self.assertTrue(parsed['well_formed'])
+        self.assertIn(
+            module.EVENT.pack(state['wd'], module.IN_ATTRIB, 0, 0),
+            state['post_poll_event'])
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['fd'])
+        evaluator.assert_called_once()
+        with self.assertRaises(OSError):
+            os.fstat(state['fd'])
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
