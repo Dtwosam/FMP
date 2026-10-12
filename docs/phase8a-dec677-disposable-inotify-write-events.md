@@ -4455,6 +4455,44 @@ OS no-write DEC-650/#820 and immutable exclusive annual
 admission DEC-651/#821/#779 remain BLOCKED.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-958 — A separately created native inotify watch survives peer instance closure
+
+DEC-954/#1175 demonstrates that `os.dup` retains the **same**
+kernel watcher after the original descriptor closes. DEC-956/
+#1177 demonstrates that two separately initialized native
+inotify instances have distinct event queues, and DEC-957/#1178
+shows that an inherited FD in a separate process still drains
+the original shared queue.
+
+DEC-958 isolates the separate-inotify-instance **lifetime**
+boundary: open two genuine independent native dual watches on
+one generated public `/tmp/sample`. First verify both queues
+start empty. Then close the first instance *entirely* and prove
+its FD invalid via `fstat`; verify that the second independent
+instance remains live. Only after this closure write distinct
+generated public `AFTER` bytes to the same regular sample.
+The surviving second instance must capture real well-formed
+source modify/content-write events, and its later drain must
+be exactly empty. Original source dev/ino/mode and the private
+parent's one-entry inventory remain stable. Close the second
+descriptor, verify invalidation, and clean all generated data.
+
+No original `run_demo` execution is claimed to have missed
+the write, nor is this second test-local watcher an authenticated
+security daemon or OS-enforced no-write control. A
+counterfactual clean local receipt is still exactly
+`LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, with
+`can_authorize_dispatch=false` and
+`independent_os_proof_verified=false`.
+
+One genuine Linux native test raises the strict draft to
+**623 distinct source-defined tests**. This is a lifetime/queue
+semantics control, not annual authorization. Own exact-head
+Phase 3/full historical CI and qualified independent security
+review are required. Protected OS no-write DEC-650/#820
+and immutable exclusive annual admission DEC-651/#821/#779
+remain BLOCKED. **DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
