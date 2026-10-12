@@ -15420,6 +15420,103 @@ class DisposableInotifyTests(unittest.TestCase):
         self.assertTrue(first_closed)
         self.assertTrue(second_closed)
 
+    @unittest.skipUnless(sys.platform == 'linux',
+                         'real native inotify watch removal is Linux-only')
+    def test_real_native_source_rm_watch_invalidates_but_parent_remains_live(self):
+        # Removing the source WATCH (not the inotify FD) generates a
+        # genuine IN_IGNORED for its WD. Subsequent source writes can still
+        # appear as named directory-watch events; do not misrepresent this
+        # as complete invisibility or independent OS write prevention.
+        native_watch = module._start_watch
+        native_poll = module._read_receipt_pending
+        native_close = os.close
+        fd = None
+        watcher_closed = False
+        with tempfile.TemporaryDirectory(
+                prefix='dec959-native-rm-source-watch-', dir='/tmp') as tmp:
+            source = Path(tmp) / 'sample'
+            self.assertEqual(source.write_bytes(module.BEFORE),
+                             len(module.BEFORE))
+            before = os.lstat(source)
+            before_parent = os.lstat(source.parent)
+            self.assertEqual(module._bounded_inventory_names(
+                source.parent), ('sample',))
+            try:
+                fd, source_wd, parent_wd = native_watch(source)
+                self.assertNotEqual(source_wd, parent_wd)
+                self.assertEqual(native_poll(fd), b'')
+                lib = module.ctypes.CDLL(None, use_errno=True)
+                lib.inotify_rm_watch.argtypes = [
+                    module.ctypes.c_int, module.ctypes.c_int]
+                lib.inotify_rm_watch.restype = module.ctypes.c_int
+                self.assertEqual(lib.inotify_rm_watch(fd, source_wd), 0)
+                removed = native_poll(fd)
+                self.assertEqual(
+                    removed,
+                    module.EVENT.pack(source_wd, module.IN_IGNORED, 0, 0))
+                classified = module._classify_stream(
+                    removed, source_wd, parent_wd)
+                self.assertTrue(classified['well_formed'])
+                self.assertTrue(classified['invalidated'])
+                self.assertEqual(classified['source_modify_events'], 0)
+                self.assertEqual(native_poll(fd), b'')
+
+                with source.open('r+b') as writer:
+                    self.assertEqual(writer.write(module.AFTER),
+                                     len(module.AFTER))
+                    writer.truncate()
+                    writer.flush()
+                    os.fsync(writer.fileno())
+                self.assertNotEqual(module.AFTER, module.BEFORE)
+                self.assertEqual(source.read_bytes(), module.AFTER)
+                after = os.lstat(source)
+                after_parent = os.lstat(source.parent)
+                self.assertEqual(
+                    (before.st_dev, before.st_ino, before.st_mode),
+                    (after.st_dev, after.st_ino, after.st_mode))
+                self.assertEqual(
+                    (before_parent.st_dev, before_parent.st_ino,
+                     before_parent.st_mode),
+                    (after_parent.st_dev, after_parent.st_ino,
+                     after_parent.st_mode))
+                self.assertEqual(module._bounded_inventory_names(
+                    source.parent), ('sample',))
+
+                later = native_poll(fd)
+                self.assertIs(type(later), bytes)
+                self.assertTrue(later)
+                parsed = module._classify_stream(
+                    later, source_wd, parent_wd)
+                self.assertTrue(parsed['well_formed'])
+                self.assertFalse(parsed['invalidated'])
+                # The source watch is removed, but the parent still
+                # captures named child-modify/close-write activity.
+                self.assertEqual(parsed['source_modify_events'], 0)
+                self.assertEqual(parsed['source_content_write_events'], 0)
+                self.assertGreaterEqual(parsed['write_events'], 1)
+                self.assertEqual(parsed['directory_changes'], 0)
+                self.assertIn(b'sample\x00', later)
+                self.assertEqual(native_poll(fd), b'')
+
+                # An artificially empty local receipt is only diagnostic.
+                # This is NOT an execution of run_demo with removed watches.
+                local = module._evaluate(
+                    module.BEFORE, module.BEFORE, b'',
+                    source_wd, True, False, directory_watch=parent_wd,
+                    directory_inventory_names=('sample',))
+                self.assertEqual(
+                    local['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+                self.assertIs(local['can_authorize_dispatch'], False)
+                self.assertIs(local['independent_os_proof_verified'], False)
+            finally:
+                if fd is not None:
+                    native_close(fd)
+                    try:
+                        os.fstat(fd)
+                    except OSError:
+                        watcher_closed = True
+        self.assertTrue(watcher_closed)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
