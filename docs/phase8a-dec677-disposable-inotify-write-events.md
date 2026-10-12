@@ -4822,6 +4822,52 @@ Requires own exact-head Phase 3/full historical CI plus
 qualified independent security review.
 **DRAFT / NEVER MERGE / NEVER PROMOTE**.
 
+## DEC-967 — Native inotify registration-lifecycle and mask-identity review matrix
+
+DEC-959–966 are **generated public Linux tests**, not operating-system
+isolation evidence for the protected annual workflow. The distinctions
+below prevent an unchanged inotify FD or watch descriptor number
+from being mistaken for proof of complete or uninterrupted observation.
+
+| Draft | Genuine native operation | Kernel evidence and remaining coverage | Correct local security conclusion |
+| --- | --- | --- | --- |
+| DEC-959/#1180 | Remove **source** WD only | Real source `IN_IGNORED`; parent still sees named source writes | Partial observation does not reconstruct direct source history |
+| DEC-960/#1181 | Remove **parent** WD only | Real parent `IN_IGNORED`; source still sees direct writes, sibling create/delete missed | Source coverage alone does not authenticate a directory census |
+| DEC-961/#1182 | Remove **both** WDs | Two `IN_IGNORED` events; still-open FD has no registrations, later writes yield no queued records | Open FD is not independent proof of an active watch |
+| DEC-963/#1184 | Remove both, then re-add **source only** | Later file writes visible; sibling changes still invisible; new WD number is not a history attestation | Counterfactual file-only evaluator must remain `BLOCKED` for missing parent watch |
+| DEC-964/#1185 | Remove both, write distinct bytes and restore them while watchless, then re-add **both** | Prior gap has genuinely empty reads; subsequent source writes become visible under new watches | A clean current two-WD state can only be local unverified, never evidence of the missed interval |
+| DEC-965/#1186 | Re-add **source** with `IN_ATTRIB` only and no `IN_MASK_ADD` | Same source WD, direct write masks removed; parent still reports named writes and source still reports chmod | True parent write stream and changed bytes require `BLOCKED` |
+| DEC-966/#1187 | Re-add **parent** with `IN_ATTRIB` only and no `IN_MASK_ADD` | Same parent WD, sibling create/delete missed; parent still reports chmod and source reports writes | True source write stream and changed bytes require `BLOCKED` |
+
+**Reviewer boundaries:** These are exact-commit draft-only native
+controls, not a claim that unmodified `run_demo` calls
+`inotify_rm_watch` or changes registration masks.
+An `IN_IGNORED` event is a real invalidation record, **not**
+a quiet interval. `inotify_add_watch` can preserve a numerical
+WD while changing its subscription mask; it does not restore
+events missed during prior unregistered intervals. Neither a
+current FD nor a WD number proves uninterrupted source+parent
+registration or authenticated OS-enforced no-write isolation.
+
+The security result of every local control must remain
+nonauthorizing: `can_authorize_dispatch=false` and
+`independent_os_proof_verified=false` exactly. When its
+preconditions are missing or there is actual write evidence,
+`BLOCKED` is required. All mutations use newly generated
+disposable public `/tmp` files, all native descriptors are closed
+by their tests, and no test touches protected annual artifacts.
+
+This documentation-only strict child retains **630 distinct
+source-defined test methods** and changes no observer runtime.
+Every draft requires its **own exact-head Phase 3 and full
+historical regression**, and passing CI is still not
+independent qualified security review. Protected no-write
+DEC-650/#820 and immutable exclusive one-shot annual admission
+DEC-651/#821/#779 remain BLOCKED. No annual run385
+dispatch/test/retry/rerun, production refs/workflows/runners/
+rulesets/permissions, broker actions, trading, merge or promotion.
+**DRAFT / NEVER MERGE / NEVER PROMOTE**.
+
 ## Important limitations
 
 **inotify is event observation, NOT OS write prevention.** It does not stop a privileged writer, make a read-only checkout, authenticate the observer process, protect against queue overflow or missed windows between installing/removing watches, cover arbitrary writable inode aliases, handle all mount namespaces or guarantee audit completeness after a malicious process tampers with the collector. It is especially not a substitute for independently enforcing a no-write sandbox. The demonstration uses its own unprivileged process to generate and collect events; the observer is not a separately trusted runner service.
