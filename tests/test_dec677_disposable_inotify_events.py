@@ -13949,6 +13949,138 @@ class DisposableInotifyTests(unittest.TestCase):
         with self.assertRaises(OSError):
             os.fstat(state['watch_fd'])
 
+    @unittest.skipUnless(sys.platform == 'linux', 'real postclose detached writer FD cannot authorize')
+    def test_real_kernel_after_observer_close_detached_writer_fd_cannot_authorize(self):
+        # Hold an actual writable FD to the generated sample inode while
+        # the observer operates normally. AFTER the watch closes, replace
+        # sample with another same-byte regular inode, then modify only
+        # the now-unlinked original via its still-open FD.
+        native_watch = module._start_watch
+        native_final_poll = module._read_receipt_pending
+        native_close = os.close
+        state = {'sample': None, 'watch_fd': None, 'writer_fd': None,
+                 'first_final': None, 'last_poll_complete': False,
+                 'close_seen': False, 'watch_fd_closed': False,
+                 'writer_fd_closed': False, 'original_fd_matches': False,
+                 'replacement_regular': False, 'replacement_inode_differs': False,
+                 'replacement_bytes_same': False, 'original_detached': False,
+                 'detached_write_detected': False, 'inventory_same': False,
+                 'parent_identity_same': False}
+
+        def watched(path):
+            fd, wd, dir_wd = native_watch(path)
+            writer = os.open(
+                path, os.O_RDWR | os.O_CLOEXEC | os.O_NOFOLLOW)
+            state.update(sample=path, watch_fd=fd, writer_fd=writer)
+            return fd, wd, dir_wd
+
+        def final_poll(fd):
+            pending = native_final_poll(fd)
+            state['first_final'] = pending
+            state['last_poll_complete'] = True
+            return pending
+
+        def closing(fd):
+            if fd != state['watch_fd'] or state['close_seen']:
+                return native_close(fd)
+            self.assertTrue(state['last_poll_complete'])
+            native_close(fd)
+            state['close_seen'] = True
+            try:
+                os.fstat(fd)
+            except OSError:
+                state['watch_fd_closed'] = True
+            sample = state['sample']
+            folder = sample.parent
+            writer = state['writer_fd']
+            original = os.lstat(sample)
+            parent_before = os.lstat(folder)
+            held = os.fstat(writer)
+            state['original_fd_matches'] = (
+                (held.st_dev, held.st_ino) ==
+                (original.st_dev, original.st_ino))
+            self.assertEqual(held.st_nlink, 1)
+            self.assertEqual(sample.read_bytes(), module.BEFORE)
+            self.assertEqual(module._bounded_inventory_names(folder),
+                             ('sample',))
+            replacement = folder / 'detached-original-new-public'
+            try:
+                with replacement.open('xb') as file:
+                    self.assertEqual(file.write(module.BEFORE),
+                                     len(module.BEFORE))
+                os.chmod(replacement, module.stat.S_IMODE(
+                    original.st_mode))
+                candidate = os.lstat(replacement)
+                self.assertNotEqual(
+                    (candidate.st_dev, candidate.st_ino),
+                    (original.st_dev, original.st_ino))
+                os.replace(replacement, sample)
+                current = os.lstat(sample)
+                orphan = os.fstat(writer)
+                state['replacement_regular'] = module.stat.S_ISREG(
+                    current.st_mode)
+                state['replacement_inode_differs'] = (
+                    (current.st_dev, current.st_ino) !=
+                    (orphan.st_dev, orphan.st_ino))
+                state['original_detached'] = (
+                    orphan.st_nlink == 0 and
+                    (orphan.st_dev, orphan.st_ino) ==
+                    (original.st_dev, original.st_ino))
+                self.assertEqual(os.pwrite(writer, module.AFTER, 0),
+                                 len(module.AFTER))
+                os.ftruncate(writer, len(module.AFTER))
+                os.fsync(writer)
+                detached_bytes = os.pread(
+                    writer, len(module.AFTER), 0)
+                state['detached_write_detected'] = (
+                    detached_bytes == module.AFTER and
+                    detached_bytes != module.BEFORE)
+                state['replacement_bytes_same'] = (
+                    sample.read_bytes() == module.BEFORE and
+                    current.st_mode == original.st_mode)
+                state['inventory_same'] = (
+                    module._bounded_inventory_names(folder) == ('sample',))
+                parent_after = os.lstat(folder)
+                state['parent_identity_same'] = (
+                    (parent_before.st_dev, parent_before.st_ino,
+                     parent_before.st_mode) ==
+                    (parent_after.st_dev, parent_after.st_ino,
+                     parent_after.st_mode))
+            finally:
+                native_close(writer)
+                try:
+                    os.fstat(writer)
+                except OSError:
+                    state['writer_fd_closed'] = True
+
+        with patch.object(module, '_start_watch', side_effect=watched) as watcher:
+            with patch.object(module, '_read_receipt_pending',
+                              side_effect=final_poll) as final:
+                with patch.object(module.os, 'close',
+                                  side_effect=closing) as close:
+                    receipt = module.run_demo()
+
+        self.assertTrue(state['last_poll_complete'])
+        self.assertEqual(state['first_final'], b'')
+        self.assertTrue(state['close_seen'])
+        self.assertTrue(state['watch_fd_closed'])
+        self.assertTrue(state['writer_fd_closed'])
+        self.assertTrue(state['original_fd_matches'])
+        self.assertTrue(state['replacement_regular'])
+        self.assertTrue(state['replacement_inode_differs'])
+        self.assertTrue(state['replacement_bytes_same'])
+        self.assertTrue(state['original_detached'])
+        self.assertTrue(state['detached_write_detected'])
+        self.assertTrue(state['inventory_same'])
+        self.assertTrue(state['parent_identity_same'])
+        self.assertEqual(
+            receipt['status'], 'LOCAL_DISPOSABLE_WITNESS_UNVERIFIED')
+        self.assertIs(receipt['can_authorize_dispatch'], False)
+        self.assertIs(receipt['independent_os_proof_verified'], False)
+        watcher.assert_called_once()
+        final.assert_called_once_with(state['watch_fd'])
+        self.assertGreaterEqual(close.call_count, 1)
+
     def test_nonlinux_blocks(self):
         with patch.object(module.sys, 'platform', 'win32'):
             self.assertEqual(module.run_demo()['status'], 'BLOCKED')
