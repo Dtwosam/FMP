@@ -15,7 +15,7 @@ The DEC-1042 disposable kernel probe observed 144 pending bytes on each alias be
 
 All tests operate exclusively on newly generated public disposable Linux `/tmp` data and true native kernel inotify events. Final public sample and parent dev/inode/mode, source bytes, bounded one-name inventory and native descriptor closure are asserted. The separate independent Linux witness serves only as an experimental proof that events genuinely occurred during the first observer's silent interval. It is NOT privileged immutable evidence or independently OS-enforced protected write confinement.
 
-Both the true independent unsafe event stream and a superficially clean original **empty** stream must stay **`status=BLOCKED`**, with `can_authorize_dispatch=false` and `independent_os_proof_verified=false`. Restoring original source+parent masks on the same WD integers cannot retrospectively fill a lost queue, and a later positive `FIONREAD` cannot establish continuity across earlier zero counts.
+The true independent unsafe event stream returns **`status=BLOCKED`**; the superficially clean original **empty** stream returns **`status=LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`**. Both remain nonauthorizing, with `can_authorize_dispatch=false` and `independent_os_proof_verified=false`. Restoring original source+parent masks on the same WD integers cannot retrospectively fill a lost queue, and a later positive `FIONREAD` cannot establish continuity across earlier zero counts.
 
 ## Exact-head CI and immutable protected boundaries
 

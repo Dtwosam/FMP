@@ -14,7 +14,7 @@
 
 The entire experiment uses fresh, generated public disposable `/tmp` files, native Linux inotify instance/watches and real filesystem writes. Independent read-only witness receipts help demonstrate the original observer's blindness but are **not** independently OS-enforced protected write confinement. The controls inspect original dev/inode/mode, restored sample bytes, bounded final inventory and native FD closure.
 
-The unchanged evaluator remains **`status=BLOCKED`**, exact `can_authorize_dispatch=false` and `independent_os_proof_verified=false`. A trivially well-formed original **empty** event buffer alone cannot meet the missing independent OS no-write proof. Re-registering original watch masks on SAME WD values only resumes future observations; it never recovers earlier history. Do not forge/provide a fake empty receipt as proof, and do not treat test witness observations as protected policy.
+For the superficially quiet empty buffer the unchanged evaluator returns **`status=LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`**, not `BLOCKED`; genuinely observed unsafe buffers return `BLOCKED`. Both keep exact `can_authorize_dispatch=false` and `independent_os_proof_verified=false`. A trivially well-formed original **empty** event buffer alone cannot meet the missing independent OS no-write proof. Re-registering original watch masks on SAME WD values only resumes future observations; it never recovers earlier history. Do not forge/provide a fake empty receipt as proof, and do not treat test witness observations as protected policy.
 
 ## Exact-head CI and non-authorization gates
 

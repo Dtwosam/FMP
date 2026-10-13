@@ -194,7 +194,9 @@ class NativeInotifyFionreadBlackoutRegression(unittest.TestCase):
                     source_wd, True, False, directory_watch=parent_wd,
                     directory_inventory_names=("sample",),
                 )
-                self.assertEqual(apparent["status"], "BLOCKED")
+                self.assertEqual(
+                    apparent["status"], "LOCAL_DISPOSABLE_WITNESS_UNVERIFIED"
+                )
                 self.assertIs(apparent["can_authorize_dispatch"], False)
                 self.assertIs(
                     apparent["independent_os_proof_verified"], False
