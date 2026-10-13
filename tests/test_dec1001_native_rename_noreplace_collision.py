@@ -193,7 +193,8 @@ class NativeRenameNoreplaceCollisionRegression(unittest.TestCase):
                 self.assertFalse(os.path.lexists(first_alias))
                 self.assertEqual(os.lstat(second_alias).st_ino,
                                  link1_before.st_ino)
-                successful_move = records(module._read_receipt_pending(fd))
+                real_move_stream = module._read_receipt_pending(fd)
+                successful_move = records(real_move_stream)
                 move_from = [
                     cookie for wd, mask, cookie, name in successful_move
                     if (wd == parent_wd and mask == module.IN_MOVED_FROM
@@ -214,10 +215,24 @@ class NativeRenameNoreplaceCollisionRegression(unittest.TestCase):
                 self.assertFalse(any(
                     wd == second_wd for wd, mask, cookie, name in successful_move
                 ))
+                # Feed the COMPLETE real kernel move stream to the
+                # original two-WD observer. Its unknown link WD cannot
+                # be silently filtered into an accepted source interval.
                 self.assertFalse(module._classify_stream(
-                    module.EVENT.pack(first_wd, module.IN_MOVE_SELF, 0, 0),
-                    source_wd, parent_wd,
+                    real_move_stream, source_wd, parent_wd
                 )["well_formed"])
+                native_move_verdict = module._evaluate(
+                    module.BEFORE, module.BEFORE, real_move_stream,
+                    source_wd, True, False, directory_watch=parent_wd,
+                    directory_inventory_names=("public-second-alias", "sample"),
+                )
+                self.assertEqual(native_move_verdict["status"], "BLOCKED")
+                self.assertIs(
+                    native_move_verdict["can_authorize_dispatch"], False
+                )
+                self.assertIs(
+                    native_move_verdict["independent_os_proof_verified"], False
+                )
                 self.assertEqual(module._read_receipt_pending(fd), b"")
 
                 os.unlink(second_alias)
