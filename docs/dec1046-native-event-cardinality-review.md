@@ -16,7 +16,7 @@ Inotify can **coalesce consecutive identical unread event records** (same watch,
 
 All native probes were run only in fresh, disposable public `/tmp` directories. The draft tests verify real syscall outcomes, native buffer parsing, source/parent device/inode/mode, returned public source bytes, bounded final directory inventory and kernel FD closure. No protected evidence, production refs, brokers or trading systems are exercised.
 
-Both an **empty** masked-event buffer and a **single nonempty** coalesced-event buffer remain nonauthorizing in the unchanged observer: `status=BLOCKED`, exact `can_authorize_dispatch=false`, and `independent_os_proof_verified=false`. Observability is not independently OS-enforced write prevention, complete per-operation provenance or exclusive immutable annual admission.
+Both an **empty** masked-event buffer and a **single nonempty** coalesced-event buffer remain nonauthorizing in the unchanged observer. The well-formed empty buffer returns `status=LOCAL_DISPOSABLE_WITNESS_UNVERIFIED`, while genuine coalesced write/attribute events return `status=BLOCKED`; both retain exact `can_authorize_dispatch=false` and `independent_os_proof_verified=false`. Observability is not independently OS-enforced write prevention, complete per-operation provenance or exclusive immutable annual admission.
 
 ## Exact-head CI and preserved failures
 
