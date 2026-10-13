@@ -1,0 +1,9 @@
+# DEC-991 — Create-only symlink watch selects target or separate link inode
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit native Linux test/documentation child of DEC-990/#1211.
+
+On a real source+parent inotify instance containing one generated public sample inode, a temporary symlink alias to that sample is a distinct pathname but not a distinct **followed target**. Calling `inotify_add_watch(alias, IN_MASK_CREATE | IN_MODIFY)` with default symlink following fails `-1/EEXIST` because the target inode is already registered. Calling create-only instead with `IN_DONT_FOLLOW | IN_DELETE_SELF` succeeds, producing a third genuine WD on the **symlink inode** in the very same FD.
+
+Writing via the alias changes the original target; the original source WD emits native `IN_MODIFY`, and the parent reports a named alias write, while the link WD is quiet. Unlinking the alias generates a parent `IN_DELETE` plus native link-WD `IN_DELETE_SELF` then `IN_IGNORED`. An unchanged two-WD observer must reject the extra unexpected WD and remain `BLOCKED`, never silently filter those records. The original target source remains watched and reports a later real restore write. Final public sample/parent dev/inode/mode and one-entry inventory match; all native FD resources are closed.
+
+Adds **one** source-defined Linux regression, for **647** total across the strict draft stack. No runtime changes, independent no-write proof or continuous authorization claims. Each exact head requires its own Phase 3, full historical regression, and qualified independent security review. Historic exact commits #1201–#1205 remain failed even if repaired descendants pass. Protected OS no-write DEC-650/#820 and immutable annual run385 admission DEC-651/#821/#779 remain **BLOCKED**. No protected evidence/sources, annual run/test/dispatch/retry/rerun, production refs/workflows/runners/rulesets/permissions, broker/trading operations, merge or promotion.
