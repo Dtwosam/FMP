@@ -90,8 +90,9 @@ class NativeCreateOnlySymlinkIdentityRegression(unittest.TestCase):
                 self.assertEqual(module._read_receipt_pending(fd), b"")
 
                 # Writing via the alias modifies the underlying target.
-                # The source and parent report the real activity; the
-                # watched symlink inode has not itself changed.
+                # The kernel resolves symlink writes to the target
+                # dentry: parent events name 'sample', not the alias.
+                # The symlink inode has not itself changed.
                 with alias.open("r+b") as writer:
                     self.assertEqual(writer.write(module.AFTER),
                                      len(module.AFTER))
@@ -106,7 +107,7 @@ class NativeCreateOnlySymlinkIdentityRegression(unittest.TestCase):
                 ))
                 self.assertTrue(any(
                     wd == parent_wd and mask == module.IN_MODIFY
-                    and name == b"public-symlink-alias"
+                    and name == b"sample"
                     for wd, mask, name in changed_records
                 ))
                 self.assertFalse(any(
