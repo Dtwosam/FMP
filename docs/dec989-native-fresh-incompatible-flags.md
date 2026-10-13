@@ -1,0 +1,9 @@
+# DEC-989 — Invalid combined watch flags create no source or parent watch on a fresh FD
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict Linux test/documentation child of DEC-988/#1209.
+
+DEC-988 validates incompatible `IN_MASK_ADD | IN_MASK_CREATE` on two **existing** watched inodes. DEC-989 supplies the complementary fresh-instance case: with a new real inotify FD and **zero** registrations, calling `inotify_add_watch` for the generated public sample or its private parent with both options returns native `-1/EINVAL`. The invalid requests create no watch; on the same instance, later *valid* first `IN_MASK_CREATE` calls independently succeed for both the source inode and the parent directory inode.
+
+Those valid subscriptions then observe real sibling `IN_CREATE`/`IN_DELETE` events, true source `IN_MODIFY` and `IN_CLOSE_WRITE`, and named parent write events from public distinct-byte writes and a restoration. The unchanged evaluator remains `BLOCKED` with exact `can_authorize_dispatch=false` and `independent_os_proof_verified=false` even when final bytes match. Final source/parent device, inode, mode, inventory and native FD cleanup are checked.
+
+One distinct Linux source-defined method brings the draft stack to **646**. No observer runtime or workflow changes. Exact-head Phase 3 and full historical CI plus qualified independent security review required; the historical failures at #1201–#1205 remain failed, with DEC-985/#1206 the dedicated correction. Independently OS-enforced protected no-write DEC-650/#820 and immutable annual run385 admission DEC-651/#821/#779 stay **BLOCKED**. No protected evidence/sources, annual test/run/dispatch/retry/rerun, production refs/workflows/runners/rulesets/permissions, broker/trading, merge or promotion.
