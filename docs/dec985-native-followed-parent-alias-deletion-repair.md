@@ -1,0 +1,11 @@
+# DEC-985 — Repair followed-parent alias deletion assertion after real kernel CI
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/documentation child of DEC-984/#1205. This fixes exactly one inherited regression assertion in the earlier DEC-980/#1201 test, not the observer runtime.
+
+Historical CI for the exact heads of #1201–#1205 completed **failed** although each Phase 3 suite passed. The actual failure in all five was `test_dec980_native_onlydir_symlink_follow.NativeOnlydirSymlinkFollowRegression.test_real_onlydir_follows_directory_symlink_unless_nofollow`, at its final assertion expecting `_read_receipt_pending(alias_fd) == b""` immediately after deleting the directory symlink.
+
+That assertion was wrong: the independent alias FD had registered `IN_ONLYDIR | IN_CREATE | IN_DELETE` with normal symlink following, so its watch remains attached to the **parent directory inode**. Unlinking the alias is itself a named entry deletion within that watched parent. Linux correctly emits `IN_DELETE` on BOTH parent watches, including the alias FD, even though no watch exists on the symlink inode. The original parent watch already asserted the same event.
+
+The repaired test requires the actual native `IN_DELETE` record for `public-parent-alias` on `followed_wd`, drains the FD afterwards, and retains all existing identity, writer event, cleanup and nonauthorization assertions. No genuine kernel event is filtered, ignored or reclassified; the test is strengthened to match the true two-instance event stream.
+
+This child adds **no** new test methods: **643 distinct source-defined methods**. Every failed earlier exact SHA remains **failed**, even if this new exact-head Phase 3 and historical suite pass. Its own CI plus qualified independent security review are mandatory. Protected OS no-write DEC-650/#820 and immutable exclusive annual run385 admission DEC-651/#821/#779 stay **BLOCKED**. No annual execution, protected evidence/source, production code/ref/workflows/runners/rulesets/permissions, broker/trading, merge or promotion.

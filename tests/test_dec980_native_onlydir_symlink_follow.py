@@ -153,6 +153,14 @@ class NativeOnlydirSymlinkFollowRegression(unittest.TestCase):
                     and name == b"public-parent-alias"
                     for wd, mask, name in records(original_alias_delete)
                 ))
+                # The followed watch remains attached to the parent
+                # inode, including the parent entry for this very alias.
+                # Unlinking the pathname must therefore generate native
+                # IN_DELETE on BOTH independently registered parent watches.
+                followed_alias_delete = module._read_receipt_pending(alias_fd)
+                self.assertEqual(records(followed_alias_delete), [
+                    (followed_wd, module.IN_DELETE, b"public-parent-alias")
+                ])
                 self.assertEqual(module._read_receipt_pending(alias_fd), b"")
                 final = os.lstat(sample)
                 parent_final = os.lstat(sample.parent)
