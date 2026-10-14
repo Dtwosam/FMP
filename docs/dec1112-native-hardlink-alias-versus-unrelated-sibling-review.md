@@ -1,0 +1,25 @@
+# DEC-1112 — A hard-link alias is the watched source inode; an unrelated sibling is not
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict documentation-only one-commit child of DEC-1111/#1332 at `d6460de913130ffb4be84028c8cb5ef4d873a441`. Adds exactly one Markdown reviewer matrix; **724 source-defined test methods unchanged**. No runtime, executable tests, protected annual source/evidence, production or broker/trading changes.
+
+## Parent named event alone is not proof of source inode identity
+
+| Case | Initial PUBLIC namespace | First actual action | Original deliberately alternative one-shot first event | What continuing native source+parent watcher observes afterward |
+| --- | --- | --- | --- | --- |
+| DEC-1093/#1314 | `public-sibling` and `sample` are **different regular-file inodes** | Real `chmod(public-sibling,different_mode)` then reverse chmod | Original **parent-only** IN_ATTRIB(public-sibling), then IN_IGNORED | Two named parent ATTRIB(public-sibling) events, no source-file ATTRIB on the unrelated inode, then later genuine source+parent MODIFY/CLOSE_WRITE on sample |
+| DEC-1109/#1330 | `public-sibling` and `sample` are **different regular-file inodes** | Real `utime(public-sibling,original_atime_mtime_ns)` repeated | Original **parent-only** IN_ATTRIB(public-sibling), then IN_IGNORED | Two named parent ATTRIB(public-sibling) events, no source-file ATTRIB from this sibling operation, then later genuine source+parent MODIFY/CLOSE_WRITE on sample |
+| **DEC-1111/#1332** | `alias` and `sample` are two hard-link names for **the same source inode**, with nlink=2 | Genuine `unlink(alias)` (nlink 2→1), then `link(sample,alias)` (nlink 1→2) | Original **source-only** unnamed IN_ATTRIB, then IN_IGNORED; source inode survives with sample name | First source ATTRIB + parent DELETE(alias), then source ATTRIB + parent CREATE(alias); later genuine write via **alias** emits unnamed source MODIFY/CLOSE_WRITE and named parent MODIFY/CLOSE_WRITE(alias), and restoring write via sample emits unnamed source and named parent MODIFY/CLOSE_WRITE(sample) |
+
+**Scope is about inode, not spelling.** A native inotify watch installed on regular-file source inode remains tied to the inode when another hard-link name is removed or added. `unlink(alias)` does not delete the watched inode because `sample` remains. Removing a second name changes link count and produces a source ATTRIB while the **test-only IN_ONESHOT** watch consumes its single event and self-removes; the separately initialized continuing normal source+parent registration remains active. The parent's named entry deletion/creation is real namespace mutation, not a content write or a benign read.
+
+**Aliased writes use two independent identities:** Writing through `alias` reaches the same source inode observed by the file watch, but the parent directory event carries name `alias`, not `sample`. A write through `sample` later returns the source bytes and produces parent name `sample`. Do not infer which hard-link name generated a write from the unnamed source event alone. Conversely, do not infer a parent named `public-sibling` write is to the watched source unless source inode identity is independently established.
+
+The normal disposable evaluator's quiet success contract expects exactly `("sample",)` in the parent inventory. A fixture with two hard-link names is a deliberate **negative** case; a terminal matching digest or restored link count does not turn it into admissible quiet evidence. For the genuinely observed sample writes, unchanged evaluator remains exact `status=BLOCKED`, `can_authorize_dispatch=false`, `independent_os_proof_verified=false`. Native source and parent observations, inode identity and initial/final PUBLIC bytes are checked separately.
+
+## Runtime, CI, and protected security gates
+
+The intentionally unsafe original IN_ONESHOT source or parent masks are only registered inside generated-PUBLIC Linux tests. The actual unchanged `scripts/dec677_disposable_inotify_events.py::_start_watch` uses continuing source+parent native mutation watches without ONESHOT. The demonstration is **not a deployed observer defect**, independent protected OS-enforced no-write, or annual dispatch authorization.
+
+Each head must separately complete exact-HEAD `phase3-acceptance` **and** full historical `tests` with success, plus qualified independent security review. At review preparation #1327/DEC-1106 was the latest consecutive fully verified draft with 721 source-defined methods; #1328–#1332 and this child need exact-head rechecks. Earlier original failed exact commits #1201–#1205, #1212, #1237 and #1261–#1267 retain FAILED status regardless of descendants.
+
+Independently OS-enforced protected no-write DEC-650/#820 and immutable exclusive annual run385 admission DEC-651/#821/#779 remain **BLOCKED**. Keep all descendants DRAFT / NEVER MERGE / NEVER PROMOTE. No protected annual source/evidence, run385 execution/test/retry/rerun/dispatch, production refs/workflows/runners/rulesets/permissions, broker/trading operations, merges or promotions.
