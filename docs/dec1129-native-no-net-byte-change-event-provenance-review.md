@@ -1,0 +1,27 @@
+# DEC-1129 — A restored or unchanged byte snapshot does not classify the operation
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict single-commit **documentation-only** child of DEC-1128/#1349 at `ebd65cbe92a68efe41972400617dced74f2f8f4a`. Adds exactly one reviewer comparison; **737 distinct source-defined test methods unchanged**. No test executable, actual helper runtime, protected annual, production, broker or trading change.
+
+## Three ways to end with identical source bytes, but not identical native inotify evidence
+
+| Native control | Real operation on freshly generated PUBLIC source | Changed byte values at operation? | Native source and parent event(s) | Unsafe original one-shot outcome | What is established |
+| --- | --- | --- | --- | --- | --- |
+| **DEC-1100/#1321** | `open(sample,O_WRONLY)` followed by `close` **without any truncate, write or fsync** | **No** | Unnamed source **IN_CLOSE_WRITE** and named parent IN_CLOSE_WRITE(sample), **no IN_MODIFY** | Source-only IN_MODIFY+IN_CLOSE_WRITE+ONESHOT receives original CLOSE_WRITE→IN_IGNORED | The descriptor was opened for writing and closed; this alone does **not** prove a content write |
+| **DEC-1127/#1348** | `pwrite(fd, BEFORE, 0)` with the **identical already-present bytes**, no O_TRUNC | **No net byte-value change**, but an actual write syscall | Unnamed source **IN_MODIFY** and named parent IN_MODIFY(sample) while open; source+parent CLOSE_WRITE on later close | Source-only IN_MODIFY+IN_CLOSE_WRITE+ONESHOT receives first MODIFY→IN_IGNORED and misses even same descriptor's close | A genuine pwrite operation happened; IN_MODIFY does **not** guarantee a different final byte value |
+| **DEC-1128/#1349** | `ftruncate(fd, current_length)` on a real O_WRONLY descriptor, **without any write/pwrite** | **No** size or byte-value change | Unnamed source **IN_MODIFY** and named parent IN_MODIFY(sample) from same-size ftruncate; source+parent CLOSE_WRITE on later close | Source-only IN_MODIFY+IN_CLOSE_WRITE+ONESHOT receives first MODIFY→IN_IGNORED and misses subsequent close | A genuine metadata/length-setting modification-type syscall happened; IN_MODIFY does **not** by itself prove changed length or bytes |
+
+Each one-shot instance is intentionally an **unsafe test-only alternative**, initialized wholly separately from the actual unchanged **continuing** source+parent inotify witness. The original one-shot is consumed by the first native matching event and removed by IN_IGNORED; it then misses later genuine changed-byte source writes despite subscribed MODIFY/CLOSE_WRITE. The continuing witness independently detects genuine source and named-parent MODIFY/CLOSE_WRITE from later changed-byte and byte-restoring writes. The unchanged evaluator returns **status=BLOCKED**, **can_authorize_dispatch=false**, **independent_os_proof_verified=false**, including for real write or truncate syscalls where the final bytes still equal BEFORE.
+
+## Do not assume one event describes the whole filesystem state
+
+**IN_CLOSE_WRITE** means an opened-for-writing descriptor closed, not necessarily that content was changed. **IN_MODIFY** indicates a native modification operation on an inode, not an assertion that bytes, file size or SHA-256 digest differ between snapshots. Both ftruncate and writing identical bytes can affect kernel-managed metadata timestamps; these regressions do **not** assert every inode field is unchanged. Restoring original bytes after other actual writes likewise does not erase the event history.
+
+These claims are scoped to real Linux behavior witnessed on disposable PUBLIC /tmp fixtures. They are **not** a promise that every filesystem, mount or write method yields exactly one MODIFY; staged `O_TRUNC`, `write`, `pwrite` and `close` tests #1345–#1347 demonstrate positive stages and permit legitimate extra MODIFY events, in line with correction #1344. Queued native events may coalesce when not drained; review event identities and positive evidence, not invented counts or a quiet final snapshot.
+
+The actual `scripts/dec677_disposable_inotify_events.py::_start_watch` is unchanged and **continuously watches source and parent without ONESHOT**. All original one-shot experiments are isolated unsafe alternatives, not installed runtime defects. No local event stream independently OS-enforces protected annual no-write or authorizes the immutable annual run. The evaluator intentionally remains nonauthorizing.
+
+## Exact-head evidence and nonpromotion gate
+
+#1344/DEC-1123 and #1345/DEC-1124 each passed both required exact-head workflows as separately verified; #1346–#1349 and this child must be checked at their own SHAs, not inherited from ancestors. Historic exact original failed commits #1338–#1343 and #1201–#1205, #1212, #1237 and #1261–#1267 stay **FAILED** despite later corrected descendants. The latest **consecutive** fully verified lineage checkpoint remains #1337/DEC-1116 (**727 tests**), because #1338 already failed.
+
+Every draft requires completed successful exact-head `phase3-acceptance` **and** complete historical `tests`, plus separate qualified independent security review. Independently OS-enforced protected no-write DEC-650/#820 and immutable exclusive annual run385 admission DEC-651/#821/#779 remain **BLOCKED**. All descendants stay DRAFT / NEVER MERGE / NEVER PROMOTE. No protected annual source/evidence, annual run385 execution/test/retry/rerun/dispatch, production refs/workflows/runners/rulesets/permissions, broker, trading operations, merges or promotions.
