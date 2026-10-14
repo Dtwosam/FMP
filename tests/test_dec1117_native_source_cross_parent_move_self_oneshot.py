@@ -48,12 +48,23 @@ class NativeSourceCrossParentMoveSelfOneShotRegression(unittest.TestCase):
 
         def check_write(data, source_wd, parent_wd, after):
             observed = records(data)
-            self.assertCountEqual(observed, [
-                (source_wd, module.IN_MODIFY, 0, b""),
-                (parent_wd, module.IN_MODIFY, 0, b"sample"),
-                (source_wd, module.IN_CLOSE_WRITE, 0, b""),
-                (parent_wd, module.IN_CLOSE_WRITE, 0, b"sample"),
-            ])
+            # O_TRUNC can emit a genuine MODIFY before the subsequent
+            # write(), yielding more than one source/parent MODIFY.
+            # Every native record must still be one of the four expected
+            # source/parent mutation identities. Enforce both writes and
+            # exactly one writable close per descriptor, but do not forge
+            # an arbitrary "exactly one MODIFY" kernel guarantee.
+            source_modify = (source_wd, module.IN_MODIFY, 0, b"")
+            parent_modify = (parent_wd, module.IN_MODIFY, 0, b"sample")
+            source_close = (source_wd, module.IN_CLOSE_WRITE, 0, b"")
+            parent_close = (parent_wd, module.IN_CLOSE_WRITE, 0, b"sample")
+            permitted = (source_modify, parent_modify, source_close,
+                         parent_close)
+            self.assertTrue(all(event in permitted for event in observed))
+            self.assertGreaterEqual(observed.count(source_modify), 1)
+            self.assertGreaterEqual(observed.count(parent_modify), 1)
+            self.assertEqual(observed.count(source_close), 1)
+            self.assertEqual(observed.count(parent_close), 1)
             parsed = module._classify_stream(data, source_wd, parent_wd)
             self.assertTrue(parsed["well_formed"])
             self.assertFalse(parsed["invalidated"])
