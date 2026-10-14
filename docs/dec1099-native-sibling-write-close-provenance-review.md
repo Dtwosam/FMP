@@ -1,0 +1,23 @@
+# DEC-1099 — Parent one-shot CLOSE_WRITE provenance: writable descriptor versus actual changed bytes
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict documentation-only single-commit child of DEC-1098/#1319 at `d6b82f2f98c123217b17eaa4c1966094073538f6`. Exactly one Markdown reviewer matrix; **717 source-defined test methods unchanged**. No executable, runtime, protected annual, production, broker or trading modifications.
+
+## Three native first-event cases with superficially similar masks
+
+| Native regression | First PUBLIC sibling operation | Original deliberately unsafe parent mask | Original native one-shot records | Continuous independent parent native witness | What the first event actually proves |
+| --- | --- | --- | --- | --- | --- |
+| DEC-1095/#1316 | Genuine changed-byte `write()`, then writable close | IN_CLOSE_WRITE and namespace categories; **IN_MODIFY excluded**, IN_ONESHOT set | Named sibling **IN_CLOSE_WRITE**, then **IN_IGNORED** | Named sibling **MODIFY and CLOSE_WRITE** | Descriptor was opened for writing and closed; **separate MODIFY and actual code path establish this test's content change** |
+| DEC-1096/#1317 | Genuine changed-byte `write()`, then writable close | **IN_MODIFY and IN_CLOSE_WRITE** plus namespace categories; IN_ONESHOT set | Named sibling **IN_MODIFY**, then **IN_IGNORED**; even that same write's CLOSE_WRITE is missing on original | Named sibling **MODIFY and CLOSE_WRITE** | First matching MODIFY consumed the watch before the writable descriptor closed |
+| **DEC-1098/#1319** | Real `O_WRONLY` open and close **without O_TRUNC, write, or fsync** | **IN_MODIFY and IN_CLOSE_WRITE** plus namespace categories; IN_ONESHOT set | Named sibling **IN_CLOSE_WRITE**, then **IN_IGNORED**, with **no MODIFY** | **Only named sibling CLOSE_WRITE, no MODIFY**, original sibling bytes unchanged | A writable descriptor closed; **not** proof any content bytes changed |
+
+All cases are real native Linux inotify events, obtained from freshly generated disposable PUBLIC /tmp source/sample fixtures. The original test-only one-shot and continuing real mutation witness use **separate inotify_init1 instances**. The continuing watcher positively witnesses genuine subsequent changed-byte source writes and writable closes as both unnamed source MODIFY/CLOSE_WRITE and named-parent MODIFY/CLOSE_WRITE. Original removed one-shots remain empty after IN_IGNORED despite initial subscriptions.
+
+**Security interpretation:** IN_CLOSE_WRITE states that a file descriptor that was opened for writing closed; it must not be casually equated with a successful content mutation. In DEC-1098 a no-op writable close is a **benign-with-respect-to-contents** first event, yet the original one-shot is exhausted. In DEC-1095 the first matching close follows an actual content change. In DEC-1096 the first matching event is MODIFY before the same operation's later writable close. Each demonstrates that first-event removal is about **watch lifetime**, not reliable completeness of later filesystem history. Final identical PUBLIC bytes, inode identities and directory inventory are snapshots and cannot reconstruct missed intervening sample write receipts.
+
+## Keep observer and admission boundaries explicit
+
+These are deliberately alternative unsafe parent IN_ONESHOT test registrations, not a deployed behavior of the actual unchanged helper `scripts/dec677_disposable_inotify_events.py::_start_watch`, which uses continuing source+parent mutation watches without IN_ONESHOT. The unchanged evaluator stays exact status=BLOCKED, can_authorize_dispatch=false, independent_os_proof_verified=false on genuinely witnessed unsafe sample writes. Quiet local disposable receipts likewise cannot authorize dispatch or independently enforce protected annual no-write.
+
+Every individual descendant requires successfully completed **exact-head** Phase 3 and complete historical regression and separate qualified independent security review; do not promote individually passing descendants past an ancestor whose suite is incomplete. At writing #1314/DEC-1093 was last consecutive fully CI verified (714 source-defined methods), while full historical suites for #1315–#1319 and this documentation child remain pending. Earlier original failed exact commits #1201–#1205, #1212, #1237 and #1261–#1267 remain FAILED.
+
+Independently OS-enforced protected no-write DEC-650/#820 and immutable exclusive annual run385 admission DEC-651/#821/#779 stay **BLOCKED**. All children remain DRAFT / NEVER MERGE / NEVER PROMOTE. No protected annual source/evidence, run385 execution/test/retry/rerun/dispatch, production refs/workflows/runners/rulesets/permissions, broker/trading operations, merges or promotions.
