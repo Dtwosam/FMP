@@ -1,0 +1,22 @@
+# DEC-1101 — No-op writable CLOSE_WRITE: source versus parent one-shot scope
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit **documentation-only** child of DEC-1100/#1321 at `84d7014aec6ac2ee90a319b35bd44345595420da`. Adds one Markdown reviewer matrix; **718 source-defined tests unchanged**. No executable tests, real observer runtime, production, protected annual, broker or trading modifications.
+
+## Same benign first event, different watched inode and missed later writes
+
+| Test | Original deliberately unsafe one-shot scope | First real PUBLIC action | Original one-shot native receipt | Independent *continuing* source + parent native receipts | Future coverage |
+| --- | --- | --- | --- | --- | --- |
+| **DEC-1098/#1319** | **Parent directory inode** with IN_MODIFY and IN_CLOSE_WRITE, IN_ONESHOT | O_WRONLY open and close **unrelated regular-file sibling** without O_TRUNC, write or fsync | **Named IN_CLOSE_WRITE(public-sibling)**, then IN_IGNORED; no MODIFY | **Named parent IN_CLOSE_WRITE(public-sibling)**, with **no sibling MODIFY**; sibling bytes unchanged | Later real changed-byte sample writes are missed by original parent one-shot, witnessed by independent source+named-parent |
+| **DEC-1100/#1321** | **Source sample regular-file inode** with IN_MODIFY and IN_CLOSE_WRITE, IN_ONESHOT | O_WRONLY open and close **sample itself** without O_TRUNC, write or fsync | **Unnamed source IN_CLOSE_WRITE**, then IN_IGNORED; no MODIFY | **Unnamed source IN_CLOSE_WRITE and named parent IN_CLOSE_WRITE(sample)**, with **no MODIFY**; sample bytes unchanged | Later real changed-byte writes to that **same source inode** are missed by original source one-shot, witnessed by independent source+named-parent |
+
+Both examples use newly generated disposable PUBLIC Linux /tmp files. Separate `inotify_init1` registrations ensure the original one-shot queue does not alias the independently continuing source+parent witness queue. The original registration is automatically removed following its **first matching CLOSE_WRITE** despite originally including IN_MODIFY. It cannot capture later genuine writes or restoring writes. Independent continuing source and parent inotify events prove later actual MODIFY and writable close activity. A final original byte digest or inode/mode/inventory snapshot cannot retrospectively restore the original watch's complete event history.
+
+**Interpreting CLOSE_WRITE precisely:** Native `IN_CLOSE_WRITE` means a descriptor that was opened with writable access was closed. It does **not** prove a `write()` occurred, that any content changed, or that no write will occur later. The no-op writable close in these tests is not itself a byte mutation. Conversely, later real changed-byte writes in both tests produce positive separate MODIFY and CLOSE_WRITE events on the continuing observer. Distinguish event semantics, originating inode, and watch lifetime when reviewing native security evidence.
+
+## Production and protected-admission boundary
+
+The IN_ONESHOT masks above are **deliberately alternative test-only watches**, not registrations installed by the actual unchanged `scripts/dec677_disposable_inotify_events.py::_start_watch`, which uses continuing source+parent mutation watches without IN_ONESHOT. These demonstrations do not assert a deployed runtime defect. The unchanged evaluator on genuine independent unsafe sample write receipts returns exactly `status=BLOCKED`, `can_authorize_dispatch=false`, and `independent_os_proof_verified=false`. An empty local receipt does not authorize protected annual dispatch.
+
+Every draft separately needs completed successful **exact-head Phase 3 acceptance and full historical regression**, plus qualified independent security review. At writing #1320/DEC-1099 was the latest consecutive both-suite CI-successful draft (717 source-defined tests); #1321 and this docs-only child still require their own checks.
+
+Previously FAILED original exact commits #1201–#1205, #1212, #1237 and #1261–#1267 remain FAILED. Independently OS-enforced protected no-write DEC-650/#820 and immutable exclusive annual run385 admission DEC-651/#821/#779 remain **BLOCKED**. Keep every descendant DRAFT / NEVER MERGE / NEVER PROMOTE. No protected annual source/evidence, run385 execution/test/retry/rerun/dispatch, production refs/workflows/runners/rulesets/permissions, broker/trading operations, merges or promotions.
