@@ -1,0 +1,26 @@
+# DEC-1146 — Byte access threshold and inode-versus-name scope across Linux read witnesses
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit documentation-only child of DEC-1145/#1366 at `e6c1f09976a6118181d4fb63dcb614a4197f28e0`. Adds one reviewer evidence matrix; **748 source-defined test methods unchanged**. No native test executable, actual helper runtime, protected annual evidence, production, broker or trading changes.
+
+## Real generated-PUBLIC read operations and first event identity
+
+| Native test | Read action | Original intentionally unsafe alternative one-shot | Independent positive read witness | Actual normal continuing source+original-parent mutation observer |
+| --- | --- | --- | --- | --- |
+| DEC-1145/#1366 | **`pread(fd,0,0)`** on an existing open `sample` descriptor | **No native ACCESS and no IN_IGNORED**; original source-only ACCESS|MODIFY|CLOSE_WRITE|ONESHOT is still registered | **No IN_ACCESS** | **Quiet** |
+| DEC-1141/#1362 and DEC-1145/#1366 | `read(fd,6)` or `pread(fd,6,0)` on **the watched original source pathname** | **Unnamed source IN_ACCESS → IN_IGNORED** | **Unnamed source IN_ACCESS** | **Quiet** |
+| DEC-1142/#1363 | `read(fd,6)` on **unrelated `parent/public-sibling` inode** | **Named parent IN_ACCESS(public-sibling) → IN_IGNORED** | **Named parent IN_ACCESS(public-sibling)** | **Quiet** |
+| DEC-1144/#1365 | `pread(fd,6,0)` on **`outside/alias`, another hard-link pathname for the watched source inode** | **Unnamed source IN_ACCESS → IN_IGNORED** | **Named IN_ACCESS(alias)** on a separately watched outside directory | **Quiet**, original parent has no alias-entry event |
+
+**First-event timing:** Merely opening a file with O_RDONLY emits native **IN_OPEN**, not IN_ACCESS, on read-event watchers. A zero-length `pread` requests no bytes and emits no native ACCESS on the probed Linux kernel. A later genuinely positive-byte read emits ACCESS, and the deliberately unsafe original IN_ACCESS|IN_MODIFY|IN_CLOSE_WRITE|IN_ONESHOT then gets IN_IGNORED, before descriptor close. The same descriptor's eventual normal read-side `IN_CLOSE_NOWRITE` is independently observed by a continuing read witness but missed by a removed source/parent one-shot. There is **no** source-content modification implied by read-side IN_OPEN, IN_ACCESS, or IN_CLOSE_NOWRITE.
+
+**Scope and identity:** The watched regular-file inode event is unnamed, regardless of whether bytes are read via `parent/sample` or its **external hard-link alias**. A directory watch identifies a child entry **inside that directory**. For unrelated sibling, the original parent can report the name `public-sibling` but source inode is unrelated. For an external hard-link alias, the original source inode receives ACCESS while **only the separate outside directory** can report the alias pathname; original parent cannot see that child-event name. External alias test has nlink=2, explicitly a negative local control because the admissible snapshot helper independently rejects multi-linked source inodes.
+
+**The observer must not alter its own evidence:** Direct `alias.read_bytes()` while an outside directory observer is subscribed to OPEN/ACCESS/CLOSE_NOWRITE would generate additional *real* named events. DEC-1144 intentionally verifies the shared alias inode using `lstat` and reads final public bytes through original `sample`, not the alias. The positive separate read-side witness in DEC-1145 is closed before ordinary verification readbacks. These precautions preserve native event provenance and prevent false assertions that a watched read-event queue stays quiet.
+
+Every deliberately unsafe original IN_ONESHOT watcher is **test-only**. The actual unchanged helper `scripts/dec677_disposable_inotify_events.py::_start_watch` installs **continuing source+parent mutation** subscriptions without IN_ONESHOT or read-side ACCESS. Later genuine changed-byte and byte-restoring writes through `parent/sample` produce independent continuing unnamed source MODIFY/CLOSE_WRITE and named parent MODIFY/CLOSE_WRITE(sample) events even while the original unsafe one-shot is silent. The unchanged evaluator remains exact `status=BLOCKED`, `can_authorize_dispatch=false`, `independent_os_proof_verified=false`. Local native event observations do not independently OS-enforce protected annual no-write or grant run385 admission; access timestamps can also change on reads depending on mount.
+
+## Exact-head CI and protected gate
+
+Every exact head, including this docs-only child, must separately finish successful `phase3-acceptance` **and** full historical `tests` CI and receive independent qualified security review before anyone could consider a status change. Older original failed exact commits #1338–#1343, #1354–#1355, #1201–#1205, #1212, #1237, and #1261–#1267 remain FAILED regardless of later descendant checks. Last **uninterrupted** both-suite fully verified checkpoint is #1337/DEC-1116 with 727 methods.
+
+Independently OS-enforced protected no-write DEC-650/#820 remains **BLOCKED**. Immutable exclusive annual run385 admission DEC-651/#821/#779 remains **BLOCKED**. All PRs must stay DRAFT / NEVER MERGE / NEVER PROMOTE. No protected annual source/evidence, run385 execution/test/retry/rerun/dispatch, production refs/workflows/runners/rulesets/permissions, broker/trading actions, merges or promotions.
