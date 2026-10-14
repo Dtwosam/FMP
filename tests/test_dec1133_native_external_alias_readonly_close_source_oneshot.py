@@ -168,7 +168,13 @@ class NativeExternalAliasReadOnlyCloseSourceOneShotRegression(unittest.TestCase)
                     [(outside_wd, IN_CLOSE_NOWRITE, b"alias")],
                 )
                 self.assertEqual(sample.read_bytes(), module.BEFORE)
-                self.assertEqual(alias.read_bytes(), module.BEFORE)
+                # Avoid opening alias for a verification read: the outside
+                # native witness subscribes to CLOSE_NOWRITE and that extra
+                # read would create an unrelated named read-close receipt.
+                # The original shared dev/ino plus sample bytes establish
+                # that both hard-link pathnames still refer to these bytes.
+                self.assertEqual(os.lstat(alias).st_ino,
+                                 os.lstat(sample).st_ino)
                 self.assertEqual(module._read_receipt_pending(original_fd), b"")
                 self.assertEqual(module._read_receipt_pending(continuing_fd),
                                  b"")
@@ -208,7 +214,11 @@ class NativeExternalAliasReadOnlyCloseSourceOneShotRegression(unittest.TestCase)
                          latest.st_nlink),
                     )
                 self.assertEqual(sample.read_bytes(), module.BEFORE)
-                self.assertEqual(alias.read_bytes(), module.BEFORE)
+                # Final shared-inode identity was verified above. A read
+                # of alias here would itself create IN_CLOSE_NOWRITE on the
+                # outside witness, so keep the event queue uncontaminated.
+                self.assertEqual(module._read_receipt_pending(outside_fd),
+                                 b"")
                 self.assertEqual(module._bounded_inventory_names(parent),
                                  ("sample",))
                 self.assertEqual(module._bounded_inventory_names(outside),
