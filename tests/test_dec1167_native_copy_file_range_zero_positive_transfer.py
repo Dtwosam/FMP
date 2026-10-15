@@ -162,7 +162,12 @@ class NativeCopyFileRangeZeroPositiveTransferRegression(unittest.TestCase):
                 os.fsync(writer_fd)
                 os.close(writer_fd)
                 writer_fd = None
-                restore = events(module._read_receipt_pending(normal_fd))
+                # Preserve the ACTUAL native write receipt bytes for
+                # both native event identity assertions and the unchanged
+                # evaluator. An empty synthesized stream would also yield
+                # BLOCKED, but would not prove the witnessed real write.
+                restore_receipt = module._read_receipt_pending(normal_fd)
+                restore = events(restore_receipt)
                 allowed = {
                     (source_wd, module.IN_MODIFY, b""),
                     (parent_wd, module.IN_MODIFY, b"sample"),
@@ -175,7 +180,7 @@ class NativeCopyFileRangeZeroPositiveTransferRegression(unittest.TestCase):
                 self.assertEqual(module._read_receipt_pending(one_fd), b"")
                 result = module._evaluate(
                     changed, module.BEFORE,
-                    b"".join([]), source_wd, True, False,
+                    restore_receipt, source_wd, True, False,
                     directory_watch=parent_wd,
                     directory_inventory_names=("sample",),
                 )
