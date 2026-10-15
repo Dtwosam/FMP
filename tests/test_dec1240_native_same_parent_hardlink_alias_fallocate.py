@@ -98,8 +98,9 @@ class NativeSameParentHardlinkAliasRouting(unittest.TestCase):
                         os.strerror(ctypes.get_errno()),
                     )
                     self.assertEqual(os.fstat(writer_fd).st_size, len(before))
-                    # Same inode: source MODIFY is real. Path provenance:
-                    # only the hardlink alias's parent gets named MODIFY.
+                    # Same inode: source MODIFY is real. This alias
+                    # shares the original directory, so its parent WD
+                    # receives MODIFY(alias), never MODIFY(sample).
                     real_receipt = module._read_receipt_pending(normal_fd)
                     self.assertCountEqual(
                         parse(real_receipt),
