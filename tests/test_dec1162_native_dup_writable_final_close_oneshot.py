@@ -64,8 +64,14 @@ class NativeDupWritableFinalCloseOneShotRegression(unittest.TestCase):
             first = (os.lstat(sample), os.lstat(parent))
             self.assertEqual(module._bounded_inventory_names(parent),
                              ("sample",))
-            self.assertEqual(len(module.BEFORE), len(module.AFTER))
-            self.assertNotEqual(module.BEFORE, module.AFTER)
+            # The canonical changed text is one byte longer than
+            # BEFORE. Use an explicit ONE-BYTE substitution so the
+            # nontruncating pwrite does not accidentally extend the inode.
+            offset = module.BEFORE.index(b"SOURCE")
+            changed = (module.BEFORE[:offset] + b"X" +
+                       module.BEFORE[offset + 1:])
+            self.assertEqual(len(changed), len(module.BEFORE))
+            self.assertNotEqual(changed, module.BEFORE)
             try:
                 normal_fd, source_wd, parent_wd = module._start_watch(sample)
                 libc = ctypes.CDLL(None, use_errno=True)
@@ -115,15 +121,15 @@ class NativeDupWritableFinalCloseOneShotRegression(unittest.TestCase):
                 # and original parent MODIFY. The original CLOSE-only
                 # ONESHOT remains armed because it excludes MODIFY.
                 self.assertEqual(
-                    os.pwrite(duplicate_fd, module.AFTER, 0),
-                    len(module.AFTER),
+                    os.pwrite(duplicate_fd, changed, 0),
+                    len(changed),
                 )
                 os.fsync(duplicate_fd)
                 modifications = module._read_receipt_pending(normal_fd)
                 assert_stage(modifications, source_wd, parent_wd,
                              module.IN_MODIFY)
                 outcome = module._evaluate(
-                    module.BEFORE, module.AFTER, modifications,
+                    module.BEFORE, changed, modifications,
                     source_wd, True, False, directory_watch=parent_wd,
                     directory_inventory_names=("sample",),
                 )
@@ -149,7 +155,7 @@ class NativeDupWritableFinalCloseOneShotRegression(unittest.TestCase):
                     [(source_wd, module.IN_CLOSE_WRITE, b""),
                      (parent_wd, module.IN_CLOSE_WRITE, b"sample")],
                 )
-                self.assertEqual(sample.read_bytes(), module.AFTER)
+                self.assertEqual(sample.read_bytes(), changed)
                 self.assertEqual(module._read_receipt_pending(normal_fd), b"")
 
                 # A separate real ordinary write restores disposable bytes.
@@ -177,7 +183,7 @@ class NativeDupWritableFinalCloseOneShotRegression(unittest.TestCase):
                 for row in expected:
                     self.assertIn(row, restore_events)
                 result = module._evaluate(
-                    module.AFTER, module.BEFORE, restore, source_wd,
+                    changed, module.BEFORE, restore, source_wd,
                     True, False, directory_watch=parent_wd,
                     directory_inventory_names=("sample",),
                 )
