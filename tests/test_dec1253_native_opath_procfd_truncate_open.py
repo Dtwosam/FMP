@@ -153,7 +153,7 @@ class NativeOPathProcFdTruncatingReopenRegression(unittest.TestCase):
                     )
                     self.assertEqual(os.fstat(reopened_fd).st_nlink,0)
                     self.assertEqual(os.fstat(reopened_fd).st_size,64)
-                    self.assertEqual(os.pread(reopened_fd,len(before),0),after)
+                    self.assertEqual(os.pread(reopened_fd,len(after),0),after)
                     receipt=module._read_receipt_pending(normal_fd)
                     self.assertCountEqual(
                         events(receipt),

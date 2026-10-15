@@ -113,6 +113,16 @@ class NativeUnlinkedProcFdReadAccessWitnessRegression(unittest.TestCase):
                 self.assertFalse(sample.exists())
                 self.assertEqual(os.fstat(writer_fd).st_nlink,0)
                 self.assertEqual(module._bounded_inventory_names(parent),())
+                # The inventory walk is itself a genuine directory
+                # OPEN/ACCESS/CLOSE_NOWRITE. Its IN_ISDIR self-events
+                # are not the later procfs file-read receipts; drain
+                # and affirm them separately, without discarding data.
+                self.assertCountEqual(
+                    events(module._read_receipt_pending(read_witness_fd)),
+                    [(read_parent_wd,IN_OPEN|module.IN_ISDIR,b""),
+                     (read_parent_wd,IN_ACCESS|module.IN_ISDIR,b""),
+                     (read_parent_wd,IN_CLOSE_NOWRITE|module.IN_ISDIR,b"")]
+                )
                 unlink_receipt=module._read_receipt_pending(normal_fd)
                 self.assertCountEqual(
                     events(unlink_receipt),
