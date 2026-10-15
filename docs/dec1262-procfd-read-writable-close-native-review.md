@@ -1,0 +1,25 @@
+# DEC-1262 — Detached-inode procfs read, close and write event provenance review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit documentation-only child of #1482 DEC-1261 at `d6a38271bcdc7bad7ef1469f0bd34617d098c5eb`. **840 distinct source-defined tests unchanged.** All Linux syscall/inotify observations are from original generated disposable **PUBLIC /tmp** files, never protected annual sources, trading data or production run artifacts.
+
+| Draft | Native Linux operation on last-link-unlinked inode held by original O_PATH FD | Real original source and original-parent receipts | What the receipt actually establishes |
+| --- | --- | --- | --- |
+| #1479 DEC-1258 | O_RDONLY|O_NOFOLLOW or O_RDWR|O_NOFOLLOW reopening through procfs | Both reject ELOOP with quiet data mutation queue | The data-open follow restriction blocks that specific magic-link traversal, not all writable reopen modes |
+| #1479 DEC-1258 | O_PATH|O_NOFOLLOW procfs open | Reports a distinct **S_IFLNK** procfs link inode; no original-source mutation | An O_PATH descriptor can name the link itself rather than the detached original regular file |
+| #1479 DEC-1258 | Ordinary procfs O_RDWR reopen, two ZERO_RANGE calls | Positive source+named-original-parent MODIFY(sample) twice | Without NOFOLLOW, original inode can be independently writable despite last original unlink |
+| #1481 DEC-1260 | Original holder O_PATH open before unlink | No independent read-witness IN_OPEN | O_PATH access does not create ordinary read-open event |
+| #1481 DEC-1260 | Procfs **O_RDONLY** reopen, `pread`, close | Independent witness: source+parent **IN_OPEN**, then **IN_ACCESS**, then **IN_CLOSE_NOWRITE**, each with original parent name sample despite unlinked pathname; mutation-only helper remains quiet | Read-side access happened; no data-write claim follows from OPEN/ACCESS/CLOSE_NOWRITE |
+| #1481 DEC-1260 | Later procfs O_RDWR reopen and two ZERO_RANGE|KEEP_SIZE calls | Positive source+parent **IN_MODIFY(sample)** twice | These are genuine subsequent data-mutating syscalls, distinct from earlier read events |
+| #1482 DEC-1261 | Independent procfs O_WRONLY reopen then **close without any write/fallocate/truncate** | Original source+parent **IN_CLOSE_WRITE(sample)** with **no byte change**; original test-only source MODIFY|CLOSE_WRITE|ONESHOT expires as CLOSE_WRITE→IGNORED | Writable close is real, but not in itself evidence of modified bytes; a combined one-shot loses future coverage |
+| #1482 DEC-1261 | Later independent procfs O_RDWR reopen and two genuine ZERO_RANGE|KEEP_SIZE operations | Original source+parent **IN_MODIFY(sample)** twice, despite exhausted unsafe source ONESHOT | Unchanged continuing two-watch helper still detects later mutations, even when the unsafe one-shot is silent |
+| #1481/#1482 | Last original O_PATH holder close after all reopened descriptions end | Original source **IN_DELETE_SELF and IN_IGNORED**, original parent remains empty | Final inode/watch retirement, not merely pathname deletion or a particular intermediate FD release |
+
+## What these tests do not authorize
+
+**No single native inotify receipt proves protected access confinement.** IN_ACCESS establishes a genuine read, but the mutation-only watch does not subscribe to that action and may be quiet throughout reading. IN_CLOSE_NOWRITE establishes a read-only description close. **IN_CLOSE_WRITE** establishes a writable description close, *not necessarily changed data*; an unsafe source ONESHOT subscribed to MODIFY|CLOSE_WRITE may expire on a byte-quiet close without observing a later real MODIFY. An original parent named event can still refer to a formerly linked dentry operated through a surviving file description. `IN_DELETE_SELF/IN_IGNORED` marks a genuine source-inode watch retirement after last-reference release, **not an independently enforced OS denial of prior operations**.
+
+Each executable test preserves exact **native source-inode and original named-parent watch descriptors**, real native event buffers, genuine generated PUBLIC snapshots or live FD content, and an unchanged actual continuously watching `scripts/dec677_disposable_inotify_events.py::_start_watch` plus unchanged `_evaluate` returning **status=BLOCKED, can_authorize_dispatch=false, independent_os_proof_verified=false**. The separate intentionally unsafe source MODIFY|CLOSE_WRITE|ONESHOT is a **test-only negative control** never used as an authorization witness.
+
+Strict review: **each exact head SHA requires its own completed successful Phase 3 and historical `tests` CI suites**, followed by qualified independent security review. Phase3-only green remains **pending** historical suites. Descendant success never overwrites an earlier originally FAILED SHA classification.
+
+**Protected gates remain BLOCKED:** independently OS-enforced protected no-write **DEC-650/#820** and immutable exclusive annual run385 admission **DEC-651/#821/#779**. No protected annual source/evidence access or modification, annual execution/test/retry/rerun/dispatch, installed watcher/runtime/CI workflow/ruleset/permission changes, broker/trading, merges or promotions.
