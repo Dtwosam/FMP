@@ -117,7 +117,7 @@ class NativeReadOnlyModeSharedMmapAfterWriterCloseRegression(unittest.TestCase):
                 mapped.flush()
                 self.assertEqual(sample.read_bytes(),changed)
                 self.assertEqual(
-                    stat.S_IMODE(os.fstat(writer_fd).st_mode),0o444)
+                    stat.S_IMODE(os.lstat(sample).st_mode),0o444)
                 self.assertEqual(module._read_receipt_pending(normal_fd),b"")
                 self.assertEqual(module._read_receipt_pending(original_fd),b"")
                 changed_verdict=module._evaluate(
