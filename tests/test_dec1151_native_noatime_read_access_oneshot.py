@@ -189,9 +189,9 @@ class NativeNoAtimeReadAccessOneShotRegression(unittest.TestCase):
                 after_noatime = os.lstat(sample)
                 self.assertEqual(after_noatime.st_atime_ns, atime_before)
                 self.assertEqual(after_noatime.st_mtime_ns,
-                                 initial[0].st_mtime_ns)
+                                 first[0].st_mtime_ns)
                 self.assertEqual(after_noatime.st_ctime_ns,
-                                 initial[0].st_ctime_ns)
+                                 first[0].st_ctime_ns)
 
                 # Stop the positive read-side witness BEFORE verifying
                 # bytes. sample.read_bytes itself would generate more read
