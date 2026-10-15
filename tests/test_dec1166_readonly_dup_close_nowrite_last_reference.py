@@ -60,7 +60,7 @@ class NativeReadOnlyDupLastCloseNowriteRegression(unittest.TestCase):
             finally:
                 os.close(fd)
 
-        def verify_normal_write(raw, source_wd, parent_wd, after):
+        def verify_normal_write(raw, source_wd, parent_wd, before, after):
             seen = events(raw)
             expected = {
                 (source_wd, module.IN_MODIFY, b""),
@@ -73,7 +73,7 @@ class NativeReadOnlyDupLastCloseNowriteRegression(unittest.TestCase):
             for required in expected:
                 self.assertIn(required, seen)
             verdict = module._evaluate(
-                module.BEFORE, after, raw, source_wd, True, False,
+                before, after, raw, source_wd, True, False,
                 directory_watch=parent_wd,
                 directory_inventory_names=("sample",),
             )
@@ -197,7 +197,7 @@ class NativeReadOnlyDupLastCloseNowriteRegression(unittest.TestCase):
                 self.assertEqual(module._read_receipt_pending(one_fd), b"")
                 verify_normal_write(
                     module._read_receipt_pending(normal_fd),
-                    source_wd, parent_wd, changed,
+                    source_wd, parent_wd, module.BEFORE, changed,
                 )
                 self.assertEqual(sample.read_bytes(), changed)
 
@@ -205,7 +205,7 @@ class NativeReadOnlyDupLastCloseNowriteRegression(unittest.TestCase):
                 self.assertEqual(module._read_receipt_pending(one_fd), b"")
                 verify_normal_write(
                     module._read_receipt_pending(normal_fd),
-                    source_wd, parent_wd, module.BEFORE,
+                    source_wd, parent_wd, changed, module.BEFORE,
                 )
                 self.assertEqual(sample.read_bytes(), module.BEFORE)
 
