@@ -1,0 +1,24 @@
+# DEC-1234 — Linux range-operation boundaries and descriptor behavior review matrix
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict single-commit documentation-only child of #1454 DEC-1233 at `b229ab562b0e169100a7f3a3d3315fe78c75f368`; **818 source-defined test methods unchanged**. This is a reviewer handoff on generated PUBLIC Linux /tmp files with syscall and native inotify receipts, **not independent protected OS-enforced no-write confinement**.
+
+| DEC / PR | Actual syscall boundary | File content and logical length | Kernel source and named original-parent evidence |
+| --- | --- | --- | --- |
+| DEC-1215 / #1436 | PUNCH_HOLE|KEEP_SIZE middle 4096 bytes | Three-page A+B+C becomes A+zero+C, **12KB unchanged** | Positive MODIFY on both first and second identical calls, writer close CLOSE_WRITE |
+| DEC-1216 / #1437 | ZERO_RANGE|KEEP_SIZE middle 4096 bytes | A+B+C becomes A+zero+C, **12KB unchanged** | Positive MODIFY first and repeat |
+| DEC-1218 / #1439 | COLLAPSE_RANGE middle B page | A+B+C → A+C, length **12KB→8KB**; repeat through EOF rejected EINVAL | First MODIFY, rejected retry mutation-quiet |
+| DEC-1219 / #1440 | INSERT_RANGE before middle B page, twice | A+B+C → A+zero+B+C → A+zero+zero+B+C, **12→16→20KB** | Independently drained positive MODIFY each success |
+| DEC-1222 / #1443 | PUNCH_HOLE|KEEP_SIZE wholly **past EOF** | Original content and logical length unchanged | Yet positive MODIFY twice |
+| DEC-1223 / #1444 | ZERO_RANGE|KEEP_SIZE wholly **past EOF** | Original content and logical length unchanged | Yet positive MODIFY twice |
+| DEC-1227 / #1448 | PUNCH_HOLE|KEEP_SIZE **straddles EOF** | A+B+C → A+B+zero C, **12KB unchanged** | Positive MODIFY first and repeat |
+| DEC-1228 / #1449 | ZERO_RANGE **without KEEP_SIZE** straddles EOF | A+B+C → A+B+8192 NUL bytes, **12→16KB** | Positive MODIFY first and same-range repeat |
+| DEC-1229 / #1450 | PUNCH_HOLE|KEEP_SIZE interior **unaligned 17 bytes**, offset4097 | A+B+C → A+one B+17 NULs+remaining B+C, **12KB unchanged** | Positive MODIFY first and same-range repeat |
+| DEC-1230 / #1451 | ZERO_RANGE|KEEP_SIZE interior **unaligned 17 bytes**, offset4097 | Same precise 17-byte replacement, **12KB unchanged** | Positive MODIFY first and same-range repeat |
+| DEC-1232 / #1453 | COLLAPSE_RANGE **at offset zero** twice, each 4096 bytes | A+B+C → B+C → C, **12→8→4KB** | Positive MODIFY after each successful removal |
+| DEC-1233 / #1454 | INSERT_RANGE **at offset zero** twice, each 4096 bytes | A+B+C → zero+A+B+C → zero+zero+A+B+C, **12→16→20KB** | Positive MODIFY after each successful insertion |
+
+The exact origin of bytes matters. A successful range operation can modify **data but not length**, **length but not explicit write-call count**, **underlying allocation without changing bytes**, or none of the above while still creating a real kernel MODIFY receipt. Native PUNCH/zero-range operations can work at 17-byte unaligned ranges; native COLLAPSE/INSERT require aligned offset/length on the probed Linux filesystem (#1446). Rejected zero-length operations (#1445), invalid flag mixes (#1442), and path-only O_PATH requests (#1447) remain mutation-quiet, but a **later rejected call cannot retroactively prove that destructive open-time O_TRUNC did not occur** (#1427).
+
+All executable regressions use generated **disposable PUBLIC temporary sources**, separate intentionally unsafe source-only **ONESHOT negative control** and the unchanged actual **continuous source+original-parent `scripts/dec677_disposable_inotify_events.py::_start_watch`** witness. Once genuine first MODIFY invalidates the unsafe ONESHOT as MODIFY→IGNORED, the unchanged real helper still detects subsequent native kernel events, including final CLOSE_WRITE and genuine later fixture-restoring operations. Unchanged `_evaluate` consumes **actual event stream bytes and accurate before/after snapshots** and remains **status=BLOCKED**, **can_authorize_dispatch=false**, **independent_os_proof_verified=false**. Restore events are separately observed and do **not** erase evidence of earlier data mutation. The exact source/parent identities and parent inventory remain verified.
+
+Every draft exact SHA requires completed successful own Phase3 AND full historical CI, then qualified independent security review, with no retroactive upgrades of prior failed exact SHAs. Native results can vary by filesystem/kernel and cannot be used as independent OS no-write security proof. Protected independently OS-enforced no-write DEC-650/#820 and exclusive immutable annual run385 admission DEC-651/#821/#779 remain **BLOCKED**. No protected annual source/evidence, annual execution/test/retry/rerun/dispatch, installed watcher runtime changes, production refs/workflows/runners/rulesets/permissions, broker/trading, merges or promotions.
