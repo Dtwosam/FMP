@@ -214,11 +214,22 @@ class NativeExternalAliasPreadAccessOneShotRegression(unittest.TestCase):
                 self.assertEqual(sample.read_bytes(), module.BEFORE)
                 self.assertEqual(module._bounded_inventory_names(parent),
                                  ("sample",))
+                # The native outside-directory witness is subscribed to
+                # read-side IN_OPEN and IN_ACCESS. The inventory helper
+                # itself calls os.scandir(outside), which opens/accesses
+                # that DIRECTORY and would create legitimate self events.
+                # Finish the outside witness lifetime after its final
+                # quiet check and BEFORE the verification scan.
+                self.assertEqual(module._read_receipt_pending(outside_fd),
+                                 b"")
+                os.close(outside_fd)
+                with self.assertRaises(OSError):
+                    os.fstat(outside_fd)
+                outside_fd = None
                 self.assertEqual(module._bounded_inventory_names(outside),
                                  ("alias",))
                 self.assertEqual(module._read_receipt_pending(one_fd), b"")
-                self.assertEqual(module._read_receipt_pending(outside_fd),
-                                 b"")
+                self.assertEqual(module._read_receipt_pending(normal_fd), b"")
             finally:
                 if read_fd is not None:
                     os.close(read_fd)
