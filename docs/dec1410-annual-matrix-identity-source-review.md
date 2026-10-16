@@ -1,0 +1,9 @@
+# DEC-1410 — Annual 18-cell matrix identity and digest source inventory
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1633 DEC-1409 at commit ecda79afdc9af5e5f08d20683b4aa59e306e02c3. Fourteen new unittest methods; **1,368 proposed source-defined methods** in this draft lineage.
+
+The checked-in annual workflow lists 18 matrix rows: the Cartesian product of EURUSD/GBPUSD/USDJPY, 5m/15m/1h, and 60m/240m. Each symbol/timeframe source pair repeats the same feature/outcome artifact identifiers and ZIP SHA-256 strings at both horizons. A pure text-only source reviewer now checks exactly 18 unique combinations, fixed field shapes, lowercase 64-hex digest syntax, quoted numeric artifact IDs, nine distinct source pairs on each side, and consistent source identity across horizons. Synthetic source mutations demonstrate missing/duplicated combinations, unusual IDs or hashes, drift and ambiguous extra/duplicate row keys.
+
+**This is a source inventory, not authentication of GitHub artifacts, immutable code provenance, exclusive admission, or filesystem protection.** Parsing is deliberately limited to the reviewed literal YAML row shape, and does not execute the annual workflow or fetch any archived data. Any new YAML syntax requires qualified review rather than inferred safety. Source-only SHA-256 values are never revalidated against real protected artifacts by these tests.
+
+Own exact-head Phase 3 acceptance and full historical CI are required, plus independent security review. The externally OS-enforced original no-write gate DEC-650/#820 and server-side exclusive immutable 2023 run385/attempt1 admission DEC-651/#821/#779 remain **BLOCKED**. No protected original, artifact download, annual dispatch/retry, installed workflow/permissions/ruleset, merge, production or trading action is authorized.
