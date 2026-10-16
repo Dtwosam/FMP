@@ -1,0 +1,11 @@
+# DEC-1391 — Minimum independent OS receipt fields cannot self-authorize
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1614 DEC-1390 at `3a553689181f4d2010f1675d8f8b01ce4e63362b`. Adds **12** synthetic review-structure methods, **1,209 proposed source-defined tests**.
+
+This optional machine-checkable *review aid* enumerates fields a separate independent custodian would have to **substantiate** to make the DEC-650/#820 original protected no-write acceptance review possible: exact original source identity and alias inventory; child process UID, cap set, no-new-privileges, standard descriptors 0–2, inherited write capabilities; externally enforced mount policy, full child lifecycle, scratch separation and independent uploader; zero privileged skips, actual real-runner denial evidence, positive trusted publication and failure cleanup; and independent qualified reviewer identity and contemporaneous server provenance.
+
+Every test uses **obviously synthetic dictionaries** with values explicitly labeled `SYNTHETIC`. No real source path or secret is consumed, no OS mounts/caps are modified, no protected write probe is attempted, and no external signature or reviewer evidence is authenticated. Even a structurally complete fake receipt always returns **`status=BLOCKED` and `dispatch_authorized=False`**, by design; it cannot grant an authority. In-memory negative cases check missing source identity, alias inventory, FD/cap/mount/child evidence, skipped privilege-dependent tests, lack of both positive publishing and cleanup, unexpected fields, and forged `PASS` flags. Valid-looking strings alone do **not** prove any evidence.
+
+This is not the missing DEC-650 implementation or acceptance; a real independent OS/storage administrator would need a separately approved architecture and independently attested actual runner observations. Separately, DEC-651/#821/#779 immutable exclusive one-shot GitHub 2023 run385/attempt1 server-side admission remains **BLOCKED**. Synthetic acceptance forms cannot close it or authorize consuming the unique slot.
+
+Own completed Phase3 and full historical CI at exact head plus independent security review required. No protected data/artifacts, annual run/dispatch/retry, installed workflows/permissions/rulesets, production/strategy/broker/trading, merge or promotion.
