@@ -55,7 +55,10 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
         if not isinstance(annual, Mapping):
             findings.append("ANNUAL_ADMISSION_DETAILS_MISSING")
         else:
-            if annual.get("run_number") != 385 or annual.get("attempt") != 1:
+            run_number=annual.get("run_number")
+            attempt=annual.get("attempt")
+            if (type(run_number) is not int or run_number != 385
+                or type(attempt) is not int or attempt != 1):
                 findings.append("NOT_THE_EXCLUSIVE_RUN385_ATTEMPT1")
             if annual.get("outcome") in (
                 "ambiguous", "failed", "cancelled", "retry", "replacement"
