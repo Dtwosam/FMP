@@ -80,10 +80,10 @@ def review_exact_pr_ci_jobs(pr: object, runs: object,
     return tuple(sorted(set(issues)))
 
 
-class ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(
-        ExactCommitCIIsNotRun385Permission):
+class ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(unittest.TestCase):
     def setUp(self):
-        super().setUp()
+        # Reuse only the synthetic fixture; do not re-inherit its 18 tests.
+        ExactCommitCIIsNotRun385Permission.setUp(self)
         self.jobs_by_run = {}
         for i, name in enumerate(("phase3-acceptance", "tests")):
             run = next(r for r in self.runs if r["name"] == name)
@@ -215,3 +215,29 @@ class ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(
         self.assertIn("phase3-acceptance_CRITICAL_STEP_ORDER_DRIFT",
                       self.verdict())
 
+
+class RequiredJobStepFixtureIsolation(unittest.TestCase):
+    def test_job_step_suite_does_not_inherit_unrelated_ci_tests(self):
+        self.assertFalse(
+            issubclass(
+                ActualRequiredStepEvidenceIsNotProtectedExecutionConsent,
+                ExactCommitCIIsNotRun385Permission,
+            )
+        )
+
+    def test_job_step_suite_has_exactly_24_locally_defined_test_methods(self):
+        # DEC-1426: 16, DEC-1427: 8; do not double count parent tests.
+        names = [
+            name for name, member in
+            ActualRequiredStepEvidenceIsNotProtectedExecutionConsent.__dict__.items()
+            if name.startswith("test_") and callable(member)
+        ]
+        self.assertEqual(len(names), 24)
+
+    def test_local_job_step_fixture_still_builds_matching_run_evidence(self):
+        case = ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(
+            methodName="test_exact_successful_job_and_step_evidence_is_consistent"
+        )
+        case.setUp()
+        self.assertEqual(case.verdict(), ())
+        self.assertEqual(set(case.jobs_by_run), {8000, 8001})
