@@ -24,6 +24,8 @@ def _exact_string(value: object, expected: str) -> bool:
 
 def assess_synthetic_runner_layout(packet: object) -> dict[str, object]:
     violations=[]
+    # Built-in string keys are checked *before* set equality or get
+    # so malicious hash-colliding key objects cannot invoke __eq__.
     if type(packet) is not dict or any(type(k) is not str for k in packet):
         violations.append("UNTRUSTED_LAYOUT_INPUT")
     else:
@@ -44,6 +46,8 @@ def assess_synthetic_runner_layout(packet: object) -> dict[str, object]:
         if not _exact_string(packet.get("scope"),"generated_public_only"):
             violations.append("UNAUTHORIZED_REAL_SOURCE_SCOPE")
         consumer=packet.get("consumer")
+        # The nested dictionary is independently checked before set()
+        # equality and any subsequent known-field lookups.
         if type(consumer) is not dict or any(
             type(k) is not str for k in consumer
         ):
