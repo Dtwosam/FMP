@@ -22,6 +22,7 @@ def review_exact_head_ci(head_sha: object, runs: object) -> tuple[str, ...]:
     if type(runs) is not list or not all(type(x) is dict for x in runs):
         return ("RUN_SNAPSHOT_UNREVIEWED",)
     reasons = []
+    seen_run_ids = set()
     for name in REQUIRED:
         matched = [run for run in runs if run.get("name") == name]
         if len(matched) != 1:
@@ -38,6 +39,12 @@ def review_exact_head_ci(head_sha: object, runs: object) -> tuple[str, ...]:
             reasons.append(name + "_NOT_SUCCESS")
         if type(run.get("id")) is not int or run["id"] <= 0:
             reasons.append(name + "_RUN_ID_UNREVIEWED")
+        elif run["id"] in seen_run_ids:
+            reasons.append("REQUIRED_RUN_IDS_COLLIDE")
+        else:
+            seen_run_ids.add(run["id"])
+        if type(run.get("run_number")) is not int or run["run_number"] <= 0:
+            reasons.append(name + "_RUN_NUMBER_UNREVIEWED")
         expected_id, expected_path = WORKFLOWS[name]
         if type(run.get("workflow_id")) is not int or run["workflow_id"] != expected_id:
             reasons.append(name + "_WORKFLOW_ID_UNREVIEWED")
@@ -56,7 +63,7 @@ class ExactHeadGreenIsNotAnnualAuthorization(unittest.TestCase):
             {"name": n, "head_sha": self.SHA, "event": "pull_request",
              "status": "completed", "conclusion": "success", "id": 100 + i,
              "workflow_id": WORKFLOWS[n][0], "path": WORKFLOWS[n][1],
-             "run_attempt": 1}
+             "run_attempt": 1, "run_number": 200 + i}
             for i, n in enumerate(REQUIRED)
         ]
 
@@ -195,6 +202,31 @@ class ExactHeadGreenIsNotAnnualAuthorization(unittest.TestCase):
         self.assertIn("tests_ATTEMPT_UNREVIEWED", issues)
 
     def test_hydrated_two_workflow_snapshots_match_canonical_sources(self):
+        self.assertEqual(review_exact_head_ci(self.SHA, self.runs), ())
+
+
+    def test_duplicate_run_ids_for_distinct_workflows_cannot_pass(self):
+        self.runs[1]["id"] = self.runs[0]["id"]
+        self.assertIn("REQUIRED_RUN_IDS_COLLIDE",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_missing_run_number_does_not_pass(self):
+        self.runs[0].pop("run_number")
+        self.assertIn("phase3-acceptance_RUN_NUMBER_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_zero_run_number_does_not_pass(self):
+        self.runs[1]["run_number"] = 0
+        self.assertIn("tests_RUN_NUMBER_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_boolean_run_number_does_not_pass(self):
+        self.runs[1]["run_number"] = True
+        self.assertIn("tests_RUN_NUMBER_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_hydrated_unique_positive_run_numbers_can_pass(self):
+        self.assertNotEqual(self.runs[0]["id"], self.runs[1]["id"])
         self.assertEqual(review_exact_head_ci(self.SHA, self.runs), ())
 
 
