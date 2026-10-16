@@ -1,0 +1,9 @@
+# DEC-1366 — Source-only predecessor freeze evidence binding
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit child of #1589 DEC-1365 at `f98d153443b680788fc11bbf969b8c3a171b312a`. Nine new source-only unittest methods, **1,032 proposed source-defined methods**, no annual workflow or CLI implementation changes.
+
+The tracked preflight YAML uses a 2015 no-predecessor exception, maps 2023 to previous 2022, requires positive numeric predecessor run ID for other segments, and reads prior-run metadata **after** its separate execution check. It obtains prior-run `head_sha`, constructs an expected segment-and-head SHA freeze artifact name, requires one unexpired matching artifact, compares reported `sha256:` ZIP digest to downloaded ZIP bytes before extraction, checks a single `annual-freeze.json`, and passes evidence plus run ID to `require-prior-freeze` CLI. New tests pin those distinctions and read *only the committed* YAML via local Git.
+
+**Important limitation:** the predecessor run ID originates from the manually supplied workflow input and its reported metadata; syntactic validation and in-job digest checks are **not** independent repository-administrator authentication of the unique 2023 run385/attempt1 slot. The earlier 2022 predecessor identity must be independently confirmed by administrators under issue #779 and current exact-run inventory, not inferred from this source-only test. The `if: always()` preflight upload boundary remains visible and source unchanged; no claim of successful leaked artifact is made.
+
+All exact-head Phase3 + complete historical CI and independent qualified security review remain required. Earlier exact SHA failures stay FAILED. Protected DEC-650/#820 OS source no-write and DEC-651/#821/#779 exclusive immutable dispatch stay BLOCKED. No protected annual evidence, run/retry/dispatch, workflow/ruleset/permission changes, promotion, strategy synthesis, broker/trading or merges.
