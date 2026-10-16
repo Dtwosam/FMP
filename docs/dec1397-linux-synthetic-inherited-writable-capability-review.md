@@ -1,0 +1,9 @@
+# DEC-1397 — Disposable Linux parent aliases and inherited write capabilities
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1620 DEC-1396 at `2cb1fd1c3609132be0127229aa939be50cd2ef4c`; five additional Linux-only unittest methods, **1,245 proposed source-defined tests**.
+
+This extends the existing synthetic-only Linux output-path probes. All source and scratch files are generated together under the current test's `TemporaryDirectory`. The new checks demonstrate: `O_NOFOLLOW` on the **final component** does not block a symlink in an ancestor directory; `dir_fd` anchoring does not prevent such ancestor traversal without additional enforcement; a writable descriptor can continue `pwrite` after the underlying synthetic pathname is renamed; a `MAP_SHARED` writable mapping can be changed even after closing its original writable file descriptor; and `O_CREAT|O_EXCL` positively rejects creating through an existing dangling file symlink. **No protected historical file, original dataset or real annual runner is involved.** The tests are Linux-only and require no privileged operation or root skip.
+
+The observations explain why independent DEC-650/#820 real original no-write acceptance must cover all aliases, inherited writable file/mmap/dir descriptors, identity over process and child lifetime, and trusted external OS isolation. They do **not** demonstrate a successful attack against the actual protected source; the repository's installed annual CLI/runtime remains unchanged. The unique 2023 server-dispatched run385/attempt1 admission DEC-651/#821/#779 is a separate still-BLOCKED control-plane requirement.
+
+Own successful exact-head Phase3 and complete historical CI plus independent qualified review required. No protected evidence reads, annual dispatch/retry, installed workflow/ruleset/permissions, broker/trading, merges or promotion.
