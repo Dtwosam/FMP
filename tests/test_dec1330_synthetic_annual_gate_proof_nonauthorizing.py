@@ -121,3 +121,30 @@ class SyntheticAnnualProofMustNotAuthorize(unittest.TestCase):
         a=self._blocked(one)
         b=self._blocked(two)
         self.assertEqual(a,b)
+
+    def test_missing_sha_pair_is_absent_not_equal(self):
+        r=self._blocked({"annual":{"run_number":385,"attempt":1}})
+        self.assertIn("SHA_BINDING_IDENTITIES_ABSENT_OR_INVALID",
+                      r["blockers"])
+        self.assertNotIn("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY",
+                         r["blockers"])
+
+    def test_blank_or_nonstr_sha_claims_are_invalid(self):
+        for expected,observed in (("", "abc"),("abc", ""), (None,None),
+                                  (123,123), (True,True)):
+            with self.subTest(expected=repr(expected),observed=repr(observed)):
+                r=self._blocked(
+                    {"annual":{"run_number":385,"attempt":1,
+                               "expected_sha":expected,
+                               "observed_sha":observed}})
+                self.assertIn("SHA_BINDING_IDENTITIES_ABSENT_OR_INVALID",
+                              r["blockers"])
+
+    def test_different_sha_values_block_admission(self):
+        r=self._blocked(
+            {"annual":{"run_number":385,"attempt":1,
+                       "expected_sha":"expected-commit",
+                       "observed_sha":"different-commit"}})
+        self.assertIn("SHA_MISMATCH_BLOCKS_ADMISSION",r["blockers"])
+        self.assertNotIn("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY",
+                         r["blockers"])
