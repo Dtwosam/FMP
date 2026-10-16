@@ -69,7 +69,10 @@ def rows_from_checked_in_text(source: str) -> list[dict[str, str]]:
     dataset = cell.split("        dataset:\n", 1)[1].split(
         "\n    steps:\n", 1
     )[0]
-    chunks = dataset.split("          - symbol: ")[1:]
+    pieces = dataset.split("          - symbol: ")
+    if pieces[0].strip():
+        raise ValueError("unreviewed matrix prefix or first row")
+    chunks = pieces[1:]
     rows = []
     for chunk in chunks:
         lines = chunk.splitlines()
@@ -445,12 +448,12 @@ class AnnualMatrixSourceIsNotImmutableArtifactProvenance(unittest.TestCase):
         self.assertEqual(matrix_source_review(changed),
                          ("MATRIX_FIELDS_DRIFT",))
 
-    def test_unknown_symbol_key_is_reported_not_raised(self):
+    def test_unknown_first_row_key_is_reported_not_ignored(self):
         changed = self.source.replace(
             "          - symbol: EURUSD\n",
             "          - unreviewed_symbol: EURUSD\n", 1)
         self.assertEqual(matrix_source_review(changed),
-                         ("MATRIX_FIELDS_DRIFT",))
+                         ("MATRIX_SOURCE_SHAPE_UNREVIEWED",))
 
     def test_unknown_timeframe_key_is_reported_not_raised(self):
         changed = self.source.replace(
@@ -477,3 +480,28 @@ class AnnualMatrixSourceIsNotImmutableArtifactProvenance(unittest.TestCase):
         self.assertEqual(matrix_source_review(self.source), ())
         self.assertEqual(pinned_archive_source_review(self.source), ())
         self.assertEqual(matrix_strategy_source_review(self.source), ())
+
+    def test_first_row_prefix_comment_requires_shape_review(self):
+        changed = self.source.replace(
+            "        dataset:\n",
+            "        dataset:\n          # unreviewed prefix\n", 1)
+        self.assertEqual(matrix_source_review(changed),
+                         ("MATRIX_SOURCE_SHAPE_UNREVIEWED",))
+
+    def test_first_symbol_row_must_not_silently_disappear(self):
+        changed = self.source.replace(
+            "          - symbol: EURUSD\n",
+            "          - renamed_symbol: EURUSD\n", 1)
+        self.assertEqual(matrix_source_review(changed),
+                         ("MATRIX_SOURCE_SHAPE_UNREVIEWED",))
+
+    def test_first_unknown_row_does_not_satisfy_reviewed_literal_pins(self):
+        changed = self.source.replace(
+            "          - symbol: EURUSD\n",
+            "          - alternative_row: EURUSD\n", 1)
+        self.assertEqual(pinned_archive_source_review(changed),
+                         ("MATRIX_BASE_SOURCE_UNREVIEWED",))
+
+    def test_canonical_source_still_has_eighteen_parsed_rows(self):
+        self.assertEqual(len(rows_from_checked_in_text(self.source)), 18)
+        self.assertEqual(matrix_source_review(self.source), ())
