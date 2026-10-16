@@ -1,0 +1,27 @@
+# DEC-1317 — Sealed anonymous inode integrity vs mutable memory, readable handles and unsafe default flags
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict single-commit documentation-only child of #1537 DEC-1316 at `c20b5e0964635237abfc6f11f123fba23c5cf7a9`, **876 distinct source-defined test methods unchanged**. All executable tests are native Linux, create fresh disposable PUBLIC **anonymous memfd** objects, and do not access protected annual inputs or evidence, installed watchers/runtime, production workflows/rulesets/permissions, brokers or trading.
+
+## Latest original exact-head CI facts
+
+The latest fully CI-verified contiguous draft at the last live workflow check was **#1525 DEC-1304**, 869 tests: exact-head Phase3 and full historical suites succeeded. Original #1526–#1530 historical suites FAILED on two inherited false-positive expectations of anonymous-memfd `IN_MODIFY` for successful original-data `pwrite`. Original FAILED exact SHAs remain **FAILED forever**, even if later descendants pass. Forward-only **#1531 DEC-1310** (exact SHA `97aa822ffd4af2fecdc4b7201989c71941e6d119`) corrected five strict kernel-receipt expectations to **empty** for actual in-place pwrite while preserving original byte readbacks and two **positive true ftruncate IN_MODIFY** assertions. Its Phase3 passed; the long full historical suite remains its own pending verification gate. All later drafts need independent exact-head successful Phase3 and full historical tests followed by qualified independent security review.
+
+## Important verified native mechanisms, restricted to generated PUBLIC anonymous data
+
+| Draft | Original file or mapping operation | Observed kernel and data boundary |
+| --- | --- | --- |
+| #1531 DEC-1310 | In-place `pwrite` versus `ftruncate` on anonymous memfd | True original inode data can change without anonymous `IN_MODIFY` on in-place pwrite; genuine size change emits real MODIFY. Only actual inode byte readbacks, not event silence, distinguish outcomes |
+| #1532 DEC-1311 | Full `F_SEAL_WRITE|GROW|SHRINK|SEAL` but create writable **MAP_PRIVATE / ACCESS_COPY** | Private userspace COW bytes can be modified and discarded; original sealed memfd bytes stay exactly original, while direct pwrite and new writable shared mmap reject EPERM |
+| #1533 DEC-1312 | Full seals; `splice(original_memfd→pipe)` and `splice(pipe→original_memfd)` | A **source READ** transfer succeeds and extracts bytes through an existing file description, while reverse original-file WRITE rejects EPERM. Native mutation receipts and original bytes remain quiet/unchanged |
+| #1534 DEC-1313 | Documentation-only exact SHA repair, sealing and splice provenance | No executable changes, explicitly preserves old failed commits and anonymous-inode-only watch scope |
+| #1535 DEC-1314 | `memfd_create(MFD_CLOEXEC)` **without MFD_ALLOW_SEALING** | Newly created inode already has `F_SEAL_SEAL` set; later F_SEAL_WRITE add rejects EPERM, yet actual pwrite and truncate still change original backing bytes. The default seal bitset can freeze **unprotected data** |
+| #1536 DEC-1315 | Documentation-only unsafe default and strong-seal capability ledger | No executable changes; separates real original bytes from private memory and kernel events |
+| #1537 DEC-1316 | Full seals; independent `open("/proc/self/fd/<orig>",O_RDWR)`, then close original FD | New O_RDWR description to the **same original sealed inode** is permitted, but cannot bypass its inode seals: pwrite, ftruncate shrink/grow, writable shared mmap, seal addition all reject EPERM with original bytes unchanged. Inode/watch retires **only after last reopened FD close** |
+
+## Security review boundaries
+
+These tests distinguish **original backing inode data**, **private mapped COW memory**, **file handle mode**, **seal capability bitsets**, **data extraction reads**, **source mutation writes**, **descriptor lifetime**, and **inotify kernel records**. None is a substitute for another. A full set of write/size seals can protect actual memfd bytes from tested mutation syscalls while still allowing copies or reads of available data; a successful MAP_PRIVATE mutation does not write the original inode. Conversely an irreversible **F_SEAL_SEAL-only default** may leave real source writes allowed while making future protection impossible. A newly opened O_RDWR descriptor does not negate existing inode-level seals, and last-FD lifetime is separate from original FD closure.
+
+The anonymous original inode is watched via genuine `inotify_add_watch("/proc/self/fd/<memfd>")` and has **no named original parent**. Do not transplant earlier named PUBLIC /tmp original-source+named-parent watcher conclusions to it. Real original source byte comparisons, native syscall errno or acceptance, F_GET_SEALS, inode identity, final kernel DELETE_SELF/IGNORED and FD/mapping cleanup remain the evidence. These disposable sealing regressions are **not actual independent OS no-write enforcement over protected annual files** or an annual execution admission process. Both hard protected gates and independent review still remain outstanding.
+
+Protected independent OS-enforced no-write **DEC-650/#820** and exclusive immutable annual run385 admission **DEC-651/#821/#779** remain **BLOCKED**. No protected annual source/evidence handling, annual run/test/retry/rerun/dispatch, installed production ref/runtime/workflow/ruleset/permission change, broker/trading, merges or promotions.
