@@ -1,0 +1,9 @@
+# DEC-1371 — Freeze result loader and output boundaries
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit child #1594 DEC-1370 at `cd35b0b297a8a54b03741d36e729a6cf3e917ab6`. Ten static unittest methods added, **1,052 proposed source-defined methods**. Source text only, no annual job, CLI runtime, protected artifacts or trading.
+
+The checked-in annual CLI recursively finds `cell-evidence.json` in a supplied result root, requires `EXPECTED_CELLS_PER_SEGMENT` count, checks a sibling `catalogue-payload.json` before reading bytes, and uses `validated_cell_summary` for evidence/payload consistency. `_cmd_freeze` performs its internal execution check before scanning result paths, compiles with segment and SHA arguments, validates the assembled freeze and writes checkout-relative output. The workflow freeze job, however, still checks out and installs dependencies **before** its separate authorization recheck, downloads pattern-matched cell artifacts into checkout-relative `.cell-results` and uploads `.annual-freeze/annual-freeze.json`. These are source observations, not authenticated protected provenance, independent OS no-write, trusted output staging, or immutable server-side admission.
+
+The ten tests use read-only local `git show HEAD:path` and AST to inspect tracked source. No annual commands, GitHub artifact downloads, installed workflow or permissions mutation, protected inputs, production, broker or trading activity.
+
+Original full historical failures at #1589–#1593 remain FAILED. This draft requires completed successful exact-head Phase3 plus full historical CI and qualified independent review. Protected DEC-650/#820 OS original no-write and DEC-651/#821/#779 single-authority immutable 2023 run385 attempt1 admission remain **BLOCKED**. No protected annual dispatch, retry/rerun/replacement, merge or promotion.
