@@ -45,6 +45,10 @@ def metadata_diagnostics(
                 problems.append("EXCESS_MEMBER_COUNT")
             cumulative = 0
             for member in members:
+                if member.compress_type not in (
+                    zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED
+                ):
+                    problems.append("UNREVIEWED_COMPRESSION_METHOD")
                 if member.file_size > max_member_bytes:
                     problems.append("EXCESS_MEMBER_SIZE")
                 cumulative += member.file_size
@@ -128,3 +132,48 @@ class InMemoryZipQuotasDoNotProveActualAnnualArchiveSafety(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertEqual(metadata_diagnostics(data, max_ratio=value),
                                  ("INVALID_REVIEW_LIMITS",))
+
+    def test_small_deflated_member_is_allowed_by_synthetic_policy(self):
+        data = archive_bytes([("payload.txt", b"hello world")],
+                             compress=zipfile.ZIP_DEFLATED)
+        self.assertEqual(metadata_diagnostics(data), ())
+
+    def test_synthetic_bzip2_method_is_not_approved(self):
+        data = archive_bytes([("payload.txt", b"hello")],
+                             compress=zipfile.ZIP_BZIP2)
+        self.assertIn("UNREVIEWED_COMPRESSION_METHOD",
+                      metadata_diagnostics(data))
+
+    def test_synthetic_lzma_method_is_not_approved(self):
+        data = archive_bytes([("payload.txt", b"hello")],
+                             compress=zipfile.ZIP_LZMA)
+        self.assertIn("UNREVIEWED_COMPRESSION_METHOD",
+                      metadata_diagnostics(data))
+
+    def test_exact_member_count_boundary_allows_three_small_files(self):
+        data = archive_bytes(
+            [("a", b"a"), ("b", b"b"), ("c", b"c")],
+            compress=zipfile.ZIP_STORED,
+        )
+        self.assertEqual(metadata_diagnostics(data), ())
+
+    def test_crc_corruption_can_pass_metadata_limits_but_fail_member_read(self):
+        initial = archive_bytes([("payload.txt", b"ORIGINAL_TEXT")],
+                                compress=zipfile.ZIP_STORED)
+        offset = initial.find(b"ORIGINAL_TEXT")
+        self.assertGreaterEqual(offset, 0)
+        tampered = (
+            initial[:offset] + b"CHANGED__TEXT"
+            + initial[offset + len(b"ORIGINAL_TEXT"):]
+        )
+        self.assertEqual(metadata_diagnostics(tampered), ())
+        with zipfile.ZipFile(BytesIO(tampered)) as archive:
+            with self.assertRaises(zipfile.BadZipFile):
+                archive.read("payload.txt")
+
+    def test_intact_synthetic_member_passes_in_memory_crc_validation(self):
+        initial = archive_bytes([("payload.txt", b"ORIGINAL_TEXT")],
+                                compress=zipfile.ZIP_STORED)
+        self.assertEqual(metadata_diagnostics(initial), ())
+        with zipfile.ZipFile(BytesIO(initial)) as archive:
+            self.assertEqual(archive.read("payload.txt"), b"ORIGINAL_TEXT")
