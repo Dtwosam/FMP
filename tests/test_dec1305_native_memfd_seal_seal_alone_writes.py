@@ -73,15 +73,15 @@ class NativeMemfdSealSealAlonePermitsDataMutation(unittest.TestCase):
             self.assertEqual(drain(),[])
 
             # Ordinary pwrite changes ORIGINAL anonymous inode
-            # bytes and emits real native IN_MODIFY even though
+            # bytes yet emits NO native IN_MODIFY even though
             # the memfd seal set can no longer be extended.
             changed=b"XXXX"+BEFORE[4:]
             self.assertEqual(os.pwrite(fd,b"XXXX",0),4)
             self.assertEqual(os.pread(fd,len(BEFORE),0),changed)
-            self.assertEqual(drain(),[(wd,IN_MODIFY,b"")])
+            self.assertEqual(drain(),[])
             self.assertEqual(os.pwrite(fd,BEFORE[:4],0),4)
             self.assertEqual(os.pread(fd,len(BEFORE),0),BEFORE)
-            self.assertEqual(drain(),[(wd,IN_MODIFY,b"")])
+            self.assertEqual(drain(),[])
 
             # Data can also be destroyed by truncation, then
             # subsequently restored because NO write/size seal
@@ -95,7 +95,7 @@ class NativeMemfdSealSealAlonePermitsDataMutation(unittest.TestCase):
             self.assertEqual(
                 os.pread(fd,len(BEFORE),0),BEFORE[:-1]+b"\x00")
             self.assertEqual(os.pwrite(fd,BEFORE[-1:],len(BEFORE)-1),1)
-            self.assertEqual(drain(),[(wd,IN_MODIFY,b"")])
+            self.assertEqual(drain(),[])
             self.assertEqual(os.pread(fd,len(BEFORE),0),BEFORE)
             self.assertEqual(os.fstat(fd).st_size,len(BEFORE))
             self.assertEqual(

@@ -80,14 +80,14 @@ class NativeMemfdGrowShrinkSealsAllowOverwrite(unittest.TestCase):
                     self.assertEqual(drain(),[])
 
             # Actual original-inode pwrite remains permitted,
-            # causing genuine anonymous source IN_MODIFY.
+            # yet emitting NO anonymous source IN_MODIFY.
             self.assertEqual(os.pwrite(fd,b"XXXX",0),4)
             self.assertEqual(os.pread(fd,len(BEFORE),0),
                              b"XXXX"+BEFORE[4:])
-            self.assertEqual(drain(),[(wd,IN_MODIFY,b"")])
+            self.assertEqual(drain(),[])
             self.assertEqual(os.pwrite(fd,BEFORE[:4],0),4)
             self.assertEqual(os.pread(fd,len(BEFORE),0),BEFORE)
-            self.assertEqual(drain(),[(wd,IN_MODIFY,b"")])
+            self.assertEqual(drain(),[])
 
             # Writable MAP_SHARED still mutates actual backing
             # source, but its stores are inotify MODIFY-quiet.
