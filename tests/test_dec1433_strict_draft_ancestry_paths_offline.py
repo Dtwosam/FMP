@@ -49,7 +49,10 @@ def review_draft_source_lineage(pr: object, compare: object,
         value = compare.get(key)
         if type(value) is not dict or value.get("sha") != base:
             issues.append(key.upper() + "_UNREVIEWED")
-    if compare.get("too_large") not in (None, False):
+    # False/None are the only accepted documented untruncated values.
+    # Equality-based membership accidentally treats integer 0 as False.
+    truncation = compare.get("too_large")
+    if truncation is not None and truncation is not False:
         issues.append("COMPARE_TRUNCATED_UNREVIEWED")
     if commit.get("sha") != head:
         issues.append("COMMIT_HEAD_SHA_MISMATCH")
@@ -71,10 +74,13 @@ def review_draft_source_lineage(pr: object, compare: object,
                 issues.append("PRODUCTION_OR_WORKFLOW_PATH_UNREVIEWED")
             else:
                 paths.append(path)
-            if previous is not None and (
-                    not reviewed_tests_docs_path(previous)):
-                issues.append("RENAMED_FROM_PRODUCTION_PATH_UNREVIEWED")
-            if file.get("status") not in ("added", "modified", "removed", "renamed"):
+            status = file.get("status")
+            if status == "renamed":
+                if not reviewed_tests_docs_path(previous) or previous == path:
+                    issues.append("RENAMED_FROM_PRODUCTION_PATH_UNREVIEWED")
+            elif previous is not None:
+                issues.append("UNEXPECTED_PREVIOUS_FILENAME_UNREVIEWED")
+            if status not in ("added", "modified", "removed", "renamed"):
                 issues.append("FILE_STATUS_UNREVIEWED")
         if len(paths) != len(set(paths)):
             issues.append("DUPLICATE_CHANGED_PATH_UNREVIEWED")
@@ -211,3 +217,51 @@ class DraftNeverMergeOnlySourceChanges(unittest.TestCase):
         self.compare["files"][0]["filename"] = "tests/safe/nested/unit.py"
         self.compare["files"][1]["filename"] = "docs/reviews/summary.md"
         self.assertEqual(self.verdict(), ())
+
+    def test_numeric_zero_is_not_untruncated_boolean_flag(self):
+        self.compare["too_large"] = 0
+        self.assertIn("COMPARE_TRUNCATED_UNREVIEWED", self.verdict())
+
+    def test_empty_list_is_not_untruncated_flag(self):
+        self.compare["too_large"] = []
+        self.assertIn("COMPARE_TRUNCATED_UNREVIEWED", self.verdict())
+
+    def test_explicit_false_untruncated_flag_is_accepted(self):
+        self.compare["too_large"] = False
+        self.assertEqual(self.verdict(), ())
+
+    def test_missing_previous_filename_in_rename_is_rejected(self):
+        self.compare["files"][0]["status"] = "renamed"
+        self.compare["files"][0].pop("previous_filename")
+        self.assertIn("RENAMED_FROM_PRODUCTION_PATH_UNREVIEWED",
+                      self.verdict())
+
+    def test_same_old_and_new_name_in_rename_is_rejected(self):
+        self.compare["files"][0]["status"] = "renamed"
+        self.compare["files"][0]["previous_filename"] = "tests/test_fixture.py"
+        self.assertIn("RENAMED_FROM_PRODUCTION_PATH_UNREVIEWED",
+                      self.verdict())
+
+    def test_modified_file_with_previous_filename_is_rejected(self):
+        self.compare["files"][0]["status"] = "modified"
+        self.compare["files"][0]["previous_filename"] = "docs/old.md"
+        self.assertIn("UNEXPECTED_PREVIOUS_FILENAME_UNREVIEWED",
+                      self.verdict())
+
+    def test_added_file_with_previous_filename_is_rejected(self):
+        self.compare["files"][0]["status"] = "added"
+        self.compare["files"][0]["previous_filename"] = "tests/old.py"
+        self.assertIn("UNEXPECTED_PREVIOUS_FILENAME_UNREVIEWED",
+                      self.verdict())
+
+    def test_safe_renamed_docs_file_has_explicit_distinct_origin(self):
+        self.compare["files"][1] = {
+            "filename": "docs/review.md", "status": "renamed",
+            "previous_filename": "docs/review-before.md"}
+        self.assertEqual(self.verdict(), ())
+
+    def test_empty_previous_filename_is_not_a_valid_rename_origin(self):
+        self.compare["files"][1]["status"] = "renamed"
+        self.compare["files"][1]["previous_filename"] = ""
+        self.assertIn("RENAMED_FROM_PRODUCTION_PATH_UNREVIEWED",
+                      self.verdict())
