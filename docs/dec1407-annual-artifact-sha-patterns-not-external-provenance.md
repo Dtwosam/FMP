@@ -1,0 +1,9 @@
+# DEC-1407 — Annual artifact name/SHA patterns are source consistency, not external provenance
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1630 DEC-1406 at `6da0b4a7bef190775859c3614855574b08494444`. Twelve new source-defined tests, **1,335 proposed methods**. No GitHub archive downloads or annual invocation.
+
+The current tracked annual preflight, cell and freeze artifacts embed the declared annual segment label and `github.sha` in their names; cell products additionally embed symbol, timeframe and minute horizon. The final freeze job searches the corresponding `phase8a-annual-catalogue-cell-<label>-*-*-*m-<github.sha>` pattern into checkout-relative `.cell-results` with `merge-multiple: false`. These source identities are an important regression invariant but are **not** actual cryptographic archive provenance, immutable external approved Actions server commit binding, authorization for 2023 run385, or proof of a trusted independent scratch/uploader.
+
+Twelve pure source tests pin these exact emitted names, the freeze pattern and extraction root, and reject in-memory changes substituting `github.ref`, missing a matrix dimension, wildcarding away `github.sha`, redirecting staging, enabling merged artifacts or duplicating an artifact `name` field. Tests use read-only `git show HEAD:<path>`; the installed annual workflow remains unchanged. Even source-perfect patterns could match untrusted outputs if upstream admission/authorization or actor control is not independently enforced.
+
+Independent protected OS original no-write DEC-650/#820 and immutable exclusive server-side 2023 run385/attempt1 admission DEC-651/#821/#779 remain **BLOCKED**. Own completed successful exact-head Phase3 and full historical CI plus independent qualified security review required. No protected evidence, annual run/dispatch/retry, installed workflow/permissions/rulesets, strategy/broker/trading, merges or promotion.
