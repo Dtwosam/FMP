@@ -48,9 +48,11 @@ def preflight_review(source: object) -> tuple[str, ...]:
     if all(name in spans[FETCH] for name in raw_metadata):
         issues.append("SOURCE_METADATA_STAGED_IN_PREFLIGHT_TREE")
     upload = spans[UPLOAD]
-    if "if: always()" in upload and "path: .preflight" in upload:
+    broad_path = re.search(r"(?m)^          path: \.preflight$", upload)
+    always = re.search(r"(?m)^        if: always\(\)$", upload)
+    if always and broad_path:
         issues.append("PREFLIGHT_ALWAYS_UPLOADS_TREE_ON_FAILURE")
-        if "include-hidden-files: true" in upload:
+        if re.search(r"(?m)^          include-hidden-files: true$", upload):
             issues.append("UPLOAD_INCLUDE_HIDDEN_SOURCE")
     return tuple(issues)
 
@@ -124,3 +126,33 @@ class SourceOnlyPreflightPublicationRiskIsNotActualLeakEvidence(unittest.TestCas
 
     def test_nontext_source_never_passes_source_review(self):
         self.assertEqual(preflight_review({}), ("SOURCE_NOT_TEXT",))
+
+    def test_suffixed_upload_path_is_not_the_full_preflight_directory(self):
+        changed = self.source.replace(
+            "          path: .preflight\n",
+            "          path: .preflight/specific-report.json\n", 1,
+        )
+        self.assertNotIn("PREFLIGHT_ALWAYS_UPLOADS_TREE_ON_FAILURE",
+                         preflight_review(changed))
+
+    def test_fake_always_comment_does_not_pass_active_upload_condition(self):
+        changed = self.source.replace(
+            "        if: always()\n",
+            "        if: success() # if: always()\n", 1,
+        )
+        self.assertNotIn("PREFLIGHT_ALWAYS_UPLOADS_TREE_ON_FAILURE",
+                         preflight_review(changed))
+
+    def test_trailing_path_suffix_comment_not_mistaken_for_exact_broad_root(self):
+        changed = self.source.replace(
+            "          path: .preflight\n",
+            "          path: .preflight  # changed location\n", 1,
+        )
+        self.assertNotIn("PREFLIGHT_ALWAYS_UPLOADS_TREE_ON_FAILURE",
+                         preflight_review(changed))
+
+    def test_broad_directory_and_exact_always_still_flagged(self):
+        self.assertIn("PREFLIGHT_ALWAYS_UPLOADS_TREE_ON_FAILURE",
+                      preflight_review(self.source))
+        self.assertIn("UPLOAD_INCLUDE_HIDDEN_SOURCE",
+                      preflight_review(self.source))
