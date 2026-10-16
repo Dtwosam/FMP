@@ -43,6 +43,24 @@ def input_diagnostics(value: object) -> tuple[str, ...]:
                 or values(second, "required") != ["false"]
                 or values(second, "type") != ["string"]):
             problems.append("INPUT_REQUIREMENT_TYPE_DRIFT")
+        allowed_years = [str(year) for year in range(2015, 2026)]
+        allowed_years.append("2026_YTD_TO_2026_08_20")
+        expected_first = [
+            "      annual_segment_label:",
+            "        description: Frozen annual segment",
+            "        required: true",
+            "        type: choice",
+            "        options:",
+            *['          - "' + year + '"' for year in allowed_years],
+        ]
+        expected_second = [
+            "        description: Required prior annual-catalogue run id for every segment after 2015",
+            "        required: false",
+            "        type: string",
+        ]
+        if ([line for line in first.splitlines() if line.strip()] != expected_first
+                or [line for line in second.splitlines() if line.strip()] != expected_second):
+            problems.append("MANUAL_INPUT_EXTRA_KEY_OR_CHOICE_DRIFT")
     return tuple(problems)
 
 
@@ -162,3 +180,51 @@ class AnnualManualInputSourceDoesNotBindServerSideDispatch(unittest.TestCase):
         )
         self.assertIn("INPUT_REQUIREMENT_TYPE_DRIFT",
                       input_diagnostics(changed))
+
+    def test_exact_input_choice_and_property_allowlist_remains_current(self):
+        self.assertNotIn("MANUAL_INPUT_EXTRA_KEY_OR_CHOICE_DRIFT",
+                         input_diagnostics(self.workflow))
+
+    def test_unreviewed_default_segment_is_rejected(self):
+        mutated = self.workflow.replace(
+            "        type: choice\n",
+            "        type: choice\n        default: 2023\n", 1,
+        )
+        self.assertIn("MANUAL_INPUT_EXTRA_KEY_OR_CHOICE_DRIFT",
+                      input_diagnostics(mutated))
+
+    def test_unreviewed_predecessor_default_is_rejected(self):
+        before, key, after = self.workflow.partition(
+            "      previous_annual_freeze_run_id:\n"
+        )
+        self.assertTrue(key)
+        mutated = before + key + after.replace(
+            "        type: string\n",
+            "        type: string\n        default: '37663157285'\n", 1,
+        )
+        self.assertIn("MANUAL_INPUT_EXTRA_KEY_OR_CHOICE_DRIFT",
+                      input_diagnostics(mutated))
+
+    def test_duplicate_2023_choice_does_not_pass_review(self):
+        mutated = self.workflow.replace(
+            '          - "2023"\n',
+            '          - "2023"\n          - "2023"\n', 1,
+        )
+        self.assertIn("MANUAL_INPUT_EXTRA_KEY_OR_CHOICE_DRIFT",
+                      input_diagnostics(mutated))
+
+    def test_unreviewed_new_future_segment_choice_is_rejected(self):
+        mutated = self.workflow.replace(
+            '          - "2025"\n',
+            '          - "2025"\n          - "2027"\n', 1,
+        )
+        self.assertIn("MANUAL_INPUT_EXTRA_KEY_OR_CHOICE_DRIFT",
+                      input_diagnostics(mutated))
+
+    def test_partial_2026_cutoff_choice_mutation_is_rejected(self):
+        mutated = self.workflow.replace(
+            '          - "2026_YTD_TO_2026_08_20"\n',
+            '          - "2026"\n', 1,
+        )
+        self.assertIn("MANUAL_INPUT_EXTRA_KEY_OR_CHOICE_DRIFT",
+                      input_diagnostics(mutated))

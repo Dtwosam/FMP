@@ -1,0 +1,9 @@
+# DEC-1392 — Manual input defaults and choice lists require renewed review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict forward-only one-commit test/docs child #1615 DEC-1391 at `ca671328e9dd037870dd43d88eeea52dd8ea1b82`; adds 6 new methods (**1,215 proposed source-defined methods**). No installed YAML/runtime/CLI changes.
+
+The existing source-only manual-dispatch input diagnostic from #1610/#1612 checked names and singleton `type`/`required` properties. It could still overlook adding a new user-controlled `default:` or extending the annual choice list to a future or duplicated segment. The updated review parser now requires the **entire exact declaration** of both manually admitted fields: annual label described as Frozen annual segment, required choice with eleven complete years 2015–2025 and the exact partial `2026_YTD_TO_2026_08_20` cutoff; predecessor run ID described as an optional string and **without default**. Source-only negative fixtures inject defaults, duplicate 2023 choice, unapproved 2027 and changed 2026 cutoff.
+
+This is deliberately a **strict tracked-source allowlist**, not a general YAML parser or a server-side GitHub admission gate. It does not prove the user's manual input could not be overridden elsewhere in installed workflow/rulesets, grant any permission, or close the immutable `main` ref SHA race. The actual 2023 run385/attempt1 is not invoked; no subsequent year is authorized by the source choice list itself.
+
+Own exact-head successful Phase3 and full historical CI and independent qualified review required. Protected DEC-650/#820 independently enforced original no-write and DEC-651/#821/#779 immutable exclusive one-shot GitHub 2023 dispatch remain **BLOCKED**. No protected source/evidence, annual run/retry, production/workflow/ruleset/permission changes, strategy synthesis, broker/trading, merges or promotion.
