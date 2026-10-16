@@ -13,6 +13,11 @@ from test_dec1425_exact_ci_pr_affinity_offline import (
 
 STEP_POLICY = {
     "tests": ("unit-tests", (
+        "Run installed one-shot dispatch-authorization tests",
+        "Run DEC-611 protected 2023 dispatch immutability audit tests",
+        "Run DEC-612 2023 main lock readiness tests",
+        "Run DEC-613 2023 administrator lock handoff tests",
+        "Run DEC-626 inert three-job precheckout expression contract tests",
         "Run historical snapshot and general unit tests",
         "Compile package",
     )),
@@ -106,15 +111,15 @@ class ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(unittest.TestCase
         self.assertEqual(self.verdict(), ())
 
     def test_missing_historical_unit_test_step_is_not_green(self):
-        self.jobs_by_run[8001][0]["steps"].pop(0)
+        self.jobs_by_run[8001][0]["steps"].pop(-2)
         self.assertIn("tests_REQUIRED_STEP_INVENTORY_DRIFT", self.verdict())
 
     def test_skipped_historical_unit_test_step_is_not_green(self):
-        self.jobs_by_run[8001][0]["steps"][0]["conclusion"] = "skipped"
+        self.jobs_by_run[8001][0]["steps"][-2]["conclusion"] = "skipped"
         self.assertIn("tests_REQUIRED_STEP_NOT_SUCCESSFUL", self.verdict())
 
     def test_failed_compile_step_is_not_green(self):
-        self.jobs_by_run[8001][0]["steps"][1]["conclusion"] = "failure"
+        self.jobs_by_run[8001][0]["steps"][-1]["conclusion"] = "failure"
         self.assertIn("tests_REQUIRED_STEP_NOT_SUCCESSFUL", self.verdict())
 
     def test_missing_phase3_evidence_verification_is_not_green(self):
@@ -171,7 +176,7 @@ class ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(unittest.TestCase
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
 
     def test_reversing_historical_critical_step_numbers_is_flagged(self):
-        a, b = self.jobs_by_run[8001][0]["steps"]
+        a, b = self.jobs_by_run[8001][0]["steps"][-2:]
         a["number"], b["number"] = b["number"], a["number"]
         self.assertIn("tests_CRITICAL_STEP_ORDER_DRIFT", self.verdict())
 
@@ -241,3 +246,49 @@ class RequiredJobStepFixtureIsolation(unittest.TestCase):
         case.setUp()
         self.assertEqual(case.verdict(), ())
         self.assertEqual(set(case.jobs_by_run), {8000, 8001})
+
+
+class AnnualSecurityCIProbeMustReallyRun(unittest.TestCase):
+    def setUp(self):
+        self.fixture = ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(
+            methodName="test_exact_successful_job_and_step_evidence_is_consistent"
+        )
+        self.fixture.setUp()
+
+    def verdict(self):
+        return self.fixture.verdict()
+
+    def test_reviewed_2023_security_step_names_are_pinned_in_order(self):
+        required = STEP_POLICY["tests"][1]
+        self.assertEqual(required[:5], (
+            "Run installed one-shot dispatch-authorization tests",
+            "Run DEC-611 protected 2023 dispatch immutability audit tests",
+            "Run DEC-612 2023 main lock readiness tests",
+            "Run DEC-613 2023 administrator lock handoff tests",
+            "Run DEC-626 inert three-job precheckout expression contract tests",
+        ))
+        self.assertEqual(self.verdict(), ())
+
+    def test_missing_installed_dispatch_authorization_step_is_detected(self):
+        self.fixture.jobs_by_run[8001][0]["steps"].pop(0)
+        self.assertIn("tests_REQUIRED_STEP_INVENTORY_DRIFT", self.verdict())
+
+    def test_skipped_2023_immutability_audit_step_is_detected(self):
+        self.fixture.jobs_by_run[8001][0]["steps"][1]["conclusion"] = "skipped"
+        self.assertIn("tests_REQUIRED_STEP_NOT_SUCCESSFUL", self.verdict())
+
+    def test_failed_main_lock_readiness_step_is_detected(self):
+        self.fixture.jobs_by_run[8001][0]["steps"][2]["conclusion"] = "failure"
+        self.assertIn("tests_REQUIRED_STEP_NOT_SUCCESSFUL", self.verdict())
+
+    def test_missing_administrator_handoff_step_is_detected(self):
+        self.fixture.jobs_by_run[8001][0]["steps"].pop(3)
+        self.assertIn("tests_REQUIRED_STEP_INVENTORY_DRIFT", self.verdict())
+
+    def test_skipped_precheckout_expression_guard_test_is_detected(self):
+        self.fixture.jobs_by_run[8001][0]["steps"][4]["conclusion"] = "skipped"
+        self.assertIn("tests_REQUIRED_STEP_NOT_SUCCESSFUL", self.verdict())
+
+    def test_synthetic_reviewed_steps_are_not_security_admission(self):
+        self.assertEqual(self.verdict(), ())
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
