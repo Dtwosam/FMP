@@ -1,0 +1,9 @@
+# DEC-1379 — Linux disposable positive/negative output guard limits
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict test/docs-only one-commit child #1602 DEC-1378 at `bbc30e31ec2096d8952485bc342b6d2b36a5012a`. Ten new unit-test methods, **1,128 proposed source-defined methods**. Pure `tempfile.TemporaryDirectory` original and scratch fixtures under a shared disposable root, Linux-only; no protected annual pathname/data/artifact, annual CLI/runtime, GitHub API or brokerage.
+
+Probes verify `O_NOFOLLOW` refuses a symlink even to a dangling target, and `O_EXCL` prevents overwriting an existing plain output. A strict basename opened relative to a scratch directory FD creates only a scratch child. **Counterexamples** demonstrate a relative `..` through `dir_fd` alone escapes the scratch subtree, a *hardlink* alias can still modify the shared inode despite `O_NOFOLLOW`, a dangling symlink may appear absent under `Path.exists()` while `lstat` detects it, and an `O_TRUNC` open mutates a synthetic original before any `write` call. A readonly FD itself denies writes but cannot prove that no other inherited writable descriptor exists.
+
+All outcomes occur only on synthetic files within this test's ephemeral root. These examples are guidance for independent DEC-650/#820 OS custodian design; neither this suite nor pathname-only checks prove the real protected original immutable under all aliases/caps/FDs. No privileged namespace was installed or runner policy modified. The separate DEC-651/#821/#779 immutable server-side one-shot annual 2023 run385/attempt1 admission remains **BLOCKED**.
+
+Requires exact-head Phase3+full historical CI success and qualified independent review. No annual run/dispatch/retry, protected evidence, installed workflows/rulesets/permissions, strategy synthesis, broker/trading, merge or promotion.
