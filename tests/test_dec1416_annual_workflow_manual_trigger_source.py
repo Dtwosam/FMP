@@ -27,8 +27,8 @@ def event_source_review(source: object) -> tuple[str, ...]:
     if re.findall(r"(?m)^on:$", header) != ["on:"]:
         return ("WORKFLOW_EVENT_TRIGGER_SHAPE_UNREVIEWED",)
     event = header.split("\non:\n", 1)[1]
-    triggers = re.findall(r"(?m)^  ([a-z0-9_-]+):[^\n]*$", event)
-    if triggers != ["workflow_dispatch"]:
+    triggers = re.findall(r"(?m)^  ([a-z0-9_-]+):([^\n]*)$", event)
+    if triggers != [("workflow_dispatch", "")]:
         issues.append("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE")
     if re.findall(r"(?m)^    inputs:$", event) != ["    inputs:"]:
         issues.append("EVENT_INPUT_CONTAINER_UNREVIEWED")
@@ -183,4 +183,28 @@ class AnnualManualTriggerListCannotAuthorizeRun385(unittest.TestCase):
         self.assertNotEqual(event_source_review(changed), ())
 
     def test_valid_manual_source_keeps_original_diagnostic(self):
+        self.assertEqual(event_source_review(self.workflow), ())
+
+    def test_manual_inline_dictionary_scalar_requires_review(self):
+        changed = self.workflow.replace(
+            "  workflow_dispatch:\n",
+            "  workflow_dispatch: {}\n", 1)
+        self.assertIn("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE",
+                      event_source_review(changed))
+
+    def test_manual_inline_list_scalar_requires_review(self):
+        changed = self.workflow.replace(
+            "  workflow_dispatch:\n",
+            "  workflow_dispatch: []\n", 1)
+        self.assertIn("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE",
+                      event_source_review(changed))
+
+    def test_manual_false_scalar_requires_review(self):
+        changed = self.workflow.replace(
+            "  workflow_dispatch:\n",
+            "  workflow_dispatch: false\n", 1)
+        self.assertIn("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE",
+                      event_source_review(changed))
+
+    def test_original_empty_manual_event_scalar_still_accepted(self):
         self.assertEqual(event_source_review(self.workflow), ())
