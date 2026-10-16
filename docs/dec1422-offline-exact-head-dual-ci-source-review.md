@@ -1,0 +1,9 @@
+# DEC-1422 — Offline exact-head two-suite CI evidence reviewer
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit synthetic test/docs child #1645 DEC-1421 at aca4010ddc751c8c7e58c038b8417c06109418fd. Adds 18 tests, **1,467 proposed source-defined test methods**.
+
+The repeated manual exact-commit CI review must never confuse Phase 3-only green with both required suites passing on the exact same commit, or an older/foreign workflow run with valid head evidence. This new stdlib-only, no-network reviewer accepts **caller-supplied** GitHub REST-shaped workflow summaries and returns review findings for missing or duplicate required workflows, mismatched head_sha, events other than pull_request, incomplete, failed, canceled or skipped runs, invalid run identities and malformed inputs. Extra skipped phase1 checks do not invalidate the two required suites. A valid synthetic two-run snapshot returns an empty diagnostic tuple, not an execution authorization flag.
+
+The 18 focused synthetic methods were executed locally in isolation and passed before opening this draft. These fixture runs are not the repository's full historical suite and cannot authenticate the supplied GitHub JSON, the remote runner, or any source artifact. The repository's own exact-head Phase3 and historical/general suites, plus independent qualified review, remain mandatory.
+
+Original PRs #1634–#1636 preserve their failed exact-head historical results. Their forward repair and descendants require individual verification; this diagnostic cannot change CI history or independently prove OS runner containment or server-side immutable one-shot admission. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**. No annual workflow dispatch/retry, protected original/archives, installed YAML/permissions/rulesets, merge, deployment or trading is authorized.
