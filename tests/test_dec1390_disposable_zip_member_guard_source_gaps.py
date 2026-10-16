@@ -11,6 +11,7 @@ import hashlib
 import re
 import stat
 import subprocess
+import unicodedata
 import unittest
 import zipfile
 
@@ -45,6 +46,7 @@ def member_problems(data: bytes) -> tuple[str, ...]:
     """Illustrative future *pre-extraction* denial logic, NOT installed guard."""
     problems = []
     observed: dict[str, bool] = {}
+    portable_seen: dict[str, str] = {}
     with zipfile.ZipFile(BytesIO(data), "r") as archive:
         for info in archive.infolist():
             raw = info.filename
@@ -57,6 +59,11 @@ def member_problems(data: bytes) -> tuple[str, ...]:
             canonical = str(name)
             if canonical in observed:
                 problems.append("DUPLICATE_NORMALIZED_NAME")
+            portable = unicodedata.normalize("NFC", canonical).casefold()
+            if portable in portable_seen and portable_seen[portable] != canonical:
+                problems.append("PORTABLE_NAME_COLLISION")
+            else:
+                portable_seen[portable] = canonical
             prefixes = canonical.split("/")
             if any("/".join(prefixes[:i]) in observed
                    and not observed["/".join(prefixes[:i])]
@@ -223,3 +230,47 @@ class SyntheticZipMembersAreNotRealProtectedArtifactAcceptance(unittest.TestCase
             "safe/file.txt", stat.S_IFREG | 0o644
         )
         self.assertEqual(member_problems(data), ())
+
+    def test_synthetic_filename_casefold_collision_is_flagged(self):
+        data = synthetic_zip([
+            ("A/REPORT.txt", b"one", False),
+            ("a/report.txt", b"two", False),
+        ])
+        self.assertIn("PORTABLE_NAME_COLLISION", member_problems(data))
+
+    def test_synthetic_unicode_nfc_nfd_collision_is_flagged(self):
+        data = synthetic_zip([
+            ("café.json", b"one", False),
+            ("cafe\u0301.json", b"two", False),
+        ])
+        self.assertIn("PORTABLE_NAME_COLLISION", member_problems(data))
+
+    def test_synthetic_unicode_casefold_sharp_s_collision_is_flagged(self):
+        data = synthetic_zip([
+            ("straße.txt", b"one", False),
+            ("strasse.txt", b"two", False),
+        ])
+        self.assertIn("PORTABLE_NAME_COLLISION", member_problems(data))
+
+    def test_synthetic_portable_collision_reversed_order_is_flagged(self):
+        data = synthetic_zip([
+            ("strasse.txt", b"first", False),
+            ("straße.txt", b"second", False),
+        ])
+        self.assertIn("PORTABLE_NAME_COLLISION", member_problems(data))
+
+    def test_unrelated_portable_names_have_no_collision_diagnostic(self):
+        data = synthetic_zip([
+            ("safe/EURUSD.json", b"first", False),
+            ("safe/GBPUSD.json", b"second", False),
+        ])
+        self.assertNotIn("PORTABLE_NAME_COLLISION",
+                         member_problems(data))
+        self.assertEqual(member_problems(data), ())
+
+    def test_literal_duplicate_name_is_still_rejected_as_duplicate(self):
+        data = synthetic_zip([
+            ("safe/manifest.json", b"first", False),
+            ("safe/manifest.json", b"second", False),
+        ])
+        self.assertIn("DUPLICATE_NORMALIZED_NAME", member_problems(data))
