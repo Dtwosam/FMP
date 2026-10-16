@@ -38,8 +38,35 @@ def source_diagnostics(source: object) -> tuple[str, ...]:
     job_names = re.findall(r"(?m)^  ([a-z_][a-z0-9_-]*):$", jobs)
     if job_names != ["annual_preflight", "annual_cell", "annual_freeze"]:
         problems.append("JOB_INVENTORY_OR_ORDER_DRIFT")
-    if source.count("GH_TOKEN: " + "$" + "{{ github.token }}") != 3:
+    token_marker = "          GH_TOKEN: " + "$" + "{{ github.token }}\n"
+    if source.count(token_marker) != 3:
         problems.append("WORKFLOW_TOKEN_SOURCE_BINDINGS_DRIFT")
+    expected_roles = (
+        ("annual_preflight", "Fetch exact accepted EXP-044 source snapshots"),
+        ("annual_preflight", "Fetch exact prior annual freeze evidence"),
+        ("annual_cell", "Download exact accepted EXP-044 feature/outcome/evidence artifacts"),
+    )
+    actual_roles = []
+    for job, next_job in (
+        ("annual_preflight", "annual_cell"),
+        ("annual_cell", "annual_freeze"),
+        ("annual_freeze", None),
+    ):
+        marker = "  " + job + ":\n"
+        if marker not in jobs:
+            problems.append("MISSING_TOKEN_SOURCE_JOB_" + job)
+            continue
+        fragment = jobs.split(marker, 1)[1]
+        if next_job is not None:
+            fragment = fragment.split("  " + next_job + ":\n", 1)[0]
+        parts = re.split(r"(?m)^      - name: ([^\n]+)\n", fragment)
+        for index in range(1, len(parts), 2):
+            step = parts[index].strip()
+            actual_roles.extend(
+                [(job, step)] * parts[index + 1].count(token_marker)
+            )
+    if tuple(actual_roles) != expected_roles:
+        problems.append("WORKFLOW_TOKEN_STEP_PLACEMENT_DRIFT")
     return tuple(problems)
 
 
@@ -165,3 +192,44 @@ class ReadOnlyGitHubTokenSourceIsNotReadOnlyFilesystem(unittest.TestCase):
         )
         self.assertIn("TOKEN_SCOPE_NOT_EXACT_READONLY_SOURCE",
                       source_diagnostics(mutated))
+
+    def test_token_bindings_match_expected_per_step_inventory(self):
+        self.assertNotIn(
+            "WORKFLOW_TOKEN_STEP_PLACEMENT_DRIFT",
+            source_diagnostics(self.source),
+        )
+
+    def test_moving_token_from_snapshot_fetch_to_checkout_is_rejected(self):
+        marker = "          GH_TOKEN: " + "$" + "{{ github.token }}\n"
+        changed = self.source.replace(marker, "", 1)
+        changed = changed.replace(
+            "      - name: Checkout\n        uses: actions/checkout@v6",
+            "      - name: Checkout\n        env:\n" + marker
+            + "        uses: actions/checkout@v6", 1
+        )
+        self.assertEqual(changed.count(marker), 3)
+        self.assertIn("WORKFLOW_TOKEN_STEP_PLACEMENT_DRIFT",
+                      source_diagnostics(changed))
+
+    def test_moving_cell_token_to_freeze_checkout_is_rejected(self):
+        marker = "          GH_TOKEN: " + "$" + "{{ github.token }}\n"
+        before, freeze = self.source.split("  annual_freeze:\n", 1)
+        prior, sep, tail = before.rpartition(marker)
+        self.assertEqual(sep, marker)
+        changed = prior + tail + "  annual_freeze:\n" + freeze.replace(
+            "      - name: Checkout\n        uses: actions/checkout@v6",
+            "      - name: Checkout\n        env:\n" + marker
+            + "        uses: actions/checkout@v6", 1
+        )
+        self.assertEqual(changed.count(marker), 3)
+        self.assertIn("WORKFLOW_TOKEN_STEP_PLACEMENT_DRIFT",
+                      source_diagnostics(changed))
+
+    def test_duplicate_prior_token_and_missing_snapshot_token_rejected(self):
+        marker = "          GH_TOKEN: " + "$" + "{{ github.token }}\n"
+        changed = self.source.replace(marker, "", 1).replace(
+            marker, marker + marker, 1
+        )
+        self.assertEqual(changed.count(marker), 3)
+        self.assertIn("WORKFLOW_TOKEN_STEP_PLACEMENT_DRIFT",
+                      source_diagnostics(changed))
