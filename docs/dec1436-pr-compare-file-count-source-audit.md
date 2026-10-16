@@ -1,0 +1,9 @@
+# DEC-1436 — Exact PR changed-file count and compare diff completeness
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1659 DEC-1435 at 8d816472d1063bf0d51b126c2c56fca5cc6ad0d3, **16 new test methods**, now **1,603 proposed source-defined methods**.
+
+The source-only lineage reviewer previously checked only each path listed by a GitHub compare response; it did not reconcile the separate PR metadata field changed_files against the number of compare entries. An incomplete compare list that silently omitted a production or installed workflow file could look like a docs/tests-only change. The reviewer also omitted checking PR additions and deletions against per-file line counts. These independent shape fields are visible in current GitHub PR and compare responses. At #1659, PR metadata reported changed_files=2, additions=155, deletions=0, matching two compare files with 9+146 added lines and no deletions.
+
+This new **offline, caller-supplied JSON shape** checker reuses DEC-1433 ancestry/path findings, requires strictly positive exact changed-file count, exact compare cardinality, nonnegative integer line counts, per-file changes==additions+deletions, and PR aggregate additions/deletions equality. Synthetic fixtures test missing/inconsistent/boolean fields, absent compare entries, altered totals and source changes. None of these controls independently authenticates the snapshot or proves no separate hidden Git server change; callers must fetch and bind real exact-head GitHub PR/compare evidence.
+
+No network, actual historical or annual workflow, protected archives/inputs, live settings, merge, or broker/trading is performed. Its own exact-head Phase3/full historical CI and qualified independent review are mandatory. DEC-650/#820 original OS no-write and DEC-651/#821/#779 immutable exclusive one-shot 2023 run385/attempt1 admission remain BLOCKED.
