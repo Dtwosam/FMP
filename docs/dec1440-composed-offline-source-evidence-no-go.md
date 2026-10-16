@@ -1,0 +1,9 @@
+# DEC-1440 — Composed draft/CI source review is never protected authorization
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1663 DEC-1439 at 624b002f0de79174b2b9aecb3343f64d5f3e658f; 17 additional source-defined methods, **1,650 proposed methods**.
+
+The independently useful review functions from DEC-1422–1439 check disjoint pieces of an exact PR research draft: its associated CI workflows and completed critical job steps, its strict one-commit diff and file counts, the changed Git tree ancestor/leaf types, the exact changed byte-to-Git-blob identities, and the reviewed CI YAML bytes. A caller must not interpret any one of these consistency checks as a complete exact-source review or, worse, protected annual execution consent.
+
+This new **offline and synthetic-only integration suite** composes five existing reviewer functions into a single diagnostic-only result. Synthetic fixtures show a fully consistent untrusted source snapshot can return source_consistency=true while the independent-original-OS, exclusive-server-dispatch, and can_authorize_annual_run fields are **always false**. Negative fixtures mutate each separately required evidence class and show the combined source consistency result fails closed; multiple violations accumulate rather than hiding each other.
+
+This composite reviewer does NOT perform live GitHub requests, authenticate separately obtained metadata, execute OS confinement, prove protected original immutability, or reserve GitHub's irreversible one-shot run number. The built-in CI workflow bytes are read via git show HEAD only from the repository's test checkout, not from protected historical archives. This PR requires its own exact-head Phase3/full historical CI and qualified review. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**. No protected annual dispatch/retry, repository branch/ruleset/security change, merge, deployment or trading.
