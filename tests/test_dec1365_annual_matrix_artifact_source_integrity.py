@@ -31,7 +31,7 @@ def parse_committed_matrix(source: str) -> list[dict[str, str]]:
     for fragment in parts[1:]:
         symbol, _, tail = fragment.partition("\n")
         row = {"symbol": symbol.strip()}
-        fields = re.findall(r"(?m)^            ([a-z_]+): (.+)$", tail)
+        fields = re.findall(r"(?m)^            ([a-z0-9_]+): (.+)$", tail)
         for name, value in fields:
             if name in row:
                 raise ValueError("duplicate matrix field")
