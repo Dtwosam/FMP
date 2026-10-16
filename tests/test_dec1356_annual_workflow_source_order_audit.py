@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import subprocess
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -15,7 +16,9 @@ spec.loader.exec_module(module)
 class ActualAnnualWorkflowSourceMustNotBeMistakenForAdmission(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source=WORKFLOW.read_text(encoding="utf-8")
+        cls.source=subprocess.check_output(["git", "show",
+            "HEAD:.github/workflows/phase8a-annual-pattern-catalogue.yml"],
+            cwd=ROOT, text=True)
 
     def _blocked(self,source):
         report=module.audit_annual_workflow_source(source)

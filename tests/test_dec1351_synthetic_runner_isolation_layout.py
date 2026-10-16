@@ -160,10 +160,15 @@ class OfflineRunnerLayoutMustNeverApprove(unittest.TestCase):
         class Colliding:
             def __hash__(self):
                 return hash("scope")
+            armed=False
             def __eq__(self,other):
-                raise AssertionError("untrusted outer key equality executed")
+                if self.armed:
+                    raise AssertionError("untrusted outer key equality executed")
+                return False
         x=canonical()
-        x[Colliding()]="generated_public_only"
+        key=Colliding()
+        x[key]="generated_public_only"
+        key.armed=True
         b=self._assess(x)
         self.assertIn("UNTRUSTED_LAYOUT_INPUT",b)
 
@@ -171,10 +176,15 @@ class OfflineRunnerLayoutMustNeverApprove(unittest.TestCase):
         class Colliding:
             def __hash__(self):
                 return hash("fd0")
+            armed=False
             def __eq__(self,other):
-                raise AssertionError("untrusted consumer key equality executed")
+                if self.armed:
+                    raise AssertionError("untrusted consumer key equality executed")
+                return False
         x=canonical()
-        x["consumer"][Colliding()]="safe_input"
+        key=Colliding()
+        x["consumer"][key]="safe_input"
+        key.armed=True
         b=self._assess(x)
         self.assertIn("UNTRUSTED_CONSUMER_SPEC",b)
 
