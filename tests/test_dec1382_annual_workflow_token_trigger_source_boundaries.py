@@ -19,6 +19,8 @@ def source_diagnostics(source: object) -> tuple[str, ...]:
     if source.count("\njobs:\n") != 1 or source.count("\npermissions:\n") != 1:
         return ("MALFORMED_TOP_LEVEL",)
     header, jobs = source.split("\njobs:\n", 1)
+    if header.count("\non:\n") > 1:
+        return ("DUPLICATED_TRIGGER_SOURCE",)
     event_block = header.split("\non:\n", 1)
     if len(event_block) != 2:
         return ("MISSING_TRIGGER",)
@@ -34,8 +36,7 @@ def source_diagnostics(source: object) -> tuple[str, ...]:
         problems.append("TOKEN_SCOPE_NOT_EXACT_READONLY_SOURCE")
     if re.search(r"(?m)^    permissions:", jobs):
         problems.append("JOB_SCOPED_PERMISSION_OVERRIDE_SOURCE")
-    job_names = re.findall(r"(?m)^  (annual_preflight|annual_cell|annual_freeze):$",
-                           jobs)
+    job_names = re.findall(r"(?m)^  ([a-z_][a-z0-9_-]*):$", jobs)
     if job_names != ["annual_preflight", "annual_cell", "annual_freeze"]:
         problems.append("JOB_INVENTORY_OR_ORDER_DRIFT")
     if source.count("GH_TOKEN: " + "$" + "{{ github.token }}") != 3:
@@ -111,3 +112,21 @@ class ReadOnlyGitHubTokenSourceIsNotReadOnlyFilesystem(unittest.TestCase):
         self.assertIn("path: .preflight", self.source)
         self.assertIn("include-hidden-files: true", self.source)
         # A GitHub API read token is not an independent OS no-write mount.
+
+    def test_unreviewed_fourth_job_is_rejected_in_memory(self):
+        mutated = self.source.replace(
+            "  annual_freeze:\n",
+            "  unreviewed_job:\n    runs-on: ubuntu-latest\n  annual_freeze:\n",
+            1,
+        )
+        self.assertIn("JOB_INVENTORY_OR_ORDER_DRIFT",
+                      source_diagnostics(mutated))
+
+    def test_duplicate_top_level_trigger_is_rejected_in_memory(self):
+        mutated = self.source.replace(
+            "\npermissions:\n",
+            "\non:\n  push:\n\npermissions:\n",
+            1,
+        )
+        self.assertIn("DUPLICATED_TRIGGER_SOURCE",
+                      source_diagnostics(mutated))
