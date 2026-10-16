@@ -252,3 +252,41 @@ class SyntheticAnnualProofMustNotAuthorize(unittest.TestCase):
                       result["blockers"])
         self.assertNotIn("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY",
                          result["blockers"])
+
+    def test_hostile_packet_dict_key_never_gets_equality_call(self):
+        class ExplosiveKey:
+            def __hash__(self):
+                return hash("proof")
+            def __eq__(self, other):
+                raise AssertionError("untrusted outer key comparison called")
+        r=self._blocked({ExplosiveKey():"not a valid proof"})
+        self.assertIn("INPUT_NONSTRING_KEYS_REJECTED",r["blockers"])
+
+    def test_hostile_nested_proof_key_never_gets_equality_call(self):
+        class ExplosiveKey:
+            def __hash__(self):
+                return hash("kind")
+            def __eq__(self, other):
+                raise AssertionError("untrusted proof key comparison called")
+        r=self._blocked({"proof":{ExplosiveKey():"public_memfd_seals"}})
+        self.assertIn("PROOF_NONSTRING_KEYS_REJECTED",r["blockers"])
+
+    def test_hostile_nested_annual_key_never_gets_equality_call(self):
+        class ExplosiveKey:
+            def __hash__(self):
+                return hash("attempt")
+            def __eq__(self, other):
+                raise AssertionError("untrusted annual key comparison called")
+        r=self._blocked({"annual":{ExplosiveKey():1}})
+        self.assertIn("ANNUAL_NONSTRING_KEYS_REJECTED",r["blockers"])
+
+    def test_normal_string_key_packet_remains_nonauthorizing(self):
+        r=self._blocked(
+            {"proof":{"kind":"inotify_quiet","independent":True},
+             "annual":{"run_number":385,"attempt":1,
+                       "expected_sha":"abc","observed_sha":"abc"}})
+        self.assertNotIn("INPUT_NONSTRING_KEYS_REJECTED",r["blockers"])
+        self.assertNotIn("PROOF_NONSTRING_KEYS_REJECTED",r["blockers"])
+        self.assertNotIn("ANNUAL_NONSTRING_KEYS_REJECTED",r["blockers"])
+        self.assertIn("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY",
+                      r["blockers"])
