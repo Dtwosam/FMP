@@ -34,10 +34,14 @@ def input_diagnostics(value: object) -> tuple[str, ...]:
         problems.append("UNREVIEWED_INPUT_EXPRESSION")
     if tuple(names) == EXPECTED:
         first, second = block.split("      previous_annual_freeze_run_id:\n", 1)
-        if ("        required: true" not in first
-                or "        type: choice" not in first
-                or "        required: false" not in second
-                or "        type: string" not in second):
+        def values(section: str, name: str) -> list[str]:
+            return re.findall(
+                r"(?m)^        " + name + r": ([^\n]+)$", section
+            )
+        if (values(first, "required") != ["true"]
+                or values(first, "type") != ["choice"]
+                or values(second, "required") != ["false"]
+                or values(second, "type") != ["string"]):
             problems.append("INPUT_REQUIREMENT_TYPE_DRIFT")
     return tuple(problems)
 
@@ -118,3 +122,43 @@ class AnnualManualInputSourceDoesNotBindServerSideDispatch(unittest.TestCase):
 
     def test_nontext_source_never_passes_review(self):
         self.assertIn("NON_TEXT", input_diagnostics({}))
+
+    def test_duplicate_annual_required_property_is_rejected(self):
+        changed = self.workflow.replace(
+            "        required: true\n",
+            "        required: true\n        required: true\n", 1
+        )
+        self.assertIn("INPUT_REQUIREMENT_TYPE_DRIFT",
+                      input_diagnostics(changed))
+
+    def test_duplicate_annual_choice_type_is_rejected(self):
+        changed = self.workflow.replace(
+            "        type: choice\n",
+            "        type: choice\n        type: choice\n", 1
+        )
+        self.assertIn("INPUT_REQUIREMENT_TYPE_DRIFT",
+                      input_diagnostics(changed))
+
+    def test_conflicting_prior_type_keys_are_rejected(self):
+        start, key, prior = self.workflow.partition(
+            "      previous_annual_freeze_run_id:\n"
+        )
+        self.assertTrue(key)
+        changed = start + key + prior.replace(
+            "        type: string\n",
+            "        type: string\n        type: choice\n", 1
+        )
+        self.assertIn("INPUT_REQUIREMENT_TYPE_DRIFT",
+                      input_diagnostics(changed))
+
+    def test_duplicate_optional_prior_requirement_is_rejected(self):
+        start, key, prior = self.workflow.partition(
+            "      previous_annual_freeze_run_id:\n"
+        )
+        self.assertTrue(key)
+        changed = start + key + prior.replace(
+            "        required: false\n",
+            "        required: false\n        required: false\n", 1
+        )
+        self.assertIn("INPUT_REQUIREMENT_TYPE_DRIFT",
+                      input_diagnostics(changed))
