@@ -1,0 +1,11 @@
+# DEC-1385 — In-memory mutable main check/dispatch race witness
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1608 DEC-1384 at `fc7d81c981e70d79fefaf0fdb19726db5c2d3016`. **10 new unittest methods; 1,158 proposed source-defined methods**.
+
+The user-level race in #779 is irreversibility **before** server allocation: an authorized operator can locally verify `main` points to vetted commit A, yet an independent updater can change it to B before the Actions server resolves `workflow_dispatch ref=main`. A post-checkout ref/SHA gate cannot retroactively return the unique run slot. To make this distinction testable **without using or even contacting GitHub dispatch APIs**, an in-memory fake ref and allocation counter deterministically illustrate uncontended checks, raced checks, post-allocation failure, retry consuming a different slot, 40-hex A and B both appearing syntactically valid, and a hypothetical fixed immutable-tag SHA staying pinned only under its assumed immutability. The source-only tests also check that the *committed existing* workflow uses main and post-checkout gates and the runtime constants still say 2023 run385/attempt1 with retry/rerun false.
+
+**This model is not an implementation of an admission gate.** Its allocation counter is arbitrary synthetic state, not an observation of GitHub Actions runs; its immutable tag is a test constant, not a real protected tag, signed attestation, Actions server guarantee or reviewed source-of-truth amendment. A real one-shot dispatch is explicitly **not** attempted; the current protected run inventory has not been reauthenticated by this unit test.
+
+Actual main branch GET still reported `protected=false` and zero repository rulesets at #1605's observation. Independent GitHub administrator proof of exclusive ref/SHA server-side one-shot admission DEC-651/#821/#779 remains **BLOCKED**, as does actual OS original protected source no-write DEC-650/#820. This draft changes no workflow, branch protection, GitHub permissions, tag, protected evidence, strategy/broker/trading code, and cannot authorize a merge, protected run/retry or trading.
+
+Exact-head successful Phase3 and full historical tests plus separately qualified independent review remain required.
