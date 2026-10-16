@@ -36,10 +36,35 @@ def step_positions(job: str) -> tuple[int, int, int]:
             job.index(check))
 
 
+def move_named_step_before(job: str, selected: str, before: str) -> str:
+    """In-memory source-step reordering, never applied to installed YAML."""
+    marker = "      - name: " + selected + "\n"
+    destination = "      - name: " + before + "\n"
+    start = job.index(marker)
+    end = job.find("      - name: ", start + len(marker))
+    if end < 0:
+        end = len(job)
+    chunk = job[start:end]
+    remainder = job[:start] + job[end:]
+    position = remainder.index(destination)
+    return remainder[:position] + chunk + remainder[position:]
+
+
 def supply_chain_notes(workflow: str, requirements: str) -> tuple[str, ...]:
     notes = []
     for job in JOBS:
         part = job_text(workflow, job)
+        required_steps = (
+            "Checkout",
+            "Install pinned annual catalogue runtime",
+            ("Require separately authorized annual catalogue execution"
+             if job == "annual_preflight"
+             else "Recheck separately authorized annual catalogue execution"),
+        )
+        if any(part.count("      - name: " + step + "\n") != 1
+               for step in required_steps):
+            notes.append("MISSING_OR_DUPLICATE_RUNTIME_STEP_" + job)
+            continue
         checkout, install, authorize = step_positions(part)
         if checkout < install < authorize:
             notes.append("EXTERNAL_SETUP_BEFORE_RUNTIME_RECHECK_" + job)
@@ -103,18 +128,22 @@ class AnnualRunnerSetupCannotEstablishPreallocationTrust(unittest.TestCase):
         self.assertIn("EXTERNAL_ACTIONS_TAGGED_NOT_IMMUTABLE_SHA", notes)
         self.assertIn("DEPENDENCY_VERSIONS_PINNED_WITHOUT_HASHES", notes)
 
-    def test_in_memory_install_after_gate_changes_order_diagnostic(self):
-        a = job_text(self.workflow, "annual_preflight")
-        # A synthetic move can change source ordering, but is not an approved
-        # alternative installed workflow or a verified safe admission design.
-        install_step = "      - name: Install pinned annual catalogue runtime\n"
-        gate_step = "      - name: Require separately authorized annual catalogue execution\n"
-        moved = a.replace(install_step, gate_step, 1).replace(
-            gate_step + "        run: python -m pip install",
-            install_step + "        run: python -m pip install", 1
+    def test_in_memory_gate_moved_before_install_changes_order_diagnostic(self):
+        part = job_text(self.workflow, "annual_preflight")
+        moved = move_named_step_before(
+            part,
+            "Require separately authorized annual catalogue execution",
+            "Install pinned annual catalogue runtime",
         )
-        # Do not interpret this superficial string mutation as runtime safety.
-        self.assertIn("      - name: Checkout\n", moved)
+        self.assertNotEqual(moved, part)
+        checkout, install, gate = step_positions(moved)
+        self.assertLess(checkout, gate)
+        self.assertLess(gate, install)
+        mutated = self.workflow.replace(part, moved, 1)
+        self.assertNotIn(
+            "EXTERNAL_SETUP_BEFORE_RUNTIME_RECHECK_annual_preflight",
+            supply_chain_notes(mutated, self.requirements),
+        )
 
     def test_unhashed_dependency_literals_are_not_protected_identity(self):
         changed = self.requirements.replace(
@@ -127,3 +156,37 @@ class AnnualRunnerSetupCannotEstablishPreallocationTrust(unittest.TestCase):
         notes = supply_chain_notes(self.workflow, self.requirements)
         self.assertNotIn("PROTECTED_2023_DISPATCH_AUTHORIZED", notes)
         self.assertGreaterEqual(len(notes), 5)
+
+    def test_duplicate_install_step_is_rejected_by_source_inventory(self):
+        name = "      - name: Install pinned annual catalogue runtime\n"
+        changed = self.workflow.replace(name, name + name, 1)
+        self.assertIn("MISSING_OR_DUPLICATE_RUNTIME_STEP_annual_preflight",
+                      supply_chain_notes(changed, self.requirements))
+
+    def test_duplicate_runtime_recheck_is_rejected_by_source_inventory(self):
+        name = "      - name: Recheck separately authorized annual catalogue execution\n"
+        changed = self.workflow.replace(name, name + name, 1)
+        self.assertIn("MISSING_OR_DUPLICATE_RUNTIME_STEP_annual_cell",
+                      supply_chain_notes(changed, self.requirements))
+
+    def test_missing_checkout_is_rejected_by_source_inventory(self):
+        name = "      - name: Checkout\n"
+        changed = self.workflow.replace(name, "      - name: Unknown\n", 1)
+        self.assertIn("MISSING_OR_DUPLICATE_RUNTIME_STEP_annual_preflight",
+                      supply_chain_notes(changed, self.requirements))
+
+    def test_synthetic_cell_gate_move_changes_only_cell_order_diagnostic(self):
+        part = job_text(self.workflow, "annual_cell")
+        moved = move_named_step_before(
+            part,
+            "Recheck separately authorized annual catalogue execution",
+            "Install pinned annual catalogue runtime",
+        )
+        changed = self.workflow.replace(part, moved, 1)
+        notes = supply_chain_notes(changed, self.requirements)
+        self.assertNotIn(
+            "EXTERNAL_SETUP_BEFORE_RUNTIME_RECHECK_annual_cell", notes
+        )
+        self.assertIn(
+            "EXTERNAL_SETUP_BEFORE_RUNTIME_RECHECK_annual_freeze", notes
+        )
