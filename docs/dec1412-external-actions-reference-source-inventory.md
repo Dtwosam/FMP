@@ -1,0 +1,9 @@
+# DEC-1412 — Fail-closed external Actions action-reference inventory
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1635 DEC-1411 at fa84ce6adcbd32e2aa0ee750582030f25c588e5c. Nine tests added; **1,391 proposed source-defined unittest methods** in this lineage.
+
+The prior DEC-1394/1396 source risk reporter recognized mutable major-tagged GitHub Actions references only if *all* action refs still matched a generic actions/name@vN expression. Replacing one reference with an unexpected owner, digest, malformed tag, or deleting an action could make that finding silently vanish without any replacement review flag. This correction retains the existing diagnostic for currently tagged uses but independently requires the **exact current ten-action inventory**: three checkout@v6, three setup-python@v6, three upload-artifact@v6, one download-artifact@v6. Unknown owners, ref changes, missing/duplicate entries and pinned-SHA candidates receive an explicit unreviewed-reference or inventory-drift finding. SHA-based references are not automatically authenticated by merely looking like hashes.
+
+All modifications use synthetic in-memory copies of checked-in source; the actual annual workflow and dependencies are not changed. The risk report is a narrow source-text diagnostic, **not** real supply-chain attestation, runner OS isolation, or GitHub server-side one-shot admission proof. Changes to the action pinning policy require independent review and separately authorized installation.
+
+Own exact-head Phase 3 + full historical CI and qualified external review required. DEC-650/#820 original protected data OS no-write and DEC-651/#821/#779 externally enforced immutable/exclusive run385/attempt1 admission remain BLOCKED. No protected archive read, annual dispatch/retry, GitHub permission/branch/ruleset edits, production code, merge or trading.

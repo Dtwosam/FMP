@@ -69,8 +69,20 @@ def supply_chain_notes(workflow: str, requirements: str) -> tuple[str, ...]:
         if checkout < install < authorize:
             notes.append("EXTERNAL_SETUP_BEFORE_RUNTIME_RECHECK_" + job)
     uses = re.findall(r"(?m)^\s+uses: ([^\n]+)$", workflow)
-    if uses and all(re.fullmatch(r"actions/[a-z-]+@v[0-9]+", action) for action in uses):
+    expected = {
+        "actions/checkout@v6": 3,
+        "actions/setup-python@v6": 3,
+        "actions/upload-artifact@v6": 3,
+        "actions/download-artifact@v6": 1,
+    }
+    if len(uses) != 10 or {
+            action: uses.count(action) for action in expected} != expected:
+        notes.append("EXTERNAL_ACTION_REFERENCE_INVENTORY_DRIFT")
+    if uses and all(re.fullmatch(r"actions/[a-z-]+@v[0-9]+", action)
+                    for action in uses):
         notes.append("EXTERNAL_ACTIONS_TAGGED_NOT_IMMUTABLE_SHA")
+    else:
+        notes.append("EXTERNAL_ACTION_REFERENCE_UNREVIEWED")
     lines = [x for x in requirements.splitlines() if x.strip()]
     if lines and all(re.fullmatch(r"[a-z0-9-]+==[0-9.]+", x) for x in lines):
         notes.append("DEPENDENCY_VERSIONS_PINNED_WITHOUT_HASHES")
@@ -190,3 +202,66 @@ class AnnualRunnerSetupCannotEstablishPreallocationTrust(unittest.TestCase):
         self.assertIn(
             "EXTERNAL_SETUP_BEFORE_RUNTIME_RECHECK_annual_freeze", notes
         )
+
+    def test_canonical_action_inventory_has_no_silent_drift(self):
+        notes = supply_chain_notes(self.workflow, self.requirements)
+        self.assertNotIn("EXTERNAL_ACTION_REFERENCE_INVENTORY_DRIFT", notes)
+        self.assertNotIn("EXTERNAL_ACTION_REFERENCE_UNREVIEWED", notes)
+        self.assertIn("EXTERNAL_ACTIONS_TAGGED_NOT_IMMUTABLE_SHA", notes)
+
+    def test_changed_checkout_major_version_requires_review(self):
+        changed = self.workflow.replace(
+            "uses: actions/checkout@v6", "uses: actions/checkout@v7", 1)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_INVENTORY_DRIFT",
+                      supply_chain_notes(changed, self.requirements))
+
+    def test_changed_setup_major_version_requires_review(self):
+        changed = self.workflow.replace(
+            "uses: actions/setup-python@v6", "uses: actions/setup-python@v7", 1)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_INVENTORY_DRIFT",
+                      supply_chain_notes(changed, self.requirements))
+
+    def test_sha_pinned_candidate_is_unreviewed_not_automatically_authorized(self):
+        changed = self.workflow.replace(
+            "uses: actions/checkout@v6",
+            "uses: actions/checkout@" + "a" * 40, 1)
+        notes = supply_chain_notes(changed, self.requirements)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_INVENTORY_DRIFT", notes)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_UNREVIEWED", notes)
+        self.assertNotIn("PROTECTED_2023_DISPATCH_AUTHORIZED", notes)
+
+    def test_unknown_action_owner_does_not_erase_risk(self):
+        changed = self.workflow.replace(
+            "uses: actions/checkout@v6", "uses: unreviewed/checkout@v6", 1)
+        notes = supply_chain_notes(changed, self.requirements)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_INVENTORY_DRIFT", notes)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_UNREVIEWED", notes)
+
+    def test_duplicate_uses_scalar_is_not_silent(self):
+        changed = self.workflow.replace(
+            "        uses: actions/checkout@v6\n",
+            "        uses: actions/checkout@v6\n"
+            "        uses: actions/checkout@v6\n", 1)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_INVENTORY_DRIFT",
+                      supply_chain_notes(changed, self.requirements))
+
+    def test_removed_action_reference_is_not_silent(self):
+        changed = self.workflow.replace(
+            "        uses: actions/checkout@v6\n", "", 1)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_INVENTORY_DRIFT",
+                      supply_chain_notes(changed, self.requirements))
+
+    def test_malformed_tag_reference_is_unreviewed(self):
+        changed = self.workflow.replace(
+            "uses: actions/checkout@v6",
+            "uses: actions/checkout@not-reviewed", 1)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_UNREVIEWED",
+                      supply_chain_notes(changed, self.requirements))
+
+    def test_no_actions_reference_counterexample_establishes_run_admission(self):
+        changed = self.workflow.replace(
+            "uses: actions/upload-artifact@v6",
+            "uses: actions/upload-artifact@v7", 1)
+        notes = supply_chain_notes(changed, self.requirements)
+        self.assertIn("EXTERNAL_ACTION_REFERENCE_INVENTORY_DRIFT", notes)
+        self.assertNotIn("PROTECTED_2023_DISPATCH_AUTHORIZED", notes)
