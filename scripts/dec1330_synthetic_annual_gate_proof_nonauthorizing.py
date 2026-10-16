@@ -20,6 +20,14 @@ SELF_ASSERTIONS = (
     "run385_authorized", "exclusive_admission_verified",
     "passed_ci", "qualified_review_complete",
 )
+UNTRUSTED_AUTHORITY_FIELDS = (
+    "gate_states", "can_authorize_dispatch", "may_access_protected_evidence",
+    "may_merge_or_promote", "may_trade", "run385_action_authorized",
+    "independent_os_proof_verified",
+    "exclusive_annual_admission_verified",
+    "reviewer_evidence_authenticated", "exclusive_admission_verified",
+    "run385_authorized", "qualified_review_complete", "passed_ci",
+)
 UNTRUSTED_PROOF_FORMS = (
     "public_memfd_seals", "inotify_quiet", "self_signed_sha",
     "public_tmp_fixture", "self_reported_admin_lock",
@@ -49,6 +57,8 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
     else:
         if any(packet.get(key) is True for key in SELF_ASSERTIONS):
             findings.append("CALLER_SELF_ASSERTED_AUTHORITY_IGNORED")
+        if any(key in packet for key in UNTRUSTED_AUTHORITY_FIELDS):
+            findings.append("UNTRUSTED_PERMISSION_FIELDS_IGNORED")
 
         proof = packet.get("proof")
         if proof is None:
