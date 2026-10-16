@@ -95,7 +95,7 @@ class NativeReadonlySharedMprotectWriteUpgradeDenial(unittest.TestCase):
                 self.assertEqual(module._read_receipt_pending(original_fd),b"")
                 with self.assertRaises(OSError) as denied:
                     os.ftruncate(reader_fd,0)
-                self.assertEqual(denied.exception.errno,errno.EBADF)
+                self.assertEqual(denied.exception.errno,errno.EINVAL)
                 self.assertEqual(module._read_receipt_pending(normal_fd),b"")
 
                 # An independent genuinely writable FD modifies the
