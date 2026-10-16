@@ -25,7 +25,7 @@ class PriorAnnualFreezeIntegrityStillNeedsIndependentAdmission(unittest.TestCase
 
     def test_prior_segment_switch_has_2015_no_predecessor_and_2023_2022(self):
         s = self.source
-        self.assertIn('2015)\n               test -z "$PREVIOUS_RUN_ID"', s)
+        self.assertIn('2015)\n              test -z "$PREVIOUS_RUN_ID"', s)
         self.assertIn('2023) previous_segment="2022" ;;', s)
         for earlier, prior in ((2016, 2015), (2017, 2016), (2018, 2017),
                                (2019, 2018), (2020, 2019), (2021, 2020),
