@@ -88,9 +88,14 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
                 or type(attempt) is not int or attempt != 1):
                 findings.append("NOT_THE_EXCLUSIVE_RUN385_ATTEMPT1")
             outcome=annual.get("outcome")
-            if type(outcome) is str and outcome in (
-                "ambiguous", "failed", "cancelled", "retry", "replacement"
+            if type(outcome) is not str or outcome not in (
+                "success", "ambiguous", "failed", "cancelled",
+                "retry", "replacement"
             ):
+                findings.append("ANNUAL_OUTCOME_MISSING_OR_UNRECOGNIZED")
+            elif outcome == "success":
+                findings.append("CLAIMED_SUCCESS_NOT_INDEPENDENT_SLOT_ATTESTATION")
+            else:
                 findings.append("TERMINAL_NO_RETRY_AMBIGUOUS_OR_FAILED_SLOT")
             expected_sha=annual.get("expected_sha")
             observed_sha=annual.get("observed_sha")
