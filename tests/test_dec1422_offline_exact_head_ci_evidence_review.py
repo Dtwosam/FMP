@@ -9,6 +9,10 @@ import re
 import unittest
 
 REQUIRED = ("phase3-acceptance", "tests")
+WORKFLOWS = {
+    "phase3-acceptance": (357768849, ".github/workflows/phase3-acceptance.yml"),
+    "tests": (339764246, ".github/workflows/tests.yml"),
+}
 
 
 def review_exact_head_ci(head_sha: object, runs: object) -> tuple[str, ...]:
@@ -34,6 +38,13 @@ def review_exact_head_ci(head_sha: object, runs: object) -> tuple[str, ...]:
             reasons.append(name + "_NOT_SUCCESS")
         if type(run.get("id")) is not int or run["id"] <= 0:
             reasons.append(name + "_RUN_ID_UNREVIEWED")
+        expected_id, expected_path = WORKFLOWS[name]
+        if type(run.get("workflow_id")) is not int or run["workflow_id"] != expected_id:
+            reasons.append(name + "_WORKFLOW_ID_UNREVIEWED")
+        if run.get("path") != expected_path:
+            reasons.append(name + "_WORKFLOW_PATH_UNREVIEWED")
+        if type(run.get("run_attempt")) is not int or run["run_attempt"] != 1:
+            reasons.append(name + "_ATTEMPT_UNREVIEWED")
     return tuple(sorted(set(reasons)))
 
 
@@ -43,7 +54,9 @@ class ExactHeadGreenIsNotAnnualAuthorization(unittest.TestCase):
     def setUp(self):
         self.runs = [
             {"name": n, "head_sha": self.SHA, "event": "pull_request",
-             "status": "completed", "conclusion": "success", "id": 100 + i}
+             "status": "completed", "conclusion": "success", "id": 100 + i,
+             "workflow_id": WORKFLOWS[n][0], "path": WORKFLOWS[n][1],
+             "run_attempt": 1}
             for i, n in enumerate(REQUIRED)
         ]
 
@@ -132,6 +145,57 @@ class ExactHeadGreenIsNotAnnualAuthorization(unittest.TestCase):
         self.assertEqual(verdict, ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", verdict)
         self.assertNotIn("ORIGINAL_OS_NO_WRITE_PROVEN", verdict)
+
+
+    def test_other_workflow_id_with_same_name_is_rejected(self):
+        self.runs[0]["workflow_id"] = 123
+        self.assertIn("phase3-acceptance_WORKFLOW_ID_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_other_workflow_path_with_same_name_is_rejected(self):
+        self.runs[1]["path"] = ".github/workflows/annual.yml"
+        self.assertIn("tests_WORKFLOW_PATH_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_missing_workflow_id_is_rejected(self):
+        self.runs[1].pop("workflow_id")
+        self.assertIn("tests_WORKFLOW_ID_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_missing_workflow_path_is_rejected(self):
+        self.runs[0].pop("path")
+        self.assertIn("phase3-acceptance_WORKFLOW_PATH_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_second_attempt_needs_separate_review(self):
+        self.runs[1]["run_attempt"] = 2
+        self.assertIn("tests_ATTEMPT_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_boolean_attempt_is_not_first_attempt(self):
+        self.runs[1]["run_attempt"] = True
+        self.assertIn("tests_ATTEMPT_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_boolean_workflow_id_is_rejected(self):
+        self.runs[0]["workflow_id"] = True
+        self.assertIn("phase3-acceptance_WORKFLOW_ID_UNREVIEWED",
+                      review_exact_head_ci(self.SHA, self.runs))
+
+    def test_compact_list_projection_without_full_run_metadata_is_blocked(self):
+        compact = [
+            {"id": r["id"], "name": r["name"], "status": r["status"],
+             "conclusion": r["conclusion"], "workflow_id": r["workflow_id"]}
+            for r in self.runs
+        ]
+        issues = review_exact_head_ci(self.SHA, compact)
+        self.assertIn("tests_HEAD_SHA_MISMATCH", issues)
+        self.assertIn("tests_EVENT_UNREVIEWED", issues)
+        self.assertIn("tests_WORKFLOW_PATH_UNREVIEWED", issues)
+        self.assertIn("tests_ATTEMPT_UNREVIEWED", issues)
+
+    def test_hydrated_two_workflow_snapshots_match_canonical_sources(self):
+        self.assertEqual(review_exact_head_ci(self.SHA, self.runs), ())
 
 
 if __name__ == "__main__":
