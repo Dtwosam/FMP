@@ -153,6 +153,37 @@ def pinned_archive_source_review(source: object) -> tuple[str, ...]:
     return tuple(sorted(set(issues)))
 
 
+def matrix_strategy_source_review(source: object) -> tuple[str, ...]:
+    """Narrow syntactic guard against unreviewed matrix axes/include/exclude."""
+    if type(source) is not str:
+        return ("NON_TEXT",)
+    try:
+        cell = source.split("  annual_cell:\n", 1)[1].split(
+            "  annual_freeze:\n", 1)[0]
+        if cell.count("    strategy:\n") != 1:
+            return ("MATRIX_STRATEGY_SHAPE_UNREVIEWED",)
+        if cell.count("      matrix:\n") != 1:
+            return ("MATRIX_CONTAINER_SHAPE_UNREVIEWED",)
+        if cell.count("        dataset:\n") != 1:
+            return ("MATRIX_DATASET_SHAPE_UNREVIEWED",)
+        if cell.count("    steps:\n") != 1:
+            return ("MATRIX_STEPS_BOUNDARY_UNREVIEWED",)
+        before_matrix = cell.split("    strategy:\n", 1)[1].split(
+            "      matrix:\n", 1)[0]
+        before_dataset = cell.split("      matrix:\n", 1)[1].split(
+            "        dataset:\n", 1)[0]
+        if before_matrix != ("      fail-fast: false\n"
+                             "      max-parallel: 3\n"):
+            return ("MATRIX_STRATEGY_KEYS_UNREVIEWED",)
+        if before_dataset:
+            return ("MATRIX_ADDITIONAL_AXIS_UNREVIEWED",)
+        if matrix_source_review(source):
+            return ("MATRIX_ROW_SOURCE_UNREVIEWED",)
+    except (IndexError, ValueError):
+        return ("MATRIX_SOURCE_SHAPE_UNREVIEWED",)
+    return ()
+
+
 class AnnualMatrixSourceIsNotImmutableArtifactProvenance(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -335,3 +366,66 @@ class AnnualMatrixSourceIsNotImmutableArtifactProvenance(unittest.TestCase):
 
     def test_untrusted_nontext_source_stays_blocked(self):
         self.assertEqual(pinned_archive_source_review([]), ("NON_TEXT",))
+
+    def test_current_matrix_outer_grammar_has_no_drift(self):
+        self.assertEqual(matrix_strategy_source_review(self.source), ())
+
+    def test_include_before_dataset_is_flagged(self):
+        changed = self.source.replace(
+            "        dataset:\n",
+            "        include:\n          - extra: unexpected\n"
+            "        dataset:\n", 1)
+        self.assertEqual(matrix_strategy_source_review(changed),
+                         ("MATRIX_ADDITIONAL_AXIS_UNREVIEWED",))
+
+    def test_exclude_before_dataset_is_flagged(self):
+        changed = self.source.replace(
+            "        dataset:\n",
+            "        exclude:\n          - symbol: EURUSD\n"
+            "        dataset:\n", 1)
+        self.assertEqual(matrix_strategy_source_review(changed),
+                         ("MATRIX_ADDITIONAL_AXIS_UNREVIEWED",))
+
+    def test_new_matrix_axis_before_dataset_is_flagged(self):
+        changed = self.source.replace(
+            "        dataset:\n",
+            "        extra_axis: [on, off]\n        dataset:\n", 1)
+        self.assertEqual(matrix_strategy_source_review(changed),
+                         ("MATRIX_ADDITIONAL_AXIS_UNREVIEWED",))
+
+    def test_duplicate_matrix_key_does_not_pass_as_reviewed(self):
+        changed = self.source.replace(
+            "      matrix:\n", "      matrix:\n      matrix:\n", 1)
+        self.assertEqual(matrix_strategy_source_review(changed),
+                         ("MATRIX_CONTAINER_SHAPE_UNREVIEWED",))
+
+    def test_unexpected_strategy_scalar_does_not_pass(self):
+        changed = self.source.replace(
+            "      max-parallel: 3\n",
+            "      max-parallel: 3\n      experimental: enabled\n", 1)
+        self.assertEqual(matrix_strategy_source_review(changed),
+                         ("MATRIX_STRATEGY_KEYS_UNREVIEWED",))
+
+    def test_missing_strategy_header_does_not_pass(self):
+        changed = self.source.replace(
+            "    strategy:\n", "    different_strategy:\n", 1)
+        self.assertEqual(matrix_strategy_source_review(changed),
+                         ("MATRIX_STRATEGY_SHAPE_UNREVIEWED",))
+
+    def test_alternate_matrix_container_requires_review(self):
+        changed = self.source.replace(
+            "      matrix:\n", "      matrix: unreviewed-expression\n", 1)
+        self.assertEqual(matrix_strategy_source_review(changed),
+                         ("MATRIX_CONTAINER_SHAPE_UNREVIEWED",))
+
+    def test_missing_cell_steps_boundary_requires_review(self):
+        cell = self.source.split("  annual_cell:\n", 1)[1].split(
+            "  annual_freeze:\n", 1)[0]
+        changed_cell = cell.replace(
+            "    steps:\n", "    changed_steps:\n", 1)
+        changed = self.source.replace(cell, changed_cell, 1)
+        self.assertEqual(matrix_strategy_source_review(changed),
+                         ("MATRIX_STEPS_BOUNDARY_UNREVIEWED",))
+
+    def test_nontext_outer_matrix_review_rejected(self):
+        self.assertEqual(matrix_strategy_source_review({}), ("NON_TEXT",))
