@@ -1,0 +1,9 @@
+# DEC-1368 — Cell job archive-to-output staging source review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit child of #1591 DEC-1367 at `a48bdb1260e94a602da503b761d8856059139dfb`. Adds ten source-only unittest methods, **1,042 proposed source-defined methods**.
+
+The actual tracked 18-cell job currently downloads four named archive roles: feature, outcome, feature-evidence and outcome-evidence. Artifact ID and zip digest variables are passed together with distinct `.downloads` destinations. The in-job shell helper compares SHA-256 before the four unzip stages. Source root discovery then enforces one manifest or evidence file per extraction directory, and the cell CLI writes `.result/cell-evidence.json` and `.result/catalogue-payload.json` in checkout-relative workspace paths. New tests pin this order and introduce generated text-only negative cases for swapped download variable and absent extraction mapping.
+
+All assertions read only committed Git workflow YAML; they never download these actual historical artifacts, run the job, access protected input/evidence, or make runtime changes. SHA-256 matching configured workflow literals is not independent authentication of original protected annual source identity or sufficient OS write isolation. The relative `.result` output is not proof of an external trusted publication sink. `GITHUB_SHA` and the mutable main ref check do not externally approve the unique server-side immutable dispatch. The real separation remains for independent administrators and reviewers to implement and attest.
+
+Earlier exact-head CI failures remain FAILED; own completed successful Phase3 and full historical tests plus qualified independent review are required. DEC-650/#820 OS no-write and DEC-651/#821/#779 exclusive immutable 2023 run385/attempt1 admission remain BLOCKED. No protected annual execution, retry, GitHub permissions/workflow/ruleset change, production, trading, merge or promotion.
