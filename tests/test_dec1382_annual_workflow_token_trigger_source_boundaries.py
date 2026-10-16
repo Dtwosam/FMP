@@ -30,9 +30,8 @@ def source_diagnostics(source: object) -> tuple[str, ...]:
     if names != ["workflow_dispatch"]:
         problems.append("NOT_EXCLUSIVE_MANUAL_DISPATCH_SOURCE")
     perms = header.split("\npermissions:\n", 1)[1]
-    permission_pairs = re.findall(r"(?m)^  (contents|actions): (read|write|none)$",
-                                  perms)
-    if permission_pairs != [("contents", "read"), ("actions", "read")]:
+    permission_lines = [line for line in perms.splitlines() if line.strip()]
+    if permission_lines != ["  contents: read", "  actions: read"]:
         problems.append("TOKEN_SCOPE_NOT_EXACT_READONLY_SOURCE")
     if re.search(r"(?m)^    permissions:", jobs):
         problems.append("JOB_SCOPED_PERMISSION_OVERRIDE_SOURCE")
@@ -129,4 +128,40 @@ class ReadOnlyGitHubTokenSourceIsNotReadOnlyFilesystem(unittest.TestCase):
             1,
         )
         self.assertIn("DUPLICATED_TRIGGER_SOURCE",
+                      source_diagnostics(mutated))
+
+    def test_unknown_oidc_token_write_scope_rejected_in_memory(self):
+        mutated = self.source.replace(
+            "  actions: read\n",
+            "  actions: read\n  id-token: write\n",
+            1,
+        )
+        self.assertIn("TOKEN_SCOPE_NOT_EXACT_READONLY_SOURCE",
+                      source_diagnostics(mutated))
+
+    def test_unknown_repository_permission_scope_rejected_in_memory(self):
+        mutated = self.source.replace(
+            "  contents: read\n",
+            "  contents: read\n  packages: write\n",
+            1,
+        )
+        self.assertIn("TOKEN_SCOPE_NOT_EXACT_READONLY_SOURCE",
+                      source_diagnostics(mutated))
+
+    def test_duplicate_root_read_permission_rejected_in_memory(self):
+        mutated = self.source.replace(
+            "  contents: read\n",
+            "  contents: read\n  contents: read\n",
+            1,
+        )
+        self.assertIn("TOKEN_SCOPE_NOT_EXACT_READONLY_SOURCE",
+                      source_diagnostics(mutated))
+
+    def test_extra_workflow_root_permission_with_none_still_rejected(self):
+        mutated = self.source.replace(
+            "  actions: read\n",
+            "  actions: read\n  checks: none\n",
+            1,
+        )
+        self.assertIn("TOKEN_SCOPE_NOT_EXACT_READONLY_SOURCE",
                       source_diagnostics(mutated))
