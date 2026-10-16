@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 import unittest
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -12,7 +13,9 @@ class AnnualCliOutputLocationsRequireSeparateTrustedScratch(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.cli=CLI.read_text(encoding="utf-8")
-        cls.workflow=WORKFLOW.read_text(encoding="utf-8")
+        cls.workflow=subprocess.check_output(["git", "show",
+            "HEAD:.github/workflows/phase8a-annual-pattern-catalogue.yml"],
+            cwd=ROOT, text=True)
 
     def test_cli_json_writer_creates_parent_and_writes_destination(self):
         self.assertIn("def _write_json(path: Path,",self.cli)

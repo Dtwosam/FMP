@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
 import re
 import unittest
 
@@ -11,7 +12,9 @@ WORKFLOW=ROOT/".github"/"workflows"/"phase8a-annual-pattern-catalogue.yml"
 class AnnualJobDependenciesDoNotProveIndependentSecurityGates(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.source=WORKFLOW.read_text(encoding="utf-8")
+        cls.source=subprocess.check_output(["git", "show",
+            "HEAD:.github/workflows/phase8a-annual-pattern-catalogue.yml"],
+            cwd=ROOT, text=True)
         cls.jobs={}
         names=list(re.finditer(
             r"^  (annual_preflight|annual_cell|annual_freeze):\s*$",
