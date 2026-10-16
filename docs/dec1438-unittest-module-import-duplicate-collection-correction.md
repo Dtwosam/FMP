@@ -1,0 +1,9 @@
+# DEC-1438 — Remove duplicate unittest collection via direct imported TestCase
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child of #1661 DEC-1437 at dab5fdd3f1570aa33f0baa9b1beb8591577eff83; adds five source-defined tests, **1,617 proposed source-defined methods**.
+
+DEC-1428 eliminated duplicate inherited tests in the source-only CI job-step class by switching that class to inherit unittest.TestCase and reuse the synthetic fixture through an explicit setUp call. It left a separate duplicate collection route: the job-step test file still imported the DEC-1425 TestCase class directly under its original name. Python's unittest discovery enumerates test-case classes in a test module's namespace, including imported classes, so the same 18 parent tests can still execute twice even though they are no longer inherited by the job-step subclass.
+
+This forward-only fix imports the DEC-1425 test module **as a module** and explicitly uses its fixture class through the module namespace. The source-only PR reviewer function remains available by a function alias. Five new isolated regression tests ensure no foreign TestCase class appears in the job-step module namespace, that the real 24 locally defined job-step checks are preserved, and the fixture still produces consistent offline PR evidence without executing actual annual code. This is a unittest collection cleanup, not an OS security proof or authorization.
+
+Own exact-head Phase3 plus full historical/general CI and qualified review must pass. No protected original/archive access, annual workflow dispatch/retry, installed YAML/settings/branch/ruleset changes, merges, deployment, brokerage or trading. DEC-650/#820 original OS no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 server admission remain **BLOCKED**.

@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import unittest
 
-from test_dec1425_exact_ci_pr_affinity_offline import (
-    ExactCommitCIIsNotRun385Permission, review_exact_pr_ci,
-)
+# Import by module, not TestCase name: unittest discovery scans imported
+# TestCase classes in each test module and otherwise collects them again.
+import test_dec1425_exact_ci_pr_affinity_offline as pr_fixtures
+review_exact_pr_ci = pr_fixtures.review_exact_pr_ci
 
 STEP_POLICY = {
     "tests": ("unit-tests", (
@@ -88,7 +89,7 @@ def review_exact_pr_ci_jobs(pr: object, runs: object,
 class ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(unittest.TestCase):
     def setUp(self):
         # Reuse only the synthetic fixture; do not re-inherit its 18 tests.
-        ExactCommitCIIsNotRun385Permission.setUp(self)
+        pr_fixtures.ExactCommitCIIsNotRun385Permission.setUp(self)
         self.jobs_by_run = {}
         for i, name in enumerate(("phase3-acceptance", "tests")):
             run = next(r for r in self.runs if r["name"] == name)
@@ -226,7 +227,7 @@ class RequiredJobStepFixtureIsolation(unittest.TestCase):
         self.assertFalse(
             issubclass(
                 ActualRequiredStepEvidenceIsNotProtectedExecutionConsent,
-                ExactCommitCIIsNotRun385Permission,
+                pr_fixtures.ExactCommitCIIsNotRun385Permission,
             )
         )
 
@@ -292,3 +293,46 @@ class AnnualSecurityCIProbeMustReallyRun(unittest.TestCase):
     def test_synthetic_reviewed_steps_are_not_security_admission(self):
         self.assertEqual(self.verdict(), ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
+
+
+class ImportedTestCaseEnumerationContract(unittest.TestCase):
+    def test_testcase_class_not_imported_into_module_namespace(self):
+        from inspect import isclass
+        import sys
+        module = sys.modules[__name__]
+        all_testcase_classes = {
+            name for name, value in vars(module).items()
+            if isclass(value) and issubclass(value, unittest.TestCase)
+            and value is not unittest.TestCase
+        }
+        self.assertEqual(all_testcase_classes, {
+            "ActualRequiredStepEvidenceIsNotProtectedExecutionConsent",
+            "RequiredJobStepFixtureIsolation",
+            "AnnualSecurityCIProbeMustReallyRun",
+            "ImportedTestCaseEnumerationContract",
+        })
+
+    def test_fixture_class_can_still_build_valid_synthetic_pr_evidence(self):
+        fixture = pr_fixtures.ExactCommitCIIsNotRun385Permission(
+            "test_matching_two_full_runs_and_draft_pr")
+        fixture.setUp()
+        self.assertEqual(pr_fixtures.review_exact_pr_ci(fixture.pr,
+                                                        fixture.runs), ())
+
+    def test_locally_defined_job_step_methods_remain_in_original_class(self):
+        cls = ActualRequiredStepEvidenceIsNotProtectedExecutionConsent
+        self.assertEqual(len([
+            k for k, v in cls.__dict__.items()
+            if k.startswith("test_") and callable(v)
+        ]), 24)
+
+    def test_inherited_tests_are_not_collected_from_job_step_class(self):
+        cls = ActualRequiredStepEvidenceIsNotProtectedExecutionConsent
+        self.assertEqual([x.__name__ for x in cls.__bases__], ["TestCase"])
+
+    def test_explicit_fixture_import_does_not_approve_annual_execution(self):
+        fixture = ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(
+            "test_exact_successful_job_and_step_evidence_is_consistent")
+        fixture.setUp()
+        self.assertEqual(fixture.verdict(), ())
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", fixture.verdict())
