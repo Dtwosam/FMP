@@ -48,8 +48,17 @@ def preflight_review(source: object) -> tuple[str, ...]:
     if all(name in spans[FETCH] for name in raw_metadata):
         issues.append("SOURCE_METADATA_STAGED_IN_PREFLIGHT_TREE")
     upload = spans[UPLOAD]
-    broad_path = re.search(r"(?m)^          path: \.preflight$", upload)
-    always = re.search(r"(?m)^        if: always\(\)$", upload)
+    conditions = re.findall(r"(?m)^        if: ([^\n]+)$", upload)
+    paths = re.findall(r"(?m)^          path: ([^\n]+)$", upload)
+    if conditions not in (["always()"], ["success()"]):
+        issues.append("PREFLIGHT_UPLOAD_CONDITION_UNREVIEWED")
+    if not (len(paths) == 1 and (
+            paths[0] == ".preflight" or re.fullmatch(
+                r"\.preflight/[A-Za-z0-9_-]+\.json", paths[0]
+            ))):
+        issues.append("PREFLIGHT_UPLOAD_PATH_UNREVIEWED")
+    broad_path = paths == [".preflight"]
+    always = conditions == ["always()"]
     if always and broad_path:
         issues.append("PREFLIGHT_ALWAYS_UPLOADS_TREE_ON_FAILURE")
         if re.search(r"(?m)^          include-hidden-files: true$", upload):
@@ -156,3 +165,57 @@ class SourceOnlyPreflightPublicationRiskIsNotActualLeakEvidence(unittest.TestCas
                       preflight_review(self.source))
         self.assertIn("UPLOAD_INCLUDE_HIDDEN_SOURCE",
                       preflight_review(self.source))
+
+    def test_current_canonical_condition_and_path_are_not_ambiguous(self):
+        report = preflight_review(self.source)
+        self.assertNotIn("PREFLIGHT_UPLOAD_CONDITION_UNREVIEWED", report)
+        self.assertNotIn("PREFLIGHT_UPLOAD_PATH_UNREVIEWED", report)
+
+    def test_alternate_expression_always_requires_source_review(self):
+        source = self.source.replace(
+            "        if: always()\n",
+            "        if: " + "$" + "{{ always() }}\n", 1,
+        )
+        self.assertIn("PREFLIGHT_UPLOAD_CONDITION_UNREVIEWED",
+                      preflight_review(source))
+
+    def test_unreviewed_compound_condition_requires_source_review(self):
+        source = self.source.replace(
+            "        if: always()\n", "        if: always() || success()\n", 1,
+        )
+        self.assertIn("PREFLIGHT_UPLOAD_CONDITION_UNREVIEWED",
+                      preflight_review(source))
+
+    def test_duplicate_yaml_if_scalar_requires_source_review(self):
+        source = self.source.replace(
+            "        if: always()\n",
+            "        if: always()\n        if: success()\n", 1,
+        )
+        self.assertIn("PREFLIGHT_UPLOAD_CONDITION_UNREVIEWED",
+                      preflight_review(source))
+
+    def test_wildcard_path_does_not_count_as_specific_report(self):
+        source = self.source.replace(
+            "          path: .preflight\n",
+            "          path: .preflight/**\n", 1,
+        )
+        self.assertIn("PREFLIGHT_UPLOAD_PATH_UNREVIEWED",
+                      preflight_review(source))
+
+    def test_duplicate_upload_path_scalar_requires_source_review(self):
+        source = self.source.replace(
+            "          path: .preflight\n",
+            "          path: .preflight\n"
+            "          path: .preflight/specific-report.json\n", 1,
+        )
+        self.assertIn("PREFLIGHT_UPLOAD_PATH_UNREVIEWED",
+                      preflight_review(source))
+
+    def test_unreviewed_expression_path_requires_source_review(self):
+        source = self.source.replace(
+            "          path: .preflight\n",
+            "          path: " + "$" + "{{ github.workspace }}/.preflight\n",
+            1,
+        )
+        self.assertIn("PREFLIGHT_UPLOAD_PATH_UNREVIEWED",
+                      preflight_review(source))
