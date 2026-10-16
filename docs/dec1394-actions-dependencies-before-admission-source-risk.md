@@ -1,0 +1,9 @@
+# DEC-1394 — GitHub actions and dependencies before in-job admission
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1617 DEC-1393 at `9db6428de41d97ac735bdacb41693ddd60f1af6a`. Adds ten source-only tests, **1,229 proposed source-defined methods**.
+
+Inspection of the actual tracked annual YAML shows every job uses `actions/checkout@v6` and `actions/setup-python@v6` and invokes `pip install -r requirements/exp061-discovery-run.txt -e .` **before** its separate runtime execution gate. The preflight job additionally fetches EXP-044 metadata and runs preflight before `require-execution`. Current `requirements/exp061-discovery-run.txt` pins `polars==1.44.2` and `polars-runtime-32==1.44.2` but does not supply hash constraints; `uses: actions/...@v6` is a moving major-version tag rather than an explicit Git commit SHA. Source-only tests document these precise limitations and verify that source change fixtures do not somehow self-authorize any dispatch.
+
+**Limitations:** A full lockfile with hashes would not by itself prove trusted GitHub runner identity or immutable server-side `workflow_dispatch` ref resolution, and an in-job authorization check after checkout/install cannot protect the allocation of the unique 2023 run385/attempt1. Conversely, source observations here do not demonstrate actual package supply-chain compromise or unauthorized execution. Separate independently approved runner and server-side admission changes are required; **this PR does not attempt them**.
+
+No real packages installed, annual CLI/runtime invoked, protected data or GitHub Actions APIs read for artifacts, branch protections/rulesets/workflows changed, orders placed or merges made. Own exact-head Phase3 and full historical suite plus qualified independent reviewer acceptance required. DEC-650/#820 original OS no-write and DEC-651/#821/#779 exclusive immutable one-shot GitHub admission remain **BLOCKED**.
