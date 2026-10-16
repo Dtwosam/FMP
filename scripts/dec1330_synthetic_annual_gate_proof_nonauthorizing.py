@@ -27,11 +27,18 @@ UNTRUSTED_PROOF_FORMS = (
 )
 
 
+def _only_plain_string_keys(value: dict) -> bool:
+    """Avoid invoking caller-supplied key equality during known-field lookups."""
+    return all(type(key) is str for key in value)
+
+
 def assess_synthetic_claims(packet: object) -> dict[str, object]:
     """Report negative diagnostic findings; NEVER approve a protected action."""
     findings: list[str] = list(STATIC_BLOCKERS)
     if type(packet) is not dict:
         findings.append("INPUT_NOT_A_MAPPING")
+    elif not _only_plain_string_keys(packet):
+        findings.append("INPUT_NONSTRING_KEYS_REJECTED")
     else:
         if any(packet.get(key) is True for key in SELF_ASSERTIONS):
             findings.append("CALLER_SELF_ASSERTED_AUTHORITY_IGNORED")
@@ -41,6 +48,8 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
             findings.append("INDEPENDENT_PROOF_NOT_SUPPLIED")
         elif type(proof) is not dict:
             findings.append("PROOF_NOT_A_MAPPING")
+        elif not _only_plain_string_keys(proof):
+            findings.append("PROOF_NONSTRING_KEYS_REJECTED")
         else:
             kind = proof.get("kind")
             if type(kind) is str and kind in UNTRUSTED_PROOF_FORMS:
@@ -53,6 +62,8 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
         annual = packet.get("annual")
         if type(annual) is not dict:
             findings.append("ANNUAL_ADMISSION_DETAILS_MISSING")
+        elif not _only_plain_string_keys(annual):
+            findings.append("ANNUAL_NONSTRING_KEYS_REJECTED")
         else:
             run_number=annual.get("run_number")
             attempt=annual.get("attempt")
