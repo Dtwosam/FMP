@@ -1,0 +1,9 @@
+# DEC-1439 — Bind changed source bytes to exact Git blob SHA
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1662 DEC-1438 at e06e217609d027b663b0193ea362f1460c13edf0. Adds 16 source-defined test methods, reaching **1,633 proposed methods**.
+
+The prior DEC-1435 draft Git tree mode/ancestor audit required changed docs/tests leaf nodes to be regular 100644 blobs. It did not verify that a separately supplied file byte string matches the Git SHA of its purported leaf; a plausible node dictionary with a false or stale SHA could be mistaken for an actual source-object review.
+
+This synthetic stdlib-only reviewer consumes separately obtained GitHub changed-file metadata, Git leaf descriptors and exact file bytes. It enforces canonical docs/tests paths, normal 100644 blob type, valid 40-lowercase-hex leaf SHA, and re-computes the precise Git blob object ID from the byte string (SHA-1 of a framed blob object). It requires the byte source inventory to equal the changed path set, including no extra or duplicate entries. Single-byte modifications, symlinks, gitlinks, missing/stale data, invalid SHA shape, deletions and malformed paths are blocked. The Git blob SHA-1 here is a Git compatibility identity check, **not** an independent security-grade attestation or arbitrary-input collision-resistance guarantee. A qualified reviewer must separately authenticate the exact commit's tree membership and byte source; neither this test nor existing green CI does so on its own.
+
+The new draft modifies tests/docs only; its own exact-head Phase3/full historical/general CI and qualified review are required. Real original historical data OS no-write DEC-650/#820 and exclusive immutable GitHub 2023 run385/attempt1 server preallocation admission DEC-651/#821/#779 remain **BLOCKED**. No annual execution/retry, original/archive read/write, installed workflow/security settings, merge, production or trading.
