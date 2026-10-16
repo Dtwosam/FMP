@@ -61,8 +61,15 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
                 "ambiguous", "failed", "cancelled", "retry", "replacement"
             ):
                 findings.append("TERMINAL_NO_RETRY_AMBIGUOUS_OR_FAILED_SLOT")
-            if annual.get("expected_sha") == annual.get("observed_sha"):
+            expected_sha=annual.get("expected_sha")
+            observed_sha=annual.get("observed_sha")
+            if (not isinstance(expected_sha,str) or not expected_sha
+                or not isinstance(observed_sha,str) or not observed_sha):
+                findings.append("SHA_BINDING_IDENTITIES_ABSENT_OR_INVALID")
+            elif expected_sha == observed_sha:
                 findings.append("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY")
+            else:
+                findings.append("SHA_MISMATCH_BLOCKS_ADMISSION")
 
     # Deliberately no positive branch.  The source-only packet is unauthenticated
     # even when it contains syntactically plausible independently signed claims.
