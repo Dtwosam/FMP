@@ -8,6 +8,7 @@ from __future__ import annotations
 from io import BytesIO
 from pathlib import PurePosixPath, Path
 import hashlib
+import re
 import stat
 import subprocess
 import unittest
@@ -31,18 +32,29 @@ def synthetic_zip(rows: list[tuple[str, bytes, bool]]) -> bytes:
 def member_problems(data: bytes) -> tuple[str, ...]:
     """Illustrative future *pre-extraction* denial logic, NOT installed guard."""
     problems = []
-    observed = set()
+    observed: dict[str, bool] = {}
     with zipfile.ZipFile(BytesIO(data), "r") as archive:
         for info in archive.infolist():
             raw = info.filename
             elements = raw.split("/")
             name = PurePosixPath(raw)
-            if name.is_absolute() or ".." in elements or "\\" in raw:
+            if (name.is_absolute() or ".." in elements or "\\" in raw
+                    or re.match(r"^[A-Za-z]:", raw)
+                    or str(name) == "."):
                 problems.append("UNSAFE_MEMBER_PATH")
             canonical = str(name)
             if canonical in observed:
                 problems.append("DUPLICATE_NORMALIZED_NAME")
-            observed.add(canonical)
+            prefixes = canonical.split("/")
+            if any("/".join(prefixes[:i]) in observed
+                   and not observed["/".join(prefixes[:i])]
+                   for i in range(1, len(prefixes))):
+                problems.append("FILE_DIRECTORY_PREFIX_CONFLICT")
+            if not info.is_dir() and any(
+                existing.startswith(canonical + "/") for existing in observed
+            ):
+                problems.append("FILE_DIRECTORY_PREFIX_CONFLICT")
+            observed[canonical] = info.is_dir()
             if stat.S_ISLNK(info.external_attr >> 16):
                 problems.append("SYMLINK_ENTRY")
     return tuple(sorted(set(problems)))
@@ -117,3 +129,45 @@ class SyntheticZipMembersAreNotRealProtectedArtifactAcceptance(unittest.TestCase
         expected = hashlib.sha256(data).hexdigest()
         self.assertEqual(hashlib.sha256(data).hexdigest(), expected)
         self.assertIn("UNSAFE_MEMBER_PATH", member_problems(data))
+
+    def test_disposable_windows_drive_absolute_name_is_rejected(self):
+        data = synthetic_zip([("C:/temp/destination.txt", b"test", False)])
+        self.assertIn("UNSAFE_MEMBER_PATH", member_problems(data))
+
+    def test_disposable_windows_drive_relative_name_is_rejected(self):
+        data = synthetic_zip([("D:destination.txt", b"test", False)])
+        self.assertIn("UNSAFE_MEMBER_PATH", member_problems(data))
+
+    def test_disposable_root_dot_filename_is_rejected(self):
+        data = synthetic_zip([(".", b"test", False)])
+        self.assertIn("UNSAFE_MEMBER_PATH", member_problems(data))
+
+    def test_normalized_duplicate_leading_dot_entry_is_rejected(self):
+        data = synthetic_zip([
+            ("./dir/manifest.json", b"first", False),
+            ("dir/manifest.json", b"second", False),
+        ])
+        self.assertIn("DUPLICATE_NORMALIZED_NAME", member_problems(data))
+
+    def test_file_then_descendant_member_collision_is_rejected(self):
+        data = synthetic_zip([
+            ("manifest", b"file", False),
+            ("manifest/subfile.json", b"child", False),
+        ])
+        self.assertIn("FILE_DIRECTORY_PREFIX_CONFLICT",
+                      member_problems(data))
+
+    def test_descendant_then_parent_file_collision_is_rejected(self):
+        data = synthetic_zip([
+            ("manifest/subfile.json", b"child", False),
+            ("manifest", b"file", False),
+        ])
+        self.assertIn("FILE_DIRECTORY_PREFIX_CONFLICT",
+                      member_problems(data))
+
+    def test_disposable_normal_directory_member_stays_distinct(self):
+        data = synthetic_zip([
+            ("safe/", b"", False),
+            ("safe/manifest.json", b"{}", False),
+        ])
+        self.assertEqual(member_problems(data), ())
