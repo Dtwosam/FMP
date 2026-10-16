@@ -36,7 +36,7 @@ def rows_from_checked_in_text(source: str) -> list[dict[str, str]]:
         lines = chunk.splitlines()
         keys = [("symbol", lines[0])]
         for line in lines[1:]:
-            matched = re.fullmatch(r"            ([a-z_]+): (.+)", line)
+            matched = re.fullmatch(r"            ([a-z0-9_]+): (.+)", line)
             if matched is None:
                 raise ValueError("unknown matrix row source syntax")
             keys.append(matched.groups())
@@ -182,3 +182,39 @@ class AnnualMatrixSourceIsNotImmutableArtifactProvenance(unittest.TestCase):
 
     def test_nontext_source_is_not_a_valid_review_input(self):
         self.assertEqual(matrix_source_review(None), ("NON_TEXT",))
+
+    def test_sha256_field_names_parse_in_all_eighteen_rows(self):
+        rows = rows_from_checked_in_text(self.source)
+        self.assertEqual(len(rows), 18)
+        for row in rows:
+            with self.subTest(pair=(row["symbol"], row["timeframe"],
+                                    row["horizon"])):
+                self.assertIn("feature_zip_sha256", row)
+                self.assertIn("outcome_zip_sha256", row)
+                self.assertEqual(len(row["feature_zip_sha256"]), 64)
+                self.assertEqual(len(row["outcome_zip_sha256"]), 64)
+
+    def test_each_real_matrix_row_has_seven_source_fields(self):
+        for row in rows_from_checked_in_text(self.source):
+            self.assertEqual(set(row), set(FIELDS))
+
+    def test_unexpected_numeric_label_is_not_silently_ignored(self):
+        changed = self.source.replace(
+            "            horizon: 60\n",
+            "            horizon: 60\n            unreviewed2: 1\n", 1)
+        self.assertEqual(matrix_source_review(changed),
+                         ("MATRIX_SOURCE_SHAPE_UNREVIEWED",))
+
+    def test_duplicate_sha256_key_is_not_silently_ignored(self):
+        field = ("            feature_zip_sha256: "
+                 "a466f0a128ea8cdc5818c6756bb71a57767f0c703eec68ad40a680f1bf9b06e2\n")
+        changed = self.source.replace(field, field + field, 1)
+        self.assertEqual(matrix_source_review(changed),
+                         ("MATRIX_SOURCE_SHAPE_UNREVIEWED",))
+
+    def test_malformed_digest_key_requires_explicit_review(self):
+        changed = self.source.replace(
+            "            feature_zip_sha256: ",
+            "            feature_zip_sha-256: ", 1)
+        self.assertEqual(matrix_source_review(changed),
+                         ("MATRIX_SOURCE_SHAPE_UNREVIEWED",))

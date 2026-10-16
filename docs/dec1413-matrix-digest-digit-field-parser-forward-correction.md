@@ -1,0 +1,7 @@
+# DEC-1413 — Forward-only correction for sha256 matrix field token parsing
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit child of #1636 DEC-1412 at 99aff63f729e850d3281b5341fc4ef08ac89f629. Repairs a test-only parser defect introduced by #1634 DEC-1410. Five new methods, **1,396 proposed source-defined unittest methods**.
+
+The new DEC-1410 matrix reviewer used \`[a-z_]+\` for field names. This erroneously rejected the canonical \`feature_zip_sha256\` and \`outcome_zip_sha256\` fields because their labels contain digits. A successful Phase 3 suite alone did not validate this historical/general test path; until its complete CI run concludes, #1634 cannot be called fully verified. The forward-only correction admits ASCII lowercase letters, digits and underscores in field-name tokens while retaining exact allowed-key inventory, duplicate/unknown-field failure, digit-bearing source SHA checks and synthetic invalid label counterexamples.
+
+No installed annual workflow, real artifact, historical source, GitHub settings, security permission, brokerage or production runtime is changed. This does not authenticate archives, prove an OS no-write restriction or grant immutable exclusive 2023 run385/attempt1 authorization. Both exact-head Phase 3 and full historical CI plus independent reviewer acceptance remain required; DEC-650/#820 and DEC-651/#821/#779 remain BLOCKED. No annual dispatch, retry, merge, promotion or trading.
