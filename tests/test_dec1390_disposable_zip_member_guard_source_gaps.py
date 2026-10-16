@@ -29,6 +29,18 @@ def synthetic_zip(rows: list[tuple[str, bytes, bool]]) -> bytes:
     return buffer.getvalue()
 
 
+
+def synthetic_unix_mode_zip(name: str, unix_mode: int) -> bytes:
+    """One in-memory entry, no chmod, special files, extraction or host writes."""
+    buffer = BytesIO()
+    with zipfile.ZipFile(buffer, "w") as dest:
+        info = zipfile.ZipInfo(name)
+        info.create_system = 3
+        info.external_attr = unix_mode << 16
+        dest.writestr(info, b"synthetic-only")
+    return buffer.getvalue()
+
+
 def member_problems(data: bytes) -> tuple[str, ...]:
     """Illustrative future *pre-extraction* denial logic, NOT installed guard."""
     problems = []
@@ -55,8 +67,16 @@ def member_problems(data: bytes) -> tuple[str, ...]:
             ):
                 problems.append("FILE_DIRECTORY_PREFIX_CONFLICT")
             observed[canonical] = info.is_dir()
-            if stat.S_ISLNK(info.external_attr >> 16):
+            unix_mode = info.external_attr >> 16
+            unix_type = stat.S_IFMT(unix_mode)
+            if stat.S_ISLNK(unix_mode):
                 problems.append("SYMLINK_ENTRY")
+            if info.create_system == 3 and unix_type not in (
+                0, stat.S_IFREG, stat.S_IFDIR, stat.S_IFLNK
+            ):
+                problems.append("UNSUPPORTED_UNIX_ENTRY_TYPE")
+            if unix_mode & (stat.S_ISUID | stat.S_ISGID):
+                problems.append("PRIVILEGED_MODE_BITS")
     return tuple(sorted(set(problems)))
 
 
@@ -170,4 +190,36 @@ class SyntheticZipMembersAreNotRealProtectedArtifactAcceptance(unittest.TestCase
             ("safe/", b"", False),
             ("safe/manifest.json", b"{}", False),
         ])
+        self.assertEqual(member_problems(data), ())
+
+    def test_disposable_unix_character_device_entry_is_rejected(self):
+        data = synthetic_unix_mode_zip(
+            "synthetic-device", stat.S_IFCHR | 0o600
+        )
+        self.assertIn("UNSUPPORTED_UNIX_ENTRY_TYPE",
+                      member_problems(data))
+
+    def test_disposable_unix_fifo_entry_is_rejected(self):
+        data = synthetic_unix_mode_zip(
+            "synthetic-fifo", stat.S_IFIFO | 0o600
+        )
+        self.assertIn("UNSUPPORTED_UNIX_ENTRY_TYPE",
+                      member_problems(data))
+
+    def test_disposable_unix_setuid_mode_is_rejected(self):
+        data = synthetic_unix_mode_zip(
+            "synthetic-file", stat.S_IFREG | stat.S_ISUID | 0o755
+        )
+        self.assertIn("PRIVILEGED_MODE_BITS", member_problems(data))
+
+    def test_disposable_unix_setgid_mode_is_rejected(self):
+        data = synthetic_unix_mode_zip(
+            "synthetic-file", stat.S_IFREG | stat.S_ISGID | 0o755
+        )
+        self.assertIn("PRIVILEGED_MODE_BITS", member_problems(data))
+
+    def test_regular_unix_file_metadata_keeps_member_shape_clean(self):
+        data = synthetic_unix_mode_zip(
+            "safe/file.txt", stat.S_IFREG | 0o644
+        )
         self.assertEqual(member_problems(data), ())
