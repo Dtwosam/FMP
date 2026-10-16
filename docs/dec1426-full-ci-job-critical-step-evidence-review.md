@@ -1,0 +1,9 @@
+# DEC-1426 — Full CI job/critical-step evidence, not merely workflow conclusion
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit source-test/docs child of #1649 DEC-1425 at 5a322ee18009e5127e8cb3460cf838f396e76b0b. Adds 16 additional unittest methods, yielding **1,515 proposed source-defined methods**.
+
+The two required workflow-level conclusions alone can be misleading if a future CI definition skips, omits or changes the actual required step. Read-only full GitHub Actions job details for #1648 confirm current required step names: the historical/general workflow has one unit-tests job with successful Run historical snapshot and general unit tests and Compile package steps; Phase3 has an acceptance job with successful Generate deterministic Phase 3 acceptance evidence, Verify evidence shape and Upload Phase 3 acceptance evidence steps.
+
+The new no-network source-test module consumes caller-provided full run, PR and job snapshots, reuses DEC-1422–1425 exact-head and association checks, and fails closed on a missing/duplicate job, changed job name, run-id mismatch, missing/duplicate/skipped/failed critical step, bad step number, malformed job list or failed job result. It checks the canonical critical steps without claiming every unlisted GitHub Action was analyzed. These tests do not query GitHub or validate logs and cannot convert a source CI pass into an approved protected execution action.
+
+The proposed synthetic child remains unmerged. Its own exact-head Phase3 and full historical/general tests plus qualified review are required. DEC-650/#820 OS-enforced original no-write and DEC-651/#821/#779 exclusive immutable one-shot 2023 run385/attempt1 GitHub admission remain **BLOCKED**. No protected original or archive reads, annual dispatch/retry, installed workflow/ruleset/branch/permissions changes, merge, production or broker/trading.
