@@ -32,6 +32,13 @@ def _only_plain_string_keys(value: dict) -> bool:
     return all(type(key) is str for key in value)
 
 
+def _is_lowercase_git_sha1_text(value: str) -> bool:
+    """Inspect syntax only; this never validates a real commit or ref."""
+    return len(value) == 40 and all(
+        character in "0123456789abcdef" for character in value
+    )
+
+
 def assess_synthetic_claims(packet: object) -> dict[str, object]:
     """Report negative diagnostic findings; NEVER approve a protected action."""
     findings: list[str] = list(STATIC_BLOCKERS)
@@ -80,10 +87,14 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
             if (type(expected_sha) is not str or not expected_sha
                 or type(observed_sha) is not str or not observed_sha):
                 findings.append("SHA_BINDING_IDENTITIES_ABSENT_OR_INVALID")
-            elif expected_sha == observed_sha:
-                findings.append("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY")
             else:
-                findings.append("SHA_MISMATCH_BLOCKS_ADMISSION")
+                if not (_is_lowercase_git_sha1_text(expected_sha)
+                        and _is_lowercase_git_sha1_text(observed_sha)):
+                    findings.append("SHA_CLAIMS_MALFORMED_GIT_SHA1_TEXT")
+                if expected_sha == observed_sha:
+                    findings.append("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY")
+                else:
+                    findings.append("SHA_MISMATCH_BLOCKS_ADMISSION")
 
     # Deliberately no positive branch.  The source-only packet is unauthenticated
     # even when it contains syntactically plausible independently signed claims.
