@@ -1,0 +1,9 @@
+# DEC-1388 — Reject duplicated scalar properties in manual dispatch source
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict forward-only one-commit test/docs child of #1611 DEC-1387 at `117bb5aa0181482d28219a88b4a3cca9058ba678`. Adds 4 focused negative in-memory test methods (**1,176 proposed source-defined methods**).
+
+The earlier source-only manual input review checked merely that each expected `required:` and `type:` *substring* appeared somewhere under the two declared inputs. YAML with a duplicate or conflicting property could retain that substring while changing how a YAML parser resolves the input. This update compares the complete sequence of each eight-space `required` and `type` property in both input blocks to the exact expected singleton values: annual segment `required: true`, `type: choice`; prior run ID `required: false`, `type: string`. Negative copied-text mutations duplicate or conflict those scalar keys. This diagnostic is a deliberately narrow source shape check, **not a general YAML parser or GitHub server admission proof**.
+
+All tests read only the committed workflow text via local `git show HEAD`, never download historical artifacts, execute annual code, contact Actions dispatch, modify installed YAML/rulesets/branches, touch any broker or merge. Future source rewrites require renewed independent review; syntactic manual input validation alone cannot establish a reviewed immutable SHA, exclusive `main` lock, trusted output uploader, or OS no-write.
+
+Original exact-head CI verdicts remain as recorded. This child needs its own completed Phase3 and full historical suite plus qualified independent security review. DEC-650/#820 independent OS original no-write and DEC-651/#821/#779 exclusive immutable 2023 run385 attempt1 dispatch remain **BLOCKED**. No protected annual dispatch/retry or trading authority.
