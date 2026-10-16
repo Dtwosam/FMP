@@ -11,6 +11,16 @@ import unittest
 REPO = "Dtwosam/FMP"
 
 
+
+def reviewed_tests_docs_path(value: object) -> bool:
+    """Only canonical POSIX relative paths strictly below docs/ or tests/."""
+    if type(value) is not str or "\\" in value or "\0" in value:
+        return False
+    parts = value.split("/")
+    return (len(parts) >= 2 and parts[0] in ("docs", "tests") and
+            all(part not in ("", ".", "..") for part in parts))
+
+
 def review_draft_source_lineage(pr: object, compare: object,
                                commit: object) -> tuple[str, ...]:
     """Fail closed on non-one-commit, non test/docs draft lineage."""
@@ -57,13 +67,12 @@ def review_draft_source_lineage(pr: object, compare: object,
                 issues.append("CHANGED_FILE_METADATA_UNREVIEWED")
                 continue
             path, previous = file.get("filename"), file.get("previous_filename")
-            if type(path) is not str or not path.startswith(("docs/", "tests/")):
+            if not reviewed_tests_docs_path(path):
                 issues.append("PRODUCTION_OR_WORKFLOW_PATH_UNREVIEWED")
             else:
                 paths.append(path)
             if previous is not None and (
-                    type(previous) is not str or
-                    not previous.startswith(("docs/", "tests/"))):
+                    not reviewed_tests_docs_path(previous)):
                 issues.append("RENAMED_FROM_PRODUCTION_PATH_UNREVIEWED")
             if file.get("status") not in ("added", "modified", "removed", "renamed"):
                 issues.append("FILE_STATUS_UNREVIEWED")
@@ -170,3 +179,35 @@ class DraftNeverMergeOnlySourceChanges(unittest.TestCase):
     def test_no_synthetic_lineage_result_grants_annual_dispatch(self):
         self.assertEqual(self.verdict(), ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
+
+    def test_parent_traversal_inside_docs_prefix_is_rejected(self):
+        self.compare["files"][0]["filename"] = "docs/../src/runtime.py"
+        self.assertIn("PRODUCTION_OR_WORKFLOW_PATH_UNREVIEWED", self.verdict())
+
+    def test_parent_traversal_inside_tests_prefix_is_rejected(self):
+        self.compare["files"][0]["filename"] = "tests/../../.github/workflows/a.yml"
+        self.assertIn("PRODUCTION_OR_WORKFLOW_PATH_UNREVIEWED", self.verdict())
+
+    def test_empty_path_component_is_rejected(self):
+        self.compare["files"][0]["filename"] = "tests//fixture.py"
+        self.assertIn("PRODUCTION_OR_WORKFLOW_PATH_UNREVIEWED", self.verdict())
+
+    def test_dot_path_component_is_rejected(self):
+        self.compare["files"][0]["filename"] = "docs/./review.md"
+        self.assertIn("PRODUCTION_OR_WORKFLOW_PATH_UNREVIEWED", self.verdict())
+
+    def test_backslash_path_component_is_rejected(self):
+        self.compare["files"][0]["filename"] = "docs/a\\b.py"
+        self.assertIn("PRODUCTION_OR_WORKFLOW_PATH_UNREVIEWED", self.verdict())
+
+    def test_renamed_previous_path_with_traversal_is_rejected(self):
+        self.compare["files"][0] = {
+            "filename": "tests/new.py", "previous_filename": "docs/../src/engine.py",
+            "status": "renamed"}
+        self.assertIn("RENAMED_FROM_PRODUCTION_PATH_UNREVIEWED",
+                      self.verdict())
+
+    def test_legitimate_nested_tests_docs_paths_are_still_accepted(self):
+        self.compare["files"][0]["filename"] = "tests/safe/nested/unit.py"
+        self.compare["files"][1]["filename"] = "docs/reviews/summary.md"
+        self.assertEqual(self.verdict(), ())
