@@ -1,0 +1,26 @@
+# DEC-1340 — Isolated Linux kernel-denial feasibility checkpoint, unsupported in current test container
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit documentation-only child of #1563 DEC-1339 at `17299ccf004da8d3eaebc6b8e81a7c100c0fb509`, **924 source-defined tests unchanged**. This note records one nonprotected capability probe and a future independent engineering-review boundary. No protected annual files/evidence were opened; no annual run/test/retry/rerun/dispatch, installed source controls, production workflow/ruleset/permission change, broker or trading activity occurred.
+
+## Verified, narrowly scoped local probe
+
+On the current **disposable development container** (reported Linux `6.18.44`, x86_64, glibc 2.41), a direct **ABI-version query** `syscall(landlock_create_ruleset=444, NULL, 0, LANDLOCK_CREATE_RULESET_VERSION=1)` returned **-1 with errno ENOSYS (38), "Function not implemented"**. This call only asks whether a Landlock ABI is available and created **no ruleset, no restricted process, no protected file access and no denial evidence**. The host's reported kernel version does **not** establish that Landlock is available inside this container: syscall availability may be constrained by sandboxing/seccomp or deployment configuration. No inference is made about any CI runner or protected annual execution host. No attempt to bypass container syscall restrictions was made.
+
+**Disposition: LANDLOCK TEST ENVIRONMENT UNSUPPORTED / SECURITY PROOF NOT VERIFIED / BLOCKED.** It would be misleading to count an unrun Landlock test as independent OS no-write success or convert a skipped test into approval.
+
+## Qualified reviewer acceptance plan (unimplemented)
+
+1. **Real threat model and owner:** Independently identify the protected annual original source, storage/mount namespace, executor credentials, inherited descriptors, writable mappings, aliases, authorized administrator privileges and actors who can modify enforcement. Establish who owns an independently enforced policy beyond the protected executor's authority.
+2. **Preflight capabilities (disposable only):** In an independently authorized environment with real kernel support, check the precise Landlock ABI, `TRUNCATE` handling, file modification, procfd and other applicable handled rights before attempting a ruleset. Record exact kernel, machine, sandbox/LSM capability and syscall errno. An unsupported ABI, syscall restriction, insufficient rights or missing mandatory right is **FAIL CLOSED**, not a passing skip.
+3. **Child-only disposable denial:** Create only generated PUBLIC `/tmp` original+parent fixtures; install a **nonprivileged child-only** policy and validate actual denied O_WRONLY/pwrite, O_RDONLY|O_TRUNC, file growth/shrink, relevant hole-punch, memory mapping and procfd aliases, while a separate unconfined **parent** independently confirms original bytes, source identity and policy isolation. Never install a restriction in the user session or annual workflow as a side effect of a test.
+4. **Policy lifetime and bypass tests:** Verify pre-existing open writable descriptors and mappings **before** applying restrictions, new descriptions and alternative paths **after** restriction, inherited FDs, the observed policy lifetime, and privilege/namespace bypass. Landlock is a per-process confinement mechanism and alone does **not** prove that independently privileged or unconfined actors cannot write a protected annual file; the true requirement is independent OS/storage enforcement over that original object and full threat model.
+5. **Independent provenance:** Require raw positive and negative kernel denial errnos, actual original bytes/length/identity, separate source+named-parent event receipts where meaningful, audited host/policy provenance and a qualified independent reviewer signature. An empty inotify event is not enforcement; a valid portable capability test is not installed protected no-write.
+6. **Immutable annual admission remains separate:** Even fully proved original-object no-write would not verify server-enforced exclusive workflow/ref/SHA admission before checkout/install/protected evidence, fresh run385 attempt1 slot inventory or a narrowly scoped one-shot decision. Those are still separate outstanding DEC-651/#821/#779 controls.
+
+## Explicit decision
+
+No Landlock code is being added to a protected runtime, no protected source is being probed, and no restricted policy is being installed from this draft. The local **ENOSYS** availability probe is evidence of an **unmet test precondition**, not failure of the annual system, nor permission to weaken restrictions or rerun protected workflows.
+
+The latest new source-only synthetic classifier and native PUBLIC fixture tests still require their own completed successful exact-head **Phase3 AND full historical `tests`** plus qualified independent review. Prior failed SHA verdicts and superseded unmerged sibling records are retained unchanged.
+
+Protected independent OS no-write **DEC-650/#820 remains BLOCKED**. Exclusive immutable annual run385 admission **DEC-651/#821/#779 remains BLOCKED**. No protected annual access/execution, production installation, trading, broker action, merge or promotion is authorized.
