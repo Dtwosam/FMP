@@ -96,7 +96,8 @@ def matrix_source_review(source: object) -> tuple[str, ...]:
     if len(rows) != 18:
         issues.append("MATRIX_CELL_COUNT_DRIFT")
     if any(set(row) != set(FIELDS) for row in rows):
-        issues.append("MATRIX_FIELDS_DRIFT")
+        # Unknown/missing keys must never reach direct dict-index lookups.
+        return ("MATRIX_FIELDS_DRIFT",)
     keys = [(row.get("symbol"), row.get("timeframe"), row.get("horizon"))
             for row in rows]
     if set(keys) != EXPECTED or len(set(keys)) != len(keys):
@@ -429,3 +430,50 @@ class AnnualMatrixSourceIsNotImmutableArtifactProvenance(unittest.TestCase):
 
     def test_nontext_outer_matrix_review_rejected(self):
         self.assertEqual(matrix_strategy_source_review({}), ("NON_TEXT",))
+
+    def test_unknown_feature_id_field_is_reported_not_raised(self):
+        changed = self.source.replace(
+            "            feature_artifact_id: ",
+            "            unreviewed_feature_id: ", 1)
+        self.assertEqual(matrix_source_review(changed),
+                         ("MATRIX_FIELDS_DRIFT",))
+
+    def test_unknown_outcome_digest_field_is_reported_not_raised(self):
+        changed = self.source.replace(
+            "            outcome_zip_sha256: ",
+            "            unreviewed_outcome_sha256: ", 1)
+        self.assertEqual(matrix_source_review(changed),
+                         ("MATRIX_FIELDS_DRIFT",))
+
+    def test_unknown_symbol_key_is_reported_not_raised(self):
+        changed = self.source.replace(
+            "          - symbol: EURUSD\n",
+            "          - unreviewed_symbol: EURUSD\n", 1)
+        self.assertEqual(matrix_source_review(changed),
+                         ("MATRIX_FIELDS_DRIFT",))
+
+    def test_unknown_timeframe_key_is_reported_not_raised(self):
+        changed = self.source.replace(
+            "            timeframe: 5m\n",
+            "            unreviewed_frame: 5m\n", 1)
+        self.assertEqual(matrix_source_review(changed),
+                         ("MATRIX_FIELDS_DRIFT",))
+
+    def test_noncanonical_field_name_blocks_literal_pin_review(self):
+        changed = self.source.replace(
+            "            feature_zip_sha256: ",
+            "            unreviewed_digest_name: ", 1)
+        self.assertEqual(pinned_archive_source_review(changed),
+                         ("MATRIX_BASE_SOURCE_UNREVIEWED",))
+
+    def test_noncanonical_field_name_blocks_strategy_review(self):
+        changed = self.source.replace(
+            "            outcome_artifact_id: ",
+            "            alternate_outcome_id: ", 1)
+        self.assertEqual(matrix_strategy_source_review(changed),
+                         ("MATRIX_ROW_SOURCE_UNREVIEWED",))
+
+    def test_canonical_pinned_matrix_remains_accepted(self):
+        self.assertEqual(matrix_source_review(self.source), ())
+        self.assertEqual(pinned_archive_source_review(self.source), ())
+        self.assertEqual(matrix_strategy_source_review(self.source), ())
