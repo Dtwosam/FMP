@@ -121,3 +121,37 @@ class OfflineRunnerLayoutMustNeverApprove(unittest.TestCase):
         x=canonical();before=copy.deepcopy(x)
         self._assess(x,consistent=True)
         self.assertEqual(x,before)
+
+    def test_custom_stage_tuple_member_cannot_execute_equality(self):
+        class Explosive:
+            def __eq__(self,other):
+                raise AssertionError("stage member equality executed")
+        x=canonical()
+        x["stages"]=("trusted_staging",Explosive(),"trusted_uploader")
+        b=self._assess(x)
+        self.assertIn("STAGING_CONSUMER_UPLOADER_ORDER_NOT_PINNED",b)
+
+    def test_custom_mount_scope_and_publication_values_do_not_run_equality(self):
+        class Explosive:
+            def __eq__(self,other):
+                raise AssertionError("symbolic field equality executed")
+        fields=(
+            ("original_source_mode","SYNTHETIC_ORIGINAL_NOT_READONLY"),
+            ("scratch_mode","SCRATCH_NOT_INDEPENDENT_OF_ORIGINAL"),
+            ("publication","REPORT_PUBLICATION_NOT_EXTERNAL"),
+            ("scope","UNAUTHORIZED_REAL_SOURCE_SCOPE"),
+        )
+        for field,reason in fields:
+            with self.subTest(field=field):
+                x=canonical();x[field]=Explosive()
+                self.assertIn(reason,self._assess(x))
+
+    def test_custom_standard_fd_targets_do_not_run_equality(self):
+        class Explosive:
+            def __eq__(self,other):
+                raise AssertionError("descriptor target equality executed")
+        for fd in ("fd0","fd1","fd2"):
+            with self.subTest(fd=fd):
+                x=canonical();x["consumer"][fd]=Explosive()
+                self.assertIn("STANDARD_DESCRIPTOR_TARGETS_NOT_SAFE",
+                              self._assess(x))
