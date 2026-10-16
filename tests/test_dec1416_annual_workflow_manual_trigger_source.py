@@ -27,7 +27,7 @@ def event_source_review(source: object) -> tuple[str, ...]:
     if re.findall(r"(?m)^on:$", header) != ["on:"]:
         return ("WORKFLOW_EVENT_TRIGGER_SHAPE_UNREVIEWED",)
     event = header.split("\non:\n", 1)[1]
-    triggers = re.findall(r"(?m)^  ([a-z0-9_-]+):\s*$", event)
+    triggers = re.findall(r"(?m)^  ([a-z0-9_-]+):[^\n]*$", event)
     if triggers != ["workflow_dispatch"]:
         issues.append("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE")
     if re.findall(r"(?m)^    inputs:$", event) != ["    inputs:"]:
@@ -140,3 +140,47 @@ class AnnualManualTriggerListCannotAuthorizeRun385(unittest.TestCase):
 
     def test_nontext_review_input_is_rejected(self):
         self.assertEqual(event_source_review(None), ("NON_TEXT",))
+
+    def test_added_inline_push_mapping_is_detected(self):
+        changed = self.workflow.replace(
+            "  workflow_dispatch:\n",
+            "  push: {branches: [main]}\n  workflow_dispatch:\n", 1)
+        self.assertIn("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE",
+                      event_source_review(changed))
+
+    def test_added_inline_schedule_mapping_is_detected(self):
+        changed = self.workflow.replace(
+            "  workflow_dispatch:\n",
+            "  schedule: [{cron: '0 0 * * *'}]\n  workflow_dispatch:\n", 1)
+        self.assertIn("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE",
+                      event_source_review(changed))
+
+    def test_duplicated_manual_trigger_mapping_is_detected(self):
+        changed = self.workflow.replace(
+            "  workflow_dispatch:\n",
+            "  workflow_dispatch:\n  workflow_dispatch:\n", 1)
+        self.assertIn("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE",
+                      event_source_review(changed))
+
+    def test_inline_workflow_call_mapping_is_detected(self):
+        changed = self.workflow.replace(
+            "  workflow_dispatch:\n",
+            "  workflow_call: {inputs: {}}\n  workflow_dispatch:\n", 1)
+        self.assertIn("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE",
+                      event_source_review(changed))
+
+    def test_added_inline_pull_request_mapping_is_detected(self):
+        changed = self.workflow.replace(
+            "  workflow_dispatch:\n",
+            "  pull_request: {branches: [main]}\n  workflow_dispatch:\n", 1)
+        self.assertIn("UNEXPECTED_WORKFLOW_TRIGGER_SOURCE",
+                      event_source_review(changed))
+
+    def test_event_trigger_with_unreviewed_inline_data_is_not_silent(self):
+        changed = self.workflow.replace(
+            "  workflow_dispatch:\n",
+            "  workflow_dispatch: {inputs: unexpected}\n", 1)
+        self.assertNotEqual(event_source_review(changed), ())
+
+    def test_valid_manual_source_keeps_original_diagnostic(self):
+        self.assertEqual(event_source_review(self.workflow), ())
