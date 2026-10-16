@@ -148,3 +148,24 @@ class SyntheticAnnualProofMustNotAuthorize(unittest.TestCase):
         self.assertIn("SHA_MISMATCH_BLOCKS_ADMISSION",r["blockers"])
         self.assertNotIn("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY",
                          r["blockers"])
+
+    def test_boolean_run_or_attempt_never_counts_as_exact_identity(self):
+        for rn,attempt in ((385,True),(True,1),(False,1),(385,False)):
+            with self.subTest(run=repr(rn),attempt=repr(attempt)):
+                r=self._blocked({"annual":{"run_number":rn,"attempt":attempt}})
+                self.assertIn("NOT_THE_EXCLUSIVE_RUN385_ATTEMPT1",
+                              r["blockers"])
+
+    def test_float_run_or_attempt_is_not_exact_integer_identity(self):
+        for rn,attempt in ((385.0,1),(385,1.0),(385.0,1.0)):
+            with self.subTest(run=repr(rn),attempt=repr(attempt)):
+                r=self._blocked({"annual":{"run_number":rn,"attempt":attempt}})
+                self.assertIn("NOT_THE_EXCLUSIVE_RUN385_ATTEMPT1",
+                              r["blockers"])
+
+    def test_exact_integer_run_pair_is_still_never_authority(self):
+        r=self._blocked({"annual":{"run_number":385,"attempt":1}})
+        self.assertNotIn("NOT_THE_EXCLUSIVE_RUN385_ATTEMPT1",
+                         r["blockers"])
+        self.assertIn("SHA_BINDING_IDENTITIES_ABSENT_OR_INVALID",
+                      r["blockers"])
