@@ -1,0 +1,9 @@
+# DEC-1409 — Annual job dependency DAG and bounded matrix concurrency
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1632 DEC-1408 at `62775a248cf0bb4beddcc628eb4d089e4d0820d9`. Twelve source-defined tests, **1,354 proposed methods**.
+
+The installed annual GitHub workflow defines the directed source job order `annual_preflight -> annual_cell -> annual_freeze`. The preflight job has no `needs`, cell declares exactly `needs: annual_preflight`, and freeze declares exactly `needs: annual_cell`. The 18-cell matrix uses `fail-fast: false` and `max-parallel: 3`. Pure source review asserts these known literal configurations and fails review if a cell runs without its preflight dependency, if freeze depends on a different job, duplicate YAML dependencies or matrix parallelism keys appear, if fail-fast/parallellism changes, or if a new job-level condition such as `if: always()` is introduced. Changes exist **only in in-memory copies of source text**; they are never applied to the installed workflow.
+
+The observed job dependency and concurrency source settings are regression invariants, **not** independent proof of run allocation before the SHA/ref race, original protected source OS no-write, trusted process isolation, privileged uploader boundaries or prevention of unreviewed manual dispatchers. `max-parallel: 3` is a source concurrency setting, not evidence of a singleton externally approved one-shot protected 2023 run385/attempt1.
+
+Own exact-head completed Phase3 + full historical CI and qualified external review required. DEC-650/#820 actual independently OS-enforced original no-write and DEC-651/#821/#779 exclusive immutable GitHub server admission stay **BLOCKED**. No protected original/artifact reads, annual job/dispatch/retry, installed YAML/ruleset/permission changes, strategy/broker/trading, merges or promotion.
