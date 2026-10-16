@@ -206,3 +206,49 @@ class SyntheticAnnualProofMustNotAuthorize(unittest.TestCase):
                          "annual":DangerousAnnual(
                              {"run_number":385,"attempt":1})})
         self.assertIn("ANNUAL_ADMISSION_DETAILS_MISSING",r["blockers"])
+
+    def test_hostile_proof_kind_comparison_is_not_evaluated(self):
+        class HostileEquality:
+            def __eq__(self, other):
+                raise AssertionError("hostile proof.kind comparison called")
+        result=self._blocked({"proof":{"kind":HostileEquality()}})
+        self.assertIn(
+            "UNVERIFIABLE_CLAIM_CANNOT_ESTABLISH_TRUST",
+            result["blockers"])
+
+    def test_hostile_annual_outcome_comparison_is_not_evaluated(self):
+        class HostileEquality:
+            def __eq__(self, other):
+                raise AssertionError("hostile annual.outcome comparison called")
+        result=self._blocked(
+            {"annual":{"run_number":385,"attempt":1,
+                       "outcome":HostileEquality()}})
+        self.assertNotIn(
+            "TERMINAL_NO_RETRY_AMBIGUOUS_OR_FAILED_SLOT",
+            result["blockers"])
+
+    def test_custom_string_subclass_cannot_spoof_proof_or_outcome(self):
+        class HostileString(str):
+            def __eq__(self, other):
+                raise AssertionError("custom str comparison called")
+        result=self._blocked(
+            {"proof":{"kind":HostileString("public_memfd_seals")},
+             "annual":{"run_number":385,"attempt":1,
+                       "outcome":HostileString("retry")}})
+        self.assertIn("UNVERIFIABLE_CLAIM_CANNOT_ESTABLISH_TRUST",
+                      result["blockers"])
+        self.assertNotIn("TERMINAL_NO_RETRY_AMBIGUOUS_OR_FAILED_SLOT",
+                         result["blockers"])
+
+    def test_custom_string_subclass_sha_equality_is_not_evaluated(self):
+        class HostileString(str):
+            def __eq__(self, other):
+                raise AssertionError("custom sha equality called")
+        result=self._blocked(
+            {"annual":{"run_number":385,"attempt":1,
+                       "expected_sha":HostileString("abc"),
+                       "observed_sha":HostileString("abc")}})
+        self.assertIn("SHA_BINDING_IDENTITIES_ABSENT_OR_INVALID",
+                      result["blockers"])
+        self.assertNotIn("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY",
+                         result["blockers"])

@@ -43,7 +43,7 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
             findings.append("PROOF_NOT_A_MAPPING")
         else:
             kind = proof.get("kind")
-            if kind in UNTRUSTED_PROOF_FORMS:
+            if type(kind) is str and kind in UNTRUSTED_PROOF_FORMS:
                 findings.append("DISPOSABLE_OR_SELF_REPORTED_PROOF_IS_NOT_PROTECTED_WITNESS")
             else:
                 findings.append("UNVERIFIABLE_CLAIM_CANNOT_ESTABLISH_TRUST")
@@ -59,14 +59,15 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
             if (type(run_number) is not int or run_number != 385
                 or type(attempt) is not int or attempt != 1):
                 findings.append("NOT_THE_EXCLUSIVE_RUN385_ATTEMPT1")
-            if annual.get("outcome") in (
+            outcome=annual.get("outcome")
+            if type(outcome) is str and outcome in (
                 "ambiguous", "failed", "cancelled", "retry", "replacement"
             ):
                 findings.append("TERMINAL_NO_RETRY_AMBIGUOUS_OR_FAILED_SLOT")
             expected_sha=annual.get("expected_sha")
             observed_sha=annual.get("observed_sha")
-            if (not isinstance(expected_sha,str) or not expected_sha
-                or not isinstance(observed_sha,str) or not observed_sha):
+            if (type(expected_sha) is not str or not expected_sha
+                or type(observed_sha) is not str or not observed_sha):
                 findings.append("SHA_BINDING_IDENTITIES_ABSENT_OR_INVALID")
             elif expected_sha == observed_sha:
                 findings.append("SHA_EQUALITY_ALONE_NOT_INDEPENDENT_REF_AUTHORITY")
