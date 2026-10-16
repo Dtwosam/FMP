@@ -1,0 +1,9 @@
+# DEC-1382 — GitHub workflow token scope and trigger source are non-authorizing
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1605 DEC-1381 at `95a34370d95509ff79f929c9288a3b863d87dba1`. Adds ten source-defined unit-test methods, **1,142 proposed methods**.
+
+The *tracked current* annual workflow declares only a manual `workflow_dispatch` event, root GitHub token permissions `contents: read` and `actions: read`, exactly the three named preflight/cell/freeze jobs, and no per-job `permissions` override in the current checked-in YAML. `GH_TOKEN` is referenced in three source steps. The offline diagnostic rejects in-memory mutations which add a push trigger, broaden `actions: write` or introduce a job-level write permission. The tests read only a committed Git YAML blob; they neither use the token nor contact Actions.
+
+**Important:** This is a *static YAML shape* check and does not prove other workflows/actors cannot dispatch, repository rulesets enforce exclusivity, or a trusted OS-mounted input is read-only. A token restricted to GitHub API read permissions does not restrict filesystem `Path.write_text`, inherited FDs or mount aliases. The preflight still contains `if: always()` publication of checkout-relative hidden `.preflight` after the separately ordered runtime gate. No protected metadata publication or leak is claimed or tested.
+
+Current read-only GET observations in #1605 show `main` protection disabled, no repository rulesets; DEC-651/#821/#779 remains **BLOCKED** irrespective of this checked-in token scope. DEC-650/#820 independent OS original no-write also remains **BLOCKED**. Own completed exact-head Phase3+full historical suite and qualified independent review required. No protected data/artifacts, annual execution/dispatch/retry, GitHub settings/installed workflow changes, broker/trading, merges or promotions.
