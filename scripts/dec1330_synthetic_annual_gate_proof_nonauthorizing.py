@@ -1,13 +1,12 @@
 """DEC-1330: pure, SOURCE-ONLY negative proof classification.
 
-Only caller-supplied synthetic Python mappings are inspected.  No filesystem,
+Only caller-supplied *plain* Python dictionaries are inspected; custom mapping
+hooks and dict subclasses are not consulted as claimed evidence.  No filesystem,
 network, GitHub, annual workflow, credentials, or protected evidence is read.
 Nothing in this module ever returns positive authorization.  A future real
 independent proof gate must be separately designed/reviewed/installed.
 """
 from __future__ import annotations
-
-from collections.abc import Mapping
 
 STATIC_BLOCKERS = (
     "INDEPENDENT_PROTECTED_ORIGINAL_OS_NO_WRITE_UNVERIFIED",
@@ -31,7 +30,7 @@ UNTRUSTED_PROOF_FORMS = (
 def assess_synthetic_claims(packet: object) -> dict[str, object]:
     """Report negative diagnostic findings; NEVER approve a protected action."""
     findings: list[str] = list(STATIC_BLOCKERS)
-    if not isinstance(packet, Mapping):
+    if type(packet) is not dict:
         findings.append("INPUT_NOT_A_MAPPING")
     else:
         if any(packet.get(key) is True for key in SELF_ASSERTIONS):
@@ -40,7 +39,7 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
         proof = packet.get("proof")
         if proof is None:
             findings.append("INDEPENDENT_PROOF_NOT_SUPPLIED")
-        elif not isinstance(proof, Mapping):
+        elif type(proof) is not dict:
             findings.append("PROOF_NOT_A_MAPPING")
         else:
             kind = proof.get("kind")
@@ -52,7 +51,7 @@ def assess_synthetic_claims(packet: object) -> dict[str, object]:
                 findings.append("INDEPENDENCE_SELF_ASSERTION_NOT_AUTHENTICATED")
 
         annual = packet.get("annual")
-        if not isinstance(annual, Mapping):
+        if type(annual) is not dict:
             findings.append("ANNUAL_ADMISSION_DETAILS_MISSING")
         else:
             run_number=annual.get("run_number")

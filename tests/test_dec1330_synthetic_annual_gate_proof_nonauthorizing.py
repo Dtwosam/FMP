@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import copy
+from collections import UserDict
+from types import MappingProxyType
 import importlib.util
 from pathlib import Path
 import unittest
@@ -169,3 +171,38 @@ class SyntheticAnnualProofMustNotAuthorize(unittest.TestCase):
                          r["blockers"])
         self.assertIn("SHA_BINDING_IDENTITIES_ABSENT_OR_INVALID",
                       r["blockers"])
+
+    def test_mapping_subclass_with_custom_get_is_never_invoked(self):
+        class DangerousDict(dict):
+            def get(self, key, default=None):
+                raise AssertionError("untrusted custom get must not be called")
+        input_packet=DangerousDict(
+            {"proof":{"kind":"inotify_quiet"},
+             "annual":{"run_number":385,"attempt":1}})
+        r=self._blocked(input_packet)
+        self.assertIn("INPUT_NOT_A_MAPPING",r["blockers"])
+
+    def test_nonplain_outer_mappings_are_negative_only(self):
+        packet={"annual":{"run_number":385,"attempt":1},
+                "proof":{"kind":"public_memfd_seals"}}
+        for case in (UserDict(packet),MappingProxyType(packet)):
+            with self.subTest(mapping_type=type(case).__name__):
+                r=self._blocked(case)
+                self.assertIn("INPUT_NOT_A_MAPPING",r["blockers"])
+
+    def test_custom_proof_mapping_does_not_execute_methods(self):
+        class DangerousProof(UserDict):
+            def get(self, key, default=None):
+                raise AssertionError("untrusted proof get must not be called")
+        r=self._blocked({"proof":DangerousProof({"kind":"x509"}),
+                         "annual":{"run_number":385,"attempt":1}})
+        self.assertIn("PROOF_NOT_A_MAPPING",r["blockers"])
+
+    def test_custom_annual_mapping_does_not_execute_methods(self):
+        class DangerousAnnual(UserDict):
+            def get(self, key, default=None):
+                raise AssertionError("untrusted annual get must not be called")
+        r=self._blocked({"proof":{"kind":"inotify_quiet"},
+                         "annual":DangerousAnnual(
+                             {"run_number":385,"attempt":1})})
+        self.assertIn("ANNUAL_ADMISSION_DETAILS_MISSING",r["blockers"])
