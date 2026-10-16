@@ -17,6 +17,11 @@ CONSUMER_FIELDS=(
 )
 
 
+def _exact_string(value: object, expected: str) -> bool:
+    """Refuse custom __eq__ on symbolic user values before comparison."""
+    return type(value) is str and value == expected
+
+
 def assess_synthetic_runner_layout(packet: object) -> dict[str, object]:
     violations=[]
     if type(packet) is not dict or any(type(k) is not str for k in packet):
@@ -24,16 +29,19 @@ def assess_synthetic_runner_layout(packet: object) -> dict[str, object]:
     else:
         if set(packet) != set(FIELDS):
             violations.append("MISSING_OR_EXTRA_LAYOUT_FIELDS")
-        if (type(packet.get("stages")) is not tuple
-            or packet.get("stages") != STAGES):
+        stages=packet.get("stages")
+        if (type(stages) is not tuple
+            or len(stages) != len(STAGES)
+            or any(not _exact_string(value,expected)
+                   for value,expected in zip(stages,STAGES))):
             violations.append("STAGING_CONSUMER_UPLOADER_ORDER_NOT_PINNED")
-        if packet.get("original_source_mode") != "read_only":
+        if not _exact_string(packet.get("original_source_mode"),"read_only"):
             violations.append("SYNTHETIC_ORIGINAL_NOT_READONLY")
-        if packet.get("scratch_mode") != "separate_read_write":
+        if not _exact_string(packet.get("scratch_mode"),"separate_read_write"):
             violations.append("SCRATCH_NOT_INDEPENDENT_OF_ORIGINAL")
-        if packet.get("publication") != "trusted_external_only":
+        if not _exact_string(packet.get("publication"),"trusted_external_only"):
             violations.append("REPORT_PUBLICATION_NOT_EXTERNAL")
-        if packet.get("scope") != "generated_public_only":
+        if not _exact_string(packet.get("scope"),"generated_public_only"):
             violations.append("UNAUTHORIZED_REAL_SOURCE_SCOPE")
         consumer=packet.get("consumer")
         if type(consumer) is not dict or any(
@@ -54,9 +62,9 @@ def assess_synthetic_runner_layout(packet: object) -> dict[str, object]:
                 or type(consumer.get("inherited_writable_source_maps")) is not int
                 or consumer.get("inherited_writable_source_maps") != 0):
                 violations.append("INHERITED_ORIGINAL_WRITE_CAPABILITY_EXISTS")
-            if (consumer.get("fd0") != "safe_input"
-                or consumer.get("fd1") != "scratch_output"
-                or consumer.get("fd2") != "scratch_error"):
+            if (not _exact_string(consumer.get("fd0"),"safe_input")
+                or not _exact_string(consumer.get("fd1"),"scratch_output")
+                or not _exact_string(consumer.get("fd2"),"scratch_error")):
                 violations.append("STANDARD_DESCRIPTOR_TARGETS_NOT_SAFE")
             if consumer.get("policy_before_first_access") is not True:
                 violations.append("ORIGINAL_ACCESS_PRECEDES_POLICY")
