@@ -1,0 +1,184 @@
+"""DEC-1410: fail-closed, source-only 18-cell annual matrix inventory.
+
+Read the checked-in YAML as text; never dispatch the annual workflow, import
+its CLI, download artifacts, or touch protected sources. This is not YAML
+evaluation or proof of immutable, externally authorized evidence.
+"""
+from __future__ import annotations
+
+from itertools import product
+from pathlib import Path
+import re
+import subprocess
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+FIELDS = (
+    "symbol", "timeframe", "horizon", "feature_artifact_id",
+    "feature_zip_sha256", "outcome_artifact_id", "outcome_zip_sha256",
+)
+SYMBOLS = ("EURUSD", "GBPUSD", "USDJPY")
+TIMEFRAMES = ("5m", "15m", "1h")
+HORIZONS = ("60", "240")
+EXPECTED = set(product(SYMBOLS, TIMEFRAMES, HORIZONS))
+
+
+def rows_from_checked_in_text(source: str) -> list[dict[str, str]]:
+    cell = source.split("  annual_cell:\n", 1)[1].split(
+        "  annual_freeze:\n", 1
+    )[0]
+    dataset = cell.split("        dataset:\n", 1)[1].split(
+        "\n    steps:\n", 1
+    )[0]
+    chunks = dataset.split("          - symbol: ")[1:]
+    rows = []
+    for chunk in chunks:
+        lines = chunk.splitlines()
+        keys = [("symbol", lines[0])]
+        for line in lines[1:]:
+            matched = re.fullmatch(r"            ([a-z_]+): (.+)", line)
+            if matched is None:
+                raise ValueError("unknown matrix row source syntax")
+            keys.append(matched.groups())
+        if len(keys) != len(FIELDS) or len({key for key, _ in keys}) != len(FIELDS):
+            raise ValueError("matrix row missing/duplicated field")
+        rows.append(dict(keys))
+    return rows
+
+
+def matrix_source_review(source: object) -> tuple[str, ...]:
+    if type(source) is not str:
+        return ("NON_TEXT",)
+    try:
+        rows = rows_from_checked_in_text(source)
+    except (IndexError, ValueError):
+        return ("MATRIX_SOURCE_SHAPE_UNREVIEWED",)
+    issues = []
+    if len(rows) != 18:
+        issues.append("MATRIX_CELL_COUNT_DRIFT")
+    if any(set(row) != set(FIELDS) for row in rows):
+        issues.append("MATRIX_FIELDS_DRIFT")
+    keys = [(row.get("symbol"), row.get("timeframe"), row.get("horizon"))
+            for row in rows]
+    if set(keys) != EXPECTED or len(set(keys)) != len(keys):
+        issues.append("MATRIX_COMBINATIONS_DRIFT")
+    previous: dict[tuple[str, str], tuple[str, ...]] = {}
+    feature_sources: dict[tuple[str, str], tuple[str, str]] = {}
+    outcome_sources: dict[tuple[str, str], tuple[str, str]] = {}
+    for row in rows:
+        ids = (row["feature_artifact_id"], row["outcome_artifact_id"])
+        digests = (row["feature_zip_sha256"], row["outcome_zip_sha256"])
+        if any(re.fullmatch(r'"[1-9][0-9]*"', value) is None for value in ids):
+            issues.append("MATRIX_ARTIFACT_ID_UNREVIEWED")
+        if any(re.fullmatch(r"[0-9a-f]{64}", value) is None for value in digests):
+            issues.append("MATRIX_DIGEST_FORMAT_UNREVIEWED")
+        pair = (row["symbol"], row["timeframe"])
+        identity = (ids[0], digests[0], ids[1], digests[1])
+        if pair in previous and previous[pair] != identity:
+            issues.append("MATRIX_PAIR_SOURCE_CONFLICT")
+        previous[pair] = identity
+        for collection, identity_part in (
+            (feature_sources, (ids[0], digests[0])),
+            (outcome_sources, (ids[1], digests[1])),
+        ):
+            if pair in collection and collection[pair] != identity_part:
+                issues.append("MATRIX_PAIR_SOURCE_CONFLICT")
+            collection[pair] = identity_part
+    if (len(set(feature_sources.values())) != 9 or
+            len(set(outcome_sources.values())) != 9):
+        issues.append("MATRIX_DISTINCT_SOURCE_PAIRS_DRIFT")
+    return tuple(sorted(set(issues)))
+
+
+class AnnualMatrixSourceIsNotImmutableArtifactProvenance(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.source = subprocess.check_output(
+            ["git", "show",
+             "HEAD:.github/workflows/phase8a-annual-pattern-catalogue.yml"],
+            cwd=ROOT, text=True,
+        )
+
+    def test_checked_in_matrix_matches_18_cell_source_inventory(self):
+        self.assertEqual(matrix_source_review(self.source), ())
+
+    def test_expected_cross_product_exactly_once(self):
+        rows = rows_from_checked_in_text(self.source)
+        self.assertEqual({(r["symbol"], r["timeframe"], r["horizon"])
+                          for r in rows}, EXPECTED)
+        self.assertEqual(len(rows), len(EXPECTED))
+
+    def test_exactly_nine_feature_and_outcome_pairs(self):
+        rows = rows_from_checked_in_text(self.source)
+        self.assertEqual(len({(r["feature_artifact_id"],
+                               r["feature_zip_sha256"]) for r in rows}), 9)
+        self.assertEqual(len({(r["outcome_artifact_id"],
+                               r["outcome_zip_sha256"]) for r in rows}), 9)
+
+    def test_duplicate_cell_combo_is_detected(self):
+        altered = self.source.replace(
+            "          - symbol: EURUSD\n            timeframe: 5m\n"
+            "            horizon: 60\n",
+            "          - symbol: EURUSD\n            timeframe: 5m\n"
+            "            horizon: 240\n", 1)
+        self.assertIn("MATRIX_COMBINATIONS_DRIFT", matrix_source_review(altered))
+
+    def test_missing_symbol_requires_review(self):
+        altered = self.source.replace(
+            "          - symbol: EURUSD\n", "          - symbol: AUDUSD\n", 1)
+        self.assertIn("MATRIX_COMBINATIONS_DRIFT", matrix_source_review(altered))
+
+    def test_unreviewed_timeframe_requires_review(self):
+        altered = self.source.replace(
+            "            timeframe: 5m\n", "            timeframe: 30m\n", 1)
+        self.assertIn("MATRIX_COMBINATIONS_DRIFT", matrix_source_review(altered))
+
+    def test_unreviewed_horizon_requires_review(self):
+        altered = self.source.replace(
+            "            horizon: 60\n", "            horizon: 90\n", 1)
+        self.assertIn("MATRIX_COMBINATIONS_DRIFT", matrix_source_review(altered))
+
+    def test_changed_artifact_id_between_horizons_fails(self):
+        altered = self.source.replace(
+            'feature_artifact_id: "10752009633"',
+            'feature_artifact_id: "10752009634"', 1)
+        self.assertIn("MATRIX_PAIR_SOURCE_CONFLICT", matrix_source_review(altered))
+
+    def test_changed_sha_between_horizons_fails(self):
+        altered = self.source.replace(
+            "feature_zip_sha256: a466f0a128ea8cdc5818c6756bb71a57767f0c703eec68ad40a680f1bf9b06e2",
+            "feature_zip_sha256: b466f0a128ea8cdc5818c6756bb71a57767f0c703eec68ad40a680f1bf9b06e2",
+            1)
+        self.assertIn("MATRIX_PAIR_SOURCE_CONFLICT", matrix_source_review(altered))
+
+    def test_nonhex_digest_is_rejected(self):
+        altered = self.source.replace(
+            "feature_zip_sha256: a466f0a128ea8cdc5818c6756bb71a57767f0c703eec68ad40a680f1bf9b06e2",
+            "feature_zip_sha256: z466f0a128ea8cdc5818c6756bb71a57767f0c703eec68ad40a680f1bf9b06e2",
+            1)
+        self.assertIn("MATRIX_DIGEST_FORMAT_UNREVIEWED",
+                      matrix_source_review(altered))
+
+    def test_nonnumeric_artifact_id_is_rejected(self):
+        altered = self.source.replace(
+            'feature_artifact_id: "10752009633"',
+            'feature_artifact_id: "not-an-id"', 1)
+        self.assertIn("MATRIX_ARTIFACT_ID_UNREVIEWED",
+                      matrix_source_review(altered))
+
+    def test_duplicate_yaml_row_scalar_requires_review(self):
+        altered = self.source.replace(
+            "            horizon: 60\n",
+            "            horizon: 60\n            horizon: 60\n", 1)
+        self.assertIn("MATRIX_SOURCE_SHAPE_UNREVIEWED",
+                      matrix_source_review(altered))
+
+    def test_unknown_matrix_scalar_requires_review(self):
+        altered = self.source.replace(
+            "            horizon: 60\n",
+            "            horizon: 60\n            extra: unreviewed\n", 1)
+        self.assertIn("MATRIX_SOURCE_SHAPE_UNREVIEWED",
+                      matrix_source_review(altered))
+
+    def test_nontext_source_is_not_a_valid_review_input(self):
+        self.assertEqual(matrix_source_review(None), ("NON_TEXT",))
