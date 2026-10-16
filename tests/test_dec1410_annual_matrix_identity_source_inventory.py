@@ -22,6 +22,45 @@ TIMEFRAMES = ("5m", "15m", "1h")
 HORIZONS = ("60", "240")
 EXPECTED = set(product(SYMBOLS, TIMEFRAMES, HORIZONS))
 
+FROZEN_SOURCE_ARTIFACTS = {
+    ("EURUSD", "5m"): (
+        "\"10752009633\"", "a466f0a128ea8cdc5818c6756bb71a57767f0c703eec68ad40a680f1bf9b06e2",
+        "\"10759485253\"", "243824ecfb365a94dbe49442352440ffc3730240b4ca9758b0b94d8e6224534b",
+    ),
+    ("EURUSD", "15m"): (
+        "\"10753305695\"", "a942b0bf97995cd67e94335435ab3c06ee0da7688f5ac494b79470c1c637b4ee",
+        "\"10759375276\"", "dca7f656c08e7b35c51e3549cdcaf92849b2905d70cbeecc5ff1ed3773eeedd0",
+    ),
+    ("EURUSD", "1h"): (
+        "\"10753555531\"", "831a1957519714933cc34c12fe126a88aeaf7fa9a359be6399b8569a236ee59e",
+        "\"10759490258\"", "4594975177b8f7b0ff2979ddba85b774d55b65afe3da61491226dc0bb6f1eaf4",
+    ),
+    ("GBPUSD", "5m"): (
+        "\"10753690116\"", "62bb96d9492fa092cd5aa157223be34dab6c78fb20e381a4d7804adbcec22498",
+        "\"10759375400\"", "69b5a774707fe1bf26e271ad6a89084f22169a9155dc5debcbf5d00c00a2fdf4",
+    ),
+    ("GBPUSD", "15m"): (
+        "\"10753680126\"", "c5d894f595e85f84670ac66348b0fb40366a80286408c8c1b777549a5dffdc84",
+        "\"10759695313\"", "a04e9a5ffa5faaf8200385fe7a71bf1d9a56aba3021d60bae25c247b537c365f",
+    ),
+    ("GBPUSD", "1h"): (
+        "\"10753440747\"", "f7c66064a0255585ecf5e4eca6da86bbea3eee58d38bbf9aaeecd04748a8f6f8",
+        "\"10759645383\"", "b2a192ceca9031dc2460194db698318a04b99df9f346b4c32c8e9ba7803d4f49",
+    ),
+    ("USDJPY", "5m"): (
+        "\"10752846673\"", "d719b40919b1edf1f868352c19579f30528232387df3862c7f85782d8a2a7360",
+        "\"10757827671\"", "42794311c61189b95a130efafab50cc2c9586d00761e053727f7a05ecd66e36f",
+    ),
+    ("USDJPY", "15m"): (
+        "\"10753781465\"", "5fdec186a2e086e725623682fd8143294d941635a780038070904e15ed2a4a92",
+        "\"10757812657\"", "edc30a8f49b072e6504a82ae0d90d30a1a362b4dd825bf48d0ed1d2b567af2be",
+    ),
+    ("USDJPY", "1h"): (
+        "\"10752752044\"", "bc8936d2a02bfc6cde9d11eae23330bfc047374f03fe265ed15eaa6d4d0bd3b4",
+        "\"10757692733\"", "aa7fda1ca6e43c3b41a2ee1fb3729de61bb7dc6ea55e98fda70e8434770a8ee4",
+    ),
+}
+
 
 def rows_from_checked_in_text(source: str) -> list[dict[str, str]]:
     cell = source.split("  annual_cell:\n", 1)[1].split(
@@ -87,6 +126,30 @@ def matrix_source_review(source: object) -> tuple[str, ...]:
     if (len(set(feature_sources.values())) != 9 or
             len(set(outcome_sources.values())) != 9):
         issues.append("MATRIX_DISTINCT_SOURCE_PAIRS_DRIFT")
+    return tuple(sorted(set(issues)))
+
+
+def pinned_archive_source_review(source: object) -> tuple[str, ...]:
+    """Check exact reviewed workflow literals, not remote artifact bytes."""
+    if type(source) is not str:
+        return ("NON_TEXT",)
+    if matrix_source_review(source):
+        return ("MATRIX_BASE_SOURCE_UNREVIEWED",)
+    try:
+        rows = rows_from_checked_in_text(source)
+    except (IndexError, ValueError, KeyError):
+        return ("MATRIX_BASE_SOURCE_UNREVIEWED",)
+    issues = []
+    for row in rows:
+        pair = (row["symbol"], row["timeframe"])
+        current = (
+            row["feature_artifact_id"], row["feature_zip_sha256"],
+            row["outcome_artifact_id"], row["outcome_zip_sha256"],
+        )
+        if FROZEN_SOURCE_ARTIFACTS.get(pair) != current:
+            issues.append("REVIEWED_ARTIFACT_LITERAL_IDENTITY_DRIFT")
+    if {r["symbol"] for r in rows} != set(SYMBOLS):
+        issues.append("SYMBOL_SET_DRIFT")
     return tuple(sorted(set(issues)))
 
 
@@ -218,3 +281,57 @@ class AnnualMatrixSourceIsNotImmutableArtifactProvenance(unittest.TestCase):
             "            feature_zip_sha-256: ", 1)
         self.assertEqual(matrix_source_review(changed),
                          ("MATRIX_SOURCE_SHAPE_UNREVIEWED",))
+
+    def test_reviewed_18_cell_literal_ids_and_hashes_are_pinned(self):
+        self.assertEqual(pinned_archive_source_review(self.source), ())
+
+    def test_reviewed_snapshot_has_nine_expected_symbol_timeframe_pairs(self):
+        self.assertEqual(set(FROZEN_SOURCE_ARTIFACTS),
+                         set(product(SYMBOLS, TIMEFRAMES)))
+
+    def test_both_horizons_changed_feature_id_is_not_silently_accepted(self):
+        changed = self.source.replace(
+            'feature_artifact_id: "10752009633"',
+            'feature_artifact_id: "10752009634"')
+        self.assertEqual(matrix_source_review(changed), ())
+        self.assertIn("REVIEWED_ARTIFACT_LITERAL_IDENTITY_DRIFT",
+                      pinned_archive_source_review(changed))
+
+    def test_both_horizons_changed_outcome_id_requires_review(self):
+        changed = self.source.replace(
+            'outcome_artifact_id: "10759485253"',
+            'outcome_artifact_id: "10759485254"')
+        self.assertEqual(matrix_source_review(changed), ())
+        self.assertIn("REVIEWED_ARTIFACT_LITERAL_IDENTITY_DRIFT",
+                      pinned_archive_source_review(changed))
+
+    def test_both_horizons_changed_feature_sha_requires_review(self):
+        original = "a466f0a128ea8cdc5818c6756bb71a57767f0c703eec68ad40a680f1bf9b06e2"
+        changed = self.source.replace(original, "b" + original[1:])
+        self.assertEqual(matrix_source_review(changed), ())
+        self.assertIn("REVIEWED_ARTIFACT_LITERAL_IDENTITY_DRIFT",
+                      pinned_archive_source_review(changed))
+
+    def test_both_horizons_changed_outcome_sha_requires_review(self):
+        original = "243824ecfb365a94dbe49442352440ffc3730240b4ca9758b0b94d8e6224534b"
+        changed = self.source.replace(original, "a" + original[1:])
+        self.assertEqual(matrix_source_review(changed), ())
+        self.assertIn("REVIEWED_ARTIFACT_LITERAL_IDENTITY_DRIFT",
+                      pinned_archive_source_review(changed))
+
+    def test_valid_shape_does_not_replace_literal_artifact_identity(self):
+        original = 'feature_artifact_id: "10753305695"'
+        changed = self.source.replace(original,
+                                      'feature_artifact_id: "10753305696"')
+        self.assertEqual(matrix_source_review(changed), ())
+        self.assertNotEqual(pinned_archive_source_review(changed), ())
+
+    def test_single_horizon_mutation_stays_a_base_source_failure(self):
+        changed = self.source.replace(
+            'feature_artifact_id: "10752009633"',
+            'feature_artifact_id: "10752009634"', 1)
+        self.assertIn("MATRIX_BASE_SOURCE_UNREVIEWED",
+                      pinned_archive_source_review(changed))
+
+    def test_untrusted_nontext_source_stays_blocked(self):
+        self.assertEqual(pinned_archive_source_review([]), ("NON_TEXT",))
