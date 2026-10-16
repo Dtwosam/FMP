@@ -43,11 +43,12 @@ def matrix_cells(source: str) -> list[tuple[str, str, int]]:
     rows = []
     for part in re.split(r"(?m)^          - symbol: ", fragment)[1:]:
         lines = part.splitlines()
-        fields = dict(re.findall(
+        fields_list = re.findall(
             r"(?m)^            (timeframe|horizon): ([0-9a-z]+)$", part
-        ))
-        if len(fields) != 2 or "timeframe" not in fields or "horizon" not in fields:
-            raise ValueError("missing workflow matrix identity fields")
+        )
+        if len(fields_list) != 2 or len({name for name, _ in fields_list}) != 2:
+            raise ValueError("missing or duplicated workflow matrix identity fields")
+        fields = dict(fields_list)
         rows.append((lines[0].strip(), fields["timeframe"],
                      int(fields["horizon"])))
     return rows
@@ -140,3 +141,35 @@ class AnnualCalendarAndMarketMatrixRemainSourceOnly(unittest.TestCase):
         expected.append("2026_YTD_TO_2026_08_20")
         self.assertNotEqual(labels, expected)
         self.assertNotEqual(len(self.labels[:-1]), 12)
+
+    def test_duplicate_timeframe_key_fails_source_parser(self):
+        needle = "            timeframe: 5m\n"
+        self.assertIn(needle, self.workflow)
+        changed = self.workflow.replace(needle, needle + needle, 1)
+        with self.assertRaises(ValueError):
+            matrix_cells(changed)
+
+    def test_duplicate_horizon_key_fails_source_parser(self):
+        needle = "            horizon: 60\n"
+        self.assertIn(needle, self.workflow)
+        changed = self.workflow.replace(needle, needle + needle, 1)
+        with self.assertRaises(ValueError):
+            matrix_cells(changed)
+
+    def test_missing_horizon_key_fails_source_parser(self):
+        needle = "            horizon: 60\n"
+        self.assertIn(needle, self.workflow)
+        changed = self.workflow.replace(
+            needle, "            shadow_horizon: 60\n", 1
+        )
+        with self.assertRaises(ValueError):
+            matrix_cells(changed)
+
+    def test_invalid_non_numeric_horizon_fails_source_parser(self):
+        needle = "            horizon: 60\n"
+        self.assertIn(needle, self.workflow)
+        changed = self.workflow.replace(
+            needle, "            horizon: broken\n", 1
+        )
+        with self.assertRaises(ValueError):
+            matrix_cells(changed)

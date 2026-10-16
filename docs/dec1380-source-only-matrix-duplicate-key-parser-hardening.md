@@ -1,0 +1,9 @@
+# DEC-1380 — Harden source-only matrix parser against identity-key shadows
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit child #1603 DEC-1379 at `763944024b1160533fea4973d86f13c69b368e6b`. Four focused new tests, **1,132 proposed source-defined unittest methods**.
+
+DEC-1378's review-only matrix extractor originally converted regex matches into a dictionary directly, allowing a duplicated `timeframe` or `horizon` entry to silently overwrite an earlier match. That is unsafe for a *source-integrity diagnostic*: mutated source YAML with duplicate keys must fail review rather than be normalized silently, regardless of YAML parser or runtime behavior. This forward-only source-test change now requires **exactly two** recognized identity field occurrences with **two distinct names** before constructing the identity dictionary, and adds in-memory negative fixture tests for duplicated timeframe, duplicated horizon, missing horizon and malformed nonnumeric horizon. These failures occur entirely on copied committed workflow text; no actual protected input, runtime, CLI or workflow is invoked.
+
+Existing per-row artifact ID+SHA-256 bindings from #1594/#1600, calendar/cartesian checks from #1602 and other source checks remain unchanged. This parser is not a general YAML parser, a live server-side installed SHA attestation, or proof of OS-protected source no-write. Earlier exact-head SHA verdicts are immutable. Own exact-head Phase3 and full historical CI plus independent qualified review required.
+
+DEC-650/#820 independent OS original no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 dispatch admission remain **BLOCKED**. No protected annual run/retry, data/evidence access, GitHub installed workflow/permissions/rulesets, production/broker/trading, merge or promotion.
