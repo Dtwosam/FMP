@@ -54,6 +54,14 @@ def review_exact_pr_ci_jobs(pr: object, runs: object,
         if type(steps) is not list or not all(type(s) is dict for s in steps):
             issues.append(name + "_JOB_STEPS_UNREVIEWED")
             continue
+        numbers = [s.get("number") for s in steps]
+        if not all(type(n) is int and n > 0 for n in numbers):
+            issues.append(name + "_JOB_STEP_NUMBERS_UNREVIEWED")
+        elif len(numbers) != len(set(numbers)):
+            issues.append(name + "_JOB_STEP_NUMBERS_DUPLICATED")
+        elif numbers != sorted(numbers):
+            issues.append(name + "_JOB_STEP_SEQUENCE_UNREVIEWED")
+        critical_positions = []
         for step_name in required_steps:
             matches = [s for s in steps if s.get("name") == step_name]
             if len(matches) != 1:
@@ -64,6 +72,11 @@ def review_exact_pr_ci_jobs(pr: object, runs: object,
                 issues.append(name + "_REQUIRED_STEP_NOT_SUCCESSFUL")
             if type(step.get("number")) is not int or step["number"] <= 0:
                 issues.append(name + "_STEP_NUMBER_UNREVIEWED")
+            else:
+                critical_positions.append(step["number"])
+        if (len(critical_positions) == len(required_steps) and
+                critical_positions != sorted(set(critical_positions))):
+            issues.append(name + "_CRITICAL_STEP_ORDER_DRIFT")
     return tuple(sorted(set(issues)))
 
 
@@ -156,3 +169,49 @@ class ActualRequiredStepEvidenceIsNotProtectedExecutionConsent(
     def test_successful_source_job_summary_never_authorizes_annual_run(self):
         self.assertEqual(self.verdict(), ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
+
+    def test_reversing_historical_critical_step_numbers_is_flagged(self):
+        a, b = self.jobs_by_run[8001][0]["steps"]
+        a["number"], b["number"] = b["number"], a["number"]
+        self.assertIn("tests_CRITICAL_STEP_ORDER_DRIFT", self.verdict())
+
+    def test_reversing_phase3_verification_upload_order_is_flagged(self):
+        steps = self.jobs_by_run[8000][0]["steps"]
+        steps[1]["number"], steps[2]["number"] = (steps[2]["number"],
+                                                  steps[1]["number"])
+        self.assertIn("phase3-acceptance_CRITICAL_STEP_ORDER_DRIFT",
+                      self.verdict())
+
+    def test_duplicate_step_numbers_are_not_silent(self):
+        steps = self.jobs_by_run[8001][0]["steps"]
+        steps[1]["number"] = steps[0]["number"]
+        self.assertIn("tests_JOB_STEP_NUMBERS_DUPLICATED", self.verdict())
+
+    def test_out_of_order_step_array_is_not_silent(self):
+        steps = self.jobs_by_run[8000][0]["steps"]
+        steps.reverse()
+        self.assertIn("phase3-acceptance_JOB_STEP_SEQUENCE_UNREVIEWED",
+                      self.verdict())
+
+    def test_zero_critical_step_number_is_not_silent(self):
+        self.jobs_by_run[8000][0]["steps"][0]["number"] = 0
+        self.assertIn("phase3-acceptance_JOB_STEP_NUMBERS_UNREVIEWED",
+                      self.verdict())
+
+    def test_boolean_critical_step_number_is_not_silent(self):
+        self.jobs_by_run[8001][0]["steps"][0]["number"] = False
+        self.assertIn("tests_JOB_STEP_NUMBERS_UNREVIEWED", self.verdict())
+
+    def test_canonical_required_steps_have_monotone_unique_indices(self):
+        self.assertEqual(self.verdict(), ())
+        for jobs in self.jobs_by_run.values():
+            indices = [step["number"] for step in jobs[0]["steps"]]
+            self.assertEqual(indices, sorted(set(indices)))
+
+    def test_phase3_generation_cannot_appear_after_upload(self):
+        steps = self.jobs_by_run[8000][0]["steps"]
+        steps[0]["number"], steps[2]["number"] = (steps[2]["number"],
+                                                  steps[0]["number"])
+        self.assertIn("phase3-acceptance_CRITICAL_STEP_ORDER_DRIFT",
+                      self.verdict())
+
