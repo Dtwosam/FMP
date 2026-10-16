@@ -1,0 +1,9 @@
+# DEC-1430 — Exact reviewed CI workflow source blob inventory
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child of #1653 DEC-1429 at 59fe893947b656f9eacb718aa8d367ef16e73e3d. Adds **14 source-defined unittest methods**, reaching **1,540 proposed methods**.
+
+The new DEC-1422–1428 offline evidence checks link exact workflow run IDs, names, GitHub workflow IDs/paths, PRs, statuses, jobs and critical steps. They do not, by themselves, prove that the CI workflow YAML producing those runs still contains the reviewed commands. A renamed/no-op command under an unchanged step name could cause misleading CI claims.
+
+This narrow review pins the exact checked-in Git *blob identities* of the two CI definitions observed at #1653: tests.yml e80c05a17b00311640fb96bc8aa09b01f2f3425e and phase3-acceptance.yml 969240049d434b30ea52f089710d7e0d511d9072. The Python stdlib-only test reads those files from HEAD Git source and computes Git blob SHA-1 directly, without network or any workflow API, and checks that the two definitions have the reviewed exact bytes. Synthetic mutations change one byte, add/remove a file, supply a non-bytes payload, or replace contents with empty data, all of which fail closed. This is a **source-review regression pin**, not cryptographic authentication of a remote CI run or proof that GitHub executed the reviewed files. Any intended CI workflow edit needs a separate reviewed update to the pins, not silent acceptance.
+
+The test does not change either YAML file. Its own exact-head Phase3 and full historical/general CI plus qualified review must pass. The installed annual YAML, protected original/archives and all dispatch/broker/trading systems are untouched. DEC-650/#820 actual original OS no-write and DEC-651/#821/#779 immutable exclusive server-authorized 2023 run385/attempt1 remain **BLOCKED**. No annual run/retry, security permission/ruleset mutation, merge, promotion or trading.
