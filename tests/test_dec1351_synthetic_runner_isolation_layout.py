@@ -155,3 +155,47 @@ class OfflineRunnerLayoutMustNeverApprove(unittest.TestCase):
                 x=canonical();x["consumer"][fd]=Explosive()
                 self.assertIn("STANDARD_DESCRIPTOR_TARGETS_NOT_SAFE",
                               self._assess(x))
+
+    def test_hash_colliding_outer_nonstring_key_does_not_run_equality(self):
+        class Colliding:
+            def __hash__(self):
+                return hash("scope")
+            def __eq__(self,other):
+                raise AssertionError("untrusted outer key equality executed")
+        x=canonical()
+        x[Colliding()]="generated_public_only"
+        b=self._assess(x)
+        self.assertIn("UNTRUSTED_LAYOUT_INPUT",b)
+
+    def test_hash_colliding_nested_consumer_nonstring_key_is_rejected(self):
+        class Colliding:
+            def __hash__(self):
+                return hash("fd0")
+            def __eq__(self,other):
+                raise AssertionError("untrusted consumer key equality executed")
+        x=canonical()
+        x["consumer"][Colliding()]="safe_input"
+        b=self._assess(x)
+        self.assertIn("UNTRUSTED_CONSUMER_SPEC",b)
+
+    def test_untrusted_keys_cannot_claim_ideal_design(self):
+        class ForeignKey:
+            def __hash__(self):
+                return 9
+        for nested in (False,True):
+            with self.subTest(nested=nested):
+                x=canonical()
+                if nested:
+                    x["consumer"][ForeignKey()]=False
+                    self.assertIn("UNTRUSTED_CONSUMER_SPEC",
+                                  self._assess(x))
+                else:
+                    x[ForeignKey()]=False
+                    self.assertIn("UNTRUSTED_LAYOUT_INPUT",
+                                  self._assess(x))
+
+    def test_all_plain_key_canonical_design_remains_non_authorizing(self):
+        x=canonical()
+        self.assertTrue(all(type(k) is str for k in x))
+        self.assertTrue(all(type(k) is str for k in x["consumer"]))
+        self.assertEqual(self._assess(x,consistent=True),())
