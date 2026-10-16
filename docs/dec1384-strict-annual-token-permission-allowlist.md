@@ -1,0 +1,9 @@
+# DEC-1384 — Reject all unexpected root GitHub token permission declarations
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit child #1607 DEC-1383 at `43b0091a09f61265834cb521a2a77fb38f01db6f`; four new test methods, **1,148 proposed source-defined methods**. Changes only one static-review test and this reviewer memo.
+
+A specific source-review blind spot was found: #1606/#1607's `source_diagnostics` previously matched and compared just the known root `contents`/`actions` permission pairs. Injecting another root permission such as `id-token: write`, `packages: write` or `checks: none` would be silently **ignored**, leaving a misleading source-only empty diagnostic. The replacement requires the complete, ordered nonblank *root permission declaration lines* to be exactly `contents: read` and `actions: read`; unexpected, repeated or unknown entries now fail source review. Negative tests exercise OIDC-token escalation, package-write escalation, duplicate contents and an extra even-denied key. This is a deliberately strict shape audit of this one tracked file, not a general YAML validator.
+
+These tests read only the *committed source* via local `git show HEAD` and transform strings in memory. No actual GitHub tokens, protected inputs, annual job, workflow dispatch, YAML deployment, repository protection, ruleset, branch permissions, production code or broker are touched. A GitHub API read-only token does not equal an OS-enforced no-write original; even clean YAML cannot establish immutable server-side main-ref exclusivity.
+
+Original prior exact-head CI verdicts are immutable; this child needs its own completed Phase3 and full historical CI and an independent qualified review. DEC-650/#820 real OS-protected original no-write and DEC-651/#821/#779 exclusive server-side 2023 run385/attempt1 immutable admission remain **BLOCKED**. No protected annual work, strategy synthesis, broker/trading, merges or promotions.
