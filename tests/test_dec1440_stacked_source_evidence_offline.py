@@ -106,6 +106,29 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
                           "sha": ci_source.git_blob_id(self.changed["docs/sample.md"])}],
             },
         }
+        tests_object = self.full_trees.pop("d"*40)
+        self.git_tests_tree = tree_chain.reviewed_git_tree_sha(
+            tests_object["tree"])
+        tests_object["sha"] = self.git_tests_tree
+        self.full_trees[self.git_tests_tree] = tests_object
+        docs_object = self.full_trees.pop("e"*40)
+        self.git_docs_tree = tree_chain.reviewed_git_tree_sha(
+            docs_object["tree"])
+        docs_object["sha"] = self.git_docs_tree
+        self.full_trees[self.git_docs_tree] = docs_object
+        root_object = self.full_trees.pop(tree_sha)
+        for entry in root_object["tree"]:
+            entry["sha"] = (self.git_tests_tree if entry["path"] == "tests"
+                            else self.git_docs_tree)
+        root_object["tree"].sort(
+            key=lambda e: e["path"].encode("utf-8") +
+            (b"/" if e["mode"] == "040000" else b""))
+        self.git_root_tree = tree_chain.reviewed_git_tree_sha(
+            root_object["tree"])
+        root_object["sha"] = self.git_root_tree
+        self.full_trees[self.git_root_tree] = root_object
+        self.commit["tree"]["sha"] = self.git_root_tree
+        self.tree["sha"] = self.git_root_tree
         self.ci_bytes = dict(self.original_ci_bytes)
 
     def verdict(self):
@@ -193,8 +216,8 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", result["diagnostics"])
 
     def test_mismatched_parent_git_tree_sha_rejected(self):
-        self.full_trees["c"*40]["tree"][0]["sha"] = "f"*40
-        self.assertIn("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
+        self.full_trees[self.git_root_tree]["tree"][0]["sha"] = "f"*40
+        self.assertIn("TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH",
                       self.verdict()["diagnostics"])
 
     def test_missing_subtree_snapshot_rejected(self):
@@ -203,18 +226,18 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
                       self.verdict()["diagnostics"])
 
     def test_duplicate_root_tree_entry_rejected(self):
-        root = self.full_trees["c"*40]["tree"]
+        root = self.full_trees[self.git_root_tree]["tree"]
         root.append(dict(root[0]))
         self.assertIn("TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED",
                       self.verdict()["diagnostics"])
 
     def test_truncated_child_tree_rejected(self):
-        self.full_trees["e"*40]["truncated"] = True
+        self.full_trees[self.git_docs_tree]["truncated"] = True
         self.assertIn("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
                       self.verdict()["diagnostics"])
 
     def test_leaf_tree_sha_not_matched_to_source_rejected(self):
-        self.full_trees["e"*40]["tree"][0]["sha"] = "f"*40
+        self.full_trees[self.git_docs_tree]["tree"][0]["sha"] = "f"*40
         self.assertIn("TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",
                       self.verdict()["diagnostics"])
 
@@ -225,7 +248,7 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
                       self.verdict()["diagnostics"])
 
     def test_flat_regular_leaf_cannot_override_symlinked_chain(self):
-        self.full_trees["d"*40]["tree"][0]["mode"] = "120000"
+        self.full_trees[self.git_tests_tree]["tree"][0]["mode"] = "120000"
         self.assertEqual(self.nodes["tests/sample.py"]["mode"], "100644")
         self.assertIn("TREE_CHAIN_LEAF_NOT_REGULAR_BLOB",
                       self.verdict()["diagnostics"])
@@ -236,3 +259,20 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_full_tree_fixtures_rehash_to_their_sha_identifiers(self):
+        for sha, obj in self.full_trees.items():
+            self.assertEqual(tree_chain.reviewed_git_tree_sha(obj["tree"]), sha)
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_new_sibling_entry_without_new_sha_fails_composite(self):
+        self.full_trees[self.git_docs_tree]["tree"].append({
+            "path": "zzz.md", "mode": "100644", "type": "blob",
+            "sha": "f"*40})
+        self.assertIn("TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_reordered_root_entries_without_rehash_fail_composite(self):
+        self.full_trees[self.git_root_tree]["tree"].reverse()
+        self.assertIn("TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH",
+                      self.verdict()["diagnostics"])
