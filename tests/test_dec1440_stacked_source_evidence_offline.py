@@ -24,6 +24,7 @@ import test_dec1466_phase3_checkout_acceptance_chronology_offline as temporal
 import test_dec1478_workflow_run_log_time_bounds_offline as run_window
 import test_dec1480_phase3_uploaded_bytes_receipt_offline as transfer
 import test_dec1484_sparse_checkout_precheckout_stage_offline as sparse_setup
+import test_dec1486_observed_submodule_cleanup_source_offline as submodule
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
@@ -194,7 +195,28 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                         raw_ci_runner_logs.get(run_id),
                         pr.get("number"), pr.get("head_sha"),
                         pr.get("base_sha")))
+    submodule_issues = []
+    if (type(pr) is not dict or type(runs) is not list or
+            type(raw_ci_runner_logs) is not dict or
+            not all(type(r) is dict for r in runs)):
+        submodule_issues.append("CI_SUBMODULE_SOURCE_INPUT_UNREVIEWED")
+    else:
+        reviewed = [r for r in runs if r.get("name") in
+                    ("tests", "phase3-acceptance")]
+        if len(reviewed) != 2:
+            submodule_issues.append("CI_SUBMODULE_SOURCE_RUNS_UNREVIEWED")
+        for run in reviewed:
+            run_id = run.get("id")
+            if type(run_id) is not int or run_id <= 0:
+                submodule_issues.append("CI_SUBMODULE_SOURCE_RUN_ID_UNREVIEWED")
+            else:
+                submodule_issues.extend(
+                    submodule.review_submodule_cleanup_source(
+                        raw_ci_runner_logs.get(run_id),
+                        pr.get("number"), pr.get("head_sha"),
+                        pr.get("base_sha")))
     checks = (
+        tuple(sorted(set(submodule_issues))),
         tuple(sorted(set(sparse_issues))),
         tuple(sorted(set(transfer_issues))),
         run_window.review_two_ci_runner_log_windows(runs, raw_ci_runner_logs),
@@ -404,6 +426,23 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
                 "https://github.com/Dtwosam/FMP/actions/runs/8000/artifacts/" +
                 str(artifact_id),
         ])
+        # Include exact reviewed GitHub checkout-action submodule cleanup
+        # command shapes before immutable fetch and after checkout/acceptance.
+        # Synthetic timestamps stay within each run's 10:00:00..10:00:09 window.
+        sub_cmds = submodule.ALLOWED_SOURCE_COMMANDS
+        for run_id, raw_text in tuple(self.raw_ci_runner_logs.items()):
+            pre = [
+                "2026-10-17T10:00:00.0" + str(i) + "00000Z " +
+                "[command]/usr/bin/git submodule " + sub_cmds[i - 1]
+                for i in (1, 3, 5)
+            ]
+            post = [
+                "2026-10-17T10:00:08." + str(i) + "000000Z " +
+                "[command]/usr/bin/git submodule " + sub_cmds[i - 1]
+                for i in (1, 2, 3)
+            ]
+            self.raw_ci_runner_logs[run_id] = (
+                "\n".join(pre) + "\n" + raw_text + "\n" + "\n".join(post))
         self.raw_log_receipts = {
             run_id: {
                 "run_id": run_id,
@@ -1113,3 +1152,60 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_two_run_submodule_cleanup_inventory_is_required(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        for run_id in (8000, 8001):
+            self.assertEqual(
+                self.raw_ci_runner_logs[run_id].count(
+                    "[command]/usr/bin/git submodule "), 6)
+
+    def test_missing_phase3_precheckout_submodule_cleanup_fails(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        self.raw_ci_runner_logs[8000] = "\n".join(lines[1:])
+        self.assertIn("SUBMODULE_CLEANUP_COMMAND_INVENTORY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_unreviewed_historical_submodule_update_fails(self):
+        self.raw_ci_runner_logs[8001] += (
+            "\n2026-10-17T10:00:08.5000000Z "
+            "[command]/usr/bin/git submodule update --init")
+        self.assertIn("SUBMODULE_CLEANUP_COMMAND_INVENTORY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_mutated_phase3_submodule_foreach_inner_action_fails(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "submodule foreach --recursive git config --local "
+            "--show-origin --name-only --get-regexp remote.origin.url",
+            "submodule foreach --recursive git reset --hard", 1)
+        self.assertIn("SUBMODULE_CLEANUP_SOURCE_SHAPE_DRIFT",
+                      self.verdict()["diagnostics"])
+
+    def test_reordered_precheckout_submodule_after_fetch_fails(self):
+        lines = self.raw_ci_runner_logs[8001].splitlines()
+        lines[2], lines[3] = lines[3], lines[2]
+        self.raw_ci_runner_logs[8001] = "\n".join(lines)
+        self.assertIn("SUBMODULE_CLEANUP_STAGE_ORDER_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_invalid_post_checkout_submodule_time_fails(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "2026-10-17T10:00:08.1000000Z "
+            "[command]/usr/bin/git submodule ",
+            "2026-99-17T10:00:08.1000000Z "
+            "[command]/usr/bin/git submodule ")
+        self.assertIn("SUBMODULE_CLEANUP_TIMESTAMP_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_read_only_unrelated_git_command_does_not_count_as_submodule(self):
+        self.raw_ci_runner_logs[8000] += (
+            "\n2026-10-17T10:00:08.6000000Z "
+            "[command]/usr/bin/git show --no-patch")
+        self.assertEqual(self.verdict()["diagnostics"],
+                         ("phase3-acceptance_RECEIPT_DIGEST_MISMATCH",))
+
+    def test_clean_two_runner_source_cleanup_is_not_annual_authorization(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["independent_original_os_proof"])
