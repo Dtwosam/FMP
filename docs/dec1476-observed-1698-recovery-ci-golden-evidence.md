@@ -1,0 +1,11 @@
+# DEC-1476 — Second real CI golden fixture from fully verified recovery #1698
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1699 at `2e7dcbab2aeb62ae5c66d7bf96bbcfef2c777045`. Adds **16 new source-defined methods**, bringing the proposed count to **2002**.
+
+Read-only unprotected GitHub Actions source observations for fully successful #1698: historical/general run `39030113645`, job `117388707144`, and Phase3 run `39030113556`, job `117388706485`. Both fetched and checked out the same temporary PR merge SHA `0cf9a4b788da6f9f3b4f4cdaeca90125742d8dc9`. Immutable Git object reads show parents base `4d4fbbae069254fdc4da549daaa799ba3ec09f6d` and head `fa1cabab52e547b5f0a6f4cf39749df818529b59`, with identical source tree `21b9e451c6e255c0dfb73910995670b11f240bf3` on head and merge. The historical suite reported **6,867 executed tests; 702 skipped; OK**.
+
+This source-only golden regression embeds the exact observed three checkout-stage lines from each CI job and the five Phase3 acceptance index/finalization/upload/URL lines. The Phase3 log reports artifact ID `12100346157`, 23,491 upload bytes, five manifest SHA records and merge-stamped `code_commit`; **no artifact was downloaded**. Tests pass the static records through the standalone checkout, two-runner, Phase3 log parser and checkout-to-index chronology checkers, including negative mutation cases for wrong merge SHA, prefix, commit parents/tree, log timing and artifact ID/run association.
+
+These **static excerpts are not provider-signed full logs or proof of runner filesystem immutability, annual original-data confinement, or exact head checkout**. They validate consistency only for these inspected source records. This draft requires its own two PR merge-source-tree Phase3/full historical CI suites and independent qualified review.
+
+**NO GO:** DEC-650/#820 actual protected-original OS no-write and DEC-651/#821/#779 exclusive immutable preallocation 2023 annual run385/attempt1 server admission remain **BLOCKED**. No protected annual dispatch/retry, originals/archive/artifact access, installed workflows/security changes, merges, deployments or trading.
