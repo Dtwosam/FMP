@@ -282,6 +282,7 @@ def _reviewed_source_path(path):
     # control inventory, including C1 controls not covered by ASCII checks.
     return not any(
         unicodedata.category(char) in ("Cc", "Cf", "Cs", "Zl", "Zp") or
+        (unicodedata.category(char) == "Zs" and char != " ") or
         ord(char) == 0x034F or  # combining grapheme joiner
         0x180B <= ord(char) <= 0x180D or  # Mongolian variation selectors
         0xFE00 <= ord(char) <= 0xFE0F or  # BMP variation selectors
@@ -2796,5 +2797,54 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_no_break_space_in_source_label_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/non\u00a0break.md"))
+
+    def test_narrow_no_break_space_source_label_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/narrow\u202fspace.md"))
+
+    def test_thin_space_source_label_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/thin\u2009space.md"))
+
+    def test_en_space_source_label_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/en\u2002space.md"))
+
+    def test_ideographic_space_source_label_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/ideographic\u3000space.md"))
+
+    def test_ascii_internal_space_remains_accepted(self):
+        self.assertTrue(_reviewed_source_path("docs/project notes.md"))
+
+    def test_ascii_trailing_space_remains_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/report.md "))
+
+    def test_nonascii_space_in_changed_source_map_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["docs/a\u00a0b.md"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_nonascii_space_in_ci_workflow_map_fails_closed(self):
+        self.envelope["ci_workflow_bytes_b64"]["ci/a\u2009b.yml"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_nonascii_space_stdin_does_not_echo_private_name(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["docs/private\u202fCANARY.md"] = "YQ=="
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("CANARY", output.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_plain_space_guard_preserves_clean_source_consistency(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
