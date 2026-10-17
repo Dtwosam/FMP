@@ -1,0 +1,9 @@
+# DEC-1481 — Safe diagnostics and recursive JSON fail-closed review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit source tests/docs child #1726 DEC-1480 at `6ac39916b0655f8bcc385aaa8cd7b457d55af5a7`. Adds five source-only regression methods, increasing the proposed total to **2,063 source-defined tests**.
+
+The DEC-1478/1479 portable offline review envelope and stdin-only verdict command already reject malformed JSON, duplicate keys and oversized inputs. They still relied on the standard JSON parser not raising `RecursionError` for a deeply nested attacker-controlled document, and they returned the nested reviewer's diagnostics without constraining output text. To preserve safe, machine-readable local operation, this child explicitly fails closed on recursive/overflowing JSON grammar, limits diagnostic count and code length, and only relays reviewed code-shaped diagnostic identifiers. Unexpected diagnostic text (including embedded source/log lines) is replaced with a fixed `BUNDLE_RESULT_SHAPE_UNREVIEWED` error, rather than echoed.
+
+Five synthetic regression tests exercise deep nesting, untrusted newline-bearing diagnostic text, oversized diagnostic entries and arrays, and a malicious or erroneous reviewer response claiming annual authorization. The command still never reads GitHub, downloads artifacts, accesses protected originals or grants annual execution consent: **exit 0 means only caller-supplied offline source consistency.**
+
+Its own head-associated PR merge-source-tree Phase3/full historical/general CI plus independently qualified source review required. DEC-650/#820 actual protected historical original OS no-write and DEC-651/#821/#779 exclusive immutable GitHub one-shot 2023 run385/attempt1 server admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive/artifact access, installed workflow/security modifications, merge, deployment or trading.

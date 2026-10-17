@@ -126,7 +126,12 @@ def review_bundle_envelope(envelope):
             verdict.get("exclusive_server_dispatch_gate_proven") is not False or
             verdict.get("can_authorize_annual_run") is not False or
             type(verdict.get("source_consistency")) is not bool or
-            type(verdict.get("diagnostics")) is not tuple):
+            type(verdict.get("diagnostics")) is not tuple or
+            len(verdict["diagnostics"]) > 256 or
+            any(type(code) is not str or re.fullmatch(
+                    r"[A-Za-z][A-Za-z0-9_-]{0,127}", code) is None
+                for code in verdict["diagnostics"])):
+        # Do not echo arbitrary caller-provided bytes through diagnostics.
         return fail_closed("BUNDLE_RESULT_SHAPE_UNREVIEWED")
     return verdict
 
@@ -138,7 +143,8 @@ def review_bundle_json_text(text):
     try:
         doc = json.loads(text, object_pairs_hook=_no_duplicate_keys,
                          parse_constant=_no_nonfinite)
-    except (ValueError, TypeError, UnicodeError):
+    except (ValueError, TypeError, UnicodeError, RecursionError,
+            OverflowError):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
     return review_bundle_envelope(doc)
 
@@ -330,3 +336,63 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertIn("BUNDLE_RUN_KEY_UNREVIEWED", result["diagnostics"])
+
+    def test_excessively_nested_json_is_diagnostic_not_recursionerror(self):
+        raw = "["*1600 + "null" + "]"*1600
+        result = review_bundle_json_text(raw)
+        self.assertIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED",
+                      result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_malformed_composite_diagnostic_cannot_echo_input(self):
+        from unittest.mock import patch
+        untrusted = {"source_consistency": False,
+                     "diagnostics": ("secret\nprotected-material",),
+                     "independent_original_os_proof": False,
+                     "exclusive_server_dispatch_gate_proven": False,
+                     "can_authorize_annual_run": False}
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=untrusted):
+            result = self.verdict()
+        self.assertIn("BUNDLE_RESULT_SHAPE_UNREVIEWED",
+                      result["diagnostics"])
+        self.assertNotIn("secret", repr(result))
+
+    def test_excessively_long_diagnostic_replaced_by_safe_error(self):
+        from unittest.mock import patch
+        bad = {"source_consistency": False, "diagnostics": ("A"*200,),
+               "independent_original_os_proof": False,
+               "exclusive_server_dispatch_gate_proven": False,
+               "can_authorize_annual_run": False}
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+
+    def test_excessive_diagnostic_count_rejected(self):
+        from unittest.mock import patch
+        bad = {"source_consistency": False,
+               "diagnostics": tuple("E"+str(i) for i in range(300)),
+               "independent_original_os_proof": False,
+               "exclusive_server_dispatch_gate_proven": False,
+               "can_authorize_annual_run": False}
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertIn("BUNDLE_RESULT_SHAPE_UNREVIEWED",
+                      result["diagnostics"])
+
+    def test_bogus_positive_annual_authorization_result_is_rejected(self):
+        from unittest.mock import patch
+        bad = {"source_consistency": True, "diagnostics": (),
+               "independent_original_os_proof": False,
+               "exclusive_server_dispatch_gate_proven": False,
+               "can_authorize_annual_run": True}
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertIn("BUNDLE_RESULT_SHAPE_UNREVIEWED",
+                      result["diagnostics"])
