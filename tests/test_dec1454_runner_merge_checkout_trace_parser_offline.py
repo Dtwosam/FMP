@@ -6,6 +6,7 @@ workflow dispatch, merging, or trading.
 from __future__ import annotations
 import re
 import unittest
+from datetime import datetime
 
 PREFIX = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z "
 FETCH = re.compile(PREFIX + r"\[command\]/usr/bin/git .*?\bfetch\b .*?"
@@ -39,6 +40,20 @@ def parse_runner_checkout(raw_log, pr_number, head_sha, base_sha):
     issues = []
     if not i < j < k:
         issues.append("RUNNER_LOG_ORDER_UNREVIEWED")
+    # A line-order-only check can accept transplanted stages from logs
+    # with impossible or reversed timestamps.
+    all_lines = raw_log.splitlines()
+    try:
+        stamps = [
+            datetime.fromisoformat(all_lines[index].split(" ", 1)[0].replace(
+                "Z", "+00:00"))
+            for index in (i, j, k)
+        ]
+    except (ValueError, OverflowError, TypeError):
+        issues.append("RUNNER_LOG_TIMESTAMP_UNREVIEWED")
+    else:
+        if not stamps[0] < stamps[1] < stamps[2]:
+            issues.append("RUNNER_LOG_TIMESTAMP_ORDER_UNREVIEWED")
     if fetch_pr != str(pr_number) or checkout_pr != str(pr_number):
         issues.append("RUNNER_LOG_PR_REF_MISMATCH")
     if not full_sha.startswith(short_sha):
@@ -138,5 +153,43 @@ class ImmutableGitFetchCheckoutHeadLogTrace(unittest.TestCase):
             (None, ("RUNNER_LOG_INPUT_UNREVIEWED",)))
 
     def test_extracted_sha_never_approves_protected_annual_run(self):
+        self.assertEqual(self.verdict()[1], ())
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])
+
+    def test_monotone_utc_stage_timestamps_are_accepted(self):
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_checkout_earlier_timestamp_than_fetch_is_rejected(self):
+        self.lines[1] = self.lines[1].replace(
+            "2026-10-16T23:10:55.7325917Z",
+            "2026-10-16T23:10:53.7325917Z")
+        self.assertIn("RUNNER_LOG_TIMESTAMP_ORDER_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_head_earlier_timestamp_than_checkout_is_rejected(self):
+        self.lines[2] = self.lines[2].replace(
+            "2026-10-16T23:10:55.9519792Z",
+            "2026-10-16T23:10:54.9519792Z")
+        self.assertIn("RUNNER_LOG_TIMESTAMP_ORDER_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_equal_checkout_and_head_timestamps_are_not_distinct(self):
+        self.lines[2] = self.lines[2].replace(
+            "2026-10-16T23:10:55.9519792Z",
+            "2026-10-16T23:10:55.7325917Z")
+        self.assertIn("RUNNER_LOG_TIMESTAMP_ORDER_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_invalid_calendar_month_does_not_count_as_log_time(self):
+        self.lines[0] = self.lines[0].replace("2026-10-16", "2026-99-16")
+        self.assertIn("RUNNER_LOG_TIMESTAMP_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_invalid_calendar_day_does_not_count_as_log_time(self):
+        self.lines[1] = self.lines[1].replace("2026-10-16", "2026-10-99")
+        self.assertIn("RUNNER_LOG_TIMESTAMP_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_increasing_log_times_remain_non_authorizing(self):
         self.assertEqual(self.verdict()[1], ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])
