@@ -38,6 +38,8 @@ MAX_RUNS_PER_ENVELOPE = 4096
 MAX_RUN_MAP_ENTRIES = 8192
 MAX_RAW_LOG_CHARS_PER_RUN = 2_000_000
 MAX_TOTAL_RAW_LOG_CHARS = 4_000_000
+MAX_RAW_LOG_UTF8_BYTES_PER_RUN = 2_000_000
+MAX_TOTAL_RAW_LOG_UTF8_BYTES = 4_000_000
 MAX_INMEMORY_NODES = 200_000
 MAX_INMEMORY_DEPTH = 512
 MAX_INMEMORY_SCALAR_UNITS = 4_000_000
@@ -407,6 +409,17 @@ def review_bundle_envelope(envelope):
                     return fail_closed("BUNDLE_RAW_LOG_TEXT_OVERSIZE")
                 if sum(len(log) for log in value.values()) > MAX_TOTAL_RAW_LOG_CHARS:
                     return fail_closed("BUNDLE_TOTAL_RAW_LOG_OVERSIZE")
+                total_utf8_bytes = 0
+                for log in value.values():
+                    try:
+                        byte_count = len(log.encode("utf-8"))
+                    except UnicodeError:
+                        return fail_closed("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+                    if byte_count > MAX_RAW_LOG_UTF8_BYTES_PER_RUN:
+                        return fail_closed("BUNDLE_RAW_LOG_UTF8_OVERSIZE")
+                    total_utf8_bytes += byte_count
+                    if total_utf8_bytes > MAX_TOTAL_RAW_LOG_UTF8_BYTES:
+                        return fail_closed("BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE")
                 if any("\x00" in log for log in value.values()):
                     return fail_closed("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
             for k in sorted(value):
@@ -3161,6 +3174,68 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
 
     def test_compatibility_budget_preserves_clean_source_only_fixture(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_fourbyte_unicode_log_exceeds_per_run_byte_cap(self):
+        self.envelope["raw_ci_runner_logs"]["9101"] = "😀"*500001
+        self.assert_fails("BUNDLE_RAW_LOG_UTF8_OVERSIZE")
+
+    def test_fourbyte_unicode_log_exact_per_run_byte_limit(self):
+        log = "😀"*500000
+        self.assertEqual(len(log.encode("utf-8")), MAX_RAW_LOG_UTF8_BYTES_PER_RUN)
+        self.envelope["raw_ci_runner_logs"]["9101"] = log
+        verdict = self.verdict()
+        self.assertNotIn("BUNDLE_RAW_LOG_UTF8_OVERSIZE", verdict["diagnostics"])
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_twobyte_unicode_log_exceeds_per_run_byte_cap(self):
+        self.envelope["raw_ci_runner_logs"]["9101"] = "é"*1000001
+        self.assert_fails("BUNDLE_RAW_LOG_UTF8_OVERSIZE")
+
+    def test_multiple_multibyte_logs_exceed_total_byte_cap(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            "9101": "😀"*350000, "9102": "😀"*350000, "9103": "😀"*350000}
+        self.assert_fails("BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE")
+
+    def test_exact_aggregate_four_megabyte_logs_not_byte_rejected(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            "9101": "😀"*500000, "9102": "😀"*500000}
+        result = self.verdict()
+        self.assertNotIn("BUNDLE_TOTAL_RAW_LOG_UTF8_OVERSIZE",
+                         result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_byte_cap_precedes_invalid_runner_id_parse(self):
+        self.envelope["raw_ci_runner_logs"]["not-an-id"] = "😀"*500001
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RAW_LOG_UTF8_OVERSIZE",))
+
+    def test_utf8_log_cap_stdin_does_not_echo_unicode_log(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["raw_ci_runner_logs"]["9101"] = "PRIVATE-CANARY" + "😀"*500001
+        output = io.StringIO()
+        rc = cli.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope, ensure_ascii=False)), output)
+        verdict = json.loads(output.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertEqual(verdict["diagnostics"],
+                         ["BUNDLE_RAW_LOG_UTF8_OVERSIZE"])
+        self.assertNotIn("PRIVATE-CANARY", output.getvalue())
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_plain_ascii_ci_log_within_byte_cap(self):
+        text = "ASCII synthetic CI receipt"
+        self.assertEqual(len(text), len(text.encode("utf-8")))
+        self.assertLess(len(text.encode("utf-8")), MAX_RAW_LOG_UTF8_BYTES_PER_RUN)
+
+    def test_valid_ci_log_fixture_remains_source_consistent_only(self):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
