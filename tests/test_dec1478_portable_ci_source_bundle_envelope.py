@@ -94,6 +94,18 @@ def _json_nesting_within_limit(text):
     return True
 
 
+def _reviewed_source_path(path):
+    """Require unambiguous repository-relative POSIX source labels."""
+    if type(path) is not str or not path or path.startswith("/") or "\\" in path:
+        return False
+    if re.match(r"^[A-Za-z]:/", path) is not None:
+        return False
+    if any(segment in ("", ".", "..") for segment in path.split("/")):
+        return False
+    return not any(ord(char) < 32 or ord(char) == 127 or
+                   0xD800 <= ord(char) <= 0xDFFF for char in path)
+
+
 def review_bundle_envelope(envelope):
     """Decode an offline-only JSON-compatible envelope, fail closed on bad input."""
     if type(envelope) is not dict:
@@ -137,7 +149,7 @@ def review_bundle_envelope(envelope):
                 return fail_closed("BUNDLE_SOURCE_PATH_UNREVIEWED")
             for path in sorted(value):
                 payload = value[path]
-                if type(path) is not str or not path:
+                if not _reviewed_source_path(path):
                     return fail_closed("BUNDLE_SOURCE_PATH_UNREVIEWED")
                 if type(payload) is not str:
                     return fail_closed("BUNDLE_SOURCE_B64_UNREVIEWED")
@@ -926,6 +938,66 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_bounded_number_parser_preserves_clean_synthetic_bundle(self):
         result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_source_absolute_unix_path_rejected(self):
+        self.envelope["changed_bytes_b64"]["/tests/synthetic.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_source_parent_segment_rejected(self):
+        self.envelope["changed_bytes_b64"]["tests/../synthetic.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_source_dot_segment_rejected(self):
+        self.envelope["changed_bytes_b64"]["./tests/synthetic.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_source_duplicate_separator_rejected(self):
+        self.envelope["changed_bytes_b64"]["tests//synthetic.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_source_backslash_separator_rejected(self):
+        self.envelope["changed_bytes_b64"]["tests\\synthetic.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_source_embedded_null_rejected(self):
+        self.envelope["changed_bytes_b64"]["tests/\x00synthetic.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_source_newline_label_rejected(self):
+        self.envelope["changed_bytes_b64"]["tests/\nsynthetic.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_source_windows_drive_absolute_label_rejected(self):
+        self.envelope["changed_bytes_b64"]["C:/tests/synthetic.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_source_trailing_separator_rejected(self):
+        self.envelope["changed_bytes_b64"]["tests/synthetic.py/"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_valid_hidden_workflow_and_dotfiles_not_rejected(self):
+        self.assertTrue(_reviewed_source_path(".github/workflows/tests.yml"))
+        self.assertTrue(_reviewed_source_path("docs/.keep"))
+        self.assertTrue(_reviewed_source_path("tests/synthetic.py"))
+
+    def test_stdin_unsafe_source_label_is_not_echoed(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        self.envelope["changed_bytes_b64"]["../protected-evidence-canary"] = "YQ=="
+        output = io.StringIO()
+        code = stdin_review.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(code, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("protected-evidence-canary", output.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_safe_source_labels_preserve_consistency_only(self):
+        result = self.verdict()
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
         self.assertFalse(result["can_authorize_annual_run"])
