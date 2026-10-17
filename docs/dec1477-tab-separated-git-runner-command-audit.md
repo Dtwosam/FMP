@@ -1,0 +1,9 @@
+# DEC-1477 — Tab-delimited runner Git mutators must not bypass checkout audit
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child of #1700 DEC-1476 at `13d77c7619ff3b405e2af66ef22b721e52106db4`. Seven newly defined unittest methods, **2,005 proposed source-defined methods**.
+
+The source-only DEC-1461/1475 checkout runner-log scanner recognized GitHub `[command]/usr/bin/git ` with a literal space. The actual observed runner logs use that space, but an alternative tab-delimited Git command record such as `[command]/usr/bin/git\tcheckout other` would be ignored after a valid reviewed checkout trace, yielding a false syntactic-clean result. The scanner now recognizes a positive whitespace sequence of spaces/tabs after the exact runner `git` command marker, extracts subsequent arguments, and checks the preexisting conservative source-mutating command inventory. Seven negative/positive synthetic tests cover `checkout`, `reset`, `restore`, tab-separated `-C` options and `clean`, benign read-only status and unrelated console text.
+
+This is conservative **caller-provided runner log consistency**, not a claim that all source changes made by shell commands or external tools are visible, that the log provider is authenticated, or that protected annual originals are OS-confined. Existing actual unprotected #1674 and recovered #1698 checkout/log golden fixtures are unchanged.
+
+This child needs its own Phase3 and full historical/general CI on its GitHub PR merge-source tree and qualified independent review. DEC-650/#820 actual protected original OS no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 pre-dispatch GitHub server admission remain **BLOCKED**. No protected annual run/retry, original/archive/artifact downloads, installed workflow/security edits, merging, deployment or brokerage/trading.
