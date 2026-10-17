@@ -82,7 +82,9 @@ def review_two_ci_runner_log_windows(runs, logs_by_run):
                 reasons.append(name + "_RUN_WINDOW_LOG_TIMESTAMP_UNREVIEWED")
                 continue
             seen += 1
-            if not created <= at <= updated:
+            # A created-but-not-yet-started workflow cannot have produced
+            # the checked-out source log line.
+            if not started <= at <= updated:
                 reasons.append(name + "_RUN_WINDOW_LOG_OUTSIDE_RUN")
         if not seen:
             reasons.append(name + "_RUN_WINDOW_LOG_TIMESTAMPS_MISSING")
@@ -189,3 +191,12 @@ class RealRecoveredCiWorkflowWindowsAreNotProtectedRunPermission(unittest.TestCa
     def test_read_only_model_never_grants_protected_run385(self):
         self.assertEqual(self.verdict(), ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
+
+    def test_checkout_log_before_run_started_but_after_created_rejected(self):
+        self.runs[0]["run_started_at"] = "2026-10-17T11:49:30Z"
+        self.assertIn("tests_RUN_WINDOW_LOG_OUTSIDE_RUN", self.verdict())
+
+    def test_phase3_index_log_before_run_started_but_after_created_rejected(self):
+        self.runs[1]["run_started_at"] = "2026-10-17T11:49:20Z"
+        self.assertIn("phase3-acceptance_RUN_WINDOW_LOG_OUTSIDE_RUN",
+                      self.verdict())

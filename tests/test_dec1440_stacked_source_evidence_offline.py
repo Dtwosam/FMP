@@ -1037,3 +1037,9 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_created_but_unstarted_phase3_log_is_not_source_evidence(self):
+        r = self.run_by_workflow("phase3-acceptance")
+        r["run_started_at"] = "2026-10-17T10:00:05Z"
+        self.assertIn("phase3-acceptance_RUN_WINDOW_LOG_OUTSIDE_RUN",
+                      self.verdict()["diagnostics"])
