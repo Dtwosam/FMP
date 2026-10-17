@@ -1,0 +1,11 @@
+# DEC-1478 — Make both CI workflow-run time envelopes mandatory in composite
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit source-test/docs child #1714 DEC-1477 at `b80d5fa401ec04bca907823c28fe09fe5803b133`. Adds **8 source-defined methods**, **2030 proposed methods**.
+
+DEC-1477 added a standalone source-only reviewer that requires each raw GitHub Actions CI log line to be timestamped within its independently supplied completed-success workflow run's UTC `run_started_at` and `updated_at` interval, with `created_at <= run_started_at <= updated_at`. The DEC-1440 combined evidence reviewer already checks CI workflow IDs, run/job identities, full immutable PR merge fetched SHAs, Git source trees, Phase3 acceptance index/uploads and raw log digests, but did not require an exact workflow-run timestamp window.
+
+This child adds DEC-1477 to **every** composed evidence verdict, without changing its existing fifteen argument slots. Existing run records are enriched with their independently read timestamps; the synthetic positive bundle uses a reviewed feasible UTC window bracketing all its raw log lines. Eight regressions reject a fake stale log from before run start, a Phase3 upload after the run's end, missing or calendar-invalid start timestamps, and preserve no-authorization.
+
+The read-only unprotected #1698 GitHub workflow-run metadata that motivated the checker contains history run `39030113645` started `2026-10-17T11:48:44Z` and last updated `12:02:06Z`, and Phase3 run `39030113556` started `11:48:44Z` and last updated `11:49:22Z`. These are **workflow-run envelopes**, not individual job timing attestations. Metadata and log text still require externally authenticated GitHub retrieval; this reviewer supplies no signed provider proof, OS original-data isolation or protected annual admission.
+
+Own head-associated PR merge-source-tree Phase3/full historical/general CI and qualified independent review mandatory. DEC-650/#820 independent OS original no-write and DEC-651/#821/#779 immutable exclusive preallocation one-shot 2023 run385/attempt1 server admission remain **BLOCKED**. No protected original/archives, annual dispatch/retry, installed workflow/security control changes, merges, deployment or trading.
