@@ -32,6 +32,8 @@ MAX_RAW_LOG_CHARS_PER_RUN = 2_000_000
 MAX_TOTAL_RAW_LOG_CHARS = 4_000_000
 MAX_INMEMORY_NODES = 200_000
 MAX_INMEMORY_DEPTH = 512
+MAX_INMEMORY_SCALAR_UNITS = 4_000_000
+MAX_INMEMORY_TOTAL_SCALAR_UNITS = 16_000_000
 VERDICT_FIELDS = frozenset((
     "source_consistency", "diagnostics", "independent_original_os_proof",
     "exclusive_server_dispatch_gate_proven", "can_authorize_annual_run",
@@ -127,6 +129,7 @@ def _within_inmemory_structure_budget(root):
     active = set()
     stack = [(root, 0, False)]
     nodes = 0
+    total_scalar_units = 0
     while stack:
         item, depth, leaving = stack.pop()
         if leaving:
@@ -135,6 +138,12 @@ def _within_inmemory_structure_budget(root):
         nodes += 1
         if nodes > MAX_INMEMORY_NODES or depth > MAX_INMEMORY_DEPTH:
             return False
+        if type(item) in (str, bytes):
+            units = len(item)
+            total_scalar_units += units
+            if (units > MAX_INMEMORY_SCALAR_UNITS or
+                    total_scalar_units > MAX_INMEMORY_TOTAL_SCALAR_UNITS):
+                return False
         if type(item) in (dict, list, tuple):
             if id(item) in active:
                 return False
@@ -1583,5 +1592,55 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertTrue(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_inmemory_one_over_scalar_string_length_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget(
+            "x" * (MAX_INMEMORY_SCALAR_UNITS+1)))
+
+    def test_inmemory_exact_scalar_string_length_is_permitted(self):
+        self.assertTrue(_within_inmemory_structure_budget(
+            "x" * MAX_INMEMORY_SCALAR_UNITS))
+
+    def test_inmemory_one_over_scalar_bytes_length_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget(
+            b"x" * (MAX_INMEMORY_SCALAR_UNITS+1)))
+
+    def test_inmemory_exact_scalar_bytes_length_is_permitted(self):
+        self.assertTrue(_within_inmemory_structure_budget(
+            b"x" * MAX_INMEMORY_SCALAR_UNITS))
+
+    def test_inmemory_scalar_budget_applies_to_dict_keys(self):
+        self.assertFalse(_within_inmemory_structure_budget({
+            "private" * (MAX_INMEMORY_SCALAR_UNITS//7+1): None}))
+
+    def test_inmemory_scalar_budget_applies_to_nested_tuple_strings(self):
+        self.assertFalse(_within_inmemory_structure_budget((
+            ["x" * (MAX_INMEMORY_SCALAR_UNITS+1)],)))
+
+    def test_inmemory_total_scalar_budget_applies_to_many_valid_values(self):
+        values = ["a" * 3_000_000 for _ in range(6)]
+        self.assertFalse(_within_inmemory_structure_budget(values))
+
+    def test_inmemory_total_scalar_exact_boundary_is_permitted(self):
+        values = ["a" * 4_000_000 for _ in range(4)]
+        self.assertTrue(_within_inmemory_structure_budget(values))
+
+    def test_inmemory_oversized_scalar_in_direct_envelope_fails_closed(self):
+        data = dict(self.envelope)
+        pr = dict(data["pr"])
+        pr["private_synthetic"] = "canary" + "x" * MAX_INMEMORY_SCALAR_UNITS
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertNotIn("canary", repr(result))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_inmemory_scalar_budget_preserves_clean_evidence_fixture(self):
+        self.assertTrue(_within_inmemory_structure_budget(self.envelope))
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
 
