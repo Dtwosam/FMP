@@ -16,12 +16,38 @@ import unittest
 import test_dec1478_portable_ci_source_bundle_envelope as envelope
 
 
-def run_stdin_review(input_stream, output_stream):
-    """Read at most capped text from supplied stdin, print structured result."""
+MAX_STDIN_READ_CHARS = 65536
+
+
+def _read_complete_bounded_stdin(input_stream):
+    """Read to EOF, including streams that return fewer chars than requested.
+
+    Do not treat a valid JSON prefix as the complete document when a later
+    read could contain more material. Refuse non-text chunks and read errors.
+    """
+    chunks = []
+    size = 0
     try:
-        raw = input_stream.read(envelope.MAX_TEXT_CHARS + 1)
-    except (OSError, UnicodeError, ValueError):
-        verdict = envelope.fail_closed("BUNDLE_STDIN_READ_UNREVIEWED")
+        while True:
+            remaining = envelope.MAX_TEXT_CHARS - size + 1
+            part = input_stream.read(min(MAX_STDIN_READ_CHARS, remaining))
+            if type(part) is not str:
+                return None, "BUNDLE_STDIN_READ_UNREVIEWED"
+            size += len(part)
+            if size > envelope.MAX_TEXT_CHARS:
+                return None, "BUNDLE_JSON_TEXT_UNREVIEWED"
+            if not part:
+                return "".join(chunks), None
+            chunks.append(part)
+    except (OSError, UnicodeError, ValueError, TypeError, RecursionError):
+        return None, "BUNDLE_STDIN_READ_UNREVIEWED"
+
+
+def run_stdin_review(input_stream, output_stream):
+    """Read complete capped stdin text and emit one fail-closed verdict."""
+    raw, read_error = _read_complete_bounded_stdin(input_stream)
+    if read_error is not None:
+        verdict = envelope.fail_closed(read_error)
     else:
         verdict = envelope.review_bundle_json_text(raw)
     # Never echo supplied evidence. Only machine-readable verdict fields.
@@ -39,6 +65,22 @@ def main():
         sys.stdout.write(json.dumps(verdict, sort_keys=True) + "\n")
         return 2
     return run_stdin_review(sys.stdin, sys.stdout)
+
+
+class _ShortReadTextStream:
+    """Synthetic, nonblocking-style text stream with short positive reads."""
+    def __init__(self, raw, chunk_size):
+        self.raw = raw
+        self.chunk_size = chunk_size
+        self.offset = 0
+        self.request_sizes = []
+
+    def read(self, requested):
+        self.request_sizes.append(requested)
+        n = min(requested, self.chunk_size)
+        part = self.raw[self.offset:self.offset+n]
+        self.offset += len(part)
+        return part
 
 
 class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
@@ -135,6 +177,119 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         status, record = self.run_fixture()
         self.assertEqual(status, 2)
         self.assertIn("BUNDLE_RUN_KEY_UNREVIEWED", record["diagnostics"])
+
+
+    def run_stream(self, stream):
+        status = run_stdin_review(stream, self.stdout)
+        return status, json.loads(self.stdout.getvalue())
+
+    def test_short_reads_clean_bundle_consistency_only(self):
+        raw = json.dumps(self.bundle)
+        status, record = self.run_stream(_ShortReadTextStream(raw, 13))
+        self.assertEqual(status, 0)
+        self.assertEqual(record["diagnostics"], [])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_one_character_short_reads_preserve_clean_result(self):
+        raw = json.dumps(self.bundle)
+        status, record = self.run_stream(_ShortReadTextStream(raw, 1))
+        self.assertEqual(status, 0)
+        self.assertTrue(record["source_consistency"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+
+    def test_short_read_valid_prefix_plus_invalid_trailer_is_rejected(self):
+        raw = json.dumps(self.bundle)
+        stream = _ShortReadTextStream(raw + "\nextra", len(raw))
+        status, record = self.run_stream(stream)
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED", record["diagnostics"])
+
+    def test_short_read_valid_prefix_plus_second_json_is_rejected(self):
+        raw = json.dumps(self.bundle)
+        stream = _ShortReadTextStream(raw + '{"annual":true}', len(raw))
+        status, record = self.run_stream(stream)
+        self.assertEqual(status, 2)
+        self.assertFalse(record["source_consistency"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_short_read_truncated_json_is_rejected(self):
+        raw = json.dumps(self.bundle)
+        status, record = self.run_stream(_ShortReadTextStream(raw[:-1], 23))
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED", record["diagnostics"])
+
+    def test_read_error_after_valid_prefix_does_not_accept_prefix(self):
+        raw = json.dumps(self.bundle)
+
+        class ErrorOnSecondRead:
+            count = 0
+            def read(self, requested):
+                self.count += 1
+                if self.count == 1:
+                    return raw
+                raise OSError("do-not-echo-secret")
+
+        status, record = self.run_stream(ErrorOnSecondRead())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+        self.assertNotIn("secret", self.stdout.getvalue())
+
+    def test_unicode_error_after_valid_prefix_is_fail_closed(self):
+        raw = json.dumps(self.bundle)
+
+        class DecodeErrorOnSecondRead:
+            count = 0
+            def read(self, requested):
+                self.count += 1
+                if self.count == 1:
+                    return raw
+                raise UnicodeError("sensitive-data")
+
+        status, record = self.run_stream(DecodeErrorOnSecondRead())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+        self.assertNotIn("sensitive-data", self.stdout.getvalue())
+
+    def test_bytes_input_chunk_cannot_be_treated_as_text(self):
+        status, record = self.run_stream(io.BytesIO(json.dumps(self.bundle).encode()))
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+
+    def test_none_chunk_is_rejected_without_exception(self):
+        class NullRead:
+            def read(self, requested):
+                return None
+
+        status, record = self.run_stream(NullRead())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+
+    def test_read_chunk_length_is_bounded(self):
+        stream = _ShortReadTextStream(json.dumps(self.bundle), 70000)
+        status, record = self.run_stream(stream)
+        self.assertEqual(status, 0)
+        self.assertTrue(stream.request_sizes)
+        self.assertLessEqual(max(stream.request_sizes), MAX_STDIN_READ_CHARS)
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_chunked_extra_text_is_rejected_without_echo(self):
+        raw = json.dumps(self.bundle) + ' "protected-log-sentinel"'
+        stream = _ShortReadTextStream(raw, 7)
+        status, record = self.run_stream(stream)
+        self.assertEqual(status, 2)
+        self.assertFalse(record["source_consistency"])
+        self.assertNotIn("protected-log-sentinel", self.stdout.getvalue())
+
+    def test_chunk_boundaries_do_not_change_bad_diagnostic(self):
+        raw = '{"schema":1,"schema":2}'
+        diagnostic_sets = []
+        for chunk_size in (1, 3, 8, 65536):
+            output = io.StringIO()
+            status = run_stdin_review(_ShortReadTextStream(raw, chunk_size), output)
+            self.assertEqual(status, 2)
+            diagnostic_sets.append(json.loads(output.getvalue())["diagnostics"])
+        self.assertEqual(diagnostic_sets,
+                         [["BUNDLE_JSON_GRAMMAR_UNREVIEWED"]] * 4)
 
 
 if __name__ == "__main__":
