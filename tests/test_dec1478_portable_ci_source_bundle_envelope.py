@@ -1062,7 +1062,7 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
 
     def test_trailing_space_in_segment_is_rejected(self):
-        for path in ("tests /module.py", "tests/module .py", "tests/readme "):
+        for path in ("tests /module.py", "tests/readme ", "docs/folder /readme.md"):
             with self.subTest(path=path):
                 self.assertFalse(_reviewed_source_path(path))
 
@@ -1362,5 +1362,37 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_internal_space_before_extension_is_not_trailing(self):
+        self.assertTrue(_reviewed_source_path("tests/module .py"))
+
+    def test_multiple_internal_spaces_before_extension_are_allowed(self):
+        self.assertTrue(_reviewed_source_path("docs/project  notes.md"))
+
+    def test_plain_internal_spaces_remain_allowed(self):
+        self.assertTrue(_reviewed_source_path("docs/meeting notes.txt"))
+
+    def test_component_only_space_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/ /notes.txt"))
+
+    def test_multiple_trailing_spaces_in_component_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/draft  /notes.txt"))
+
+    def test_trailing_space_in_final_component_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/report.md "))
+
+    def test_spaces_inside_dotfile_name_still_allowed(self):
+        self.assertTrue(_reviewed_source_path("docs/.project notes"))
+
+    def test_trailing_dot_still_rejected_after_boundary_correction(self):
+        self.assertFalse(_reviewed_source_path("docs/reports./notes.md"))
+
+    def test_whitespace_boundary_correction_preserves_source_only_verdict(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
