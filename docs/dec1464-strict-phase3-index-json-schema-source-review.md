@@ -1,0 +1,9 @@
+# DEC-1464 — Strict Phase3 acceptance log JSON schema and JSON numeric grammar
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1687 DEC-1463 at 743db7e47d09025e63104403540444c6ed55bb86. Nine new unittest methods, **1,898 proposed source-defined methods**.
+
+DEC-1462 parses the actual Phase3 one-line JSON acceptance index and matches it to the finalized artifact receipt. Its Python json decoder used default acceptance of nonstandard NaN and Infinity constants, and its downstream scenario checks did not reject unexpected additional index/scenario fields. This can conceal schema drift in a caller-supplied log-derived result even if the five expected scenarios are still present.
+
+This forward-only change rejects nonfinite JSON constants at decode time and strictly pins the observed source-defined Phase3 index keys and scenario keys. The reviewed real #1674 Phase3 log index contains only `code_commit,fixture_id,protocol,scenario_count,scenarios` and five scenario records with exactly `name,bytes_equal,primary_manifest_sha256,repeat_manifest_sha256,trade_count,rejection_count`. Nine synthetic regression tests reject extra/missing keys, nonstandard NaN/Infinity values, Boolean/string count impostors and preserve the valid reviewed schema. The composed DEC-1463 reviewer automatically inherits the parser's stricter result; no production/installed CI/annual workflow changes.
+
+The source schema check does not prove artifact bytes or authenticated GitHub execution. Own head-associated PR merge-source-tree Phase3/full historical CI and independent reviewer acceptance required. DEC-650/#820 actual protected original OS no-write and DEC-651/#821/#779 exclusive immutable 2023 annual run385/attempt1 admission remain **BLOCKED**. No protected annual run/retry, originals/archives/artifact downloads, installed workflow/security changes, merge, deployment or trading.

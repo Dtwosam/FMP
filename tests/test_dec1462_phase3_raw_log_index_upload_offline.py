@@ -35,6 +35,10 @@ def _unique_json_pairs(pairs):
     return result
 
 
+def _reject_nonfinite_constant(value):
+    raise ValueError("nonstandard JSON numeric constant " + value)
+
+
 def parse_phase3_log_evidence(raw_log, run_id, expected_merge_sha):
     """Return (index, upload, issues), using four immutable-looking log stages.
 
@@ -68,13 +72,18 @@ def parse_phase3_log_evidence(raw_log, run_id, expected_merge_sha):
             issues.append("PHASE3_RAW_LOG_TIMESTAMP_ORDER_UNREVIEWED")
     try:
         index = json.loads(found["index"][0][1][1],
-                           object_pairs_hook=_unique_json_pairs)
+                           object_pairs_hook=_unique_json_pairs,
+                           parse_constant=_reject_nonfinite_constant)
     except (json.JSONDecodeError, ValueError, TypeError):
         return None, None, tuple(sorted(set(
             issues + ["PHASE3_RAW_INDEX_JSON_UNREVIEWED"])))
     if type(index) is not dict:
         issues.append("PHASE3_RAW_INDEX_SHAPE_UNREVIEWED")
         return None, None, tuple(sorted(set(issues)))
+    expected_index_keys = frozenset((
+        "code_commit", "fixture_id", "protocol", "scenario_count", "scenarios"))
+    if set(index) != expected_index_keys:
+        issues.append("PHASE3_RAW_INDEX_SCHEMA_DRIFT")
     if (index.get("code_commit") != expected_merge_sha or
             index.get("protocol") != "fmp-phase3-acceptance-fixture-v1" or
             index.get("fixture_id") != "phase3-merged-main-acceptance-v1" or
@@ -88,7 +97,12 @@ def parse_phase3_log_evidence(raw_log, run_id, expected_merge_sha):
     else:
         if tuple(s.get("name") for s in scenarios) != SCENARIOS:
             issues.append("PHASE3_RAW_SCENARIO_NAMES_UNREVIEWED")
+        scenario_keys = frozenset((
+            "bytes_equal", "name", "primary_manifest_sha256",
+            "rejection_count", "repeat_manifest_sha256", "trade_count"))
         for scenario in scenarios:
+            if set(scenario) != scenario_keys:
+                issues.append("PHASE3_RAW_SCENARIO_SCHEMA_DRIFT")
             primary = scenario.get("primary_manifest_sha256")
             repeat = scenario.get("repeat_manifest_sha256")
             if (scenario.get("bytes_equal") is not True or
@@ -228,3 +242,56 @@ class Phase3LogEvidenceIsNotProtectedResearchPermission(unittest.TestCase):
     def test_log_record_consistency_is_not_os_or_dispatch_admission(self):
         self.assertEqual(self.verdict()[2], ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[2])
+
+    def set_index_line_from_fixture(self):
+        self.lines[0] = self.lines[0].split("Z ", 1)[0] + "Z " + json.dumps(
+            self.index, separators=(",", ":"), allow_nan=True)
+
+    def test_unknown_index_field_is_rejected(self):
+        self.index["unreviewed_extra"] = True
+        self.set_index_line_from_fixture()
+        self.assertIn("PHASE3_RAW_INDEX_SCHEMA_DRIFT", self.verdict()[2])
+
+    def test_unknown_scenario_field_is_rejected(self):
+        self.index["scenarios"][0]["undocumented"] = "untrusted"
+        self.set_index_line_from_fixture()
+        self.assertIn("PHASE3_RAW_SCENARIO_SCHEMA_DRIFT", self.verdict()[2])
+
+    def test_missing_manifest_hash_key_rejects_schema(self):
+        self.index["scenarios"][0].pop("primary_manifest_sha256")
+        self.set_index_line_from_fixture()
+        self.assertIn("PHASE3_RAW_SCENARIO_SCHEMA_DRIFT", self.verdict()[2])
+
+    def test_json_nan_extension_is_rejected(self):
+        self.index["scenarios"][0]["trade_count"] = float("nan")
+        self.set_index_line_from_fixture()
+        self.assertIn("PHASE3_RAW_INDEX_JSON_UNREVIEWED", self.verdict()[2])
+
+    def test_json_infinity_extension_is_rejected(self):
+        self.index["scenarios"][0]["rejection_count"] = float("inf")
+        self.set_index_line_from_fixture()
+        self.assertIn("PHASE3_RAW_INDEX_JSON_UNREVIEWED", self.verdict()[2])
+
+    def test_boolean_trade_count_is_not_nonnegative_integer(self):
+        self.index["scenarios"][0]["trade_count"] = True
+        self.set_index_line_from_fixture()
+        self.assertIn("PHASE3_RAW_SCENARIO_DETERMINISM_UNREVIEWED",
+                      self.verdict()[2])
+
+    def test_string_rejection_count_is_not_integer(self):
+        self.index["scenarios"][0]["rejection_count"] = "0"
+        self.set_index_line_from_fixture()
+        self.assertIn("PHASE3_RAW_SCENARIO_DETERMINISM_UNREVIEWED",
+                      self.verdict()[2])
+
+    def test_missing_index_field_fails_schema_and_identity(self):
+        self.index.pop("protocol")
+        self.set_index_line_from_fixture()
+        self.assertIn("PHASE3_RAW_INDEX_SCHEMA_DRIFT", self.verdict()[2])
+        self.assertIn("PHASE3_RAW_INDEX_IDENTITY_UNREVIEWED", self.verdict()[2])
+
+    def test_real_schema_fixture_still_parses_without_permission(self):
+        _, upload, errors = self.verdict()
+        self.assertEqual(errors, ())
+        self.assertEqual(upload["id"], self.artifact_id)
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", errors)
