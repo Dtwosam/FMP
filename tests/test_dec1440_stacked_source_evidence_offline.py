@@ -142,11 +142,16 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
         if len(phase3_run) != 1 or type(merge) is not dict:
             temporal_issues.append("PHASE3_CHECKOUT_INDEX_ORDER_RUN_UNREVIEWED")
         else:
-            temporal_issues.extend(
-                temporal.review_phase3_checkout_then_acceptance(
-                    raw_ci_runner_logs.get(phase3_run[0].get("id")),
-                    pr.get("number"), pr.get("head_sha"), pr.get("base_sha"),
-                    phase3_run[0].get("id"), merge.get("sha")))
+            run_id = phase3_run[0].get("id")
+            if type(run_id) is not int or run_id <= 0:
+                temporal_issues.append(
+                    "PHASE3_CHECKOUT_INDEX_ORDER_RUN_ID_UNREVIEWED")
+            else:
+                temporal_issues.extend(
+                    temporal.review_phase3_checkout_then_acceptance(
+                        raw_ci_runner_logs.get(run_id),
+                        pr.get("number"), pr.get("head_sha"), pr.get("base_sha"),
+                        run_id, merge.get("sha")))
     checks = (
         tuple(sorted(set(temporal_issues))),
         tuple(sorted(set(phase3_log_issues))),
@@ -846,3 +851,42 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertFalse(result["independent_original_os_proof"])
+
+    def phase3_run_record(self):
+        return next(r for r in self.runs if r.get("name") == "phase3-acceptance")
+
+    def test_unhashable_list_run_id_fails_closed_not_typeerror(self):
+        self.phase3_run_record()["id"] = [8000]
+        self.assertIn("PHASE3_CHECKOUT_INDEX_ORDER_RUN_ID_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_unhashable_dict_run_id_fails_closed_not_typeerror(self):
+        self.phase3_run_record()["id"] = {"run": 8000}
+        self.assertIn("PHASE3_CHECKOUT_INDEX_ORDER_RUN_ID_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_boolean_run_id_is_not_valid_positive_id(self):
+        self.phase3_run_record()["id"] = True
+        self.assertIn("PHASE3_CHECKOUT_INDEX_ORDER_RUN_ID_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_missing_run_id_fails_closed(self):
+        self.phase3_run_record().pop("id")
+        self.assertIn("PHASE3_CHECKOUT_INDEX_ORDER_RUN_ID_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_zero_run_id_fails_closed(self):
+        self.phase3_run_record()["id"] = 0
+        self.assertIn("PHASE3_CHECKOUT_INDEX_ORDER_RUN_ID_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_valid_exact_run_id_keeps_clean_temporal_evidence(self):
+        self.assertEqual(self.phase3_run_record()["id"], 8000)
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_malformed_run_id_never_confers_annual_permission(self):
+        self.phase3_run_record()["id"] = [8000]
+        result = self.verdict()
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertIn("PHASE3_CHECKOUT_INDEX_ORDER_RUN_ID_UNREVIEWED",
+                      result["diagnostics"])
