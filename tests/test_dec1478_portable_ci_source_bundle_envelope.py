@@ -24,6 +24,7 @@ MAX_BLOB_BYTES = 1_000_000
 MAX_TOTAL_BLOB_BYTES = 4_000_000
 MAX_JSON_NESTING = 512
 MAX_JSON_INTEGER_DIGITS = 64
+MAX_JSON_FLOAT_LITERAL_CHARS = 128
 MAX_SOURCE_PATH_CHARS = 4096
 MAX_SOURCE_PATH_UTF8_BYTES = 4096
 MAX_SOURCE_SEGMENT_UTF8_BYTES = 255
@@ -493,7 +494,9 @@ def _bounded_json_integer(value):
 
 
 def _finite_json_float(value):
-    """Do not admit syntactically valid JSON numbers decoded as infinity."""
+    """Bound floating-point token text and reject decoded infinity."""
+    if len(value) > MAX_JSON_FLOAT_LITERAL_CHARS:
+        raise ValueError("unreviewed JSON float token length")
     number = float(value)
     if not math.isfinite(number):
         raise ValueError("nonfinite JSON number")
@@ -2572,6 +2575,69 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_regular_raw_ci_log_fixture_remains_source_only_consistent(self):
         result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_float_exact_literal_cap_is_syntactically_accepted(self):
+        raw = "1." + "0" * (MAX_JSON_FLOAT_LITERAL_CHARS-2)
+        self.assertEqual(len(raw), MAX_JSON_FLOAT_LITERAL_CHARS)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_float_over_literal_cap_is_grammar_refusal(self):
+        raw = "1." + "0" * (MAX_JSON_FLOAT_LITERAL_CHARS-1)
+        self.assertEqual(len(raw), MAX_JSON_FLOAT_LITERAL_CHARS+1)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_negative_float_over_literal_cap_refused(self):
+        raw = "-1." + "0" * (MAX_JSON_FLOAT_LITERAL_CHARS-2)
+        self.assertGreater(len(raw), MAX_JSON_FLOAT_LITERAL_CHARS)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_long_exponent_text_refused_before_float_conversion(self):
+        raw = "1e-" + "0" * MAX_JSON_FLOAT_LITERAL_CHARS
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_exact_exponent_text_limit_is_decodable(self):
+        raw = "1e-" + "0" * (MAX_JSON_FLOAT_LITERAL_CHARS-3)
+        self.assertEqual(len(raw), MAX_JSON_FLOAT_LITERAL_CHARS)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_nested_oversized_float_literal_fails_grammar(self):
+        raw = '{"synthetic":' + "1." + "0" * 140 + "}"
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_normal_scientific_decimal_still_decodable(self):
+        result = review_bundle_json_text("1.25e+2")
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_nonfinite_short_exponent_still_fails_grammar(self):
+        result = review_bundle_json_text("1e400")
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_oversized_float_stdout_does_not_echo_token(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = '{"private_sentinel":' + "1." + "9"*200 + "}"
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), output)
+        self.assertEqual(status, 2)
+        self.assertEqual(json.loads(output.getvalue())["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("9999999999", output.getvalue())
+
+    def test_json_float_parser_budget_preserves_clean_evidence_consistency(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
