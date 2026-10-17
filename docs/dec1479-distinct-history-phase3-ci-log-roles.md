@@ -1,0 +1,9 @@
+# DEC-1479 — Distinct CI job log roles are part of source review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** One-commit tests/docs child #1715 at `2b69af46e7aa62b967e2a45890af7660b96bead7`; adds **14 source-defined methods**, **2044 proposed total**.
+
+A self-consistent per-run log digest or runner checkout trace does not by itself prove that the raw logs belong to the historical/general and Phase3 jobs they are attributed to. The real completed unprotected #1698 historical job log includes unittest discovery and final `Ran 6867 tests` / `OK (skipped=702)`, while the Phase3 job log includes acceptance generation, JSON index and `actions/upload-artifact@v6` before finalization. This standalone offline checker requires those distinct *source-shaped* workflow roles, detects whole-log swaps, missing/downgraded historical completion, an explicit FAILED summary and missing/misordered Phase3 upload stages. Its conservative reviewed full-suite threshold is 5,000 tests, to be revisited if the legitimately expected suite size changes.
+
+The added checks are **not signed GitHub log provenance or OS runner attestation**, and can be fooled by a caller fabricating the logs and metadata together. They must not be used as protected annual execution permission. A subsequent reviewed child can require this helper in the composed fifteen-input evidence reviewer.
+
+Own PR merge-source-tree Phase3/full historical CI and independent qualified review required. DEC-650/#820 real protected-original OS no-write and DEC-651/#821/#779 exclusive immutable one-shot 2023 run385/attempt1 server admission remain **BLOCKED**. No protected originals/archives, annual dispatch/retry, installed security/workflow changes, merge, deployment or trading.
