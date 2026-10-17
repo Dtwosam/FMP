@@ -1,0 +1,9 @@
+# DEC-1451 — Both CI runner checkouts mandatory in combined source review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1674 DEC-1450 at 3033bec6416e1aeeb0fb7c41f6376d785b0ab425. Adds eight new unit methods, **1,780 proposed source-defined methods**.
+
+The DEC-1440 combined PR/CI source reviewer previously inspected only the historical CI runner's actual Git checkout. Phase3 acceptance has a separate checkout, which could fetch a different temporary PR merge commit despite both workflow runs being associated with the same branch head SHA. DEC-1450 introduced a standalone offline two-runner verifier. This forward-only child requires that verifier in the combined result.
+
+Each of the two reviewed workflows must have its own first-attempt completed-success run, unique exact run ID and independently obtained runner log record. Each full 40-hex fetched SHA must equal the same reviewed temporary merge commit, which is separately checked against its draft-head file tree and base/head commit parents. Synthetic fixtures exercise absent Phase3 log, divergent fetched commit, wrong PR remote checkout path, bad run association, spurious log, workflow impostor and a consistent pair. A successful offline consistency result is not a direct standalone head checkout proof or GitHub server attestation.
+
+The actual runner log/immutable Git commit sources must be independently collected and authenticated; these tests do not access GitHub or protected original/annual artifacts. This PR needs its own head-associated PR merge-source-tree Phase3 and full historical/general CI plus qualified external review. DEC-650/#820 actual OS-protected original no-write and DEC-651/#821/#779 exclusive immutable server-side 2023 run385/attempt1 admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive read/write, installed workflow/permissions/ruleset changes, merge/deployment or broker/trading.
