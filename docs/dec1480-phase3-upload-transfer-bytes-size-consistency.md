@@ -1,0 +1,11 @@
+# DEC-1480 — Reconcile Phase3 upload transfer bytes with finalized size
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1703 DEC-1479 at `23d7bea029225cc461a0d06b469d8f498da023ee`. 12 new source-defined unittest methods, **2,039 proposed methods**.
+
+Observed read-only unprotected GitHub Actions Phase3 logs for #1674 and recovered #1698 contain an additional upload-action receipt: `Uploaded bytes 23504` and `Uploaded bytes 23491`, respectively. Their respective finalized upload lines report matching final sizes. The existing DEC-1462 parser validated the finalized size, merge SHA, artifact ID and run URL, but not the separately logged transfer byte count. An inconsistent transfer byte count could slip through an otherwise clean supplied source-evidence log.
+
+This standalone offline reviewer validates **exactly one** positive-integer `Uploaded bytes N` record in the same Phase3 job log, ties `N` to the DEC-1462 finalized receipt's `size_bytes`, and requires the record to appear strictly after the named artifact and before finalization, in line position and UTC timestamp. It rejects malformed, duplicate, missing, contradictory or reordered transfer records and retains the already validated merge/run association. Twelve synthetic/observed tests include one real #1698 transfer line with the previously reviewed eight checkout/index/upload lines, plus deliberate corruptions.
+
+**This is not a data-plane artifact hash or attestation.** A transfer count inside caller-supplied GitHub log text is not proof the actual remote ZIP contents or protected historical originals are immutable. No artifact bytes or protected original data were downloaded. A future forward child can make this stricter check mandatory in DEC-1440's composite, by adding correctly sequenced synthetic transfer evidence.
+
+Own head-associated PR merge-source-tree Phase3/full historical CI and qualified independent review required. DEC-650/#820 actual protected original OS no-write and DEC-651/#821/#779 exclusive immutable server-side 2023 annual run385/attempt1 admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive/artifact downloads, installed annual workflow or security setting edits, merging, deployment or trading.
