@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import unittest
 import hashlib
+import json
 import test_dec1426_exact_ci_job_critical_steps_offline as jobs_review
 import test_dec1436_pr_compare_file_count_offline as file_review
 import test_dec1435_git_tree_regular_blob_review as modes_review
@@ -18,6 +19,7 @@ import test_dec1450_dual_suite_merge_checkout_offline as dual_runner
 import test_dec1447_phase3_acceptance_merge_stamp_offline as phase3_stamps
 import test_dec1454_runner_merge_checkout_trace_parser_offline as log_parse
 import test_dec1458_ci_job_raw_log_receipt_offline as log_receipt
+import test_dec1462_phase3_raw_log_index_upload_offline as phase3_raw
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
@@ -94,7 +96,39 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                      for key in ("checkout_ref", "checkout_fetch_sha",
                                  "checkout_sha_prefix")):
                 raw_issues.append("RAW_CI_RUNNER_LOG_METADATA_MISMATCH")
+    # Decode Phase3's actual JSON index, finalization/upload and run URL
+    # from the supplied job log, instead of trusting pre-extracted dicts.
+    phase3_log_issues = []
+    if (type(raw_ci_runner_logs) is not dict or type(runs) is not list or
+            type(phase3_evidence_snapshot) is not dict or
+            type(merge_checkout_snapshot) is not dict):
+        phase3_log_issues.append("PHASE3_RAW_INDEX_RECEIPT_INPUT_UNREVIEWED")
+    else:
+        matching = [r for r in runs if type(r) is dict and
+                    r.get("name") == "phase3-acceptance"]
+        merge = merge_checkout_snapshot.get("merge_commit")
+        merge_sha = merge.get("sha") if type(merge) is dict else None
+        if len(matching) != 1 or type(matching[0].get("id")) is not int:
+            phase3_log_issues.append("PHASE3_RAW_INDEX_RUN_UNREVIEWED")
+        else:
+            phase3_id = matching[0]["id"]
+            idx, receipt, parsed_issues = phase3_raw.parse_phase3_log_evidence(
+                raw_ci_runner_logs.get(phase3_id), phase3_id, merge_sha)
+            phase3_log_issues.extend(parsed_issues)
+            if idx is None or receipt is None:
+                phase3_log_issues.append("PHASE3_RAW_INDEX_RECEIPT_UNREVIEWED")
+            else:
+                if idx != phase3_evidence_snapshot.get("index"):
+                    phase3_log_issues.append(
+                        "PHASE3_RAW_INDEX_VS_SUPPLIED_EVIDENCE_MISMATCH")
+                supplied = phase3_evidence_snapshot.get("upload")
+                if type(supplied) is not dict or any(
+                        receipt.get(k) != supplied.get(k)
+                        for k in ("name", "id", "run_id", "finalized")):
+                    phase3_log_issues.append(
+                        "PHASE3_RAW_UPLOAD_VS_SUPPLIED_EVIDENCE_MISMATCH")
     checks = (
+        tuple(sorted(set(phase3_log_issues))),
         tuple(sorted(set(raw_issues))),
         log_receipt.review_ci_job_log_receipts(
             runs, jobs_by_run, raw_ci_runner_logs, raw_ci_log_receipts),
@@ -245,7 +279,10 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
                 "code_commit": self.merge_checkout["merge_commit"]["sha"],
                 "scenario_count": 5,
                 "scenarios": [
-                    {"name": scenario, "bytes_equal": True}
+                    {"name": scenario, "bytes_equal": True,
+                     "primary_manifest_sha256": "a"*64,
+                     "repeat_manifest_sha256": "a"*64,
+                     "trade_count": 1, "rejection_count": 0}
                     for scenario in phase3_stamps.SCENARIOS
                 ],
             },
@@ -267,6 +304,23 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             ])
             for run in self.runs
         }
+        phase3_merge = self.merge_checkout["merge_commit"]["sha"]
+        phase3_name = "phase3-backtester-acceptance-" + phase3_merge
+        phase3_id = 8000
+        artifact_id = 7777
+        self.raw_ci_runner_logs[phase3_id] += "\n" + "\n".join([
+            "2026-10-17T10:00:03.1000000Z " + json.dumps(
+                self.phase3_evidence["index"], separators=(",", ":")),
+            "2026-10-17T10:00:04.1000000Z   name: " + phase3_name,
+            "2026-10-17T10:00:05.1000000Z Artifact " + phase3_name +
+                ".zip successfully finalized. Artifact ID " + str(artifact_id),
+            "2026-10-17T10:00:06.1000000Z Artifact " + phase3_name +
+                " has been successfully uploaded! Final size is 100 bytes. "
+                "Artifact ID is " + str(artifact_id),
+            "2026-10-17T10:00:07.1000000Z Artifact download URL: "
+                "https://github.com/Dtwosam/FMP/actions/runs/8000/artifacts/" +
+                str(artifact_id),
+        ])
         self.raw_log_receipts = {
             run_id: {
                 "run_id": run_id,
@@ -683,3 +737,55 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+
+    def test_phase3_index_and_upload_receipt_came_from_raw_log(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+
+    def test_phase3_claimed_index_not_equal_to_log_json_fails(self):
+        self.phase3_evidence["index"]["scenarios"][0]["trade_count"] = 99
+        self.assertIn("PHASE3_RAW_INDEX_VS_SUPPLIED_EVIDENCE_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_claimed_artifact_id_not_equal_to_log_fails(self):
+        self.phase3_evidence["upload"]["id"] = 9999
+        self.assertIn("PHASE3_RAW_UPLOAD_VS_SUPPLIED_EVIDENCE_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_raw_index_wrong_merge_sha_fails(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            '"code_commit":"f', '"code_commit":"e')
+        self.assertIn("PHASE3_RAW_INDEX_IDENTITY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_raw_index_missing_fails_composite(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        self.raw_ci_runner_logs[8000] = "\n".join(
+            line for line in lines if '"code_commit":' not in line)
+        self.assertIn("PHASE3_RAW_LOG_STAGE_CARDINALITY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_raw_artifact_wrong_finalized_id_fails(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            ".zip successfully finalized. Artifact ID 7777",
+            ".zip successfully finalized. Artifact ID 9999")
+        self.assertIn("PHASE3_RAW_UPLOAD_ID_RUN_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_raw_unreviewed_download_url_run_fails(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "/runs/8000/artifacts/", "/runs/9999/artifacts/")
+        self.assertIn("PHASE3_RAW_UPLOAD_ID_RUN_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_raw_log_stale_text_digest_also_fails(self):
+        self.raw_ci_runner_logs[8000] += "\nunknown log modification"
+        self.assertIn("phase3-acceptance_RECEIPT_DIGEST_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_synthetic_log_evidence_cannot_authorize_annual(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["can_authorize_annual_run"])
