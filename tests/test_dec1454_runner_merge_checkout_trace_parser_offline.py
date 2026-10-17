@@ -42,8 +42,13 @@ def parse_runner_checkout(raw_log, pr_number, head_sha, base_sha):
     for line in raw_log.splitlines():
         if re.match(PREFIX, line) is None:
             continue
-        if "[command]/usr/bin/git " in line:
-            command = line.split("[command]/usr/bin/git ", 1)[1]
+        # GitHub command records normally show one space after "git";
+        # whitespace separators are not guaranteed in untrusted log text.
+        # Do not allow a tab to make an extra source-mutating command vanish.
+        command_marker = re.search(
+            r"\[command\]/usr/bin/git[ \t]+", line)
+        if command_marker is not None:
+            command = line[command_marker.end():]
             mutating = re.search(
                 # Detect command words, not substrings of paths such as
                 # refs/remotes/pull/N/merge or branch "cherry-pick".
@@ -359,6 +364,47 @@ class ImmutableGitFetchCheckoutHeadLogTrace(unittest.TestCase):
     def test_added_source_mutator_does_not_authorize_annual(self):
         self.lines.append(
             "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git rebase main")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])
+
+    def test_tab_delimited_additional_git_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:58.1000000Z [command]/usr/bin/git\tcheckout other")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_tab_delimited_git_reset_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:58.1000000Z [command]/usr/bin/git\treset --hard")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_tab_delimited_git_restore_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:58.1000000Z [command]/usr/bin/git\trestore .")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_tab_between_git_options_and_mutator_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:58.1000000Z [command]/usr/bin/git -C\trepo\tclean -fd")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_tab_delimited_read_only_git_command_remains_allowed(self):
+        self.lines.append(
+            "2026-10-16T23:10:58.1000000Z [command]/usr/bin/git\tstatus --short")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_non_runner_console_text_remains_ignored(self):
+        self.lines.append(
+            "2026-10-16T23:10:58.1000000Z printed git\tcheckout command")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_tab_delimited_mutator_never_creates_annual_permission(self):
+        self.lines.append(
+            "2026-10-16T23:10:58.1000000Z [command]/usr/bin/git\trebase other")
         self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
                       self.verdict()[1])
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])
