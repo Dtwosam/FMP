@@ -1,0 +1,7 @@
+# DEC-1453 — Malformed caller-supplied CI workflow names fail closed
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit source-only test/docs child #1676 DEC-1452 at 32e5156051f0d4fb79e146843562d81596ecc433. Nine added synthetic test methods; **1,797 proposed methods**.
+
+A review of DEC-1450's in-memory two-runner checkout verifier identified a Python type-safety gap: comparing set(names) with reviewed workflow names raises TypeError if a caller supplies a JSON array or object rather than a string for workflow name. A fail-closed diagnostic reviewer must not crash on malformed, untrusted structured input. This code replaces the unsafe set operation with an explicit exact-type/name inventory check before per-workflow evidence processing. Nine new negative cases exercise list, dict, boolean, integer and missing workflow name, empty run log, boolean run identifiers/attempts, and simultaneous evidence defects. Normal reviewed CI records remain accepted.
+
+This is a source-only offline input-hardening correction. It does not authenticate GitHub CI, verify runner OS permissions, or authorize the protected 2023 annual one-shot research. Its own PR merge-source-tree Phase3/full historical CI and external independent review remain required. DEC-650/#820 real original OS no-write and DEC-651/#821/#779 exclusive immutable one-shot 2023 run385/attempt1 server admission remain **BLOCKED**. No protected original/archives, annual dispatch/retry, installed workflow/security mutation, merge, deployment or trading.
