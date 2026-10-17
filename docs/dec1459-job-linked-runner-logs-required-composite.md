@@ -1,0 +1,9 @@
+# DEC-1459 — Job-linked raw log receipts mandatory in combined CI review
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1682 DEC-1458 at 26351a0d02d5fd06d5b0203721f08b43abff097f. Eight added unittest methods, **1,855 proposed source-defined methods**.
+
+DEC-1458 introduced a standalone offline reviewer requiring that each required CI workflow's raw checkout log text be accompanied by source-consistent GitHub run ID, exact job ID/name, UTF-8 text-byte length and SHA-256 receipt. The earlier combined source reviewer included raw log checkout parsing, but did not make the per-job receipt checks mandatory; it could accept a log indexed under the correct run but supplied from the wrong job.
+
+This forward-only child requires DEC-1458 in the full composite, using the independently provided exact run/job snapshots and per-run raw logs already needed for two-runner SHA comparison. Synthetic fixture receipts are calculated from the fixture's own text and corresponding reviewed job IDs. Eight new negative/positive regression tests reject swapped job receipt IDs, changed log text, removed/extra receipt inventory, malformed identifiers and wrong digest. As before, hashes of *caller-supplied text* are not an authenticated GitHub signed-log source or independent OS isolation proof; an untrusted caller could rewrite both text and digest.
+
+Own head-associated PR merge-source-tree Phase3/full historical CI and qualified independent review required. DEC-650/#820 OS-enforced protected original no-write and DEC-651/#821/#779 immutable exclusive server-side 2023 annual run385/attempt1 admission remain **BLOCKED**. No protected annual execution/retry, source/archive reads, installed YAML/security changes, merge, deployment or trading.
