@@ -1,0 +1,9 @@
+# DEC-1463 — Require Phase3 JSON index and artifact receipt to match raw job log
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1686 DEC-1462 at 781b11da3b9b6f46f9abe05a528fb5022ab40160; **nine new unittest methods, 1,889 proposed source-defined methods**.
+
+The DEC-1452 combined offline PR CI reviewer required five deterministic Phase3 scenarios, reviewed index labels and finalized upload receipt, but accepted those fields as manually supplied JSON-shaped records without proving they matched the actual job log. DEC-1462 added a standalone log decoder for the observed index JSON and exact artifact name, finalization, upload and run/artifact URL lines without downloading artifacts.
+
+This forward-only integration now uses that parser in the combined review. The full Phase3 job log must contain an exact reviewed JSON index for the **same merge SHA fetched by both CI runners**, valid five scenario manifest SHA256 equality and an upload receipt with matching name, artifact ID and run ID. The decoder's index and receipt must equal the separately supplied source-evidence dictionaries. Nine synthetic cases exercise forged supplied fields, missing index, altered merge SHA, mismatched artifact IDs or URL run, changed raw log digest, and no-authorization. Existing fixture data is expanded to match the actual Phase3 JSON schema and real log stages; it is still synthetic and not a GitHub signed attestation or protected annual artifact.
+
+Own head-associated PR merge-source-tree Phase3/full historical CI and independently qualified review required. DEC-650/#820 independently demonstrated OS protected-original no-write and DEC-651/#821/#779 exclusive immutable GitHub server-side 2023 annual run385/attempt1 admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive/artifact download, installed YAML/security settings, merge, deployment or trading.
