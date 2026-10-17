@@ -1,0 +1,9 @@
+# DEC-1481 — Transfer byte count mandatory for composed Phase3 evidence
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1704 DEC-1480 at `4512c9e03b8424949dd24e6a32cbdebaeade81a1`. Seven new source-defined test methods; **2,046 proposed methods**.
+
+DEC-1480 introduced an offline reviewer that requires the GitHub upload action's `Uploaded bytes N` text record to agree with its finalized `Final size is N bytes`, with correct source run, merge SHA, artifact name/ID and UTC stage order. Before this child, that check was standalone; the DEC-1440 full CI source reviewer could accept a Phase3 log claiming inconsistent transfer and final sizes. The new child requires DEC-1480 in the composed review and adds a correctly ordered `10:00:04.5000000Z Uploaded bytes 100` line to its synthetic Phase3 job log between artifact name and finalization. Existing SHA-256 log receipts are calculated from the complete updated fixture.
+
+Seven new tests reject a missing or duplicate transferred-count line, mismatch with final size in either direction, transfer time before artifact naming, and preserve the explicit annual no-authorization result. Real unprotected #1674 and #1698 job logs recorded matching transferred and final byte counts of 23,504 and 23,491, respectively. **Neither these log lines nor this test review proves the actual bytes of a downloaded artifact**; no artifact is read.
+
+Own head-associated PR merge-source-tree Phase3/full historical/general CI and qualified independent review required. DEC-650/#820 independently witnessed OS protected-original no-write and DEC-651/#821/#779 exclusive immutable pre-dispatch server admission for one-shot 2023 annual run385/attempt1 remain **BLOCKED**. No protected original/archive/artifact downloads, annual dispatch/retry, installed workflows/branch/security settings, merge, deployment or brokerage/trading.

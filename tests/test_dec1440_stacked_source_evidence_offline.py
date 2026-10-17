@@ -22,6 +22,7 @@ import test_dec1458_ci_job_raw_log_receipt_offline as log_receipt
 import test_dec1462_phase3_raw_log_index_upload_offline as phase3_raw
 import test_dec1466_phase3_checkout_acceptance_chronology_offline as temporal
 import test_dec1478_workflow_run_log_time_bounds_offline as run_window
+import test_dec1480_phase3_uploaded_bytes_receipt_offline as transfer
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
@@ -153,7 +154,27 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                         raw_ci_runner_logs.get(run_id),
                         pr.get("number"), pr.get("head_sha"), pr.get("base_sha"),
                         run_id, merge.get("sha")))
+    # The upload action's transferred bytes must agree with its finalized
+    # artifact size inside the *same* reviewed Phase3 runner log.
+    transfer_issues = []
+    if (type(runs) is not list or type(raw_ci_runner_logs) is not dict or
+            type(merge_checkout_snapshot) is not dict):
+        transfer_issues.append("PHASE3_TRANSFER_SOURCE_INPUT_UNREVIEWED")
+    else:
+        phase3_runs = [r for r in runs if type(r) is dict and
+                       r.get("name") == "phase3-acceptance"]
+        merge = merge_checkout_snapshot.get("merge_commit")
+        if len(phase3_runs) != 1 or type(merge) is not dict:
+            transfer_issues.append("PHASE3_TRANSFER_RUN_UNREVIEWED")
+        else:
+            run_id = phase3_runs[0].get("id")
+            if type(run_id) is not int or run_id <= 0:
+                transfer_issues.append("PHASE3_TRANSFER_RUN_ID_UNREVIEWED")
+            else:
+                transfer_issues.extend(transfer.review_phase3_uploaded_bytes(
+                    raw_ci_runner_logs.get(run_id), run_id, merge.get("sha")))
     checks = (
+        tuple(sorted(set(transfer_issues))),
         run_window.review_two_ci_runner_log_windows(runs, raw_ci_runner_logs),
         tuple(sorted(set(temporal_issues))),
         tuple(sorted(set(phase3_log_issues))),
@@ -350,6 +371,7 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             "2026-10-17T10:00:03.1000000Z " + json.dumps(
                 self.phase3_evidence["index"], separators=(",", ":")),
             "2026-10-17T10:00:04.1000000Z   name: " + phase3_name,
+            "2026-10-17T10:00:04.5000000Z Uploaded bytes 100",
             "2026-10-17T10:00:05.1000000Z Artifact " + phase3_name +
                 ".zip successfully finalized. Artifact ID " + str(artifact_id),
             "2026-10-17T10:00:06.1000000Z Artifact " + phase3_name +
@@ -965,6 +987,51 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
                       self.verdict()["diagnostics"])
 
     def test_synthetic_run_bounds_never_authorize_protected_annual(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_phase3_transfer_bytes_required_in_full_evidence(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertIn(
+            "2026-10-17T10:00:04.5000000Z Uploaded bytes 100",
+            self.raw_ci_runner_logs[8000])
+
+    def test_phase3_missing_transfer_bytes_does_not_pass(self):
+        self.raw_ci_runner_logs[8000] = "\n".join(
+            line for line in self.raw_ci_runner_logs[8000].splitlines()
+            if " Uploaded bytes " not in line)
+        self.assertIn("PHASE3_UPLOADED_BYTES_RECORD_COUNT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_wrong_transfer_size_fails_full_composite(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "Uploaded bytes 100", "Uploaded bytes 101")
+        self.assertIn("PHASE3_UPLOADED_VS_FINAL_SIZE_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_wrong_final_size_is_not_accepted_by_transfer_receipt(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "Final size is 100 bytes", "Final size is 101 bytes")
+        self.assertIn("PHASE3_UPLOADED_VS_FINAL_SIZE_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_duplicate_uploaded_bytes_line_fails_composite(self):
+        self.raw_ci_runner_logs[8000] += (
+            "\n2026-10-17T10:00:04.6000000Z Uploaded bytes 100")
+        self.assertIn("PHASE3_UPLOADED_BYTES_RECORD_COUNT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_transfer_timestamp_before_artifact_name_fails(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "10:00:04.5000000Z Uploaded bytes",
+            "10:00:04.0000000Z Uploaded bytes")
+        self.assertIn("PHASE3_UPLOAD_BYTES_TIMESTAMP_ORDER_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_full_transfer_log_consistency_is_not_os_security_attestation(self):
         result = self.verdict()
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
