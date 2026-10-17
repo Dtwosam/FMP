@@ -11,6 +11,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import math
 import re
 import unittest
 
@@ -21,6 +22,7 @@ MAX_TEXT_CHARS = 2_000_000
 MAX_BLOB_BYTES = 1_000_000
 MAX_TOTAL_BLOB_BYTES = 4_000_000
 MAX_JSON_NESTING = 512
+MAX_JSON_INTEGER_DIGITS = 64
 VERDICT_FIELDS = frozenset((
     "source_consistency", "diagnostics", "independent_original_os_proof",
     "exclusive_server_dispatch_gate_proven", "can_authorize_annual_run",
@@ -205,6 +207,22 @@ def _has_unpaired_json_surrogate(doc):
     return False
 
 
+def _bounded_json_integer(value):
+    """Reject oversized JSON numeric literals before bigint construction."""
+    digits = value[1:] if value.startswith("-") else value
+    if len(digits) > MAX_JSON_INTEGER_DIGITS:
+        raise ValueError("JSON integer over reviewed digit bound")
+    return int(value)
+
+
+def _finite_json_float(value):
+    """Do not admit syntactically valid JSON numbers decoded as infinity."""
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("nonfinite JSON number")
+    return number
+
+
 def review_bundle_json_text(text):
     """No external I/O: caller provides raw UTF-8-decoded JSON text."""
     if type(text) is not str or len(text) > MAX_TEXT_CHARS:
@@ -213,7 +231,9 @@ def review_bundle_json_text(text):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
     try:
         doc = json.loads(text, object_pairs_hook=_no_duplicate_keys,
-                         parse_constant=_no_nonfinite)
+                         parse_constant=_no_nonfinite,
+                         parse_int=_bounded_json_integer,
+                         parse_float=_finite_json_float)
     except (ValueError, TypeError, UnicodeError, RecursionError,
             OverflowError):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
@@ -837,5 +857,76 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_overflow_positive_json_exponent_is_grammar_failure(self):
+        result = review_bundle_json_text("1e400")
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_overflow_negative_json_exponent_is_grammar_failure(self):
+        result = review_bundle_json_text("-1e400")
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_nested_overflow_exponent_is_grammar_failure(self):
+        result = review_bundle_json_text('{"pr":{"size":1e999999}}')
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_overflow_large_decimal_mantissa_rejected(self):
+        result = review_bundle_json_text("1.0e+9999")
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_underflow_exponent_is_finite_but_invalid_envelope_shape(self):
+        result = review_bundle_json_text("1e-9999")
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_ordinary_finite_json_decimal_is_shape_not_grammar_failure(self):
+        result = review_bundle_json_text("1.25e+2")
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_exact_integer_digit_limit_is_decodable(self):
+        result = review_bundle_json_text("9" * MAX_JSON_INTEGER_DIGITS)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_one_above_integer_digit_limit_fails_before_int(self):
+        result = review_bundle_json_text("9" * (MAX_JSON_INTEGER_DIGITS + 1))
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_negative_integer_over_digit_limit_is_rejected(self):
+        result = review_bundle_json_text("-" + "9" * (MAX_JSON_INTEGER_DIGITS + 1))
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_nested_unbounded_integer_rejected(self):
+        raw = '{"unused":' + "9" * 6000 + "}"
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_stdin_nonfinite_exponent_cannot_echo_evidence(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        raw = '{"synthetic_secret":"canary-not-for-output","x":1e500}'
+        out = io.StringIO()
+        rc = stdin_review.run_stdin_review(io.StringIO(raw), out)
+        self.assertEqual(rc, 2)
+        verdict = json.loads(out.getvalue())
+        self.assertEqual(verdict["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("canary-not-for-output", out.getvalue())
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_bounded_number_parser_preserves_clean_synthetic_bundle(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
         self.assertFalse(result["can_authorize_annual_run"])
 
