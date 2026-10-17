@@ -39,6 +39,148 @@ VERDICT_FIELDS = frozenset((
     "source_consistency", "diagnostics", "independent_original_os_proof",
     "exclusive_server_dispatch_gate_proven", "can_authorize_annual_run",
 ))
+# Frozen allowlist of diagnostic literals emitted by the reviewed DEC-1440
+# composite and its 13 direct source-only reviewer dependencies.
+# Never trust an arbitrary caller-controlled or mocked diagnostic identifier.
+REVIEWED_NESTED_DIAGNOSTICS = frozenset((
+    "BLOB_CHANGED_FILES_UNREVIEWED",
+    "BLOB_DELETION_UNREVIEWED",
+    "BLOB_LEAF_TYPE_UNREVIEWED",
+    "BLOB_PATH_UNREVIEWED",
+    "BLOB_REVIEW_INPUT_UNREVIEWED",
+    "BLOB_SHA_UNREVIEWED",
+    "BLOB_SOURCE_BYTES_SHA_MISMATCH",
+    "BLOB_SOURCE_BYTES_UNREVIEWED",
+    "BLOB_SOURCE_INVENTORY_UNREVIEWED",
+    "CI_JOB_SNAPSHOT_UNREVIEWED",
+    "CI_LOG_RECEIPT_INPUT_UNREVIEWED",
+    "CI_LOG_RECEIPT_INVENTORY_UNREVIEWED",
+    "CI_LOG_RECEIPT_JOB_IDS_UNREVIEWED",
+    "CI_LOG_RECEIPT_RUN_IDS_UNREVIEWED",
+    "CI_LOG_RECEIPT_RUN_INVENTORY_UNREVIEWED",
+    "CI_SOURCE_INVENTORY_UNREVIEWED",
+    "COMMIT_TREE_ROOT_UNREVIEWED",
+    "COMPARE_FILE_LINE_COUNTS_UNREVIEWED",
+    "COMPARE_FILE_LIST_UNREVIEWED",
+    "COMPARE_FILE_TOTAL_LINES_MISMATCH",
+    "COMPARE_NOT_STRICT_ONE_COMMIT_CHILD",
+    "DELETED_OR_UNREVIEWED_SOURCE_FILE",
+    "DIFF_COUNT_INPUT_UNREVIEWED",
+    "DUAL_CHECKOUT_INPUT_UNREVIEWED",
+    "DUAL_CHECKOUT_RUNNER_LOG_INVENTORY_UNREVIEWED",
+    "DUAL_CHECKOUT_RUN_ID_UNIQUENESS_UNREVIEWED",
+    "DUAL_CHECKOUT_TESTED_MERGE_SHA_DIFFERENT",
+    "DUAL_CHECKOUT_WORKFLOW_INVENTORY_UNREVIEWED",
+    "GITHUB_MERGE_REF_SHA_MISMATCH",
+    "GITHUB_MERGE_REF_UNREVIEWED",
+    "GIT_TREE_DIRECTORY_MODE_DRIFT",
+    "GIT_TREE_LEAF_MODE_DRIFT",
+    "GIT_TREE_NODES_UNREVIEWED",
+    "GIT_TREE_PATH_MISSING",
+    "GIT_TREE_SNAPSHOT_UNREVIEWED",
+    "HEAD_AND_MERGE_COMMIT_UNEXPECTEDLY_EQUAL",
+    "HEAD_COMMIT_SHA_MISMATCH",
+    "MERGE_AND_HEAD_FILE_TREE_MISMATCH",
+    "MERGE_CHECKOUT_INPUT_UNREVIEWED",
+    "MERGE_CHECKOUT_SNAPSHOT_UNREVIEWED",
+    "MERGE_COMMIT_PARENT_PAIR_UNREVIEWED",
+    "MERGE_COMMIT_SHA_UNREVIEWED",
+    "MERGE_HISTORICAL_RUN_UNREVIEWED",
+    "PHASE3_ACCEPTANCE_GENERATED_BEFORE_CHECKOUT",
+    "PHASE3_ACCEPTANCE_RUN_UNREVIEWED",
+    "PHASE3_ACCEPTANCE_SNAPSHOT_UNREVIEWED",
+    "PHASE3_ACCEPTANCE_TIMESTAMP_BEFORE_CHECKOUT",
+    "PHASE3_ATTEMPT_UNREVIEWED",
+    "PHASE3_CHECKOUT_ACCEPTANCE_MERGE_MISMATCH",
+    "PHASE3_CHECKOUT_ACCEPTANCE_SOURCE_UNREVIEWED",
+    "PHASE3_CHECKOUT_ACCEPTANCE_STAGE_UNREVIEWED",
+    "PHASE3_CHECKOUT_ACCEPTANCE_TIMESTAMP_UNREVIEWED",
+    "PHASE3_CHECKOUT_INDEX_ORDER_INPUT_UNREVIEWED",
+    "PHASE3_CHECKOUT_INDEX_ORDER_RUN_ID_UNREVIEWED",
+    "PHASE3_CHECKOUT_INDEX_ORDER_RUN_UNREVIEWED",
+    "PHASE3_COMMIT_SHA_UNREVIEWED",
+    "PHASE3_EVIDENCE_INPUT_UNREVIEWED",
+    "PHASE3_INDEX_COMMIT_NOT_TESTED_MERGE",
+    "PHASE3_INDEX_FIXTURE_UNREVIEWED",
+    "PHASE3_INDEX_PROTOCOL_UNREVIEWED",
+    "PHASE3_INDEX_SCENARIO_COUNT_UNREVIEWED",
+    "PHASE3_MERGE_HEAD_IDENTITY_UNREVIEWED",
+    "PHASE3_RAW_INDEX_IDENTITY_UNREVIEWED",
+    "PHASE3_RAW_INDEX_JSON_UNREVIEWED",
+    "PHASE3_RAW_INDEX_RECEIPT_INPUT_UNREVIEWED",
+    "PHASE3_RAW_INDEX_RECEIPT_UNREVIEWED",
+    "PHASE3_RAW_INDEX_RUN_UNREVIEWED",
+    "PHASE3_RAW_INDEX_SCHEMA_DRIFT",
+    "PHASE3_RAW_INDEX_SHAPE_UNREVIEWED",
+    "PHASE3_RAW_INDEX_VS_SUPPLIED_EVIDENCE_MISMATCH",
+    "PHASE3_RAW_LOG_CONFLICTING_STAGE_UNREVIEWED",
+    "PHASE3_RAW_LOG_INPUT_UNREVIEWED",
+    "PHASE3_RAW_LOG_STAGE_CARDINALITY_UNREVIEWED",
+    "PHASE3_RAW_LOG_STAGE_ORDER_UNREVIEWED",
+    "PHASE3_RAW_LOG_TIMESTAMP_ORDER_UNREVIEWED",
+    "PHASE3_RAW_LOG_TIMESTAMP_UNREVIEWED",
+    "PHASE3_RAW_SCENARIO_DETERMINISM_UNREVIEWED",
+    "PHASE3_RAW_SCENARIO_INVENTORY_UNREVIEWED",
+    "PHASE3_RAW_SCENARIO_NAMES_UNREVIEWED",
+    "PHASE3_RAW_SCENARIO_SCHEMA_DRIFT",
+    "PHASE3_RAW_UPLOAD_ID_RUN_MISMATCH",
+    "PHASE3_RAW_UPLOAD_MERGE_NAME_MISMATCH",
+    "PHASE3_RAW_UPLOAD_VS_SUPPLIED_EVIDENCE_MISMATCH",
+    "PHASE3_RUN_ID_UNREVIEWED",
+    "PHASE3_RUN_NOT_REVIEWED_SUCCESS",
+    "PHASE3_SCENARIOS_UNREVIEWED",
+    "PHASE3_SCENARIO_DETERMINISM_UNREVIEWED",
+    "PHASE3_SCENARIO_NAMES_UNREVIEWED",
+    "PHASE3_UPLOAD_ID_UNREVIEWED",
+    "PHASE3_UPLOAD_MERGE_SHA_NAME_MISMATCH",
+    "PHASE3_UPLOAD_NOT_FINALIZED",
+    "PHASE3_UPLOAD_RUN_ASSOCIATION_MISMATCH",
+    "PRODUCTION_OR_WORKFLOW_PATH_UNREVIEWED",
+    "PR_ADDITIONS_UNREVIEWED",
+    "PR_CHANGED_FILE_COUNT_UNREVIEWED",
+    "PR_COMPARE_ADDITIONS_MISMATCH",
+    "PR_COMPARE_DELETIONS_MISMATCH",
+    "PR_COMPARE_FILE_COUNT_MISMATCH",
+    "PR_HEAD_BASE_SHA_UNREVIEWED",
+    "PR_NUMBER_UNREVIEWED",
+    "RAW_CI_RUNNER_LOG_INPUT_UNREVIEWED",
+    "RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
+    "RAW_CI_RUNNER_LOG_METADATA_MISMATCH",
+    "RAW_CI_RUNNER_LOG_RECORD_UNREVIEWED",
+    "RENAMED_FROM_PRODUCTION_PATH_UNREVIEWED",
+    "RUNNER_CHECKOUT_REF_UNREVIEWED",
+    "RUNNER_CHECKOUT_SHA_PREFIX_MISMATCH",
+    "RUNNER_FETCH_FULL_SHA_MISMATCH",
+    "RUNNER_FETCH_FULL_SHA_UNREVIEWED",
+    "RUNNER_LOG_CHECKOUT_SHA_MISMATCH",
+    "RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+    "RUNNER_LOG_INPUT_UNREVIEWED",
+    "RUNNER_LOG_ORDER_UNREVIEWED",
+    "RUNNER_LOG_PARENT_SHA_MISMATCH",
+    "RUNNER_LOG_PR_REF_MISMATCH",
+    "RUNNER_LOG_STAGE_CARDINALITY_UNREVIEWED",
+    "RUNNER_LOG_TIMESTAMP_ORDER_UNREVIEWED",
+    "RUNNER_LOG_TIMESTAMP_UNREVIEWED",
+    "RUN_HEAD_ASSOCIATION_UNREVIEWED",
+    "RUN_NOT_COMPLETED_SUCCESS",
+    "TREE_CHAIN_CHANGED_BYTES_UNREVIEWED",
+    "TREE_CHAIN_CHANGED_FILES_UNREVIEWED",
+    "TREE_CHAIN_CHANGED_PATH_UNREVIEWED",
+    "TREE_CHAIN_CHANGE_STATUS_UNREVIEWED",
+    "TREE_CHAIN_DUPLICATE_CHANGED_PATH",
+    "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED",
+    "TREE_CHAIN_ENTRY_SHA_UNREVIEWED",
+    "TREE_CHAIN_INPUT_UNREVIEWED",
+    "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",
+    "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB",
+    "TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH",
+    "TREE_CHAIN_PARENT_NOT_REGULAR_TREE",
+    "TREE_CHAIN_ROOT_SHA_UNREVIEWED",
+    "TREE_CHAIN_SOURCE_BYTE_INVENTORY_UNREVIEWED",
+    "TREE_CHAIN_TREE_ENTRIES_UNREVIEWED",
+    "TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
+    "TREE_CHAIN_TREE_SNAPSHOT_INVENTORY_UNREVIEWED",
+))
 REQUIRED = frozenset((
     "schema", "pr", "runs", "jobs_by_run", "compare", "commit", "tree",
     "nodes", "changed_bytes_b64", "ci_workflow_bytes_b64",
@@ -282,8 +424,8 @@ def review_bundle_envelope(envelope):
             type(verdict.get("source_consistency")) is not bool or
             type(verdict.get("diagnostics")) is not tuple or
             len(verdict["diagnostics"]) > 256 or
-            any(type(code) is not str or re.fullmatch(
-                    r"[A-Za-z][A-Za-z0-9_-]{0,127}", code) is None
+            any(type(code) is not str or
+                code not in REVIEWED_NESTED_DIAGNOSTICS
                 for code in verdict["diagnostics"]) or
             # Caller-supplied or mocked reviewers must not return a
             # contradictory success flag or nondeterministic diagnostics.
@@ -878,12 +1020,12 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         from unittest.mock import patch
         valid = dict(self.verdict())
         valid["source_consistency"] = False
-        valid["diagnostics"] = ("SYNTHETIC_REVIEW_WARNING",)
+        valid["diagnostics"] = ("MERGE_HISTORICAL_RUN_UNREVIEWED",)
         with patch.object(composite, "review_stacked_draft_evidence",
                           return_value=valid):
             result = self.verdict()
         self.assertFalse(result["source_consistency"])
-        self.assertEqual(result["diagnostics"], ("SYNTHETIC_REVIEW_WARNING",))
+        self.assertEqual(result["diagnostics"], ("MERGE_HISTORICAL_RUN_UNREVIEWED",))
         self.assertFalse(result["can_authorize_annual_run"])
 
     def test_stdin_json_verdict_never_serializes_extra_source_field(self):
@@ -1877,5 +2019,88 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertTrue(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_reviewed_nested_diagnostics_set_is_exact_known_literatures(self):
+        self.assertIn("MERGE_HISTORICAL_RUN_UNREVIEWED",
+                      REVIEWED_NESTED_DIAGNOSTICS)
+        self.assertNotIn("SYNTHETIC_REVIEW_WARNING",
+                         REVIEWED_NESTED_DIAGNOSTICS)
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED",
+                         REVIEWED_NESTED_DIAGNOSTICS)
+
+    def test_unknown_well_formed_nested_diagnostic_rejected(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=("SYNTHETIC_PRIVATE_CANARY",))
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+        self.assertNotIn("SYNTHETIC_PRIVATE_CANARY", repr(result))
+
+    def test_annual_authorization_diagnostic_label_is_rejected(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=("ANNUAL_DISPATCH_AUTHORIZED",))
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_trusted_nested_source_only_failure_code_is_preserved(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=("MERGE_HISTORICAL_RUN_UNREVIEWED",))
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("MERGE_HISTORICAL_RUN_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_reviewer_known_multi_code_sorted_tuple_is_preserved(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=("MERGE_HISTORICAL_RUN_UNREVIEWED",
+                                "TREE_CHAIN_ROOT_SHA_UNREVIEWED"))
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"], bad["diagnostics"])
+
+    def test_known_plus_unknown_code_causes_whole_result_refusal(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=("MERGE_HISTORICAL_RUN_UNREVIEWED",
+                                "SECRET_CANARY_SOURCE"))
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+        self.assertNotIn("SECRET_CANARY_SOURCE", repr(result))
+
+    def test_stdin_looks_like_diagnostic_secret_cannot_be_echoed(self):
+        from unittest.mock import patch
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=("PRIVATE_SOURCE_CANARY_2026",))
+        output = io.StringIO()
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            rc = stdin_review.run_stdin_review(
+                io.StringIO(json.dumps(self.envelope)), output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertEqual(result["diagnostics"],
+                         ["BUNDLE_RESULT_SHAPE_UNREVIEWED"])
+        self.assertNotIn("PRIVATE_SOURCE_CANARY_2026", output.getvalue())
+
+    def test_plain_source_bundle_without_diagnostics_stays_consistent(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
         self.assertFalse(result["can_authorize_annual_run"])
 
