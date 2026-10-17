@@ -1,0 +1,9 @@
+# DEC-1480 — Fail early on huge numeric run keys and Base64 payloads
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit source tests/docs child #1725 DEC-1479 at `a39642823458b20caa8088a775a9ffcbfaea8bda`. Six new unittest methods, **2,058 proposed source-defined methods**.
+
+The portable JSON evidence bundle decoder from DEC-1478 converts canonical decimal workflow run dictionary keys into Python integers. A malicious untrusted key with thousands of digits could trigger an integer parsing error or excessive computation *before* source-evidence diagnostics. Similarly, it Base64-decodes a caller-supplied string before checking its decoded maximum length. This correction enforces a 19-digit/signed 64-bit positive run key ceiling **before** integer conversion and a strict encoded Base64 length ceiling **before** allocating decoded bytes, retaining the earlier canonical Base64 and decoded-length checks. No valid observed GitHub run ID is affected.
+
+Six new tests exercise a 6000-digit run key, signed 64-bit overflow, the maximum numeric format (which decodes but still cannot forge a real run), excessive Base64 text, malformed near-limit Base64, and the no-annual-authorization invariant. The DEC-1479 stdin-only command inherits this defensive decoder automatically. It never fetches GitHub logs or protected artifacts and only reports consistency of supplied records.
+
+Own head-associated PR merge-source-tree Phase3/full historical/general CI and independently qualified review required. DEC-650/#820 actual protected historical original OS no-write and DEC-651/#821/#779 exclusive immutable one-shot GitHub server authorization for 2023 run385/attempt1 remain **BLOCKED**. No protected annual dispatch/retry, originals/archives, installed workflow/security settings, merge, deployment or trading.

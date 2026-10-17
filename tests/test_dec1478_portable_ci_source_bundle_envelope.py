@@ -77,9 +77,14 @@ def review_bundle_envelope(envelope):
             decoded = {}
             for k, item in value.items():
                 if (type(k) is not str or
+                        len(k) > 19 or
                         re.fullmatch(r"[1-9][0-9]*", k) is None):
                     return fail_closed("BUNDLE_RUN_KEY_UNREVIEWED")
+                # GitHub run identifiers must fit a signed 64-bit integer.
+                # Length and range checks occur before any unbounded int().
                 number = int(k)
+                if number > 9223372036854775807:
+                    return fail_closed("BUNDLE_RUN_KEY_UNREVIEWED")
                 if number in decoded:
                     return fail_closed("BUNDLE_RUN_KEY_DUPLICATED")
                 decoded[number] = item
@@ -91,6 +96,10 @@ def review_bundle_envelope(envelope):
                     return fail_closed("BUNDLE_SOURCE_PATH_UNREVIEWED")
                 if type(payload) is not str:
                     return fail_closed("BUNDLE_SOURCE_B64_UNREVIEWED")
+                # Check the encoded length *before* allocating decoded bytes.
+                # 4*ceil(n/3) is the largest canonical Base64 text for n bytes.
+                if len(payload) > 4 * ((MAX_BLOB_BYTES + 2) // 3):
+                    return fail_closed("BUNDLE_SOURCE_BLOB_OVERSIZE")
                 try:
                     raw = base64.b64decode(payload, validate=True)
                 except (binascii.Error, ValueError):
@@ -286,3 +295,38 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_no_bundle_can_supply_authorization_flags(self):
         self.envelope["can_authorize_annual_run"] = True
         self.assert_fails("BUNDLE_KEY_INVENTORY_UNREVIEWED")
+
+    def test_long_decimal_run_key_rejected_before_int_conversion(self):
+        k = self.envelope["jobs_by_run"].pop("8000")
+        self.envelope["jobs_by_run"]["8"*6000] = k
+        self.assert_fails("BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_overflow_signed_64_bit_run_key_is_rejected(self):
+        k = self.envelope["jobs_by_run"].pop("8000")
+        self.envelope["jobs_by_run"]["9223372036854775808"] = k
+        self.assert_fails("BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_signed_64_bit_max_run_key_is_structurally_decodable(self):
+        value = self.envelope["jobs_by_run"].pop("8000")
+        self.envelope["jobs_by_run"]["9223372036854775807"] = value
+        result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertNotIn("BUNDLE_RUN_KEY_UNREVIEWED", result["diagnostics"])
+
+    def test_excessive_base64_text_rejected_before_decode(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = (
+            "A" * (4*((MAX_BLOB_BYTES+2)//3)+4))
+        self.assert_fails("BUNDLE_SOURCE_BLOB_OVERSIZE")
+
+    def test_corrupted_base64_near_limit_does_not_pass(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = (
+            "A" * (4*((MAX_BLOB_BYTES+2)//3)-1) + "%")
+        self.assert_fails("BUNDLE_SOURCE_B64_UNREVIEWED")
+
+    def test_resource_limits_never_imply_annual_permission(self):
+        k = self.envelope["checkout_by_run"].pop("8000")
+        self.envelope["checkout_by_run"]["9"*6000] = k
+        result = self.verdict()
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertIn("BUNDLE_RUN_KEY_UNREVIEWED", result["diagnostics"])
