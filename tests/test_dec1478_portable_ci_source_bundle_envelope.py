@@ -1348,13 +1348,18 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
 
     def test_exact_source_path_limit_is_lexically_permitted(self):
-        path = "src/" + "a" * (MAX_SOURCE_PATH_CHARS-4)
+        # 17 components of 240 bytes + 16 separators = 4096 bytes.
+        path = "/".join(["a" * 240] * 17)
         self.assertEqual(len(path), MAX_SOURCE_PATH_CHARS)
+        self.assertEqual(len(path.encode("utf-8")), MAX_SOURCE_PATH_UTF8_BYTES)
         self.assertTrue(_reviewed_source_path(path))
 
     def test_one_above_source_path_limit_is_lexically_rejected(self):
-        path = "src/" + "a" * (MAX_SOURCE_PATH_CHARS-3)
+        path = "/".join(["a" * 240] * 16 + ["a" * 241])
         self.assertEqual(len(path), MAX_SOURCE_PATH_CHARS+1)
+        self.assertTrue(all(len(p.encode("utf-8")) <=
+                            MAX_SOURCE_SEGMENT_UTF8_BYTES
+                            for p in path.split("/")))
         self.assertFalse(_reviewed_source_path(path))
 
     def test_overlong_changed_source_path_fails_without_decoding(self):
@@ -2841,6 +2846,68 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
 
     def test_plain_space_guard_preserves_clean_source_consistency(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_long_path_exact_boundary_all_components_portable(self):
+        path = "/".join(["x"*240] * 17)
+        self.assertEqual(len(path), 4096)
+        self.assertEqual(max(len(x.encode("utf-8")) for x in path.split("/")), 240)
+        self.assertTrue(_reviewed_source_path(path))
+
+    def test_long_path_one_extra_ascii_character_rejected_by_total(self):
+        path = "/".join(["x"*240] * 16 + ["x"*241])
+        self.assertEqual(len(path), 4097)
+        self.assertFalse(_reviewed_source_path(path))
+
+    def test_one_256_byte_component_rejected_even_under_total_cap(self):
+        path = "src/" + "x"*256
+        self.assertLess(len(path), MAX_SOURCE_PATH_CHARS)
+        self.assertFalse(_reviewed_source_path(path))
+
+    def test_multibyte_path_uses_utf8_length_not_code_point_count(self):
+        path = "/".join(["é"*120] * 17)
+        self.assertEqual(max(len(p.encode("utf-8")) for p in path.split("/")), 240)
+        self.assertTrue(_reviewed_source_path(path))
+        over = path + "/" + "é"*120
+        self.assertLess(len(over), MAX_SOURCE_PATH_CHARS)
+        self.assertGreater(len(over.encode("utf-8")), MAX_SOURCE_PATH_UTF8_BYTES)
+        self.assertFalse(_reviewed_source_path(over))
+
+    def test_ascii_compound_path_4095_bytes_is_valid(self):
+        path = "/".join(["x"*255]*16)
+        self.assertEqual(len(path.encode("utf-8")), 4095)
+        self.assertTrue(_reviewed_source_path(path))
+
+    def test_total_path_limit_does_not_override_255_byte_component(self):
+        path = "/".join(["x"*255]*15 + ["x"*256])
+        self.assertFalse(_reviewed_source_path(path))
+
+    def test_overlong_component_fails_closed_before_composite_review(self):
+        from unittest.mock import patch
+        self.envelope["changed_bytes_b64"]["src/" + "x"*256] = "YQ=="
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("must not run")) as nested:
+            self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+        nested.assert_not_called()
+
+    def test_overlimit_total_path_fails_closed_without_echoing_path(self):
+        from unittest.mock import patch
+        path = "/".join(["SECRET"*40] * 16 + ["SECRET"*40+"x"])
+        self.envelope["changed_bytes_b64"][path] = "YQ=="
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("must not run")):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SOURCE_PATH_UNREVIEWED",))
+        self.assertNotIn("SECRET", repr(result))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_path_boundary_corrected_fixture_remains_source_only(self):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
