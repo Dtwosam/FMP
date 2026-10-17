@@ -1,0 +1,9 @@
+# DEC-1466 — Phase3 acceptance generation follows the reviewed runner checkout
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1689 DEC-1465 at 38cdc303ca7f2800b01c5a6f4a51c8e021e93e1c. Adds 12 source-defined methods, **1918 proposed methods**.
+
+The raw CI checkout trace validator and Phase3 index/artifact parser independently check their three and five stage sequences, but do not establish that Phase3 acceptance evidence was generated **after** that same runner checked out the reviewed PR merge commit. Spliced log segments could individually pass stage sequencing while the acceptance index was produced before checkout.
+
+A source-only synthetic checker composes both exact log parsers over the **same complete Phase3 raw log text**, requires fetched full merge SHA equal to the index's reviewed merge commit and additionally requires checkout HEAD line position and its UTC timestamp strictly precede the logged acceptance index. Positive fixture lines reproduce the inspected unprotected #1674 Phase3 job's actual checkout and index/upload timestamps (with schema-correct synthetic scenario values); negative fixtures test reversed/equal timestamps, stage reorder, wrong source parents and missing index/checkout. No artifacts are downloaded or annual workflow dispatched. A separate future child can make this mandatory in the all-evidence composite.
+
+Log chronology consistency is not authenticated GitHub provider integrity, protected original OS no-write or exclusive immutable annual admission. Own head-associated PR merge-source-tree Phase3/full historical CI and qualified review required. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**. No protected originals/archives, annual dispatch/retry, installed security/workflow changes, merge, deployment or trading.
