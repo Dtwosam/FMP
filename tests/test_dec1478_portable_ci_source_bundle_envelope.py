@@ -205,7 +205,8 @@ def review_bundle_envelope(envelope):
     try:
         verdict = composite.review_stacked_draft_evidence(**converted)
     except (TypeError, ValueError, KeyError, IndexError, AttributeError,
-            OverflowError, UnicodeError, RecursionError) as _:
+            OverflowError, UnicodeError, RecursionError, RuntimeError,
+            AssertionError, OSError) as _:
         return fail_closed("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
     if (type(verdict) is not dict or
             set(verdict) != VERDICT_FIELDS or
@@ -1280,5 +1281,86 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertTrue(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_nested_runtime_error_is_sanitized(self):
+        from unittest.mock import patch
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=RuntimeError("private-runner-log-sentinel")):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_NESTED_EVIDENCE_UNREVIEWED",))
+        self.assertNotIn("private-runner-log-sentinel", repr(result))
+
+    def test_nested_assertion_failure_is_sanitized(self):
+        from unittest.mock import patch
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("secret-assertion")):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+
+    def test_nested_file_permission_error_is_sanitized(self):
+        from unittest.mock import patch
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=PermissionError("never-open-original")):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_NESTED_EVIDENCE_UNREVIEWED",))
+        self.assertNotIn("never-open-original", repr(result))
+
+    def test_nested_generic_io_failure_is_sanitized(self):
+        from unittest.mock import patch
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=OSError("sensitive-path")):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+
+    def test_nested_lookup_index_error_stays_fail_closed(self):
+        from unittest.mock import patch
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=IndexError("untrusted-index")):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+
+    def test_nested_value_error_stays_fail_closed(self):
+        from unittest.mock import patch
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=ValueError("untrusted-value")):
+            self.assert_fails("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
+
+    def test_nested_runtime_error_via_stdin_is_one_safe_verdict(self):
+        from unittest.mock import patch
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        output = io.StringIO()
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=RuntimeError("sensitive-log-sentinel")):
+            code = stdin_review.run_stdin_review(
+                io.StringIO(json.dumps(self.envelope)), output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(code, 2)
+        self.assertEqual(result["diagnostics"],
+                         ["BUNDLE_NESTED_EVIDENCE_UNREVIEWED"])
+        self.assertEqual(len(output.getvalue().splitlines()), 1)
+        self.assertNotIn("sensitive-log-sentinel", output.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_nested_assertion_failure_via_stdin_is_non_authorizing(self):
+        from unittest.mock import patch
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        output = io.StringIO()
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("hidden-assertion")):
+            code = stdin_review.run_stdin_review(
+                io.StringIO(json.dumps(self.envelope)), output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(code, 2)
+        self.assertNotIn("hidden-assertion", output.getvalue())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_nested_crash_policy_preserves_clean_consistency_only(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
 
