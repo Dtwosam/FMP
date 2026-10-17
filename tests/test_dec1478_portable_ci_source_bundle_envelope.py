@@ -376,6 +376,8 @@ def review_bundle_envelope(envelope):
                     return fail_closed("BUNDLE_RAW_LOG_TEXT_OVERSIZE")
                 if sum(len(log) for log in value.values()) > MAX_TOTAL_RAW_LOG_CHARS:
                     return fail_closed("BUNDLE_TOTAL_RAW_LOG_OVERSIZE")
+                if any("\x00" in log for log in value.values()):
+                    return fail_closed("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
             for k in sorted(value):
                 item = value[k]
                 if (type(k) is not str or
@@ -2516,4 +2518,61 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertTrue(verdict["source_consistency"])
         self.assertEqual(verdict["diagnostics"], ())
         self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_raw_ci_log_embedded_nul_is_rejected_directly(self):
+        self.envelope["raw_ci_runner_logs"]["9101"] = "before\x00after"
+        self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_raw_ci_log_leading_nul_is_rejected(self):
+        self.envelope["raw_ci_runner_logs"]["9101"] = "\x00marker"
+        self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_raw_ci_log_trailing_nul_is_rejected(self):
+        self.envelope["raw_ci_runner_logs"]["9101"] = "marker\x00"
+        self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_raw_ci_log_nul_rejected_before_invalid_run_id(self):
+        self.envelope["raw_ci_runner_logs"]["non-decimal"] = "safe\x00hidden"
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RAW_LOG_TEXT_UNREVIEWED",))
+
+    def test_raw_ci_log_nul_json_escape_fails_closed(self):
+        raw = json.dumps(self.envelope)
+        parsed = json.loads(raw)
+        parsed["raw_ci_runner_logs"]["9101"] = "\u0000"
+        verdict = review_bundle_json_text(json.dumps(parsed))
+        self.assertEqual(verdict["diagnostics"],
+                         ("BUNDLE_RAW_LOG_TEXT_UNREVIEWED",))
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_raw_ci_log_newline_and_tab_are_not_forbidden_by_nul_guard(self):
+        self.assertNotIn("\x00", "synthetic\n\tCI log")
+        self.assertTrue(_within_inmemory_structure_budget(
+            {"raw_ci_runner_logs": {"9101": "synthetic\n\tCI log"}}))
+
+    def test_raw_ci_log_nul_stdin_output_never_echoes_private_bytes(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["raw_ci_runner_logs"]["9101"] = "private-canary\x00secret"
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), out)
+        record = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_RAW_LOG_TEXT_UNREVIEWED", record["diagnostics"])
+        self.assertNotIn("private-canary", out.getvalue())
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_raw_ci_log_nul_cannot_approve_annual_execution(self):
+        self.envelope["raw_ci_runner_logs"]["9101"] = "\x00"
+        result = self.verdict()
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_regular_raw_ci_log_fixture_remains_source_only_consistent(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
 
