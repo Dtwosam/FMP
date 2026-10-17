@@ -330,6 +330,9 @@ def review_bundle_envelope(envelope):
     """Decode an offline-only JSON-compatible envelope, fail closed on bad input."""
     if type(envelope) is not dict:
         return fail_closed("BUNDLE_SHAPE_UNREVIEWED")
+    if any(type(key) is not str for key in envelope):
+        # Inventory comparison must not invoke custom key hashing/equality.
+        return fail_closed("BUNDLE_KEY_INVENTORY_UNREVIEWED")
     if set(envelope) != REQUIRED:
         return fail_closed("BUNDLE_KEY_INVENTORY_UNREVIEWED")
     if (type(envelope["schema"]) is not str or
@@ -2285,4 +2288,87 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(verdict["independent_original_os_proof"])
         self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_top_level_plain_non_string_key_fails_inventory(self):
+        data = dict(self.envelope)
+        data[101] = "synthetic"
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_top_level_plain_none_key_fails_inventory(self):
+        data = dict(self.envelope)
+        data[None] = "synthetic"
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_top_level_string_subclass_key_fails_inventory(self):
+        class NonPlainKey(str):
+            pass
+        data = dict(self.envelope)
+        data[NonPlainKey("unrecognized_synthetic")] = "synthetic"
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_top_level_custom_key_is_not_rehashed_by_inventory(self):
+        class DangerousKey:
+            def __init__(self):
+                self.calls = 0
+            def __hash__(self):
+                self.calls += 1
+                return 918237
+            def __eq__(self, other):
+                raise AssertionError("key equality must not run")
+        key = DangerousKey()
+        data = dict(self.envelope)
+        data[key] = "synthetic"
+        key.calls = 0
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+        self.assertEqual(key.calls, 0)
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_top_level_custom_key_diagnostic_never_renders_key(self):
+        class SecretKey:
+            def __hash__(self):
+                return 191827
+            def __repr__(self):
+                raise AssertionError("sensitive identifier must not print")
+        data = dict(self.envelope)
+        data[SecretKey()] = "protected-private-canary"
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+        self.assertNotIn("protected-private-canary", repr(result))
+
+    def test_top_level_missing_string_key_retains_inventory_code(self):
+        data = dict(self.envelope)
+        del data["schema"]
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_top_level_unknown_plain_string_retains_inventory_code(self):
+        data = dict(self.envelope)
+        data["not_reviewed"] = None
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_top_level_dict_subclass_still_fails_shape_first(self):
+        class UntrustedDict(dict):
+            pass
+        result = review_bundle_envelope(UntrustedDict(self.envelope))
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_top_level_plain_keys_keep_clean_source_only_verdict(self):
+        self.assertTrue(all(type(key) is str for key in self.envelope))
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
 
