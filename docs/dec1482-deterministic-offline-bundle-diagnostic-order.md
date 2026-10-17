@@ -1,0 +1,9 @@
+# DEC-1482 — Deterministic offline evidence-bundle diagnostics
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1727 DEC-1481 at `490bf7644cfcf6fb30e82a3f8d54d57e6d4a3eb2`. Six new unittest methods, **2,069 proposed source-defined methods**.
+
+The DEC-1478/1481 versioned JSON evidence envelope validates fifteen independent source categories, Base64 blobs and decimal run-key maps. It used a Python frozenset to iterate envelope categories. If a caller supplied multiple malformed fields, the first diagnostic could differ across Python hash randomization settings or JSON key insertion order, complicating reproducible reviewer handoffs.
+
+This forward-only test-only correction iterates categories in a stable sorted order and individually sorts verified-string run/source keys before conversion. Mixed-type raw Python dictionary keys are rejected before sorting, so attempting to reorder an ill-typed key map does not itself raise TypeError. Six synthetic regression tests cover clean reordered bundles, multiple simultaneous defects, run-map order, invalid source/run key types and permanently false annual authorization flags. This does not change the source evidence acceptance policy or infer GitHub provider authenticity.
+
+Own head-associated PR merge-source-tree Phase3/full historical CI and independent qualified review required. DEC-650/#820 independently witnessed protected original OS no-write and DEC-651/#821/#779 exclusive immutable server preallocation gate for one-shot protected 2023 run385/attempt1 remain **BLOCKED**. No protected annual dispatch/retry, original/archive/artifact access, installed workflow/security changes, merges, deployment or trading.

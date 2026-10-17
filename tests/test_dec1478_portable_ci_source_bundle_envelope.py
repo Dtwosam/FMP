@@ -71,11 +71,16 @@ def review_bundle_envelope(envelope):
 
     converted = {}
     total_bytes = 0
-    for key in REQUIRED - frozenset(("schema",)):
+    # Stable ordering makes the same malformed bundle produce the same
+    # diagnostics regardless of PYTHONHASHSEED or JSON field insertion order.
+    for key in sorted(REQUIRED - frozenset(("schema",))):
         value = envelope[key]
         if key in ID_MAPS:
             decoded = {}
-            for k, item in value.items():
+            if any(type(k) is not str for k in value):
+                return fail_closed("BUNDLE_RUN_KEY_UNREVIEWED")
+            for k in sorted(value):
+                item = value[k]
                 if (type(k) is not str or
                         len(k) > 19 or
                         re.fullmatch(r"[1-9][0-9]*", k) is None):
@@ -91,7 +96,10 @@ def review_bundle_envelope(envelope):
             converted[key] = decoded
         elif key in BYTES_MAPS:
             decoded = {}
-            for path, payload in value.items():
+            if any(type(path) is not str for path in value):
+                return fail_closed("BUNDLE_SOURCE_PATH_UNREVIEWED")
+            for path in sorted(value):
+                payload = value[path]
                 if type(path) is not str or not path:
                     return fail_closed("BUNDLE_SOURCE_PATH_UNREVIEWED")
                 if type(payload) is not str:
@@ -396,3 +404,43 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertIn("BUNDLE_RESULT_SHAPE_UNREVIEWED",
                       result["diagnostics"])
+
+    def test_valid_reordered_bundle_categories_has_same_clean_verdict(self):
+        original = self.verdict()
+        self.envelope = dict(reversed(list(self.envelope.items())))
+        self.assertEqual(self.verdict(), original)
+
+    def test_two_faults_have_identical_result_after_category_reorder(self):
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = "bad%"
+        self.envelope["jobs_by_run"]["0"] = {}
+        original = self.verdict()
+        self.envelope = dict(reversed(list(self.envelope.items())))
+        self.assertEqual(self.verdict(), original)
+        self.assertFalse(original["source_consistency"])
+
+    def test_invalid_run_keys_report_same_error_after_map_reorder(self):
+        self.envelope["jobs_by_run"]["0"] = {}
+        self.envelope["jobs_by_run"]["08000"] = {}
+        original = self.verdict()
+        self.envelope["jobs_by_run"] = dict(
+            reversed(list(self.envelope["jobs_by_run"].items())))
+        self.assertEqual(self.verdict(), original)
+        self.assertIn("BUNDLE_RUN_KEY_UNREVIEWED",
+                      original["diagnostics"])
+
+    def test_invalid_source_paths_do_not_trigger_mixed_type_sort_exception(self):
+        self.envelope["changed_bytes_b64"][4] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_invalid_run_key_types_do_not_trigger_sort_exception(self):
+        self.envelope["raw_ci_log_receipts"][4] = {}
+        self.assert_fails("BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_sorted_validation_does_not_make_annual_gate_true(self):
+        self.envelope = dict(reversed(list(self.envelope.items())))
+        self.envelope["ci_workflow_bytes_b64"]["invalid"] = "%%%!"
+        result = self.verdict()
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertTrue(result["diagnostics"])
