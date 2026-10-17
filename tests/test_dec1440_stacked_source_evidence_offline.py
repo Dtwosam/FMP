@@ -6,6 +6,7 @@ GitHub settings change or trading. Consistency is NOT source authentication.
 from __future__ import annotations
 
 import unittest
+import hashlib
 import test_dec1426_exact_ci_job_critical_steps_offline as jobs_review
 import test_dec1436_pr_compare_file_count_offline as file_review
 import test_dec1435_git_tree_regular_blob_review as modes_review
@@ -16,13 +17,14 @@ import test_dec1445_pr_merge_checkout_tree_identity_offline as merge_review
 import test_dec1450_dual_suite_merge_checkout_offline as dual_runner
 import test_dec1447_phase3_acceptance_merge_stamp_offline as phase3_stamps
 import test_dec1454_runner_merge_checkout_trace_parser_offline as log_parse
+import test_dec1458_ci_job_raw_log_receipt_offline as log_receipt
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                                   tree, nodes, changed_bytes, ci_workflow_bytes,
                                   full_tree_snapshots, merge_checkout_snapshot,
                                   checkout_by_run, phase3_evidence_snapshot,
-                                  raw_ci_runner_logs):
+                                  raw_ci_runner_logs, raw_ci_log_receipts):
     """Return diagnostic shape only; never authorization or authenticated proof."""
     # Run metadata head_sha is an association to the PR branch head, not
     # evidence that checkout HEAD equaled that SHA. Review the actual merge.
@@ -94,6 +96,8 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                 raw_issues.append("RAW_CI_RUNNER_LOG_METADATA_MISMATCH")
     checks = (
         tuple(sorted(set(raw_issues))),
+        log_receipt.review_ci_job_log_receipts(
+            runs, jobs_by_run, raw_ci_runner_logs, raw_ci_log_receipts),
         merge_check,
         phase3_check,
         dual_check,
@@ -263,6 +267,15 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             ])
             for run in self.runs
         }
+        self.raw_log_receipts = {
+            run_id: {
+                "run_id": run_id,
+                "job_id": self.jobs[run_id][0]["id"],
+                "byte_count": len(text.encode("utf-8")),
+                "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            }
+            for run_id, text in self.raw_ci_runner_logs.items()
+        }
         self.ci_bytes = dict(self.original_ci_bytes)
 
     def verdict(self):
@@ -271,7 +284,7 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             self.tree, self.nodes, self.changed, self.ci_bytes,
             self.full_trees, self.merge_checkout,
             self.runner_checks, self.phase3_evidence,
-            self.raw_ci_runner_logs)
+            self.raw_ci_runner_logs, self.raw_log_receipts)
 
     def test_consistent_synthetic_bundle_passes_only_source_consistency(self):
         result = self.verdict()
@@ -628,3 +641,45 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         diagnostics = self.verdict()["diagnostics"]
         self.assertIn("RAW_CI_RUNNER_LOG_METADATA_MISMATCH", diagnostics)
         self.assertNotIn("RUNNER_LOG_CHECKOUT_SHA_MISMATCH", diagnostics)
+
+    def test_raw_job_log_receipts_are_composite_prerequisite(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertEqual(set(self.raw_log_receipts), {8000, 8001})
+
+    def test_swapped_historical_log_job_id_blocks_composite(self):
+        self.raw_log_receipts[8001]["job_id"] = self.jobs[8000][0]["id"]
+        self.assertIn("tests_RECEIPT_JOB_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_log_text_mutation_blocks_digest_check(self):
+        self.raw_ci_runner_logs[8000] += "\nInjected unreviewed log line"
+        self.assertIn("phase3-acceptance_RECEIPT_DIGEST_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_missing_run_log_receipt_blocks_composite(self):
+        self.raw_log_receipts.pop(8000)
+        self.assertIn("phase3-acceptance_LOG_RECEIPT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_extra_unreviewed_log_receipt_blocks_composite(self):
+        self.raw_log_receipts[8888] = dict(self.raw_log_receipts[8000])
+        self.assertIn("CI_LOG_RECEIPT_INVENTORY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_log_receipt_job_id_boolean_blocks_composite(self):
+        self.raw_log_receipts[8001]["job_id"] = True
+        self.assertIn("tests_RECEIPT_JOB_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_log_receipt_digest_mismatch_does_not_confer_dispatch(self):
+        self.raw_log_receipts[8001]["text_sha256"] = "a"*64
+        result = self.verdict()
+        self.assertIn("tests_RECEIPT_DIGEST_MISMATCH",
+                      result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_consistent_receipts_cannot_prove_provider_authentication(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
