@@ -580,7 +580,11 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
 
     def test_historical_raw_log_different_merge_sha_fails(self):
         log = self.raw_ci_runner_logs[8001]
-        self.raw_ci_runner_logs[8001] = log.replace("f"*40, "e"*40)
+        # A coherent but wrong *other* merge checkout is valid parse syntax,
+        # then fails the independent exact-SHA metadata comparison.
+        self.raw_ci_runner_logs[8001] = (
+            log.replace("f"*40, "e"*40)
+               .replace("fffffff Merge ", "eeeeeee Merge "))
         self.assertIn("RAW_CI_RUNNER_LOG_METADATA_MISMATCH",
                       self.verdict()["diagnostics"])
 
@@ -608,3 +612,19 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["independent_original_os_proof"])
+
+    def test_incoherent_log_sha_abbreviation_fails_at_parser_stage(self):
+        log = self.raw_ci_runner_logs[8001]
+        self.raw_ci_runner_logs[8001] = log.replace("f"*40, "e"*40)
+        diagnostics = self.verdict()["diagnostics"]
+        self.assertIn("RUNNER_LOG_CHECKOUT_SHA_MISMATCH", diagnostics)
+        self.assertIn("RAW_CI_RUNNER_LOG_RECORD_UNREVIEWED", diagnostics)
+
+    def test_coherent_other_merge_log_is_rejected_by_cross_run_proof(self):
+        log = self.raw_ci_runner_logs[8000]
+        self.raw_ci_runner_logs[8000] = (
+            log.replace("f"*40, "e"*40)
+               .replace("fffffff Merge ", "eeeeeee Merge "))
+        diagnostics = self.verdict()["diagnostics"]
+        self.assertIn("RAW_CI_RUNNER_LOG_METADATA_MISMATCH", diagnostics)
+        self.assertNotIn("RUNNER_LOG_CHECKOUT_SHA_MISMATCH", diagnostics)
