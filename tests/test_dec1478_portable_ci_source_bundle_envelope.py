@@ -185,6 +185,26 @@ def review_bundle_envelope(envelope):
     return verdict
 
 
+def _has_unpaired_json_surrogate(doc):
+    """Reject lone UTF-16 surrogate code points in parsed JSON strings.
+
+    JSON decoding can leave such code points in keys or values. Walking
+    iteratively avoids relying on the interpreter's recursion limit.
+    """
+    pending = [doc]
+    while pending:
+        item = pending.pop()
+        if type(item) is str:
+            if any(0xD800 <= ord(char) <= 0xDFFF for char in item):
+                return True
+        elif type(item) is dict:
+            pending.extend(item.keys())
+            pending.extend(item.values())
+        elif type(item) is list:
+            pending.extend(item)
+    return False
+
+
 def review_bundle_json_text(text):
     """No external I/O: caller provides raw UTF-8-decoded JSON text."""
     if type(text) is not str or len(text) > MAX_TEXT_CHARS:
@@ -197,6 +217,8 @@ def review_bundle_json_text(text):
     except (ValueError, TypeError, UnicodeError, RecursionError,
             OverflowError):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
+    if _has_unpaired_json_surrogate(doc):
+        return fail_closed("BUNDLE_JSON_UNICODE_UNREVIEWED")
     return review_bundle_envelope(doc)
 
 
@@ -753,4 +775,67 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertIn("BUNDLE_RESULT_SHAPE_UNREVIEWED", verdict["diagnostics"])
         self.assertNotIn("untrusted-protected-evidence", output.getvalue())
         self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_escaped_lone_high_surrogate_value_fails_closed(self):
+        raw = '{"key":"\\ud800"}'
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_escaped_lone_low_surrogate_value_fails_closed(self):
+        raw = '{"key":"\\udfff"}'
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_escaped_lone_surrogate_object_key_fails_closed(self):
+        raw = '{"\\ud800": "anything"}'
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_nested_unpaired_surrogate_fails_before_evidence_review(self):
+        nested = dict(self.envelope)
+        nested["pr"] = dict(nested["pr"])
+        nested["pr"]["synthetic_bad"] = "\ud800"
+        result = review_bundle_json_text(json.dumps(nested))
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+        self.assertFalse(result["source_consistency"])
+
+    def test_valid_escaped_surrogate_pair_is_not_unpaired(self):
+        result = review_bundle_json_text('"\\ud83d\\ude00"')
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_valid_emoji_scalar_is_not_unpaired(self):
+        result = review_bundle_json_text(json.dumps("🚀"))
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_valid_multilingual_scalar_is_not_unpaired(self):
+        result = review_bundle_json_text(json.dumps("日本語 العربية"))
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_valid_escaped_bmp_character_is_not_unpaired(self):
+        result = review_bundle_json_text('"\\u20ac"')
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_stdin_unpaired_surrogate_diagnostic_does_not_echo_source(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        raw = '{"private":"\\ud800","marker":"protected-log"}'
+        out = io.StringIO()
+        rc = stdin_review.run_stdin_review(io.StringIO(raw), out)
+        self.assertEqual(rc, 2)
+        self.assertEqual(json.loads(out.getvalue())["diagnostics"],
+                         ["BUNDLE_JSON_UNICODE_UNREVIEWED"])
+        self.assertNotIn("protected-log", out.getvalue())
+
+    def test_json_surrogate_guard_preserves_valid_offline_consistency_only(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
 
