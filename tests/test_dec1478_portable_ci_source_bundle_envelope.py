@@ -139,6 +139,11 @@ def _within_inmemory_structure_budget(root):
         nodes += 1
         if nodes > MAX_INMEMORY_NODES or depth > MAX_INMEMORY_DEPTH:
             return False
+        if type(item) not in (dict, list, tuple, str, bytes, int,
+                             float, bool, type(None)):
+            # Reject unknown Python objects and subclasses before a
+            # composite reviewer could invoke their special methods.
+            return False
         if (type(item) is int and
                 not (-MAX_INMEMORY_INTEGER_MAGNITUDE <= item <=
                      MAX_INMEMORY_INTEGER_MAGNITUDE)):
@@ -1701,5 +1706,68 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_inmemory_custom_object_not_accepted_as_scalar(self):
+        class Untrusted:
+            pass
+        self.assertFalse(_within_inmemory_structure_budget({"x": Untrusted()}))
+
+    def test_inmemory_custom_object_rejected_without_repr(self):
+        class Dangerous:
+            def __repr__(self):
+                raise AssertionError("must not render unknown object")
+        self.assertFalse(_within_inmemory_structure_budget({"private": Dangerous()}))
+
+    def test_inmemory_str_subclass_is_rejected(self):
+        class UntrustedStr(str):
+            pass
+        self.assertFalse(_within_inmemory_structure_budget(UntrustedStr("data")))
+
+    def test_inmemory_dict_subclass_is_rejected(self):
+        class UntrustedDict(dict):
+            pass
+        self.assertFalse(_within_inmemory_structure_budget(UntrustedDict()))
+
+    def test_inmemory_list_subclass_is_rejected(self):
+        class UntrustedList(list):
+            pass
+        self.assertFalse(_within_inmemory_structure_budget(UntrustedList()))
+
+    def test_inmemory_bytes_subclass_is_rejected(self):
+        class UntrustedBytes(bytes):
+            pass
+        self.assertFalse(_within_inmemory_structure_budget(UntrustedBytes(b"abc")))
+
+    def test_inmemory_set_and_frozenset_are_not_reviewed(self):
+        self.assertFalse(_within_inmemory_structure_budget({"synthetic": set()}))
+        self.assertFalse(_within_inmemory_structure_budget({"synthetic": frozenset()}))
+
+    def test_inmemory_decimal_and_complex_numbers_are_not_reviewed(self):
+        from decimal import Decimal
+        self.assertFalse(_within_inmemory_structure_budget(Decimal("1.25")))
+        self.assertFalse(_within_inmemory_structure_budget(2+3j))
+
+    def test_inmemory_plain_supported_scalars_are_accepted(self):
+        values = [None, False, True, 42, -42, 1.25, "synthetic", b"bytes"]
+        self.assertTrue(_within_inmemory_structure_budget(values))
+
+    def test_inmemory_unknown_object_in_envelope_is_sanitized(self):
+        class Untrusted:
+            def __repr__(self):
+                raise AssertionError("hidden source")
+        data = dict(self.envelope)
+        pr = dict(data["pr"])
+        pr["unknown_synthetic"] = Untrusted()
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_inmemory_known_types_preserve_clean_consistency_only(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
         self.assertFalse(result["can_authorize_annual_run"])
 
