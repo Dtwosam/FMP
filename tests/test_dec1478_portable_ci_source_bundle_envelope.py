@@ -176,10 +176,15 @@ def review_bundle_envelope(envelope):
                 return fail_closed("BUNDLE_SOURCE_MAP_OVERSIZE")
             if any(type(path) is not str for path in value):
                 return fail_closed("BUNDLE_SOURCE_PATH_UNREVIEWED")
+            seen_folded = set()
             for path in sorted(value):
                 payload = value[path]
                 if not _reviewed_source_path(path):
                     return fail_closed("BUNDLE_SOURCE_PATH_UNREVIEWED")
+                folded = path.casefold()
+                if folded in seen_folded:
+                    return fail_closed("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+                seen_folded.add(folded)
                 if type(payload) is not str:
                     return fail_closed("BUNDLE_SOURCE_B64_UNREVIEWED")
                 # Check the encoded length *before* allocating decoded bytes.
@@ -1392,6 +1397,76 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_changed_source_names_differing_only_by_case_are_rejected(self):
+        self.envelope["changed_bytes_b64"].update({
+            "tests/CASEFOLD_SYNTHETIC.py": "YQ==",
+            "tests/casefold_synthetic.py": "YQ==",
+        })
+        self.assert_fails("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_workflow_source_names_differing_only_by_case_are_rejected(self):
+        self.envelope["ci_workflow_bytes_b64"].update({
+            "ci/Synthetic.yml": "YQ==",
+            "ci/synthetic.yml": "YQ==",
+        })
+        self.assert_fails("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_unicode_sharp_s_casefold_alias_is_rejected(self):
+        self.envelope["changed_bytes_b64"].update({
+            "tests/Straße.py": "YQ==",
+            "tests/Strasse.py": "YQ==",
+        })
+        self.assert_fails("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_unicode_uppercase_accent_casefold_alias_is_rejected(self):
+        self.envelope["changed_bytes_b64"].update({
+            "tests/Café.py": "YQ==",
+            "tests/café.py": "YQ==",
+        })
+        self.assert_fails("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_similar_names_with_different_extensions_do_not_collide(self):
+        self.assertNotEqual("src/synthetic.py".casefold(),
+                            "src/synthetic.pyi".casefold())
+        self.assertTrue(_reviewed_source_path("src/synthetic.py"))
+        self.assertTrue(_reviewed_source_path("src/synthetic.pyi"))
+
+    def test_filenames_in_distinct_directories_do_not_collide(self):
+        a = "docs/report.md"
+        b = "tests/report.md"
+        self.assertNotEqual(a.casefold(), b.casefold())
+        self.assertTrue(_reviewed_source_path(a))
+        self.assertTrue(_reviewed_source_path(b))
+
+    def test_casefold_collision_output_does_not_echo_untrusted_path(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        self.envelope["changed_bytes_b64"].update({
+            "src/SECRET-CANARY-A.py": "YQ==",
+            "src/secret-canary-a.py": "YQ==",
+        })
+        out = io.StringIO()
+        status = stdin_review.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED",
+                      result["diagnostics"])
+        self.assertNotIn("SECRET-CANARY-A", out.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_casefold_cannot_mask_absolute_or_parent_path_rejection(self):
+        self.envelope["changed_bytes_b64"]["../SYNTHETIC.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_unmodified_synthetic_bundle_stays_source_consistent_only(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
