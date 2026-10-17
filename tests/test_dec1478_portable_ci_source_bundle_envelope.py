@@ -260,6 +260,11 @@ def _json_nesting_within_limit(text):
     return True
 
 
+def _portable_source_path_identity(path):
+    """Conservatively compare labels across Unicode compatibility forms."""
+    return unicodedata.normalize("NFKC", path).casefold()
+
+
 def _reviewed_source_path(path):
     """Require unambiguous repository-relative POSIX source labels."""
     if (type(path) is not str or not path or
@@ -419,7 +424,7 @@ def review_bundle_envelope(envelope):
                 payload = value[path]
                 if not _reviewed_source_path(path):
                     return fail_closed("BUNDLE_SOURCE_PATH_UNREVIEWED")
-                folded = path.casefold()
+                folded = _portable_source_path_identity(path)
                 if folded in seen_folded:
                     return fail_closed("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
                 seen_folded.add(folded)
@@ -447,8 +452,8 @@ def review_bundle_envelope(envelope):
 
     # Changed source and installed CI workflow source inventories have
     # different roles; the same casefolded path cannot claim both roles.
-    changed_folded = {path.casefold() for path in converted["changed_bytes"]}
-    ci_folded = {path.casefold() for path in converted["ci_workflow_bytes"]}
+    changed_folded = {_portable_source_path_identity(path) for path in converted["changed_bytes"]}
+    ci_folded = {_portable_source_path_identity(path) for path in converted["ci_workflow_bytes"]}
     if changed_folded & ci_folded:
         return fail_closed("BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
 
@@ -2976,6 +2981,64 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_valid_nested_json_source_fixture_still_non_authorizing(self):
         verdict = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertTrue(verdict["source_consistency"])
+        self.assertEqual(verdict["diagnostics"], ())
+        self.assertFalse(verdict["independent_original_os_proof"])
+        self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_compatibility_fullwidth_ascii_source_alias_rejected(self):
+        self.envelope["changed_bytes_b64"].update({
+            "src/ＡＢＣ.py": "YQ==", "src/abc.py": "YQ=="})
+        self.assert_fails("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_compatibility_circled_digit_source_alias_rejected(self):
+        self.envelope["changed_bytes_b64"].update({
+            "src/stage①.py": "YQ==", "src/stage1.py": "YQ=="})
+        self.assert_fails("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_compatibility_roman_numeral_source_alias_rejected(self):
+        self.envelope["changed_bytes_b64"].update({
+            "src/Ⅰ.py": "YQ==", "src/i.py": "YQ=="})
+        self.assert_fails("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_compatibility_workflow_map_alias_rejected(self):
+        self.envelope["ci_workflow_bytes_b64"].update({
+            "ci/ＦＯＯ.yml": "YQ==", "ci/foo.yml": "YQ=="})
+        self.assert_fails("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED")
+
+    def test_compatibility_crossmap_alias_rejected(self):
+        self.envelope["changed_bytes_b64"]["ci/ＡＢＣ.yml"] = "YQ=="
+        self.envelope["ci_workflow_bytes_b64"]["ci/abc.yml"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_compatibility_identity_retains_literal_valid_path(self):
+        self.assertTrue(_reviewed_source_path("src/①.py"))
+        self.assertEqual(_portable_source_path_identity("src/①.py"),
+                         _portable_source_path_identity("src/1.py"))
+
+    def test_compatibility_identity_does_not_alias_distinct_dirs(self):
+        self.assertNotEqual(
+            _portable_source_path_identity("src/①.py"),
+            _portable_source_path_identity("docs/1.py"))
+
+    def test_compatibility_source_stdin_diagnostic_has_no_path_echo(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"].update({
+            "src/ＰＲＩＶＡＴＥ.py": "YQ==",
+            "src/private.py": "YQ=="})
+        output = io.StringIO()
+        rc = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), output)
+        record = json.loads(output.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED"])
+        self.assertNotIn("private.py", output.getvalue())
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_compatibility_alias_guard_preserves_clean_source_only(self):
+        verdict = self.verdict()
         self.assertTrue(verdict["source_consistency"])
         self.assertEqual(verdict["diagnostics"], ())
         self.assertFalse(verdict["independent_original_os_proof"])
