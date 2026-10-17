@@ -1,0 +1,9 @@
+# DEC-1480 — Require distinct historical/Phase3 raw log work roles in full composite
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1716 DEC-1479 at `b1107169f986c0cadb1bbb748236803c27e413cc`. Adds eight source-defined tests, **2052 proposed methods**.
+
+DEC-1479 independently checks that the historical/general CI log includes unittest discovery and a reviewed large full-suite completion summary, while the Phase3 log records acceptance fixture generation, code-commit JSON, upload-artifact action, and finalized receipt. A self-reported log SHA-256 receipt, correct runner checkout and successful workflow-run metadata alone cannot demonstrate that the supplied log text records the **right workflow's actual critical work**. This child makes role checking mandatory in the composed source review alongside Git SHA/tree association, the fifteen other evidence inputs, exact run/job log receipts and bounded run timestamps.
+
+The synthetic combined source fixture is extended with a historical full-suite summary and distinct Phase3 generation/upload-action markers. Its historical synthetic run envelope now covers a plausible multi-minute full suite, rather than forcing the entire test run into the Phase3-sized window. Eight regressions reject missing/too-short historical completions, missing Phase3 stages, and swapped logs. The source check is **not cryptographically authenticated GitHub provenance** and does not establish runner filesystem OS enforcement or protected annual annual-run admission.
+
+Own head-associated PR merge-source-tree Phase3/full historical CI and qualified independent review mandatory. DEC-650/#820 actual protected-original OS no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 preallocation server admission remain **BLOCKED**. No protected annual dispatch/retry, original/archives/artifacts, installed workflow/security changes, merge/deployment/trading.

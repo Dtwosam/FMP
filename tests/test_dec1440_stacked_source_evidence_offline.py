@@ -22,6 +22,7 @@ import test_dec1458_ci_job_raw_log_receipt_offline as log_receipt
 import test_dec1462_phase3_raw_log_index_upload_offline as phase3_raw
 import test_dec1466_phase3_checkout_acceptance_chronology_offline as temporal
 import test_dec1477_ci_run_time_window_raw_log_offline as run_window
+import test_dec1479_ci_workflow_raw_log_roles_offline as ci_roles
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
@@ -154,6 +155,7 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                         pr.get("number"), pr.get("head_sha"), pr.get("base_sha"),
                         run_id, merge.get("sha")))
     checks = (
+        ci_roles.review_ci_workflow_log_roles(runs, raw_ci_runner_logs),
         run_window.review_both_run_log_windows(runs, raw_ci_runner_logs),
         tuple(sorted(set(temporal_issues))),
         tuple(sorted(set(phase3_log_issues))),
@@ -200,7 +202,9 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             r.update({
                 "created_at": "2026-10-17T09:59:59Z",
                 "run_started_at": "2026-10-17T09:59:59Z",
-                "updated_at": "2026-10-17T10:00:08Z",
+                "updated_at": (
+                    "2026-10-17T10:14:00Z" if r["name"] == "tests"
+                    else "2026-10-17T10:00:08Z"),
             })
         self.jobs = fixture.jobs_by_run
         base, head = self.pr["base_sha"], self.pr["head_sha"]
@@ -346,9 +350,16 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         phase3_name = "phase3-backtester-acceptance-" + phase3_merge
         phase3_id = 8000
         artifact_id = 7777
+        self.raw_ci_runner_logs[8001] += "\n" + "\n".join([
+            "2026-10-17T10:00:03.1000000Z ##[group]Run python -m unittest discover -s tests -p 'test_synthetic.py' -v",
+            "2026-10-17T10:12:00.1000000Z Ran 6867 tests in 717.000s",
+            "2026-10-17T10:12:00.2000000Z OK (skipped=702)",
+        ])
         self.raw_ci_runner_logs[phase3_id] += "\n" + "\n".join([
+            "2026-10-17T10:00:02.5000000Z ##[group]Run rm -rf .phase3-acceptance",
             "2026-10-17T10:00:03.1000000Z " + json.dumps(
                 self.phase3_evidence["index"], separators=(",", ":")),
+            "2026-10-17T10:00:03.5000000Z ##[group]Run actions/upload-artifact@v6",
             "2026-10-17T10:00:04.1000000Z   name: " + phase3_name,
             "2026-10-17T10:00:05.1000000Z Artifact " + phase3_name +
                 ".zip successfully finalized. Artifact ID " + str(artifact_id),
@@ -960,3 +971,50 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+
+    def test_historical_and_phase3_job_log_roles_now_mandatory(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_historical_full_unittest_summary_removed_fails_composite(self):
+        self.raw_ci_runner_logs[8001] = "\n".join(
+            l for l in self.raw_ci_runner_logs[8001].splitlines()
+            if "Ran 6867 tests" not in l)
+        self.assertIn("tests_FULL_SUITE_COMPLETION_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_small_historical_smoke_run_not_full_suite(self):
+        self.raw_ci_runner_logs[8001] = self.raw_ci_runner_logs[8001].replace(
+            "Ran 6867 tests", "Ran 8 tests")
+        self.assertIn("tests_FULL_SUITE_COMPLETION_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_upload_action_removed_fails_composite(self):
+        self.raw_ci_runner_logs[8000] = "\n".join(
+            l for l in self.raw_ci_runner_logs[8000].splitlines()
+            if "##[group]Run actions/upload-artifact" not in l)
+        self.assertIn("phase3-acceptance_UPLOAD_SEQUENCE_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_generation_step_removed_fails_composite(self):
+        self.raw_ci_runner_logs[8000] = "\n".join(
+            l for l in self.raw_ci_runner_logs[8000].splitlines()
+            if "##[group]Run rm -rf" not in l)
+        self.assertIn("phase3-acceptance_UPLOAD_SEQUENCE_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_swapped_raw_workflow_log_roles_fail_composite(self):
+        self.raw_ci_runner_logs[8000], self.raw_ci_runner_logs[8001] = (
+            self.raw_ci_runner_logs[8001], self.raw_ci_runner_logs[8000])
+        self.assertIn("tests_FULL_SUITE_COMPLETION_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_history_fixture_raw_log_timestamp_in_run_envelope(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        history = next(r for r in self.runs if r["name"] == "tests")
+        self.assertEqual(history["updated_at"], "2026-10-17T10:14:00Z")
+
+    def test_passing_log_workflow_roles_cannot_approve_annual_dispatch(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["independent_original_os_proof"])
