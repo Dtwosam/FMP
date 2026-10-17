@@ -24,6 +24,7 @@ MAX_BLOB_BYTES = 1_000_000
 MAX_TOTAL_BLOB_BYTES = 4_000_000
 MAX_JSON_NESTING = 512
 MAX_JSON_INTEGER_DIGITS = 64
+MAX_JSON_OBJECT_MEMBERS = 16384
 MAX_JSON_FLOAT_LITERAL_CHARS = 128
 MAX_SOURCE_PATH_CHARS = 4096
 MAX_SOURCE_PATH_UTF8_BYTES = 4096
@@ -213,6 +214,10 @@ def fail_closed(*codes):
 
 
 def _no_duplicate_keys(pairs):
+    # JSON decoder already supplied pairs; refuse oversized objects before
+    # constructing their dictionary or invoking nested review.
+    if len(pairs) > MAX_JSON_OBJECT_MEMBERS:
+        raise ValueError("unreviewed JSON object member count")
     obj = {}
     for key, value in pairs:
         if key in obj:
@@ -2914,4 +2919,66 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_hook_exact_object_member_limit_is_accepted(self):
+        pairs = [(str(i), i) for i in range(MAX_JSON_OBJECT_MEMBERS)]
+        self.assertEqual(len(_no_duplicate_keys(pairs)), MAX_JSON_OBJECT_MEMBERS)
+
+    def test_json_hook_one_over_member_limit_is_rejected(self):
+        pairs = [(str(i), i) for i in range(MAX_JSON_OBJECT_MEMBERS+1)]
+        with self.assertRaises(ValueError):
+            _no_duplicate_keys(pairs)
+
+    def test_json_hook_duplicate_keys_still_rejected_below_cap(self):
+        with self.assertRaises(ValueError):
+            _no_duplicate_keys([("synthetic", 1), ("synthetic", 2)])
+
+    def test_json_hook_small_object_preserves_pair_values(self):
+        self.assertEqual(_no_duplicate_keys([("x", 1), ("y", 2)]),
+                         {"x": 1, "y": 2})
+
+    def test_json_nested_object_over_member_limit_fails_grammar(self):
+        data = {"synthetic": {str(i): 0
+                              for i in range(MAX_JSON_OBJECT_MEMBERS+1)}}
+        raw = json.dumps(data, separators=(",", ":"))
+        self.assertLess(len(raw), MAX_TEXT_CHARS)
+        verdict = review_bundle_json_text(raw)
+        self.assertEqual(verdict["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_json_nested_exact_member_limit_reaches_envelope_shape(self):
+        data = {"synthetic": {str(i): 0
+                              for i in range(MAX_JSON_OBJECT_MEMBERS)}}
+        verdict = review_bundle_json_text(json.dumps(data))
+        self.assertEqual(verdict["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_json_top_level_many_unique_keys_fail_grammar_before_shape(self):
+        raw = json.dumps({str(i): None
+                          for i in range(MAX_JSON_OBJECT_MEMBERS+1)})
+        verdict = review_bundle_json_text(raw)
+        self.assertEqual(verdict["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_object_cap_rejects_untrusted_values_without_echo(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        data = {"private_canary": {str(i): "secret"
+                 for i in range(MAX_JSON_OBJECT_MEMBERS+1)}}
+        out = io.StringIO()
+        rc = cli.run_stdin_review(io.StringIO(json.dumps(data)), out)
+        self.assertEqual(rc, 2)
+        result = json.loads(out.getvalue())
+        self.assertEqual(result["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("private_canary", out.getvalue())
+
+    def test_valid_nested_json_source_fixture_still_non_authorizing(self):
+        verdict = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertTrue(verdict["source_consistency"])
+        self.assertEqual(verdict["diagnostics"], ())
+        self.assertFalse(verdict["independent_original_os_proof"])
+        self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(verdict["can_authorize_annual_run"])
 
