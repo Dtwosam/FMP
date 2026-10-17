@@ -258,7 +258,7 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
                       self.verdict()["diagnostics"])
 
     def test_missing_subtree_snapshot_rejected(self):
-        self.full_trees.pop("d"*40)
+        self.full_trees.pop(self.git_tests_tree)
         self.assertIn("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
                       self.verdict()["diagnostics"])
 
@@ -364,4 +364,20 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
     def test_stale_runner_full_fetch_sha_blocks_composite(self):
         self.merge_checkout["checkout_fetch_sha"] = "d"*40
         self.assertIn("RUNNER_FETCH_FULL_SHA_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_computed_tree_keys_are_not_old_placeholder_identifiers(self):
+        self.assertNotEqual(self.git_tests_tree, "d"*40)
+        self.assertNotEqual(self.git_docs_tree, "e"*40)
+        self.assertNotEqual(self.git_root_tree, "c"*40)
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_missing_computed_docs_tree_fails_with_diagnostic(self):
+        self.full_trees.pop(self.git_docs_tree)
+        self.assertIn("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_missing_computed_root_tree_fails_with_diagnostic(self):
+        self.full_trees.pop(self.git_root_tree)
+        self.assertIn("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
                       self.verdict()["diagnostics"])
