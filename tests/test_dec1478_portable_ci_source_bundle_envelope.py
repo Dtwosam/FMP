@@ -14,6 +14,7 @@ import json
 import math
 import re
 import unittest
+import unicodedata
 
 import test_dec1440_stacked_source_evidence_offline as composite
 
@@ -98,12 +99,17 @@ def _reviewed_source_path(path):
     """Require unambiguous repository-relative POSIX source labels."""
     if type(path) is not str or not path or path.startswith("/") or "\\" in path:
         return False
-    if re.match(r"^[A-Za-z]:/", path) is not None:
+    if ":" in path or not unicodedata.is_normalized("NFC", path):
         return False
-    if any(segment in ("", ".", "..") for segment in path.split("/")):
-        return False
+    for segment in path.split("/"):
+        if (segment in ("", ".", "..") or segment.endswith((" ", ".")) or
+                re.fullmatch(r"(?i:(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]))"
+                             r"(?:\..*)?", segment) is not None):
+            return False
     return not any(ord(char) < 32 or ord(char) == 127 or
-                   0xD800 <= ord(char) <= 0xDFFF for char in path)
+                   0xD800 <= ord(char) <= 0xDFFF or
+                   0x202A <= ord(char) <= 0x202E or
+                   0x2066 <= ord(char) <= 0x2069 for char in path)
 
 
 def review_bundle_envelope(envelope):
@@ -1000,5 +1006,72 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_non_nfc_combining_unicode_path_is_rejected(self):
+        path = "tests/cafe\u0301.py"
+        self.assertFalse(_reviewed_source_path(path))
+        self.envelope["changed_bytes_b64"][path] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_nfc_unicode_path_is_valid_portable_label(self):
+        self.assertTrue(_reviewed_source_path("tests/café.py"))
+        self.assertTrue(_reviewed_source_path("tests/日本語.py"))
+
+    def test_embedded_drive_colon_path_is_rejected(self):
+        for path in ("tests/C:temp.py", "C:relative.txt", "x/y:z.md"):
+            with self.subTest(path=path):
+                self.assertFalse(_reviewed_source_path(path))
+
+    def test_windows_device_name_is_rejected(self):
+        for path in ("CON", "tests/con.txt", "src/NUL", "COM1.py", "aux.md"):
+            with self.subTest(path=path):
+                self.assertFalse(_reviewed_source_path(path))
+
+    def test_windows_device_name_embedded_normal_word_allowed(self):
+        for path in ("tests/console.py", "tests/auxiliary.md", "src/com10.py"):
+            with self.subTest(path=path):
+                self.assertTrue(_reviewed_source_path(path))
+
+    def test_windows_reserved_extension_path_rejected_before_base64(self):
+        self.envelope["ci_workflow_bytes_b64"]["docs/PRN.md"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_trailing_space_in_segment_is_rejected(self):
+        for path in ("tests /module.py", "tests/module .py", "tests/readme "):
+            with self.subTest(path=path):
+                self.assertFalse(_reviewed_source_path(path))
+
+    def test_trailing_dot_in_segment_is_rejected(self):
+        for path in ("tests./file.py", "docs/README.", "src/a./module.py"):
+            with self.subTest(path=path):
+                self.assertFalse(_reviewed_source_path(path))
+
+    def test_bidi_override_source_label_is_rejected(self):
+        self.envelope["changed_bytes_b64"]["tests/\u202efile.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_bidi_isolate_source_label_is_rejected(self):
+        self.envelope["changed_bytes_b64"]["src/\u2066trick.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_stdin_rejected_path_does_not_echo_untrusted_label(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        self.envelope["changed_bytes_b64"]["src/CON.private-sentinel"] = "YQ=="
+        output = io.StringIO()
+        code = stdin_review.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(code, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("private-sentinel", output.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_previous_valid_source_paths_remain_reviewable(self):
+        self.assertTrue(_reviewed_source_path(".github/workflows/tests.yml"))
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
 
