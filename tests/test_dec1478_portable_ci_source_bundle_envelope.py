@@ -25,6 +25,8 @@ MAX_TOTAL_BLOB_BYTES = 4_000_000
 MAX_JSON_NESTING = 512
 MAX_JSON_INTEGER_DIGITS = 64
 MAX_SOURCE_PATH_CHARS = 4096
+MAX_SOURCE_PATH_UTF8_BYTES = 4096
+MAX_SOURCE_SEGMENT_UTF8_BYTES = 255
 MAX_SOURCE_ENTRIES_PER_MAP = 8192
 MAX_RUNS_PER_ENVELOPE = 4096
 MAX_RUN_MAP_ENTRIES = 8192
@@ -256,11 +258,19 @@ def _reviewed_source_path(path):
         return False
     if ":" in path or not unicodedata.is_normalized("NFC", path):
         return False
-    for segment in path.split("/"):
-        if (segment in ("", ".", "..") or segment.endswith((" ", ".")) or
-                re.fullmatch(r"(?i:(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]))"
-                             r"(?:\..*)?", segment) is not None):
+    try:
+        if len(path.encode("utf-8")) > MAX_SOURCE_PATH_UTF8_BYTES:
             return False
+        for segment in path.split("/"):
+            if (len(segment.encode("utf-8")) >
+                    MAX_SOURCE_SEGMENT_UTF8_BYTES or
+                    segment in ("", ".", "..") or
+                    segment.endswith((" ", ".")) or
+                    re.fullmatch(r"(?i:(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]))"
+                                 r"(?:\..*)?", segment) is not None):
+                return False
+    except UnicodeError:
+        return False
     # Reject invisible layout/format characters and the full Unicode
     # control inventory, including C1 controls not covered by ASCII checks.
     return not any(
@@ -2451,4 +2461,59 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_exact_255_byte_ascii_filename_is_lexically_reviewable(self):
+        path = "docs/" + "x"*255
+        self.assertEqual(len(path.split("/")[-1].encode("utf-8")), 255)
+        self.assertTrue(_reviewed_source_path(path))
+
+    def test_one_over_255_byte_ascii_filename_rejected(self):
+        path = "docs/" + "x"*256
+        self.assertFalse(_reviewed_source_path(path))
+
+    def test_exact_utf8_multibyte_component_boundary_reviewable(self):
+        path = "docs/" + "é"*127 + "a"
+        self.assertEqual(len(path.split("/")[-1].encode("utf-8")), 255)
+        self.assertTrue(_reviewed_source_path(path))
+
+    def test_multibyte_component_over_utf8_byte_cap_rejected(self):
+        path = "docs/" + "é"*128
+        self.assertEqual(len(path.split("/")[-1].encode("utf-8")), 256)
+        self.assertFalse(_reviewed_source_path(path))
+
+    def test_total_utf8_path_over_cap_rejected_even_with_short_segments(self):
+        segments = ["é"*100 for _ in range(23)]
+        path = "/".join(segments)
+        self.assertGreater(len(path.encode("utf-8")), MAX_SOURCE_PATH_UTF8_BYTES)
+        self.assertLess(len(path), MAX_SOURCE_PATH_CHARS)
+        self.assertFalse(_reviewed_source_path(path))
+
+    def test_direct_source_over_utf8_segment_cap_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["docs/" + "é"*128] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_ci_workflow_source_over_utf8_segment_cap_fails_closed(self):
+        self.envelope["ci_workflow_bytes_b64"]["ci/" + "x"*256] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_unpaired_unicode_path_refused_without_encoding_exception(self):
+        self.assertFalse(_reviewed_source_path("docs/\ud800.txt"))
+
+    def test_stdin_oversized_component_never_echoes_source_label(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["docs/" + "SENTINEL" + "x"*256] = "YQ=="
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("SENTINEL", output.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_utf8_byte_caps_preserve_clean_synthetic_source_only(self):
+        verdict = self.verdict()
+        self.assertTrue(verdict["source_consistency"])
+        self.assertEqual(verdict["diagnostics"], ())
+        self.assertFalse(verdict["can_authorize_annual_run"])
 
