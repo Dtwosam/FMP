@@ -1,0 +1,9 @@
+# DEC-1461 — Fail closed on extra source-changing checkout actions in raw CI logs
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1684 DEC-1460 at 38b4227a46e728d8fbc6c839a4988ed47e362d00. Ten new unittest methods: **1,865 proposed source-defined methods**.
+
+The DEC-1454–1457 parser currently establishes exactly one syntactically valid timestamp-ordered fetch, checkout and HEAD line. However, it ignores a second *differently formatted* Git source-changing command or HEAD message after those three valid lines. A complete job log that included a later checkout, reset or switch could therefore still appear to support the originally checked-out source. A read-only audit of unprotected completed #1674 historical CI showed exactly one runner-action fetch, checkout and HEAD message, with no reset.
+
+This forward-only change reviews all timestamped actual GitHub Actions runner `[command]/usr/bin/git` command records, rejecting additional fetch, checkout, switch or reset commands not represented by the reviewed fetch/checkout trace, plus additional incompatible checkout HEAD messages. It does not interpret shell examples, status or show commands as checkout actions. Ten in-memory tests cover added fetch/checkout/switch/reset, altered HEAD and negative benign lines. It improves provenance *of the supplied raw logs*, not authenticity of those logs, full runner filesystem immutability or protected annual authorization.
+
+Own head-associated PR merge-source-tree Phase3/full historical CI and qualified review required. DEC-650/#820 independently verified protected original OS no-write and DEC-651/#821/#779 exclusive immutable server-side 2023 annual run385/attempt1 admission remain **BLOCKED**. No annual dispatch/retry, protected originals/archives, installed workflow or security settings changes, merge, deployment, trading.

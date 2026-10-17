@@ -34,6 +34,26 @@ def parse_runner_checkout(raw_log, pr_number, head_sha, base_sha):
         ]
     if any(len(v) != 1 for v in candidates.values()):
         return None, ("RUNNER_LOG_STAGE_CARDINALITY_UNREVIEWED",)
+    # Do not accept a log containing the expected three-stage trace AND
+    # an additional checkout-changing Git action not recognized above.
+    # Restrict to actual actions/checkout runner command records: shell
+    # scripts echoed inside logs are not independent git execution evidence.
+    extra_mutations = []
+    for line in raw_log.splitlines():
+        if re.match(PREFIX, line) is None:
+            continue
+        if "[command]/usr/bin/git " in line:
+            command = line.split("[command]/usr/bin/git ", 1)[1]
+            mutating = re.search(
+                r"(?<![\w-])(fetch|checkout|switch|reset)(?![\w-])",
+                command)
+            if mutating and not (
+                    FETCH.fullmatch(line) or CHECKOUT.fullmatch(line)):
+                extra_mutations.append(line)
+        elif "HEAD is now at " in line and HEAD.fullmatch(line) is None:
+            extra_mutations.append(line)
+    if extra_mutations:
+        return None, ("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",)
     i, (full_sha, fetch_pr) = candidates["fetch"][0]
     j, (checkout_pr,) = candidates["checkout"][0]
     k, (short_sha, msg_head, msg_base) = candidates["head"][0]
@@ -192,4 +212,66 @@ class ImmutableGitFetchCheckoutHeadLogTrace(unittest.TestCase):
 
     def test_increasing_log_times_remain_non_authorizing(self):
         self.assertEqual(self.verdict()[1], ())
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])
+
+    def test_unreviewed_second_checkout_after_valid_head_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git checkout "
+            "--force refs/heads/other")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_unreviewed_second_fetch_after_valid_head_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git fetch "
+            "origin refs/heads/other")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_reset_hard_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git reset "
+            "--hard 0000000")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_switch_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git switch "
+            "unreviewed")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_extra_differently_formatted_head_message_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:58.1000000Z HEAD is now at 0000000 unreviewed")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_read_only_git_status_action_does_not_look_like_checkout(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git status --short")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_read_only_git_show_action_does_not_look_like_checkout(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git show --format=oneline")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_ignored_console_echo_without_runner_command_marker(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z shell example: git checkout other")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_extra_reset_even_before_checkout_is_rejected(self):
+        self.lines.insert(1,
+            "2026-10-16T23:10:55.1000000Z [command]/usr/bin/git reset --hard")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_extra_checkout_evidence_does_not_authorize_run385(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git checkout other")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])
