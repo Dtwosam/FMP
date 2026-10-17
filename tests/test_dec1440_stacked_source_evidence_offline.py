@@ -21,6 +21,7 @@ import test_dec1454_runner_merge_checkout_trace_parser_offline as log_parse
 import test_dec1458_ci_job_raw_log_receipt_offline as log_receipt
 import test_dec1462_phase3_raw_log_index_upload_offline as phase3_raw
 import test_dec1466_phase3_checkout_acceptance_chronology_offline as temporal
+import test_dec1478_workflow_run_log_time_bounds_offline as run_window
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
@@ -153,6 +154,7 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                         pr.get("number"), pr.get("head_sha"), pr.get("base_sha"),
                         run_id, merge.get("sha")))
     checks = (
+        run_window.review_two_ci_runner_log_windows(runs, raw_ci_runner_logs),
         tuple(sorted(set(temporal_issues))),
         tuple(sorted(set(phase3_log_issues))),
         tuple(sorted(set(raw_issues))),
@@ -192,6 +194,14 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.pr = dict(fixture.pr)
         self.pr.update({"changed_files": 2, "additions": 10, "deletions": 0})
         self.runs = fixture.runs
+        # Same completed first-attempt CI lifecycle as the synthetic
+        # 10:00:00..10:00:07 Git checkout / Phase3 acceptance log stages.
+        for run in self.runs:
+            run.update({
+                "created_at": "2026-10-17T10:00:00Z",
+                "run_started_at": "2026-10-17T10:00:00Z",
+                "updated_at": "2026-10-17T10:00:09Z",
+            })
         self.jobs = fixture.jobs_by_run
         base, head = self.pr["base_sha"], self.pr["head_sha"]
         self.compare = {
@@ -909,3 +919,54 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertEqual(index, self.phase3_evidence["index"])
         self.assertEqual(receipt["id"], self.phase3_evidence["upload"]["id"])
         self.assertEqual(receipt["run_id"], 8000)
+
+    def run_by_workflow(self, name):
+        return next(r for r in self.runs if r.get("name") == name)
+
+    def test_both_log_windows_required_for_clean_full_composite(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertEqual(
+            self.run_by_workflow("phase3-acceptance")["updated_at"],
+            "2026-10-17T10:00:09Z")
+
+    def test_phase3_upload_after_reported_run_completion_fails(self):
+        self.run_by_workflow("phase3-acceptance")["updated_at"] = (
+            "2026-10-17T10:00:06Z")
+        self.assertIn("phase3-acceptance_RUN_WINDOW_LOG_OUTSIDE_RUN",
+                      self.verdict()["diagnostics"])
+
+    def test_historical_log_before_its_run_creation_fails(self):
+        historical = self.run_by_workflow("tests")
+        historical["created_at"] = "2026-10-17T10:00:03Z"
+        historical["run_started_at"] = "2026-10-17T10:00:03Z"
+        self.assertIn("tests_RUN_WINDOW_LOG_OUTSIDE_RUN",
+                      self.verdict()["diagnostics"])
+
+    def test_missing_historical_run_updated_timestamp_fails(self):
+        self.run_by_workflow("tests").pop("updated_at")
+        self.assertIn("tests_RUN_WINDOW_TIMESTAMP_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_wrong_phase3_run_attempt_rejects_timeline(self):
+        self.run_by_workflow("phase3-acceptance")["run_attempt"] = 2
+        self.assertIn("phase3-acceptance_RUN_WINDOW_IDENTITY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_unreviewed_extra_ci_log_outside_run_fails(self):
+        self.raw_ci_runner_logs[8001] += (
+            "\n2026-10-16T10:00:04.1000000Z older checkout trace")
+        self.assertIn("tests_RUN_WINDOW_LOG_OUTSIDE_RUN",
+                      self.verdict()["diagnostics"])
+
+    def test_malformed_phase3_log_timestamp_fails_composed_review(self):
+        self.raw_ci_runner_logs[8000] += (
+            "\n2026-99-17T10:00:01.0000000Z malformed timestamp")
+        self.assertIn("phase3-acceptance_RUN_WINDOW_LOG_TIMESTAMP_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_synthetic_run_bounds_never_authorize_protected_annual(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
