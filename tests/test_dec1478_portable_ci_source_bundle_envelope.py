@@ -284,7 +284,9 @@ def _reviewed_source_path(path):
                     segment in ("", ".", "..") or
                     segment.endswith((" ", ".")) or
                     re.fullmatch(r"(?i:(CON|PRN|AUX|NUL|CONIN\$|CONOUT\$|COM[1-9¹²³]|LPT[1-9¹²³]))"
-                                 r"(?:\..*)?", segment) is not None):
+                                 r"(?:\..*)?",
+                                 unicodedata.normalize("NFKC", segment))
+                    is not None):
                 return False
     except UnicodeError:
         return False
@@ -3044,4 +3046,56 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(verdict["independent_original_os_proof"])
         self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_fullwidth_con_is_reserved_source_device(self):
+        self.assertFalse(_reviewed_source_path("src/ＣＯＮ.txt"))
+
+    def test_fullwidth_prn_and_aux_are_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/ＰＲＮ.log"))
+        self.assertFalse(_reviewed_source_path("src/ＡＵＸ.md"))
+
+    def test_fullwidth_com_digit_is_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/ＣＯＭ１.txt"))
+
+    def test_compatibility_circled_digit_device_is_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/COM①.txt"))
+
+    def test_fullwidth_lpt_digit_is_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/ＬＰＴ９.log"))
+
+    def test_fullwidth_console_aliases_are_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/ＣＯＮＩＮ＄.log"))
+        self.assertFalse(_reviewed_source_path("src/ＣＯＮＯＵＴ＄.log"))
+
+    def test_compatibility_similar_ordinary_names_still_allowed(self):
+        self.assertTrue(_reviewed_source_path("src/ＣＯＮＳＯＬＥ.py"))
+        self.assertTrue(_reviewed_source_path("src/ＣＯＭ１０.txt"))
+
+    def test_compatibility_reserved_changed_source_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["src/ＣＯＮ.txt"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_compatibility_reserved_workflow_source_fails_closed(self):
+        self.envelope["ci_workflow_bytes_b64"]["ci/ＣＯＭ１.yml"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_compatibility_reserved_stdin_never_echoes_source(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["src/ＣＯＮ.private-canary"] = "YQ=="
+        output = io.StringIO()
+        rc = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("private-canary", output.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_compatibility_device_guard_preserves_source_consistency_only(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
 
