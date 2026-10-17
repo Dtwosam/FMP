@@ -11,10 +11,12 @@ import test_dec1436_pr_compare_file_count_offline as file_review
 import test_dec1435_git_tree_regular_blob_review as modes_review
 import test_dec1439_changed_git_blob_source_bytes_offline as bytes_review
 import test_dec1430_reviewed_ci_workflow_blob_source_identity as ci_source
+import test_dec1441_git_tree_sha_chain_source_review as tree_chain
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
-                                  tree, nodes, changed_bytes, ci_workflow_bytes):
+                                  tree, nodes, changed_bytes, ci_workflow_bytes,
+                                  full_tree_snapshots):
     """Return diagnostic shape only; never authorization or authenticated proof."""
     checks = (
         jobs_review.review_exact_pr_ci_jobs(pr, runs, jobs_by_run),
@@ -23,6 +25,8 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
         bytes_review.review_changed_blob_byte_identity(
             compare, nodes, changed_bytes),
         ci_source.review_ci_workflow_blobs(ci_workflow_bytes),
+        tree_chain.review_exact_changed_tree_chain(
+            commit, compare, full_tree_snapshots, changed_bytes),
     )
     diagnostics = tuple(sorted({reason for check in checks for reason in check}))
     return {
@@ -81,12 +85,34 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
                    "sha": ci_source.git_blob_id(payload)}
             for path, payload in self.changed.items()
         })
+        self.full_trees = {
+            tree_sha: {
+                "sha": tree_sha, "truncated": False,
+                "tree": [
+                    {"path": "tests", "mode": "040000", "type": "tree", "sha": "d"*40},
+                    {"path": "docs", "mode": "040000", "type": "tree", "sha": "e"*40},
+                ],
+            },
+            "d"*40: {
+                "sha": "d"*40, "truncated": False,
+                "tree": [{"path": "sample.py", "mode": "100644",
+                          "type": "blob",
+                          "sha": ci_source.git_blob_id(self.changed["tests/sample.py"])}],
+            },
+            "e"*40: {
+                "sha": "e"*40, "truncated": False,
+                "tree": [{"path": "sample.md", "mode": "100644",
+                          "type": "blob",
+                          "sha": ci_source.git_blob_id(self.changed["docs/sample.md"])}],
+            },
+        }
         self.ci_bytes = dict(self.original_ci_bytes)
 
     def verdict(self):
         return review_stacked_draft_evidence(
             self.pr, self.runs, self.jobs, self.compare, self.commit,
-            self.tree, self.nodes, self.changed, self.ci_bytes)
+            self.tree, self.nodes, self.changed, self.ci_bytes,
+            self.full_trees)
 
     def test_consistent_synthetic_bundle_passes_only_source_consistency(self):
         result = self.verdict()
@@ -165,3 +191,48 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         result = self.verdict()
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", result["diagnostics"])
+
+    def test_mismatched_parent_git_tree_sha_rejected(self):
+        self.full_trees["c"*40]["tree"][0]["sha"] = "f"*40
+        self.assertIn("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_missing_subtree_snapshot_rejected(self):
+        self.full_trees.pop("d"*40)
+        self.assertIn("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_duplicate_root_tree_entry_rejected(self):
+        root = self.full_trees["c"*40]["tree"]
+        root.append(dict(root[0]))
+        self.assertIn("TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_truncated_child_tree_rejected(self):
+        self.full_trees["e"*40]["truncated"] = True
+        self.assertIn("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_leaf_tree_sha_not_matched_to_source_rejected(self):
+        self.full_trees["e"*40]["tree"][0]["sha"] = "f"*40
+        self.assertIn("TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_extra_unlinked_tree_snapshot_rejected(self):
+        self.full_trees["f"*40] = {
+            "sha": "f"*40, "truncated": False, "tree": []}
+        self.assertIn("TREE_CHAIN_TREE_SNAPSHOT_INVENTORY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_flat_regular_leaf_cannot_override_symlinked_chain(self):
+        self.full_trees["d"*40]["tree"][0]["mode"] = "120000"
+        self.assertEqual(self.nodes["tests/sample.py"]["mode"], "100644")
+        self.assertIn("TREE_CHAIN_LEAF_NOT_REGULAR_BLOB",
+                      self.verdict()["diagnostics"])
+
+    def test_fully_consistent_composite_remains_non_authorizing(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
