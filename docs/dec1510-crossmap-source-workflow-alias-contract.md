@@ -1,0 +1,9 @@
+# DEC-1510 — Cross-inventory changed-source versus workflow path alias refusal
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1755 at `877b0cc798014cf3fa650909f644722e498f5e3a`. Nine synthetic methods, **2,343 proposed source-defined tests**.
+
+The changed-source and installed CI workflow byte maps already prohibit ambiguous path labels and Unicode case-fold collisions **within each map**, but a single repository-relative path can still be supplied in both maps (possibly under different letter case or Unicode capitalization). These categories represent mutually exclusive source roles in this offline review; an alias risks treating the same source path as both changed source evidence and the installed workflow source. After validating and decoding each bounded map, compare their `casefold()` path sets. Reject overlap with a safe `BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED` code before invoking the nested source reviewer. Earlier malformed Base64/path errors keep their diagnostic precedence. No filesystem reads, GitHub API calls or source rewriting.
+
+Nine tests cover exact aliases, ASCII and Unicode case-fold aliases, noncolliding basenames in distinct directories, error precedence, safe stdout non-disclosure, clean consistency-only review, and false protected annual authority flags. This only validates caller-supplied source inventories, not provider authentication, independent original OS isolation or annual execution consent.
+
+Own exact-head Phase 3/full historical/general CI and qualified independent review mandatory. DEC-650/#820 protected-original witnessed OS no-write and DEC-651/#821/#779 exclusive immutable protected 2023 run385/attempt1 GitHub server admission remain **BLOCKED**. No protected dispatch/retry, original/archive/artifact reads, installed workflow/security changes, merges, deployment or trading.

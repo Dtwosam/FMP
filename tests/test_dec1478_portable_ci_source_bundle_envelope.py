@@ -411,6 +411,13 @@ def review_bundle_envelope(envelope):
         else:
             converted[key] = value
 
+    # Changed source and installed CI workflow source inventories have
+    # different roles; the same casefolded path cannot claim both roles.
+    changed_folded = {path.casefold() for path in converted["changed_bytes"]}
+    ci_folded = {path.casefold() for path in converted["ci_workflow_bytes"]}
+    if changed_folded & ci_folded:
+        return fail_closed("BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
     try:
         verdict = composite.review_stacked_draft_evidence(**converted)
     except (TypeError, ValueError, KeyError, IndexError, AttributeError,
@@ -2162,4 +2169,66 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertTrue(verdict["source_consistency"])
         self.assertEqual(verdict["diagnostics"], ())
         self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_crossmap_identical_workflow_source_path_fails_closed(self):
+        path = next(iter(self.envelope["ci_workflow_bytes_b64"]))
+        self.envelope["changed_bytes_b64"][path] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_crossmap_ascii_casefold_workflow_path_fails_closed(self):
+        path = next(iter(self.envelope["ci_workflow_bytes_b64"]))
+        self.envelope["changed_bytes_b64"][path.swapcase()] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_crossmap_unicode_casefold_sharp_s_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["src/Straße.py"] = "YQ=="
+        self.envelope["ci_workflow_bytes_b64"]["src/Strasse.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_crossmap_unicode_accent_casefold_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["src/Café.py"] = "YQ=="
+        self.envelope["ci_workflow_bytes_b64"]["src/café.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED")
+
+    def test_crossmap_same_basename_different_directory_not_collision(self):
+        first = "docs/synthetic.txt"
+        second = "tests/synthetic.txt"
+        self.assertNotEqual(first.casefold(), second.casefold())
+        self.assertTrue(_reviewed_source_path(first))
+        self.assertTrue(_reviewed_source_path(second))
+
+    def test_crossmap_valid_distinct_paths_preserve_source_consistency(self):
+        changed = {k.casefold() for k in self.envelope["changed_bytes_b64"]}
+        workflows = {k.casefold() for k in self.envelope["ci_workflow_bytes_b64"]}
+        self.assertFalse(changed & workflows)
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_crossmap_invalid_base64_is_rejected_before_collision(self):
+        path = next(iter(self.envelope["ci_workflow_bytes_b64"]))
+        self.envelope["changed_bytes_b64"][path] = "not valid base64!"
+        self.assert_fails("BUNDLE_SOURCE_B64_UNREVIEWED")
+
+    def test_crossmap_collision_never_uses_supplied_log_text(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["src/PRIVATE-CANARY.py"] = "YQ=="
+        self.envelope["ci_workflow_bytes_b64"]["src/private-canary.py"] = "YQ=="
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), output)
+        result = json.loads(output.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(result["diagnostics"],
+                         ["BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED"])
+        self.assertNotIn("PRIVATE-CANARY", output.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_crossmap_collision_cannot_grant_independent_authority(self):
+        path = next(iter(self.envelope["ci_workflow_bytes_b64"]))
+        self.envelope["changed_bytes_b64"][path] = "YQ=="
+        result = self.verdict()
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
 
