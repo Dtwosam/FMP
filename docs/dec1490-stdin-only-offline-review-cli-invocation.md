@@ -1,0 +1,7 @@
+# DEC-1490 — stdin-only invocation and non-disclosing CLI output
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1735 at `4ad5cf92c2318eeff09ff5e70ef055b86859eb86`. Nine synthetic regression tests, **2,142 proposed source-defined methods**.
+
+The DEC-1479/1485 offline evidence CLI is stdin-only, with no command-line paths, URLs, workflow flags or execution authority. This draft tests the actual `main()` boundary with patched process argv/stdin/stdout: exactly one program token plus caller-supplied synthetic stdin is admitted for *source consistency only*. Unexpected filename, URL, help, multiple execution-looking flags, missing argv and secret positional arguments are refused **before any stdin read**. Invalid input or unreviewed annual-authorization fields produce one safe five-field JSON verdict without echoing evidence.
+
+No protected original or annual artifact is used by the test fixture. Test assertions do not imply provider authentication, GitHub server admission or permission to dispatch an annual workflow. Own exact-head PR Phase 3/full historical-general CI and qualified independent review mandatory. DEC-650/#820 independently witnessed protected originals OS no-write and DEC-651/#821/#779 exclusive immutable 2023 run385/attempt1 server admission remain **BLOCKED**. No annual dispatch/retry, protected originals/archive access, installed workflow/security changes, merges, deployments or trading.
