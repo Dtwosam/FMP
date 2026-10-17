@@ -31,7 +31,7 @@ def review_two_ci_runner_log_windows(runs, logs_by_run):
     if (type(runs) is not list or type(logs_by_run) is not dict or
             len(runs) != 2 or not all(type(r) is dict for r in runs)):
         return ("CI_RUN_WINDOW_INPUT_UNREVIEWED",)
-    reasons, ids = [], []
+    reasons, ids, head_shas = [], [], []
     for name in policy.REQUIRED:
         matched = [r for r in runs if r.get("name") == name]
         if len(matched) != 1:
@@ -43,6 +43,14 @@ def review_two_ci_runner_log_windows(runs, logs_by_run):
             reasons.append(name + "_RUN_WINDOW_ID_UNREVIEWED")
             continue
         ids.append(run_id)
+        if r.get("event") != "pull_request":
+            reasons.append(name + "_RUN_WINDOW_EVENT_UNREVIEWED")
+        head_sha = r.get("head_sha")
+        if (type(head_sha) is not str or
+                re.fullmatch(r"[0-9a-f]{40}", head_sha) is None):
+            reasons.append(name + "_RUN_WINDOW_HEAD_SHA_UNREVIEWED")
+        else:
+            head_shas.append(head_sha)
         expected_id, expected_path = policy.WORKFLOWS[name]
         if (type(r.get("workflow_id")) is not int or
                 r.get("workflow_id") != expected_id or
@@ -90,6 +98,8 @@ def review_two_ci_runner_log_windows(runs, logs_by_run):
             reasons.append(name + "_RUN_WINDOW_LOG_TIMESTAMPS_MISSING")
     if len(ids) != 2 or len(set(ids)) != 2:
         reasons.append("CI_RUN_WINDOW_REQUIRED_IDS_UNREVIEWED")
+    if len(head_shas) != 2 or len(set(head_shas)) != 1:
+        reasons.append("CI_RUN_WINDOW_HEAD_SHA_AFFINITY_UNREVIEWED")
     if set(logs_by_run) != set(ids):
         reasons.append("CI_RUN_WINDOW_LOG_INVENTORY_UNREVIEWED")
     return tuple(sorted(set(reasons)))
@@ -103,7 +113,8 @@ class RealRecoveredCiWorkflowWindowsAreNotProtectedRunPermission(unittest.TestCa
                 "workflow_id": policy.WORKFLOWS["tests"][0],
                 "path": policy.WORKFLOWS["tests"][1],
                 "status": "completed", "conclusion": "success",
-                "run_attempt": 1,
+                "run_attempt": 1, "event": "pull_request",
+                "head_sha": observed.HEAD,
                 "created_at": "2026-10-17T11:48:44Z",
                 "run_started_at": "2026-10-17T11:48:44Z",
                 "updated_at": "2026-10-17T12:02:06Z",
@@ -113,7 +124,8 @@ class RealRecoveredCiWorkflowWindowsAreNotProtectedRunPermission(unittest.TestCa
                 "workflow_id": policy.WORKFLOWS["phase3-acceptance"][0],
                 "path": policy.WORKFLOWS["phase3-acceptance"][1],
                 "status": "completed", "conclusion": "success",
-                "run_attempt": 1,
+                "run_attempt": 1, "event": "pull_request",
+                "head_sha": observed.HEAD,
                 "created_at": "2026-10-17T11:48:44Z",
                 "run_started_at": "2026-10-17T11:48:44Z",
                 "updated_at": "2026-10-17T11:49:22Z",
@@ -200,3 +212,28 @@ class RealRecoveredCiWorkflowWindowsAreNotProtectedRunPermission(unittest.TestCa
         self.runs[1]["run_started_at"] = "2026-10-17T11:49:20Z"
         self.assertIn("phase3-acceptance_RUN_WINDOW_LOG_OUTSIDE_RUN",
                       self.verdict())
+
+    def test_wrong_event_cannot_claim_pr_runner_window(self):
+        self.runs[0]["event"] = "workflow_dispatch"
+        self.assertIn("tests_RUN_WINDOW_EVENT_UNREVIEWED", self.verdict())
+
+    def test_two_different_run_head_shas_cannot_share_pr_source_review(self):
+        self.runs[1]["head_sha"] = "f"*40
+        self.assertIn("CI_RUN_WINDOW_HEAD_SHA_AFFINITY_UNREVIEWED",
+                      self.verdict())
+
+    def test_nonhex_workflow_head_sha_fails_closed(self):
+        self.runs[0]["head_sha"] = "not-a-commit"
+        self.assertIn("tests_RUN_WINDOW_HEAD_SHA_UNREVIEWED", self.verdict())
+        self.assertIn("CI_RUN_WINDOW_HEAD_SHA_AFFINITY_UNREVIEWED",
+                      self.verdict())
+
+    def test_missing_phase3_head_sha_fails_closed(self):
+        self.runs[1].pop("head_sha")
+        self.assertIn("phase3-acceptance_RUN_WINDOW_HEAD_SHA_UNREVIEWED",
+                      self.verdict())
+
+    def test_valid_two_run_head_affinity_never_confers_annual_permission(self):
+        self.assertEqual(self.runs[0]["head_sha"], self.runs[1]["head_sha"])
+        self.assertEqual(self.verdict(), ())
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
