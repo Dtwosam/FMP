@@ -433,8 +433,8 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         for run_id, raw_text in tuple(self.raw_ci_runner_logs.items()):
             pre = [
                 "2026-10-17T10:00:00.0" + str(i) + "00000Z " +
-                "[command]/usr/bin/git submodule " + sub_cmds[i - 1]
-                for i in (1, 3, 5)
+                "[command]/usr/bin/git submodule " + sub_cmds[index]
+                for index, i in enumerate((1, 3, 5))
             ]
             post = [
                 "2026-10-17T10:00:08." + str(i) + "000000Z " +
@@ -1209,3 +1209,25 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertFalse(result["independent_original_os_proof"])
+
+    def test_submodule_precheckout_fixture_uses_three_distinct_allowed_commands(self):
+        import test_dec1486_observed_submodule_cleanup_source_offline as source
+        for run_id in (8000, 8001):
+            pre = [
+                line.split("[command]/usr/bin/git submodule ", 1)[1]
+                for line in self.raw_ci_runner_logs[run_id].splitlines()
+                if "[command]/usr/bin/git submodule " in line
+            ][:3]
+            self.assertEqual(tuple(pre), tuple(source.ALLOWED_SOURCE_COMMANDS))
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_submodule_precheckout_fixture_timestamps_are_monotone(self):
+        for run_id in (8000, 8001):
+            timestamps = [
+                line.split("Z ", 1)[0]
+                for line in self.raw_ci_runner_logs[run_id].splitlines()
+                if "[command]/usr/bin/git submodule " in line
+            ][:3]
+            self.assertEqual(len(timestamps), 3)
+            self.assertEqual(timestamps, sorted(timestamps))
+        self.assertEqual(self.verdict()["diagnostics"], ())

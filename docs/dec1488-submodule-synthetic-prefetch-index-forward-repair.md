@@ -1,0 +1,9 @@
+# DEC-1488 — Forward-only correction of precheckout submodule fixture indexing
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child of #1711 DEC-1487 at `9b646c3f1d2c19f1972d342b3fa447b632517f02`. Two new source-defined tests, **2,096 proposed methods**.
+
+Source inspection immediately after creating DEC-1487 found an invalid Python synthetic-fixture comprehension in the DEC-1440 combined evidence class. Its precheckout submodule cleanup line timestamps were indexed with `i in (1, 3, 5)`, but the command allowlist contains exactly three items and was accessed as `sub_cmds[i-1]`. The final iteration tries `sub_cmds[4]` and raises `IndexError` *during test setup*, before individual source-evidence assertions can run. This is not real GitHub log evidence or a protected annual runtime issue; it is a regression in the unverified prior draft's synthetic test fixture.
+
+This **forward-only** correction enumerates the three timestamp values separately from their zero-based allowlist indexes, preserving observed command order (core.sshCommand cleanup, GitHub extraheader cleanup, remote.origin URL inspection) and strictly increasing synthetic timestamps. Two explicit regression tests verify both required CI source log fixtures have the exact three expected precheckout commands and monotone time/order. The original #1711 SHA and its CI result are not rewritten; CI results must be evaluated at each subsequent immutable draft head.
+
+Own head-associated PR merge-tree Phase3/full historical/general CI and independently qualified review are mandatory. DEC-650/#820 protected-original actual OS no-write and DEC-651/#821/#779 exclusive immutable one-shot GitHub preallocation admission for **2023 run385/attempt1** remain **BLOCKED**. No protected annual execution/retry, original/archive/artifact reads, installed workflow/security changes, merging, deployment or trading.
