@@ -1319,11 +1319,11 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.envelope["raw_ci_runner_logs"]["9001"] = None
         self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
 
-    def test_raw_log_string_subclass_is_rejected(self):
+    def test_raw_log_string_subclass_is_rejected_by_structure_guard(self):
         class NonPlainLog(str):
             pass
         self.envelope["raw_ci_runner_logs"]["9001"] = NonPlainLog("synthetic")
-        self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+        self.assert_fails("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED")
 
     def test_raw_log_limit_precedes_malformed_run_id(self):
         self.envelope["raw_ci_runner_logs"]["not-a-run-id"] = (
@@ -1816,6 +1816,65 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_raw_log_plain_bytes_still_reaches_category_type_guard(self):
+        self.envelope["raw_ci_runner_logs"]["9001"] = b"synthetic"
+        self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_raw_log_plain_none_still_reaches_category_type_guard(self):
+        self.envelope["raw_ci_runner_logs"]["9001"] = None
+        self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_raw_log_subclass_diagnostic_precedes_category_guard(self):
+        class SubclassLog(str):
+            pass
+        self.envelope["raw_ci_runner_logs"]["9001"] = SubclassLog("private-canary")
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertNotIn("private-canary", repr(result))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_custom_payload_inside_job_map_fails_preflight(self):
+        class Untrusted:
+            pass
+        self.envelope["jobs_by_run"]["9001"] = Untrusted()
+        self.assert_fails("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED")
+
+    def test_run_id_key_subclass_fails_preflight_before_id_parse(self):
+        class IdSubclass(str):
+            pass
+        self.envelope["checkout_by_run"][IdSubclass("9001")] = {}
+        self.assert_fails("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED")
+
+    def test_plain_invalid_run_id_still_reaches_id_guard(self):
+        self.envelope["checkout_by_run"]["not-an-id"] = {}
+        self.assert_fails("BUNDLE_RUN_KEY_UNREVIEWED")
+
+    def test_direct_subclass_rejection_never_invokes_nested_reviewer(self):
+        from unittest.mock import patch
+        class SubclassLog(str):
+            pass
+        self.envelope["raw_ci_runner_logs"]["9001"] = SubclassLog("synthetic")
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("must not run")) as nested:
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        nested.assert_not_called()
+
+    def test_stdin_only_json_has_plain_strings_not_subclasses(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_valid_source_consistency_retains_all_negative_authority(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
