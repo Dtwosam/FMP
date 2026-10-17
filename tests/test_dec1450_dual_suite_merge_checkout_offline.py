@@ -19,7 +19,11 @@ def review_dual_suite_merge_checkouts(pr, runs, checkouts, merge_ref,
     issues = []
     required = frozenset(("tests", "phase3-acceptance"))
     names = [r.get("name") for r in runs]
-    if len(runs) != 2 or set(names) != required:
+    # Even malformed JSON-shaped workflow names (lists, objects, numbers)
+    # must produce diagnostics rather than raise TypeError in set(names).
+    if (len(runs) != 2 or
+            not all(type(name) is str for name in names) or
+            any(names.count(required_name) != 1 for required_name in required)):
         issues.append("DUAL_CHECKOUT_WORKFLOW_INVENTORY_UNREVIEWED")
     run_ids = []
     for name in sorted(required):
@@ -191,3 +195,51 @@ class BothCIJobsMustTestOneIdenticalMergeCommit(unittest.TestCase):
     def test_consistent_synthetic_dual_checkout_does_not_authorize_2023_run(self):
         self.assertEqual(self.verdict(), ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
+
+    def test_list_shaped_workflow_name_fails_closed_not_exception(self):
+        self.runs[1]["name"] = []
+        self.assertIn("DUAL_CHECKOUT_WORKFLOW_INVENTORY_UNREVIEWED",
+                      self.verdict())
+
+    def test_dict_shaped_workflow_name_fails_closed_not_exception(self):
+        self.runs[0]["name"] = {"name": "tests"}
+        self.assertIn("DUAL_CHECKOUT_WORKFLOW_INVENTORY_UNREVIEWED",
+                      self.verdict())
+
+    def test_boolean_workflow_name_does_not_pass(self):
+        self.runs[0]["name"] = False
+        self.assertIn("DUAL_CHECKOUT_WORKFLOW_INVENTORY_UNREVIEWED",
+                      self.verdict())
+
+    def test_none_workflow_name_does_not_pass(self):
+        self.runs[0].pop("name")
+        self.assertIn("DUAL_CHECKOUT_WORKFLOW_INVENTORY_UNREVIEWED",
+                      self.verdict())
+
+    def test_integer_workflow_name_does_not_pass(self):
+        self.runs[1]["name"] = 1
+        self.assertIn("DUAL_CHECKOUT_WORKFLOW_INVENTORY_UNREVIEWED",
+                      self.verdict())
+
+    def test_empty_runner_log_dict_does_not_pass(self):
+        self.checkouts[4001] = {}
+        self.assertIn("phase3-acceptance_RUNNER_LOG_RUN_ASSOCIATION_MISMATCH",
+                      self.verdict())
+
+    def test_boolean_run_identifier_cannot_claim_exact_identity(self):
+        self.runs[0]["id"] = True
+        self.assertIn("tests_RUN_ID_UNREVIEWED", self.verdict())
+
+    def test_boolean_run_attempt_is_not_first_attempt(self):
+        self.runs[1]["run_attempt"] = True
+        self.assertIn("phase3-acceptance_WORKFLOW_IDENTITY_UNREVIEWED",
+                      self.verdict())
+
+    def test_malformed_name_and_missing_runner_log_both_diagnosed(self):
+        self.runs[0]["name"] = []
+        self.checkouts.pop(4001)
+        diagnostics = self.verdict()
+        self.assertIn("DUAL_CHECKOUT_WORKFLOW_INVENTORY_UNREVIEWED",
+                      diagnostics)
+        self.assertIn("phase3-acceptance_RUNNER_LOG_SNAPSHOT_UNREVIEWED",
+                      diagnostics)
