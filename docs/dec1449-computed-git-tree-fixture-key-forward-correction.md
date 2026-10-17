@@ -1,0 +1,9 @@
+# DEC-1449 — Forward-only repair for computed-tree fixture stale key
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1672 DEC-1448 at f6c202376aecd2ee6856bb7261fa37a147d3e7f2. Adds three test methods and corrects one fixture, **1,752 proposed source-defined methods**.
+
+A review of immutable historical/general CI run 39024050232 for original draft #1668 revealed a real suite failure in 6,595 executed tests (702 skipped): test_missing_subtree_snapshot_rejected in test_dec1440_stacked_source_evidence_offline raised KeyError for hardcoded "d"*40. DEC-1444 had correctly rebuilt synthetic Git tree object IDs to real SHA-1 tree wire hashes, but this one negative fixture still removed the original placeholder key rather than the resulting computed self.git_tests_tree key. The false test-fixture error was not a real Git-tree reviewer bypass, but it makes historical CI red.
+
+This forward-only fix updates that negative fixture to remove the computed tree key before checking the expected fail-closed diagnostic, and adds three synthetic tests pinning computed-key inventory and missing docs/root subtree behavior. The original #1668 exact CI result remains failed; earlier descendant runs #1669–#1672 are not assumed green. Each PR has its own immutable test-run status; **only this child and later independently verified heads can contain this correction**.
+
+This is source-only tests/docs. Its own head-associated PR merge-source-tree Phase3/full historical CI and qualified independent review required. DEC-650/#820 protected original OS no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 server admission remain BLOCKED. No protected annual execution/retry, original/archive access, installed YAML/branch/ruleset/permissions, merge, deployment or trading.
