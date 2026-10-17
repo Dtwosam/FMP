@@ -263,9 +263,13 @@ def _reviewed_source_path(path):
             return False
     # Reject invisible layout/format characters and the full Unicode
     # control inventory, including C1 controls not covered by ASCII checks.
-    return not any(unicodedata.category(char) in
-                   ("Cc", "Cf", "Cs", "Zl", "Zp")
-                   for char in path)
+    return not any(
+        unicodedata.category(char) in ("Cc", "Cf", "Cs", "Zl", "Zp") or
+        ord(char) == 0x034F or  # combining grapheme joiner
+        0x180B <= ord(char) <= 0x180D or  # Mongolian variation selectors
+        0xFE00 <= ord(char) <= 0xFE0F or  # BMP variation selectors
+        0xE0100 <= ord(char) <= 0xE01EF  # supplementary selectors
+        for char in path)
 
 
 def _within_inmemory_structure_budget(root):
@@ -2231,4 +2235,54 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_combining_grapheme_joiner_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/ab\u034fcd.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_mongolian_free_variation_selector_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/a\u180bb.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_bmp_emoji_variation_selector_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/a\ufe0fb.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_bmp_text_variation_selector_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/a\ufe0eb.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_supplementary_variation_selector_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/a\U000e0100b.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_supplementary_last_variation_selector_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/a\U000e01efb.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_regular_composed_diacritic_remains_valid(self):
+        self.assertTrue(_reviewed_source_path("src/café.py"))
+
+    def test_multilingual_unicode_without_selector_remains_valid(self):
+        self.assertTrue(_reviewed_source_path("src/日本語.py"))
+
+    def test_stdin_supplementary_selector_is_safe_failure(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["src/PRIVATE\U000e0100CANARY.py"] = "YQ=="
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), output)
+        record = json.loads(output.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(record["diagnostics"], ["BUNDLE_SOURCE_PATH_UNREVIEWED"])
+        self.assertNotIn("PRIVATE", output.getvalue())
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_valid_synthetic_evidence_stays_source_only(self):
+        verdict = self.verdict()
+        self.assertEqual(verdict["diagnostics"], ())
+        self.assertTrue(verdict["source_consistency"])
+        self.assertFalse(verdict["independent_original_os_proof"])
+        self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(verdict["can_authorize_annual_run"])
 
