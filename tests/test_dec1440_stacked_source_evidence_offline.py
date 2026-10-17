@@ -12,13 +12,31 @@ import test_dec1435_git_tree_regular_blob_review as modes_review
 import test_dec1439_changed_git_blob_source_bytes_offline as bytes_review
 import test_dec1430_reviewed_ci_workflow_blob_source_identity as ci_source
 import test_dec1441_git_tree_sha_chain_source_review as tree_chain
+import test_dec1445_pr_merge_checkout_tree_identity_offline as merge_review
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                                   tree, nodes, changed_bytes, ci_workflow_bytes,
-                                  full_tree_snapshots):
+                                  full_tree_snapshots, merge_checkout_snapshot):
     """Return diagnostic shape only; never authorization or authenticated proof."""
+    # Run metadata head_sha is an association to the PR branch head, not
+    # evidence that checkout HEAD equaled that SHA. Review the actual merge.
+    if type(merge_checkout_snapshot) is not dict:
+        merge_check = ("MERGE_CHECKOUT_SNAPSHOT_UNREVIEWED",)
+    elif type(runs) is not list or not all(type(r) is dict for r in runs):
+        merge_check = ("MERGE_HISTORICAL_RUN_UNREVIEWED",)
+    else:
+        historical = [r for r in runs if r.get("name") == "tests"]
+        if len(historical) != 1:
+            merge_check = ("MERGE_HISTORICAL_RUN_UNREVIEWED",)
+        else:
+            e = merge_checkout_snapshot
+            merge_check = merge_review.review_pr_merge_checkout(
+                pr, historical[0], e.get("merge_ref"),
+                e.get("merge_commit"), e.get("head_commit"),
+                e.get("checkout_ref"), e.get("checkout_sha_prefix"))
     checks = (
+        merge_check,
         jobs_review.review_exact_pr_ci_jobs(pr, runs, jobs_by_run),
         file_review.review_draft_file_inventory_counts(pr, compare, commit),
         modes_review.review_source_tree_mode(pr, compare, commit, tree, nodes),
@@ -129,13 +147,30 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.full_trees[self.git_root_tree] = root_object
         self.commit["tree"]["sha"] = self.git_root_tree
         self.tree["sha"] = self.git_root_tree
+        self.merge_checkout = {
+            "merge_ref": {
+                "ref": "refs/pull/1649/merge",
+                "object": {"type": "commit", "sha": "f"*40},
+            },
+            "merge_commit": {
+                "sha": "f"*40, "tree": {"sha": self.git_root_tree},
+                "parents": [{"sha": self.pr["base_sha"]},
+                            {"sha": self.pr["head_sha"]}],
+            },
+            "head_commit": {
+                "sha": self.pr["head_sha"],
+                "tree": {"sha": self.git_root_tree},
+            },
+            "checkout_ref": "refs/remotes/pull/1649/merge",
+            "checkout_sha_prefix": "fffffff",
+        }
         self.ci_bytes = dict(self.original_ci_bytes)
 
     def verdict(self):
         return review_stacked_draft_evidence(
             self.pr, self.runs, self.jobs, self.compare, self.commit,
             self.tree, self.nodes, self.changed, self.ci_bytes,
-            self.full_trees)
+            self.full_trees, self.merge_checkout)
 
     def test_consistent_synthetic_bundle_passes_only_source_consistency(self):
         result = self.verdict()
@@ -276,3 +311,45 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.full_trees[self.git_root_tree]["tree"].reverse()
         self.assertIn("TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH",
                       self.verdict()["diagnostics"])
+
+    def test_merge_checkout_tree_consistency_is_separately_required(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertNotEqual(self.merge_checkout["merge_commit"]["sha"],
+                            self.pr["head_sha"])
+
+    def test_missing_merge_checkout_snapshot_blocks_composite(self):
+        self.merge_checkout = None
+        self.assertIn("MERGE_CHECKOUT_SNAPSHOT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_different_pr_merge_ref_blocks_composite(self):
+        self.merge_checkout["merge_ref"]["ref"] = "refs/pull/99/merge"
+        self.assertIn("GITHUB_MERGE_REF_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_merge_source_tree_different_from_head_blocks_composite(self):
+        self.merge_checkout["merge_commit"]["tree"]["sha"] = "e"*40
+        self.assertIn("MERGE_AND_HEAD_FILE_TREE_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_merge_wrong_second_parent_blocks_composite(self):
+        self.merge_checkout["merge_commit"]["parents"][1]["sha"] = "d"*40
+        self.assertIn("MERGE_COMMIT_PARENT_PAIR_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_runner_claimed_draft_head_checkout_is_not_merge_proof(self):
+        self.merge_checkout["checkout_ref"] = "refs/heads/draft"
+        self.assertIn("RUNNER_CHECKOUT_REF_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_incorrect_checkout_sha_prefix_blocks_composite(self):
+        self.merge_checkout["checkout_sha_prefix"] = "eeeeeee"
+        self.assertIn("RUNNER_CHECKOUT_SHA_PREFIX_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_green_composite_is_merge_tree_review_not_annual_consent(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
