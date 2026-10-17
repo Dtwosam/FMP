@@ -13,11 +13,13 @@ import test_dec1439_changed_git_blob_source_bytes_offline as bytes_review
 import test_dec1430_reviewed_ci_workflow_blob_source_identity as ci_source
 import test_dec1441_git_tree_sha_chain_source_review as tree_chain
 import test_dec1445_pr_merge_checkout_tree_identity_offline as merge_review
+import test_dec1450_dual_suite_merge_checkout_offline as dual_runner
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                                   tree, nodes, changed_bytes, ci_workflow_bytes,
-                                  full_tree_snapshots, merge_checkout_snapshot):
+                                  full_tree_snapshots, merge_checkout_snapshot,
+                                  checkout_by_run):
     """Return diagnostic shape only; never authorization or authenticated proof."""
     # Run metadata head_sha is an association to the PR branch head, not
     # evidence that checkout HEAD equaled that SHA. Review the actual merge.
@@ -36,8 +38,16 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                 e.get("merge_commit"), e.get("head_commit"),
                 e.get("checkout_ref"), e.get("checkout_sha_prefix"),
                 e.get("checkout_fetch_sha"))
+    if type(merge_checkout_snapshot) is dict:
+        e = merge_checkout_snapshot
+        dual_check = dual_runner.review_dual_suite_merge_checkouts(
+            pr, runs, checkout_by_run, e.get("merge_ref"),
+            e.get("merge_commit"), e.get("head_commit"))
+    else:
+        dual_check = ("DUAL_CHECKOUT_INPUT_UNREVIEWED",)
     checks = (
         merge_check,
+        dual_check,
         jobs_review.review_exact_pr_ci_jobs(pr, runs, jobs_by_run),
         file_review.review_draft_file_inventory_counts(pr, compare, commit),
         modes_review.review_source_tree_mode(pr, compare, commit, tree, nodes),
@@ -166,13 +176,23 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             "checkout_sha_prefix": "fffffff",
             "checkout_fetch_sha": "f"*40,
         }
+        self.runner_checks = {
+            r["id"]: {
+                "run_id": r["id"],
+                "checkout_ref": self.merge_checkout["checkout_ref"],
+                "checkout_sha_prefix": self.merge_checkout["checkout_sha_prefix"],
+                "checkout_fetch_sha": self.merge_checkout["checkout_fetch_sha"],
+            }
+            for r in self.runs
+        }
         self.ci_bytes = dict(self.original_ci_bytes)
 
     def verdict(self):
         return review_stacked_draft_evidence(
             self.pr, self.runs, self.jobs, self.compare, self.commit,
             self.tree, self.nodes, self.changed, self.ci_bytes,
-            self.full_trees, self.merge_checkout)
+            self.full_trees, self.merge_checkout,
+            self.runner_checks)
 
     def test_consistent_synthetic_bundle_passes_only_source_consistency(self):
         result = self.verdict()
@@ -381,3 +401,44 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.full_trees.pop(self.git_root_tree)
         self.assertIn("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",
                       self.verdict()["diagnostics"])
+
+    def test_both_runner_checkouts_are_now_mandatory(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertEqual(set(self.runner_checks), {8000, 8001})
+
+    def test_missing_phase3_runner_checkout_fails_complete_review(self):
+        self.runner_checks.pop(8000)
+        self.assertIn("phase3-acceptance_RUNNER_LOG_SNAPSHOT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_different_phase3_full_merge_sha_fails_complete_review(self):
+        self.runner_checks[8000]["checkout_fetch_sha"] = "e"*40
+        self.assertIn("DUAL_CHECKOUT_TESTED_MERGE_SHA_DIFFERENT",
+                      self.verdict()["diagnostics"])
+
+    def test_historical_runner_checkout_must_be_run_id_bound(self):
+        self.runner_checks[8001]["run_id"] = 8000
+        self.assertIn("tests_RUNNER_LOG_RUN_ASSOCIATION_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_wrong_pr_checkout_ref_fails_complete_review(self):
+        self.runner_checks[8000]["checkout_ref"] = "refs/remotes/pull/999/merge"
+        self.assertIn("phase3-acceptance_RUNNER_CHECKOUT_REF_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_duplicate_unreviewed_log_snapshot_fails_complete_review(self):
+        self.runner_checks[8888] = dict(self.runner_checks[8000])
+        self.assertIn("DUAL_CHECKOUT_RUNNER_LOG_INVENTORY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_mismatch_in_workflow_id_fails_dual_checkout_review(self):
+        self.runs[0]["workflow_id"] = 1
+        self.assertIn("phase3-acceptance_WORKFLOW_IDENTITY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_complete_two_runner_source_consistency_still_non_authorizing(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"], result["diagnostics"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
