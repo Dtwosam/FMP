@@ -1,0 +1,9 @@
+# DEC-1509 — Reject Unicode invisible and C1 control source-path labels
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit forward-only tests/docs child of #1754, exact parent `8c7fc2bdf5ae2c7d31ca8df2f7c31170d098139c`. Twelve synthetic unittest methods: **2,334 proposed source-defined tests**.
+
+DEC-1493/1494 limited ASCII controls, surrogates and specific bidirectional controls in repository-relative source labels, but other Unicode invisible format code points, C1 controls, and line/paragraph separator code points remained valid-looking path content. Such labels can evade visual review or change how terminals display a source inventory. Extend the portable source-label guard to refuse Unicode categories Cc, Cf, Cs, Zl and Zp; this encompasses the original forbidden categories and all general-format controls, without reading any filesystem path or normalizing a malicious label into a safe one. Canonical Unicode source names and explicitly printable private-use code points continue to pass the lexical character-class test.
+
+Twelve tests cover zero-width space/joiner, soft hyphen, BOM, C1 NEL, Unicode line and paragraph separators, word joiner, Unicode positive controls, stdin non-disclosure, and an unchanged clean synthetic consistency-only verdict. These are offline source-label checks, not GitHub provider authenticity or annual execution authorization.
+
+Own exact-head Phase 3/full historical-general CI and independent qualified review mandatory. DEC-650/#820 independently witnessed protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected 2023 run385/attempt1 GitHub server admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive/artifact access, installed workflow/security modifications, merges, deployment or trading.
