@@ -1,0 +1,9 @@
+# DEC-1467 — Mandatory Phase3 checkout-before-acceptance temporal evidence
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1690 DEC-1466 at a3eddc6ebcfe516195e378bdc15c2ac58f9e56ca. Six added source-defined tests, **1,924 proposed methods**.
+
+The DEC-1440/1463 composite already requires two source-matching runner checkouts and a Phase3 acceptance JSON/upload receipt extracted from the Phase3 runner job log. DEC-1466 established an additional ordering requirement: the Phase3 acceptance index must be generated *after* the Phase3 runner checked out that exact reviewed merge commit, not merely bear the same claimed code_commit value.
+
+This forward-only change makes that requirement mandatory in the combined offline reviewer. It composes the reviewed checkout and Phase3 index parsers over the **same raw job log text**, requiring the git checkout HEAD line to precede the acceptance JSON by both log line order and UTC timestamp. Six regression cases reject pre-checkout index generation, reordering, missing index and wrong PR checkout; a consistent fixture remains source-only and cannot approve protected annual execution. Existing raw text SHA256 receipts and exact job/run linkage remain required in parallel.
+
+This is a test/docs-only consistency review of externally supplied logs, not authenticated GitHub provenance, OS-enforced original no-write or protected server dispatch admission. Own head-associated PR merge-source-tree Phase3/full historical CI and qualified review required. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**. No protected annual dispatch/retry, archives/originals/artifact downloads, installed workflow/security modifications, merge, deployment or trading.

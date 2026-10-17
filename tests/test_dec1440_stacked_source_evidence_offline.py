@@ -20,6 +20,7 @@ import test_dec1447_phase3_acceptance_merge_stamp_offline as phase3_stamps
 import test_dec1454_runner_merge_checkout_trace_parser_offline as log_parse
 import test_dec1458_ci_job_raw_log_receipt_offline as log_receipt
 import test_dec1462_phase3_raw_log_index_upload_offline as phase3_raw
+import test_dec1466_phase3_checkout_acceptance_chronology_offline as temporal
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
@@ -127,7 +128,27 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                         for k in ("name", "id", "run_id", "finalized")):
                     phase3_log_issues.append(
                         "PHASE3_RAW_UPLOAD_VS_SUPPLIED_EVIDENCE_MISMATCH")
+    # Index/upload evidence must have been generated after the very same
+    # CI runner checkout HEAD in the same complete Phase3 raw job log.
+    temporal_issues = []
+    if (type(pr) is not dict or type(runs) is not list or
+            type(raw_ci_runner_logs) is not dict or
+            type(merge_checkout_snapshot) is not dict):
+        temporal_issues.append("PHASE3_CHECKOUT_INDEX_ORDER_INPUT_UNREVIEWED")
+    else:
+        phase3_run = [r for r in runs if type(r) is dict and
+                      r.get("name") == "phase3-acceptance"]
+        merge = merge_checkout_snapshot.get("merge_commit")
+        if len(phase3_run) != 1 or type(merge) is not dict:
+            temporal_issues.append("PHASE3_CHECKOUT_INDEX_ORDER_RUN_UNREVIEWED")
+        else:
+            temporal_issues.extend(
+                temporal.review_phase3_checkout_then_acceptance(
+                    raw_ci_runner_logs.get(phase3_run[0].get("id")),
+                    pr.get("number"), pr.get("head_sha"), pr.get("base_sha"),
+                    phase3_run[0].get("id"), merge.get("sha")))
     checks = (
+        tuple(sorted(set(temporal_issues))),
         tuple(sorted(set(phase3_log_issues))),
         tuple(sorted(set(raw_issues))),
         log_receipt.review_ci_job_log_receipts(
@@ -789,3 +810,39 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_phase3_checkout_then_index_is_required(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_phase3_index_timestamp_before_checkout_is_rejected(self):
+        log = self.raw_ci_runner_logs[8000]
+        self.raw_ci_runner_logs[8000] = log.replace(
+            "10:00:03.1000000Z ", "10:00:01.5000000Z ")
+        self.assertIn("PHASE3_ACCEPTANCE_TIMESTAMP_BEFORE_CHECKOUT",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_index_log_line_before_head_is_rejected(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        lines[2], lines[3] = lines[3], lines[2]
+        self.raw_ci_runner_logs[8000] = "\n".join(lines)
+        self.assertIn("PHASE3_ACCEPTANCE_GENERATED_BEFORE_CHECKOUT",
+                      self.verdict()["diagnostics"])
+
+    def test_missing_phase3_index_stage_rejects_full_review(self):
+        self.raw_ci_runner_logs[8000] = "\n".join(
+            line for line in self.raw_ci_runner_logs[8000].splitlines()
+            if '"code_commit":' not in line)
+        self.assertIn("PHASE3_CHECKOUT_ACCEPTANCE_SOURCE_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_checkout_for_other_pr_rejects_full_review(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "/1649/merge", "/9999/merge")
+        self.assertIn("RUNNER_LOG_PR_REF_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_valid_temporal_source_review_is_never_annual_admission(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["independent_original_os_proof"])
