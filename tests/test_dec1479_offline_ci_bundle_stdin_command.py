@@ -61,8 +61,15 @@ def run_stdin_review(input_stream, output_stream):
         written = output_stream.write(encoded)
         if type(written) is not int or written != len(encoded):
             return 2
+        # A full buffered write alone is not delivery. Flush when the
+        # supplied output stream exposes the standard flush method.
+        flush = getattr(output_stream, "flush", None)
+        if flush is not None:
+            if not callable(flush):
+                return 2
+            flush()
     except (OSError, UnicodeError, ValueError, TypeError, RuntimeError,
-            RecursionError, AssertionError):
+            RecursionError, AssertionError, AttributeError):
         return 2
     # Zero is merely *offline source consistency*, never execution consent.
     return 0 if verdict["source_consistency"] is True else 2
@@ -626,6 +633,111 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         self.assertIn("BUNDLE_KEY_INVENTORY_UNREVIEWED",
                       record["diagnostics"])
         self.assertNotIn("canary", self.stdout.getvalue())
+        self.assertFalse(record["can_authorize_annual_run"])
+
+
+    def test_stdin_output_stream_flush_called_on_complete_write(self):
+        class BufferedOutput:
+            def __init__(self):
+                self.flushes = 0
+                self.text = ""
+            def write(self, value):
+                self.text += value
+                return len(value)
+            def flush(self):
+                self.flushes += 1
+        output = BufferedOutput()
+        rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), output)
+        self.assertEqual(rc, 0)
+        self.assertEqual(output.flushes, 1)
+        self.assertFalse(json.loads(output.text)["can_authorize_annual_run"])
+
+    def test_stdin_output_oserror_during_flush_forces_failure(self):
+        class FailingOutput:
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                raise BrokenPipeError("private-log-canary")
+        rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)),
+                              FailingOutput())
+        self.assertEqual(rc, 2)
+
+    def test_stdin_output_runtime_error_during_flush_forces_failure(self):
+        class FailingOutput:
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                raise RuntimeError("private-path-canary")
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), FailingOutput()), 2)
+
+    def test_stdin_output_assertion_error_during_flush_forces_failure(self):
+        class FailingOutput:
+            def write(self, value):
+                return len(value)
+            def flush(self):
+                raise AssertionError("synthetic-canary")
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), FailingOutput()), 2)
+
+    def test_stdin_output_noncallable_flush_is_nonzero(self):
+        class UnreviewedOutput:
+            flush = True
+            def write(self, value):
+                return len(value)
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), UnreviewedOutput()), 2)
+
+    def test_stdin_output_without_flush_method_preserves_full_write(self):
+        class UnbufferedOutput:
+            def __init__(self):
+                self.text = ""
+            def write(self, value):
+                self.text += value
+                return len(value)
+        output = UnbufferedOutput()
+        self.assertEqual(run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), output), 0)
+        self.assertEqual(len(output.text.splitlines()), 1)
+
+    def test_stdin_output_short_write_never_calls_flush(self):
+        class PartialOutput:
+            def __init__(self):
+                self.flushes = 0
+            def write(self, value):
+                return len(value)-1
+            def flush(self):
+                self.flushes += 1
+        output = PartialOutput()
+        rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), output)
+        self.assertEqual(rc, 2)
+        self.assertEqual(output.flushes, 0)
+
+    def test_stdin_invalid_json_full_write_flushed_but_still_failure(self):
+        class BufferedOutput:
+            def __init__(self):
+                self.text = ""
+                self.flushes = 0
+            def write(self, value):
+                self.text += value
+                return len(value)
+            def flush(self):
+                self.flushes += 1
+        output = BufferedOutput()
+        rc = run_stdin_review(io.StringIO('{"private":"not a bundle"}'), output)
+        self.assertEqual(rc, 2)
+        self.assertEqual(output.flushes, 1)
+        self.assertNotIn("not a bundle", output.text)
+        self.assertFalse(json.loads(output.text)["can_authorize_annual_run"])
+
+    def test_stdin_real_stringio_flush_keeps_source_only_verdict(self):
+        out = io.StringIO()
+        rc = run_stdin_review(io.StringIO(json.dumps(self.bundle)), out)
+        self.assertEqual(rc, 0)
+        record = json.loads(out.getvalue())
+        self.assertTrue(record["source_consistency"])
+        self.assertFalse(record["independent_original_os_proof"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(record["can_authorize_annual_run"])
 
 
