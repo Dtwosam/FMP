@@ -28,6 +28,10 @@ MAX_JSON_FLOAT_LITERAL_CHARS = 128
 MAX_SOURCE_PATH_CHARS = 4096
 MAX_SOURCE_PATH_UTF8_BYTES = 4096
 MAX_SOURCE_SEGMENT_UTF8_BYTES = 255
+SOURCE_PATH_CONFUSABLE_SEPARATORS = frozenset((
+    "\u2044", "\u2215", "\u29f8", "\uff0f",
+    "\u2216", "\u29f5", "\uff3c",
+))
 MAX_SOURCE_ENTRIES_PER_MAP = 8192
 MAX_RUNS_PER_ENVELOPE = 4096
 MAX_RUN_MAP_ENTRIES = 8192
@@ -258,6 +262,8 @@ def _reviewed_source_path(path):
             path.startswith("/") or "\\" in path):
         return False
     if ":" in path or not unicodedata.is_normalized("NFC", path):
+        return False
+    if any(char in SOURCE_PATH_CONFUSABLE_SEPARATORS for char in path):
         return False
     try:
         if len(path.encode("utf-8")) > MAX_SOURCE_PATH_UTF8_BYTES:
@@ -2742,5 +2748,53 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_fraction_slash_source_path_refused(self):
+        self.assertFalse(_reviewed_source_path("src\u2044file.py"))
+
+    def test_division_slash_source_path_refused(self):
+        self.assertFalse(_reviewed_source_path("src\u2215file.py"))
+
+    def test_big_solidus_source_path_refused(self):
+        self.assertFalse(_reviewed_source_path("src\u29f8file.py"))
+
+    def test_fullwidth_solidus_source_path_refused(self):
+        self.assertFalse(_reviewed_source_path("src\uff0ffile.py"))
+
+    def test_set_minus_source_path_refused(self):
+        self.assertFalse(_reviewed_source_path("src\u2216file.py"))
+
+    def test_reverse_solidus_operator_source_path_refused(self):
+        self.assertFalse(_reviewed_source_path("src\u29f5file.py"))
+
+    def test_fullwidth_reverse_solidus_source_path_refused(self):
+        self.assertFalse(_reviewed_source_path("src\uff3cfile.py"))
+
+    def test_confusable_separator_changed_source_map_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["src\u2215secret.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_confusable_separator_workflow_source_map_fails_closed(self):
+        self.envelope["ci_workflow_bytes_b64"]["ci\uff0fsecret.yml"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_confusable_separator_stdin_verdict_is_non_disclosing(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["src\u2044PRIVATE-CANARY.py"] = "YQ=="
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("PRIVATE-CANARY", out.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_real_posix_separator_and_clean_source_only_fixture_preserved(self):
+        self.assertTrue(_reviewed_source_path("docs/sample.md"))
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
         self.assertFalse(result["can_authorize_annual_run"])
 
