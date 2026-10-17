@@ -1,6 +1,6 @@
 # DEC-1482 — Enforce full UTC fractional precision in all CI source timestamp reviewers
 
-**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1718 DEC-1481 at `cf1202702ac31be169c551dc29b6b353e6b821f9`. Adds **8 new source-defined unittest methods**, now **2,075 proposed methods**.
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1718 DEC-1481 at `cf1202702ac31be169c551dc29b6b353e6b821f9`. Adds **8 new source-defined unittest methods**, now **2,076 proposed methods**.
 
 DEC-1481 introduced an exact integer UTC-nanosecond converter because GitHub Actions source-log timestamps typically use seven fractional digits, while standard-library `datetime.fromisoformat` truncates precision at six. This child uses that converter in all four source-consistency validators: DEC-1454 raw Git fetch/checkout/HEAD stage order; DEC-1462 five-stage Phase3 index/artifact upload; DEC-1466 checkout-before-index chronology; and DEC-1477 completed workflow-run timestamp envelope checks. The composed reviewer imports these modules and automatically inherits the uniform exact-time behavior.
 
