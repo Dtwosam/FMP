@@ -1,0 +1,9 @@
+# DEC-1501 — Exact stdout delivery required for offline CI verdict success
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1746 at `061196e38fe136cbacb52e0acc437934e1118ac6`. Adds **10 synthetic unittest methods**, **2,254 proposed source-defined tests**.
+
+The stdin-only offline evidence review command wrote a JSON verdict to stdout without verifying how many characters were actually accepted. A stream could report a short, excessive, unknown or boolean count and still cause the command to exit zero for source-consistent input. Similarly, an output-side I/O exception could escape and reveal untrusted implementation context. Emit exactly one safe compact JSON verdict, require the stream's `write` method to return a plain `int` equal to the encoded verdict length, and return exit code 2 if output is incomplete, unexpected or raises a common exception. Do not attempt secondary output on a failed stream; it cannot be trusted. No caller-supplied logs or file contents are emitted.
+
+Ten tests cover short/zero/overreported/unknown/boolean counts, stdout OS/Unicode/runtime errors, a complete positive single-line verdict, and malformed input remaining nonzero. One older mock output fixture is updated to honor the standard text-stream `write` contract. **Exit 0 means only local caller-supplied source consistency, never permission to execute annual research.**
+
+Own exact-head Phase 3 and full historical/general CI with qualified independent review mandatory. DEC-650/#820 witnessed protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected annual 2023 run385/attempt1 server admission remain **BLOCKED**. No protected runs/retries, originals/archive/artifacts, installed workflow/security setting changes, merges, deployments or trading.

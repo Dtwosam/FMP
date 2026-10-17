@@ -53,9 +53,17 @@ def run_stdin_review(input_stream, output_stream):
     else:
         verdict = envelope.review_bundle_json_text(raw)
     # Never echo supplied evidence. Only machine-readable verdict fields.
-    output_stream.write(json.dumps(verdict, sort_keys=True,
-                                   ensure_ascii=True,
-                                   separators=(",", ":")) + "\n")
+    # Refuse reported short/unknown writes: a partially emitted JSON record
+    # must not be mistaken for a successful machine-consumable verdict.
+    try:
+        encoded = (json.dumps(verdict, sort_keys=True, ensure_ascii=True,
+                              separators=(",", ":")) + "\n")
+        written = output_stream.write(encoded)
+        if type(written) is not int or written != len(encoded):
+            return 2
+    except (OSError, UnicodeError, ValueError, TypeError, RuntimeError,
+            RecursionError, AssertionError):
+        return 2
     # Zero is merely *offline source consistency*, never execution consent.
     return 0 if verdict["source_consistency"] is True else 2
 
@@ -342,6 +350,7 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
                 self.writes = []
             def write(self, value):
                 self.writes.append(value)
+                return len(value)
         target = Capture()
         rc = run_stdin_review(_ShortReadTextStream(json.dumps(self.bundle), 2), target)
         self.assertEqual(rc, 0)
@@ -538,6 +547,86 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         self.assertEqual(chars_read, 0)
         self.assertNotIn("private-source-sentinel", output)
         self.assertEqual(len(result), 5)
+
+
+    def test_stdin_stdout_short_write_forces_nonzero_exit(self):
+        class ShortOutput:
+            def write(self, value):
+                return len(value)-1
+        status = run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), ShortOutput())
+        self.assertEqual(status, 2)
+
+    def test_stdin_stdout_zero_write_forces_nonzero_exit(self):
+        class NoOutput:
+            def write(self, value):
+                return 0
+        status = run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), NoOutput())
+        self.assertEqual(status, 2)
+
+    def test_stdin_stdout_overreported_count_forces_nonzero_exit(self):
+        class OverreportingOutput:
+            def write(self, value):
+                return len(value)+1
+        status = run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), OverreportingOutput())
+        self.assertEqual(status, 2)
+
+    def test_stdin_stdout_unknown_count_forces_nonzero_exit(self):
+        class UnknownOutput:
+            def write(self, value):
+                return None
+        status = run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), UnknownOutput())
+        self.assertEqual(status, 2)
+
+    def test_stdin_stdout_bool_count_not_treated_as_integer(self):
+        class BooleanOutput:
+            def write(self, value):
+                return True
+        status = run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), BooleanOutput())
+        self.assertEqual(status, 2)
+
+    def test_stdin_stdout_oserror_is_safe_nonzero_exit(self):
+        class BrokenOutput:
+            def write(self, value):
+                raise OSError("protected-evidence-canary")
+        status = run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), BrokenOutput())
+        self.assertEqual(status, 2)
+
+    def test_stdin_stdout_unicode_error_is_safe_nonzero_exit(self):
+        class BrokenOutput:
+            def write(self, value):
+                raise UnicodeError("source-canary")
+        status = run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), BrokenOutput())
+        self.assertEqual(status, 2)
+
+    def test_stdin_stdout_runtime_error_is_safe_nonzero_exit(self):
+        class BrokenOutput:
+            def write(self, value):
+                raise RuntimeError("source-canary")
+        status = run_stdin_review(
+            io.StringIO(json.dumps(self.bundle)), BrokenOutput())
+        self.assertEqual(status, 2)
+
+    def test_stdin_stdout_regular_full_write_has_one_safe_record(self):
+        status, record = self.run_fixture()
+        self.assertEqual(status, 0)
+        self.assertTrue(record["source_consistency"])
+        self.assertEqual(len(self.stdout.getvalue().splitlines()), 1)
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_invalid_bundle_regular_full_write_remains_nonzero(self):
+        status, record = self.run_raw('{"invalid":"canary"}')
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_KEY_INVENTORY_UNREVIEWED",
+                      record["diagnostics"])
+        self.assertNotIn("canary", self.stdout.getvalue())
+        self.assertFalse(record["can_authorize_annual_run"])
 
 
 if __name__ == "__main__":
