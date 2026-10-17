@@ -58,6 +58,30 @@ def parse_phase3_log_evidence(raw_log, run_id, expected_merge_sha):
     }
     if any(len(records) != 1 for records in found.values()):
         return None, None, ("PHASE3_RAW_LOG_STAGE_CARDINALITY_UNREVIEWED",)
+    # An otherwise valid five-stage trace must not override an additional
+    # malformed or contradictory index/receipt line. Do not match arbitrary
+    # console comments: restrict to actual line shapes emitted by this step.
+    unsupported = []
+    for line in raw_log.splitlines():
+        if re.match(PREFIX, line) is None:
+            continue
+        payload = line.split("Z ", 1)[1]
+        is_index = payload.startswith("{") and '"code_commit"' in payload
+        is_name = payload.startswith("  name: ") and (
+            "phase3-backtester-acceptance" in payload)
+        is_final = (payload.startswith("Artifact phase3-backtester-acceptance")
+                    and "successfully finalized" in payload)
+        is_uploaded = (payload.startswith("Artifact phase3-backtester-acceptance")
+                       and "has been successfully uploaded" in payload)
+        is_url = payload.startswith("Artifact download URL: ")
+        if ((is_index and INDEX.fullmatch(line) is None) or
+                (is_name and NAME.fullmatch(line) is None) or
+                (is_final and FINAL.fullmatch(line) is None) or
+                (is_uploaded and UPLOAD.fullmatch(line) is None) or
+                (is_url and URL.fullmatch(line) is None)):
+            unsupported.append(line)
+    if unsupported:
+        return None, None, ("PHASE3_RAW_LOG_CONFLICTING_STAGE_UNREVIEWED",)
     stage = [found[name][0] for name in patterns]
     issues = []
     if [i for i, _ in stage] != sorted(i for i, _ in stage):
@@ -295,3 +319,56 @@ class Phase3LogEvidenceIsNotProtectedResearchPermission(unittest.TestCase):
         self.assertEqual(errors, ())
         self.assertEqual(upload["id"], self.artifact_id)
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", errors)
+
+    def test_other_json_index_field_order_is_not_ignored(self):
+        self.lines.append(
+            "2026-10-17T10:45:01.1000000Z "
+            '{"protocol":"fmp-phase3-acceptance-fixture-v1",'
+            '"code_commit":"' + self.merge + '"}')
+        self.assertIn("PHASE3_RAW_LOG_CONFLICTING_STAGE_UNREVIEWED",
+                      self.verdict()[2])
+
+    def test_extra_broken_artifact_name_line_is_not_ignored(self):
+        self.lines.append(
+            "2026-10-17T10:45:01.1000000Z   name: " + self.name + "-changed")
+        self.assertIn("PHASE3_RAW_LOG_CONFLICTING_STAGE_UNREVIEWED",
+                      self.verdict()[2])
+
+    def test_extra_malformed_finalize_line_is_not_ignored(self):
+        self.lines.append(
+            "2026-10-17T10:45:01.1000000Z Artifact " + self.name +
+            ".zip successfully finalized. Artifact ID WRONG")
+        self.assertIn("PHASE3_RAW_LOG_CONFLICTING_STAGE_UNREVIEWED",
+                      self.verdict()[2])
+
+    def test_extra_malformed_successful_upload_line_is_not_ignored(self):
+        self.lines.append(
+            "2026-10-17T10:45:01.1000000Z Artifact " + self.name +
+            " has been successfully uploaded! Final size is zero bytes.")
+        self.assertIn("PHASE3_RAW_LOG_CONFLICTING_STAGE_UNREVIEWED",
+                      self.verdict()[2])
+
+    def test_extra_download_url_with_wrong_domain_does_not_pass(self):
+        self.lines.append(
+            "2026-10-17T10:45:01.1000000Z Artifact download URL: "
+            "https://other.example/actions/runs/10/artifacts/20")
+        self.assertIn("PHASE3_RAW_LOG_CONFLICTING_STAGE_UNREVIEWED",
+                      self.verdict()[2])
+
+    def test_unrelated_upload_action_status_is_allowed(self):
+        self.lines.append(
+            "2026-10-17T10:45:01.1000000Z Artifact name is valid!")
+        self.assertEqual(self.verdict()[2], ())
+
+    def test_unrelated_shell_echo_of_code_commit_is_ignored(self):
+        self.lines.append(
+            "2026-10-17T10:45:01.1000000Z assertion: "
+            "index['code_commit'] == os.environ['GITHUB_SHA']")
+        self.assertEqual(self.verdict()[2], ())
+
+    def test_unreviewed_extra_phase3_record_never_grants_annual(self):
+        self.lines.append(
+            "2026-10-17T10:45:01.1000000Z Artifact download URL: malformed")
+        self.assertIn("PHASE3_RAW_LOG_CONFLICTING_STAGE_UNREVIEWED",
+                      self.verdict()[2])
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[2])
