@@ -6,7 +6,7 @@ workflow dispatch, merging, or trading.
 from __future__ import annotations
 import re
 import unittest
-from datetime import datetime
+from test_dec1481_exact_utc_nanosecond_source_time import reviewed_utc_nanoseconds
 
 PREFIX = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z "
 FETCH = re.compile(PREFIX + r"\[command\]/usr/bin/git .*?\bfetch\b .*?"
@@ -67,17 +67,14 @@ def parse_runner_checkout(raw_log, pr_number, head_sha, base_sha):
     # A line-order-only check can accept transplanted stages from logs
     # with impossible or reversed timestamps.
     all_lines = raw_log.splitlines()
-    try:
-        stamps = [
-            datetime.fromisoformat(all_lines[index].split(" ", 1)[0].replace(
-                "Z", "+00:00"))
-            for index in (i, j, k)
-        ]
-    except (ValueError, OverflowError, TypeError):
+    stamps = [
+        reviewed_utc_nanoseconds(all_lines[index].split(" ", 1)[0])
+        for index in (i, j, k)
+    ]
+    if any(stamp is None for stamp in stamps):
         issues.append("RUNNER_LOG_TIMESTAMP_UNREVIEWED")
-    else:
-        if not stamps[0] < stamps[1] < stamps[2]:
-            issues.append("RUNNER_LOG_TIMESTAMP_ORDER_UNREVIEWED")
+    elif not stamps[0] < stamps[1] < stamps[2]:
+        issues.append("RUNNER_LOG_TIMESTAMP_ORDER_UNREVIEWED")
     if fetch_pr != str(pr_number) or checkout_pr != str(pr_number):
         issues.append("RUNNER_LOG_PR_REF_MISMATCH")
     if not full_sha.startswith(short_sha):
@@ -362,3 +359,18 @@ class ImmutableGitFetchCheckoutHeadLogTrace(unittest.TestCase):
         self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
                       self.verdict()[1])
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])
+
+    def test_fetch_checkout_head_times_one_hundred_ns_apart_pass(self):
+        for i, fraction in enumerate(("0000001", "0000002", "0000003")):
+            self.lines[i] = re.sub(
+                r"^\S+", "2026-10-16T23:10:55." + fraction + "Z",
+                self.lines[i])
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_head_one_hundred_ns_before_checkout_is_rejected(self):
+        for i, fraction in enumerate(("0000001", "0000003", "0000002")):
+            self.lines[i] = re.sub(
+                r"^\S+", "2026-10-16T23:10:55." + fraction + "Z",
+                self.lines[i])
+        self.assertIn("RUNNER_LOG_TIMESTAMP_ORDER_UNREVIEWED",
+                      self.verdict()[1])

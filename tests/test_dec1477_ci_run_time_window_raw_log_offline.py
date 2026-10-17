@@ -4,7 +4,7 @@ This is source consistency over caller-supplied metadata, not an authenticated
 GitHub provider/job attestation or protected annual-run authorization.
 """
 from __future__ import annotations
-from datetime import datetime
+from test_dec1481_exact_utc_nanosecond_source_time import reviewed_utc_nanoseconds
 import re
 import unittest
 
@@ -16,12 +16,7 @@ REQUIRED = frozenset(("tests", "phase3-acceptance"))
 
 
 def _utc(value):
-    if type(value) is not str or UTC_TIME.fullmatch(value) is None:
-        return None
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except (ValueError, OverflowError):
-        return None
+    return reviewed_utc_nanoseconds(value)
 
 
 def review_both_run_log_windows(run_snapshots, logs_by_run_id):
@@ -197,3 +192,21 @@ class ObservedRecoveredCIWorkflowRunWindows(unittest.TestCase):
     def test_run_window_consistency_never_authorizes_annual_run(self):
         self.assertEqual(self.verdict(), ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
+
+    def test_log_line_within_submicrosecond_run_window_passes(self):
+        self.runs[0].update({
+            "created_at": "2026-10-17T11:49:00Z",
+            "run_started_at": "2026-10-17T11:49:01.0000001Z",
+            "updated_at": "2026-10-17T11:49:01.0000003Z",
+        })
+        self.logs[39030113645] = "2026-10-17T11:49:01.0000002Z reviewed"
+        self.assertEqual(self.verdict(), ())
+
+    def test_log_line_exceeding_run_end_by_hundred_ns_fails(self):
+        self.runs[0].update({
+            "created_at": "2026-10-17T11:49:00Z",
+            "run_started_at": "2026-10-17T11:49:01.0000001Z",
+            "updated_at": "2026-10-17T11:49:01.0000003Z",
+        })
+        self.logs[39030113645] = "2026-10-17T11:49:01.0000004Z unreviewed"
+        self.assertIn("tests_LOG_OUTSIDE_RUN_WINDOW", self.verdict())

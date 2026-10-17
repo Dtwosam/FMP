@@ -5,7 +5,7 @@ artifacts or accesses protected originals, dispatch, brokers or security.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from test_dec1481_exact_utc_nanosecond_source_time import reviewed_utc_nanoseconds
 import json
 import unittest
 
@@ -44,16 +44,14 @@ def review_phase3_checkout_then_acceptance(raw_log, number, head, base,
         index_i, _ = index_found[0]
         if checkout_i >= index_i:
             issues.append("PHASE3_ACCEPTANCE_GENERATED_BEFORE_CHECKOUT")
-        try:
-            checkout_at = datetime.fromisoformat(
-                lines[checkout_i].split(" ", 1)[0].replace("Z", "+00:00"))
-            index_at = datetime.fromisoformat(
-                lines[index_i].split(" ", 1)[0].replace("Z", "+00:00"))
-        except (ValueError, OverflowError, TypeError):
+        checkout_at = reviewed_utc_nanoseconds(
+            lines[checkout_i].split(" ", 1)[0])
+        index_at = reviewed_utc_nanoseconds(
+            lines[index_i].split(" ", 1)[0])
+        if checkout_at is None or index_at is None:
             issues.append("PHASE3_CHECKOUT_ACCEPTANCE_TIMESTAMP_UNREVIEWED")
-        else:
-            if not checkout_at < index_at:
-                issues.append("PHASE3_ACCEPTANCE_TIMESTAMP_BEFORE_CHECKOUT")
+        elif not checkout_at < index_at:
+            issues.append("PHASE3_ACCEPTANCE_TIMESTAMP_BEFORE_CHECKOUT")
     return tuple(sorted(set(issues)))
 
 
@@ -161,3 +159,28 @@ class Phase3AcceptanceMustBeAfterItsOwnMergeCheckout(unittest.TestCase):
     def test_temporal_evidence_never_grants_protected_2023_run(self):
         self.assertEqual(self.verdict(), ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
+
+    def test_checkout_head_before_index_by_hundred_ns_passes(self):
+        self.lines[1] = self.lines[1].replace(
+            "2026-10-17T10:44:43.6358903Z",
+            "2026-10-17T10:44:42.6000000Z")
+        self.lines[2] = self.lines[2].replace(
+            "2026-10-17T10:44:43.8544428Z",
+            "2026-10-17T10:44:43.0000001Z")
+        self.lines[3] = self.lines[3].replace(
+            "2026-10-17T10:44:58.9660091Z",
+            "2026-10-17T10:44:43.0000002Z")
+        self.assertEqual(self.verdict(), ())
+
+    def test_index_before_checkout_head_by_hundred_ns_fails(self):
+        self.lines[1] = self.lines[1].replace(
+            "2026-10-17T10:44:43.6358903Z",
+            "2026-10-17T10:44:42.6000000Z")
+        self.lines[2] = self.lines[2].replace(
+            "2026-10-17T10:44:43.8544428Z",
+            "2026-10-17T10:44:43.0000002Z")
+        self.lines[3] = self.lines[3].replace(
+            "2026-10-17T10:44:58.9660091Z",
+            "2026-10-17T10:44:43.0000001Z")
+        self.assertIn("PHASE3_ACCEPTANCE_TIMESTAMP_BEFORE_CHECKOUT",
+                      self.verdict())
