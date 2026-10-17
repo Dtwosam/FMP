@@ -21,6 +21,10 @@ MAX_TEXT_CHARS = 2_000_000
 MAX_BLOB_BYTES = 1_000_000
 MAX_TOTAL_BLOB_BYTES = 4_000_000
 MAX_JSON_NESTING = 512
+VERDICT_FIELDS = frozenset((
+    "source_consistency", "diagnostics", "independent_original_os_proof",
+    "exclusive_server_dispatch_gate_proven", "can_authorize_annual_run",
+))
 REQUIRED = frozenset((
     "schema", "pr", "runs", "jobs_by_run", "compare", "commit", "tree",
     "nodes", "changed_bytes_b64", "ci_workflow_bytes_b64",
@@ -161,6 +165,7 @@ def review_bundle_envelope(envelope):
             OverflowError, UnicodeError, RecursionError) as _:
         return fail_closed("BUNDLE_NESTED_EVIDENCE_UNREVIEWED")
     if (type(verdict) is not dict or
+            set(verdict) != VERDICT_FIELDS or
             verdict.get("independent_original_os_proof") is not False or
             verdict.get("exclusive_server_dispatch_gate_proven") is not False or
             verdict.get("can_authorize_annual_run") is not False or
@@ -660,4 +665,92 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_valid_result_inventory_matches_canonical_fail_closed_shape(self):
+        self.assertEqual(set(fail_closed("SYNTHETIC")), VERDICT_FIELDS)
+        result = self.verdict()
+        self.assertEqual(set(result), VERDICT_FIELDS)
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_extra_secret_result_key_rejected_without_echo(self):
+        from unittest.mock import patch
+        valid = self.verdict()
+        bad = dict(valid, leaked_source_text="protected-source-sentinel")
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+        self.assertNotIn("protected-source-sentinel", repr(result))
+
+    def test_extra_nested_raw_log_payload_rejected(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), raw_runner_logs={"secret": "material"})
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_extra_false_authority_like_field_still_rejected(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), protected_execution_ready=False)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_missing_each_required_result_field_rejected(self):
+        from unittest.mock import patch
+        valid = self.verdict()
+        for missing in sorted(VERDICT_FIELDS):
+            with self.subTest(missing=missing):
+                bad = {k: v for k, v in valid.items() if k != missing}
+                with patch.object(composite, "review_stacked_draft_evidence",
+                                  return_value=bad):
+                    self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_unrecognized_nonstring_result_key_fails_closed(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict())
+        bad[3] = "secret-result"
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_result_dict_subclass_is_not_accepted(self):
+        from unittest.mock import patch
+        class DictSubclass(dict):
+            pass
+        bad = DictSubclass(self.verdict())
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_exact_valid_negative_verdict_preserves_codes(self):
+        from unittest.mock import patch
+        valid = dict(self.verdict())
+        valid["source_consistency"] = False
+        valid["diagnostics"] = ("SYNTHETIC_REVIEW_WARNING",)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=valid):
+            result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ("SYNTHETIC_REVIEW_WARNING",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_stdin_json_verdict_never_serializes_extra_source_field(self):
+        from unittest.mock import patch
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        valid = dict(self.verdict())
+        valid["provider_secret"] = "untrusted-protected-evidence"
+        output = io.StringIO()
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=valid):
+            code = stdin_review.run_stdin_review(
+                io.StringIO(json.dumps(self.envelope)), output)
+        verdict = json.loads(output.getvalue())
+        self.assertEqual(code, 2)
+        self.assertEqual(len(verdict), 5)
+        self.assertIn("BUNDLE_RESULT_SHAPE_UNREVIEWED", verdict["diagnostics"])
+        self.assertNotIn("untrusted-protected-evidence", output.getvalue())
+        self.assertFalse(verdict["can_authorize_annual_run"])
 
