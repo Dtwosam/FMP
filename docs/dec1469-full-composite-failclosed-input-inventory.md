@@ -1,0 +1,9 @@
+# DEC-1469 — Complete composite source-evidence missing-input fail-closed matrix
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1692 DEC-1468 at fa6eea17aa27e006b59f5b8e6c3e5655ff363d33. 19 additional unittest methods, **1950 proposed source-defined methods**.
+
+The combined DEC-1440 reviewer composes fifteen independently supplied PR/CI/Git source evidence payloads. A caller can provide malformed top-level objects or omit a complete evidence category. The whole review must return a structured diagnostic outcome, never Python TypeError/KeyError, never a clean source-consistency result and never protected annual execution permission. The previously fixed DEC-1468 unhashable Phase3 run ID is included as a regression.
+
+This source-only integration matrix constructs one internally consistent synthetic fixture from the current composed reviewer and independently replaces each of its fifteen top-level inputs with None. Nineteen tests additionally check invalid run IDs, nonboolean PR draft status and unexpected production paths. Every malformed case requires a nonempty diagnostic list with all operational authorization fields false. The valid synthetic positive case checks consistency alone, not authentication of any live GitHub source.
+
+Own head-associated PR merge-source-tree Phase3/full historical/general CI and external qualified review required. DEC-650/#820 independent OS original no-write and DEC-651/#821/#779 immutable exclusive one-shot 2023 run385/attempt1 server admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive/artifact access, installed workflow/security mutation, merge, deployment, broker or trading.
