@@ -24,6 +24,8 @@ MAX_BLOB_BYTES = 1_000_000
 MAX_TOTAL_BLOB_BYTES = 4_000_000
 MAX_JSON_NESTING = 512
 MAX_JSON_INTEGER_DIGITS = 64
+MAX_SOURCE_PATH_CHARS = 4096
+MAX_SOURCE_ENTRIES_PER_MAP = 8192
 VERDICT_FIELDS = frozenset((
     "source_consistency", "diagnostics", "independent_original_os_proof",
     "exclusive_server_dispatch_gate_proven", "can_authorize_annual_run",
@@ -97,7 +99,9 @@ def _json_nesting_within_limit(text):
 
 def _reviewed_source_path(path):
     """Require unambiguous repository-relative POSIX source labels."""
-    if type(path) is not str or not path or path.startswith("/") or "\\" in path:
+    if (type(path) is not str or not path or
+            len(path) > MAX_SOURCE_PATH_CHARS or
+            path.startswith("/") or "\\" in path):
         return False
     if ":" in path or not unicodedata.is_normalized("NFC", path):
         return False
@@ -151,6 +155,8 @@ def review_bundle_envelope(envelope):
             converted[key] = decoded
         elif key in BYTES_MAPS:
             decoded = {}
+            if len(value) > MAX_SOURCE_ENTRIES_PER_MAP:
+                return fail_closed("BUNDLE_SOURCE_MAP_OVERSIZE")
             if any(type(path) is not str for path in value):
                 return fail_closed("BUNDLE_SOURCE_PATH_UNREVIEWED")
             for path in sorted(value):
@@ -1070,6 +1076,79 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_previous_valid_source_paths_remain_reviewable(self):
         self.assertTrue(_reviewed_source_path(".github/workflows/tests.yml"))
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_exact_source_path_limit_is_lexically_permitted(self):
+        path = "src/" + "a" * (MAX_SOURCE_PATH_CHARS-4)
+        self.assertEqual(len(path), MAX_SOURCE_PATH_CHARS)
+        self.assertTrue(_reviewed_source_path(path))
+
+    def test_one_above_source_path_limit_is_lexically_rejected(self):
+        path = "src/" + "a" * (MAX_SOURCE_PATH_CHARS-3)
+        self.assertEqual(len(path), MAX_SOURCE_PATH_CHARS+1)
+        self.assertFalse(_reviewed_source_path(path))
+
+    def test_overlong_changed_source_path_fails_without_decoding(self):
+        path = "src/" + "x" * (MAX_SOURCE_PATH_CHARS+1)
+        self.envelope["changed_bytes_b64"][path] = "!"
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_overlong_ci_workflow_source_path_fails(self):
+        path = ".github/workflows/" + "y" * MAX_SOURCE_PATH_CHARS
+        self.envelope["ci_workflow_bytes_b64"][path] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_source_map_over_entry_count_fails_closed(self):
+        self.envelope["changed_bytes_b64"] = {
+            "tests/synthetic_%05d.py" % n: "YQ=="
+            for n in range(MAX_SOURCE_ENTRIES_PER_MAP+1)}
+        self.assert_fails("BUNDLE_SOURCE_MAP_OVERSIZE")
+
+    def test_ci_workflow_map_over_entry_count_fails_closed(self):
+        self.envelope["ci_workflow_bytes_b64"] = {
+            "workflows/synthetic_%05d.yml" % n: "YQ=="
+            for n in range(MAX_SOURCE_ENTRIES_PER_MAP+1)}
+        self.assert_fails("BUNDLE_SOURCE_MAP_OVERSIZE")
+
+    def test_exact_source_map_entry_count_not_rejected_by_count_guard(self):
+        self.envelope["changed_bytes_b64"] = {
+            "tests/synthetic_%05d.py" % n: "YQ=="
+            for n in range(MAX_SOURCE_ENTRIES_PER_MAP)}
+        result = self.verdict()
+        self.assertNotIn("BUNDLE_SOURCE_MAP_OVERSIZE", result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_map_entry_cap_precedes_binary_decoding(self):
+        self.envelope["changed_bytes_b64"] = {
+            "tests/synthetic_%05d.py" % n: "not base64!"
+            for n in range(MAX_SOURCE_ENTRIES_PER_MAP+1)}
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SOURCE_MAP_OVERSIZE",))
+
+    def test_stdin_overlong_source_label_not_echoed(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        path = "src/" + "private-source-sentinel" + "x" * MAX_SOURCE_PATH_CHARS
+        self.envelope["changed_bytes_b64"][path] = "YQ=="
+        out = io.StringIO()
+        status = stdin_review.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), out)
+        self.assertEqual(status, 2)
+        result = json.loads(out.getvalue())
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("private-source-sentinel", out.getvalue())
+
+    def test_inmemory_source_map_count_guard_needs_no_json_text(self):
+        data = dict(self.envelope)
+        data["changed_bytes_b64"] = {"src/a%05d" % i: "" for i in range(MAX_SOURCE_ENTRIES_PER_MAP+1)}
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"], ("BUNDLE_SOURCE_MAP_OVERSIZE",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_source_map_ordinary_fixture_still_consistent_only(self):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
