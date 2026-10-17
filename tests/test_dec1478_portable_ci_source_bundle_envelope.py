@@ -26,6 +26,8 @@ MAX_JSON_NESTING = 512
 MAX_JSON_INTEGER_DIGITS = 64
 MAX_SOURCE_PATH_CHARS = 4096
 MAX_SOURCE_ENTRIES_PER_MAP = 8192
+MAX_RUNS_PER_ENVELOPE = 4096
+MAX_RUN_MAP_ENTRIES = 8192
 VERDICT_FIELDS = frozenset((
     "source_consistency", "diagnostics", "independent_original_os_proof",
     "exclusive_server_dispatch_gate_proven", "can_authorize_annual_run",
@@ -122,11 +124,14 @@ def review_bundle_envelope(envelope):
         return fail_closed("BUNDLE_SHAPE_UNREVIEWED")
     if set(envelope) != REQUIRED:
         return fail_closed("BUNDLE_KEY_INVENTORY_UNREVIEWED")
-    if envelope["schema"] != ENVELOPE_SCHEMA:
+    if (type(envelope["schema"]) is not str or
+            envelope["schema"] != ENVELOPE_SCHEMA):
         return fail_closed("BUNDLE_SCHEMA_UNREVIEWED")
     if type(envelope["runs"]) is not list or any(
             type(envelope[key]) is not dict for key in DICT_KEYS):
         return fail_closed("BUNDLE_CATEGORY_TYPE_UNREVIEWED")
+    if len(envelope["runs"]) > MAX_RUNS_PER_ENVELOPE:
+        return fail_closed("BUNDLE_RUN_COLLECTION_OVERSIZE")
 
     converted = {}
     total_bytes = 0
@@ -136,6 +141,8 @@ def review_bundle_envelope(envelope):
         value = envelope[key]
         if key in ID_MAPS:
             decoded = {}
+            if len(value) > MAX_RUN_MAP_ENTRIES:
+                return fail_closed("BUNDLE_RUN_MAP_OVERSIZE")
             if any(type(k) is not str for k in value):
                 return fail_closed("BUNDLE_RUN_KEY_UNREVIEWED")
             for k in sorted(value):
@@ -1152,5 +1159,65 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_schema_string_subclass_is_rejected(self):
+        class NonPlainSchema(str):
+            pass
+        self.envelope["schema"] = NonPlainSchema(ENVELOPE_SCHEMA)
+        self.assert_fails("BUNDLE_SCHEMA_UNREVIEWED")
+
+    def test_exact_plain_schema_still_passes_source_consistency_only(self):
+        self.assertIs(type(self.envelope["schema"]), str)
+        self.assertTrue(self.verdict()["source_consistency"])
+        self.assertFalse(self.verdict()["can_authorize_annual_run"])
+
+    def test_over_count_top_level_runs_rejected_directly(self):
+        self.envelope["runs"] = [{}] * (MAX_RUNS_PER_ENVELOPE+1)
+        self.assert_fails("BUNDLE_RUN_COLLECTION_OVERSIZE")
+
+    def test_exact_run_collection_limit_is_not_count_rejection(self):
+        self.envelope["runs"] = [{}] * MAX_RUNS_PER_ENVELOPE
+        result = self.verdict()
+        self.assertNotIn("BUNDLE_RUN_COLLECTION_OVERSIZE", result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_jobs_run_map_over_count_rejected(self):
+        self.envelope["jobs_by_run"] = {
+            str(i+1): [] for i in range(MAX_RUN_MAP_ENTRIES+1)}
+        self.assert_fails("BUNDLE_RUN_MAP_OVERSIZE")
+
+    def test_checkout_run_map_over_count_rejected(self):
+        self.envelope["checkout_by_run"] = {
+            str(i+1): {} for i in range(MAX_RUN_MAP_ENTRIES+1)}
+        self.assert_fails("BUNDLE_RUN_MAP_OVERSIZE")
+
+    def test_raw_ci_runner_logs_over_count_rejected(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            str(i+1): "synthetic" for i in range(MAX_RUN_MAP_ENTRIES+1)}
+        self.assert_fails("BUNDLE_RUN_MAP_OVERSIZE")
+
+    def test_raw_ci_receipts_over_count_rejected(self):
+        self.envelope["raw_ci_log_receipts"] = {
+            str(i+1): {} for i in range(MAX_RUN_MAP_ENTRIES+1)}
+        self.assert_fails("BUNDLE_RUN_MAP_OVERSIZE")
+
+    def test_map_over_count_precedes_malformed_run_keys(self):
+        self.envelope["jobs_by_run"] = {
+            "invalid_%05d" % i: [] for i in range(MAX_RUN_MAP_ENTRIES+1)}
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ("BUNDLE_RUN_MAP_OVERSIZE",))
+
+    def test_stdin_oversized_runs_preserves_safe_diagnostics(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as stdin_review
+        self.envelope["runs"] = ["synthetic-sentinel"] * (MAX_RUNS_PER_ENVELOPE+1)
+        out = io.StringIO()
+        status = stdin_review.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_RUN_COLLECTION_OVERSIZE", result["diagnostics"])
+        self.assertNotIn("synthetic-sentinel", out.getvalue())
         self.assertFalse(result["can_authorize_annual_run"])
 
