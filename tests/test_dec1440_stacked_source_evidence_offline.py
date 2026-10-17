@@ -14,12 +14,13 @@ import test_dec1430_reviewed_ci_workflow_blob_source_identity as ci_source
 import test_dec1441_git_tree_sha_chain_source_review as tree_chain
 import test_dec1445_pr_merge_checkout_tree_identity_offline as merge_review
 import test_dec1450_dual_suite_merge_checkout_offline as dual_runner
+import test_dec1447_phase3_acceptance_merge_stamp_offline as phase3_stamps
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                                   tree, nodes, changed_bytes, ci_workflow_bytes,
                                   full_tree_snapshots, merge_checkout_snapshot,
-                                  checkout_by_run):
+                                  checkout_by_run, phase3_evidence_snapshot):
     """Return diagnostic shape only; never authorization or authenticated proof."""
     # Run metadata head_sha is an association to the PR branch head, not
     # evidence that checkout HEAD equaled that SHA. Review the actual merge.
@@ -45,8 +46,24 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
             e.get("merge_commit"), e.get("head_commit"))
     else:
         dual_check = ("DUAL_CHECKOUT_INPUT_UNREVIEWED",)
+    if (type(phase3_evidence_snapshot) is not dict or
+            type(merge_checkout_snapshot) is not dict or
+            type(runs) is not list or
+            not all(type(run) is dict for run in runs)):
+        phase3_check = ("PHASE3_ACCEPTANCE_SNAPSHOT_UNREVIEWED",)
+    else:
+        phase3_runs = [r for r in runs if r.get("name") == "phase3-acceptance"]
+        if len(phase3_runs) != 1:
+            phase3_check = ("PHASE3_ACCEPTANCE_RUN_UNREVIEWED",)
+        else:
+            e = phase3_evidence_snapshot
+            merge = merge_checkout_snapshot.get("merge_commit")
+            merge_sha = merge.get("sha") if type(merge) is dict else None
+            phase3_check = phase3_stamps.review_phase3_merge_evidence(
+                phase3_runs[0], merge_sha, e.get("index"), e.get("upload"))
     checks = (
         merge_check,
+        phase3_check,
         dual_check,
         jobs_review.review_exact_pr_ci_jobs(pr, runs, jobs_by_run),
         file_review.review_draft_file_inventory_counts(pr, compare, commit),
@@ -185,6 +202,23 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             }
             for r in self.runs
         }
+        self.phase3_evidence = {
+            "index": {
+                "protocol": "fmp-phase3-acceptance-fixture-v1",
+                "fixture_id": "phase3-merged-main-acceptance-v1",
+                "code_commit": self.merge_checkout["merge_commit"]["sha"],
+                "scenario_count": 5,
+                "scenarios": [
+                    {"name": scenario, "bytes_equal": True}
+                    for scenario in phase3_stamps.SCENARIOS
+                ],
+            },
+            "upload": {
+                "name": "phase3-backtester-acceptance-" +
+                        self.merge_checkout["merge_commit"]["sha"],
+                "id": 7777, "run_id": 8000, "finalized": True,
+            },
+        }
         self.ci_bytes = dict(self.original_ci_bytes)
 
     def verdict(self):
@@ -192,7 +226,7 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             self.pr, self.runs, self.jobs, self.compare, self.commit,
             self.tree, self.nodes, self.changed, self.ci_bytes,
             self.full_trees, self.merge_checkout,
-            self.runner_checks)
+            self.runner_checks, self.phase3_evidence)
 
     def test_consistent_synthetic_bundle_passes_only_source_consistency(self):
         result = self.verdict()
@@ -442,3 +476,45 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_phase3_acceptance_merge_stamp_is_required(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertEqual(self.phase3_evidence["index"]["code_commit"],
+                         self.merge_checkout["merge_commit"]["sha"])
+
+    def test_missing_phase3_acceptance_snapshot_blocks_composite(self):
+        self.phase3_evidence = None
+        self.assertIn("PHASE3_ACCEPTANCE_SNAPSHOT_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_acceptance_index_head_sha_instead_of_merge_sha_blocks(self):
+        self.phase3_evidence["index"]["code_commit"] = self.pr["head_sha"]
+        self.assertIn("PHASE3_INDEX_COMMIT_NOT_TESTED_MERGE",
+                      self.verdict()["diagnostics"])
+
+    def test_artifact_named_for_head_not_merge_sha_blocks(self):
+        self.phase3_evidence["upload"]["name"] = (
+            "phase3-backtester-acceptance-" + self.pr["head_sha"])
+        self.assertIn("PHASE3_UPLOAD_MERGE_SHA_NAME_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_wrong_acceptance_artifact_run_id_blocks(self):
+        self.phase3_evidence["upload"]["run_id"] = 8001
+        self.assertIn("PHASE3_UPLOAD_RUN_ASSOCIATION_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_unfinalized_acceptance_artifact_blocks(self):
+        self.phase3_evidence["upload"]["finalized"] = False
+        self.assertIn("PHASE3_UPLOAD_NOT_FINALIZED",
+                      self.verdict()["diagnostics"])
+
+    def test_missing_acceptance_scenario_blocks(self):
+        self.phase3_evidence["index"]["scenarios"].pop()
+        self.assertIn("PHASE3_SCENARIO_NAMES_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_dual_checkout_and_acceptance_stamps_never_authorize_run385(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"], result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])

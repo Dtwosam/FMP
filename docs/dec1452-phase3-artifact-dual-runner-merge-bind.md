@@ -1,0 +1,7 @@
+# DEC-1452 — Bind Phase3 acceptance stamp to both CI runner checkouts
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child #1675 DEC-1451 at d2dd5c39e295fa4b088f3c63706f81580f16d365. Eight new unittest methods, **1,788 proposed source-defined methods**.
+
+DEC-1451 requires both successful CI runner logs to show the same full PR merge SHA. DEC-1447 separately verified that the Phase3 acceptance index and finalized artifact receipt use the tested merge SHA, not the pull request head association. This source-only child requires both checks together in the combined reviewer: the Phase3 run's index code_commit, protocol, five deterministic scenarios, finalized artifact name and exact run ID must all match the merge SHA verified from both runner checkouts. Tests reject absent index, head-stamped artifact, wrong artifact run ID, missing scenario and unfinalized upload.
+
+No artifacts are downloaded and no network call is made by these tests. Caller-provided records require independent GitHub authentication; consistent source evidence does not constitute an independent protected data OS no-write witness or immutable one-shot run admission. Own head-associated PR merge-source-tree Phase3/full historical CI and external qualified review required. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**. No protected annual execution/retry, original/archive access, installed workflow/security mutations, merge, deployment, trading.
