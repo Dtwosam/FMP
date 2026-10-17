@@ -279,7 +279,9 @@ def _reviewed_source_path(path):
         ord(char) == 0x034F or  # combining grapheme joiner
         0x180B <= ord(char) <= 0x180D or  # Mongolian variation selectors
         0xFE00 <= ord(char) <= 0xFE0F or  # BMP variation selectors
-        0xE0100 <= ord(char) <= 0xE01EF  # supplementary selectors
+        0xE0100 <= ord(char) <= 0xE01EF or  # supplementary selectors
+        0xFDD0 <= ord(char) <= 0xFDEF or  # Unicode noncharacters
+        (ord(char) & 0xFFFE) == 0xFFFE  # last two code points of each plane
         for char in path)
 
 
@@ -2693,5 +2695,52 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_noncharacter_fdd0_source_path_rejected(self):
+        self.assertFalse(_reviewed_source_path("src/\ufdd0.py"))
+
+    def test_noncharacter_fdef_source_path_rejected(self):
+        self.assertFalse(_reviewed_source_path("src/\ufdef.py"))
+
+    def test_noncharacter_fffe_source_path_rejected(self):
+        self.assertFalse(_reviewed_source_path("src/\ufffe.py"))
+
+    def test_noncharacter_ffff_source_path_rejected(self):
+        self.assertFalse(_reviewed_source_path("src/\uffff.py"))
+
+    def test_supplementary_plane_noncharacter_rejected(self):
+        self.assertFalse(_reviewed_source_path("src/\U0001fffe.py"))
+
+    def test_highest_unicode_noncharacter_rejected(self):
+        self.assertFalse(_reviewed_source_path("src/\U0010ffff.py"))
+
+    def test_noncharacter_in_changed_source_map_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["src/\ufdd0canary.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_noncharacter_in_workflow_source_map_fails_closed(self):
+        self.envelope["ci_workflow_bytes_b64"]["ci/\ufffe.yml"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_noncharacter_stdin_source_name_never_echoed(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["src/private\U0010ffffcanary.py"] = "YQ=="
+        out = io.StringIO()
+        rc = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), out)
+        verdict = json.loads(out.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", verdict["diagnostics"])
+        self.assertNotIn("private", out.getvalue())
+        self.assertFalse(verdict["can_authorize_annual_run"])
+
+    def test_noncharacter_guard_preserves_plain_unicode_source_only(self):
+        self.assertTrue(_reviewed_source_path("docs/café.py"))
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
