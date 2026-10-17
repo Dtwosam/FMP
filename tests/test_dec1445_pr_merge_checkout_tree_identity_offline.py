@@ -12,7 +12,8 @@ HEX = re.compile(r"[0-9a-f]{40}\Z")
 
 
 def review_pr_merge_checkout(pr, run, merge_ref, merge_commit, head_commit,
-                             checkout_ref, checkout_sha_prefix):
+                             checkout_ref, checkout_sha_prefix,
+                             checkout_fetch_sha):
     """Consistency-only review of caller-supplied REST and runner log fields."""
     snapshots = (pr, run, merge_ref, merge_commit, head_commit)
     if not all(type(x) is dict for x in snapshots):
@@ -65,6 +66,11 @@ def review_pr_merge_checkout(pr, run, merge_ref, merge_commit, head_commit,
             type(merge_sha) is str and
             merge_sha.startswith(checkout_sha_prefix)):
         issues.append("RUNNER_CHECKOUT_SHA_PREFIX_MISMATCH")
+    if type(checkout_fetch_sha) is not str or HEX.fullmatch(
+            checkout_fetch_sha) is None:
+        issues.append("RUNNER_FETCH_FULL_SHA_UNREVIEWED")
+    elif checkout_fetch_sha != merge_sha:
+        issues.append("RUNNER_FETCH_FULL_SHA_MISMATCH")
     if head == merge_sha:
         issues.append("HEAD_AND_MERGE_COMMIT_UNEXPECTEDLY_EQUAL")
     return tuple(sorted(set(issues)))
@@ -91,12 +97,13 @@ class PassingPRCIIsTestedMergeTreeNotStandaloneHead(unittest.TestCase):
         self.head_commit = {"sha": self.head, "tree": {"sha": self.tree}}
         self.checkout_ref = "refs/remotes/pull/1664/merge"
         self.checkout_sha_prefix = "5857e06"
+        self.checkout_fetch_sha = self.merge
 
     def verdict(self):
         return review_pr_merge_checkout(
             self.pr, self.run, self.merge_ref,
             self.merge_commit, self.head_commit, self.checkout_ref,
-            self.checkout_sha_prefix)
+            self.checkout_sha_prefix, self.checkout_fetch_sha)
 
     def test_observed_real_1664_merge_tree_and_commit_shape(self):
         self.assertEqual(self.verdict(), ())
@@ -169,9 +176,26 @@ class PassingPRCIIsTestedMergeTreeNotStandaloneHead(unittest.TestCase):
             review_pr_merge_checkout([], self.run, self.merge_ref,
                                      self.merge_commit, self.head_commit,
                                      self.checkout_ref,
-                                     self.checkout_sha_prefix),
+                                     self.checkout_sha_prefix, self.checkout_fetch_sha),
             ("MERGE_CHECKOUT_INPUT_UNREVIEWED",))
 
     def test_matching_merge_tree_is_never_a_protected_execution_gate(self):
         self.assertEqual(self.verdict(), ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
+
+    def test_full_fetch_sha_and_merge_object_match(self):
+        self.assertEqual(self.checkout_fetch_sha, self.merge)
+        self.assertEqual(self.verdict(), ())
+
+    def test_absent_full_fetch_sha_is_rejected(self):
+        self.checkout_fetch_sha = None
+        self.assertIn("RUNNER_FETCH_FULL_SHA_UNREVIEWED", self.verdict())
+
+    def test_wrong_full_fetched_sha_is_rejected(self):
+        self.checkout_fetch_sha = self.head
+        self.assertIn("RUNNER_FETCH_FULL_SHA_MISMATCH", self.verdict())
+
+    def test_abbreviated_head_line_alone_is_not_full_identity(self):
+        self.checkout_sha_prefix = self.merge[:7]
+        self.checkout_fetch_sha = ""
+        self.assertIn("RUNNER_FETCH_FULL_SHA_UNREVIEWED", self.verdict())
