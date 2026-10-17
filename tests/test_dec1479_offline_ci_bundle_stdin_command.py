@@ -30,8 +30,9 @@ def _read_complete_bounded_stdin(input_stream):
     try:
         while True:
             remaining = envelope.MAX_TEXT_CHARS - size + 1
-            part = input_stream.read(min(MAX_STDIN_READ_CHARS, remaining))
-            if type(part) is not str:
+            requested = min(MAX_STDIN_READ_CHARS, remaining)
+            part = input_stream.read(requested)
+            if type(part) is not str or len(part) > requested:
                 return None, "BUNDLE_STDIN_READ_UNREVIEWED"
             size += len(part)
             if size > envelope.MAX_TEXT_CHARS:
@@ -290,6 +291,85 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
             diagnostic_sets.append(json.loads(output.getvalue())["diagnostics"])
         self.assertEqual(diagnostic_sets,
                          [["BUNDLE_JSON_GRAMMAR_UNREVIEWED"]] * 4)
+
+
+    def test_nonconforming_stream_overreturn_rejected(self):
+        raw = json.dumps(self.bundle) + " " * MAX_STDIN_READ_CHARS
+        class Overreturn:
+            def read(self, n):
+                return raw
+        status, record = self.run_stream(Overreturn())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_overreturn_after_valid_prefix_rejected(self):
+        raw = json.dumps(self.bundle)
+        class LateOverreturn:
+            calls = 0
+            def read(self, n):
+                self.calls += 1
+                return raw if self.calls == 1 else " " * (n + 1)
+        status, record = self.run_stream(LateOverreturn())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+
+    def test_exact_per_read_cap_accepts_complete_json(self):
+        raw = json.dumps(self.bundle)
+        stream = _ShortReadTextStream(raw + " " * (MAX_STDIN_READ_CHARS-len(raw)), MAX_STDIN_READ_CHARS)
+        status, record = self.run_stream(stream)
+        self.assertEqual(status, 0)
+        self.assertLessEqual(max(stream.request_sizes), MAX_STDIN_READ_CHARS)
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_exact_total_cap_accepts_consistency_only(self):
+        raw = json.dumps(self.bundle)
+        status, record = self.run_stream(io.StringIO(raw + " " * (envelope.MAX_TEXT_CHARS-len(raw))))
+        self.assertEqual(status, 0)
+        self.assertTrue(record["source_consistency"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_one_above_total_cap_is_rejected(self):
+        raw = json.dumps(self.bundle)
+        status, record = self.run_stream(io.StringIO(raw + " " * (envelope.MAX_TEXT_CHARS+1-len(raw))))
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_JSON_TEXT_UNREVIEWED", record["diagnostics"])
+
+    def test_only_one_verdict_written_after_many_short_reads(self):
+        class Capture:
+            def __init__(self):
+                self.writes = []
+            def write(self, value):
+                self.writes.append(value)
+        target = Capture()
+        rc = run_stdin_review(_ShortReadTextStream(json.dumps(self.bundle), 2), target)
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(target.writes), 1)
+        self.assertEqual(len(target.writes[0].splitlines()), 1)
+
+    def test_late_value_error_has_safe_single_verdict(self):
+        raw = json.dumps(self.bundle)
+        class FailLate:
+            calls = 0
+            def read(self, n):
+                self.calls += 1
+                if self.calls == 1:
+                    return raw
+                raise ValueError("protected-sentinel")
+        status, record = self.run_stream(FailLate())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+        self.assertNotIn("protected-sentinel", self.stdout.getvalue())
+
+    def test_str_subclass_chunk_fails_type_boundary(self):
+        class Substr(str):
+            pass
+        class Fake:
+            def read(self, n):
+                return Substr(json.dumps(self.bundle))
+        status, record = self.run_stream(Fake())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
 
 
 if __name__ == "__main__":
