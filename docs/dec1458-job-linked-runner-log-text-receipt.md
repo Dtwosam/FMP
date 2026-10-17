@@ -1,0 +1,9 @@
+# DEC-1458 — Exact GitHub CI job ID bound to raw runner log text receipt
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1681 DEC-1457 at 1efd4513ec3b998594567e9989ea8e7402308cfe. Adds 17 source-defined unittest methods; **1847 proposed methods**.
+
+The composed source reviewer now requires both raw runner checkout log texts and reconciles their exact fetched PR merge SHAs. Until now, however, those texts were indexed by the workflow run ID alone, without an explicit link to the actual GitHub Actions job that executed the historical or Phase3 workflow. A stale log belonging to a different job could therefore be supplied under a valid run key.
+
+This offline reviewer accepts independently obtained GitHub run+job snapshots, each raw log text, and per-run receipts that bind positive unique job IDs, exact run IDs, reviewed job names (unit-tests/acceptance), byte length and SHA-256 of the *UTF-8-encoded supplied text*. It checks exact two-run/two-job inventory, prevents swapped receipts, malformed bool identifiers, changed text and incomplete log inventories. Seventeen test fixtures exercise these conditions. **A matching receipt is not provider-signed proof**: anyone controlling the untrusted input can rewrite both the text and its digest. Authentication of raw job logs through GitHub remains an independent review task.
+
+This standalone source-only check does not fetch from GitHub, access protected annual archives/originals, change installed YAML or security controls, merge or trade. Its own head-associated PR merge-source-tree Phase3 and full historical/general CI plus qualified external review required. DEC-650/#820 actual OS original no-write and DEC-651/#821/#779 exclusive immutable 2023 run385/attempt1 admission remain **BLOCKED**.
