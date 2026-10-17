@@ -1,0 +1,9 @@
+# DEC-1457 — Monotonic actual runner checkout log timestamps
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child of #1680 DEC-1456 at b450f8c3bd1b5312ddedd57f64935d7ec4db2f4c. Seven additional source-defined tests; **1,830 proposed methods**.
+
+The DEC-1454 checkout parser already requires the three log lines in their sequence (full immutable git fetch SHA, PR merge checkout, checked-out HEAD). It can still accept three lines whose ISO UTC timestamps are reversed or malformed, because line-order consistency does not imply chronological consistency. An independently retrieved log may be stale, merged from other runs, or synthetically malformed. This child validates the three reviewed timestamp strings as actual calendar datetimes and enforces strictly increasing fetch/checkout/HEAD timestamps.
+
+This is an offline parser regression improvement only. Seven tests cover valid monotone order, reversed/equal times, impossible months/days, and the no-authorization safety invariant. Timestamp consistency does not authenticate the GitHub log provider and does not prove OS original-data protection or immutable one-shot server authorization. The parser remains a source-evidence check, never a protected annual gate.
+
+Own head-associated PR merge-source-tree Phase3 and full historical/general CI plus qualified external review required. DEC-650/#820 real OS-enforced protected original no-write and DEC-651/#821/#779 exclusive immutable 2023 annual run385/attempt1 server admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive read, installed workflow/permissions/rulesets mutation, merge, deployment or trading.
