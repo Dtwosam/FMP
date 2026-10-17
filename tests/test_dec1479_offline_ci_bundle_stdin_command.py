@@ -40,7 +40,8 @@ def _read_complete_bounded_stdin(input_stream):
             if not part:
                 return "".join(chunks), None
             chunks.append(part)
-    except (OSError, UnicodeError, ValueError, TypeError, RecursionError):
+    except (OSError, UnicodeError, ValueError, TypeError, RuntimeError,
+            RecursionError):
         return None, "BUNDLE_STDIN_READ_UNREVIEWED"
 
 
@@ -362,14 +363,86 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         self.assertNotIn("protected-sentinel", self.stdout.getvalue())
 
     def test_str_subclass_chunk_fails_type_boundary(self):
+        raw = json.dumps(self.bundle)
         class Substr(str):
             pass
         class Fake:
             def read(self, n):
-                return Substr(json.dumps(self.bundle))
+                return Substr(raw)
         status, record = self.run_stream(Fake())
         self.assertEqual(status, 2)
         self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+
+
+    def test_subclass_zero_length_chunk_refused_not_treated_as_eof(self):
+        class TextSubclass(str):
+            pass
+        class SubclassEOF:
+            def read(self, requested):
+                return TextSubclass("")
+        status, record = self.run_stream(SubclassEOF())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+
+    def test_subclass_partial_prefix_cannot_bypass_strict_type(self):
+        raw = json.dumps(self.bundle)
+        class SubclassPrefix:
+            def read(self, requested):
+                return type("EvidenceText", (str,), {})(raw[:10])
+        status, record = self.run_stream(SubclassPrefix())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_subclass_chunk_diagnostic_does_not_echo_sensitive_text(self):
+        class Untrusted(str):
+            pass
+        class Malformed:
+            def read(self, requested):
+                return Untrusted("secret-token-sentinel")
+        status, record = self.run_stream(Malformed())
+        self.assertEqual(status, 2)
+        self.assertEqual(record["diagnostics"], ["BUNDLE_STDIN_READ_UNREVIEWED"])
+        self.assertNotIn("secret-token-sentinel", self.stdout.getvalue())
+
+    def test_runtime_error_from_stream_fails_closed_without_echo(self):
+        class BrokenStream:
+            def read(self, requested):
+                raise RuntimeError("private-evidence-sentinel")
+        status, record = self.run_stream(BrokenStream())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+        self.assertNotIn("private-evidence-sentinel", self.stdout.getvalue())
+
+    def test_runtime_error_after_valid_prefix_fails_closed(self):
+        raw = json.dumps(self.bundle)
+        class BrokenAfterPrefix:
+            calls = 0
+            def read(self, requested):
+                self.calls += 1
+                if self.calls == 1:
+                    return raw
+                raise RuntimeError("late-stream-fault")
+        status, record = self.run_stream(BrokenAfterPrefix())
+        self.assertEqual(status, 2)
+        self.assertFalse(record["source_consistency"])
+        self.assertIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
+
+    def test_plain_string_short_reads_still_pass_after_type_enforcement(self):
+        stream = _ShortReadTextStream(json.dumps(self.bundle), 9)
+        status, record = self.run_stream(stream)
+        self.assertEqual(status, 0)
+        self.assertEqual(record["diagnostics"], [])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_plain_string_empty_eof_is_only_valid_end_marker(self):
+        class EmptyStream:
+            def read(self, requested):
+                return ""
+        status, record = self.run_stream(EmptyStream())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED", record["diagnostics"])
+        self.assertNotIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
 
 
 if __name__ == "__main__":
