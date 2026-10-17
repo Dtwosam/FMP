@@ -45,7 +45,11 @@ def parse_runner_checkout(raw_log, pr_number, head_sha, base_sha):
         if "[command]/usr/bin/git " in line:
             command = line.split("[command]/usr/bin/git ", 1)[1]
             mutating = re.search(
-                r"(?<![\w-])(fetch|checkout|switch|reset)(?![\w-])",
+                # Detect command words, not substrings of paths such as
+                # refs/remotes/pull/N/merge or branch "cherry-pick".
+                r"(?:^|\s)(fetch|checkout|switch|reset|restore|clean|apply|"
+                r"am|cherry-pick|merge|rebase|pull|read-tree|worktree|"
+                r"update-index)(?=\s|$)",
                 command)
             if mutating and not (
                     FETCH.fullmatch(line) or CHECKOUT.fullmatch(line)):
@@ -272,6 +276,89 @@ class ImmutableGitFetchCheckoutHeadLogTrace(unittest.TestCase):
     def test_extra_checkout_evidence_does_not_authorize_run385(self):
         self.lines.append(
             "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git checkout other")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])
+
+    def test_git_restore_worktree_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git restore --worktree .")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_clean_untracked_worktree_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git clean -fd")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_apply_patch_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git apply a.patch")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_am_patch_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git am a.mbox")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_merge_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git merge other")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_rebase_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git rebase other")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_pull_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git pull origin main")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_cherry_pick_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git cherry-pick abc1234")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_read_tree_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git read-tree HEAD")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_worktree_add_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git worktree add /tmp/w HEAD")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_git_update_index_after_checkout_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git update-index --refresh")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_read_only_log_option_with_merge_word_is_allowed(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git log -1 --format=Merge")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_read_only_show_with_refs_pull_merge_path_is_allowed(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git show refs/pull/1664/merge")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_added_source_mutator_does_not_authorize_annual(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git rebase main")
         self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
                       self.verdict()[1])
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])
