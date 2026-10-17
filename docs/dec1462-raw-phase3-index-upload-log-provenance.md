@@ -1,0 +1,9 @@
+# DEC-1462 — Parse Phase3 acceptance index and upload receipt from original job log
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1685 DEC-1461 at 0e7825d9804547677b571a4135ef238cbab4bb69. Adds **15 synthetic unittest methods**, bringing the draft lineage to **1880 proposed source-defined methods**.
+
+Previously the DEC-1452 composite accepted a caller-supplied acceptance index and upload receipt without independently comparing those fields to the original Phase3 job log. Read-only real unprotected Phase3 CI run **39026055591** for #1674 shows a one-line JSON index with merge `code_commit=7630c183c7aca3e72a01b405b342c73db228c845`, five deterministic named scenarios, and a named uploaded/finalized artifact ID **12098433056** whose log URL references exactly that run. **No artifact was downloaded.**
+
+The new pure-stdlib offline parser requires exactly one each of index, artifact name, finalization, successful upload and log URL stages. It validates stage order and UTC timestamps, strict JSON key uniqueness, required Phase3 fixture/protocol identity and merge SHA, all five deterministic scenario manifest SHA256 equality, and exact name/ID/run binding across upload records. Negative tests exercise missing/duplicate/malformed JSON, wrong SHA/run/ID, altered scenario manifests and timestamps. It generates fields for downstream DEC-1447 validation without claiming artifact byte authenticity. Original job logs and objects must be gathered through trustworthy live GitHub sources.
+
+Own PR merge-source-tree Phase3/full historical CI and external qualified review required. DEC-650/#820 actual protected-original OS no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 server-side admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive/artifact download, installed workflow/security mutation, merge, deployment or trading.
