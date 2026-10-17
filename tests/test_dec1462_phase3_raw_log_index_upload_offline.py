@@ -5,7 +5,7 @@ or security setting mutation. Caller must independently authenticate log text.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from test_dec1481_exact_utc_nanosecond_source_time import reviewed_utc_nanoseconds
 import json
 import re
 import unittest
@@ -86,14 +86,12 @@ def parse_phase3_log_evidence(raw_log, run_id, expected_merge_sha):
     issues = []
     if [i for i, _ in stage] != sorted(i for i, _ in stage):
         issues.append("PHASE3_RAW_LOG_STAGE_ORDER_UNREVIEWED")
-    try:
-        times = [datetime.fromisoformat(entry[0].replace("Z", "+00:00"))
-                 for _, entry in stage]
-    except (ValueError, TypeError, OverflowError):
+    times = [reviewed_utc_nanoseconds(entry[0])
+             for _, entry in stage]
+    if any(value is None for value in times):
         issues.append("PHASE3_RAW_LOG_TIMESTAMP_UNREVIEWED")
-    else:
-        if not all(a < b for a, b in zip(times, times[1:])):
-            issues.append("PHASE3_RAW_LOG_TIMESTAMP_ORDER_UNREVIEWED")
+    elif not all(a < b for a, b in zip(times, times[1:])):
+        issues.append("PHASE3_RAW_LOG_TIMESTAMP_ORDER_UNREVIEWED")
     try:
         index = json.loads(found["index"][0][1][1],
                            object_pairs_hook=_unique_json_pairs,
@@ -372,3 +370,18 @@ class Phase3LogEvidenceIsNotProtectedResearchPermission(unittest.TestCase):
         self.assertIn("PHASE3_RAW_LOG_CONFLICTING_STAGE_UNREVIEWED",
                       self.verdict()[2])
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[2])
+
+    def test_five_acceptance_stages_one_hundred_ns_apart_pass(self):
+        for i in range(5):
+            self.lines[i] = re.sub(
+                r"^\S+", "2026-10-17T10:45:00.000000" + str(i+1) + "Z",
+                self.lines[i])
+        self.assertEqual(self.verdict()[2], ())
+
+    def test_acceptance_stage_submicrosecond_reversal_is_rejected(self):
+        for i, fraction in enumerate((1, 2, 4, 3, 5)):
+            self.lines[i] = re.sub(
+                r"^\S+", "2026-10-17T10:45:00.000000" + str(fraction) + "Z",
+                self.lines[i])
+        self.assertIn("PHASE3_RAW_LOG_TIMESTAMP_ORDER_UNREVIEWED",
+                      self.verdict()[2])
