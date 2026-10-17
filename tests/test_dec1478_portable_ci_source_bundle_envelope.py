@@ -261,10 +261,11 @@ def _reviewed_source_path(path):
                 re.fullmatch(r"(?i:(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]))"
                              r"(?:\..*)?", segment) is not None):
             return False
-    return not any(ord(char) < 32 or ord(char) == 127 or
-                   0xD800 <= ord(char) <= 0xDFFF or
-                   0x202A <= ord(char) <= 0x202E or
-                   0x2066 <= ord(char) <= 0x2069 for char in path)
+    # Reject invisible layout/format characters and the full Unicode
+    # control inventory, including C1 controls not covered by ASCII checks.
+    return not any(unicodedata.category(char) in
+                   ("Cc", "Cf", "Cs", "Zl", "Zp")
+                   for char in path)
 
 
 def _within_inmemory_structure_budget(root):
@@ -2103,4 +2104,62 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
         self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_zero_width_space_source_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/synthe\u200btic.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_zero_width_joiner_source_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/zero\u200dwidth.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_soft_hyphen_source_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/soft\u00adhyphen.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_bom_source_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/\ufeffmodule.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_c1_control_source_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/control\u0085.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_line_separator_source_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/x\u2028y.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_paragraph_separator_source_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/x\u2029y.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_word_joiner_source_path_refused(self):
+        self.envelope["changed_bytes_b64"]["src/a\u2060b.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_private_use_printable_path_allowed_by_character_class(self):
+        self.assertTrue(_reviewed_source_path("src/\ue000.py"))
+
+    def test_unicode_canonical_multilingual_source_path_allowed(self):
+        for path in ("src/café.py", "src/日本語.py", "src/العربية.py"):
+            with self.subTest(path=path):
+                self.assertTrue(_reviewed_source_path(path))
+
+    def test_invisible_path_stdin_output_never_echoes_supplied_label(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["src/private\u200bcanary.py"] = "YQ=="
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), output)
+        self.assertEqual(status, 2)
+        record = json.loads(output.getvalue())
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", record["diagnostics"])
+        self.assertNotIn("private", output.getvalue())
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_canonical_source_fixture_preserves_consistency_only(self):
+        verdict = self.verdict()
+        self.assertTrue(verdict["source_consistency"])
+        self.assertEqual(verdict["diagnostics"], ())
+        self.assertFalse(verdict["can_authorize_annual_run"])
 
