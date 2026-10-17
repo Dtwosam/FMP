@@ -276,13 +276,22 @@ def _reviewed_source_path(path):
     if any(char in SOURCE_PATH_CONFUSABLE_SEPARATORS for char in path):
         return False
     try:
-        if len(path.encode("utf-8")) > MAX_SOURCE_PATH_UTF8_BYTES:
+        compatible = unicodedata.normalize("NFKC", path)
+        if (len(path.encode("utf-8")) > MAX_SOURCE_PATH_UTF8_BYTES or
+                len(compatible.encode("utf-8")) > MAX_SOURCE_PATH_UTF8_BYTES or
+                "\\" in compatible or ":" in compatible or
+                compatible.startswith("/") or
+                compatible.count("/") != path.count("/")):
             return False
-        for segment in path.split("/"):
+        for segment, alias in zip(path.split("/"), compatible.split("/")):
             if (len(segment.encode("utf-8")) >
                     MAX_SOURCE_SEGMENT_UTF8_BYTES or
+                    len(alias.encode("utf-8")) >
+                    MAX_SOURCE_SEGMENT_UTF8_BYTES or
                     segment in ("", ".", "..") or
+                    alias in ("", ".", "..") or
                     segment.endswith((" ", ".")) or
+                    alias.endswith((" ", ".")) or
                     re.fullmatch(r"(?i:(CON|PRN|AUX|NUL|CONIN\$|CONOUT\$|COM[1-9¹²³]|LPT[1-9¹²³]))"
                                  r"(?:\..*)?",
                                  unicodedata.normalize("NFKC", segment))
@@ -3095,6 +3104,66 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_compatibility_exact_252_byte_segment_is_valid(self):
+        path = "src/" + "Ⅷ"*63
+        self.assertEqual(len(unicodedata.normalize("NFKC", path).split("/")[-1]
+                             .encode("utf-8")), 252)
+        self.assertTrue(_reviewed_source_path(path))
+
+    def test_compatibility_256_byte_segment_is_rejected(self):
+        path = "src/" + "Ⅷ"*64
+        self.assertLess(len(path.split("/")[-1].encode("utf-8")), 255)
+        self.assertFalse(_reviewed_source_path(path))
+
+    def test_compatibility_total_path_over_utf8_budget_is_rejected(self):
+        path = "/".join(["Ⅷ"*50] * 23)
+        self.assertLess(len(path.encode("utf-8")), MAX_SOURCE_PATH_UTF8_BYTES)
+        self.assertGreater(len(unicodedata.normalize("NFKC", path).encode("utf-8")),
+                           MAX_SOURCE_PATH_UTF8_BYTES)
+        self.assertFalse(_reviewed_source_path(path))
+
+    def test_fullwidth_period_trailing_segment_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("docs/report．"))
+
+    def test_fullwidth_period_inside_component_remains_valid(self):
+        self.assertTrue(_reviewed_source_path("docs/report．txt"))
+
+    def test_compatibility_introduced_reverse_solidus_is_rejected(self):
+        self.assertEqual(unicodedata.normalize("NFKC", "\ufe68"), "\\")
+        self.assertFalse(_reviewed_source_path("src/a\ufe68b.py"))
+
+    def test_compatibility_introduced_colon_is_rejected(self):
+        self.assertEqual(unicodedata.normalize("NFKC", "\ufe13"), ":")
+        self.assertFalse(_reviewed_source_path("src/a\ufe13b.py"))
+
+    def test_compatibility_byte_overflow_changed_source_map_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["src/" + "Ⅷ"*64] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_compatibility_trailing_period_workflow_map_fails_closed(self):
+        self.envelope["ci_workflow_bytes_b64"]["ci/hidden．"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_compatibility_overflow_stdin_does_not_echo_name(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["src/private-"+"Ⅷ"*64] = "YQ=="
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("private-", out.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_compatibility_budget_preserves_clean_source_only_fixture(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
