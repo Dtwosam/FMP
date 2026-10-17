@@ -1,0 +1,9 @@
+# DEC-1470 — Actual unprotected #1674 Phase3 runner log golden regression fixture
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1693 DEC-1469 at de24fc54183c13f5a8e5c2ba0704c1e538190307. Ten new source-defined test methods, **1,960 proposed methods**.
+
+The offline checkout (DEC-1454), acceptance index/artifact (DEC-1462) and Phase3 checkout-before-index timing (DEC-1466) reviewers had chiefly hand-authored fixtures. This new test file uses **eight exact relevant lines extracted read-only** from successful real, unprotected GitHub Actions Phase3 run `39026055591`, job `117377148833` for PR #1674. These include its full fetched checkout merge SHA `7630c183c7aca3e72a01b405b342c73db228c845`, checked-out HEAD, actual JSON index and five scenario manifest hashes, artifact name, finalization, upload record and run/artifact URL referencing ID `12098433056`. Only public CI job logs were consulted: **no artifact downloaded, no annual execution and no protected original data accessed**.
+
+Ten regression tests run the actual observed lines through source-only parsers, check that code_commit is the temporary merge SHA rather than draft head, verify selected observed manifest hash values, and detect mutations in source SHA, artifact ID, stage time or completeness. The eight-line static fixture is not full authenticated provider evidence and omits unrelated console output; these tests make no claim about signed GitHub log provenance or artifact data bytes.
+
+Own head-associated PR merge-source-tree Phase3/full historical/general CI and qualified independent review mandatory. DEC-650/#820 protected-original actual OS no-write and DEC-651/#821/#779 immutable exclusive server-side 2023 annual run385/attempt1 admission remain **BLOCKED**. No protected annual dispatch/retry, original/archives, installed YAML/security modifications, merges, deployments or trading.
