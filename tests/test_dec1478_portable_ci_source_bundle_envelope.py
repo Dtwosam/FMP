@@ -3243,3 +3243,47 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def test_fullwidth_single_dot_component_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("src/．/file.py"))
+
+    def test_fullwidth_double_dot_component_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("src/．．/file.py"))
+
+    def test_mixed_fullwidth_ascii_dot_component_is_rejected(self):
+        self.assertFalse(_reviewed_source_path("src/．./file.py"))
+        self.assertFalse(_reviewed_source_path("src/.．/file.py"))
+
+    def test_compatibility_dot_traversal_changed_map_rejected(self):
+        self.envelope["changed_bytes_b64"]["src/．．/hidden.py"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_compatibility_dot_traversal_workflow_map_rejected(self):
+        self.envelope["ci_workflow_bytes_b64"]["ci/．/hidden.yml"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_compatibility_dot_traversal_stdin_does_not_echo_input(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["src/．．/private-canary.py"] = "YQ=="
+        out = io.StringIO()
+        rc = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), out)
+        result = json.loads(out.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("private-canary", out.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_fullwidth_leading_dotfile_is_not_a_dot_segment(self):
+        self.assertTrue(_reviewed_source_path("src/．gitignore"))
+
+    def test_fullwidth_double_leading_dot_filename_is_not_parent(self):
+        self.assertTrue(_reviewed_source_path("src/．．gitignore"))
+
+    def test_compatibility_dot_segment_guard_preserves_source_only_fixture(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
