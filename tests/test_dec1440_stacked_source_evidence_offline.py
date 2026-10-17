@@ -300,9 +300,11 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         }
         self.phase3_evidence = {
             "index": {
-                "protocol": "fmp-phase3-acceptance-fixture-v1",
-                "fixture_id": "phase3-merged-main-acceptance-v1",
+                # Real Phase3 logs serialize code_commit first; the strict
+                # logged JSON stage recognizer requires this ordering.
                 "code_commit": self.merge_checkout["merge_commit"]["sha"],
+                "fixture_id": "phase3-merged-main-acceptance-v1",
+                "protocol": "fmp-phase3-acceptance-fixture-v1",
                 "scenario_count": 5,
                 "scenarios": [
                     {"name": scenario, "bytes_equal": True,
@@ -890,3 +892,20 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertIn("PHASE3_CHECKOUT_INDEX_ORDER_RUN_ID_UNREVIEWED",
                       result["diagnostics"])
+
+    def test_fixture_json_stage_starts_with_reviewed_code_commit_key(self):
+        lines = self.raw_ci_runner_logs[8000].splitlines()
+        records = [line for line in lines if '"code_commit":' in line]
+        self.assertEqual(len(records), 1)
+        self.assertIn('Z {"code_commit":"', records[0])
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_parsed_fixture_index_and_upload_match_composite_evidence(self):
+        import test_dec1462_phase3_raw_log_index_upload_offline as parser
+        index, receipt, problems = parser.parse_phase3_log_evidence(
+            self.raw_ci_runner_logs[8000], 8000,
+            self.merge_checkout["merge_commit"]["sha"])
+        self.assertEqual(problems, ())
+        self.assertEqual(index, self.phase3_evidence["index"])
+        self.assertEqual(receipt["id"], self.phase3_evidence["upload"]["id"])
+        self.assertEqual(receipt["run_id"], 8000)
