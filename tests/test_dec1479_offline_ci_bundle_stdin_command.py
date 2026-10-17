@@ -445,5 +445,100 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
         self.assertNotIn("BUNDLE_STDIN_READ_UNREVIEWED", record["diagnostics"])
 
 
+    def _invoke_main_for_test(self, argv, raw):
+        from unittest.mock import patch
+        provided_stdin = io.StringIO(raw)
+        out = io.StringIO()
+        with patch.object(sys, "argv", argv), \
+             patch.object(sys, "stdin", provided_stdin), \
+             patch.object(sys, "stdout", out):
+            rc = main()
+        lines = out.getvalue().splitlines()
+        self.assertEqual(len(lines), 1)
+        return rc, json.loads(lines[0]), provided_stdin.tell(), out.getvalue()
+
+    def test_main_accepts_only_stdin_synthetic_consistency(self):
+        raw = json.dumps(self.bundle)
+        status, result, chars_read, output = self._invoke_main_for_test(
+            ["offline-review"], raw)
+        self.assertEqual(status, 0)
+        self.assertEqual(chars_read, len(raw))
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertEqual(len(result), 5)
+
+    def test_main_rejects_filename_without_reading_stdin(self):
+        raw = json.dumps(self.bundle)
+        status, result, chars_read, _ = self._invoke_main_for_test(
+            ["offline-review", "/tmp/private-evidence.json"], raw)
+        self.assertEqual(status, 2)
+        self.assertEqual(chars_read, 0)
+        self.assertEqual(result["diagnostics"],
+                         ["BUNDLE_STDIN_ONLY_INVOCATION_REQUIRED"])
+
+    def test_main_rejects_url_argument_without_reading_stdin(self):
+        raw = json.dumps(self.bundle)
+        status, result, chars_read, output = self._invoke_main_for_test(
+            ["offline-review", "https://example.invalid/bundle"], raw)
+        self.assertEqual(status, 2)
+        self.assertEqual(chars_read, 0)
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertNotIn("example.invalid", output)
+
+    def test_main_rejects_help_flag_without_reading_stdin(self):
+        raw = json.dumps(self.bundle)
+        status, result, chars_read, _ = self._invoke_main_for_test(
+            ["offline-review", "--help"], raw)
+        self.assertEqual(status, 2)
+        self.assertEqual(chars_read, 0)
+        self.assertIn("BUNDLE_STDIN_ONLY_INVOCATION_REQUIRED",
+                      result["diagnostics"])
+
+    def test_main_rejects_multiple_unreviewed_arguments(self):
+        raw = json.dumps(self.bundle)
+        status, result, chars_read, _ = self._invoke_main_for_test(
+            ["offline-review", "--authorize", "2023", "run385"], raw)
+        self.assertEqual(status, 2)
+        self.assertEqual(chars_read, 0)
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+
+    def test_main_rejects_missing_program_argument(self):
+        raw = json.dumps(self.bundle)
+        status, result, chars_read, _ = self._invoke_main_for_test([], raw)
+        self.assertEqual(status, 2)
+        self.assertEqual(chars_read, 0)
+        self.assertEqual(result["diagnostics"],
+                         ["BUNDLE_STDIN_ONLY_INVOCATION_REQUIRED"])
+
+    def test_main_rejects_malformed_stdin_without_echo(self):
+        raw = '{"schema":"secret-sentinel"'
+        status, result, chars_read, output = self._invoke_main_for_test(
+            ["offline-review"], raw)
+        self.assertEqual(status, 2)
+        self.assertEqual(chars_read, len(raw))
+        self.assertIn("BUNDLE_JSON_GRAMMAR_UNREVIEWED", result["diagnostics"])
+        self.assertNotIn("secret-sentinel", output)
+
+    def test_main_rejects_false_authorization_extra_input(self):
+        data = dict(self.bundle)
+        data["can_authorize_annual_run"] = True
+        raw = json.dumps(data)
+        status, result, chars_read, _ = self._invoke_main_for_test(
+            ["offline-review"], raw)
+        self.assertEqual(status, 2)
+        self.assertEqual(chars_read, len(raw))
+        self.assertIn("BUNDLE_KEY_INVENTORY_UNREVIEWED", result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_main_rejects_positional_secret_without_echo(self):
+        raw = json.dumps(self.bundle)
+        status, result, chars_read, output = self._invoke_main_for_test(
+            ["offline-review", "private-source-sentinel"], raw)
+        self.assertEqual(status, 2)
+        self.assertEqual(chars_read, 0)
+        self.assertNotIn("private-source-sentinel", output)
+        self.assertEqual(len(result), 5)
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
