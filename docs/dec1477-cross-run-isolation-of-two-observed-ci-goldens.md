@@ -1,0 +1,9 @@
+# DEC-1477 — Cross-run isolation for two observed successful PR CI records
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit source test/docs child of #1722 DEC-1476 at `ed8661db555abaa22aec9c6b9ad49c50a73d4e8f`. **15 new synthetic regression methods, 2017 proposed source-defined methods**.
+
+The previously recorded read-only, unprotected PR #1674 and recovered PR #1698 CI golden sources both show actual successful CI workflows and five deterministic Phase3 acceptance scenarios, but involve entirely different branch heads, Git merge commits, source trees, workflow run/job IDs, and acceptance artifact IDs. A reviewer must never allow fields or text from one to silently substitute for the other's purported run, even when the two have the same fixture protocol, schema and scenario names.
+
+This child imports both exact observed-log golden fixtures (DEC-1470 and DEC-1476), verifies each parses independently, and deliberately swaps Phase3 checkout, index, artifact-name, finalization, upload and URL records. Offline parsers are required to detect divergent merge SHA, parent/PR ref, artifact run and ID, while still accepting the untouched fixtures. The same-source-tree comparison across each original head vs its tested merge is preserved; the trees are correctly **different across PRs**. Tests do not download artifacts or call GitHub. They do not authenticate provider logs, guarantee OS runner no-write, or authorize 2023 protected annual run385/attempt1.
+
+Each PR continues to require its own head-associated PR merge-source-tree Phase3 and full historical/general CI plus qualified independent review. DEC-650/#820 independently witnessed original OS no-write and DEC-651/#821/#779 exclusive immutable 2023 run385/attempt1 GitHub server admission remain **BLOCKED**. No annual dispatch/retry, protected originals/archive reads, installed workflow/security settings changes, merge, production deployment, brokerage or trading.
