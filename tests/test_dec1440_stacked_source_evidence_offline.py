@@ -15,12 +15,14 @@ import test_dec1441_git_tree_sha_chain_source_review as tree_chain
 import test_dec1445_pr_merge_checkout_tree_identity_offline as merge_review
 import test_dec1450_dual_suite_merge_checkout_offline as dual_runner
 import test_dec1447_phase3_acceptance_merge_stamp_offline as phase3_stamps
+import test_dec1454_runner_merge_checkout_trace_parser_offline as log_parse
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                                   tree, nodes, changed_bytes, ci_workflow_bytes,
                                   full_tree_snapshots, merge_checkout_snapshot,
-                                  checkout_by_run, phase3_evidence_snapshot):
+                                  checkout_by_run, phase3_evidence_snapshot,
+                                  raw_ci_runner_logs):
     """Return diagnostic shape only; never authorization or authenticated proof."""
     # Run metadata head_sha is an association to the PR branch head, not
     # evidence that checkout HEAD equaled that SHA. Review the actual merge.
@@ -61,7 +63,37 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
             merge_sha = merge.get("sha") if type(merge) is dict else None
             phase3_check = phase3_stamps.review_phase3_merge_evidence(
                 phase3_runs[0], merge_sha, e.get("index"), e.get("upload"))
+    # Raw run logs are separate per-workflow evidence, not metadata derived
+    # from the run's association to a mutable PR merge ref.
+    raw_issues = []
+    if (type(raw_ci_runner_logs) is not dict or type(checkout_by_run) is not dict
+            or type(runs) is not list or type(pr) is not dict or
+            not all(type(r) is dict for r in runs)):
+        raw_issues.append("RAW_CI_RUNNER_LOG_INPUT_UNREVIEWED")
+    else:
+        expected_run_ids = [
+            r.get("id") for r in runs
+            if r.get("name") in ("phase3-acceptance", "tests")
+            and type(r.get("id")) is int and r["id"] > 0
+        ]
+        if (len(expected_run_ids) != 2 or
+                len(set(expected_run_ids)) != 2 or
+                set(raw_ci_runner_logs) != set(expected_run_ids)):
+            raw_issues.append("RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED")
+        for run_id in expected_run_ids:
+            parsed, parse_issues = log_parse.parse_runner_checkout(
+                raw_ci_runner_logs.get(run_id),
+                pr.get("number"), pr.get("head_sha"), pr.get("base_sha"))
+            raw_issues.extend(parse_issues)
+            supplied = checkout_by_run.get(run_id)
+            if type(supplied) is not dict or parsed is None:
+                raw_issues.append("RAW_CI_RUNNER_LOG_RECORD_UNREVIEWED")
+            elif any(parsed.get(key) != supplied.get(key)
+                     for key in ("checkout_ref", "checkout_fetch_sha",
+                                 "checkout_sha_prefix")):
+                raw_issues.append("RAW_CI_RUNNER_LOG_METADATA_MISMATCH")
     checks = (
+        tuple(sorted(set(raw_issues))),
         merge_check,
         phase3_check,
         dual_check,
@@ -219,6 +251,18 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
                 "id": 7777, "run_id": 8000, "finalized": True,
             },
         }
+        raw_ref = "refs/remotes/pull/" + str(self.pr["number"]) + "/merge"
+        raw_merge = self.merge_checkout["merge_commit"]["sha"]
+        raw_head = self.pr["head_sha"]
+        raw_base = self.pr["base_sha"]
+        self.raw_ci_runner_logs = {
+            run["id"]: "\n".join([
+                "2026-10-17T10:00:00.1000000Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags origin +" + raw_merge + ":" + raw_ref,
+                "2026-10-17T10:00:01.1000000Z [command]/usr/bin/git checkout --progress --force " + raw_ref,
+                "2026-10-17T10:00:02.1000000Z HEAD is now at " + raw_merge[:7] + " Merge " + raw_head + " into " + raw_base,
+            ])
+            for run in self.runs
+        }
         self.ci_bytes = dict(self.original_ci_bytes)
 
     def verdict(self):
@@ -226,7 +270,8 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             self.pr, self.runs, self.jobs, self.compare, self.commit,
             self.tree, self.nodes, self.changed, self.ci_bytes,
             self.full_trees, self.merge_checkout,
-            self.runner_checks, self.phase3_evidence)
+            self.runner_checks, self.phase3_evidence,
+            self.raw_ci_runner_logs)
 
     def test_consistent_synthetic_bundle_passes_only_source_consistency(self):
         result = self.verdict()
@@ -518,3 +563,48 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertTrue(result["source_consistency"], result["diagnostics"])
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+
+    def test_complete_raw_both_runner_logs_are_required(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertEqual(set(self.raw_ci_runner_logs), {8000, 8001})
+
+    def test_missing_phase3_raw_log_fails_composite(self):
+        self.raw_ci_runner_logs.pop(8000)
+        self.assertIn("RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_missing_historical_raw_log_fails_composite(self):
+        self.raw_ci_runner_logs.pop(8001)
+        self.assertIn("RAW_CI_RUNNER_LOG_INVENTORY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_historical_raw_log_different_merge_sha_fails(self):
+        log = self.raw_ci_runner_logs[8001]
+        self.raw_ci_runner_logs[8001] = log.replace("f"*40, "e"*40)
+        self.assertIn("RAW_CI_RUNNER_LOG_METADATA_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_checkout_ref_tampered_in_raw_log_fails(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "/1649/merge", "/999/merge")
+        self.assertIn("RUNNER_LOG_PR_REF_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_raw_phase3_checkout_order_must_be_verified(self):
+        log_lines = self.raw_ci_runner_logs[8000].splitlines()
+        log_lines[0], log_lines[1] = log_lines[1], log_lines[0]
+        self.raw_ci_runner_logs[8000] = "\n".join(log_lines)
+        self.assertIn("RUNNER_LOG_ORDER_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_valid_raw_log_cannot_override_wrong_supplied_fetch_sha(self):
+        self.runner_checks[8001]["checkout_fetch_sha"] = "e"*40
+        self.assertIn("RAW_CI_RUNNER_LOG_METADATA_MISMATCH",
+                      self.verdict()["diagnostics"])
+
+    def test_green_raw_log_consistency_does_not_prove_os_or_admission(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["independent_original_os_proof"])
