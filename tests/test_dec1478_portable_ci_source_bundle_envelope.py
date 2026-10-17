@@ -20,6 +20,7 @@ ENVELOPE_SCHEMA = "fmp-offline-source-bundle-v1"
 MAX_TEXT_CHARS = 2_000_000
 MAX_BLOB_BYTES = 1_000_000
 MAX_TOTAL_BLOB_BYTES = 4_000_000
+MAX_JSON_NESTING = 512
 REQUIRED = frozenset((
     "schema", "pr", "runs", "jobs_by_run", "compare", "commit", "tree",
     "nodes", "changed_bytes_b64", "ci_workflow_bytes_b64",
@@ -55,6 +56,36 @@ def _no_duplicate_keys(pairs):
 
 def _no_nonfinite(value):
     raise ValueError("nonstandard JSON constant: " + value)
+
+
+def _json_nesting_within_limit(text):
+    """Count only JSON containers outside quoted strings.
+
+    Enforce a bound independent of process-global sys.setrecursionlimit.
+    The decoder still validates full syntax and balanced delimiters.
+    """
+    depth = 0
+    in_string = False
+    escaped = False
+    for char in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char in "[{":
+            depth += 1
+            if depth > MAX_JSON_NESTING:
+                return False
+        elif char in "]}":
+            depth -= 1
+            if depth < 0:
+                return False
+    return True
 
 
 def review_bundle_envelope(envelope):
@@ -148,6 +179,8 @@ def review_bundle_json_text(text):
     """No external I/O: caller provides raw UTF-8-decoded JSON text."""
     if type(text) is not str or len(text) > MAX_TEXT_CHARS:
         return fail_closed("BUNDLE_JSON_TEXT_UNREVIEWED")
+    if not _json_nesting_within_limit(text):
+        return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
     try:
         doc = json.loads(text, object_pairs_hook=_no_duplicate_keys,
                          parse_constant=_no_nonfinite)
@@ -444,3 +477,58 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertTrue(result["diagnostics"])
+
+    def test_depth_limit_rejects_one_too_many_array_levels(self):
+        raw = "[" * (MAX_JSON_NESTING + 1) + "null" + "]" * (MAX_JSON_NESTING + 1)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"], ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_depth_limit_rejects_one_too_many_object_levels(self):
+        raw = '{"a":' * (MAX_JSON_NESTING + 1) + "null" + "}" * (MAX_JSON_NESTING + 1)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_depth_limit_counts_mixed_array_and_object_levels(self):
+        raw = ('[{"a":' * (MAX_JSON_NESTING // 2 + 1) + 'null' +
+               '}]' * (MAX_JSON_NESTING // 2 + 1))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_boundary_array_depth_reaches_shape_check(self):
+        raw = "[" * MAX_JSON_NESTING + "null" + "]" * MAX_JSON_NESTING
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_boundary_object_depth_reaches_shape_check(self):
+        raw = '{"a":' * MAX_JSON_NESTING + 'null' + "}" * MAX_JSON_NESTING
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_brackets_inside_string_do_not_count_as_container_depth(self):
+        raw = json.dumps("[" * 800 + "]" * 800 + "{" * 800 + "}" * 800)
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_escaped_quotes_do_not_release_string_brackets(self):
+        raw = json.dumps('quoted "[' * 600 + ']" tail')
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_escaped_backslashes_do_not_change_bracket_depth(self):
+        raw = json.dumps(("\\\\[" * 600) + ("]\\\\" * 600))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_stray_closing_container_remains_grammar_error(self):
+        self.assertEqual(review_bundle_json_text("]")["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_nesting_guard_keeps_clean_envelope_non_authorizing(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
