@@ -1,0 +1,9 @@
+# DEC-1443 — Git tree wire SHA is computed, not merely asserted
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1666 DEC-1442 at 27c1b8fe8ed4401cb03d186233aa37948cda06b3. Adds 12 new unittest methods, **1688 proposed source-defined methods**.
+
+The DEC-1441/1442 full parent-child tree-chain source reviewers compare supplied tree SHA fields to the commit or parent entry. If a caller merely invents the child entries and also invents the matching SHA metadata, this is only a shape check, not a byte-identity check. This new stand-alone helper reproduces the actual Git tree object wire format (octal mode, path, NUL, 20-byte raw child SHA; length-framed tree with Git directory trailing-slash sort) and computes SHA-1 of the full canonical tree. It fails closed on bad types, invalid modes, duplicate/misordered entries, paths, and child SHA shapes.
+
+A static 12-entry GitHub root tree captured read-only at draft #1666 recomputes exact object ID 985365a6a6503d1a4b786888877ba8ef42c207d3, also independently verified using Python hashlib. This is a source encoding check, not cryptographic authentication of a GitHub server or an OS isolation witness. The code intentionally accepts valid Git wire types such as gitlinks: a separate changed-file security policy must still reject them.
+
+This is a stand-alone helper; it is **not yet required by the DEC-1441/1442 composite** until a future test-only forward correction updates its synthetic fixtures to use actual computed tree SHAs. Own exact-head Phase3 and full historical/general CI plus independent review required. DEC-650/#820 protected original OS no-write and DEC-651/#821/#779 exclusive immutable run385/attempt1 server admission remain BLOCKED. No protected originals/archives, annual dispatch/retry, installed workflow/security settings, merge or trading.
