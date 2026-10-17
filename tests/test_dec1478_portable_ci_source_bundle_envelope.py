@@ -28,6 +28,8 @@ MAX_SOURCE_PATH_CHARS = 4096
 MAX_SOURCE_ENTRIES_PER_MAP = 8192
 MAX_RUNS_PER_ENVELOPE = 4096
 MAX_RUN_MAP_ENTRIES = 8192
+MAX_RAW_LOG_CHARS_PER_RUN = 2_000_000
+MAX_TOTAL_RAW_LOG_CHARS = 4_000_000
 VERDICT_FIELDS = frozenset((
     "source_consistency", "diagnostics", "independent_original_os_proof",
     "exclusive_server_dispatch_gate_proven", "can_authorize_annual_run",
@@ -145,6 +147,14 @@ def review_bundle_envelope(envelope):
                 return fail_closed("BUNDLE_RUN_MAP_OVERSIZE")
             if any(type(k) is not str for k in value):
                 return fail_closed("BUNDLE_RUN_KEY_UNREVIEWED")
+            if key == "raw_ci_runner_logs":
+                if any(type(log) is not str for log in value.values()):
+                    return fail_closed("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+                if any(len(log) > MAX_RAW_LOG_CHARS_PER_RUN
+                       for log in value.values()):
+                    return fail_closed("BUNDLE_RAW_LOG_TEXT_OVERSIZE")
+                if sum(len(log) for log in value.values()) > MAX_TOTAL_RAW_LOG_CHARS:
+                    return fail_closed("BUNDLE_TOTAL_RAW_LOG_OVERSIZE")
             for k in sorted(value):
                 item = value[k]
                 if (type(k) is not str or
@@ -1219,5 +1229,56 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(status, 2)
         self.assertIn("BUNDLE_RUN_COLLECTION_OVERSIZE", result["diagnostics"])
         self.assertNotIn("synthetic-sentinel", out.getvalue())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_overlong_raw_runner_log_is_rejected_in_memory(self):
+        self.envelope["raw_ci_runner_logs"]["9001"] = (
+            "x" * (MAX_RAW_LOG_CHARS_PER_RUN+1))
+        self.assert_fails("BUNDLE_RAW_LOG_TEXT_OVERSIZE")
+
+    def test_raw_runner_logs_over_total_budget_rejected(self):
+        self.envelope["raw_ci_runner_logs"] = {
+            "8001": "a" * 1_500_000,
+            "8002": "b" * 1_500_000,
+            "8003": "c" * 1_500_001,
+        }
+        self.assert_fails("BUNDLE_TOTAL_RAW_LOG_OVERSIZE")
+
+    def test_raw_log_nontext_type_is_rejected(self):
+        self.envelope["raw_ci_runner_logs"]["9001"] = b"synthetic-raw-log"
+        self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_raw_log_none_value_is_rejected(self):
+        self.envelope["raw_ci_runner_logs"]["9001"] = None
+        self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_raw_log_string_subclass_is_rejected(self):
+        class NonPlainLog(str):
+            pass
+        self.envelope["raw_ci_runner_logs"]["9001"] = NonPlainLog("synthetic")
+        self.assert_fails("BUNDLE_RAW_LOG_TEXT_UNREVIEWED")
+
+    def test_raw_log_limit_precedes_malformed_run_id(self):
+        self.envelope["raw_ci_runner_logs"]["not-a-run-id"] = (
+            "s" * (MAX_RAW_LOG_CHARS_PER_RUN+1))
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RAW_LOG_TEXT_OVERSIZE",))
+
+    def test_overlong_raw_log_diagnostic_does_not_echo_source(self):
+        self.envelope["raw_ci_runner_logs"]["9001"] = (
+            "sensitive-log-canary" + "x" * MAX_RAW_LOG_CHARS_PER_RUN)
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RAW_LOG_TEXT_OVERSIZE",))
+        self.assertNotIn("sensitive-log-canary", repr(result))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_valid_synthetic_logs_remain_source_consistency_only(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
