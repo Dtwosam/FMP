@@ -1,0 +1,9 @@
+# DEC-1495 — Bound in-memory source path and source-map inventory sizes
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent, one-commit tests/docs child of #1740 at `6780f8a6719caefb1ae705b64edcdd7475a9e11b`. Eleven synthetic regression methods; **2,199 proposed source-defined methods**.
+
+The DEC-1478 offline envelope offers a direct in-memory entry point in addition to size-limited JSON/stdin text. Although Base64 bytes have per-item and cumulative caps, path-key length and number of source-map entries were not separately bounded, and direct in-memory callers can construct arbitrarily large dictionaries without passing through the 2,000,000-character JSON input guard. Add explicit checks that each portable path is at most 4,096 code points and each of the changed-source/workflow-byte maps contains at most 8,192 entries. Reject excess entry count before sorting and decoding, using a sanitized `BUNDLE_SOURCE_MAP_OVERSIZE` verdict. Reject excess source labels with the existing `BUNDLE_SOURCE_PATH_UNREVIEWED` code.
+
+Eleven new tests cover precise path and map count boundaries, both map categories, precedence before malformed binary decode, stdin non-disclosure, direct in-memory invocation, and clean synthetic consistency-only behavior. These are conservative resource limits for caller-supplied offline evidence, not GitHub provider authenticity or protected annual execution authority.
+
+Own exact-head Phase 3/full historical/general CI and independent qualified review required. DEC-650/#820 independently witnessed protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected 2023 run385/attempt1 GitHub server admission remain **BLOCKED**. No protected data/artifacts/annual dispatch/retry, installed workflows/security modifications, merges, deployments or trading.
