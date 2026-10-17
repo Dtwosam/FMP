@@ -158,6 +158,9 @@ def _within_inmemory_structure_budget(root):
             if (units > MAX_INMEMORY_SCALAR_UNITS or
                     total_scalar_units > MAX_INMEMORY_TOTAL_SCALAR_UNITS):
                 return False
+            if type(item) is str and any(
+                    0xD800 <= ord(char) <= 0xDFFF for char in item):
+                return False
         if type(item) in (dict, list, tuple):
             if id(item) in active:
                 return False
@@ -1769,5 +1772,51 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_unpaired_high_surrogate_string_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget("\ud800"))
+
+    def test_direct_unpaired_low_surrogate_string_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget("\udfff"))
+
+    def test_direct_unpaired_surrogate_dict_key_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget({
+            "private_\ud800": "synthetic"}))
+
+    def test_direct_unpaired_surrogate_nested_tuple_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget(
+            {"pr": (["synthetic", "\udc00"],)}))
+
+    def test_direct_unpaired_surrogate_in_envelope_fails_closed(self):
+        data = dict(self.envelope)
+        pr = dict(data["pr"])
+        pr["private_synthetic"] = "secret-canary-\ud800"
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertNotIn("secret-canary", repr(result))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_valid_emoji_and_multilingual_text_are_allowed(self):
+        self.assertTrue(_within_inmemory_structure_budget(
+            {"unicode": ["🚀", "日本語", "العربية", "café"]}))
+
+    def test_direct_valid_private_use_unicode_is_allowed(self):
+        self.assertTrue(_within_inmemory_structure_budget("\ue000"))
+
+    def test_json_surrogate_rejection_retains_safe_specific_code(self):
+        raw = '{"synthetic":"\\ud800"}'
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_UNICODE_UNREVIEWED",))
+
+    def test_plain_utf8_synthetic_evidence_still_consistency_only(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
