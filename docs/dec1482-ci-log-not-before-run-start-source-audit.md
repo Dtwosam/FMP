@@ -1,0 +1,9 @@
+# DEC-1482 — Require observed CI log timestamps not earlier than workflow run_started_at
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child of #1705 DEC-1481 at `0b0a5161c8e086fbb615865d2e2225f042b28aae`. Three new source-defined test methods, **2,049 proposed methods**.
+
+The DEC-1478/1479 run-level timestamp check required a GitHub workflow's UTC lifecycle metadata to satisfy `created_at <= run_started_at <= updated_at`, but compared raw runner log timestamps only with **created_at..updated_at**. Consequently a source-shaped runner log could be accepted even if its checkout or acceptance records occurred after workflow creation but before GitHub reported the run had started.
+
+The bound is now tightened to `run_started_at <= log_timestamp <= updated_at`, retaining the independent `created_at <= run_started_at` validation. Three source-only tests check historical fetch, Phase3 index, and the full combined reviewer with a post-creation/pre-start forged trace. The real unprotected #1698 observed source golden fixture remains valid: both workflow records were created and started at `2026-10-17T11:48:44Z`, prior to their actual checkout and acceptance evidence.
+
+This is **not** exact job-level start/completion attestation: the available connected job wrapper omits those timestamps, and all submitted source snapshots require independent provider authentication. It does not establish a protected original OS boundary or annual execution admission. DEC-650/#820 protected actual original no-write and DEC-651/#821/#779 immutable exclusive preallocation one-shot **2023 run385/attempt1** GitHub server admission remain **BLOCKED**. Its own PR merge-source-tree Phase3/full historical/general CI and qualified independent review required. No protected annual dispatch/retry, originals/archives/artifact downloads, workflow/security edits, merge, deployment or trading.
