@@ -12,6 +12,7 @@ from test_dec1433_strict_draft_ancestry_paths_offline import (
     reviewed_tests_docs_path,
 )
 from test_dec1430_reviewed_ci_workflow_blob_source_identity import git_blob_id
+from test_dec1443_git_tree_object_wire_identity import reviewed_git_tree_sha
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 
@@ -55,6 +56,8 @@ def review_exact_changed_tree_chain(commit, compare, tree_snapshots,
                     type(entry) is dict for entry in entries):
                 issues.append("TREE_CHAIN_TREE_ENTRIES_UNREVIEWED")
                 break
+            if reviewed_git_tree_sha(entries) != sha:
+                issues.append("TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH")
             found = [entry for entry in entries if entry.get("path") == part]
             if len(found) != 1:
                 issues.append("TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED")
@@ -128,6 +131,30 @@ class ExactTreeParentChildBindingCannotConferAnnualPermission(unittest.TestCase)
                           "sha": git_blob_id(self.contents[self.file_names[1]])}],
             },
         }
+
+        # Build true Git hashes for every fixture tree, bottom-up.
+        nested = self.trees.pop(self.nested)
+        self.nested = reviewed_git_tree_sha(nested["tree"])
+        nested["sha"] = self.nested
+        self.trees[self.nested] = nested
+        docs = self.trees.pop(self.docs)
+        self.docs = reviewed_git_tree_sha(docs["tree"])
+        docs["sha"] = self.docs
+        self.trees[self.docs] = docs
+        tests = self.trees.pop(self.tests)
+        tests["tree"][0]["sha"] = self.nested
+        self.tests = reviewed_git_tree_sha(tests["tree"])
+        tests["sha"] = self.tests
+        self.trees[self.tests] = tests
+        root = self.trees.pop(self.root)
+        for entry in root["tree"]:
+            entry["sha"] = self.tests if entry["path"] == "tests" else self.docs
+        root["tree"].sort(key=lambda e: e["path"].encode("utf-8") +
+                          (b"/" if e["mode"] == "040000" else b""))
+        self.root = reviewed_git_tree_sha(root["tree"])
+        root["sha"] = self.root
+        self.trees[self.root] = root
+        self.commit["tree"]["sha"] = self.root
 
     def verdict(self):
         return review_exact_changed_tree_chain(
@@ -209,3 +236,20 @@ class ExactTreeParentChildBindingCannotConferAnnualPermission(unittest.TestCase)
     def test_synthetically_consistent_chain_never_authorizes_run385(self):
         self.assertEqual(self.verdict(), ())
         self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict())
+
+    def test_altered_full_subtree_contents_cannot_keep_claimed_sha(self):
+        self.trees[self.nested]["tree"][0]["path"] = "forged.py"
+        self.assertIn("TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH",
+                      self.verdict())
+
+    def test_reordered_root_entries_cannot_keep_claimed_sha(self):
+        self.trees[self.root]["tree"].reverse()
+        self.assertIn("TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH",
+                      self.verdict())
+
+    def test_new_sibling_object_requires_recomputed_parent_hash(self):
+        self.trees[self.docs]["tree"].append({
+            "path": "z-extra.md", "mode": "100644", "type": "blob",
+            "sha": "e"*40})
+        self.assertIn("TREE_CHAIN_OBJECT_BYTES_SHA_MISMATCH",
+                      self.verdict())
