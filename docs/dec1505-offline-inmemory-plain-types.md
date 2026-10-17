@@ -1,0 +1,9 @@
+# DEC-1505 — Plain-type contract for direct in-memory evidence
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1750, exact parent `587d0628be61d6bf4d8f43366256b331d4c4253f`. Eleven synthetic unittest methods: **2,296 proposed source-defined methods**.
+
+The direct Python-object entry point is intended for JSON-compatible offline evidence and explicitly supplied byte payloads. Before this change its graph preflight traversed plain dict/list/tuple containers and counted strings, bytes and numeric scalars, but silently accepted arbitrary objects and subclasses as opaque leaves. Those values could reach the nested evidence reviewer and invoke user-defined magic methods or inconsistent data conversions. The preflight now accepts only exact built-in `dict`, `list`, `tuple`, `str`, `bytes`, `int`, `float`, `bool` and `NoneType`; unsupported objects fail with the existing non-echoing `BUNDLE_STRUCTURE_BUDGET_UNREVIEWED` diagnostic. Cycle, depth, cardinality, scalar-volume and finite-number limits remain in force.
+
+Eleven synthetic regression methods cover custom objects whose `__repr__` raises, subclassed strings/maps/lists/bytes, sets, decimals, complex numbers, safe plain scalars, direct-envelope fail-closed behavior and a clean positive fixture. This is a local source-shape contract, not an assertion of authenticated external provenance, protected OS isolation or annual run admission.
+
+Own exact-head Phase 3/full historical-general CI plus independent qualified review required. DEC-650/#820 witnessed protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected 2023 run385/attempt1 GitHub server admission remain **BLOCKED**. No protected runs/retries, original/archive/artifact access, installed workflow/security settings changes, merge, deployment or trading.
