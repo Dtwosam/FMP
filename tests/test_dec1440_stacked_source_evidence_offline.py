@@ -21,6 +21,7 @@ import test_dec1454_runner_merge_checkout_trace_parser_offline as log_parse
 import test_dec1458_ci_job_raw_log_receipt_offline as log_receipt
 import test_dec1462_phase3_raw_log_index_upload_offline as phase3_raw
 import test_dec1466_phase3_checkout_acceptance_chronology_offline as temporal
+import test_dec1477_ci_run_time_window_raw_log_offline as run_window
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
@@ -153,6 +154,7 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
                         pr.get("number"), pr.get("head_sha"), pr.get("base_sha"),
                         run_id, merge.get("sha")))
     checks = (
+        run_window.review_both_run_log_windows(runs, raw_ci_runner_logs),
         tuple(sorted(set(temporal_issues))),
         tuple(sorted(set(phase3_log_issues))),
         tuple(sorted(set(raw_issues))),
@@ -192,6 +194,14 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.pr = dict(fixture.pr)
         self.pr.update({"changed_files": 2, "additions": 10, "deletions": 0})
         self.runs = fixture.runs
+        # Independently supplied UTC run envelopes must cover every raw log
+        # stage; exact job windows are not available in this CI snapshot.
+        for r in self.runs:
+            r.update({
+                "created_at": "2026-10-17T09:59:59Z",
+                "run_started_at": "2026-10-17T09:59:59Z",
+                "updated_at": "2026-10-17T10:00:08Z",
+            })
         self.jobs = fixture.jobs_by_run
         base, head = self.pr["base_sha"], self.pr["head_sha"]
         self.compare = {
@@ -909,3 +919,44 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertEqual(index, self.phase3_evidence["index"])
         self.assertEqual(receipt["id"], self.phase3_evidence["upload"]["id"])
         self.assertEqual(receipt["run_id"], 8000)
+
+    def test_run_level_utc_windows_are_composite_requirements(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertEqual({r["name"] for r in self.runs},
+                         {"tests", "phase3-acceptance"})
+
+    def test_historical_raw_log_before_declared_run_start_fails(self):
+        self.runs[1]["run_started_at"] = "2026-10-17T10:00:03Z"
+        self.assertIn("tests_LOG_OUTSIDE_RUN_WINDOW",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_raw_upload_after_declared_run_end_fails(self):
+        self.runs[0]["updated_at"] = "2026-10-17T10:00:05Z"
+        self.assertIn("phase3-acceptance_LOG_OUTSIDE_RUN_WINDOW",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_unreviewed_calendar_start_date_fails(self):
+        self.runs[0]["run_started_at"] = "2026-99-17T09:59:59Z"
+        self.assertIn("phase3-acceptance_RUN_WINDOW_TIMESTAMP_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_missing_historical_run_start_fails(self):
+        self.runs[1].pop("run_started_at")
+        self.assertIn("tests_RUN_WINDOW_TIMESTAMP_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_raw_historical_log_with_out_of_window_line_fails(self):
+        self.raw_ci_runner_logs[8001] += (
+            "\n2026-10-17T08:00:00.000Z stale historical log line")
+        self.assertIn("tests_LOG_OUTSIDE_RUN_WINDOW",
+                      self.verdict()["diagnostics"])
+
+    def test_run_window_comparison_is_not_exact_job_time_proof(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertFalse(self.verdict()["independent_original_os_proof"])
+
+    def test_valid_run_envelopes_do_not_authorize_annual_run(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
