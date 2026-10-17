@@ -34,6 +34,7 @@ MAX_INMEMORY_NODES = 200_000
 MAX_INMEMORY_DEPTH = 512
 MAX_INMEMORY_SCALAR_UNITS = 4_000_000
 MAX_INMEMORY_TOTAL_SCALAR_UNITS = 16_000_000
+MAX_INMEMORY_INTEGER_MAGNITUDE = 10**MAX_JSON_INTEGER_DIGITS-1
 VERDICT_FIELDS = frozenset((
     "source_consistency", "diagnostics", "independent_original_os_proof",
     "exclusive_server_dispatch_gate_proven", "can_authorize_annual_run",
@@ -137,6 +138,14 @@ def _within_inmemory_structure_budget(root):
             continue
         nodes += 1
         if nodes > MAX_INMEMORY_NODES or depth > MAX_INMEMORY_DEPTH:
+            return False
+        if (type(item) is int and
+                not (-MAX_INMEMORY_INTEGER_MAGNITUDE <= item <=
+                     MAX_INMEMORY_INTEGER_MAGNITUDE)):
+            # Magnitude comparison enforces the exact decimal digit bound
+            # without formatting arbitrarily large integers.
+            return False
+        if type(item) is float and not math.isfinite(item):
             return False
         if type(item) in (str, bytes):
             units = len(item)
@@ -1639,6 +1648,56 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_inmemory_scalar_budget_preserves_clean_evidence_fixture(self):
         self.assertTrue(_within_inmemory_structure_budget(self.envelope))
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_inmemory_large_positive_integer_fails_before_stringify(self):
+        self.assertFalse(_within_inmemory_structure_budget(10**10000))
+
+    def test_inmemory_large_negative_integer_fails(self):
+        self.assertFalse(_within_inmemory_structure_budget(-(10**10000)))
+
+    def test_inmemory_exact_max_64_digit_integer_is_permitted(self):
+        self.assertTrue(_within_inmemory_structure_budget(10**64-1))
+
+    def test_inmemory_first_65_digit_integer_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget(10**64))
+
+    def test_inmemory_nonfinite_positive_float_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget(float("inf")))
+
+    def test_inmemory_nonfinite_negative_float_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget(float("-inf")))
+
+    def test_inmemory_nonfinite_nan_is_rejected(self):
+        self.assertFalse(_within_inmemory_structure_budget(float("nan")))
+
+    def test_inmemory_finite_float_remains_allowed(self):
+        self.assertTrue(_within_inmemory_structure_budget(
+            {"synthetic_float": 2.5e300}))
+
+    def test_inmemory_overlong_integer_inside_envelope_fails_closed(self):
+        data = dict(self.envelope)
+        pr = dict(data["pr"])
+        pr["synthetic_bigint"] = 10**10000
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_inmemory_nan_in_envelope_fails_closed(self):
+        data = dict(self.envelope)
+        pr = dict(data["pr"])
+        pr["synthetic_nan"] = float("nan")
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+
+    def test_inmemory_numeric_guard_preserves_clean_synthetic_source_only(self):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
