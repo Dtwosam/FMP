@@ -505,10 +505,10 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
                          ("BUNDLE_SHAPE_UNREVIEWED",))
 
-    def test_boundary_object_depth_reaches_shape_check(self):
+    def test_boundary_object_depth_reaches_inventory_check(self):
         raw = '{"a":' * MAX_JSON_NESTING + 'null' + "}" * MAX_JSON_NESTING
         self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
-                         ("BUNDLE_SHAPE_UNREVIEWED",))
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
 
     def test_brackets_inside_string_do_not_count_as_container_depth(self):
         raw = json.dumps("[" * 800 + "]" * 800 + "{" * 800 + "}" * 800)
@@ -604,6 +604,59 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
                           side_effect=RecursionError("synthetic")):
             result = review_bundle_json_text(json.dumps(self.envelope))
         self.assertEqual(result["diagnostics"], ("BUNDLE_NESTED_EVIDENCE_UNREVIEWED",))
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_object_one_below_depth_limit_is_valid_json_but_wrong_inventory(self):
+        depth = MAX_JSON_NESTING - 1
+        raw = '{"nested":' * depth + "null" + "}" * depth
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_object_one_above_depth_limit_is_grammar_rejection(self):
+        depth = MAX_JSON_NESTING + 1
+        raw = '{"nested":' * depth + "null" + "}" * depth
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_empty_object_is_inventory_failure_not_shape_failure(self):
+        self.assertEqual(review_bundle_json_text("{}")["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_scalar_json_is_shape_failure_not_inventory_failure(self):
+        for raw in ("42", '""', "true", "null"):
+            with self.subTest(raw=raw):
+                self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                                 ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_exact_mixed_boundary_top_level_object_is_inventory_failure(self):
+        raw = '{"nested":' + "[" * (MAX_JSON_NESTING-1) + "null" + "]" * (MAX_JSON_NESTING-1) + "}"
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_one_above_mixed_boundary_is_grammar_failure(self):
+        raw = '{"nested":' + "[" * MAX_JSON_NESTING + "null" + "]" * MAX_JSON_NESTING + "}"
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_mismatched_nested_delimiters_still_fail_grammar(self):
+        self.assertEqual(review_bundle_json_text('{"a":[1}}')["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_duplicate_nested_object_keys_still_fail_grammar(self):
+        self.assertEqual(review_bundle_json_text('{"a":{"b":1,"b":2}}')["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_utf8_escaped_nested_key_brackets_are_not_containers(self):
+        raw = json.dumps({"[[]" * 100: None})
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_boundary_inventory_diagnostic_cannot_grant_annual_permission(self):
+        raw = '{"a":' * MAX_JSON_NESTING + 'null' + "}" * MAX_JSON_NESTING
+        result = review_bundle_json_text(raw)
+        self.assertFalse(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
