@@ -1,0 +1,9 @@
+# DEC-1502 — Bounded direct in-memory offline evidence object graph
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1747 at `fc830ca5f4fcd27e2db9d02c887920280733f272`. Adds **10 synthetic unittest methods**, for **2,264 proposed source-defined methods**.
+
+The stdin JSON reviewer already limits raw text length and lexical container depth, while the direct `review_bundle_envelope` function accepts Python dictionaries/lists/tuples without a structural budget. A direct caller can supply a cyclic object graph, a huge container or exceptionally deep nested containers and cause unbounded traversal or inconsistent interpreter-level errors. A new local, iterative DFS preflight checks that the graph contains no active-backedge cycles, at most 200,000 visited nodes and a maximum depth of 512. Only built-in dict/list/tuple container structure is traversed; scalar strings are not iterated character by character. If exceeded, return the non-echoing `BUNDLE_STRUCTURE_BUDGET_UNREVIEWED` diagnostic before nested source review. Existing top-level category, source-map and run-map bounds remain active.
+
+Ten synthetic tests cover self-referential dictionaries, cyclic lists and tuple/list cycles, deep nesting, oversized lists, permitted shared acyclic objects, scalar string handling, moderate nesting, JSON depth precedence and a normal positive bundle. Zero permissions or original OS protection are inferred from passing this review.
+
+Own exact-head Phase 3/full historical-general CI and qualified independent review mandatory. DEC-650/#820 protected-original OS no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 server admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive/artifact access, workflow/security settings changes, merges, deployment or trading.
