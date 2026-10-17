@@ -7,6 +7,7 @@ from __future__ import annotations
 import re
 import unittest
 from test_dec1481_exact_utc_nanosecond_source_time import reviewed_utc_nanoseconds
+import test_dec1483_runner_git_subcommand_source_parser as git_words
 
 PREFIX = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z "
 FETCH = re.compile(PREFIX + r"\[command\]/usr/bin/git .*?\bfetch\b .*?"
@@ -17,6 +18,11 @@ CHECKOUT = re.compile(PREFIX +
 HEAD = re.compile(PREFIX + r"HEAD is now at ([0-9a-f]{7,40}) "
                   r"Merge ([0-9a-f]{40}) into ([0-9a-f]{40})$")
 SHA = re.compile(r"[0-9a-f]{40}\Z")
+SOURCE_MUTATORS = frozenset((
+    "fetch", "checkout", "switch", "reset", "restore", "clean",
+    "apply", "am", "cherry-pick", "merge", "rebase", "pull",
+    "read-tree", "worktree", "update-index",
+))
 
 
 def parse_runner_checkout(raw_log, pr_number, head_sha, base_sha):
@@ -43,15 +49,12 @@ def parse_runner_checkout(raw_log, pr_number, head_sha, base_sha):
         if re.match(PREFIX, line) is None:
             continue
         if "[command]/usr/bin/git " in line:
-            command = line.split("[command]/usr/bin/git ", 1)[1]
-            mutating = re.search(
-                # Detect command words, not substrings of paths such as
-                # refs/remotes/pull/N/merge or branch "cherry-pick".
-                r"(?:^|\s)(fetch|checkout|switch|reset|restore|clean|apply|"
-                r"am|cherry-pick|merge|rebase|pull|read-tree|worktree|"
-                r"update-index)(?=\s|$)",
-                command)
-            if mutating and not (
+            subcommand = git_words.reviewed_runner_git_subcommand(line)
+            # Empty means the runner Git line has bad shell/global-option
+            # shape. None means a supposedly Git command did not parse.
+            if subcommand in ("", None):
+                extra_mutations.append(line)
+            elif subcommand in SOURCE_MUTATORS and not (
                     FETCH.fullmatch(line) or CHECKOUT.fullmatch(line)):
                 extra_mutations.append(line)
         elif "HEAD is now at " in line and HEAD.fullmatch(line) is None:
@@ -374,3 +377,56 @@ class ImmutableGitFetchCheckoutHeadLogTrace(unittest.TestCase):
                 self.lines[i])
         self.assertIn("RUNNER_LOG_TIMESTAMP_ORDER_UNREVIEWED",
                       self.verdict()[1])
+
+    def test_git_show_argument_named_clean_is_not_actual_git_clean(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git show clean")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_git_log_format_named_merge_is_not_actual_git_merge(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git log -1 --format=merge")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_git_show_branch_named_reset_is_read_only(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git show reset")
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_git_checkout_after_global_worktree_option_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git -C /tmp checkout other")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_unknown_git_global_option_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git --unexpected checkout other")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_unterminated_git_command_quoting_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git show 'unclosed")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_extra_full_fetch_with_git_config_option_is_rejected(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git -c protocol.version=2 fetch origin main")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+
+    def test_read_only_submodule_config_inspection_is_not_a_direct_clean(self):
+        self.lines.append(
+            '2026-10-16T23:10:57.1000000Z [command]/usr/bin/git submodule foreach --recursive sh -c "git clean -fd"')
+        # Only the top-level command is parsed. Nested submodule shell
+        # commands require independent inspection before use as evidence.
+        self.assertEqual(self.verdict()[1], ())
+
+    def test_parsed_git_command_roles_cannot_authorize_2023_annual(self):
+        self.lines.append(
+            "2026-10-16T23:10:57.1000000Z [command]/usr/bin/git restore .")
+        self.assertIn("RUNNER_LOG_EXTRA_GIT_MUTATION_UNREVIEWED",
+                      self.verdict()[1])
+        self.assertNotIn("ANNUAL_DISPATCH_AUTHORIZED", self.verdict()[1])

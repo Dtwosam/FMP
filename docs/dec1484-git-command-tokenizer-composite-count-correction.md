@@ -1,0 +1,11 @@
+# DEC-1484 — Actual Git subcommand mutator test, plus exact lineage count correction
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1720 DEC-1483 at `ed0d8e359674d10a41a566c034181c4b100198c0`. Nine new methods, **2,103 proposed source-defined unittest methods**.
+
+DEC-1475 treated words inside every runner Git command's argument string as potential source-mutating Git subcommands. This overblocked read-only `git show clean` and `git log --format=merge`, and could conflate quoted `git submodule foreach` bodies with a direct `git clean`. This child requires the DEC-1483 reviewed top-level Git argument tokenizer from DEC-1454's extra source-mutation logic instead. Actual extra fetch/checkout/restore/rebase/etc remain fail-closed, including Git `-C` and `-c` global option forms; invalid leading options and malformed shell quoting now also fail closed.
+
+Nine positive/negative tests protect exact subcommand classification and the no-authorization invariant. Nested `submodule foreach` shell bodies remain **outside** the top-level parser; these tests do not assert full Git subprocess immutability. Real checkout-action setup includes Git config, init and sparse-checkout before checkout; parsing the subcommand is not a guarantee of trustworthiness or full filesystem confinement.
+
+**Counting correction:** Earlier committed source claims in DEC-1482 and DEC-1483 were off by one: #1718 had 2,068 proposed methods, #1719 **2,076** (not 2,075), and #1720 **2,094** (not 2,093). This forward child corrects the two docs and adds nine methods to reach **2,103**. Prior exact commit SHAs and CI results remain unchanged.
+
+Own head-associated PR merge-source-tree Phase3/full historical CI and external qualified review required. DEC-650/#820 actual original-data OS no-write and DEC-651/#821/#779 immutable exclusive preallocation 2023 run385/attempt1 server admission still **BLOCKED**. No protected annual dispatch/retry, originals/artifacts, installed workflow/security/ruleset changes, merges, deployment or trading.

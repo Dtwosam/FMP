@@ -1,6 +1,6 @@
 # DEC-1483 — Parse actual top-level Git runner subcommand rather than argument words
 
-**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1719 DEC-1482 at `48860b7cdf053528cae335ef99865ae6eb7e5753`; **18 new methods, 2093 proposed source-defined methods**.
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1719 DEC-1482 at `48860b7cdf053528cae335ef99865ae6eb7e5753`; **18 new methods, 2094 proposed source-defined methods**.
 
 DEC-1461/1475 added fail-closed checks for extra source-changing Git commands in raw GitHub Actions job logs. The previous regular expression looked for Git mutator **words anywhere in the argument string**; it could incorrectly mark a read-only command like `git show clean` or `git log -1 --format=merge` as a source mutation. The read-only #1698 runner logs also include Git global options (e.g. `git -c protocol.version=2 fetch`) and quoted `submodule foreach` arguments containing more Git commands.
 
