@@ -1,0 +1,9 @@
+# DEC-1448 — Enforce full fetched checkout merge commit SHA
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit test/docs child of #1671 DEC-1447 at c24fad74613ab5dc445fee6152ab1f40d355c223. Six new source-defined methods, **1,749 proposed methods**.
+
+DEC-1445 reviewed a seven-character checkout HEAD abbreviation plus a mutable refs/pull/N/merge GitHub ref. Those fields alone are weaker historical provenance than the actual completed runner's full Git fetch record. Read-only logs for the previously green #1664 historical and Phase3 jobs both include an immutable full SHA fetch of 5857e06c3cff50243d2ad87c31c55e86a636ea50 into refs/remotes/pull/1664/merge. The live read-only Git commit object at that SHA shows parents (base 624b002f0de79174b2b9aecb3343f64d5f3e658f; head 7eb566a3448f9fc01ed6a1433714304c19e4568c) and a source tree identical to the reviewed draft head.
+
+This forward-only correction requires a full 40-hex SHA taken from the runner fetch log in addition to the short checkout log SHA and independently read merge commit record. The new requirement is propagated into the DEC-1446 composite reviewer. Six new synthetic tests reject missing full checkout evidence or an incorrect fetched SHA despite an apparently valid seven-character prefix. A current mutable merge ref can corroborate but should never replace an immutable exact historical fetch witness. Neither these fixture tests nor a green test suite independently authenticates the log source or confers protected annual execution permission.
+
+Its own head-associated PR merge-source-tree Phase3/full historical CI and qualified review are mandatory. DEC-650/#820 real OS-protected original no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 admission remain **BLOCKED**. No annual dispatch/retry, original/archive access, installed workflow/security settings, merge, production or trading.

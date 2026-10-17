@@ -34,7 +34,8 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
             merge_check = merge_review.review_pr_merge_checkout(
                 pr, historical[0], e.get("merge_ref"),
                 e.get("merge_commit"), e.get("head_commit"),
-                e.get("checkout_ref"), e.get("checkout_sha_prefix"))
+                e.get("checkout_ref"), e.get("checkout_sha_prefix"),
+                e.get("checkout_fetch_sha"))
     checks = (
         merge_check,
         jobs_review.review_exact_pr_ci_jobs(pr, runs, jobs_by_run),
@@ -163,6 +164,7 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
             },
             "checkout_ref": "refs/remotes/pull/1649/merge",
             "checkout_sha_prefix": "fffffff",
+            "checkout_fetch_sha": "f"*40,
         }
         self.ci_bytes = dict(self.original_ci_bytes)
 
@@ -353,3 +355,13 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.assertFalse(result["can_authorize_annual_run"])
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+
+    def test_missing_full_runner_fetch_sha_blocks_composite(self):
+        self.merge_checkout.pop("checkout_fetch_sha")
+        self.assertIn("RUNNER_FETCH_FULL_SHA_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_stale_runner_full_fetch_sha_blocks_composite(self):
+        self.merge_checkout["checkout_fetch_sha"] = "d"*40
+        self.assertIn("RUNNER_FETCH_FULL_SHA_MISMATCH",
+                      self.verdict()["diagnostics"])
