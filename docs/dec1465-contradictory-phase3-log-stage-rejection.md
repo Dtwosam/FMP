@@ -1,0 +1,9 @@
+# DEC-1465 — Fail closed on contradictory extra Phase3 log evidence stages
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1688 DEC-1464 at 2c58b5bf8b3f8d5ae5d619072d8cef8c57e56b90. Eight added synthetic methods, **1,906 proposed source-defined methods**.
+
+The DEC-1462/1464 Phase3 parser requires exactly one syntactically reviewed acceptance JSON/index, artifact name, finalized upload and download URL record. Without an additional inventory check it could ignore a second malformed/conflicting record (for example a JSON object with reordered keys, an alternate upload name or a malformed artifact URL) while still accepting the first valid line. This child inspects the supplied raw Phase3 job log for extra source-shaped index or upload lines that fail the reviewed stage patterns, preventing apparently clean evidence from overriding contradictory status.
+
+The new fail-closed check is intentionally narrow: it does not reject unrelated shell assertions or the regular upload action's "Artifact name is valid!" status, since those are not duplicate evidence receipts. Eight regression tests cover additional malformed index/name/finalization/upload/URL and benign incidental lines. It does not authenticate GitHub log text, retrieve artifact bytes or grant protected annual authorization; existing DEC-1463 composite inherits this check.
+
+Own head-associated PR merge-source-tree Phase3/full historical/general CI and independent qualified review required. DEC-650/#820 actual protected original OS no-write and DEC-651/#821/#779 immutable exclusive 2023 run385/attempt1 server admission remain **BLOCKED**. No protected annual dispatch/retry, original/archive download, installed workflow/security modifications, merges or trading.
