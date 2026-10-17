@@ -30,6 +30,8 @@ MAX_RUNS_PER_ENVELOPE = 4096
 MAX_RUN_MAP_ENTRIES = 8192
 MAX_RAW_LOG_CHARS_PER_RUN = 2_000_000
 MAX_TOTAL_RAW_LOG_CHARS = 4_000_000
+MAX_INMEMORY_NODES = 200_000
+MAX_INMEMORY_DEPTH = 512
 VERDICT_FIELDS = frozenset((
     "source_consistency", "diagnostics", "independent_original_os_proof",
     "exclusive_server_dispatch_gate_proven", "can_authorize_annual_run",
@@ -120,6 +122,37 @@ def _reviewed_source_path(path):
                    0x2066 <= ord(char) <= 0x2069 for char in path)
 
 
+def _within_inmemory_structure_budget(root):
+    """Iteratively refuse cyclic, excessively deep, or huge input graphs."""
+    active = set()
+    stack = [(root, 0, False)]
+    nodes = 0
+    while stack:
+        item, depth, leaving = stack.pop()
+        if leaving:
+            active.remove(id(item))
+            continue
+        nodes += 1
+        if nodes > MAX_INMEMORY_NODES or depth > MAX_INMEMORY_DEPTH:
+            return False
+        if type(item) in (dict, list, tuple):
+            if id(item) in active:
+                return False
+            children = len(item) * (2 if type(item) is dict else 1)
+            if children > MAX_INMEMORY_NODES:
+                return False
+            active.add(id(item))
+            stack.append((item, depth, True))
+            if type(item) is dict:
+                for key, value in item.items():
+                    stack.append((key, depth+1, False))
+                    stack.append((value, depth+1, False))
+            else:
+                for value in item:
+                    stack.append((value, depth+1, False))
+    return True
+
+
 def review_bundle_envelope(envelope):
     """Decode an offline-only JSON-compatible envelope, fail closed on bad input."""
     if type(envelope) is not dict:
@@ -134,6 +167,8 @@ def review_bundle_envelope(envelope):
         return fail_closed("BUNDLE_CATEGORY_TYPE_UNREVIEWED")
     if len(envelope["runs"]) > MAX_RUNS_PER_ENVELOPE:
         return fail_closed("BUNDLE_RUN_COLLECTION_OVERSIZE")
+    if not _within_inmemory_structure_budget(envelope):
+        return fail_closed("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED")
 
     converted = {}
     total_bytes = 0
@@ -1467,6 +1502,85 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_inmemory_self_referential_dict_rejected(self):
+        data = dict(self.envelope)
+        pr = dict(data["pr"])
+        pr["synthetic_cycle"] = pr
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_direct_inmemory_self_referential_list_rejected(self):
+        data = dict(self.envelope)
+        cycle = []
+        cycle.append(cycle)
+        pr = dict(data["pr"])
+        pr["synthetic_cycle"] = cycle
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+
+    def test_direct_inmemory_tuple_list_cycle_rejected(self):
+        cycle = []
+        cycle.append((cycle,))
+        self.assertFalse(_within_inmemory_structure_budget(cycle))
+
+    def test_direct_inmemory_deep_nested_list_rejected(self):
+        nested = []
+        for _ in range(MAX_INMEMORY_DEPTH+2):
+            nested = [nested]
+        data = dict(self.envelope)
+        pr = dict(data["pr"])
+        pr["synthetic_deep"] = nested
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+
+    def test_direct_inmemory_overlarge_list_rejected_before_walk(self):
+        data = dict(self.envelope)
+        pr = dict(data["pr"])
+        pr["synthetic_large"] = [None] * (MAX_INMEMORY_NODES+1)
+        data["pr"] = pr
+        result = review_bundle_envelope(data)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_shared_acyclic_dict_is_not_a_cycle(self):
+        shared = {"fixture": "synthetic"}
+        self.assertTrue(_within_inmemory_structure_budget(
+            {"first": shared, "second": shared}))
+
+    def test_large_scalar_string_is_not_exploded_into_nodes(self):
+        self.assertTrue(_within_inmemory_structure_budget(
+            {"synthetic": "x" * (MAX_INMEMORY_NODES+1)}))
+
+    def test_structure_budget_allows_moderately_nested_acyclic_lists(self):
+        nested = []
+        for _ in range(100):
+            nested = [nested]
+        self.assertTrue(_within_inmemory_structure_budget(nested))
+
+    def test_json_over_depth_still_fails_before_composite_review(self):
+        raw = "[" * (MAX_JSON_NESTING+1) + "null" + "]" * (MAX_JSON_NESTING+1)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_structure_budget_preserves_clean_source_only_fixture(self):
+        self.assertTrue(_within_inmemory_structure_budget(self.envelope))
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
