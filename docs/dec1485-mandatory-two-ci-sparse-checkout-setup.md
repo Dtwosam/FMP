@@ -1,0 +1,11 @@
+# DEC-1485 — Require sparse checkout disable in BOTH runner source setups
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child #1708 DEC-1484 at `9083b0d464df4f342eded8a77b83ee4fddd2a22c`. Seven additional source-defined test methods; **2,074 proposed methods**.
+
+DEC-1484 reviewed the actual `actions/checkout` setup records seen in read-only successful #1674 and #1698 runner logs: after immutable PR merge SHA fetch and before the actual Git merge checkout, the checkout action runs `git sparse-checkout disable`. This can change which worktree files are present, so it must be reviewed as part of source establishment, not ignored or rejected without recognizing its legitimate precheckout position.
+
+The DEC-1440 composed source-evidence reviewer now requires exactly one observed `sparse-checkout disable` in the correct line/time position for **both** required first-attempt PR CI runner logs, in addition to full fetched merge SHA, worktree mutation check, source-tree identity, Phase3 acceptance trace, artifact transfer count, exact run/job log receipts and workflow run lifecycle windows. Synthetic fixture checkout traces add `10:00:00.7500000Z [command]/usr/bin/git sparse-checkout disable` between fetch and checkout; derived raw log SHA-256 receipts are updated automatically. Seven positive/negative tests reject missing, unexpected, repeated or late sparse checkout actions for either run.
+
+This is a conservative **source-log consistency model**. Real job logs include GitHub Actions submodule/credential cleanup commands and other non-Git shell steps not exhaustively assessed by this narrow reviewer. A green result is not signed provider attestation, complete source filesystem integrity, protected original OS no-write, or permission to run the one-shot annual research.
+
+Own head-associated PR merge-source-tree Phase3/full historical/general CI and qualified independent review required. DEC-650/#820 actual protected original OS no-write and DEC-651/#821/#779 immutable exclusive server-admitted **2023 run385/attempt1** remain **BLOCKED**. No protected annual dispatch/retry, original/archive/artifact downloads, installed workflow/security mutations, merges, deployments or brokerage/trading.

@@ -23,6 +23,7 @@ import test_dec1462_phase3_raw_log_index_upload_offline as phase3_raw
 import test_dec1466_phase3_checkout_acceptance_chronology_offline as temporal
 import test_dec1478_workflow_run_log_time_bounds_offline as run_window
 import test_dec1480_phase3_uploaded_bytes_receipt_offline as transfer
+import test_dec1484_sparse_checkout_precheckout_stage_offline as sparse_setup
 
 
 def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
@@ -173,7 +174,28 @@ def review_stacked_draft_evidence(pr, runs, jobs_by_run, compare, commit,
             else:
                 transfer_issues.extend(transfer.review_phase3_uploaded_bytes(
                     raw_ci_runner_logs.get(run_id), run_id, merge.get("sha")))
+    sparse_issues = []
+    if (type(pr) is not dict or type(runs) is not list or
+            type(raw_ci_runner_logs) is not dict or
+            not all(type(r) is dict for r in runs)):
+        sparse_issues.append("CI_SPARSE_SETUP_INPUT_UNREVIEWED")
+    else:
+        reviewed = [r for r in runs if r.get("name") in
+                    ("tests", "phase3-acceptance")]
+        if len(reviewed) != 2:
+            sparse_issues.append("CI_SPARSE_SETUP_RUNS_UNREVIEWED")
+        for run in reviewed:
+            run_id = run.get("id")
+            if type(run_id) is not int or run_id <= 0:
+                sparse_issues.append("CI_SPARSE_SETUP_RUN_ID_UNREVIEWED")
+            else:
+                sparse_issues.extend(
+                    sparse_setup.review_sparse_disable_before_checkout(
+                        raw_ci_runner_logs.get(run_id),
+                        pr.get("number"), pr.get("head_sha"),
+                        pr.get("base_sha")))
     checks = (
+        tuple(sorted(set(sparse_issues))),
         tuple(sorted(set(transfer_issues))),
         run_window.review_two_ci_runner_log_windows(runs, raw_ci_runner_logs),
         tuple(sorted(set(temporal_issues))),
@@ -358,6 +380,7 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         self.raw_ci_runner_logs = {
             run["id"]: "\n".join([
                 "2026-10-17T10:00:00.1000000Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags origin +" + raw_merge + ":" + raw_ref,
+                "2026-10-17T10:00:00.7500000Z [command]/usr/bin/git sparse-checkout disable",
                 "2026-10-17T10:00:01.1000000Z [command]/usr/bin/git checkout --progress --force " + raw_ref,
                 "2026-10-17T10:00:02.1000000Z HEAD is now at " + raw_merge[:7] + " Merge " + raw_head + " into " + raw_base,
             ])
@@ -1043,3 +1066,50 @@ class CombinedSourceChecksRemainNonAuthorizing(unittest.TestCase):
         r["run_started_at"] = "2026-10-17T10:00:05Z"
         self.assertIn("phase3-acceptance_RUN_WINDOW_LOG_OUTSIDE_RUN",
                       self.verdict()["diagnostics"])
+
+    def test_both_ci_checkout_sparse_setup_required_for_clean_review(self):
+        self.assertEqual(self.verdict()["diagnostics"], ())
+        self.assertIn(
+            "sparse-checkout disable", self.raw_ci_runner_logs[8000])
+        self.assertIn(
+            "sparse-checkout disable", self.raw_ci_runner_logs[8001])
+
+    def test_missing_historical_sparse_disable_fails_full_review(self):
+        self.raw_ci_runner_logs[8001] = "\n".join(
+            line for line in self.raw_ci_runner_logs[8001].splitlines()
+            if "sparse-checkout disable" not in line)
+        self.assertIn("SPARSE_SETUP_CARDINALITY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_phase3_unreviewed_sparse_set_fails_full_review(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "sparse-checkout disable", "sparse-checkout set .")
+        self.assertIn("SPARSE_SETUP_CARDINALITY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_historical_sparse_disable_after_checkout_fails(self):
+        lines = self.raw_ci_runner_logs[8001].splitlines()
+        lines[1], lines[2] = lines[2], lines[1]
+        self.raw_ci_runner_logs[8001] = "\n".join(lines)
+        self.assertIn("SPARSE_SETUP_STAGE_ORDER_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_sparse_disable_wrong_phase3_timestamp_fails(self):
+        self.raw_ci_runner_logs[8000] = self.raw_ci_runner_logs[8000].replace(
+            "10:00:00.7500000Z [command]/usr/bin/git sparse",
+            "10:00:01.7500000Z [command]/usr/bin/git sparse")
+        self.assertIn("SPARSE_SETUP_TIMESTAMP_ORDER_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_extra_historical_sparse_setup_command_fails(self):
+        self.raw_ci_runner_logs[8001] += (
+            "\n2026-10-17T10:00:03.1000000Z "
+            "[command]/usr/bin/git sparse-checkout add extra")
+        self.assertIn("SPARSE_SETUP_CARDINALITY_UNREVIEWED",
+                      self.verdict()["diagnostics"])
+
+    def test_reviewed_both_ci_sparse_setup_never_grants_annual_admission(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["can_authorize_annual_run"])
