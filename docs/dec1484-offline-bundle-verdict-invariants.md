@@ -1,0 +1,9 @@
+# DEC-1484 — Fail-closed offline CI verdict semantics
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Strict one-commit tests/docs child of #1729 at `dcee54f8250ba21a89981f6140cde0119404e83b`. Eight additional synthetic unittest methods; **2,087 proposed source-defined methods**.
+
+The offline envelope already requires five fields, forbids positive annual-admission and provider-proof flags, limits diagnostics to safe token shapes, and rejects malformed nested evidence. This increment also enforces the reviewer's own result contract: a source-consistent verdict must have zero diagnostics, an inconsistent verdict must have at least one, and diagnostics must be sorted and unique. This is the invariant already produced by `review_stacked_draft_evidence`, made explicit at the portable boundary to fail closed on accidental or adversarial contradicting responses.
+
+A caught `RecursionError` in the nested reviewer now becomes `BUNDLE_NESTED_EVIDENCE_UNREVIEWED`, with no untrusted text echoed. Eight synthetic tests cover contradictory verdicts, unsorted/duplicate codes, clean and negative controls, and simulated nested-reviewer recursion from both entrypoints. The latest historical/general CI on #1727 and #1728 failed from unbounded JSON nesting; #1729 is the forward-only correction and has not yet been fully verified at this draft's creation. No CI result is treated as passed before it is observed.
+
+Own head-associated PR merge-source-tree Phase 3/full historical/general CI and independent qualified review required. DEC-650/#820 independently witnessed protected-original OS no-write and DEC-651/#821/#779 exclusive immutable 2023 run385/attempt1 GitHub server admission remain **BLOCKED**. Neither source-consistency nor green CI authorizes the protected annual run. No dispatch/retry, protected-original or archive access, installed workflow/security changes, merges, deployment or trading.
