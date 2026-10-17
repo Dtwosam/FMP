@@ -887,7 +887,8 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
 
     def test_sorted_unique_negative_diagnostics_are_retained(self):
         from unittest.mock import patch
-        expected = ("A_ERROR", "Z_ERROR")
+        expected = ("MERGE_HISTORICAL_RUN_UNREVIEWED",
+                    "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
         bad = {"source_consistency": False, "diagnostics": expected,
                "independent_original_os_proof": False,
                "exclusive_server_dispatch_gate_proven": False,
@@ -2370,5 +2371,84 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = self.verdict()
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_sorted_reviewed_diagnostic_names_are_retained(self):
+        from unittest.mock import patch
+        codes = ("MERGE_HISTORICAL_RUN_UNREVIEWED",
+                 "TREE_CHAIN_ROOT_SHA_UNREVIEWED")
+        self.assertTrue(all(code in REVIEWED_NESTED_DIAGNOSTICS for code in codes))
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=codes)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assertEqual(self.verdict()["diagnostics"], codes)
+
+    def test_reverse_order_reviewed_diagnostics_are_rejected(self):
+        from unittest.mock import patch
+        codes = ("TREE_CHAIN_ROOT_SHA_UNREVIEWED",
+                 "MERGE_HISTORICAL_RUN_UNREVIEWED")
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=codes)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_repeated_reviewed_diagnostic_is_rejected(self):
+        from unittest.mock import patch
+        codes = ("MERGE_HISTORICAL_RUN_UNREVIEWED",) * 2
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=codes)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_unreviewed_ascii_diagnostics_remain_rejected(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=("A_ERROR", "Z_ERROR"))
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            self.assert_fails("BUNDLE_RESULT_SHAPE_UNREVIEWED")
+
+    def test_mixed_known_unknown_codes_deny_full_result(self):
+        from unittest.mock import patch
+        codes = ("MERGE_HISTORICAL_RUN_UNREVIEWED", "Z_ERROR")
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=codes)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+        self.assertNotIn("Z_ERROR", repr(result))
+
+    def test_real_diagnostic_code_does_not_grant_annual_authority(self):
+        from unittest.mock import patch
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=("TREE_CHAIN_ROOT_SHA_UNREVIEWED",))
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_single_real_code_remains_source_diagnostic_only(self):
+        from unittest.mock import patch
+        code = "MERGE_HISTORICAL_RUN_UNREVIEWED"
+        bad = dict(self.verdict(), source_consistency=False,
+                   diagnostics=(code,))
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          return_value=bad):
+            result = self.verdict()
+        self.assertEqual(result["diagnostics"], (code,))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_clean_source_fixture_remains_nonauthorizing_after_correction(self):
+        result = self.verdict()
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
 
