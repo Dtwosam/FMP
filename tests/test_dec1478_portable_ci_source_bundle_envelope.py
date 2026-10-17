@@ -267,7 +267,7 @@ def _reviewed_source_path(path):
                     MAX_SOURCE_SEGMENT_UTF8_BYTES or
                     segment in ("", ".", "..") or
                     segment.endswith((" ", ".")) or
-                    re.fullmatch(r"(?i:(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9]))"
+                    re.fullmatch(r"(?i:(CON|PRN|AUX|NUL|CONIN\$|CONOUT\$|COM[1-9¹²³]|LPT[1-9¹²³]))"
                                  r"(?:\..*)?", segment) is not None):
                 return False
     except UnicodeError:
@@ -2640,5 +2640,58 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = review_bundle_json_text(json.dumps(self.envelope))
         self.assertTrue(result["source_consistency"])
         self.assertEqual(result["diagnostics"], ())
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_windows_com_superscript_one_is_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/COM¹.txt"))
+
+    def test_windows_com_superscript_two_is_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/com².md"))
+
+    def test_windows_com_superscript_three_is_reserved(self):
+        self.assertFalse(_reviewed_source_path("docs/CoM³"))
+
+    def test_windows_lpt_superscript_one_is_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/LPT¹.txt"))
+
+    def test_windows_lpt_superscript_two_and_three_are_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/lpt².txt"))
+        self.assertFalse(_reviewed_source_path("src/LPT³"))
+
+    def test_windows_conin_conout_dollar_devices_are_reserved(self):
+        self.assertFalse(_reviewed_source_path("src/CONIN$.txt"))
+        self.assertFalse(_reviewed_source_path("src/conout$.log"))
+
+    def test_windows_similar_unreserved_names_remain_allowed(self):
+        for path in ("src/COM10.txt", "src/LPT10.txt",
+                     "src/CONINPUT.log", "src/CONOUTFILE.txt"):
+            with self.subTest(path=path):
+                self.assertTrue(_reviewed_source_path(path))
+
+    def test_superscript_reserved_source_map_fails_closed(self):
+        self.envelope["changed_bytes_b64"]["src/COM².txt"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_reserved_workflow_name_fails_closed(self):
+        self.envelope["ci_workflow_bytes_b64"]["ci/CONOUT$.yml"] = "YQ=="
+        self.assert_fails("BUNDLE_SOURCE_PATH_UNREVIEWED")
+
+    def test_reserved_superscript_stdin_verdict_never_echoes_name(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.envelope["changed_bytes_b64"]["src/COM¹-PRIVATE.txt"] = "YQ=="
+        self.envelope["changed_bytes_b64"]["src/COM¹.txt"] = "YQ=="
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(json.dumps(self.envelope)), output)
+        record = json.loads(output.getvalue())
+        self.assertEqual(status, 2)
+        self.assertIn("BUNDLE_SOURCE_PATH_UNREVIEWED", record["diagnostics"])
+        self.assertNotIn("COM¹", output.getvalue())
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_clean_non_reserved_synthetic_source_remains_consistent_only(self):
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"], ())
+        self.assertTrue(result["source_consistency"])
         self.assertFalse(result["can_authorize_annual_run"])
 
