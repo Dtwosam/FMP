@@ -8235,3 +8235,78 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_tree_sha_lexical_clean_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _set_portable_full_snapshot_truncated(self, directory, value):
+        trees = self.envelope["full_tree_snapshots"]
+        if directory is None:
+            sha = self.envelope["commit"]["tree"]["sha"]
+        else:
+            _, _, sha = self._portable_snapshot_parent_child(directory)
+        trees[sha]["truncated"] = value
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_git_tree_root_truncated_integer_zero_refused(self):
+        self._set_portable_full_snapshot_truncated(None, 0)
+
+    def test_portable_git_tree_root_truncated_null_refused(self):
+        self._set_portable_full_snapshot_truncated(None, None)
+
+    def test_portable_git_tree_root_truncated_string_false_refused(self):
+        self._set_portable_full_snapshot_truncated(None, "false")
+
+    def test_portable_git_tree_root_truncated_empty_string_refused(self):
+        self._set_portable_full_snapshot_truncated(None, "")
+
+    def test_portable_git_tree_root_truncated_empty_list_refused(self):
+        self._set_portable_full_snapshot_truncated(None, [])
+
+    def test_portable_git_tree_root_truncated_empty_object_refused(self):
+        self._set_portable_full_snapshot_truncated(None, {})
+
+    def test_portable_git_tree_root_truncated_float_zero_refused(self):
+        self._set_portable_full_snapshot_truncated(None, 0.0)
+
+    def test_portable_git_tree_child_truncated_tests_integer_zero_refused(self):
+        self._set_portable_full_snapshot_truncated("tests", 0)
+
+    def test_portable_git_tree_child_truncated_docs_null_refused(self):
+        self._set_portable_full_snapshot_truncated("docs", None)
+
+    def test_portable_git_tree_child_truncated_tests_string_false_refused(self):
+        self._set_portable_full_snapshot_truncated("tests", "false")
+
+    def test_portable_git_tree_child_truncated_docs_empty_list_refused(self):
+        self._set_portable_full_snapshot_truncated("docs", [])
+
+    def test_portable_git_tree_child_truncated_tests_float_zero_refused(self):
+        self._set_portable_full_snapshot_truncated("tests", 0.0)
+
+    def test_portable_git_tree_root_truncated_field_missing_refused(self):
+        root = self.envelope["full_tree_snapshots"][
+            self.envelope["commit"]["tree"]["sha"]]
+        root.pop("truncated")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_git_tree_docs_truncated_field_missing_refused(self):
+        trees, _, sha = self._portable_snapshot_parent_child("docs")
+        trees[sha].pop("truncated")
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def test_portable_git_tree_flat_root_integer_zero_refused(self):
+        self.envelope["tree"]["truncated"] = 0
+        self._assert_changed_tree_node_mode_refused(
+            "COMMIT_TREE_ROOT_UNREVIEWED")
+
+    def test_portable_git_tree_flat_root_string_false_refused(self):
+        self.envelope["tree"]["truncated"] = "false"
+        self._assert_changed_tree_node_mode_refused(
+            "COMMIT_TREE_ROOT_UNREVIEWED")
+
+    def test_portable_git_tree_truncated_clean_boolean_control(self):
+        self.assertIs(self.envelope["tree"]["truncated"], False)
+        for snapshot in self.envelope["full_tree_snapshots"].values():
+            self.assertIs(snapshot["truncated"], False)
+        self._assert_portable_tree_object_order_consistency_only()
+
