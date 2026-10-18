@@ -8696,3 +8696,103 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_tree_exception_clean_checker_recovers_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_forged_tree_review_verdict_refused(self, changes,
+                                                  replace=None):
+        import io
+        from unittest.mock import patch
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = copy.deepcopy(self.envelope)
+        good = {
+            "source_consistency": True,
+            "diagnostics": (),
+            "independent_original_os_proof": False,
+            "exclusive_server_dispatch_gate_proven": False,
+            "can_authorize_annual_run": False,
+        }
+        forged = copy.deepcopy(good) if replace is None else replace
+        if changes:
+            forged.update(changes)
+
+        def bogus_nested_review(**evidence):
+            evidence["full_tree_snapshots"].clear()
+            return copy.deepcopy(forged)
+
+        raw = json.dumps(self.envelope, sort_keys=True)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=bogus_nested_review):
+            direct = self.verdict()
+            parsed = review_bundle_json_text(raw)
+            out = io.StringIO()
+            status = cli.run_stdin_review(io.StringIO(raw), out)
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_RESULT_SHAPE_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertNotIn("private", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+        self.assertEqual(self.verdict()["diagnostics"], ())
+
+    def test_portable_tree_forged_original_os_proof_true_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"independent_original_os_proof": True})
+
+    def test_portable_tree_forged_exclusive_server_gate_true_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"exclusive_server_dispatch_gate_proven": True})
+
+    def test_portable_tree_forged_annual_run_authorized_true_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"can_authorize_annual_run": True})
+
+    def test_portable_tree_forged_source_consistency_numeric_true_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": 1})
+
+    def test_portable_tree_forged_diagnostics_list_instead_of_tuple_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"diagnostics": []})
+
+    def test_portable_tree_forged_diagnostics_private_unreviewed_code_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": ("private-tree-authorization",)})
+
+    def test_portable_tree_forged_diagnostics_string_instead_of_tuple_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": "private"})
+
+    def test_portable_tree_forged_diagnostics_duplicate_code_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": ("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",)*2})
+
+    def test_portable_tree_forged_diagnostics_unsorted_codes_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": ("TREE_CHAIN_TREE_OBJECT_UNREVIEWED", "BLOB_SHA_UNREVIEWED")})
+
+    def test_portable_tree_forged_success_with_nonempty_diagnostics_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"diagnostics": ("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",)})
+
+    def test_portable_tree_forged_failure_with_empty_diagnostics_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False})
+
+    def test_portable_tree_forged_diagnostics_over_limit_refused(self):
+        self._assert_forged_tree_review_verdict_refused({"source_consistency": False, "diagnostics": ("TREE_CHAIN_TREE_OBJECT_UNREVIEWED",)*257})
+
+    def test_portable_tree_forged_missing_annual_field_refused(self):
+        forged = {
+            "source_consistency": True,
+            "diagnostics": (),
+            "independent_original_os_proof": False,
+            "exclusive_server_dispatch_gate_proven": False,
+        }
+        self._assert_forged_tree_review_verdict_refused(None, replace=forged)
+
+    def test_portable_tree_forged_nondict_verdict_refused(self):
+        self._assert_forged_tree_review_verdict_refused(None, replace=[])
+
+    def test_portable_tree_forged_numeric_verdict_refused(self):
+        self._assert_forged_tree_review_verdict_refused(None, replace=1)
+
+    def test_portable_tree_forged_verdict_clean_real_checker_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+

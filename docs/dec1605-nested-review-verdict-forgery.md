@@ -1,0 +1,7 @@
+# DEC-1605 — Nested review cannot forge portable envelope verdict flags
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1851 at `e48c0c8686eb5dad5ac6f8c1e01f5434a0989395`. Sixteen synthetic regression methods (**3,274 proposed source-defined methods**).
+
+A nested reviewer controls neither protected-original OS evidence nor exclusive annual server admission. Monkeypatch the nested checker to mutate its isolated Git tree graph and return adversarial result shapes: asserted protected flags, a fake annual run grant, boolean/type confusion, unreviewed or private diagnostics, unsorted/duplicate/oversized diagnostic sequences, success/failure contradictions, missing required fields, and wrong top-level result types. Direct-memory, JSON-text and bounded stdin must deterministically refuse all such responses with only `BUNDLE_RESULT_SHAPE_UNREVIEWED`, never echo private text, and leave caller evidence unchanged. The real nested reviewer is restored after each mock and a clean control remains source-only.
+
+No synthetic nested verdict is provider-authenticated Git/OS/annual permission. Own exact-head Phase 3/general CI and independent qualified review required. Tests/docs only, no production/parser/limits/workflow/security/admission changes, protected originals/archives/artifacts, annual dispatch/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
