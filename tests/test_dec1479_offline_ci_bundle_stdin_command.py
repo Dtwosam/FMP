@@ -1498,5 +1498,83 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
                 self.assertFalse(result["can_authorize_annual_run"])
 
 
+    def assert_json_and_stdin_entrypoints_agree(self, raw):
+        direct = envelope.review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = run_stdin_review(io.StringIO(raw), out)
+        record = json.loads(out.getvalue())
+        self.assertEqual(set(record), envelope.VERDICT_FIELDS)
+        self.assertEqual(record["diagnostics"], list(direct["diagnostics"]))
+        self.assertEqual(record["source_consistency"], direct["source_consistency"])
+        self.assertEqual(record["independent_original_os_proof"], False)
+        self.assertEqual(record["exclusive_server_dispatch_gate_proven"], False)
+        self.assertEqual(record["can_authorize_annual_run"], False)
+        self.assertEqual(status, 0 if direct["source_consistency"] else 2)
+        return record, out.getvalue()
+
+    def test_cli_parity_rejects_crossed_nested_containers(self):
+        for raw in ('{"a":[1,2}', '[{"x":1]', '{"x":[1,2}}'):
+            with self.subTest(raw=raw):
+                record, _ = self.assert_json_and_stdin_entrypoints_agree(raw)
+                self.assertEqual(record["diagnostics"],
+                                 ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+
+    def test_cli_parity_accepts_exact_aggregate_json_object_budget(self):
+        raw = "[" + ",".join('[{"a":1},{"a":1}]' for _ in range(
+            envelope.MAX_JSON_ARRAY_ITEMS)) + "]"
+        record, _ = self.assert_json_and_stdin_entrypoints_agree(raw)
+        self.assertEqual(record["diagnostics"], ["BUNDLE_SHAPE_UNREVIEWED"])
+
+    def test_cli_parity_rejects_one_extra_aggregate_json_object_member(self):
+        raw = ("[" + '[{"a":1},{"a":1},{"a":1}],' +
+               ",".join('[{"a":1},{"a":1}]' for _ in range(
+                   envelope.MAX_JSON_ARRAY_ITEMS-1)) + "]")
+        record, _ = self.assert_json_and_stdin_entrypoints_agree(raw)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+
+    def test_cli_parity_accepts_exact_global_array_item_budget(self):
+        raw = "[" + ",".join("[0,0,0]" for _ in range(
+            envelope.MAX_JSON_ARRAY_ITEMS)) + "]"
+        record, _ = self.assert_json_and_stdin_entrypoints_agree(raw)
+        self.assertEqual(record["diagnostics"], ["BUNDLE_SHAPE_UNREVIEWED"])
+
+    def test_cli_parity_rejects_over_global_array_item_budget(self):
+        raw = "[" + ",".join("[0,0,0,0]" for _ in range(
+            envelope.MAX_JSON_ARRAY_ITEMS)) + "]"
+        record, _ = self.assert_json_and_stdin_entrypoints_agree(raw)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+
+    def test_cli_parity_rejects_escaped_alias_and_nonfinite_numbers(self):
+        for raw in (r'{"a":1,"\u0061":2}', '{"x":NaN}',
+                    '{"x":Infinity}', '[1,]'):
+            with self.subTest(raw=raw):
+                record, _ = self.assert_json_and_stdin_entrypoints_agree(raw)
+                self.assertEqual(record["diagnostics"],
+                                 ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+
+    def test_cli_parity_global_utf8_limit_never_echoes_unicode_canary(self):
+        raw = json.dumps(["private-unicode-canary" + "🚀"*500000],
+                         ensure_ascii=False)
+        self.assertLess(len(raw), envelope.MAX_TEXT_CHARS)
+        self.assertGreater(len(raw.encode("utf-8")),
+                           envelope.MAX_TEXT_UTF8_BYTES)
+        record, output = self.assert_json_and_stdin_entrypoints_agree(raw)
+        self.assertEqual(record["diagnostics"], ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+        self.assertNotIn("private-unicode-canary", output)
+
+    def test_cli_parity_clean_synthetic_source_only_across_json_layouts(self):
+        for options in ({"sort_keys": True}, {"indent": 2},
+                        {"separators": (",", ":")}):
+            with self.subTest(options=options):
+                raw = json.dumps(self.bundle, **options)
+                record, output = self.assert_json_and_stdin_entrypoints_agree(raw)
+                self.assertTrue(record["source_consistency"])
+                self.assertEqual(record["diagnostics"], [])
+                self.assertNotIn("changed_bytes_b64", output)
+                self.assertFalse(record["can_authorize_annual_run"])
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
