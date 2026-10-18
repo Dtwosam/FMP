@@ -1576,5 +1576,70 @@ class ExplicitStdinReviewIsNotAnnualWorkflowAdmission(unittest.TestCase):
                 self.assertFalse(record["can_authorize_annual_run"])
 
 
+    def assert_shortread_json_verdict(self, raw, chunk_sizes, expected):
+        for size in chunk_sizes:
+            with self.subTest(chunk_size=size):
+                stream = _ShortReadTextStream(raw, size)
+                output = io.StringIO()
+                status = run_stdin_review(stream, output)
+                verdict = json.loads(output.getvalue())
+                self.assertEqual(status, 0 if expected == [] else 2)
+                self.assertEqual(verdict["diagnostics"], expected)
+                self.assertEqual(set(verdict), envelope.VERDICT_FIELDS)
+                self.assertFalse(verdict["independent_original_os_proof"])
+                self.assertFalse(verdict["exclusive_server_dispatch_gate_proven"])
+                self.assertFalse(verdict["can_authorize_annual_run"])
+                self.assertEqual(output.getvalue().count("\n"), 1)
+
+    def test_shortread_escaped_structural_punctuation_not_counted(self):
+        raw = json.dumps(["synthetic ],{ \\ \" , : [ content"])
+        self.assert_shortread_json_verdict(
+            raw, (1, 2, 3, 7, 31), ["BUNDLE_SHAPE_UNREVIEWED"])
+
+    def test_shortread_decoded_duplicate_escape_key_fails_closed(self):
+        raw = r'{"synthetic":1,"\u0073ynthetic":2}'
+        self.assert_shortread_json_verdict(
+            raw, (1, 2, 5, 16), ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+
+    def test_shortread_malformed_quoted_json_never_uses_prefix(self):
+        raw = '{"synthetic":"unterminated private-canary'
+        self.assert_shortread_json_verdict(
+            raw, (1, 3, 8), ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+
+    def test_shortread_literal_unicode_scalar_stays_below_byte_ceiling(self):
+        raw = json.dumps(["é"*4000, "🚀"*4000], ensure_ascii=False)
+        self.assertLess(len(raw.encode("utf-8")), envelope.MAX_TEXT_UTF8_BYTES)
+        self.assert_shortread_json_verdict(
+            raw, (3, 11, 4096), ["BUNDLE_SHAPE_UNREVIEWED"])
+
+    def test_shortread_ascii_escaped_unicode_over_text_ceiling(self):
+        raw = json.dumps(["private-canary" + "é"*400000], ensure_ascii=True)
+        self.assertGreater(len(raw), envelope.MAX_TEXT_CHARS)
+        self.assert_shortread_json_verdict(
+            raw, (4096, 65536), ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+
+    def test_shortread_literal_unicode_over_byte_ceiling(self):
+        raw = json.dumps(["private-canary" + "é"*1000000],
+                         ensure_ascii=False)
+        self.assertLess(len(raw), envelope.MAX_TEXT_CHARS)
+        self.assertGreater(len(raw.encode("utf-8")),
+                           envelope.MAX_TEXT_UTF8_BYTES)
+        self.assert_shortread_json_verdict(
+            raw, (4096, 65536), ["BUNDLE_JSON_TEXT_UNREVIEWED"])
+
+    def test_shortread_complete_synthetic_bundle_remains_source_only(self):
+        raw = json.dumps(self.bundle, sort_keys=True, separators=(",", ":"))
+        self.assert_shortread_json_verdict(raw, (1, 17, 4096), [])
+
+    def test_shortread_valid_json_prefix_followed_by_private_trailer(self):
+        raw = json.dumps(["synthetic"]) + " private-trailer-canary"
+        self.assert_shortread_json_verdict(
+            raw, (1, 2, 13), ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        for chunk_size in (1, 13):
+            out = io.StringIO()
+            run_stdin_review(_ShortReadTextStream(raw, chunk_size), out)
+            self.assertNotIn("private-trailer-canary", out.getvalue())
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
