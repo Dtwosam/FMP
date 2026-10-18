@@ -6198,3 +6198,104 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def _assert_repeated_review_does_not_retain_failed_input(self, mutate):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        original = copy.deepcopy(self.envelope)
+        def review_all():
+            raw = json.dumps(self.envelope, ensure_ascii=True)
+            direct = self.verdict()
+            parsed = review_bundle_json_text(raw)
+            output = io.StringIO()
+            status = cli.run_stdin_review(io.StringIO(raw), output)
+            record = json.loads(output.getvalue())
+            self.assertEqual(direct, parsed)
+            self.assertEqual(set(record), VERDICT_FIELDS)
+            self.assertEqual(record["diagnostics"],
+                             list(direct["diagnostics"]))
+            self.assertEqual(record["source_consistency"],
+                             direct["source_consistency"])
+            self.assertNotIn("private-replay-canary", output.getvalue())
+            self.assertFalse(record["independent_original_os_proof"])
+            self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(record["can_authorize_annual_run"])
+            return status, direct
+        before_status, before = review_all()
+        self.assertEqual(before_status, 0)
+        self.assertTrue(before["source_consistency"])
+        self.assertEqual(before["diagnostics"], ())
+        mutate()
+        bad_status, bad = review_all()
+        self.assertEqual(bad_status, 2)
+        self.assertFalse(bad["source_consistency"])
+        self.assertTrue(bad["diagnostics"])
+        self.envelope = original
+        after_status, after = review_all()
+        self.assertEqual(after_status, 0)
+        self.assertEqual(after, before)
+        self.assertFalse(after["independent_original_os_proof"])
+        self.assertFalse(after["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(after["can_authorize_annual_run"])
+
+    def test_repeat_recovery_after_extra_annual_root_field(self):
+        self._assert_repeated_review_does_not_retain_failed_input(
+            lambda: self.envelope.update({
+                "can_authorize_annual_run": True}))
+
+    def test_repeat_recovery_after_unknown_schema(self):
+        self._assert_repeated_review_does_not_retain_failed_input(
+            lambda: self.envelope.update({
+                "schema": "private-replay-canary"}))
+
+    def test_repeat_recovery_after_invalid_run_map_key(self):
+        def corrupt():
+            self.envelope["jobs_by_run"]["08000"] = (
+                self.envelope["jobs_by_run"].pop("8000"))
+        self._assert_repeated_review_does_not_retain_failed_input(corrupt)
+
+    def test_repeat_recovery_after_malformed_base64(self):
+        def corrupt():
+            self.envelope["changed_bytes_b64"]["tests/sample.py"] = (
+                "private-replay-canary%")
+        self._assert_repeated_review_does_not_retain_failed_input(corrupt)
+
+    def test_repeat_recovery_after_valid_but_wrong_source_bytes(self):
+        def corrupt():
+            self.envelope["changed_bytes_b64"]["tests/sample.py"] = (
+                base64.b64encode(b"private-replay-canary").decode("ascii"))
+        self._assert_repeated_review_does_not_retain_failed_input(corrupt)
+
+    def test_repeat_recovery_after_rehashed_wrong_checkout_ref(self):
+        def corrupt():
+            log = self.envelope["raw_ci_runner_logs"]["8001"]
+            self.envelope["raw_ci_runner_logs"]["8001"] = (
+                log.replace("/1649/merge", "/9999/merge"))
+            self._refingerprint_portable_synthetic_ci_log("8001")
+        self._assert_repeated_review_does_not_retain_failed_input(corrupt)
+
+    def test_repeat_recovery_after_unreviewed_raw_log_receipt_job(self):
+        def corrupt():
+            self.envelope["raw_ci_log_receipts"]["8001"]["job_id"] = (
+                self.envelope["raw_ci_log_receipts"]["8000"]["job_id"])
+        self._assert_repeated_review_does_not_retain_failed_input(corrupt)
+
+    def test_repeat_recovery_after_absolute_source_path(self):
+        def corrupt():
+            self.envelope["changed_bytes_b64"][
+                "/private-replay-canary.py"] = (
+                self.envelope["changed_bytes_b64"].pop("tests/sample.py"))
+        self._assert_repeated_review_does_not_retain_failed_input(corrupt)
+
+    def test_repeat_recovery_after_phase3_artifact_drift(self):
+        def corrupt():
+            self.envelope["phase3_evidence_snapshot"]["upload"][
+                "name"] = "private-replay-canary"
+        self._assert_repeated_review_does_not_retain_failed_input(corrupt)
+
+    def test_repeat_recovery_after_duplicate_runner_run_id(self):
+        def corrupt():
+            historical = next(r for r in self.envelope["runs"]
+                              if r["name"] == "tests")
+            historical["id"] = 8000
+        self._assert_repeated_review_does_not_retain_failed_input(corrupt)
+
