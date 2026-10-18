@@ -8310,3 +8310,92 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             self.assertIs(snapshot["truncated"], False)
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _set_portable_tree_object_shape(self, directory, value):
+        trees = self.envelope["full_tree_snapshots"]
+        if directory is None:
+            sha = self.envelope["commit"]["tree"]["sha"]
+        else:
+            _, _, sha = self._portable_snapshot_parent_child(directory)
+        trees[sha] = value
+        self._assert_full_tree_snapshot_mutation_refused(
+            "TREE_CHAIN_TREE_OBJECT_UNREVIEWED")
+
+    def _assert_portable_tree_category_type_refused(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        direct = self.verdict()
+        raw = json.dumps(self.envelope)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_CATEGORY_TYPE_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_tree_object_root_null_refused(self):
+        self._set_portable_tree_object_shape(None, None)
+
+    def test_portable_tree_object_root_boolean_false_refused(self):
+        self._set_portable_tree_object_shape(None, False)
+
+    def test_portable_tree_object_root_integer_zero_refused(self):
+        self._set_portable_tree_object_shape(None, 0)
+
+    def test_portable_tree_object_root_empty_string_refused(self):
+        self._set_portable_tree_object_shape(None, "")
+
+    def test_portable_tree_object_root_empty_list_refused(self):
+        self._set_portable_tree_object_shape(None, [])
+
+    def test_portable_tree_object_root_empty_dict_refused(self):
+        self._set_portable_tree_object_shape(None, {})
+
+    def test_portable_tree_object_root_float_zero_refused(self):
+        self._set_portable_tree_object_shape(None, 0.0)
+
+    def test_portable_tree_object_child_tests_null_refused(self):
+        self._set_portable_tree_object_shape("tests", None)
+
+    def test_portable_tree_object_child_docs_boolean_false_refused(self):
+        self._set_portable_tree_object_shape("docs", False)
+
+    def test_portable_tree_object_child_tests_integer_zero_refused(self):
+        self._set_portable_tree_object_shape("tests", 0)
+
+    def test_portable_tree_object_child_docs_empty_string_refused(self):
+        self._set_portable_tree_object_shape("docs", "")
+
+    def test_portable_tree_object_child_tests_empty_list_refused(self):
+        self._set_portable_tree_object_shape("tests", [])
+
+    def test_portable_tree_object_child_docs_empty_dict_refused(self):
+        self._set_portable_tree_object_shape("docs", {})
+
+    def test_portable_tree_object_child_tests_float_zero_refused(self):
+        self._set_portable_tree_object_shape("tests", 0.0)
+
+    def test_portable_tree_object_category_null_refused(self):
+        self.envelope["full_tree_snapshots"] = None
+        self._assert_portable_tree_category_type_refused()
+
+    def test_portable_tree_object_category_array_refused(self):
+        self.envelope["full_tree_snapshots"] = []
+        self._assert_portable_tree_category_type_refused()
+
+    def test_portable_tree_object_clean_dict_control(self):
+        self.assertIs(type(self.envelope["full_tree_snapshots"]), dict)
+        for snapshot in self.envelope["full_tree_snapshots"].values():
+            self.assertIs(type(snapshot), dict)
+        self._assert_portable_tree_object_order_consistency_only()
+

@@ -1,0 +1,7 @@
+# DEC-1601 — Full Git tree snapshots cannot be replaced with lookalike object shapes
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1847 at `3afd3434c81454df96dbd7ce1a7f8f6f30c4a828`. Seventeen source-defined methods (**3,222 proposed methods**).
+
+Treat the full Git tree snapshot map as a dictionary of dictionaries, not loosely typed caller-controlled JSON. Test `null`, `false`, numeric zero, floating zero, empty strings, empty arrays and empty dictionaries in root and child snapshot slots; no shape may suppress `TREE_CHAIN_TREE_OBJECT_UNREVIEWED`. Replace the entire `full_tree_snapshots` category with `null` or an array to require `BUNDLE_CATEGORY_TYPE_UNREVIEWED` *before* nested review. Assert direct-memory, JSON-text, bounded stdin parity, safe diagnostics without path echo, and nonauthorizing flags; preserve canonical source bytes and flat Git nodes. A normal dictionary control remains source-only.
+
+No authenticated provider Git tree, protected original OS or exclusive annual gate is established by synthetic evidence. Own exact-head Phase 3/historical general CI and qualified independent review required. Tests/docs only; no parser/limit/production/workflow/security/admission modifications, protected originals/archives/artifacts, annual execution/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
