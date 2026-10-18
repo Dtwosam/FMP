@@ -9411,3 +9411,290 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_embedded_approval_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_nested_tree_python_subclass_refused(self):
+        result = self.verdict()
+        self.assertFalse(result["source_consistency"])
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_STRUCTURE_BUDGET_UNREVIEWED",))
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_subclass_trap_root_snapshot_value_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha] = PoisonDict(
+            self.envelope["full_tree_snapshots"][sha])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_child_snapshot_value_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        trees, _, sha = self._portable_snapshot_parent_child("tests")
+        trees[sha] = PoisonDict(trees[sha])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_root_tree_array_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        sha = self.envelope["commit"]["tree"]["sha"]
+        root = self.envelope["full_tree_snapshots"][sha]
+        root["tree"] = PoisonList(root["tree"])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_root_tree_entry_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        sha = self.envelope["commit"]["tree"]["sha"]
+        items = self.envelope["full_tree_snapshots"][sha]["tree"]
+        items[0] = PoisonDict(items[0])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_root_tree_entry_path_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        sha = self.envelope["commit"]["tree"]["sha"]
+        item = self.envelope["full_tree_snapshots"][sha]["tree"][0]
+        item["path"] = PoisonStr(item["path"])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_child_tree_entry_sha_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        leaf = self._portable_snapshot_leaf("docs")
+        leaf["sha"] = PoisonStr(leaf["sha"])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_snapshot_self_sha_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["sha"] = PoisonStr(sha)
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_flat_node_value_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        node = self.envelope["nodes"]["docs/sample.md"]
+        self.envelope["nodes"]["docs/sample.md"] = PoisonDict(node)
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_flat_node_sha_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        node = self.envelope["nodes"]["tests/sample.py"]
+        node["sha"] = PoisonStr(node["sha"])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_source_b64_value_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        pair = self.envelope["changed_bytes_b64"]
+        pair["tests/sample.py"] = PoisonStr(pair["tests/sample.py"])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_raw_log_value_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        logs = self.envelope["raw_ci_runner_logs"]
+        logs["8000"] = PoisonStr(logs["8000"])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_compare_line_count_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        self.envelope["compare"]["files"][0]["changes"] = PoisonInt(6)
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_runs_record_refused(self):
+        class PoisonDict(dict):
+            def items(self):
+                raise AssertionError("nested tree dict hook invoked")
+
+        class PoisonList(list):
+            def __iter__(self):
+                raise AssertionError("nested tree list hook invoked")
+
+        class PoisonStr(str):
+            def __eq__(self, other):
+                raise AssertionError("nested tree string comparator invoked")
+
+        class PoisonInt(int):
+            def __eq__(self, other):
+                raise AssertionError("nested tree integer comparator invoked")
+
+        self.envelope["runs"][0] = PoisonDict(self.envelope["runs"][0])
+        self._assert_nested_tree_python_subclass_refused()
+
+    def test_portable_subclass_trap_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
