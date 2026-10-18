@@ -3730,19 +3730,95 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             hook([("k", 1), ("k", 2)])
 
     def test_json_many_small_objects_exceed_aggregate_members(self):
-        raw = "[" + ",".join('{"a":1}' for _ in range(
-            MAX_JSON_TOTAL_OBJECT_MEMBERS+1)) + "]"
+        # Hold every array below its own item limit: 16,384 groups of two
+        # single-member objects, with one extra member in the first group.
+        groups = ['[{"a":1},{"a":1},{"a":1}]'] + [
+            '[{"a":1},{"a":1}]' for _ in range(MAX_JSON_ARRAY_ITEMS-1)]
+        raw = "[" + ",".join(groups) + "]"
         self.assertLess(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertFalse(_json_lexical_object_budgets(raw))
         result = review_bundle_json_text(raw)
         self.assertEqual(result["diagnostics"],
                          ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
         self.assertFalse(result["can_authorize_annual_run"])
 
     def test_json_exact_aggregate_object_members_reaches_shape(self):
-        raw = "[" + ",".join('{"a":1}' for _ in range(
-            MAX_JSON_TOTAL_OBJECT_MEMBERS)) + "]"
+        # A flat array of 32,768 objects trips the separate 16,384-item
+        # array ceiling. Group pairs to isolate the object-member boundary.
+        raw = "[" + ",".join('[{"a":1},{"a":1}]' for _ in range(
+            MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertEqual(MAX_JSON_TOTAL_OBJECT_MEMBERS,
+                         2 * MAX_JSON_ARRAY_ITEMS)
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
         result = review_bundle_json_text(raw)
         self.assertEqual(result["diagnostics"], ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_global_member_exact_boundary_does_not_raise_lexical_array(self):
+        raw = "[" + ",".join('[{"a":1},{"a":1}]' for _ in range(
+            MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_global_member_one_over_is_not_an_array_failure(self):
+        raw = ("[" + '[{"a":1},{"a":1},{"a":1}],' +
+               ",".join('[{"a":1},{"a":1}]' for _ in range(
+                   MAX_JSON_ARRAY_ITEMS-1)) + "]")
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertFalse(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_flat_array_over_cap_is_not_object_member_failure(self):
+        raw = "[" + ",".join('{"a":1}' for _ in range(
+            MAX_JSON_ARRAY_ITEMS+1)) + "]"
+        self.assertFalse(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_empty_objects_do_not_exhaust_member_budget(self):
+        raw = "[" + ",".join("[{},{}]" for _ in range(
+            MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_global_member_limit_fresh_for_separate_documents(self):
+        raw = "[" + ",".join('[{"a":1},{"a":1}]' for _ in range(
+            MAX_JSON_ARRAY_ITEMS)) + "]"
+        for _ in range(2):
+            self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                             ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_object_member_and_array_counts_do_not_grant_annual_authority(self):
+        raw = "[" + ",".join('[{"a":1},{"a":1}]' for _ in range(
+            MAX_JSON_ARRAY_ITEMS)) + "]"
+        result = review_bundle_json_text(raw)
+        self.assertFalse(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_array_budget_with_few_object_members_still_precedes_shape(self):
+        raw = "[" + ",".join("[]" for _ in range(
+            MAX_JSON_ARRAY_ITEMS+1)) + "]"
+        self.assertFalse(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_mixed_small_object_groups_keep_shape_diagnostic(self):
+        raw = json.dumps([[{"synthetic": 1}, {"synthetic": 2}],
+                          [{"synthetic": 3}]], separators=(",", ":"))
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
 
     def test_json_total_member_counter_resets_for_each_document(self):
         raw = '["' + 'synthetic' + '"]'
@@ -3754,8 +3830,13 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_json_total_members_stdin_never_echoes_evidence(self):
         import io
         import test_dec1479_offline_ci_bundle_stdin_command as cli
-        raw = '{"private_canary":[' + ",".join('{"x":1}' for _ in range(
-            MAX_JSON_TOTAL_OBJECT_MEMBERS+1)) + ']}'
+        # Root object's own member is the one-over case; arrays stay in
+        # budget so this exercises the aggregate object-member refusal.
+        raw = ('{"private_canary":[' +
+               ",".join('[{"x":1},{"x":1}]' for _ in range(
+                   MAX_JSON_ARRAY_ITEMS)) + ']}')
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertFalse(_json_lexical_object_budgets(raw))
         out = io.StringIO()
         status = cli.run_stdin_review(io.StringIO(raw), out)
         record = json.loads(out.getvalue())
