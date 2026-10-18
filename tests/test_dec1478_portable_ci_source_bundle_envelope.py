@@ -27,6 +27,8 @@ MAX_JSON_NESTING = 512
 MAX_JSON_INTEGER_DIGITS = 64
 MAX_JSON_OBJECT_MEMBERS = 16384
 MAX_JSON_TOTAL_OBJECT_MEMBERS = 32768
+MAX_JSON_ARRAY_ITEMS = 16384
+MAX_JSON_TOTAL_ARRAY_ITEMS = 65536
 MAX_JSON_FLOAT_LITERAL_CHARS = 128
 MAX_SOURCE_PATH_CHARS = 4096
 MAX_SOURCE_PATH_UTF8_BYTES = 4096
@@ -575,6 +577,24 @@ def _finite_json_float(value):
     return number
 
 
+def _within_json_array_budgets(root):
+    """Inspect built-in parsed JSON containers without recursion."""
+    total_items = 0
+    stack = [root]
+    while stack:
+        item = stack.pop()
+        if type(item) is list:
+            n = len(item)
+            total_items += n
+            if (n > MAX_JSON_ARRAY_ITEMS or
+                    total_items > MAX_JSON_TOTAL_ARRAY_ITEMS):
+                return False
+            stack.extend(item)
+        elif type(item) is dict:
+            stack.extend(item.values())
+    return True
+
+
 def review_bundle_json_text(text):
     """No external I/O: caller provides raw UTF-8-decoded JSON text."""
     if type(text) is not str or len(text) > MAX_TEXT_CHARS:
@@ -593,6 +613,8 @@ def review_bundle_json_text(text):
                          parse_float=_finite_json_float)
     except (ValueError, TypeError, UnicodeError, RecursionError,
             OverflowError):
+        return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
+    if not _within_json_array_budgets(doc):
         return fail_closed("BUNDLE_JSON_GRAMMAR_UNREVIEWED")
     if _has_unpaired_json_surrogate(doc):
         return fail_closed("BUNDLE_JSON_UNICODE_UNREVIEWED")
@@ -3658,6 +3680,69 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         result = review_bundle_json_text(json.dumps(self.envelope))
         self.assertEqual(result["diagnostics"], ())
         self.assertTrue(result["source_consistency"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_json_array_at_exact_per_list_cap_reaches_shape(self):
+        raw = "[" + ",".join("0" for _ in range(MAX_JSON_ARRAY_ITEMS)) + "]"
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_array_one_over_per_list_cap_rejected(self):
+        raw = "[" + ",".join("0" for _ in range(MAX_JSON_ARRAY_ITEMS+1)) + "]"
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_many_small_arrays_exceed_global_item_cap(self):
+        raw = "[" + ",".join("[0,0,0,0]" for _ in range(16384)) + "]"
+        self.assertLess(len(raw.encode("utf-8")), MAX_TEXT_UTF8_BYTES)
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_global_array_cap_exact_boundary_allows_preflight(self):
+        root = [[0, 0, 0] for _ in range(16384)]
+        self.assertEqual(sum(len(v) for v in root) + len(root), 65536)
+        self.assertTrue(_within_json_array_budgets(root))
+
+    def test_json_global_array_cap_one_over_refused_by_preflight(self):
+        root = [[0, 0, 0] for _ in range(16384)]
+        root[0].append(0)
+        self.assertFalse(_within_json_array_budgets(root))
+
+    def test_json_nested_oversized_array_fails_grammar_before_shape(self):
+        raw = '{"untrusted":[' + ",".join("null" for _ in range(
+            MAX_JSON_ARRAY_ITEMS+1)) + "]}"
+        result = review_bundle_json_text(raw)
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_array_budget_has_fresh_state_per_document(self):
+        raw = "[0,1,2]"
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_array_guard_stdout_never_echoes_raw_content(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = '{"private_canary":[' + ",".join("0" for _ in range(
+            MAX_JSON_ARRAY_ITEMS+1)) + ']}'
+        output = io.StringIO()
+        rc = cli.run_stdin_review(io.StringIO(raw), output)
+        record = json.loads(output.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertEqual(record["diagnostics"],
+                         ["BUNDLE_JSON_GRAMMAR_UNREVIEWED"])
+        self.assertNotIn("private_canary", output.getvalue())
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_json_array_budget_preserves_clean_synthetic_bundle(self):
+        result = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertTrue(result["source_consistency"])
+        self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["independent_original_os_proof"])
         self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(result["can_authorize_annual_run"])
