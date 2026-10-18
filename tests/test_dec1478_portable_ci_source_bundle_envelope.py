@@ -11461,3 +11461,103 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_run_log_priority_clean_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_malformed_base64_alphabet_refused(self):
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_SOURCE_B64_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_SOURCE_B64_UNREVIEWED"])
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_source_alphabet_docs_percent_refused(self):
+        value = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = "%" + value
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_tests_hash_refused(self):
+        value = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = "#" + value
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_docs_question_refused(self):
+        value = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = value + "?"
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_tests_tilde_refused(self):
+        value = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = value + "~"
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_docs_space_refused(self):
+        value = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = value[:2] + " " + value[2:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_tests_tab_refused(self):
+        value = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = value[:2] + "\t" + value[2:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_docs_newline_refused(self):
+        value = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = value[:3] + "\n" + value[3:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_tests_carriage_return_refused(self):
+        value = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = value[:1] + "\r" + value[1:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_docs_nonascii_eacute_refused(self):
+        value = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = value[:2] + "é" + value[2:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_tests_nonascii_fullwidth_refused(self):
+        value = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = value[:2] + "Ａ" + value[2:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_docs_zero_width_refused(self):
+        value = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = value[:2] + "\u200b" + value[2:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_tests_null_byte_refused(self):
+        value = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = value[:1] + "\x00" + value[1:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_docs_interior_equal_refused(self):
+        value = self.envelope["changed_bytes_b64"]["docs/sample.md"]
+        self.envelope["changed_bytes_b64"]["docs/sample.md"] = value[:2] + "=" + value[2:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_tests_interior_equal_refused(self):
+        value = self.envelope["changed_bytes_b64"]["tests/sample.py"]
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = value[:3] + "=" + value[3:]
+        self._assert_malformed_base64_alphabet_refused()
+
+    def test_portable_source_alphabet_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+
