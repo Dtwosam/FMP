@@ -6349,3 +6349,90 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
                          ("BUNDLE_SOURCE_MAP_OVERSIZE",))
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def _assert_unicode_log_receipt_parity(self, source_consistency):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, ensure_ascii=False)
+        json_result = review_bundle_json_text(raw)
+        output = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), output)
+        record = json.loads(output.getvalue())
+        self.assertEqual(direct, json_result)
+        self.assertEqual(record["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertEqual(record["source_consistency"],
+                         direct["source_consistency"])
+        self.assertEqual(direct["source_consistency"], source_consistency)
+        self.assertEqual(status, 0 if source_consistency else 2)
+        self.assertNotIn("private-unicode-ci-canary", output.getvalue())
+        self.assertEqual(set(record), VERDICT_FIELDS)
+        for result in (direct, record):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def _append_unicode_nonstage_historical_ci_note(self, suffix):
+        key = "8001"
+        self.envelope["raw_ci_runner_logs"][key] += (
+            "\nprivate-unicode-ci-canary " + suffix)
+        self._refingerprint_portable_synthetic_ci_log(key)
+
+    def test_utf8_emoji_ci_log_receipt_counts_bytes_not_chars(self):
+        self._append_unicode_nonstage_historical_ci_note("🚀")
+        raw = self.envelope["raw_ci_runner_logs"]["8001"]
+        self.assertGreater(len(raw.encode("utf-8")), len(raw))
+        self.assertEqual(self.envelope["raw_ci_log_receipts"]["8001"][
+            "byte_count"], len(raw.encode("utf-8")))
+        self._assert_unicode_log_receipt_parity(True)
+
+    def test_utf8_accent_ci_log_note_rehashed_is_source_only(self):
+        self._append_unicode_nonstage_historical_ci_note("é")
+        self._assert_unicode_log_receipt_parity(True)
+
+    def test_utf8_supplementary_ci_log_note_rehashed_is_source_only(self):
+        self._append_unicode_nonstage_historical_ci_note("\U00010400")
+        self._assert_unicode_log_receipt_parity(True)
+
+    def test_utf8_combining_ci_log_note_rehashed_is_source_only(self):
+        self._append_unicode_nonstage_historical_ci_note("e\u0301")
+        self._assert_unicode_log_receipt_parity(True)
+
+    def test_utf8_log_wrong_character_count_receipt_fails_closed(self):
+        self._append_unicode_nonstage_historical_ci_note("🚀")
+        raw = self.envelope["raw_ci_runner_logs"]["8001"]
+        receipt = self.envelope["raw_ci_log_receipts"]["8001"]
+        receipt["byte_count"] = len(raw)
+        self.assertNotEqual(receipt["byte_count"], len(raw.encode("utf-8")))
+        self._assert_unicode_log_receipt_parity(False)
+
+    def test_utf8_log_stale_digest_after_unicode_edit_fails_closed(self):
+        original_sha = self.envelope["raw_ci_log_receipts"]["8001"][
+            "text_sha256"]
+        self._append_unicode_nonstage_historical_ci_note("🚀")
+        self.envelope["raw_ci_log_receipts"]["8001"][
+            "text_sha256"] = original_sha
+        self._assert_unicode_log_receipt_parity(False)
+
+    def test_utf8_log_wrong_receipt_job_id_still_fails_closed(self):
+        self._append_unicode_nonstage_historical_ci_note("é")
+        self.envelope["raw_ci_log_receipts"]["8001"]["job_id"] = (
+            self.envelope["raw_ci_log_receipts"]["8000"]["job_id"])
+        self._assert_unicode_log_receipt_parity(False)
+
+    def test_utf8_log_rehashed_wrong_checkout_identity_still_fails(self):
+        self._append_unicode_nonstage_historical_ci_note("🚀")
+        text = self.envelope["raw_ci_runner_logs"]["8001"]
+        self.envelope["raw_ci_runner_logs"]["8001"] = text.replace(
+            "/1649/merge", "/9999/merge")
+        self._refingerprint_portable_synthetic_ci_log("8001")
+        self._assert_unicode_log_receipt_parity(False)
+
+    def test_utf8_log_nonstage_annual_claim_does_not_confer_permission(self):
+        self._append_unicode_nonstage_historical_ci_note(
+            "🚀 can_authorize_annual_run=true")
+        self._assert_unicode_log_receipt_parity(True)
+
+    def test_utf8_log_clean_baseline_is_source_consistency_only(self):
+        self._assert_unicode_log_receipt_parity(True)
+
