@@ -9330,3 +9330,84 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_compare_tree_clean_control_source_only(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_untrusted_source_approval_claim_never_grants_run(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 0 if direct["source_consistency"] else 2)
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"], list(direct["diagnostics"]))
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_embedded_approval_pr_annual_never_authorizes(self):
+        self.envelope["pr"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_pr_original_os_never_authorizes(self):
+        self.envelope["pr"]["independent_original_os_proof"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_pr_exclusive_gate_never_authorizes(self):
+        self.envelope["pr"]["exclusive_server_dispatch_gate_proven"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_compare_annual_never_authorizes(self):
+        self.envelope["compare"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_compare_server_gate_never_authorizes(self):
+        self.envelope["compare"]["exclusive_server_dispatch_gate_proven"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_commit_annual_never_authorizes(self):
+        self.envelope["commit"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_flat_tree_annual_never_authorizes(self):
+        self.envelope["tree"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_flat_node_annual_never_authorizes(self):
+        self.envelope["nodes"]["tests/sample.py"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_flat_node_original_os_never_authorizes(self):
+        self.envelope["nodes"]["docs/sample.md"]["independent_original_os_proof"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_root_full_tree_annual_never_authorizes(self):
+        sha = self.envelope["commit"]["tree"]["sha"]
+        self.envelope["full_tree_snapshots"][sha]["can_authorize_annual_run"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_child_full_tree_gate_never_authorizes(self):
+        trees, _, sha = self._portable_snapshot_parent_child("tests")
+        trees[sha]["exclusive_server_dispatch_gate_proven"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_merge_checkout_annual_never_authorizes(self):
+        self.envelope["merge_checkout_snapshot"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_phase3_evidence_gate_never_authorizes(self):
+        self.envelope["phase3_evidence_snapshot"]["exclusive_server_dispatch_gate_proven"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_raw_log_receipt_annual_never_authorizes(self):
+        self.envelope["raw_ci_log_receipts"]["8000"]["can_authorize_annual_run"] = True
+        self._assert_untrusted_source_approval_claim_never_grants_run()
+
+    def test_portable_embedded_approval_clean_control(self):
+        self._assert_portable_tree_object_order_consistency_only()
+

@@ -1,0 +1,7 @@
+# DEC-1613 — Untrusted source records cannot smuggle annual approval
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1859 at `1bf86cd88abfc4b6d5ee3f04f6c4afc3e8a98b66`. Fifteen regression methods (**3,384 proposed source-defined methods**).
+
+Caller-provided PR, compare, commit, flat Git tree, leaf nodes, complete root/child tree snapshot, merge checkout, Phase 3 evidence and raw CI receipt maps can contain unrelated claims of annual authorization, protected-original OS proof or exclusive server gate approval. Fourteen synthetic injections test that an extra `can_authorize_annual_run`, `independent_original_os_proof` or `exclusive_server_dispatch_gate_proven` claim can never turn the *portable source-only verdict* into annual authority. Whether a nested source reviewer ignores or refuses unexpected fields, direct-memory, JSON text and bounded stdin must agree and every output authority flag remain false; no source path may be echoed. One clean baseline remains source-consistent only.
+
+These tests do not confer provider-authenticated Git provenance, protected original OS evidence, or annual execution permission. Own exact-head Phase 3/full historical-general CI and qualified independent review required. Tests/docs only; no production/parser/resource limits/workflow/security/admission changes, protected originals/archives/artifacts, annual dispatch/retry, merge, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
