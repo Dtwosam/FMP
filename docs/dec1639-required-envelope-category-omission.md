@@ -1,0 +1,7 @@
+# DEC-1639 — Every required source evidence envelope category must be present
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1885 at `55ac6afa9cac1de6436230fdeb658731c3e6d05e`. Seventeen new regression methods (**3,761 proposed source-defined tests**).
+
+The versioned portable review envelope has sixteen required categories. Sixteen distinct mutants omit exactly one category, including schema, PR, runs/jobs, compare, Git commit/root/tree and node evidence, changed-source and CI workflow bytes, full tree snapshots, merge checkout and per-run checkout maps, Phase 3 evidence, runner logs and receipts. Removing one field must **always** fail at ingress with exact `BUNDLE_KEY_INVENTORY_UNREVIEWED`, regardless of otherwise consistent caller-supplied evidence. Test direct-memory, JSON text and bounded stdin parity, immutability, no source-path echo and false protected-run flags. A fully populated control remains source-consistent but nonauthorizing.
+
+No original protected OS, provider Git provenance or exclusive annual server gate is authenticated by these offline fixtures. Own exact-head Phase 3/general CI and qualified independent review required. Tests/docs only; no production/parser/budget/workflow/security/admission changes, protected originals/archive/artifacts, annual dispatch/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.

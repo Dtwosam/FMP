@@ -11885,3 +11885,99 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_path_bytes_clean_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_required_envelope_category_missing_refused(self, name):
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertIn(name, REQUIRED)
+        self.envelope.pop(name)
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, sort_keys=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_KEY_INVENTORY_UNREVIEWED"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_required_omission_schema_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "schema")
+
+    def test_portable_required_omission_pr_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "pr")
+
+    def test_portable_required_omission_runs_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "runs")
+
+    def test_portable_required_omission_jobs_by_run_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "jobs_by_run")
+
+    def test_portable_required_omission_compare_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "compare")
+
+    def test_portable_required_omission_commit_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "commit")
+
+    def test_portable_required_omission_tree_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "tree")
+
+    def test_portable_required_omission_nodes_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "nodes")
+
+    def test_portable_required_omission_changed_bytes_b64_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "changed_bytes_b64")
+
+    def test_portable_required_omission_ci_workflow_bytes_b64_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "ci_workflow_bytes_b64")
+
+    def test_portable_required_omission_full_tree_snapshots_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "full_tree_snapshots")
+
+    def test_portable_required_omission_merge_checkout_snapshot_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "merge_checkout_snapshot")
+
+    def test_portable_required_omission_checkout_by_run_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "checkout_by_run")
+
+    def test_portable_required_omission_phase3_evidence_snapshot_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "phase3_evidence_snapshot")
+
+    def test_portable_required_omission_raw_ci_runner_logs_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "raw_ci_runner_logs")
+
+    def test_portable_required_omission_raw_ci_log_receipts_refused(self):
+        self._assert_required_envelope_category_missing_refused(
+            "raw_ci_log_receipts")
+
+    def test_portable_required_omission_clean_control(self):
+        self.assertEqual(set(self.envelope), REQUIRED)
+        self._assert_portable_tree_object_order_consistency_only()
+
