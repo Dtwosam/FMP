@@ -6527,3 +6527,102 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_phase3_clean_baseline_remains_non_authorizing(self):
         self._assert_phase3_unicode_receipt_parity(True)
 
+    def _assert_nfkc_path_alias_is_preflight_refused(self, first, second,
+                                                    cross_map=False):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        from unittest.mock import patch
+        self.assertNotEqual(first, second)
+        self.assertTrue(_reviewed_source_path(first))
+        self.assertTrue(_reviewed_source_path(second))
+        self.assertEqual(_portable_source_path_identity(first),
+                         _portable_source_path_identity(second))
+        payload = base64.b64encode(b"synthetic").decode("ascii")
+        self.envelope["changed_bytes_b64"] = {first: payload}
+        if cross_map:
+            self.envelope["ci_workflow_bytes_b64"] = {second: payload}
+            diagnostic = "BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED"
+        else:
+            self.envelope["changed_bytes_b64"][second] = payload
+            self.envelope["ci_workflow_bytes_b64"] = {}
+            diagnostic = "BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED"
+        raw = json.dumps(self.envelope, ensure_ascii=False)
+        with patch.object(composite, "review_stacked_draft_evidence",
+                          side_effect=AssertionError("must not source review")) as nested:
+            direct = self.verdict()
+            parsed = review_bundle_json_text(raw)
+        nested.assert_not_called()
+        self.assertEqual(direct, parsed)
+        self.assertEqual(direct["diagnostics"], (diagnostic,))
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(emitted["diagnostics"], [diagnostic])
+        self.assertNotIn(first, out.getvalue())
+        self.assertNotIn(second, out.getvalue())
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertFalse(emitted["independent_original_os_proof"])
+        self.assertFalse(emitted["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(emitted["can_authorize_annual_run"])
+
+    def test_nfkc_ligature_ffi_source_alias_is_rejected(self):
+        self._assert_nfkc_path_alias_is_preflight_refused(
+            "tests/oﬃce.py", "tests/office.py")
+
+    def test_nfkc_circled_letter_source_alias_is_rejected(self):
+        self._assert_nfkc_path_alias_is_preflight_refused(
+            "tests/ⓐ.py", "tests/a.py")
+
+    def test_nfkc_superscript_digit_source_alias_is_rejected(self):
+        self._assert_nfkc_path_alias_is_preflight_refused(
+            "tests/⁵.py", "tests/5.py")
+
+    def test_nfkc_double_struck_letter_source_alias_is_rejected(self):
+        self._assert_nfkc_path_alias_is_preflight_refused(
+            "tests/ℝ.py", "tests/R.py")
+
+    def test_nfkc_roman_numeral_source_alias_is_rejected(self):
+        self._assert_nfkc_path_alias_is_preflight_refused(
+            "tests/Ⅳ.py", "tests/IV.py")
+
+    def test_nfkc_modifier_letter_source_alias_is_rejected(self):
+        self._assert_nfkc_path_alias_is_preflight_refused(
+            "tests/ᵃ.py", "tests/a.py")
+
+    def test_nfkc_fullwidth_letter_source_alias_is_rejected(self):
+        self._assert_nfkc_path_alias_is_preflight_refused(
+            "tests/Ｋ.py", "tests/K.py")
+
+    def test_nfkc_fi_ligature_crossmap_alias_is_rejected(self):
+        self._assert_nfkc_path_alias_is_preflight_refused(
+            "tests/ﬁle.py", "tests/file.py", cross_map=True)
+
+    def test_nfkc_circled_letter_crossmap_alias_is_rejected(self):
+        self._assert_nfkc_path_alias_is_preflight_refused(
+            "tests/ⓐ.py", "tests/a.py", cross_map=True)
+
+    def test_nfkc_distinct_directories_are_not_false_collision(self):
+        payload = base64.b64encode(b"synthetic").decode("ascii")
+        self.envelope["changed_bytes_b64"] = {
+            "tests/oﬃce.py": payload,
+            "docs/office.py": payload}
+        self.envelope["ci_workflow_bytes_b64"] = {}
+        result = self.verdict()
+        self.assertNotIn("BUNDLE_SOURCE_CASE_COLLISION_UNREVIEWED",
+                         result["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_CROSSMAP_COLLISION_UNREVIEWED",
+                         result["diagnostics"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_nfkc_clean_synthetic_bundle_stays_source_only(self):
+        original = self.verdict()
+        parsed = review_bundle_json_text(json.dumps(
+            self.envelope, ensure_ascii=False))
+        self.assertEqual(original, parsed)
+        self.assertEqual(original["diagnostics"], ())
+        self.assertTrue(original["source_consistency"])
+        self.assertFalse(original["independent_original_os_proof"])
+        self.assertFalse(original["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(original["can_authorize_annual_run"])
+
