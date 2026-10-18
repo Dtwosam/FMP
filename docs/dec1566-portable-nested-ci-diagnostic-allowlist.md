@@ -1,0 +1,7 @@
+# DEC-1566 — Nested CI receipt diagnostics stay inside the portable allowlist
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent tests/docs child of #1812 at `fad86ac10c39619a18d57b235b99afa636d0622b`, adding six synthetic unittest methods and one test fixture helper (**2,848 proposed source-defined tests**).
+
+The DEC-1565 correction exposed a useful distinction: the composite synthetic evidence reviewer can emit `tests_RECEIPT_JOB_MISMATCH` for a tampered historical job association, but the reviewed portable diagnostic literal allowlist deliberately does not include this prefixed nested label. The portable memory/JSON/CLI interfaces must therefore fail closed with `BUNDLE_RESULT_SHAPE_UNREVIEWED`, not echo the internal string or elevate it to a trusted output. Tests check the direct composite reason separately, the generic portable refusal on both interfaces, one-line stdin status and no annual permission, stable refusal despite map reordering, an unrelated **allowlisted** PR compare diagnostic still reaching the caller, and the clean source-only control.
+
+No widening of the diagnostic allowlist or changes to application/parser, CI workflow, security controls or permission gates. Exact-head Phase 3 and historical/general suites and qualified independent review required. DEC-650/#820 independent protected-original OS no-write and DEC-651/#821/#779 immutable exclusive protected 2023 run385/attempt1 server admission remain **BLOCKED**. No protected originals/artifacts/archives, annual dispatch/retry, merge, deployment or trading.
