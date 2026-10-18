@@ -5302,3 +5302,87 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertFalse(original["exclusive_server_dispatch_gate_proven"])
         self.assertFalse(original["can_authorize_annual_run"])
 
+    def _assert_invalid_run_map_key_all_entrypoints(self, map_name, bad_key):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        record = self.envelope[map_name]
+        original = record.pop("8000")
+        record[bad_key] = original
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        exit_code = cli.run_stdin_review(io.StringIO(raw), out)
+        cli_result = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_RUN_KEY_UNREVIEWED",))
+        self.assertEqual(cli_result["diagnostics"],
+                         ["BUNDLE_RUN_KEY_UNREVIEWED"])
+        self.assertEqual(set(cli_result), VERDICT_FIELDS)
+        self.assertFalse(cli_result["source_consistency"])
+        self.assertFalse(cli_result["independent_original_os_proof"])
+        self.assertFalse(cli_result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(cli_result["can_authorize_annual_run"])
+
+    def test_run_map_key_plus_prefix_rejected_in_jobs(self):
+        self._assert_invalid_run_map_key_all_entrypoints(
+            "jobs_by_run", "+8000")
+
+    def test_run_map_key_negative_prefix_rejected_in_checkout(self):
+        self._assert_invalid_run_map_key_all_entrypoints(
+            "checkout_by_run", "-8000")
+
+    def test_run_map_key_leading_zero_rejected_in_raw_logs(self):
+        self._assert_invalid_run_map_key_all_entrypoints(
+            "raw_ci_runner_logs", "08000")
+
+    def test_run_map_key_trailing_space_rejected_in_raw_receipts(self):
+        self._assert_invalid_run_map_key_all_entrypoints(
+            "raw_ci_log_receipts", "8000 ")
+
+    def test_run_map_key_scientific_notation_rejected(self):
+        self._assert_invalid_run_map_key_all_entrypoints(
+            "jobs_by_run", "8e3")
+
+    def test_run_map_key_unicode_decimal_digits_rejected(self):
+        self._assert_invalid_run_map_key_all_entrypoints(
+            "checkout_by_run", "\u0668\u0660\u0660\u0660")
+
+    def test_run_map_key_signed_int64_overflow_rejected(self):
+        self._assert_invalid_run_map_key_all_entrypoints(
+            "raw_ci_runner_logs", "9223372036854775808")
+
+    def test_run_map_key_overlong_decimal_rejected_without_conversion(self):
+        self._assert_invalid_run_map_key_all_entrypoints(
+            "raw_ci_log_receipts", "8"*2000)
+
+    def test_run_map_key_private_canary_not_echoed(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        key = "private-runkey-canary"
+        self.envelope["raw_ci_log_receipts"][key] = (
+            self.envelope["raw_ci_log_receipts"].pop("8001"))
+        output = io.StringIO()
+        status = cli.run_stdin_review(
+            io.StringIO(json.dumps(self.envelope)), output)
+        self.assertEqual(status, 2)
+        self.assertNotIn(key, output.getvalue())
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["diagnostics"],
+                         ["BUNDLE_RUN_KEY_UNREVIEWED"])
+        self.assertFalse(result["independent_original_os_proof"])
+        self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_run_map_key_canonical_fixture_keeps_source_only(self):
+        direct = self.verdict()
+        json_verdict = review_bundle_json_text(json.dumps(self.envelope))
+        self.assertEqual(direct, json_verdict)
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertTrue(direct["source_consistency"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
