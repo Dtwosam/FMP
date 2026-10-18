@@ -7172,3 +7172,97 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_canonical_doc_source_bytes_still_need_tree_identity(
             "# Sôurce-only\n".encode("utf-8"))
 
+    def _assert_swapped_canonical_source_evidence_is_not_tree_proof(self):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        for encoded in self.envelope["changed_bytes_b64"].values():
+            raw = base64.b64decode(encoded, validate=True)
+            self.assertEqual(base64.b64encode(raw).decode("ascii"), encoded)
+        direct = self.verdict()
+        raw = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_UNREVIEWED",
+                         direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_NONCANONICAL",
+                         direct["diagnostics"])
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def _swap_two_changed_source_payloads(self):
+        pairs = self.envelope["changed_bytes_b64"]
+        self.assertEqual(base64.b64decode(pairs["tests/sample.py"]),
+                         b"pass\n")
+        self.assertEqual(base64.b64decode(pairs["docs/sample.md"]),
+                         b"# Source-only\n")
+        pairs["tests/sample.py"], pairs["docs/sample.md"] = (
+            pairs["docs/sample.md"], pairs["tests/sample.py"])
+
+    def test_changed_sources_swapped_bytes_fail_tree_identity(self):
+        self._swap_two_changed_source_payloads()
+        self._assert_swapped_canonical_source_evidence_is_not_tree_proof()
+
+    def test_changed_sources_swapped_bytes_with_reversed_map_fail(self):
+        self._swap_two_changed_source_payloads()
+        self.envelope["changed_bytes_b64"] = dict(
+            reversed(list(self.envelope["changed_bytes_b64"].items())))
+        self._assert_swapped_canonical_source_evidence_is_not_tree_proof()
+
+    def test_changed_sources_swapped_and_rehashed_nodes_fail_tree_identity(self):
+        self._swap_two_changed_source_payloads()
+        for path, encoded in self.envelope["changed_bytes_b64"].items():
+            self.envelope["nodes"][path]["sha"] = (
+                composite.ci_source.git_blob_id(
+                    base64.b64decode(encoded, validate=True)))
+        self._assert_swapped_canonical_source_evidence_is_not_tree_proof()
+
+    def test_changed_sources_swapped_and_changed_compare_counts_fail(self):
+        self._swap_two_changed_source_payloads()
+        self.envelope["compare"]["files"][0]["changes"] = 5
+        self._assert_swapped_canonical_source_evidence_is_not_tree_proof()
+
+    def test_changed_sources_swapped_with_false_annual_claim_fail(self):
+        self._swap_two_changed_source_payloads()
+        self.envelope["pr"]["can_authorize_annual_run"] = True
+        self._assert_swapped_canonical_source_evidence_is_not_tree_proof()
+
+    def test_changed_sources_copy_docs_bytes_into_python_path_fail(self):
+        pairs = self.envelope["changed_bytes_b64"]
+        pairs["tests/sample.py"] = pairs["docs/sample.md"]
+        self._assert_swapped_canonical_source_evidence_is_not_tree_proof()
+
+    def test_changed_sources_copy_python_bytes_into_docs_path_fail(self):
+        pairs = self.envelope["changed_bytes_b64"]
+        pairs["docs/sample.md"] = pairs["tests/sample.py"]
+        self._assert_swapped_canonical_source_evidence_is_not_tree_proof()
+
+    def test_changed_sources_swap_rehashed_node_and_fake_tree_sha_fail(self):
+        self._swap_two_changed_source_payloads()
+        for path, encoded in self.envelope["changed_bytes_b64"].items():
+            self.envelope["nodes"][path]["sha"] = (
+                composite.ci_source.git_blob_id(
+                    base64.b64decode(encoded, validate=True)))
+        self.envelope["tree"]["sha"] = "a"*40
+        self._assert_swapped_canonical_source_evidence_is_not_tree_proof()
+
+    def test_changed_sources_unswapped_fixture_remains_source_only(self):
+        raw = json.dumps(self.envelope)
+        direct = self.verdict()
+        self.assertEqual(direct, review_bundle_json_text(raw))
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
