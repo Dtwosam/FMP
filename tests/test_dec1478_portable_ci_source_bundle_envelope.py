@@ -8399,3 +8399,116 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
             self.assertIs(type(snapshot), dict)
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_portable_multiple_tree_faults(self, *expected_codes):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertGreaterEqual(len(set(expected_codes)), 2)
+        direct = self.verdict()
+        payload = json.dumps(self.envelope, sort_keys=True)
+        parsed = review_bundle_json_text(payload)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(payload), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertFalse(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"],
+                         tuple(sorted(set(direct["diagnostics"]))))
+        for code in expected_codes:
+            self.assertIn(code, direct["diagnostics"])
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         list(direct["diagnostics"]))
+        self.assertNotIn("tests/sample.py", out.getvalue())
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_multi_tree_test_mode_and_docs_wrong_blob_sha(self):
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self._assert_portable_multiple_tree_faults(
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB",
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_multi_tree_docs_parent_and_test_wrong_blob_sha(self):
+        root = self.envelope["full_tree_snapshots"][
+            self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "docs")[
+            "mode"] = "120000"
+        self._portable_snapshot_leaf("tests")["sha"] = "a"*40
+        self._assert_portable_multiple_tree_faults(
+            "TREE_CHAIN_PARENT_NOT_REGULAR_TREE",
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_multi_tree_docs_parent_and_test_executable(self):
+        root = self.envelope["full_tree_snapshots"][
+            self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "docs")[
+            "mode"] = "120000"
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        self._assert_portable_multiple_tree_faults(
+            "TREE_CHAIN_PARENT_NOT_REGULAR_TREE",
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_multi_tree_docs_nonhex_and_test_symlink(self):
+        self._portable_snapshot_leaf("docs")["sha"] = "g"*40
+        self._portable_snapshot_leaf("tests")["mode"] = "120000"
+        self._assert_portable_multiple_tree_faults(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED",
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_multi_tree_tests_parent_nonhex_and_docs_symlink(self):
+        root = self.envelope["full_tree_snapshots"][
+            self.envelope["commit"]["tree"]["sha"]]
+        next(e for e in root["tree"] if e["path"] == "tests")[
+            "sha"] = "g"*40
+        self._portable_snapshot_leaf("docs")["mode"] = "120000"
+        self._assert_portable_multiple_tree_faults(
+            "TREE_CHAIN_ENTRY_SHA_UNREVIEWED",
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_multi_tree_extra_orphan_and_docs_executable(self):
+        self.envelope["full_tree_snapshots"]["f"*40] = {
+            "sha": "f"*40, "truncated": False, "tree": []}
+        self._portable_snapshot_leaf("docs")["mode"] = "100755"
+        self._assert_portable_multiple_tree_faults(
+            "TREE_CHAIN_TREE_SNAPSHOT_INVENTORY_UNREVIEWED",
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_multi_tree_tests_leaf_renamed_docs_blob_replaced(self):
+        self._portable_snapshot_leaf("tests")["path"] = "changed.py"
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self._assert_portable_multiple_tree_faults(
+            "TREE_CHAIN_ENTRY_CARDINALITY_UNREVIEWED",
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_multi_tree_tests_wrong_sha_docs_wrong_mode(self):
+        self._portable_snapshot_leaf("tests")["sha"] = "a"*40
+        self._portable_snapshot_leaf("docs")["mode"] = "160000"
+        self._assert_portable_multiple_tree_faults(
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_multi_tree_reversed_snapshot_map_keeps_fail_closed(self):
+        self._portable_snapshot_leaf("docs")["sha"] = "a"*40
+        self._portable_snapshot_leaf("tests")["mode"] = "100755"
+        trees = self.envelope["full_tree_snapshots"]
+        self.envelope["full_tree_snapshots"] = dict(
+            reversed(list(trees.items())))
+        self._assert_portable_multiple_tree_faults(
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH",
+            "TREE_CHAIN_LEAF_NOT_REGULAR_BLOB")
+
+    def test_portable_multi_tree_wrong_nodes_and_wrong_full_tree(self):
+        self.envelope["nodes"]["docs/sample.md"]["mode"] = "100755"
+        self._portable_snapshot_leaf("tests")["sha"] = "a"*40
+        self._assert_portable_multiple_tree_faults(
+            "GIT_TREE_LEAF_MODE_DRIFT",
+            "TREE_CHAIN_LEAF_BYTES_SHA_MISMATCH")
+
+    def test_portable_multi_tree_clean_control_source_only(self):
+        self._assert_portable_tree_object_order_consistency_only()
+

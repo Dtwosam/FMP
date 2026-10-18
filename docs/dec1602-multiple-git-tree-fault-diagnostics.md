@@ -1,0 +1,7 @@
+# DEC-1602 — Multiple Git tree evidence faults must not suppress diagnostics
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1848 at `3cdf8ca790ab303d53dd11fce4c7ac0d935d3821`. Eleven regression methods (**3,233 proposed source-defined methods**).
+
+Single-mutant regression tests can overlook error masking. Combine distinct source-tree corruptions across both changed paths and across independent flat-node and full-tree evidence views: invalid Git modes, mismatched or malformed leaf SHA pointers, symlink parents, missing path identities, orphaned tree snapshots and unrelated map insertion order. Require the **set of all reviewed diagnostic categories** to be present, deduplicated, deterministically sorted, identical in direct-memory, JSON-text and bounded stdin, and free of raw source-path echo. Every mutant remains nonauthorizing; the untouched clean control remains source-consistent only.
+
+This is synthetic caller-supplied source evidence only, not independently authenticated provider Git trees, protected original OS or annual execution permission. Own exact-head Phase 3 and full historical/general CI and qualified independent review required. Tests/docs only, no parser/limit/production/workflow/security/admission controls, protected originals/archives/artifacts, annual run/retry, merging, deployment or trading. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
