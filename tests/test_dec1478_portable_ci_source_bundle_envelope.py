@@ -12159,3 +12159,111 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
     def test_portable_required_category_clean_source_only_control(self):
         self._assert_portable_tree_object_order_consistency_only()
 
+    def _assert_portable_schema_literal_refused(self, value):
+        import io
+        import copy
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertNotEqual(value, ENVELOPE_SCHEMA)
+        self.envelope["schema"] = value
+        before = copy.deepcopy(self.envelope)
+        raw = json.dumps(self.envelope, ensure_ascii=True)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(self.envelope, before)
+        self.assertEqual(direct, parsed)
+        self.assertEqual(status, 2)
+        self.assertEqual(direct["diagnostics"],
+                         ("BUNDLE_SCHEMA_UNREVIEWED",))
+        self.assertEqual(set(emitted), VERDICT_FIELDS)
+        self.assertEqual(emitted["diagnostics"],
+                         ["BUNDLE_SCHEMA_UNREVIEWED"])
+        self.assertNotIn("docs/sample.md", out.getvalue())
+        for result in (direct, emitted):
+            self.assertFalse(result["source_consistency"])
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def _assert_portable_schema_json_escaped_equivalent(self, index):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        raw = json.dumps(self.envelope, sort_keys=True, separators=(",", ":"))
+        original = json.dumps(ENVELOPE_SCHEMA)
+        self.assertIn('"schema":' + original, raw)
+        escaped = ('"' + ENVELOPE_SCHEMA[:index] +
+                   "\\u%04x" % ord(ENVELOPE_SCHEMA[index]) +
+                   ENVELOPE_SCHEMA[index+1:] + '"')
+        encoded = raw.replace('"schema":' + original,
+                              '"schema":' + escaped, 1)
+        self.assertEqual(json.loads(encoded), self.envelope)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(encoded)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(encoded), out)
+        emitted = json.loads(out.getvalue())
+        self.assertEqual(status, 0)
+        self.assertEqual(direct, parsed)
+        self.assertTrue(direct["source_consistency"])
+        self.assertEqual(direct["diagnostics"], ())
+        self.assertEqual(emitted["diagnostics"], [])
+        for result in (direct, emitted):
+            self.assertFalse(result["independent_original_os_proof"])
+            self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+            self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_portable_schema_literal_version_v2_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA.replace("-v1", "-v2"))
+
+    def test_portable_schema_literal_leading_space_refused(self):
+        self._assert_portable_schema_literal_refused(" " + ENVELOPE_SCHEMA)
+
+    def test_portable_schema_literal_trailing_space_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA + " ")
+
+    def test_portable_schema_literal_uppercased_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA.upper())
+
+    def test_portable_schema_literal_newline_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA + "\n")
+
+    def test_portable_schema_literal_null_suffix_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA + "\x00")
+
+    def test_portable_schema_literal_online_alias_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA.replace("offline", "online"))
+
+    def test_portable_schema_literal_plural_source_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA.replace("source", "sources"))
+
+    def test_portable_schema_literal_source_caps_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA.replace("source", "Source"))
+
+    def test_portable_schema_literal_bundle_caps_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA.replace("bundle", "Bundle"))
+
+    def test_portable_schema_literal_long_s_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA.replace("source", "ſource"))
+
+    def test_portable_schema_literal_cyrillic_m_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA.replace("fmp", "fмp"))
+
+    def test_portable_schema_literal_fullwidth_f_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA.replace("fmp", "ｆmp"))
+
+    def test_portable_schema_literal_zero_width_refused(self):
+        self._assert_portable_schema_literal_refused(ENVELOPE_SCHEMA[:3] + "\u200b" + ENVELOPE_SCHEMA[3:])
+
+    def test_portable_schema_literal_json_escape_start_equivalent(self):
+        self._assert_portable_schema_json_escaped_equivalent(0)
+
+    def test_portable_schema_literal_json_escape_version_equivalent(self):
+        self._assert_portable_schema_json_escaped_equivalent(
+            len(ENVELOPE_SCHEMA) - 1)
+
+    def test_portable_schema_literal_clean_control(self):
+        self.assertEqual(self.envelope["schema"], ENVELOPE_SCHEMA)
+        self._assert_portable_tree_object_order_consistency_only()
+
