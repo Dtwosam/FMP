@@ -1,0 +1,7 @@
+# DEC-1593 — Complete full Git tree snapshot inventory is required
+
+**DRAFT / NEVER MERGE / NEVER PROMOTE.** Exact-parent one-commit tests/docs child of #1839 at `496be47d8cc91f098af4e827f62d6e6ea7de7ccf`. Twelve synthetic source-only regression methods (**3,101 proposed source-defined methods**).
+
+Following DEC-1592 full parent/child entry-mode checks, this draft targets structurally incomplete or conflicting caller-supplied full Git tree snapshots: missing root, missing `tests` or `docs` subtree, truncated subtree, duplicate parent or leaf entry, deleted/renamed expected leaf entry, an unlinked extra tree object, and top-level or child self-SHA mismatch. The changed-source bytes remain exactly `tests/sample.py = b"pass\\n"` and `docs/sample.md = b"# Source-only\\n"`; canonical Base64 and flat `nodes` records are intentionally unmodified. Each case asserts a specific existing `TREE_CHAIN_*` diagnostic and identical fail-closed direct-memory, JSON-text and bounded stdin verdicts without source-path echo or annual execution authority.
+
+No GitHub object, protected original OS or annual execution gate is independently authenticated by these fixtures. Require own exact-head Phase 3 and historical/general CI and qualified independent review. No production, parser, resource budget, workflow, security control, annual dispatch/retry, protected originals/archives/artifacts, merging, deployment or trading changes. DEC-650/#820 and DEC-651/#821/#779 remain **BLOCKED**.
