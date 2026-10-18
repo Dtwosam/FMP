@@ -4135,3 +4135,76 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self.assertEqual(result["diagnostics"], ())
         self.assertFalse(result["can_authorize_annual_run"])
 
+    def test_json_lexical_scanners_ignore_large_comma_text(self):
+        raw = "[" + json.dumps("value,"*10000) + "]"
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_SHAPE_UNREVIEWED",))
+
+    def test_json_lexical_scanners_ignore_bracket_like_object_keys(self):
+        raw = json.dumps({"[[],{},:]"*3000: "synthetic"})
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_json_lexical_scanners_handle_escaped_quote_backslash(self):
+        raw = json.dumps({"synthetic": 'quoted "\\"][,{}]\\" content'})
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_json_lexical_scanners_accept_many_empty_containers(self):
+        raw = json.dumps({"synthetic": [{"a": [], "b": {}} for _ in range(500)]},
+                         separators=(",", ":"))
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_json_lexical_scanners_reject_crossed_container_closures(self):
+        for raw in ('{"a":[1,2}', '[{"a":1]', '{[}]'):
+            with self.subTest(raw=raw):
+                self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                                 ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_decoded_duplicate_keys_hidden_by_escape_fail_closed(self):
+        raw = '{"a":1,"\\u0061":2}'
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_lexical_scanners_ignore_escaped_punctuation_text(self):
+        raw = json.dumps({"message": '\\[\\,\\} "secret" ' * 500})
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_json_lexical_scanners_accept_nested_small_arrays_objects(self):
+        raw = json.dumps({"synthetic": [[{"k": i} for i in range(10)]
+                                         for _ in range(10)]})
+        self.assertTrue(_json_lexical_array_budgets(raw))
+        self.assertTrue(_json_lexical_object_budgets(raw))
+        self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                         ("BUNDLE_KEY_INVENTORY_UNREVIEWED",))
+
+    def test_json_lexical_scanners_reject_malformed_closing_tokens(self):
+        for raw in ('[1,2]]', '{"a":1}}', '{"x":[0,1}}'):
+            with self.subTest(raw=raw):
+                self.assertEqual(review_bundle_json_text(raw)["diagnostics"],
+                                 ("BUNDLE_JSON_GRAMMAR_UNREVIEWED",))
+
+    def test_json_lexical_scanners_keep_order_independent_source_consistency(self):
+        for sort_keys in (False, True):
+            with self.subTest(sort_keys=sort_keys):
+                raw = json.dumps(self.envelope, sort_keys=sort_keys)
+                result = review_bundle_json_text(raw)
+                self.assertEqual(result["diagnostics"], ())
+                self.assertTrue(result["source_consistency"])
+                self.assertFalse(result["independent_original_os_proof"])
+                self.assertFalse(result["exclusive_server_dispatch_gate_proven"])
+                self.assertFalse(result["can_authorize_annual_run"])
+
