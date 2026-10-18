@@ -5666,3 +5666,93 @@ class PortableSourceBundleNeverGrantsAnnualRunAdmission(unittest.TestCase):
         self._assert_returning_nested_reviewer_cannot_mutate_original(
             lambda v: v["raw_ci_log_receipts"].clear())
 
+    def _assert_base64_alias_refusal_all_entrypoints(self, category, encoded,
+                                                       canonical, diagnostic):
+        import io
+        import test_dec1479_offline_ci_bundle_stdin_command as cli
+        self.assertEqual(base64.b64decode(encoded, validate=True),
+                         base64.b64decode(canonical, validate=True))
+        self.assertNotEqual(encoded, canonical)
+        key = next(iter(self.envelope[category]))
+        self.envelope[category][key] = encoded
+        direct = self.verdict()
+        raw = json.dumps(self.envelope)
+        json_result = review_bundle_json_text(raw)
+        out = io.StringIO()
+        status = cli.run_stdin_review(io.StringIO(raw), out)
+        record = json.loads(out.getvalue())
+        self.assertEqual(direct, json_result)
+        self.assertEqual(direct["diagnostics"], (diagnostic,))
+        self.assertEqual(record["diagnostics"], [diagnostic])
+        self.assertEqual(status, 2)
+        self.assertEqual(set(record), VERDICT_FIELDS)
+        self.assertFalse(record["source_consistency"])
+        self.assertFalse(record["independent_original_os_proof"])
+        self.assertFalse(record["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(record["can_authorize_annual_run"])
+
+    def test_base64_pad_bit_alias_z_h_changed_source_refused(self):
+        self._assert_base64_alias_refusal_all_entrypoints(
+            "changed_bytes_b64", "Zh==", "Zg==",
+            "BUNDLE_SOURCE_B64_NONCANONICAL")
+
+    def test_base64_pad_bit_alias_z_v_changed_source_refused(self):
+        self._assert_base64_alias_refusal_all_entrypoints(
+            "changed_bytes_b64", "Zv==", "Zg==",
+            "BUNDLE_SOURCE_B64_NONCANONICAL")
+
+    def test_base64_pad_bit_alias_null_byte_changed_source_refused(self):
+        self._assert_base64_alias_refusal_all_entrypoints(
+            "changed_bytes_b64", "AB==", "AA==",
+            "BUNDLE_SOURCE_B64_NONCANONICAL")
+
+    def test_base64_pad_bit_alias_two_byte_changed_source_refused(self):
+        self._assert_base64_alias_refusal_all_entrypoints(
+            "changed_bytes_b64", "Zm9=", "Zm8=",
+            "BUNDLE_SOURCE_B64_NONCANONICAL")
+
+    def test_base64_pad_bit_alias_two_byte_workflow_refused(self):
+        self._assert_base64_alias_refusal_all_entrypoints(
+            "ci_workflow_bytes_b64", "Zm/=", "Zm8=",
+            "BUNDLE_SOURCE_B64_NONCANONICAL")
+
+    def test_base64_pad_bit_alias_one_byte_workflow_refused(self):
+        self._assert_base64_alias_refusal_all_entrypoints(
+            "ci_workflow_bytes_b64", "Zh==", "Zg==",
+            "BUNDLE_SOURCE_B64_NONCANONICAL")
+
+    def test_base64_pad_bit_alias_nul_workflow_refused(self):
+        self._assert_base64_alias_refusal_all_entrypoints(
+            "ci_workflow_bytes_b64", "AB==", "AA==",
+            "BUNDLE_SOURCE_B64_NONCANONICAL")
+
+    def test_base64_missing_padding_refused_before_nested_evidence(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = "Zg="
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SOURCE_B64_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_base64_excess_padding_refused_before_nested_evidence(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = "Zg==="
+        result = self.verdict()
+        self.assertEqual(result["diagnostics"],
+                         ("BUNDLE_SOURCE_B64_UNREVIEWED",))
+        self.assertFalse(result["can_authorize_annual_run"])
+
+    def test_base64_canonical_replacement_decodes_but_cannot_spoof_source(self):
+        self.envelope["changed_bytes_b64"]["tests/sample.py"] = "Zg=="
+        raw = json.dumps(self.envelope)
+        direct = self.verdict()
+        parsed = review_bundle_json_text(raw)
+        self.assertEqual(direct, parsed)
+        self.assertFalse(direct["source_consistency"])
+        self.assertTrue(direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_UNREVIEWED",
+                         direct["diagnostics"])
+        self.assertNotIn("BUNDLE_SOURCE_B64_NONCANONICAL",
+                         direct["diagnostics"])
+        self.assertFalse(direct["independent_original_os_proof"])
+        self.assertFalse(direct["exclusive_server_dispatch_gate_proven"])
+        self.assertFalse(direct["can_authorize_annual_run"])
+
